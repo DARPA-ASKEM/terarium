@@ -26,7 +26,6 @@
 							v-model="isSimulationsFromSameModel"
 							label="All simulations are from the same model"
 						/>
-
 						<template v-if="selectedCompareOption === CompareValue.IMPACT">
 							<label> Select simulation to use as a baseline (optional) </label>
 							<Dropdown
@@ -74,7 +73,17 @@
 		<tera-drilldown-section :tabName="DrilldownTabs.Wizard">
 			<Accordion multiple :active-index="activeIndices">
 				<AccordionTab header="Summary"> </AccordionTab>
-				<AccordionTab header="Variables"> vega lite here </AccordionTab>
+				<AccordionTab header="Variables">
+					<template v-for="(compareChart, index) in compareCharts">
+						<vega-chart
+							v-if="!isEmpty(compareChart)"
+							:key="index"
+							:visualization-spec="compareChart"
+							:are-embed-actions-visible="false"
+							expandable
+						/>
+					</template>
+				</AccordionTab>
 				<AccordionTab header="Comparison table"> </AccordionTab>
 			</Accordion>
 		</tera-drilldown-section>
@@ -114,12 +123,15 @@ import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
 import Dropdown from 'primevue/dropdown';
 import { Dataset } from '@/types/Types';
-import { getDataset } from '@/services/dataset';
+import { getDataset, getRawContent } from '@/services/dataset';
 import TeraCheckbox from '@/components/widgets/tera-checkbox.vue';
 import RadioButton from 'primevue/radiobutton';
-import _ from 'lodash';
+import { isEmpty, cloneDeep } from 'lodash';
+import VegaChart from '@/components/widgets/VegaChart.vue';
+import { createDatasetCompareChart } from '@/services/charts';
 import { blankCriteriaOfInterest, CompareDatasetsState, CriteriaOfInterestCard } from './compare-datasets-operation';
 import TeraCriteriaOfInterestCard from './tera-criteria-of-interest-card.vue';
+
 // const props =
 const props = defineProps<{
 	node: WorkflowNode<CompareDatasetsState>;
@@ -153,6 +165,8 @@ const isFetchingDatasets = ref(false);
 const isSimulationsFromSameModel = ref(true);
 const isATESelected = ref(false);
 
+const compareCharts = ref<any[]>([]);
+
 const onRun = () => {
 	console.log('run');
 };
@@ -180,7 +194,7 @@ const knobs = ref<BasicKnobs>({
 });
 
 const initialize = async () => {
-	const state = _.cloneDeep(props.node.state);
+	const state = cloneDeep(props.node.state);
 	knobs.value = Object.assign(knobs.value, state);
 
 	const inputs = props.node.inputs;
@@ -195,16 +209,63 @@ const initialize = async () => {
 		datasets.value.push(...filteredDatasets);
 	});
 	isFetchingDatasets.value = false;
+
+	createCharts();
 };
+
+function transposeArrays(arrays) {
+	if (arrays.length === 0) return [];
+	return arrays[0].map((_, colIndex) => arrays.map((row) => row[colIndex]));
+}
+
+async function createCharts() {
+	if (datasets.value.length <= 1) return;
+
+	const rawContents = await Promise.all(datasets.value.map((dataset) => getRawContent(dataset)));
+	const transposedRawContents = rawContents.map((content) => ({ ...content, csv: transposeArrays(content?.csv) }));
+
+	const names1 = datasets.value?.[0]?.columns?.map((column) => column.name);
+	const names2 = datasets.value?.[1]?.columns?.map((column) => column.name);
+	const commonHeaderNames = names1?.filter((name) => names2?.includes(name));
+
+	const timepointIndex = transposedRawContents[0]?.headers?.indexOf('t');
+	if (timepointIndex === undefined) return;
+
+	// Go through every column header
+	commonHeaderNames?.forEach((headerName) => {
+		if (headerName === 't') return;
+
+		const headerIndex = transposedRawContents[0]?.headers?.indexOf(headerName);
+		if (!headerIndex) return;
+
+		const values: any = [];
+
+		transposedRawContents.forEach((content, datasetIndex) => {
+			const timepoints = content.csv[timepointIndex];
+			timepoints.forEach((timepoint: number, rowIndex: number) => {
+				values.push({
+					timepoint,
+					value: parseFloat(content.csv[headerIndex][rowIndex]) + datasetIndex,
+					name: `${headerName}${datasetIndex}`
+				});
+			});
+		});
+		compareCharts.value.push(createDatasetCompareChart(values, headerName));
+		console.log(compareCharts.value);
+	});
+
+	// console.log('values', values);
+}
 
 onMounted(() => {
 	initialize();
+	createCharts();
 });
 
 watch(
 	() => knobs.value,
 	() => {
-		const state = _.cloneDeep(props.node.state);
+		const state = cloneDeep(props.node.state);
 		Object.assign(state, knobs.value);
 		emit('update-state', state);
 	},
