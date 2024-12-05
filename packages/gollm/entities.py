@@ -30,7 +30,7 @@ class ModelCardModel(BaseModel):
 
 class ModelCompareModel(BaseModel):
     amrs: List[str]  # expects AMRs to be a stringified JSON object
-
+    goal: str = None
 
 class EquationsCleanup(BaseModel):
     equations: List[str]

@@ -580,6 +580,7 @@ public class GoLLMController {
 	)
 	public ResponseEntity<TaskResponse> createCompareModelsTask(
 		@RequestParam(name = "model-ids", required = true) final List<UUID> modelIds,
+		@RequestParam(name = "goal", required = false) final String goal,
 		@RequestParam(name = "mode", required = false, defaultValue = "ASYNC") final TaskMode mode,
 		@RequestParam(name = "workflow-id", required = false) final UUID workflowId,
 		@RequestParam(name = "node-id", required = false) final UUID nodeId,
@@ -610,6 +611,7 @@ public class GoLLMController {
 
 		final CompareModelsResponseHandler.Input input = new CompareModelsResponseHandler.Input();
 		input.setAmrs(amrs);
+		input.setGoal(goal);
 
 		// create the task
 		final TaskRequest req = new TaskRequest();
