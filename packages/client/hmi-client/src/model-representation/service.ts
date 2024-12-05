@@ -4,7 +4,7 @@ import { runDagreLayout, rerouteEdges } from '@/services/graph';
 import { MiraModel } from '@/model-representation/mira/mira-common';
 import { ModelPartItem } from '@/types/Model';
 import { extractNestedStratas } from '@/model-representation/petrinet/mira-petri';
-import type { Initial, Model, ModelParameter, State, RegNetVertex, Transition, Rate } from '@/types/Types';
+import type { Initial, Model, ModelParameter, State, RegNetVertex, Transition, Rate, Observable } from '@/types/Types';
 import { getModelType } from '@/services/model';
 import { AMRSchemaNames } from '@/types/common';
 import { parseCurie } from '@/services/concept';
@@ -428,7 +428,7 @@ export function createPartsList(parts, model, partType) {
 	});
 }
 
-export function createObservablesList(observables) {
+export function createObservablesList(observables: Observable[]) {
 	return observables.map((observable) => {
 		const { id, name, expression, description, units, grounding } = observable;
 		return {
