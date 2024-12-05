@@ -269,3 +269,11 @@ export function percentile(values: number[], q: number): number {
 	const upperValue = values[upperIndex];
 	return lowerValue + (upperValue - lowerValue) * (index - lowerIndex);
 }
+
+export function calculateUncertaintyRange(value: number, percentage: number): { min: number; max: number } {
+	const delta = value * (percentage / 100);
+	return {
+		min: parseFloat((value - delta).toFixed(8)),
+		max: parseFloat((value + delta).toFixed(8))
+	};
+}

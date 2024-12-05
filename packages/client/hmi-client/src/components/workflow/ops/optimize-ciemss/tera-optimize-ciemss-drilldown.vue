@@ -459,7 +459,7 @@ import {
 	AssetType
 } from '@/types/Types';
 import { logger } from '@/utils/logger';
-import { nodeMetadata } from '@/components/workflow/util';
+import { getActiveOutput, nodeMetadata } from '@/components/workflow/util';
 import { WorkflowNode } from '@/types/workflow';
 import TeraSliderPanel from '@/components/widgets/tera-slider-panel.vue';
 import TeraNotebookError from '@/components/drilldown/tera-notebook-error.vue';
@@ -491,7 +491,7 @@ import {
 	OptimizeCiemssOperationState,
 	OptimizationInterventionObjective
 } from './optimize-ciemss-operation';
-import { usePreparedChartInputs } from './optimize-utils';
+import { setQoIData, usePreparedChartInputs } from './optimize-utils';
 
 const confirm = useConfirm();
 
@@ -919,10 +919,10 @@ const setOutputValues = async () => {
 	const preForecastRunId = knobs.value.preForecastRunId;
 	const postForecastRunId = knobs.value.postForecastRunId;
 
-	riskResults.value[knobs.value.postForecastRunId] = await getRunResult(knobs.value.postForecastRunId, 'risk.json');
-
 	const preResult = await getRunResultCSV(preForecastRunId, 'result.csv', renameFnGenerator('pre'));
 	const postResult = await getRunResultCSV(postForecastRunId, 'result.csv');
+	const outputState = getActiveOutput(props.node)?.state as OptimizeCiemssOperationState;
+	riskResults.value[knobs.value.postForecastRunId] = setQoIData(postResult, outputState.constraintGroups[0]);
 
 	// FIXME: only show the post optimize data for now...
 	simulationRawContent.value[knobs.value.postForecastRunId] = convertToCsvAsset(
@@ -966,7 +966,6 @@ const preparedSuccessCriteriaCharts = computed(() => {
 		.map((constraint) =>
 			createSuccessCriteriaChart(
 				riskResults.value[postForecastRunId],
-				constraint.targetVariable,
 				constraint.threshold,
 				constraint.isMinimized,
 				constraint.riskTolerance,

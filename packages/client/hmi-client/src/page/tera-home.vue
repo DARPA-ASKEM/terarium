@@ -108,6 +108,7 @@
 							:selected-columns="selectedColumns"
 							:search-query="searchProjectsQuery"
 							@open-project="openProject"
+							@open-asset="openAsset"
 						/>
 					</TabPanel>
 				</TabView>
@@ -138,7 +139,16 @@ import Dropdown from 'primevue/dropdown';
 import MultiSelect from 'primevue/multiselect';
 import SelectButton from 'primevue/selectbutton';
 import { useProjectMenu } from '@/composables/project-menu';
-import { ClientEventType, ProgressState, Project, ProjectSearchResponse } from '@/types/Types';
+import {
+	AssetType,
+	ClientEventType,
+	ProgressState,
+	Project,
+	ProjectAsset,
+	ProjectSearchResult,
+	TerariumAssetEmbeddingType
+} from '@/types/Types';
+import { ProjectWithKnnData } from '@/types/Project';
 import { Vue3Lottie } from 'vue3-lottie';
 import EmptySeed from '@/assets/images/lottie-empty-seed.json';
 import TeraInputText from '@/components/widgets/tera-input-text.vue';
@@ -167,7 +177,7 @@ const activeTabIndex = ref(0);
 const showVideo = ref(false);
 const isUploadProjectModalVisible = ref(false);
 const searchProjectsQuery = ref('');
-const searchProjectsResults = ref<ProjectSearchResponse[]>([]);
+const searchProjectsResults = ref<ProjectSearchResult[]>([]);
 const isSearchLoading = ref(false);
 
 enum ProjectsView {
@@ -220,28 +230,26 @@ const searchedAndFilterProjects = computed(() => {
 		tabProjects = tabProjects.filter(({ sampleProject }) => sampleProject === true);
 	}
 
-	// If they are no search we can return the filtered and sorted projects
+	// If there are no search we can return the filtered and sorted projects
 	if (isEmpty(searchProjectsResults.value)) {
-		return filterAndSortProjects(tabProjects);
+		return filterAndSortProjects(tabProjects) as ProjectWithKnnData[];
 	}
 
-	// If there is a search query, we need to filter the projects based on the search results
-	// while keeping the order of the search results to the order of the projects
 	return searchProjectsResults.value
-		.map((result) => {
+		.map((result: ProjectSearchResult) => {
 			const project = tabProjects.find(({ id }) => id === result.projectId);
 			if (!project) return null;
-			if (!project.metadata) project.metadata = {};
 
-			// Add the scoring to the search
-			project.metadata.score = result.score.toString();
-
-			// Add the search scoring to the projectAsset
-			result.hits.forEach((hit) => {
-				project.metadata![hit.assetId] = hit.score.toString();
-			});
-
-			return project as Project;
+			// Only display Project Overview as search results and sort the assets by descending score
+			result.assets = result.assets
+				?.filter((asset) => {
+					const isNotAProject = asset.assetType !== AssetType.Project;
+					const isProjectOverview =
+						asset.assetType === AssetType.Project && asset.embeddingType === TerariumAssetEmbeddingType.Overview;
+					return isNotAProject || isProjectOverview;
+				})
+				.sort((a, b) => b.score - a.score);
+			return { ...project, ...result } as ProjectWithKnnData;
 		})
 		.filter((project) => !!project); // Remove null values
 });
@@ -311,6 +319,17 @@ function openProject(projectId: string) {
 	router.push({ name: RouteName.Project, params: { projectId } });
 }
 
+function openAsset(projectId: Project['id'], assetId: ProjectAsset['id'], assetType: ProjectAsset['assetType']) {
+	router.push({
+		name: RouteName.Project,
+		params: {
+			projectId,
+			assetId,
+			pageType: assetType.toString()
+		}
+	});
+}
+
 watch(cloningProjects, () => {
 	if (cloningProjects.value.length === 0) {
 		useProjects().getAll();
@@ -325,17 +344,20 @@ async function searchedProjects() {
 	}
 
 	isSearchLoading.value = true;
-	searchProjectsResults.value = await findProjects(searchProjectsQuery.value);
-
-	// If no projects found, display a toast message
-	if (isEmpty(searchProjectsResults.value)) {
-		useToastService().info('No projects found', 'Try searching for something else', 5000);
-	} else {
-		// Display search results using the table view
-		view.value = ProjectsView.Table;
-	}
-
-	isSearchLoading.value = false;
+	findProjects(searchProjectsQuery.value)
+		.then((response) => {
+			// If no projects found, display a toast message
+			if (isEmpty(response)) {
+				useToastService().info('No projects found', 'Try searching for something else', 5000);
+			} else {
+				// Display search results using the table view
+				searchProjectsResults.value = response;
+				view.value = ProjectsView.Table;
+			}
+		})
+		.finally(() => {
+			isSearchLoading.value = false;
+		});
 }
 </script>
 
