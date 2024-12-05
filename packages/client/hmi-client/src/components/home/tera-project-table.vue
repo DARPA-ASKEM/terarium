@@ -64,7 +64,11 @@
 		</Column>
 		<template #expansion="{ data }">
 			<div v-for="asset in data.assets" :key="asset.assetId" class="flex align-items-center gap-4">
-				<tera-asset-button :asset="asset" @click="emit('open-asset', data.id, asset.assetId, asset.assetType)" />
+				<tera-asset-button
+					v-if="asset.assetType != AssetType.Project"
+					:asset="asset"
+					@click="emit('open-asset', data.id, asset.assetId, asset.assetType)"
+				/>
 				<tera-show-more-text :text="asset.embeddingContent" :lines="3" />
 			</div>
 		</template>
