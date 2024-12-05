@@ -382,7 +382,11 @@ public class ProjectSearchService {
 
 			final ProjectDocument projectDoc = elasticService.get(getAlias(), projectId.toString(), ProjectDocument.class);
 
-			if (projectDoc.embeddingSha256 != null && projectDoc.embeddingSha256.equals(newEmbeddingSha256)) {
+			if (
+				projectDoc != null &&
+				projectDoc.embeddingSha256 != null &&
+				projectDoc.embeddingSha256.equals(newEmbeddingSha256)
+			) {
 				log.info("Embedding for asset {} has not changed, skipping", asset.getId());
 				return null;
 			}
