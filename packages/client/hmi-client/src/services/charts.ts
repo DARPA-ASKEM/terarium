@@ -746,15 +746,14 @@ export function createForecastChartAnnotation(axis: 'x' | 'y', datum: number, la
 
 export function createSuccessCriteriaChart(
 	riskResults: any,
-	targetVariable: string,
 	threshold: number,
 	isMinimized: boolean,
 	alpha: number,
 	options: BaseChartOptions
 ): any {
 	// FIXME: risk results can be null/undefined sometimes
-	const data = riskResults?.[targetVariable]?.qoi || [];
-	const risk = riskResults?.[targetVariable]?.risk?.[0] || 0;
+	const data = riskResults.data;
+	const risk = riskResults.risk;
 	const binCount = Math.floor(Math.sqrt(data.length)) ?? 1;
 	const alphaPercentile = percentile(data, alpha);
 
@@ -1308,5 +1307,40 @@ export function createFunmanParameterCharts(
 				}
 			]
 		}
+	};
+}
+
+export function createDatasetCompareChart(values: any[], headerName: string) {
+	const globalFont = 'Figtree';
+
+	return {
+		$schema: VEGALITE_SCHEMA,
+		config: {
+			font: globalFont
+		},
+		title: {
+			text: headerName,
+			anchor: 'start',
+			frame: 'group',
+			offset: 10,
+			fontSize: 14
+		},
+		width: 600,
+		height: 300,
+		data: {
+			values
+		},
+		layer: [
+			{
+				mark: {
+					type: 'line'
+				},
+				encoding: {
+					x: { field: 'timepoint', type: 'quantitative' },
+					y: { field: 'value', type: 'quantitative' },
+					color: { field: 'name', type: 'nominal' }
+				}
+			}
+		]
 	};
 }

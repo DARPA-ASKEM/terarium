@@ -139,7 +139,15 @@ import Dropdown from 'primevue/dropdown';
 import MultiSelect from 'primevue/multiselect';
 import SelectButton from 'primevue/selectbutton';
 import { useProjectMenu } from '@/composables/project-menu';
-import { AssetType, ClientEventType, ProgressState, Project, ProjectAsset, ProjectSearchResult } from '@/types/Types';
+import {
+	AssetType,
+	ClientEventType,
+	ProgressState,
+	Project,
+	ProjectAsset,
+	ProjectSearchResult,
+	TerariumAssetEmbeddingType
+} from '@/types/Types';
 import { ProjectWithKnnData } from '@/types/Project';
 import { Vue3Lottie } from 'vue3-lottie';
 import EmptySeed from '@/assets/images/lottie-empty-seed.json';
@@ -232,9 +240,14 @@ const searchedAndFilterProjects = computed(() => {
 			const project = tabProjects.find(({ id }) => id === result.projectId);
 			if (!project) return null;
 
-			// Do not display Project as search results and sort the assets by descending score
+			// Only display Project Overview as search results and sort the assets by descending score
 			result.assets = result.assets
-				?.filter((asset) => asset.assetType !== AssetType.Project)
+				?.filter((asset) => {
+					const isNotAProject = asset.assetType !== AssetType.Project;
+					const isProjectOverview =
+						asset.assetType === AssetType.Project && asset.embeddingType === TerariumAssetEmbeddingType.Overview;
+					return isNotAProject || isProjectOverview;
+				})
 				.sort((a, b) => b.score - a.score);
 			return { ...project, ...result } as ProjectWithKnnData;
 		})
