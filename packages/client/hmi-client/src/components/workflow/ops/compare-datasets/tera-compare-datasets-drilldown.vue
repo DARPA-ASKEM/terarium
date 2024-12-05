@@ -230,6 +230,8 @@ const initialize = async () => {
 	});
 	isFetchingDatasets.value = false;
 
+	if (!knobs.value.selectedDataset) knobs.value.selectedDataset = datasets.value[0]?.id ?? null;
+
 	createCharts();
 };
 
