@@ -586,7 +586,7 @@ export function useCharts(
 		return weightsCharts;
 	};
 
-	const useSimulateSensitivityCharts = (timestep: number) => {
+	const useSimulateSensitivityCharts = (chartSettings: ComputedRef<ChartSetting[]>, timestep: number) => {
 		const sensitivity = computed(() => {
 			const sliceData = chartData.value?.result.filter((d: any) => d.timepoint_id === timestep) as any[];
 
@@ -606,21 +606,35 @@ export function useCharts(
 				return r;
 			});
 
-			const spec = createSimulateSensitivityScatter(
-				{
-					data: sliceDataTranslated,
-					inputVariables: ['beta', 'gamma'],
-					outputVariable: 'S'
-				},
-				{
-					width: 200,
-					height: 200,
-					xAxisTitle: '',
-					yAxisTitle: '',
-					translationMap: chartData.value?.translationMap || {}
-				}
-			);
-			return spec;
+			// FIXME: Let modeller pick the input variables
+			let inputVariables: string[] = [];
+			if (model && model.value && model.value.semantics?.ode) {
+				const ode = model.value.semantics.ode;
+				const initials = ode.initials?.map((initial) => initial.expression) as string[];
+				inputVariables = ode.parameters
+					?.filter((parameter) => !initials.includes(parameter.id))
+					.map((parameter) => parameter.id) as string[];
+			}
+
+			const charts: Record<string, VisualizationSpec> = {};
+			chartSettings.value.forEach((settings) => {
+				const spec = createSimulateSensitivityScatter(
+					{
+						data: sliceDataTranslated,
+						inputVariables,
+						outputVariable: settings.selectedVariables[0]
+					},
+					{
+						width: 150,
+						height: 150,
+						xAxisTitle: '',
+						yAxisTitle: '',
+						translationMap: chartData.value?.translationMap || {}
+					}
+				);
+				charts[settings.id] = spec;
+			});
+			return charts;
 		});
 		return sensitivity;
 	};

@@ -638,7 +638,7 @@ export function createSimulateSensitivityScatter(samplingLayer: SensitivityChart
 	// Start building
 	const spec: any = {
 		$schema: VEGALITE_SCHEMA,
-		title: '',
+		title: `${samplingLayer.outputVariable} sensitivity`,
 		description: '',
 		repeat: {
 			row: samplingLayer.inputVariables,

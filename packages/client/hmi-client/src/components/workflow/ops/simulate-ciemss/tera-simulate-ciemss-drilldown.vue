@@ -175,8 +175,12 @@
 								</template>
 							</AccordionTab>
 							<AccordionTab header="Sensitivity">
-								<template v-if="testSensitivity">
-									<vega-chart expandable :are-embed-actions-visible="true" :visualization-spec="testSensitivity" />
+								<template v-for="setting of selectedSensitivityChartSettings" :key="setting.id">
+									<vega-chart
+										expandable
+										:are-embed-actions-visible="true"
+										:visualization-spec="testSensitivity[setting.id]"
+									/>
 								</template>
 							</AccordionTab>
 						</Accordion>
@@ -260,6 +264,7 @@
 							@remove="removeChartSettings"
 							@selection-change="comparisonChartsSettingsSelection = $event"
 						/>
+
 						<div>
 							<Button
 								:disabled="!comparisonChartsSettingsSelection.length"
@@ -271,6 +276,27 @@
 							/>
 						</div>
 						<Divider />
+
+						<!--
+						FIXME: Need to support this scheme
+               inputs = [a, b, c]
+               outputs = [x, y]
+							 That results in
+                - { a, b, c } => X
+                - { a, b, c } => Y
+						-->
+						<tera-chart-settings
+							:title="'Sensitivity analysis'"
+							:settings="chartSettings"
+							:type="ChartSettingType.SENSITIVITY"
+							:select-options="
+								Object.keys(pyciemssMap).filter((c) => ['state', 'observable'].includes(modelPartTypesMap[c]))
+							"
+							:selected-options="selectedSensitivityChartSettings.map((s) => s.selectedVariables[0])"
+							@open="activeChartSettings = $event"
+							@remove="removeChartSettings"
+							@selection-change="updateChartSettings"
+						/>
 					</div>
 				</template>
 			</tera-slider-panel>
@@ -497,6 +523,7 @@ const {
 	selectedVariableSettings,
 	selectedInterventionSettings,
 	selectedComparisonChartSettings,
+	selectedSensitivityChartSettings,
 	comparisonChartsSettingsSelection,
 	removeChartSettings,
 	updateChartSettings,
@@ -522,7 +549,7 @@ const {
 const interventionCharts = useInterventionCharts(selectedInterventionSettings, true);
 const variableCharts = useVariableCharts(selectedVariableSettings, null);
 const comparisonCharts = useComparisonCharts(selectedComparisonChartSettings);
-const testSensitivity = useSimulateSensitivityCharts(50);
+const testSensitivity = useSimulateSensitivityCharts(selectedSensitivityChartSettings, 50);
 
 const updateState = () => {
 	const state = _.cloneDeep(props.node.state);
