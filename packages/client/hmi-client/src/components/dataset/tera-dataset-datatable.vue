@@ -221,7 +221,6 @@ watch(
 	() => props.rawContent,
 	async () => {
 		await nextTick();
-		console.log('rawContent', props.rawContent);
 		headerStats.value =
 			props.rawContent.stats?.map((stat) => ({
 				minValue: roundStat(stat.minValue),
