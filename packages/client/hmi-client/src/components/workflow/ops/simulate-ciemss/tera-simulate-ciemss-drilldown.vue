@@ -549,7 +549,7 @@ const {
 const interventionCharts = useInterventionCharts(selectedInterventionSettings, true);
 const variableCharts = useVariableCharts(selectedVariableSettings, null);
 const comparisonCharts = useComparisonCharts(selectedComparisonChartSettings);
-const testSensitivity = useSimulateSensitivityCharts(selectedSensitivityChartSettings, 50);
+const testSensitivity = useSimulateSensitivityCharts(selectedSensitivityChartSettings);
 
 const updateState = () => {
 	const state = _.cloneDeep(props.node.state);

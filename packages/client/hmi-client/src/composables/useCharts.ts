@@ -586,8 +586,9 @@ export function useCharts(
 		return weightsCharts;
 	};
 
-	const useSimulateSensitivityCharts = (chartSettings: ComputedRef<ChartSetting[]>, timestep: number) => {
+	const useSimulateSensitivityCharts = (chartSettings: ComputedRef<ChartSetting[]>) => {
 		const sensitivity = computed(() => {
+			const timestep = _.last(chartData.value?.result)?.timepoint_id;
 			const sliceData = chartData.value?.result.filter((d: any) => d.timepoint_id === timestep) as any[];
 
 			// Translate names ahead of time, because we can't seem to customize titles
