@@ -19,8 +19,12 @@ Ensure that you compare EVERY supplied model. Do not leave any model out of the 
 
 MODEL_METADATA_COMPARE_GOAL_PROMPT = """
 
-When creating your final conclusion, consider the following goal of the user when comparing the models:
+When creating the comparison summary. Consider the following goal of the user when comparing the models and try to answer the goal as best as you can:
+
+---GOAL START---
 
 {goal}
+
+---GOAL END---
 
 """
