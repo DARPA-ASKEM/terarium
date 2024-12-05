@@ -20,7 +20,7 @@
 							:options="compareOptions"
 							option-label="label"
 							option-value="value"
-						></Dropdown>
+						/>
 						<tera-checkbox
 							class="pt-2"
 							v-model="isSimulationsFromSameModel"
