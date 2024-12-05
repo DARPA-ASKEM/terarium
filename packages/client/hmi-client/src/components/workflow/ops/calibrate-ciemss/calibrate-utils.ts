@@ -51,12 +51,12 @@ export function getErrorData(
 	groundTruth: DataArray,
 	simulationData: DataArray,
 	mapping: CalibrateMap[],
-	timestampColName: string
+	timestampColName: string,
+	pyciemssMap: Record<string, string>
 ) {
 	const errors: DataArray = [];
-	if (simulationData.length === 0 || groundTruth.length === 0 || !timestampColName) return errors;
-	const pyciemssMap = parsePyCiemssMap(simulationData[0]);
-
+	if (simulationData.length === 0 || groundTruth.length === 0 || !timestampColName || _.isEmpty(pyciemssMap))
+		return errors;
 	const datasetVariables = mapping.map((ele) => ele.datasetVariable);
 	const relevantGroundTruthColumns = Object.keys(groundTruth[0]).filter(
 		(variable) => datasetVariables.includes(variable) && variable !== timestampColName

@@ -11,10 +11,3 @@ export async function fileToJson(file: File): Promise<Record<string, unknown>> {
 		reader.readAsText(file);
 	});
 }
-
-/**
- * Check if a filename ends with a pdf, txt, or md extension
- */
-export function isTextFile(filename: string): boolean {
-	return /\.(pdf|txt|md)$/.test(filename.trim());
-}

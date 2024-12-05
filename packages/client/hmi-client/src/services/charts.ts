@@ -48,6 +48,12 @@ export interface ForecastChartLayer {
 	groupField?: string;
 }
 
+export interface SensitivityChartLayer {
+	data: Record<string, any>[];
+	inputVariables: string[];
+	outputVariable: string;
+}
+
 export interface HistogramChartOptions extends BaseChartOptions {
 	maxBins?: number;
 	variables: { field: string; label?: string; width: number; color: string }[];
@@ -58,6 +64,7 @@ export interface ErrorChartOptions extends Omit<BaseChartOptions, 'height' | 'yA
 	height?: number;
 	areaChartHeight?: number;
 	boxPlotHeight?: number;
+	color?: string;
 	variables: { field: string; label?: string }[];
 }
 
@@ -92,8 +99,8 @@ export function createErrorChart(dataset: Record<string, any>[], options: ErrorC
 	const labelFontWeight = 'normal';
 	const globalFont = 'Figtree';
 
-	const areaChartColor = '#1B8073';
-	const dotColor = '#67B5AC';
+	const areaChartColor = options.color ?? '#1B8073';
+	const dotColor = options.color ?? '#1B8073';
 	const boxPlotColor = '#000';
 
 	const width = options.width;
@@ -144,6 +151,7 @@ export function createErrorChart(dataset: Record<string, any>[], options: ErrorC
 		},
 		point: {
 			color: dotColor,
+			opacity: 0.7,
 			filled: true
 		},
 		boxplot: {
@@ -217,7 +225,14 @@ export function createErrorChart(dataset: Record<string, any>[], options: ErrorC
 						y: {
 							field: 'Variable Label',
 							scale: { range: [boxPlotYPosition, boxPlotYPosition] },
-							axis: { grid: true, labels: true, orient: 'left', offset: 5 }
+							axis: {
+								grid: true,
+								labels: true,
+								orient: 'left',
+								offset: 5,
+								labelAngle: -90,
+								labelLimit: areaChartHeight + boxPlotHeight + gap
+							}
 						}
 					}
 				},
@@ -621,6 +636,60 @@ export function createForecastChart(
 		}
 		spec.layer.push(layerSpec);
 	}
+	return spec;
+}
+
+/**
+ * FIXME: The design calls for combinations of different types of charts
+ * in the grid, which we don't know how to achieve currently with vegalite
+ * */
+export function createSimulateSensitivityScatter(samplingLayer: SensitivityChartLayer, options: ForecastChartOptions) {
+	// Start building
+	const spec: any = {
+		$schema: VEGALITE_SCHEMA,
+		title: `${samplingLayer.outputVariable} sensitivity`,
+		description: '',
+		repeat: {
+			row: samplingLayer.inputVariables,
+			column: samplingLayer.inputVariables
+		},
+		data: { values: samplingLayer.data },
+		spec: {
+			width: options.width,
+			height: options.height,
+			mark: { type: 'point', filled: true },
+			encoding: {
+				x: {
+					field: { repeat: 'row' },
+					type: 'quantitative',
+					axis: {
+						gridColor: '#EEE'
+					},
+					scale: {
+						zero: false,
+						nice: false
+					}
+				},
+				y: {
+					field: { repeat: 'column' },
+					type: 'quantitative',
+					axis: {
+						gridColor: '#EEE'
+					},
+					scale: {
+						zero: false,
+						nice: false
+					}
+				},
+				color: {
+					field: samplingLayer.outputVariable,
+					type: 'quantitative'
+				},
+				size: { value: 80 }
+			}
+		}
+	};
+
 	return spec;
 }
 

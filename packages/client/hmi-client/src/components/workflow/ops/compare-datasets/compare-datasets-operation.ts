@@ -10,6 +10,16 @@ export enum RankOption {
 	MAXIMUM = 'maximum'
 }
 
+export enum PlotValue {
+	PERCENTAGE = 'percentage',
+	VALUE = 'value'
+}
+
+export enum CompareValue {
+	IMPACT = 'impact',
+	RANK = 'rank'
+}
+
 export const blankCriteriaOfInterest = {
 	name: 'Criteria of interest',
 	configurations: [],
@@ -30,6 +40,9 @@ export interface CriteriaOfInterestCard {
 }
 export interface CompareDatasetsState extends BaseState {
 	criteriaOfInterestCards: CriteriaOfInterestCard[];
+	selectedPlotValue: PlotValue;
+	selectedCompareOption: CompareValue;
+	selectedDataset: string | null;
 }
 
 export const CompareDatasetsOperation: Operation = {
@@ -46,7 +59,10 @@ export const CompareDatasetsOperation: Operation = {
 	action: () => {},
 	initState: () => {
 		const init: CompareDatasetsState = {
-			criteriaOfInterestCards: [blankCriteriaOfInterest]
+			criteriaOfInterestCards: [blankCriteriaOfInterest],
+			selectedPlotValue: PlotValue.PERCENTAGE,
+			selectedCompareOption: CompareValue.IMPACT,
+			selectedDataset: null
 		};
 		return init;
 	}

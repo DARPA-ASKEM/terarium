@@ -463,6 +463,7 @@ async function fetchModel() {
 function getEquations() {
 	const newEquations = multipleEquations.value.split('\n');
 	newEquations.forEach((equation) => {
+		if (!equation.trim().length) return;
 		const index = clonedState.value.equations.length;
 		clonedState.value.equations.push({
 			name: `Equation ${index}`,
