@@ -109,7 +109,12 @@
 					<tera-drilldown-section class="px-2">
 						<label>What values do you want to plot?</label>
 						<div v-for="option in plotOptions" class="flex align-items-center" :key="option.value">
-							<RadioButton v-model="knobs.selectedPlotValue" :value="option.value" name="plotValues" />
+							<RadioButton
+								v-model="knobs.selectedPlotValue"
+								:value="option.value"
+								name="plotValues"
+								@change="createCharts"
+							/>
 							<label class="pl-2 py-1" :for="option.value">{{ option.label }}</label>
 						</div>
 					</tera-drilldown-section>
@@ -294,12 +299,14 @@ async function createCharts() {
 			const timepoints = content.csv[timepointIndex];
 			timepoints.forEach((timepoint: number, rowIndex: number) => {
 				const referencePoint = parseFloat(referenceColumn[rowIndex]);
-				const currentPoint = parseFloat(content.csv[headerIndex][rowIndex]) + datasetIndex; // Adding datasetIndex is just to temporarily differentiate the datasets
+				const currentPoint = parseFloat(content.csv[headerIndex][rowIndex]);
+
 				const absoluteDifference = Math.abs(referencePoint - currentPoint);
+				const percentChange = (absoluteDifference / referencePoint) * 100;
 
 				values.push({
 					timepoint,
-					value: absoluteDifference,
+					value: knobs.value.selectedPlotValue === PlotValue.VALUE ? absoluteDifference : percentChange,
 					name: `${headerName}_${datasets.value[datasetIndex].name}`
 				});
 			});
