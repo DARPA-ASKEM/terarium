@@ -27,6 +27,7 @@
 								size="small"
 								:loading="isUpdatingModel"
 								@click="runCode"
+								:disabled="isEmpty(codeText)"
 							/>
 						</template>
 					</tera-notebook-jupyter-input>
