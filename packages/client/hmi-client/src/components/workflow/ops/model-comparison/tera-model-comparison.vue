@@ -506,9 +506,9 @@ const processCompareModels = async () => {
 
 // Listen for the task completion event
 useClientEvent(ClientEventType.TaskGollmCompareModel, (event: ClientEvent<TaskResponse>) => {
-	if (!event.data || event.data.id !== compareModelsTaskId) {
-		console.log(event);
-	} else if ([TaskStatus.Queued, TaskStatus.Running, TaskStatus.Cancelling].includes(event.data.status)) {
+	if (!event.data || event.data.id !== compareModelsTaskId) return;
+
+	if ([TaskStatus.Queued, TaskStatus.Running, TaskStatus.Cancelling].includes(event.data.status)) {
 		isProcessingComparison.value = true;
 	} else if (event.data.status === TaskStatus.Success) {
 		generateOverview(event.data.output);
