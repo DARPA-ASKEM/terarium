@@ -218,9 +218,29 @@ const initialize = async () => {
 	createCharts();
 };
 
+// Following two funcs are util like
 function transposeArrays(arrays) {
 	if (arrays.length === 0) return [];
 	return arrays[0].map((_, colIndex) => arrays.map((row) => row[colIndex]));
+}
+
+function findDuplicates(strings: string[]): string[] {
+	const duplicates: string[] = [];
+	const seen: Record<string, number> = {};
+
+	strings.forEach((str) => {
+		if (seen[str]) {
+			seen[str]++;
+		} else {
+			seen[str] = 1;
+		}
+	});
+	Object.keys(seen).forEach((key) => {
+		if (seen[key] > 1) {
+			duplicates.push(key);
+		}
+	});
+	return duplicates;
 }
 
 async function createCharts() {
@@ -229,9 +249,12 @@ async function createCharts() {
 	const rawContents = await Promise.all(datasets.value.map((dataset) => getRawContent(dataset)));
 	const transposedRawContents = rawContents.map((content) => ({ ...content, csv: transposeArrays(content?.csv) }));
 
-	const names1 = datasets.value?.[0]?.columns?.map((column) => column.name);
-	const names2 = datasets.value?.[1]?.columns?.map((column) => column.name);
-	const commonHeaderNames = names1?.filter((name) => names2?.includes(name));
+	const allColumnNames: string[] = [];
+	datasets.value.forEach((dataset) => {
+		const columnNames = dataset?.columns?.map((column) => column.name) ?? [];
+		allColumnNames.push(...columnNames);
+	});
+	const commonHeaderNames = findDuplicates(allColumnNames);
 
 	const timepointIndex = transposedRawContents[0]?.headers?.indexOf('t');
 	if (timepointIndex === undefined) return;
@@ -244,27 +267,29 @@ async function createCharts() {
 		if (!headerIndex) return;
 
 		const values: any = [];
+		const referenceColumn = transposedRawContents[0].csv[headerIndex];
 
 		transposedRawContents.forEach((content, datasetIndex) => {
 			const timepoints = content.csv[timepointIndex];
 			timepoints.forEach((timepoint: number, rowIndex: number) => {
+				const referencePoint = parseFloat(referenceColumn[rowIndex]);
+				const currentPoint = parseFloat(content.csv[headerIndex][rowIndex]) + datasetIndex; // Adding datasetIndex is just to temporarily differentiate the datasets
+				const absoluteDifference = Math.abs(referencePoint - currentPoint);
+
 				values.push({
 					timepoint,
-					value: parseFloat(content.csv[headerIndex][rowIndex]) + datasetIndex,
+					value: absoluteDifference,
 					name: `${headerName}${datasetIndex}`
 				});
 			});
 		});
-		compareCharts.value.push(createDatasetCompareChart(values, headerName));
-		console.log(compareCharts.value);
-	});
 
-	// console.log('values', values);
+		compareCharts.value.push(createDatasetCompareChart(values, headerName));
+	});
 }
 
 onMounted(() => {
 	initialize();
-	createCharts();
 });
 
 watch(
