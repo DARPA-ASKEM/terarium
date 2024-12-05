@@ -187,7 +187,8 @@ export enum ChartSettingType {
 	VARIABLE_ENSEMBLE = 'variable-ensemble',
 	DISTRIBUTION_COMPARISON = 'distribution-comparison',
 	ERROR_DISTRIBUTION = 'error-distribution',
-	INTERVENTION = 'intervention'
+	INTERVENTION = 'intervention',
+	SENSITIVITY = 'sensitivity'
 }
 
 export type ChartSetting = ChartSettingBase | ChartSettingEnsembleVariable;

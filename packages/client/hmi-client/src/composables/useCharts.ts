@@ -10,6 +10,7 @@ import {
 	createForecastChart,
 	createHistogramChart,
 	createInterventionChartMarkers,
+	createSimulateSensitivityScatter,
 	ForecastChartOptions
 } from '@/services/charts';
 import { flattenInterventionData } from '@/services/intervention-policy';
@@ -649,6 +650,60 @@ export function useCharts(
 		return weightsCharts;
 	};
 
+	const useSimulateSensitivityCharts = (chartSettings: ComputedRef<ChartSetting[]>) => {
+		const sensitivity = computed(() => {
+			const timestep = _.last(chartData.value?.result)?.timepoint_id;
+			const sliceData = chartData.value?.result.filter((d: any) => d.timepoint_id === timestep) as any[];
+
+			// Translate names ahead of time, because we can't seem to customize titles
+			// in vegalite with repeat
+			const translationMap = chartData.value?.translationMap;
+			const sliceDataTranslated = sliceData.map((obj: any) => {
+				const r: any = {};
+				Object.keys(obj).forEach((key) => {
+					if (translationMap && translationMap[key]) {
+						const newKey = translationMap[key];
+						r[newKey] = obj[key];
+					} else {
+						r[key] = obj[key];
+					}
+				});
+				return r;
+			});
+
+			// FIXME: Let modeller pick the input variables
+			let inputVariables: string[] = [];
+			if (model && model.value && model.value.semantics?.ode) {
+				const ode = model.value.semantics.ode;
+				const initials = ode.initials?.map((initial) => initial.expression) as string[];
+				inputVariables = ode.parameters
+					?.filter((parameter) => !initials.includes(parameter.id))
+					.map((parameter) => parameter.id) as string[];
+			}
+
+			const charts: Record<string, VisualizationSpec> = {};
+			chartSettings.value.forEach((settings) => {
+				const spec = createSimulateSensitivityScatter(
+					{
+						data: sliceDataTranslated,
+						inputVariables,
+						outputVariable: settings.selectedVariables[0]
+					},
+					{
+						width: 150,
+						height: 150,
+						xAxisTitle: '',
+						yAxisTitle: '',
+						translationMap: chartData.value?.translationMap || {}
+					}
+				);
+				charts[settings.id] = spec;
+			});
+			return charts;
+		});
+		return sensitivity;
+	};
+
 	return {
 		generateAnnotation,
 		getChartAnnotationsByChartId,
@@ -659,6 +714,7 @@ export function useCharts(
 		useErrorChart,
 		useParameterDistributionCharts,
 		useWeightsDistributionCharts,
+		useSimulateSensitivityCharts,
 		useEnsembleErrorCharts
 	};
 }
