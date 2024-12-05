@@ -146,7 +146,8 @@ const sampleAgentQuestions = [
 	'Rename the transition infection to inf.',
 	'Change rate law of inf to S * I * z.',
 	'Add a new parameter with id θ and value 0.5.',
-	'Specify the time unit of the model to be "day"'
+	'Specify the time unit of the model to be "day"',
+	'Merge the models together with the name "merged_model"'
 ];
 
 const contextLanguage = ref<string>('python3');
