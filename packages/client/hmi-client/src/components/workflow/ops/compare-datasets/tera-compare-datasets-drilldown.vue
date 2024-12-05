@@ -25,6 +25,7 @@
 							class="pt-2"
 							v-model="isSimulationsFromSameModel"
 							label="All simulations are from the same model"
+							disabled
 						/>
 
 						<template v-if="knobs.selectedCompareOption === CompareValue.IMPACT">
@@ -36,6 +37,7 @@
 								option-value="id"
 								:loading="isFetchingDatasets"
 								placeholder="Optional"
+								@change="createCharts"
 							/>
 
 							<label>Comparison tables</label>
@@ -45,7 +47,13 @@
 								subtext="Description for ATE."
 							/>
 						</template>
-
+						<label class="mt-2">Timepoint column</label>
+						<Dropdown
+							v-model="timepointHeaderName"
+							:options="commonHeaderNames"
+							placeholder="Select timepoint header"
+							@change="createCharts"
+						/>
 						<template v-if="knobs.selectedCompareOption === CompareValue.RANK">
 							<label>Specifiy criteria of interest</label>
 							<tera-criteria-of-interest-card
@@ -102,7 +110,12 @@
 					<tera-drilldown-section class="px-2">
 						<label>What values do you want to plot?</label>
 						<div v-for="option in plotOptions" class="flex align-items-center" :key="option.value">
-							<RadioButton v-model="knobs.selectedPlotValue" :value="option.value" name="plotValues" />
+							<RadioButton
+								v-model="knobs.selectedPlotValue"
+								:value="option.value"
+								name="plotValues"
+								@change="createCharts"
+							/>
 							<label class="pl-2 py-1" :for="option.value">{{ option.label }}</label>
 						</div>
 					</tera-drilldown-section>
@@ -150,6 +163,9 @@ const compareOptions: { label: string; value: CompareValue }[] = [
 ];
 
 const datasets = ref<Dataset[]>([]);
+
+const commonHeaderNames = ref<string[]>([]);
+const timepointHeaderName = ref<string | null>(null);
 
 const plotOptions = [
 	{ label: 'Percent change', value: 'percentage' },
@@ -215,6 +231,8 @@ const initialize = async () => {
 	});
 	isFetchingDatasets.value = false;
 
+	if (!knobs.value.selectedDataset) knobs.value.selectedDataset = datasets.value[0]?.id ?? null;
+
 	createCharts();
 };
 
@@ -245,41 +263,54 @@ function findDuplicates(strings: string[]): string[] {
 
 async function createCharts() {
 	if (datasets.value.length <= 1) return;
+	compareCharts.value = [];
 
 	const rawContents = await Promise.all(datasets.value.map((dataset) => getRawContent(dataset)));
 	const transposedRawContents = rawContents.map((content) => ({ ...content, csv: transposeArrays(content?.csv) }));
 
-	const allColumnNames: string[] = [];
-	datasets.value.forEach((dataset) => {
-		const columnNames = dataset?.columns?.map((column) => column.name) ?? [];
-		allColumnNames.push(...columnNames);
-	});
-	const commonHeaderNames = findDuplicates(allColumnNames);
+	if (isEmpty(commonHeaderNames.value)) {
+		const allColumnNames: string[] = [];
+		datasets.value.forEach((dataset) => {
+			const columnNames = dataset?.columns?.map((column) => column.name) ?? [];
+			allColumnNames.push(...columnNames);
+		});
+		commonHeaderNames.value = findDuplicates(allColumnNames);
 
-	const timepointIndex = transposedRawContents[0]?.headers?.indexOf('t');
+		// Convenient assumption that the timepoint header name contains 't'
+		timepointHeaderName.value =
+			commonHeaderNames.value?.find((name) => name.toLowerCase().slice(0, 1) === 't') ?? commonHeaderNames.value[0];
+	}
+
+	if (!timepointHeaderName.value) return;
+
+	const timepointIndex = transposedRawContents[0]?.headers?.indexOf(timepointHeaderName.value);
 	if (timepointIndex === undefined) return;
 
 	// Go through every column header
-	commonHeaderNames?.forEach((headerName) => {
-		if (headerName === 't') return;
+	commonHeaderNames.value?.forEach((headerName) => {
+		if (headerName === timepointHeaderName.value) return;
 
 		const headerIndex = transposedRawContents[0]?.headers?.indexOf(headerName);
 		if (!headerIndex) return;
 
 		const values: any = [];
-		const referenceColumn = transposedRawContents[0].csv[headerIndex];
+		// Find dataset index of the selected dataset
+		const selectedIndex = datasets.value.findIndex((dataset) => dataset.id === knobs.value.selectedDataset);
+		const referenceColumn = transposedRawContents[selectedIndex].csv[headerIndex]; // aka the baseline dataset
 
 		transposedRawContents.forEach((content, datasetIndex) => {
 			const timepoints = content.csv[timepointIndex];
 			timepoints.forEach((timepoint: number, rowIndex: number) => {
 				const referencePoint = parseFloat(referenceColumn[rowIndex]);
-				const currentPoint = parseFloat(content.csv[headerIndex][rowIndex]) + datasetIndex; // Adding datasetIndex is just to temporarily differentiate the datasets
-				const absoluteDifference = Math.abs(referencePoint - currentPoint);
+				const currentPoint = parseFloat(content.csv[headerIndex][rowIndex]);
+
+				const absoluteDifference = referencePoint - currentPoint;
+				const percentChange = (absoluteDifference / referencePoint) * 100;
 
 				values.push({
 					timepoint,
-					value: absoluteDifference,
-					name: `${headerName}${datasetIndex}`
+					value: knobs.value.selectedPlotValue === PlotValue.VALUE ? absoluteDifference : percentChange,
+					name: `${headerName}_${datasets.value[datasetIndex].name}`
 				});
 			});
 		});

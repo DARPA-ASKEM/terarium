@@ -6,7 +6,7 @@ import { operation as ModelOp } from '@/components/workflow/ops/model/mod';
 import { operation as ModelConfigOp } from '@/components/workflow/ops/model-config/mod';
 import { operation as InterventionOp } from '@/components/workflow/ops/intervention-policy/mod';
 import { operation as SimulateOp } from '@/components/workflow/ops/simulate-ciemss/mod';
-import { operation as TransformDatasetOp } from '@/components/workflow/ops/dataset-transformer/mod';
+import { operation as CompareDatasetsOp } from '@/components/workflow/ops/compare-datasets/mod';
 import { OperatorNodeSize } from '@/services/workflow';
 import { flattenInterventionData, getInterventionPolicyById } from '@/services/intervention-policy';
 import { ChartSetting, ChartSettingType } from '@/types/common';
@@ -120,8 +120,8 @@ export class DecisionMakingScenario extends BaseScenario {
 			}
 		);
 
-		const datasetTransformerNode = wf.addNode(
-			TransformDatasetOp,
+		const compareDatasetNode = wf.addNode(
+			CompareDatasetsOp,
 			{ x: 0, y: 0 },
 			{
 				size: OperatorNodeSize.medium
@@ -159,7 +159,7 @@ export class DecisionMakingScenario extends BaseScenario {
 			this.simulateSpec.ids
 		);
 
-		// 2. Add base simulation (no interventions) and connect it to the dataset transformer
+		// 2. Add base simulation (no interventions) and connect it to the compare datasets node
 		const baseSimulateNode = wf.addNode(
 			SimulateOp,
 			{ x: 0, y: 0 },
@@ -182,8 +182,8 @@ export class DecisionMakingScenario extends BaseScenario {
 		wf.addEdge(
 			baseSimulateNode.id,
 			baseSimulateNode.outputs[0].id,
-			datasetTransformerNode.id,
-			datasetTransformerNode.inputs[0].id,
+			compareDatasetNode.id,
+			compareDatasetNode.inputs[0].id,
 			[
 				{ x: 0, y: 0 },
 				{ x: 0, y: 0 }
@@ -191,12 +191,12 @@ export class DecisionMakingScenario extends BaseScenario {
 		);
 
 		/* 3. Create intervention and simulate nodes for each intervention
-		 model -> intervention -> simulate -> dataset transformer
-		 modelConfig -> simulate -> dataset transformer */
+		 model -> intervention -> simulate -> compare datasets
+		 modelConfig -> simulate -> compare datasets */
 
-		// add input ports for each simulation to the dataset transformer (base simulation + interventions)
+		// add input ports for each simulation to the compare datasets (base simulation + interventions)
 		for (let i = 0; i < this.interventionSpecs.length + 1; i++) {
-			workflowService.appendInputPort(datasetTransformerNode, {
+			workflowService.appendInputPort(compareDatasetNode, {
 				type: 'datasetId|simulationId',
 				label: 'Dataset or Simulation'
 			});
@@ -259,8 +259,8 @@ export class DecisionMakingScenario extends BaseScenario {
 			wf.addEdge(
 				simulateNode.id,
 				simulateNode.outputs[0].id,
-				datasetTransformerNode.id,
-				datasetTransformerNode.inputs[i + 1].id,
+				compareDatasetNode.id,
+				compareDatasetNode.inputs[i + 1].id,
 				[
 					{ x: 0, y: 0 },
 					{ x: 0, y: 0 }
