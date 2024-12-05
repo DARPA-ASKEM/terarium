@@ -184,7 +184,7 @@
 						>
 							<template #toolbar-right-side>
 								<tera-input-text v-model="knobs.transientModelConfig.name" placeholder="Configuration Name" />
-								<Button icon="pi pi-play" label="Run" @click="runFromCode" />
+								<Button icon="pi pi-play" label="Run" @click="runFromCode" :disabled="isEmpty(codeText)" />
 							</template>
 						</tera-notebook-jupyter-input>
 					</Suspense>

@@ -143,6 +143,16 @@
 									:are-embed-actions-visible="false"
 									:visualization-spec="preparedCharts[appliedTo]"
 								/>
+								<span class="flex justify-content-end pr-7 pb-6">
+									<label class="pr-2">Display on node thumbnail</label>
+									<Checkbox
+										v-model="selectedCharts"
+										:input-id="appliedTo"
+										:name="appliedTo"
+										:value="appliedTo"
+										@change="onSelectChartChange"
+									/>
+								</span>
 								<ul>
 									<li
 										class="pb-2"
@@ -226,6 +236,7 @@ import {
 } from '@/services/intervention-policy';
 import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
+import Checkbox from 'primevue/checkbox';
 import Textarea from 'primevue/textarea';
 import EmptySeed from '@/assets/images/lottie-empty-seed.json';
 import { Vue3Lottie } from 'vue3-lottie';
@@ -251,6 +262,8 @@ const props = defineProps<{
 }>();
 
 const emit = defineEmits(['close', 'update-state', 'select-output', 'append-output']);
+
+const selectedCharts = ref<string[] | []>([]);
 
 const confirm = useConfirm();
 
@@ -397,6 +410,7 @@ const initialize = async (overwriteWithState: boolean = false) => {
 	} else {
 		knobs.value.transientInterventionPolicy = cloneDeep(state.interventionPolicy);
 	}
+	selectedCharts.value = state.selectedCharts ?? [];
 };
 
 const applyInterventionPolicy = (interventionPolicy: InterventionPolicy) => {
@@ -590,6 +604,12 @@ const extractInterventionPolicyFromInputs = async () => {
 			}
 		});
 	}
+	emit('update-state', state);
+};
+
+const onSelectChartChange = () => {
+	const state = cloneDeep(props.node.state);
+	state.selectedCharts = selectedCharts.value;
 	emit('update-state', state);
 };
 

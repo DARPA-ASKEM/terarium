@@ -90,6 +90,17 @@ public class DocumentAsset extends TerariumAsset {
 	@JdbcTypeCode(Types.BINARY)
 	private byte[] thumbnail;
 
+	public List<ExtractedDocumentPage> getExtractions() {
+		if (
+			this.extractions.size() == 0 &&
+			this.fileNames.size() > 0 &&
+			(this.fileNames.get(0).endsWith(".txt") || this.fileNames.get(0).endsWith(".md"))
+		) {
+			extractions = List.of(new ExtractedDocumentPage().setPageNumber(1).setText(text));
+		}
+		return this.extractions;
+	}
+
 	@Override
 	public List<String> getFileNames() {
 		if (this.fileNames == null) {
