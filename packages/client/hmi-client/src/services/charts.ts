@@ -1310,6 +1310,7 @@ export function createFunmanParameterCharts(
 	};
 }
 
+// Similar to createForecastChart, see about deprecating this later
 export function createDatasetCompareChart(values: any[], headerName: string) {
 	const globalFont = 'Figtree';
 
