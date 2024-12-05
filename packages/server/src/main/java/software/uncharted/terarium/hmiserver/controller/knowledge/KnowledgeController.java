@@ -284,7 +284,7 @@ public class KnowledgeController {
 				final JsonNode testNode = mapper.readValue(amrString, JsonNode.class);
 				responseAMR = mapper.convertValue(testNode, Model.class);
 			} catch (Exception e) {
-				log.error("failed to convert latex equations to AMR", e);
+				log.error("failed to convert LaTeX equations to AMR", e);
 				throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "failed to convert latex equations to AMR");
 			}
 		} else {
@@ -779,7 +779,7 @@ public class KnowledgeController {
 				groundings.getIdentifiers().add(new DKG(g.get(0).asText(), g.get(1).asText(), ""));
 			}
 
-			// remove groundings from annotation object
+			// remove groundings from an annotation object
 			((ObjectNode) annotation).remove("dkg_groundings");
 
 			col.setGrounding(groundings);

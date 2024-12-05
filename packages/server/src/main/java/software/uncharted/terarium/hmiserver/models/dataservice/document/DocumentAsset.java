@@ -90,6 +90,17 @@ public class DocumentAsset extends TerariumAsset {
 	@JdbcTypeCode(Types.BINARY)
 	private byte[] thumbnail;
 
+	public List<ExtractedDocumentPage> getExtractions() {
+		if (
+			this.extractions.size() == 0 &&
+			this.fileNames.size() > 0 &&
+			(this.fileNames.get(0).endsWith(".txt") || this.fileNames.get(0).endsWith(".md"))
+		) {
+			extractions = List.of(new ExtractedDocumentPage().setPageNumber(1).setText(text));
+		}
+		return this.extractions;
+	}
+
 	@Override
 	public List<String> getFileNames() {
 		if (this.fileNames == null) {
@@ -157,24 +168,5 @@ public class DocumentAsset extends TerariumAsset {
 		} catch (final Exception e) {
 			throw new RuntimeException("Failed to serialize model embedding text into JSON", e);
 		}
-	}
-
-	@JsonIgnore
-	@TSIgnore
-	public Map<TerariumAssetEmbeddingType, String> getEmbeddingsSourceByType() {
-		final Map<TerariumAssetEmbeddingType, String> sources = super.getEmbeddingsSourceByType();
-
-		try {
-			if (getMetadata() != null && getMetadata().containsKey("gollmCard")) {
-				// update embeddings
-				final JsonNode card = getMetadata().get("gollmCard");
-				final ObjectMapper objectMapper = new ObjectMapper();
-				sources.put(TerariumAssetEmbeddingType.CARD, objectMapper.writeValueAsString(card));
-			}
-		} catch (final Exception e) {
-			log.warn("Failed to serialize card embedding text into JSON", e);
-		}
-
-		return sources;
 	}
 }

@@ -9,6 +9,20 @@ export interface ClientConfig {
     sseHeartbeatIntervalMillis: number;
 }
 
+export interface ProjectSearchResult extends Project {
+    score: number;
+    assets: ProjectSearchResultAsset[];
+}
+
+export interface ProjectSearchResultAsset {
+    assetId: string;
+    assetType: AssetType;
+    assetName: string;
+    embeddingContent: string;
+    embeddingType: TerariumAssetEmbeddingType;
+    score: number;
+}
+
 export interface ClientEvent<T> {
     id: string;
     createdAtMs: number;
@@ -1062,6 +1076,12 @@ export enum TaskStatus {
     Cancelled = "CANCELLED",
 }
 
+export enum TerariumAssetEmbeddingType {
+    Overview = "OVERVIEW",
+    Name = "NAME",
+    Description = "DESCRIPTION",
+}
+
 export enum ClientEventType {
     ChartAnnotationCreate = "CHART_ANNOTATION_CREATE",
     ChartAnnotationDelete = "CHART_ANNOTATION_DELETE",
@@ -1082,6 +1102,7 @@ export enum ClientEventType {
     TaskGollmConfigureModelFromDataset = "TASK_GOLLM_CONFIGURE_MODEL_FROM_DATASET",
     TaskGollmConfigureModelFromDocument = "TASK_GOLLM_CONFIGURE_MODEL_FROM_DOCUMENT",
     TaskGollmEnrichAmr = "TASK_GOLLM_ENRICH_AMR",
+    TaskGollmEnrichDataset = "TASK_GOLLM_ENRICH_DATASET",
     TaskGollmEquationsFromImage = "TASK_GOLLM_EQUATIONS_FROM_IMAGE",
     TaskGollmGenerateSummary = "TASK_GOLLM_GENERATE_SUMMARY",
     TaskGollmInterventionsFromDocument = "TASK_GOLLM_INTERVENTIONS_FROM_DOCUMENT",
@@ -1207,12 +1228,4 @@ export enum ExtractionAssetType {
     Figure = "FIGURE",
     Table = "TABLE",
     Equation = "EQUATION",
-}
-
-export enum TerariumAssetEmbeddingType {
-    Overview = "OVERVIEW",
-    Name = "NAME",
-    Description = "DESCRIPTION",
-    Metadata = "METADATA",
-    Card = "CARD",
 }

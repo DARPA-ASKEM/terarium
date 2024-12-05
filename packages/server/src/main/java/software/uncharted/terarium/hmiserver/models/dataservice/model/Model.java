@@ -382,19 +382,11 @@ public class Model extends TerariumAssetThatSupportsAdditionalProperties {
 	@JsonIgnore
 	@TSIgnore
 	public String getEmbeddingSourceText() {
-		String source = "";
-		try {
-			if (getDescription() != null) {
-				source += getDescriptionAsReadableString();
-			}
-			final ObjectMapper objectMapper = new ObjectMapper();
-			if (getMetadata() != null && getMetadata().getGollmCard() != null) {
-				source += objectMapper.writeValueAsString(getMetadata().getGollmCard());
-			}
-		} catch (final Exception e) {
-			throw new RuntimeException("Failed to serialize model embedding text into JSON", e);
+		if (getMetadata().getDescription() != null) {
+			return getDescriptionAsReadableString();
+		} else {
+			return "";
 		}
-		return source;
 	}
 
 	@JsonIgnore
@@ -402,18 +394,8 @@ public class Model extends TerariumAssetThatSupportsAdditionalProperties {
 	public Map<TerariumAssetEmbeddingType, String> getEmbeddingsSourceByType() {
 		final Map<TerariumAssetEmbeddingType, String> sources = super.getEmbeddingsSourceByType();
 
-		try {
-			if (getMetadata() != null && getMetadata().getGollmCard() != null) {
-				// update embeddings
-				final JsonNode card = getMetadata().getGollmCard();
-				final ObjectMapper objectMapper = new ObjectMapper();
-				sources.put(TerariumAssetEmbeddingType.CARD, objectMapper.writeValueAsString(card));
-			}
-		} catch (final Exception e) {
-			log.warn("Failed to serialize card embedding text into JSON", e);
-		}
-
-		if (getDescription() != null) {
+		// Description are saved as base64 encoded strings, this returns a pure string.
+		if (getMetadata().getDescription() != null) {
 			sources.put(TerariumAssetEmbeddingType.DESCRIPTION, getDescriptionAsReadableString());
 		}
 
