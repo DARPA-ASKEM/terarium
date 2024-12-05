@@ -21,7 +21,7 @@ def main():
         input_model = ModelCompareModel(**input_dict)
 
         taskrunner.log("Sending request to OpenAI API")
-        response = compare_models(amrs=input_model.amrs)
+        response = compare_models(amrs=input_model.amrs, goal=input_model.goal)
         taskrunner.log("Received response from OpenAI API")
 
         taskrunner.write_output_dict_with_timeout({"response": response})

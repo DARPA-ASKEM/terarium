@@ -8,7 +8,7 @@
 			<tera-drilldown-section>
 				<!-- LLM generated overview -->
 				<section class="comparison-overview">
-					<Accordion :activeIndex="currentActiveIndicies">
+					<Accordion multiple :activeIndex="currentActiveIndicies">
 						<AccordionTab header="Overview">
 							<template #header>
 								<tera-input-text
