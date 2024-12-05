@@ -1,9 +1,9 @@
-import _ from 'lodash';
+import _, { groupBy, max, minBy, maxBy, sum } from 'lodash';
 import { computed, Ref } from 'vue';
 import { WorkflowNode } from '@/types/workflow';
 import { DataArray, parsePyCiemssMap } from '@/services/models/simulation-service';
 import { mergeResults } from '../calibrate-ciemss/calibrate-utils';
-import { OptimizeCiemssOperationState } from './optimize-ciemss-operation';
+import { ContextMethods, Criterion, OptimizeCiemssOperationState } from './optimize-ciemss-operation';
 
 export function usePreparedChartInputs(
 	props: {
@@ -40,4 +40,44 @@ export function usePreparedChartInputs(
 			pyciemssMap
 		};
 	});
+}
+
+export function setQoIData(resultData: DataArray, config: Criterion) {
+	const targetVar = config.targetVariable;
+	let data: number[] = [];
+	let averageRisk = 0;
+	// Set data:
+	if (config.qoiMethod === ContextMethods.day_average) {
+		// last timepoints
+		// Filter for all values with timepoint = last timepoint
+		const lastTime = max(resultData.map((ele) => ele.timepoint_id));
+		data = resultData.filter((ele) => ele.timepoint_id === lastTime).map((ele) => ele[targetVar]);
+	} else if (config.qoiMethod === ContextMethods.max) {
+		// all timepoints
+		// For each sample grab the min or max value for the given state:
+		if (config.isMinimized) {
+			// Grab the max:
+			data = Object.entries(groupBy(resultData, 'sample_id')).map((ele) => maxBy(ele[1], targetVar)?.[targetVar]);
+		} else {
+			// Grab the min
+			data = Object.entries(groupBy(resultData, 'sample_id')).map((ele) => minBy(ele[1], targetVar)?.[targetVar]);
+		}
+	} else {
+		// should not be hit unless we add more available ContextMethods that we have yet to handle.
+		console.error(`The following context method is not handled: ${config.qoiMethod}`);
+	}
+	// Set Risk:
+	// Risk value is the average of the top or bottom X% where X is 100 - riskTolerance
+	const amountOfRiskIndexes = Math.ceil(((100 - config.riskTolerance) / 100) * data.length);
+	if (config.isMinimized) {
+		// Get for the top X
+		const topX = data.sort().slice(data.length - amountOfRiskIndexes, data.length);
+		averageRisk = sum(topX) / topX.length;
+	} else {
+		// Get bottom X
+		const bottomX = data.sort().slice(0, amountOfRiskIndexes);
+		averageRisk = sum(bottomX) / bottomX.length;
+	}
+
+	return { data, risk: averageRisk };
 }
