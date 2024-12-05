@@ -3,6 +3,7 @@ import imghdr
 import json
 import os
 from gollm_openai.prompts.amr_enrichment import ENRICH_PROMPT
+from gollm_openai.prompts.compact_equations import COMPACT_EQUATIONS_PROMPT
 from gollm_openai.prompts.condense import CONDENSE_PROMPT, format_chunks
 from gollm_openai.prompts.config_from_dataset import (
     CONFIGURE_FROM_DATASET_PROMPT,
@@ -120,6 +121,46 @@ def equations_cleanup(equations: List[str]) -> dict:
     output_json = json.loads(output.choices[0].message.content)
 
     return output_json
+
+
+def compact_equations(equations: List[str]) -> dict:
+    print("Reformatting equations...")
+    escaped_equations = escape_curly_braces(equations)
+
+    print("Uploading and validating equations schema...")
+    config_path = os.path.join(SCRIPT_DIR, 'gollm/gollm_openai/schemas', 'equations.json')
+    with open(config_path, 'r') as config_file:
+        response_schema = json.load(config_file)
+    validate_schema(response_schema)
+
+    print("Building prompt to reformat equations...")
+    prompt = COMPACT_EQUATIONS_PROMPT.format(
+        equations="\n".join(escaped_equations)
+    )
+
+    client = OpenAI()
+    output = client.chat.completions.create(
+        model=GPT_MODEL,
+        top_p=1,
+        frequency_penalty=0,
+        presence_penalty=0,
+        temperature=0,
+        seed=123,
+        max_tokens=16000,
+        response_format={
+            "type": "json_schema",
+            "json_schema": {
+                "name": "equations",
+                "schema": response_schema
+            }
+        },
+        messages=[
+            {"role": "user", "content": prompt},
+        ]
+    )
+    print("Received response from OpenAI API. Formatting response to work with HMI...")
+    output_json = json.loads(output.choices[0].message.content)
+    return unescape_curly_braces(output_json)
 
 
 def equations_from_image(image: str) -> dict:
