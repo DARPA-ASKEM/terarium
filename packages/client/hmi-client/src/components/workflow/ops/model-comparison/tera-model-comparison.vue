@@ -82,7 +82,7 @@
 					>
 						<template #toolbar-right-side>
 							<Button label="Reset" outlined severity="secondary" size="small" @click="resetNotebook" />
-							<Button icon="pi pi-play" label="Run" size="small" @click="runCode" />
+							<Button icon="pi pi-play" label="Run" size="small" @click="runCode" :disabled="isEmpty(code)" />
 						</template>
 					</tera-notebook-jupyter-input>
 				</div>

@@ -779,7 +779,7 @@ public class KnowledgeController {
 				groundings.getIdentifiers().add(new DKG(g.get(0).asText(), g.get(1).asText(), ""));
 			}
 
-			// remove groundings from annotation object
+			// remove groundings from an annotation object
 			((ObjectNode) annotation).remove("dkg_groundings");
 
 			col.setGrounding(groundings);

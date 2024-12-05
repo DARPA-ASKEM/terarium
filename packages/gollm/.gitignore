@@ -6,6 +6,9 @@ build/
 !**/src/test/**/build/
 gollm.egg-info
 
+### Notebook ###
+*.ipynb
+
 ### STS ###
 .apt_generated
 .classpath
