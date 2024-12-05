@@ -3,12 +3,12 @@
  */
 
 import API from '@/api/api';
+import { isEmpty, cloneDeep } from 'lodash';
 import { logger } from '@/utils/logger';
 import type { CsvAsset, CsvColumnStats, Dataset, PresignedURL } from '@/types/Types';
 import { Ref } from 'vue';
 import { AxiosResponse } from 'axios';
 import { RunResults } from '@/types/SimulateConfig';
-import { cloneDeep } from 'lodash';
 
 /**
  * Get Dataset from the data service
@@ -347,6 +347,22 @@ const getCsvColumnStats = (csvColumn: number[]): CsvColumnStats => {
 	return { bins, minValue, maxValue, mean, median, sd };
 };
 
+async function getRawContent(dataset: Dataset) {
+	// If it's an ESGF dataset or a NetCDF file, we don't want to download the raw content
+	if (!dataset?.id || dataset.esgfId || dataset.metadata?.format === 'netcdf') return null;
+	// We are assuming here there is only a single csv file.
+	if (
+		dataset.fileNames &&
+		!isEmpty(dataset.fileNames) &&
+		!isEmpty(dataset.fileNames[0]) &&
+		dataset.fileNames[0].endsWith('.csv')
+	) {
+		const response = await downloadRawFile(dataset.id, dataset.fileNames[0]);
+		return response;
+	}
+	return null;
+}
+
 export {
 	getDataset,
 	getClimateDataset,
@@ -361,5 +377,6 @@ export {
 	createDatasetFromSimulationResult,
 	saveDataset,
 	createCsvAssetFromRunResults,
-	createDataset
+	createDataset,
+	getRawContent
 };
