@@ -48,6 +48,10 @@ export function useChartSettings(
 		chartSettings.value.filter((setting) => setting.type === ChartSettingType.VARIABLE_COMPARISON)
 	);
 
+	const selectedSensitivityChartSettings = computed(() =>
+		chartSettings.value.filter((setting) => setting.type === ChartSettingType.SENSITIVITY)
+	);
+
 	// Methods to manage chart settings
 	const removeChartSettings = (chartId: string) => {
 		emit('update-state', {
@@ -92,6 +96,7 @@ export function useChartSettings(
 		selectedParameterSettings,
 		selectedInterventionSettings,
 		selectedComparisonChartSettings,
+		selectedSensitivityChartSettings,
 		removeChartSettings,
 		updateChartSettings,
 		addComparisonChartSettings,

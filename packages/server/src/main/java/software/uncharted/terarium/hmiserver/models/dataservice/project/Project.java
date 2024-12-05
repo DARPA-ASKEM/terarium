@@ -140,26 +140,21 @@ public class Project extends TerariumAsset {
 			final ObjectMapper objectMapper = new ObjectMapper();
 			return objectMapper.writeValueAsString(this);
 		} catch (final Exception e) {
-			throw new RuntimeException("Failed to serialize model embedding text into JSON", e);
+			throw new RuntimeException("Failed to serialize project embedding text into JSON", e);
 		}
 	}
 
-	private String getOverviewAsReadableString() {
+	@TSIgnore
+	public String getOverviewAsReadableString() {
 		if (overviewContent == null) {
 			return null;
 		}
 
-		// decode from base64
-		final byte[] decodedBytes = Base64.getDecoder().decode(overviewContent);
-		final String decodedString = new String(decodedBytes);
-
 		// remove image tags
 		final String regex = "<img\\b[^>]*>(.*?)<\\/img>|<img\\b[^>]*\\/>";
 		final Pattern pattern = Pattern.compile(regex, Pattern.CASE_INSENSITIVE);
-		final Matcher matcher = pattern.matcher(decodedString);
-		final String result = matcher.replaceAll("");
-
-		return result;
+		final Matcher matcher = pattern.matcher(new String(overviewContent));
+		return matcher.replaceAll("");
 	}
 
 	@JsonIgnore
@@ -172,22 +167,5 @@ public class Project extends TerariumAsset {
 		}
 
 		return sources;
-	}
-
-	public Project() {
-		super();
-	}
-
-	/**
-	 * Add an extra constructor that takes a project
-	 */
-	public Project(final Project project) {
-		this.userId = project.userId;
-		this.thumbnail = project.thumbnail;
-		this.userName = project.userName;
-		this.authors = project.authors;
-		this.overviewContent = project.overviewContent;
-		this.projectAssets = project.projectAssets;
-		this.sampleProject = project.sampleProject;
 	}
 }

@@ -122,10 +122,16 @@ export async function configureModelFromDataset(
 	return data;
 }
 
-export async function compareModels(modelIds: string[], workflowId?: string, nodeId?: string): Promise<TaskResponse> {
+export async function compareModels(
+	modelIds: string[],
+	goal?: string,
+	workflowId?: string,
+	nodeId?: string
+): Promise<TaskResponse> {
 	const { data } = await API.get<TaskResponse>('/gollm/compare-models', {
 		params: {
 			'model-ids': modelIds.join(','),
+			goal,
 			'workflow-id': workflowId,
 			'node-id': nodeId
 		}
