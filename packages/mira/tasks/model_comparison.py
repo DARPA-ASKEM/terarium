@@ -3,6 +3,7 @@ import json
 import itertools
 import traceback
 import time
+import base64
 from pandas import DataFrame
 from pydantic import BaseModel
 from typing import List
@@ -64,12 +65,18 @@ def main():
 
         concept_graph_comparison = {}
         for i, j in itertools.combinations(models.keys(), 2):
-            concept_graph_comparison[(i, j)] = TemplateModelDelta(
+            image = TemplateModelDelta(
                 template_model1=models[i],
                 template_model2=models[j],
                 refinement_function=is_ontological_child_web,
                 concepts_only=True,
             )
+
+            # Encode the image in base64
+            image_base64 = base64.b64encode(image).decode('utf-8')
+
+            # Store the base64 encoded image in the dictionary
+            concept_graph_comparison[(i, j)] = image_base64
 
         previous_end = end
         end = time.time()
