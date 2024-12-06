@@ -182,6 +182,7 @@ import TeraColumnarPanel from '@/components/widgets/tera-columnar-panel.vue';
 import { b64DecodeUnicode } from '@/utils/binary';
 import { useClientEvent } from '@/composables/useClientEvent';
 import TeraInputText from '@/components/widgets/tera-input-text.vue';
+import { CompareModelsConceptsResponse, getCompareModelConcepts } from '@/services/concept';
 import { ModelComparisonOperationState } from './model-comparison-operation';
 
 const props = defineProps<{
@@ -224,6 +225,7 @@ const llmThoughts = ref<any[]>([]);
 const isKernelReady = ref(false);
 const contextLanguage = ref<string>('python3');
 const comparisonPairs = ref(props.node.state.comparisonPairs);
+const compareModelsConcepts = ref<CompareModelsConceptsResponse>({});
 
 const initializeAceEditor = (editorInstance: any) => {
 	editor = editorInstance;
@@ -493,11 +495,20 @@ function generateOverview(output: string) {
 // Create a task to compare the models
 const processCompareModels = async () => {
 	isProcessingComparison.value = true;
+
+	// Compare the models via LLM
 	const taskRes = await compareModels(modelIds.value, goalQuery.value, props.node.workflowId, props.node.id);
 	compareModelsTaskId = taskRes.id;
 	if (taskRes.status === TaskStatus.Success) {
 		generateOverview(taskRes.output);
 	}
+
+	// Compare the models concepts
+	const taskCompareModelsConcepts = await getCompareModelConcepts(modelIds.value, props.node.workflowId, props.node.id);
+	if (taskCompareModelsConcepts.status === TaskStatus.Success) {
+		compareModelsConcepts.value = taskCompareModelsConcepts.output;
+	}
+
 	const state = cloneDeep(props.node.state);
 	state.hasRun = true;
 	emit('update-state', state);

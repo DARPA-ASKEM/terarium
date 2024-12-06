@@ -298,17 +298,22 @@ const autoModelMapping = async (modelOneOptions: State[], modelTwoOptions: State
 interface CompareModelsConceptsRequest {
 	modelIds: Array<Model['id']>;
 	workflowId?: Workflow['id'];
-	nodeId?: WorkflowNode<S>['id'];
+	nodeId?: WorkflowNode<any>['id'];
+}
+interface CompareModelsConceptsResponse {
+	concept_context_comparison?: { [key: string]: string };
+	tabular_comparison?: { [key: string]: string };
+	concept_graph_comparison?: { [key: string]: string };
 }
 async function getCompareModelConcepts(
 	modelIds: Array<Model['id']>,
 	workflowId?: Workflow['id'],
-	nodeId?: WorkflowNode<S>['id']
+	nodeId?: WorkflowNode<any>['id']
 ) {
 	const request: CompareModelsConceptsRequest = { modelIds, workflowId, nodeId };
 	const response = await API.post('/mira/compare-model-concepts', request);
 	if (response?.status !== 200) return null;
-	return response?.data ?? null;
+	return (response?.data as CompareModelsConceptsResponse) ?? null;
 }
 
 export {
@@ -321,5 +326,6 @@ export {
 	autoModelMapping,
 	autoCalibrationMapping,
 	autoEntityMapping,
-	getCompareModelConcepts
+	getCompareModelConcepts,
+	type CompareModelsConceptsResponse
 };
