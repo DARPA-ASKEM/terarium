@@ -24,7 +24,7 @@ WORKDIR /mira
 RUN pip install --no-cache-dir .[sbml,biomodels]
 
 # install sympy
-RUN pip install sympy antlr4-python3-runtime==4.11 pandas
+RUN pip install sympy antlr4-python3-runtime==4.11 pandas fastapi
 
 #^^^^^^^^^^^^^^^^^^^^
 ######################
@@ -67,7 +67,7 @@ WORKDIR /mira_task
 RUN pip install --no-cache-dir -e .
 
 # install sympy
-RUN pip install sympy antlr4-python3-runtime==4.11 pandas
+RUN pip install sympy antlr4-python3-runtime==4.11 pandas fastapi
 
 WORKDIR /
 CMD ["java", "-jar", "taskrunner.jar"]
