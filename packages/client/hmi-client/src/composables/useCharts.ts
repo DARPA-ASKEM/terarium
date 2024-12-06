@@ -200,7 +200,8 @@ export function useCharts(
 			xAxisTitle: getUnit('_time') || 'Time',
 			yAxisTitle: _.uniq(variables.map(getUnit).filter((v) => !!v)).join(',') || '',
 			dateOptions,
-			colorscheme: [BASE_GREY, PRIMARY_COLOR]
+			colorscheme: [BASE_GREY, PRIMARY_COLOR],
+			scale: setting.scale
 		};
 
 		let sampleLayerVariables = [
@@ -281,10 +282,12 @@ export function useCharts(
 		groundTruthData: ComputedRef<DataArray> | null
 	) => {
 		const variableCharts = computed(() => {
+			console.log('doh doh');
 			const charts: Record<string, VisualizationSpec> = {};
 			if (!isChartReadyToBuild.value || !isRefReady(groundTruthData)) return charts;
 			const { result, resultSummary } = chartData.value as ChartData;
 
+			// eslint-disable-next-line
 			chartSettings.value.forEach((settings) => {
 				const variable = settings.selectedVariables[0];
 				const annotations = getChartAnnotationsByChartId(settings.id);
@@ -682,6 +685,8 @@ export function useCharts(
 			}
 
 			const charts: Record<string, VisualizationSpec> = {};
+
+			// eslint-disable-next-line
 			chartSettings.value.forEach((settings) => {
 				const spec = createSimulateSensitivityScatter(
 					{

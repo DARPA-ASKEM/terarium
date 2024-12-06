@@ -28,6 +28,7 @@ interface BaseChartOptions {
 	legend?: boolean;
 	autosize?: AUTOSIZE;
 	dateOptions?: DateOptions;
+	scale?: string;
 }
 
 export interface DateOptions {
@@ -514,6 +515,10 @@ export function createForecastChart(
 			type: 'quantitative',
 			axis: yaxis
 		};
+
+		if (options.scale === 'log') {
+			encodingY.scale = { type: 'log' };
+		}
 
 		if (options.fitYDomain && layer.data[0]) {
 			// gets the other fieldname
