@@ -34,7 +34,7 @@
 						/>
 					</div>
 				</div>
-				<section>
+				<section v-if="activeSettings.type !== 'error-distribution'">
 					<h6>Color Picker</h6>
 					<input type="color" :value="selectedColor" @change="onColorChange($event)" />
 				</section>
@@ -75,9 +75,16 @@ const isGeneratingAnnotation = ref(false);
 const generateAnnotationQuery = ref<string>('');
 const showAnnotationInput = ref<Boolean>(false);
 
-const selectedColor = computed(() => props.activeSettings?.primaryColor ?? '#1B8073');
+const selectedColor = computed(() => {
+	if (!color.value) {
+		return props.activeSettings?.primaryColor ?? '#1B8073';
+	}
+	return color.value;
+});
+const color = ref('');
 
 const onColorChange = (event) => {
+	color.value = event.target?.value;
 	emit('change-color', event.target?.value);
 };
 

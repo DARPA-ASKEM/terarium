@@ -1020,9 +1020,6 @@ const getConfiguredModelConfig = async () => {
 };
 
 const onColorChange = (color: string) => {
-	console.log('test');
-	console.log('what was passed', color);
-	console.log('activeChartSettings', activeChartSettings.value);
 	if (activeChartSettings.value) updateChartPrimaryColor(activeChartSettings.value, color);
 };
 
