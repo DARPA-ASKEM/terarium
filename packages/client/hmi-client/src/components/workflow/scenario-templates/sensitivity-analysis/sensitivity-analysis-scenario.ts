@@ -197,6 +197,12 @@ export class SensitivityAnalysisScenario extends BaseScenario {
 			this.simulateSpec.ids
 		);
 
+		simulateChartSettings = updateChartSettingsBySelectedVariables(
+			simulateChartSettings,
+			ChartSettingType.SENSITIVITY,
+			this.simulateSpec.ids
+		);
+
 		wf.updateNode(simulateNode, {
 			state: {
 				chartSettings: simulateChartSettings
