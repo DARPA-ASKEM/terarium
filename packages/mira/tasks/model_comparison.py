@@ -3,6 +3,7 @@ import json
 import itertools
 import traceback
 import time
+from pandas import DataFrame
 from pydantic import BaseModel
 from typing import List
 from taskrunner import TaskRunnerInterface
@@ -40,7 +41,7 @@ def main():
         taskrunner.log("Concept context comparison")
 
         comp = TemplateModelComparison(models.values(), is_ontological_child_web)
-        concept_context_comparison = comp.compare_context()
+        concept_context_comparison = comp.compare_context().to_csv(encoding='utf-8')
 
         previous_end = end
         end = time.time()
@@ -51,7 +52,8 @@ def main():
 
         tabular_comparison = {}
         for i, j in itertools.combinations(models.keys(), 2):
-            tabular_comparison[(i, j)] = get_concept_comparison_table(models[i], models[j])
+            table = get_concept_comparison_table(models[i], models[j]).to_csv(encoding='utf-8')
+            tabular_comparison[(i, j)] = table
 
         previous_end = end
         end = time.time()
