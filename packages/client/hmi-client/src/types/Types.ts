@@ -19,6 +19,7 @@ export interface ProjectSearchResultAsset {
     assetId: string;
     assetType: AssetType;
     assetName: string;
+    assetShortDescription: string;
     createdOn: Date;
     embeddingContent: string;
     embeddingType: TerariumAssetEmbeddingType;

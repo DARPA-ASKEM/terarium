@@ -69,8 +69,11 @@
 					:asset="asset"
 					@click="emit('open-asset', data.id, asset.assetId, asset.assetType)"
 				/>
-				<p class="font-semibold">{{ capitalize(asset.embeddingType) }}</p>
-				<tera-show-more-text :text="asset.embeddingContent" :lines="3" />
+				<tera-show-more-text :text="asset.assetShortDescription" :lines="3" />
+				<template v-if="visibleEmbeddingResult(asset.embeddingType)">
+					<p class="font-semibold">{{ capitalize(asset.embeddingType) }}</p>
+					<tera-show-more-text :text="asset.embeddingContent" :lines="3" />
+				</template>
 			</div>
 		</template>
 	</DataTable>
@@ -87,7 +90,7 @@ import TeraAssetButton from '@/components/asset/tera-asset-button.vue';
 import TeraAssetIcon from '@/components/widgets/tera-asset-icon.vue';
 import TeraProjectMenu from '@/components/home/tera-project-menu.vue';
 import TeraShowMoreText from '@/components/widgets/tera-show-more-text.vue';
-import { AssetType } from '@/types/Types';
+import { AssetType, TerariumAssetEmbeddingType } from '@/types/Types';
 import type { ProjectWithKnnData } from '@/types/Project';
 import { isEmpty } from 'lodash';
 
@@ -125,6 +128,14 @@ const metadataCountToAssetNameMap = {
 
 function formatStatTooltip(amount: number, itemName: string) {
 	return `${amount} ${itemName}${amount === 1 ? '' : 's'}`;
+}
+
+function visibleEmbeddingResult(embeddingType: TerariumAssetEmbeddingType) {
+	return ![
+		TerariumAssetEmbeddingType.Name,
+		TerariumAssetEmbeddingType.Description,
+		TerariumAssetEmbeddingType.Overview
+	].includes(embeddingType);
 }
 
 watch(
