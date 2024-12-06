@@ -8,8 +8,6 @@
 			<div class="content">
 				<div class="annotation-items">
 					<h5>Options</h5>
-					{{ activeSettings }}
-					{{ useLog }}
 					<tera-checkbox
 						label="Use log scale"
 						:model-value="Boolean(useLog)"
