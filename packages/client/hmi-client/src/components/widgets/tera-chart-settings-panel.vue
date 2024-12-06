@@ -44,6 +44,7 @@
 </template>
 
 <script setup lang="ts">
+import _ from 'lodash';
 import { ref, computed } from 'vue';
 import Button from 'primevue/button';
 import { ChartSetting } from '@/types/common';
@@ -74,10 +75,9 @@ const isGeneratingAnnotation = ref(false);
 const generateAnnotationQuery = ref<string>('');
 const showAnnotationInput = ref<Boolean>(false);
 
-const selectedColor = ref(props.activeSettings?.primaryColor ?? '#1B8073');
+const selectedColor = computed(() => props.activeSettings?.primaryColor ?? '#1B8073');
 
 const onColorChange = (event) => {
-	selectedColor.value = event.target?.value;
 	emit('change-color', event.target?.value);
 };
 

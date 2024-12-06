@@ -128,10 +128,10 @@ export function useCharts(
 		setting: ChartSettingEnsembleVariable,
 		modelConfigId = '',
 		multiVariable = false,
-		showBaseLines = false
+		showBaseLines = false,
+		color: string | null = null
 	) => {
 		const ensembleVarName = setting.selectedVariables[0];
-
 		const options: ForecastChartOptions = {
 			title: getModelConfigName(<ModelConfiguration[]>modelConfig?.value ?? [], modelConfigId) || ensembleVarName,
 			legend: true,
@@ -141,7 +141,7 @@ export function useCharts(
 			xAxisTitle: '',
 			yAxisTitle: '',
 			autosize: AUTOSIZE.FIT,
-			colorscheme: multiVariable ? CATEGORICAL_SCHEME : [BASE_GREY, PRIMARY_COLOR]
+			colorscheme: multiVariable ? CATEGORICAL_SCHEME : [BASE_GREY, color ?? PRIMARY_COLOR]
 		};
 
 		const variables: string[] = [];
@@ -185,7 +185,7 @@ export function useCharts(
 	};
 
 	// Create options for forecast charts based on chart settings and model configuration
-	const createForecastChartOptions = (setting: ChartSetting) => {
+	const createForecastChartOptions = (setting: ChartSetting, color: string | null = null) => {
 		if (isChartSettingEnsembleVariable(setting)) return createEnsembleVariableChartOptions(setting, '', true, true);
 		const variables = setting.selectedVariables;
 		const dateOptions = getVegaDateOptions(model?.value ?? null, <ModelConfiguration>modelConfig?.value || null);
@@ -198,7 +198,7 @@ export function useCharts(
 			xAxisTitle: getUnit('_time') || 'Time',
 			yAxisTitle: _.uniq(variables.map(getUnit).filter((v) => !!v)).join(',') || '',
 			dateOptions,
-			colorscheme: [BASE_GREY, PRIMARY_COLOR]
+			colorscheme: [BASE_GREY, color ?? PRIMARY_COLOR]
 		};
 
 		let sampleLayerVariables = [
@@ -245,7 +245,10 @@ export function useCharts(
 			// intervention chart spec
 			chartSettings.value.forEach((setting) => {
 				const variable = setting.selectedVariables[0];
-				const { sampleLayerVariables, statLayerVariables, options } = createForecastChartOptions(setting);
+				const { sampleLayerVariables, statLayerVariables, options } = createForecastChartOptions(
+					setting,
+					setting.primaryColor ?? null
+				);
 				const forecastChart = createForecastChart(
 					{
 						data: showSamples ? result : [],
@@ -287,7 +290,10 @@ export function useCharts(
 				const variable = settings.selectedVariables[0];
 				const annotations = getChartAnnotationsByChartId(settings.id);
 				const datasetVar = modelVarToDatasetVar(mapping?.value || [], variable);
-				const { sampleLayerVariables, statLayerVariables, options } = createForecastChartOptions(settings);
+				const { sampleLayerVariables, statLayerVariables, options } = createForecastChartOptions(
+					settings,
+					settings.primaryColor ?? null
+				);
 				const chart = applyForecastChartAnnotations(
 					createForecastChart(
 						{
@@ -330,7 +336,10 @@ export function useCharts(
 			const { result, resultSummary } = chartData.value as ChartData;
 			chartSettings.value.forEach((setting) => {
 				const selectedVars = setting.selectedVariables;
-				const { statLayerVariables, sampleLayerVariables, options } = createForecastChartOptions(setting);
+				const { statLayerVariables, sampleLayerVariables, options } = createForecastChartOptions(
+					setting,
+					setting.primaryColor ?? null
+				);
 				const annotations = getChartAnnotationsByChartId(setting.id);
 
 				const chart = applyForecastChartAnnotations(
@@ -383,7 +392,8 @@ export function useCharts(
 							setting,
 							modelConfigId,
 							false,
-							true
+							true,
+							setting.primaryColor ?? null
 						);
 						options.width = chartSize.value.width / (modelConfigIds.length + 1);
 						options.legendProperties = { direction: 'vertical', columns: 1, labelLimit: options.width };
@@ -521,7 +531,7 @@ export function useCharts(
 					maxBins: 10,
 					variables: [
 						{ field: beforeFieldName, label: labelBefore, width: 54, color: BASE_GREY },
-						{ field: fieldName, label: labelAfter, width: 24, color: PRIMARY_COLOR }
+						{ field: fieldName, label: labelAfter, width: 24, color: setting.primaryColor ?? PRIMARY_COLOR }
 					]
 				});
 				const toDisplayNumber = (num?: number) => (num ? displayNumber(num.toString()) : '');
