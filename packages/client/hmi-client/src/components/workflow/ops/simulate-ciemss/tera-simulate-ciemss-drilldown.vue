@@ -224,6 +224,7 @@
 						"
 						:active-settings="activeChartSettings"
 						:generate-annotation="generateAnnotation"
+						@update-settings-scale="updateChartSettingsScale(activeChartSettings?.id as string, $event)"
 						@delete-annotation="deleteAnnotation"
 						@close="activeChartSettings = null"
 					/>
@@ -527,6 +528,7 @@ const {
 	comparisonChartsSettingsSelection,
 	removeChartSettings,
 	updateChartSettings,
+	updateChartSettingsScale,
 	addComparisonChartSettings
 } = useChartSettings(props, emit);
 
