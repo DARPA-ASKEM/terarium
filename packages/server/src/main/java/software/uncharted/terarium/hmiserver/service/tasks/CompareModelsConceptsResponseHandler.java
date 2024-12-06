@@ -11,7 +11,7 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class CompareModelsConceptsResponseHandler extends TaskResponseHandler {
 
-	public static final String NAME = "mira:compare_models";
+	public static final String NAME = "mira_task:model_comparison";
 
 	@Override
 	public String getName() {
