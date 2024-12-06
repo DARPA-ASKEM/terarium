@@ -207,6 +207,7 @@ export interface ChartSettingBase {
 	name: string;
 	selectedVariables: string[];
 	type: ChartSettingType;
+	primaryColor?: string;
 }
 
 export const ProgrammingLanguageVersion: { [key in ProgrammingLanguage]: string } = {

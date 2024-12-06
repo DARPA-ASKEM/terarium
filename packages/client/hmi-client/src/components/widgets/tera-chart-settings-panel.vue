@@ -34,13 +34,16 @@
 						/>
 					</div>
 				</div>
+				<section>
+					<h6>Color Picker</h6>
+					<input type="color" :value="selectedColor" @change="onColorChange($event)" />
+				</section>
 			</div>
 		</div>
 	</transition>
 </template>
 
 <script setup lang="ts">
-import _ from 'lodash';
 import { ref, computed } from 'vue';
 import Button from 'primevue/button';
 import { ChartSetting } from '@/types/common';
@@ -59,7 +62,7 @@ const props = defineProps<{
 	generateAnnotation?: (setting: ChartSetting, query: string) => Promise<ChartAnnotation | null>;
 }>();
 
-const emit = defineEmits(['close', 'update:settings', 'delete-annotation', 'create-annotation']);
+const emit = defineEmits(['close', 'update:settings', 'delete-annotation', 'create-annotation', 'change-color']);
 
 const chartAnnotations = computed(() => {
 	if (props.annotations === undefined) {
@@ -70,6 +73,13 @@ const chartAnnotations = computed(() => {
 const isGeneratingAnnotation = ref(false);
 const generateAnnotationQuery = ref<string>('');
 const showAnnotationInput = ref<Boolean>(false);
+
+const selectedColor = ref(props.activeSettings?.primaryColor ?? '#1B8073');
+
+const onColorChange = (event) => {
+	selectedColor.value = event.target?.value;
+	emit('change-color', event.target?.value);
+};
 
 const createAnnotation = async () => {
 	if (props.generateAnnotation === undefined || props.activeSettings === null) {

@@ -376,6 +376,7 @@
 						:active-settings="activeChartSettings"
 						:generate-annotation="generateAnnotation"
 						@delete-annotation="deleteAnnotation"
+						@change-color="onColorChange"
 						@close="activeChartSettings = null"
 					/>
 				</template>
@@ -756,6 +757,7 @@ const {
 	comparisonChartsSettingsSelection,
 	removeChartSettings,
 	updateChartSettings,
+	updateChartPrimaryColor,
 	addComparisonChartSettings
 } = useChartSettings(props, emit);
 
@@ -1015,6 +1017,13 @@ const getConfiguredModelConfig = async () => {
 	if (configuredModelId) {
 		configuredModelConfig.value = await getModelConfigurationById(configuredModelId);
 	}
+};
+
+const onColorChange = (color: string) => {
+	console.log('test');
+	console.log('what was passed', color);
+	console.log('activeChartSettings', activeChartSettings.value);
+	if (activeChartSettings.value) updateChartPrimaryColor(activeChartSettings.value, color);
 };
 
 onMounted(async () => {

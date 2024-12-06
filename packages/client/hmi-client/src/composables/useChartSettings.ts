@@ -8,6 +8,7 @@ import {
 	updateEnsembleVariableChartSettingOption
 } from '@/services/chart-settings';
 import { WorkflowNode } from '@/types/workflow';
+import { cloneDeep } from 'lodash';
 
 /**
  * Composable to manage chart settings for a given workflow node.
@@ -82,6 +83,21 @@ export function useChartSettings(
 		});
 	};
 
+	const updateChartPrimaryColor = (settings: ChartSetting, color: string) => {
+		const index = chartSettings.value.findIndex(
+			(chart) => chart.name === settings.name && chart.selectedVariables[0] === settings.selectedVariables[0]
+		);
+		if (index !== -1) {
+			const charts = cloneDeep(chartSettings.value);
+			charts[index].primaryColor = color;
+
+			emit('update-state', {
+				...props.node.state,
+				chartSettings: charts
+			});
+		}
+	};
+
 	return {
 		chartSettings,
 		activeChartSettings,
@@ -94,6 +110,7 @@ export function useChartSettings(
 		selectedComparisonChartSettings,
 		removeChartSettings,
 		updateChartSettings,
+		updateChartPrimaryColor,
 		addComparisonChartSettings,
 		updateEnsembleVariableSettingOption
 	};
