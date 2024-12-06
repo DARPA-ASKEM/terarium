@@ -1,3 +1,4 @@
+import { cloneDeep } from 'lodash';
 import { ref, computed } from 'vue';
 import { ChartSetting, ChartSettingEnsembleVariable, ChartSettingType } from '@/types/common';
 import {
@@ -67,6 +68,20 @@ export function useChartSettings(
 		});
 	};
 
+	const updateChartSettingsScale = (id: string, useLog: boolean) => {
+		const state = cloneDeep(props.node.state);
+		if (state.chartSettings) {
+			const setting = state.chartSettings.find((settings) => settings.id === id);
+			if (setting) {
+				setting.scale = useLog === true ? 'log' : '';
+				if (activeChartSettings.value) {
+					activeChartSettings.value.scale = setting.scale;
+				}
+				emit('update-state', state);
+			}
+		}
+	};
+
 	const addComparisonChartSettings = () => {
 		emit('update-state', {
 			...props.node.state,
@@ -99,6 +114,7 @@ export function useChartSettings(
 		selectedSensitivityChartSettings,
 		removeChartSettings,
 		updateChartSettings,
+		updateChartSettingsScale,
 		addComparisonChartSettings,
 		updateEnsembleVariableSettingOption
 	};

@@ -47,7 +47,8 @@ export function addMultiVariableChartSetting(
 		id: uuidv4(),
 		name: selectedVariables.join(', '),
 		selectedVariables,
-		type
+		type,
+		scale: ''
 	} as ChartSetting;
 	return [...settings, newSetting];
 }
@@ -80,7 +81,8 @@ export function createNewChartSetting(
 		id: uuidv4(),
 		name,
 		selectedVariables,
-		type
+		type,
+		scale: ''
 	};
 	if (isChartSettingEnsembleVariable(setting)) Object.assign(setting, options);
 	return setting;
