@@ -53,7 +53,7 @@ def main():
 
         tabular_comparison = {}
         for i, j in itertools.combinations(models.keys(), 2):
-            table = get_concept_comparison_table(models[i], models[j]).to_csv(encoding='utf-8')
+            table = get_concept_comparison_table(models[i], models[j], name_only=True).to_csv(encoding='utf-8')
             tabular_comparison[(i, j)] = table
 
         previous_end = end
