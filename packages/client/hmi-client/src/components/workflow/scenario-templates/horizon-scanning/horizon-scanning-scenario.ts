@@ -3,13 +3,13 @@ import * as workflowService from '@/services/workflow';
 import { operation as ModelOp } from '@/components/workflow/ops/model/mod';
 import { operation as ModelConfigOp } from '@/components/workflow/ops/model-config/mod';
 import { operation as SimulateCiemssOp } from '@/components/workflow/ops/simulate-ciemss/mod';
-// import { operation as TransformDatasetOp } from '@/components/workflow/ops/dataset-transformer/mod';
+import { operation as CompareDatasetOp } from '@/components/workflow/ops/compare-datasets/mod';
 import { operation as InterventionOp } from '@/components/workflow/ops/intervention-policy/mod';
 import { OperatorNodeSize } from '@/services/workflow';
 import { createModelConfiguration, getModelConfigurationById, getParameter } from '@/services/model-configurations';
 import _ from 'lodash';
-// import { ChartSetting, ChartSettingType } from '@/types/common';
-// import { updateChartSettingsBySelectedVariables } from '@/services/chart-settings';
+import { ChartSetting, ChartSettingType } from '@/types/common';
+import { updateChartSettingsBySelectedVariables } from '@/services/chart-settings';
 import { AssetType, ParameterSemantic } from '@/types/Types';
 import { DistributionType } from '@/services/distribution';
 import { calculateUncertaintyRange } from '@/utils/math';
@@ -114,7 +114,14 @@ export class HorizonScanningScenario extends BaseScenario {
 	}
 
 	isValid(): boolean {
-		return !!this.workflowName && !!this.modelSpec.id && !!this.modelConfigSpec.id && !_.isEmpty(this.simulateSpec.ids);
+		return (
+			!!this.workflowName &&
+			!!this.modelSpec.id &&
+			!!this.modelConfigSpec.id &&
+			!this.interventionSpecs.some((interventionSpec) => !interventionSpec.id) &&
+			!this.parameters.some((parameter) => !parameter) &&
+			!_.isEmpty(this.simulateSpec.ids)
+		);
 	}
 
 	async createWorkflow() {
@@ -122,7 +129,7 @@ export class HorizonScanningScenario extends BaseScenario {
 		wf.setWorkflowName(this.workflowName);
 		wf.setWorkflowScenario(this.toJSON());
 
-		// 1. Add nodes
+		// 1. Add model and compare dataset nodes
 		const modelNode = wf.addNode(
 			ModelOp,
 			{ x: 0, y: 0 },
@@ -140,90 +147,116 @@ export class HorizonScanningScenario extends BaseScenario {
 			}
 		});
 
+		const compareDatasetNode = wf.addNode(
+			CompareDatasetOp,
+			{ x: 0, y: 0 },
+			{
+				size: OperatorNodeSize.medium
+			}
+		);
+
+		// add input ports for each simulation to the dataset transformer, this will be a matrix of intervention x parameter low and high
+		for (let i = 0; i < this.interventionSpecs.length * (this.parameters.length * 2); i++) {
+			workflowService.appendInputPort(compareDatasetNode, {
+				type: 'datasetId|simulationId',
+				label: 'Dataset or Simulation'
+			});
+		}
+
+		let compareDatasetIndex = 0;
+
 		const modelConfig = await getModelConfigurationById(this.modelConfigSpec.id);
 
-		const modelConfigNodes = (
-			await Promise.all(
-				this.parameters.map(async (parameter) => {
-					if (!parameter) return [];
-					const clonedModelConfig = _.cloneDeep(modelConfig);
-					const foundParameter = getParameter(clonedModelConfig, parameter.id);
-					if (!foundParameter) return [];
+		// chart settings for simulate node
+		let simulateChartSettings: ChartSetting[] = [];
+		simulateChartSettings = updateChartSettingsBySelectedVariables(
+			simulateChartSettings,
+			ChartSettingType.VARIABLE,
+			this.simulateSpec.ids
+		);
 
-					const modelConfigNodeLow = wf.addNode(
-						ModelConfigOp,
-						{ x: 0, y: 0 },
-						{
-							size: OperatorNodeSize.medium
-						}
-					);
+		// 2. create model config nodes for each paramter for both the low and high values and attach them to the model node
+		const modelConfigPromises = this.parameters.flatMap(async (parameter) => {
+			if (!parameter) return [];
+			const clonedModelConfig = _.cloneDeep(modelConfig);
+			const foundParameter = getParameter(clonedModelConfig, parameter.id);
+			if (!foundParameter) return [];
 
-					wf.addEdge(modelNode.id, modelNode.outputs[0].id, modelConfigNodeLow.id, modelConfigNodeLow.inputs[0].id, [
-						{ x: 0, y: 0 },
-						{ x: 0, y: 0 }
-					]);
+			const modelConfigNodeLow = wf.addNode(
+				ModelConfigOp,
+				{ x: 0, y: 0 },
+				{
+					size: OperatorNodeSize.medium
+				}
+			);
 
-					const modelConfigNodeHigh = wf.addNode(
-						ModelConfigOp,
-						{ x: 0, y: 0 },
-						{
-							size: OperatorNodeSize.medium
-						}
-					);
+			wf.addEdge(modelNode.id, modelNode.outputs[0].id, modelConfigNodeLow.id, modelConfigNodeLow.inputs[0].id, [
+				{ x: 0, y: 0 },
+				{ x: 0, y: 0 }
+			]);
 
-					wf.addEdge(modelNode.id, modelNode.outputs[0].id, modelConfigNodeHigh.id, modelConfigNodeHigh.inputs[0].id, [
-						{ x: 0, y: 0 },
-						{ x: 0, y: 0 }
-					]);
+			const modelConfigNodeHigh = wf.addNode(
+				ModelConfigOp,
+				{ x: 0, y: 0 },
+				{
+					size: OperatorNodeSize.medium
+				}
+			);
 
-					foundParameter.distribution.type = DistributionType.Constant;
-					foundParameter.distribution.parameters = { value: parameter.low };
+			wf.addEdge(modelNode.id, modelNode.outputs[0].id, modelConfigNodeHigh.id, modelConfigNodeHigh.inputs[0].id, [
+				{ x: 0, y: 0 },
+				{ x: 0, y: 0 }
+			]);
 
-					clonedModelConfig.name = `${modelConfig.name}_${parameter.id}_low`;
-					const newModelConfigLow = await createModelConfiguration(clonedModelConfig);
-					await useProjects().addAsset(
-						AssetType.ModelConfiguration,
-						newModelConfigLow.id,
-						useProjects().activeProject.value?.id
-					);
+			// We want to change the distribution of the parameter to a constant distribution with the 1 config with the constant low value, and another with a constant high value
+			foundParameter.distribution.type = DistributionType.Constant;
+			foundParameter.distribution.parameters = { value: parameter.low };
 
-					foundParameter.distribution.parameters = { value: parameter.high };
+			clonedModelConfig.name = `${modelConfig.name}_${parameter.id}_low`;
+			const newModelConfigLow = await createModelConfiguration(clonedModelConfig);
+			await useProjects().addAsset(
+				AssetType.ModelConfiguration,
+				newModelConfigLow.id,
+				useProjects().activeProject.value?.id
+			);
 
-					clonedModelConfig.name = `${modelConfig.name}_${parameter.id}_high`;
-					const newModelConfigHigh = await createModelConfiguration(clonedModelConfig);
-					await useProjects().addAsset(
-						AssetType.ModelConfiguration,
-						newModelConfigHigh.id,
-						useProjects().activeProject.value?.id
-					);
+			foundParameter.distribution.parameters = { value: parameter.high };
 
-					wf.updateNode(modelConfigNodeLow, {
-						state: {
-							transientModelConfig: newModelConfigLow
-						},
-						output: {
-							value: [newModelConfigLow.id],
-							state: _.omit(modelConfigNodeLow.state, ['transientModelConfig'])
-						}
-					});
+			clonedModelConfig.name = `${modelConfig.name}_${parameter.id}_high`;
+			const newModelConfigHigh = await createModelConfiguration(clonedModelConfig);
+			await useProjects().addAsset(
+				AssetType.ModelConfiguration,
+				newModelConfigHigh.id,
+				useProjects().activeProject.value?.id
+			);
 
-					wf.updateNode(modelConfigNodeHigh, {
-						state: {
-							transientModelConfig: newModelConfigHigh
-						},
-						output: {
-							value: [newModelConfigHigh.id],
-							state: _.omit(modelConfigNodeHigh.state, ['transientModelConfig'])
-						}
-					});
+			wf.updateNode(modelConfigNodeLow, {
+				state: {
+					transientModelConfig: newModelConfigLow
+				},
+				output: {
+					value: [newModelConfigLow.id],
+					state: _.omit(modelConfigNodeLow.state, ['transientModelConfig'])
+				}
+			});
 
-					return [modelConfigNodeLow, modelConfigNodeHigh];
-				})
-			)
-		)
-			.flat()
-			.filter((node) => node !== undefined);
+			wf.updateNode(modelConfigNodeHigh, {
+				state: {
+					transientModelConfig: newModelConfigHigh
+				},
+				output: {
+					value: [newModelConfigHigh.id],
+					state: _.omit(modelConfigNodeHigh.state, ['transientModelConfig'])
+				}
+			});
 
+			return [modelConfigNodeLow, modelConfigNodeHigh];
+		});
+
+		// Wait for all modelConfigPromises to resolve and flatten them
+		const modelConfigNodes = (await Promise.all(modelConfigPromises)).flat();
+
+		// 3. Add intervention nodes for each intervention and attach them to the model node
 		const interventionPromises = this.interventionSpecs.map(async (interventionSpec) => {
 			const interventionPolicy = await getInterventionPolicyById(interventionSpec.id);
 
@@ -250,8 +283,8 @@ export class HorizonScanningScenario extends BaseScenario {
 				}
 			});
 
-			// Collect all promises from the modelConfigNodes map
-			const simulatePromises = modelConfigNodes.map(async (modelConfigNode) => {
+			// each intervention node will be connected to a simulate node along with each model config node
+			modelConfigNodes.forEach((modelConfigNode) => {
 				const simulateNode = wf.addNode(
 					SimulateCiemssOp,
 					{ x: 0, y: 0 },
@@ -259,6 +292,12 @@ export class HorizonScanningScenario extends BaseScenario {
 						size: OperatorNodeSize.medium
 					}
 				);
+
+				wf.updateNode(simulateNode, {
+					state: {
+						chartSettings: simulateChartSettings
+					}
+				});
 
 				wf.addEdge(modelConfigNode.id, modelConfigNode.outputs[0].id, simulateNode.id, simulateNode.inputs[0].id, [
 					{ x: 0, y: 0 },
@@ -269,10 +308,19 @@ export class HorizonScanningScenario extends BaseScenario {
 					{ x: 0, y: 0 },
 					{ x: 0, y: 0 }
 				]);
-			});
 
-			// Wait for all simulatePromises to resolve
-			await Promise.all(simulatePromises);
+				wf.addEdge(
+					simulateNode.id,
+					simulateNode.outputs[0].id,
+					compareDatasetNode.id,
+					compareDatasetNode.inputs[compareDatasetIndex].id,
+					[
+						{ x: 0, y: 0 },
+						{ x: 0, y: 0 }
+					]
+				);
+				compareDatasetIndex++;
+			});
 		});
 
 		// Wait for all interventionPromises to resolve

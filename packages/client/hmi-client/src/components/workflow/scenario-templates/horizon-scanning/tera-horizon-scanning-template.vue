@@ -47,7 +47,7 @@
 			<Dropdown
 				:model-value="scenario.modelConfigSpec.id"
 				placeholder="Select a configuration"
-				:options="modelConfigurations"
+				:options="filterModelConfigurations"
 				option-label="name"
 				option-value="id"
 				@update:model-value="scenario.setModelConfigSpec($event)"
@@ -145,6 +145,9 @@ const isFetchingModelConfiguration = ref(false);
 const models = computed(() => useProjects().getActiveProjectAssets(AssetType.Model));
 
 const modelConfigurations = ref<ModelConfiguration[]>([]);
+const filterModelConfigurations = computed<ModelConfiguration[]>(() =>
+	modelConfigurations.value.filter((mc) => isEmpty(mc.inferredParameterList))
+);
 const interventionPolicies = ref<InterventionPolicy[]>([]);
 const modelStateOptions = ref<any[]>([]);
 const modelParameters = ref<ParameterSemantic[]>([]);
