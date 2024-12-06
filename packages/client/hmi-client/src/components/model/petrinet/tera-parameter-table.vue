@@ -29,7 +29,7 @@
 					:options="distributionTypeOptions().filter((type) => type.value !== DistributionType.Constant)"
 				>
 					<template #value>
-						{{ DistributionTypeLabel[uncertaintyType].toLowerCase() }}
+						{{ distributions[uncertaintyType].label.toLowerCase() }}
 					</template>
 					<template #option="{ option }">
 						{{ option.name.toLowerCase() }}
@@ -154,7 +154,7 @@ import { MiraModel, MiraTemplateParams } from '@/model-representation/mira/mira-
 import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
 import Button from 'primevue/button';
-import { DistributionType, DistributionTypeLabel, distributionTypeOptions } from '@/services/distribution';
+import { DistributionType, distributions, distributionTypeOptions } from '@/services/distribution';
 import InputNumber from 'primevue/inputnumber';
 import Dropdown from 'primevue/dropdown';
 import Checkbox from 'primevue/checkbox';
