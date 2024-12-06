@@ -282,7 +282,6 @@ export function useCharts(
 		groundTruthData: ComputedRef<DataArray> | null
 	) => {
 		const variableCharts = computed(() => {
-			console.log('doh doh');
 			const charts: Record<string, VisualizationSpec> = {};
 			if (!isChartReadyToBuild.value || !isRefReady(groundTruthData)) return charts;
 			const { result, resultSummary } = chartData.value as ChartData;

@@ -517,7 +517,7 @@ export function createForecastChart(
 		};
 
 		if (options.scale === 'log') {
-			encodingY.scale = { type: 'log' };
+			encodingY.scale = { type: 'symlog' };
 		}
 
 		if (options.fitYDomain && layer.data[0]) {
