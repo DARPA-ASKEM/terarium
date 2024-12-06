@@ -1,0 +1,27 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "equations": {
+      "type": "array",
+      "description": "A list of equations defined in an image.",
+      "items": {
+        "type": "string",
+        "description": "A LaTeX representation of an equation."
+      }
+    },
+    "indexMap": {
+      "type": "array",
+      "description": "a list of how each index value maps to the subscript names for all the equations.",
+      "items": {
+        "type": "string",
+        "description": "A LaTeX representation of a value mapping."
+      }
+    }
+  },
+  "required": [
+    "equations",
+    "indexMap"
+  ],
+  "additionalProperties": false
+}
