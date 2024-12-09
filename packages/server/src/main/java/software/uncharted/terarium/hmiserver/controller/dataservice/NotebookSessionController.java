@@ -259,6 +259,11 @@ public class NotebookSessionController {
 				projectId,
 				permission
 			);
+
+			final Optional<Project> project = projectService.getProject(projectId);
+
+			projectAssetService.createProjectAsset(project.get(), AssetType.NOTEBOOK_SESSION, newNotebookSession, permission);
+
 			return ResponseEntity.status(HttpStatus.OK).body(newNotebookSession);
 		} catch (final Exception e) {
 			final String error = "Unable to clone notebook session";
