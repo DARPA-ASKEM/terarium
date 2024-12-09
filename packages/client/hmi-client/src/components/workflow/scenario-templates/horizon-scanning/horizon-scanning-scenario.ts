@@ -21,6 +21,39 @@ export interface HorizonScanningParameter {
 	low: number;
 	high: number;
 }
+
+/*
+ * Horizon Scanning scenario
+
+	Configure the model to represent the extremes of uncertainty for some
+	parameters, then simulate into the near future with different intervention
+	policies and compare the outcomes.
+
+  Users can input a model, a model configuration, a set of interventions,
+  and a set of parameters. For each parameter, a low and high value will be specified,
+  resulting in the creation of two new model configurations: one with the
+  parameter set to the low value and another with the parameter set to the high value.
+
+	Example:
+	1 intervention, 2 parameters
+  Model Node
+  |
+  +-- Model Config Node (Low Param 1)
+  |     |
+  |     +-- Simulate Node (Intervention 1)
+  |
+  +-- Model Config Node (High Param 1)
+  |     |
+  |     +-- Simulate Node (Intervention 1)
+  |
+  +-- Model Config Node (Low Param 2)
+  |     |
+  |     +-- Simulate Node (Intervention 1)
+  |
+  +-- Model Config Node (High Param 2)
+        |
+        +-- Simulate Node (Intervention 1)
+ */
 export class HorizonScanningScenario extends BaseScenario {
 	public static templateId = 'horizon-scanning';
 
