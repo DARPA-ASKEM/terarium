@@ -47,7 +47,7 @@
 import { computed, PropType, ref, watch, onMounted } from 'vue';
 import { cloneDeep, isEmpty, isEqual } from 'lodash';
 import {
-	downloadRawFile,
+	getRawContent,
 	getClimateDataset,
 	getClimateDatasetPreview,
 	getDataset,
@@ -194,22 +194,6 @@ const fetchDataset = async () => {
 	}
 };
 
-function getRawContent() {
-	// If it's an ESGF dataset or a NetCDF file, we don't want to download the raw content
-	if (!dataset.value || dataset.value.esgfId || dataset.value.metadata?.format === 'netcdf') return;
-	// We are assuming here there is only a single csv file.
-	if (
-		dataset.value.fileNames &&
-		!isEmpty(dataset.value.fileNames) &&
-		!isEmpty(dataset.value.fileNames[0]) &&
-		dataset.value.fileNames[0].endsWith('.csv')
-	) {
-		downloadRawFile(props.assetId, dataset.value.fileNames[0]).then((res) => {
-			rawContent.value = res;
-		});
-	}
-}
-
 onMounted(async () => {
 	const addProjectMenuItems = (await useProjects().getAllExceptActive()).map((project) => ({
 		label: project.name,
@@ -237,7 +221,7 @@ watch(
 			isDatasetLoading.value = true;
 			await fetchDataset();
 			isDatasetLoading.value = false;
-			getRawContent(); // Whenever we change the dataset, we need to fetch the rawContent
+			if (dataset.value) rawContent.value = await getRawContent(dataset.value); // Whenever we change the dataset, we need to fetch the rawContent
 			prepareDescription();
 		}
 	},

@@ -292,7 +292,10 @@ export const runDagreLayout = <V, E>(graphData: IGraph<V, E>, lr: boolean = true
 			if (node.y + 0.5 * node.height > maxY) maxY = node.y + 0.5 * node.height;
 		});
 
-		rerouteEdges(graphData.nodes, graphData.edges);
+		// FIXME: temp hack, need to optimize OrthogonalConnector
+		if (graphData.edges.length < 100) {
+			rerouteEdges(graphData.nodes, graphData.edges);
+		}
 
 		// Give the bounds a little extra buffer
 		const buffer = 10;

@@ -64,8 +64,16 @@
 		</Column>
 		<template #expansion="{ data }">
 			<div v-for="asset in data.assets" :key="asset.assetId" class="flex align-items-center gap-4">
-				<tera-asset-button :asset="asset" @click="emit('open-asset', data.id, asset.assetId, asset.assetType)" />
-				<tera-show-more-text :text="asset.embeddingContent" :lines="3" />
+				<tera-asset-button
+					v-if="asset.assetType != AssetType.Project"
+					:asset="asset"
+					@click="emit('open-asset', data.id, asset.assetId, asset.assetType)"
+				/>
+				<tera-show-more-text :text="asset.assetShortDescription" :lines="3" />
+				<template v-if="visibleEmbeddingResult(asset.embeddingType)">
+					<p class="font-semibold">{{ capitalize(asset.embeddingType) }}</p>
+					<tera-show-more-text :text="asset.embeddingContent" :lines="3" />
+				</template>
 			</div>
 		</template>
 	</DataTable>
@@ -74,6 +82,7 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue';
 import { v4 as uuidv4 } from 'uuid';
+import { capitalize } from '@/utils/text';
 import { formatDdMmmYyyy } from '@/utils/date';
 import Column from 'primevue/column';
 import DataTable, { DataTableExpandedRows } from 'primevue/datatable';
@@ -81,7 +90,7 @@ import TeraAssetButton from '@/components/asset/tera-asset-button.vue';
 import TeraAssetIcon from '@/components/widgets/tera-asset-icon.vue';
 import TeraProjectMenu from '@/components/home/tera-project-menu.vue';
 import TeraShowMoreText from '@/components/widgets/tera-show-more-text.vue';
-import { AssetType } from '@/types/Types';
+import { AssetType, TerariumAssetEmbeddingType } from '@/types/Types';
 import type { ProjectWithKnnData } from '@/types/Project';
 import { isEmpty } from 'lodash';
 
@@ -119,6 +128,14 @@ const metadataCountToAssetNameMap = {
 
 function formatStatTooltip(amount: number, itemName: string) {
 	return `${amount} ${itemName}${amount === 1 ? '' : 's'}`;
+}
+
+function visibleEmbeddingResult(embeddingType: TerariumAssetEmbeddingType) {
+	return ![
+		TerariumAssetEmbeddingType.Name,
+		TerariumAssetEmbeddingType.Description,
+		TerariumAssetEmbeddingType.Overview
+	].includes(embeddingType);
 }
 
 watch(

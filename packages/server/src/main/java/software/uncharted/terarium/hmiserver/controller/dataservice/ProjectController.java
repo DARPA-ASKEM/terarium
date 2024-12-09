@@ -11,6 +11,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import io.swagger.v3.oas.annotations.tags.Tags;
 import jakarta.annotation.PostConstruct;
 import java.io.IOException;
+import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -49,6 +50,7 @@ import software.uncharted.terarium.hmiserver.models.TerariumAsset;
 import software.uncharted.terarium.hmiserver.models.TerariumAssetEmbeddingType;
 import software.uncharted.terarium.hmiserver.models.dataservice.AssetType;
 import software.uncharted.terarium.hmiserver.models.dataservice.ResponseDeleted;
+import software.uncharted.terarium.hmiserver.models.dataservice.model.Model;
 import software.uncharted.terarium.hmiserver.models.dataservice.project.Contributor;
 import software.uncharted.terarium.hmiserver.models.dataservice.project.Project;
 import software.uncharted.terarium.hmiserver.models.dataservice.project.ProjectAsset;
@@ -1014,6 +1016,8 @@ public class ProjectController {
 		final UUID assetId;
 		final AssetType assetType;
 		final String assetName;
+		final String assetShortDescription;
+		final Timestamp createdOn;
 		final String embeddingContent;
 		final TerariumAssetEmbeddingType embeddingType;
 		final Float score;
@@ -1125,10 +1129,25 @@ public class ProjectController {
 				default -> asset.getName();
 			};
 
+		// Get the description of the asset to be displayed nontheless
+		String assetShortDescription =
+			switch (hit.getAssetType()) {
+				case PROJECT -> ((Project) asset).getOverviewAsReadableString();
+				case MODEL -> ((Model) asset).getDescriptionAsReadableString();
+				default -> asset.getDescription();
+			};
+
+		// Only keep the first 100 characters of the description, followed by an ellipsis
+		if (assetShortDescription.length() > 100) {
+			assetShortDescription = assetShortDescription.substring(0, 100) + "...";
+		}
+
 		return new ProjectSearchResultAsset(
 			hit.getAssetId(),
 			hit.getAssetType(),
 			asset.getName(),
+			assetShortDescription,
+			asset.getCreatedOn(),
 			embeddingContent,
 			hit.getEmbeddingType(),
 			hit.getScore()

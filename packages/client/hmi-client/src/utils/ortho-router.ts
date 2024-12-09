@@ -756,16 +756,6 @@ export default class OrthogonalConnector {
 			inflatedB = shapeB;
 		}
 
-		// testing
-		/*
-				const test = Rectangle.fromRect({
-					left: 200,
-					top: 300,
-					width: 400,
-					height: 20
-				});
-				*/
-
 		const inflatedBounds = inflatedA.union(inflatedB).inflate(globalBoundsMargin, globalBoundsMargin);
 
 		// Curated bounds to stick to
@@ -844,7 +834,8 @@ export default class OrthogonalConnector {
 		const path = shortestPath(graph, origin, destination);
 
 		if (path.length > 0) {
-			return simplifyPath([start, ...shortestPath(graph, origin, destination), end]);
+			// return simplifyPath([start, ...shortestPath(graph, origin, destination), end]);
+			return simplifyPath([start, ...path, end]);
 		}
 		return [];
 	}
