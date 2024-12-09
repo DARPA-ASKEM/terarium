@@ -5,7 +5,6 @@ import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
-import jakarta.transaction.Transactional;
 import java.io.IOException;
 import java.util.List;
 import java.util.Optional;
@@ -255,7 +254,12 @@ public class NotebookSessionController {
 			if (session.isEmpty()) {
 				return ResponseEntity.notFound().build();
 			}
-			return ResponseEntity.status(HttpStatus.OK).body(session.get().clone());
+			final NotebookSession newNotebookSession = sessionService.createAsset(
+				session.get().clone(),
+				projectId,
+				permission
+			);
+			return ResponseEntity.status(HttpStatus.OK).body(newNotebookSession);
 		} catch (final Exception e) {
 			final String error = "Unable to clone notebook session";
 			log.error(error, e);
