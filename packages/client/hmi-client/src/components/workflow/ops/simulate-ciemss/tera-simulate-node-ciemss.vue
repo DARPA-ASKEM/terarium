@@ -308,8 +308,8 @@ watch(
 		if (baseForecastId) {
 			// If forecast run before intervention (base run) is available, merge the results
 			const [baseResult, baseResultSummary] = await Promise.all([
-				getRunResultCSV(baseForecastId, 'result.csv', renameFnGenerator('base')),
-				getRunResultCSV(baseForecastId, 'result_summary.csv', renameFnGenerator('base'))
+				getRunResultCSV(baseForecastId, 'result.csv', renameFnGenerator('pre')),
+				getRunResultCSV(baseForecastId, 'result_summary.csv', renameFnGenerator('pre'))
 			]);
 			const merged = mergeResults(baseResult, result, baseResultSummary, resultSummary);
 			result = merged.result;

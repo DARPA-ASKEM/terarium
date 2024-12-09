@@ -1,6 +1,6 @@
 import { computed } from 'vue';
 import { createRouter, createWebHistory } from 'vue-router';
-import HomeView from '@/page/Home.vue';
+import HomeView from '@/page/tera-home.vue';
 import UnauthorizedView from '@/page/Unauthorized.vue';
 import ProjectView from '@/page/tera-project.vue';
 import WorkflowNodeView from '@/page/WorkflowNode.vue';

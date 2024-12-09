@@ -158,6 +158,8 @@ interface Comparison {
 	conclusion: string;
 }
 
+export type ModelEnrichmentStatusUpdate = StatusUpdate<{ modelId: string; workflowId: string; nodeId: string }>;
+
 export type ExtractionStatusUpdate = StatusUpdate<{ documentId: string }>;
 export type CloneProjectStatusUpdate = StatusUpdate<{ projectId: string }>;
 export interface NotificationItem extends NotificationItemStatus, AssetRoute {
@@ -185,7 +187,8 @@ export enum ChartSettingType {
 	VARIABLE_ENSEMBLE = 'variable-ensemble',
 	DISTRIBUTION_COMPARISON = 'distribution-comparison',
 	ERROR_DISTRIBUTION = 'error-distribution',
-	INTERVENTION = 'intervention'
+	INTERVENTION = 'intervention',
+	SENSITIVITY = 'sensitivity'
 }
 
 export type ChartSetting = ChartSettingBase | ChartSettingEnsembleVariable;
@@ -205,6 +208,7 @@ export interface ChartSettingBase {
 	name: string;
 	selectedVariables: string[];
 	type: ChartSettingType;
+	scale?: string;
 }
 
 export const ProgrammingLanguageVersion: { [key in ProgrammingLanguage]: string } = {

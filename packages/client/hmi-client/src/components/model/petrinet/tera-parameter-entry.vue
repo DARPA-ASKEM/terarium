@@ -20,10 +20,10 @@
 		<div v-if="inferredDistribution" class="inferred-parameter">
 			<span class="type"><label>Type</label> {{ inferredDistribution.type }}</span>
 			<span class="mean">
-				<label>Mean</label> {{ displayNumber(inferredDistribution?.parameters?.mean.toString()) }}
+				<label>Mean</label> {{ displayNumber(inferredDistribution?.parameters?.mean?.toString()) }}
 			</span>
 			<span class="std">
-				<label>STDDEV</label> {{ displayNumber(inferredDistribution?.parameters?.stddev.toString()) }}
+				<label>STDDEV</label> {{ displayNumber(inferredDistribution?.parameters?.stddev?.toString()) }}
 			</span>
 		</div>
 		<template v-else-if="!featureConfig?.isPreview">
@@ -147,7 +147,7 @@ onMounted(async () => {
 	const identifiers = getParameter(props.model, props.parameterId)?.grounding?.identifiers;
 	if (identifiers) concept.value = await getNameOfCurieCached(getCurieFromGroundingIdentifier(identifiers));
 	const parameter = getParameterDistribution(props.modelConfiguration, props.parameterId, true);
-	isParameterEmpty.value = isParameterInputEmpty(parameter);
+	isParameterEmpty.value = inferredDistribution.value ? false : isParameterInputEmpty(parameter);
 });
 </script>
 

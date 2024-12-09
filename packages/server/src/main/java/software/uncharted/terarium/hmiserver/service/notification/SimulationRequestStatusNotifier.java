@@ -17,6 +17,7 @@ import software.uncharted.terarium.hmiserver.models.dataservice.simulation.Simul
 import software.uncharted.terarium.hmiserver.models.dataservice.simulation.SimulationEngine;
 import software.uncharted.terarium.hmiserver.models.dataservice.simulation.SimulationType;
 import software.uncharted.terarium.hmiserver.service.ClientEventService;
+import software.uncharted.terarium.hmiserver.service.CurrentUserService;
 import software.uncharted.terarium.hmiserver.service.data.SimulationService;
 import software.uncharted.terarium.hmiserver.utils.rebac.Schema;
 
@@ -50,6 +51,7 @@ public class SimulationRequestStatusNotifier {
 
 	private final ScheduledExecutorService executor;
 	private final ClientEventService clientEventService;
+	private final CurrentUserService currentUserService;
 	private final NotificationService notificationService;
 	private final SimulationService simulationService;
 
@@ -66,6 +68,7 @@ public class SimulationRequestStatusNotifier {
 	public SimulationRequestStatusNotifier(
 		final NotificationService notificationService,
 		final ClientEventService clientEventService,
+		final CurrentUserService currentUserService,
 		final SimulationService simulationService,
 		final UUID simulationId,
 		final UUID projectId,
@@ -73,13 +76,13 @@ public class SimulationRequestStatusNotifier {
 		final JsonNode metadata
 	) {
 		this.clientEventService = clientEventService;
+		this.currentUserService = currentUserService;
 		this.notificationService = notificationService;
 		this.simulationService = simulationService;
 		this.simulationId = simulationId;
 		this.projectId = projectId;
 		this.permission = permission;
 		this.metadata = metadata;
-
 		this.executor = Executors.newScheduledThreadPool(1);
 	}
 
@@ -120,7 +123,8 @@ public class SimulationRequestStatusNotifier {
 			this.projectId,
 			new SimulationNotificationData(this.simulationId, sim.getType(), sim.getEngine(), this.metadata),
 			this.halfTimeSeconds,
-			sim.getId()
+			sim.getId(),
+			currentUserService.get().getId()
 		);
 		log.info("Starting polling for simulation {} every {} seconds", this.simulationId, this.interval);
 		this.sendStatusMessage(notificationInterface, sim);

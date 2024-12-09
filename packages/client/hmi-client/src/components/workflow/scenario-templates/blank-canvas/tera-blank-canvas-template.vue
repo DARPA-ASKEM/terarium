@@ -1,5 +1,10 @@
 <template>
-	<tera-scenario-template ref="blankTemplate" :header="header" :scenario-instance="scenario" />
+	<tera-scenario-template
+		ref="blankTemplate"
+		:header="header"
+		:scenario-instance="scenario"
+		@save-workflow="emit('save-workflow')"
+	/>
 	<img :src="blankCanvas" alt="Blank canvas template" />
 </template>
 
@@ -15,4 +20,5 @@ const header: ScenarioHeader = Object.freeze({
 defineProps<{
 	scenario: BlankCanvasScenario;
 }>();
+const emit = defineEmits(['save-workflow']);
 </script>

@@ -121,6 +121,8 @@
 							showIcon
 							iconDisplay="input"
 							@date-select="knobs.transientModelConfig.temporalContext = $event"
+							show-button-bar
+							@clear-click="delete knobs.transientModelConfig.temporalContext"
 						/>
 					</div>
 				</AccordionTab>
@@ -182,7 +184,7 @@
 						>
 							<template #toolbar-right-side>
 								<tera-input-text v-model="knobs.transientModelConfig.name" placeholder="Configuration Name" />
-								<Button icon="pi pi-play" label="Run" @click="runFromCode" />
+								<Button icon="pi pi-play" label="Run" @click="runFromCode" :disabled="isEmpty(codeText)" />
 							</template>
 						</tera-notebook-jupyter-input>
 					</Suspense>
@@ -535,8 +537,9 @@ const missingInputCount = (modelConfiguration: ModelConfiguration) => {
 	if (selectedConfigId.value === modelConfiguration.id) {
 		return selectedConfigMissingInputCount.value;
 	}
+	const inferredParameterList = modelConfiguration.inferredParameterList?.length ?? 0;
 	const total = amrInitials.value.length + amrParameters.value.length;
-	const amount = total - getTotalInput(modelConfiguration);
+	const amount = total - getTotalInput(modelConfiguration) - inferredParameterList;
 	return getMissingInputsMessage(amount, total);
 };
 
@@ -544,7 +547,8 @@ const selectedConfigMissingInputCount = computed(() => {
 	if (initializing.value) {
 		return '';
 	}
-	const amount = getMissingInputAmount(knobs.value.transientModelConfig);
+	const inferredParameterAmount = knobs.value.transientModelConfig.inferredParameterList?.length ?? 0;
+	const amount = getMissingInputAmount(knobs.value.transientModelConfig) - inferredParameterAmount;
 	const total = getTotalInput(knobs.value.transientModelConfig);
 	return getMissingInputsMessage(amount, total);
 });

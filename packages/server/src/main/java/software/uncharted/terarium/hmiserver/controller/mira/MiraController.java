@@ -44,7 +44,7 @@ import software.uncharted.terarium.hmiserver.service.data.ModelConfigurationServ
 import software.uncharted.terarium.hmiserver.service.data.ProjectService;
 import software.uncharted.terarium.hmiserver.service.tasks.AMRToMMTResponseHandler;
 import software.uncharted.terarium.hmiserver.service.tasks.GenerateModelLatexResponseHandler;
-import software.uncharted.terarium.hmiserver.service.tasks.LatexToSymPyResponseHandler;
+import software.uncharted.terarium.hmiserver.service.tasks.LatexToAMRResponseHandler;
 import software.uncharted.terarium.hmiserver.service.tasks.MdlToStockflowResponseHandler;
 import software.uncharted.terarium.hmiserver.service.tasks.SbmlToPetrinetResponseHandler;
 import software.uncharted.terarium.hmiserver.service.tasks.StellaToStockflowResponseHandler;
@@ -226,9 +226,9 @@ public class MiraController {
 		return ResponseEntity.ok().body(latexResponse);
 	}
 
-	@PostMapping("/latex-to-sympy")
+	@PostMapping("/latex-to-amr")
 	@Secured(Roles.USER)
-	@Operation(summary = "Generate SymPy from a latex")
+	@Operation(summary = "Generate AMR from latex ODE equations")
 	@ApiResponses(
 		value = {
 			@ApiResponse(
@@ -242,7 +242,7 @@ public class MiraController {
 			@ApiResponse(responseCode = "500", description = "There was an issue dispatching the request", content = @Content)
 		}
 	)
-	public ResponseEntity<JsonNode> latexToSymPy(@RequestBody final String latex) {
+	public ResponseEntity<JsonNode> latexToAMR(@RequestBody final String latex) {
 		// create request:
 		final TaskRequest req = new TaskRequest();
 		req.setType(TaskType.MIRA);
@@ -254,7 +254,7 @@ public class MiraController {
 			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("generic.io-error.write"));
 		}
 
-		req.setScript(LatexToSymPyResponseHandler.NAME);
+		req.setScript(LatexToAMRResponseHandler.NAME);
 		req.setUserId(currentUserService.get().getId());
 
 		// send the request

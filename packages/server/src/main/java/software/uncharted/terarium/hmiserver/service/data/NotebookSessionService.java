@@ -52,7 +52,6 @@ public class NotebookSessionService
 		throw new UnsupportedOperationException("Unimplemented");
 	}
 
-
 	@Override
 	public Integer uploadFile(final UUID uuid, final String filename, final ContentType contentType, final byte[] data)
 		throws IOException {

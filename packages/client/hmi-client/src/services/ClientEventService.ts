@@ -1,8 +1,8 @@
 import getConfiguration from '@/services/ConfigService';
 import useAuthStore from '@/stores/auth';
 import type { ClientEvent } from '@/types/Types';
-import type { ExtractionStatusUpdate } from '@/types/common';
 import { ClientEventType } from '@/types/Types';
+import type { ExtractionStatusUpdate } from '@/types/common';
 import { EventSource } from 'extended-eventsource';
 
 /**
@@ -17,7 +17,7 @@ let lastHeartbeat = new Date().valueOf();
 
 /**
  * The initial backoff time in milliseconds for resubscribing to the SSE endpoint
- * in the event of a retriable error
+ * in the event of a retrievable error
  */
 let backoffMs = 1000;
 

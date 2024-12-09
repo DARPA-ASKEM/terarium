@@ -184,7 +184,7 @@ const transitionsList: {
 
 const parameterMatrixModalId = ref('');
 const transitionMatrixModalId = ref('');
-const observablesList = computed(() => createObservablesList(observables));
+const observablesList = computed(() => createObservablesList(observables.value));
 const timeList: {
 	base: ModelPartItem;
 	children: ModelPartItem[];

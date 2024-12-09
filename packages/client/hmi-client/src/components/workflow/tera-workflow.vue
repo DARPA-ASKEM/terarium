@@ -72,7 +72,7 @@
 							:is="registry.getNode(node.operationType)"
 							:node="node"
 							@append-output="(event: any) => appendOutput(node, event)"
-							@append-input-port="(event: any) => appendInputPort(node, event)"
+							@append-input-port="(event: any) => workflowService.appendInputPort(node, event)"
 							@update-state="(event: any) => updateWorkflowNodeState(node, event)"
 							@open-drilldown="addOperatorToRoute(node.id)"
 						/>
@@ -175,7 +175,7 @@ import Button from 'primevue/button';
 import TeraToggleableInput from '@/components/widgets/tera-toggleable-input.vue';
 import ContextMenu from 'primevue/contextmenu';
 import * as workflowService from '@/services/workflow';
-import { OperatorImport, OperatorNodeSize, getNodeMenu } from '@/services/workflow';
+import { OperatorImport, OperatorNodeSize } from '@/services/workflow';
 import * as d3 from 'd3';
 import { AssetType, ClientEventType, EventType, ClientEvent } from '@/types/Types';
 import { useDragEvent } from '@/services/drag-drop';
@@ -205,6 +205,7 @@ import * as OptimizeCiemssOp from '@/components/workflow/ops/optimize-ciemss/mod
 import * as DocumentOp from '@/components/workflow/ops/document/mod';
 import * as ModelFromDocumentOp from '@/components/workflow/ops/model-from-equations/mod';
 import * as ModelComparisonOp from '@/components/workflow/ops/model-comparison/mod';
+import * as CompareDatasetsOp from '@/components/workflow/ops/compare-datasets/mod';
 import * as InterventionPolicyOp from '@/components/workflow/ops/intervention-policy/mod';
 import { subscribe, unsubscribe } from '@/services/ClientEventService';
 import { activeProjectId } from '@/composables/activeProject';
@@ -230,13 +231,14 @@ registry.registerOp(DocumentOp);
 registry.registerOp(ModelFromDocumentOp);
 registry.registerOp(ModelComparisonOp);
 registry.registerOp(InterventionPolicyOp);
+registry.registerOp(CompareDatasetsOp);
 
 // Will probably be used later to save the workflow in the project
 const props = defineProps<{
 	assetId: string;
 }>();
 
-const outputPortMenu = ref(getNodeMenu(registry.operationMap));
+const outputPortMenu = ref(workflowService.getNodeMenu(registry.operationMap));
 const upstreamOperatorsNav = ref<MenuItem[]>([]);
 const downstreamOperatorsNav = ref<MenuItem[]>([]);
 const drilldownSpawnAnimation = ref<'left' | 'right' | 'scale'>('scale');
@@ -298,16 +300,6 @@ const updateWorkflowHandler = debounce(_updateWorkflow, 250);
 const saveWorkflowHandler = () => {
 	saveWorkflowDebounced();
 };
-
-function appendInputPort(node: WorkflowNode<any>, port: { type: string; label?: string; value: any }) {
-	node.inputs.push({
-		id: uuidv4(),
-		type: port.type,
-		label: port.label,
-		isOptional: false,
-		status: WorkflowPortStatus.NOT_CONNECTED
-	});
-}
 
 /**
  * The operator creates a new output, this will mark the
@@ -559,6 +551,10 @@ const contextMenuItems: MenuItem[] = [
 			{
 				label: CalibrateEnsembleCiemssOp.operation.displayName,
 				command: addOperatorToWorkflow(CalibrateEnsembleCiemssOp)
+			},
+			{
+				label: CompareDatasetsOp.operation.displayName,
+				command: addOperatorToWorkflow(CompareDatasetsOp)
 			}
 		]
 	},

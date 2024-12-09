@@ -6,6 +6,7 @@ import { isEqual, omit } from 'lodash';
 export interface InterventionPolicyState extends BaseState {
 	interventionPolicy: InterventionPolicy;
 	taskIds: string[];
+	selectedCharts?: string[];
 }
 
 export const InterventionPolicyOperation: Operation = {

@@ -6,114 +6,9 @@
       "type": "string",
       "description": "The title should say 'Comparison of' and the names of the models being compared."
     },
-    "structuralComparison": {
-      "type": "object",
-      "description": "This section compares the structure of the models to each other.",
-      "properties": {
-        "states": {
-          "type": "object",
-          "description": "A comparison of the state variables of the models.",
-          "properties": {
-            "common": {
-              "type": "string",
-              "description": "A detailed paragraph that compares and summarizes the state variables common to all the models. This should be based on the name, description, and the initial condition expression of the state variables. The focus should be on how these properties are similar across all the models. If there are no common state variables, you can write 'None of the models have state variables in common.'."
-            },
-            "unique": {
-              "type": "string",
-              "description": "A detailed paragraph that compares and summarizes the state variables that are unique for a given model. This should be based on the name, description, and the initial condition expression of the state variables. The focus should be on how these properties differ from the other models. If there are no unique state variables, you can write 'None of the models have unique state variables.'."
-            },
-            "conclusion": {
-              "type": "string",
-              "description": "A short paragraph that summarizes the comparison with a conclusion. There should be mention of which model has the most state variables and which has the fewest. When formatting the paragraph, You should start with 'In conclusion,'."
-            }
-          },
-          "required": [
-            "common",
-            "unique",
-            "conclusion"
-          ],
-          "additionalProperties": false
-        },
-        "parameters": {
-          "type": "object",
-          "description": "A comparison of the parameters of the models.",
-          "properties": {
-            "common": {
-              "type": "string",
-              "description": "A detailed paragraph that compares and summarizes the parameters common to all the models. This should be based on the name, description, value of the parameters and in what rate laws each parameter is used. The focus should be on how these properties are similar across all models. If there are no common parameters, you can write 'None of the models have parameters in common.'."
-            },
-            "unique": {
-              "type": "string",
-              "description": "A detailed paragraph that compares and summarizes the parameters that are unique for a given model. This should be based on the name, description, value of the parameters and in what rate laws each parameter is used. The focus should be on how these properties differ from the other models. If there are no unique parameters, you can write 'None of the models have unique parameters.'."
-            },
-            "conclusion": {
-              "type": "string",
-              "description": "A short paragraph that summarizes the comparison with a conclusion. There should be mention of which model has the parameters and which has the fewest. When formatting the paragraph, You should start with 'In conclusion,'."
-            }
-          },
-          "required": [
-            "common",
-            "unique",
-            "conclusion"
-          ],
-          "additionalProperties": false
-        },
-        "transitions": {
-          "type": "object",
-          "description": "A comparison of the transitions of the models.",
-          "properties": {
-            "common": {
-              "type": "string",
-              "description": "A detailed paragraph that compares and summarizes transitions common to all the models. This should be based on the id, the list of input state variables, the list of output state variables, and the SymPy expression that target each transition. The focus should be on how these properties are similar across all the models. If there are no common transitions, you can write 'None of the models have transitions in common.'."
-            },
-            "unique": {
-              "type": "string",
-              "description": "A detailed paragraph that compares and summarizes transitions that are unique for a given model. This should be based on the id, the list of input state variables, the list of output state variables, and the SymPy expression that target each transition. The focus should be on how these properties differ from the other models. If there are no unique transitions, you can write 'None of the models have unique transitions.'."
-            },
-            "conclusion": {
-              "type": "string",
-              "description": "A short paragraph that summarizes the comparison with a conclusion. There should be mention of which model has the most transitions and which has the fewest. When formatting the paragraph, You should start with 'In conclusion,'."
-            }
-          },
-          "required": [
-            "common",
-            "unique",
-            "conclusion"
-          ],
-          "additionalProperties": false
-        },
-        "observables": {
-          "type": "object",
-          "description": "A comparison of the observables of the models.",
-          "properties": {
-            "common": {
-              "type": "string",
-              "description": "A detailed paragraph that compares and summarizes observables common to all the models. This should be based on the id, name, SymPy expression of each observable. The focus should be on how these properties are similar across all the models. If there are no common observables, you can write 'None of the models have observables in common.'."
-            },
-            "unique": {
-              "type": "string",
-              "description": "A detailed paragraph that compares and summarizes observables that are unique for a given model. This should be based on the id, name, SymPy expression of each observable. The focus should be on how these properties differ from the other models. If there are no unique observables, you can write 'None of the models have unique observables.'."
-            },
-            "conclusion": {
-              "type": "string",
-              "description": "A short paragraph that summarizes the comparison with a conclusion. There should be mention of which model has the most observations and which has the fewest. When formatting the paragraph, You should start with 'In conclusion,'."
-            }
-          },
-          "required": [
-            "common",
-            "unique",
-            "conclusion"
-          ],
-          "additionalProperties": false
-        }
-      },
-      "required": [
-        "states",
-        "parameters",
-        "transitions",
-        "observables"
-      ],
-      "additionalProperties": false
+    "summary": {
+      "type": "string",
+      "description": "A short paragraph that summarizes the comparisons of the models and determines the strengths and weaknesses unique to each model. When formatting the paragraph, mention the intended use cases of each model and ensure the paragraph is big enough to provide detailed information. If a comparison goal is supplied, ensure the summary uses the goal as a reference point. If there is no goal supplied, provide a general summary of the comparison."
     },
     "metadataComparison": {
       "type": "object",
@@ -129,16 +24,11 @@
             "unique": {
               "type": "string",
               "description": "A detailed paragraph that compares and summarizes basic details like source publication, authors, funding, and model type that differ between models. If there are no unique details, you can write 'None of the models have unique details.'."
-            },
-            "conclusion": {
-              "type": "string",
-              "description": "A short paragraph that summarizes the comparison with a conclusion. When formatting the paragraph, You should start with 'In conclusion,'."
             }
           },
           "required": [
             "common",
-            "unique",
-            "conclusion"
+            "unique"
           ],
           "additionalProperties": false
         },
@@ -153,16 +43,11 @@
             "unique": {
               "type": "string",
               "description": "A detailed paragraph that compares and summarizes the unique context that each of the model is designed to be used. This should focus on how the model can be used directly (without modification), how the model can be used indirectly (downstream, as part of a larger system), and how the model can be foreseeably misused (what users should not do). If there are no unique uses, you can write 'None of the models have unique uses.'."
-            },
-            "conclusion": {
-              "type": "string",
-              "description": "A short paragraph that summarizes the comparison with a conclusion. For each of the intended use cases, reason and rank the models in descending order by their fit for purpose. When formatting the paragraph, You should start with 'In conclusion,'."
             }
           },
           "required": [
             "common",
-            "unique",
-            "conclusion"
+            "unique"
           ],
           "additionalProperties": false
         },
@@ -177,16 +62,11 @@
             "unique": {
               "type": "string",
               "description": "A detailed paragraph that compares and summarizes any bias, risks, and technical limitations unique to a given model. This should focus on providing information on assumptions, foreseeable harms, misunderstandings, warnings, and potential mitigations. Here, bias is a disproportionate performance or skew for some subpopulations; a risk is societal-relevant issue that the model might cause; a limitation is a likely failure mode of the model. If there are no unique bias, risks, or limitations, you can write 'None of the models have unique bias, risks, or limitations.'."
-            },
-            "conclusion": {
-              "type": "string",
-              "description": "A short paragraph that summarizes the comparison with a conclusion. When formatting the paragraph, You should start with 'In conclusion,'."
             }
           },
           "required": [
             "common",
-            "unique",
-            "conclusion"
+            "unique"
           ],
           "additionalProperties": false
         },
@@ -201,16 +81,11 @@
             "unique": {
               "type": "string",
               "description": "A detailed paragraph that compares and summarizes the evaluation protocols unique to a given model. This should focus on the type and source of testing data, the factors that could influence model behaviour, the evaluation metrics and benchmarks, any result with respect to social safety issues such as fairness and privacy. If there are no unique evaluation protocols, you can write 'None of the models have unique evaluation protocols.'."
-            },
-            "conclusion": {
-              "type": "string",
-              "description": "A short paragraph that summarizes the comparison with a conclusion. When formatting the paragraph, You should start with 'In conclusion,'."
             }
           },
           "required": [
             "common",
-            "unique",
-            "conclusion"
+            "unique"
           ],
           "additionalProperties": false
         }
@@ -223,16 +98,101 @@
       ],
       "additionalProperties": false
     },
-    "summary": {
-      "type": "string",
-      "description": "A short paragraph that summarizes the comparisons of the models and determines the strengths and weaknesses unique to each model. When formatting the paragraph, mention the intended use cases of each model and ensure the paragraph is big enough to provide detailed information. The paragraph should start with 'In summary,'."
+    "structuralComparison": {
+      "type": "object",
+      "description": "This section compares the structure of the models to each other.",
+      "properties": {
+        "states": {
+          "type": "object",
+          "description": "A comparison of the state variables of the models.",
+          "properties": {
+            "common": {
+              "type": "string",
+              "description": "A detailed paragraph that compares and summarizes the state variables common to all the models. This should be based on the name, description, and the initial condition expression of the state variables. The focus should be on how these properties are similar across all the models. If there are no common state variables, you can write 'None of the models have state variables in common.'."
+            },
+            "unique": {
+              "type": "string",
+              "description": "A detailed paragraph that compares and summarizes the state variables that are unique for a given model. This should be based on the name, description, and the initial condition expression of the state variables. The focus should be on how these properties differ from the other models. If there are no unique state variables, you can write 'None of the models have unique state variables.'."
+            }
+          },
+          "required": [
+            "common",
+            "unique"
+          ],
+          "additionalProperties": false
+        },
+        "parameters": {
+          "type": "object",
+          "description": "A comparison of the parameters of the models.",
+          "properties": {
+            "common": {
+              "type": "string",
+              "description": "A detailed paragraph that compares and summarizes the parameters common to all the models. This should be based on the name, description, value of the parameters and in what rate laws each parameter is used. The focus should be on how these properties are similar across all models. If there are no common parameters, you can write 'None of the models have parameters in common.'."
+            },
+            "unique": {
+              "type": "string",
+              "description": "A detailed paragraph that compares and summarizes the parameters that are unique for a given model. This should be based on the name, description, value of the parameters and in what rate laws each parameter is used. The focus should be on how these properties differ from the other models. If there are no unique parameters, you can write 'None of the models have unique parameters.'."
+            }
+          },
+          "required": [
+            "common",
+            "unique"
+          ],
+          "additionalProperties": false
+        },
+        "transitions": {
+          "type": "object",
+          "description": "A comparison of the transitions of the models.",
+          "properties": {
+            "common": {
+              "type": "string",
+              "description": "A detailed paragraph that compares and summarizes transitions common to all the models. This should be based on the id, the list of input state variables, the list of output state variables, and the SymPy expression that target each transition. The focus should be on how these properties are similar across all the models. If there are no common transitions, you can write 'None of the models have transitions in common.'."
+            },
+            "unique": {
+              "type": "string",
+              "description": "A detailed paragraph that compares and summarizes transitions that are unique for a given model. This should be based on the id, the list of input state variables, the list of output state variables, and the SymPy expression that target each transition. The focus should be on how these properties differ from the other models. If there are no unique transitions, you can write 'None of the models have unique transitions.'."
+            }
+          },
+          "required": [
+            "common",
+            "unique"
+          ],
+          "additionalProperties": false
+        },
+        "observables": {
+          "type": "object",
+          "description": "A comparison of the observables of the models.",
+          "properties": {
+            "common": {
+              "type": "string",
+              "description": "A detailed paragraph that compares and summarizes observables common to all the models. This should be based on the id, name, SymPy expression of each observable. The focus should be on how these properties are similar across all the models. If there are no common observables, you can write 'None of the models have observables in common.'."
+            },
+            "unique": {
+              "type": "string",
+              "description": "A detailed paragraph that compares and summarizes observables that are unique for a given model. This should be based on the id, name, SymPy expression of each observable. The focus should be on how these properties differ from the other models. If there are no unique observables, you can write 'None of the models have unique observables.'."
+            }
+          },
+          "required": [
+            "common",
+            "unique"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "states",
+        "parameters",
+        "transitions",
+        "observables"
+      ],
+      "additionalProperties": false
     }
   },
   "required": [
     "title",
     "summary",
-    "structuralComparison",
-    "metadataComparison"
+    "metadataComparison",
+    "structuralComparison"
   ],
   "additionalProperties": false
 }

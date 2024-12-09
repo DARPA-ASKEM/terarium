@@ -10,9 +10,12 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import java.io.Serial;
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
@@ -358,17 +361,25 @@ public class Model extends TerariumAssetThatSupportsAdditionalProperties {
 		return this.getHeader().getSchemaName().equalsIgnoreCase("petrinet");
 	}
 
+	private String getDescriptionAsReadableString() {
+		if (getMetadata().getDescription() == null) {
+			return null;
+		}
+
+		// remove image tags
+		final String regex = "<img\\b[^>]*>(.*?)<\\/img>|<img\\b[^>]*\\/>";
+		final Pattern pattern = Pattern.compile(regex, Pattern.CASE_INSENSITIVE);
+		final Matcher matcher = pattern.matcher(new String(getMetadata().getDescription()));
+		return matcher.replaceAll("");
+	}
+
 	@JsonIgnore
 	@TSIgnore
 	public String getEmbeddingSourceText() {
-		try {
-			final ObjectMapper objectMapper = new ObjectMapper();
-			if (getMetadata() != null && getMetadata().getGollmCard() != null) {
-				return objectMapper.writeValueAsString(getMetadata().getGollmCard());
-			}
-			return objectMapper.writeValueAsString(this);
-		} catch (final Exception e) {
-			throw new RuntimeException("Failed to serialize model embedding text into JSON", e);
+		if (getMetadata().getDescription() != null) {
+			return getDescriptionAsReadableString();
+		} else {
+			return "";
 		}
 	}
 
@@ -377,15 +388,9 @@ public class Model extends TerariumAssetThatSupportsAdditionalProperties {
 	public Map<TerariumAssetEmbeddingType, String> getEmbeddingsSourceByType() {
 		final Map<TerariumAssetEmbeddingType, String> sources = super.getEmbeddingsSourceByType();
 
-		try {
-			if (getMetadata() != null && getMetadata().getGollmCard() != null) {
-				// update embeddings
-				final JsonNode card = getMetadata().getGollmCard();
-				final ObjectMapper objectMapper = new ObjectMapper();
-				sources.put(TerariumAssetEmbeddingType.CARD, objectMapper.writeValueAsString(card));
-			}
-		} catch (final Exception e) {
-			log.warn("Failed to serialize card embedding text into JSON", e);
+		// Description are saved as base64 encoded strings, this returns a pure string.
+		if (getMetadata().getDescription() != null) {
+			sources.put(TerariumAssetEmbeddingType.DESCRIPTION, getDescriptionAsReadableString());
 		}
 
 		return sources;

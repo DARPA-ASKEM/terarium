@@ -22,6 +22,7 @@ public class CompareModelsResponseHandler extends TaskResponseHandler {
 	public static class Input {
 
 		List<String> amrs;
+		String goal;
 	}
 
 	@Data

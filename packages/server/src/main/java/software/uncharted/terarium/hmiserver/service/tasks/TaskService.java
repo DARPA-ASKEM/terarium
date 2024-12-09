@@ -563,7 +563,7 @@ public class TaskService {
 
 			notificationService.createNotificationGroup(group);
 		} catch (final Exception e) {
-			log.error("Failed to create notificaiton group for id: {}", req.getId(), e);
+			log.error("Failed to create notification group for id: {}", req.getId(), e);
 		}
 
 		try {

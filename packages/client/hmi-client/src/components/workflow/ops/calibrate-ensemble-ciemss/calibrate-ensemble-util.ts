@@ -2,6 +2,7 @@ import _ from 'lodash';
 import { createForecastChart, AUTOSIZE } from '@/services/charts';
 import {
 	DataArray,
+	extractModelConfigIdsInOrder,
 	getEnsembleResultModelConfigMap,
 	getRunResultCSV,
 	getSimulation,
@@ -10,12 +11,13 @@ import {
 import { EnsembleModelConfigs } from '@/types/Types';
 import { WorkflowNode } from '@/types/workflow';
 import { getActiveOutput } from '@/components/workflow/util';
+import { CalibrateMap } from '@/services/calibrate-workflow';
 import {
 	CalibrateEnsembleCiemssOperationState,
 	CalibrateEnsembleMappingRow,
 	CalibrateEnsembleWeights
 } from './calibrate-ensemble-ciemss-operation';
-import { mergeResults, renameFnGenerator } from '../calibrate-ciemss/calibrate-utils';
+import { getErrorData, mergeResults, renameFnGenerator } from '../calibrate-ciemss/calibrate-utils';
 
 export async function getLossValuesFromSimulation(calibrationId: string) {
 	if (!calibrationId) return [];
@@ -142,4 +144,44 @@ export function buildChartData(
 		translationMap[mapObj.datasetMapping] = 'Observations';
 	});
 	return { ...outputData, translationMap };
+}
+
+export interface EnsembleErrorData {
+	ensemble: DataArray;
+	[modelConfigId: string]: DataArray;
+}
+
+// Get the error data for the ensemble calibration
+export function getEnsembleErrorData(
+	groundTruth: DataArray,
+	simulationData: DataArray,
+	mapping: CalibrateEnsembleMappingRow[],
+	pyciemssMap: Record<string, string>
+): EnsembleErrorData {
+	const errorData: EnsembleErrorData = { ensemble: [] };
+	const timestampColName = mapping.find((m) => m.newName === 'timepoint_id')?.datasetMapping ?? '';
+	const mappingWithoutTimeCol = mapping.filter((m) => m.newName !== 'timepoint_id');
+	// Error data for the ensemble
+	const calibrateMappings = mappingWithoutTimeCol.map(
+		(m) =>
+			({
+				datasetVariable: m.datasetMapping,
+				modelVariable: m.datasetMapping
+			}) as CalibrateMap
+	);
+	errorData.ensemble = getErrorData(groundTruth, simulationData, calibrateMappings, timestampColName, pyciemssMap);
+
+	// Error data for each model
+	const modelConfigIds = extractModelConfigIdsInOrder(pyciemssMap);
+	modelConfigIds.forEach((configId) => {
+		const cMapping = mappingWithoutTimeCol.map(
+			(m) =>
+				({
+					datasetVariable: m.datasetMapping,
+					modelVariable: `${configId}/${m.modelConfigurationMappings[configId]}`
+				}) as CalibrateMap
+		);
+		errorData[configId] = getErrorData(groundTruth, simulationData, cMapping, timestampColName, pyciemssMap);
+	});
+	return errorData;
 }

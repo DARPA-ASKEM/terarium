@@ -1,5 +1,5 @@
 <template>
-	<tera-scenario-template :header="header" :scenario-instance="scenario">
+	<tera-scenario-template :header="header" :scenario-instance="scenario" @save-workflow="emit('save-workflow')">
 		<template #inputs>
 			<label>Select a model</label>
 			<Dropdown
@@ -51,6 +51,7 @@
 				option-value="id"
 				@update:model-value="scenario.setModelConfigSpec($event)"
 				:disabled="isEmpty(modelConfigurations) || isFetchingModelInformation"
+				:loading="isFetchingModelInformation"
 			/>
 		</template>
 
@@ -65,6 +66,7 @@
 				:options="modelStateOptions"
 				@update:model-value="scenario.setCalibrateSpec($event)"
 				filter
+				:loading="isFetchingModelInformation"
 			/>
 			<img :src="calibrate" alt="Calibrate chart" />
 		</template>
@@ -75,8 +77,8 @@
 import Dropdown from 'primevue/dropdown';
 import { computed, ref, watch } from 'vue';
 import { useProjects } from '@/composables/project';
-import { AssetType, InterventionPolicy, ModelConfiguration } from '@/types/Types';
-import { getInterventionPoliciesForModel, getModel, getModelConfigurationsForModel } from '@/services/model';
+import { AssetType, ModelConfiguration } from '@/types/Types';
+import { getModel, getModelConfigurationsForModel } from '@/services/model';
 import { isEmpty } from 'lodash';
 import MultiSelect from 'primevue/multiselect';
 import calibrate from '@/assets/svg/template-images/calibration-thumbnail.svg';
@@ -100,12 +102,13 @@ const models = computed(() => useProjects().getActiveProjectAssets(AssetType.Mod
 const datasets = computed(() => useProjects().getActiveProjectAssets(AssetType.Dataset));
 
 const modelConfigurations = ref<ModelConfiguration[]>([]);
-const interventionPolicies = ref<InterventionPolicy[]>([]);
 const modelStateOptions = ref<any[]>([]);
 
 const props = defineProps<{
 	scenario: SituationalAwarenessScenario;
 }>();
+
+const emit = defineEmits(['save-workflow']);
 
 watch(
 	() => props.scenario.modelSpec.id,
@@ -115,7 +118,8 @@ watch(
 		const model = await getModel(modelId);
 		if (!model) return;
 		modelConfigurations.value = await getModelConfigurationsForModel(modelId);
-		interventionPolicies.value = await getInterventionPoliciesForModel(modelId);
+		// TODO: adding intervention policies
+		// interventionPolicies.value = await getInterventionPoliciesForModel(modelId);
 
 		// Set the first model configuration as the default
 		if (!isEmpty(modelConfigurations.value)) {

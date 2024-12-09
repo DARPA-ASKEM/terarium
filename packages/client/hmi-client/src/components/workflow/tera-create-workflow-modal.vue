@@ -7,9 +7,9 @@
 			<div class="grid">
 				<aside class="flex flex-column col-3">
 					<label class="p-text-secondary pb-2">Select a template</label>
-					<div v-for="scenario in scenarios" :key="scenario.id" class="flex align-items-center py-1">
-						<RadioButton :inputId="scenario.id" :value="scenario.id" v-model="selectedTemplateId" />
-						<label class="pl-2" :for="scenario.id">{{ scenario.displayName }}</label>
+					<div v-for="[id, { name }] in scenarioMap" :key="id" class="flex align-items-center py-1">
+						<RadioButton :inputId="id" :value="id" v-model="selectedTemplateId" />
+						<label class="pl-2" :for="id">{{ name }}</label>
 					</div>
 				</aside>
 				<main class="col-9 flex flex-column">
@@ -24,7 +24,13 @@
 			</div>
 		</template>
 		<template #footer>
-			<Button label="Create" size="large" @click="saveWorkflow" :disabled="!getScenario().instance.isValid()" />
+			<Button
+				label="Create"
+				size="large"
+				@click="saveWorkflow"
+				:disabled="!getScenario().instance.isValid()"
+				:loading="isCreatingWorkflow"
+			/>
 			<Button label="Close" class="p-button-secondary" size="large" outlined @click="emit('close-modal')" />
 		</template>
 	</tera-modal>
@@ -45,44 +51,64 @@ import { RouteName } from '@/router/routes';
 import TeraBlankCanvasTemplate from '@/components/workflow/scenario-templates/blank-canvas/tera-blank-canvas-template.vue';
 import TeraSituationalAwarenessTemplate from '@/components/workflow/scenario-templates/situational-awareness/tera-situational-awareness-template.vue';
 import TeraSensitivityAnalysisTemplate from '@/components/workflow/scenario-templates/sensitivity-analysis/tera-sensitivity-analysis-template.vue';
+import TeraDecisionMakingTemplate from '@/components/workflow/scenario-templates/decision-making/tera-decision-making-template.vue';
 import { BlankCanvasScenario } from '@/components/workflow/scenario-templates/blank-canvas/blank-canvas-scenario';
 import { SituationalAwarenessScenario } from '@/components/workflow/scenario-templates/situational-awareness/situational-awareness-scenario';
 import { SensitivityAnalysisScenario } from '@/components/workflow/scenario-templates/sensitivity-analysis/sensitivity-analysis-scenario';
+import { DecisionMakingScenario } from '@/components/workflow/scenario-templates/decision-making/decision-making-scenario';
 
 interface ScenarioItem {
-	displayName: string;
-	id: string;
+	name: string;
 	instance: BaseScenario;
 	component: Component;
 }
 const scenarioComponent = ref();
-const scenarios = ref<ScenarioItem[]>([
-	{
-		displayName: BlankCanvasScenario.templateName,
-		id: BlankCanvasScenario.templateId,
-		instance: new BlankCanvasScenario(),
-		component: markRaw(TeraBlankCanvasTemplate)
-	},
-	{
-		displayName: SituationalAwarenessScenario.templateName,
-		id: SituationalAwarenessScenario.templateId,
-		instance: new SituationalAwarenessScenario(),
-		component: markRaw(TeraSituationalAwarenessTemplate)
-	},
-	{
-		displayName: SensitivityAnalysisScenario.templateName,
-		id: SensitivityAnalysisScenario.templateId,
-		instance: new SensitivityAnalysisScenario(),
-		component: markRaw(TeraSensitivityAnalysisTemplate)
-	}
-]);
+const scenarioMap = ref(
+	new Map<string, ScenarioItem>([
+		[
+			BlankCanvasScenario.templateId,
+			{
+				name: BlankCanvasScenario.templateName,
+				instance: new BlankCanvasScenario(),
+				component: markRaw(TeraBlankCanvasTemplate)
+			}
+		],
+		[
+			SituationalAwarenessScenario.templateId,
+			{
+				name: SituationalAwarenessScenario.templateName,
+				instance: new SituationalAwarenessScenario(),
+				component: markRaw(TeraSituationalAwarenessTemplate)
+			}
+		],
+		[
+			SensitivityAnalysisScenario.templateId,
+			{
+				name: SensitivityAnalysisScenario.templateName,
+				instance: new SensitivityAnalysisScenario(),
+				component: markRaw(TeraSensitivityAnalysisTemplate)
+			}
+		],
+		[
+			DecisionMakingScenario.templateId,
+			{
+				name: DecisionMakingScenario.templateName,
+				instance: new DecisionMakingScenario(),
+				component: markRaw(TeraDecisionMakingTemplate)
+			}
+		]
+	])
+);
 
 const emit = defineEmits(['close-modal']);
-
-const selectedTemplateId = ref<any>(scenarios.value[0].id);
+// get first map entry (Blank Canvas)
+const selectedTemplateId = ref<any>(scenarioMap.value.keys().next().value);
+const isCreatingWorkflow = ref(false);
 
 const saveWorkflow = async () => {
 	if (!getScenario().instance.isValid()) return;
+
+	isCreatingWorkflow.value = true;
 	const scenario = getScenario();
 	const wf = await scenario.instance.createWorkflow();
 	const response = await createWorkflow(wf);
@@ -102,6 +128,8 @@ const saveWorkflow = async () => {
 		}
 	});
 
+	isCreatingWorkflow.value = false;
+
 	emit('close-modal');
 };
 
@@ -112,5 +140,5 @@ onMounted(() => {
 		scenarioComponent.value.$refs.blankTemplate?.$refs.nameInput?.focusInput();
 	});
 });
-const getScenario = () => scenarios.value.find((s) => s.id === selectedTemplateId.value) as ScenarioItem;
+const getScenario = () => scenarioMap.value.get(selectedTemplateId.value) as ScenarioItem;
 </script>
