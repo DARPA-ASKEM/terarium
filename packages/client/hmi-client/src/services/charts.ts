@@ -28,6 +28,7 @@ interface BaseChartOptions {
 	legend?: boolean;
 	autosize?: AUTOSIZE;
 	dateOptions?: DateOptions;
+	scale?: string;
 }
 
 export interface DateOptions {
@@ -514,6 +515,10 @@ export function createForecastChart(
 			type: 'quantitative',
 			axis: yaxis
 		};
+
+		if (options.scale === 'log') {
+			encodingY.scale = { type: 'symlog' };
+		}
 
 		if (options.fitYDomain && layer.data[0]) {
 			// gets the other fieldname
@@ -1310,6 +1315,7 @@ export function createFunmanParameterCharts(
 	};
 }
 
+// Similar to createForecastChart, see about deprecating this later
 export function createDatasetCompareChart(values: any[], headerName: string) {
 	const globalFont = 'Figtree';
 

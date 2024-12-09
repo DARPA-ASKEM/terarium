@@ -20,7 +20,10 @@ from gollm_openai.prompts.general_instruction import GENERAL_INSTRUCTION_PROMPT
 from gollm_openai.prompts.interventions_from_document import INTERVENTIONS_FROM_DOCUMENT_PROMPT
 from gollm_openai.prompts.latex_style_guide import LATEX_STYLE_GUIDE
 from gollm_openai.prompts.model_card import INSTRUCTIONS
-from gollm_openai.prompts.model_meta_compare import MODEL_METADATA_COMPARE_PROMPT
+from gollm_openai.prompts.model_meta_compare import (
+    MODEL_METADATA_COMPARE_PROMPT,
+    MODEL_METADATA_COMPARE_GOAL_PROMPT
+)
 from openai import OpenAI
 from openai.types.chat.completion_create_params import ResponseFormat
 from typing import List
@@ -506,7 +509,8 @@ def model_config_from_dataset(amr: str, dataset: List[str], matrix: str) -> dict
     return unescape_curly_braces(model_config_adapter(output_json))
 
 
-def compare_models(amrs: List[str]) -> dict:
+def compare_models(amrs: List[str], goal: str) -> dict:
+
     print("Comparing models...")
 
     print("Building prompt to compare models...")
@@ -514,6 +518,11 @@ def compare_models(amrs: List[str]) -> dict:
     prompt = MODEL_METADATA_COMPARE_PROMPT.format(
         amrs=joined_escaped_amrs
     )
+    if goal is not None and goal != '':
+        prompt += MODEL_METADATA_COMPARE_GOAL_PROMPT.format(goal=goal)
+    prompt += "Answer:"
+
+    print(prompt)
 
     print("Uploading and validating compare models schema...")
     config_path = os.path.join(SCRIPT_DIR, 'schemas', 'compare_models.json')
