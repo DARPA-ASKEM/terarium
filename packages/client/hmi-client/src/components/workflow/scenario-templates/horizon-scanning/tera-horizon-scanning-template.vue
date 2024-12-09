@@ -117,17 +117,17 @@
 </template>
 
 <script setup lang="ts">
-import { HorizonScanningScenario } from '@/components/workflow/scenario-templates/horizon-scanning/horizon-scanning-scenario';
-import { useProjects } from '@/composables/project';
-import { getInterventionPoliciesForModel, getModel, getModelConfigurationsForModel } from '@/services/model';
-import { AssetType, InterventionPolicy, ModelConfiguration, ParameterSemantic } from '@/types/Types';
 import _, { isEmpty } from 'lodash';
 import { computed, ref, watch } from 'vue';
 import Dropdown from 'primevue/dropdown';
 import MultiSelect from 'primevue/multiselect';
+import Button from 'primevue/button';
+import { useProjects } from '@/composables/project';
+import { HorizonScanningScenario } from '@/components/workflow/scenario-templates/horizon-scanning/horizon-scanning-scenario';
+import { getInterventionPoliciesForModel, getModel, getModelConfigurationsForModel } from '@/services/model';
+import { AssetType, InterventionPolicy, ModelConfiguration, ParameterSemantic } from '@/types/Types';
 import { getModelConfigurationById, getParameter, getParameters } from '@/services/model-configurations';
 import { DistributionType } from '@/services/distribution';
-import Button from 'primevue/button';
 import TeraInputNumber from '@/components/widgets/tera-input-number.vue';
 import { ScenarioHeader } from '../base-scenario';
 import TeraScenarioTemplate from '../tera-scenario-template.vue';

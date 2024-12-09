@@ -1,3 +1,4 @@
+import _ from 'lodash';
 import { BaseScenario } from '@/components/workflow/scenario-templates/base-scenario';
 import * as workflowService from '@/services/workflow';
 import { operation as ModelOp } from '@/components/workflow/ops/model/mod';
@@ -7,7 +8,6 @@ import { operation as CompareDatasetOp } from '@/components/workflow/ops/compare
 import { operation as InterventionOp } from '@/components/workflow/ops/intervention-policy/mod';
 import { OperatorNodeSize } from '@/services/workflow';
 import { createModelConfiguration, getModelConfigurationById, getParameter } from '@/services/model-configurations';
-import _ from 'lodash';
 import { ChartSetting, ChartSettingType } from '@/types/common';
 import { updateChartSettingsBySelectedVariables } from '@/services/chart-settings';
 import { AssetType, ParameterSemantic } from '@/types/Types';
