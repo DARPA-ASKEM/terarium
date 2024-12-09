@@ -284,27 +284,12 @@ export class PetrinetRenderer extends BasicRenderer<NodeData, EdgeData> {
 		});
 	}
 
-	selectEdge(selection: D3SelectionIEdge<EdgeData>) {
-		selection.selectAll('path').style('stroke-width', 3);
-	}
-
-	deselectEdge(selection: D3SelectionIEdge<EdgeData>) {
-		selection.selectAll('path').style('stroke-width', 2);
-	}
-
 	resetOpacity() {
 		this?.chart?.selectAll('.node-ui, .edge').style('opacity', 1);
 	}
 
 	castTransparency() {
 		this?.chart?.selectAll('.node-ui, .edge').style('opacity', 0.3);
-	}
-
-	toggleNodeSelectionByLabel(label: string) {
-		const selection = this.chart?.selectAll('.node-ui').filter((d: any) => d.label === label);
-		if (selection?.size() === 1) {
-			this.toggleNodeSelection(selection as D3SelectionINode<NodeData>);
-		}
 	}
 
 	toggleNodeSelection(selection: D3SelectionINode<NodeData>) {
@@ -316,11 +301,6 @@ export class PetrinetRenderer extends BasicRenderer<NodeData, EdgeData> {
 			this.castTransparency();
 			selection.style('opacity', 1);
 			this.nodeSelection = selection;
-		}
-
-		if (this.edgeSelection) {
-			this.deselectEdge(this.edgeSelection);
-			this.edgeSelection = null;
 		}
 	}
 
@@ -428,25 +408,9 @@ export class PetrinetRenderer extends BasicRenderer<NodeData, EdgeData> {
 			this.toggleNodeSelection(selection);
 		});
 
-		this.on('edge-click', (_eventName, _event, selection: D3SelectionIEdge<EdgeData>) => {
-			if (this.edgeSelection) {
-				this.deselectEdge(this.edgeSelection);
-			}
-			if (this.nodeSelection) {
-				this.nodeSelection = null;
-			}
-
-			this.edgeSelection = selection;
-			this.selectEdge(this.edgeSelection);
-		});
-
 		this.on('background-click', () => {
 			this.resetOpacity();
 
-			if (this.edgeSelection) {
-				this.deselectEdge(this.edgeSelection);
-				this.edgeSelection = null;
-			}
 			if (this.nodeSelection) {
 				this.nodeSelection = null;
 			}
