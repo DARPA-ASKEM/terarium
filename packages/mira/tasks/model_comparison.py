@@ -25,11 +25,9 @@ def main():
         taskrunner = TaskRunnerInterface(description="Compare Model Concepts")
         taskrunner.on_cancellation(cleanup)
 
-        taskrunner.log("Creating Models from input")
         input_dict = taskrunner.read_input_dict_with_timeout()
         amrs = CompareModelConcepts(**input_dict).amrs
-
-        taskrunner.log(f"Received {len(amrs)} AMRs")
+        taskrunner.log(f"Received {len(amrs)} AMRs from input")
 
         ### Create MMT (MIRA Model Template) from input
         models = {}
@@ -41,10 +39,10 @@ def main():
             models[i] = template_model_from_amr_json(amr)
 
         end = time.time()
-        taskrunner.log(f"Creating {len(models)} MMTs from input took {(end - start) * 1000} ms")
+        taskrunner.log(f"Created {len(models)} MMTs from input — took {(end - start) * 1000} ms")
 
         ### Concept context comparison
-        taskrunner.log("Concept context comparison")
+        taskrunner.log("Concept context comparison — started")
 
         # comp = TemplateModelComparison(models.values(), is_ontological_child)
         comp = TemplateModelComparison(models.values(), is_ontological_child, tags, run_on_init=False)
@@ -52,10 +50,10 @@ def main():
 
         previous_end = end
         end = time.time()
-        taskrunner.log(f"Concept context comparison took {(end - previous_end) * 1000} ms")
+        taskrunner.log(f"Concept context comparison — took {(end - previous_end) * 1000} ms")
 
         ### Tabular concept comparison
-        taskrunner.log("Tabular concept comparison")
+        taskrunner.log("Tabular concept comparison — started")
 
         tabular_comparison = {}
         for i, j in itertools.combinations(models.keys(), 2):
@@ -64,29 +62,32 @@ def main():
 
         previous_end = end
         end = time.time()
-        taskrunner.log(f"Tabular concept comparison took {(end - previous_end) * 1000} ms")
+        taskrunner.log(f"Created {len(tabular_comparison)} Tabular concept comparison — took {(end - previous_end) * 1000} ms")
 
         ### Concept graph comparison
-        taskrunner.log("Concept graph comparison")
+        taskrunner.log("Concept graph comparison — started")
 
         concept_graph_comparison = {}
         for i, j in itertools.combinations(models.keys(), 2):
-            image = TemplateModelDelta(
+            tmd = TemplateModelDelta(
                 template_model1=models[i],
                 template_model2=models[j],
                 refinement_function=is_ontological_child,
                 concepts_only=True,
             )
 
+            # Create the image from TemplateModelDelta
+            image_png = tmd.draw_jupyter(name=f"{i}-{j}.png", args="-Grankdir=LR")
+
             # Encode the image in base64
-            image_base64 = base64.b64encode(image).decode('utf-8')
+            image_base64 = base64.b64encode(image_png).decode('utf-8')
 
             # Store the base64 encoded image in the dictionary
             concept_graph_comparison[(i, j)] = image_base64
 
         previous_end = end
         end = time.time()
-        taskrunner.log(f"Concept graph comparison took {(end - previous_end) * 1000} ms")
+        taskrunner.log(f"Created {len(concept_graph_comparison)} Concept graph comparison — took {(end - previous_end) * 1000} ms")
 
 
         ### Send the results back
@@ -99,7 +100,7 @@ def main():
 
         # Log the time taken to compare model concepts
         end = time.time()
-        taskrunner.log(f"Compare Model Concepts took {(end - start) * 1000} ms")
+        taskrunner.log(f"Compare Model Concepts — took {(end - start) * 1000} ms")
 
         print("Compare Model Concepts succeeded")
     except Exception as e:
