@@ -1,14 +1,14 @@
 # Build the Spring Boot application
-FROM python:3.10-slim-bookworm AS mira_taskrunner_builder
+FROM python:3.10-bookworm AS mira_taskrunner_builder
 
 ###### DEV ONLY ######
 #VVVVVVVVVVVVVVVVVVVVV
 
 # These deps are installed only for use during local development
 
-# Install OpenJDK
-RUN apt-get update && apt-get install -y --no-install-recommends \
-	wget \
+# Install OpenJDK and libraries for Mira
+RUN apt update && apt install -y --no-install-recommends \
+	wget graphviz libgraphviz-dev pkg-config \
 	openjdk-17-jdk-headless && \
 	rm -rf /var/lib/apt/lists/*
 
@@ -24,7 +24,7 @@ WORKDIR /mira
 RUN pip install --no-cache-dir .[sbml,biomodels]
 
 # install sympy
-RUN pip install sympy antlr4-python3-runtime==4.11
+RUN pip install sympy antlr4-python3-runtime==4.11 pygraphviz ipython
 
 #^^^^^^^^^^^^^^^^^^^^
 ######################
@@ -36,14 +36,14 @@ COPY ./packages/taskrunner .
 RUN ./gradlew bootJar
 
 # ------------------------------------------------------------------------------
-FROM python:3.10-slim-bookworm
+FROM python:3.10-bookworm
 
 WORKDIR /
 
-# Install OpenJDK JRE
-RUN apt-get update && apt-get install -y --no-install-recommends \
-	wget \
-	openjdk-17-jre-headless && \
+# Install OpenJDK and libraries for Mira
+RUN apt update && apt install -y --no-install-recommends \
+	wget graphviz libgraphviz-dev pkg-config \
+	openjdk-17-jdk-headless && \
 	rm -rf /var/lib/apt/lists/*
 
 # Copy the Spring Boot fat JAR from the builder image
@@ -67,7 +67,7 @@ WORKDIR /mira_task
 RUN pip install --no-cache-dir -e .
 
 # install sympy
-RUN pip install sympy antlr4-python3-runtime==4.11
+RUN pip install sympy antlr4-python3-runtime==4.11 pygraphviz ipython
 
 WORKDIR /
 CMD ["java", "-jar", "taskrunner.jar"]
