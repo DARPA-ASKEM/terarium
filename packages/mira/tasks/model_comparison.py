@@ -4,6 +4,7 @@ import traceback
 import time
 import base64
 import json
+from pandas import DataFrame
 from pydantic import BaseModel
 from typing import List
 from taskrunner import TaskRunnerInterface
@@ -57,12 +58,15 @@ def main():
 
         tabular_comparison = {}
         for i, j in itertools.combinations(models.keys(), 2):
-            table = get_concept_comparison_table(models[i], models[j], name_only=True)
-            tabular_comparison[(i, j)] = table.to_csv(encoding='utf-8')
+            table = get_concept_comparison_table(models[i], models[j], name_only=True, refinement_func=is_ontological_child)
+            taskrunner.log(f"Tabular concept comparison — between {tags[i]} and {tags[j]}")
+
+            # Store the CSV in the dictionary
+            tabular_comparison[f"{i}-{j}"] = table.to_csv(encoding='utf-8')
 
         previous_end = end
         end = time.time()
-        taskrunner.log(f"Created {len(tabular_comparison)} Tabular concept comparison — took {(end - previous_end) * 1000} ms")
+        taskrunner.log(f"Tabular concept comparison — {len(tabular_comparison)} comparison took {(end - previous_end) * 1000} ms")
 
         ### Concept graph comparison
         taskrunner.log("Concept graph comparison — started")
@@ -75,20 +79,18 @@ def main():
                 refinement_function=is_ontological_child,
                 concepts_only=True,
             )
+            taskrunner.log(f"Concept graph comparison — between {tags[i]} and {tags[j]}")
 
             # Create the image from TemplateModelDelta
-            image_png = tmd.draw_jupyter(name=f"{i}-{j}.png", args="-Grankdir=LR")
-
-            # Encode the image in base64
-            image_base64 = base64.b64encode(image_png).decode('utf-8')
+            png_bytes = tmd.draw_jupyter(name=f"{tags[i]}-{tags[j]}.png", args="-Grankdir=LR").data
 
             # Store the base64 encoded image in the dictionary
-            concept_graph_comparison[(i, j)] = image_base64
+            image_base64 = base64.b64encode(png_bytes).decode('utf-8')
+            concept_graph_comparison[f"{i}-{j}"] = image_base64
 
         previous_end = end
         end = time.time()
-        taskrunner.log(f"Created {len(concept_graph_comparison)} Concept graph comparison — took {(end - previous_end) * 1000} ms")
-
+        taskrunner.log(f"Concept graph comparison — {len(concept_graph_comparison)} comparison took {(end - previous_end) * 1000} ms")
 
         ### Send the results back
         result = {
