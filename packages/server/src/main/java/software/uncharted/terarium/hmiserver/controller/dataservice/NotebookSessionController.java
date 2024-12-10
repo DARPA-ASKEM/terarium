@@ -250,29 +250,26 @@ public class NotebookSessionController {
 			currentUserService.get().getId(),
 			projectId
 		);
+		final NotebookSession session = sessionService
+			.getAsset(id, permission)
+			.orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, messages.get("asset.not-found")));
+
+		NotebookSession newNotebookSession;
 		try {
-			final Optional<NotebookSession> session = sessionService.getAsset(id, permission);
-			if (session.isEmpty()) {
-				return ResponseEntity.notFound().build();
-			}
-			final NotebookSession newNotebookSession = sessionService.createAsset(
-				session.get().clone(),
-				projectId,
-				permission
-			);
-
-			final Project project = projectService
-				.getProject(projectId)
-				.orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, messages.get("asset.not-found")));
-
-			projectAssetService.createProjectAsset(project, AssetType.NOTEBOOK_SESSION, newNotebookSession, permission);
-
-			return ResponseEntity.status(HttpStatus.OK).body(newNotebookSession);
+			newNotebookSession = sessionService.createAsset(session.clone(), projectId, permission);
 		} catch (final Exception e) {
 			final String error = "Unable to clone notebook session";
 			log.error(error, e);
 			throw new ResponseStatusException(org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR, error);
 		}
+
+		final Project project = projectService
+			.getProject(projectId)
+			.orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, messages.get("asset.not-found")));
+
+		projectAssetService.createProjectAsset(project, AssetType.NOTEBOOK_SESSION, newNotebookSession, permission);
+
+		return ResponseEntity.status(HttpStatus.OK).body(newNotebookSession);
 	}
 
 	/**
