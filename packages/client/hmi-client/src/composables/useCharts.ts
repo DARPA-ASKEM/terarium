@@ -200,8 +200,8 @@ export function useCharts(
 			xAxisTitle: getUnit('_time') || 'Time',
 			yAxisTitle: _.uniq(variables.map(getUnit).filter((v) => !!v)).join(',') || '',
 			dateOptions,
-			colorscheme: [BASE_GREY, color ?? PRIMARY_COLOR]
-      scale: setting.scale
+			colorscheme: [BASE_GREY, color ?? PRIMARY_COLOR],
+			scale: setting.scale
 		};
 
 		let sampleLayerVariables = [
