@@ -33,6 +33,7 @@ import software.uncharted.terarium.hmiserver.service.CurrentUserService;
 import software.uncharted.terarium.hmiserver.service.data.NotebookSessionService;
 import software.uncharted.terarium.hmiserver.service.data.ProjectAssetService;
 import software.uncharted.terarium.hmiserver.service.data.ProjectService;
+import software.uncharted.terarium.hmiserver.utils.Messages;
 import software.uncharted.terarium.hmiserver.utils.rebac.Schema;
 
 /** Rest controller for storing, retrieving, modifying and deleting notebook sessions in the dataservice */
@@ -43,7 +44,7 @@ import software.uncharted.terarium.hmiserver.utils.rebac.Schema;
 public class NotebookSessionController {
 
 	final NotebookSessionService sessionService;
-
+	private final Messages messages;
 	private final ProjectService projectService;
 	private final ProjectAssetService projectAssetService;
 	private final CurrentUserService currentUserService;
@@ -260,9 +261,11 @@ public class NotebookSessionController {
 				permission
 			);
 
-			final Optional<Project> project = projectService.getProject(projectId);
+			final Project project = projectService
+				.getProject(projectId)
+				.orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, messages.get("asset.not-found")));
 
-			projectAssetService.createProjectAsset(project.get(), AssetType.NOTEBOOK_SESSION, newNotebookSession, permission);
+			projectAssetService.createProjectAsset(project, AssetType.NOTEBOOK_SESSION, newNotebookSession, permission);
 
 			return ResponseEntity.status(HttpStatus.OK).body(newNotebookSession);
 		} catch (final Exception e) {
