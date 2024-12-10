@@ -402,6 +402,9 @@ export function createForecastChart(
 	groundTruthLayer: ForecastChartLayer | null,
 	options: ForecastChartOptions
 ) {
+	// console.log(samplingLayer, statisticsLayer, groundTruthLayer, options);
+	console.log(statisticsLayer);
+
 	const axisColor = '#EEE';
 	const labelColor = '#667085';
 	const labelFontWeight = 'normal';

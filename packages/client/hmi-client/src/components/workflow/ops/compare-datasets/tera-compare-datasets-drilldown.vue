@@ -309,28 +309,34 @@ async function createCharts() {
 			const name = `${headerName}_${datasets.value[datasetIndex].name}`;
 			variableNames.push(name);
 
-			differences.push(
-				...referenceColumn.map((referencePoint: number, index: number) => {
-					let value = 0;
-					if (knobs.value.selectedPlotValue === PlotValue.VALUE) {
-						value = referencePoint - columnToSubtract[index]; // difference
-					} else if (knobs.value.selectedPlotValue === PlotValue.PERCENTAGE) {
-						value = ((referencePoint - columnToSubtract[index]) / referencePoint) * 100; // percentage
-					} else if (knobs.value.selectedPlotValue === PlotValue.TRAJECTORY) {
-						value = parseFloat(columnToSubtract[index]); // trajectory
-					}
-					return {
+			referenceColumn.forEach((referencePoint: number, index: number) => {
+				let value = 0;
+				if (knobs.value.selectedPlotValue === PlotValue.VALUE) {
+					value = referencePoint - columnToSubtract[index]; // difference
+				} else if (knobs.value.selectedPlotValue === PlotValue.PERCENTAGE) {
+					value = ((referencePoint - columnToSubtract[index]) / referencePoint) * 100; // percentage
+				} else if (knobs.value.selectedPlotValue === PlotValue.TRAJECTORY) {
+					value = parseFloat(columnToSubtract[index]); // trajectory
+				}
+				if (differences[index] === undefined) {
+					differences.push({
 						[name]: value,
 						timepoint: parseFloat(timepoints[index])
-					};
-				})
-			);
+					});
+				} else {
+					differences[index][name] = value;
+				}
+			});
 		});
-		console.log(differences);
+		console.log(differences, variableNames);
 		compareCharts.value.push(
 			createForecastChart(
-				{ data: differences, variables: variableNames, timeField: 'timepoint' },
-				{ data: differences, variables: variableNames, timeField: 'timepoint' },
+				null,
+				{
+					data: differences,
+					variables: variableNames,
+					timeField: 'timepoint'
+				},
 				null,
 				{
 					title: headerName,
