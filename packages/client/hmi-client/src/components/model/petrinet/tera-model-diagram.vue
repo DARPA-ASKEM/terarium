@@ -163,7 +163,12 @@ async function renderGraph() {
 
 	// If not interactive, convert elem buffer into image
 	if (props.featureConfig?.isPreview && graphElement.value) {
-		const image = await svgToImage(elem?.querySelector('svg') as SVGElement);
+		const svg = elem?.querySelector('svg') as SVGElement;
+
+		// Carry background from container
+		svg.style.background = '#f9fbfa';
+
+		const image = await svgToImage(svg);
 		graphElement.value.innerHTML = '';
 		graphElement.value.appendChild(image);
 		elem = null;

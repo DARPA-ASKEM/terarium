@@ -40,12 +40,13 @@ export const svgToImage = (svgElement: SVGElement): Promise<HTMLImageElement> =>
 	const serializer = new XMLSerializer();
 	// embedExternalStyles(svgElement);
 
+	const w = svgElement.clientWidth || parseFloat(svgElement.getAttribute('width') as string);
+	const h = svgElement.clientHeight || parseFloat(svgElement.getAttribute('height') as string);
+
 	const svgString = serializer.serializeToString(svgElement);
 	const svgBlob = new Blob([svgString], { type: 'image/svg+xml;charset=utf-8' });
 	const url = URL.createObjectURL(svgBlob);
 
-	const w = svgElement.clientWidth || parseFloat(svgElement.getAttribute('width') as string);
-	const h = svgElement.clientHeight || parseFloat(svgElement.getAttribute('height') as string);
 	const img = new Image(w, h);
 	const finalImg = new Image(w, h);
 
