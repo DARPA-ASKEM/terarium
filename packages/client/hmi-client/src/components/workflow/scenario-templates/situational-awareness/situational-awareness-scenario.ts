@@ -5,6 +5,10 @@ import { operation as ModelConfigOp } from '@/components/workflow/ops/model-conf
 import { operation as CalibrateCiemssOp } from '@/components/workflow/ops/calibrate-ciemss/mod';
 import { operation as DatasetOp } from '@/components/workflow/ops/dataset/mod';
 import { OperatorNodeSize } from '@/services/workflow';
+import { getModelConfigurationById } from '@/services/model-configurations';
+import _ from 'lodash';
+import { ChartSetting, ChartSettingType } from '@/types/common';
+import { updateChartSettingsBySelectedVariables } from '@/services/chart-settings';
 
 export class SituationalAwarenessScenario extends BaseScenario {
 	public static templateId = 'situational-awareness';
@@ -19,9 +23,13 @@ export class SituationalAwarenessScenario extends BaseScenario {
 
 	calibrateSpec: { ids: string[] };
 
+	historicalInterventionSpec: { id: string };
+
+	futureInterventionSpec: { id: string };
+
 	constructor() {
 		super();
-		this.workflowName = 'Situational Awareness';
+		this.workflowName = '';
 		this.modelSpec = {
 			id: ''
 		};
@@ -33,6 +41,12 @@ export class SituationalAwarenessScenario extends BaseScenario {
 		};
 		this.calibrateSpec = {
 			ids: []
+		};
+		this.historicalInterventionSpec = {
+			id: ''
+		};
+		this.futureInterventionSpec = {
+			id: ''
 		};
 	}
 
@@ -50,15 +64,46 @@ export class SituationalAwarenessScenario extends BaseScenario {
 		this.modelConfigSpec.id = id;
 	}
 
+	setHistoricalInterventionSpec(id: string) {
+		this.historicalInterventionSpec.id = id;
+	}
+
+	setFutureInterventionSpec(id: string) {
+		this.futureInterventionSpec.id = id;
+	}
+
 	setCalibrateSpec(ids: string[]) {
 		this.calibrateSpec.ids = ids;
 	}
 
-	createWorkflow() {
-		const wf = new workflowService.WorkflowWrapper();
+	toJSON() {
+		return {
+			templateId: SituationalAwarenessScenario.templateId,
+			workflowName: this.workflowName,
+			modelSpec: this.modelSpec,
+			datasetSpec: this.datasetSpec,
+			modelConfigSpec: this.modelConfigSpec,
+			calibrateSpec: this.calibrateSpec
+		};
+	}
 
-		// Model
-		wf.addNode(
+	isValid(): boolean {
+		return (
+			!!this.workflowName &&
+			!!this.modelSpec.id &&
+			!!this.datasetSpec.id &&
+			!!this.modelConfigSpec.id &&
+			!_.isEmpty(this.calibrateSpec.ids)
+		);
+	}
+
+	async createWorkflow() {
+		const wf = new workflowService.WorkflowWrapper();
+		wf.setWorkflowName(this.workflowName);
+		wf.setWorkflowScenario(this.toJSON());
+
+		// 1. Add nodes
+		const modelNode = wf.addNode(
 			ModelOp,
 			{ x: 0, y: 0 },
 			{
@@ -66,8 +111,7 @@ export class SituationalAwarenessScenario extends BaseScenario {
 			}
 		);
 
-		// Dataset
-		wf.addNode(
+		const datasetNode = wf.addNode(
 			DatasetOp,
 			{ x: 0, y: 0 },
 			{
@@ -75,17 +119,15 @@ export class SituationalAwarenessScenario extends BaseScenario {
 			}
 		);
 
-		// Model Configuration
-		wf.addNode(
+		const modelConfig = await getModelConfigurationById(this.modelConfigSpec.id);
+		const modelConfigNode = wf.addNode(
 			ModelConfigOp,
 			{ x: 0, y: 0 },
 			{
 				size: OperatorNodeSize.medium
 			}
 		);
-
-		// Calibrate
-		wf.addNode(
+		const calibrateNode = wf.addNode(
 			CalibrateCiemssOp,
 			{ x: 0, y: 0 },
 			{
@@ -93,9 +135,65 @@ export class SituationalAwarenessScenario extends BaseScenario {
 			}
 		);
 
-		const workflow = wf.dump();
-		workflow.name = this.workflowName;
+		// 2. Add edges
+		wf.addEdge(modelNode.id, modelNode.outputs[0].id, modelConfigNode.id, modelConfigNode.inputs[0].id, [
+			{ x: 0, y: 0 },
+			{ x: 0, y: 0 }
+		]);
+		wf.addEdge(modelConfigNode.id, modelConfigNode.outputs[0].id, calibrateNode.id, calibrateNode.inputs[0].id, [
+			{ x: 0, y: 0 },
+			{ x: 0, y: 0 }
+		]);
+		wf.addEdge(datasetNode.id, datasetNode.outputs[0].id, calibrateNode.id, calibrateNode.inputs[1].id, [
+			{ x: 0, y: 0 },
+			{ x: 0, y: 0 }
+		]);
 
-		return workflow;
+		// 3. Setting node states/outputs
+		wf.updateNode(modelNode, {
+			state: {
+				modelId: this.modelSpec.id
+			},
+			output: {
+				value: [this.modelSpec.id]
+			}
+		});
+
+		wf.updateNode(datasetNode, {
+			state: {
+				datasetId: this.datasetSpec.id
+			},
+			output: {
+				value: [this.datasetSpec.id]
+			}
+		});
+
+		wf.updateNode(modelConfigNode, {
+			state: {
+				transientModelConfig: modelConfig
+			},
+			output: {
+				value: [modelConfig.id],
+				state: _.omit(modelConfigNode.state, ['transientModelConfig'])
+			}
+		});
+
+		let calibrateChartSettings: ChartSetting[] = [];
+		calibrateChartSettings = updateChartSettingsBySelectedVariables(
+			calibrateChartSettings,
+			ChartSettingType.VARIABLE,
+			this.calibrateSpec.ids
+		);
+
+		wf.updateNode(calibrateNode, {
+			state: {
+				chartSettings: calibrateChartSettings
+			}
+		});
+
+		// 4. Run layout
+		wf.runDagreLayout();
+
+		return wf.dump();
 	}
 }

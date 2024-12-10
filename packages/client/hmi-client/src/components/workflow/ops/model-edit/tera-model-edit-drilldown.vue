@@ -27,6 +27,7 @@
 								size="small"
 								:loading="isUpdatingModel"
 								@click="runCode"
+								:disabled="isEmpty(codeText)"
 							/>
 						</template>
 					</tera-notebook-jupyter-input>
@@ -144,7 +145,8 @@ const sampleAgentQuestions = [
 	'Rename the state S to Susceptible in the infection transition.',
 	'Rename the transition infection to inf.',
 	'Change rate law of inf to S * I * z.',
-	'Add a new parameter with id θ and value 0.5.'
+	'Add a new parameter with id θ and value 0.5.',
+	'Specify the time unit of the model to be "day"'
 ];
 
 const contextLanguage = ref<string>('python3');

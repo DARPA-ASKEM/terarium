@@ -20,6 +20,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 import software.uncharted.terarium.hmiserver.controller.SnakeCaseController;
+import software.uncharted.terarium.hmiserver.models.dataservice.AssetType;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.configurations.ModelConfiguration;
 import software.uncharted.terarium.hmiserver.models.dataservice.project.Project;
 import software.uncharted.terarium.hmiserver.models.dataservice.simulation.ProgressState;
@@ -37,6 +38,7 @@ import software.uncharted.terarium.hmiserver.security.Roles;
 import software.uncharted.terarium.hmiserver.service.ClientEventService;
 import software.uncharted.terarium.hmiserver.service.CurrentUserService;
 import software.uncharted.terarium.hmiserver.service.data.ModelConfigurationService;
+import software.uncharted.terarium.hmiserver.service.data.ProjectAssetService;
 import software.uncharted.terarium.hmiserver.service.data.ProjectService;
 import software.uncharted.terarium.hmiserver.service.data.SimulationService;
 import software.uncharted.terarium.hmiserver.service.notification.NotificationService;
@@ -56,6 +58,7 @@ public class SimulationRequestController implements SnakeCaseController {
 	private final SimulationCiemssServiceProxy simulationCiemssServiceProxy;
 
 	private final ProjectService projectService;
+	private final ProjectAssetService projectAssetService;
 	private final SimulationService simulationService;
 
 	private final ModelConfigurationService modelConfigService;
@@ -119,16 +122,15 @@ public class SimulationRequestController implements SnakeCaseController {
 			.makeForecastRun(convertObjectToSnakeCaseJsonNode(request.payload))
 			.getBody();
 
-		final Simulation sim = new Simulation();
-
-		sim.setId(UUID.fromString(res.getSimulationId()));
-		sim.setType(SimulationType.SIMULATION);
+		final Optional<Simulation> sim = simulationService.getAsset(UUID.fromString(res.getSimulationId()), permission);
+		final Optional<Project> project = projectService.getProject(projectId);
 
 		new SimulationRequestStatusNotifier(
 			notificationService,
 			clientEventService,
+			currentUserService,
 			simulationService,
-			sim.getId(),
+			sim.get().getId(),
 			projectId,
 			permission,
 			request.metadata
@@ -138,22 +140,9 @@ public class SimulationRequestController implements SnakeCaseController {
 			.setHalfTimeSeconds(2.0)
 			.startPolling();
 
-		sim.setExecutionPayload(objectMapper.convertValue(request, JsonNode.class));
-		sim.setStatus(ProgressState.QUEUED);
-		sim.setEngine(SimulationEngine.CIEMSS);
-
-		final Optional<Project> project = projectService.getProject(projectId);
-		if (project.isPresent()) {
-			sim.setProjectId(project.get().getId());
-			sim.setUserId(project.get().getUserId());
-		}
-
 		try {
-			final Optional<Simulation> updated = simulationService.updateAsset(sim, projectId, permission);
-			if (updated.isEmpty()) {
-				return ResponseEntity.notFound().build();
-			}
-			return ResponseEntity.ok(updated.get());
+			projectAssetService.createProjectAsset(project.get(), AssetType.SIMULATION, sim.get(), permission);
+			return ResponseEntity.ok(sim.get());
 		} catch (final Exception e) {
 			final String error = "Failed to create simulation";
 			log.error(error, e);
@@ -186,12 +175,17 @@ public class SimulationRequestController implements SnakeCaseController {
 		new SimulationRequestStatusNotifier(
 			notificationService,
 			clientEventService,
+			currentUserService,
 			simulationService,
 			UUID.fromString(res.getSimulationId()),
 			projectId,
 			permission,
 			request.metadata
 		).startPolling();
+
+		final Optional<Simulation> sim = simulationService.getAsset(UUID.fromString(res.getSimulationId()), permission);
+		final Optional<Project> project = projectService.getProject(projectId);
+		projectAssetService.createProjectAsset(project.get(), AssetType.SIMULATION, sim.get(), permission);
 
 		return ResponseEntity.ok(res);
 	}
@@ -222,12 +216,17 @@ public class SimulationRequestController implements SnakeCaseController {
 		new SimulationRequestStatusNotifier(
 			notificationService,
 			clientEventService,
+			currentUserService,
 			simulationService,
 			UUID.fromString(res.getSimulationId()),
 			projectId,
 			permission,
 			request.metadata
 		).startPolling();
+
+		final Optional<Simulation> sim = simulationService.getAsset(UUID.fromString(res.getSimulationId()), permission);
+		final Optional<Project> project = projectService.getProject(projectId);
+		projectAssetService.createProjectAsset(project.get(), AssetType.SIMULATION, sim.get(), permission);
 
 		return ResponseEntity.ok(res);
 	}
@@ -246,15 +245,22 @@ public class SimulationRequestController implements SnakeCaseController {
 		final JobResponse res = simulationCiemssServiceProxy
 			.makeEnsembleSimulateCiemssJob(convertObjectToSnakeCaseJsonNode(request.payload))
 			.getBody();
+
 		new SimulationRequestStatusNotifier(
 			notificationService,
 			clientEventService,
+			currentUserService,
 			simulationService,
 			UUID.fromString(res.getSimulationId()),
 			projectId,
 			permission,
 			request.metadata
 		).startPolling();
+
+		final Optional<Simulation> sim = simulationService.getAsset(UUID.fromString(res.getSimulationId()), permission);
+		final Optional<Project> project = projectService.getProject(projectId);
+		projectAssetService.createProjectAsset(project.get(), AssetType.SIMULATION, sim.get(), permission);
+
 		return ResponseEntity.ok(res);
 	}
 
@@ -276,12 +282,17 @@ public class SimulationRequestController implements SnakeCaseController {
 		new SimulationRequestStatusNotifier(
 			notificationService,
 			clientEventService,
+			currentUserService,
 			simulationService,
 			UUID.fromString(res.getSimulationId()),
 			projectId,
 			permission,
 			request.metadata
 		).startPolling();
+
+		final Optional<Simulation> sim = simulationService.getAsset(UUID.fromString(res.getSimulationId()), permission);
+		final Optional<Project> project = projectService.getProject(projectId);
+		projectAssetService.createProjectAsset(project.get(), AssetType.SIMULATION, sim.get(), permission);
 
 		return ResponseEntity.ok(res);
 	}

@@ -16,15 +16,14 @@
 			>
 				<template #content>
 					<div class="toolbar">
-						<p>Set your mapping, calibration and visualization settings then click run.</p>
+						<Button
+							label="Reset"
+							outlined
+							@click="resetState"
+							severity="secondary"
+							:disabled="_.isEmpty(node.outputs[0].value)"
+						/>
 						<span class="flex gap-2">
-							<Button
-								label="Reset"
-								outlined
-								@click="resetState"
-								severity="secondary"
-								:disabled="_.isEmpty(node.outputs[0].value)"
-							/>
 							<tera-pyciemss-cancel-button class="mr-auto" :simulation-run-id="cancelRunId" />
 							<Button label="Run" icon="pi pi-play" @click="runCalibrate" :disabled="disableRunButton" />
 						</span>
@@ -33,7 +32,7 @@
 					<!-- Mapping section -->
 					<div class="form-section">
 						<h5 class="mb-1">Mapping</h5>
-						<p class="mb-2">
+						<p class="mb-2 p-text-secondary text-sm">
 							Select a subset of output variables of the model and individually associate them to columns in the
 							dataset.
 						</p>
@@ -67,6 +66,7 @@
 										:placeholder="mappingDropdownPlaceholder"
 										v-model="data[field]"
 										:options="modelStateOptions?.map((ele) => ele.referenceId ?? ele.id)"
+										@change="updateMapping()"
 									/>
 								</template>
 							</Column>
@@ -80,6 +80,7 @@
 										:placeholder="mappingDropdownPlaceholder"
 										v-model="data[field]"
 										:options="datasetColumns?.map((ele) => ele.name)"
+										@change="updateMapping()"
 									/>
 								</template>
 							</Column>
@@ -137,7 +138,7 @@
 								@update:model-value="setPresetValues"
 							/>
 						</div>
-						<label class="mb-1 p-text-secondary text-sm">
+						<label class="p-text-secondary text-sm flex align-items-center gap-2 my-1">
 							<i class="pi pi-info-circle" />
 							This impacts solver method, iterations and learning rate.
 						</label>
@@ -146,7 +147,7 @@
 								<label>Number of Samples</label>
 								<tera-input-number inputId="integeronly" v-model="knobs.numSamples" @update:model-value="updateState" />
 							</div>
-							<div class="spacer m-3" />
+							<div class="spacer m-4" />
 
 							<h6 class="mb-2">ODE solver options</h6>
 
@@ -165,7 +166,7 @@
 									<tera-input-number inputId="integeronly" v-model="knobs.stepSize" />
 								</div>
 							</div>
-							<div class="spacer m-3" />
+							<div class="spacer m-4" />
 							<h6 class="mb-2">Inference Options</h6>
 							<div class="input-row">
 								<div class="label-and-input">
@@ -192,7 +193,7 @@
 									<label>Loss function</label>
 									<tera-input-text disabled model-value="ELBO" />
 								</div>
-								<div class="label-and-input">
+								<div class="label-and-input mb-3">
 									<label>Optimizer method</label>
 									<tera-input-text disabled model-value="ADAM" />
 								</div>
@@ -223,8 +224,8 @@
 		<!-- Output section -->
 		<template #preview>
 			<tera-drilldown-section v-if="showOutputSection">
-				<template #header-controls-left v-if="configuredModelConfig?.name">
-					<h5 class="ml-3">{{ configuredModelConfig.name }}</h5>
+				<template #header-controls-left>
+					<h5 v-if="configuredModelConfig?.name" class="ml-3">{{ configuredModelConfig.name }}</h5>
 				</template>
 				<template #header-controls-right>
 					<Button
@@ -245,7 +246,7 @@
 					class="p-3"
 					:summary-id="node.state.summaryId"
 				/>
-				<Accordion :active-index="0" class="px-2" v-if="!isLoading">
+				<Accordion :active-index="lossActiveIndex" class="px-2" v-if="!isLoading">
 					<AccordionTab header="Loss">
 						<!-- Loss chart -->
 						<div ref="lossChartContainer">
@@ -261,7 +262,7 @@
 				</Accordion>
 				<div v-if="!isLoading">
 					<section class="pb-3" ref="outputPanel" v-if="modelConfig && csvAsset">
-						<Accordion multiple :active-index="[0, 1, 2, 3, 4]" class="px-2">
+						<Accordion multiple :active-index="currentActiveIndicies" class="px-2">
 							<AccordionTab header="Parameter distributions">
 								<template v-for="setting of selectedParameterSettings" :key="setting.id">
 									<vega-chart
@@ -518,7 +519,7 @@ import {
 	Model
 } from '@/types/Types';
 import { CiemssPresetTypes, DrilldownTabs, ChartSettingType } from '@/types/common';
-import { getTimespan, nodeMetadata } from '@/components/workflow/util';
+import { getActiveOutput, getTimespan, nodeMetadata } from '@/components/workflow/util';
 import { useToastService } from '@/services/toast';
 import { autoCalibrationMapping } from '@/services/concept';
 import {
@@ -548,13 +549,7 @@ import { getCalendarSettingsFromModel } from '@/services/model';
 import { useCharts } from '@/composables/useCharts';
 import { useChartSettings } from '@/composables/useChartSettings';
 import type { CalibrationOperationStateCiemss } from './calibrate-operation';
-import {
-	renameFnGenerator,
-	getErrorData,
-	usePreparedChartInputs,
-	getSelectedOutputMapping,
-	getSelectedOutput
-} from './calibrate-utils';
+import { renameFnGenerator, getErrorData, usePreparedChartInputs, getSelectedOutputMapping } from './calibrate-utils';
 
 const isSidebarOpen = ref(true);
 
@@ -592,7 +587,6 @@ const presetType = computed(() => {
 	if (knobs.value.numSamples === qualityPreset.numSamples && knobs.value.method === qualityPreset.method) {
 		return CiemssPresetTypes.Normal;
 	}
-
 	return '';
 });
 
@@ -626,6 +620,9 @@ const isOutputSettingsPanelOpen = ref(false);
 const datasetColumns = ref<DatasetColumn[]>();
 const csvAsset = shallowRef<CsvAsset | undefined>(undefined);
 const groundTruthData = computed<DataArray>(() => parseCsvAsset(csvAsset.value as CsvAsset));
+
+const lossActiveIndex = ref([0]);
+const currentActiveIndicies = ref([0, 1, 2, 3, 4]);
 
 const modelConfig = ref<ModelConfiguration | null>(null);
 const model = ref<Model | null>(null);
@@ -665,9 +662,9 @@ const mappingDropdownPlaceholder = computed(() => {
 const showOutputSection = computed(
 	() =>
 		lossValues.value.length > 0 ||
-		!_.isEmpty(chartSettings.value) ||
 		isLoading.value ||
-		!_.isEmpty(props.node.state?.errorMessage?.traceback)
+		!_.isEmpty(props.node.state?.errorMessage?.traceback) ||
+		selectedOutputId.value
 );
 
 const updateState = () => {
@@ -685,8 +682,7 @@ const setPresetValues = (data: CiemssPresetTypes) => {
 		knobs.value.method = qualityPreset.method;
 		knobs.value.numIterations = qualityPreset.numIterations;
 		knobs.value.learningRate = qualityPreset.learningRate;
-	}
-	if (data === CiemssPresetTypes.Fast) {
+	} else if (data === CiemssPresetTypes.Fast) {
 		knobs.value.numSamples = speedPreset.numSamples;
 		knobs.value.method = speedPreset.method;
 		knobs.value.numIterations = speedPreset.numIterations;
@@ -730,14 +726,15 @@ const groupedInterventionOutputs = computed(() =>
 );
 
 const selectedOutputMapping = computed(() => getSelectedOutputMapping(props.node));
-const selectedOutputTimestampColName = computed(() => getSelectedOutput(props.node)?.state?.timestampColName ?? '');
+const selectedOutputTimestampColName = computed(() => getActiveOutput(props.node)?.state?.timestampColName ?? '');
 
 const errorData = computed<DataArray>(() =>
 	getErrorData(
 		groundTruthData.value,
 		runResult.value,
 		selectedOutputMapping.value,
-		selectedOutputTimestampColName.value
+		selectedOutputTimestampColName.value,
+		pyciemssMap.value
 	)
 );
 
@@ -777,17 +774,14 @@ const {
 	modelConfig,
 	preparedChartInputs,
 	chartSize,
-	computed(() => interventionPolicy.value?.interventions ?? [])
+	computed(() => interventionPolicy.value?.interventions ?? []),
+	selectedOutputMapping
 );
 const parameterDistributionCharts = useParameterDistributionCharts(selectedParameterSettings);
 const interventionCharts = useInterventionCharts(selectedInterventionSettings);
-const variableCharts = useVariableCharts(selectedVariableSettings, groundTruthData, selectedOutputMapping);
+const variableCharts = useVariableCharts(selectedVariableSettings, groundTruthData);
 const comparisonCharts = useComparisonCharts(selectedComparisonChartSettings);
-const { errorChart, onExpandErrorChart } = useErrorChart(
-	selectedErrorVariableSettings,
-	errorData,
-	selectedOutputMapping
-);
+const { errorChart, onExpandErrorChart } = useErrorChart(selectedErrorVariableSettings, errorData);
 
 const LOSS_CHART_DATA_SOURCE = 'lossData'; // Name of the streaming data source
 const lossChartRef = ref<InstanceType<typeof VegaChart>>();
@@ -815,13 +809,19 @@ const updateLossChartSpec = (data: string | Record<string, any>[], size: { width
 };
 
 const initDefaultChartSettings = (state: CalibrationOperationStateCiemss) => {
-	// Initialize default selected chart settings when chart settings are not set yet. Return if chart settings are already set.
-	if (Array.isArray(state.chartSettings)) return;
 	const defaultSelectedParam = modelParameters.value.filter((p) => !!p.distribution).map((p) => p.id);
 	const mappedModelVariables = mapping.value
 		.filter((c) => ['state', 'observable'].includes(modelPartTypesMap.value[c.modelVariable]))
 		.map((c) => c.modelVariable);
-	state.chartSettings = updateChartSettingsBySelectedVariables([], ChartSettingType.VARIABLE, mappedModelVariables);
+
+	// update variable chart settings only if they do not exist
+	if (!state.chartSettings?.some((c) => c.type === ChartSettingType.VARIABLE)) {
+		state.chartSettings = updateChartSettingsBySelectedVariables(
+			state.chartSettings ?? [],
+			ChartSettingType.VARIABLE,
+			mappedModelVariables
+		);
+	}
 	state.chartSettings = updateChartSettingsBySelectedVariables(
 		state.chartSettings,
 		ChartSettingType.ERROR_DISTRIBUTION,
@@ -913,6 +913,12 @@ function addMapping() {
 
 	emit('update-state', state);
 }
+
+const updateMapping = () => {
+	const state = _.cloneDeep(props.node.state);
+	state.mapping = mapping.value;
+	emit('update-state', state);
+};
 
 function deleteAllMappings() {
 	mapping.value = [];
@@ -1134,7 +1140,7 @@ th {
 .column-header {
 	color: var(--text-color-primary);
 	font-size: var(--font-body-small);
-	font-weight: var(--font-weight-semibold);
+	font-weight: var(--font-weight);
 	padding-top: var(--gap-2);
 }
 
@@ -1247,6 +1253,7 @@ img {
 	background: var(--surface-200);
 	padding: var(--gap-3);
 	border-radius: var(--border-radius-medium);
+	box-shadow: inset 0px 0px 4px var(--surface-border);
 }
 
 input {

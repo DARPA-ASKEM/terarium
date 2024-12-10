@@ -2,6 +2,7 @@ package software.uncharted.terarium.hmiserver.models.dataservice;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import java.util.ArrayList;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -14,6 +15,7 @@ import software.uncharted.terarium.hmiserver.models.dataservice.dataset.Dataset;
 import software.uncharted.terarium.hmiserver.models.dataservice.document.DocumentAsset;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.Model;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.configurations.ModelConfiguration;
+import software.uncharted.terarium.hmiserver.models.dataservice.notebooksession.NotebookSession;
 import software.uncharted.terarium.hmiserver.models.dataservice.project.Project;
 import software.uncharted.terarium.hmiserver.models.dataservice.simulation.Simulation;
 import software.uncharted.terarium.hmiserver.models.dataservice.workflow.Workflow;
@@ -50,6 +52,9 @@ public enum AssetType {
 	@JsonProperty("intervention-policy")
 	INTERVENTION_POLICY,
 
+	@JsonProperty("notebook-session")
+	NOTEBOOK_SESSION,
+
 	@JsonProperty("project")
 	PROJECT;
 
@@ -82,6 +87,8 @@ public enum AssetType {
 			return WORKFLOW;
 		} else if (clazz == InterventionPolicy.class) {
 			return INTERVENTION_POLICY;
+		} else if (clazz == NotebookSession.class) {
+			return NOTEBOOK_SESSION;
 		} else if (clazz == Project.class) {
 			return PROJECT;
 		} else {
@@ -109,6 +116,8 @@ public enum AssetType {
 				return Workflow.class;
 			case INTERVENTION_POLICY:
 				return InterventionPolicy.class;
+			case NOTEBOOK_SESSION:
+				return NotebookSession.class;
 			case PROJECT:
 				return Project.class;
 			default:
@@ -127,7 +136,21 @@ public enum AssetType {
 			SIMULATION,
 			WORKFLOW,
 			PROJECT,
-			INTERVENTION_POLICY
+			INTERVENTION_POLICY,
+			NOTEBOOK_SESSION
 		);
+	}
+
+	public static List<String> toJsonRepresentation(final List<AssetType> assetTypes) {
+		final List<String> strs = new ArrayList<>();
+		final ObjectMapper objectMapper = new ObjectMapper();
+		for (final AssetType assetType : assetTypes) {
+			try {
+				strs.add(objectMapper.writeValueAsString(assetType).replaceAll("^\"|\"$", ""));
+			} catch (final Exception e) {
+				e.printStackTrace();
+			}
+		}
+		return strs;
 	}
 }

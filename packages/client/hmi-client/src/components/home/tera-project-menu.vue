@@ -1,6 +1,14 @@
 <template>
 	<span v-if="isCopying">Copying...</span>
-	<Button v-else icon="pi pi-ellipsis-v" rounded text @click.stop="toggle" :disabled="isEmpty(projectMenuItems)" />
+	<Button
+		v-else
+		:class="$attrs.class"
+		icon="pi pi-ellipsis-v"
+		rounded
+		text
+		@click.stop="toggle"
+		:disabled="isEmpty(projectMenuItems)"
+	/>
 	<Menu ref="menu" :model="projectMenuItems" :popup="true" @focus="menuProject = project" />
 </template>
 
@@ -27,6 +35,7 @@ const { isShareDialogVisible, isRemoveDialogVisible, isProjectConfigDialogVisibl
 const isCopying = ref(false);
 
 const menu = ref();
+
 const editDetailsMenuItem = {
 	label: 'Edit details',
 	icon: 'pi pi-pencil',
@@ -34,6 +43,7 @@ const editDetailsMenuItem = {
 		isProjectConfigDialogVisible.value = true;
 	}
 };
+
 const shareMenuItem = {
 	label: 'Share',
 	icon: 'pi pi-user-plus',
@@ -41,6 +51,7 @@ const shareMenuItem = {
 		isShareDialogVisible.value = true;
 	}
 };
+
 const removeMenuItem = {
 	label: 'Delete',
 	icon: 'pi pi-trash',
@@ -48,6 +59,7 @@ const removeMenuItem = {
 		isRemoveDialogVisible.value = true;
 	}
 };
+
 const copyMenuItem = {
 	label: 'Copy',
 	icon: 'pi pi-clone',
@@ -98,7 +110,7 @@ const projectMenuItems = computed(() => {
 	return items;
 });
 
-function toggle(event) {
+function toggle(event: any) {
 	menu.value.toggle(event);
 }
 </script>

@@ -1,5 +1,5 @@
 import { CiemssMethodOptions } from '@/services/models/simulation-service';
-import { CiemssPresetTypes } from '@/types/common';
+import { ChartSetting, CiemssPresetTypes } from '@/types/common';
 import { Operation, WorkflowOperationTypes, BaseState } from '@/types/workflow';
 import calibrateEnsembleCiemss from '@assets/svg/operator-images/calibrate-ensemble-probabilistic.svg';
 
@@ -33,13 +33,22 @@ export interface CalibrateEnsembleMappingRow {
 	datasetMapping: string;
 	modelConfigurationMappings: { [key: string]: string };
 }
+export const isCalibrateEnsembleMappingRow = (obj: any): obj is CalibrateEnsembleMappingRow =>
+	obj.newName !== undefined && obj.datasetMapping !== undefined;
 
 export interface CalibrateEnsembleWeights {
 	[key: string]: number;
 }
 
-export interface CalibrateEnsembleCiemssOperationState extends BaseState {
-	chartConfigs: string[][];
+export interface CalibrateEnsembleCiemssOperationOutputSettingsState {
+	showLossChart: boolean;
+	chartSettings: ChartSetting[] | null;
+	showModelWeightsCharts: boolean;
+}
+
+export interface CalibrateEnsembleCiemssOperationState
+	extends BaseState,
+		CalibrateEnsembleCiemssOperationOutputSettingsState {
 	ensembleMapping: CalibrateEnsembleMappingRow[];
 	configurationWeights: CalibrateEnsembleWeights;
 	timestampColName: string;
@@ -47,6 +56,7 @@ export interface CalibrateEnsembleCiemssOperationState extends BaseState {
 	inProgressCalibrationId: string;
 	inProgressPreForecastId: string;
 	inProgressForecastId: string;
+	errorMessage: { name: string; value: string; traceback: string };
 	calibrationId: string;
 	postForecastId: string;
 	preForecastId: string;
@@ -69,7 +79,9 @@ export const CalibrateEnsembleCiemssOperation: Operation = {
 
 	initState: () => {
 		const init: CalibrateEnsembleCiemssOperationState = {
-			chartConfigs: [],
+			chartSettings: null,
+			showLossChart: true,
+			showModelWeightsCharts: true,
 			ensembleMapping: [],
 			configurationWeights: {},
 			timestampColName: '',
@@ -88,6 +100,7 @@ export const CalibrateEnsembleCiemssOperation: Operation = {
 			calibrationId: '',
 			postForecastId: '',
 			preForecastId: '',
+			errorMessage: { name: '', value: '', traceback: '' },
 			currentProgress: 0
 		};
 		return init;

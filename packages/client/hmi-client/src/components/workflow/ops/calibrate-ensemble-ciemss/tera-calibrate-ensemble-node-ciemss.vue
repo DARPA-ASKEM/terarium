@@ -5,28 +5,6 @@
 			:are-embed-actions-visible="false"
 			:visualization-spec="lossChartSpec"
 		/>
-		<template v-if="!inProgressCalibrationId && !inProgressForecastId && runResults && csvAsset">
-			<tera-simulate-chart
-				v-for="(config, index) of props.node.state.chartConfigs"
-				:key="index"
-				:run-results="runResults"
-				:chartConfig="{
-					selectedRun: props.node.state.postForecastId,
-					selectedVariable: config
-				}"
-				:mapping="
-					formatCalibrateModelConfigurations(
-						props.node.state.ensembleMapping,
-						props.node.state.configurationWeights
-					) as any
-				"
-				:initial-data="csvAsset"
-				:size="{ width: 190, height: 120 }"
-				has-mean-line
-				@configuration-change="chartProxy.configurationChange(index, $event)"
-			/>
-		</template>
-
 		<tera-progress-spinner
 			v-if="inProgressCalibrationId || inProgressForecastId"
 			:font-size="2"
@@ -48,16 +26,16 @@ import { computed, ref, shallowRef, watch, onMounted } from 'vue';
 import _ from 'lodash';
 import Button from 'primevue/button';
 import TeraOperatorPlaceholder from '@/components/operator/tera-operator-placeholder.vue';
-import TeraSimulateChart from '@/components/workflow/tera-simulate-chart.vue';
 import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue';
 import {
 	getRunResultCiemss,
 	pollAction,
 	getCalibrateBlobURL,
-	makeEnsembleCiemssSimulation
+	makeEnsembleCiemssSimulation,
+	getSimulation
 } from '@/services/models/simulation-service';
 import { setupCsvAsset } from '@/services/calibrate-workflow';
-import { chartActionsProxy, nodeMetadata, nodeOutputLabel } from '@/components/workflow/util';
+import { nodeMetadata, nodeOutputLabel } from '@/components/workflow/util';
 import { logger } from '@/utils/logger';
 import { Poller, PollerState } from '@/api/api';
 import type { WorkflowNode } from '@/types/workflow';
@@ -92,10 +70,6 @@ const lossValues = ref<{ [key: string]: number }[]>([]);
 const lossChartSpec = ref();
 const lossChartSize = { width: 180, height: 120 };
 
-const chartProxy = chartActionsProxy(props.node, (state: CalibrateEnsembleCiemssOperationState) => {
-	emit('update-state', state);
-});
-
 const poller = new Poller();
 const pollResult = async (runId: string) => {
 	poller
@@ -122,29 +96,35 @@ const pollResult = async (runId: string) => {
 			}
 		});
 	const pollerResults = await poller.start();
+	const state = _.cloneDeep(props.node.state);
+	state.errorMessage = { name: '', value: '', traceback: '' };
 
 	if (pollerResults.state === PollerState.Cancelled) {
-		const state = _.cloneDeep(props.node.state);
 		state.currentProgress = 0;
 		state.inProgressForecastId = '';
 		state.inProgressCalibrationId = '';
-		emit('update-state', state);
-		return pollerResults;
-	}
-	if (pollerResults.state !== PollerState.Done || !pollerResults.data) {
+		poller.stop();
+	} else if (pollerResults.state !== PollerState.Done || !pollerResults.data) {
 		// throw if there are any failed runs for now
 		logger.error(`Calibration: ${runId} has failed`, {
 			toastTitle: 'Error - Pyciemss'
 		});
-
-		// TODO: show error in UI
-		const state = _.cloneDeep(props.node.state);
+		const simulation = await getSimulation(runId);
+		if (simulation?.status && simulation?.statusMessage) {
+			state.inProgressCalibrationId = '';
+			state.errorMessage = {
+				name: runId,
+				value: simulation.status,
+				traceback: simulation.statusMessage
+			};
+		}
 		state.currentProgress = 0;
 		state.inProgressForecastId = '';
 		state.inProgressCalibrationId = '';
 		emit('update-state', state);
 		throw Error('Failed Runs');
 	}
+	emit('update-state', state);
 	return pollerResults;
 };
 

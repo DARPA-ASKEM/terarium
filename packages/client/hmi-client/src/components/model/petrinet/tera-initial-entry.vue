@@ -1,28 +1,28 @@
 <template>
-	<div class="initial-entry">
-		<header>
+	<div class="initial-entry" :class="{ empty: isExpressionEmpty }">
+		<header class="gap-1">
 			<div class="flex">
 				<strong>{{ initialId }}</strong>
 				<span v-if="name" class="ml-1">{{ '| ' + name }}</span>
 				<template v-if="unit">
-					<label class="ml-2">Unit</label>
+					<label class="ml-auto">Unit:</label>
 					<span class="ml-1">{{ unit }}</span>
 				</template>
 				<template v-if="concept">
-					<label class="ml-auto">Concept</label>
+					<label class="ml-6">Concept:</label>
 					<span class="ml-1">{{ concept }}</span>
 				</template>
 			</div>
 			<span v-if="description" class="description">{{ description }}</span>
 		</header>
 		<template v-if="isEmpty(modelConfiguration.inferredParameterList) && !featureConfig?.isPreview">
-			<main>
+			<main class="flex align-items-center">
 				<span class="expression">
 					<tera-input-text
 						label="Expression"
 						error-empty
-						:model-value="getInitialExpression(modelConfiguration, initialId)"
-						@update:model-value="emit('update-expression', { id: initialId, value: $event })"
+						:model-value="getExpression()"
+						@blur="onExpressionChange($event)"
 					/>
 				</span>
 				<Button :label="getSourceLabel(initialId)" text size="small" @click="sourceOpen = !sourceOpen" />
@@ -39,7 +39,7 @@
 		<katex-element
 			v-else
 			class="expression"
-			:expression="stringToLatexExpression(getInitialExpression(modelConfiguration, initialId))"
+			:expression="stringToLatexExpression(getExpression())"
 			:throw-on-error="false"
 		/>
 		<tera-initial-other-value-modal
@@ -87,12 +87,25 @@ const emit = defineEmits(['update-expression', 'update-source']);
 const name = getInitialName(props.model, props.initialId);
 const unit = getInitialUnits(props.model, props.initialId);
 const description = getInitialDescription(props.model, props.initialId);
+const isExpressionEmpty = computed(() => isEmpty(getInitialExpression(props.modelConfiguration, props.initialId)));
 
 const concept = ref('');
 const sourceOpen = ref(false);
 const showOtherConfigValueModal = ref(false);
+const expression = ref('');
 
-const getOtherValuesLabel = computed(() => `Other Values(${otherValueList.value?.length})`);
+const getOtherValuesLabel = computed(() => `Other values (${otherValueList.value?.length})`);
+
+function onExpressionChange(value) {
+	emit('update-expression', { id: props.initialId, value });
+}
+
+function getExpression() {
+	if (!isExpressionEmpty.value) {
+		return getInitialExpression(props.modelConfiguration, props.initialId);
+	}
+	return expression.value;
+}
 
 function getSourceLabel(initialId) {
 	if (sourceOpen.value) return 'Hide source';
@@ -110,6 +123,9 @@ onMounted(async () => {
 .initial-entry {
 	border-left: 4px solid var(--surface-300);
 	padding-left: var(--gap-4);
+}
+.empty {
+	border-left: 4px solid var(--error-color);
 }
 header {
 	display: flex;

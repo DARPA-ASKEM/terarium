@@ -140,3 +140,11 @@ export function scrubAndParse(v) {
 	} else if (Number(parts[0])) return true;
 	return false;
 }
+
+export function toScientificNotation(num: number) {
+	if (num === 0) return { A: 0, B: 0 };
+	const exponent = Math.floor(Math.log10(Math.abs(num)));
+	const mantissa = num / 10 ** exponent;
+
+	return { mantissa, exponent };
+}

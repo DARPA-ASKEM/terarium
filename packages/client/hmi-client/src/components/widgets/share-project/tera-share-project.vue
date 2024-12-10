@@ -1,14 +1,14 @@
 <template>
 	<Dialog
-		v-model:visible="visible"
 		modal
-		:closable="false"
 		header="Share project"
-		@hide="$emit('update:modelValue', false)"
+		style="width: 35rem"
+		v-model:visible="visible"
+		:closable="false"
 		@after-hide="onAfterHide"
-		:style="{ width: '35rem' }"
+		@hide="$emit('update:modelValue', false)"
 	>
-		<section class="mr-2">
+		<main>
 			<Dropdown
 				v-model="selectedUser"
 				:options="usersMenu"
@@ -39,6 +39,7 @@
 					class="p-dropdown-sm accessibility"
 					:loading="isUpdatingAccessibility"
 					@update:model-value="changeAccessibility"
+					:disabled="isSample"
 				>
 					<template #value="slotProps">
 						<div class="general-access-option">
@@ -53,11 +54,21 @@
 						</div>
 					</template>
 				</Dropdown>
-				<div class="caption">{{ generalAccessCaption }}</div>
+				<div class="text-sm">{{ generalAccessCaption }}</div>
 			</section>
-		</section>
+			<section v-if="useAuthStore().isAdmin">
+				<label for="sample-project" class="cursor-pointer block">
+					<i v-if="isSampleLoading" class="pi pi-spin pi-spinner" style="color: var(--primary-color)" />
+					<input v-else type="checkbox" id="sample-project" v-model="isSample" class="m-0" />
+					<strong class="ml-2">Sample project</strong>
+					<span class="block pt-1 text-sm">
+						A sample project is public and only editable by an <em>administrator</em>.
+					</span>
+				</label>
+			</section>
+		</main>
 		<template #footer>
-			<Button label="Done" @click="setPermissions" size="large" />
+			<Button label="Done" @click="onDone" />
 		</template>
 	</Dialog>
 </template>
@@ -70,6 +81,7 @@ import Button from 'primevue/button';
 import { getUsers } from '@/services/user';
 import type { PermissionRelationships, PermissionUser, Project } from '@/types/Types';
 import { useProjects } from '@/composables/project';
+import useAuthStore from '@/stores/auth';
 import TeraUserCard from './tera-user-card.vue';
 
 enum Accessibility {
@@ -110,6 +122,10 @@ const generalAccessCaption = computed(() => {
 	}
 	return 'Anyone can view and copy this project.';
 });
+
+function onDone() {
+	setPermissions();
+}
 
 async function changeAccessibility({ label }: { label: Accessibility }) {
 	isUpdatingAccessibility.value = true;
@@ -230,6 +246,8 @@ watch(
 	async () => {
 		existingUsers.value = new Set();
 		users.value = (await getUsers()) ?? [];
+		isSample.value = props.project.sampleProject ?? false;
+		publicGeneralAccess.value = props.project.publicProject;
 	},
 	{ immediate: true }
 );
@@ -249,14 +267,33 @@ watch(
 		visible.value = props.modelValue;
 	}
 );
+
+/**
+ * Sample project
+ */
+const isSample = ref<boolean>(props.project.sampleProject ?? false);
+const isSampleLoading = ref<boolean>(false);
+watch(isSample, (value) => {
+	// When the user decides to change the sample project status
+	if (props.project.sampleProject !== value) {
+		isSampleLoading.value = true;
+		useProjects()
+			.setSample(props.project.id, value)
+			.then((done) => {
+				isSampleLoading.value = false;
+				// In case of error, revert the checkbox to the previous state
+				if (!done) isSample.value = props.project.sampleProject ?? false;
+			});
+	}
+});
 </script>
 
 <style scoped>
-section {
-	padding-top: var(--gap-2);
+section + section {
+	margin-top: var(--gap-3);
 }
 
-section > section {
+main > section {
 	padding-top: var(--gap-4);
 }
 

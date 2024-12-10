@@ -81,7 +81,7 @@ public class DKGController {
 		@RequestParam final String text
 	) {
 		try {
-			return ResponseEntity.ok(dkgService.knnSearchEpiDKG(page, pageSize, k, text, null));
+			return ResponseEntity.ok(dkgService.knnSearchEpiDKG(page, pageSize, k, List.of(text), null));
 		} catch (Exception e) {
 			log.error("Error searching assets", e);
 			return ResponseEntity.internalServerError().build();

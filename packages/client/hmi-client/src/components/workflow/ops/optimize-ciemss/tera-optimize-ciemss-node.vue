@@ -18,6 +18,7 @@
 					:key="setting.id"
 					:visualization-spec="variableCharts[setting.id]"
 					:are-embed-actions-visible="false"
+					:interactive="false"
 				/>
 			</div>
 			<div class="flex gap-2">
@@ -84,9 +85,10 @@ const { useVariableCharts } = useCharts(
 	modelConfiguration,
 	preparedChartInputs,
 	toRef({ width: 180, height: 120 }),
-	undefined
+	null,
+	null
 );
-const variableCharts = useVariableCharts(selectedVariableSettings, null, null);
+const variableCharts = useVariableCharts(selectedVariableSettings, null);
 
 const showSpinner = computed<boolean>(
 	() =>

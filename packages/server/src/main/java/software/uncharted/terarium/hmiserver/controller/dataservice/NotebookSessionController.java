@@ -5,7 +5,6 @@ import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
-import jakarta.transaction.Transactional;
 import java.io.IOException;
 import java.util.List;
 import java.util.Optional;
@@ -25,11 +24,14 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
+import software.uncharted.terarium.hmiserver.models.dataservice.AssetType;
 import software.uncharted.terarium.hmiserver.models.dataservice.ResponseDeleted;
 import software.uncharted.terarium.hmiserver.models.dataservice.notebooksession.NotebookSession;
+import software.uncharted.terarium.hmiserver.models.dataservice.project.Project;
 import software.uncharted.terarium.hmiserver.security.Roles;
 import software.uncharted.terarium.hmiserver.service.CurrentUserService;
 import software.uncharted.terarium.hmiserver.service.data.NotebookSessionService;
+import software.uncharted.terarium.hmiserver.service.data.ProjectAssetService;
 import software.uncharted.terarium.hmiserver.service.data.ProjectService;
 import software.uncharted.terarium.hmiserver.utils.rebac.Schema;
 
@@ -43,6 +45,7 @@ public class NotebookSessionController {
 	final NotebookSessionService sessionService;
 
 	private final ProjectService projectService;
+	private final ProjectAssetService projectAssetService;
 	private final CurrentUserService currentUserService;
 
 	/**
@@ -119,6 +122,10 @@ public class NotebookSessionController {
 
 		try {
 			sessionService.createAsset(session, projectId, permission);
+
+			final Optional<Project> project = projectService.getProject(projectId);
+			projectAssetService.createProjectAsset(project.get(), AssetType.NOTEBOOK_SESSION, session, permission);
+
 			return ResponseEntity.status(HttpStatus.CREATED).body(session);
 		} catch (final IOException e) {
 			final String error = "Unable to create session";
@@ -247,7 +254,17 @@ public class NotebookSessionController {
 			if (session.isEmpty()) {
 				return ResponseEntity.notFound().build();
 			}
-			return ResponseEntity.status(HttpStatus.OK).body(session.get().clone());
+			final NotebookSession newNotebookSession = sessionService.createAsset(
+				session.get().clone(),
+				projectId,
+				permission
+			);
+
+			final Optional<Project> project = projectService.getProject(projectId);
+
+			projectAssetService.createProjectAsset(project.get(), AssetType.NOTEBOOK_SESSION, newNotebookSession, permission);
+
+			return ResponseEntity.status(HttpStatus.OK).body(newNotebookSession);
 		} catch (final Exception e) {
 			final String error = "Unable to clone notebook session";
 			log.error(error, e);

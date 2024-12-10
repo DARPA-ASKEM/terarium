@@ -505,15 +505,6 @@ export const convertToIGraph = (
 				points: [],
 				data: {}
 			});
-
-			t.controllers.forEach((controllerName) => {
-				graph.edges.push({
-					source: controllerName,
-					target: t.name,
-					points: [],
-					data: { isController: true }
-				});
-			});
 		}
 		if (t.outcome !== '') {
 			graph.edges.push({
@@ -522,11 +513,12 @@ export const convertToIGraph = (
 				points: [],
 				data: {}
 			});
-
+		}
+		if (t.controllers && t.controllers.length > 0) {
 			t.controllers.forEach((controllerName) => {
 				graph.edges.push({
-					source: t.name,
-					target: controllerName,
+					source: controllerName,
+					target: t.name,
 					points: [],
 					data: { isController: true }
 				});

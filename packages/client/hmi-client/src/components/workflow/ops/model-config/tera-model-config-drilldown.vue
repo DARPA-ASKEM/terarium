@@ -31,6 +31,7 @@
 							<tera-input-text v-model="filterModelConfigurationsText" placeholder="Filter" class="w-full" />
 							<Button
 								label="Extract from inputs"
+								icon="pi pi-sparkles"
 								severity="primary"
 								class="white-space-nowrap min-w-min"
 								size="small"
@@ -120,6 +121,8 @@
 							showIcon
 							iconDisplay="input"
 							@date-select="knobs.transientModelConfig.temporalContext = $event"
+							show-button-bar
+							@clear-click="delete knobs.transientModelConfig.temporalContext"
 						/>
 					</div>
 				</AccordionTab>
@@ -139,7 +142,7 @@
 						:model-configurations="filteredModelConfigurations"
 						:mmt="configuredMmt"
 						:mmt-params="mmtParams"
-						@update-expression="setInitialExpression(knobs.transientModelConfig, $event.id, $event.value)"
+						@update-expressions="setInitialExpressions(knobs.transientModelConfig, $event)"
 						@update-source="setInitialSource(knobs.transientModelConfig, $event.id, $event.value)"
 					/>
 					<tera-parameter-table
@@ -152,13 +155,11 @@
 						@update-parameters="setParameterDistributions(knobs.transientModelConfig, $event)"
 						@update-source="setParameterSource(knobs.transientModelConfig, $event.id, $event.value)"
 					/>
-					<Accordion :active-index="0" v-if="!isEmpty(calibratedConfigObservables)">
+					<Accordion :active-index="observableActiveIndicies" v-if="!isEmpty(calibratedConfigObservables)">
 						<AccordionTab header="Observables">
-							<tera-observables
+							<tera-model-part
 								class="pl-4"
-								:model="model"
-								:mmt="configuredMmt"
-								:observables="calibratedConfigObservables"
+								:items="calibratedConfigObservables"
 								:feature-config="{ isPreview: true }"
 							/>
 						</AccordionTab>
@@ -183,7 +184,7 @@
 						>
 							<template #toolbar-right-side>
 								<tera-input-text v-model="knobs.transientModelConfig.name" placeholder="Configuration Name" />
-								<Button icon="pi pi-play" label="Run" @click="runFromCode" />
+								<Button icon="pi pi-play" label="Run" @click="runFromCode" :disabled="isEmpty(codeText)" />
 							</template>
 						</tera-notebook-jupyter-input>
 					</Suspense>
@@ -240,7 +241,7 @@ import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
 import TeraNotebookError from '@/components/drilldown/tera-notebook-error.vue';
 import TeraNotebookJupyterInput from '@/components/llm/tera-notebook-jupyter-input.vue';
 import TeraModelDiagram from '@/components/model/petrinet/tera-model-diagram.vue';
-import TeraObservables from '@/components/model/model-parts/tera-observables.vue';
+import TeraModelPart from '@/components/model/model-parts/tera-model-part.vue';
 import TeraInitialTable from '@/components/model/petrinet/tera-initial-table.vue';
 import TeraParameterTable from '@/components/model/petrinet/tera-parameter-table.vue';
 import { downloadDocumentAsset, getDocumentAsset, getDocumentFileAsText } from '@/services/document-assets';
@@ -256,21 +257,27 @@ import { getMMT, getModel, getModelConfigurationsForModel, getCalendarSettingsFr
 import {
 	createModelConfiguration,
 	getArchive,
+	getModelInitials,
 	getMissingInputAmount,
+	getModelParameters,
 	getModelConfigurationById,
-	setInitialExpression,
+	setInitialExpressions,
 	setInitialSource,
 	setParameterDistributions,
 	setParameterSource,
 	updateModelConfiguration
 } from '@/services/model-configurations';
 import { useToastService } from '@/services/toast';
-import type { Model, ModelConfiguration, TaskResponse } from '@/types/Types';
-import { AssetType, Observable } from '@/types/Types';
+import type { Initial, Model, ModelConfiguration, TaskResponse } from '@/types/Types';
+import { AssetType, ModelParameter, Observable } from '@/types/Types';
 import type { WorkflowNode } from '@/types/workflow';
 import { OperatorStatus } from '@/types/workflow';
 import { logger } from '@/utils/logger';
-import { isModelMissingMetadata } from '@/model-representation/service';
+import {
+	isModelMissingMetadata,
+	getParameters as getAmrParameters,
+	getInitials as getAmrInitials
+} from '@/model-representation/service';
 import Message from 'primevue/message';
 import TeraColumnarPanel from '@/components/widgets/tera-columnar-panel.vue';
 import TeraSliderPanel from '@/components/widgets/tera-slider-panel.vue';
@@ -284,6 +291,7 @@ import Calendar from 'primevue/calendar';
 import { CalendarSettings } from '@/utils/date';
 import { DrilldownTabs } from '@/types/common';
 import { formatListWithConjunction } from '@/utils/text';
+import { DistributionType } from '@/services/distribution';
 import {
 	blankModelConfig,
 	isModelConfigsEqual,
@@ -301,12 +309,12 @@ const emit = defineEmits(['append-output', 'update-state', 'select-output', 'clo
 
 const isFetchingPDF = ref(false);
 const isDocViewerOpen = ref(true);
-const selectedConfigMissingInputCount = ref('');
 
 const currentActiveIndexes = ref([0, 1, 2]);
+const observableActiveIndicies = ref([0]);
 const pdfData = ref<{ document: any; data: string; isPdf: boolean; name: string }[]>([]);
 const pdfPanelRef = ref();
-const pdfViewer = computed(() => pdfPanelRef.value?.pdfRef[0]);
+const pdfViewer = computed(() => pdfPanelRef.value?.pdfRef);
 
 const isSidebarOpen = ref(true);
 const isEditingDescription = ref(false);
@@ -334,20 +342,6 @@ const calibratedConfigObservables = computed<Observable[]>(() =>
 
 const getTotalInput = (modelConfiguration: ModelConfiguration) =>
 	modelConfiguration.initialSemanticList.length + modelConfiguration.parameterSemanticList.length;
-
-const getMissingInputCountMessage = (modelConfiguration: ModelConfiguration) => {
-	const amount = getMissingInputAmount(modelConfiguration);
-	const total = getTotalInput(modelConfiguration);
-	const precent = (amount / total) * 100;
-	return amount ? `Missing values: ${amount}/${total} (${precent.toFixed(0)}%)` : '';
-};
-
-const missingInputCount = (modelConfiguration: ModelConfiguration) => {
-	if (selectedConfigId.value === modelConfiguration.id) {
-		return selectedConfigMissingInputCount.value;
-	}
-	return getMissingInputCountMessage(modelConfiguration);
-};
 
 // Check if the model configuration is the same as the original
 const isModelConfigChanged = computed(() => !isModelConfigsEqual(originalConfig, knobs.value.transientModelConfig));
@@ -530,6 +524,35 @@ const initializing = ref(false);
 const isFetching = ref(false);
 const isLoading = ref(false);
 
+const amrInitials = ref<Initial[]>([]);
+const amrParameters = ref<ModelParameter[]>([]);
+
+const getMissingInputsMessage = (amount, total) => {
+	if (!total) return '';
+	const percent = (amount / total) * 100;
+	return amount ? `Missing values: ${amount}/${total} (${percent.toFixed(0)}%)` : '';
+};
+
+const missingInputCount = (modelConfiguration: ModelConfiguration) => {
+	if (selectedConfigId.value === modelConfiguration.id) {
+		return selectedConfigMissingInputCount.value;
+	}
+	const inferredParameterList = modelConfiguration.inferredParameterList?.length ?? 0;
+	const total = amrInitials.value.length + amrParameters.value.length;
+	const amount = total - getTotalInput(modelConfiguration) - inferredParameterList;
+	return getMissingInputsMessage(amount, total);
+};
+
+const selectedConfigMissingInputCount = computed(() => {
+	if (initializing.value) {
+		return '';
+	}
+	const inferredParameterAmount = knobs.value.transientModelConfig.inferredParameterList?.length ?? 0;
+	const amount = getMissingInputAmount(knobs.value.transientModelConfig) - inferredParameterAmount;
+	const total = getTotalInput(knobs.value.transientModelConfig);
+	return getMissingInputsMessage(amount, total);
+});
+
 const model = ref<Model | null>(null);
 const mmt = ref<MiraModel>(emptyMiraModel());
 const mmtParams = ref<MiraTemplateParams>({});
@@ -633,6 +656,28 @@ const initialize = async (overwriteWithState: boolean = false) => {
 		}
 	}
 
+	if (model.value) {
+		amrInitials.value = getAmrInitials(model.value);
+		amrParameters.value = getAmrParameters(model.value);
+		const initials = getModelInitials(knobs.value.transientModelConfig, mmt.value.annotations.name, amrInitials.value);
+		if (initials.length) {
+			knobs.value.transientModelConfig.initialSemanticList = initials;
+		}
+		const parameters = getModelParameters(
+			knobs.value.transientModelConfig,
+			mmt.value.annotations.name,
+			amrParameters.value
+		);
+
+		parameters.forEach((parameter) => {
+			const type = parameter.distribution.type;
+			parameter.distribution.type = type === 'Uniform' ? DistributionType.Uniform : type;
+		});
+		if (parameters.length) {
+			knobs.value.transientModelConfig.parameterSemanticList = parameters;
+		}
+	}
+
 	configuredMmt.value = makeConfiguredMMT(mmt.value, knobs.value.transientModelConfig);
 
 	initializing.value = false;
@@ -652,8 +697,14 @@ const initialize = async (overwriteWithState: boolean = false) => {
 };
 
 const onSelectConfiguration = async (config: ModelConfiguration) => {
+	let tabIndex = 0;
+	if (pdfPanelRef.value && config.extractionDocumentId) {
+		tabIndex = await pdfPanelRef.value.selectPdf(config.extractionDocumentId);
+		await nextTick();
+	}
+
 	if (pdfViewer.value && config.extractionPage) {
-		pdfViewer.value.goToPage(config.extractionPage);
+		pdfViewer.value[tabIndex].goToPage(config.extractionPage);
 	}
 
 	const { transientModelConfig } = knobs.value;
@@ -760,7 +811,6 @@ const debounceUpdateState = debounce(() => {
 	configuredMmt.value = makeConfiguredMMT(mmt.value, knobs.value.transientModelConfig);
 
 	emit('update-state', state);
-	selectedConfigMissingInputCount.value = getMissingInputCountMessage(state.transientModelConfig);
 }, 100);
 watch(
 	() => knobs.value,
@@ -853,8 +903,8 @@ onUnmounted(() => {
 }
 
 .notebook-section {
-	background-color: var(--surface-disabled);
-	border-right: 1px solid var(--surface-border-dark);
+	background-color: var(--surface-200);
+	border-right: 1px solid var(--surface-border-light);
 	padding: var(--gap-4);
 }
 
@@ -951,6 +1001,7 @@ button.start-edit {
 
 .executed-code {
 	white-space: pre-wrap;
+	padding: var(--gap-4);
 }
 :deep(.content-wrapper) {
 	& > section {

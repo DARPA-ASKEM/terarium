@@ -1,26 +1,6 @@
 <template>
-	<div>
-		<h6>What's likely to happen next?</h6>
-		<p>
-			Calibrates the model to historical data to obtain the best estimate of parameters for the present, then forecasts
-			into the near future.
-		</p>
-	</div>
-	<div>
-		<h6>Examples</h6>
-		<ul>
-			<li>Some example</li>
-		</ul>
-	</div>
-
-	<div>
-		<label>What would you like to call this workflow?</label>
-		<tera-input-text :model-value="scenario.workflowName" @update:model-value="scenario.setWorkflowName($event)" />
-	</div>
-
-	<div class="grid">
-		<div class="col-6 flex flex-column gap-2">
-			<h6>Inputs</h6>
+	<tera-scenario-template :header="header" :scenario-instance="scenario" @save-workflow="emit('save-workflow')">
+		<template #inputs>
 			<label>Select a model</label>
 			<Dropdown
 				:model-value="scenario.modelSpec.id"
@@ -41,11 +21,26 @@
 				@update:model-value="scenario.setDatasetSpec($event)"
 			/>
 
-			<label>Select an intervention policy (historical)</label>
-			<Dropdown placeholder="Optional" :disabled="isEmpty(interventionPolicies) || isFetchingModelInformation" />
+			<!-- TODO: adding intervention policies -->
+			<!-- <label>Select an intervention policy (historical)</label>
+			<Dropdown
+			:model-value="scenario.historicalInterventionSpec.id"
+			placeholder="Optional"
+			:options="interventionPolicies"
+			option-label="name"
+			option-value="id"
+			@update:model-value="scenario.setHistoricalInterventionSpec($event)"
+			:disabled="isEmpty(interventionPolicies) || isFetchingModelInformation" />
 
 			<label>Select an intervention policy (known future)</label>
-			<Dropdown placeholder="Optional" :disabled="isEmpty(interventionPolicies) || isFetchingModelInformation" />
+			<Dropdown
+			:model-value="scenario.futureInterventionSpec.id"
+			placeholder="Optional"
+			:options="interventionPolicies"
+			option-label="name"
+			option-value="id"
+			@update:model-value="scenario.setFutureInterventionSpec($event)"
+			:disabled="isEmpty(interventionPolicies) || isFetchingModelInformation" /> -->
 
 			<label>Select configuration representing best and generous estimates of the initial conditions</label>
 			<Dropdown
@@ -56,10 +51,11 @@
 				option-value="id"
 				@update:model-value="scenario.setModelConfigSpec($event)"
 				:disabled="isEmpty(modelConfigurations) || isFetchingModelInformation"
+				:loading="isFetchingModelInformation"
 			/>
-		</div>
-		<div class="col-6 flex flex-column gap-2">
-			<h6>Outputs</h6>
+		</template>
+
+		<template #outputs>
 			<label>Select an output metric</label>
 			<MultiSelect
 				:disabled="isEmpty(modelStateOptions) || isFetchingModelInformation"
@@ -70,33 +66,49 @@
 				:options="modelStateOptions"
 				@update:model-value="scenario.setCalibrateSpec($event)"
 				filter
+				:loading="isFetchingModelInformation"
 			/>
-		</div>
-	</div>
+			<img :src="calibrate" alt="Calibrate chart" />
+		</template>
+	</tera-scenario-template>
 </template>
 
 <script setup lang="ts">
 import Dropdown from 'primevue/dropdown';
 import { computed, ref, watch } from 'vue';
 import { useProjects } from '@/composables/project';
-import { AssetType, InterventionPolicy, ModelConfiguration } from '@/types/Types';
-import { getInterventionPoliciesForModel, getModel, getModelConfigurationsForModel } from '@/services/model';
+import { AssetType, ModelConfiguration } from '@/types/Types';
+import { getModel, getModelConfigurationsForModel } from '@/services/model';
 import { isEmpty } from 'lodash';
-import TeraInputText from '@/components/widgets/tera-input-text.vue';
 import MultiSelect from 'primevue/multiselect';
+import calibrate from '@/assets/svg/template-images/calibration-thumbnail.svg';
 import { SituationalAwarenessScenario } from './situational-awareness-scenario';
+import TeraScenarioTemplate from '../tera-scenario-template.vue';
+import { ScenarioHeader } from '../base-scenario';
+
+const header: ScenarioHeader = Object.freeze({
+	title: 'Situational awareness template',
+	question: "What's likely to happen next?",
+	description:
+		'Calibrates the model to historical data to obtain the best estimate of parameters for the present, then forecasts into the near future.',
+	examples: [
+		'Anticipate the arrival of a new variants.',
+		'Evaluate the potential impact of growing vaccine hesitancy and declining NPIs.'
+	]
+});
 
 const isFetchingModelInformation = ref(false);
 const models = computed(() => useProjects().getActiveProjectAssets(AssetType.Model));
 const datasets = computed(() => useProjects().getActiveProjectAssets(AssetType.Dataset));
 
 const modelConfigurations = ref<ModelConfiguration[]>([]);
-const interventionPolicies = ref<InterventionPolicy[]>([]);
 const modelStateOptions = ref<any[]>([]);
 
 const props = defineProps<{
 	scenario: SituationalAwarenessScenario;
 }>();
+
+const emit = defineEmits(['save-workflow']);
 
 watch(
 	() => props.scenario.modelSpec.id,
@@ -106,7 +118,13 @@ watch(
 		const model = await getModel(modelId);
 		if (!model) return;
 		modelConfigurations.value = await getModelConfigurationsForModel(modelId);
-		interventionPolicies.value = await getInterventionPoliciesForModel(modelId);
+		// TODO: adding intervention policies
+		// interventionPolicies.value = await getInterventionPoliciesForModel(modelId);
+
+		// Set the first model configuration as the default
+		if (!isEmpty(modelConfigurations.value)) {
+			props.scenario.setModelConfigSpec(modelConfigurations.value[0].id!);
+		}
 
 		const modelOptions: any[] = model.model.states;
 

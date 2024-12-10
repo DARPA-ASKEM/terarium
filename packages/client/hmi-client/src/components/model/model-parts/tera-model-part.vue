@@ -119,7 +119,14 @@
 							:key="child.id"
 						>
 							<tera-model-part-entry
-								:item="child"
+								:description="child.description"
+								:name="child.name"
+								:id="child.id"
+								:grounding="child.grounding"
+								:templateId="child.templateId"
+								:input="child.input"
+								:output="child.output"
+								:unitExpression="child.unitExpression"
 								:feature-config="featureConfig"
 								@update-item="$emit('update-item', { id: child.id, ...$event })"
 							/>
@@ -140,7 +147,14 @@
 			<tera-model-part-entry
 				v-else
 				:is-time-part="!!isTimePart"
-				:item="base"
+				:description="base.description"
+				:name="base.name"
+				:id="base.id"
+				:grounding="base.grounding"
+				:templateId="base.templateId"
+				:input="base.input"
+				:output="base.output"
+				:unitExpression="base.unitExpression"
 				:feature-config="featureConfig"
 				@update-item="$emit('update-item', { id: base.id, ...$event })"
 			/>
@@ -172,7 +186,7 @@ import TeraInputText from '@/components/widgets/tera-input-text.vue';
 import Paginator from 'primevue/paginator';
 
 const props = defineProps<{
-	items: { base: ModelPartItem; children: ModelPartItem[]; isParent: boolean }[];
+	items: any[];
 	featureConfig: FeatureConfig;
 	collapsedItems?: Map<string, string[]>;
 	showMatrix?: boolean;
@@ -182,7 +196,7 @@ const props = defineProps<{
 
 const emit = defineEmits(['update-item', 'open-matrix']);
 
-const MAX_NUMBER_OF_ROWS = 10;
+const MAX_NUMBER_OF_ROWS = 5;
 
 const editingState = ref(
 	Array.from({ length: props.items.length }, () => ({

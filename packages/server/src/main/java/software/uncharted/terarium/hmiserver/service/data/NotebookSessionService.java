@@ -53,12 +53,6 @@ public class NotebookSessionService
 	}
 
 	@Override
-	@Observed(name = "function_profile")
-	public Map<String, FileExport> exportAssetFiles(final UUID assetId, final Schema.Permission hasReadPermission) {
-		throw new UnsupportedOperationException("Unimplemented");
-	}
-
-	@Override
 	public Integer uploadFile(final UUID uuid, final String filename, final ContentType contentType, final byte[] data)
 		throws IOException {
 		throw new UnsupportedOperationException("Unimplemented");

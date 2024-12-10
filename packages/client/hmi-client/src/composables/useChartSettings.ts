@@ -1,9 +1,12 @@
+import { cloneDeep } from 'lodash';
 import { ref, computed } from 'vue';
-import { ChartSetting, ChartSettingType } from '@/types/common';
+import { ChartSetting, ChartSettingEnsembleVariable, ChartSettingType } from '@/types/common';
 import {
 	addMultiVariableChartSetting,
+	EnsembleVariableChartSettingOption,
 	removeChartSettingById,
-	updateChartSettingsBySelectedVariables
+	updateChartSettingsBySelectedVariables,
+	updateEnsembleVariableChartSettingOption
 } from '@/services/chart-settings';
 import { WorkflowNode } from '@/types/workflow';
 
@@ -33,14 +36,21 @@ export function useChartSettings(
 	const selectedVariableSettings = computed(() =>
 		chartSettings.value.filter((setting) => setting.type === ChartSettingType.VARIABLE)
 	);
-	const selectedEnsembleVariableSettings = computed(() =>
-		chartSettings.value.filter((setting) => setting.type === ChartSettingType.VARIABLE_ENSEMBLE)
+	const selectedEnsembleVariableSettings = computed(
+		() =>
+			chartSettings.value.filter(
+				(setting) => setting.type === ChartSettingType.VARIABLE_ENSEMBLE
+			) as ChartSettingEnsembleVariable[]
 	);
 	const selectedErrorVariableSettings = computed(() =>
 		chartSettings.value.filter((setting) => setting.type === ChartSettingType.ERROR_DISTRIBUTION)
 	);
 	const selectedComparisonChartSettings = computed(() =>
 		chartSettings.value.filter((setting) => setting.type === ChartSettingType.VARIABLE_COMPARISON)
+	);
+
+	const selectedSensitivityChartSettings = computed(() =>
+		chartSettings.value.filter((setting) => setting.type === ChartSettingType.SENSITIVITY)
 	);
 
 	// Methods to manage chart settings
@@ -58,6 +68,20 @@ export function useChartSettings(
 		});
 	};
 
+	const updateChartSettingsScale = (id: string, useLog: boolean) => {
+		const state = cloneDeep(props.node.state);
+		if (state.chartSettings) {
+			const setting = state.chartSettings.find((settings) => settings.id === id);
+			if (setting) {
+				setting.scale = useLog === true ? 'log' : '';
+				if (activeChartSettings.value) {
+					activeChartSettings.value.scale = setting.scale;
+				}
+				emit('update-state', state);
+			}
+		}
+	};
+
 	const addComparisonChartSettings = () => {
 		emit('update-state', {
 			...props.node.state,
@@ -70,6 +94,13 @@ export function useChartSettings(
 		comparisonChartsSettingsSelection.value = [];
 	};
 
+	const updateEnsembleVariableSettingOption = (option: EnsembleVariableChartSettingOption, value: boolean) => {
+		emit('update-state', {
+			...props.node.state,
+			chartSettings: updateEnsembleVariableChartSettingOption(chartSettings.value, option, value)
+		});
+	};
+
 	return {
 		chartSettings,
 		activeChartSettings,
@@ -80,8 +111,11 @@ export function useChartSettings(
 		selectedParameterSettings,
 		selectedInterventionSettings,
 		selectedComparisonChartSettings,
+		selectedSensitivityChartSettings,
 		removeChartSettings,
 		updateChartSettings,
-		addComparisonChartSettings
+		updateChartSettingsScale,
+		addComparisonChartSettings,
+		updateEnsembleVariableSettingOption
 	};
 }

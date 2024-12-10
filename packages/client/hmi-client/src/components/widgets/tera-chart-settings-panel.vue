@@ -6,6 +6,15 @@
 				<h4>{{ activeSettings.name }}</h4>
 			</header>
 			<div class="content">
+				<div class="annotation-items">
+					<h5>Options</h5>
+					<tera-checkbox
+						label="Use log scale"
+						:model-value="Boolean(useLog)"
+						@update:model-value="toggleLogScale($event)"
+					/>
+				</div>
+
 				<div v-if="chartAnnotations !== undefined" class="annotation-items">
 					<h5>Annotations</h5>
 					<div v-for="annotation in chartAnnotations" :key="annotation.id" class="annotation-item">
@@ -30,6 +39,7 @@
 							:disabled="!!isGeneratingAnnotation"
 							@keyup.enter="createAnnotationDebounced"
 							@keyup.esc="cancelGenerateAnnotation"
+							class="annotation-input"
 						/>
 					</div>
 				</div>
@@ -45,6 +55,7 @@ import Button from 'primevue/button';
 import { ChartSetting } from '@/types/common';
 import { ChartAnnotation } from '@/types/Types';
 import TeraInputText from '@/components/widgets/tera-input-text.vue';
+import TeraCheckbox from '@/components/widgets/tera-checkbox.vue';
 
 const props = defineProps<{
 	activeSettings: ChartSetting | null;
@@ -58,7 +69,13 @@ const props = defineProps<{
 	generateAnnotation?: (setting: ChartSetting, query: string) => Promise<ChartAnnotation | null>;
 }>();
 
-const emit = defineEmits(['close', 'update:settings', 'delete-annotation', 'create-annotation']);
+const emit = defineEmits(['close', 'update-settings-scale', 'delete-annotation', 'create-annotation']);
+
+const useLog = computed(() => props.activeSettings?.scale === 'log');
+
+const toggleLogScale = (useLogScale: boolean) => {
+	emit('update-settings-scale', useLogScale);
+};
 
 const chartAnnotations = computed(() => {
 	if (props.annotations === undefined) {
@@ -99,11 +116,12 @@ const cancelGenerateAnnotation = () => {
 	height: calc(100% - 50px);
 	width: 100%;
 	background: #fff;
-	left: 0;
+	left: 2px;
+	border: solid 1px var(--surface-border-light);
 
 	&.v-enter-active,
 	&.v-leave-active {
-		transition: left 0.15s ease-in;
+		transition: left 0.15s ease-out;
 		left: 30%;
 	}
 	&.v-enter-from,
@@ -135,16 +153,22 @@ const cancelGenerateAnnotation = () => {
 		padding: var(--gap-4);
 	}
 
+	.annotation-input:deep(main) {
+		padding: var(--gap-2-5) var(--gap-2);
+	}
 	.annotation-items {
 		display: flex;
+		padding-bottom: var(--gap-4);
 		flex-direction: column;
 		gap: var(--gap-2);
 
 		.annotation-item {
 			position: relative;
-			padding: var(--gap-2);
+			padding: var(--gap-3);
+			padding-left: var(--gap-4);
 			padding-right: var(--gap-9);
 			background: var(--surface-50);
+			border-left: 4px solid var(--gray-600);
 		}
 		.btn-wrapper {
 			position: absolute;

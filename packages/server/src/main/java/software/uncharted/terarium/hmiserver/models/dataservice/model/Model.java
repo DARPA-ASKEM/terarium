@@ -10,16 +10,21 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import java.io.Serial;
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
+import lombok.extern.slf4j.Slf4j;
 import org.hibernate.annotations.Type;
 import software.uncharted.terarium.hmiserver.annotations.TSIgnore;
 import software.uncharted.terarium.hmiserver.annotations.TSModel;
 import software.uncharted.terarium.hmiserver.annotations.TSOptional;
+import software.uncharted.terarium.hmiserver.models.TerariumAssetEmbeddingType;
 import software.uncharted.terarium.hmiserver.models.TerariumAssetThatSupportsAdditionalProperties;
 import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.ModelHeader;
 import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.ModelMetadata;
@@ -39,6 +44,7 @@ import software.uncharted.terarium.hmiserver.utils.JsonUtil;
 @Accessors(chain = true)
 @Entity
 @TSModel
+@Slf4j
 public class Model extends TerariumAssetThatSupportsAdditionalProperties {
 
 	@Serial
@@ -357,15 +363,38 @@ public class Model extends TerariumAssetThatSupportsAdditionalProperties {
 
 	@JsonIgnore
 	@TSIgnore
-	public String getEmbeddingSourceText() {
-		try {
-			final ObjectMapper objectMapper = new ObjectMapper();
-			if (getMetadata() != null && getMetadata().getGollmCard() != null) {
-				return objectMapper.writeValueAsString(getMetadata().getGollmCard());
-			}
-			return objectMapper.writeValueAsString(this);
-		} catch (final Exception e) {
-			throw new RuntimeException("Failed to serialize model embedding text into JSON", e);
+	public String getDescriptionAsReadableString() {
+		if (getMetadata().getDescription() == null) {
+			return null;
 		}
+
+		// remove image tags
+		final String regex = "<img\\b[^>]*>(.*?)<\\/img>|<img\\b[^>]*\\/>";
+		final Pattern pattern = Pattern.compile(regex, Pattern.CASE_INSENSITIVE);
+		final Matcher matcher = pattern.matcher(new String(getMetadata().getDescription()));
+		return matcher.replaceAll("");
+	}
+
+	@JsonIgnore
+	@TSIgnore
+	public String getEmbeddingSourceText() {
+		if (getMetadata().getDescription() != null) {
+			return getDescriptionAsReadableString();
+		} else {
+			return "";
+		}
+	}
+
+	@JsonIgnore
+	@TSIgnore
+	public Map<TerariumAssetEmbeddingType, String> getEmbeddingsSourceByType() {
+		final Map<TerariumAssetEmbeddingType, String> sources = super.getEmbeddingsSourceByType();
+
+		// Description are saved as base64 encoded strings, this returns a pure string.
+		if (getMetadata().getDescription() != null) {
+			sources.put(TerariumAssetEmbeddingType.DESCRIPTION, getDescriptionAsReadableString());
+		}
+
+		return sources;
 	}
 }

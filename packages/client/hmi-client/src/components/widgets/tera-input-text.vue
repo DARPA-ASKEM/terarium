@@ -2,7 +2,7 @@
 	<div class="tera-input">
 		<label v-if="label" @click.self.stop="focusInput">{{ label }}</label>
 		<main :class="[{ error: getErrorMessage }, { empty: isEmptyError }]" @click.self.stop="focusInput">
-			<i v-if="icon" :class="icon" />
+			<i v-if="icon" :class="icon" class="px-1" />
 			<input
 				v-bind="$attrs"
 				ref="inputField"
@@ -16,6 +16,7 @@
 				@focus="onFocus"
 				@blur="onBlur"
 				@input="updateValue"
+				@keydown.space.stop
 			/>
 		</main>
 		<aside v-if="getErrorMessage"><i class="pi pi-exclamation-circle" /> {{ getErrorMessage }}</aside>
@@ -101,12 +102,23 @@ const onFocus = (event) => {
 };
 const onBlur = (event) => {
 	isFocused.value = false;
-	emit('blur', event);
+	const target = event.target as HTMLInputElement;
+	if (props.charactersToReject && !isEmpty(props.charactersToReject)) {
+		const start = target.selectionStart;
+		const end = target.selectionEnd;
+		target.value = target.value.replace(new RegExp(`[${props.charactersToReject.join('')}]`, 'g'), ''); // Create a regex pattern from charactersToReject to remove them
+		target.setSelectionRange(start, end); // Maintain cursor position, is needed if we are entering in the middle of the input
+	}
+	emit('blur', event.target.value);
 };
 
 onMounted(() => {
 	if (props.autoFocus) {
 		focusInput();
 	}
+});
+
+defineExpose({
+	focusInput
 });
 </script>

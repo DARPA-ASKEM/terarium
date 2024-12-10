@@ -91,7 +91,7 @@ div {
 
 	&,
 	&.selected {
-		transition: border-left-color 250ms;
+		transition: border-left-color 15ms;
 	}
 }
 

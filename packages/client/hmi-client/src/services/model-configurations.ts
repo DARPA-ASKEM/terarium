@@ -7,7 +7,8 @@ import type {
 	ObservableSemantic,
 	ParameterSemantic
 } from '@/types/Types';
-import { isEmpty, isNaN, isNumber } from 'lodash';
+import { SemanticType } from '@/types/Types';
+import { isEmpty, isNaN, isNumber, keyBy } from 'lodash';
 import { pythonInstance } from '@/python/PyodideController';
 import { DistributionType } from './distribution';
 
@@ -94,9 +95,14 @@ export function getParameter(config: ModelConfiguration, parameterId: string): P
 	return config.parameterSemanticList?.find((param) => param.referenceId === parameterId);
 }
 
-export function getParameterDistribution(config: ModelConfiguration, parameterId: string): ModelDistribution {
+export function getParameterDistribution(
+	config: ModelConfiguration,
+	parameterId: string,
+	useDefaultNan: boolean = false
+): ModelDistribution {
 	const parameter = getParameter(config, parameterId);
-	if (!parameter) return { type: DistributionType.Constant, parameters: { value: 0 } };
+	const defaultValue = useDefaultNan ? NaN : 0;
+	if (!parameter) return { type: DistributionType.Constant, parameters: { value: defaultValue } };
 	return parameter.distribution;
 }
 
@@ -171,6 +177,17 @@ export async function setInitialExpression(
 	initial.expressionMathml = mathml;
 }
 
+export async function setInitialExpressions(
+	config: ModelConfiguration,
+	initialExpressions: { id: string; value: string }[]
+): Promise<void> {
+	await Promise.all(
+		initialExpressions.map(async (initial) => {
+			await setInitialExpression(config, initial.id, initial.value);
+		})
+	);
+}
+
 export function setInitialSource(config: ModelConfiguration, initialId: string, source: string): void {
 	const initial = getInitial(config, initialId);
 	if (initial) {
@@ -216,7 +233,7 @@ export function isNumberInputEmpty(value: string) {
 export function getMissingInputAmount(modelConfiguration: ModelConfiguration) {
 	let missingInputs = 0;
 	modelConfiguration.initialSemanticList.forEach((initial) => {
-		if (isNumberInputEmpty(initial.expression)) {
+		if (isEmpty(initial.expression)) {
 			missingInputs++;
 		}
 	});
@@ -234,4 +251,41 @@ export function getMissingInputAmount(modelConfiguration: ModelConfiguration) {
 		}
 	});
 	return missingInputs;
+}
+
+export function getModelParameters(modelConfiguration, source, amrParameters) {
+	const configParameters = keyBy(getParameters(modelConfiguration), 'referenceId');
+	return amrParameters.map((parameter) => {
+		if (configParameters[parameter.id]) return { ...configParameters[parameter.id] };
+		return {
+			default: false,
+			distribution: {
+				type: DistributionType.Constant,
+				parameters: { value: NaN }
+			},
+			referenceId: parameter.id,
+			type: SemanticType.Parameter,
+			source
+		};
+	});
+}
+
+export function getModelInitials(modelConfiguration, source, amrInitials) {
+	const configInitials = keyBy(getInitials(modelConfiguration), 'target');
+	return amrInitials.map((initial) => {
+		if (configInitials[initial.target]) return { ...configInitials[initial.target] };
+		return {
+			expression: '',
+			expressionMathml: '',
+			target: initial.target,
+			type: SemanticType.Initial,
+			source
+		};
+	});
+}
+
+// Get the model configuration name for the given model configuration id
+export function getModelConfigName(modelConfigs: ModelConfiguration[], configId: string) {
+	const modelConfig = modelConfigs.find((d) => d.id === configId);
+	return modelConfig?.name ?? '';
 }

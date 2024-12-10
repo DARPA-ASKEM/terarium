@@ -12,6 +12,7 @@
 					expandable
 					are-embed-actions-visible
 					:visualization-spec="interventionCharts[setting.id]"
+					:interactive="false"
 				/>
 				<vega-chart
 					v-for="setting of selectedVariableSettings"
@@ -19,6 +20,7 @@
 					expandable
 					are-embed-actions-visible
 					:visualization-spec="variableCharts[setting.id]"
+					:interactive="false"
 				/>
 				<vega-chart
 					v-for="setting of selectedComparisonChartSettings"
@@ -26,6 +28,7 @@
 					expandable
 					are-embed-actions-visible
 					:visualization-spec="comparisonCharts[setting.id]"
+					:interactive="false"
 				/>
 			</section>
 		</template>
@@ -179,10 +182,11 @@ const { useInterventionCharts, useVariableCharts, useComparisonCharts } = useCha
 	modelConfiguration,
 	preparedChartInputs,
 	toRef({ width: 180, height: 120 }),
-	computed(() => interventionPolicy.value?.interventions ?? [])
+	computed(() => interventionPolicy.value?.interventions ?? []),
+	null
 );
 const interventionCharts = useInterventionCharts(selectedInterventionSettings, true);
-const variableCharts = useVariableCharts(selectedVariableSettings, null, null);
+const variableCharts = useVariableCharts(selectedVariableSettings, null);
 const comparisonCharts = useComparisonCharts(selectedComparisonChartSettings);
 const isChartsEmpty = computed(
 	() => _.isEmpty(interventionCharts.value) && _.isEmpty(variableCharts.value) && _.isEmpty(comparisonCharts.value)
@@ -304,8 +308,8 @@ watch(
 		if (baseForecastId) {
 			// If forecast run before intervention (base run) is available, merge the results
 			const [baseResult, baseResultSummary] = await Promise.all([
-				getRunResultCSV(baseForecastId, 'result.csv', renameFnGenerator('base')),
-				getRunResultCSV(baseForecastId, 'result_summary.csv', renameFnGenerator('base'))
+				getRunResultCSV(baseForecastId, 'result.csv', renameFnGenerator('pre')),
+				getRunResultCSV(baseForecastId, 'result_summary.csv', renameFnGenerator('pre'))
 			]);
 			const merged = mergeResults(baseResult, result, baseResultSummary, resultSummary);
 			result = merged.result;

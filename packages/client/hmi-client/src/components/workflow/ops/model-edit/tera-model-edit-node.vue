@@ -16,7 +16,7 @@ import Button from 'primevue/button';
 import { WorkflowNode } from '@/types/workflow';
 import { ModelEditOperationState } from '@/components/workflow/ops/model-edit/model-edit-operation';
 import { Model } from '@/types/Types';
-import operator from '@/services/operator';
+import { getActiveOutput } from '@/components/workflow/util';
 import TeraOperatorModelPreview from '@/components/operator/tera-operator-model-preview.vue';
 import TeraOperatorPlaceholder from '@/components/operator/tera-operator-placeholder.vue';
 import { getModel } from '@/services/model';
@@ -31,7 +31,7 @@ const model = ref<Model | null>(null);
 
 const fetchModel = async () => {
 	model.value = null;
-	const modelId = operator.getActiveOutput(props.node)?.value?.[0];
+	const modelId = getActiveOutput(props.node)?.value?.[0];
 	if (modelId) {
 		model.value = await getModel(modelId);
 	}

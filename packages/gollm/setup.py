@@ -5,9 +5,10 @@ setup(
     version="0.1.0",
     packages=find_packages(),
     install_requires=[
-        "openai==1.52.2",
+        "openai==1.56.0",
+        "httpx==0.28.0",
         "pandas",
-        "pydantic==2.9.2",
+        "pydantic==2.10.2",
         "regex",
         "tiktoken",
         "jsonschema"
@@ -22,6 +23,7 @@ setup(
             "gollm:configure_model_from_document=tasks.configure_model_from_document:main",
             "gollm:embedding=tasks.embedding:main",
             "gollm:enrich_amr=tasks.enrich_amr:main",
+            "gollm:enrich_dataset=tasks.enrich_dataset:main",
             "gollm:equations_cleanup=tasks.equations_cleanup:main",
             "gollm:equations_from_image=tasks.equations_from_image:main",
             "gollm:generate_response=tasks.generate_response:main",

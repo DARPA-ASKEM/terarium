@@ -123,6 +123,7 @@
 											<td>
 												<tera-signal-bars
 													label="Relative certainty"
+													:min-option="1"
 													v-model="knobs.weights[key]"
 													@change="updateWeights()"
 												/>
@@ -203,6 +204,9 @@
 				:is-loading="showSpinner"
 				@update:selection="onSelection"
 			>
+				<template #header-controls-right>
+					<Button class="mr-3" label="Save for re-use" severity="secondary" outlined @click="showSaveDataset = true" />
+				</template>
 				<tera-notebook-error v-if="!_.isEmpty(node.state?.errorMessage?.traceback)" v-bind="node.state.errorMessage" />
 				<section ref="outputPanel">
 					<tera-simulate-chart
@@ -243,6 +247,12 @@
 			</tera-slider-panel>
 		</template>
 	</tera-drilldown>
+	<tera-save-simulation-modal
+		:is-visible="showSaveDataset"
+		@close-modal="showSaveDataset = false"
+		:simulation-id="node.state.forecastId"
+		:assets="[{ id: selectedRunId, type: AssetType.Dataset }]"
+	/>
 </template>
 
 <script setup lang="ts">
@@ -266,12 +276,13 @@ import {
 import { getModelConfigurationById, getObservables, getInitials } from '@/services/model-configurations';
 import { chartActionsProxy, drilldownChartSize, nodeMetadata } from '@/components/workflow/util';
 import type { WorkflowNode } from '@/types/workflow';
-import type { EnsembleSimulationCiemssRequest } from '@/types/Types';
+import { AssetType, type EnsembleSimulationCiemssRequest } from '@/types/Types';
 import { RunResults } from '@/types/SimulateConfig';
 import { DrilldownTabs, CiemssPresetTypes } from '@/types/common';
 import TeraNotebookError from '@/components/drilldown/tera-notebook-error.vue';
 import TeraSignalBars from '@/components/widgets/tera-signal-bars.vue';
 import TeraSliderPanel from '@/components/widgets/tera-slider-panel.vue';
+import TeraSaveSimulationModal from '@/components/project/tera-save-simulation-modal.vue';
 import { v4 as uuidv4 } from 'uuid';
 import {
 	SimulateEnsembleCiemssOperationState,
@@ -309,6 +320,7 @@ const activeAccordionIndicies = ref([0, 1, 2]);
 const isSidebarOpen = ref(true);
 const isOutputSettingsPanelOpen = ref(false);
 const showSpinner = ref(false);
+const showSaveDataset = ref(false);
 const showAddMappingInput = ref(false);
 const listModelLabels = ref<string[]>([]);
 

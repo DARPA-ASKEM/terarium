@@ -58,7 +58,7 @@ public class Dataset extends TerariumAsset {
 	@Column(length = 1024)
 	private String datasetUrl;
 
-	/** (Optional) List of urls from which the dataset can be downloaded/fetched. Used for ESGF datasets */
+	/** (Optional) List of urls, from which the dataset can be downloaded/fetched. Used for ESGF datasets */
 	@TSOptional
 	@Type(JsonType.class)
 	@Column(columnDefinition = "json")

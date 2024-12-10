@@ -13,7 +13,11 @@
 		</div>
 	</Dialog>
 	<div class="vega-chart-container">
-		<div ref="vegaContainer" />
+		<div v-if="!interactive">
+			<img v-if="imageDataURL.length > 0" :src="imageDataURL" alt="chart" class="not-interactive" />
+		</div>
+		<div v-else ref="vegaContainer" />
+
 		<footer v-if="$slots.footer">
 			<slot name="footer" />
 		</footer>
@@ -27,7 +31,7 @@ import embed, { Config, Result, VisualizationSpec } from 'vega-embed';
 import Button from 'primevue/button';
 import Dialog from 'primevue/dialog';
 import { countDigits, fixPrecisionError } from '@/utils/number';
-import { ref, watch, toRaw, isRef, isReactive, isProxy, computed, h, render } from 'vue';
+import { ref, watch, toRaw, isRef, isReactive, isProxy, computed, h, render, onUnmounted } from 'vue';
 
 const NUMBER_FORMAT = '.3~s';
 
@@ -77,12 +81,17 @@ const props = withDefaults(
 		 * If a function is provided, it will be called before expanding the chart, and the returned spec will be used for the expanded chart.
 		 */
 		expandable?: boolean | ((spec: VisualizationSpec) => VisualizationSpec);
+		/**
+		 * Whether to render interactive chart or png
+		 */
+		interactive?: boolean;
 	}>(),
 	{
 		areEmbedActionsVisible: true,
 		intervalSelectionSignalNames: () => [],
 		config: null,
-		expandable: false
+		expandable: false,
+		interactive: true
 	}
 );
 const vegaContainer = ref<HTMLElement>();
@@ -94,6 +103,9 @@ const vegaVisualizationExpanded = ref<Result>();
 const expandedView = computed(() => vegaVisualizationExpanded.value?.view);
 
 const isExpanded = ref(false);
+
+const interactive = ref(props.interactive);
+const imageDataURL = ref('');
 
 const onExpand = async () => {
 	if (vegaContainerLg.value) {
@@ -107,6 +119,7 @@ const onExpand = async () => {
 		if (typeof props.expandable === 'function') {
 			spec = props.expandable(spec);
 		}
+		vegaVisualizationExpanded.value?.finalize(); // dispose previous visualization before creating a new one
 		vegaVisualizationExpanded.value = await createVegaVisualization(vegaContainerLg.value, spec, props.config, {
 			actions: props.areEmbedActionsVisible,
 			expandable: false
@@ -121,6 +134,7 @@ const emit = defineEmits<{
 		intervalExtent: { [fieldName: string]: [number, number] } | null
 	): void;
 	(e: 'chart-click', datum: any | null): void;
+	(e: 'done-render'): void;
 }>();
 
 /**
@@ -203,17 +217,50 @@ async function createVegaVisualization(
 	return viz;
 }
 
-watch([vegaContainer, () => props.visualizationSpec], async ([, newSpec], [, oldSpec]) => {
-	if (!vegaContainer.value) {
-		return;
-	}
-	const isEqual = _.isEqual(newSpec, oldSpec);
-	if (isEqual && vegaVisualization.value !== undefined) return;
-	const spec = deepToRaw(props.visualizationSpec);
-	vegaVisualization.value = await createVegaVisualization(vegaContainer.value, spec, props.config, {
-		actions: props.areEmbedActionsVisible,
-		expandable: !!props.expandable
-	});
+watch(
+	[vegaContainer, () => props.visualizationSpec],
+	async ([, newSpec], [, oldSpec]) => {
+		if (_.isEmpty(newSpec)) return;
+		const isEqual = _.isEqual(newSpec, oldSpec);
+		if (isEqual && vegaVisualization.value !== undefined) return;
+		const spec = deepToRaw(props.visualizationSpec);
+
+		if (interactive.value === false) {
+			// console.log('render png');
+			const shadowContainer = document.createElement('div');
+			const viz = await embed(
+				shadowContainer,
+				{ ...spec },
+				{
+					config: { ...defaultChartConfig, ...props.config } as Config,
+					actions: props.areEmbedActionsVisible,
+					expressionFunctions // Register expression functions
+				}
+			);
+			const dataURL = await viz.view.toImageURL('png');
+			imageDataURL.value = dataURL;
+
+			// dispose
+			viz.finalize();
+
+			emit('done-render');
+		} else {
+			// console.log('render interactive');
+			if (!vegaContainer.value) return;
+			vegaVisualization.value?.finalize(); // dispose previous visualization before creating a new one
+			vegaVisualization.value = await createVegaVisualization(vegaContainer.value, spec, props.config, {
+				actions: props.areEmbedActionsVisible,
+				expandable: !!props.expandable
+			});
+			emit('done-render');
+		}
+	},
+	{ immediate: true }
+);
+
+onUnmounted(() => {
+	vegaVisualization.value?.finalize();
+	vegaVisualizationExpanded.value?.finalize();
 });
 
 defineExpose({
@@ -279,5 +326,9 @@ defineExpose({
 :deep(.vega-embed .vega-actions a) {
 	font-family: 'Figtree', sans-serif;
 	font-weight: 400;
+}
+
+.not-interactive {
+	pointer-events: none;
 }
 </style>

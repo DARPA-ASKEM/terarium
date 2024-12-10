@@ -88,7 +88,11 @@ public class ProjectAssetService {
 		project.getProjectAssets().add(projectAsset);
 
 		// update the asset embeddings in the project document
-		projectSearchService.generateAndUpsertProjectAssetEmbeddings(project.getId(), asset);
+		try {
+			projectSearchService.generateAndUpsertProjectAssetEmbeddings(project.getId(), asset);
+		} catch (final Exception e) {
+			log.error("Error generating embeddings for project asset", e);
+		}
 
 		return Optional.of(projectAsset);
 	}
@@ -113,8 +117,12 @@ public class ProjectAssetService {
 				projectAsset.setAssetName(asset.getName());
 				updateProjectAsset(projectAsset, hasWritePermission);
 
-				// update the asset embeddings in the project document
-				projectSearchService.generateAndUpsertProjectAssetEmbeddings(projectAsset.getProject().getId(), asset);
+				try {
+					// update the asset embeddings in the project document
+					projectSearchService.generateAndUpsertProjectAssetEmbeddings(projectAsset.getProject().getId(), asset);
+				} catch (final Exception e) {
+					log.error("Error generating embeddings for project asset", e);
+				}
 			});
 		} else {
 			log.warn(

@@ -208,6 +208,7 @@ public class ModelService extends TerariumAssetServiceWithSearch<Model, ModelRep
 		return updatedOptional;
 	}
 
+	@Observed(name = "function_profile")
 	public UUID enrichModel(
 		final UUID projectId,
 		final UUID documentId,
@@ -245,8 +246,7 @@ public class ModelService extends TerariumAssetServiceWithSearch<Model, ModelRep
 				currentUserService.get().getId(),
 				document.get(),
 				model.get(),
-				projectId,
-				overwrite
+				projectId
 			);
 
 			final TaskRequest modelCardRequest = TaskUtilities.getModelCardTask(
@@ -274,57 +274,32 @@ public class ModelService extends TerariumAssetServiceWithSearch<Model, ModelRep
 		// Update State Grounding
 		if (newModel.get().isRegnet()) {
 			final List<RegNetVertex> vertices = newModel.get().getVerticies();
-			vertices.forEach(vertex -> {
-				if (vertex == null) {
-					vertex = new RegNetVertex();
-				}
-				TaskUtilities.performDKGSearchAndSetGrounding(dkgService, vertex);
-			});
+			TaskUtilities.performDKGSearchAndSetGrounding(dkgService, vertices);
 			newModel.get().setVerticies(vertices);
 		} else {
 			final List<State> states = newModel.get().getStates();
-			states.forEach(state -> {
-				if (state == null) {
-					state = new State();
-				}
-				TaskUtilities.performDKGSearchAndSetGrounding(dkgService, state);
-			});
+			TaskUtilities.performDKGSearchAndSetGrounding(dkgService, states);
 			newModel.get().setStates(states);
 		}
 
 		// Update Observable Grounding
 		if (newModel.get().getObservables() != null && !newModel.get().getObservables().isEmpty()) {
 			final List<Observable> observables = newModel.get().getObservables();
-			observables.forEach(observable -> {
-				if (observable == null) {
-					observable = new Observable();
-				}
-				TaskUtilities.performDKGSearchAndSetGrounding(dkgService, observable);
-			});
+			TaskUtilities.performDKGSearchAndSetGrounding(dkgService, observables);
 			newModel.get().setObservables(observables);
 		}
 
 		// Update Parameter Grounding
 		if (newModel.get().getParameters() != null && !newModel.get().getParameters().isEmpty()) {
 			final List<ModelParameter> parameters = newModel.get().getParameters();
-			parameters.forEach(parameter -> {
-				if (parameter == null) {
-					parameter = new ModelParameter();
-				}
-				TaskUtilities.performDKGSearchAndSetGrounding(dkgService, parameter);
-			});
+			TaskUtilities.performDKGSearchAndSetGrounding(dkgService, parameters);
 			newModel.get().setParameters(parameters);
 		}
 
 		// Update Transition Grounding
 		if (newModel.get().getTransitions() != null && !newModel.get().getTransitions().isEmpty()) {
 			final List<Transition> transitions = newModel.get().getTransitions();
-			transitions.forEach(transition -> {
-				if (transition == null) {
-					transition = new Transition();
-				}
-				TaskUtilities.performDKGSearchAndSetGrounding(dkgService, transition);
-			});
+			TaskUtilities.performDKGSearchAndSetGrounding(dkgService, transitions);
 			newModel.get().setTransitions(transitions);
 		}
 

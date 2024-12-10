@@ -18,7 +18,7 @@
 			<tera-stratified-matrix
 				v-bind="props"
 				:should-eval="matrixShouldEval"
-				@update-cell-value="(configToUpdate: any) => emit('update-cell-value', configToUpdate)"
+				@update-cell-values="(configsToUpdate: any) => emit('update-cell-values', configsToUpdate)"
 			/>
 		</template>
 		<template #footer>
@@ -44,7 +44,7 @@ const props = defineProps<{
 	isReadOnly?: boolean;
 }>();
 
-const emit = defineEmits(['close-modal', 'update-cell-value']);
+const emit = defineEmits(['close-modal', 'update-cell-values']);
 
 const matrixShouldEval = ref(false);
 </script>

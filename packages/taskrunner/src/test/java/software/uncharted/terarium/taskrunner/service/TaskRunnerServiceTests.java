@@ -51,6 +51,8 @@ public class TaskRunnerServiceTests extends TaskRunnerApplicationTests {
 	private final String SCRIPT_PATH = getClass().getResource("/echo.py").getPath();
 	private final String TASK_RUNNER_RESPONSE_QUEUE = "terarium-response-queue-test";
 
+	String responseRoutingKey = "test-routing-key";
+
 	@BeforeEach
 	public void setup() {
 		taskRunnerService.destroyQueues();
@@ -58,7 +60,7 @@ public class TaskRunnerServiceTests extends TaskRunnerApplicationTests {
 		taskRunnerService.declareAndBindTransientQueueWithRoutingKey(
 			taskRunnerService.TASK_RUNNER_RESPONSE_EXCHANGE,
 			TASK_RUNNER_RESPONSE_QUEUE,
-			""
+			responseRoutingKey
 		);
 	}
 
@@ -142,6 +144,7 @@ public class TaskRunnerServiceTests extends TaskRunnerApplicationTests {
 		req.setScript(SCRIPT_PATH);
 		req.setInput(TEST_INPUT_WITH_PROGRESS.getBytes());
 		req.setTimeoutMinutes(1);
+		req.setRoutingKey(responseRoutingKey);
 
 		final String reqStr = mapper.writeValueAsString(req);
 		rabbitTemplate.convertAndSend(taskRunnerService.TASK_RUNNER_REQUEST_QUEUE, reqStr);
@@ -165,6 +168,7 @@ public class TaskRunnerServiceTests extends TaskRunnerApplicationTests {
 		req.setScript(SCRIPT_PATH);
 		req.setInput(FAILURE_INPUT.getBytes());
 		req.setTimeoutMinutes(1);
+		req.setRoutingKey(responseRoutingKey);
 
 		final String reqStr = mapper.writeValueAsString(req);
 		rabbitTemplate.convertAndSend(taskRunnerService.TASK_RUNNER_REQUEST_QUEUE, reqStr);
@@ -183,6 +187,7 @@ public class TaskRunnerServiceTests extends TaskRunnerApplicationTests {
 		req.setScript(SCRIPT_PATH);
 		req.setInput(TEST_INPUT_WITH_PROGRESS.getBytes());
 		req.setTimeoutMinutes(1);
+		req.setRoutingKey(responseRoutingKey);
 
 		final String reqStr = mapper.writeValueAsString(req);
 		rabbitTemplate.convertAndSend(taskRunnerService.TASK_RUNNER_REQUEST_QUEUE, reqStr);
@@ -215,6 +220,7 @@ public class TaskRunnerServiceTests extends TaskRunnerApplicationTests {
 		req.setScript(SCRIPT_PATH);
 		req.setInput(TEST_INPUT_WITH_PROGRESS.getBytes());
 		req.setTimeoutMinutes(1);
+		req.setRoutingKey(responseRoutingKey);
 
 		// we have to create this queue before sending the cancellation to know that
 		// there is a queue to get the msg
@@ -286,6 +292,7 @@ public class TaskRunnerServiceTests extends TaskRunnerApplicationTests {
 					req.setId(UUID.randomUUID());
 					req.setScript(SCRIPT_PATH);
 					req.setTimeoutMinutes(1);
+					req.setRoutingKey(responseRoutingKey);
 
 					// allocate the response stuff
 					responsesPerReq.put(req.getId(), Collections.synchronizedList(new ArrayList<>()));

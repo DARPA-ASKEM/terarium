@@ -25,7 +25,7 @@ defineEmits(['open', 'remove']);
 	border-left: 4px solid #667085;
 	padding: var(--gap-3);
 	padding-left: var(--gap-4);
-	background: var(--surface-50);
+	background: var(--surface-0);
 	display: flex;
 	align-items: center;
 	justify-content: space-between;

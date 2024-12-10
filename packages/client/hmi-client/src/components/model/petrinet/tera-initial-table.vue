@@ -1,5 +1,5 @@
 <template>
-	<Accordion multiple :active-index="[0]">
+	<Accordion multiple :active-index="currentActiveIndicies">
 		<AccordionTab>
 			<template #header>
 				Initials <span class="artifact-amount">({{ numInitials }})</span>
@@ -7,7 +7,7 @@
 			</template>
 
 			<ul>
-				<li v-for="{ baseInitial, childInitials, isVirtual } in initialList" :key="baseInitial">
+				<li v-for="{ baseInitial, childInitials, isVirtual } in initialList" :key="baseInitial" class="element-card">
 					<!-- Stratified -->
 					<section v-if="isVirtual" class="initial-entry-stratified">
 						<Accordion multiple>
@@ -24,7 +24,7 @@
 											:modelConfigurations="modelConfigurations"
 											:feature-config="featureConfig"
 											:initial-id="target"
-											@update-expression="emit('update-expression', $event)"
+											@update-expression="emit('update-expressions', [$event])"
 											@update-source="emit('update-source', $event)"
 										/>
 									</li>
@@ -41,7 +41,7 @@
 						:modelConfigurations="modelConfigurations"
 						:initial-id="baseInitial"
 						:feature-config="featureConfig"
-						@update-expression="emit('update-expression', $event)"
+						@update-expression="emit('update-expressions', [$event])"
 						@update-source="emit('update-source', $event)"
 					/>
 				</li>
@@ -56,7 +56,7 @@
 		:stratified-matrix-type="StratifiedMatrix.Initials"
 		:open-value-config="!!matrixModalId"
 		@close-modal="matrixModalId = ''"
-		@update-cell-value="emit('update-expression', { id: $event.variableName, value: $event.newValue })"
+		@update-cell-values="emit('update-expressions', $event)"
 	/>
 </template>
 
@@ -84,7 +84,7 @@ const props = defineProps<{
 	featureConfig?: FeatureConfig;
 }>();
 
-const emit = defineEmits(['update-expression', 'update-source']);
+const emit = defineEmits(['update-expressions', 'update-source']);
 
 const isStratified = isStratifiedModel(props.mmt);
 const initialList = computed<
@@ -110,6 +110,8 @@ const initialList = computed<
 		.filter(({ baseInitial }) => baseInitial.toLowerCase().includes(filterText.value.toLowerCase()));
 });
 
+const currentActiveIndicies = ref([0]);
+
 const matrixModalId = ref('');
 
 const numInitials = computed(() => initialList.value.length);
@@ -123,11 +125,18 @@ ul {
 	padding-left: var(--gap-1);
 
 	& li {
-		border-bottom: 1px solid var(--gray-300);
+		border-bottom: 1px solid var(--surface-border-light);
 		list-style: none;
 		margin-bottom: var(--gap-1-5);
 		padding-bottom: var(--gap-1-5);
 	}
+}
+
+.element-card {
+	background-color: var(--surface-0);
+}
+.element-card:hover {
+	background-color: var(--surface-50);
 }
 
 .initial-entry-stratified {

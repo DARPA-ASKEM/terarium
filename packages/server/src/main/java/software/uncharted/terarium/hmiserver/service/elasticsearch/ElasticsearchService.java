@@ -15,12 +15,15 @@ import co.elastic.clients.elasticsearch.core.DeleteRequest;
 import co.elastic.clients.elasticsearch.core.GetRequest;
 import co.elastic.clients.elasticsearch.core.GetResponse;
 import co.elastic.clients.elasticsearch.core.IndexRequest;
+import co.elastic.clients.elasticsearch.core.MsearchRequest;
+import co.elastic.clients.elasticsearch.core.MsearchResponse;
 import co.elastic.clients.elasticsearch.core.SearchRequest;
 import co.elastic.clients.elasticsearch.core.SearchResponse;
 import co.elastic.clients.elasticsearch.core.UpdateRequest;
 import co.elastic.clients.elasticsearch.core.bulk.BulkOperation;
 import co.elastic.clients.elasticsearch.core.bulk.BulkResponseItem;
 import co.elastic.clients.elasticsearch.core.bulk.UpdateOperation;
+import co.elastic.clients.elasticsearch.core.msearch.RequestItem;
 import co.elastic.clients.elasticsearch.core.search.Hit;
 import co.elastic.clients.elasticsearch.core.search.SourceConfigParam;
 import co.elastic.clients.elasticsearch.indices.CreateIndexRequest;
@@ -341,7 +344,7 @@ public class ElasticsearchService {
 	}
 
 	/**
-	 * Put an component template to the cluster
+	 * Put a component template to the cluster
 	 *
 	 * @param name         The name of the index template
 	 * @param templateJson The component template json string
@@ -613,6 +616,29 @@ public class ElasticsearchService {
 		}
 	}
 
+	public <T> MsearchResponse bulkKnnSearch(final String index, final List<KnnQuery> knnQueries, final Class<T> tClass)
+		throws IOException {
+		try {
+			log.info("KNN search on: {}", index);
+
+			List<RequestItem> items = new ArrayList<>();
+			for (KnnQuery knnQuery : knnQueries) {
+				RequestItem item = new RequestItem.Builder()
+					.header(h -> h.index(index)) // Specify the index for the request
+					.body(b -> b.knn(knnQuery)) // Add the KnnQuery as the body
+					.build();
+
+				items.add(item);
+			}
+
+			MsearchRequest request = new MsearchRequest.Builder().index(index).searches(items).build();
+
+			return client.msearch(request, tClass);
+		} catch (final ElasticsearchException e) {
+			throw handleException(e);
+		}
+	}
+
 	/**
 	 * Bulk insert documents into an index.
 	 *
@@ -638,11 +664,20 @@ public class ElasticsearchService {
 	}
 
 	@Data
+	public static class KnnInnerHit<InnerType> {
+
+		private UUID id;
+		private InnerType source;
+		private Float score;
+	}
+
+	@Data
 	public static class KnnHit<Type, InnerType> {
 
 		private UUID id;
 		private Type source;
-		private List<InnerType> innerHits = new ArrayList<>();
+		private Float score;
+		private List<KnnInnerHit<InnerType>> innerHits = new ArrayList<>();
 	}
 
 	@Data
@@ -709,13 +744,19 @@ public class ElasticsearchService {
 				final KnnHit<Type, InnerType> knnHit = new KnnHit<>();
 				knnHit.id = UUID.fromString(hit.get("_id").asText());
 				knnHit.source = mapper.convertValue(hit.get("_source"), hitClass);
+				knnHit.score = hit.get("_score").floatValue();
 
 				if (hit.get("inner_hits") == null || getFirstField(hit.get("inner_hits")) == null) {
 					continue;
 				}
 
 				for (final JsonNode innerHit : getFirstField(hit.get("inner_hits")).get("hits").get("hits")) {
-					knnHit.innerHits.add(mapper.convertValue(innerHit.get("_source"), innerHitClass));
+					final KnnInnerHit<InnerType> knnInnerHit = new KnnInnerHit<>();
+					knnInnerHit.id = UUID.fromString(innerHit.get("_id").asText());
+					knnInnerHit.source = mapper.convertValue(innerHit.get("_source"), innerHitClass);
+					knnInnerHit.score = innerHit.get("_score").floatValue();
+
+					knnHit.innerHits.add(knnInnerHit);
 				}
 
 				response.hits.add(knnHit);
@@ -885,7 +926,7 @@ public class ElasticsearchService {
 	}
 
 	public static String emphasis(final String s, final int boost) {
-		return s + "^" + String.valueOf(boost);
+		return s + "^" + boost;
 	}
 
 	/**

@@ -32,8 +32,9 @@ watch(
 
 <style scoped>
 .container {
+	margin: 0 var(--gap-3) var(--gap-3) var(--gap-3);
 	background-color: #ffdcdc;
-	padding: var(--gap-2);
+	padding: var(--gap-3);
 	border-radius: var(--border-radius);
 }
 

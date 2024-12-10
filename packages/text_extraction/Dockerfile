@@ -9,6 +9,7 @@ FROM python:3.11-slim-bookworm AS text_extraction_taskrunner_builder
 # Install OpenJDK
 RUN apt-get update && apt-get install -y --no-install-recommends \
 	ocrmypdf \
+	poppler-utils \
 	openjdk-17-jdk-headless && \
 	rm -rf /var/lib/apt/lists/*
 
@@ -34,6 +35,7 @@ WORKDIR /
 # Install OpenJRE
 RUN apt-get update && apt-get install -y --no-install-recommends \
 	ocrmypdf \
+	poppler-utils \
 	openjdk-17-jre-headless && \
 	rm -rf /var/lib/apt/lists/*
 

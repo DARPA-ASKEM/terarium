@@ -8,6 +8,7 @@
 				:key="setting.id"
 				:are-embed-actions-visible="false"
 				:visualization-spec="variableCharts[setting.id]"
+				:interactive="false"
 			/>
 			<vega-chart
 				v-for="setting of selectedInterventionSettings"
@@ -15,6 +16,7 @@
 				expandable
 				:are-embed-actions-visible="true"
 				:visualization-spec="interventionCharts[setting.id]"
+				:interactive="false"
 			/>
 		</template>
 		<vega-chart v-else-if="lossChartSpec" :are-embed-actions-visible="false" :visualization-spec="lossChartSpec" />
@@ -160,10 +162,11 @@ const { useInterventionCharts, useVariableCharts } = useCharts(
 	modelConfiguration,
 	preparedChartInputs,
 	toRef(chartSize),
-	computed(() => interventionPolicy.value?.interventions ?? [])
+	computed(() => interventionPolicy.value?.interventions ?? []),
+	selectedOutputMapping
 );
 const interventionCharts = useInterventionCharts(selectedInterventionSettings);
-const variableCharts = useVariableCharts(selectedVariableSettings, groundTruth, selectedOutputMapping);
+const variableCharts = useVariableCharts(selectedVariableSettings, groundTruth);
 
 const poller = new Poller();
 const pollResult = async (runId: string) => {

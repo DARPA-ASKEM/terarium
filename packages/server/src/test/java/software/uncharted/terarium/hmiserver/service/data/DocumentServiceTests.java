@@ -63,7 +63,7 @@ public class DocumentServiceTests extends TerariumApplicationTests {
 		final Grounding grounding = new Grounding();
 		grounding.setContext(mapper.createObjectNode().put("hello", "world-" + key).put("foo", "bar-" + key));
 		grounding.setIdentifiers(new ArrayList<>());
-		grounding.getIdentifiers().add(new DKG("curie", "maria", null));
+		grounding.getIdentifiers().add(new DKG("curie", "maria", ""));
 		return grounding;
 	}
 

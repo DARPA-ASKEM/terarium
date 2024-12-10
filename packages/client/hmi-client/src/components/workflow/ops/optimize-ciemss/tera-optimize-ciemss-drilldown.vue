@@ -264,7 +264,7 @@
 				<tera-notebook-error v-bind="node.state.simulateErrorMessage" />
 				<template v-if="runResults[knobs.postForecastRunId] && runResults[knobs.preForecastRunId] && !showSpinner">
 					<section v-if="outputViewSelection === OutputView.Charts" ref="outputPanel">
-						<Accordion multiple :active-index="[0, 1, 2, 3]">
+						<Accordion multiple :active-index="currentActiveIndicies">
 							<AccordionTab header="Success criteria">
 								<ul>
 									<li v-for="(_constraint, key) in knobs.constraintGroups" :key="key">
@@ -459,7 +459,7 @@ import {
 	AssetType
 } from '@/types/Types';
 import { logger } from '@/utils/logger';
-import { nodeMetadata } from '@/components/workflow/util';
+import { getActiveOutput, nodeMetadata } from '@/components/workflow/util';
 import { WorkflowNode } from '@/types/workflow';
 import TeraSliderPanel from '@/components/widgets/tera-slider-panel.vue';
 import TeraNotebookError from '@/components/drilldown/tera-notebook-error.vue';
@@ -491,7 +491,7 @@ import {
 	OptimizeCiemssOperationState,
 	OptimizationInterventionObjective
 } from './optimize-ciemss-operation';
-import { usePreparedChartInputs } from './optimize-utils';
+import { setQoIData, usePreparedChartInputs } from './optimize-utils';
 
 const confirm = useConfirm();
 
@@ -534,6 +534,8 @@ const knobs = ref<BasicKnobs>({
 	constraintGroups: props.node.state.constraintGroups ?? [],
 	interventionPolicyGroups: props.node.state.interventionPolicyGroups ?? []
 });
+
+const currentActiveIndicies = ref([0, 1, 2, 3]);
 
 const summaryCheckbox = ref(true);
 
@@ -917,13 +919,16 @@ const setOutputValues = async () => {
 	const preForecastRunId = knobs.value.preForecastRunId;
 	const postForecastRunId = knobs.value.postForecastRunId;
 
-	riskResults.value[knobs.value.postForecastRunId] = await getRunResult(knobs.value.postForecastRunId, 'risk.json');
-
 	const preResult = await getRunResultCSV(preForecastRunId, 'result.csv', renameFnGenerator('pre'));
 	const postResult = await getRunResultCSV(postForecastRunId, 'result.csv');
+	const outputState = getActiveOutput(props.node)?.state as OptimizeCiemssOperationState;
+	riskResults.value[knobs.value.postForecastRunId] = setQoIData(postResult, outputState.constraintGroups[0]);
 
 	// FIXME: only show the post optimize data for now...
-	simulationRawContent.value[knobs.value.postForecastRunId] = convertToCsvAsset(postResult, Object.values(pyciemssMap));
+	simulationRawContent.value[knobs.value.postForecastRunId] = convertToCsvAsset(
+		postResult,
+		Object.values(pyciemssMap.value)
+	);
 	runResults.value[preForecastRunId] = preResult;
 	runResults.value[postForecastRunId] = postResult;
 
@@ -961,7 +966,6 @@ const preparedSuccessCriteriaCharts = computed(() => {
 		.map((constraint) =>
 			createSuccessCriteriaChart(
 				riskResults.value[postForecastRunId],
-				constraint.targetVariable,
 				constraint.threshold,
 				constraint.isMinimized,
 				constraint.riskTolerance,
@@ -997,9 +1001,9 @@ const {
 	useInterventionCharts,
 	useVariableCharts,
 	useComparisonCharts
-} = useCharts(props.node.id, model, modelConfiguration, preparedChartInputs, chartSize, combinedInterventions);
+} = useCharts(props.node.id, model, modelConfiguration, preparedChartInputs, chartSize, combinedInterventions, null);
 const interventionCharts = useInterventionCharts(selectedInterventionSettings);
-const variableCharts = useVariableCharts(selectedVariableSettings, null, null);
+const variableCharts = useVariableCharts(selectedVariableSettings, null);
 const comparisonCharts = useComparisonCharts(selectedComparisonChartSettings);
 
 // refresh policy

@@ -13,9 +13,12 @@ import jakarta.persistence.Transient;
 import java.io.Serial;
 import java.sql.Types;
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
@@ -26,6 +29,7 @@ import software.uncharted.terarium.hmiserver.annotations.TSIgnore;
 import software.uncharted.terarium.hmiserver.annotations.TSModel;
 import software.uncharted.terarium.hmiserver.annotations.TSOptional;
 import software.uncharted.terarium.hmiserver.models.TerariumAsset;
+import software.uncharted.terarium.hmiserver.models.TerariumAssetEmbeddingType;
 
 @EqualsAndHashCode(callSuper = true)
 @Data
@@ -70,6 +74,9 @@ public class Project extends TerariumAsset {
 	@Schema(accessMode = Schema.AccessMode.READ_ONLY, defaultValue = "{}")
 	private Map<String, String> metadata;
 
+	@TSOptional
+	private Boolean sampleProject = false;
+
 	/** Information for the front-end to display/filter the project accordingly. */
 	@TSOptional
 	@Transient
@@ -99,6 +106,9 @@ public class Project extends TerariumAsset {
 		if (project.getThumbnail() != null) {
 			existingProject.setThumbnail(project.getThumbnail());
 		}
+		if (project.getSampleProject() != null) {
+			existingProject.setSampleProject(project.getSampleProject());
+		}
 		return existingProject;
 	}
 
@@ -125,13 +135,37 @@ public class Project extends TerariumAsset {
 	public String getEmbeddingSourceText() {
 		try {
 			if (overviewContent != null) {
-				log.info(new String(overviewContent));
-				return new String(overviewContent);
+				return getOverviewAsReadableString();
 			}
 			final ObjectMapper objectMapper = new ObjectMapper();
 			return objectMapper.writeValueAsString(this);
 		} catch (final Exception e) {
-			throw new RuntimeException("Failed to serialize model embedding text into JSON", e);
+			throw new RuntimeException("Failed to serialize project embedding text into JSON", e);
 		}
+	}
+
+	@TSIgnore
+	public String getOverviewAsReadableString() {
+		if (overviewContent == null) {
+			return null;
+		}
+
+		// remove image tags
+		final String regex = "<img\\b[^>]*>(.*?)<\\/img>|<img\\b[^>]*\\/>";
+		final Pattern pattern = Pattern.compile(regex, Pattern.CASE_INSENSITIVE);
+		final Matcher matcher = pattern.matcher(new String(overviewContent));
+		return matcher.replaceAll("");
+	}
+
+	@JsonIgnore
+	@TSIgnore
+	public Map<TerariumAssetEmbeddingType, String> getEmbeddingsSourceByType() {
+		final Map<TerariumAssetEmbeddingType, String> sources = super.getEmbeddingsSourceByType();
+
+		if (overviewContent != null) {
+			sources.put(TerariumAssetEmbeddingType.OVERVIEW, getOverviewAsReadableString());
+		}
+
+		return sources;
 	}
 }

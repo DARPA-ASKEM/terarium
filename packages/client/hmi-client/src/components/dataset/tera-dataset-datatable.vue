@@ -51,13 +51,14 @@
 			:tableStyle="tableStyle ? tableStyle : `width:auto`"
 		>
 			<Column
-				v-for="(colName, index) of selectedColumns"
+				v-for="(colName, index) of rawContent.headers"
 				:key="index"
 				:field="index.toString()"
 				:header="colName"
 				:style="previousHeaders && !previousHeaders.includes(colName) ? 'border-color: green' : ''"
 				sortable
 				:frozen="index == 0"
+				:hidden="selectedColumns.includes(colName) ? false : true"
 			>
 				<template #header v-if="!previewMode && !isEmpty(headerStats) && showSummaries">
 					<!-- column summary charts below -->

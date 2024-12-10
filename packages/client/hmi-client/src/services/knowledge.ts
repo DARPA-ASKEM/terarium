@@ -4,19 +4,41 @@ import { extractionStatusUpdateHandler, subscribe } from '@/services/ClientEvent
 import { type Dataset, type DocumentAsset, type Model, ClientEventType } from '@/types/Types';
 import { logger } from '@/utils/logger';
 import { isEmpty } from 'lodash';
+import { Workflow, WorkflowNode } from '@/types/workflow';
+
+/**
+ * Clean up a list of equations
+ * @param equations string[] - list of LaTeX or mathml strings representing a model
+ * @return {Promise<string[]>}
+ */
+export const getCleanedEquations = async (
+	equations: string[]
+): Promise<{ cleanedEquations: string[]; wasCleaned: boolean } | null> => {
+	try {
+		const response = await API.post<{ cleanedEquations: string[]; wasCleaned: boolean }>(
+			`/knowledge/clean-equations`,
+			equations
+		);
+		return response.data ?? null;
+	} catch (error: unknown) {
+		logger.error(error, { showToast: false });
+	}
+	return null;
+};
 
 /**
  * Define the request type
  * @param equations string[] - list of LaTeX or mathml strings representing a model
- * @param framework string= - the framework to use for the extraction, default to 'petrinet'
  * @param modelId string= - the model id to use for the extraction
  * @param documentId string= - the document id source of the equations
  */
 export interface EquationsToAMRRequest {
 	equations: string[];
-	framework?: string;
 	modelId?: Model['id'];
 	documentId?: DocumentAsset['id'];
+	workflowId?: Workflow['id'];
+	nodeId?: WorkflowNode<any>['id'];
+	extractionService?: 'mira' | 'skema';
 }
 
 /**
@@ -25,14 +47,8 @@ export interface EquationsToAMRRequest {
  * @return {Promise<any>}
  */
 export const equationsToAMR = async (request: EquationsToAMRRequest): Promise<string | null> => {
-	const { equations, framework: model = 'petrinet', modelId, documentId } = request;
 	try {
-		const response: AxiosResponse<string> = await API.post(`/knowledge/equations-to-model`, {
-			model,
-			modelId,
-			documentId,
-			equations
-		});
+		const response: AxiosResponse<string> = await API.post(`/knowledge/equations-to-model`, request);
 		return response.data;
 	} catch (error: unknown) {
 		logger.error(error, { showToast: false });
