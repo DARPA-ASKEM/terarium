@@ -19,6 +19,7 @@ export interface ProjectSearchResultAsset {
     assetId: string;
     assetType: AssetType;
     assetName: string;
+    assetShortDescription: string;
     createdOn: Date;
     embeddingContent: string;
     embeddingType: TerariumAssetEmbeddingType;
@@ -485,6 +486,7 @@ export interface DKG {
     curie: string;
     name: string;
     description: string;
+    locations?: string[];
 }
 
 export interface EntitySimilarityResult {
