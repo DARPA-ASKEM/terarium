@@ -3,6 +3,8 @@ import itertools
 import traceback
 import time
 import base64
+import json
+import os
 from pydantic import BaseModel
 from typing import List
 from taskrunner import TaskRunnerInterface
@@ -24,23 +26,30 @@ def main():
         taskrunner = TaskRunnerInterface(description="Compare Model Concepts")
         taskrunner.on_cancellation(cleanup)
 
+        # Print environment variables in a more readable format
+        taskrunner.log(json.dumps(dict(os.environ), indent=2))
+
         taskrunner.log("Creating Models from input")
-        input_dict = taskrunner.read_input_str_with_timeout()
+        input_dict = taskrunner.read_input_dict_with_timeout()
         amrs = CompareModelConcepts(**input_dict).amrs
 
+        taskrunner.log(f"Received {len(amrs)} AMRs")
 
         ### Create MMT (MIRA Model Template) from input
         models = {}
-        for amr, i in amrs:
-           models[i] = template_model_from_amr_json(amr)
+        tags = []
+
+        for i, amr_string in enumerate(amrs):
+            amr = json.loads(amr_string)
+            tags.append(f"Model {amr['header']['name']}")
+            models[i] = template_model_from_amr_json(amr)
 
         end = time.time()
-        taskrunner.log(f"Creating MMTs from input took {(end - start) * 1000} ms")
+        taskrunner.log(f"Creating {len(models)} MMTs from input took {(end - start) * 1000} ms")
 
         ### Concept context comparison
         taskrunner.log("Concept context comparison")
 
-        tags = [f"Model {i}" for i in models.values().map(lambda x: x.name)]
         # comp = TemplateModelComparison(models.values(), is_ontological_child)
         comp = TemplateModelComparison(models.values(), is_ontological_child, tags, run_on_init=False)
         concept_context_comparison = comp.compare_context().to_csv(encoding='utf-8')
