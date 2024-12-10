@@ -4347,14 +4347,14 @@ __metadata:
   languageName: node
   linkType: hard
 
-"axios@npm:1.7.8":
-  version: 1.7.8
-  resolution: "axios@npm:1.7.8"
+"axios@npm:1.7.9":
+  version: 1.7.9
+  resolution: "axios@npm:1.7.9"
   dependencies:
     follow-redirects: "npm:^1.15.6"
     form-data: "npm:^4.0.0"
     proxy-from-env: "npm:^1.1.0"
-  checksum: 10/7ddcde188041ac55090186254b4025eb2af842be3cf615ce45393fd7f543c1eab0ad2fdd2017a5f6190695e3ecea73ee5e9c37f204854aec2698f9579046efdf
+  checksum: 10/b7a5f660ea53ba9c2a745bf5ad77ad8bf4f1338e13ccc3f9f09f810267d6c638c03dac88b55dae8dc98b79c57d2d6835be651d58d2af97c174f43d289a9fd007
   languageName: node
   linkType: hard
 
@@ -8662,7 +8662,7 @@ __metadata:
     "@vue/runtime-dom": "npm:3.4.38"
     "@vueup/vue-quill": "npm:1.2.0"
     ace-builds: "npm:1.32.9"
-    axios: "npm:1.7.8"
+    axios: "npm:1.7.9"
     chart.js: "npm:4.4.6"
     chartjs-plugin-annotation: "npm:3.0.1"
     chartjs-plugin-datalabels: "npm:2.2.0"

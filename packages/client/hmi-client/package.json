@@ -38,7 +38,7 @@
 		"@vue/runtime-dom": "3.4.38",
 		"@vueup/vue-quill": "1.2.0",
 		"ace-builds": "1.32.9",
-		"axios": "1.7.8",
+		"axios": "1.7.9",
 		"chart.js": "4.4.6",
 		"chartjs-plugin-annotation": "3.0.1",
 		"chartjs-plugin-datalabels": "2.2.0",
