@@ -486,6 +486,7 @@ export interface DKG {
     curie: string;
     name: string;
     description: string;
+    locations?: string[];
 }
 
 export interface EntitySimilarityResult {

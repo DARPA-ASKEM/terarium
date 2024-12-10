@@ -38,8 +38,10 @@ const pathFn = d3
 	.y((d) => d.y)
 	.curve(d3.curveBasis);
 
-const EDGE_COLOR = 'var(--petri-lineColor)';
-const HIGHLIGHTEDSTROKECOLOUR = 'var(--primary-color)';
+const TEXT_COLOR = 'rgb(16, 24, 40)';
+const EDGE_COLOR = '#616161';
+const NODE_COLOR = '#E0E0E0';
+const HIGHLIGHTEDSTROKECOLOUR = '#1B8073';
 const EDGE_OPACITY = 0.5;
 
 const { getNodeTypeColor } = useNodeTypeColorPalette();
@@ -54,8 +56,8 @@ export class PetrinetRenderer extends BasicRenderer<NodeData, EdgeData> {
 
 		d3.select(this.svgEl)
 			.style('border', '4px solid transparent')
-			.style('background', 'var(--surface-0')
-			.style('border-radius', 'var(--border-radius) 0px 0px var(--border-radius)');
+			.style('background', '#ffffff')
+			.style('border-radius', '4px 0px 0px 4px');
 	}
 
 	setupDefs() {
@@ -95,8 +97,8 @@ export class PetrinetRenderer extends BasicRenderer<NodeData, EdgeData> {
 			.append('circle')
 			.classed('shape selectableNode', true)
 			.attr('r', (d) => 0.55 * d.width)
-			.attr('fill', (d) => (d.data.strataType ? getNodeTypeColor(d.data.strataType) : 'var(--petri-nodeFill)'))
-			.attr('stroke', 'var(--petri-nodeBorder)')
+			.attr('fill', (d) => (d.data.strataType ? getNodeTypeColor(d.data.strataType) : NODE_COLOR))
+			.attr('stroke', NODE_COLOR)
 			.attr('stroke-width', 1)
 			.style('cursor', 'pointer');
 
@@ -110,7 +112,7 @@ export class PetrinetRenderer extends BasicRenderer<NodeData, EdgeData> {
 			.style('font-size', (d) => setFontSize(d.id))
 			.style('stroke', '#FFF')
 			.style('paint-order', 'stroke')
-			.style('fill', 'var(--text-color-primary')
+			.style('fill', TEXT_COLOR)
 			.style('pointer-events', 'none')
 			.text((d) => d.id);
 
@@ -147,7 +149,7 @@ export class PetrinetRenderer extends BasicRenderer<NodeData, EdgeData> {
 			.style('fill', EDGE_COLOR)
 			.style('fill-opacity', EDGE_OPACITY)
 			.style('cursor', 'pointer')
-			.attr('stroke', 'var(--petri-nodeBorder)')
+			.attr('stroke', NODE_COLOR)
 			.attr('stroke-width', 1);
 
 		// transitions label text
@@ -160,7 +162,7 @@ export class PetrinetRenderer extends BasicRenderer<NodeData, EdgeData> {
 			.style('font-size', (d) => setFontSize(d.id))
 			.style('stroke', '#FFF')
 			.style('paint-order', 'stroke')
-			.style('fill', 'var(--text-color-primary')
+			.style('fill', TEXT_COLOR)
 			.style('pointer-events', 'none')
 			.html((d) => d.id);
 
@@ -176,7 +178,7 @@ export class PetrinetRenderer extends BasicRenderer<NodeData, EdgeData> {
 			.style('stroke', '#FFF')
 			.style('stroke-width', '3px')
 			.style('stroke-linecap', 'butt')
-			.style('fill', 'var(--text-color-primary')
+			.style('fill', TEXT_COLOR)
 			.style('pointer-events', 'none')
 			.html((d) => {
 				if (d.data.expression) return d.data.expression;
@@ -193,9 +195,9 @@ export class PetrinetRenderer extends BasicRenderer<NodeData, EdgeData> {
 			.attr('x', (d) => -d.width * 0.5)
 			.attr('rx', '6')
 			.attr('ry', '6')
-			.style('fill', 'var(--petri-nodeFill)')
+			.style('fill', NODE_COLOR)
 			.style('cursor', 'pointer')
-			.attr('stroke', 'var(--petri-nodeBorder)')
+			.attr('stroke', NODE_COLOR)
 			.attr('stroke-width', 1);
 
 		// observables text
@@ -208,7 +210,7 @@ export class PetrinetRenderer extends BasicRenderer<NodeData, EdgeData> {
 			.style('font-size', (d) => setFontSize(d.id))
 			.style('stroke', '#FFF')
 			.style('paint-order', 'stroke')
-			.style('fill', 'var(--text-color-primary')
+			.style('fill', TEXT_COLOR)
 			.style('pointer-events', 'none')
 			.text((d) => d.id);
 	}
@@ -246,10 +248,10 @@ export class PetrinetRenderer extends BasicRenderer<NodeData, EdgeData> {
 					.style('font-style', 'italic')
 					.style('font-size', FONT_SIZE_REGULAR)
 					.style('paint-order', 'stroke')
-					.style('stroke', 'var(--gray-50)')
+					.style('stroke', '#fafafa')
 					.style('stroke-width', '6px')
 					.style('stroke-linecap', 'butt')
-					.style('fill', 'var(--text-color-primary)')
+					.style('fill', TEXT_COLOR)
 					.text(d.id);
 			}
 		});
@@ -274,20 +276,12 @@ export class PetrinetRenderer extends BasicRenderer<NodeData, EdgeData> {
 				.style('font-style', 'italic')
 				.style('font-size', FONT_SIZE_REGULAR)
 				.style('paint-order', 'stroke')
-				.style('stroke', 'var(--gray-50)')
+				.style('stroke', '#fafafa)')
 				.style('stroke-width', '6px')
 				.style('stroke-linecap', 'butt')
-				.style('fill', 'var(--text-color-primary')
+				.style('fill', TEXT_COLOR)
 				.text((d) => d.data?.numEdges as number);
 		});
-	}
-
-	selectEdge(selection: D3SelectionIEdge<EdgeData>) {
-		selection.selectAll('path').style('stroke-width', 3);
-	}
-
-	deselectEdge(selection: D3SelectionIEdge<EdgeData>) {
-		selection.selectAll('path').style('stroke-width', 2);
 	}
 
 	resetOpacity() {
@@ -296,13 +290,6 @@ export class PetrinetRenderer extends BasicRenderer<NodeData, EdgeData> {
 
 	castTransparency() {
 		this?.chart?.selectAll('.node-ui, .edge').style('opacity', 0.3);
-	}
-
-	toggleNodeSelectionByLabel(label: string) {
-		const selection = this.chart?.selectAll('.node-ui').filter((d: any) => d.label === label);
-		if (selection?.size() === 1) {
-			this.toggleNodeSelection(selection as D3SelectionINode<NodeData>);
-		}
 	}
 
 	toggleNodeSelection(selection: D3SelectionINode<NodeData>) {
@@ -314,11 +301,6 @@ export class PetrinetRenderer extends BasicRenderer<NodeData, EdgeData> {
 			this.castTransparency();
 			selection.style('opacity', 1);
 			this.nodeSelection = selection;
-		}
-
-		if (this.edgeSelection) {
-			this.deselectEdge(this.edgeSelection);
-			this.edgeSelection = null;
 		}
 	}
 
@@ -375,13 +357,13 @@ export class PetrinetRenderer extends BasicRenderer<NodeData, EdgeData> {
 				.attr('d', pathFn(line))
 				.attr('marker-end', 'url(#arrowhead)')
 				.style('stroke-width', 3)
-				.style('stroke', 'var(--primary-color)');
+				.style('stroke', EDGE_COLOR);
 		});
 
 		this.on('node-drag-end', (_eventName, _event, selection: D3SelectionINode<NodeData>) => {
 			chart?.selectAll('.new-edge').remove();
 			// reset colour after drag
-			selection.selectAll('.selectableNode').attr('stroke', 'var(--petri-nodeBorder)');
+			selection.selectAll('.selectableNode').attr('stroke', NODE_COLOR);
 
 			if (!this.isDragEnabled) return;
 			if (targetData && sourceData) {
@@ -426,25 +408,9 @@ export class PetrinetRenderer extends BasicRenderer<NodeData, EdgeData> {
 			this.toggleNodeSelection(selection);
 		});
 
-		this.on('edge-click', (_eventName, _event, selection: D3SelectionIEdge<EdgeData>) => {
-			if (this.edgeSelection) {
-				this.deselectEdge(this.edgeSelection);
-			}
-			if (this.nodeSelection) {
-				this.nodeSelection = null;
-			}
-
-			this.edgeSelection = selection;
-			this.selectEdge(this.edgeSelection);
-		});
-
 		this.on('background-click', () => {
 			this.resetOpacity();
 
-			if (this.edgeSelection) {
-				this.deselectEdge(this.edgeSelection);
-				this.edgeSelection = null;
-			}
 			if (this.nodeSelection) {
 				this.nodeSelection = null;
 			}
