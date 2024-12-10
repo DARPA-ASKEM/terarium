@@ -734,7 +734,8 @@ const errorData = computed<DataArray>(() =>
 		groundTruthData.value,
 		runResult.value,
 		selectedOutputMapping.value,
-		selectedOutputTimestampColName.value
+		selectedOutputTimestampColName.value,
+		pyciemssMap.value
 	)
 );
 

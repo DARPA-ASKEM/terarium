@@ -192,7 +192,7 @@
 			<tera-drilldown-section>
 				<section class="pb-3 px-2">
 					<div class="mx-2" ref="chartWidthDiv"></div>
-					<Accordion multiple :active-index="[0, 1, 2]">
+					<Accordion multiple :active-index="[0, 1, 2, 3]">
 						<!-- <AccordionTab header="Summary">
 						</AccordionTab> -->
 						<AccordionTab v-if="node.state.showLossChart" header="Loss">
@@ -205,12 +205,23 @@
 							/>
 						</AccordionTab>
 						<template v-if="!isRunInProgress">
-							<AccordionTab header="Ensemble variables over time">
+							<AccordionTab v-if="selectedEnsembleVariableSettings.length > 0" header="Ensemble variables over time">
 								<div class="flex flex-row" v-for="setting of selectedEnsembleVariableSettings" :key="setting.id">
 									<vega-chart
 										v-for="(spec, index) of ensembleVariableCharts[setting.id]"
 										:key="index"
 										expandable
+										:are-embed-actions-visible="true"
+										:visualization-spec="spec"
+									/>
+								</div>
+							</AccordionTab>
+							<AccordionTab v-if="selectedErrorVariableSettings.length > 0" header="Error">
+								<div class="flex flex-row">
+									<vega-chart
+										v-for="(spec, index) of errorCharts"
+										:key="index"
+										:expandable="() => onExpandErrorChart(index)"
 										:are-embed-actions-visible="true"
 										:visualization-spec="spec"
 									/>
@@ -276,6 +287,17 @@
 							@remove="removeChartSettings"
 							@selection-change="updateChartSettings"
 							@toggle-ensemble-variable-setting-option="updateEnsembleVariableSettingOption"
+						/>
+						<Divider />
+						<tera-chart-settings
+							:title="'Error'"
+							:settings="chartSettings"
+							:type="ChartSettingType.ERROR_DISTRIBUTION"
+							:select-options="ensembleVariables"
+							:selected-options="selectedErrorVariableSettings.map((s) => s.selectedVariables[0])"
+							@open="activeChartSettings = $event"
+							@remove="removeChartSettings"
+							@selection-change="updateChartSettings"
 						/>
 						<Divider />
 						<h5>Model Weights</h5>
@@ -358,7 +380,9 @@ import {
 	formatCalibrateModelConfigurations,
 	getSelectedOutputEnsembleMapping,
 	fetchOutputData,
-	buildChartData
+	buildChartData,
+	getEnsembleErrorData,
+	EnsembleErrorData
 } from './calibrate-ensemble-util';
 
 const props = defineProps<{
@@ -579,23 +603,38 @@ const {
 	removeChartSettings,
 	updateChartSettings,
 	selectedEnsembleVariableSettings,
+	selectedErrorVariableSettings,
 	updateEnsembleVariableSettingOption
 } = useChartSettings(props, emit);
 
-const { generateAnnotation, getChartAnnotationsByChartId, useEnsembleVariableCharts, useWeightsDistributionCharts } =
-	useCharts(
-		props.node.id,
-		null,
-		allModelConfigurations,
-		computed(() => buildChartData(outputData.value, selectedOutputMapping.value)),
-		chartSize,
-		null,
-		selectedOutputMapping
-	);
+const {
+	generateAnnotation,
+	getChartAnnotationsByChartId,
+	useEnsembleVariableCharts,
+	useWeightsDistributionCharts,
+	useEnsembleErrorCharts
+} = useCharts(
+	props.node.id,
+	null,
+	allModelConfigurations,
+	computed(() => buildChartData(outputData.value, selectedOutputMapping.value)),
+	chartSize,
+	null,
+	selectedOutputMapping
+);
+const errorData = computed<EnsembleErrorData>(() =>
+	getEnsembleErrorData(
+		groundTruthData.value,
+		outputData.value?.result ?? [],
+		selectedOutputMapping.value,
+		outputData.value?.pyciemssMap ?? {}
+	)
+);
 
 const ensembleVariables = computed(() => getSelectedOutputEnsembleMapping(props.node, false).map((d) => d.newName));
 const ensembleVariableCharts = useEnsembleVariableCharts(selectedEnsembleVariableSettings, groundTruthData);
 const weightsDistributionCharts = useWeightsDistributionCharts();
+const { errorCharts, onExpandErrorChart } = useEnsembleErrorCharts(selectedErrorVariableSettings, errorData);
 // --------------------------------------------------------
 
 watch(

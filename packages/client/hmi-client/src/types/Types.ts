@@ -9,15 +9,18 @@ export interface ClientConfig {
     sseHeartbeatIntervalMillis: number;
 }
 
-export interface ProjectSearchResult extends Project {
-    score: number;
-    assets: ProjectSearchResultAsset[];
+export interface ProjectSearchResult {
+    projectId?: string;
+    score?: number;
+    assets?: ProjectSearchResultAsset[];
 }
 
 export interface ProjectSearchResultAsset {
     assetId: string;
     assetType: AssetType;
     assetName: string;
+    assetShortDescription: string;
+    createdOn: Date;
     embeddingContent: string;
     embeddingType: TerariumAssetEmbeddingType;
     score: number;
@@ -483,6 +486,7 @@ export interface DKG {
     curie: string;
     name: string;
     description: string;
+    locations?: string[];
 }
 
 export interface EntitySimilarityResult {

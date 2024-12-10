@@ -29,7 +29,7 @@
 					:options="distributionTypeOptions().filter((type) => type.value !== DistributionType.Constant)"
 				>
 					<template #value>
-						{{ DistributionTypeLabel[uncertaintyType].toLowerCase() }}
+						{{ distributions[uncertaintyType].label.toLowerCase() }}
 					</template>
 					<template #option="{ option }">
 						{{ option.name.toLowerCase() }}
@@ -154,13 +154,14 @@ import { MiraModel, MiraTemplateParams } from '@/model-representation/mira/mira-
 import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
 import Button from 'primevue/button';
-import { DistributionType, DistributionTypeLabel, distributionTypeOptions } from '@/services/distribution';
+import { DistributionType, distributions, distributionTypeOptions } from '@/services/distribution';
 import InputNumber from 'primevue/inputnumber';
 import Dropdown from 'primevue/dropdown';
 import Checkbox from 'primevue/checkbox';
 import TeraInputText from '@/components/widgets/tera-input-text.vue';
 import Divider from 'primevue/divider';
 import type { FeatureConfig } from '@/types/common';
+import { calculateUncertaintyRange } from '@/utils/math';
 import TeraParameterEntry from './tera-parameter-entry.vue';
 import TeraStratifiedMatrixModal from './model-configurations/tera-stratified-matrix-modal.vue';
 
@@ -230,8 +231,7 @@ const onUpdateDistributions = () => {
 			const distribution = getParameterDistribution(props.modelConfiguration, paramId);
 			if (distribution.type !== DistributionType.Constant) return;
 
-			const v = distribution.parameters.value;
-			const delta = (distribution.parameters.value * uncertaintyPercentage.value) / 100;
+			const { min, max } = calculateUncertaintyRange(distribution.parameters.value, uncertaintyPercentage.value);
 
 			const distributionParameterMapping = {
 				id: paramId,
@@ -240,8 +240,8 @@ const onUpdateDistributions = () => {
 					// A way to get around the floating point precision issue is to set a fixed number of decimal places and parse as a float
 					// This will be an issue for adding uncertainty to very small numbers, but I think 8 decimal points should do
 					parameters: {
-						minimum: parseFloat((v - delta).toFixed(8)),
-						maximum: parseFloat((v + delta).toFixed(8))
+						minimum: min,
+						maximum: max
 					}
 				}
 			};

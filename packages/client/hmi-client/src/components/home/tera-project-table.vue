@@ -1,14 +1,14 @@
 <template>
 	<!--The pt wrapper styling enables the table header to stick with the project search bar-->
 	<DataTable
-		:value="projectsWithKnnMatches"
+		:value="projects"
 		:rows="numberOfRows"
 		:rows-per-page-options="[10, 20, 30, 40, 50]"
 		:pt="{ wrapper: { style: { overflow: 'none' } } }"
 		:key="projectTableKey"
 		data-key="id"
 		paginator
-		@page="getProjectAssets"
+		v-model:expandedRows="dataExpandedRows"
 	>
 		<Column
 			v-for="(col, index) in selectedColumns"
@@ -24,28 +24,9 @@
 						<a @click.stop="emit('open-project', data.id)">{{ data.name }}</a>
 						<tera-project-menu class="project-options" :project="data" />
 					</span>
-					<ul>
-						<li
-							v-for="asset in data.projectAssets.slice(0, data.showMore ? data.projectAssets.length : 3)"
-							class="flex align-center gap-2"
-							:key="asset.id"
-						>
-							<tera-asset-icon :asset-type="asset.assetType" />
-							<span v-html="highlight(asset.assetName, searchQuery)" />
-						</li>
-					</ul>
-					<Button
-						v-if="data.projectAssets.length > 3"
-						class="p-2 mt-2"
-						:label="data.showMore ? 'Show less' : 'Show more'"
-						text
-						size="small"
-						@click="data.showMore = !data.showMore"
-					/>
 				</template>
 				<template v-else-if="col.field === 'description'">
 					<tera-show-more-text :text="data.description" :lines="1" />
-					<p v-if="data.snippet" class="mt-2" v-html="data.snippet" />
 				</template>
 				<template v-if="col.field === 'userName'">
 					{{ data.userName ?? '--' }}
@@ -81,50 +62,59 @@
 				</template>
 			</template>
 		</Column>
+		<template #expansion="{ data }">
+			<div v-for="asset in data.assets" :key="asset.assetId" class="flex align-items-center gap-4">
+				<tera-asset-button
+					v-if="asset.assetType != AssetType.Project"
+					:asset="asset"
+					@click="emit('open-asset', data.id, asset.assetId, asset.assetType)"
+				/>
+				<tera-show-more-text :text="asset.assetShortDescription" :lines="3" />
+				<template v-if="visibleEmbeddingResult(asset.embeddingType)">
+					<p class="font-semibold">{{ capitalize(asset.embeddingType) }}</p>
+					<tera-show-more-text :text="asset.embeddingContent" :lines="3" />
+				</template>
+			</div>
+		</template>
 	</DataTable>
 </template>
 
 <script setup lang="ts">
-import { isEmpty } from 'lodash';
 import { ref, watch } from 'vue';
-import DataTable from 'primevue/datatable';
-import Column from 'primevue/column';
-import TeraShowMoreText from '@/components/widgets/tera-show-more-text.vue';
-import { formatDdMmmYyyy } from '@/utils/date';
-import { AssetType, Project } from '@/types/Types';
-import type { PageState } from 'primevue/paginator';
-import * as ProjectService from '@/services/project';
-import { highlight } from '@/utils/text';
-import Button from 'primevue/button';
 import { v4 as uuidv4 } from 'uuid';
+import { capitalize } from '@/utils/text';
+import { formatDdMmmYyyy } from '@/utils/date';
+import Column from 'primevue/column';
+import DataTable, { DataTableExpandedRows } from 'primevue/datatable';
+import TeraAssetButton from '@/components/asset/tera-asset-button.vue';
 import TeraAssetIcon from '@/components/widgets/tera-asset-icon.vue';
-import TeraProjectMenu from './tera-project-menu.vue';
-
-interface ProjectWithKnnSnippet extends Project {
-	snippet?: string;
-	showMore?: boolean;
-}
+import TeraProjectMenu from '@/components/home/tera-project-menu.vue';
+import TeraShowMoreText from '@/components/widgets/tera-show-more-text.vue';
+import { AssetType, TerariumAssetEmbeddingType } from '@/types/Types';
+import type { ProjectWithKnnData } from '@/types/Project';
+import { isEmpty } from 'lodash';
 
 const props = defineProps<{
-	projects: Project[];
+	projects: ProjectWithKnnData[];
 	selectedColumns: { field: string; header: string }[];
 	searchQuery: string;
 }>();
 
-const emit = defineEmits(['open-project']);
+const emit = defineEmits(['open-project', 'open-asset']);
 
-const projectsWithKnnMatches = ref<ProjectWithKnnSnippet[]>([]);
 const numberOfRows = ref(20);
 const projectTableKey = ref(uuidv4());
 
-let pageState: PageState = { page: 0, rows: numberOfRows.value, first: 0 };
-let prevSearchQuery = '';
+const dataExpandedRows: DataTableExpandedRows = props.projects.reduce((acc, project) => {
+	acc[project.id!] = !isEmpty(project.assets);
+	return acc;
+}, {});
 
 const columnWidthMap = {
 	name: '25%',
-	description: '30%',
+	description: '25%',
 	userName: '15%',
-	stats: '10%',
+	stats: '15%',
 	createdOn: '10%',
 	updatedOn: '10%'
 };
@@ -140,43 +130,18 @@ function formatStatTooltip(amount: number, itemName: string) {
 	return `${amount} ${itemName}${amount === 1 ? '' : 's'}`;
 }
 
-async function getProjectAssets(event: PageState = pageState) {
-	pageState = event; // Save the current page state so we still know it when the watch is triggered
-	if (isEmpty(props.searchQuery)) return;
-
-	const { rows, first } = event;
-	const searchQuery = props.searchQuery.toLowerCase().trim();
-
-	// Just fetch the asset data we are seeing in the current page
-	projectsWithKnnMatches.value.slice(first, first + rows).forEach(async (project) => {
-		// If assets were fetched before from when we were on that page don't redo it
-		if (!isEmpty(project.projectAssets) && prevSearchQuery === searchQuery) return;
-
-		const projectWithAssets = (await ProjectService.get(project.id)) as ProjectWithKnnSnippet | null;
-		if (!projectWithAssets) return;
-
-		project.projectAssets = projectWithAssets.projectAssets.filter(
-			({ assetName, assetType }) =>
-				assetName.toLowerCase().includes(searchQuery) &&
-				// These assets dont have names
-				assetType !== AssetType.Simulation &&
-				assetType !== AssetType.NotebookSession
-		);
-		project.showMore = false;
-		project.snippet = project.description?.toLowerCase().includes(searchQuery)
-			? highlight(project.description, searchQuery)
-			: undefined;
-	});
-
-	prevSearchQuery = searchQuery;
+function visibleEmbeddingResult(embeddingType: TerariumAssetEmbeddingType) {
+	return ![
+		TerariumAssetEmbeddingType.Name,
+		TerariumAssetEmbeddingType.Description,
+		TerariumAssetEmbeddingType.Overview
+	].includes(embeddingType);
 }
 
 watch(
 	() => props.projects,
 	() => {
 		projectTableKey.value = uuidv4();
-		projectsWithKnnMatches.value = props.projects;
-		getProjectAssets();
 	},
 	{ immediate: true }
 );
@@ -199,7 +164,7 @@ watch(
 
 /* Now the table header sticks along with the project search bar */
 :deep(thead) {
-	top: 105px;
+	top: 104px;
 	z-index: 1;
 }
 
@@ -230,6 +195,17 @@ watch(
 .p-datatable:deep(.p-datatable-tbody > tr > td a:hover) {
 	color: var(--primary-color);
 	text-decoration: underline;
+}
+
+/* Adjust padding for non-empty expansion rows */
+:deep(.p-datatable-tbody > tr.p-datatable-row-expansion > :not(td:empty)) {
+	padding: var(--gap-2) var(--gap-1);
+}
+
+/* Remove padding for empty expansion rows */
+:deep(.p-datatable-tbody > tr.p-datatable-row-expansion > td:empty) {
+	border: none;
+	padding: 0;
 }
 
 /* Truncate long text for asset list, project name and highlighted description*/

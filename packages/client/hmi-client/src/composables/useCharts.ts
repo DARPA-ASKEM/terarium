@@ -10,6 +10,7 @@ import {
 	createForecastChart,
 	createHistogramChart,
 	createInterventionChartMarkers,
+	createSimulateSensitivityScatter,
 	ForecastChartOptions
 } from '@/services/charts';
 import { flattenInterventionData } from '@/services/intervention-policy';
@@ -26,6 +27,7 @@ import {
 } from '@/components/workflow/ops/calibrate-ensemble-ciemss/calibrate-ensemble-ciemss-operation';
 import { SimulateEnsembleMappingRow } from '@/components/workflow/ops/simulate-ensemble-ciemss/simulate-ensemble-ciemss-operation';
 import { getModelConfigName } from '@/services/model-configurations';
+import { EnsembleErrorData } from '@/components/workflow/ops/calibrate-ensemble-ciemss/calibrate-ensemble-util';
 import { useChartAnnotations } from './useChartAnnotations';
 
 export interface ChartData {
@@ -199,6 +201,7 @@ export function useCharts(
 			yAxisTitle: _.uniq(variables.map(getUnit).filter((v) => !!v)).join(',') || '',
 			dateOptions,
 			colorscheme: [BASE_GREY, color ?? PRIMARY_COLOR]
+      scale: setting.scale
 		};
 
 		let sampleLayerVariables = [
@@ -286,6 +289,7 @@ export function useCharts(
 			if (!isChartReadyToBuild.value || !isRefReady(groundTruthData)) return charts;
 			const { result, resultSummary } = chartData.value as ChartData;
 
+			// eslint-disable-next-line
 			chartSettings.value.forEach((settings) => {
 				const variable = settings.selectedVariables[0];
 				const annotations = getChartAnnotationsByChartId(settings.id);
@@ -467,10 +471,10 @@ export function useCharts(
 			if (!chartSettings.value.length) return [];
 			const variables = chartSettings.value
 				.map((s) => s.selectedVariables[0])
-				.map((variable) => ({
-					field: modelVarToDatasetVar(mapping?.value ?? [], variable) as string,
-					label: variable
-				}))
+				.map((variable) => {
+					const field = modelVarToDatasetVar(mapping?.value ?? [], variable) as string;
+					return { field, label: `${variable}, ${field}` };
+				})
 				.filter((v) => !!v.field);
 			return variables;
 		});
@@ -504,6 +508,69 @@ export function useCharts(
 
 		return {
 			errorChart,
+			onExpandErrorChart
+		};
+	};
+
+	// Create ensemble calibrate error charts based on chart settings
+	const useEnsembleErrorCharts = (
+		chartSettings: ComputedRef<ChartSetting[]>,
+		errorData: ComputedRef<EnsembleErrorData>
+	) => {
+		const getErrorChartVariables = (configId: string) => {
+			const variables = chartSettings.value
+				.map((s) => s.selectedVariables[0])
+				.map((variable) => {
+					const modelVarName = configId
+						? getModelConfigVariable(<EnsembleVariableMappings>mapping?.value ?? [], variable, configId)
+						: variable;
+					const field = modelVarToDatasetVar(mapping?.value ?? [], variable) as string;
+					return { field, label: `${modelVarName}, ${field}` };
+				})
+				.filter((v) => !!v.field);
+			return variables;
+		};
+
+		const errorCharts = computed(() => {
+			if (!isChartReadyToBuild.value) return [];
+			const data = [errorData.value.ensemble]; // First item is always ensemble error data, and the rest are model error data
+			const modelConfigIds = extractModelConfigIdsInOrder(chartData.value?.pyciemssMap ?? {});
+			modelConfigIds.forEach((configId) => {
+				if (errorData.value[configId]) data.push(errorData.value[configId]);
+			});
+			const errorChartSpecs = data.map((ed, index) => {
+				const spec = createErrorChart(ed, {
+					title: '',
+					width: chartSize.value.width / data.length - 30, // Note: error chart adds extra 30px padding on top of the provided width so we subtract 30px to make the chart fit the container
+					variables: getErrorChartVariables(modelConfigIds[index - 1] ?? ''),
+					xAxisTitle: 'Mean absolute (MAE)',
+					color: CATEGORICAL_SCHEME[index % CATEGORICAL_SCHEME.length]
+				});
+				return spec;
+			});
+			return errorChartSpecs;
+		});
+
+		const onExpandErrorChart = (chartSpecIndex: number) => {
+			if (!isChartReadyToBuild.value) return {};
+			const modelConfigIds = extractModelConfigIdsInOrder(chartData.value?.pyciemssMap ?? {});
+			const errorDataKeys = ['ensemble', ...modelConfigIds];
+			// Customize the chart size by modifying the spec before expanding the chart
+			const spec = createErrorChart(errorData.value[errorDataKeys[chartSpecIndex]], {
+				title: '',
+				width: window.innerWidth / 1.5,
+				height: 230,
+				boxPlotHeight: 50,
+				areaChartHeight: 150,
+				variables: getErrorChartVariables(modelConfigIds[chartSpecIndex - 1] ?? ''),
+				xAxisTitle: 'Mean absolute (MAE)',
+				color: CATEGORICAL_SCHEME[chartSpecIndex % CATEGORICAL_SCHEME.length]
+			});
+			return spec as VisualizationSpec;
+		};
+
+		return {
+			errorCharts,
 			onExpandErrorChart
 		};
 	};
@@ -595,6 +662,62 @@ export function useCharts(
 		return weightsCharts;
 	};
 
+	const useSimulateSensitivityCharts = (chartSettings: ComputedRef<ChartSetting[]>) => {
+		const sensitivity = computed(() => {
+			const timestep = _.last(chartData.value?.result)?.timepoint_id;
+			const sliceData = chartData.value?.result.filter((d: any) => d.timepoint_id === timestep) as any[];
+
+			// Translate names ahead of time, because we can't seem to customize titles
+			// in vegalite with repeat
+			const translationMap = chartData.value?.translationMap;
+			const sliceDataTranslated = sliceData.map((obj: any) => {
+				const r: any = {};
+				Object.keys(obj).forEach((key) => {
+					if (translationMap && translationMap[key]) {
+						const newKey = translationMap[key];
+						r[newKey] = obj[key];
+					} else {
+						r[key] = obj[key];
+					}
+				});
+				return r;
+			});
+
+			// FIXME: Let modeller pick the input variables
+			let inputVariables: string[] = [];
+			if (model && model.value && model.value.semantics?.ode) {
+				const ode = model.value.semantics.ode;
+				const initials = ode.initials?.map((initial) => initial.expression) as string[];
+				inputVariables = ode.parameters
+					?.filter((parameter) => !initials.includes(parameter.id))
+					.map((parameter) => parameter.id) as string[];
+			}
+
+			const charts: Record<string, VisualizationSpec> = {};
+
+			// eslint-disable-next-line
+			chartSettings.value.forEach((settings) => {
+				const spec = createSimulateSensitivityScatter(
+					{
+						data: sliceDataTranslated,
+						inputVariables,
+						outputVariable: settings.selectedVariables[0]
+					},
+					{
+						width: 150,
+						height: 150,
+						xAxisTitle: '',
+						yAxisTitle: '',
+						translationMap: chartData.value?.translationMap || {}
+					}
+				);
+				charts[settings.id] = spec;
+			});
+			return charts;
+		});
+		return sensitivity;
+	};
+
 	return {
 		generateAnnotation,
 		getChartAnnotationsByChartId,
@@ -604,6 +727,8 @@ export function useCharts(
 		useEnsembleVariableCharts,
 		useErrorChart,
 		useParameterDistributionCharts,
-		useWeightsDistributionCharts
+		useWeightsDistributionCharts,
+		useSimulateSensitivityCharts,
+		useEnsembleErrorCharts
 	};
 }

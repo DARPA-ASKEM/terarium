@@ -128,6 +128,7 @@ public class SimulationRequestController implements SnakeCaseController {
 		new SimulationRequestStatusNotifier(
 			notificationService,
 			clientEventService,
+			currentUserService,
 			simulationService,
 			sim.get().getId(),
 			projectId,
@@ -174,6 +175,7 @@ public class SimulationRequestController implements SnakeCaseController {
 		new SimulationRequestStatusNotifier(
 			notificationService,
 			clientEventService,
+			currentUserService,
 			simulationService,
 			UUID.fromString(res.getSimulationId()),
 			projectId,
@@ -214,6 +216,7 @@ public class SimulationRequestController implements SnakeCaseController {
 		new SimulationRequestStatusNotifier(
 			notificationService,
 			clientEventService,
+			currentUserService,
 			simulationService,
 			UUID.fromString(res.getSimulationId()),
 			projectId,
@@ -246,6 +249,7 @@ public class SimulationRequestController implements SnakeCaseController {
 		new SimulationRequestStatusNotifier(
 			notificationService,
 			clientEventService,
+			currentUserService,
 			simulationService,
 			UUID.fromString(res.getSimulationId()),
 			projectId,
@@ -278,6 +282,7 @@ public class SimulationRequestController implements SnakeCaseController {
 		new SimulationRequestStatusNotifier(
 			notificationService,
 			clientEventService,
+			currentUserService,
 			simulationService,
 			UUID.fromString(res.getSimulationId()),
 			projectId,

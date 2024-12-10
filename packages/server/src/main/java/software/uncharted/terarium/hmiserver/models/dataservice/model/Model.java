@@ -361,22 +361,18 @@ public class Model extends TerariumAssetThatSupportsAdditionalProperties {
 		return this.getHeader().getSchemaName().equalsIgnoreCase("petrinet");
 	}
 
-	private String getDescriptionAsReadableString() {
-		if (getDescription() == null) {
+	@JsonIgnore
+	@TSIgnore
+	public String getDescriptionAsReadableString() {
+		if (getMetadata().getDescription() == null) {
 			return null;
 		}
-
-		// decode from base64
-		final byte[] decodedBytes = Base64.getDecoder().decode(getDescription());
-		final String decodedString = new String(decodedBytes);
 
 		// remove image tags
 		final String regex = "<img\\b[^>]*>(.*?)<\\/img>|<img\\b[^>]*\\/>";
 		final Pattern pattern = Pattern.compile(regex, Pattern.CASE_INSENSITIVE);
-		final Matcher matcher = pattern.matcher(decodedString);
-		final String result = matcher.replaceAll("");
-
-		return result;
+		final Matcher matcher = pattern.matcher(new String(getMetadata().getDescription()));
+		return matcher.replaceAll("");
 	}
 
 	@JsonIgnore

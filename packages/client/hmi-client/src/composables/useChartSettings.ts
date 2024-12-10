@@ -1,3 +1,4 @@
+import { cloneDeep } from 'lodash';
 import { ref, computed } from 'vue';
 import { ChartSetting, ChartSettingEnsembleVariable, ChartSettingType } from '@/types/common';
 import {
@@ -49,6 +50,10 @@ export function useChartSettings(
 		chartSettings.value.filter((setting) => setting.type === ChartSettingType.VARIABLE_COMPARISON)
 	);
 
+	const selectedSensitivityChartSettings = computed(() =>
+		chartSettings.value.filter((setting) => setting.type === ChartSettingType.SENSITIVITY)
+	);
+
 	// Methods to manage chart settings
 	const removeChartSettings = (chartId: string) => {
 		emit('update-state', {
@@ -62,6 +67,20 @@ export function useChartSettings(
 			...props.node.state,
 			chartSettings: updateChartSettingsBySelectedVariables(chartSettings.value, type, selectedVariables)
 		});
+	};
+
+	const updateChartSettingsScale = (id: string, useLog: boolean) => {
+		const state = cloneDeep(props.node.state);
+		if (state.chartSettings) {
+			const setting = state.chartSettings.find((settings) => settings.id === id);
+			if (setting) {
+				setting.scale = useLog === true ? 'log' : '';
+				if (activeChartSettings.value) {
+					activeChartSettings.value.scale = setting.scale;
+				}
+				emit('update-state', state);
+			}
+		}
 	};
 
 	const addComparisonChartSettings = () => {
@@ -111,9 +130,11 @@ export function useChartSettings(
 		selectedParameterSettings,
 		selectedInterventionSettings,
 		selectedComparisonChartSettings,
+		selectedSensitivityChartSettings,
 		removeChartSettings,
 		updateChartSettings,
 		updateChartPrimaryColor,
+		updateChartSettingsScale,
 		addComparisonChartSettings,
 		updateEnsembleVariableSettingOption
 	};

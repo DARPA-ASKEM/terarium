@@ -187,7 +187,8 @@ export enum ChartSettingType {
 	VARIABLE_ENSEMBLE = 'variable-ensemble',
 	DISTRIBUTION_COMPARISON = 'distribution-comparison',
 	ERROR_DISTRIBUTION = 'error-distribution',
-	INTERVENTION = 'intervention'
+	INTERVENTION = 'intervention',
+	SENSITIVITY = 'sensitivity'
 }
 
 export type ChartSetting = ChartSettingBase | ChartSettingEnsembleVariable;
@@ -208,6 +209,7 @@ export interface ChartSettingBase {
 	selectedVariables: string[];
 	type: ChartSettingType;
 	primaryColor?: string;
+	scale?: string;
 }
 
 export const ProgrammingLanguageVersion: { [key in ProgrammingLanguage]: string } = {
