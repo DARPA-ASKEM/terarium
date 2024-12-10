@@ -4,7 +4,6 @@ import traceback
 import time
 import base64
 import json
-import os
 from pydantic import BaseModel
 from typing import List
 from taskrunner import TaskRunnerInterface
@@ -25,9 +24,6 @@ def main():
         start = time.time()
         taskrunner = TaskRunnerInterface(description="Compare Model Concepts")
         taskrunner.on_cancellation(cleanup)
-
-        # Print environment variables in a more readable format
-        taskrunner.log(json.dumps(dict(os.environ), indent=2))
 
         taskrunner.log("Creating Models from input")
         input_dict = taskrunner.read_input_dict_with_timeout()
