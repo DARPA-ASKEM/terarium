@@ -1,16 +1,14 @@
 import sys
-import json
 import itertools
 import traceback
 import time
 import base64
-from pandas import DataFrame
 from pydantic import BaseModel
 from typing import List
 from taskrunner import TaskRunnerInterface
 from mira.metamodel import *
 from mira.sources.amr.petrinet import template_model_from_amr_json
-from mira.dkg.web_client import is_ontological_child_web
+from mira.metamodel.utils import is_ontological_child
 
 class CompareModelConcepts(BaseModel):
     amrs: List[str]  # expects AMRs to be a stringifies JSON object
@@ -30,6 +28,7 @@ def main():
         input_dict = taskrunner.read_input_str_with_timeout()
         amrs = CompareModelConcepts(**input_dict).amrs
 
+
         ### Create MMT (MIRA Model Template) from input
         models = {}
         for amr, i in amrs:
@@ -41,7 +40,9 @@ def main():
         ### Concept context comparison
         taskrunner.log("Concept context comparison")
 
-        comp = TemplateModelComparison(models.values(), is_ontological_child_web)
+        tags = [f"Model {i}" for i in models.values().map(lambda x: x.name)]
+        # comp = TemplateModelComparison(models.values(), is_ontological_child)
+        comp = TemplateModelComparison(models.values(), is_ontological_child, tags, run_on_init=False)
         concept_context_comparison = comp.compare_context().to_csv(encoding='utf-8')
 
         previous_end = end
@@ -53,8 +54,8 @@ def main():
 
         tabular_comparison = {}
         for i, j in itertools.combinations(models.keys(), 2):
-            table = get_concept_comparison_table(models[i], models[j], name_only=True).to_csv(encoding='utf-8')
-            tabular_comparison[(i, j)] = table
+            table = get_concept_comparison_table(models[i], models[j], name_only=True)
+            tabular_comparison[(i, j)] = table.to_csv(encoding='utf-8')
 
         previous_end = end
         end = time.time()
@@ -68,7 +69,7 @@ def main():
             image = TemplateModelDelta(
                 template_model1=models[i],
                 template_model2=models[j],
-                refinement_function=is_ontological_child_web,
+                refinement_function=is_ontological_child,
                 concepts_only=True,
             )
 
