@@ -74,7 +74,7 @@ public class TerariumAssetCloneServiceTests extends TerariumApplicationTests {
 		final Grounding grounding = new Grounding();
 		grounding.setContext(objectMapper.createObjectNode().put("hello", "world-" + key).put("foo", "bar-" + key));
 		grounding.setIdentifiers(new ArrayList<>());
-		grounding.getIdentifiers().add(new DKG("curie", "maria", ""));
+		grounding.getIdentifiers().add(new DKG("curie", "maria", "", null, null));
 		return grounding;
 	}
 
