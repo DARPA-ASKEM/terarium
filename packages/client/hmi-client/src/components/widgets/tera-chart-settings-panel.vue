@@ -43,6 +43,10 @@
 						/>
 					</div>
 				</div>
+				<section v-if="activeSettings.type !== 'error-distribution'">
+					<h6>Color Picker</h6>
+					<input type="color" :value="selectedColor" @change="onColorChange($event)" />
+				</section>
 			</div>
 		</div>
 	</transition>
@@ -69,7 +73,7 @@ const props = defineProps<{
 	generateAnnotation?: (setting: ChartSetting, query: string) => Promise<ChartAnnotation | null>;
 }>();
 
-const emit = defineEmits(['close', 'update-settings-scale', 'delete-annotation', 'create-annotation']);
+const emit = defineEmits(['close', 'update-settings-scale', 'delete-annotation', 'create-annotation', 'change-color']);
 
 const useLog = computed(() => props.activeSettings?.scale === 'log');
 
@@ -86,6 +90,19 @@ const chartAnnotations = computed(() => {
 const isGeneratingAnnotation = ref(false);
 const generateAnnotationQuery = ref<string>('');
 const showAnnotationInput = ref<Boolean>(false);
+
+const selectedColor = computed(() => {
+	if (!color.value) {
+		return props.activeSettings?.primaryColor ?? '#1B8073';
+	}
+	return color.value;
+});
+const color = ref('');
+
+const onColorChange = (event) => {
+	color.value = event.target?.value;
+	emit('change-color', event.target?.value);
+};
 
 const createAnnotation = async () => {
 	if (props.generateAnnotation === undefined || props.activeSettings === null) {

@@ -1,5 +1,5 @@
 <template>
-	<div class="chart-settings-item">
+	<div class="chart-settings-item" :style="{ 'border-left': primaryColor }">
 		<h6>{{ settings.name }}</h6>
 		<div class="btn-group">
 			<Button icon="pi pi-cog" rounded text @click="$emit('open')" />
@@ -10,14 +10,17 @@
 
 <script setup lang="ts">
 import Button from 'primevue/button';
+import { computed } from 'vue';
 
-defineProps({
+const props = defineProps({
 	settings: {
 		type: Object,
 		default: () => ({})
 	}
 });
 defineEmits(['open', 'remove']);
+
+const primaryColor = computed(() => (props.settings.primaryColor ? `4px solid ${props.settings.primaryColor}` : ''));
 </script>
 
 <style scoped>
