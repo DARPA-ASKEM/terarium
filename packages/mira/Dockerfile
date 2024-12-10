@@ -1,5 +1,5 @@
 # Build the Spring Boot application
-FROM python:3.10-slim-bookworm AS mira_taskrunner_builder
+FROM python:3.10-bookworm AS mira_taskrunner_builder
 
 ###### DEV ONLY ######
 #VVVVVVVVVVVVVVVVVVVVV
@@ -8,7 +8,7 @@ FROM python:3.10-slim-bookworm AS mira_taskrunner_builder
 
 # Install OpenJDK and libraries for Mira
 RUN apt update && apt install -y --no-install-recommends \
-	wget gcc graphviz libgraphviz-dev pkg-config \
+	wget graphviz libgraphviz-dev pkg-config \
 	openjdk-17-jdk-headless && \
 	rm -rf /var/lib/apt/lists/*
 
@@ -36,13 +36,13 @@ COPY ./packages/taskrunner .
 RUN ./gradlew bootJar
 
 # ------------------------------------------------------------------------------
-FROM python:3.10-slim-bookworm
+FROM python:3.10-bookworm
 
 WORKDIR /
 
 # Install OpenJDK and libraries for Mira
 RUN apt update && apt install -y --no-install-recommends \
-	wget gcc graphviz libgraphviz-dev pkg-config \
+	wget graphviz libgraphviz-dev pkg-config \
 	openjdk-17-jdk-headless && \
 	rm -rf /var/lib/apt/lists/*
 
