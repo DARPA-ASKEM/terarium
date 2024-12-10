@@ -43,8 +43,11 @@ export const svgToImage = (svgElement: SVGElement): Promise<HTMLImageElement> =>
 	const svgString = serializer.serializeToString(svgElement);
 	const svgBlob = new Blob([svgString], { type: 'image/svg+xml;charset=utf-8' });
 	const url = URL.createObjectURL(svgBlob);
-	const img = new Image(svgElement.clientWidth, svgElement.clientHeight);
-	const finalImg = new Image(svgElement.clientWidth, svgElement.clientHeight);
+
+	const w = svgElement.clientWidth || parseFloat(svgElement.getAttribute('width') as string);
+	const h = svgElement.clientHeight || parseFloat(svgElement.getAttribute('height') as string);
+	const img = new Image(w, h);
+	const finalImg = new Image(w, h);
 
 	return new Promise((resolve, reject) => {
 		img.addEventListener('load', (e: any) => {

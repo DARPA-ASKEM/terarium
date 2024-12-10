@@ -83,6 +83,7 @@ import { AMRSchemaNames, type FeatureConfig } from '@/types/common';
 import { StratifiedMatrix } from '@/types/Model';
 import type { Model } from '@/types/Types';
 import { observeElementSizeChange } from '@/utils/observer';
+import { svgToImage } from '@/utils/svg';
 
 const props = defineProps<{
 	model: Model;
@@ -122,11 +123,17 @@ async function renderGraph() {
 	// Sanity guard
 	if (mmt.value.templates.length === 0) return;
 
-	renderer = getModelRenderer(
-		mmt.value,
-		graphElement.value as HTMLDivElement,
-		stratifiedView.value === StratifiedView.Collapsed
-	);
+	// Abstract the container element so we can render off the DOM
+	let elem = graphElement.value;
+	if (props.featureConfig?.isPreview && graphElement.value) {
+		const originalElem = graphElement.value;
+		elem = document.createElement('div');
+		elem.style.width = `${originalElem.clientWidth}px`;
+		elem.style.height = `${originalElem.clientHeight}px`;
+	}
+
+	renderer = getModelRenderer(mmt.value, elem as HTMLDivElement, stratifiedView.value === StratifiedView.Collapsed);
+
 	if (renderer.constructor === NestedPetrinetRenderer && renderer.dims?.length) {
 		graphLegendLabels.value = renderer.dims;
 		graphLegendColors.value = renderer.depthColorList;
@@ -135,6 +142,36 @@ async function renderGraph() {
 		graphLegendColors.value = [];
 	}
 
+	// If interactive, setup events and handlers
+	if (!props.featureConfig?.isPreview) {
+		makeGraphInteractive(renderer);
+	}
+
+	// Prepare data
+	const graphData = convertToIGraph(
+		mmt.value,
+		observableSummary,
+		isStratified.value && stratifiedView.value === StratifiedView.Collapsed
+	);
+
+	// Render graph, this will either render to the DOM or a virutal element
+	if (renderer) {
+		renderer.isGraphDirty = true;
+		await renderer.setData(graphData);
+		await renderer.render();
+	}
+
+	// If not interactive, convert elem buffer into image
+	if (props.featureConfig?.isPreview && graphElement.value) {
+		const image = await svgToImage(elem?.querySelector('svg') as SVGElement);
+		graphElement.value.innerHTML = '';
+		graphElement.value.appendChild(image);
+		elem = null;
+	}
+}
+
+// eslint-disable-next-line
+function makeGraphInteractive(renderer: PetrinetRenderer | NestedPetrinetRenderer) {
 	renderer.on('node-click', (_eventName, _event, selection) => {
 		const { id, data } = selection.datum();
 		if (data.type === NodeType.Transition && data.isStratified) {
@@ -174,19 +211,6 @@ async function renderGraph() {
 		const { data } = selection.datum();
 		if (data.type === NodeType.Transition && data.isStratified) hoveredTransitionId.value = '';
 	});
-
-	// Render graph
-	const graphData = convertToIGraph(
-		mmt.value,
-		observableSummary,
-		isStratified.value && stratifiedView.value === StratifiedView.Collapsed
-	);
-
-	if (renderer) {
-		renderer.isGraphDirty = true;
-		await renderer.setData(graphData);
-		await renderer.render();
-	}
 }
 
 async function toggleCollapsedView(view: StratifiedView) {
