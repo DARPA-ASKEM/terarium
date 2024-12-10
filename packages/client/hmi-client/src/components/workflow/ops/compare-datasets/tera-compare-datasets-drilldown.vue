@@ -298,7 +298,7 @@ async function createCharts() {
 		const headerIndex = transposedRawContents[0]?.headers?.indexOf(headerName);
 		if (!headerIndex) return;
 
-		const differences: any = [];
+		const data: any = [];
 		const variableNames: string[] = [];
 		const referenceColumn = transposedRawContents[selectedIndex].csv[headerIndex]; // aka the column of baseline dataset we are subtracting from
 
@@ -318,13 +318,13 @@ async function createCharts() {
 				} else if (knobs.value.selectedPlotValue === PlotValue.TRAJECTORY) {
 					value = parseFloat(columnToSubtract[index]); // trajectory
 				}
-				if (differences[index] === undefined) {
-					differences.push({
+				if (data[index] === undefined) {
+					data.push({
 						[name]: value,
 						timepoint: parseFloat(timepoints[index])
 					});
 				} else {
-					differences[index][name] = value;
+					data[index][name] = value;
 				}
 			});
 		});
@@ -332,7 +332,7 @@ async function createCharts() {
 			createForecastChart(
 				null,
 				{
-					data: differences,
+					data,
 					variables: variableNames,
 					timeField: 'timepoint'
 				},
