@@ -108,7 +108,7 @@
 			>
 				<template #content>
 					<tera-drilldown-section class="px-2">
-						<label>What values do you want to plot?</label>
+						<label>How do you want to plot the values?</label>
 						<div v-for="option in plotOptions" class="flex align-items-center" :key="option.value">
 							<RadioButton
 								v-model="knobs.selectedPlotValue"
@@ -142,7 +142,7 @@ import TeraCheckbox from '@/components/widgets/tera-checkbox.vue';
 import RadioButton from 'primevue/radiobutton';
 import { isEmpty, cloneDeep } from 'lodash';
 import VegaChart from '@/components/widgets/VegaChart.vue';
-import { createDatasetCompareChart } from '@/services/charts';
+import { createForecastChart } from '@/services/charts';
 import {
 	blankCriteriaOfInterest,
 	CompareDatasetsState,
@@ -168,8 +168,9 @@ const commonHeaderNames = ref<string[]>([]);
 const timepointHeaderName = ref<string | null>(null);
 
 const plotOptions = [
-	{ label: 'Percent change', value: 'percentage' },
-	{ label: 'Absolute difference', value: 'value' }
+	{ label: 'Compare trajectories', value: PlotValue.TRAJECTORY },
+	{ label: 'Percent change', value: PlotValue.PERCENTAGE },
+	{ label: 'Difference', value: PlotValue.VALUE }
 ];
 
 const isInputSettingsOpen = ref(true);
@@ -268,54 +269,78 @@ async function createCharts() {
 	const rawContents = await Promise.all(datasets.value.map((dataset) => getRawContent(dataset)));
 	const transposedRawContents = rawContents.map((content) => ({ ...content, csv: transposeArrays(content?.csv) }));
 
+	// Collect common header names if not done yet
 	if (isEmpty(commonHeaderNames.value)) {
 		const allColumnNames: string[] = [];
-		datasets.value.forEach((dataset) => {
-			const columnNames = dataset?.columns?.map((column) => column.name) ?? [];
-			allColumnNames.push(...columnNames);
+		transposedRawContents.forEach(({ headers }) => {
+			if (headers) allColumnNames.push(...headers);
 		});
 		commonHeaderNames.value = findDuplicates(allColumnNames);
 
-		// Convenient assumption that the timepoint header name contains 't'
+		// Convenient assumption that the timepoint header name starts with 't'
 		timepointHeaderName.value =
 			commonHeaderNames.value?.find((name) => name.toLowerCase().slice(0, 1) === 't') ?? commonHeaderNames.value[0];
 	}
-
 	if (!timepointHeaderName.value) return;
 
+	// Find index of timepoint column
 	const timepointIndex = transposedRawContents[0]?.headers?.indexOf(timepointHeaderName.value);
-	if (timepointIndex === undefined) return;
+	if (timepointIndex === undefined || timepointIndex === -1) return;
 
-	// Go through every column header
+	// Find dataset index of the selected dataset
+	const selectedIndex = datasets.value.findIndex((dataset) => dataset.id === knobs.value.selectedDataset);
+	if (selectedIndex === -1) return;
+
+	// Go through every common header (column loop)
 	commonHeaderNames.value?.forEach((headerName) => {
 		if (headerName === timepointHeaderName.value) return;
 
 		const headerIndex = transposedRawContents[0]?.headers?.indexOf(headerName);
 		if (!headerIndex) return;
 
-		const values: any = [];
-		// Find dataset index of the selected dataset
-		const selectedIndex = datasets.value.findIndex((dataset) => dataset.id === knobs.value.selectedDataset);
-		const referenceColumn = transposedRawContents[selectedIndex].csv[headerIndex]; // aka the baseline dataset
+		const differences: any = [];
+		const variableNames: string[] = [];
+		const referenceColumn = transposedRawContents[selectedIndex].csv[headerIndex]; // aka the column of baseline dataset we are subtracting from
 
-		transposedRawContents.forEach((content, datasetIndex) => {
-			const timepoints = content.csv[timepointIndex];
-			timepoints.forEach((timepoint: number, rowIndex: number) => {
-				const referencePoint = parseFloat(referenceColumn[rowIndex]);
-				const currentPoint = parseFloat(content.csv[headerIndex][rowIndex]);
+		transposedRawContents.forEach(({ csv }, datasetIndex) => {
+			const timepoints = csv[timepointIndex];
+			const columnToSubtract = csv[headerIndex];
 
-				const absoluteDifference = referencePoint - currentPoint;
-				const percentChange = (absoluteDifference / referencePoint) * 100;
+			const name = `${headerName}_${datasets.value[datasetIndex].name}`;
+			variableNames.push(name);
 
-				values.push({
-					timepoint,
-					value: knobs.value.selectedPlotValue === PlotValue.VALUE ? absoluteDifference : percentChange,
-					name: `${headerName}_${datasets.value[datasetIndex].name}`
-				});
-			});
+			differences.push(
+				...referenceColumn.map((referencePoint: number, index: number) => {
+					let value = 0;
+					if (knobs.value.selectedPlotValue === PlotValue.VALUE) {
+						value = referencePoint - columnToSubtract[index]; // difference
+					} else if (knobs.value.selectedPlotValue === PlotValue.PERCENTAGE) {
+						value = ((referencePoint - columnToSubtract[index]) / referencePoint) * 100; // percentage
+					} else if (knobs.value.selectedPlotValue === PlotValue.TRAJECTORY) {
+						value = parseFloat(columnToSubtract[index]); // trajectory
+					}
+					return {
+						[name]: value,
+						timepoint: parseFloat(timepoints[index])
+					};
+				})
+			);
 		});
-
-		compareCharts.value.push(createDatasetCompareChart(values, headerName));
+		console.log(differences);
+		compareCharts.value.push(
+			createForecastChart(
+				{ data: differences, variables: variableNames, timeField: 'timepoint' },
+				{ data: differences, variables: variableNames, timeField: 'timepoint' },
+				null,
+				{
+					title: headerName,
+					xAxisTitle: 'Timepoint',
+					yAxisTitle: 'Value',
+					width: 500,
+					height: 300
+				}
+			)
+		);
 	});
 }
 

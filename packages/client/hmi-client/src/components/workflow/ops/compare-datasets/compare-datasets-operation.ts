@@ -11,6 +11,7 @@ export enum RankOption {
 }
 
 export enum PlotValue {
+	TRAJECTORY = 'trajectory',
 	PERCENTAGE = 'percentage',
 	VALUE = 'value'
 }
