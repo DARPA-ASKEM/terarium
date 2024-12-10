@@ -155,13 +155,9 @@
 						@update-parameters="setParameterDistributions(knobs.transientModelConfig, $event)"
 						@update-source="setParameterSource(knobs.transientModelConfig, $event.id, $event.value)"
 					/>
-					<Accordion :active-index="observableActiveIndicies" v-if="!isEmpty(calibratedConfigObservables)">
+					<Accordion :active-index="observableActiveIndicies" v-if="!isEmpty(observablesList)">
 						<AccordionTab header="Observables">
-							<tera-model-part
-								class="pl-4"
-								:items="calibratedConfigObservables"
-								:feature-config="{ isPreview: true }"
-							/>
+							<tera-model-part class="pl-4" :items="observablesList" :feature-config="{ isPreview: true }" />
 						</AccordionTab>
 					</Accordion>
 					<!-- vertical spacer at end of page -->
@@ -269,14 +265,15 @@ import {
 } from '@/services/model-configurations';
 import { useToastService } from '@/services/toast';
 import type { Initial, Model, ModelConfiguration, TaskResponse } from '@/types/Types';
-import { AssetType, ModelParameter, Observable } from '@/types/Types';
+import { AssetType, ModelParameter } from '@/types/Types';
 import type { WorkflowNode } from '@/types/workflow';
 import { OperatorStatus } from '@/types/workflow';
 import { logger } from '@/utils/logger';
 import {
 	isModelMissingMetadata,
 	getParameters as getAmrParameters,
-	getInitials as getAmrInitials
+	getInitials as getAmrInitials,
+	createObservablesList
 } from '@/model-representation/service';
 import Message from 'primevue/message';
 import TeraColumnarPanel from '@/components/widgets/tera-columnar-panel.vue';
@@ -330,15 +327,6 @@ interface BasicKnobs {
 const knobs = ref<BasicKnobs>({
 	transientModelConfig: blankModelConfig
 });
-
-const calibratedConfigObservables = computed<Observable[]>(() =>
-	knobs.value.transientModelConfig.observableSemanticList.map(({ referenceId, states, expression }) => ({
-		id: referenceId,
-		name: referenceId,
-		states,
-		expression
-	}))
-);
 
 const getTotalInput = (modelConfiguration: ModelConfiguration) =>
 	modelConfiguration.initialSemanticList.length + modelConfiguration.parameterSemanticList.length;
@@ -517,6 +505,9 @@ const datasetIds = computed(() =>
 		.map((input) => input.value?.[0])
 		.filter((id): id is string => id !== undefined)
 );
+
+const observables = computed(() => model.value?.semantics?.ode?.observables ?? []);
+const observablesList = computed(() => createObservablesList(observables.value));
 
 const modelConfigurations = ref<ModelConfiguration[]>([]);
 
