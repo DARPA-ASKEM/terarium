@@ -361,7 +361,9 @@ public class Model extends TerariumAssetThatSupportsAdditionalProperties {
 		return this.getHeader().getSchemaName().equalsIgnoreCase("petrinet");
 	}
 
-	private String getDescriptionAsReadableString() {
+	@JsonIgnore
+	@TSIgnore
+	public String getDescriptionAsReadableString() {
 		if (getMetadata().getDescription() == null) {
 			return null;
 		}
