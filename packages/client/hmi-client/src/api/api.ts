@@ -108,9 +108,9 @@ export interface PollerResult<T> {
 }
 
 export class Poller<T> {
-	pollingInterval = 2000;
+	pollingInterval = 3000;
 
-	pollingThreshold = 10;
+	pollingThreshold = 350;
 
 	keepGoing = false;
 

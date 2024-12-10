@@ -204,8 +204,6 @@ const isFinished = (state: ProgressState) =>
 // const poller = new Poller();
 // const pollResult = async (runId: string) => {
 // 	poller
-// 		.setInterval(3000)
-// 		.setThreshold(350)
 // 		.setPollAction(async () => pollAction(runId))
 // 		.setProgressAction((data: Simulation) => {
 // 			if (data?.updates?.length) {
