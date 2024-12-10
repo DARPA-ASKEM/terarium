@@ -42,18 +42,22 @@
 import _ from 'lodash';
 import { computed, ref, toRef, watch } from 'vue';
 import Button from 'primevue/button';
+
+import { logger } from '@/utils/logger';
+
+import { updateChartSettingsBySelectedVariables } from '@/services/chart-settings';
+import { createDatasetFromSimulationResult } from '@/services/dataset';
+import { flattenInterventionData, getInterventionPolicyById } from '@/services/intervention-policy';
+import { getModelByModelConfigurationId, getTypesFromModelParts, getUnitsFromModelParts } from '@/services/model';
+import { getModelConfigurationById } from '@/services/model-configurations';
+import { getRunResultCSV, getSimulation, parsePyCiemssMap, DataArray } from '@/services/models/simulation-service';
+import { createLLMSummary } from '@/services/summary-service';
+
 import TeraOperatorPlaceholder from '@/components/operator/tera-operator-placeholder.vue';
 import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue';
-import { getRunResultCSV, getSimulation, parsePyCiemssMap, DataArray } from '@/services/models/simulation-service';
-import { getModelByModelConfigurationId, getTypesFromModelParts, getUnitsFromModelParts } from '@/services/model';
-import { logger } from '@/utils/logger';
+import VegaChart from '@/components/widgets/VegaChart.vue';
 import { nodeOutputLabel } from '@/components/workflow/util';
 
-import type { WorkflowNode } from '@/types/workflow';
-import { createLLMSummary } from '@/services/summary-service';
-import { useProjects } from '@/composables/project';
-import { createDatasetFromSimulationResult } from '@/services/dataset';
-import VegaChart from '@/components/widgets/VegaChart.vue';
 import {
 	ClientEvent,
 	ClientEventType,
@@ -65,16 +69,18 @@ import {
 	type InterventionPolicy,
 	type Model
 } from '@/types/Types';
-import { flattenInterventionData, getInterventionPolicyById } from '@/services/intervention-policy';
-import { updateChartSettingsBySelectedVariables } from '@/services/chart-settings';
 import { ChartSettingType } from '@/types/common';
+import type { WorkflowNode } from '@/types/workflow';
+
 import { useClientEvent } from '@/composables/useClientEvent';
-import { getModelConfigurationById } from '@/services/model-configurations';
 import { useChartSettings } from '@/composables/useChartSettings';
 import { useCharts } from '@/composables/useCharts';
+import { useProjects } from '@/composables/project';
+
 import { SimulateCiemssOperationState, SimulateCiemssOperation } from './simulate-ciemss-operation';
 import { mergeResults, renameFnGenerator } from '../calibrate-ciemss/calibrate-utils';
 import { usePreparedChartInputs } from './simulate-utils';
+// import { Poller, PollerState } from '@/api/api';
 
 const props = defineProps<{
 	node: WorkflowNode<SimulateCiemssOperationState>;
@@ -194,6 +200,35 @@ const isChartsEmpty = computed(
 
 const isFinished = (state: ProgressState) =>
 	[ProgressState.Cancelled, ProgressState.Failed, ProgressState.Complete].includes(state);
+
+// const poller = new Poller();
+// const pollResult = async (runId: string) => {
+// 	poller
+// 		.setInterval(3000)
+// 		.setThreshold(350)
+// 		.setPollAction(async () => pollAction(runId))
+// 		.setProgressAction((data: Simulation) => {
+// 			if (data?.updates?.length) {
+// 				lossValues = data?.updates
+// 					.sort((a, b) => a.data.progress - b.data.progress)
+// 					.map((d, i) => ({
+// 						iter: i,
+// 						loss: d.data.loss
+// 					}));
+// 				// updateLossChartSpec(lossValues);
+// 			}
+// 			if (runId === props.node.state.inProgressBaseForecastId && data.updates.length > 0) {
+// 				const checkpoint = _.first(data.updates);
+// 				if (checkpoint) {
+// 					const state = _.cloneDeep(props.node.state);
+// 					state.currentProgress = +((100 * checkpoint.data.progress) / state.numIterations).toFixed(2);
+// 					emit('update-state', state);
+// 				}
+// 			}
+// 		});
+
+// 	const pollerResults = await poller.start();
+// };
 
 // Handle simulation status update event for the forecast run
 useClientEvent(
