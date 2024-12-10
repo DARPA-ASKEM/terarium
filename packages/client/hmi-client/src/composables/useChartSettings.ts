@@ -9,7 +9,6 @@ import {
 	updateEnsembleVariableChartSettingOption
 } from '@/services/chart-settings';
 import { WorkflowNode } from '@/types/workflow';
-import { cloneDeep } from 'lodash';
 
 /**
  * Composable to manage chart settings for a given workflow node.
