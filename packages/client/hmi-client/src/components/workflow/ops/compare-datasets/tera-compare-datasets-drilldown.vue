@@ -328,7 +328,6 @@ async function createCharts() {
 				}
 			});
 		});
-		console.log(differences, variableNames);
 		compareCharts.value.push(
 			createForecastChart(
 				null,
