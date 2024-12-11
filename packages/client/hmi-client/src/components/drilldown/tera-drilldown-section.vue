@@ -10,7 +10,9 @@
 		</header>
 		<main ref="main" @scroll="handleScroll">
 			<tera-progress-spinner v-if="isLoading" :font-size="2" is-centered>
-				Processing...<span v-if="loadingProgress">{{ loadingProgress }}%</span>
+				<span v-if="!loadingMessage">Processing... </span>
+				<span v-if="loadingProgress">{{ loadingProgress }}% </span>
+				<span v-if="loadingProgress && loadingMessage">{{ loadingMessage }}</span>
 			</tera-progress-spinner>
 			<div v-else-if="isBlank" class="empty-state">
 				<Vue3Lottie :animationData="EmptySeed" :height="150" :width="150" loop autoplay />
@@ -34,6 +36,7 @@ defineProps<{
 	isLoading?: boolean;
 	isBlank?: boolean;
 	blankMessage?: string;
+	loadingMessage?: string;
 	loadingProgress?: number;
 }>();
 

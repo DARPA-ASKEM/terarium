@@ -189,7 +189,7 @@
 			<h4>Notebook</h4>
 		</section>
 		<template #preview>
-			<tera-drilldown-section>
+			<tera-drilldown-section :is-loading="isRunInProgress" :loading-progress="node.state.currentProgress">
 				<section class="pb-3 px-2">
 					<div class="mx-2" ref="chartWidthDiv"></div>
 					<Accordion multiple :active-index="[0, 1, 2, 3]">
@@ -240,9 +240,6 @@
 							</AccordionTab>
 						</template>
 					</Accordion>
-					<tera-progress-spinner v-if="isRunInProgress" :font-size="2" is-centered style="height: 100%">
-						{{ node.state.currentProgress }}%
-					</tera-progress-spinner>
 					<tera-notebook-error v-bind="node.state.errorMessage" />
 				</section>
 			</tera-drilldown-section>
@@ -334,7 +331,6 @@ import Divider from 'primevue/divider';
 import TeraInputNumber from '@/components/widgets/tera-input-number.vue';
 import AccordionTab from 'primevue/accordiontab';
 import Accordion from 'primevue/accordion';
-import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue';
 import Dropdown from 'primevue/dropdown';
 import { setupDatasetInput, setupCsvAsset, setupModelInput, parseCsvAsset } from '@/services/calibrate-workflow';
 import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
