@@ -190,7 +190,7 @@ const commonHeaderNames = ref<string[]>([]);
 const timepointHeaderName = ref<string | null>(null);
 
 const plotOptions = [
-	{ label: 'Compare trajectories', value: PlotValue.VALUE },
+	{ label: 'Raw data', value: PlotValue.VALUE },
 	{ label: 'Percent change', value: PlotValue.PERCENTAGE },
 	{ label: 'Difference', value: PlotValue.DIFFERENCE }
 ];
