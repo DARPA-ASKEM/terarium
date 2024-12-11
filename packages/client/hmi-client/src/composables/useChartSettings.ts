@@ -102,12 +102,7 @@ export function useChartSettings(
 	};
 
 	const updateChartPrimaryColor = (settings: ChartSetting, color: string) => {
-		const index = chartSettings.value.findIndex(
-			(chart) =>
-				chart.name === settings.name &&
-				chart.selectedVariables[0] === settings.selectedVariables[0] &&
-				chart.type === settings.type
-		);
+		const index = chartSettings.value.findIndex((chart) => chart.id === settings.id);
 		if (index !== -1) {
 			const charts = cloneDeep(chartSettings.value);
 			charts[index].primaryColor = color;

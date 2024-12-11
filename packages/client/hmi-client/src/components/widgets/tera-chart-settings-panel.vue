@@ -45,7 +45,7 @@
 				</div>
 				<section v-if="activeSettings.type !== 'error-distribution'">
 					<h6>Color Picker</h6>
-					<input type="color" :value="selectedColor" @change="onColorChange($event)" />
+					<input type="color" :value="primaryColor" @change="onColorChange($event)" />
 				</section>
 			</div>
 		</div>
@@ -54,7 +54,7 @@
 
 <script setup lang="ts">
 import _ from 'lodash';
-import { ref, computed } from 'vue';
+import { ref, computed, watch } from 'vue';
 import Button from 'primevue/button';
 import { ChartSetting } from '@/types/common';
 import { ChartAnnotation } from '@/types/Types';
@@ -73,7 +73,13 @@ const props = defineProps<{
 	generateAnnotation?: (setting: ChartSetting, query: string) => Promise<ChartAnnotation | null>;
 }>();
 
-const emit = defineEmits(['close', 'update-settings-scale', 'delete-annotation', 'create-annotation', 'change-color']);
+const emit = defineEmits([
+	'close',
+	'update-settings-scale',
+	'delete-annotation',
+	'create-annotation',
+	'update-settings-color'
+]);
 
 const useLog = computed(() => props.activeSettings?.scale === 'log');
 
@@ -90,18 +96,11 @@ const chartAnnotations = computed(() => {
 const isGeneratingAnnotation = ref(false);
 const generateAnnotationQuery = ref<string>('');
 const showAnnotationInput = ref<Boolean>(false);
-
-const selectedColor = computed(() => {
-	if (!color.value) {
-		return props.activeSettings?.primaryColor ?? '#1B8073';
-	}
-	return color.value;
-});
-const color = ref('');
+const primaryColor = ref(props.activeSettings?.primaryColor ?? '#1B8073');
 
 const onColorChange = (event) => {
-	color.value = event.target?.value;
-	emit('change-color', event.target?.value);
+	primaryColor.value = event.target?.value;
+	emit('update-settings-color', event.target?.value);
 };
 
 const createAnnotation = async () => {
@@ -122,6 +121,15 @@ const cancelGenerateAnnotation = () => {
 	generateAnnotationQuery.value = '';
 	showAnnotationInput.value = false;
 };
+
+watch(
+	() => props.activeSettings,
+	() => {
+		if (props.activeSettings?.primaryColor) {
+			primaryColor.value = props.activeSettings.primaryColor;
+		}
+	}
+);
 </script>
 
 <style scoped>

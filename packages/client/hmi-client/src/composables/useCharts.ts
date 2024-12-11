@@ -130,8 +130,7 @@ export function useCharts(
 		setting: ChartSettingEnsembleVariable,
 		modelConfigId = '',
 		multiVariable = false,
-		showBaseLines = false,
-		color: string | null = null
+		showBaseLines = false
 	) => {
 		const ensembleVarName = setting.selectedVariables[0];
 		const options: ForecastChartOptions = {
@@ -143,7 +142,7 @@ export function useCharts(
 			xAxisTitle: '',
 			yAxisTitle: '',
 			autosize: AUTOSIZE.FIT,
-			colorscheme: multiVariable ? CATEGORICAL_SCHEME : [BASE_GREY, color ?? PRIMARY_COLOR]
+			colorscheme: multiVariable ? CATEGORICAL_SCHEME : [BASE_GREY, setting.primaryColor ?? PRIMARY_COLOR]
 		};
 
 		const variables: string[] = [];
@@ -187,7 +186,7 @@ export function useCharts(
 	};
 
 	// Create options for forecast charts based on chart settings and model configuration
-	const createForecastChartOptions = (setting: ChartSetting, color: string | null = null) => {
+	const createForecastChartOptions = (setting: ChartSetting) => {
 		if (isChartSettingEnsembleVariable(setting)) return createEnsembleVariableChartOptions(setting, '', true, true);
 		const variables = setting.selectedVariables;
 		const dateOptions = getVegaDateOptions(model?.value ?? null, <ModelConfiguration>modelConfig?.value || null);
@@ -200,7 +199,7 @@ export function useCharts(
 			xAxisTitle: getUnit('_time') || 'Time',
 			yAxisTitle: _.uniq(variables.map(getUnit).filter((v) => !!v)).join(',') || '',
 			dateOptions,
-			colorscheme: [BASE_GREY, color ?? PRIMARY_COLOR],
+			colorscheme: [BASE_GREY, setting.primaryColor ?? PRIMARY_COLOR],
 			scale: setting.scale
 		};
 
@@ -248,10 +247,7 @@ export function useCharts(
 			// intervention chart spec
 			chartSettings.value.forEach((setting) => {
 				const variable = setting.selectedVariables[0];
-				const { sampleLayerVariables, statLayerVariables, options } = createForecastChartOptions(
-					setting,
-					setting.primaryColor ?? null
-				);
+				const { sampleLayerVariables, statLayerVariables, options } = createForecastChartOptions(setting);
 				const forecastChart = createForecastChart(
 					{
 						data: showSamples ? result : [],
@@ -294,10 +290,7 @@ export function useCharts(
 				const variable = settings.selectedVariables[0];
 				const annotations = getChartAnnotationsByChartId(settings.id);
 				const datasetVar = modelVarToDatasetVar(mapping?.value || [], variable);
-				const { sampleLayerVariables, statLayerVariables, options } = createForecastChartOptions(
-					settings,
-					settings.primaryColor ?? null
-				);
+				const { sampleLayerVariables, statLayerVariables, options } = createForecastChartOptions(settings);
 				const chart = applyForecastChartAnnotations(
 					createForecastChart(
 						{
@@ -340,10 +333,7 @@ export function useCharts(
 			const { result, resultSummary } = chartData.value as ChartData;
 			chartSettings.value.forEach((setting) => {
 				const selectedVars = setting.selectedVariables;
-				const { statLayerVariables, sampleLayerVariables, options } = createForecastChartOptions(
-					setting,
-					setting.primaryColor ?? null
-				);
+				const { statLayerVariables, sampleLayerVariables, options } = createForecastChartOptions(setting);
 				const annotations = getChartAnnotationsByChartId(setting.id);
 
 				const chart = applyForecastChartAnnotations(
@@ -396,8 +386,7 @@ export function useCharts(
 							setting,
 							modelConfigId,
 							false,
-							true,
-							setting.primaryColor ?? null
+							true
 						);
 						options.width = chartSize.value.width / (modelConfigIds.length + 1);
 						options.legendProperties = { direction: 'vertical', columns: 1, labelLimit: options.width };

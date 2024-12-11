@@ -376,7 +376,7 @@
 						:active-settings="activeChartSettings"
 						:generate-annotation="generateAnnotation"
 						@delete-annotation="deleteAnnotation"
-						@change-color="onColorChange"
+						@update-settings-color="onColorChange"
 						@close="activeChartSettings = null"
 					/>
 				</template>
