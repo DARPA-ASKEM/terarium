@@ -7,7 +7,7 @@ FROM python:3.11-slim-bookworm AS gollm_taskrunner_builder
 # These deps are installed only for use during local development
 
 # Install OpenJDK
-RUN apt update && apt install -y --no-install-recommends \
+RUN apt-get update && apt-get install -y --no-install-recommends \
 	wget  \
   openjdk-17-jdk-headless && \
 	rm -rf /var/lib/apt/lists/*
@@ -34,7 +34,7 @@ FROM python:3.11-slim-bookworm
 WORKDIR /
 
 # Install OpenJDK JRE
-RUN apt update && apt install -y --no-install-recommends \
+RUN apt-get update && apt-get install -y --no-install-recommends \
 	wget  \
   openjdk-17-jre-headless && \
 	rm -rf /var/lib/apt/lists/*

@@ -69,8 +69,8 @@ passwd <username>
 
 In the WSL Terminal input these commands to install the dependencies (Ubuntu install commands).
 ```shell
-sudo apt upgrade
-sudo apt install build-essential
+sudo apt-get upgrade
+sudo apt-get install build-essential
 sudo apt install openjdk-17-jre-headless
 sudo apt install gradle
 sudo apt install python3-pip

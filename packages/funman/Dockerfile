@@ -7,7 +7,7 @@ FROM ghcr.io/darpa-askem/funman-base:latest AS funman_taskrunner_builder
 # These deps are installed only for use during local development
 
 # Install Python
-RUN apt update && apt install -y --no-install-recommends \
+RUN apt-get update && apt-get install -y --no-install-recommends \
 	openjdk-17-jdk-headless \
 	gcc \
 	git \
@@ -47,8 +47,8 @@ FROM ghcr.io/darpa-askem/funman-base:latest
 WORKDIR /
 
 # Install OpenJDK JRE
-RUN apt update && \
-	apt install -y --no-install-recommends \
+RUN apt-get update && \
+	apt-get install -y --no-install-recommends \
 	openjdk-17-jre-headless && \
 	rm -rf /var/lib/apt/lists/*
 
