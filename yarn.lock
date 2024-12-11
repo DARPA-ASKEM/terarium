@@ -4347,14 +4347,14 @@ __metadata:
   languageName: node
   linkType: hard
 
-"axios@npm:1.7.8":
-  version: 1.7.8
-  resolution: "axios@npm:1.7.8"
+"axios@npm:1.7.9":
+  version: 1.7.9
+  resolution: "axios@npm:1.7.9"
   dependencies:
     follow-redirects: "npm:^1.15.6"
     form-data: "npm:^4.0.0"
     proxy-from-env: "npm:^1.1.0"
-  checksum: 10/7ddcde188041ac55090186254b4025eb2af842be3cf615ce45393fd7f543c1eab0ad2fdd2017a5f6190695e3ecea73ee5e9c37f204854aec2698f9579046efdf
+  checksum: 10/b7a5f660ea53ba9c2a745bf5ad77ad8bf4f1338e13ccc3f9f09f810267d6c638c03dac88b55dae8dc98b79c57d2d6835be651d58d2af97c174f43d289a9fd007
   languageName: node
   linkType: hard
 
@@ -8662,7 +8662,7 @@ __metadata:
     "@vue/runtime-dom": "npm:3.4.38"
     "@vueup/vue-quill": "npm:1.2.0"
     ace-builds: "npm:1.32.9"
-    axios: "npm:1.7.8"
+    axios: "npm:1.7.9"
     chart.js: "npm:4.4.6"
     chartjs-plugin-annotation: "npm:3.0.1"
     chartjs-plugin-datalabels: "npm:2.2.0"
@@ -11275,11 +11275,11 @@ __metadata:
   linkType: hard
 
 "nanoid@npm:^3.1.23, nanoid@npm:^3.3.7":
-  version: 3.3.7
-  resolution: "nanoid@npm:3.3.7"
+  version: 3.3.8
+  resolution: "nanoid@npm:3.3.8"
   bin:
     nanoid: bin/nanoid.cjs
-  checksum: 10/ac1eb60f615b272bccb0e2b9cd933720dad30bf9708424f691b8113826bb91aca7e9d14ef5d9415a6ba15c266b37817256f58d8ce980c82b0ba3185352565679
+  checksum: 10/2d1766606cf0d6f47b6f0fdab91761bb81609b2e3d367027aff45e6ee7006f660fb7e7781f4a34799fe6734f1268eeed2e37a5fdee809ade0c2d4eb11b0f9c40
   languageName: node
   linkType: hard
 
