@@ -36,7 +36,7 @@ def main():
 
         for i, amr_string in enumerate(amrs):
             amr = json.loads(amr_string)
-            tags.append(f"Model {amr['header']['name']}")
+            tags.append(f"{amr['header']['name']}")
             models[i] = template_model_from_amr_json(amr)
 
         end = time.time()
@@ -62,7 +62,7 @@ def main():
             taskrunner.log(f"Tabular concept comparison — between {tags[i]} and {tags[j]}")
 
             # Store the CSV in the dictionary
-            tabular_comparison[f"{i}-{j}"] = table.to_csv(encoding='utf-8')
+            tabular_comparison[f"{tags[i]} — {tags[j]}"] = table.to_csv(encoding='utf-8')
 
         previous_end = end
         end = time.time()
@@ -86,7 +86,7 @@ def main():
 
             # Store the base64 encoded image in the dictionary
             image_base64 = base64.b64encode(png_bytes).decode('utf-8')
-            concept_graph_comparison[f"{i}-{j}"] = image_base64
+            concept_graph_comparison[f"{tags[i]} — {tags[j]}"] = image_base64
 
         previous_end = end
         end = time.time()
