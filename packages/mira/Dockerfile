@@ -7,7 +7,7 @@ FROM python:3.10-slim-bookworm AS mira_taskrunner_builder
 # These deps are installed only for use during local development
 
 # Install OpenJDK
-RUN apt-get update && apt-get install -y --no-install-recommends \
+RUN apt-get update && apt-get install --assume-yes --no-install-recommends \
 	wget \
 	openjdk-17-jdk-headless && \
 	rm -rf /var/lib/apt/lists/*
@@ -41,7 +41,7 @@ FROM python:3.10-slim-bookworm
 WORKDIR /
 
 # Install OpenJDK JRE
-RUN apt-get update && apt-get install -y --no-install-recommends \
+RUN apt-get update && apt-get install --assume-yes --no-install-recommends \
 	wget \
 	openjdk-17-jre-headless && \
 	rm -rf /var/lib/apt/lists/*
@@ -58,13 +58,13 @@ RUN pip install --no-cache-dir .[sbml,biomodels]
 COPY ./packages/taskrunner/setup.py /taskrunner/setup.py
 COPY ./packages/taskrunner/taskrunner.py /taskrunner/taskrunner.py
 WORKDIR /taskrunner
-RUN pip install --no-cache-dir -e .
+RUN pip install --no-cache-dir --editable .
 
 # Install Mira tasks
 COPY ./packages/mira /mira_task
 
 WORKDIR /mira_task
-RUN pip install --no-cache-dir -e .
+RUN pip install --no-cache-dir --editable .
 
 # install sympy
 RUN pip install sympy antlr4-python3-runtime==4.11
