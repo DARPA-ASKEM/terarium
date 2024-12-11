@@ -112,24 +112,24 @@
 							class="w-full"
 							:chart-config="{
 								selectedRun: 'fixme',
-								selectedVariable: selectedSettings.map((s) => s.selectedVariables[0])
+								selectedVariable: selectedVariableSettings.map((s) => s.selectedVariables[0])
 							}"
 							multi-select
 							:show-remove-button="false"
 							:variables="commonHeaderNames"
-							@configuration-change="updateSelectedParts"
+							@configuration-change="updateChartSettings($event.selectedVariable, ChartSettingType.VARIABLE)"
 						/>
 						<tera-chart-settings-item
 							v-for="settings of chartSettings.filter((setting) => setting.type === ChartSettingType.VARIABLE)"
 							:key="settings.id"
 							:settings="settings"
 							@open="activeChartSettings = settings"
-							@remove="removeChartSetting"
+							@remove="removeChartSettings"
 						/>
 						<label>How do you want to plot the values?</label>
 						<div v-for="option in plotOptions" class="flex align-items-center" :key="option.value">
 							<RadioButton
-								v-model="knobs.selectedPlotValue"
+								v-model="knobs.selectedPlotType"
 								:value="option.value"
 								name="plotValues"
 								@change="createCharts"
@@ -158,12 +158,12 @@ import { Dataset } from '@/types/Types';
 import { getDataset, getRawContent } from '@/services/dataset';
 import TeraCheckbox from '@/components/widgets/tera-checkbox.vue';
 import RadioButton from 'primevue/radiobutton';
-import { isEmpty, cloneDeep } from 'lodash';
+import { isEmpty, cloneDeep, capitalize, isEqual } from 'lodash';
 import VegaChart from '@/components/widgets/VegaChart.vue';
 import { createForecastChart, AUTOSIZE } from '@/services/charts';
 import TeraChartSettingsItem from '@/components/widgets/tera-chart-settings-item.vue';
 import TeraChartControl from '@/components/workflow/tera-chart-control.vue';
-import { removeChartSettingById, updateChartSettingsBySelectedVariables } from '@/services/chart-settings';
+import { useChartSettings } from '@/composables/useChartSettings';
 import TeraCriteriaOfInterestCard from './tera-criteria-of-interest-card.vue';
 import {
 	blankCriteriaOfInterest,
@@ -173,7 +173,6 @@ import {
 	PlotValue
 } from './compare-datasets-operation';
 
-// const props =
 const props = defineProps<{
 	node: WorkflowNode<CompareDatasetsState>;
 }>();
@@ -191,9 +190,9 @@ const commonHeaderNames = ref<string[]>([]);
 const timepointHeaderName = ref<string | null>(null);
 
 const plotOptions = [
-	{ label: 'Compare trajectories', value: PlotValue.TRAJECTORY },
+	{ label: 'Compare trajectories', value: PlotValue.VALUE },
 	{ label: 'Percent change', value: PlotValue.PERCENTAGE },
-	{ label: 'Difference', value: PlotValue.VALUE }
+	{ label: 'Difference', value: PlotValue.DIFFERENCE }
 ];
 
 const isInputSettingsOpen = ref(true);
@@ -206,13 +205,11 @@ const isATESelected = ref(false);
 
 const compareCharts = ref<any[]>([]);
 
-const activeChartSettings = ref<ChartSetting | null>(null);
-const chartSettings = computed(() => props.node.state.chartSettings ?? []);
-const selectedSettings = computed(() =>
-	chartSettings.value.filter((setting) => setting.type === ChartSettingType.VARIABLE)
-);
+const { activeChartSettings, chartSettings, selectedVariableSettings, removeChartSettings, updateChartSettings } =
+	useChartSettings(props, emit);
+
 const selectedCharts = computed(() => {
-	const selectedChartIds = selectedSettings.value.map((setting) => setting.selectedVariables[0]);
+	const selectedChartIds = selectedVariableSettings.value.map((setting) => setting.selectedVariables[0]);
 	return compareCharts.value.filter((chart) => selectedChartIds.includes(chart.title.text));
 });
 
@@ -222,7 +219,7 @@ const onRun = () => {
 
 interface BasicKnobs {
 	criteriaOfInterestCards: CriteriaOfInterestCard[];
-	selectedPlotValue: PlotValue;
+	selectedPlotType: PlotValue;
 	selectedCompareOption: CompareValue;
 	selectedDataset: string | null;
 	chartSettings: ChartSetting[] | null;
@@ -242,7 +239,7 @@ const updateCriteria = (card: Partial<CriteriaOfInterestCard>, index: number) =>
 
 const knobs = ref<BasicKnobs>({
 	criteriaOfInterestCards: [],
-	selectedPlotValue: PlotValue.PERCENTAGE,
+	selectedPlotType: PlotValue.PERCENTAGE,
 	selectedCompareOption: CompareValue.IMPACT,
 	selectedDataset: null,
 	chartSettings: null
@@ -295,19 +292,13 @@ function findDuplicates(strings: string[]): string[] {
 	return duplicates;
 }
 
-function updateSelectedParts(event: any) {
-	knobs.value.chartSettings = updateChartSettingsBySelectedVariables(
-		chartSettings.value,
-		ChartSettingType.VARIABLE,
-		event.selectedVariable
-	);
-}
-
-function removeChartSetting(chartId: string) {
-	knobs.value.chartSettings = removeChartSettingById(chartSettings.value, chartId);
-}
-
 async function createCharts() {
+	// FIXME: Temporary check, useChartSettings updates the state directly but the knobs are not updated
+	// If this isn't synced the chartSettings will be reverted to the previous state
+	if (!isEqual(props.node.state.chartSettings, knobs.value.chartSettings)) {
+		knobs.value.chartSettings = props.node.state.chartSettings;
+	}
+
 	if (datasets.value.length <= 1) return;
 	compareCharts.value = [];
 
@@ -336,6 +327,8 @@ async function createCharts() {
 	const selectedIndex = datasets.value.findIndex((dataset) => dataset.id === knobs.value.selectedDataset);
 	if (selectedIndex === -1) return;
 
+	const { selectedPlotType } = knobs.value;
+
 	// Go through every common header (column loop)
 	commonHeaderNames.value?.forEach((headerName) => {
 		if (headerName === timepointHeaderName.value) return;
@@ -356,11 +349,11 @@ async function createCharts() {
 
 			referenceColumn.forEach((referencePoint: number, index: number) => {
 				let value = 0;
-				if (knobs.value.selectedPlotValue === PlotValue.VALUE) {
+				if (selectedPlotType === PlotValue.DIFFERENCE) {
 					value = referencePoint - columnToSubtract[index]; // difference
-				} else if (knobs.value.selectedPlotValue === PlotValue.PERCENTAGE) {
+				} else if (selectedPlotType === PlotValue.PERCENTAGE) {
 					value = ((referencePoint - columnToSubtract[index]) / referencePoint) * 100; // percentage
-				} else if (knobs.value.selectedPlotValue === PlotValue.TRAJECTORY) {
+				} else if (selectedPlotType === PlotValue.VALUE) {
 					value = parseFloat(columnToSubtract[index]); // trajectory
 				}
 				if (data[index] === undefined) {
@@ -385,7 +378,7 @@ async function createCharts() {
 				{
 					title: headerName,
 					xAxisTitle: 'Timepoint',
-					yAxisTitle: 'Value',
+					yAxisTitle: capitalize(selectedPlotType),
 					width: 600,
 					height: 300,
 					legend: true,

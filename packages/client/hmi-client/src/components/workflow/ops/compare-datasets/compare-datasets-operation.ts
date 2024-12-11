@@ -12,9 +12,9 @@ export enum RankOption {
 }
 
 export enum PlotValue {
-	TRAJECTORY = 'trajectory',
-	PERCENTAGE = 'percentage',
-	VALUE = 'value'
+	VALUE = 'value',
+	PERCENTAGE = 'percent change',
+	DIFFERENCE = 'difference'
 }
 
 export enum CompareValue {
@@ -42,7 +42,7 @@ export interface CriteriaOfInterestCard {
 }
 export interface CompareDatasetsState extends BaseState {
 	criteriaOfInterestCards: CriteriaOfInterestCard[];
-	selectedPlotValue: PlotValue;
+	selectedPlotType: PlotValue;
 	selectedCompareOption: CompareValue;
 	selectedDataset: string | null;
 	chartSettings: ChartSetting[] | null;
@@ -63,7 +63,7 @@ export const CompareDatasetsOperation: Operation = {
 	initState: () => {
 		const init: CompareDatasetsState = {
 			criteriaOfInterestCards: [blankCriteriaOfInterest],
-			selectedPlotValue: PlotValue.PERCENTAGE,
+			selectedPlotType: PlotValue.PERCENTAGE,
 			selectedCompareOption: CompareValue.IMPACT,
 			selectedDataset: null,
 			chartSettings: null
