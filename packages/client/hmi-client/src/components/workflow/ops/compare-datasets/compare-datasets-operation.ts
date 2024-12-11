@@ -1,5 +1,6 @@
 import { WorkflowOperationTypes } from '@/types/workflow';
 import type { Operation, BaseState } from '@/types/workflow';
+import { ChartSetting } from '@/types/common';
 
 export enum TimepointOption {
 	LAST = 'last',
@@ -11,6 +12,7 @@ export enum RankOption {
 }
 
 export enum PlotValue {
+	TRAJECTORY = 'trajectory',
 	PERCENTAGE = 'percentage',
 	VALUE = 'value'
 }
@@ -43,6 +45,7 @@ export interface CompareDatasetsState extends BaseState {
 	selectedPlotValue: PlotValue;
 	selectedCompareOption: CompareValue;
 	selectedDataset: string | null;
+	chartSettings: ChartSetting[] | null;
 }
 
 export const CompareDatasetsOperation: Operation = {
@@ -62,7 +65,8 @@ export const CompareDatasetsOperation: Operation = {
 			criteriaOfInterestCards: [blankCriteriaOfInterest],
 			selectedPlotValue: PlotValue.PERCENTAGE,
 			selectedCompareOption: CompareValue.IMPACT,
-			selectedDataset: null
+			selectedDataset: null,
+			chartSettings: null
 		};
 		return init;
 	}

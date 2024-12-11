@@ -83,7 +83,7 @@
 			<Accordion multiple :active-index="activeIndices">
 				<AccordionTab header="Summary"> </AccordionTab>
 				<AccordionTab header="Variables">
-					<template v-for="(compareChart, index) in compareCharts">
+					<template v-for="(compareChart, index) in selectedCharts">
 						<vega-chart
 							v-if="!isEmpty(compareChart)"
 							:key="index"
@@ -107,8 +107,26 @@
 				content-width="360px"
 			>
 				<template #content>
-					<tera-drilldown-section class="px-2">
-						<label>What values do you want to plot?</label>
+					<div class="output-settings-panel">
+						<tera-chart-control
+							class="w-full"
+							:chart-config="{
+								selectedRun: 'fixme',
+								selectedVariable: selectedSettings.map((s) => s.selectedVariables[0])
+							}"
+							multi-select
+							:show-remove-button="false"
+							:variables="commonHeaderNames"
+							@configuration-change="updateSelectedParts"
+						/>
+						<tera-chart-settings-item
+							v-for="settings of chartSettings.filter((setting) => setting.type === ChartSettingType.VARIABLE)"
+							:key="settings.id"
+							:settings="settings"
+							@open="activeChartSettings = settings"
+							@remove="removeChartSetting"
+						/>
+						<label>How do you want to plot the values?</label>
 						<div v-for="option in plotOptions" class="flex align-items-center" :key="option.value">
 							<RadioButton
 								v-model="knobs.selectedPlotValue"
@@ -118,7 +136,7 @@
 							/>
 							<label class="pl-2 py-1" :for="option.value">{{ option.label }}</label>
 						</div>
-					</tera-drilldown-section>
+					</div>
 				</template>
 			</tera-slider-panel>
 		</template>
@@ -130,8 +148,8 @@ import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
 import { WorkflowNode, WorkflowPortStatus } from '@/types/workflow';
 import TeraSliderPanel from '@/components/widgets/tera-slider-panel.vue';
 import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.vue';
-import { DrilldownTabs } from '@/types/common';
-import { onMounted, ref, watch } from 'vue';
+import { DrilldownTabs, ChartSettingType, type ChartSetting } from '@/types/common';
+import { onMounted, ref, watch, computed } from 'vue';
 import Button from 'primevue/button';
 import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
@@ -142,7 +160,11 @@ import TeraCheckbox from '@/components/widgets/tera-checkbox.vue';
 import RadioButton from 'primevue/radiobutton';
 import { isEmpty, cloneDeep } from 'lodash';
 import VegaChart from '@/components/widgets/VegaChart.vue';
-import { createDatasetCompareChart } from '@/services/charts';
+import { createForecastChart, AUTOSIZE } from '@/services/charts';
+import TeraChartSettingsItem from '@/components/widgets/tera-chart-settings-item.vue';
+import TeraChartControl from '@/components/workflow/tera-chart-control.vue';
+import { removeChartSettingById, updateChartSettingsBySelectedVariables } from '@/services/chart-settings';
+import TeraCriteriaOfInterestCard from './tera-criteria-of-interest-card.vue';
 import {
 	blankCriteriaOfInterest,
 	CompareDatasetsState,
@@ -150,12 +172,13 @@ import {
 	CriteriaOfInterestCard,
 	PlotValue
 } from './compare-datasets-operation';
-import TeraCriteriaOfInterestCard from './tera-criteria-of-interest-card.vue';
 
 // const props =
 const props = defineProps<{
 	node: WorkflowNode<CompareDatasetsState>;
 }>();
+
+const emit = defineEmits(['update-state', 'update-status', 'close']);
 
 const compareOptions: { label: string; value: CompareValue }[] = [
 	{ label: 'Compare the impact of interventions', value: CompareValue.IMPACT },
@@ -168,8 +191,9 @@ const commonHeaderNames = ref<string[]>([]);
 const timepointHeaderName = ref<string | null>(null);
 
 const plotOptions = [
-	{ label: 'Percent change', value: 'percentage' },
-	{ label: 'Absolute difference', value: 'value' }
+	{ label: 'Compare trajectories', value: PlotValue.TRAJECTORY },
+	{ label: 'Percent change', value: PlotValue.PERCENTAGE },
+	{ label: 'Difference', value: PlotValue.VALUE }
 ];
 
 const isInputSettingsOpen = ref(true);
@@ -182,17 +206,26 @@ const isATESelected = ref(false);
 
 const compareCharts = ref<any[]>([]);
 
+const activeChartSettings = ref<ChartSetting | null>(null);
+const chartSettings = computed(() => props.node.state.chartSettings ?? []);
+const selectedSettings = computed(() =>
+	chartSettings.value.filter((setting) => setting.type === ChartSettingType.VARIABLE)
+);
+const selectedCharts = computed(() => {
+	const selectedChartIds = selectedSettings.value.map((setting) => setting.selectedVariables[0]);
+	return compareCharts.value.filter((chart) => selectedChartIds.includes(chart.title.text));
+});
+
 const onRun = () => {
 	console.log('run');
 };
-
-const emit = defineEmits(['update-state', 'update-status', 'close']);
 
 interface BasicKnobs {
 	criteriaOfInterestCards: CriteriaOfInterestCard[];
 	selectedPlotValue: PlotValue;
 	selectedCompareOption: CompareValue;
 	selectedDataset: string | null;
+	chartSettings: ChartSetting[] | null;
 }
 
 const addCriteria = () => {
@@ -211,7 +244,8 @@ const knobs = ref<BasicKnobs>({
 	criteriaOfInterestCards: [],
 	selectedPlotValue: PlotValue.PERCENTAGE,
 	selectedCompareOption: CompareValue.IMPACT,
-	selectedDataset: null
+	selectedDataset: null,
+	chartSettings: null
 });
 
 const initialize = async () => {
@@ -261,6 +295,18 @@ function findDuplicates(strings: string[]): string[] {
 	return duplicates;
 }
 
+function updateSelectedParts(event: any) {
+	knobs.value.chartSettings = updateChartSettingsBySelectedVariables(
+		chartSettings.value,
+		ChartSettingType.VARIABLE,
+		event.selectedVariable
+	);
+}
+
+function removeChartSetting(chartId: string) {
+	knobs.value.chartSettings = removeChartSettingById(chartSettings.value, chartId);
+}
+
 async function createCharts() {
 	if (datasets.value.length <= 1) return;
 	compareCharts.value = [];
@@ -268,54 +314,85 @@ async function createCharts() {
 	const rawContents = await Promise.all(datasets.value.map((dataset) => getRawContent(dataset)));
 	const transposedRawContents = rawContents.map((content) => ({ ...content, csv: transposeArrays(content?.csv) }));
 
+	// Collect common header names if not done yet
 	if (isEmpty(commonHeaderNames.value)) {
 		const allColumnNames: string[] = [];
-		datasets.value.forEach((dataset) => {
-			const columnNames = dataset?.columns?.map((column) => column.name) ?? [];
-			allColumnNames.push(...columnNames);
+		transposedRawContents.forEach(({ headers }) => {
+			if (headers) allColumnNames.push(...headers);
 		});
 		commonHeaderNames.value = findDuplicates(allColumnNames);
 
-		// Convenient assumption that the timepoint header name contains 't'
+		// Convenient assumption that the timepoint header name starts with 't'
 		timepointHeaderName.value =
 			commonHeaderNames.value?.find((name) => name.toLowerCase().slice(0, 1) === 't') ?? commonHeaderNames.value[0];
 	}
-
 	if (!timepointHeaderName.value) return;
 
+	// Find index of timepoint column
 	const timepointIndex = transposedRawContents[0]?.headers?.indexOf(timepointHeaderName.value);
-	if (timepointIndex === undefined) return;
+	if (timepointIndex === undefined || timepointIndex === -1) return;
 
-	// Go through every column header
+	// Find dataset index of the selected dataset
+	const selectedIndex = datasets.value.findIndex((dataset) => dataset.id === knobs.value.selectedDataset);
+	if (selectedIndex === -1) return;
+
+	// Go through every common header (column loop)
 	commonHeaderNames.value?.forEach((headerName) => {
 		if (headerName === timepointHeaderName.value) return;
 
 		const headerIndex = transposedRawContents[0]?.headers?.indexOf(headerName);
 		if (!headerIndex) return;
 
-		const values: any = [];
-		// Find dataset index of the selected dataset
-		const selectedIndex = datasets.value.findIndex((dataset) => dataset.id === knobs.value.selectedDataset);
-		const referenceColumn = transposedRawContents[selectedIndex].csv[headerIndex]; // aka the baseline dataset
+		const data: any = [];
+		const variableNames: string[] = [];
+		const referenceColumn = transposedRawContents[selectedIndex].csv[headerIndex]; // aka the column of baseline dataset we are subtracting from
 
-		transposedRawContents.forEach((content, datasetIndex) => {
-			const timepoints = content.csv[timepointIndex];
-			timepoints.forEach((timepoint: number, rowIndex: number) => {
-				const referencePoint = parseFloat(referenceColumn[rowIndex]);
-				const currentPoint = parseFloat(content.csv[headerIndex][rowIndex]);
+		transposedRawContents.forEach(({ csv }, datasetIndex) => {
+			const timepoints = csv[timepointIndex];
+			const columnToSubtract = csv[headerIndex];
 
-				const absoluteDifference = referencePoint - currentPoint;
-				const percentChange = (absoluteDifference / referencePoint) * 100;
+			const name = `${headerName}_${datasets.value[datasetIndex].name}`;
+			variableNames.push(name);
 
-				values.push({
-					timepoint,
-					value: knobs.value.selectedPlotValue === PlotValue.VALUE ? absoluteDifference : percentChange,
-					name: `${headerName}_${datasets.value[datasetIndex].name}`
-				});
+			referenceColumn.forEach((referencePoint: number, index: number) => {
+				let value = 0;
+				if (knobs.value.selectedPlotValue === PlotValue.VALUE) {
+					value = referencePoint - columnToSubtract[index]; // difference
+				} else if (knobs.value.selectedPlotValue === PlotValue.PERCENTAGE) {
+					value = ((referencePoint - columnToSubtract[index]) / referencePoint) * 100; // percentage
+				} else if (knobs.value.selectedPlotValue === PlotValue.TRAJECTORY) {
+					value = parseFloat(columnToSubtract[index]); // trajectory
+				}
+				if (data[index] === undefined) {
+					data.push({
+						[name]: value,
+						timepoint: parseFloat(timepoints[index])
+					});
+				} else {
+					data[index][name] = value;
+				}
 			});
 		});
-
-		compareCharts.value.push(createDatasetCompareChart(values, headerName));
+		compareCharts.value.push(
+			createForecastChart(
+				null,
+				{
+					data,
+					variables: variableNames,
+					timeField: 'timepoint'
+				},
+				null,
+				{
+					title: headerName,
+					xAxisTitle: 'Timepoint',
+					yAxisTitle: 'Value',
+					width: 600,
+					height: 300,
+					legend: true,
+					autosize: AUTOSIZE.FIT
+				}
+			)
+		);
 	});
 }
 
@@ -337,5 +414,17 @@ watch(
 <style scoped>
 label {
 	padding: var(--gap-2) 0;
+}
+
+.output-settings-panel {
+	padding: var(--gap-4);
+	display: flex;
+	flex-direction: column;
+	gap: var(--gap-2);
+	hr {
+		border: 0;
+		border-top: 1px solid var(--surface-border-alt);
+		width: 100%;
+	}
 }
 </style>
