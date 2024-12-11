@@ -40,10 +40,10 @@ FROM python:3.10-bookworm
 
 WORKDIR /
 
-# Install OpenJDK and libraries for Mira
+# Install OpenJRE and libraries for Mira
 RUN apt-get update && apt-get install --assume-yes --no-install-recommends \
 	wget graphviz libgraphviz-dev pkg-config \
-	openjdk-17-jdk-headless && \
+	openjdk-17-jre-headless && \
 	rm -rf /var/lib/apt/lists/*
 
 # Copy the Spring Boot fat JAR from the builder image
