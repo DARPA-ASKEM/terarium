@@ -311,7 +311,7 @@ async function getCompareModelConcepts(
 	nodeId?: WorkflowNode<any>['id']
 ) {
 	const request: CompareModelsConceptsRequest = { modelIds, workflowId, nodeId };
-	const response = await API.post('/mira/compare-model-concepts', request);
+	const response = await API.post('/mira/compare-models-concepts', request);
 	if (response?.status !== 200) return null;
 	return response?.data ?? null;
 }

@@ -116,7 +116,6 @@ public class MiraController {
 		final List<UUID> modelIds;
 		final UUID workflowId;
 		final UUID nodeId;
-		final UUID projectId;
 	}
 
 	@PostMapping("/compare-models-concepts")
@@ -132,10 +131,18 @@ public class MiraController {
 					schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = TaskResponse.class)
 				)
 			),
+			@ApiResponse(
+				responseCode = "400",
+				description = "Less than 2 models provided for comparison",
+				content = @Content
+			),
 			@ApiResponse(responseCode = "500", description = "There was an issue dispatching the request", content = @Content)
 		}
 	)
-	public ResponseEntity<JsonNode> compareModelsConcepts(@RequestBody final CompareModelsConceptsRequest request) {
+	public ResponseEntity<JsonNode> compareModelsConcepts(
+		@RequestBody final CompareModelsConceptsRequest request,
+		@RequestParam(name = "project-id", required = false) final UUID projectId
+	) {
 		// if the number of models is less than 2, return an error
 		if (request.modelIds.size() < 2) {
 			log.warn("Less than 2 models provided for comparison");
@@ -147,7 +154,7 @@ public class MiraController {
 		taskRequest.setType(TaskType.MIRA);
 		taskRequest.setScript(CompareModelsConceptsResponseHandler.NAME);
 		taskRequest.setUserId(currentUserService.get().getId());
-		taskRequest.setProjectId(request.projectId);
+		taskRequest.setProjectId(projectId);
 
 		// Set the task request additional properties
 		final CompareModelsConceptsResponseHandler.Properties properties =
