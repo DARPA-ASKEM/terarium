@@ -1998,13 +1998,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@kurkle/color@npm:^0.3.0":
-  version: 0.3.2
-  resolution: "@kurkle/color@npm:0.3.2"
-  checksum: 10/079c4b7688061070f1d570cee4cf0e7c4085867b940688ff80356a56825a5ace7077257c9ec5863eb344a8eae78379388ab57cdf9d75c491389fad56f411cd43
-  languageName: node
-  linkType: hard
-
 "@lumino/algorithm@npm:^1.9.0, @lumino/algorithm@npm:^1.9.2":
   version: 1.9.2
   resolution: "@lumino/algorithm@npm:1.9.2"
@@ -4847,33 +4840,6 @@ __metadata:
   version: 0.7.0
   resolution: "chardet@npm:0.7.0"
   checksum: 10/b0ec668fba5eeec575ed2559a0917ba41a6481f49063c8445400e476754e0957ee09e44dc032310f526182b8f1bf25e9d4ed371f74050af7be1383e06bc44952
-  languageName: node
-  linkType: hard
-
-"chart.js@npm:4.4.7":
-  version: 4.4.7
-  resolution: "chart.js@npm:4.4.7"
-  dependencies:
-    "@kurkle/color": "npm:^0.3.0"
-  checksum: 10/f80c5e61adf8118d71d189db431f9bf82864e42d19d1c19008afdcf5e8933545f1f8a8662a4e7809f21a518781f12f2242657864c863016303cbf63a2aade72b
-  languageName: node
-  linkType: hard
-
-"chartjs-plugin-annotation@npm:3.0.1":
-  version: 3.0.1
-  resolution: "chartjs-plugin-annotation@npm:3.0.1"
-  peerDependencies:
-    chart.js: ">=4.0.0"
-  checksum: 10/638550f92c6cc948205822f8b8fcfde20769d923a9bff26edd07f58ccfc6f48a456d8307f8cb837f16a7fe86a9c3646914649c77144337ea12d70e99916c9248
-  languageName: node
-  linkType: hard
-
-"chartjs-plugin-datalabels@npm:2.2.0":
-  version: 2.2.0
-  resolution: "chartjs-plugin-datalabels@npm:2.2.0"
-  peerDependencies:
-    chart.js: ">=3.0.0"
-  checksum: 10/e87c2f30d4f6f84b4b1a28c00d1b032d0100f87f8f296a498507047bd2f7fe98eced583a2c09f30e55806e79a0ca7e0db027cc3bed9b27688980e55701a6945f
   languageName: node
   linkType: hard
 
@@ -8663,9 +8629,6 @@ __metadata:
     "@vueup/vue-quill": "npm:1.2.0"
     ace-builds: "npm:1.32.9"
     axios: "npm:1.7.9"
-    chart.js: "npm:4.4.7"
-    chartjs-plugin-annotation: "npm:3.0.1"
-    chartjs-plugin-datalabels: "npm:2.2.0"
     chroma-js: "npm:2.4.2"
     d3: "npm:7.8.5"
     dagre: "npm:0.8.5"
