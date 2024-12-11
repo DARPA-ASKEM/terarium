@@ -505,15 +505,6 @@ export const convertToIGraph = (
 				points: [],
 				data: {}
 			});
-
-			t.controllers.forEach((controllerName) => {
-				graph.edges.push({
-					source: controllerName,
-					target: t.name,
-					points: [],
-					data: { isController: true }
-				});
-			});
 		}
 		if (t.outcome !== '') {
 			graph.edges.push({
@@ -522,16 +513,16 @@ export const convertToIGraph = (
 				points: [],
 				data: {}
 			});
-
-			// Turn off dual-controller edges as per request - Nov 2024
-			// t.controllers.forEach((controllerName) => {
-			// 	graph.edges.push({
-			// 		source: t.name,
-			// 		target: controllerName,
-			// 		points: [],
-			// 		data: { isController: true }
-			// 	});
-			// });
+		}
+		if (t.controllers && t.controllers.length > 0) {
+			t.controllers.forEach((controllerName) => {
+				graph.edges.push({
+					source: controllerName,
+					target: t.name,
+					points: [],
+					data: { isController: true }
+				});
+			});
 		}
 	});
 
