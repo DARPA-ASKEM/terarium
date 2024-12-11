@@ -196,7 +196,7 @@ export class ValueOfInformationScenario extends BaseScenario {
 		);
 
 		// 2. create model config nodes for each paramter and attach them to the model node
-		const modelConfigPromises = this.parameters.flatMap(async (parameter) => {
+		const modelConfigPromises = this.parameters.map(async (parameter) => {
 			if (!parameter) return null;
 			const clonedModelConfig = _.cloneDeep(modelConfig);
 
