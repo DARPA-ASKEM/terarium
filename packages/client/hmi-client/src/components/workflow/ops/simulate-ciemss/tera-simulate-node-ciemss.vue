@@ -57,7 +57,6 @@ import {
 	getSimulation,
 	parsePyCiemssMap,
 	pollAction,
-	progressAction,
 	DataArray
 } from '@/services/models/simulation-service';
 import { createLLMSummary } from '@/services/summary-service';
@@ -213,9 +212,7 @@ const isFinished = (state: ProgressState) =>
 const poller = new Poller();
 // do we really need to check the poll result or should the poll actuion just do the work and set the things?
 const pollResult = async (runId: string) => {
-	poller
-		.setPollAction(async () => pollAction(runId))
-		.setProgressAction(async (data: Simulation) => progressAction(emit, props.node.state, runId, data));
+	poller.setPollAction(async () => pollAction(runId));
 
 	// need this error checking stuff?
 	const pollerResults = await poller.start();

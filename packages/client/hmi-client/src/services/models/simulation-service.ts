@@ -1,5 +1,4 @@
 import { csvParse, autoType } from 'd3';
-import _ from 'lodash';
 import { logger } from '@/utils/logger';
 import API from '@/api/api';
 import {
@@ -309,16 +308,6 @@ export async function pollAction(id: string) {
 		return { data: null, progress: null, error: null, cancelled: true };
 	}
 	return { data: simResponse, progress: null, error: null };
-}
-
-export async function progressAction(emit, state, runId, data: Simulation) {
-	if (runId === state.inProgressBaseForecastId && data.updates.length > 0) {
-		const checkpoint = _.first(data.updates);
-		if (checkpoint) {
-			state.currentProgress = +((100 * checkpoint.data.progress) / state.numSamples).toFixed(2);
-			emit('update-state', _.cloneDeep(state));
-		}
-	}
 }
 
 // FIXME: PyCIEMSS renames state and parameters, should consolidate upstream in pyciemss-service
