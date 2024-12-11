@@ -7,7 +7,7 @@ FROM python:3.11-slim-bookworm AS text_extraction_taskrunner_builder
 # These deps are installed only for use during local development
 
 # Install OpenJDK
-RUN apt-get update && apt-get install -y --no-install-recommends \
+RUN apt update && apt install -y --no-install-recommends \
 	ocrmypdf \
 	poppler-utils \
 	openjdk-17-jdk-headless && \
@@ -33,7 +33,7 @@ FROM python:3.11-slim-bookworm
 WORKDIR /
 
 # Install OpenJRE
-RUN apt-get update && apt-get install -y --no-install-recommends \
+RUN apt update && apt install -y --no-install-recommends \
 	ocrmypdf \
 	poppler-utils \
 	openjdk-17-jre-headless && \
