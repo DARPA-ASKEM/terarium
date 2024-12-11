@@ -83,7 +83,7 @@
 			<Accordion multiple :active-index="activeIndices">
 				<AccordionTab header="Summary"> </AccordionTab>
 				<AccordionTab header="Variables">
-					<template v-for="(compareChart, index) in compareCharts">
+					<template v-for="(compareChart, index) in selectedCharts">
 						<vega-chart
 							v-if="!isEmpty(compareChart)"
 							:key="index"
@@ -107,7 +107,25 @@
 				content-width="360px"
 			>
 				<template #content>
-					<tera-drilldown-section class="px-2">
+					<div class="output-settings-panel">
+						<tera-chart-control
+							class="w-full"
+							:chart-config="{
+								selectedRun: 'fixme',
+								selectedVariable: selectedSettings.map((s) => s.selectedVariables[0])
+							}"
+							multi-select
+							:show-remove-button="false"
+							:variables="commonHeaderNames"
+							@configuration-change="updateSelectedParts"
+						/>
+						<tera-chart-settings-item
+							v-for="settings of chartSettings.filter((setting) => setting.type === ChartSettingType.VARIABLE)"
+							:key="settings.id"
+							:settings="settings"
+							@open="activeChartSettings = settings"
+							@remove="removeChartSetting"
+						/>
 						<label>How do you want to plot the values?</label>
 						<div v-for="option in plotOptions" class="flex align-items-center" :key="option.value">
 							<RadioButton
@@ -118,7 +136,7 @@
 							/>
 							<label class="pl-2 py-1" :for="option.value">{{ option.label }}</label>
 						</div>
-					</tera-drilldown-section>
+					</div>
 				</template>
 			</tera-slider-panel>
 		</template>
@@ -130,8 +148,8 @@ import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
 import { WorkflowNode, WorkflowPortStatus } from '@/types/workflow';
 import TeraSliderPanel from '@/components/widgets/tera-slider-panel.vue';
 import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.vue';
-import { DrilldownTabs } from '@/types/common';
-import { onMounted, ref, watch } from 'vue';
+import { DrilldownTabs, ChartSettingType, type ChartSetting } from '@/types/common';
+import { onMounted, ref, watch, computed } from 'vue';
 import Button from 'primevue/button';
 import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
@@ -142,7 +160,11 @@ import TeraCheckbox from '@/components/widgets/tera-checkbox.vue';
 import RadioButton from 'primevue/radiobutton';
 import { isEmpty, cloneDeep } from 'lodash';
 import VegaChart from '@/components/widgets/VegaChart.vue';
-import { createForecastChart } from '@/services/charts';
+import { createForecastChart, AUTOSIZE } from '@/services/charts';
+import TeraChartSettingsItem from '@/components/widgets/tera-chart-settings-item.vue';
+import TeraChartControl from '@/components/workflow/tera-chart-control.vue';
+import { removeChartSettingById, updateChartSettingsBySelectedVariables } from '@/services/chart-settings';
+import TeraCriteriaOfInterestCard from './tera-criteria-of-interest-card.vue';
 import {
 	blankCriteriaOfInterest,
 	CompareDatasetsState,
@@ -150,12 +172,13 @@ import {
 	CriteriaOfInterestCard,
 	PlotValue
 } from './compare-datasets-operation';
-import TeraCriteriaOfInterestCard from './tera-criteria-of-interest-card.vue';
 
 // const props =
 const props = defineProps<{
 	node: WorkflowNode<CompareDatasetsState>;
 }>();
+
+const emit = defineEmits(['update-state', 'update-status', 'close']);
 
 const compareOptions: { label: string; value: CompareValue }[] = [
 	{ label: 'Compare the impact of interventions', value: CompareValue.IMPACT },
@@ -183,17 +206,26 @@ const isATESelected = ref(false);
 
 const compareCharts = ref<any[]>([]);
 
+const activeChartSettings = ref<ChartSetting | null>(null);
+const chartSettings = computed(() => props.node.state.chartSettings ?? []);
+const selectedSettings = computed(() =>
+	chartSettings.value.filter((setting) => setting.type === ChartSettingType.VARIABLE)
+);
+const selectedCharts = computed(() => {
+	const selectedChartIds = selectedSettings.value.map((setting) => setting.selectedVariables[0]);
+	return compareCharts.value.filter((chart) => selectedChartIds.includes(chart.title.text));
+});
+
 const onRun = () => {
 	console.log('run');
 };
-
-const emit = defineEmits(['update-state', 'update-status', 'close']);
 
 interface BasicKnobs {
 	criteriaOfInterestCards: CriteriaOfInterestCard[];
 	selectedPlotValue: PlotValue;
 	selectedCompareOption: CompareValue;
 	selectedDataset: string | null;
+	chartSettings: ChartSetting[] | null;
 }
 
 const addCriteria = () => {
@@ -212,7 +244,8 @@ const knobs = ref<BasicKnobs>({
 	criteriaOfInterestCards: [],
 	selectedPlotValue: PlotValue.PERCENTAGE,
 	selectedCompareOption: CompareValue.IMPACT,
-	selectedDataset: null
+	selectedDataset: null,
+	chartSettings: null
 });
 
 const initialize = async () => {
@@ -260,6 +293,18 @@ function findDuplicates(strings: string[]): string[] {
 		}
 	});
 	return duplicates;
+}
+
+function updateSelectedParts(event: any) {
+	knobs.value.chartSettings = updateChartSettingsBySelectedVariables(
+		chartSettings.value,
+		ChartSettingType.VARIABLE,
+		event.selectedVariable
+	);
+}
+
+function removeChartSetting(chartId: string) {
+	knobs.value.chartSettings = removeChartSettingById(chartSettings.value, chartId);
 }
 
 async function createCharts() {
@@ -341,8 +386,10 @@ async function createCharts() {
 					title: headerName,
 					xAxisTitle: 'Timepoint',
 					yAxisTitle: 'Value',
-					width: 500,
-					height: 300
+					width: 600,
+					height: 300,
+					legend: true,
+					autosize: AUTOSIZE.FIT
 				}
 			)
 		);
@@ -367,5 +414,17 @@ watch(
 <style scoped>
 label {
 	padding: var(--gap-2) 0;
+}
+
+.output-settings-panel {
+	padding: var(--gap-4);
+	display: flex;
+	flex-direction: column;
+	gap: var(--gap-2);
+	hr {
+		border: 0;
+		border-top: 1px solid var(--surface-border-alt);
+		width: 100%;
+	}
 }
 </style>
