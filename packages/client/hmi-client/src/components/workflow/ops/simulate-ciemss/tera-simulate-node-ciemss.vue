@@ -212,8 +212,6 @@ const isFinished = (state: ProgressState) =>
 const poller = new Poller();
 const pollResult = async (runId: string) => {
 	poller.setPollAction(async () => pollAction(runId));
-
-	// need this error checking stuff?
 	const pollerResults = await poller.start();
 	const state = _.cloneDeep(props.node.state);
 	state.errorMessage = { name: '', value: '', traceback: '' };
