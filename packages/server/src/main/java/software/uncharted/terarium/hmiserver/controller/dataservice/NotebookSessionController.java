@@ -252,7 +252,7 @@ public class NotebookSessionController {
 		);
 		final NotebookSession session = sessionService
 			.getAsset(id, permission)
-			.orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, messages.get("asset.not-found")));
+			.orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, messages.get("notebook-session.not-found")));
 
 		NotebookSession newNotebookSession;
 		try {
@@ -265,7 +265,7 @@ public class NotebookSessionController {
 
 		final Project project = projectService
 			.getProject(projectId)
-			.orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, messages.get("asset.not-found")));
+			.orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, messages.get("projects.not-found")));
 
 		projectAssetService.createProjectAsset(project, AssetType.NOTEBOOK_SESSION, newNotebookSession, permission);
 
