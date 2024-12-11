@@ -104,7 +104,7 @@
 			<label>Select an output metric</label>
 			<MultiSelect
 				:disabled="isEmpty(modelStateOptions) || isFetchingModelInformation"
-				:model-value="scenario.simulateSpecs.ids"
+				:model-value="scenario.simulateSpec.ids"
 				placeholder="Select output metrics"
 				option-label="name"
 				option-value="id"

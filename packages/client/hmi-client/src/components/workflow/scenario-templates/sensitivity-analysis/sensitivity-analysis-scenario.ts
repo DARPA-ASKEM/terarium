@@ -27,7 +27,7 @@ export class SensitivityAnalysisScenario extends BaseScenario {
 
 	parameters: (ParameterSemantic | null)[];
 
-	simulateSpecs: { ids: string[] };
+	simulateSpec: { ids: string[] };
 
 	constructor() {
 		super();
@@ -38,7 +38,7 @@ export class SensitivityAnalysisScenario extends BaseScenario {
 		this.modelConfigSpec = {
 			id: ''
 		};
-		this.simulateSpecs = {
+		this.simulateSpec = {
 			ids: []
 		};
 		this.parameters = [null];
@@ -47,7 +47,7 @@ export class SensitivityAnalysisScenario extends BaseScenario {
 	setModelSpec(id: string) {
 		this.modelSpec.id = id;
 		this.modelConfigSpec.id = '';
-		this.simulateSpecs.ids = [];
+		this.simulateSpec.ids = [];
 		this.parameters = [null];
 	}
 
@@ -68,8 +68,8 @@ export class SensitivityAnalysisScenario extends BaseScenario {
 		this.modelConfigSpec.id = id;
 	}
 
-	setSimulateSpecs(ids: string[]) {
-		this.simulateSpecs.ids = ids;
+	setsimulateSpec(ids: string[]) {
+		this.simulateSpec.ids = ids;
 	}
 
 	toJSON() {
@@ -78,14 +78,12 @@ export class SensitivityAnalysisScenario extends BaseScenario {
 			workflowName: this.workflowName,
 			modelSpec: this.modelSpec,
 			modelConfigSpec: this.modelConfigSpec,
-			simulateSpecs: this.simulateSpecs
+			simulateSpec: this.simulateSpec
 		};
 	}
 
 	isValid(): boolean {
-		return (
-			!!this.workflowName && !!this.modelSpec.id && !!this.modelConfigSpec.id && !_.isEmpty(this.simulateSpecs.ids)
-		);
+		return !!this.workflowName && !!this.modelSpec.id && !!this.modelConfigSpec.id && !_.isEmpty(this.simulateSpec.ids);
 	}
 
 	async createWorkflow() {
@@ -169,13 +167,13 @@ export class SensitivityAnalysisScenario extends BaseScenario {
 		simulateChartSettings = updateChartSettingsBySelectedVariables(
 			simulateChartSettings,
 			ChartSettingType.VARIABLE,
-			this.simulateSpecs.ids
+			this.simulateSpec.ids
 		);
 
 		simulateChartSettings = updateChartSettingsBySelectedVariables(
 			simulateChartSettings,
 			ChartSettingType.SENSITIVITY,
-			this.simulateSpecs.ids
+			this.simulateSpec.ids
 		);
 
 		wf.updateNode(simulateNode, {

@@ -65,7 +65,7 @@ export class HorizonScanningScenario extends BaseScenario {
 
 	interventionSpecs: { id: string }[];
 
-	simulateSpecs: { ids: string[] };
+	simulateSpec: { ids: string[] };
 
 	parameters: (HorizonScanningParameter | null)[];
 
@@ -78,7 +78,7 @@ export class HorizonScanningScenario extends BaseScenario {
 		this.modelConfigSpec = {
 			id: ''
 		};
-		this.simulateSpecs = {
+		this.simulateSpec = {
 			ids: []
 		};
 		this.interventionSpecs = [{ id: '' }];
@@ -89,7 +89,7 @@ export class HorizonScanningScenario extends BaseScenario {
 		this.modelSpec.id = id;
 		this.modelConfigSpec.id = '';
 		this.interventionSpecs = [{ id: '' }];
-		this.simulateSpecs.ids = [];
+		this.simulateSpec.ids = [];
 		this.parameters = [null];
 	}
 
@@ -97,8 +97,8 @@ export class HorizonScanningScenario extends BaseScenario {
 		this.modelConfigSpec.id = id;
 	}
 
-	setSimulateSpecs(ids: string[]) {
-		this.simulateSpecs.ids = ids;
+	setsimulateSpec(ids: string[]) {
+		this.simulateSpec.ids = ids;
 	}
 
 	addInterventionSpec() {
@@ -142,7 +142,7 @@ export class HorizonScanningScenario extends BaseScenario {
 			workflowName: this.workflowName,
 			modelSpec: this.modelSpec,
 			modelConfigSpec: this.modelConfigSpec,
-			simulateSpecs: this.simulateSpecs,
+			simulateSpec: this.simulateSpec,
 			interventionSpecs: this.interventionSpecs
 		};
 	}
@@ -154,7 +154,7 @@ export class HorizonScanningScenario extends BaseScenario {
 			!!this.modelConfigSpec.id &&
 			!this.interventionSpecs.some((interventionSpec) => !interventionSpec.id) &&
 			!this.parameters.some((parameter) => !parameter) &&
-			!_.isEmpty(this.simulateSpecs.ids)
+			!_.isEmpty(this.simulateSpec.ids)
 		);
 	}
 
@@ -206,7 +206,7 @@ export class HorizonScanningScenario extends BaseScenario {
 		simulateChartSettings = updateChartSettingsBySelectedVariables(
 			simulateChartSettings,
 			ChartSettingType.VARIABLE,
-			this.simulateSpecs.ids
+			this.simulateSpec.ids
 		);
 
 		// 2. create model config nodes for each paramter for both the low and high values and attach them to the model node

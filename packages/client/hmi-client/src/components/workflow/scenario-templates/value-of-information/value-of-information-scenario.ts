@@ -61,7 +61,7 @@ export class ValueOfInformationScenario extends BaseScenario {
 
 	interventionSpecs: { id: string }[];
 
-	simulateSpecs: { ids: string[] };
+	simulateSpec: { ids: string[] };
 
 	parameters: (ParameterSemantic | null)[];
 
@@ -74,7 +74,7 @@ export class ValueOfInformationScenario extends BaseScenario {
 		this.modelConfigSpec = {
 			id: ''
 		};
-		this.simulateSpecs = {
+		this.simulateSpec = {
 			ids: []
 		};
 		this.interventionSpecs = [{ id: '' }];
@@ -85,7 +85,7 @@ export class ValueOfInformationScenario extends BaseScenario {
 		this.modelSpec.id = id;
 		this.modelConfigSpec.id = '';
 		this.interventionSpecs = [{ id: '' }];
-		this.simulateSpecs.ids = [];
+		this.simulateSpec.ids = [];
 		this.parameters = [null];
 	}
 
@@ -94,7 +94,7 @@ export class ValueOfInformationScenario extends BaseScenario {
 	}
 
 	setSimulateSpec(ids: string[]) {
-		this.simulateSpecs.ids = ids;
+		this.simulateSpec.ids = ids;
 	}
 
 	addInterventionSpec() {
@@ -128,7 +128,7 @@ export class ValueOfInformationScenario extends BaseScenario {
 			workflowName: this.workflowName,
 			modelSpec: this.modelSpec,
 			modelConfigSpec: this.modelConfigSpec,
-			simulateSpecs: this.simulateSpecs,
+			simulateSpec: this.simulateSpec,
 			interventionSpecs: this.interventionSpecs
 		};
 	}
@@ -140,7 +140,7 @@ export class ValueOfInformationScenario extends BaseScenario {
 			!!this.modelConfigSpec.id &&
 			!this.interventionSpecs.some((interventionSpec) => !interventionSpec.id) &&
 			!this.parameters.some((parameter) => !parameter) &&
-			!_.isEmpty(this.simulateSpecs.ids)
+			!_.isEmpty(this.simulateSpec.ids)
 		);
 	}
 
@@ -192,7 +192,7 @@ export class ValueOfInformationScenario extends BaseScenario {
 		simulateChartSettings = updateChartSettingsBySelectedVariables(
 			simulateChartSettings,
 			ChartSettingType.VARIABLE,
-			this.simulateSpecs.ids
+			this.simulateSpec.ids
 		);
 
 		// 2. create model config nodes for each paramter and attach them to the model node
