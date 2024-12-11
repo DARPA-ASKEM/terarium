@@ -77,7 +77,7 @@ RUN pip install --no-cache-dir --requirement requirements.txt
 COPY ./packages/taskrunner/setup.py /taskrunner/setup.py
 COPY ./packages/taskrunner/taskrunner.py /taskrunner/taskrunner.py
 WORKDIR /taskrunner
-RUN pip install --no-cache-dir --no-cache-dir --editable .
+RUN pip install --no-cache-dir --editable .
 
 # Install document_intelligence tasks
 COPY ./packages/equation_extraction /equation_extraction_task
