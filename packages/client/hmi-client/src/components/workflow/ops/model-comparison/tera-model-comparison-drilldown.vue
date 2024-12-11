@@ -6,6 +6,8 @@
 	>
 		<div :tabName="Tabs.Wizard">
 			<tera-drilldown-section>
+				<!-- Concept comparison table -->
+				<div>{{ compareModelsConcepts }}</div>
 				<!-- LLM generated overview -->
 				<section class="comparison-overview">
 					<Accordion multiple :activeIndex="currentActiveIndicies">
@@ -275,6 +277,7 @@ function resetNotebook() {
 	emptyImages();
 	updateCodeState();
 }
+
 function onUpdateGoalQuery(goal: string) {
 	const state = cloneDeep(props.node.state);
 	goalQuery.value = goal;
