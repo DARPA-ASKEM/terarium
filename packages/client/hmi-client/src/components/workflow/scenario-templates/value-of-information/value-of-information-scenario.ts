@@ -237,7 +237,7 @@ export class ValueOfInformationScenario extends BaseScenario {
 		});
 
 		// Wait for all modelConfigPromises to resolve and filter non null responses
-		const modelConfigNodes = (await Promise.all(modelConfigPromises)).filter((node) => !!node);
+		const modelConfigNodes = await Promise.all(modelConfigPromises);
 
 		// 3. Add intervention nodes for each intervention and attach them to the model node
 		const interventionPromises = this.interventionSpecs.map(async (interventionSpec) => {
@@ -268,6 +268,7 @@ export class ValueOfInformationScenario extends BaseScenario {
 
 			// each intervention node will be connected to a simulate node along with each model config node
 			modelConfigNodes.forEach((modelConfigNode) => {
+				if (!modelConfigNode) return;
 				const simulateNode = wf.addNode(
 					SimulateCiemssOp,
 					{ x: 0, y: 0 },
