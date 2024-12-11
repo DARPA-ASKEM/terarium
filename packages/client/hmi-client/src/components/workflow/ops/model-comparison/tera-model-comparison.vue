@@ -112,12 +112,7 @@
 					:options="{ showPrintMargin: false }"
 				/>
 			</tera-drilldown-section>
-			<tera-drilldown-preview>
-				<tera-progress-spinner
-					v-if="isLoadingStructuralComparisons && isEmpty(structuralComparisons)"
-					is-centered
-					:font-size="3"
-				/>
+			<tera-drilldown-preview :is-loading="isLoadingStructuralComparisons && isEmpty(structuralComparisons)">
 				<ul>
 					<li v-for="(image, index) in structuralComparisons" :key="index">
 						<label>Comparison {{ index + 1 }}: {{ getTitle(index) }}</label>
@@ -174,7 +169,6 @@ import { VAceEditorInstance } from 'vue3-ace-editor/types';
 
 import TeraNotebookJupyterInput from '@/components/llm/tera-notebook-jupyter-input.vue';
 import Image from 'primevue/image';
-import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue';
 
 import { saveCodeToState } from '@/services/notebook';
 import { addImage, deleteImages, getImages } from '@/services/image';

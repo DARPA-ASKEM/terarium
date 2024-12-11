@@ -1,9 +1,8 @@
 <template>
-	<tera-drilldown-section>
+	<tera-drilldown-section :is-loading="isLoading">
 		<div class="content-container">
 			<main>
-				<slot v-if="!isLoading" />
-				<tera-progress-spinner v-else :font-size="2" is-centered style="height: 100%" />
+				<slot />
 			</main>
 		</div>
 		<template #footer v-if="slots.footer">
@@ -15,7 +14,6 @@
 <script setup lang="ts">
 import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.vue';
 import { useSlots } from 'vue';
-import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue';
 
 defineProps<{
 	isLoading?: boolean;
