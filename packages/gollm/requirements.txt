@@ -1,7 +1,7 @@
 ## Used for docker image.
 fastapi
-openai==1.56.0
-httpx==0.28.0
+openai==1.57.2
+httpx==0.28.1
 pandas
 pydantic==2.10.2
 regex
