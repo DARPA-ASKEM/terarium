@@ -1,6 +1,9 @@
 <template>
 	<main>
-		<template v-if="selectedRunId && runResults[selectedRunId]">
+		<tera-progress-spinner v-if="inProgressForecastRun" :font-size="2" is-centered style="height: 100%">
+			Processing... <span v-if="node.state.currentProgress">{{ node.state.currentProgress }}%</span>
+		</tera-progress-spinner>
+		<template v-else-if="selectedRunId && runResults[selectedRunId]">
 			<section>
 				<div v-if="isChartsEmpty" class="empty-chart">
 					<img src="@assets/svg/seed.svg" alt="" draggable="false" class="empty-image" />
@@ -32,7 +35,6 @@
 				/>
 			</section>
 		</template>
-		<tera-progress-spinner v-if="inProgressForecastRun" :font-size="2" is-centered style="height: 100%" />
 		<Button v-if="areInputsFilled" label="Edit" @click="emit('open-drilldown')" severity="secondary" outlined />
 		<tera-operator-placeholder v-else :node="node"> Connect a model configuration </tera-operator-placeholder>
 	</main>
@@ -50,7 +52,14 @@ import { createDatasetFromSimulationResult } from '@/services/dataset';
 import { flattenInterventionData, getInterventionPolicyById } from '@/services/intervention-policy';
 import { getModelByModelConfigurationId, getTypesFromModelParts, getUnitsFromModelParts } from '@/services/model';
 import { getModelConfigurationById } from '@/services/model-configurations';
-import { getRunResultCSV, getSimulation, parsePyCiemssMap, DataArray } from '@/services/models/simulation-service';
+import {
+	getRunResultCSV,
+	getSimulation,
+	parsePyCiemssMap,
+	pollAction,
+	progressAction,
+	DataArray
+} from '@/services/models/simulation-service';
 import { createLLMSummary } from '@/services/summary-service';
 
 import TeraOperatorPlaceholder from '@/components/operator/tera-operator-placeholder.vue';
@@ -77,10 +86,10 @@ import { useChartSettings } from '@/composables/useChartSettings';
 import { useCharts } from '@/composables/useCharts';
 import { useProjects } from '@/composables/project';
 
+import { Poller, PollerState } from '@/api/api';
 import { SimulateCiemssOperationState, SimulateCiemssOperation } from './simulate-ciemss-operation';
 import { mergeResults, renameFnGenerator } from '../calibrate-ciemss/calibrate-utils';
 import { usePreparedChartInputs } from './simulate-utils';
-// import { Poller, PollerState } from '@/api/api';
 
 const props = defineProps<{
 	node: WorkflowNode<SimulateCiemssOperationState>;
@@ -201,32 +210,16 @@ const isChartsEmpty = computed(
 const isFinished = (state: ProgressState) =>
 	[ProgressState.Cancelled, ProgressState.Failed, ProgressState.Complete].includes(state);
 
-// const poller = new Poller();
-// const pollResult = async (runId: string) => {
-// 	poller
-// 		.setPollAction(async () => pollAction(runId))
-// 		.setProgressAction((data: Simulation) => {
-// 			if (data?.updates?.length) {
-// 				lossValues = data?.updates
-// 					.sort((a, b) => a.data.progress - b.data.progress)
-// 					.map((d, i) => ({
-// 						iter: i,
-// 						loss: d.data.loss
-// 					}));
-// 				// updateLossChartSpec(lossValues);
-// 			}
-// 			if (runId === props.node.state.inProgressBaseForecastId && data.updates.length > 0) {
-// 				const checkpoint = _.first(data.updates);
-// 				if (checkpoint) {
-// 					const state = _.cloneDeep(props.node.state);
-// 					state.currentProgress = +((100 * checkpoint.data.progress) / state.numIterations).toFixed(2);
-// 					emit('update-state', state);
-// 				}
-// 			}
-// 		});
+const poller = new Poller();
+// do we really need to check the poll result or should the poll actuion just do the work and set the things?
+const pollResult = async (runId: string) => {
+	poller
+		.setPollAction(async () => pollAction(runId))
+		.setProgressAction(progressAction(emit, props.node.state, runId, data));
 
-// 	const pollerResults = await poller.start();
-// };
+	// need this error checking stuff?
+	// const pollerResults = await poller.start();
+};
 
 // Handle simulation status update event for the forecast run
 useClientEvent(
@@ -280,13 +273,13 @@ watch(
 	() => props.node.state.inProgressForecastId,
 	async (id) => {
 		if (!id || id === '') return;
-		// Check simulation status and update the state
-		const simResponse: Simulation | null = await getSimulation(id);
-		if (simResponse?.status !== ProgressState.Complete) return;
-		const state = _.cloneDeep(props.node.state);
-		state.inProgressForecastId = '';
-		state.forecastId = id;
-		emit('update-state', state);
+		const response = await pollResult(id);
+		if (response.state === PollerState.Done) {
+			const state = _.cloneDeep(props.node.state);
+			state.inProgressForecastId = '';
+			state.forecastId = id;
+			emit('update-state', state);
+		}
 		await processResult(id);
 	},
 	{ immediate: true }

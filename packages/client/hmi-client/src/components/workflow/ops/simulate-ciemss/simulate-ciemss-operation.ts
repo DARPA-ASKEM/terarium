@@ -12,6 +12,7 @@ export interface SimulateCiemssOperationState extends BaseState {
 	// state specific to individual simulate runs
 	currentTimespan: TimeSpan;
 	numSamples: number;
+	currentProgress: number;
 	method: string;
 	forecastId: string; // Completed run's Id
 	baseForecastId: string; // Simulation without intervention
@@ -45,6 +46,7 @@ export const SimulateCiemssOperation: Operation = {
 			chartSettings: null,
 			currentTimespan: { start: 0, end: 100 },
 			numSamples: 100,
+			currentProgress: 0,
 			method: 'dopri5',
 			forecastId: '',
 			baseForecastId: '',

@@ -229,7 +229,7 @@
 					/>
 				</template>
 				<template #content>
-					<div class="output-settings-panel" v-if="!inProgressForecastRun">
+					<div class="output-settings-panel">
 						<tera-chart-settings
 							:title="'Interventions over time'"
 							:settings="chartSettings"
