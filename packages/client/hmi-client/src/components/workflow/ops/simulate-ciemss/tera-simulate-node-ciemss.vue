@@ -215,10 +215,37 @@ const poller = new Poller();
 const pollResult = async (runId: string) => {
 	poller
 		.setPollAction(async () => pollAction(runId))
-		.setProgressAction(progressAction(emit, props.node.state, runId, data));
+		.setProgressAction(async (data: Simulation) => progressAction(emit, props.node.state, runId, data));
 
 	// need this error checking stuff?
-	// const pollerResults = await poller.start();
+	const pollerResults = await poller.start();
+	let state = _.cloneDeep(props.node.state);
+	state.errorMessage = { name: '', value: '', traceback: '' };
+
+	if (pollerResults.state === PollerState.Cancelled) {
+		state.inProgressForecastId = '';
+		state.inProgressBaseForecastId = '';
+		poller.stop();
+	} else if (pollerResults.state !== PollerState.Done || !pollerResults.data) {
+		// throw if there are any failed runs for now
+		logger.error(`Simulate: ${runId} has failed`, {
+			toastTitle: 'Error - Pyciemss'
+		});
+		const simulation = await getSimulation(runId);
+		if (simulation?.status && simulation?.statusMessage) {
+			state = _.cloneDeep(props.node.state);
+			state.inProgressBaseForecastId = '';
+			state.errorMessage = {
+				name: runId,
+				value: simulation.status,
+				traceback: simulation.statusMessage
+			};
+			emit('update-state', state);
+		}
+		throw Error('Failed Runs');
+	}
+	emit('update-state', state);
+	return pollerResults;
 };
 
 // Handle simulation status update event for the forecast run
