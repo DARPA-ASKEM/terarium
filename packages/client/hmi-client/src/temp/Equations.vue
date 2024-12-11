@@ -4,7 +4,7 @@
 			<h4>LaTeX => Cleaned LaTeX</h4>
 			<div style="display: flex; flex-direction: row">
 				<textarea ref="latex1"></textarea>
-				<div class="result" ref="result1"></div>
+				<pre class="result" ref="result1"></pre>
 			</div>
 			<Button @click="latex2latex()" label="Run" size="small"></Button>
 		</div>
@@ -84,13 +84,14 @@ section {
 }
 
 textarea {
-	min-height: 150px;
-	min-width: 450px;
+	height: 200px;
+	width: 450px;
 	font-size: 90%;
 }
 .result {
-	min-height: 150px;
-	min-width: 400px;
+	margin: 0;
+	height: 200px;
+	width: 450px;
 	border: 1px solid #bbb;
 	margin-left: 10px;
 	overflow: scroll;
