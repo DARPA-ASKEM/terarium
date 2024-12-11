@@ -301,7 +301,7 @@ interface CompareModelsConceptsRequest {
 	nodeId?: WorkflowNode<any>['id'];
 }
 interface CompareModelsConceptsResponse {
-	concept_context_comparison?: { [key: string]: string };
+	concept_context_comparison?: string;
 	tabular_comparison?: { [key: string]: string };
 	concept_graph_comparison?: { [key: string]: string };
 }
@@ -313,7 +313,7 @@ async function getCompareModelConcepts(
 	const request: CompareModelsConceptsRequest = { modelIds, workflowId, nodeId };
 	const response = await API.post('/mira/compare-models-concepts', request);
 	if (response?.status !== 200) return null;
-	return response?.data ?? null;
+	return (response?.data.response as CompareModelsConceptsResponse) ?? null;
 }
 
 export {
