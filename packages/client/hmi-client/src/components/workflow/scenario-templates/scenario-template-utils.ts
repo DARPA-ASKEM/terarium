@@ -18,7 +18,7 @@ export const displayParameter = (parameters: ParameterSemantic[], parameterName:
 	return `${parameterName}  [${value}]`;
 };
 
-export const formatUniformDistribution = (parameter: ParameterSemantic) => {
+export const switchToUniformDistribution = (parameter: ParameterSemantic) => {
 	if (parameter.distribution.type !== DistributionType.Uniform) {
 		let minimum = 0;
 		let maximum = 1;

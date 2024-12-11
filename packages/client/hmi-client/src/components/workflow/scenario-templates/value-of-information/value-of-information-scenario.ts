@@ -17,7 +17,7 @@ import { updateChartSettingsBySelectedVariables } from '@/services/chart-setting
 import { AssetType, ParameterSemantic } from '@/types/Types';
 import { getInterventionPolicyById } from '@/services/intervention-policy';
 import { useProjects } from '@/composables/project';
-import { formatUniformDistribution } from '../scenario-template-utils';
+import { switchToUniformDistribution } from '../scenario-template-utils';
 
 /*
  * Value of information scenario
@@ -118,7 +118,7 @@ export class ValueOfInformationScenario extends BaseScenario {
 	}
 
 	setParameter(parameter: ParameterSemantic, index: number) {
-		formatUniformDistribution(parameter);
+		switchToUniformDistribution(parameter);
 		this.parameters[index] = parameter;
 	}
 

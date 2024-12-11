@@ -14,7 +14,7 @@ import { ChartSetting, ChartSettingType } from '@/types/common';
 import { updateChartSettingsBySelectedVariables } from '@/services/chart-settings';
 import { AssetType, ParameterSemantic } from '@/types/Types';
 import { useProjects } from '@/composables/project';
-import { formatUniformDistribution } from '../scenario-template-utils';
+import { switchToUniformDistribution } from '../scenario-template-utils';
 
 export class SensitivityAnalysisScenario extends BaseScenario {
 	public static templateId = 'sensitivity-analysis';
@@ -60,7 +60,7 @@ export class SensitivityAnalysisScenario extends BaseScenario {
 	}
 
 	setParameter(parameter: ParameterSemantic, index: number) {
-		formatUniformDistribution(parameter);
+		switchToUniformDistribution(parameter);
 		this.parameters[index] = parameter;
 	}
 
