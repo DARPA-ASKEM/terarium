@@ -1,7 +1,7 @@
 <template>
 	<main>
 		<tera-progress-spinner v-if="inProgressForecastRun" :font-size="2" is-centered style="height: 100%">
-			Processing... <span v-if="node.state.currentProgress">{{ node.state.currentProgress }}%</span>
+			Processing...
 		</tera-progress-spinner>
 		<template v-else-if="selectedRunId && runResults[selectedRunId]">
 			<section>
@@ -210,13 +210,12 @@ const isFinished = (state: ProgressState) =>
 	[ProgressState.Cancelled, ProgressState.Failed, ProgressState.Complete].includes(state);
 
 const poller = new Poller();
-// do we really need to check the poll result or should the poll actuion just do the work and set the things?
 const pollResult = async (runId: string) => {
 	poller.setPollAction(async () => pollAction(runId));
 
 	// need this error checking stuff?
 	const pollerResults = await poller.start();
-	let state = _.cloneDeep(props.node.state);
+	const state = _.cloneDeep(props.node.state);
 	state.errorMessage = { name: '', value: '', traceback: '' };
 
 	if (pollerResults.state === PollerState.Cancelled) {
@@ -228,20 +227,7 @@ const pollResult = async (runId: string) => {
 		logger.error(`Simulate: ${runId} has failed`, {
 			toastTitle: 'Error - Pyciemss'
 		});
-		const simulation = await getSimulation(runId);
-		if (simulation?.status && simulation?.statusMessage) {
-			state = _.cloneDeep(props.node.state);
-			state.inProgressBaseForecastId = '';
-			state.errorMessage = {
-				name: runId,
-				value: simulation.status,
-				traceback: simulation.statusMessage
-			};
-			emit('update-state', state);
-		}
-		throw Error('Failed Runs');
 	}
-	emit('update-state', state);
 	return pollerResults;
 };
 

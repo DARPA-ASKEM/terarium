@@ -124,7 +124,6 @@
 				:is-loading="inProgressForecastRun"
 				:is-blank="!selectedOutputId"
 				:blank-message="blankMessage"
-				:loading-progress="node.state.currentProgress"
 			>
 				<template #header-controls-right>
 					<Button class="mr-3" label="Save for re-use" severity="secondary" outlined @click="showSaveDataset = true" />
