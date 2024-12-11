@@ -279,23 +279,7 @@ public class KnowledgeController {
 				final TaskResponse taskResp = taskService.runTaskSync(taskReq);
 				final JsonNode taskResponseJSON = mapper.readValue(taskResp.getOutput(), JsonNode.class);
 
-				System.out.println("");
-				System.out.println("debug 0");
-				System.out.println(taskResponseJSON);
-				System.out.println("");
-				System.out.println("");
-
-				// final String amrString = taskResponseJSON.get("response").get("amr");
 				final ObjectNode amrNode = taskResponseJSON.get("response").get("amr").deepCopy();
-
-				System.out.println("");
-				System.out.println("debug 1");
-				System.out.println(amrNode);
-				System.out.println("");
-				System.out.println("");
-
-				// ObjectNode objNode = (ObjectNode) mapper.readTree(amrString);
-				// final JsonNode testNode = mapper.readValue(amrString, JsonNode.class);
 				responseAMR = mapper.convertValue(amrNode, Model.class);
 			} catch (Exception e) {
 				log.error("failed to convert LaTeX equations to AMR", e);
