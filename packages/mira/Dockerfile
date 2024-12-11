@@ -7,7 +7,7 @@ FROM python:3.10-bookworm AS mira_taskrunner_builder
 # These deps are installed only for use during local development
 
 # Install OpenJDK and libraries for Mira
-RUN apt update && apt install -y --no-install-recommends \
+RUN apt-get update && apt-get install -y --no-install-recommends \
 	wget graphviz libgraphviz-dev pkg-config \
 	openjdk-17-jdk-headless && \
 	rm -rf /var/lib/apt/lists/*
@@ -41,7 +41,7 @@ FROM python:3.10-bookworm
 WORKDIR /
 
 # Install OpenJDK and libraries for Mira
-RUN apt update && apt install -y --no-install-recommends \
+RUN apt-get update && apt-get install -y --no-install-recommends \
 	wget graphviz libgraphviz-dev pkg-config \
 	openjdk-17-jdk-headless && \
 	rm -rf /var/lib/apt/lists/*
