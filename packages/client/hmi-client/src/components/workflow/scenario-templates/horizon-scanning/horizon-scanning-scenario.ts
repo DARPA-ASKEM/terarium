@@ -65,7 +65,7 @@ export class HorizonScanningScenario extends BaseScenario {
 
 	interventionSpecs: { id: string }[];
 
-	simulateSpec: { ids: string[] };
+	simulateSpecs: { ids: string[] };
 
 	parameters: (HorizonScanningParameter | null)[];
 
@@ -78,7 +78,7 @@ export class HorizonScanningScenario extends BaseScenario {
 		this.modelConfigSpec = {
 			id: ''
 		};
-		this.simulateSpec = {
+		this.simulateSpecs = {
 			ids: []
 		};
 		this.interventionSpecs = [{ id: '' }];
@@ -89,7 +89,7 @@ export class HorizonScanningScenario extends BaseScenario {
 		this.modelSpec.id = id;
 		this.modelConfigSpec.id = '';
 		this.interventionSpecs = [{ id: '' }];
-		this.simulateSpec.ids = [];
+		this.simulateSpecs.ids = [];
 		this.parameters = [null];
 	}
 
@@ -97,8 +97,8 @@ export class HorizonScanningScenario extends BaseScenario {
 		this.modelConfigSpec.id = id;
 	}
 
-	setCalibrateSpec(ids: string[]) {
-		this.simulateSpec.ids = ids;
+	setSimulateSpecs(ids: string[]) {
+		this.simulateSpecs.ids = ids;
 	}
 
 	addInterventionSpec() {
@@ -142,7 +142,8 @@ export class HorizonScanningScenario extends BaseScenario {
 			workflowName: this.workflowName,
 			modelSpec: this.modelSpec,
 			modelConfigSpec: this.modelConfigSpec,
-			simulateSpec: this.simulateSpec
+			simulateSpecs: this.simulateSpecs,
+			interventionSpecs: this.interventionSpecs
 		};
 	}
 
@@ -153,7 +154,7 @@ export class HorizonScanningScenario extends BaseScenario {
 			!!this.modelConfigSpec.id &&
 			!this.interventionSpecs.some((interventionSpec) => !interventionSpec.id) &&
 			!this.parameters.some((parameter) => !parameter) &&
-			!_.isEmpty(this.simulateSpec.ids)
+			!_.isEmpty(this.simulateSpecs.ids)
 		);
 	}
 
@@ -205,7 +206,7 @@ export class HorizonScanningScenario extends BaseScenario {
 		simulateChartSettings = updateChartSettingsBySelectedVariables(
 			simulateChartSettings,
 			ChartSettingType.VARIABLE,
-			this.simulateSpec.ids
+			this.simulateSpecs.ids
 		);
 
 		// 2. create model config nodes for each paramter for both the low and high values and attach them to the model node

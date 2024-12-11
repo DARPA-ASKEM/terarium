@@ -22,9 +22,8 @@ import { formatUniformDistribution } from '../scenario-template-utils';
 /*
  * Value of information scenario
 
-	Configure the model to represent the extremes of uncertainty for some
-	parameters, then simulate into the near future with different intervention
-	policies and compare the outcomes.
+	Configure the model with parameter distributions that reflect all the sources of uncertainty,
+	then simulate into the near future with different intervention policies.
 
   Users can input a model, a model configuration, a set of interventions,
   and a set of parameters. For each parameter, a min and max value will be specified,
@@ -62,7 +61,7 @@ export class ValueOfInformationScenario extends BaseScenario {
 
 	interventionSpecs: { id: string }[];
 
-	simulateSpec: { ids: string[] };
+	simulateSpecs: { ids: string[] };
 
 	parameters: (ParameterSemantic | null)[];
 
@@ -75,7 +74,7 @@ export class ValueOfInformationScenario extends BaseScenario {
 		this.modelConfigSpec = {
 			id: ''
 		};
-		this.simulateSpec = {
+		this.simulateSpecs = {
 			ids: []
 		};
 		this.interventionSpecs = [{ id: '' }];
@@ -86,7 +85,7 @@ export class ValueOfInformationScenario extends BaseScenario {
 		this.modelSpec.id = id;
 		this.modelConfigSpec.id = '';
 		this.interventionSpecs = [{ id: '' }];
-		this.simulateSpec.ids = [];
+		this.simulateSpecs.ids = [];
 		this.parameters = [null];
 	}
 
@@ -94,8 +93,8 @@ export class ValueOfInformationScenario extends BaseScenario {
 		this.modelConfigSpec.id = id;
 	}
 
-	setCalibrateSpec(ids: string[]) {
-		this.simulateSpec.ids = ids;
+	setSimulateSpec(ids: string[]) {
+		this.simulateSpecs.ids = ids;
 	}
 
 	addInterventionSpec() {
@@ -129,7 +128,8 @@ export class ValueOfInformationScenario extends BaseScenario {
 			workflowName: this.workflowName,
 			modelSpec: this.modelSpec,
 			modelConfigSpec: this.modelConfigSpec,
-			simulateSpec: this.simulateSpec
+			simulateSpecs: this.simulateSpecs,
+			interventionSpecs: this.interventionSpecs
 		};
 	}
 
@@ -140,7 +140,7 @@ export class ValueOfInformationScenario extends BaseScenario {
 			!!this.modelConfigSpec.id &&
 			!this.interventionSpecs.some((interventionSpec) => !interventionSpec.id) &&
 			!this.parameters.some((parameter) => !parameter) &&
-			!_.isEmpty(this.simulateSpec.ids)
+			!_.isEmpty(this.simulateSpecs.ids)
 		);
 	}
 
@@ -192,7 +192,7 @@ export class ValueOfInformationScenario extends BaseScenario {
 		simulateChartSettings = updateChartSettingsBySelectedVariables(
 			simulateChartSettings,
 			ChartSettingType.VARIABLE,
-			this.simulateSpec.ids
+			this.simulateSpecs.ids
 		);
 
 		// 2. create model config nodes for each paramter and attach them to the model node
