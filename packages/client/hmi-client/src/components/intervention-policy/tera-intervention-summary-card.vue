@@ -1,26 +1,28 @@
 <template>
-	<div>
-		<aside>{{ !isEmpty(intervention.dynamicInterventions) ? 'Dynamic' : 'Static' }} intervention</aside>
-		<h6 class="pt-1 line-wrap">{{ intervention.name }}</h6>
-		<ul class="text-sm">
-			<li v-for="(staticIntervention, index) in intervention.staticInterventions" :key="`static-${index}`">
-				Set {{ staticIntervention.type }} <strong>{{ staticIntervention.appliedTo }}</strong> to
-				<strong>{{ staticIntervention.value }}</strong> starting at
-				<strong>{{
-					getTimePointString(staticIntervention.timestep, {
-						startDate: props.startDate,
-						calendarSettings: props.calendarSettings
-					})
-				}}</strong>
-			</li>
-			<li v-for="(dynamicIntervention, index) in intervention.dynamicInterventions" :key="`dynamic-${index}`">
-				Set {{ dynamicIntervention.type }} <strong>{{ dynamicIntervention.appliedTo }}</strong> to
-				<strong>{{ dynamicIntervention.value }}</strong> when
-				<strong>{{ dynamicIntervention.parameter }}</strong> crosses the threshold&nbsp;<strong
-					>{{ dynamicIntervention.threshold }} {{ getUnit(dynamicIntervention) }}</strong
-				>.
-			</li>
-		</ul>
+	<div class="intervention-card">
+		<div class="content">
+			<aside>{{ !isEmpty(intervention.dynamicInterventions) ? 'Dynamic' : 'Static' }} intervention</aside>
+			<h6 class="pt-1 line-wrap">{{ intervention.name }}</h6>
+			<ul class="text-sm">
+				<li v-for="(staticIntervention, index) in intervention.staticInterventions" :key="`static-${index}`">
+					Set {{ staticIntervention.type }} <strong>{{ staticIntervention.appliedTo }}</strong> to
+					<strong>{{ staticIntervention.value }}</strong> starting at
+					<strong>{{
+						getTimePointString(staticIntervention.timestep, {
+							startDate: props.startDate,
+							calendarSettings: props.calendarSettings
+						})
+					}}</strong>
+				</li>
+				<li v-for="(dynamicIntervention, index) in intervention.dynamicInterventions" :key="`dynamic-${index}`">
+					Set {{ dynamicIntervention.type }} <strong>{{ dynamicIntervention.appliedTo }}</strong> to
+					<strong>{{ dynamicIntervention.value }}</strong> when
+					<strong>{{ dynamicIntervention.parameter }}</strong> crosses the threshold&nbsp;<strong
+						>{{ dynamicIntervention.threshold }} {{ getUnit(dynamicIntervention) }}</strong
+					>.
+				</li>
+			</ul>
+		</div>
 	</div>
 </template>
 
@@ -49,12 +51,20 @@ function getUnit(dynamicIntervention: DynamicIntervention) {
 </script>
 
 <style scoped>
-div {
+.intervention-card {
 	background: var(--surface-section);
 	border: 1px solid var(--surface-border-light);
 	border-radius: var(--border-radius-medium);
-	padding: var(--gap-2) var(--gap-3) var(--gap-3) var(--gap-3);
 	box-shadow: 0 2px 4px -1px rgba(0, 0, 0, 0.08);
+	overflow: hidden;
+}
+
+.intervention-card .content {
+	padding-top: var(--gap-2);
+	padding-right: var(--gap-2);
+	padding-bottom: var(--gap-3);
+	padding-left: var(--gap-2-5);
+	border-left: 5px solid var(--surface-400);
 }
 
 ul {
