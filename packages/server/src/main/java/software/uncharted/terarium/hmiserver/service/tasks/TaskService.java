@@ -429,7 +429,7 @@ public class TaskService {
 				rabbitAdmin.declareExchange(exchange);
 
 				// Declare a queue
-				final Queue queue = new Queue(queueName, IS_DURABLE_QUEUES, true, true);
+				final Queue queue = new Queue(queueName, IS_DURABLE_QUEUES, false, true);
 				rabbitAdmin.declareQueue(queue);
 
 				// Bind the queue to the exchange with a routing key

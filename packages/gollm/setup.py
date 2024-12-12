@@ -15,7 +15,7 @@ setup(
         "tiktoken"
     ],
     package_data={
-        "schemas": ["*.json"],
+        "schemas": ["*.json"]
     },
     entry_points={
         "console_scripts": [

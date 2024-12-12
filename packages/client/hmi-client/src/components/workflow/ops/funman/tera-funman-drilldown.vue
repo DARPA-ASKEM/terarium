@@ -385,7 +385,7 @@ import { getAsConfiguredModel, getModelConfigurationById } from '@/services/mode
 import { useToastService } from '@/services/toast';
 import { pythonInstance } from '@/python/PyodideController';
 import TeraConstraintGroupForm from '@/components/workflow/ops/funman/tera-constraint-group-form.vue';
-import { DrilldownTabs, ChartSetting, ChartSettingType } from '@/types/common';
+import { DrilldownTabs, type ChartSetting, ChartSettingType } from '@/types/common';
 import { stringToLatexExpression, getModel, getMMT } from '@/services/model';
 import { toScientificNotation } from '@/utils/number';
 import { removeChartSettingById, updateChartSettingsBySelectedVariables } from '@/services/chart-settings';

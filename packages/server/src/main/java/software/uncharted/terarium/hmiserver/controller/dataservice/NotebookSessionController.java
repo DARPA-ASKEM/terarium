@@ -5,7 +5,6 @@ import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
-import jakarta.transaction.Transactional;
 import java.io.IOException;
 import java.util.List;
 import java.util.Optional;
@@ -34,6 +33,7 @@ import software.uncharted.terarium.hmiserver.service.CurrentUserService;
 import software.uncharted.terarium.hmiserver.service.data.NotebookSessionService;
 import software.uncharted.terarium.hmiserver.service.data.ProjectAssetService;
 import software.uncharted.terarium.hmiserver.service.data.ProjectService;
+import software.uncharted.terarium.hmiserver.utils.Messages;
 import software.uncharted.terarium.hmiserver.utils.rebac.Schema;
 
 /** Rest controller for storing, retrieving, modifying and deleting notebook sessions in the dataservice */
@@ -44,7 +44,7 @@ import software.uncharted.terarium.hmiserver.utils.rebac.Schema;
 public class NotebookSessionController {
 
 	final NotebookSessionService sessionService;
-
+	private final Messages messages;
 	private final ProjectService projectService;
 	private final ProjectAssetService projectAssetService;
 	private final CurrentUserService currentUserService;
@@ -250,17 +250,26 @@ public class NotebookSessionController {
 			currentUserService.get().getId(),
 			projectId
 		);
+		final NotebookSession session = sessionService
+			.getAsset(id, permission)
+			.orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, messages.get("notebook-session.not-found")));
+
+		NotebookSession newNotebookSession;
 		try {
-			final Optional<NotebookSession> session = sessionService.getAsset(id, permission);
-			if (session.isEmpty()) {
-				return ResponseEntity.notFound().build();
-			}
-			return ResponseEntity.status(HttpStatus.OK).body(session.get().clone());
+			newNotebookSession = sessionService.createAsset(session.clone(), projectId, permission);
 		} catch (final Exception e) {
 			final String error = "Unable to clone notebook session";
 			log.error(error, e);
 			throw new ResponseStatusException(org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR, error);
 		}
+
+		final Project project = projectService
+			.getProject(projectId)
+			.orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, messages.get("projects.not-found")));
+
+		projectAssetService.createProjectAsset(project, AssetType.NOTEBOOK_SESSION, newNotebookSession, permission);
+
+		return ResponseEntity.status(HttpStatus.OK).body(newNotebookSession);
 	}
 
 	/**

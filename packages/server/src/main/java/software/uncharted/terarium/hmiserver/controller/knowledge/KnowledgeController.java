@@ -776,7 +776,7 @@ public class KnowledgeController {
 				if (groundings.getIdentifiers() == null) {
 					groundings.setIdentifiers(new ArrayList<>());
 				}
-				groundings.getIdentifiers().add(new DKG(g.get(0).asText(), g.get(1).asText(), ""));
+				groundings.getIdentifiers().add(new DKG(g.get(0).asText(), g.get(1).asText(), "", null, null));
 			}
 
 			// remove groundings from an annotation object
