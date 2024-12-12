@@ -2,7 +2,7 @@
 	<div>
 		<aside>{{ !isEmpty(intervention.dynamicInterventions) ? 'Dynamic' : 'Static' }} intervention</aside>
 		<h6 class="pt-1 line-wrap">{{ intervention.name }}</h6>
-		<ul>
+		<ul class="text-sm">
 			<li v-for="(staticIntervention, index) in intervention.staticInterventions" :key="`static-${index}`">
 				Set {{ staticIntervention.type }} <strong>{{ staticIntervention.appliedTo }}</strong> to
 				<strong>{{ staticIntervention.value }}</strong> starting at
@@ -53,10 +53,8 @@ div {
 	background: var(--surface-section);
 	border: 1px solid var(--surface-border-light);
 	border-radius: var(--border-radius-medium);
-	padding: var(--gap-2) var(--gap-3);
-	box-shadow:
-		0 2px 2px -1px rgba(0, 0, 0, 0.06),
-		0 2px 4px -1px rgba(0, 0, 0, 0.08);
+	padding: var(--gap-2) var(--gap-3) var(--gap-3) var(--gap-3);
+	box-shadow: 0 2px 4px -1px rgba(0, 0, 0, 0.08);
 }
 
 ul {
@@ -72,5 +70,11 @@ aside {
 	color: var(--text-color-subdued);
 	font-size: var(--font-caption);
 	font-style: italic;
+}
+.line-wrap {
+	white-space: normal;
+	overflow-wrap: break-word;
+	word-break: break-word;
+	max-width: 100%;
 }
 </style>

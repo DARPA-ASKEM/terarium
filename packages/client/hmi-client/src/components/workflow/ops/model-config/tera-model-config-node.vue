@@ -1,8 +1,8 @@
 <template>
 	<section>
-		<div v-if="!isEmpty(node.state.transientModelConfig.id)" class="pb-3">
+		<div v-if="!isEmpty(node.state.transientModelConfig.id)" class="configuration-card">
 			<h6 class="pb-1 line-wrap">{{ node.state.transientModelConfig.name }}</h6>
-			<p>{{ node.state.transientModelConfig.description }}</p>
+			<p class="text-sm">{{ node.state.transientModelConfig.description }}</p>
 		</div>
 		<tera-operator-placeholder v-else :node="node" />
 
@@ -126,6 +126,14 @@ watch(
 );
 </script>
 <style scoped>
+.configuration-card {
+	background: var(--surface-section);
+	border: 1px solid var(--surface-border-light);
+	border-radius: var(--border-radius-medium);
+	padding: var(--gap-2) var(--gap-3) var(--gap-3) var(--gap-3);
+	box-shadow: 0 2px 4px -1px rgba(0, 0, 0, 0.08);
+}
+
 .line-wrap {
 	white-space: normal;
 	overflow-wrap: break-word;
