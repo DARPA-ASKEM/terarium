@@ -103,6 +103,7 @@ const emit = defineEmits(['remove-file']);
 }
 
 .ready i {
-	align-self: end;
+	align-self: center;
+	margin-bottom: 2px;
 }
 </style>
