@@ -43,7 +43,7 @@
 						/>
 					</div>
 				</div>
-				<section v-if="activeSettings.type !== 'error-distribution'">
+				<section v-if="isColorPickerEnabled">
 					<h6>Color Picker</h6>
 					<input type="color" :value="primaryColor" @change="onColorChange($event)" />
 				</section>
@@ -56,7 +56,7 @@
 import _ from 'lodash';
 import { ref, computed, watch } from 'vue';
 import Button from 'primevue/button';
-import { ChartSetting } from '@/types/common';
+import { ChartSetting, ChartSettingType } from '@/types/common';
 import { ChartAnnotation } from '@/types/Types';
 import TeraInputText from '@/components/widgets/tera-input-text.vue';
 import TeraCheckbox from '@/components/widgets/tera-checkbox.vue';
@@ -87,16 +87,25 @@ const toggleLogScale = (useLogScale: boolean) => {
 	emit('update-settings-scale', useLogScale);
 };
 
+const isColorPickerEnabled = computed(() => {
+	const type = props.activeSettings?.type;
+	if (type) {
+		return ![ChartSettingType.ERROR_DISTRIBUTION, ChartSettingType.VARIABLE_COMPARISON].includes(type);
+	}
+	return false;
+});
+
 const chartAnnotations = computed(() => {
 	if (props.annotations === undefined) {
 		return undefined;
 	}
 	return props.annotations.filter((annotation) => annotation.chartId === props.activeSettings?.id);
 });
+
 const isGeneratingAnnotation = ref(false);
 const generateAnnotationQuery = ref<string>('');
 const showAnnotationInput = ref<Boolean>(false);
-const primaryColor = ref(props.activeSettings?.primaryColor ?? '#1B8073');
+const primaryColor = ref(props.activeSettings?.primaryColor ?? '');
 
 const onColorChange = (event) => {
 	primaryColor.value = event.target?.value;
@@ -125,7 +134,9 @@ const cancelGenerateAnnotation = () => {
 watch(
 	() => props.activeSettings,
 	() => {
-		if (props.activeSettings?.primaryColor) {
+		if (!props.activeSettings) {
+			primaryColor.value = '';
+		} else if (props.activeSettings?.primaryColor) {
 			primaryColor.value = props.activeSettings.primaryColor;
 		}
 	}
