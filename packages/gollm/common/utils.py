@@ -1,60 +1,5 @@
-import json
 import jsonschema
-import regex as re
 import tiktoken
-
-
-def remove_references(text: str) -> str:
-    """
-    Removes reference sections from a scientific paper.
-    """
-    pattern = r"References\n([\s\S]*?)(?:\n\n|\Z)"
-    new_text = re.sub(pattern, "", text)
-    return new_text.strip()
-
-
-def parse_param_initials(amr: dict):
-    try:
-        ode = amr['semantics']['ode']
-    except KeyError:
-        raise KeyError("ODE semantics not found in AMR, please provide a valide AMR with structure semantics.ode")
-
-    assert 'parameters' in ode, "No parameters found in ODE semantics, please provide a valid AMR with structure semtnatics.ode.parameters"
-    assert 'initials' in ode, "No initials found in ODE semantics, please provide a valid AMR with structure semantics.ode.initials"
-
-    params = ode['parameters']
-
-    assert all(['id' in p.keys() for p in params]), "All parameters must have an 'id' key"
-
-    param_ids = [p['id'] for p in params if p is not None and p.get('id')]
-
-    initials = ode['initials']
-
-    assert all(['target' in i.keys() for i in initials]), "All initials must have an 'id' key"
-
-    initial_ids = [i['target'] for i in initials if i is not None and i.get('target')]
-
-    return {'initial_names': initial_ids, 'param_names': param_ids}
-
-
-def parse_json_from_markdown(text):
-    print("Stripping markdown...")
-    json_pattern = r"```json\s*(\{.*?\})\s*```"
-    match = re.search(json_pattern, text, re.DOTALL)
-    if match:
-        return match.group(1)
-    else:
-        print(f"No markdown found in text: {text}")
-        return text
-
-
-def extract_json(text: str) -> dict:
-    corrected_text = text.replace("{{", "{").replace("}}", "}")
-    try:
-        json_obj = json.loads(corrected_text)
-        return json_obj
-    except json.JSONDecodeError as e:
-        raise ValueError(f"Error decoding JSON: {e}\nfrom text {text}")
 
 
 def validate_schema(schema):
@@ -63,13 +8,6 @@ def validate_schema(schema):
         print("Schema is valid.")
     except jsonschema.exceptions.SchemaError as e:
         print(f"Schema is invalid: {e.message}")
-
-
-def postprocess_oai_json(output: str) -> dict:
-    output = "{" + parse_json_from_markdown(
-        output
-    )  # curly bracket is used in all prompts to denote start of json.
-    return extract_json(output)
 
 
 def normalize_greek_alphabet(text: str) -> str:
@@ -116,7 +54,6 @@ def exceeds_tokens(prompt: str, max_tokens: int) -> bool:
     return False
 
 
-# Adapter function which converts the model config dict to HMI expected format.
 def model_config_adapter(model_config: dict) -> dict:
     # for each condition and for each parameter semantic in the model configuration,
     # if the distribution is not `contant`, remove the `value` key
@@ -142,3 +79,49 @@ def model_config_adapter(model_config: dict) -> dict:
                     raise ValueError("Invalid distribution type")
 
     return model_config
+
+
+def escape_curly_braces(json_obj: dict) -> dict:
+    if isinstance(json_obj, dict):
+        for key, value in json_obj.items():
+            json_obj[key] = unescape_curly_braces(value)
+    elif isinstance(json_obj, list):
+        for i in range(len(json_obj)):
+            json_obj[i] = unescape_curly_braces(json_obj[i])
+    elif isinstance(json_obj, str):
+        json_obj = json_obj.replace("{", "{{").replace("}", "}}")
+    return json_obj
+
+
+def unescape_curly_braces(json_obj: dict) -> dict:
+    if isinstance(json_obj, dict):
+        for key, value in json_obj.items():
+            json_obj[key] = unescape_curly_braces(value)
+    elif isinstance(json_obj, list):
+        for i in range(len(json_obj)):
+            json_obj[i] = unescape_curly_braces(json_obj[i])
+    elif isinstance(json_obj, str):
+        json_obj = json_obj.replace('{{', '{').replace('}}', '}')
+    return json_obj
+
+
+def get_image_format_string(image_format: str) -> str:
+    if not image_format:
+        raise ValueError("Invalid image format.")
+
+    format_strings = {
+        "rgb": f"data:image/rgb:base64,",
+        "gif": f"data:image/gif:base64,",
+        "pbm": f"data:image/pbm:base64,",
+        "pgm": f"data:image/pgm:base64,",
+        "ppm": f"data:image/ppm:base64,",
+        "tiff": f"Bdata:image/tiff:base64MP,",
+        "rast": f"data:image/rast:base64,",
+        "xbm": f"data:image/xbm:base64,",
+        "jpeg": f"data:image/jpeg:base64,",
+        "bmp": f"data:image/bmp:base64,",
+        "png": f"data:image/png:base64,",
+        "webp": f"data:image/webp:base64,",
+        "exr": f"data:image/exr:base64,"
+    }
+    return format_strings.get(image_format.lower())
