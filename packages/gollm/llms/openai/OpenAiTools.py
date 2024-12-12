@@ -1,15 +1,12 @@
 import json
 import os
 from typing import List
+
 from openai import OpenAI
-from common.LlmToolsInterface import LlmToolsInterface
-from common.utils import (
-    normalize_greek_alphabet,
-    escape_curly_braces,
-    unescape_curly_braces
-)
-from common.prompts.latex_style_guide import LATEX_STYLE_GUIDE
-from common.prompts.config_from_dataset import (
+
+from gollm.common.LlmToolsInterface import LlmToolsInterface
+from gollm.common.prompts.amr_enrichment import ENRICH_PROMPT
+from gollm.common.prompts.config_from_dataset import (
     CONFIGURE_FROM_DATASET_PROMPT,
     CONFIGURE_FROM_DATASET_MAPPING_PROMPT,
     CONFIGURE_FROM_DATASET_TIMESERIES_PROMPT,
@@ -17,15 +14,20 @@ from common.prompts.config_from_dataset import (
     CONFIGURE_FROM_DATASET_DATASET_PROMPT,
     CONFIGURE_FROM_DATASET_MATRIX_PROMPT
 )
-from common.prompts.config_from_document import CONFIGURE_FROM_DOCUMENT_PROMPT
-from common.prompts.amr_enrichment import ENRICH_PROMPT
-from common.prompts.equations_cleanup import EQUATIONS_CLEANUP_PROMPT
-from common.prompts.dataset_enrichment import DATASET_ENRICH_PROMPT
-from common.prompts.model_card import MODEL_CARD_PROMPT
-from common.prompts.model_meta_compare import MODEL_METADATA_COMPARE_PROMPT, MODEL_METADATA_COMPARE_GOAL_PROMPT
-from common.prompts.interventions_from_document import INTERVENTIONS_FROM_DOCUMENT_PROMPT
-from common.prompts.equations_from_image import EQUATIONS_FROM_IMAGE_PROMPT
-
+from gollm.common.prompts.config_from_document import CONFIGURE_FROM_DOCUMENT_PROMPT
+from gollm.common.prompts.dataset_enrichment import DATASET_ENRICH_PROMPT
+from gollm.common.prompts.equations_cleanup import EQUATIONS_CLEANUP_PROMPT
+from gollm.common.prompts.equations_from_image import EQUATIONS_FROM_IMAGE_PROMPT
+from gollm.common.prompts.general_query import GENERAL_QUERY_PROMPT
+from gollm.common.prompts.interventions_from_document import INTERVENTIONS_FROM_DOCUMENT_PROMPT
+from gollm.common.prompts.latex_style_guide import LATEX_STYLE_GUIDE
+from gollm.common.prompts.model_card import MODEL_CARD_PROMPT
+from gollm.common.prompts.model_meta_compare import MODEL_METADATA_COMPARE_PROMPT, MODEL_METADATA_COMPARE_GOAL_PROMPT
+from gollm.common.utils import (
+    normalize_greek_alphabet,
+    escape_curly_braces,
+    unescape_curly_braces
+)
 
 GPT_MODEL = "gpt-4o-2024-08-06"
 
@@ -177,3 +179,10 @@ class OpenAiTools(LlmToolsInterface):
 
         prompt += "Answer:"
         return prompt
+
+
+    def create_general_query_prompt(self, instruction: str) -> str:
+        print("Building general query prompt...")
+        return GENERAL_QUERY_PROMPT.format(
+            instruction=instruction
+        )

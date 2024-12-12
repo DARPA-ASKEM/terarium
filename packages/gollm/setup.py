@@ -27,8 +27,7 @@ setup(
             "gollm:enrich_dataset=tasks.enrich_dataset:main",
             "gollm:equations_cleanup=tasks.equations_cleanup:main",
             "gollm:equations_from_image=tasks.equations_from_image:main",
-            "gollm:generate_response=tasks.generate_response:main",
-            "gollm:generate_summary=tasks.generate_summary:main",
+            "gollm:general_query=tasks.general_query:main",
             "gollm:interventions_from_document=tasks.interventions_from_document:main",
             "gollm:model_card=tasks.model_card:main"
         ],

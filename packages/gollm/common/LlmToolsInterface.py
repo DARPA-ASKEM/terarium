@@ -49,3 +49,7 @@ class LlmToolsInterface:
     def create_compare_models_prompt(self, amrs: List[str], goal: str, schema: str) -> str:
         """Create a prompt that compares models"""
         pass
+
+    def create_general_query_prompt(self, instruction: str) -> str:
+        """Create a prompt that performs a general query"""
+        pass

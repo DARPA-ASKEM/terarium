@@ -3,10 +3,9 @@ import imghdr
 import json
 import os
 from typing import List
-from common.utils import validate_schema, model_config_adapter, get_image_format_string
 
 from common import LlmToolsInterface
-
+from common.utils import validate_schema, model_config_adapter, get_image_format_string
 
 # define a constant for the absolute path of the schemas directory
 SCHEMAS_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'schemas')
@@ -130,3 +129,8 @@ def compare_models_chain(llm: LlmToolsInterface, amrs: List[str], goal: str) -> 
 
     prompt = llm.create_compare_models_prompt(amrs, goal, response_schema)
     return llm.send_to_llm(prompt, response_schema)
+
+
+def general_query_chain(llm: LlmToolsInterface, instruction: str) -> str:
+    prompt = llm.create_generate_respose_prompt(instruction)
+    return llm.send_to_llm(prompt, None)

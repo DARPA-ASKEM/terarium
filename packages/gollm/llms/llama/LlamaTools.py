@@ -1,16 +1,12 @@
 import json
 import os
-import boto3
 from typing import List
 
-from common.LlmToolsInterface import LlmToolsInterface
-from common.utils import (
-    normalize_greek_alphabet,
-    escape_curly_braces,
-    unescape_curly_braces
-)
-from common.prompts.latex_style_guide import LATEX_STYLE_GUIDE
-from common.prompts.config_from_dataset import (
+import boto3
+
+from gollm.common.LlmToolsInterface import LlmToolsInterface
+from gollm.common.prompts.amr_enrichment import ENRICH_PROMPT
+from gollm.common.prompts.config_from_dataset import (
     CONFIGURE_FROM_DATASET_PROMPT,
     CONFIGURE_FROM_DATASET_MAPPING_PROMPT,
     CONFIGURE_FROM_DATASET_TIMESERIES_PROMPT,
@@ -18,15 +14,21 @@ from common.prompts.config_from_dataset import (
     CONFIGURE_FROM_DATASET_DATASET_PROMPT,
     CONFIGURE_FROM_DATASET_MATRIX_PROMPT
 )
-from common.prompts.config_from_document import CONFIGURE_FROM_DOCUMENT_PROMPT
-from common.prompts.amr_enrichment import ENRICH_PROMPT
-from common.prompts.equations_cleanup import EQUATIONS_CLEANUP_PROMPT
-from common.prompts.dataset_enrichment import DATASET_ENRICH_PROMPT
-from common.prompts.model_card import MODEL_CARD_PROMPT
-from common.prompts.model_meta_compare import MODEL_METADATA_COMPARE_PROMPT, MODEL_METADATA_COMPARE_GOAL_PROMPT
-from common.prompts.interventions_from_document import INTERVENTIONS_FROM_DOCUMENT_PROMPT
-from common.prompts.equations_from_image import EQUATIONS_FROM_IMAGE_PROMPT
-from llms.llama.prompts.llama_prompts import LLAMA_START_PROMPT, LLAMA_RETURN_INSTRUCTIONS, LLAMA_END_PROMPT
+from gollm.common.prompts.config_from_document import CONFIGURE_FROM_DOCUMENT_PROMPT
+from gollm.common.prompts.dataset_enrichment import DATASET_ENRICH_PROMPT
+from gollm.common.prompts.equations_cleanup import EQUATIONS_CLEANUP_PROMPT
+from gollm.common.prompts.equations_from_image import EQUATIONS_FROM_IMAGE_PROMPT
+from gollm.common.prompts.general_query import GENERAL_QUERY_PROMPT
+from gollm.common.prompts.interventions_from_document import INTERVENTIONS_FROM_DOCUMENT_PROMPT
+from gollm.common.prompts.latex_style_guide import LATEX_STYLE_GUIDE
+from gollm.common.prompts.model_card import MODEL_CARD_PROMPT
+from gollm.common.prompts.model_meta_compare import MODEL_METADATA_COMPARE_PROMPT, MODEL_METADATA_COMPARE_GOAL_PROMPT
+from gollm.common.utils import (
+    normalize_greek_alphabet,
+    escape_curly_braces,
+    unescape_curly_braces
+)
+from gollm.llms.llama.prompts.llama_prompts import LLAMA_START_PROMPT, LLAMA_RETURN_INSTRUCTIONS, LLAMA_END_PROMPT
 
 GPT_MODEL = "us.meta.llama3-2-90b-instruct-v1:0"
 
@@ -60,7 +62,7 @@ class LlamaTools(LlmToolsInterface):
         print("Received response from AWS Bedrock (Llama)...")
         model_response = json.loads(response["body"].read())
         response_text = model_response["generation"]
-        return response_text
+        return unescape_curly_braces(response_text)
 
 
     def send_image_to_llm(self, prompt: str, schema: str, image_url: str, max_tokens=2048) -> dict:
@@ -81,7 +83,7 @@ class LlamaTools(LlmToolsInterface):
             "top_p": 1,
         })
 
-        client.invoke_model(
+        response = client.invoke_model(
             modelId=GPT_MODEL,
             body=request,
             contentType="application/json"
@@ -90,7 +92,7 @@ class LlamaTools(LlmToolsInterface):
         print("Received response from AWS Bedrock (Llama)...")
         model_response = json.loads(response["body"].read())
         response_text = model_response["generation"]
-        return response_text
+        return unescape_curly_braces(response_text)
 
 
     def create_enrich_model_prompt(self, amr: str, document: str, schema: str) -> str:
@@ -230,3 +232,14 @@ class LlamaTools(LlmToolsInterface):
         )
         prompt += LLAMA_END_PROMPT
         return prompt
+
+
+    def create_general_query_prompt(self, instruction: str) -> str:
+        print("Building general query prompt...")
+        prompt = LLAMA_START_PROMPT
+        prompt += GENERAL_QUERY_PROMPT.format(
+            instruction=instruction
+        )
+        prompt += LLAMA_END_PROMPT
+        return prompt
+
