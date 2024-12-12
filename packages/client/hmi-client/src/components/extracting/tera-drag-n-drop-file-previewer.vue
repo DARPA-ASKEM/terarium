@@ -60,7 +60,7 @@ const emit = defineEmits(['remove-file']);
 <style scoped>
 .file-preview {
 	overflow: hidden !important;
-	margin-top: 0.5rem;
+	margin-top: var(--gap-2);
 }
 
 .file-title-container {
@@ -76,14 +76,14 @@ const emit = defineEmits(['remove-file']);
 
 .file-name-container {
 	display: flex;
-	gap: 1rem;
+	gap: var(--gap-4);
 	flex-direction: row;
 }
 
 .progress-message {
 	font-size: var(--font-caption);
 	color: var(--text-color-secondary);
-	margin-top: 0.5rem;
+	margin-top: var(--gap-2);
 }
 .file-preview embed {
 	width: 100%;
@@ -98,12 +98,12 @@ const emit = defineEmits(['remove-file']);
 .ready {
 	color: var(--primary-color);
 	display: flex;
-	gap: 0.5rem;
+	gap: var(--gap-2);
 	align-items: center;
 }
 
 .ready i {
 	align-self: center;
-	margin-bottom: 2px;
+	margin-bottom: var(--gap-0-5);
 }
 </style>
