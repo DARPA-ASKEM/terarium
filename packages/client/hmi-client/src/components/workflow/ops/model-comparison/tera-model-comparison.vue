@@ -11,18 +11,23 @@
 					<Accordion multiple :activeIndex="currentActiveIndicies">
 						<AccordionTab header="Overview">
 							<template #header>
-								<div class="flex gap-2 ml-4">
-									<tera-input-text
+								<div class="flex align-items-start gap-2 ml-4 w-full">
+									<Textarea
+										v-model="goalQuery"
+										autoResize
+										rows="1"
 										placeholder="What is your goal? (Optional)"
-										:model-value="goalQuery"
-										@blur="onUpdateGoalQuery"
+										class="w-full"
+										@keydown.stop
+										@click.stop
 									/>
 									<Button
+										class="flex-shrink-0"
 										label="Compare"
-										@click.stop="processCompareModels"
-										size="small"
 										icon="pi pi-sparkles"
+										size="small"
 										:loading="isProcessingComparison"
+										@click.stop="processCompareModels"
 									/>
 								</div>
 							</template>
@@ -151,7 +156,7 @@
 </template>
 
 <script setup lang="ts">
-import { cloneDeep, isEmpty } from 'lodash';
+import { cloneDeep, debounce, isEmpty } from 'lodash';
 import { v4 as uuidv4 } from 'uuid';
 import markdownit from 'markdown-it';
 import Accordion from 'primevue/accordion';
@@ -167,20 +172,18 @@ import { ClientEvent, ClientEventType, type Model, TaskResponse, TaskStatus } fr
 import { OperatorStatus, WorkflowNode, WorkflowPortStatus } from '@/types/workflow';
 import { logger } from '@/utils/logger';
 import Button from 'primevue/button';
-import { computed, onMounted, onUnmounted, ref } from 'vue';
+import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
 import { VAceEditor } from 'vue3-ace-editor';
 import { VAceEditorInstance } from 'vue3-ace-editor/types';
-
 import TeraNotebookJupyterInput from '@/components/llm/tera-notebook-jupyter-input.vue';
 import Image from 'primevue/image';
 import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue';
-
 import { saveCodeToState } from '@/services/notebook';
 import { addImage, deleteImages, getImages } from '@/services/image';
 import TeraColumnarPanel from '@/components/widgets/tera-columnar-panel.vue';
 import { b64DecodeUnicode } from '@/utils/binary';
 import { useClientEvent } from '@/composables/useClientEvent';
-import TeraInputText from '@/components/widgets/tera-input-text.vue';
+import Textarea from 'primevue/textarea';
 import { ModelComparisonOperationState } from './model-comparison-operation';
 
 const props = defineProps<{
@@ -539,6 +542,8 @@ onMounted(async () => {
 onUnmounted(() => {
 	kernelManager.shutdown();
 });
+
+watch(goalQuery, debounce(onUpdateGoalQuery, 1000));
 </script>
 
 <style scoped>
