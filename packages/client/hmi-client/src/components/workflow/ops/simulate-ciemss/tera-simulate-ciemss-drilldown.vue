@@ -631,6 +631,9 @@ const lazyLoadSimulationData = async (outputRunId: string) => {
 	}
 	runResults.value[outputRunId] = result;
 	runResultsSummary.value[outputRunId] = resultSummary;
+
+	console.log(runResults.value);
+	console.log(runResultsSummary.value);
 	if (_.isNil(props.node.state.chartSettings)) isOutputSettingsPanelOpen.value = true;
 };
 

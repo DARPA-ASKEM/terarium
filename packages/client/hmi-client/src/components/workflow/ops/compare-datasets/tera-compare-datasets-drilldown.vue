@@ -79,15 +79,13 @@
 			</tera-slider-panel>
 		</template>
 
-		<tera-drilldown-section :tabName="DrilldownTabs.Wizard">
+		<tera-drilldown-section :tabName="DrilldownTabs.Wizard" ref="outputPanel">
 			<Accordion multiple :active-index="activeIndices">
 				<AccordionTab header="Summary"> </AccordionTab>
 				<AccordionTab header="Variables">
-					<template v-for="(compareChart, index) in selectedCharts">
+					<template v-for="setting of selectedVariableSettings" :key="setting.id">
 						<vega-chart
-							v-if="!isEmpty(compareChart)"
-							:key="index"
-							:visualization-spec="compareChart"
+							:visualization-spec="variableCharts[setting.id]"
 							:are-embed-actions-visible="false"
 							expandable
 						/>
@@ -149,7 +147,7 @@ import { WorkflowNode, WorkflowPortStatus } from '@/types/workflow';
 import TeraSliderPanel from '@/components/widgets/tera-slider-panel.vue';
 import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.vue';
 import { DrilldownTabs, ChartSettingType, type ChartSetting } from '@/types/common';
-import { onMounted, ref, watch, computed } from 'vue';
+import { onMounted, ref, watch } from 'vue'; // computed
 import Button from 'primevue/button';
 import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
@@ -158,12 +156,19 @@ import { Dataset } from '@/types/Types';
 import { getDataset, getRawContent } from '@/services/dataset';
 import TeraCheckbox from '@/components/widgets/tera-checkbox.vue';
 import RadioButton from 'primevue/radiobutton';
-import { isEmpty, cloneDeep, capitalize, isEqual } from 'lodash';
+import { isEmpty, cloneDeep, isEqual } from 'lodash'; // capitalize,
 import VegaChart from '@/components/widgets/VegaChart.vue';
-import { createForecastChart, AUTOSIZE } from '@/services/charts';
+// import {
+// 	createForecastChart,
+// 	applyForecastChartAnnotations,
+// 	createForecastChartAnnotation,
+// 	AUTOSIZE
+// } from '@/services/charts';
 import TeraChartSettingsItem from '@/components/widgets/tera-chart-settings-item.vue';
 import TeraChartControl from '@/components/workflow/tera-chart-control.vue';
 import { useChartSettings } from '@/composables/useChartSettings';
+import { useDrilldownChartSize } from '@/composables/useDrilldownChartSize';
+import { useCharts, type ChartData } from '@/composables/useCharts';
 import TeraCriteriaOfInterestCard from './tera-criteria-of-interest-card.vue';
 import {
 	blankCriteriaOfInterest,
@@ -172,6 +177,7 @@ import {
 	CriteriaOfInterestCard,
 	PlotValue
 } from './compare-datasets-operation';
+// import { usePreparedChartInputs } from '../simulate-ciemss/simulate-utils';
 
 const props = defineProps<{
 	node: WorkflowNode<CompareDatasetsState>;
@@ -208,10 +214,27 @@ const compareCharts = ref<any[]>([]);
 const { activeChartSettings, chartSettings, selectedVariableSettings, removeChartSettings, updateChartSettings } =
 	useChartSettings(props, emit);
 
-const selectedCharts = computed(() => {
-	const selectedChartIds = selectedVariableSettings.value.map((setting) => setting.selectedVariables[0]);
-	return compareCharts.value.filter((chart) => selectedChartIds.includes(chart.title.text));
-});
+const outputPanel = ref(null);
+const chartSize = useDrilldownChartSize(outputPanel);
+
+const chartData = ref<ChartData | null>(null);
+
+const { useVariableCharts } = useCharts(
+	// generateAnnotation, getChartAnnotationsByChartId,
+	props.node.id,
+	null,
+	null,
+	chartData,
+	chartSize,
+	null,
+	null
+);
+const variableCharts = useVariableCharts(selectedVariableSettings, null);
+
+// const selectedCharts = computed(() => {
+// 	const selectedChartIds = selectedVariableSettings.value.map((setting) => setting.selectedVariables[0]);
+// 	return compareCharts.value.filter((chart) => selectedChartIds.includes(chart.title.text));
+// });
 
 const onRun = () => {
 	console.log('run');
@@ -328,6 +351,7 @@ async function createCharts() {
 	if (selectedIndex === -1) return;
 
 	const { selectedPlotType } = knobs.value;
+	const allData: any[] = [];
 
 	// Go through every common header (column loop)
 	commonHeaderNames.value?.forEach((headerName) => {
@@ -366,27 +390,35 @@ async function createCharts() {
 				}
 			});
 		});
-		compareCharts.value.push(
-			createForecastChart(
-				null,
-				{
-					data,
-					variables: variableNames,
-					timeField: 'timepoint'
-				},
-				null,
-				{
-					title: headerName,
-					xAxisTitle: 'Timepoint',
-					yAxisTitle: capitalize(selectedPlotType),
-					width: 600,
-					height: 300,
-					legend: true,
-					autosize: AUTOSIZE.FIT
-				}
-			)
-		);
+
+		// console.log(allData);
+		allData.push(...data); // all keys need top be here maybe
+		// compareCharts.value.push(
+		// 	applyForecastChartAnnotations(
+		// 		createForecastChart(
+		// 			null,
+		// 			{
+		// 				data,
+		// 				variables: variableNames,
+		// 				timeField: 'timepoint'
+		// 			},
+		// 			null,
+		// 			{
+		// 				title: headerName,
+		// 				xAxisTitle: 'Timepoint',
+		// 				yAxisTitle: capitalize(selectedPlotType),
+		// 				width: 600,
+		// 				height: 300,
+		// 				legend: true,
+		// 				autosize: AUTOSIZE.FIT
+		// 			}
+		// 		),
+		// 		[createForecastChartAnnotation('y', 60, 'test label')]
+		// 	)
+		// );
 	});
+	chartData.value = { result: allData, resultSummary: [], pyciemssMap: {}, translationMap: {} };
+	// console.log(chartData.value);
 }
 
 onMounted(() => {

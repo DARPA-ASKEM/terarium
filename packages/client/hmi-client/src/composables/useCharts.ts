@@ -204,6 +204,8 @@ export function useCharts(
 			scale: setting.scale
 		};
 
+		console.log(chartData.value);
+
 		let sampleLayerVariables = [
 			`${chartData.value?.pyciemssMap[variables[0]]}:pre`,
 			`${chartData.value?.pyciemssMap[variables[0]]}`
@@ -218,6 +220,7 @@ export function useCharts(
 			sampleLayerVariables = variables.map((d) => `${chartData.value?.pyciemssMap[d]}`);
 			delete options.colorscheme;
 		}
+		console.log({ statLayerVariables, sampleLayerVariables, options });
 		return { statLayerVariables, sampleLayerVariables, options };
 	};
 
