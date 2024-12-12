@@ -26,10 +26,9 @@
 									:loading="isProcessingComparison"
 								/>
 							</template>
-							<p v-if="isProcessingComparison" class="subdued">
-								<i class="pi pi-spin pi-spinner mr-1" />
+							<tera-progress-spinner v-if="isProcessingComparison" is-centered :font-size="3">
 								Analyzing models metadata to generate a detailed comparison analysis...
-							</p>
+							</tera-progress-spinner>
 							<p v-html="overview" v-else class="markdown-text" />
 						</AccordionTab>
 					</Accordion>
