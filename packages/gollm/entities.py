@@ -1,7 +1,8 @@
 import inspect
 from datetime import datetime
-from pydantic import BaseModel, root_validator
 from typing import List, Callable, Type
+
+from pydantic import BaseModel, root_validator
 
 
 class ConfigureModelDocument(BaseModel):
