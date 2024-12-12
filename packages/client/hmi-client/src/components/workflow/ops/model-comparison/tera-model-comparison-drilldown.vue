@@ -82,20 +82,21 @@
 					</table>
 				</div>
 				<!-- Comparison context -->
-				<Accordion multiple :activeIndex="[0, 1, 2]" class="comparison-context">
-					<AccordionTab
-						header="Concept context comparison"
-						v-if="!isEmpty(conceptComparison.concept_context_comparison)"
-					>
+				<Accordion
+					v-if="!isConceptComparisonEmpty && !isConceptComparisonLoading"
+					:activeIndex="comparisonContextActiveIndexes"
+					class="comparison-context"
+				>
+					<AccordionTab header="Concept context comparison" v-if="!isContextComparisonEmpty">
 						<tera-csv-table :csv-text="conceptComparison.concept_context_comparison!" />
 					</AccordionTab>
-					<AccordionTab header="Tabular concept comparison" v-if="!isEmpty(conceptComparison.tabular_comparison)">
+					<AccordionTab header="Tabular concept comparison" v-if="!isTabularComparisonEmpty">
 						<template v-for="(value, pair) in conceptComparison.tabular_comparison" :key="pair">
 							<h6>Tabular comparison {{ pair }}</h6>
 							<tera-csv-table :csv-text="value" />
 						</template>
 					</AccordionTab>
-					<AccordionTab header="Concept graph comparison" v-if="!isEmpty(conceptComparison.concept_graph_comparison)">
+					<AccordionTab header="Concept graph comparison" v-if="!isGraphComparisonEmpty">
 						<template v-for="(value, pair) in conceptComparison.concept_graph_comparison" :key="pair">
 							<h6>Concept comparison {{ pair }}</h6>
 							<image
@@ -107,6 +108,9 @@
 						</template>
 					</AccordionTab>
 				</Accordion>
+				<tera-progress-spinner v-if="isConceptComparisonLoading" is-centered :font-size="3" class="max-w-25rem">
+					Creating a context, tabular, and graph concept comparison between the {{ modelIds.length }} models...
+				</tera-progress-spinner>
 			</tera-drilldown-section>
 		</div>
 		<tera-columnar-panel :tabName="Tabs.Notebook">
@@ -546,6 +550,14 @@ const processCompareModels = async () => {
 /* Concept comparison */
 
 const conceptComparison = ref<CompareModelsConceptsResponse>({});
+const isConceptComparisonLoading = ref(false);
+const isContextComparisonEmpty = computed(() => isEmpty(conceptComparison.value.concept_context_comparison));
+const isTabularComparisonEmpty = computed(() => isEmpty(conceptComparison.value.tabular_comparison));
+const isGraphComparisonEmpty = computed(() => isEmpty(conceptComparison.value.concept_graph_comparison));
+const isConceptComparisonEmpty = computed(
+	() => isContextComparisonEmpty.value && isTabularComparisonEmpty.value && isGraphComparisonEmpty.value
+);
+const comparisonContextActiveIndexes = ref([0, 1, 2]);
 
 /* End of concept comparison */
 
