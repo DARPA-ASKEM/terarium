@@ -344,7 +344,7 @@ async function createCharts() {
 			const timepoints = csv[timepointIndex];
 			const columnToSubtract = csv[headerIndex];
 
-			const name = `${headerName}_${datasets.value[datasetIndex].name}`;
+			const name = `${datasets.value[datasetIndex].name}`;
 			variableNames.push(name);
 
 			referenceColumn.forEach((referencePoint: number, index: number) => {
