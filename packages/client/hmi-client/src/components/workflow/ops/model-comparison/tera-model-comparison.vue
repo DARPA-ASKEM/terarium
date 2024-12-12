@@ -11,20 +11,20 @@
 					<Accordion multiple :activeIndex="currentActiveIndicies">
 						<AccordionTab header="Overview">
 							<template #header>
-								<tera-input-text
-									class="ml-auto w-4"
-									placeholder="What is your goal? (Optional)"
-									:model-value="goalQuery"
-									@blur="onUpdateGoalQuery"
-								/>
-								<Button
-									class="ml-4"
-									label="Compare"
-									@click.stop="processCompareModels"
-									size="small"
-									icon="pi pi-sparkles"
-									:loading="isProcessingComparison"
-								/>
+								<div class="flex gap-2 ml-4">
+									<tera-input-text
+										placeholder="What is your goal? (Optional)"
+										:model-value="goalQuery"
+										@blur="onUpdateGoalQuery"
+									/>
+									<Button
+										label="Compare"
+										@click.stop="processCompareModels"
+										size="small"
+										icon="pi pi-sparkles"
+										:loading="isProcessingComparison"
+									/>
+								</div>
 							</template>
 							<tera-progress-spinner v-if="isProcessingComparison" is-centered :font-size="3">
 								Analyzing models metadata to generate a detailed comparison analysis...
