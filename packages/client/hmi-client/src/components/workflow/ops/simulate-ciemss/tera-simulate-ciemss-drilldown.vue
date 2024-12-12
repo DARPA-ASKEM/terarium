@@ -224,7 +224,10 @@
 						"
 						:active-settings="activeChartSettings"
 						:generate-annotation="generateAnnotation"
+						:comparison="true"
 						@update-settings-scale="updateChartSettingsScale(activeChartSettings?.id as string, $event)"
+						@update-small-multiples="updateSmallMultiples()"
+						@update-share-y-axis="updateShareYAxis()"
 						@delete-annotation="deleteAnnotation"
 						@close="activeChartSettings = null"
 					/>
@@ -529,6 +532,8 @@ const {
 	removeChartSettings,
 	updateChartSettings,
 	updateChartSettingsScale,
+	updateSmallMultiples,
+	updateShareYAxis,
 	addComparisonChartSettings
 } = useChartSettings(props, emit);
 

@@ -101,6 +101,10 @@ export function useChartSettings(
 		});
 	};
 
+	const updateSmallMultiples = () => {};
+
+	const updateShareYAxis = () => {};
+
 	return {
 		chartSettings,
 		activeChartSettings,
@@ -115,6 +119,8 @@ export function useChartSettings(
 		removeChartSettings,
 		updateChartSettings,
 		updateChartSettingsScale,
+		updateSmallMultiples,
+		updateShareYAxis,
 		addComparisonChartSettings,
 		updateEnsembleVariableSettingOption
 	};

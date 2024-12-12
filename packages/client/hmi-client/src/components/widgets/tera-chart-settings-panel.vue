@@ -13,6 +13,18 @@
 						:model-value="Boolean(useLog)"
 						@update:model-value="toggleLogScale($event)"
 					/>
+					<tera-checkbox
+						v-if="comparison"
+						label="Small multiples"
+						:model-value="Boolean(isSmallMultiples)"
+						@update:model-value="toggleSmallMultiples($event)"
+					/>
+					<tera-checkbox
+						v-if="comparison && isSmallMultiples"
+						label="Share Y Axis"
+						:model-value="Boolean(isShareYAxis)"
+						@update:model-value="toggleShareYAxis($event)"
+					/>
 				</div>
 
 				<div v-if="chartAnnotations !== undefined" class="annotation-items">
@@ -60,6 +72,7 @@ import TeraCheckbox from '@/components/widgets/tera-checkbox.vue';
 const props = defineProps<{
 	activeSettings: ChartSetting | null;
 	annotations?: ChartAnnotation[];
+	comparison?: boolean;
 	/**
 	 * We receives generateAnnotation as a functor from the parent to access the parent scope directly. This allows us to utilize dependencies defined in the parent component without passing them all as props, which can be cumbersome.
 	 * Additionally, it enables us to handle post-generation actions (like resetting loading state or clearing input) after function completion.
@@ -69,12 +82,29 @@ const props = defineProps<{
 	generateAnnotation?: (setting: ChartSetting, query: string) => Promise<ChartAnnotation | null>;
 }>();
 
-const emit = defineEmits(['close', 'update-settings-scale', 'delete-annotation', 'create-annotation']);
+const emit = defineEmits([
+	'close',
+	'update-settings-scale',
+	'delete-annotation',
+	'create-annotation',
+	'update-small-multiples',
+	'update-share-y-axis'
+]);
 
 const useLog = computed(() => props.activeSettings?.scale === 'log');
+const isSmallMultiples = ref<boolean>(false);
+const isShareYAxis = ref<boolean>(false);
 
 const toggleLogScale = (useLogScale: boolean) => {
 	emit('update-settings-scale', useLogScale);
+};
+
+const toggleSmallMultiples = (smallMultiples: boolean) => {
+	emit('update-small-multiples', smallMultiples);
+};
+
+const toggleShareYAxis = (shareYAxis: boolean) => {
+	emit('update-share-y-axis', shareYAxis);
 };
 
 const chartAnnotations = computed(() => {
