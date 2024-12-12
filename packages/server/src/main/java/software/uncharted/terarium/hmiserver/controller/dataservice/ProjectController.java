@@ -1129,13 +1129,8 @@ public class ProjectController {
 				default -> asset.getName();
 			};
 
-		// Get the description of the asset to be displayed nontheless
-		String assetShortDescription =
-			switch (hit.getAssetType()) {
-				case PROJECT -> ((Project) asset).getOverviewAsReadableString();
-				case MODEL -> ((Model) asset).getDescriptionAsReadableString();
-				default -> asset.getDescription();
-			};
+		// Get the description of the asset to be displayed nonetheless
+		String assetShortDescription = asset.getDescription() == null ? "" : asset.getDescription();
 
 		// Only keep the first 100 characters of the description, followed by an ellipsis
 		if (assetShortDescription.length() > 100) {
