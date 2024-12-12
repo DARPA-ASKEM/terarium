@@ -1,8 +1,10 @@
 import sys
-from entities import DatasetCardModel
-from gollm_openai.tool_utils import dataset_enrichment_chain
 
+from gollm.chains import enrich_dataset_chain
+from gollm.entities import DatasetCardModel
+from gollm.llms.openai.OpenAiTools import OpenAiTools
 from taskrunner import TaskRunnerInterface
+
 
 def cleanup():
     pass
@@ -21,7 +23,8 @@ def main():
         inputs = DatasetCardModel(**input_dict)
 
         taskrunner.log("Sending request to OpenAI API")
-        response = dataset_enrichment_chain(research_paper=inputs.research_paper, dataset=inputs.dataset)
+        llm = OpenAiTools()
+        response = enrich_dataset_chain(llm, research_paper=inputs.research_paper, dataset=inputs.dataset)
         taskrunner.log("Received response from OpenAI API")
 
         taskrunner.write_output_dict_with_timeout({"response": response})

@@ -1,7 +1,8 @@
 import sys
-from entities import EquationsFromImage
-from gollm_openai.tool_utils import equations_from_image
 
+from gollm.chains import equations_from_image_chain
+from gollm.entities import EquationsFromImage
+from gollm.llms.openai.OpenAiTools import OpenAiTools
 from taskrunner import TaskRunnerInterface
 
 
@@ -21,7 +22,8 @@ def main():
         input_model = EquationsFromImage(**input_dict)
 
         taskrunner.log("Sending request to OpenAI API")
-        response = equations_from_image(image=input_model.image)
+        llm = OpenAiTools()
+        response = equations_from_image_chain(llm, image=input_model.image)
         taskrunner.log("Received response from OpenAI API")
 
         taskrunner.write_output_dict_with_timeout({"response": response})

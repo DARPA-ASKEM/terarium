@@ -1,8 +1,9 @@
 import json
 import sys
-from entities import ConfigureModelDocument
-from gollm_openai.tool_utils import model_config_from_document
 
+from gollm.chains import model_config_from_document_chain
+from gollm.entities import ConfigureModelDocument
+from gollm.llms.openai.OpenAiTools import OpenAiTools
 from taskrunner import TaskRunnerInterface
 
 
@@ -23,9 +24,8 @@ def main():
         amr = json.dumps(input_model.amr, separators=(",", ":"))
 
         taskrunner.log("Sending request to OpenAI API")
-        response = model_config_from_document(
-            research_paper=input_model.research_paper, amr=amr
-        )
+        llm = OpenAiTools()
+        response = model_config_from_document_chain(llm, research_paper=input_model.research_paper, amr=amr)
         taskrunner.log("Received response from OpenAI API")
 
         taskrunner.write_output_dict_with_timeout({"response": response})
