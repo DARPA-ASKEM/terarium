@@ -8,7 +8,7 @@
 			<tera-drilldown-section>
 				<!-- LLM generated overview -->
 				<section class="comparison-overview">
-					<Accordion multiple :activeIndex="currentActiveIndicies">
+					<Accordion multiple :activeIndex="currentActiveIndices">
 						<AccordionTab header="Overview">
 							<template #header>
 								<tera-input-text
@@ -243,7 +243,7 @@ const sampleAgentQuestions = [
 ];
 let compareModelsTaskId = '';
 
-const currentActiveIndicies = ref([0]);
+const currentActiveIndices = ref([0]);
 const modelsToCompare = ref<Model[]>([]);
 const modelCardsToCompare = ref<any[]>([]);
 const fields = ref<string[]>([]);
@@ -533,14 +533,6 @@ const processCompareModels = async () => {
 	if (taskRes.status === TaskStatus.Success) {
 		generateOverview(taskRes.output);
 	}
-
-	// Compare the models concepts
-	getCompareModelConcepts(modelIds.value, props.node.workflowId, props.node.id).then((response) => {
-		if (response) {
-			conceptComparison.value = response;
-		}
-	});
-
 	const state = cloneDeep(props.node.state);
 	state.hasRun = true;
 	emit('update-state', state);
@@ -559,6 +551,22 @@ const isConceptComparisonEmpty = computed(
 );
 const comparisonContextActiveIndexes = ref([0, 1, 2]);
 
+function processConceptComparison() {
+	if (isEmpty(modelIds.value)) return;
+	isConceptComparisonLoading.value = true;
+	conceptComparison.value = {};
+	getCompareModelConcepts(modelIds.value, props.node.workflowId, props.node.id)
+		.then((response) => {
+			if (response) conceptComparison.value = response;
+		})
+		.catch((error) => {
+			logger.error(`Error comparing concepts: ${error}`);
+		})
+		.finally(() => {
+			isConceptComparisonLoading.value = false;
+		});
+}
+
 /* End of concept comparison */
 
 // Listen for the task completion event
@@ -576,6 +584,9 @@ useClientEvent(ClientEventType.TaskGollmCompareModel, (event: ClientEvent<TaskRe
 });
 
 onMounted(async () => {
+	// Run asynchronously the concept comparison of the models
+	processConceptComparison();
+
 	if (!isEmpty(props.node.state.comparisonImageIds)) {
 		isLoadingStructuralComparisons.value = true;
 		structuralComparisons.value = await getImages(props.node.state.comparisonImageIds);
