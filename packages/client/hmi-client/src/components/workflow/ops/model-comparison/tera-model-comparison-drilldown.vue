@@ -6,8 +6,6 @@
 	>
 		<div :tabName="Tabs.Wizard">
 			<tera-drilldown-section>
-				<!-- Concept comparison table -->
-				<div>{{ compareModelsConcepts }}</div>
 				<!-- LLM generated overview -->
 				<section class="comparison-overview">
 					<Accordion multiple :activeIndex="currentActiveIndicies">
@@ -83,6 +81,32 @@
 						</tbody>
 					</table>
 				</div>
+				<!-- Comparison context -->
+				<Accordion multiple :activeIndex="[0, 1, 2]" class="comparison-context">
+					<AccordionTab
+						header="Concept context comparison"
+						v-if="!isEmpty(conceptComparison.concept_context_comparison)"
+					>
+						<tera-csv-table :csv-text="conceptComparison.concept_context_comparison!" />
+					</AccordionTab>
+					<AccordionTab header="Tabular concept comparison" v-if="!isEmpty(conceptComparison.tabular_comparison)">
+						<template v-for="(value, pair) in conceptComparison.tabular_comparison" :key="pair">
+							<h6>Tabular comparison {{ pair }}</h6>
+							<tera-csv-table :csv-text="value" />
+						</template>
+					</AccordionTab>
+					<AccordionTab header="Concept graph comparison" v-if="!isEmpty(conceptComparison.concept_graph_comparison)">
+						<template v-for="(value, pair) in conceptComparison.concept_graph_comparison" :key="pair">
+							<h6>Concept comparison {{ pair }}</h6>
+							<image
+								width="500px"
+								height="1000px"
+								:src="`data:image/png;base64,${value}`"
+								:alt="`Concept comparison ${pair}`"
+							/>
+						</template>
+					</AccordionTab>
+				</Accordion>
 			</tera-drilldown-section>
 		</div>
 		<tera-columnar-panel :tabName="Tabs.Notebook">
@@ -185,6 +209,7 @@ import { b64DecodeUnicode } from '@/utils/binary';
 import { useClientEvent } from '@/composables/useClientEvent';
 import TeraInputText from '@/components/widgets/tera-input-text.vue';
 import { CompareModelsConceptsResponse, getCompareModelConcepts } from '@/services/concept';
+import TeraCsvTable from '@/components/widgets/tera-csv-table.vue';
 import { ModelComparisonOperationState } from './model-comparison-operation';
 
 const props = defineProps<{
@@ -227,7 +252,6 @@ const llmThoughts = ref<any[]>([]);
 const isKernelReady = ref(false);
 const contextLanguage = ref<string>('python3');
 const comparisonPairs = ref(props.node.state.comparisonPairs);
-const compareModelsConcepts = ref<CompareModelsConceptsResponse>({});
 
 const initializeAceEditor = (editorInstance: any) => {
 	editor = editorInstance;
@@ -507,16 +531,23 @@ const processCompareModels = async () => {
 	}
 
 	// Compare the models concepts
-	const taskCompareModelsConcepts = await getCompareModelConcepts(modelIds.value, props.node.workflowId, props.node.id);
-	if (taskCompareModelsConcepts.status === TaskStatus.Success) {
-		compareModelsConcepts.value = taskCompareModelsConcepts.output;
-	}
+	getCompareModelConcepts(modelIds.value, props.node.workflowId, props.node.id).then((response) => {
+		if (response) {
+			conceptComparison.value = response;
+		}
+	});
 
 	const state = cloneDeep(props.node.state);
 	state.hasRun = true;
 	emit('update-state', state);
 	isProcessingComparison.value = false;
 };
+
+/* Concept comparison */
+
+const conceptComparison = ref<CompareModelsConceptsResponse>({});
+
+/* End of concept comparison */
 
 // Listen for the task completion event
 useClientEvent(ClientEventType.TaskGollmCompareModel, (event: ClientEvent<TaskResponse>) => {
@@ -635,11 +666,26 @@ ul {
 	align-items: center;
 }
 
-.comparison-overview {
+.comparison-overview,
+.comparison-context {
 	border: 1px solid var(--surface-border-light);
 	border-radius: var(--border-radius-medium);
 	padding: var(--gap-2);
-	margin: var(--gap-4);
+	margin: var(--gap-4) var(--gap-4) 0;
+
+	& + & {
+		margin-top: var(--gap-4);
+	}
+}
+
+.comparison-context h6 {
+	&:not(:first-of-type) {
+		margin-top: var(--gap-8);
+	}
+
+	& + * {
+		margin-top: var(--gap-4);
+	}
 }
 
 .subdued {

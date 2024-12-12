@@ -7,7 +7,7 @@
 		<div v-else-if="error" class="error">Error loading CSV: {{ error }}</div>
 
 		<!-- PrimeVue DataTable -->
-		<DataTable v-else :value="csvData" :globalFilter="true" :sortMode="'multiple'">
+		<DataTable v-else size="small" :value="csvData" :globalFilter="true" :sortMode="'multiple'">
 			<!-- Dynamically generate columns -->
 			<Column v-for="col in columns" :key="col.field" :field="col.field" :header="col.header" :sortable="true" />
 		</DataTable>
