@@ -229,7 +229,7 @@ const { useVariableCharts } = useCharts(
 	null,
 	null
 );
-const variableCharts = useVariableCharts(selectedVariableSettings, null);
+const variableCharts = useVariableCharts(selectedVariableSettings, null, true);
 
 // const selectedCharts = computed(() => {
 // 	const selectedChartIds = selectedVariableSettings.value.map((setting) => setting.selectedVariables[0]);
@@ -374,9 +374,9 @@ async function createCharts() {
 			referenceColumn.forEach((referencePoint: number, index: number) => {
 				let value = 0;
 				if (selectedPlotType === PlotValue.DIFFERENCE) {
-					value = referencePoint - columnToSubtract[index]; // difference
+					value = columnToSubtract[index] - referencePoint; // difference
 				} else if (selectedPlotType === PlotValue.PERCENTAGE) {
-					value = ((referencePoint - columnToSubtract[index]) / referencePoint) * 100; // percentage
+					value = ((columnToSubtract[index] - referencePoint) / referencePoint) * 100; // percentage
 				} else if (selectedPlotType === PlotValue.VALUE) {
 					value = parseFloat(columnToSubtract[index]); // trajectory
 				}

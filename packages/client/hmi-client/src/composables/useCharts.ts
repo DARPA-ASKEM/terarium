@@ -204,8 +204,6 @@ export function useCharts(
 			scale: setting.scale
 		};
 
-		console.log(chartData.value);
-
 		let sampleLayerVariables = [
 			`${chartData.value?.pyciemssMap[variables[0]]}:pre`,
 			`${chartData.value?.pyciemssMap[variables[0]]}`
@@ -220,7 +218,7 @@ export function useCharts(
 			sampleLayerVariables = variables.map((d) => `${chartData.value?.pyciemssMap[d]}`);
 			delete options.colorscheme;
 		}
-		console.log({ statLayerVariables, sampleLayerVariables, options });
+
 		return { statLayerVariables, sampleLayerVariables, options };
 	};
 
@@ -282,7 +280,8 @@ export function useCharts(
 	// Create variable charts based on chart settings
 	const useVariableCharts = (
 		chartSettings: ComputedRef<ChartSetting[]>,
-		groundTruthData: ComputedRef<DataArray> | null
+		groundTruthData: ComputedRef<DataArray> | null,
+		isCompareDataset = false
 	) => {
 		const variableCharts = computed(() => {
 			const charts: Record<string, VisualizationSpec> = {};
@@ -291,10 +290,21 @@ export function useCharts(
 
 			// eslint-disable-next-line
 			chartSettings.value.forEach((settings) => {
+				console.log(settings);
+
 				const variable = settings.selectedVariables[0];
 				const annotations = getChartAnnotationsByChartId(settings.id);
 				const datasetVar = modelVarToDatasetVar(mapping?.value || [], variable);
 				const { sampleLayerVariables, statLayerVariables, options } = createForecastChartOptions(settings);
+
+				if (isCompareDataset) {
+					options.title = variable;
+				}
+
+				console.log('statLayerVariables', statLayerVariables);
+				console.log(result);
+				console.log(resultSummary);
+
 				const chart = applyForecastChartAnnotations(
 					createForecastChart(
 						{
