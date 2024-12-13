@@ -209,12 +209,12 @@ const pollResult = async (runId: string) => {
 	return pollerResults;
 };
 
-async function processPolling(id, propName) {
+async function processPolling(id, propName, inProgressPropName) {
 	const response = await pollResult(id);
 	if (response.state === PollerState.Done) {
 		const state = _.cloneDeep(props.node.state);
 		state[propName] = id;
-		state[`inProcess${propName}`] = ''; // fix after call
+		state[inProgressPropName] = '';
 		emit('update-state', state);
 	}
 	await processResult(id);
@@ -224,7 +224,7 @@ watch(
 	() => props.node.state.inProgressForecastId,
 	async (id) => {
 		if (!id || id === '') return;
-		await processPolling(id, 'forecastId');
+		await processPolling(id, 'forecastId', 'inProgressForecastId');
 	},
 	{ immediate: true }
 );
@@ -233,7 +233,7 @@ watch(
 	() => props.node.state.inProgressBaseForecastId,
 	async (id) => {
 		if (!id || id === '') return;
-		await processPolling(id, 'baseForecastId');
+		await processPolling(id, 'baseForecastId', 'inProgressBaseForecastId');
 	},
 	{ immediate: true }
 );
