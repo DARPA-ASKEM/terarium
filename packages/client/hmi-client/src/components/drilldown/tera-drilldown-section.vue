@@ -9,6 +9,7 @@
 			</div>
 		</header>
 		<main ref="main" @scroll="handleScroll">
+			<slot v-if="!isLoading || showSlotWhileLoading" />
 			<tera-progress-spinner v-if="isLoading" :font-size="2" is-centered>
 				<span v-if="!loadingMessage">Processing... </span>
 				<span v-if="loadingProgress">{{ loadingProgress }}% </span>
@@ -18,7 +19,6 @@
 				<Vue3Lottie :animationData="EmptySeed" :height="150" :width="150" loop autoplay />
 				<p>{{ blankMessage }}</p>
 			</div>
-			<slot v-else />
 		</main>
 		<footer v-if="slots.footer">
 			<slot name="footer" />
@@ -34,6 +34,7 @@ import TeraProgressSpinner from '../widgets/tera-progress-spinner.vue';
 
 defineProps<{
 	isLoading?: boolean;
+	showSlotWhileLoading?: boolean;
 	isBlank?: boolean;
 	blankMessage?: string;
 	loadingMessage?: string;

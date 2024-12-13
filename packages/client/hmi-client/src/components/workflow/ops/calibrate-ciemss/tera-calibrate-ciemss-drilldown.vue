@@ -225,6 +225,7 @@
 		<template #preview>
 			<tera-drilldown-section
 				:is-loading="isLoading"
+				:show-slot-while-loading="true"
 				:loading-progress="props.node.state.currentProgress"
 				:is-blank="!showOutputSection"
 				:blank-message="'Click \'Run\' to begin calibrating'"
@@ -251,7 +252,7 @@
 					class="p-3"
 					:summary-id="node.state.summaryId"
 				/>
-				<Accordion :active-index="lossActiveIndex" class="px-2" v-if="!isLoading">
+				<Accordion :active-index="lossActiveIndex" class="px-2">
 					<AccordionTab header="Loss">
 						<!-- Loss chart -->
 						<div ref="lossChartContainer">
