@@ -109,7 +109,7 @@
 				option-label="name"
 				option-value="id"
 				:options="modelStateOptions"
-				@update:model-value="scenario.setsimulateSpec($event)"
+				@update:model-value="scenario.setSimulateSpec($event)"
 				:loading="isFetchingModelInformation"
 				filter
 			/>

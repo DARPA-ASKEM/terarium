@@ -68,7 +68,7 @@ export class SensitivityAnalysisScenario extends BaseScenario {
 		this.modelConfigSpec.id = id;
 	}
 
-	setsimulateSpec(ids: string[]) {
+	setSimulateSpec(ids: string[]) {
 		this.simulateSpec.ids = ids;
 	}
 
