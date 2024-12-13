@@ -376,6 +376,7 @@
 						:active-settings="activeChartSettings"
 						:generate-annotation="generateAnnotation"
 						@delete-annotation="deleteAnnotation"
+						@update-settings-scale="updateChartSettingsScale(activeChartSettings?.id as string, $event)"
 						@update-settings-color="onColorChange"
 						@close="activeChartSettings = null"
 					/>
@@ -758,8 +759,9 @@ const {
 	comparisonChartsSettingsSelection,
 	removeChartSettings,
 	updateChartSettings,
+	addComparisonChartSettings,
 	updateChartPrimaryColor,
-	addComparisonChartSettings
+	updateChartSettingsScale
 } = useChartSettings(props, emit);
 
 const {
