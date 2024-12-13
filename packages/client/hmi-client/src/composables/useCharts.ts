@@ -142,7 +142,8 @@ export function useCharts(
 			xAxisTitle: '',
 			yAxisTitle: '',
 			autosize: AUTOSIZE.FIT,
-			colorscheme: multiVariable ? CATEGORICAL_SCHEME : [BASE_GREY, setting.primaryColor ?? PRIMARY_COLOR]
+			colorscheme: multiVariable ? CATEGORICAL_SCHEME : [BASE_GREY, setting.primaryColor ?? PRIMARY_COLOR],
+			scale: setting.scale
 		};
 
 		const variables: string[] = [];
