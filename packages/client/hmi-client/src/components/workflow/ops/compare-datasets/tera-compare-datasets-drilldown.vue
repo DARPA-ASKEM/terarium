@@ -106,6 +106,23 @@
 				header="Output settings"
 				content-width="360px"
 			>
+				<template #overlay>
+					<tera-chart-settings-panel
+						:annotations="
+							[ChartSettingType.VARIABLE, ChartSettingType.VARIABLE_COMPARISON].includes(
+								activeChartSettings?.type as ChartSettingType
+							)
+								? getChartAnnotationsByChartId(activeChartSettings?.id ?? '')
+								: undefined
+						"
+						:active-settings="activeChartSettings"
+						:generate-annotation="generateAnnotation"
+						@update-settings-scale="updateChartSettingsScale(activeChartSettings?.id as string, $event)"
+						@update-settings-color="onColorChange"
+						@delete-annotation="deleteAnnotation"
+						@close="activeChartSettings = null"
+					/>
+				</template>
 				<template #content>
 					<div class="output-settings-panel">
 						<tera-chart-control
@@ -160,8 +177,10 @@ import TeraCheckbox from '@/components/widgets/tera-checkbox.vue';
 import RadioButton from 'primevue/radiobutton';
 import { isEmpty, cloneDeep, isEqual } from 'lodash';
 import VegaChart from '@/components/widgets/VegaChart.vue';
+import { deleteAnnotation } from '@/services/chart-settings';
 import TeraChartSettingsItem from '@/components/widgets/tera-chart-settings-item.vue';
 import TeraChartControl from '@/components/workflow/tera-chart-control.vue';
+import TeraChartSettingsPanel from '@/components/widgets/tera-chart-settings-panel.vue';
 import { useChartSettings } from '@/composables/useChartSettings';
 import { useDrilldownChartSize } from '@/composables/useDrilldownChartSize';
 import { useCharts, type ChartData } from '@/composables/useCharts';
@@ -206,18 +225,20 @@ const isATESelected = ref(false);
 
 const compareCharts = ref<any[]>([]);
 
-const { activeChartSettings, chartSettings, selectedVariableSettings, removeChartSettings, updateChartSettings } =
-	useChartSettings(props, emit);
+const {
+	activeChartSettings,
+	chartSettings,
+	selectedVariableSettings,
+	removeChartSettings,
+	updateChartSettings,
+	updateChartSettingsScale,
+	updateChartPrimaryColor
+} = useChartSettings(props, emit);
 
 const outputPanel = ref(null);
 const chartSize = useDrilldownChartSize(outputPanel);
 
 const chartData = ref<ChartData | null>(null);
-
-// const selectedCharts = computed(() => {
-// 	const selectedChartIds = selectedVariableSettings.value.map((setting) => setting.selectedVariables[0]);
-// 	return compareCharts.value.filter((chart) => selectedChartIds.includes(chart.title.text));
-// });
 
 const onRun = () => {
 	console.log('run');
@@ -251,8 +272,7 @@ const knobs = ref<BasicKnobs>({
 	chartSettings: null
 });
 
-const { useCompareDatasetCharts } = useCharts(
-	// generateAnnotation, getChartAnnotationsByChartId,
+const { generateAnnotation, getChartAnnotationsByChartId, useCompareDatasetCharts } = useCharts(
 	props.node.id,
 	null,
 	null,
@@ -309,6 +329,10 @@ function findDuplicates(strings: string[]): string[] {
 	});
 	return duplicates;
 }
+
+const onColorChange = (color: string) => {
+	if (activeChartSettings.value) updateChartPrimaryColor(activeChartSettings.value, color);
+};
 
 async function createCharts() {
 	// FIXME: Temporary check, useChartSettings updates the state directly but the knobs are not updated
