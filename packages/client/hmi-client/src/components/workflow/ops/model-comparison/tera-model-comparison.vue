@@ -521,6 +521,10 @@ useClientEvent(ClientEventType.TaskGollmCompareModel, (event: ClientEvent<TaskRe
 });
 
 onMounted(async () => {
+	if (props.node.state.hasRun) {
+		processCompareModels();
+	}
+
 	if (!isEmpty(props.node.state.comparisonImageIds)) {
 		isLoadingStructuralComparisons.value = true;
 		structuralComparisons.value = await getImages(props.node.state.comparisonImageIds);
@@ -533,10 +537,7 @@ onMounted(async () => {
 	modelCardsToCompare.value = modelsToCompare.value.map(({ metadata }) => metadata?.gollmCard);
 	fields.value = [...new Set(modelCardsToCompare.value.flatMap((card) => (card ? Object.keys(card) : [])))];
 
-	await buildJupyterContext();
-	if (props.node.state.hasRun) {
-		processCompareModels();
-	}
+	buildJupyterContext();
 });
 
 onUnmounted(() => {
