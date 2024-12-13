@@ -1,11 +1,18 @@
 <template>
-	<div class="csv-viewer">
-		<div v-if="isLoading" class="loading">Loading CSV...</div>
-		<div v-else-if="error" class="error">Error loading CSV: {{ error }}</div>
-		<DataTable v-else size="small" :value="csvData" :globalFilter="true" :sortMode="'multiple'">
-			<Column v-for="col in columns" :key="col.field" :field="col.field" :header="col.header" :sortable="true" />
-		</DataTable>
-	</div>
+	<p v-if="isLoading">Loading CSV...</p>
+	<p v-else-if="error">Error loading CSV: {{ error }}</p>
+	<DataTable
+		v-else
+		:size="'small'"
+		showGridlines
+		stripedRows
+		removableSort
+		:value="csvData"
+		:globalFilter="true"
+		:sortMode="'multiple'"
+	>
+		<Column v-for="col in columns" :key="col.field" :field="col.field" :header="col.header" :sortable="true" />
+	</DataTable>
 </template>
 
 <script setup lang="ts">
@@ -71,15 +78,7 @@ onMounted(() => {
 </script>
 
 <style scoped>
-.csv-viewer {
+.p-datatable {
 	border: 1px solid var(--surface-border);
-	width: 100%;
-}
-
-.loading,
-.error {
-	padding: 20px;
-	text-align: center;
-	color: #666;
 }
 </style>
