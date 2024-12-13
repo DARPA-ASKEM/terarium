@@ -46,10 +46,19 @@ const EDGE_OPACITY = 0.5;
 
 const { getNodeTypeColor } = useNodeTypeColorPalette();
 
+const RENDER_EDGE_OFFSET = 15;
+const adjustedPathPoints = (pathNode: SVGPathElement, offset: number) => {
+	const len = pathNode.getTotalLength();
+	const end = len - offset;
+	return partialPath(pathNode, 0, end, 20);
+};
+
 export class PetrinetRenderer extends BasicRenderer<NodeData, EdgeData> {
 	nodeSelection: D3SelectionINode<NodeData> | null = null;
 
 	edgeSelection: D3SelectionIEdge<EdgeData> | null = null;
+
+	draggingNode: D3SelectionINode<NodeData> | null = null;
 
 	initialize(element: HTMLDivElement): void {
 		super.initialize(element);
@@ -220,12 +229,6 @@ export class PetrinetRenderer extends BasicRenderer<NodeData, EdgeData> {
 
 		const transitionNodeIds = this.graph.nodes.filter((n) => n.data.type === 'transition').map((n) => n.id);
 
-		const adjustedPathPoints = (pathNode: SVGPathElement, offset: number) => {
-			const len = pathNode.getTotalLength();
-			const end = len - offset;
-			return partialPath(pathNode, 0, end, 30);
-		};
-
 		selection
 			.append('path')
 			.attr('d', (d) => pathFn(d.points))
@@ -252,7 +255,7 @@ export class PetrinetRenderer extends BasicRenderer<NodeData, EdgeData> {
 
 			const selectItem = d3.select(this);
 			const pathNode = selectItem.node();
-			const newPathPoints = adjustedPathPoints(pathNode as SVGPathElement, 15);
+			const newPathPoints = adjustedPathPoints(pathNode as SVGPathElement, RENDER_EDGE_OFFSET);
 
 			// Apply new points
 			d3.select(this).attr('d', pathFn(newPathPoints));
@@ -276,6 +279,34 @@ export class PetrinetRenderer extends BasicRenderer<NodeData, EdgeData> {
 		});
 
 		this.updateMultiEdgeLabels();
+	}
+
+	/* @Override */
+	updateEdgePoints(): void {
+		// The edge rendering here is customized and more expensive, we will null-out
+		// the general update mechanism and instead do updates upon emitted dragging
+		// events where we can do more customized control/filtering
+		//
+		// See updateEdgePointsCustom
+	}
+
+	updateEdgePointsCustom(nodeId: string): void {
+		const chart = this.chart;
+		const transitionNodeIds = this.graph.nodes.filter((n) => n.data.type === 'transition').map((n) => n.id);
+
+		// At this point, the edge points have been updated, but we need to recompute the paths
+		chart!
+			.selectAll('.edge')
+			.filter((d: any) => d.target === nodeId || d.source === nodeId)
+			.selectAll('path')
+			.attr('d', (d: any) => {
+				if (transitionNodeIds.includes(d.target as string)) return pathFn(d.points);
+
+				const virtualPath = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+				virtualPath.setAttribute('d', pathFn((d as IEdge<any>).points) as string);
+				const newPathPoints = adjustedPathPoints(virtualPath, RENDER_EDGE_OFFSET);
+				return pathFn(newPathPoints);
+			});
 	}
 
 	updateMultiEdgeLabels() {
@@ -341,6 +372,7 @@ export class PetrinetRenderer extends BasicRenderer<NodeData, EdgeData> {
 		this.on('node-drag-start', (_eventName, event, selection: D3SelectionINode<NodeData>) => {
 			// set colour on drag
 			selection.selectAll('.selectableNode').attr('stroke', HIGHLIGHTEDSTROKECOLOUR);
+			this.draggingNode = selection;
 
 			if (!this.isDragEnabled) return;
 			sourceData = selection.datum();
@@ -354,6 +386,8 @@ export class PetrinetRenderer extends BasicRenderer<NodeData, EdgeData> {
 
 		this.on('node-drag-move', (_eventName, event /* , _selection: D3SelectionINode<NodeData> */) => {
 			this.updateMultiEdgeLabels();
+			this.updateEdgePointsCustom(this.draggingNode!.datum().id);
+
 			if (!this.isDragEnabled) return;
 			const pointerCoords = d3.zoomTransform(svg.node() as Element).invert(d3.pointer(event, svg.node()));
 			targetData = d3.select<SVGGElement, INode<NodeData>>(event.sourceEvent.target).datum();
@@ -380,6 +414,8 @@ export class PetrinetRenderer extends BasicRenderer<NodeData, EdgeData> {
 		});
 
 		this.on('node-drag-end', (_eventName, _event, selection: D3SelectionINode<NodeData>) => {
+			this.updateEdgePointsCustom(this.draggingNode!.datum().id);
+			this.draggingNode = null;
 			chart?.selectAll('.new-edge').remove();
 			// reset colour after drag
 			selection.selectAll('.selectableNode').attr('stroke', NODE_COLOR);
