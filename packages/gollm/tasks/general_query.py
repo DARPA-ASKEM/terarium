@@ -1,7 +1,8 @@
 import sys
 
-from gollm.chains import general_query_chain
-from gollm.llms.openai.OpenAiTools import OpenAiTools
+from chains import general_query_chain
+from llms.openai.OpenAiTools import OpenAiTools
+
 from taskrunner import TaskRunnerInterface
 
 

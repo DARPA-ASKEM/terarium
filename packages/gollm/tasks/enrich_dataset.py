@@ -1,8 +1,9 @@
 import sys
 
-from gollm.chains import enrich_dataset_chain
-from gollm.entities import DatasetCardModel
-from gollm.llms.openai.OpenAiTools import OpenAiTools
+from chains import enrich_dataset_chain
+from entities import DatasetCardModel
+from llms.openai.OpenAiTools import OpenAiTools
+
 from taskrunner import TaskRunnerInterface
 
 

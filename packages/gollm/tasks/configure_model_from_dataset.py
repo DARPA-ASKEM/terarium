@@ -1,9 +1,10 @@
 import json
 import sys
 
-from gollm.chains import model_config_from_dataset_chain
-from gollm.entities import ConfigureModelDataset
-from gollm.llms.openai.OpenAiTools import OpenAiTools
+from chains import model_config_from_dataset_chain
+from entities import ConfigureModelDataset
+from llms.openai.OpenAiTools import OpenAiTools
+
 from taskrunner import TaskRunnerInterface
 
 

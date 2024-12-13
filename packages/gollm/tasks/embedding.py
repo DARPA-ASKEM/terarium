@@ -1,7 +1,8 @@
 import sys
 
-from gollm.common.embedding import bulk_embedding_chain
-from gollm.entities import EmbeddingModel
+from common.embedding import bulk_embedding_chain
+from entities import EmbeddingModel
+
 from taskrunner import TaskRunnerInterface
 
 

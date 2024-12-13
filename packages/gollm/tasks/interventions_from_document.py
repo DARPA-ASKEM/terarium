@@ -1,9 +1,10 @@
 import json
 import sys
 
-from gollm.chains import interventions_from_document_chain
-from gollm.entities import InterventionsFromDocument
-from gollm.llms.openai.OpenAiTools import OpenAiTools
+from chains import interventions_from_document_chain
+from entities import InterventionsFromDocument
+from llms.openai.OpenAiTools import OpenAiTools
+
 from taskrunner import TaskRunnerInterface
 
 

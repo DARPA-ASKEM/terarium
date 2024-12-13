@@ -1,9 +1,10 @@
 import json
 import sys
 
-from gollm.chains import model_config_from_document_chain
-from gollm.entities import ConfigureModelDocument
-from gollm.llms.openai.OpenAiTools import OpenAiTools
+from chains import model_config_from_document_chain
+from entities import ConfigureModelDocument
+from llms.openai.OpenAiTools import OpenAiTools
+
 from taskrunner import TaskRunnerInterface
 
 

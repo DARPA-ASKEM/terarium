@@ -1,8 +1,9 @@
 import sys
 
-from gollm.chains import cleanup_equations_chain
-from gollm.entities import EquationsCleanup
-from gollm.llms.openai.OpenAiTools import OpenAiTools
+from chains import cleanup_equations_chain
+from entities import EquationsCleanup
+from llms.openai.OpenAiTools import OpenAiTools
+
 from taskrunner import TaskRunnerInterface
 
 

@@ -1,8 +1,9 @@
 import sys
 
-from gollm.chains import compare_models_chain
-from gollm.entities import ModelCompareModel
-from gollm.llms.openai.OpenAiTools import OpenAiTools
+from chains import compare_models_chain
+from entities import ModelCompareModel
+from llms.openai.OpenAiTools import OpenAiTools
+
 from taskrunner import TaskRunnerInterface
 
 

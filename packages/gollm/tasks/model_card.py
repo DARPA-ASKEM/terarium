@@ -1,8 +1,9 @@
 import sys
 
-from gollm.chains import model_card_chain
-from gollm.entities import ModelCardModel
-from gollm.llms.openai.OpenAiTools import OpenAiTools
+from chains import model_card_chain
+from entities import ModelCardModel
+from llms.openai.OpenAiTools import OpenAiTools
+
 from taskrunner import TaskRunnerInterface
 
 

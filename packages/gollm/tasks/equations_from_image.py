@@ -1,8 +1,9 @@
 import sys
 
-from gollm.chains import equations_from_image_chain
-from gollm.entities import EquationsFromImage
-from gollm.llms.openai.OpenAiTools import OpenAiTools
+from chains import equations_from_image_chain
+from entities import EquationsFromImage
+from llms.openai.OpenAiTools import OpenAiTools
+
 from taskrunner import TaskRunnerInterface
 
 
