@@ -79,20 +79,22 @@
 			</tera-slider-panel>
 		</template>
 
-		<tera-drilldown-section :tabName="DrilldownTabs.Wizard" ref="outputPanel">
-			<Accordion multiple :active-index="activeIndices">
-				<AccordionTab header="Summary"> </AccordionTab>
-				<AccordionTab header="Variables">
-					<template v-for="setting of selectedVariableSettings" :key="setting.id">
-						<vega-chart
-							:visualization-spec="variableCharts[setting.id]"
-							:are-embed-actions-visible="false"
-							expandable
-						/>
-					</template>
-				</AccordionTab>
-				<AccordionTab header="Comparison table"> </AccordionTab>
-			</Accordion>
+		<tera-drilldown-section :tabName="DrilldownTabs.Wizard">
+			<div ref="outputPanel">
+				<Accordion multiple :active-index="activeIndices">
+					<AccordionTab header="Summary"> </AccordionTab>
+					<AccordionTab header="Variables">
+						<template v-for="setting of selectedVariableSettings" :key="setting.id">
+							<vega-chart
+								:visualization-spec="variableCharts[setting.id]"
+								:are-embed-actions-visible="false"
+								expandable
+							/>
+						</template>
+					</AccordionTab>
+					<AccordionTab header="Comparison table"> </AccordionTab>
+				</Accordion>
+			</div>
 		</tera-drilldown-section>
 
 		<tera-drilldown-section :tabName="DrilldownTabs.Notebook"> </tera-drilldown-section>
@@ -156,7 +158,7 @@ import { Dataset } from '@/types/Types';
 import { getDataset, getRawContent } from '@/services/dataset';
 import TeraCheckbox from '@/components/widgets/tera-checkbox.vue';
 import RadioButton from 'primevue/radiobutton';
-import { isEmpty, cloneDeep, isEqual } from 'lodash'; // capitalize,
+import { isEmpty, cloneDeep, isEqual } from 'lodash';
 import VegaChart from '@/components/widgets/VegaChart.vue';
 // import {
 // 	createForecastChart,
@@ -177,7 +179,6 @@ import {
 	CriteriaOfInterestCard,
 	PlotValue
 } from './compare-datasets-operation';
-// import { usePreparedChartInputs } from '../simulate-ciemss/simulate-utils';
 
 const props = defineProps<{
 	node: WorkflowNode<CompareDatasetsState>;
@@ -219,18 +220,6 @@ const chartSize = useDrilldownChartSize(outputPanel);
 
 const chartData = ref<ChartData | null>(null);
 
-const { useVariableCharts } = useCharts(
-	// generateAnnotation, getChartAnnotationsByChartId,
-	props.node.id,
-	null,
-	null,
-	chartData,
-	chartSize,
-	null,
-	null
-);
-const variableCharts = useVariableCharts(selectedVariableSettings, null, true);
-
 // const selectedCharts = computed(() => {
 // 	const selectedChartIds = selectedVariableSettings.value.map((setting) => setting.selectedVariables[0]);
 // 	return compareCharts.value.filter((chart) => selectedChartIds.includes(chart.title.text));
@@ -267,6 +256,18 @@ const knobs = ref<BasicKnobs>({
 	selectedDataset: null,
 	chartSettings: null
 });
+
+const { useCompareDatasetCharts } = useCharts(
+	// generateAnnotation, getChartAnnotationsByChartId,
+	props.node.id,
+	null,
+	null,
+	chartData,
+	chartSize,
+	null,
+	null
+);
+const variableCharts = useCompareDatasetCharts(selectedVariableSettings, knobs);
 
 const initialize = async () => {
 	const state = cloneDeep(props.node.state);
@@ -391,28 +392,7 @@ async function createCharts() {
 				}
 			});
 		});
-
-		allData.push(...data); // all keys need to be here maybe
-		// compareCharts.value.push(
-		// 		createForecastChart(
-		// 			null,
-		// 			{
-		// 				data,
-		// 				variables: variableNames,
-		// 				timeField: 'timepoint'
-		// 			},
-		// 			null,
-		// 			{
-		// 				title: headerName,
-		// 				xAxisTitle: 'Timepoint',
-		// 				yAxisTitle: capitalize(selectedPlotType),
-		// 				width: 600,
-		// 				height: 300,
-		// 				legend: true,
-		// 				autosize: AUTOSIZE.FIT
-		// 			}
-		// 		),
-		// );
+		allData.push(...data);
 	});
 	chartData.value = { result: [], resultSummary: allData, pyciemssMap: {}, translationMap: {} };
 }

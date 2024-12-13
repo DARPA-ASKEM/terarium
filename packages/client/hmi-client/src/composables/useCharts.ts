@@ -277,60 +277,65 @@ export function useCharts(
 		return interventionCharts;
 	};
 
+	const useCompareDatasetCharts = (chartSettings: ComputedRef<ChartSetting[]>, knobs: Ref<any>) => {
+		const compareDatasetCharts = computed(() => {
+			const charts: Record<string, VisualizationSpec> = {};
+			if (!isChartReadyToBuild.value) return charts;
+			const { resultSummary } = chartData.value as ChartData;
+			chartSettings.value.forEach((settings) => {
+				const variable = settings.selectedVariables[0];
+				const chart = createForecastChart(
+					null,
+					{
+						data: resultSummary.filter((d) => d.headerName === variable),
+						variables: Object.keys(resultSummary[0]).filter((key) => key !== 'timepoint_id' && key !== 'headerName'),
+						timeField: 'timepoint_id'
+					},
+					null,
+					{
+						title: variable,
+						legend: true,
+						width: chartSize.value.width,
+						height: chartSize.value.height,
+						xAxisTitle: getUnit('_time') || 'Time',
+						yAxisTitle: capitalize(knobs.value.selectedPlotType),
+						// dateOptions,
+						scale: settings.scale
+					}
+				);
+				charts[settings.id] = chart;
+			});
+			return charts;
+		});
+		return compareDatasetCharts;
+	};
+
 	// Create variable charts based on chart settings
 	const useVariableCharts = (
 		chartSettings: ComputedRef<ChartSetting[]>,
-		groundTruthData: ComputedRef<DataArray> | null,
-		isCompareDataset = false
+		groundTruthData: ComputedRef<DataArray> | null
 	) => {
 		const variableCharts = computed(() => {
 			const charts: Record<string, VisualizationSpec> = {};
 			if (!isChartReadyToBuild.value || !isRefReady(groundTruthData)) return charts;
 			const { result, resultSummary } = chartData.value as ChartData;
-
-			console.log(chartData.value);
-
 			// eslint-disable-next-line
 			chartSettings.value.forEach((settings) => {
-				console.log(settings);
-
 				const variable = settings.selectedVariables[0];
 				const annotations = getChartAnnotationsByChartId(settings.id);
 				const datasetVar = modelVarToDatasetVar(mapping?.value || [], variable);
+				const { sampleLayerVariables, statLayerVariables, options } = createForecastChartOptions(settings);
 
-				const forecastChartOptions = createForecastChartOptions(settings);
-				let { statLayerVariables } = forecastChartOptions;
-				const { sampleLayerVariables, options } = forecastChartOptions;
-
-				let filteredSummary: any[] = [];
-
-				if (isCompareDataset) {
-					options.title = variable;
-					options.yAxisTitle = capitalize(variable);
-					filteredSummary = resultSummary.filter((d) => d.headerName === variable);
-					statLayerVariables = Object.keys(resultSummary[0]).filter(
-						(key) => key !== 'timepoint_id' && key !== 'headerName'
-					);
-				}
-
-				const samplingLayer = isCompareDataset
-					? null
-					: {
+				const chart = applyForecastChartAnnotations(
+					createForecastChart(
+						{
 							data: result,
 							variables: sampleLayerVariables,
 							timeField: 'timepoint_id',
 							groupField: 'sample_id'
-						};
-
-				console.log('statLayerVariables', statLayerVariables);
-				console.log(filteredSummary);
-				console.log(options);
-
-				const chart = applyForecastChartAnnotations(
-					createForecastChart(
-						samplingLayer,
+						},
 						{
-							data: isCompareDataset ? filteredSummary : resultSummary,
+							data: resultSummary,
 							variables: statLayerVariables,
 							timeField: 'timepoint_id'
 						},
@@ -743,6 +748,7 @@ export function useCharts(
 		useInterventionCharts,
 		useVariableCharts,
 		useComparisonCharts,
+		useCompareDatasetCharts,
 		useEnsembleVariableCharts,
 		useErrorChart,
 		useParameterDistributionCharts,
