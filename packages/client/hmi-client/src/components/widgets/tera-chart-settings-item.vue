@@ -1,5 +1,5 @@
 <template>
-	<div class="chart-settings-item" :style="{ 'border-left': primaryColor }">
+	<div class="chart-settings-item" :style="{ 'border-left': borderStyle }">
 		<h6>{{ settings.name }}</h6>
 		<div class="btn-group">
 			<Button icon="pi pi-cog" rounded text @click="$emit('open')" />
@@ -20,7 +20,7 @@ const props = defineProps({
 });
 defineEmits(['open', 'remove']);
 
-const primaryColor = computed(() => (props.settings.primaryColor ? `4px solid ${props.settings.primaryColor}` : ''));
+const borderStyle = computed(() => (props.settings.primaryColor ? `4px solid ${props.settings.primaryColor}` : ''));
 </script>
 
 <style scoped>
