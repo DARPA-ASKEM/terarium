@@ -368,7 +368,7 @@ async function createCharts() {
 			const timepoints = csv[timepointIndex];
 			const columnToSubtract = csv[headerIndex];
 
-			const name = `${headerName}_${datasets.value[datasetIndex].name}`;
+			const name = `${datasets.value[datasetIndex].name}`;
 			variableNames.push(name);
 
 			referenceColumn.forEach((referencePoint: number, index: number) => {
@@ -382,8 +382,9 @@ async function createCharts() {
 				}
 				if (data[index] === undefined) {
 					data.push({
+						headerName,
 						[name]: value,
-						timepoint: parseFloat(timepoints[index])
+						timepoint_id: parseFloat(timepoints[index])
 					});
 				} else {
 					data[index][name] = value;
@@ -392,9 +393,8 @@ async function createCharts() {
 		});
 
 		// console.log(allData);
-		allData.push(...data); // all keys need top be here maybe
+		allData.push(...data); // all keys need to be here maybe
 		// compareCharts.value.push(
-		// 	applyForecastChartAnnotations(
 		// 		createForecastChart(
 		// 			null,
 		// 			{
@@ -413,12 +413,9 @@ async function createCharts() {
 		// 				autosize: AUTOSIZE.FIT
 		// 			}
 		// 		),
-		// 		[createForecastChartAnnotation('y', 60, 'test label')]
-		// 	)
 		// );
 	});
-	chartData.value = { result: allData, resultSummary: [], pyciemssMap: {}, translationMap: {} };
-	// console.log(chartData.value);
+	chartData.value = { result: [], resultSummary: allData, pyciemssMap: {}, translationMap: {} };
 }
 
 onMounted(() => {

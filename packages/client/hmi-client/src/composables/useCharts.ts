@@ -288,6 +288,8 @@ export function useCharts(
 			if (!isChartReadyToBuild.value || !isRefReady(groundTruthData)) return charts;
 			const { result, resultSummary } = chartData.value as ChartData;
 
+			console.log(chartData.value);
+
 			// eslint-disable-next-line
 			chartSettings.value.forEach((settings) => {
 				console.log(settings);
@@ -295,26 +297,39 @@ export function useCharts(
 				const variable = settings.selectedVariables[0];
 				const annotations = getChartAnnotationsByChartId(settings.id);
 				const datasetVar = modelVarToDatasetVar(mapping?.value || [], variable);
-				const { sampleLayerVariables, statLayerVariables, options } = createForecastChartOptions(settings);
+
+				const forecastChartOptions = createForecastChartOptions(settings);
+				let { statLayerVariables } = forecastChartOptions;
+				const { sampleLayerVariables, options } = forecastChartOptions;
+
+				let filteredSummary: any[] = [];
 
 				if (isCompareDataset) {
 					options.title = variable;
+					filteredSummary = resultSummary.filter((d) => d.headerName === variable);
+					statLayerVariables = Object.keys(resultSummary[0]).filter(
+						(key) => key !== 'timepoint_id' && key !== 'headerName'
+					);
 				}
 
-				console.log('statLayerVariables', statLayerVariables);
-				console.log(result);
-				console.log(resultSummary);
-
-				const chart = applyForecastChartAnnotations(
-					createForecastChart(
-						{
+				const samplingLayer = isCompareDataset
+					? null
+					: {
 							data: result,
 							variables: sampleLayerVariables,
 							timeField: 'timepoint_id',
 							groupField: 'sample_id'
-						},
+						};
+
+				console.log('statLayerVariables', statLayerVariables);
+				console.log(filteredSummary);
+				console.log(options);
+
+				const chart = applyForecastChartAnnotations(
+					createForecastChart(
+						samplingLayer,
 						{
-							data: resultSummary,
+							data: isCompareDataset ? filteredSummary : resultSummary,
 							variables: statLayerVariables,
 							timeField: 'timepoint_id'
 						},
