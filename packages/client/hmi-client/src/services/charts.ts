@@ -699,13 +699,11 @@ export function createSimulateSensitivityScatter(samplingLayer: SensitivityChart
 }
 
 export function applyForecastChartAnnotations(chartSpec: any, annotations: ChartAnnotation[]) {
-	// console.log(annotations);
 	if (isEmpty(annotations)) return chartSpec;
 	const targetLayerIndex = 1; // Assume the target layer is the second layer which is the statistic layer
 	const layerSpecs = annotations.map((a) => a.layerSpec);
 	if (!chartSpec.layer[targetLayerIndex]) return chartSpec;
 	chartSpec.layer[targetLayerIndex].layer.push(...layerSpecs);
-	console.log('chartSpec', chartSpec);
 	return chartSpec;
 }
 
