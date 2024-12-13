@@ -499,7 +499,7 @@ function updatePreviousRunId() {
 }
 
 function onClickCompare() {
-	// If they are no previous run ID, or the node has already run, update the previous run ID
+	// If there is no previous run ID, or the node has already run, update the previousRunId
 	if (!props.node.state.previousRunId || props.node.state.hasRun) {
 		updatePreviousRunId();
 	}
@@ -512,7 +512,6 @@ const processCompareModels = async () => {
 
 	// Add a unique ID to the request to avoid caching
 	if (!props.node.state.previousRunId) updatePreviousRunId();
-	console.log('RequestID: ', props.node.state.previousRunId);
 	const request = `
   		RequestID: ${props.node.state.previousRunId}
   		${goalQuery.value}
