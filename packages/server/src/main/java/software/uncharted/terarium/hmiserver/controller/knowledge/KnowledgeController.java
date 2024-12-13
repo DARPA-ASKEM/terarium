@@ -278,11 +278,9 @@ public class KnowledgeController {
 				taskReq.setUserId(currentUserService.get().getId());
 				final TaskResponse taskResp = taskService.runTaskSync(taskReq);
 				final JsonNode taskResponseJSON = mapper.readValue(taskResp.getOutput(), JsonNode.class);
-				final String amrString = taskResponseJSON.get("response").asText();
-				ObjectNode objNode = (ObjectNode) mapper.readTree(amrString);
 
-				final JsonNode testNode = mapper.readValue(amrString, JsonNode.class);
-				responseAMR = mapper.convertValue(testNode, Model.class);
+				final ObjectNode amrNode = taskResponseJSON.get("response").get("amr").deepCopy();
+				responseAMR = mapper.convertValue(amrNode, Model.class);
 			} catch (Exception e) {
 				log.error("failed to convert LaTeX equations to AMR", e);
 				throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "failed to convert latex equations to AMR");
