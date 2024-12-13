@@ -27,7 +27,7 @@
 										icon="pi pi-sparkles"
 										size="small"
 										:loading="isProcessingComparison"
-										@click.stop="processCompareModels"
+										@click.stop="onClickCompare"
 									/>
 								</div>
 							</template>
@@ -486,10 +486,32 @@ function generateOverview(output: string) {
 	emit('update-status', OperatorStatus.DEFAULT); // This is a custom way of granting a default status to the operator, since it has no output
 }
 
+function updatePreviousRunId() {
+	const state = cloneDeep(props.node.state);
+	state.previousRunId = uuidv4();
+	emit('update-state', state);
+}
+
+function onClickCompare() {
+	// If there is no previous run ID, or the node has already run, update the previousRunId
+	if (!props.node.state.previousRunId || props.node.state.hasRun) {
+		updatePreviousRunId();
+	}
+	processCompareModels();
+}
+
 // Create a task to compare the models
 const processCompareModels = async () => {
 	isProcessingComparison.value = true;
-	const taskRes = await compareModels(modelIds.value, goalQuery.value, props.node.workflowId, props.node.id);
+
+	// Add a unique ID to the request to avoid caching
+	if (!props.node.state.previousRunId) updatePreviousRunId();
+	const request = `
+  		RequestID: ${props.node.state.previousRunId}
+  		${goalQuery.value}
+		`;
+
+	const taskRes = await compareModels(modelIds.value, request, props.node.workflowId, props.node.id);
 	compareModelsTaskId = taskRes.id;
 	if (taskRes.status === TaskStatus.Success) {
 		generateOverview(taskRes.output);
@@ -515,6 +537,10 @@ useClientEvent(ClientEventType.TaskGollmCompareModel, (event: ClientEvent<TaskRe
 });
 
 onMounted(async () => {
+	if (props.node.state.hasRun) {
+		processCompareModels();
+	}
+
 	if (!isEmpty(props.node.state.comparisonImageIds)) {
 		isLoadingStructuralComparisons.value = true;
 		structuralComparisons.value = await getImages(props.node.state.comparisonImageIds);
@@ -527,10 +553,7 @@ onMounted(async () => {
 	modelCardsToCompare.value = modelsToCompare.value.map(({ metadata }) => metadata?.gollmCard);
 	fields.value = [...new Set(modelCardsToCompare.value.flatMap((card) => (card ? Object.keys(card) : [])))];
 
-	await buildJupyterContext();
-	if (props.node.state.hasRun) {
-		processCompareModels();
-	}
+	buildJupyterContext();
 });
 
 onUnmounted(() => {

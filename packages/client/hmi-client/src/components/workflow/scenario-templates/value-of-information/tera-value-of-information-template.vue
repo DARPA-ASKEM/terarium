@@ -59,7 +59,7 @@
 				<div class="flex">
 					<Dropdown
 						class="flex-1"
-						:model-value="parameter?.id"
+						:model-value="parameter?.referenceId"
 						:options="modelParameters"
 						option-label="referenceId"
 						option-value="referenceId"
@@ -82,10 +82,10 @@
 					<Button v-if="scenario.parameters.length > 1" icon="pi pi-trash" text @click="scenario.removeParameter(i)" />
 				</div>
 				<div v-if="parameter" class="distribution-container">
-					<label class="p-0 white-space-nowrap">Extreme low:</label>
-					<tera-input-number class="m-0" v-model="parameter.low" auto-width />
-					<label class="p-0 ml-2 white-space-nowrap">Extreme high:</label>
-					<tera-input-number class="m-0" v-model="parameter.high" auto-width />
+					<label class="p-0 white-space-nowrap">Min:</label>
+					<tera-input-number class="m-0" v-model="parameter.distribution.parameters.minimum" auto-width />
+					<label class="p-0 ml-2 white-space-nowrap">Max:</label>
+					<tera-input-number class="m-0" v-model="parameter.distribution.parameters.maximum" auto-width />
 				</div>
 			</template>
 			<div>
@@ -125,7 +125,7 @@ import Dropdown from 'primevue/dropdown';
 import MultiSelect from 'primevue/multiselect';
 import Button from 'primevue/button';
 import { useProjects } from '@/composables/project';
-import { HorizonScanningScenario } from '@/components/workflow/scenario-templates/horizon-scanning/horizon-scanning-scenario';
+import { ValueOfInformationScenario } from '@/components/workflow/scenario-templates/value-of-information/value-of-information-scenario';
 import { getInterventionPoliciesForModel, getModel, getModelConfigurationsForModel } from '@/services/model';
 import { AssetType, InterventionPolicy, ModelConfiguration, ParameterSemantic } from '@/types/Types';
 import { getModelConfigurationById, getParameter, getParameters } from '@/services/model-configurations';
@@ -135,11 +135,14 @@ import TeraScenarioTemplate from '../tera-scenario-template.vue';
 import { displayParameter } from '../scenario-template-utils';
 
 const header: ScenarioHeader = Object.freeze({
-	title: 'Horizon scanning template',
-	question: 'How does extreme scenarios impact the outcome of different interventions?',
+	title: 'Value of information template',
+	question: 'How does uncertainty impact the outcomes of different interventions?',
 	description:
-		'Configure the model to represent the extremes of uncertainty for some parameters, then simulate into the near future with different intervention policies and compare the outcomes.',
-	examples: ['Potential emergence of a new variant.', 'Rapidly waning immunity.']
+		'Configure the model with parameter distributions that reflect all the sources of uncertainty, then simulate into the near future with different intervention policies.',
+	examples: [
+		'Does uncertainty in severity change the priority of which group to target for vaccination?',
+		'Does the disease severity impact the outcome of different social distancing policies?'
+	]
 });
 
 const isFetchingModelInformation = ref(false);
@@ -157,7 +160,7 @@ const modelParameters = ref<ParameterSemantic[]>([]);
 const selectedModelConfiguration = ref<ModelConfiguration | null>(null);
 
 const props = defineProps<{
-	scenario: HorizonScanningScenario;
+	scenario: ValueOfInformationScenario;
 }>();
 
 const emit = defineEmits(['save-workflow']);
