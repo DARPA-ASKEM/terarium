@@ -213,8 +213,8 @@ async function processPolling(id, propName) {
 	const response = await pollResult(id);
 	if (response.state === PollerState.Done) {
 		const state = _.cloneDeep(props.node.state);
-		state[propName] = '';
-		state.forecastId = id; // this part seems wrong
+		state[propName] = id;
+		state[`inProcess${propName}`] = ''; // fix after call
 		emit('update-state', state);
 	}
 	await processResult(id);
@@ -224,7 +224,7 @@ watch(
 	() => props.node.state.inProgressForecastId,
 	async (id) => {
 		if (!id || id === '') return;
-		await processPolling(id, 'inProgressForecastId');
+		await processPolling(id, 'forecastId');
 	},
 	{ immediate: true }
 );
@@ -233,7 +233,7 @@ watch(
 	() => props.node.state.inProgressBaseForecastId,
 	async (id) => {
 		if (!id || id === '') return;
-		await processPolling(id, 'inProgressBaseForecastId');
+		await processPolling(id, 'baseForecastId');
 	},
 	{ immediate: true }
 );
