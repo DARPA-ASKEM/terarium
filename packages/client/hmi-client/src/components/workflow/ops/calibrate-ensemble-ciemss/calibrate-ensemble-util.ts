@@ -167,6 +167,8 @@ export function buildChartData(
 		// pyciemssMap keys are formatted as either '{modelConfigId}/{displayVariableName}' for model variables or '{displayVariableName}' for ensemble variables
 		const tokens = key.split('/');
 		const varName = tokens.length > 1 ? tokens[1] : 'Ensemble';
+		translationMap[`${pyciemssMap[key]}`] = `${varName} after calibration`;
+		translationMap[`${pyciemssMap[key]}:pre`] = `${varName} before calibration`;
 		translationMap[`${pyciemssMap[key]}_mean`] = `${varName} after calibration`;
 		translationMap[`${pyciemssMap[key]}_mean:pre`] = `${varName} before calibration`;
 	});

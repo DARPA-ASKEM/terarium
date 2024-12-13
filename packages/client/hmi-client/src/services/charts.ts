@@ -50,14 +50,6 @@ export interface ForecastChartLayer {
 	groupField?: string;
 }
 
-export interface RangeAreaChartData {
-	x: number;
-	lower: number;
-	upper: number;
-	variable: string;
-	quantile: number;
-}
-
 export interface SensitivityChartLayer {
 	data: Record<string, any>[];
 	inputVariables: string[];
@@ -653,41 +645,51 @@ export function createForecastChart(
 	return spec;
 }
 
-export const buildQuantileRangeAreaData = (
-	data: Record<string, number[]>[],
-	selectVariables: string[],
-	quantiles: number[]
-) => {
-	console.log('------ range area data input ------');
-	console.log(data);
-	console.log(selectVariables);
-	// selectVariables = ['Infected_state_state:pre', 'Susceptible_state_state:pre', 'model_0/Infected_state:pre'];
-	// selectVariables = ['Susceptible_state_state:pre'];
+/**
+ * e.g. [{variable1: [1, 2, 3], variable2: [4, 5, 6]}, ...] where each item in the variable array is a sample value. Sample values must be sorted in ascending order.
+ */
+export type GroupedDataArray = Record<string, number[]>[];
+
+const buildQuantileChartData = (data: GroupedDataArray, selectVariables: string[], quantiles: number[]) => {
 	// quantiles = [0.5, 0.55, 0.60, 0.65, 0.70, 0.75, 0.80, 0.85, 0.90, 0.95, 0.99];
-	quantiles = [0.5, 0.75, 0.99];
-	const datapoint = [] as RangeAreaChartData[];
+	// quantiles = [0.5, 0.75, 0.99];
+	quantiles = [0.5, 0.99, 0.9];
+	const result: {
+		x: number;
+		lower: number;
+		upper: number;
+		variable: string;
+		quantile: number;
+	}[] = [];
 	data.forEach((d, index) => {
-		const datum = {} as RangeAreaChartData;
+		const datum = {};
 		selectVariables.forEach((variable) => {
 			const values = d[variable] ?? [];
-			quantiles.forEach((q) => {
-				datapoint.push({
-					x: index,
-					lower: d3.quantile(values, 1 - q) ?? NaN,
-					upper: d3.quantile(values, q) ?? NaN,
-					variable,
-					quantile: q
+			quantiles
+				.sort((a, b) => b - a)
+				.forEach((q) => {
+					result.push({
+						x: index,
+						lower: d3.quantile(values, 1 - q) ?? NaN,
+						upper: d3.quantile(values, q) ?? NaN,
+						variable,
+						quantile: q
+					});
 				});
-			});
 		});
 		return datum;
 	});
 	console.log('------ range area data ------');
-	console.log(datapoint);
-	return datapoint;
+	console.log(result);
+	return result;
 };
 
-export function createRangeAreaChart(data: RangeAreaChartData[], options: ForecastChartOptions) {
+export function createQuantilesForecastChart(
+	data: GroupedDataArray,
+	variables: string[],
+	quantiles: number[],
+	options: ForecastChartOptions
+) {
 	const axisColor = '#EEE';
 	const labelColor = '#667085';
 	const labelFontWeight = 'normal';
@@ -715,11 +717,16 @@ export function createRangeAreaChart(data: RangeAreaChartData[], options: Foreca
 
 	const translationMap = options.translationMap;
 	let labelExpr = '';
+	let varDisplayNameExpr = '';
 	if (translationMap) {
-		Object.keys(translationMap).forEach((key) => {
-			labelExpr += `datum.value === '${key}' ? '${translationMap[key]}' : `;
-		});
+		Object.keys(translationMap)
+			.filter((key) => variables.includes(key))
+			.forEach((key) => {
+				labelExpr += `datum.value === '${key}' ? '${translationMap[key]}' : `;
+				varDisplayNameExpr += `datum.variable === '${key}' ? '${translationMap[key]}' : `;
+			});
 		labelExpr += " 'other'";
+		varDisplayNameExpr += " 'other'";
 	}
 
 	const isCompact = options.width < 200;
@@ -738,7 +745,8 @@ export function createRangeAreaChart(data: RangeAreaChartData[], options: Foreca
 		...options.legendProperties
 	};
 
-	console.log(labelExpr);
+	const yScale = { type: options.scale === 'log' ? 'symlog' : 'linear' };
+
 	const spec: any = {
 		$schema: VEGALITE_SCHEMA,
 		title: titleObj,
@@ -757,92 +765,54 @@ export function createRangeAreaChart(data: RangeAreaChartData[], options: Foreca
 				}
 			}
 		},
-		data: { values: data },
+		data: { values: buildQuantileChartData(data, variables, quantiles) },
+		transform: [
+			{
+				calculate: varDisplayNameExpr,
+				as: 'varDisplayName'
+			}
+		],
 		layer: [
 			{
-				mark: 'area',
+				mark: {
+					type: 'errorband',
+					extent: 'ci',
+					borders: true
+				},
 				encoding: {
-					x: { field: 'x', type: 'quantitative' },
-					y: { field: 'lower', type: 'quantitative' },
-					y2: { field: 'upper' },
-					color: { field: 'variable', type: 'nominal' },
+					x: { field: 'x', type: 'quantitative', axis: { ...xaxis } },
+					y: { field: 'lower', type: 'quantitative', axis: { ...yaxis }, scale: yScale },
+					y2: { field: 'upper', type: 'quantitative' },
+					color: {
+						field: 'variable',
+						type: 'nominal',
+						scale: {
+							domain: variables,
+							range: options.colorscheme || CATEGORICAL_SCHEME
+						},
+						legend: options.legend
+							? {
+									...legendProperties,
+									labelExpr: labelExpr.length && labelExpr
+								}
+							: false
+					},
 					opacity: {
 						field: 'quantile',
 						type: 'quantitative',
-						scale: { domain: [0, 1], range: [0, 1] }
-					}
-				}
-			},
-			{
-				mark: 'line',
-				encoding: {
-					x: { field: 'x', type: 'quantitative' },
-					y: { field: 'lower', type: 'quantitative' },
-					color: { field: 'variable', type: 'nominal' },
-					opacity: {
-						field: 'quantile',
-						type: 'quantitative',
-						scale: { domain: [0, 1], range: [0, 1] }
-					}
-				}
-			},
-			{
-				mark: 'line',
-				encoding: {
-					x: { field: 'x', type: 'quantitative' },
-					y: { field: 'upper', type: 'quantitative' },
-					color: { field: 'variable', type: 'nominal' },
-					opacity: {
-						field: 'quantile',
-						type: 'quantitative',
-						scale: { domain: [0, 1], range: [0, 1] }
-					}
+						scale: { domain: [0.5, 1], range: [1, 0.1] },
+						legend: false
+					},
+					tooltip: [
+						{ field: 'varDisplayName', title: ' ' },
+						{ field: 'quantile', title: 'Quantile', format: '.0%' },
+						{ field: 'lower', title: 'Lower Bound' },
+						{ field: 'upper', title: 'Upper Bound' }
+					]
 				}
 			}
 		]
 	};
-	// return spec;
-	// let dateExpression;
-	// if (options.dateOptions) {
-	// 	dateExpression = formatDateLabelFn(options.dateOptions.startDate, 'datum.value', options.dateOptions.dateFormat);
-	// }
-	// const layerSpec = {
-	// 	data,
-	// 	transform: [
-	// 		{
-	// 			fold: layer.variables,
-	// 			as: ['variableField', 'valueField']
-	// 		}
-	// 	],
-	// 	layer: [
-	// 		{
-	// 			mark: { type: 'area' },
-	// 			x: {
-	// 				field: layer.timeField,
-	// 				type: 'quantitative',
-	// 				axis: {
-	// 					...xaxis,
-	// 					labelExpr: dateExpression
-	// 				}
-	// 			},
-	// 			y: {
-	// 				field: 'valueField',
-	// 				type: 'quantitative',
-	// 				axis: yaxis
-	// 			},
-	// 			color: {
-	// 				field: 'variableField',
-	// 				type: 'nominal',
-	// 				scale: {
-	// 					domain: layer.variables,
-	// 					range: options.colorscheme || CATEGORICAL_SCHEME
-	// 				},
-	// 				legend: options.legend === true ? { ...legendProperties, labelExpr } : false
-	// 			}
-	// 		}
-	// 	]
-	// }
-	// spec.layer.push(layerSpec);
 	return spec;
 }
 

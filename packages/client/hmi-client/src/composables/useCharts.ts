@@ -5,13 +5,12 @@ import { VisualizationSpec } from 'vega-embed';
 import {
 	applyForecastChartAnnotations,
 	AUTOSIZE,
-	buildQuantileRangeAreaData,
 	CATEGORICAL_SCHEME,
 	createErrorChart,
 	createForecastChart,
 	createHistogramChart,
 	createInterventionChartMarkers,
-	createRangeAreaChart,
+	createQuantilesForecastChart,
 	createSimulateSensitivityScatter,
 	ForecastChartOptions
 } from '@/services/charts';
@@ -378,7 +377,7 @@ export function useCharts(
 		chartSettings: ComputedRef<ChartSettingEnsembleVariable[]>,
 		groundTruthData: ComputedRef<DataArray> | null
 	) => {
-		const defaultMode = false;
+		const isDefaultFormat = false;
 		const ensembleVariableCharts = computed(() => {
 			const charts: Record<string, VisualizationSpec[]> = {};
 			if (!isChartReadyToBuild.value || !isRefReady(groundTruthData)) return chartData;
@@ -398,7 +397,7 @@ export function useCharts(
 						options.width = chartSize.value.width / (modelConfigIds.length + 1);
 						options.legendProperties = { direction: 'vertical', columns: 1, labelLimit: options.width };
 						options.colorscheme = [BASE_GREY, CATEGORICAL_SCHEME[index % CATEGORICAL_SCHEME.length]];
-						const smallChart = defaultMode
+						const smallChart = isDefaultFormat
 							? applyForecastChartAnnotations(
 									createForecastChart(
 										{
@@ -421,8 +420,10 @@ export function useCharts(
 									),
 									annotations
 								)
-							: createRangeAreaChart(
-									buildQuantileRangeAreaData(chartData.value?.resultGroupByTimepoint ?? [], sampleLayerVariables, []),
+							: createQuantilesForecastChart(
+									chartData.value?.resultGroupByTimepoint ?? [],
+									sampleLayerVariables,
+									[],
 									options
 								);
 						return smallChart;
@@ -436,7 +437,7 @@ export function useCharts(
 						false,
 						true
 					);
-					const chart = defaultMode
+					const chart = isDefaultFormat
 						? applyForecastChartAnnotations(
 								createForecastChart(
 									{
@@ -459,8 +460,10 @@ export function useCharts(
 								),
 								annotations
 							)
-						: createRangeAreaChart(
-								buildQuantileRangeAreaData(chartData.value?.resultGroupByTimepoint ?? [], sampleLayerVariables, []),
+						: createQuantilesForecastChart(
+								chartData.value?.resultGroupByTimepoint ?? [],
+								sampleLayerVariables,
+								[],
 								options
 							);
 					charts[setting.id] = [chart];
