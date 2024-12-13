@@ -1,3 +1,4 @@
+import * as d3 from 'd3';
 import { isEmpty, pick } from 'lodash';
 import { percentile } from '@/utils/math';
 import { VisualizationSpec } from 'vega-embed';
@@ -47,6 +48,14 @@ export interface ForecastChartLayer {
 	variables: string[];
 	timeField: string;
 	groupField?: string;
+}
+
+export interface RangeAreaChartData {
+	x: number;
+	lower: number;
+	upper: number;
+	variable: string;
+	quantile: number;
 }
 
 export interface SensitivityChartLayer {
@@ -641,6 +650,199 @@ export function createForecastChart(
 		}
 		spec.layer.push(layerSpec);
 	}
+	return spec;
+}
+
+export const buildQuantileRangeAreaData = (
+	data: Record<string, number[]>[],
+	selectVariables: string[],
+	quantiles: number[]
+) => {
+	console.log('------ range area data input ------');
+	console.log(data);
+	console.log(selectVariables);
+	// selectVariables = ['Infected_state_state:pre', 'Susceptible_state_state:pre', 'model_0/Infected_state:pre'];
+	// selectVariables = ['Susceptible_state_state:pre'];
+	// quantiles = [0.5, 0.55, 0.60, 0.65, 0.70, 0.75, 0.80, 0.85, 0.90, 0.95, 0.99];
+	quantiles = [0.5, 0.75, 0.99];
+	const datapoint = [] as RangeAreaChartData[];
+	data.forEach((d, index) => {
+		const datum = {} as RangeAreaChartData;
+		selectVariables.forEach((variable) => {
+			const values = d[variable] ?? [];
+			quantiles.forEach((q) => {
+				datapoint.push({
+					x: index,
+					lower: d3.quantile(values, 1 - q) ?? NaN,
+					upper: d3.quantile(values, q) ?? NaN,
+					variable,
+					quantile: q
+				});
+			});
+		});
+		return datum;
+	});
+	console.log('------ range area data ------');
+	console.log(datapoint);
+	return datapoint;
+};
+
+export function createRangeAreaChart(data: RangeAreaChartData[], options: ForecastChartOptions) {
+	const axisColor = '#EEE';
+	const labelColor = '#667085';
+	const labelFontWeight = 'normal';
+	const globalFont = 'Figtree';
+	const titleObj = options.title
+		? {
+				text: options.title,
+				anchor: 'start',
+				subtitle: ' ',
+				subtitlePadding: 4
+			}
+		: null;
+
+	const xaxis: any = {
+		domainColor: axisColor,
+		tickColor: { value: axisColor },
+		labelColor: { value: labelColor },
+		labelFontWeight,
+		title: options.xAxisTitle,
+		gridColor: '#EEE',
+		gridOpacity: 1.0
+	};
+	const yaxis = structuredClone(xaxis);
+	yaxis.title = options.yAxisTitle;
+
+	const translationMap = options.translationMap;
+	let labelExpr = '';
+	if (translationMap) {
+		Object.keys(translationMap).forEach((key) => {
+			labelExpr += `datum.value === '${key}' ? '${translationMap[key]}' : `;
+		});
+		labelExpr += " 'other'";
+	}
+
+	const isCompact = options.width < 200;
+
+	const legendProperties = {
+		title: null,
+		padding: { value: 0 },
+		strokeColor: null,
+		orient: 'top',
+		direction: isCompact ? 'vertical' : 'horizontal',
+		symbolStrokeWidth: isCompact ? 2 : 4,
+		symbolSize: 200,
+		labelFontSize: isCompact ? 8 : 12,
+		labelOffset: isCompact ? 2 : 4,
+		labelLimit: isCompact ? 50 : 150,
+		...options.legendProperties
+	};
+
+	console.log(labelExpr);
+	const spec: any = {
+		$schema: VEGALITE_SCHEMA,
+		title: titleObj,
+		description: '',
+		width: options.width,
+		height: options.height,
+		autosize: {
+			type: options.autosize || AUTOSIZE.FIT_X
+		},
+		config: {
+			font: globalFont,
+			legend: {
+				layout: {
+					direction: legendProperties.direction,
+					anchor: 'start'
+				}
+			}
+		},
+		data: { values: data },
+		layer: [
+			{
+				mark: 'area',
+				encoding: {
+					x: { field: 'x', type: 'quantitative' },
+					y: { field: 'lower', type: 'quantitative' },
+					y2: { field: 'upper' },
+					color: { field: 'variable', type: 'nominal' },
+					opacity: {
+						field: 'quantile',
+						type: 'quantitative',
+						scale: { domain: [0, 1], range: [0, 1] }
+					}
+				}
+			},
+			{
+				mark: 'line',
+				encoding: {
+					x: { field: 'x', type: 'quantitative' },
+					y: { field: 'lower', type: 'quantitative' },
+					color: { field: 'variable', type: 'nominal' },
+					opacity: {
+						field: 'quantile',
+						type: 'quantitative',
+						scale: { domain: [0, 1], range: [0, 1] }
+					}
+				}
+			},
+			{
+				mark: 'line',
+				encoding: {
+					x: { field: 'x', type: 'quantitative' },
+					y: { field: 'upper', type: 'quantitative' },
+					color: { field: 'variable', type: 'nominal' },
+					opacity: {
+						field: 'quantile',
+						type: 'quantitative',
+						scale: { domain: [0, 1], range: [0, 1] }
+					}
+				}
+			}
+		]
+	};
+	// return spec;
+	// let dateExpression;
+	// if (options.dateOptions) {
+	// 	dateExpression = formatDateLabelFn(options.dateOptions.startDate, 'datum.value', options.dateOptions.dateFormat);
+	// }
+	// const layerSpec = {
+	// 	data,
+	// 	transform: [
+	// 		{
+	// 			fold: layer.variables,
+	// 			as: ['variableField', 'valueField']
+	// 		}
+	// 	],
+	// 	layer: [
+	// 		{
+	// 			mark: { type: 'area' },
+	// 			x: {
+	// 				field: layer.timeField,
+	// 				type: 'quantitative',
+	// 				axis: {
+	// 					...xaxis,
+	// 					labelExpr: dateExpression
+	// 				}
+	// 			},
+	// 			y: {
+	// 				field: 'valueField',
+	// 				type: 'quantitative',
+	// 				axis: yaxis
+	// 			},
+	// 			color: {
+	// 				field: 'variableField',
+	// 				type: 'nominal',
+	// 				scale: {
+	// 					domain: layer.variables,
+	// 					range: options.colorscheme || CATEGORICAL_SCHEME
+	// 				},
+	// 				legend: options.legend === true ? { ...legendProperties, labelExpr } : false
+	// 			}
+	// 		}
+	// 	]
+	// }
+	// spec.layer.push(layerSpec);
 	return spec;
 }
 

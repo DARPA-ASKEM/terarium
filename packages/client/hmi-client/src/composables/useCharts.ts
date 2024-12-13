@@ -5,11 +5,13 @@ import { VisualizationSpec } from 'vega-embed';
 import {
 	applyForecastChartAnnotations,
 	AUTOSIZE,
+	buildQuantileRangeAreaData,
 	CATEGORICAL_SCHEME,
 	createErrorChart,
 	createForecastChart,
 	createHistogramChart,
 	createInterventionChartMarkers,
+	createRangeAreaChart,
 	createSimulateSensitivityScatter,
 	ForecastChartOptions
 } from '@/services/charts';
@@ -30,11 +32,14 @@ import { getModelConfigName } from '@/services/model-configurations';
 import { EnsembleErrorData } from '@/components/workflow/ops/calibrate-ensemble-ciemss/calibrate-ensemble-util';
 import { useChartAnnotations } from './useChartAnnotations';
 
+export type GroupedDataArray = Record<string, number[]>[];
+
 export interface ChartData {
 	result: DataArray;
 	resultSummary: DataArray;
 	pyciemssMap: Record<string, string>;
 	translationMap: Record<string, string>;
+	resultGroupByTimepoint?: GroupedDataArray;
 }
 
 type EnsembleVariableMappings = CalibrateEnsembleMappingRow[] | SimulateEnsembleMappingRow[];
@@ -373,6 +378,7 @@ export function useCharts(
 		chartSettings: ComputedRef<ChartSettingEnsembleVariable[]>,
 		groundTruthData: ComputedRef<DataArray> | null
 	) => {
+		const defaultMode = false;
 		const ensembleVariableCharts = computed(() => {
 			const charts: Record<string, VisualizationSpec[]> = {};
 			if (!isChartReadyToBuild.value || !isRefReady(groundTruthData)) return chartData;
@@ -392,28 +398,33 @@ export function useCharts(
 						options.width = chartSize.value.width / (modelConfigIds.length + 1);
 						options.legendProperties = { direction: 'vertical', columns: 1, labelLimit: options.width };
 						options.colorscheme = [BASE_GREY, CATEGORICAL_SCHEME[index % CATEGORICAL_SCHEME.length]];
-						const smallChart = applyForecastChartAnnotations(
-							createForecastChart(
-								{
-									data: result,
-									variables: sampleLayerVariables,
-									timeField: 'timepoint_id',
-									groupField: 'sample_id'
-								},
-								{
-									data: resultSummary,
-									variables: statLayerVariables,
-									timeField: 'timepoint_id'
-								},
-								groundTruthData && {
-									data: groundTruthData.value,
-									variables: datasetVar ? [datasetVar] : [],
-									timeField: modelVarToDatasetVar(mapping?.value || [], 'timepoint_id')
-								},
-								options
-							),
-							annotations
-						);
+						const smallChart = defaultMode
+							? applyForecastChartAnnotations(
+									createForecastChart(
+										{
+											data: result,
+											variables: sampleLayerVariables,
+											timeField: 'timepoint_id',
+											groupField: 'sample_id'
+										},
+										{
+											data: resultSummary,
+											variables: statLayerVariables,
+											timeField: 'timepoint_id'
+										},
+										groundTruthData && {
+											data: groundTruthData.value,
+											variables: datasetVar ? [datasetVar] : [],
+											timeField: modelVarToDatasetVar(mapping?.value || [], 'timepoint_id')
+										},
+										options
+									),
+									annotations
+								)
+							: createRangeAreaChart(
+									buildQuantileRangeAreaData(chartData.value?.resultGroupByTimepoint ?? [], sampleLayerVariables, []),
+									options
+								);
 						return smallChart;
 					});
 					charts[setting.id] = smallMultiplesCharts;
@@ -425,28 +436,33 @@ export function useCharts(
 						false,
 						true
 					);
-					const chart = applyForecastChartAnnotations(
-						createForecastChart(
-							{
-								data: result,
-								variables: sampleLayerVariables,
-								timeField: 'timepoint_id',
-								groupField: 'sample_id'
-							},
-							{
-								data: resultSummary,
-								variables: statLayerVariables,
-								timeField: 'timepoint_id'
-							},
-							groundTruthData && {
-								data: groundTruthData.value,
-								variables: datasetVar ? [datasetVar] : [],
-								timeField: modelVarToDatasetVar(mapping?.value || [], 'timepoint_id')
-							},
-							options
-						),
-						annotations
-					);
+					const chart = defaultMode
+						? applyForecastChartAnnotations(
+								createForecastChart(
+									{
+										data: result,
+										variables: sampleLayerVariables,
+										timeField: 'timepoint_id',
+										groupField: 'sample_id'
+									},
+									{
+										data: resultSummary,
+										variables: statLayerVariables,
+										timeField: 'timepoint_id'
+									},
+									groundTruthData && {
+										data: groundTruthData.value,
+										variables: datasetVar ? [datasetVar] : [],
+										timeField: modelVarToDatasetVar(mapping?.value || [], 'timepoint_id')
+									},
+									options
+								),
+								annotations
+							)
+						: createRangeAreaChart(
+								buildQuantileRangeAreaData(chartData.value?.resultGroupByTimepoint ?? [], sampleLayerVariables, []),
+								options
+							);
 					charts[setting.id] = [chart];
 				}
 			});

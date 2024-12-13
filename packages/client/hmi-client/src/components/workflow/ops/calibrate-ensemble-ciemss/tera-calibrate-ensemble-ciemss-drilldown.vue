@@ -591,9 +591,12 @@ onMounted(async () => {
 // -------------- Charts && chart settings ----------------
 const chartWidthDiv = ref(null);
 const isOutputSettingsPanelOpen = ref(false);
-const outputData = ref<{ result: DataArray; resultSummary: DataArray; pyciemssMap: Record<string, string> } | null>(
-	null
-);
+const outputData = ref<{
+	result: DataArray;
+	resultSummary: DataArray;
+	pyciemssMap: Record<string, string>;
+	resultGroupByTimepoint: Record<string, number[]>[];
+} | null>(null);
 const groundTruthData = computed<DataArray>(() => parseCsvAsset(csvAsset.value as CsvAsset));
 const chartSize = useDrilldownChartSize(chartWidthDiv);
 const selectedOutputMapping = computed(() => getSelectedOutputEnsembleMapping(props.node));
