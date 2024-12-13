@@ -10,6 +10,19 @@ export const pointOnPath = (pathEl: SVGPathElement, percent: number) => {
 	return point;
 };
 
+/**
+ * Given a path element, create a new point-list from start to end, sampled by number of "steps"
+ * */
+export const partialPath = (pathEl: SVGPathElement, start: number, end: number, steps: number) => {
+	const newPoints: DOMPoint[] = [];
+	for (let i = 0; i <= steps; i++) {
+		const length = start + ((end - start) * i) / steps;
+		const point = pathEl.getPointAtLength(length);
+		newPoints.push(point);
+	}
+	return newPoints;
+};
+
 // Note: Being evaluated for now, not in use
 // @ts-ignore
 // eslint-disable-next-line

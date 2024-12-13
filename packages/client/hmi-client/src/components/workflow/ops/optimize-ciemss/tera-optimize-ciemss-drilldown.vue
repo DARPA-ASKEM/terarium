@@ -332,6 +332,7 @@
 								? getChartAnnotationsByChartId(activeChartSettings?.id ?? '')
 								: undefined
 						"
+						@update-settings-color="onColorChange"
 						:active-settings="activeChartSettings"
 						:generate-annotation="generateAnnotation"
 						@delete-annotation="deleteAnnotation"
@@ -992,7 +993,8 @@ const {
 	comparisonChartsSettingsSelection,
 	removeChartSettings,
 	updateChartSettings,
-	addComparisonChartSettings
+	addComparisonChartSettings,
+	updateChartPrimaryColor
 } = useChartSettings(props, emit);
 
 const {
@@ -1027,6 +1029,10 @@ const resetState = () => {
 			}
 		}
 	});
+};
+
+const onColorChange = (color: string) => {
+	if (activeChartSettings.value) updateChartPrimaryColor(activeChartSettings.value, color);
 };
 
 watch(
