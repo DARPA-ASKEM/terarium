@@ -1,4 +1,4 @@
-import _ from 'lodash';
+import _, { capitalize } from 'lodash';
 import { mean, variance } from 'd3';
 import { computed, ComputedRef, Ref } from 'vue';
 import { VisualizationSpec } from 'vega-embed';
@@ -306,6 +306,7 @@ export function useCharts(
 
 				if (isCompareDataset) {
 					options.title = variable;
+					options.yAxisTitle = capitalize(variable);
 					filteredSummary = resultSummary.filter((d) => d.headerName === variable);
 					statLayerVariables = Object.keys(resultSummary[0]).filter(
 						(key) => key !== 'timepoint_id' && key !== 'headerName'

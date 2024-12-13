@@ -392,7 +392,6 @@ async function createCharts() {
 			});
 		});
 
-		// console.log(allData);
 		allData.push(...data); // all keys need to be here maybe
 		// compareCharts.value.push(
 		// 		createForecastChart(
