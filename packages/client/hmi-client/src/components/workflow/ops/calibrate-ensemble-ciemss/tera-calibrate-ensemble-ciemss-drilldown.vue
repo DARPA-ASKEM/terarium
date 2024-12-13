@@ -262,8 +262,10 @@
 								? getChartAnnotationsByChartId(activeChartSettings?.id ?? '')
 								: undefined
 						"
+						@update-settings-color="onColorChange"
 						:active-settings="activeChartSettings"
 						:generate-annotation="generateAnnotation"
+						@update-settings-scale="updateChartSettingsScale(activeChartSettings?.id as string, $event)"
 						@delete-annotation="deleteAnnotation"
 						@close="activeChartSettings = null"
 					/>
@@ -604,7 +606,9 @@ const {
 	updateChartSettings,
 	selectedEnsembleVariableSettings,
 	selectedErrorVariableSettings,
-	updateEnsembleVariableSettingOption
+	updateEnsembleVariableSettingOption,
+	updateChartSettingsScale,
+	updateChartPrimaryColor
 } = useChartSettings(props, emit);
 
 const {
@@ -636,6 +640,10 @@ const ensembleVariableCharts = useEnsembleVariableCharts(selectedEnsembleVariabl
 const weightsDistributionCharts = useWeightsDistributionCharts();
 const { errorCharts, onExpandErrorChart } = useEnsembleErrorCharts(selectedErrorVariableSettings, errorData);
 // --------------------------------------------------------
+
+const onColorChange = (color: string) => {
+	if (activeChartSettings.value) updateChartPrimaryColor(activeChartSettings.value, color);
+};
 
 watch(
 	() => props.node.active,

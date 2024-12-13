@@ -32,8 +32,12 @@ def main():
         # MMT to AMR
         amr_json = template_model_to_petrinet_json(mmt)
 
+        # Gather results
+        response = {}
+        response["sympyExprs"] = list(map(lambda x: str(x), sympy_exprs))
+        response["amr"] = amr_json
         taskrunner.log(f"LaTeX to AMR conversion succeeded")
-        taskrunner.write_output_dict_with_timeout({"response": json.dumps(amr_json)})
+        taskrunner.write_output_dict_with_timeout({"response": response })
 
         print("LaTeX to AMR conversion succeeded")
     except Exception as e:
