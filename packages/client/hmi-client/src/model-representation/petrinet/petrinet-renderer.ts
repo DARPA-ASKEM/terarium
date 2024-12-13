@@ -3,7 +3,7 @@ import { isEmpty } from 'lodash';
 import { BasicRenderer, INode, IEdge } from '@graph-scaffolder/index';
 import type { D3SelectionINode, D3SelectionIEdge } from '@/services/graph';
 import { NodeType } from '@/services/graph';
-import { pointOnPath } from '@/utils/svg';
+import { pointOnPath, partialPath } from '@/utils/svg';
 import { useNodeTypeColorPalette } from '@/utils/petrinet-color-palette';
 
 export interface NodeData {
@@ -73,11 +73,11 @@ export class PetrinetRenderer extends BasicRenderer<NodeData, EdgeData> {
 			.classed('edge-marker-end', true)
 			.attr('id', 'arrowhead')
 			.attr('viewBox', MARKER_VIEWBOX)
-			.attr('refX', 6)
+			.attr('refX', 0)
 			.attr('refY', 0)
 			.attr('orient', 'auto')
-			.attr('markerWidth', 20)
-			.attr('markerHeight', 20)
+			.attr('markerWidth', 30)
+			.attr('markerHeight', 30)
 			.attr('markerUnits', 'userSpaceOnUse')
 			.attr('xoverflow', 'visible')
 			.append('svg:path')
@@ -220,6 +220,12 @@ export class PetrinetRenderer extends BasicRenderer<NodeData, EdgeData> {
 
 		const transitionNodeIds = this.graph.nodes.filter((n) => n.data.type === 'transition').map((n) => n.id);
 
+		const adjustedPathPoints = (pathNode: SVGPathElement, offset: number) => {
+			const len = pathNode.getTotalLength();
+			const end = len - offset;
+			return partialPath(pathNode, 0, end, 30);
+		};
+
 		selection
 			.append('path')
 			.attr('d', (d) => pathFn(d.points))
@@ -238,6 +244,19 @@ export class PetrinetRenderer extends BasicRenderer<NodeData, EdgeData> {
 				if (transitionNodeIds.includes(d.target as string)) return null;
 				return 'url(#arrowhead)';
 			});
+
+		// Re-adjust edges
+		selection.selectAll('path').each(function (d: any) {
+			if (d.data?.isController || d.data?.isObservable) return;
+			if (transitionNodeIds.includes(d.target as string)) return;
+
+			const selectItem = d3.select(this);
+			const pathNode = selectItem.node();
+			const newPathPoints = adjustedPathPoints(pathNode as SVGPathElement, 15);
+
+			// Apply new points
+			d3.select(this).attr('d', pathFn(newPathPoints));
+		});
 
 		selection.append('text').each(function (d) {
 			if (d.id && !isEmpty(d.points) && d.data?.isObservable) {
