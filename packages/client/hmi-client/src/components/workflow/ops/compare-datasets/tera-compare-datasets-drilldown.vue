@@ -149,7 +149,7 @@ import { WorkflowNode, WorkflowPortStatus } from '@/types/workflow';
 import TeraSliderPanel from '@/components/widgets/tera-slider-panel.vue';
 import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.vue';
 import { DrilldownTabs, ChartSettingType, type ChartSetting } from '@/types/common';
-import { onMounted, ref, watch } from 'vue'; // computed
+import { onMounted, ref, watch } from 'vue';
 import Button from 'primevue/button';
 import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
@@ -160,12 +160,6 @@ import TeraCheckbox from '@/components/widgets/tera-checkbox.vue';
 import RadioButton from 'primevue/radiobutton';
 import { isEmpty, cloneDeep, isEqual } from 'lodash';
 import VegaChart from '@/components/widgets/VegaChart.vue';
-// import {
-// 	createForecastChart,
-// 	applyForecastChartAnnotations,
-// 	createForecastChartAnnotation,
-// 	AUTOSIZE
-// } from '@/services/charts';
 import TeraChartSettingsItem from '@/components/widgets/tera-chart-settings-item.vue';
 import TeraChartControl from '@/components/workflow/tera-chart-control.vue';
 import { useChartSettings } from '@/composables/useChartSettings';
