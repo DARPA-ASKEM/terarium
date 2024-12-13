@@ -101,6 +101,19 @@ export function useChartSettings(
 		});
 	};
 
+	const updateChartPrimaryColor = (settings: ChartSetting, color: string) => {
+		const index = chartSettings.value.findIndex((chart) => chart.id === settings.id);
+		if (index !== -1) {
+			const charts = cloneDeep(chartSettings.value);
+			charts[index].primaryColor = color;
+
+			emit('update-state', {
+				...props.node.state,
+				chartSettings: charts
+			});
+		}
+	};
+
 	return {
 		chartSettings,
 		activeChartSettings,
@@ -114,6 +127,7 @@ export function useChartSettings(
 		selectedSensitivityChartSettings,
 		removeChartSettings,
 		updateChartSettings,
+		updateChartPrimaryColor,
 		updateChartSettingsScale,
 		addComparisonChartSettings,
 		updateEnsembleVariableSettingOption

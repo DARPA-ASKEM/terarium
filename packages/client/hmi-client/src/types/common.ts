@@ -208,6 +208,7 @@ export interface ChartSettingBase {
 	name: string;
 	selectedVariables: string[];
 	type: ChartSettingType;
+	primaryColor?: string;
 	scale?: string;
 }
 
