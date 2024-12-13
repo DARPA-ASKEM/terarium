@@ -7,57 +7,53 @@ import { operation as SimulateCiemssOp } from '@/components/workflow/ops/simulat
 import { operation as CompareDatasetOp } from '@/components/workflow/ops/compare-datasets/mod';
 import { operation as InterventionOp } from '@/components/workflow/ops/intervention-policy/mod';
 import { OperatorNodeSize } from '@/services/workflow';
-import { createModelConfiguration, getModelConfigurationById, getParameter } from '@/services/model-configurations';
+import {
+	createModelConfiguration,
+	getModelConfigurationById,
+	setParameterDistribution
+} from '@/services/model-configurations';
 import { ChartSetting, ChartSettingType } from '@/types/common';
 import { updateChartSettingsBySelectedVariables } from '@/services/chart-settings';
 import { AssetType, ParameterSemantic } from '@/types/Types';
-import { DistributionType } from '@/services/distribution';
-import { calculateUncertaintyRange } from '@/utils/math';
 import { getInterventionPolicyById } from '@/services/intervention-policy';
 import { useProjects } from '@/composables/project';
-
-export interface HorizonScanningParameter {
-	id: string;
-	low: number;
-	high: number;
-}
+import { switchToUniformDistribution } from '../scenario-template-utils';
 
 /*
- * Horizon Scanning scenario
+ * Value of information scenario
 
-	Configure the model to represent the extremes of uncertainty for some
-	parameters, then simulate into the near future with different intervention
-	policies and compare the outcomes.
+	Configure the model with parameter distributions that reflect all the sources of uncertainty,
+	then simulate into the near future with different intervention policies.
 
   Users can input a model, a model configuration, a set of interventions,
-  and a set of parameters. For each parameter, a low and high value will be specified,
-  resulting in the creation of two new model configurations: one with the
-  parameter set to the low value and another with the parameter set to the high value.
+  and a set of parameters. For each parameter, a min and max value will be specified,
+  resulting in the creation of new model configurations for each parameter with that
+	parameter set to a uniform.
 
 	Example:
-	1 intervention, 2 parameters
+	2 interventions, 2 parameters
   Model Node
   |
-  +-- Model Config Node (Low Param 1)
+  +-- Model Config Node (Uniform distrubiton for Param 1)
   |     |
   |     +-- Simulate Node (Intervention 1)
   |
-  +-- Model Config Node (High Param 1)
+  +-- Model Config Node (Uniform distrubiton for Param 2)
   |     |
   |     +-- Simulate Node (Intervention 1)
   |
-  +-- Model Config Node (Low Param 2)
+  +-- Model Config Node (Uniform distrubiton for Param 1)
   |     |
-  |     +-- Simulate Node (Intervention 1)
+  |     +-- Simulate Node (Intervention 2)
   |
-  +-- Model Config Node (High Param 2)
+  +-- Model Config Node (Uniform distrubiton for Param 2)
         |
-        +-- Simulate Node (Intervention 1)
+        +-- Simulate Node (Intervention 2)
  */
-export class HorizonScanningScenario extends BaseScenario {
-	public static templateId = 'horizon-scanning';
+export class ValueOfInformationScenario extends BaseScenario {
+	public static templateId = 'value-of-information-scenario';
 
-	public static templateName = 'Horizon scanning';
+	public static templateName = 'Value of information';
 
 	modelSpec: { id: string };
 
@@ -67,7 +63,7 @@ export class HorizonScanningScenario extends BaseScenario {
 
 	simulateSpec: { ids: string[] };
 
-	parameters: (HorizonScanningParameter | null)[];
+	parameters: (ParameterSemantic | null)[];
 
 	constructor() {
 		super();
@@ -122,23 +118,13 @@ export class HorizonScanningScenario extends BaseScenario {
 	}
 
 	setParameter(parameter: ParameterSemantic, index: number) {
-		let low = 0;
-		let high = 1;
-		if (parameter.distribution.type === DistributionType.Constant) {
-			const { min, max } = calculateUncertaintyRange(parameter.distribution.parameters.value, 10);
-			low = min;
-			high = max;
-		} else if (parameter.distribution.type === DistributionType.Uniform) {
-			low = parameter.distribution.parameters.minimum;
-			high = parameter.distribution.parameters.maximum;
-		}
-
-		this.parameters[index] = { id: parameter.referenceId, low, high };
+		switchToUniformDistribution(parameter);
+		this.parameters[index] = parameter;
 	}
 
 	toJSON() {
 		return {
-			templateId: HorizonScanningScenario.templateId,
+			templateId: ValueOfInformationScenario.templateId,
 			workflowName: this.workflowName,
 			modelSpec: this.modelSpec,
 			modelConfigSpec: this.modelConfigSpec,
@@ -189,8 +175,8 @@ export class HorizonScanningScenario extends BaseScenario {
 			}
 		);
 
-		// add input ports for each simulation to the dataset transformer, this will be a matrix of intervention x parameter low and high
-		for (let i = 0; i < this.interventionSpecs.length * (this.parameters.length * 2); i++) {
+		// add input ports for each simulation to the dataset transformer, this will be a matrix of intervention x parameter
+		for (let i = 0; i < this.interventionSpecs.length * this.parameters.length; i++) {
 			workflowService.appendInputPort(compareDatasetNode, {
 				type: 'datasetId|simulationId',
 				label: 'Dataset or Simulation'
@@ -209,14 +195,12 @@ export class HorizonScanningScenario extends BaseScenario {
 			this.simulateSpec.ids
 		);
 
-		// 2. create model config nodes for each paramter for both the low and high values and attach them to the model node
-		const modelConfigPromises = this.parameters.flatMap(async (parameter) => {
-			if (!parameter) return [];
+		// 2. create model config nodes for each paramter and attach them to the model node
+		const modelConfigPromises = this.parameters.map(async (parameter) => {
+			if (!parameter) return null;
 			const clonedModelConfig = _.cloneDeep(modelConfig);
-			const foundParameter = getParameter(clonedModelConfig, parameter.id);
-			if (!foundParameter) return [];
 
-			const modelConfigNodeLow = wf.addNode(
+			const modelConfigNode = wf.addNode(
 				ModelConfigOp,
 				{ x: 0, y: 0 },
 				{
@@ -224,71 +208,36 @@ export class HorizonScanningScenario extends BaseScenario {
 				}
 			);
 
-			wf.addEdge(modelNode.id, modelNode.outputs[0].id, modelConfigNodeLow.id, modelConfigNodeLow.inputs[0].id, [
+			wf.addEdge(modelNode.id, modelNode.outputs[0].id, modelConfigNode.id, modelConfigNode.inputs[0].id, [
 				{ x: 0, y: 0 },
 				{ x: 0, y: 0 }
 			]);
 
-			const modelConfigNodeHigh = wf.addNode(
-				ModelConfigOp,
-				{ x: 0, y: 0 },
-				{
-					size: OperatorNodeSize.medium
-				}
-			);
+			setParameterDistribution(clonedModelConfig, parameter.referenceId, parameter.distribution);
 
-			wf.addEdge(modelNode.id, modelNode.outputs[0].id, modelConfigNodeHigh.id, modelConfigNodeHigh.inputs[0].id, [
-				{ x: 0, y: 0 },
-				{ x: 0, y: 0 }
-			]);
-
-			// We want to change the distribution of the parameter to a constant distribution with the 1 config with the constant low value, and another with a constant high value
-			foundParameter.distribution.type = DistributionType.Constant;
-			foundParameter.distribution.parameters = { value: parameter.low };
-
-			clonedModelConfig.name = `${modelConfig.name}_${parameter.id}_low`;
-			const newModelConfigLow = await createModelConfiguration(clonedModelConfig);
+			clonedModelConfig.name = `${modelConfig.name}_${parameter.referenceId}`;
+			const newModelConfig = await createModelConfiguration(clonedModelConfig);
 			await useProjects().addAsset(
 				AssetType.ModelConfiguration,
-				newModelConfigLow.id,
+				newModelConfig.id,
 				useProjects().activeProject.value?.id
 			);
 
-			foundParameter.distribution.parameters = { value: parameter.high };
-
-			clonedModelConfig.name = `${modelConfig.name}_${parameter.id}_high`;
-			const newModelConfigHigh = await createModelConfiguration(clonedModelConfig);
-			await useProjects().addAsset(
-				AssetType.ModelConfiguration,
-				newModelConfigHigh.id,
-				useProjects().activeProject.value?.id
-			);
-
-			wf.updateNode(modelConfigNodeLow, {
+			wf.updateNode(modelConfigNode, {
 				state: {
-					transientModelConfig: newModelConfigLow
+					transientModelConfig: newModelConfig
 				},
 				output: {
-					value: [newModelConfigLow.id],
-					state: _.omit(modelConfigNodeLow.state, ['transientModelConfig'])
+					value: [newModelConfig.id],
+					state: _.omit(modelConfigNode.state, ['transientModelConfig'])
 				}
 			});
 
-			wf.updateNode(modelConfigNodeHigh, {
-				state: {
-					transientModelConfig: newModelConfigHigh
-				},
-				output: {
-					value: [newModelConfigHigh.id],
-					state: _.omit(modelConfigNodeHigh.state, ['transientModelConfig'])
-				}
-			});
-
-			return [modelConfigNodeLow, modelConfigNodeHigh];
+			return modelConfigNode;
 		});
 
-		// Wait for all modelConfigPromises to resolve and flatten them
-		const modelConfigNodes = (await Promise.all(modelConfigPromises)).flat();
+		// Wait for all modelConfigPromises to resolve and filter non null responses
+		const modelConfigNodes = await Promise.all(modelConfigPromises);
 
 		// 3. Add intervention nodes for each intervention and attach them to the model node
 		const interventionPromises = this.interventionSpecs.map(async (interventionSpec) => {
@@ -319,6 +268,7 @@ export class HorizonScanningScenario extends BaseScenario {
 
 			// each intervention node will be connected to a simulate node along with each model config node
 			modelConfigNodes.forEach((modelConfigNode) => {
+				if (!modelConfigNode) return;
 				const simulateNode = wf.addNode(
 					SimulateCiemssOp,
 					{ x: 0, y: 0 },
