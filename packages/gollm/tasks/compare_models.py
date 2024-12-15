@@ -1,6 +1,8 @@
 import sys
+
+from chains import compare_models_chain
 from entities import ModelCompareModel
-from gollm_openai.tool_utils import compare_models
+from llms.openai.OpenAiTools import OpenAiTools
 
 from taskrunner import TaskRunnerInterface
 
@@ -21,7 +23,8 @@ def main():
         input_model = ModelCompareModel(**input_dict)
 
         taskrunner.log("Sending request to OpenAI API")
-        response = compare_models(amrs=input_model.amrs, goal=input_model.goal)
+        llm = OpenAiTools()
+        response = compare_models_chain(llm, amrs=input_model.amrs, goal=input_model.goal)
         taskrunner.log("Received response from OpenAI API")
 
         taskrunner.write_output_dict_with_timeout({"response": response})

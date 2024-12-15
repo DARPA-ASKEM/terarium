@@ -5,16 +5,17 @@ setup(
     version="0.1.0",
     packages=find_packages(),
     install_requires=[
-        "openai==1.57.2",
+        "boto3",
         "httpx==0.28.1",
+        "jsonschema",
+        "openai",
         "pandas",
         "pydantic==2.10.2",
         "regex",
-        "tiktoken",
-        "jsonschema"
+        "tiktoken"
     ],
     package_data={
-        "gollm_openai.schemas": ["*.json"]
+        "schemas": ["*.json"]
     },
     entry_points={
         "console_scripts": [
@@ -26,8 +27,7 @@ setup(
             "gollm:enrich_dataset=tasks.enrich_dataset:main",
             "gollm:equations_cleanup=tasks.equations_cleanup:main",
             "gollm:equations_from_image=tasks.equations_from_image:main",
-            "gollm:generate_response=tasks.generate_response:main",
-            "gollm:generate_summary=tasks.generate_summary:main",
+            "gollm:general_query=tasks.general_query:main",
             "gollm:interventions_from_document=tasks.interventions_from_document:main",
             "gollm:model_card=tasks.model_card:main"
         ],

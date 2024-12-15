@@ -1,4 +1,4 @@
-INSTRUCTIONS = """
+MODEL_CARD_PROMPT = """
 You are a helpful agent designed to populate metadata of a given AMR model.
 
 You may have access to a document that describes the given AMR model and a JSON representation of the AMR model we want populated.
