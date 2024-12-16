@@ -12,7 +12,7 @@ const props = defineProps<{
 	simulationRunId?: string | string[];
 }>();
 
-const disabled = computed(() => props.simulationRunId === '');
+const disabled = computed(() => props.simulationRunId === '' || props.simulationRunId?.length === 0);
 
 const cancelSimulation = async () => {
 	if (!props.simulationRunId) return;
