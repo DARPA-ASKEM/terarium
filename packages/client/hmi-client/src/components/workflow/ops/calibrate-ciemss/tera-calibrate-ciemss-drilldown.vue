@@ -252,7 +252,7 @@
 					class="p-3"
 					:summary-id="node.state.summaryId"
 				/>
-				<Accordion :active-index="lossActiveIndex" class="px-2">
+				<Accordion :active-index="lossActiveIndex" @update:active-index="updateLossTab" class="px-2">
 					<AccordionTab header="Loss">
 						<!-- Loss chart -->
 						<div ref="lossChartContainer">
@@ -372,9 +372,8 @@
 						:active-settings="activeChartSettings"
 						:generate-annotation="generateAnnotation"
 						@delete-annotation="deleteAnnotation"
-						@update-settings-scale="updateChartSettingsScale(activeChartSettings?.id as string, $event)"
-						@update-settings-color="onColorChange"
-						@close="activeChartSettings = null"
+						@update-settings="updateActiveChartSettings"
+						@close="setActiveChartSettings(null)"
 					/>
 				</template>
 				<template #content>
@@ -385,7 +384,7 @@
 							:type="ChartSettingType.DISTRIBUTION_COMPARISON"
 							:select-options="Object.keys(pyciemssMap).filter((c) => modelPartTypesMap[c] === 'parameter')"
 							:selected-options="selectedParameterSettings.map((s) => s.selectedVariables[0])"
-							@open="activeChartSettings = $event"
+							@open="setActiveChartSettings($event)"
 							@remove="removeChartSettings"
 							@selection-change="updateChartSettings"
 						/>
@@ -396,7 +395,7 @@
 							:type="ChartSettingType.INTERVENTION"
 							:select-options="Object.keys(groupedInterventionOutputs)"
 							:selected-options="selectedInterventionSettings.map((s) => s.selectedVariables[0])"
-							@open="activeChartSettings = $event"
+							@open="setActiveChartSettings($event)"
 							@remove="removeChartSettings"
 							@selection-change="updateChartSettings"
 						/>
@@ -409,7 +408,7 @@
 								Object.keys(pyciemssMap).filter((c) => ['state', 'observable'].includes(modelPartTypesMap[c]))
 							"
 							:selected-options="selectedVariableSettings.map((s) => s.selectedVariables[0])"
-							@open="activeChartSettings = $event"
+							@open="setActiveChartSettings($event)"
 							@remove="removeChartSettings"
 							@selection-change="updateChartSettings"
 						/>
@@ -424,7 +423,7 @@
 									.filter((c) => selectedOutputMapping.find((s) => s.modelVariable === c))
 							"
 							:selected-options="selectedErrorVariableSettings.map((s) => s.selectedVariables[0])"
-							@open="activeChartSettings = $event"
+							@open="setActiveChartSettings($event)"
 							@remove="removeChartSettings"
 							@selection-change="updateChartSettings"
 						/>
@@ -439,7 +438,7 @@
 								)
 							"
 							:selected-options="comparisonChartsSettingsSelection"
-							@open="activeChartSettings = $event"
+							@open="setActiveChartSettings($event)"
 							@remove="removeChartSettings"
 							@selection-change="comparisonChartsSettingsSelection = $event"
 						/>
@@ -616,7 +615,7 @@ const datasetColumns = ref<DatasetColumn[]>();
 const csvAsset = shallowRef<CsvAsset | undefined>(undefined);
 const groundTruthData = computed<DataArray>(() => parseCsvAsset(csvAsset.value as CsvAsset));
 
-const lossActiveIndex = ref([0]);
+const lossActiveIndex = ref<number | null>(0);
 const currentActiveIndicies = ref([0, 1, 2, 3, 4]);
 
 const modelConfig = ref<ModelConfiguration | null>(null);
@@ -753,8 +752,8 @@ const {
 	removeChartSettings,
 	updateChartSettings,
 	addComparisonChartSettings,
-	updateChartPrimaryColor,
-	updateChartSettingsScale
+	updateActiveChartSettings,
+	setActiveChartSettings
 } = useChartSettings(props, emit);
 
 const {
@@ -836,7 +835,12 @@ const initDefaultChartSettings = (state: CalibrationOperationStateCiemss) => {
 	);
 };
 
+const updateLossTab = (activeTab: number | undefined) => {
+	lossActiveIndex.value = activeTab ?? null;
+};
+
 const runCalibrate = async () => {
+	lossActiveIndex.value = 0; // ensure loss tab open on run
 	if (!modelConfigId.value || !datasetId.value || !currentDatasetFileName.value) return;
 
 	const formattedMap: { [index: string]: string } = {};
@@ -1013,10 +1017,6 @@ const getConfiguredModelConfig = async () => {
 	if (configuredModelId) {
 		configuredModelConfig.value = await getModelConfigurationById(configuredModelId);
 	}
-};
-
-const onColorChange = (color: string) => {
-	if (activeChartSettings.value) updateChartPrimaryColor(activeChartSettings.value, color);
 };
 
 onMounted(async () => {

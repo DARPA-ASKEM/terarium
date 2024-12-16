@@ -11,7 +11,7 @@ import {
 import { v4 as uuidv4 } from 'uuid';
 import { b64DecodeUnicode } from '@/utils/binary';
 import { ChartAnnotation } from '@/types/Types';
-import { ForecastChartOptions } from './charts';
+import { CATEGORICAL_SCHEME, ForecastChartOptions } from './charts';
 
 export interface LLMGeneratedChartAnnotation {
 	request: string;
@@ -84,7 +84,8 @@ export function createNewChartSetting(
 		name,
 		selectedVariables,
 		type,
-		scale: ''
+		scale: '',
+		primaryColor: CATEGORICAL_SCHEME[0]
 	};
 	if (isChartSettingEnsembleVariable(setting) || setting.type === ChartSettingType.SENSITIVITY)
 		Object.assign(setting, options);

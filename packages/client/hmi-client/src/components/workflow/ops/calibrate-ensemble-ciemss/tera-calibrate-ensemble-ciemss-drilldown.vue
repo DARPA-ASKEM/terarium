@@ -263,12 +263,11 @@
 								? getChartAnnotationsByChartId(activeChartSettings?.id ?? '')
 								: undefined
 						"
-						@update-settings-color="onColorChange"
 						:active-settings="activeChartSettings"
 						:generate-annotation="generateAnnotation"
-						@update-settings-scale="updateChartSettingsScale(activeChartSettings?.id as string, $event)"
+						@update-settings="updateActiveChartSettings"
 						@delete-annotation="deleteAnnotation"
-						@close="activeChartSettings = null"
+						@close="setActiveChartSettings(null)"
 					/>
 				</template>
 				<template #content>
@@ -286,7 +285,7 @@
 							:type="ChartSettingType.VARIABLE_ENSEMBLE"
 							:select-options="ensembleVariables"
 							:selected-options="selectedEnsembleVariableSettings.map((s) => s.selectedVariables[0])"
-							@open="activeChartSettings = $event"
+							@open="setActiveChartSettings($event)"
 							@remove="removeChartSettings"
 							@selection-change="updateChartSettings"
 							@toggle-ensemble-variable-setting-option="updateEnsembleVariableSettingOption"
@@ -298,7 +297,7 @@
 							:type="ChartSettingType.ERROR_DISTRIBUTION"
 							:select-options="ensembleVariables"
 							:selected-options="selectedErrorVariableSettings.map((s) => s.selectedVariables[0])"
-							@open="activeChartSettings = $event"
+							@open="setActiveChartSettings($event)"
 							@remove="removeChartSettings"
 							@selection-change="updateChartSettings"
 						/>
@@ -607,8 +606,8 @@ const {
 	selectedEnsembleVariableSettings,
 	selectedErrorVariableSettings,
 	updateEnsembleVariableSettingOption,
-	updateChartSettingsScale,
-	updateChartPrimaryColor
+	updateActiveChartSettings,
+	setActiveChartSettings
 } = useChartSettings(props, emit);
 
 const {
@@ -640,10 +639,6 @@ const ensembleVariableCharts = useEnsembleVariableCharts(selectedEnsembleVariabl
 const weightsDistributionCharts = useWeightsDistributionCharts();
 const { errorCharts, onExpandErrorChart } = useEnsembleErrorCharts(selectedErrorVariableSettings, errorData);
 // --------------------------------------------------------
-
-const onColorChange = (color: string) => {
-	if (activeChartSettings.value) updateChartPrimaryColor(activeChartSettings.value, color);
-};
 
 watch(
 	() => props.node.active,
