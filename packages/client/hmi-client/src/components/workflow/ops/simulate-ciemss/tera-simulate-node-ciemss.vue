@@ -197,8 +197,8 @@ const pollResult = async (runId: string) => {
 	state.errorMessage = { name: '', value: '', traceback: '' };
 
 	if (pollerResults.state === PollerState.Cancelled) {
-		// state.inProgressForecastId = '';
-		// state.inProgressBaseForecastId = '';
+		state.inProgressForecastId = '';
+		state.inProgressBaseForecastId = '';
 		poller.stop();
 	} else if (pollerResults.state !== PollerState.Done || !pollerResults.data) {
 		// throw if there are any failed runs for now
