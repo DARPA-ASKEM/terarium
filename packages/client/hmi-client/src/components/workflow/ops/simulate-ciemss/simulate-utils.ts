@@ -26,7 +26,6 @@ export function usePreparedChartInputs(
 			reverseMap[`${pyciemssMap.value[key]}_mean`] = key;
 			reverseMap[`${pyciemssMap.value[key]}_mean:pre`] = `${key} (baseline)`;
 		});
-
 		return { result, resultSummary, translationMap: reverseMap, pyciemssMap: pyciemssMap.value };
 	});
 }
