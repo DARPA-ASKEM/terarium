@@ -10,11 +10,11 @@
 * @dgauldie @mwdchang @YohannParis
 
 # Client code owners
-/packages/client/ @YohannParis @mwdchang @jryu01 @Tom-Szendrey @shawnyama @blanchco @asylves1
+/packages/client/ @YohannParis @mwdchang @jryu01 @Tom-Szendrey @shawnyama @blanchco @asylves1 @mloppie
 
 # Backend services owners
 /packages/server/ @dgauldie @dvince2 @YohannParis
-/packages/taskrunner/ @kbirk @YohannParis
+/packages/taskrunner/ @dgauldie @YohannParis
 
 # Documentation owners
 docs/*  @dgauldie @pascaleproulx @YohannParis @dvince2

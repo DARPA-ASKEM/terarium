@@ -191,16 +191,24 @@ export enum ChartSettingType {
 	SENSITIVITY = 'sensitivity'
 }
 
-export type ChartSetting = ChartSettingBase | ChartSettingEnsembleVariable;
+export type ChartSetting = ChartSettingBase | ChartSettingEnsembleVariable | ChartSettingSensitivity;
 
 export interface ChartSettingEnsembleVariable extends ChartSettingBase, ChartSettingEnsembleVariableOptions {
 	type: ChartSettingType.VARIABLE_ENSEMBLE;
+}
+
+export interface ChartSettingSensitivity extends ChartSettingBase, ChartSettingSensitivityOptions {
+	type: ChartSettingType.SENSITIVITY;
 }
 
 export interface ChartSettingEnsembleVariableOptions {
 	showIndividualModels: boolean;
 	relativeToEnsemble: boolean;
 	showIndividualModelsWithWeight?: boolean;
+}
+export interface ChartSettingSensitivityOptions {
+	selectedInputVariables: string[];
+	timepoint: number;
 }
 
 export interface ChartSettingBase {
