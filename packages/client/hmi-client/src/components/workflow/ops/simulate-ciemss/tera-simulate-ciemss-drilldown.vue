@@ -224,8 +224,7 @@
 						"
 						:active-settings="activeChartSettings"
 						:generate-annotation="generateAnnotation"
-						@update-settings-scale="updateChartSettingsScale(activeChartSettings?.id as string, $event)"
-						@update-settings-color="onColorChange"
+						@update-settings="findAndUpdateChartSettingsById(activeChartSettings?.id as string, $event)"
 						@delete-annotation="deleteAnnotation"
 						@close="activeChartSettings = null"
 					/>
@@ -529,9 +528,8 @@ const {
 	comparisonChartsSettingsSelection,
 	removeChartSettings,
 	updateChartSettings,
-	updateChartSettingsScale,
 	addComparisonChartSettings,
-	updateChartPrimaryColor
+	findAndUpdateChartSettingsById
 } = useChartSettings(props, emit);
 
 const {
@@ -743,10 +741,6 @@ watch(
 	},
 	{ immediate: true }
 );
-
-const onColorChange = (color: string) => {
-	if (activeChartSettings.value) updateChartPrimaryColor(activeChartSettings.value, color);
-};
 
 onMounted(() => {
 	buildJupyterContext();
