@@ -315,7 +315,7 @@
 										timepoint: selectedSensitivityChartSettings[0]?.timepoint ?? 0
 									})
 							"
-							@input-selection-change="
+							@sensitivity-selection-change="
 								(e) =>
 									updateSensitivityChartSettings({
 										selectedVariables: selectedSensitivityChartSettings.map((s) => s.selectedVariables[0]),

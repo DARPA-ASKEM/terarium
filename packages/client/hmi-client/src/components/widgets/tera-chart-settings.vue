@@ -21,7 +21,7 @@
 				:model-value="sensitivityOptions.selectedInputOptions"
 				:options="sensitivityOptions.inputOptions"
 				@change="
-					$emit('input-selection-change', {
+					$emit('sensitivity-selection-change', {
 						selectedInputVariables: $event.value,
 						timepoint: sensitivityOptions.timepoint
 					})
@@ -33,7 +33,7 @@
 				:disabled="_.isEmpty(selectedOptions)"
 				:model-value="sensitivityOptions.timepoint"
 				@update:model-value="
-					$emit('input-selection-change', {
+					$emit('sensitivity-selection-change', {
 						selectedInputVariables: sensitivityOptions.selectedInputOptions,
 						timepoint: $event
 					})
@@ -104,7 +104,7 @@ const emits = defineEmits([
 	'remove',
 	'selection-change',
 	'toggle-ensemble-variable-setting-option',
-	'input-selection-change'
+	'sensitivity-selection-change'
 ]);
 
 // Settings of the same type that we want to interact with.
