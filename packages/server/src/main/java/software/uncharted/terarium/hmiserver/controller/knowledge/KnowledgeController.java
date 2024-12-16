@@ -302,22 +302,6 @@ public class KnowledgeController {
 				log.error("failed to convert LaTeX equations to AMR", e);
 				throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "failed to convert latex equations to AMR");
 			}
-			// final TaskRequest taskReq = new TaskRequest();
-			// final String latex = req.get("equations").toString();
-			// taskReq.setType(TaskType.MIRA);
-			// try {
-			// 	taskReq.setInput(latex.getBytes());
-			// 	taskReq.setScript(LatexToAMRResponseHandler.NAME);
-			// 	taskReq.setUserId(currentUserService.get().getId());
-			// 	final TaskResponse taskResp = taskService.runTaskSync(taskReq);
-			// 	final JsonNode taskResponseJSON = mapper.readValue(taskResp.getOutput(), JsonNode.class);
-
-			// 	final ObjectNode amrNode = taskResponseJSON.get("response").get("amr").deepCopy();
-			// 	responseAMR = mapper.convertValue(amrNode, Model.class);
-			// } catch (Exception e) {
-			// 	log.error("failed to convert LaTeX equations to AMR", e);
-			// 	throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "failed to convert latex equations to AMR");
-			// }
 		} else {
 			try {
 				// Create a request for SKEMA with the cleaned-up equations.
