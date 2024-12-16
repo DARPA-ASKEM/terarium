@@ -80,6 +80,9 @@ import software.uncharted.terarium.hmiserver.service.notification.NotificationGr
 import software.uncharted.terarium.hmiserver.service.notification.NotificationService;
 import software.uncharted.terarium.hmiserver.service.tasks.EquationsCleanupResponseHandler;
 import software.uncharted.terarium.hmiserver.service.tasks.LatexToAMRResponseHandler;
+// latex to model chain
+import software.uncharted.terarium.hmiserver.service.tasks.LatexToSympyResponseHandler;
+import software.uncharted.terarium.hmiserver.service.tasks.SympyToAMRResponseHandler;
 import software.uncharted.terarium.hmiserver.service.tasks.TaskService;
 import software.uncharted.terarium.hmiserver.service.tasks.TaskService.TaskMode;
 import software.uncharted.terarium.hmiserver.utils.ByteMultipartFile;
@@ -267,22 +270,54 @@ public class KnowledgeController {
 		}
 
 		if (extractionService.equals("mira")) {
-			final TaskRequest taskReq = new TaskRequest();
-			final String latex = req.get("equations").toString();
-			taskReq.setType(TaskType.MIRA);
-			try {
-				taskReq.setInput(latex.getBytes());
-				taskReq.setScript(LatexToAMRResponseHandler.NAME);
-				taskReq.setUserId(currentUserService.get().getId());
-				final TaskResponse taskResp = taskService.runTaskSync(taskReq);
-				final JsonNode taskResponseJSON = mapper.readValue(taskResp.getOutput(), JsonNode.class);
+			final TaskRequest latexToSympyRequest = new TaskRequest();
+			final TaskResponse latexToSympyResponse;
+			final TaskRequest sympyToAMRRequest = new TaskRequest();
+			final TaskResponse sympyToAMRResponse;
 
+			try {
+				// 1. LaTeX to sympy code
+				final String latex = req.get("equations").toString();
+				latexToSympyRequest.setType(TaskType.GOLLM);
+				latexToSympyRequest.setInput(latex.getBytes());
+				latexToSympyRequest.setScript(LatexToSympyResponseHandler.NAME);
+				latexToSympyRequest.setUserId(currentUserService.get().getId());
+				latexToSympyResponse = taskService.runTaskSync(latexToSympyRequest);
+
+				// 2. hand off
+				final JsonNode node = mapper.readValue(latexToSympyResponse.getOutput(), JsonNode.class);
+				final String code = node.get("response").asText();
+
+				// 3. sympy code string to amr json
+				sympyToAMRRequest.setType(TaskType.MIRA);
+				sympyToAMRRequest.setInput(code.getBytes());
+				sympyToAMRRequest.setScript(SympyToAMRResponseHandler.NAME);
+				sympyToAMRRequest.setUserId(currentUserService.get().getId());
+				sympyToAMRResponse = taskService.runTaskSync(sympyToAMRRequest);
+
+				final JsonNode taskResponseJSON = mapper.readValue(sympyToAMRResponse.getOutput(), JsonNode.class);
 				final ObjectNode amrNode = taskResponseJSON.get("response").get("amr").deepCopy();
 				responseAMR = mapper.convertValue(amrNode, Model.class);
-			} catch (Exception e) {
+			} catch (final Exception e) {
 				log.error("failed to convert LaTeX equations to AMR", e);
 				throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "failed to convert latex equations to AMR");
 			}
+			// final TaskRequest taskReq = new TaskRequest();
+			// final String latex = req.get("equations").toString();
+			// taskReq.setType(TaskType.MIRA);
+			// try {
+			// 	taskReq.setInput(latex.getBytes());
+			// 	taskReq.setScript(LatexToAMRResponseHandler.NAME);
+			// 	taskReq.setUserId(currentUserService.get().getId());
+			// 	final TaskResponse taskResp = taskService.runTaskSync(taskReq);
+			// 	final JsonNode taskResponseJSON = mapper.readValue(taskResp.getOutput(), JsonNode.class);
+
+			// 	final ObjectNode amrNode = taskResponseJSON.get("response").get("amr").deepCopy();
+			// 	responseAMR = mapper.convertValue(amrNode, Model.class);
+			// } catch (Exception e) {
+			// 	log.error("failed to convert LaTeX equations to AMR", e);
+			// 	throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "failed to convert latex equations to AMR");
+			// }
 		} else {
 			try {
 				// Create a request for SKEMA with the cleaned-up equations.
