@@ -331,12 +331,11 @@
 								? getChartAnnotationsByChartId(activeChartSettings?.id ?? '')
 								: undefined
 						"
-						@update-settings-color="onColorChange"
 						:active-settings="activeChartSettings"
 						:generate-annotation="generateAnnotation"
-						@update-settings-scale="updateChartSettingsScale(activeChartSettings?.id as string, $event)"
+						@update-settings="updateActiveChartSettings"
 						@delete-annotation="deleteAnnotation"
-						@close="activeChartSettings = null"
+						@close="setActiveChartSettings(null)"
 					/>
 				</template>
 				<template #content>
@@ -367,7 +366,7 @@
 							:type="ChartSettingType.INTERVENTION"
 							:select-options="_.keys(preProcessedInterventionsData)"
 							:selected-options="selectedInterventionSettings.map((s) => s.selectedVariables[0])"
-							@open="activeChartSettings = $event"
+							@open="setActiveChartSettings($event)"
 							@remove="removeChartSettings"
 							@selection-change="updateChartSettings"
 						/>
@@ -378,7 +377,7 @@
 							:type="ChartSettingType.VARIABLE"
 							:select-options="modelStateAndObsOptions.map((ele) => ele.label)"
 							:selected-options="selectedVariableSettings.map((s) => s.selectedVariables[0])"
-							@open="activeChartSettings = $event"
+							@open="setActiveChartSettings($event)"
 							@remove="removeChartSettings"
 							@selection-change="updateChartSettings"
 						/>
@@ -389,7 +388,7 @@
 							:type="ChartSettingType.VARIABLE_COMPARISON"
 							:select-options="simulationChartOptions"
 							:selected-options="comparisonChartsSettingsSelection"
-							@open="activeChartSettings = $event"
+							@open="setActiveChartSettings($event)"
 							@remove="removeChartSettings"
 							@selection-change="comparisonChartsSettingsSelection = $event"
 						/>
@@ -993,8 +992,8 @@ const {
 	removeChartSettings,
 	updateChartSettings,
 	addComparisonChartSettings,
-	updateChartSettingsScale,
-	updateChartPrimaryColor
+	updateActiveChartSettings,
+	setActiveChartSettings
 } = useChartSettings(props, emit);
 
 const {
@@ -1029,10 +1028,6 @@ const resetState = () => {
 			}
 		}
 	});
-};
-
-const onColorChange = (color: string) => {
-	if (activeChartSettings.value) updateChartPrimaryColor(activeChartSettings.value, color);
 };
 
 watch(
