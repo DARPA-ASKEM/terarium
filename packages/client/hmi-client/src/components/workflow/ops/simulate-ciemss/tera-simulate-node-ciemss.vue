@@ -1,6 +1,9 @@
 <template>
 	<main>
-		<template v-if="selectedRunId && runResults[selectedRunId]">
+		<tera-progress-spinner v-if="inProgressForecastRun" :font-size="2" is-centered style="height: 100%">
+			Processing...
+		</tera-progress-spinner>
+		<template v-else-if="selectedRunId && runResults[selectedRunId]">
 			<section>
 				<div v-if="isChartsEmpty" class="empty-chart">
 					<img src="@assets/svg/seed.svg" alt="" draggable="false" class="empty-image" />
@@ -32,7 +35,6 @@
 				/>
 			</section>
 		</template>
-		<tera-progress-spinner v-if="inProgressForecastRun" :font-size="2" is-centered style="height: 100%" />
 		<Button v-if="areInputsFilled" label="Edit" @click="emit('open-drilldown')" severity="secondary" outlined />
 		<tera-operator-placeholder v-else :node="node"> Connect a model configuration </tera-operator-placeholder>
 	</main>
@@ -42,36 +44,31 @@
 import _ from 'lodash';
 import { computed, ref, toRef, watch } from 'vue';
 import Button from 'primevue/button';
+
+import { logger } from '@/utils/logger';
+
+import { updateChartSettingsBySelectedVariables } from '@/services/chart-settings';
+import { createDatasetFromSimulationResult } from '@/services/dataset';
+import { flattenInterventionData, getInterventionPolicyById } from '@/services/intervention-policy';
+import { getModelByModelConfigurationId, getTypesFromModelParts, getUnitsFromModelParts } from '@/services/model';
+import { getModelConfigurationById } from '@/services/model-configurations';
+import { getRunResultCSV, parsePyCiemssMap, pollAction, DataArray } from '@/services/models/simulation-service';
+import { createLLMSummary } from '@/services/summary-service';
+
 import TeraOperatorPlaceholder from '@/components/operator/tera-operator-placeholder.vue';
 import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue';
-import { getRunResultCSV, getSimulation, parsePyCiemssMap, DataArray } from '@/services/models/simulation-service';
-import { getModelByModelConfigurationId, getTypesFromModelParts, getUnitsFromModelParts } from '@/services/model';
-import { logger } from '@/utils/logger';
+import VegaChart from '@/components/widgets/VegaChart.vue';
 import { nodeOutputLabel } from '@/components/workflow/util';
 
-import type { WorkflowNode } from '@/types/workflow';
-import { createLLMSummary } from '@/services/summary-service';
-import { useProjects } from '@/composables/project';
-import { createDatasetFromSimulationResult } from '@/services/dataset';
-import VegaChart from '@/components/widgets/VegaChart.vue';
-import {
-	ClientEvent,
-	ClientEventType,
-	ModelConfiguration,
-	ProgressState,
-	Simulation,
-	SimulationNotificationData,
-	StatusUpdate,
-	type InterventionPolicy,
-	type Model
-} from '@/types/Types';
-import { flattenInterventionData, getInterventionPolicyById } from '@/services/intervention-policy';
-import { updateChartSettingsBySelectedVariables } from '@/services/chart-settings';
+import { ModelConfiguration, type InterventionPolicy, type Model } from '@/types/Types';
 import { ChartSettingType } from '@/types/common';
-import { useClientEvent } from '@/composables/useClientEvent';
-import { getModelConfigurationById } from '@/services/model-configurations';
+import type { WorkflowNode } from '@/types/workflow';
+
 import { useChartSettings } from '@/composables/useChartSettings';
 import { useCharts } from '@/composables/useCharts';
+import { useProjects } from '@/composables/project';
+
+import { Poller, PollerState } from '@/api/api';
 import { SimulateCiemssOperationState, SimulateCiemssOperation } from './simulate-ciemss-operation';
 import { mergeResults, renameFnGenerator } from '../calibrate-ciemss/calibrate-utils';
 import { usePreparedChartInputs } from './simulate-utils';
@@ -192,69 +189,42 @@ const isChartsEmpty = computed(
 	() => _.isEmpty(interventionCharts.value) && _.isEmpty(variableCharts.value) && _.isEmpty(comparisonCharts.value)
 );
 
-const isFinished = (state: ProgressState) =>
-	[ProgressState.Cancelled, ProgressState.Failed, ProgressState.Complete].includes(state);
+const poller = new Poller();
+const pollResult = async (runId: string) => {
+	poller.setPollAction(async () => pollAction(runId));
+	const pollerResults = await poller.start();
+	const state = _.cloneDeep(props.node.state);
+	state.errorMessage = { name: '', value: '', traceback: '' };
 
-// Handle simulation status update event for the forecast run
-useClientEvent(
-	ClientEventType.SimulationNotification,
-	async (event: ClientEvent<StatusUpdate<SimulationNotificationData>>) => {
-		const simulationNotificationData = event.data.data;
-		if (simulationNotificationData.simulationId !== inProgressForecastId.value || !isFinished(event.data.state)) return;
-
-		const simId = simulationNotificationData.simulationId;
-		let errorMessage = { name: '', value: '', traceback: '' };
-		let forecastId = '';
-		if (event.data.state === ProgressState.Failed) {
-			const simulation = await getSimulation(simId);
-			if (simulation?.status && simulation?.statusMessage) {
-				errorMessage = {
-					name: simId,
-					value: simulation.status,
-					traceback: simulation.statusMessage
-				};
-			}
-		} else if (event.data.state === ProgressState.Complete) {
-			forecastId = simId;
-		}
-		const state = _.cloneDeep(props.node.state);
+	if (pollerResults.state === PollerState.Cancelled) {
 		state.inProgressForecastId = '';
-		state.forecastId = forecastId;
-		state.errorMessage = errorMessage;
-		emit('update-state', state);
-		if (event.data.state === ProgressState.Complete) await processResult(simId);
-	}
-);
-
-// Handle simulation status update event for the base forecast run
-useClientEvent(
-	ClientEventType.SimulationNotification,
-	async (event: ClientEvent<StatusUpdate<SimulationNotificationData>>) => {
-		const simulationNotificationData = event.data.data;
-		if (simulationNotificationData.simulationId !== inProgressBaseForecastId.value || !isFinished(event.data.state))
-			return;
-
-		const simId = simulationNotificationData.simulationId;
-		const state = _.cloneDeep(props.node.state);
-		state.errorMessage = { name: '', value: '', traceback: '' };
 		state.inProgressBaseForecastId = '';
-		if (event.data.state === ProgressState.Complete) state.baseForecastId = simId;
+		poller.stop();
+	} else if (pollerResults.state !== PollerState.Done || !pollerResults.data) {
+		// throw if there are any failed runs for now
+		logger.error(`Simulate: ${runId} has failed`, {
+			toastTitle: 'Error - Pyciemss'
+		});
+	}
+	return pollerResults;
+};
+
+async function processPolling(id, propName, inProgressPropName) {
+	const response = await pollResult(id);
+	if (response.state === PollerState.Done) {
+		const state = _.cloneDeep(props.node.state);
+		state[propName] = id;
+		state[inProgressPropName] = '';
 		emit('update-state', state);
 	}
-);
+	await processResult(id);
+}
 
 watch(
 	() => props.node.state.inProgressForecastId,
 	async (id) => {
 		if (!id || id === '') return;
-		// Check simulation status and update the state
-		const simResponse: Simulation | null = await getSimulation(id);
-		if (simResponse?.status !== ProgressState.Complete) return;
-		const state = _.cloneDeep(props.node.state);
-		state.inProgressForecastId = '';
-		state.forecastId = id;
-		emit('update-state', state);
-		await processResult(id);
+		await processPolling(id, 'forecastId', 'inProgressForecastId');
 	},
 	{ immediate: true }
 );
@@ -263,13 +233,7 @@ watch(
 	() => props.node.state.inProgressBaseForecastId,
 	async (id) => {
 		if (!id || id === '') return;
-		// Check base simulation (without intervention) status and update the state
-		const simResponse: Simulation | null = await getSimulation(id);
-		if (simResponse?.status !== ProgressState.Complete) return;
-		const state = _.cloneDeep(props.node.state);
-		state.inProgressBaseForecastId = '';
-		state.baseForecastId = id;
-		emit('update-state', state);
+		await processPolling(id, 'baseForecastId', 'inProgressBaseForecastId');
 	},
 	{ immediate: true }
 );
