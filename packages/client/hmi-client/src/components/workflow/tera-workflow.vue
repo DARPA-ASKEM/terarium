@@ -286,12 +286,11 @@ const _saveWorkflow = async () => {
 };
 // eslint-disable-next-line
 const _updateWorkflow = (event: ClientEvent<any>) => {
+	console.debug(currentUserId);
 	if (event.data.id !== wf.value.getId()) {
 		return;
 	}
-
-	const delayUpdate = isDragging || event.userId === currentUserId;
-	wf.value.update(event.data as Workflow, delayUpdate);
+	wf.value.update(event.data as Workflow);
 };
 
 const saveWorkflowDebounced = debounce(_saveWorkflow, 400);
