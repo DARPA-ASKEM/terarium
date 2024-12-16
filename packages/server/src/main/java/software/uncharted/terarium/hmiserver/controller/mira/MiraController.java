@@ -271,7 +271,11 @@ public class MiraController {
 		}
 	)
 	public ResponseEntity<JsonNode> latexToAMR(@RequestBody final String latex) {
-		// 1. Convert latex to sympy code string
+		////////////////////////////////////////////////////////////////////////////////
+		// 1. Convert latex string to python sympy code string
+		//
+		// Note this is a gollm string => string task
+		////////////////////////////////////////////////////////////////////////////////
 		final TaskRequest latexToSympyRequest = new TaskRequest();
 		final TaskResponse latexToSympyResponse;
 		String code = null;
@@ -285,23 +289,28 @@ public class MiraController {
 
 			final JsonNode node = objectMapper.readValue(latexToSympyResponse.getOutput(), JsonNode.class);
 			code = node.get("response").asText();
-		} catch (final IOException e) {
-			log.error("");
 		} catch (final TimeoutException e) {
-			log.error("");
+			log.warn("Timeout while waiting for task response", e);
+			throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, messages.get("task.gollm.timeout"));
 		} catch (final InterruptedException e) {
-			log.error("");
+			log.warn("Interrupted while waiting for task response", e);
+			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("task.gollm.interrupted"));
 		} catch (final ExecutionException e) {
-			log.error("");
+			log.error("Error while waiting for task response", e);
+			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("task.gollm.execution-failure"));
+		} catch (final Exception e) {
+			log.error("Unexpected error", e);
 		}
 
-		System.out.println("");
-		System.out.println("=== code ===");
-		System.out.println(code);
-		System.out.println("");
-		System.out.println("");
+		if (code == null) {
+			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("task.gollm.execution-failure"));
+		}
 
-		// 2. Convert sympy code string to amr
+		////////////////////////////////////////////////////////////////////////////////
+		// 2. Convert python sympy code string to amr
+		//
+		// This returns the AMR json, and intermediate data representations for debugging
+		////////////////////////////////////////////////////////////////////////////////
 		final TaskRequest sympyToAMRRequest = new TaskRequest();
 		final TaskResponse sympyToAMRResponse;
 		final JsonNode response;
@@ -314,62 +323,19 @@ public class MiraController {
 			sympyToAMRResponse = taskService.runTaskSync(sympyToAMRRequest);
 			response = objectMapper.readValue(sympyToAMRResponse.getOutput(), JsonNode.class);
 			return ResponseEntity.ok().body(response);
-		} catch (final JsonProcessingException e) {
-			log.error("");
-		} catch (final TimeoutException e) {
-			log.error("");
-		} catch (final InterruptedException e) {
-			log.error("");
-		} catch (final ExecutionException e) {
-			log.error("");
-		} catch (final Exception e) {
-			log.error("");
-		}
-
-		throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("generic.io-error.read"));
-		// create request:
-		/*
-		final TaskRequest req = new TaskRequest();
-		req.setType(TaskType.MIRA);
-
-		try {
-			req.setInput(latex.getBytes());
-		} catch (final Exception e) {
-			log.error("Unable to serialize input", e);
-			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("generic.io-error.write"));
-		}
-
-		req.setScript(LatexToAMRResponseHandler.NAME);
-		req.setUserId(currentUserService.get().getId());
-
-		// send the request
-		final TaskResponse resp;
-		try {
-			resp = taskService.runTaskSync(req);
-		} catch (final JsonProcessingException e) {
-			log.error("Unable to serialize input", e);
-			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("task.mira.json-processing"));
 		} catch (final TimeoutException e) {
 			log.warn("Timeout while waiting for task response", e);
 			throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, messages.get("task.mira.timeout"));
 		} catch (final InterruptedException e) {
 			log.warn("Interrupted while waiting for task response", e);
-			throw new ResponseStatusException(HttpStatus.UNPROCESSABLE_ENTITY, messages.get("task.mira.interrupted"));
+			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("task.mira.interrupted"));
 		} catch (final ExecutionException e) {
 			log.error("Error while waiting for task response", e);
 			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("task.mira.execution-failure"));
+		} catch (final Exception e) {
+			log.error("Unexpected error", e);
 		}
-
-		final JsonNode latexResponse;
-		try {
-			latexResponse = objectMapper.readValue(resp.getOutput(), JsonNode.class);
-		} catch (final IOException e) {
-			log.error("Unable to deserialize output", e);
-			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("generic.io-error.read"));
-		}
-		return ResponseEntity.ok().body(latexResponse);
-		*/
-
+		throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("generic.io-error.read"));
 	}
 
 	@PostMapping("/convert-and-create-model")
