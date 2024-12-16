@@ -201,11 +201,14 @@ const pollResult = async (runId: string) => {
 		state.inProgressBaseForecastId = '';
 		poller.stop();
 	} else if (pollerResults.state !== PollerState.Done || !pollerResults.data) {
+		state.inProgressForecastId = '';
+		state.inProgressBaseForecastId = '';
 		// throw if there are any failed runs for now
 		logger.error(`Simulate: ${runId} has failed`, {
 			toastTitle: 'Error - Pyciemss'
 		});
 	}
+	emit('update-state', state);
 	return pollerResults;
 };
 
