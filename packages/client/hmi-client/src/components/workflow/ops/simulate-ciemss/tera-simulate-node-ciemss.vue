@@ -52,7 +52,13 @@ import { createDatasetFromSimulationResult } from '@/services/dataset';
 import { flattenInterventionData, getInterventionPolicyById } from '@/services/intervention-policy';
 import { getModelByModelConfigurationId, getTypesFromModelParts, getUnitsFromModelParts } from '@/services/model';
 import { getModelConfigurationById } from '@/services/model-configurations';
-import { getRunResultCSV, parsePyCiemssMap, pollAction, DataArray } from '@/services/models/simulation-service';
+import {
+	getRunResultCSV,
+	parsePyCiemssMap,
+	pollAction,
+	DataArray,
+	getSimulation
+} from '@/services/models/simulation-service';
 import { createLLMSummary } from '@/services/summary-service';
 
 import TeraOperatorPlaceholder from '@/components/operator/tera-operator-placeholder.vue';
@@ -203,6 +209,15 @@ const pollResult = async (runId: string) => {
 	} else if (pollerResults.state !== PollerState.Done || !pollerResults.data) {
 		state.inProgressForecastId = '';
 		state.inProgressBaseForecastId = '';
+		const simulation = await getSimulation(runId);
+		if (simulation?.status && simulation?.statusMessage) {
+			state.errorMessage = {
+				name: runId,
+				value: simulation.status,
+				traceback: simulation.statusMessage
+			};
+			emit('update-state', state);
+		}
 		// throw if there are any failed runs for now
 		logger.error(`Simulate: ${runId} has failed`, {
 			toastTitle: 'Error - Pyciemss'
