@@ -134,3 +134,14 @@ def compare_models_chain(llm: LlmToolsInterface, amrs: List[str], goal: str) -> 
 def general_query_chain(llm: LlmToolsInterface, instruction: str) -> str:
     prompt = llm.create_generate_respose_prompt(instruction)
     return llm.send_to_llm(prompt, None)
+
+
+def chart_annotation_chain(llm: LlmToolsInterface, preamble: str, instruction: str) -> dict:
+    print("Uploading and validating chart annotation schema...")
+    config_path = os.path.join(SCHEMAS_DIR, 'chart_annotation.json')
+    with open(config_path, 'r') as config_file:
+        response_schema = json.load(config_file)
+    validate_schema(response_schema)
+
+    prompt = llm.create_chart_annotation_prompt(preamble, instruction, response_schema)
+    return llm.send_to_llm(prompt, response_schema)

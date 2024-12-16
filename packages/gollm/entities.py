@@ -41,6 +41,11 @@ class EquationsFromImage(BaseModel):
     image: str  # expects a base64 encoded image
 
 
+class ChartAnnotationModel(BaseModel):
+    preamble: str
+    instruction: str
+
+
 class EmbeddingModel(BaseModel):
     text: List[str]
     embedding_model: str

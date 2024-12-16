@@ -1,0 +1,246 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "description": {
+      "type": "string"
+    },
+    "data": {
+      "type": "object",
+      "properties": {
+        "url": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "url"
+      ],
+      "additionalProperties": false
+    },
+    "transform": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "filter": {
+            "type": ["string", "null"]
+          },
+          "joinaggregate": {
+            "type": ["array", "null"],
+            "items": {
+              "type": "object",
+              "properties": {
+                "op": {
+                  "type": "string"
+                },
+                "field": {
+                  "type": "string"
+                },
+                "as": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "op",
+                "field",
+                "as"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "aggregate": {
+            "type": ["array", "null"],
+            "items": {
+              "type": "object",
+              "properties": {
+                "op": {
+                  "type": "string"
+                },
+                "field": {
+                  "type": "string"
+                },
+                "as": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "op",
+                "field",
+                "as"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "fold": {
+            "type": ["string", "null"],
+            "enum": [
+              "price",
+              "cost",
+              "tax",
+              "profit"
+            ]
+          },
+          "as": {
+            "type": ["string", "null"],
+            "enum": [
+              "variableField",
+              "valueField"
+            ]
+          }
+        },
+        "required": [
+          "filter",
+          "joinaggregate",
+          "aggregate",
+          "fold",
+          "as"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "layer": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "mark": {
+            "type": "object",
+            "properties": {
+              "type": {
+                "type": "string"
+              },
+              "strokeDash": {
+                "type": "array",
+                "items": {
+                  "type": "number"
+                }
+              },
+              "align": {
+                "type": "string"
+              },
+              "dx": {
+                "type": "number"
+              },
+              "dy": {
+                "type": "number"
+              }
+            },
+            "required": [
+              "type",
+              "strokeDash",
+              "align",
+              "dx",
+              "dy"
+            ],
+            "additionalProperties": false
+          },
+          "encoding": {
+            "type": "object",
+            "properties": {
+              "x": {
+                "type": "object",
+                "properties": {
+                  "field": {
+                    "type": "string"
+                  },
+                  "type": {
+                    "type": "string"
+                  },
+                  "datum": {
+                    "type": "number"
+                  },
+                  "axis": {
+                    "type": "object",
+                    "properties": {
+                      "title": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "title"
+                    ],
+                    "additionalProperties": false
+                  },
+                  "text": {
+                    "type": "object",
+                    "properties": {
+                      "value": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "value"
+                    ],
+                    "additionalProperties": false
+                  }
+                },
+                "required": [
+                  "field",
+                  "type",
+                  "datum",
+                  "axis",
+                  "text"
+                ],
+                "additionalProperties": false
+              },
+              "y": {
+                "type": "object",
+                "properties": {
+                  "field": {
+                    "type": "string"
+                  },
+                  "type": {
+                    "type": "string"
+                  },
+                  "axis": {
+                    "type": "object",
+                    "properties": {
+                      "title": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "title"
+                    ],
+                    "additionalProperties": false
+                  }
+                },
+                "required": [
+                  "field",
+                  "type",
+                  "axis"
+                ],
+                "additionalProperties": false
+              },
+              "text": {
+                "type": "object",
+                "properties": {
+                  "value": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "value"
+                ],
+                "additionalProperties": false
+              }
+            },
+            "required": [
+              "x",
+              "y",
+              "text"
+            ],
+            "additionalProperties": false
+          }
+        }
+      }
+    }
+  },
+  "required": [
+    "description",
+    "data",
+    "transform",
+    "layer"
+  ],
+  "additionalProperties": false
+}

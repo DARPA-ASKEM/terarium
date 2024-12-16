@@ -4,6 +4,7 @@ from typing import List
 
 from common.LlmToolsInterface import LlmToolsInterface
 from common.prompts.amr_enrichment import ENRICH_PROMPT
+from common.prompts.chart_annotation import CHART_ANNOTATION_PROMPT
 from common.prompts.config_from_dataset import (
     CONFIGURE_FROM_DATASET_PROMPT,
     CONFIGURE_FROM_DATASET_MAPPING_PROMPT,
@@ -20,7 +21,12 @@ from common.prompts.general_query import GENERAL_QUERY_PROMPT
 from common.prompts.interventions_from_document import INTERVENTIONS_FROM_DOCUMENT_PROMPT
 from common.prompts.latex_style_guide import LATEX_STYLE_GUIDE
 from common.prompts.model_card import MODEL_CARD_PROMPT
-from common.prompts.model_meta_compare import MODEL_METADATA_COMPARE_PROMPT, MODEL_METADATA_COMPARE_GOAL_PROMPT
+from common.prompts.model_meta_compare import (
+    MODEL_METADATA_COMPARE_PROMPT,
+    MODEL_METADATA_COMPARE_GOAL_PROMPT,
+    MODEL_METADATA_COMPARE_DATA_PROMPT,
+    MODEL_METADATA_COMPARE_GOAL_AND_DATA_PROMPT
+)
 from common.utils import (
     normalize_greek_alphabet,
     escape_curly_braces,
@@ -167,14 +173,18 @@ class OpenAiTools(LlmToolsInterface):
         )
 
 
-    def create_compare_models_prompt(self, amrs: List[str], goal: str, schema=None) -> str:
+    def create_compare_models_prompt(self, amrs: List[str], dataset: str, goal: str, schema=None) -> str:
         print("Building prompt to compare models...")
         joined_escaped_amrs = "\n\n------\n\n".join([escape_curly_braces(amr) for amr in amrs])
         prompt = MODEL_METADATA_COMPARE_PROMPT.format(
             amrs=joined_escaped_amrs
         )
+        if dataset is not None and dataset != '':
+            prompt += MODEL_METADATA_COMPARE_DATA_PROMPT.format(dataset=dataset)
         if goal is not None and goal != '':
             prompt += MODEL_METADATA_COMPARE_GOAL_PROMPT.format(goal=goal)
+        if (dataset is not None and dataset != '') and (goal is not None and goal != ''):
+            prompt += MODEL_METADATA_COMPARE_GOAL_AND_DATA_PROMPT
 
         prompt += "Answer:"
         return prompt
@@ -183,5 +193,13 @@ class OpenAiTools(LlmToolsInterface):
     def create_general_query_prompt(self, instruction: str) -> str:
         print("Building general query prompt...")
         return GENERAL_QUERY_PROMPT.format(
+            instruction=instruction
+        )
+
+
+    def create_chart_annotation_prompt(self, preamble: str, instruction: str, schema=None) -> str:
+        print("Building chart annotation prompt...")
+        return CHART_ANNOTATION_PROMPT.format(
+            preamble=preamble,
             instruction=instruction
         )

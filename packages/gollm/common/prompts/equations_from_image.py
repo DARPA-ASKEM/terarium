@@ -11,6 +11,4 @@ LaTeX equations need to conform to a standard form. Use the following guidelines
 {style_guide}
 
 --- STYLE GUIDE END ---
-
-Answer:
 """

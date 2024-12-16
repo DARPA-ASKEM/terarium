@@ -46,10 +46,14 @@ class LlmToolsInterface:
         """Create a prompt that produces a model card"""
         pass
 
-    def create_compare_models_prompt(self, amrs: List[str], goal: str, schema: str) -> str:
+    def create_compare_models_prompt(self, amrs: List[str], dataset: str, goal: str, schema: str) -> str:
         """Create a prompt that compares models"""
         pass
 
     def create_general_query_prompt(self, instruction: str) -> str:
         """Create a prompt that performs a general query"""
+        pass
+
+    def create_chart_annotation_prompt(self, preamble: str, instruction: str, schema: str) -> str:
+        """Create a prompt that annotates a chart"""
         pass
