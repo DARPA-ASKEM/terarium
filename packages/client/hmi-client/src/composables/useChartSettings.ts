@@ -115,6 +115,14 @@ export function useChartSettings(
 		}
 	};
 
+	/**
+	 * Update the active chart settings with a partial update.
+	 * @param update - The partial update to apply to the active chart settings.
+	 */
+	const updateActiveChartSettings = (update: Partial<ChartSetting>) => {
+		findAndUpdateChartSettingsById(activeChartSettings.value?.id ?? '', update);
+	};
+
 	return {
 		chartSettings,
 		activeChartSettings: computed(() => activeChartSettings.value),
@@ -127,6 +135,7 @@ export function useChartSettings(
 		selectedComparisonChartSettings,
 		selectedSensitivityChartSettings,
 		setActiveChartSettings,
+		updateActiveChartSettings,
 		removeChartSettings,
 		updateChartSettings,
 		addComparisonChartSettings,

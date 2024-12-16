@@ -376,7 +376,7 @@
 						:active-settings="activeChartSettings"
 						:generate-annotation="generateAnnotation"
 						@delete-annotation="deleteAnnotation"
-						@update-settings="findAndUpdateChartSettingsById(activeChartSettings?.id as string, $event)"
+						@update-settings="updateActiveChartSettings"
 						@close="setActiveChartSettings(null)"
 					/>
 				</template>
@@ -759,7 +759,7 @@ const {
 	removeChartSettings,
 	updateChartSettings,
 	addComparisonChartSettings,
-	findAndUpdateChartSettingsById,
+	updateActiveChartSettings,
 	setActiveChartSettings
 } = useChartSettings(props, emit);
 

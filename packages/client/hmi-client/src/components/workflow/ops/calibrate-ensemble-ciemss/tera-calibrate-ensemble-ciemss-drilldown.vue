@@ -264,7 +264,7 @@
 						"
 						:active-settings="activeChartSettings"
 						:generate-annotation="generateAnnotation"
-						@update-settings="findAndUpdateChartSettingsById(activeChartSettings?.id as string, $event)"
+						@update-settings="updateActiveChartSettings"
 						@delete-annotation="deleteAnnotation"
 						@close="setActiveChartSettings(null)"
 					/>
@@ -606,7 +606,7 @@ const {
 	selectedEnsembleVariableSettings,
 	selectedErrorVariableSettings,
 	updateEnsembleVariableSettingOption,
-	findAndUpdateChartSettingsById,
+	updateActiveChartSettings,
 	setActiveChartSettings
 } = useChartSettings(props, emit);
 
