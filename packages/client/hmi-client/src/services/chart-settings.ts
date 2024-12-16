@@ -133,14 +133,12 @@ export function updateSensitivityChartSettingOption(
 		if (found) {
 			found.selectedInputVariables = options.selectedInputVariables ?? [];
 			found.timepoint = options.timepoint ?? 0;
+			return found;
 		}
-		return (
-			found ??
-			createNewChartSetting(variable, ChartSettingType.SENSITIVITY, [variable], {
-				selectedInputVariables: options.selectedInputVariables ?? [],
-				timepoint: options.timepoint ?? 0
-			})
-		);
+		return createNewChartSetting(variable, ChartSettingType.SENSITIVITY, [variable], {
+			selectedInputVariables: options.selectedInputVariables ?? [],
+			timepoint: options.timepoint ?? 0
+		});
 	});
 
 	const newSettings: ChartSetting[] = [...previousSettings, ...(selectedSettings ?? [])];
