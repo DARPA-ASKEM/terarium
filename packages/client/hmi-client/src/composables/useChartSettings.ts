@@ -1,12 +1,13 @@
 import { cloneDeep } from 'lodash';
 import { ref, computed, watch } from 'vue';
-import { ChartSetting, ChartSettingEnsembleVariable, ChartSettingType } from '@/types/common';
+import { ChartSetting, ChartSettingEnsembleVariable, ChartSettingSensitivity, ChartSettingType } from '@/types/common';
 import {
 	addMultiVariableChartSetting,
 	EnsembleVariableChartSettingOption,
 	removeChartSettingById,
 	updateChartSettingsBySelectedVariables,
-	updateEnsembleVariableChartSettingOption
+	updateEnsembleVariableChartSettingOption,
+	updateSensitivityChartSettingOption
 } from '@/services/chart-settings';
 import { WorkflowNode } from '@/types/workflow';
 
@@ -49,8 +50,11 @@ export function useChartSettings(
 		chartSettings.value.filter((setting) => setting.type === ChartSettingType.VARIABLE_COMPARISON)
 	);
 
-	const selectedSensitivityChartSettings = computed(() =>
-		chartSettings.value.filter((setting) => setting.type === ChartSettingType.SENSITIVITY)
+	const selectedSensitivityChartSettings = computed(
+		() =>
+			chartSettings.value.filter(
+				(setting) => setting.type === ChartSettingType.SENSITIVITY
+			) as ChartSettingSensitivity[]
 	);
 
 	watch(chartSettings, (settings) => {
@@ -99,6 +103,17 @@ export function useChartSettings(
 		});
 	};
 
+	const updateSensitivityChartSettings = (options: {
+		selectedVariables?: string[];
+		selectedInputVariables?: string[];
+		timepoint?: number;
+	}) => {
+		emit('update-state', {
+			...props.node.state,
+			chartSettings: updateSensitivityChartSettingOption(chartSettings.value as ChartSettingSensitivity[], options)
+		});
+	};
+
 	/**
 	 * Find and update a chart setting by its id.
 	 * @param id - The id of the chart setting to update.
@@ -140,6 +155,7 @@ export function useChartSettings(
 		updateChartSettings,
 		addComparisonChartSettings,
 		updateEnsembleVariableSettingOption,
+		updateSensitivityChartSettings,
 		findAndUpdateChartSettingsById
 	};
 }
