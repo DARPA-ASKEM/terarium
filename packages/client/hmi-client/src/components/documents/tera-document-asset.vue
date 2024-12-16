@@ -1,12 +1,8 @@
 <template>
-	<tera-asset :id="assetId" :name="document?.name ?? ''" :is-loading="documentLoading">
-		<p class="pl-3" v-if="documentLoading">PDF Loading...</p>
-		<tera-pdf-embed
-			v-else-if="view === DocumentView.PDF && pdfLink"
-			:pdf-link="pdfLink"
-			:title="document?.name || ''"
-		/>
-		<tera-text-editor v-else-if="view === DocumentView.TXT" :initial-text="docText ?? ''" />
+	<tera-asset :id="assetId" :name="document?.name ?? ''" :is-loading="documentLoading" :is-document="true">
+		<p class="pl-3" v-if="documentLoading">Document Loading...</p>
+		<tera-pdf-embed v-if="pdfLink" :pdf-link="pdfLink" :title="document?.name || ''" />
+		<tera-text-editor v-else-if="docText" :initial-text="docText" />
 	</tera-asset>
 </template>
 
@@ -18,11 +14,6 @@ import TeraPdfEmbed from '@/components/widgets/tera-pdf-embed.vue';
 import { downloadDocumentAsset, getDocumentAsset, getDocumentFileAsText } from '@/services/document-assets';
 import { type DocumentAsset } from '@/types/Types';
 
-enum DocumentView {
-	PDF = 'PDF',
-	TXT = 'Text'
-}
-
 const props = defineProps<{
 	assetId: string;
 }>();
@@ -31,38 +22,25 @@ const document = ref<DocumentAsset | null>(null);
 const documentLoading = ref(false);
 const docText = ref<string | null>(null);
 const pdfLink = ref<string | null>(null);
-const view = ref(DocumentView.PDF);
 
 watch(
 	() => props.assetId,
 	async (assetId, oldAssetId) => {
 		if (assetId === oldAssetId) return;
 		if (assetId) {
-			view.value = DocumentView.PDF;
 			pdfLink.value = null;
 			documentLoading.value = true;
 			document.value = await getDocumentAsset(assetId);
 			const filename = document.value?.fileNames?.[0];
 
-			if (filename?.endsWith('.pdf')) {
-				// Generate PDF download link on assetId change
-				downloadDocumentAsset(props.assetId, filename).then((pdfLinkResponse) => {
-					if (pdfLinkResponse) {
-						pdfLink.value = pdfLinkResponse;
-					}
-				});
-			} else if (filename && document.value?.id) {
-				if (document.value?.text) {
-					docText.value = document.value.text;
+			const isPdf = filename?.endsWith('.pdf');
+			if (document.value?.id && filename) {
+				if (isPdf) {
+					pdfLink.value = (await downloadDocumentAsset(props.assetId, filename)) ?? null;
 				} else {
-					getDocumentFileAsText(document.value.id, filename).then((text) => {
-						docText.value = text;
-					});
+					docText.value = (await getDocumentFileAsText(document.value.id, filename)) ?? null;
 				}
-			} else {
-				docText.value = document.value?.text ?? null;
 			}
-
 			documentLoading.value = false;
 		} else {
 			document.value = null;
