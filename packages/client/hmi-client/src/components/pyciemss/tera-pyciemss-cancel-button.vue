@@ -25,6 +25,7 @@ const cancelSimulation = async () => {
 		await cancelCiemssJob(id);
 		logger.success(`Simulation ${id} has been cancelled.`);
 	});
+	isCancelling.value = false;
 };
 </script>
 
