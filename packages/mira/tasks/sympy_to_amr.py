@@ -14,27 +14,18 @@ def main():
     exitCode = 0
 
     try:
-        taskrunner = TaskRunnerInterface(description="LaTeX to AMR")
+        taskrunner = TaskRunnerInterface(description="Sympy to AMR")
         taskrunner.on_cancellation(cleanup)
 
         sympy_code = taskrunner.read_input_str_with_timeout()
-        taskrunner.log("")
-        taskrunner.log("!!!!!")
+        taskrunner.log("== input code")
         taskrunner.log(sympy_code)
-        taskrunner.log("")
         taskrunner.log("")
 
         globals = {}
         exec(sympy_code, globals) # output should be in placed into "equation_output"
-        taskrunner.log("")
-        taskrunner.log("")
-        taskrunner.log("")
-        taskrunner.log("")
-        taskrunner.log("equations")
+        taskrunner.log("== equations")
         taskrunner.log(globals["equation_output"])
-        taskrunner.log("")
-        taskrunner.log("")
-        taskrunner.log("")
         taskrunner.log("")
 
         # SymPy to MMT
@@ -43,34 +34,23 @@ def main():
         # MMT to AMR
         amr_json = template_model_to_petrinet_json(mmt)
 
-        # amr_json = {}
-
-        taskrunner.log("");
-        taskrunner.log("");
-        taskrunner.log(amr_json)
-        taskrunner.log("");
-        taskrunner.log("");
-
-
         # Gather results
         response = {}
-        # response["sympyExprs"] = list(map(lambda x: str(x), sympy_exprs))
         response["amr"] = amr_json
-        taskrunner.log(f"LaTeX to AMR conversion succeeded")
-        taskrunner.write_output_dict_with_timeout({"response": response })
+        response["sympyCode"] = sympy_code
+        response["sympyExprs"] = list(map(lambda x: str(x), globals["equation_output"]))
 
-        print("LaTeX to AMR conversion succeeded")
+        taskrunner.log(f"Sympy to AMR conversion succeeded")
+        taskrunner.write_output_dict_with_timeout({"response": response })
     except Exception as e:
         sys.stderr.write(f"Error: {str(e)}\n")
         sys.stderr.write(traceback.format_exc())
         sys.stderr.flush()
         exitCode = 1
 
-
     taskrunner.log("Shutting down")
     taskrunner.shutdown()
     sys.exit(exitCode)
-
 
 if __name__ == "__main__":
     main()
