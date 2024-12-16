@@ -271,7 +271,7 @@ public class DatasetController {
 		@RequestParam("filename") final String filename,
 		@RequestParam(name = "limit", defaultValue = "" + DEFAULT_CSV_LIMIT, required = false) final Integer limit
 	) {
-		final CSVParser csvParser;
+		CSVParser csvParser;
 		try {
 			csvParser = datasetService.getCSVFileParser(filename, datasetId);
 			if (csvParser == null) {
@@ -288,6 +288,15 @@ public class DatasetController {
 				messages.get("postgres.service-unavailable")
 			);
 		}
+
+		// Count the number of rows in the CSV file
+		// int totalRowCount = 0;
+		// for (CSVRecord record : csvParser.getRecords()) {
+		// 		System.out.println("Total row count: " + totalRowCount);
+		// 		totalRowCount++;
+		// }
+
+		// System.out.println("Total row count: " + csvParser.getRecords().size());
 
 		// We have a parser over our CSV file. Now for the front end we need to create a matrix of strings
 		// to represent the CSV file up to our limit. Then we need to calculate the column statistics.

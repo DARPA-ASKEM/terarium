@@ -104,6 +104,7 @@ async function getBulkDatasets(datasetIDs: string[]) {
  */
 async function downloadRawFile(datasetId: string, filename: string, limit: number = 100): Promise<CsvAsset | null> {
 	const URL = `/datasets/${datasetId}/download-csv?filename=${filename}&limit=${limit}`;
+	console.log('URL', URL);
 	const response = await API.get(URL).catch((error) => {
 		logger.error(`Error: data-service was not able to retrieve the dataset's rawfile ${error}`);
 	});
@@ -347,7 +348,7 @@ const getCsvColumnStats = (csvColumn: number[]): CsvColumnStats => {
 	return { bins, minValue, maxValue, mean, median, sd };
 };
 
-async function getRawContent(dataset: Dataset) {
+async function getRawContent(dataset: Dataset, limit: number = 100): Promise<CsvAsset | null> {
 	// If it's an ESGF dataset or a NetCDF file, we don't want to download the raw content
 	if (!dataset?.id || dataset.esgfId || dataset.metadata?.format === 'netcdf') return null;
 	// We are assuming here there is only a single csv file.
@@ -357,7 +358,7 @@ async function getRawContent(dataset: Dataset) {
 		!isEmpty(dataset.fileNames[0]) &&
 		dataset.fileNames[0].endsWith('.csv')
 	) {
-		const response = await downloadRawFile(dataset.id, dataset.fileNames[0]);
+		const response = await downloadRawFile(dataset.id, dataset.fileNames[0], limit);
 		return response;
 	}
 	return null;

@@ -329,8 +329,11 @@ function findDuplicates(strings: string[]): string[] {
 async function generateChartData() {
 	if (datasets.value.length <= 1) return;
 
-	const rawContents = await Promise.all(datasets.value.map((dataset) => getRawContent(dataset)));
+	const rawContents = await Promise.all(datasets.value.map((dataset) => getRawContent(dataset, 162)));
 	const transposedRawContents = rawContents.map((content) => ({ ...content, csv: transposeArrays(content?.csv) }));
+
+	console.log(datasets.value);
+	console.log(rawContents);
 
 	// Collect common header names if not done yet
 	if (isEmpty(commonHeaderNames.value)) {
