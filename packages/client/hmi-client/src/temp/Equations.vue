@@ -12,6 +12,7 @@
 			<h4>Cleaned LaTeX => SymPy equation strings + AMR json</h4>
 			<div style="display: flex; flex-direction: row">
 				<textarea ref="latex2"></textarea>
+				<pre class="result" ref="resultCode"></pre>
 				<pre class="result" ref="resultSympy"></pre>
 				<pre class="result" ref="resultAmr"></pre>
 			</div>
@@ -28,6 +29,7 @@ import API from '@/api/api';
 const latex1 = ref<HTMLTextAreaElement | null>(null);
 const latex2 = ref<HTMLTextAreaElement | null>(null);
 const result1 = ref<HTMLDivElement | null>(null);
+const resultCode = ref<HTMLDivElement | null>(null);
 const resultSympy = ref<HTMLDivElement | null>(null);
 const resultAmr = ref<HTMLDivElement | null>(null);
 
@@ -52,6 +54,9 @@ const latex2amr = async () => {
 	const inputStr = latex2.value?.value || '[]';
 	const equations = JSON.parse(inputStr);
 
+	if (resultCode.value) {
+		resultCode.value.innerHTML = 'processing...';
+	}
 	if (resultSympy.value) {
 		resultSympy.value.innerHTML = 'processing...';
 	}
@@ -62,6 +67,10 @@ const latex2amr = async () => {
 	const resp = await API.post('/mira/latex-to-amr', equations);
 	const respData = resp.data;
 
+	if (resultCode.value) {
+		resultCode.value.innerHTML = '';
+		resultCode.value.innerHTML = respData.response.sympyCode;
+	}
 	if (resultSympy.value) {
 		resultSympy.value.innerHTML = '';
 		resultSympy.value.innerHTML = JSON.stringify(respData.response.sympyExprs, null, 2);
