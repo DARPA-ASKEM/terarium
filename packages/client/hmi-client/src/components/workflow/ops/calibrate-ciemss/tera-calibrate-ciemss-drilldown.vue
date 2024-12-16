@@ -616,7 +616,7 @@ const datasetColumns = ref<DatasetColumn[]>();
 const csvAsset = shallowRef<CsvAsset | undefined>(undefined);
 const groundTruthData = computed<DataArray>(() => parseCsvAsset(csvAsset.value as CsvAsset));
 
-const lossActiveIndex = ref([0]);
+const lossActiveIndex = ref(0);
 const currentActiveIndicies = ref([0, 1, 2, 3, 4]);
 
 const modelConfig = ref<ModelConfiguration | null>(null);
