@@ -670,9 +670,6 @@ export function useCharts(
 			if (typeof value !== 'number') {
 				throw new Error(`The selected variable "${selectedVariable}" must map to numeric values.`);
 			}
-			if (typeof id !== 'number') {
-				throw new Error('The "sample_id" field must be a numeric value.');
-			}
 			return { id, value };
 		});
 
