@@ -6,7 +6,7 @@ import {
 	EnsembleVariableChartSettingOption,
 	removeChartSettingById,
 	updateChartSettingsBySelectedVariables,
-	updateEnsembleVariableChartSettingOption
+	updateAllChartSettings
 } from '@/services/chart-settings';
 import { WorkflowNode } from '@/types/workflow';
 
@@ -95,7 +95,9 @@ export function useChartSettings(
 	const updateEnsembleVariableSettingOption = (option: EnsembleVariableChartSettingOption, value: boolean) => {
 		emit('update-state', {
 			...props.node.state,
-			chartSettings: updateEnsembleVariableChartSettingOption(chartSettings.value, option, value)
+			chartSettings: updateAllChartSettings(chartSettings.value, { [option]: value }, [
+				ChartSettingType.VARIABLE_ENSEMBLE
+			])
 		});
 	};
 

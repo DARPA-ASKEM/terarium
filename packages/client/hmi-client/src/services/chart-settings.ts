@@ -131,6 +131,27 @@ export function updateEnsembleVariableChartSettingOption(
 }
 
 /**
+ * Update all chart settings with the given update object. If includeTypes is provided, only the settings with the specified types will be updated.
+ * @param settings - The current array of chart settings.
+ * @param update - The partial update to apply to the chart settings.
+ * @param includeTypes = The types of chart settings to update.
+ * @returns The updated array of chart settings.
+ */
+export function updateAllChartSettings(
+	settings: ChartSetting[],
+	update: Partial<ChartSetting>,
+	includeTypes?: ChartSettingType[]
+) {
+	const newSettings = settings.map((setting) => {
+		if (includeTypes === undefined || includeTypes.includes(setting.type)) {
+			Object.assign(setting, update);
+		}
+		return setting;
+	});
+	return newSettings;
+}
+
+/**
  * Filters chart settings based on the specified type and variable selection.
  * Assume that this is used for single variable charts only.
  *
