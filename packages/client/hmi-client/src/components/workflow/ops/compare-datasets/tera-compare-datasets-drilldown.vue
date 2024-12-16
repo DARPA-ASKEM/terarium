@@ -37,7 +37,7 @@
 								option-value="id"
 								:loading="isFetchingDatasets"
 								placeholder="Optional"
-								@change="createCharts"
+								@change="generateChartData"
 							/>
 
 							<label>Comparison tables</label>
@@ -52,7 +52,7 @@
 							v-model="timepointHeaderName"
 							:options="commonHeaderNames"
 							placeholder="Select timepoint header"
-							@change="createCharts"
+							@change="generateChartData"
 						/>
 						<template v-if="knobs.selectedCompareOption === CompareValue.RANK">
 							<label>Specifiy criteria of interest</label>
@@ -118,7 +118,6 @@
 						:active-settings="activeChartSettings"
 						:generate-annotation="generateAnnotation"
 						@update-settings-scale="updateChartSettingsScale(activeChartSettings?.id as string, $event)"
-						@update-settings-color="onColorChange"
 						@delete-annotation="deleteAnnotation"
 						@close="activeChartSettings = null"
 					/>
@@ -149,7 +148,7 @@
 								v-model="knobs.selectedPlotType"
 								:value="option.value"
 								name="plotValues"
-								@change="createCharts"
+								@change="generateChartData"
 							/>
 							<label class="pl-2 py-1" :for="option.value">{{ option.label }}</label>
 						</div>
@@ -165,8 +164,8 @@ import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
 import { WorkflowNode, WorkflowPortStatus } from '@/types/workflow';
 import TeraSliderPanel from '@/components/widgets/tera-slider-panel.vue';
 import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.vue';
-import { DrilldownTabs, ChartSettingType, type ChartSetting } from '@/types/common';
-import { onMounted, ref, watch } from 'vue';
+import { DrilldownTabs, ChartSettingType } from '@/types/common';
+import { onMounted, ref, watch, computed } from 'vue';
 import Button from 'primevue/button';
 import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
@@ -175,7 +174,7 @@ import { Dataset } from '@/types/Types';
 import { getDataset, getRawContent } from '@/services/dataset';
 import TeraCheckbox from '@/components/widgets/tera-checkbox.vue';
 import RadioButton from 'primevue/radiobutton';
-import { isEmpty, cloneDeep, isEqual } from 'lodash';
+import { isEmpty, cloneDeep } from 'lodash';
 import VegaChart from '@/components/widgets/VegaChart.vue';
 import { deleteAnnotation } from '@/services/chart-settings';
 import TeraChartSettingsItem from '@/components/widgets/tera-chart-settings-item.vue';
@@ -223,16 +222,13 @@ const isFetchingDatasets = ref(false);
 const isSimulationsFromSameModel = ref(true);
 const isATESelected = ref(false);
 
-const compareCharts = ref<any[]>([]);
-
 const {
 	activeChartSettings,
 	chartSettings,
 	selectedVariableSettings,
 	removeChartSettings,
 	updateChartSettings,
-	updateChartSettingsScale,
-	updateChartPrimaryColor
+	updateChartSettingsScale
 } = useChartSettings(props, emit);
 
 const outputPanel = ref(null);
@@ -246,11 +242,19 @@ const onRun = () => {
 
 interface BasicKnobs {
 	criteriaOfInterestCards: CriteriaOfInterestCard[];
-	selectedPlotType: PlotValue;
 	selectedCompareOption: CompareValue;
 	selectedDataset: string | null;
-	chartSettings: ChartSetting[] | null;
+	selectedPlotType: PlotValue;
 }
+
+const knobs = ref<BasicKnobs>({
+	criteriaOfInterestCards: [],
+	selectedCompareOption: CompareValue.IMPACT,
+	selectedDataset: null,
+	selectedPlotType: PlotValue.PERCENTAGE
+});
+
+const selectedPlotType = computed(() => knobs.value.selectedPlotType);
 
 const addCriteria = () => {
 	knobs.value.criteriaOfInterestCards.push(blankCriteriaOfInterest);
@@ -264,14 +268,6 @@ const updateCriteria = (card: Partial<CriteriaOfInterestCard>, index: number) =>
 	Object.assign(knobs.value.criteriaOfInterestCards[index], card);
 };
 
-const knobs = ref<BasicKnobs>({
-	criteriaOfInterestCards: [],
-	selectedPlotType: PlotValue.PERCENTAGE,
-	selectedCompareOption: CompareValue.IMPACT,
-	selectedDataset: null,
-	chartSettings: null
-});
-
 const { generateAnnotation, getChartAnnotationsByChartId, useCompareDatasetCharts } = useCharts(
 	props.node.id,
 	null,
@@ -281,7 +277,7 @@ const { generateAnnotation, getChartAnnotationsByChartId, useCompareDatasetChart
 	null,
 	null
 );
-const variableCharts = useCompareDatasetCharts(selectedVariableSettings, knobs);
+const variableCharts = useCompareDatasetCharts(selectedVariableSettings, selectedPlotType);
 
 const initialize = async () => {
 	const state = cloneDeep(props.node.state);
@@ -302,7 +298,7 @@ const initialize = async () => {
 
 	if (!knobs.value.selectedDataset) knobs.value.selectedDataset = datasets.value[0]?.id ?? null;
 
-	createCharts();
+	generateChartData();
 };
 
 // Following two funcs are util like
@@ -330,19 +326,8 @@ function findDuplicates(strings: string[]): string[] {
 	return duplicates;
 }
 
-const onColorChange = (color: string) => {
-	if (activeChartSettings.value) updateChartPrimaryColor(activeChartSettings.value, color);
-};
-
-async function createCharts() {
-	// FIXME: Temporary check, useChartSettings updates the state directly but the knobs are not updated
-	// If this isn't synced the chartSettings will be reverted to the previous state
-	if (!isEqual(props.node.state.chartSettings, knobs.value.chartSettings)) {
-		knobs.value.chartSettings = props.node.state.chartSettings;
-	}
-
+async function generateChartData() {
 	if (datasets.value.length <= 1) return;
-	compareCharts.value = [];
 
 	const rawContents = await Promise.all(datasets.value.map((dataset) => getRawContent(dataset)));
 	const transposedRawContents = rawContents.map((content) => ({ ...content, csv: transposeArrays(content?.csv) }));
@@ -369,7 +354,6 @@ async function createCharts() {
 	const selectedIndex = datasets.value.findIndex((dataset) => dataset.id === knobs.value.selectedDataset);
 	if (selectedIndex === -1) return;
 
-	const { selectedPlotType } = knobs.value;
 	const allData: any[] = [];
 
 	// Go through every common header (column loop)
@@ -392,11 +376,11 @@ async function createCharts() {
 
 			referenceColumn.forEach((referencePoint: number, index: number) => {
 				let value = 0;
-				if (selectedPlotType === PlotValue.DIFFERENCE) {
+				if (selectedPlotType.value === PlotValue.DIFFERENCE) {
 					value = columnToSubtract[index] - referencePoint; // difference
-				} else if (selectedPlotType === PlotValue.PERCENTAGE) {
+				} else if (selectedPlotType.value === PlotValue.PERCENTAGE) {
 					value = ((columnToSubtract[index] - referencePoint) / referencePoint) * 100; // percentage
-				} else if (selectedPlotType === PlotValue.VALUE) {
+				} else if (selectedPlotType.value === PlotValue.VALUE) {
 					value = parseFloat(columnToSubtract[index]); // trajectory
 				}
 				if (data[index] === undefined) {
@@ -423,7 +407,10 @@ watch(
 	() => knobs.value,
 	() => {
 		const state = cloneDeep(props.node.state);
-		Object.assign(state, knobs.value);
+		state.criteriaOfInterestCards = knobs.value.criteriaOfInterestCards;
+		state.selectedCompareOption = knobs.value.selectedCompareOption;
+		state.selectedDataset = knobs.value.selectedDataset;
+		state.selectedPlotType = knobs.value.selectedPlotType;
 		emit('update-state', state);
 	},
 	{ deep: true }

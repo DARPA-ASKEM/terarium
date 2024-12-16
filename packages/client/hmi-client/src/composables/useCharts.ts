@@ -28,6 +28,7 @@ import {
 import { SimulateEnsembleMappingRow } from '@/components/workflow/ops/simulate-ensemble-ciemss/simulate-ensemble-ciemss-operation';
 import { getModelConfigName } from '@/services/model-configurations';
 import { EnsembleErrorData } from '@/components/workflow/ops/calibrate-ensemble-ciemss/calibrate-ensemble-util';
+import { PlotValue } from '@/components/workflow/ops/compare-datasets/compare-datasets-operation';
 import { useChartAnnotations } from './useChartAnnotations';
 
 export interface ChartData {
@@ -277,31 +278,37 @@ export function useCharts(
 		return interventionCharts;
 	};
 
-	const useCompareDatasetCharts = (chartSettings: ComputedRef<ChartSetting[]>, knobs: Ref<any>) => {
+	const useCompareDatasetCharts = (
+		chartSettings: ComputedRef<ChartSetting[]>,
+		selectedPlotType: ComputedRef<PlotValue>
+	) => {
 		const compareDatasetCharts = computed(() => {
 			const charts: Record<string, VisualizationSpec> = {};
 			if (!isChartReadyToBuild.value) return charts;
 			const { resultSummary } = chartData.value as ChartData;
 			chartSettings.value.forEach((settings) => {
 				const variable = settings.selectedVariables[0];
-				const chart = createForecastChart(
-					null,
-					{
-						data: resultSummary.filter((d) => d.headerName === variable),
-						variables: Object.keys(resultSummary[0]).filter((key) => key !== 'timepoint_id' && key !== 'headerName'),
-						timeField: 'timepoint_id'
-					},
-					null,
-					{
-						title: variable,
-						legend: true,
-						width: chartSize.value.width,
-						height: chartSize.value.height,
-						xAxisTitle: getUnit('_time') || 'Time',
-						yAxisTitle: capitalize(knobs.value.selectedPlotType),
-						// dateOptions,
-						scale: settings.scale
-					}
+				const annotations = getChartAnnotationsByChartId(settings.id);
+				const chart = applyForecastChartAnnotations(
+					createForecastChart(
+						null,
+						{
+							data: resultSummary.filter((d) => d.headerName === variable),
+							variables: Object.keys(resultSummary[0]).filter((key) => key !== 'timepoint_id' && key !== 'headerName'),
+							timeField: 'timepoint_id'
+						},
+						null,
+						{
+							title: variable,
+							legend: true,
+							width: chartSize.value.width,
+							height: chartSize.value.height,
+							xAxisTitle: getUnit('_time') || 'Time',
+							yAxisTitle: capitalize(selectedPlotType.value),
+							scale: settings.scale
+						}
+					),
+					annotations
 				);
 				charts[settings.id] = chart;
 			});
