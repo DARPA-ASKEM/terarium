@@ -11,6 +11,7 @@ export interface ModelComparisonOperationState extends BaseState {
 	comparisonPairs: string[][];
 	goal: string;
 	hasRun: boolean;
+	previousRunId?: string;
 }
 
 export const ModelComparisonOperation: Operation = {

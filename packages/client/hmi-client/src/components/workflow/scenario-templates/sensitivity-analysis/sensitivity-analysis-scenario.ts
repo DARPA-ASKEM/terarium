@@ -13,9 +13,8 @@ import _ from 'lodash';
 import { ChartSetting, ChartSettingType } from '@/types/common';
 import { updateChartSettingsBySelectedVariables } from '@/services/chart-settings';
 import { AssetType, ParameterSemantic } from '@/types/Types';
-import { DistributionType } from '@/services/distribution';
-import { calculateUncertaintyRange } from '@/utils/math';
 import { useProjects } from '@/composables/project';
+import { switchToUniformDistribution } from '../scenario-template-utils';
 
 export class SensitivityAnalysisScenario extends BaseScenario {
 	public static templateId = 'sensitivity-analysis';
@@ -61,14 +60,7 @@ export class SensitivityAnalysisScenario extends BaseScenario {
 	}
 
 	setParameter(parameter: ParameterSemantic, index: number) {
-		// convert constants to distributions
-		if (parameter.distribution.type === DistributionType.Constant) {
-			parameter.distribution.type = DistributionType.Uniform;
-			// +10% and -10% of the constant value
-			const { min, max } = calculateUncertaintyRange(parameter.distribution.parameters.value, 10);
-			parameter.distribution.parameters = { maximum: max, minimum: min };
-		}
-
+		switchToUniformDistribution(parameter);
 		this.parameters[index] = parameter;
 	}
 
@@ -76,7 +68,7 @@ export class SensitivityAnalysisScenario extends BaseScenario {
 		this.modelConfigSpec.id = id;
 	}
 
-	setCalibrateSpec(ids: string[]) {
+	setSimulateSpec(ids: string[]) {
 		this.simulateSpec.ids = ids;
 	}
 
