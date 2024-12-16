@@ -24,6 +24,8 @@ from gollm_openai.prompts.model_meta_compare import (
     MODEL_METADATA_COMPARE_PROMPT,
     MODEL_METADATA_COMPARE_GOAL_PROMPT
 )
+from gollm_openai.prompts.latex_to_sympy import LATEX_TO_SYMPY_PROMPT
+
 from openai import OpenAI
 from openai.types.chat.completion_create_params import ResponseFormat
 from typing import List
@@ -75,6 +77,33 @@ def get_image_format_string(image_format: str) -> str:
         "exr": f"data:image/exr:base64,"
     }
     return format_strings.get(image_format.lower())
+
+
+def latex_to_sympy(equations: List[str]) -> str:
+    print("latex to sympy ...")
+
+    prompt = LATEX_TO_SYMPY_PROMPT.format(
+        latex_equations=",\n".join(equations)
+    )
+
+    client = OpenAI()
+    output = client.chat.completions.create(
+        model=GPT_MODEL,
+        frequency_penalty=0,
+        max_tokens=4000,
+        presence_penalty=0,
+        seed=905,
+        temperature=0,
+        top_p=1,
+        response_format={
+            "type": "text"
+        },
+        messages=[
+            {"role": "user", "content": prompt},
+        ]
+    )
+    return output.choices[0].message.content
+
 
 
 def equations_cleanup(equations: List[str]) -> dict:
