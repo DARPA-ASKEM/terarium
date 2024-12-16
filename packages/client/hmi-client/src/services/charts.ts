@@ -11,7 +11,7 @@ const VEGALITE_SCHEMA = 'https://vega.github.io/schema/vega-lite/v5.json';
 
 export const CATEGORICAL_SCHEME = ['#1B8073', '#6495E8', '#8F69B9', '#D67DBF', '#E18547', '#D2C446', '#84594D'];
 
-// diverging colour scheme for the sensitivity chart (from a deep blue -> a deep red)
+// diverging categorical colour scheme for the sensitivity chart (from a deep blue -> a deep red)
 export const SENSITIVITY_COLOUR_SCHEME = ['#4575B4', '#91BFDB', '#E0F3F8', '#FFFFBF', '#FEE090', '#FC8D59', '#D73027'];
 export enum AUTOSIZE {
 	FIT = 'fit',
