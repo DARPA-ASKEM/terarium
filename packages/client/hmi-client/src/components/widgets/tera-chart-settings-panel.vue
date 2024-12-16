@@ -99,7 +99,6 @@ const chartAnnotations = computed(() => {
 	if (props.annotations === undefined) {
 		return undefined;
 	}
-
 	return props.annotations.filter((annotation) => annotation.chartId === props.activeSettings?.id);
 });
 
