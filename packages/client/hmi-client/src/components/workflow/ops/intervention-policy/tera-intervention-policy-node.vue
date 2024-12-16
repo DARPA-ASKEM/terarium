@@ -24,6 +24,7 @@
 			severity="secondary"
 			outlined
 			:disabled="!isModelInputConnected"
+			class="mt-2"
 		/>
 	</section>
 </template>

@@ -5,8 +5,8 @@ setup(
     version="0.1.0",
     packages=find_packages(),
     install_requires=[
-        "openai==1.56.0",
-        "httpx==0.28.0",
+        "openai==1.57.2",
+        "httpx==0.28.1",
         "pandas",
         "pydantic==2.10.2",
         "regex",
@@ -24,6 +24,7 @@ setup(
             "gollm:embedding=tasks.embedding:main",
             "gollm:enrich_amr=tasks.enrich_amr:main",
             "gollm:enrich_dataset=tasks.enrich_dataset:main",
+            "gollm:latex_to_sympy=tasks.latex_to_sympy:main",
             "gollm:equations_cleanup=tasks.equations_cleanup:main",
             "gollm:equations_from_image=tasks.equations_from_image:main",
             "gollm:generate_response=tasks.generate_response:main",

@@ -69,7 +69,6 @@ import software.uncharted.terarium.hmiserver.proxies.skema.SkemaUnifiedProxy;
 import software.uncharted.terarium.hmiserver.security.Roles;
 import software.uncharted.terarium.hmiserver.service.ClientEventService;
 import software.uncharted.terarium.hmiserver.service.CurrentUserService;
-import software.uncharted.terarium.hmiserver.service.EnrichmentService;
 import software.uncharted.terarium.hmiserver.service.ExtractionService;
 import software.uncharted.terarium.hmiserver.service.data.CodeService;
 import software.uncharted.terarium.hmiserver.service.data.DatasetService;
@@ -108,7 +107,6 @@ public class KnowledgeController {
 	private final CodeService codeService;
 
 	private final ExtractionService extractionService;
-	private final EnrichmentService enrichmentService;
 	private final TaskService taskService;
 
 	private final ProjectService projectService;
@@ -278,11 +276,9 @@ public class KnowledgeController {
 				taskReq.setUserId(currentUserService.get().getId());
 				final TaskResponse taskResp = taskService.runTaskSync(taskReq);
 				final JsonNode taskResponseJSON = mapper.readValue(taskResp.getOutput(), JsonNode.class);
-				final String amrString = taskResponseJSON.get("response").asText();
-				ObjectNode objNode = (ObjectNode) mapper.readTree(amrString);
 
-				final JsonNode testNode = mapper.readValue(amrString, JsonNode.class);
-				responseAMR = mapper.convertValue(testNode, Model.class);
+				final ObjectNode amrNode = taskResponseJSON.get("response").get("amr").deepCopy();
+				responseAMR = mapper.convertValue(amrNode, Model.class);
 			} catch (Exception e) {
 				log.error("failed to convert LaTeX equations to AMR", e);
 				throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "failed to convert latex equations to AMR");
@@ -341,41 +337,6 @@ public class KnowledgeController {
 			}
 
 			notificationInterface.sendMessage("Model updated.");
-		}
-
-		// Enrich the model asynchronously if a document ID was provided
-		if (documentId != null) {
-			// Get the Document
-			final DocumentAsset document = documentService
-				.getAsset(documentId, permission)
-				.orElseThrow(() ->
-					new ResponseStatusException(
-						HttpStatus.NOT_FOUND,
-						messages.get("An error occurred while trying to get the document.")
-					)
-				);
-
-			// Make sure there is text in the document
-			if (document.getText() != null && !document.getText().isBlank()) {
-				notificationInterface.sendMessage("Document text found.");
-
-				// Do the enrichment
-				enrichmentService.modelWithDocument(
-					projectId,
-					document,
-					model,
-					currentUserService.get().getId(),
-					permission,
-					notificationInterface
-				);
-			} else {
-				final String documentTextNotFoundMessage = String.format(
-					"Document text not found. Please try enriching the model when the document %s extraction is done",
-					document.getName()
-				);
-				notificationInterface.sendMessage(documentTextNotFoundMessage);
-				log.info(documentTextNotFoundMessage);
-			}
 		}
 
 		notificationInterface.sendFinalMessage("Model from equations done.");
@@ -776,7 +737,7 @@ public class KnowledgeController {
 				if (groundings.getIdentifiers() == null) {
 					groundings.setIdentifiers(new ArrayList<>());
 				}
-				groundings.getIdentifiers().add(new DKG(g.get(0).asText(), g.get(1).asText(), ""));
+				groundings.getIdentifiers().add(new DKG(g.get(0).asText(), g.get(1).asText(), "", null, null));
 			}
 
 			// remove groundings from an annotation object

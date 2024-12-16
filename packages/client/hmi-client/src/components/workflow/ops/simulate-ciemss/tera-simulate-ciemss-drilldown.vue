@@ -17,7 +17,7 @@
 			>
 				<template #content>
 					<div class="toolbar">
-						<p>Click Run to start the simulation.</p>
+						<p>{{ blankMessage }}.</p>
 						<span class="flex gap-2">
 							<tera-pyciemss-cancel-button :simulation-run-id="cancelRunIds" />
 							<Button label="Run" icon="pi pi-play" @click="run" :loading="inProgressForecastRun" />
@@ -120,7 +120,11 @@
 
 		<!-- Preview -->
 		<template #preview>
-			<tera-drilldown-section v-if="selectedOutputId" :is-loading="inProgressForecastRun">
+			<tera-drilldown-section
+				:is-loading="inProgressForecastRun"
+				:is-blank="!selectedOutputId"
+				:blank-message="blankMessage"
+			>
 				<template #header-controls-right>
 					<Button class="mr-3" label="Save for re-use" severity="secondary" outlined @click="showSaveDataset = true" />
 				</template>
@@ -197,12 +201,6 @@
 					</div>
 				</template>
 			</tera-drilldown-section>
-
-			<!-- Empty state -->
-			<section v-else class="empty-state">
-				<Vue3Lottie :animationData="EmptySeed" :height="150" loop autoplay />
-				<p class="helpMessage">Click 'Run' to start the simulation</p>
-			</section>
 		</template>
 
 		<template #sidebar-right>
@@ -224,6 +222,8 @@
 						"
 						:active-settings="activeChartSettings"
 						:generate-annotation="generateAnnotation"
+						@update-settings-scale="updateChartSettingsScale(activeChartSettings?.id as string, $event)"
+						@update-settings-color="onColorChange"
 						@delete-annotation="deleteAnnotation"
 						@close="activeChartSettings = null"
 					/>
@@ -313,16 +313,16 @@
 <script setup lang="ts">
 import _, { isEmpty } from 'lodash';
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
+
+import { VAceEditor } from 'vue3-ace-editor';
+import { VAceEditorInstance } from 'vue3-ace-editor/types';
+
+import Accordion from 'primevue/accordion';
+import AccordionTab from 'primevue/accordiontab';
 import Button from 'primevue/button';
 import Dropdown from 'primevue/dropdown';
 import Divider from 'primevue/divider';
-import Accordion from 'primevue/accordion';
-import AccordionTab from 'primevue/accordiontab';
-import { Vue3Lottie } from 'vue3-lottie';
-import EmptySeed from '@/assets/images/lottie-empty-seed.json';
-import { useDrilldownChartSize } from '@/composables/useDrilldownChartSize';
-import TeraInputNumber from '@/components/widgets/tera-input-number.vue';
-import TeraSliderPanel from '@/components/widgets/tera-slider-panel.vue';
+
 import type {
 	CsvAsset,
 	InterventionPolicy,
@@ -333,6 +333,16 @@ import type {
 } from '@/types/Types';
 import { AssetType } from '@/types/Types';
 import type { WorkflowNode } from '@/types/workflow';
+
+import { deleteAnnotation } from '@/services/chart-settings';
+import { flattenInterventionData, getInterventionPolicyById } from '@/services/intervention-policy';
+import {
+	getModelByModelConfigurationId,
+	getUnitsFromModelParts,
+	getCalendarSettingsFromModel,
+	getTypesFromModelParts
+} from '@/services/model';
+import { getModelConfigurationById } from '@/services/model-configurations';
 import {
 	getRunResultCSV,
 	parsePyCiemssMap,
@@ -341,39 +351,33 @@ import {
 	DataArray,
 	CiemssMethodOptions
 } from '@/services/models/simulation-service';
-import {
-	getModelByModelConfigurationId,
-	getUnitsFromModelParts,
-	getCalendarSettingsFromModel,
-	getTypesFromModelParts
-} from '@/services/model';
-import { nodeMetadata } from '@/components/workflow/util';
 
-import TeraDatasetDatatable from '@/components/dataset/tera-dataset-datatable.vue';
-import SelectButton from 'primevue/selectbutton';
-import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
-import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.vue';
-import TeraPyciemssCancelButton from '@/components/pyciemss/tera-pyciemss-cancel-button.vue';
-import TeraNotebookError from '@/components/drilldown/tera-notebook-error.vue';
-import TeraOperatorOutputSummary from '@/components/operator/tera-operator-output-summary.vue';
-import { useProjects } from '@/composables/project';
-import TeraNotebookJupyterInput from '@/components/llm/tera-notebook-jupyter-input.vue';
-import { KernelSessionManager } from '@/services/jupyter';
 import { logger } from '@/utils/logger';
-import { VAceEditor } from 'vue3-ace-editor';
-import { VAceEditorInstance } from 'vue3-ace-editor/types';
-import VegaChart from '@/components/widgets/VegaChart.vue';
+
 import { ChartSettingType, CiemssPresetTypes, DrilldownTabs } from '@/types/common';
-import { getModelConfigurationById } from '@/services/model-configurations';
-import { flattenInterventionData, getInterventionPolicyById } from '@/services/intervention-policy';
-import TeraInterventionSummaryCard from '@/components/intervention-policy/tera-intervention-summary-card.vue';
-import TeraSaveSimulationModal from '@/components/project/tera-save-simulation-modal.vue';
+
+import VegaChart from '@/components/widgets/VegaChart.vue';
+import { KernelSessionManager } from '@/services/jupyter';
 import TeraChartSettings from '@/components/widgets/tera-chart-settings.vue';
 import TeraChartSettingsPanel from '@/components/widgets/tera-chart-settings-panel.vue';
+import TeraDatasetDatatable from '@/components/dataset/tera-dataset-datatable.vue';
+import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
+import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.vue';
+import TeraInputNumber from '@/components/widgets/tera-input-number.vue';
+import TeraInterventionSummaryCard from '@/components/intervention-policy/tera-intervention-summary-card.vue';
+import TeraNotebookError from '@/components/drilldown/tera-notebook-error.vue';
+import TeraNotebookJupyterInput from '@/components/llm/tera-notebook-jupyter-input.vue';
+import TeraOperatorOutputSummary from '@/components/operator/tera-operator-output-summary.vue';
+import TeraPyciemssCancelButton from '@/components/pyciemss/tera-pyciemss-cancel-button.vue';
+import TeraSaveSimulationModal from '@/components/project/tera-save-simulation-modal.vue';
+import TeraSliderPanel from '@/components/widgets/tera-slider-panel.vue';
 import TeraTimestepCalendar from '@/components/widgets/tera-timestep-calendar.vue';
-import { deleteAnnotation } from '@/services/chart-settings';
+import { nodeMetadata } from '@/components/workflow/util';
+
 import { useCharts } from '@/composables/useCharts';
 import { useChartSettings } from '@/composables/useChartSettings';
+import { useProjects } from '@/composables/project';
+import { useDrilldownChartSize } from '@/composables/useDrilldownChartSize';
 import { SimulateCiemssOperationState } from './simulate-ciemss-operation';
 import { mergeResults, renameFnGenerator } from '../calibrate-ciemss/calibrate-utils';
 import { usePreparedChartInputs } from './simulate-utils';
@@ -385,6 +389,7 @@ const emit = defineEmits(['update-state', 'select-output', 'close']);
 
 const isSidebarOpen = ref(true);
 const isOutputSettingsPanelOpen = ref(false);
+const blankMessage = "Click 'Run' to start the simulation";
 
 const currentActiveIndicies = ref([0, 1, 2]);
 
@@ -527,7 +532,9 @@ const {
 	comparisonChartsSettingsSelection,
 	removeChartSettings,
 	updateChartSettings,
-	addComparisonChartSettings
+	updateChartSettingsScale,
+	addComparisonChartSettings,
+	updateChartPrimaryColor
 } = useChartSettings(props, emit);
 
 const {
@@ -740,6 +747,10 @@ watch(
 	{ immediate: true }
 );
 
+const onColorChange = (color: string) => {
+	if (activeChartSettings.value) updateChartPrimaryColor(activeChartSettings.value, color);
+};
+
 onMounted(() => {
 	buildJupyterContext();
 });
@@ -784,6 +795,7 @@ onUnmounted(() => kernelManager.shutdown());
 	color: var(--text-color-secondary);
 	background: var(--surface-50);
 }
+
 .empty-image {
 	width: 5rem;
 	height: 6rem;
@@ -825,18 +837,6 @@ onUnmounted(() => kernelManager.shutdown());
 	& > * {
 		flex: 1;
 	}
-}
-
-.empty-state {
-	width: 100%;
-	height: 100%;
-	display: flex;
-	flex-direction: column;
-	align-items: center;
-	justify-content: center;
-	gap: var(--gap-4);
-	text-align: center;
-	pointer-events: none;
 }
 
 .p-button-icon-left {

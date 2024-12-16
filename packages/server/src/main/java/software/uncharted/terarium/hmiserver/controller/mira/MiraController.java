@@ -10,6 +10,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import jakarta.annotation.PostConstruct;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -21,17 +22,20 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.annotation.Secured;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 import software.uncharted.terarium.hmiserver.models.dataservice.Artifact;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.Model;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.configurations.ModelConfiguration;
 import software.uncharted.terarium.hmiserver.models.mira.Curies;
+import software.uncharted.terarium.hmiserver.models.mira.DKG;
 import software.uncharted.terarium.hmiserver.models.mira.EntitySimilarityResult;
 import software.uncharted.terarium.hmiserver.models.task.TaskRequest;
 import software.uncharted.terarium.hmiserver.models.task.TaskRequest.TaskType;
@@ -45,9 +49,11 @@ import software.uncharted.terarium.hmiserver.service.data.ProjectService;
 import software.uncharted.terarium.hmiserver.service.tasks.AMRToMMTResponseHandler;
 import software.uncharted.terarium.hmiserver.service.tasks.GenerateModelLatexResponseHandler;
 import software.uncharted.terarium.hmiserver.service.tasks.LatexToAMRResponseHandler;
+import software.uncharted.terarium.hmiserver.service.tasks.LatexToSympyResponseHandler;
 import software.uncharted.terarium.hmiserver.service.tasks.MdlToStockflowResponseHandler;
 import software.uncharted.terarium.hmiserver.service.tasks.SbmlToPetrinetResponseHandler;
 import software.uncharted.terarium.hmiserver.service.tasks.StellaToStockflowResponseHandler;
+import software.uncharted.terarium.hmiserver.service.tasks.SympyToAMRResponseHandler;
 import software.uncharted.terarium.hmiserver.service.tasks.TaskService;
 import software.uncharted.terarium.hmiserver.utils.Messages;
 import software.uncharted.terarium.hmiserver.utils.rebac.Schema;
@@ -105,6 +111,28 @@ public class MiraController {
 		taskService.addResponseHandler(stellaToStockflowResponseHandler);
 		taskService.addResponseHandler(mdlToStockflowResponseHandler);
 		taskService.addResponseHandler(sbmlToPetrinetResponseHandler);
+	}
+
+	@GetMapping("/geoname-search")
+	@Secured(Roles.USER)
+	public ResponseEntity<DKG> search(@RequestParam("q") final String q) {
+		final DKG finalResponse = new DKG(q);
+		try {
+			for (String s : q.split("_")) {
+				ResponseEntity<List<DKG>> response = proxy.search(q, 1, 0);
+				if (
+					response.getBody() == null &&
+					!response.getBody().isEmpty() &&
+					response.getBody().get(0).getLabels().contains(DKG.GEONAMES)
+				) {
+					finalResponse.getLocations().add(response.getBody().get(0).getCurie());
+				}
+			}
+		} catch (final FeignException e) {
+			throw handleMiraFeignException(e, "concepts", "query", q, "mira.concept.bad-query");
+		}
+
+		return new ResponseEntity<>(finalResponse, HttpStatus.OK);
 	}
 
 	@PostMapping("/amr-to-mmt")
@@ -243,47 +271,71 @@ public class MiraController {
 		}
 	)
 	public ResponseEntity<JsonNode> latexToAMR(@RequestBody final String latex) {
-		// create request:
-		final TaskRequest req = new TaskRequest();
-		req.setType(TaskType.MIRA);
+		////////////////////////////////////////////////////////////////////////////////
+		// 1. Convert latex string to python sympy code string
+		//
+		// Note this is a gollm string => string task
+		////////////////////////////////////////////////////////////////////////////////
+		final TaskRequest latexToSympyRequest = new TaskRequest();
+		final TaskResponse latexToSympyResponse;
+		String code = null;
 
 		try {
-			req.setInput(latex.getBytes());
+			latexToSympyRequest.setType(TaskType.GOLLM);
+			latexToSympyRequest.setInput(latex.getBytes());
+			latexToSympyRequest.setScript(LatexToSympyResponseHandler.NAME);
+			latexToSympyRequest.setUserId(currentUserService.get().getId());
+			latexToSympyResponse = taskService.runTaskSync(latexToSympyRequest);
+
+			final JsonNode node = objectMapper.readValue(latexToSympyResponse.getOutput(), JsonNode.class);
+			code = node.get("response").asText();
+		} catch (final TimeoutException e) {
+			log.warn("Timeout while waiting for task response", e);
+			throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, messages.get("task.gollm.timeout"));
+		} catch (final InterruptedException e) {
+			log.warn("Interrupted while waiting for task response", e);
+			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("task.gollm.interrupted"));
+		} catch (final ExecutionException e) {
+			log.error("Error while waiting for task response", e);
+			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("task.gollm.execution-failure"));
 		} catch (final Exception e) {
-			log.error("Unable to serialize input", e);
-			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("generic.io-error.write"));
+			log.error("Unexpected error", e);
 		}
 
-		req.setScript(LatexToAMRResponseHandler.NAME);
-		req.setUserId(currentUserService.get().getId());
+		if (code == null) {
+			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("task.gollm.execution-failure"));
+		}
 
-		// send the request
-		final TaskResponse resp;
+		////////////////////////////////////////////////////////////////////////////////
+		// 2. Convert python sympy code string to amr
+		//
+		// This returns the AMR json, and intermediate data representations for debugging
+		////////////////////////////////////////////////////////////////////////////////
+		final TaskRequest sympyToAMRRequest = new TaskRequest();
+		final TaskResponse sympyToAMRResponse;
+		final JsonNode response;
+
 		try {
-			resp = taskService.runTaskSync(req);
-		} catch (final JsonProcessingException e) {
-			log.error("Unable to serialize input", e);
-			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("task.mira.json-processing"));
+			sympyToAMRRequest.setType(TaskType.MIRA);
+			sympyToAMRRequest.setInput(code.getBytes());
+			sympyToAMRRequest.setScript(SympyToAMRResponseHandler.NAME);
+			sympyToAMRRequest.setUserId(currentUserService.get().getId());
+			sympyToAMRResponse = taskService.runTaskSync(sympyToAMRRequest);
+			response = objectMapper.readValue(sympyToAMRResponse.getOutput(), JsonNode.class);
+			return ResponseEntity.ok().body(response);
 		} catch (final TimeoutException e) {
 			log.warn("Timeout while waiting for task response", e);
 			throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, messages.get("task.mira.timeout"));
 		} catch (final InterruptedException e) {
 			log.warn("Interrupted while waiting for task response", e);
-			throw new ResponseStatusException(HttpStatus.UNPROCESSABLE_ENTITY, messages.get("task.mira.interrupted"));
+			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("task.mira.interrupted"));
 		} catch (final ExecutionException e) {
 			log.error("Error while waiting for task response", e);
 			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("task.mira.execution-failure"));
+		} catch (final Exception e) {
+			log.error("Unexpected error", e);
 		}
-
-		final JsonNode latexResponse;
-		try {
-			latexResponse = objectMapper.readValue(resp.getOutput(), JsonNode.class);
-		} catch (final IOException e) {
-			log.error("Unable to deserialize output", e);
-			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("generic.io-error.read"));
-		}
-
-		return ResponseEntity.ok().body(latexResponse);
+		throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("generic.io-error.read"));
 	}
 
 	@PostMapping("/convert-and-create-model")

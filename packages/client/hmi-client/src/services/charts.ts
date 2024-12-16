@@ -28,6 +28,7 @@ interface BaseChartOptions {
 	legend?: boolean;
 	autosize?: AUTOSIZE;
 	dateOptions?: DateOptions;
+	scale?: string;
 }
 
 export interface DateOptions {
@@ -514,6 +515,10 @@ export function createForecastChart(
 			type: 'quantitative',
 			axis: yaxis
 		};
+
+		if (options.scale === 'log') {
+			encodingY.scale = { type: 'symlog' };
+		}
 
 		if (options.fitYDomain && layer.data[0]) {
 			// gets the other fieldname
@@ -1307,41 +1312,5 @@ export function createFunmanParameterCharts(
 				}
 			]
 		}
-	};
-}
-
-// Similar to createForecastChart, see about deprecating this later
-export function createDatasetCompareChart(values: any[], headerName: string) {
-	const globalFont = 'Figtree';
-
-	return {
-		$schema: VEGALITE_SCHEMA,
-		config: {
-			font: globalFont
-		},
-		title: {
-			text: headerName,
-			anchor: 'start',
-			frame: 'group',
-			offset: 10,
-			fontSize: 14
-		},
-		width: 600,
-		height: 300,
-		data: {
-			values
-		},
-		layer: [
-			{
-				mark: {
-					type: 'line'
-				},
-				encoding: {
-					x: { field: 'timepoint', type: 'quantitative' },
-					y: { field: 'value', type: 'quantitative' },
-					color: { field: 'name', type: 'nominal' }
-				}
-			}
-		]
 	};
 }

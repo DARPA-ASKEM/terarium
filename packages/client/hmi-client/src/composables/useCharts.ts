@@ -133,7 +133,6 @@ export function useCharts(
 		showBaseLines = false
 	) => {
 		const ensembleVarName = setting.selectedVariables[0];
-
 		const options: ForecastChartOptions = {
 			title: getModelConfigName(<ModelConfiguration[]>modelConfig?.value ?? [], modelConfigId) || ensembleVarName,
 			legend: true,
@@ -143,7 +142,8 @@ export function useCharts(
 			xAxisTitle: '',
 			yAxisTitle: '',
 			autosize: AUTOSIZE.FIT,
-			colorscheme: multiVariable ? CATEGORICAL_SCHEME : [BASE_GREY, PRIMARY_COLOR]
+			colorscheme: multiVariable ? CATEGORICAL_SCHEME : [BASE_GREY, setting.primaryColor ?? PRIMARY_COLOR],
+			scale: setting.scale
 		};
 
 		const variables: string[] = [];
@@ -200,7 +200,8 @@ export function useCharts(
 			xAxisTitle: getUnit('_time') || 'Time',
 			yAxisTitle: _.uniq(variables.map(getUnit).filter((v) => !!v)).join(',') || '',
 			dateOptions,
-			colorscheme: [BASE_GREY, PRIMARY_COLOR]
+			colorscheme: [BASE_GREY, setting.primaryColor ?? PRIMARY_COLOR],
+			scale: setting.scale
 		};
 
 		let sampleLayerVariables = [
@@ -285,6 +286,7 @@ export function useCharts(
 			if (!isChartReadyToBuild.value || !isRefReady(groundTruthData)) return charts;
 			const { result, resultSummary } = chartData.value as ChartData;
 
+			// eslint-disable-next-line
 			chartSettings.value.forEach((settings) => {
 				const variable = settings.selectedVariables[0];
 				const annotations = getChartAnnotationsByChartId(settings.id);
@@ -586,7 +588,7 @@ export function useCharts(
 					maxBins: 10,
 					variables: [
 						{ field: beforeFieldName, label: labelBefore, width: 54, color: BASE_GREY },
-						{ field: fieldName, label: labelAfter, width: 24, color: PRIMARY_COLOR }
+						{ field: fieldName, label: labelAfter, width: 24, color: setting.primaryColor ?? PRIMARY_COLOR }
 					]
 				});
 				const toDisplayNumber = (num?: number) => (num ? displayNumber(num.toString()) : '');
@@ -682,6 +684,8 @@ export function useCharts(
 			}
 
 			const charts: Record<string, VisualizationSpec> = {};
+
+			// eslint-disable-next-line
 			chartSettings.value.forEach((settings) => {
 				const spec = createSimulateSensitivityScatter(
 					{

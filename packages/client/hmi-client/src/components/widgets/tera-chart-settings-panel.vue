@@ -6,6 +6,15 @@
 				<h4>{{ activeSettings.name }}</h4>
 			</header>
 			<div class="content">
+				<div class="annotation-items">
+					<h5>Options</h5>
+					<tera-checkbox
+						label="Use log scale"
+						:model-value="Boolean(useLog)"
+						@update:model-value="toggleLogScale($event)"
+					/>
+				</div>
+
 				<div v-if="chartAnnotations !== undefined" class="annotation-items">
 					<h5>Annotations</h5>
 					<div v-for="annotation in chartAnnotations" :key="annotation.id" class="annotation-item">
@@ -34,6 +43,10 @@
 						/>
 					</div>
 				</div>
+				<section v-if="isColorPickerEnabled">
+					<h6>Color Picker</h6>
+					<input type="color" :value="primaryColor" @change="onColorChange($event)" />
+				</section>
 			</div>
 		</div>
 	</transition>
@@ -41,11 +54,12 @@
 
 <script setup lang="ts">
 import _ from 'lodash';
-import { ref, computed } from 'vue';
+import { ref, computed, watch } from 'vue';
 import Button from 'primevue/button';
-import { ChartSetting } from '@/types/common';
+import { ChartSetting, ChartSettingType } from '@/types/common';
 import { ChartAnnotation } from '@/types/Types';
 import TeraInputText from '@/components/widgets/tera-input-text.vue';
+import TeraCheckbox from '@/components/widgets/tera-checkbox.vue';
 
 const props = defineProps<{
 	activeSettings: ChartSetting | null;
@@ -59,7 +73,27 @@ const props = defineProps<{
 	generateAnnotation?: (setting: ChartSetting, query: string) => Promise<ChartAnnotation | null>;
 }>();
 
-const emit = defineEmits(['close', 'update:settings', 'delete-annotation', 'create-annotation']);
+const emit = defineEmits([
+	'close',
+	'update-settings-scale',
+	'delete-annotation',
+	'create-annotation',
+	'update-settings-color'
+]);
+
+const useLog = computed(() => props.activeSettings?.scale === 'log');
+
+const toggleLogScale = (useLogScale: boolean) => {
+	emit('update-settings-scale', useLogScale);
+};
+
+const isColorPickerEnabled = computed(() => {
+	const type = props.activeSettings?.type;
+	if (type) {
+		return ![ChartSettingType.ERROR_DISTRIBUTION, ChartSettingType.VARIABLE_COMPARISON].includes(type);
+	}
+	return false;
+});
 
 const chartAnnotations = computed(() => {
 	if (props.annotations === undefined) {
@@ -67,9 +101,16 @@ const chartAnnotations = computed(() => {
 	}
 	return props.annotations.filter((annotation) => annotation.chartId === props.activeSettings?.id);
 });
+
 const isGeneratingAnnotation = ref(false);
 const generateAnnotationQuery = ref<string>('');
 const showAnnotationInput = ref<Boolean>(false);
+const primaryColor = ref(props.activeSettings?.primaryColor ?? '');
+
+const onColorChange = (event) => {
+	primaryColor.value = event.target?.value;
+	emit('update-settings-color', event.target?.value);
+};
 
 const createAnnotation = async () => {
 	if (props.generateAnnotation === undefined || props.activeSettings === null) {
@@ -89,6 +130,17 @@ const cancelGenerateAnnotation = () => {
 	generateAnnotationQuery.value = '';
 	showAnnotationInput.value = false;
 };
+
+watch(
+	() => props.activeSettings,
+	() => {
+		if (!props.activeSettings) {
+			primaryColor.value = '';
+		} else if (props.activeSettings?.primaryColor) {
+			primaryColor.value = props.activeSettings.primaryColor;
+		}
+	}
+);
 </script>
 
 <style scoped>
@@ -142,6 +194,7 @@ const cancelGenerateAnnotation = () => {
 	}
 	.annotation-items {
 		display: flex;
+		padding-bottom: var(--gap-4);
 		flex-direction: column;
 		gap: var(--gap-2);
 

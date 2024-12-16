@@ -196,9 +196,15 @@ export const runDagreLayout = <V, E>(graphData: IGraph<V, E>, lr: boolean = true
 		});
 		node.nodes.forEach((child) => g.setParent(child.id, node.id));
 	});
+
 	// Set state/transitions edges
+	// Ignore
+	// - observable edges, they are realized at interaction time
+	// - controller edges, they are routed after initial layout because they can
+	//   intefere with the general topological structure
 	graphData.edges.forEach((edge: IEdge<any>) => {
 		if (edge.data?.isObservable) return;
+		if (edge.data?.isController) return;
 		g.setEdge(edge.source, edge.target);
 	});
 
@@ -292,7 +298,17 @@ export const runDagreLayout = <V, E>(graphData: IGraph<V, E>, lr: boolean = true
 			if (node.y + 0.5 * node.height > maxY) maxY = node.y + 0.5 * node.height;
 		});
 
-		rerouteEdges(graphData.nodes, graphData.edges);
+		// manual route controller edges
+		rerouteEdges(
+			graphData.nodes,
+			graphData.edges.filter((edge: IEdge<any>) => edge.data?.isController === true)
+		);
+
+		// FIXME: temp hack, need to optimize OrthogonalConnector
+		const nonControllerEdges = graphData.edges.filter((edge: IEdge<any>) => edge.data?.isController !== true);
+		if (nonControllerEdges.length < 100) {
+			rerouteEdges(graphData.nodes, nonControllerEdges);
+		}
 
 		// Give the bounds a little extra buffer
 		const buffer = 10;

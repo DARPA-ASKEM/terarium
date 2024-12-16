@@ -3,7 +3,6 @@ import * as workflowService from '@/services/workflow';
 import { operation as ModelOp } from '@/components/workflow/ops/model/mod';
 import { operation as ModelConfigOp } from '@/components/workflow/ops/model-config/mod';
 import { operation as SimulateCiemssOp } from '@/components/workflow/ops/simulate-ciemss/mod';
-import { operation as TransformDatasetOp } from '@/components/workflow/ops/dataset-transformer/mod';
 import { OperatorNodeSize } from '@/services/workflow';
 import {
 	createModelConfiguration,
@@ -14,9 +13,8 @@ import _ from 'lodash';
 import { ChartSetting, ChartSettingType } from '@/types/common';
 import { updateChartSettingsBySelectedVariables } from '@/services/chart-settings';
 import { AssetType, ParameterSemantic } from '@/types/Types';
-import { DistributionType } from '@/services/distribution';
-import { calculateUncertaintyRange } from '@/utils/math';
 import { useProjects } from '@/composables/project';
+import { switchToUniformDistribution } from '../scenario-template-utils';
 
 export class SensitivityAnalysisScenario extends BaseScenario {
 	public static templateId = 'sensitivity-analysis';
@@ -62,14 +60,7 @@ export class SensitivityAnalysisScenario extends BaseScenario {
 	}
 
 	setParameter(parameter: ParameterSemantic, index: number) {
-		// convert constants to distributions
-		if (parameter.distribution.type === DistributionType.Constant) {
-			parameter.distribution.type = DistributionType.Uniform;
-			// +10% and -10% of the constant value
-			const { min, max } = calculateUncertaintyRange(parameter.distribution.parameters.value, 10);
-			parameter.distribution.parameters = { maximum: max, minimum: min };
-		}
-
+		switchToUniformDistribution(parameter);
 		this.parameters[index] = parameter;
 	}
 
@@ -77,7 +68,7 @@ export class SensitivityAnalysisScenario extends BaseScenario {
 		this.modelConfigSpec.id = id;
 	}
 
-	setCalibrateSpec(ids: string[]) {
+	setSimulateSpec(ids: string[]) {
 		this.simulateSpec.ids = ids;
 	}
 
@@ -142,14 +133,6 @@ export class SensitivityAnalysisScenario extends BaseScenario {
 			}
 		);
 
-		const datasetTransformerNode = wf.addNode(
-			TransformDatasetOp,
-			{ x: 0, y: 0 },
-			{
-				size: OperatorNodeSize.medium
-			}
-		);
-
 		// 2. Add edges
 		wf.addEdge(modelNode.id, modelNode.outputs[0].id, modelConfigNode.id, modelConfigNode.inputs[0].id, [
 			{ x: 0, y: 0 },
@@ -159,16 +142,6 @@ export class SensitivityAnalysisScenario extends BaseScenario {
 			{ x: 0, y: 0 },
 			{ x: 0, y: 0 }
 		]);
-		wf.addEdge(
-			simulateNode.id,
-			simulateNode.outputs[0].id,
-			datasetTransformerNode.id,
-			datasetTransformerNode.inputs[0].id,
-			[
-				{ x: 0, y: 0 },
-				{ x: 0, y: 0 }
-			]
-		);
 
 		// 3. Setting node states/outputs
 		wf.updateNode(modelNode, {
@@ -194,6 +167,12 @@ export class SensitivityAnalysisScenario extends BaseScenario {
 		simulateChartSettings = updateChartSettingsBySelectedVariables(
 			simulateChartSettings,
 			ChartSettingType.VARIABLE,
+			this.simulateSpec.ids
+		);
+
+		simulateChartSettings = updateChartSettingsBySelectedVariables(
+			simulateChartSettings,
+			ChartSettingType.SENSITIVITY,
 			this.simulateSpec.ids
 		);
 

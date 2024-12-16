@@ -223,7 +223,13 @@
 
 		<!-- Output section -->
 		<template #preview>
-			<tera-drilldown-section v-if="showOutputSection">
+			<tera-drilldown-section
+				:is-loading="isLoading"
+				:show-slot-while-loading="true"
+				:loading-progress="props.node.state.currentProgress"
+				:is-blank="!showOutputSection"
+				:blank-message="'Click \'Run\' to begin calibrating'"
+			>
 				<template #header-controls-left>
 					<h5 v-if="configuredModelConfig?.name" class="ml-3">{{ configuredModelConfig.name }}</h5>
 				</template>
@@ -246,7 +252,7 @@
 					class="p-3"
 					:summary-id="node.state.summaryId"
 				/>
-				<Accordion :active-index="lossActiveIndex" class="px-2" v-if="!isLoading">
+				<Accordion :active-index="lossActiveIndex" class="px-2">
 					<AccordionTab header="Loss">
 						<!-- Loss chart -->
 						<div ref="lossChartContainer">
@@ -343,17 +349,7 @@
 						<p class="helpMessage">Connect a model configuration and dataset</p>
 					</section>
 				</div>
-
-				<section v-else class="emptyState">
-					<tera-progress-spinner :font-size="2" is-centered style="height: 12rem" />
-					<p>Processing...{{ props.node.state.currentProgress }}%</p>
-				</section>
 			</tera-drilldown-section>
-			<!-- Empty state if calibrate hasn't been run yet -->
-			<section v-else class="output-section-empty-state">
-				<Vue3Lottie :animationData="EmptySeed" :height="150" loop autoplay />
-				<p class="helpMessage">Click 'Run' to begin calibrating</p>
-			</section>
 		</template>
 
 		<template #sidebar-right>
@@ -376,6 +372,8 @@
 						:active-settings="activeChartSettings"
 						:generate-annotation="generateAnnotation"
 						@delete-annotation="deleteAnnotation"
+						@update-settings-scale="updateChartSettingsScale(activeChartSettings?.id as string, $event)"
+						@update-settings-color="onColorChange"
 						@close="activeChartSettings = null"
 					/>
 				</template>
@@ -495,11 +493,8 @@ import {
 	parseCsvAsset
 } from '@/services/calibrate-workflow';
 import { deleteAnnotation, updateChartSettingsBySelectedVariables } from '@/services/chart-settings';
-import { Vue3Lottie } from 'vue3-lottie';
-import EmptySeed from '@/assets/images/lottie-empty-seed.json';
 import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
 import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.vue';
-import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue';
 import TeraNotebookError from '@/components/drilldown/tera-notebook-error.vue';
 import TeraOperatorOutputSummary from '@/components/operator/tera-operator-output-summary.vue';
 import TeraSliderPanel from '@/components/widgets/tera-slider-panel.vue';
@@ -757,7 +752,9 @@ const {
 	comparisonChartsSettingsSelection,
 	removeChartSettings,
 	updateChartSettings,
-	addComparisonChartSettings
+	addComparisonChartSettings,
+	updateChartPrimaryColor,
+	updateChartSettingsScale
 } = useChartSettings(props, emit);
 
 const {
@@ -1016,6 +1013,10 @@ const getConfiguredModelConfig = async () => {
 	if (configuredModelId) {
 		configuredModelConfig.value = await getModelConfigurationById(configuredModelId);
 	}
+};
+
+const onColorChange = (color: string) => {
+	if (activeChartSettings.value) updateChartPrimaryColor(activeChartSettings.value, color);
 };
 
 onMounted(async () => {
