@@ -252,7 +252,7 @@
 					class="p-3"
 					:summary-id="node.state.summaryId"
 				/>
-				<Accordion :active-index="lossActiveIndex" class="px-2">
+				<Accordion :active-index="lossActiveIndex" @update:active-index="updateLossTab" class="px-2">
 					<AccordionTab header="Loss">
 						<!-- Loss chart -->
 						<div ref="lossChartContainer">
@@ -615,7 +615,7 @@ const datasetColumns = ref<DatasetColumn[]>();
 const csvAsset = shallowRef<CsvAsset | undefined>(undefined);
 const groundTruthData = computed<DataArray>(() => parseCsvAsset(csvAsset.value as CsvAsset));
 
-const lossActiveIndex = ref([0]);
+const lossActiveIndex = ref<number | null>(0);
 const currentActiveIndicies = ref([0, 1, 2, 3, 4]);
 
 const modelConfig = ref<ModelConfiguration | null>(null);
@@ -835,7 +835,12 @@ const initDefaultChartSettings = (state: CalibrationOperationStateCiemss) => {
 	);
 };
 
+const updateLossTab = (activeTab: number | undefined) => {
+	lossActiveIndex.value = activeTab ?? null;
+};
+
 const runCalibrate = async () => {
+	lossActiveIndex.value = 0; // ensure loss tab open on run
 	if (!modelConfigId.value || !datasetId.value || !currentDatasetFileName.value) return;
 
 	const formattedMap: { [index: string]: string } = {};
