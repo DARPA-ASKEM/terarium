@@ -274,6 +274,7 @@ public class MiraController {
 		// 1. Convert latex to sympy code string
 		final TaskRequest latexToSympyRequest = new TaskRequest();
 		final TaskResponse latexToSympyResponse;
+		String code = null;
 
 		try {
 			latexToSympyRequest.setType(TaskType.GOLLM);
@@ -281,25 +282,53 @@ public class MiraController {
 			latexToSympyRequest.setScript(LatexToSympyResponseHandler.NAME);
 			latexToSympyRequest.setUserId(currentUserService.get().getId());
 			latexToSympyResponse = taskService.runTaskSync(latexToSympyRequest);
-		} catch (final JsonProcessingException e) {} catch (final TimeoutException e) {} catch (
-			final InterruptedException e
-		) {} catch (final ExecutionException e) {}
+
+			final JsonNode node = objectMapper.readValue(latexToSympyResponse.getOutput(), JsonNode.class);
+			code = node.get("response").asText();
+		} catch (final IOException e) {
+			log.error("");
+		} catch (final TimeoutException e) {
+			log.error("");
+		} catch (final InterruptedException e) {
+			log.error("");
+		} catch (final ExecutionException e) {
+			log.error("");
+		}
+
+		System.out.println("");
+		System.out.println("=== code ===");
+		System.out.println(code);
+		System.out.println("");
+		System.out.println("");
 
 		// 2. Convert sympy code string to amr
 		final TaskRequest sympyToAMRRequest = new TaskRequest();
 		final TaskResponse sympyToAMRResponse;
+		final JsonNode response;
 
 		try {
 			sympyToAMRRequest.setType(TaskType.MIRA);
-			sympyToAMRRequest.setInput(latex.getBytes());
+			sympyToAMRRequest.setInput(code.getBytes());
 			sympyToAMRRequest.setScript(SympyToAMRResponseHandler.NAME);
 			sympyToAMRRequest.setUserId(currentUserService.get().getId());
 			sympyToAMRResponse = taskService.runTaskSync(sympyToAMRRequest);
-		} catch (final JsonProcessingException e) {} catch (final TimeoutException e) {} catch (
-			final InterruptedException e
-		) {} catch (final ExecutionException e) {}
+			response = objectMapper.readValue(sympyToAMRResponse.getOutput(), JsonNode.class);
+			return ResponseEntity.ok().body(response);
+		} catch (final JsonProcessingException e) {
+			log.error("");
+		} catch (final TimeoutException e) {
+			log.error("");
+		} catch (final InterruptedException e) {
+			log.error("");
+		} catch (final ExecutionException e) {
+			log.error("");
+		} catch (final Exception e) {
+			log.error("");
+		}
 
+		throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("generic.io-error.read"));
 		// create request:
+		/*
 		final TaskRequest req = new TaskRequest();
 		req.setType(TaskType.MIRA);
 
@@ -338,8 +367,9 @@ public class MiraController {
 			log.error("Unable to deserialize output", e);
 			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("generic.io-error.read"));
 		}
-
 		return ResponseEntity.ok().body(latexResponse);
+		*/
+
 	}
 
 	@PostMapping("/convert-and-create-model")

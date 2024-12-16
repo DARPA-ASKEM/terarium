@@ -18,17 +18,43 @@ def main():
         taskrunner.on_cancellation(cleanup)
 
         sympy_code = taskrunner.read_input_str_with_timeout()
-        exec(sympy_code) # output should be in placed into "equation_output"
+        taskrunner.log("")
+        taskrunner.log("!!!!!")
+        taskrunner.log(sympy_code)
+        taskrunner.log("")
+        taskrunner.log("")
+
+        globals = {}
+        exec(sympy_code, globals) # output should be in placed into "equation_output"
+        taskrunner.log("")
+        taskrunner.log("")
+        taskrunner.log("")
+        taskrunner.log("")
+        taskrunner.log("equations")
+        taskrunner.log(globals["equation_output"])
+        taskrunner.log("")
+        taskrunner.log("")
+        taskrunner.log("")
+        taskrunner.log("")
 
         # SymPy to MMT
-        mmt = template_model_from_sympy_odes(equation_output)
+        mmt = template_model_from_sympy_odes(globals["equation_output"])
 
         # MMT to AMR
         amr_json = template_model_to_petrinet_json(mmt)
 
+        # amr_json = {}
+
+        taskrunner.log("");
+        taskrunner.log("");
+        taskrunner.log(amr_json)
+        taskrunner.log("");
+        taskrunner.log("");
+
+
         # Gather results
         response = {}
-        response["sympyExprs"] = list(map(lambda x: str(x), sympy_exprs))
+        # response["sympyExprs"] = list(map(lambda x: str(x), sympy_exprs))
         response["amr"] = amr_json
         taskrunner.log(f"LaTeX to AMR conversion succeeded")
         taskrunner.write_output_dict_with_timeout({"response": response })
