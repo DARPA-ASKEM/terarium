@@ -117,8 +117,7 @@ export function useChartSettings(
 
 	return {
 		chartSettings,
-		activeChartSettings,
-		// activeChartSettings: computed(() => activeChartSettings.value),
+		activeChartSettings: computed(() => activeChartSettings.value),
 		comparisonChartsSettingsSelection,
 		selectedVariableSettings,
 		selectedEnsembleVariableSettings,

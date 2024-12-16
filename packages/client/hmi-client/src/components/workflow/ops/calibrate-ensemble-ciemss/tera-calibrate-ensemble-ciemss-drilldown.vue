@@ -266,7 +266,7 @@
 						:generate-annotation="generateAnnotation"
 						@update-settings="findAndUpdateChartSettingsById(activeChartSettings?.id as string, $event)"
 						@delete-annotation="deleteAnnotation"
-						@close="activeChartSettings = null"
+						@close="setActiveChartSettings(null)"
 					/>
 				</template>
 				<template #content>
@@ -284,7 +284,7 @@
 							:type="ChartSettingType.VARIABLE_ENSEMBLE"
 							:select-options="ensembleVariables"
 							:selected-options="selectedEnsembleVariableSettings.map((s) => s.selectedVariables[0])"
-							@open="activeChartSettings = $event"
+							@open="setActiveChartSettings($event)"
 							@remove="removeChartSettings"
 							@selection-change="updateChartSettings"
 							@toggle-ensemble-variable-setting-option="updateEnsembleVariableSettingOption"
@@ -296,7 +296,7 @@
 							:type="ChartSettingType.ERROR_DISTRIBUTION"
 							:select-options="ensembleVariables"
 							:selected-options="selectedErrorVariableSettings.map((s) => s.selectedVariables[0])"
-							@open="activeChartSettings = $event"
+							@open="setActiveChartSettings($event)"
 							@remove="removeChartSettings"
 							@selection-change="updateChartSettings"
 						/>
@@ -606,7 +606,8 @@ const {
 	selectedEnsembleVariableSettings,
 	selectedErrorVariableSettings,
 	updateEnsembleVariableSettingOption,
-	findAndUpdateChartSettingsById
+	findAndUpdateChartSettingsById,
+	setActiveChartSettings
 } = useChartSettings(props, emit);
 
 const {

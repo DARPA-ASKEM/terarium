@@ -377,7 +377,7 @@
 						:generate-annotation="generateAnnotation"
 						@delete-annotation="deleteAnnotation"
 						@update-settings="findAndUpdateChartSettingsById(activeChartSettings?.id as string, $event)"
-						@close="activeChartSettings = null"
+						@close="setActiveChartSettings(null)"
 					/>
 				</template>
 				<template #content>
@@ -388,7 +388,7 @@
 							:type="ChartSettingType.DISTRIBUTION_COMPARISON"
 							:select-options="Object.keys(pyciemssMap).filter((c) => modelPartTypesMap[c] === 'parameter')"
 							:selected-options="selectedParameterSettings.map((s) => s.selectedVariables[0])"
-							@open="activeChartSettings = $event"
+							@open="setActiveChartSettings($event)"
 							@remove="removeChartSettings"
 							@selection-change="updateChartSettings"
 						/>
@@ -399,7 +399,7 @@
 							:type="ChartSettingType.INTERVENTION"
 							:select-options="Object.keys(groupedInterventionOutputs)"
 							:selected-options="selectedInterventionSettings.map((s) => s.selectedVariables[0])"
-							@open="activeChartSettings = $event"
+							@open="setActiveChartSettings($event)"
 							@remove="removeChartSettings"
 							@selection-change="updateChartSettings"
 						/>
@@ -412,7 +412,7 @@
 								Object.keys(pyciemssMap).filter((c) => ['state', 'observable'].includes(modelPartTypesMap[c]))
 							"
 							:selected-options="selectedVariableSettings.map((s) => s.selectedVariables[0])"
-							@open="activeChartSettings = $event"
+							@open="setActiveChartSettings($event)"
 							@remove="removeChartSettings"
 							@selection-change="updateChartSettings"
 						/>
@@ -427,7 +427,7 @@
 									.filter((c) => selectedOutputMapping.find((s) => s.modelVariable === c))
 							"
 							:selected-options="selectedErrorVariableSettings.map((s) => s.selectedVariables[0])"
-							@open="activeChartSettings = $event"
+							@open="setActiveChartSettings($event)"
 							@remove="removeChartSettings"
 							@selection-change="updateChartSettings"
 						/>
@@ -442,7 +442,7 @@
 								)
 							"
 							:selected-options="comparisonChartsSettingsSelection"
-							@open="activeChartSettings = $event"
+							@open="setActiveChartSettings($event)"
 							@remove="removeChartSettings"
 							@selection-change="comparisonChartsSettingsSelection = $event"
 						/>
@@ -759,7 +759,8 @@ const {
 	removeChartSettings,
 	updateChartSettings,
 	addComparisonChartSettings,
-	findAndUpdateChartSettingsById
+	findAndUpdateChartSettingsById,
+	setActiveChartSettings
 } = useChartSettings(props, emit);
 
 const {
