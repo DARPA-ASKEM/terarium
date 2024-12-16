@@ -13,11 +13,10 @@
 		/>
 		<template v-if="type === ChartSettingType.SENSITIVITY && sensitivityOptions">
 			<!--FIXME: It might be better to move these inside the panel so that they can be controlled at an individual chart settings level -->
-
 			<label>Select parameter(s) of interest</label>
 			<MultiSelect
 				:disabled="_.isEmpty(selectedOptions)"
-				:placeholder="_.isEmpty(selectedOptions) ? 'Select variable(s) to display above' : 'Select parameters'"
+				placeholder="Select parameters"
 				:model-value="sensitivityOptions.selectedInputOptions"
 				:options="sensitivityOptions.inputOptions"
 				@change="
