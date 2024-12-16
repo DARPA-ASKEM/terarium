@@ -80,6 +80,9 @@ import software.uncharted.terarium.hmiserver.service.notification.NotificationGr
 import software.uncharted.terarium.hmiserver.service.notification.NotificationService;
 import software.uncharted.terarium.hmiserver.service.tasks.EquationsCleanupResponseHandler;
 import software.uncharted.terarium.hmiserver.service.tasks.LatexToAMRResponseHandler;
+// latex to model chain
+import software.uncharted.terarium.hmiserver.service.tasks.LatexToSympyResponseHandler;
+import software.uncharted.terarium.hmiserver.service.tasks.SympyToAMRResponseHandler;
 import software.uncharted.terarium.hmiserver.service.tasks.TaskService;
 import software.uncharted.terarium.hmiserver.service.tasks.TaskService.TaskMode;
 import software.uncharted.terarium.hmiserver.utils.ByteMultipartFile;
@@ -267,19 +270,35 @@ public class KnowledgeController {
 		}
 
 		if (extractionService.equals("mira")) {
-			final TaskRequest taskReq = new TaskRequest();
-			final String latex = req.get("equations").toString();
-			taskReq.setType(TaskType.MIRA);
-			try {
-				taskReq.setInput(latex.getBytes());
-				taskReq.setScript(LatexToAMRResponseHandler.NAME);
-				taskReq.setUserId(currentUserService.get().getId());
-				final TaskResponse taskResp = taskService.runTaskSync(taskReq);
-				final JsonNode taskResponseJSON = mapper.readValue(taskResp.getOutput(), JsonNode.class);
+			final TaskRequest latexToSympyRequest = new TaskRequest();
+			final TaskResponse latexToSympyResponse;
+			final TaskRequest sympyToAMRRequest = new TaskRequest();
+			final TaskResponse sympyToAMRResponse;
 
+			try {
+				// 1. LaTeX to sympy code
+				final String latex = req.get("equations").toString();
+				latexToSympyRequest.setType(TaskType.GOLLM);
+				latexToSympyRequest.setInput(latex.getBytes());
+				latexToSympyRequest.setScript(LatexToSympyResponseHandler.NAME);
+				latexToSympyRequest.setUserId(currentUserService.get().getId());
+				latexToSympyResponse = taskService.runTaskSync(latexToSympyRequest);
+
+				// 2. hand off
+				final JsonNode node = mapper.readValue(latexToSympyResponse.getOutput(), JsonNode.class);
+				final String code = node.get("response").asText();
+
+				// 3. sympy code string to amr json
+				sympyToAMRRequest.setType(TaskType.MIRA);
+				sympyToAMRRequest.setInput(code.getBytes());
+				sympyToAMRRequest.setScript(SympyToAMRResponseHandler.NAME);
+				sympyToAMRRequest.setUserId(currentUserService.get().getId());
+				sympyToAMRResponse = taskService.runTaskSync(sympyToAMRRequest);
+
+				final JsonNode taskResponseJSON = mapper.readValue(sympyToAMRResponse.getOutput(), JsonNode.class);
 				final ObjectNode amrNode = taskResponseJSON.get("response").get("amr").deepCopy();
 				responseAMR = mapper.convertValue(amrNode, Model.class);
-			} catch (Exception e) {
+			} catch (final Exception e) {
 				log.error("failed to convert LaTeX equations to AMR", e);
 				throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "failed to convert latex equations to AMR");
 			}
@@ -866,6 +885,95 @@ public class KnowledgeController {
 			}
 		}
 		return ResponseEntity.accepted().build();
+	}
+
+	@PostMapping("/equations-to-model-debug")
+	@Secured(Roles.USER)
+	@Operation(summary = "Generate AMR from latex ODE equations, DEBUGGING only")
+	@ApiResponses(
+		value = {
+			@ApiResponse(
+				responseCode = "200",
+				description = "Dispatched successfully",
+				content = @Content(
+					mediaType = "application/json",
+					schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = TaskResponse.class)
+				)
+			),
+			@ApiResponse(responseCode = "500", description = "There was an issue dispatching the request", content = @Content)
+		}
+	)
+	/**
+	 * This is similiar to /equations-to-model endpoint, but rather than
+	 * directly creating a model asset it returns artifact at different intersections
+	 * and handoff for debugging
+	 **/
+	public ResponseEntity<JsonNode> latexToAMR(@RequestBody final String latex) {
+		////////////////////////////////////////////////////////////////////////////////
+		// 1. Convert latex string to python sympy code string
+		//
+		// Note this is a gollm string => string task
+		////////////////////////////////////////////////////////////////////////////////
+		final TaskRequest latexToSympyRequest = new TaskRequest();
+		final TaskResponse latexToSympyResponse;
+		String code = null;
+
+		try {
+			latexToSympyRequest.setType(TaskType.GOLLM);
+			latexToSympyRequest.setInput(latex.getBytes());
+			latexToSympyRequest.setScript(LatexToSympyResponseHandler.NAME);
+			latexToSympyRequest.setUserId(currentUserService.get().getId());
+			latexToSympyResponse = taskService.runTaskSync(latexToSympyRequest);
+
+			final JsonNode node = mapper.readValue(latexToSympyResponse.getOutput(), JsonNode.class);
+			code = node.get("response").asText();
+		} catch (final TimeoutException e) {
+			log.warn("Timeout while waiting for task response", e);
+			throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, messages.get("task.gollm.timeout"));
+		} catch (final InterruptedException e) {
+			log.warn("Interrupted while waiting for task response", e);
+			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("task.gollm.interrupted"));
+		} catch (final ExecutionException e) {
+			log.error("Error while waiting for task response", e);
+			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("task.gollm.execution-failure"));
+		} catch (final Exception e) {
+			log.error("Unexpected error", e);
+		}
+
+		if (code == null) {
+			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("task.gollm.execution-failure"));
+		}
+
+		////////////////////////////////////////////////////////////////////////////////
+		// 2. Convert python sympy code string to amr
+		//
+		// This returns the AMR json, and intermediate data representations for debugging
+		////////////////////////////////////////////////////////////////////////////////
+		final TaskRequest sympyToAMRRequest = new TaskRequest();
+		final TaskResponse sympyToAMRResponse;
+		final JsonNode response;
+
+		try {
+			sympyToAMRRequest.setType(TaskType.MIRA);
+			sympyToAMRRequest.setInput(code.getBytes());
+			sympyToAMRRequest.setScript(SympyToAMRResponseHandler.NAME);
+			sympyToAMRRequest.setUserId(currentUserService.get().getId());
+			sympyToAMRResponse = taskService.runTaskSync(sympyToAMRRequest);
+			response = mapper.readValue(sympyToAMRResponse.getOutput(), JsonNode.class);
+			return ResponseEntity.ok().body(response);
+		} catch (final TimeoutException e) {
+			log.warn("Timeout while waiting for task response", e);
+			throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, messages.get("task.mira.timeout"));
+		} catch (final InterruptedException e) {
+			log.warn("Interrupted while waiting for task response", e);
+			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("task.mira.interrupted"));
+		} catch (final ExecutionException e) {
+			log.error("Error while waiting for task response", e);
+			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("task.mira.execution-failure"));
+		} catch (final Exception e) {
+			log.error("Unexpected error", e);
+		}
+		throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("generic.io-error.read"));
 	}
 
 	private ResponseStatusException handleSkemaFeignException(final FeignException e) {
