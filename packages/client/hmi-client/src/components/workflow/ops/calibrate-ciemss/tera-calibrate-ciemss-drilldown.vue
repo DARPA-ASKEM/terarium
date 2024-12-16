@@ -836,8 +836,8 @@ const initDefaultChartSettings = (state: CalibrationOperationStateCiemss) => {
 	);
 };
 
-const updateLossTab = (activeTab: number | null) => {
-	lossActiveIndex.value = activeTab;
+const updateLossTab = (activeTab: number | undefined) => {
+	lossActiveIndex.value = activeTab ?? null;
 };
 
 const runCalibrate = async () => {
