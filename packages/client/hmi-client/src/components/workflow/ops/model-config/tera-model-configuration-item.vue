@@ -4,7 +4,14 @@
 			<h6>{{ configuration.name }}</h6>
 			<Button text icon="pi pi-ellipsis-v" @click.stop="toggleContextMenu" />
 		</header>
-		<ContextMenu ref="contextMenu" :model="contextMenuItems" />
+		<ContextMenu
+			ref="contextMenu"
+			:model="contextMenuItems"
+			@focus="() => {}"
+			@blur="hideContextMenu"
+			@mouseenter="contextMenuInFocus = true"
+			@mouseleave="contextMenuInFocus = false"
+		/>
 		<p>{{ configuration.description }}</p>
 		<p>{{ formatTimestamp(configuration.createdOn) }}</p>
 		<span v-if="emptyInputCount" :class="{ 'input-count': emptyInputCount }">{{ emptyInputCount }}</span>
@@ -28,7 +35,7 @@ const props = defineProps<{
 }>();
 
 const confirm = useConfirm();
-
+const contextMenuInFocus = ref(false);
 const contextMenu = ref();
 const contextMenuItems = ref([
 	{
@@ -57,6 +64,12 @@ const contextMenuItems = ref([
 
 const toggleContextMenu = (event) => {
 	contextMenu.value.toggle(event);
+};
+
+const hideContextMenu = () => {
+	if (!contextMenuInFocus.value) {
+		contextMenu.value.hide();
+	}
 };
 
 const onDeleteConfiguration = () => {
