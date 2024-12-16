@@ -11,6 +11,35 @@
 			:variables="selectOptions"
 			@configuration-change="$emit('selection-change', $event.selectedVariable, type)"
 		/>
+		<template v-if="type === ChartSettingType.SENSITIVITY && sensitivityOptions">
+			<!--FIXME: It might be better to move these inside the panel so that they can be controlled at an individual chart settings level -->
+
+			<label>Select parameter(s) of interest</label>
+			<MultiSelect
+				:disabled="_.isEmpty(selectedOptions)"
+				:placeholder="_.isEmpty(selectedOptions) ? 'Select variable(s) to display above' : 'Select parameters'"
+				:model-value="sensitivityOptions.selectedInputOptions"
+				:options="sensitivityOptions.inputOptions"
+				@change="
+					$emit('input-selection-change', {
+						selectedInputVariables: $event.value,
+						timepoint: sensitivityOptions.timepoint
+					})
+				"
+			/>
+
+			<label>Select time slice of interest</label>
+			<tera-input-number
+				:disabled="_.isEmpty(selectedOptions)"
+				:model-value="sensitivityOptions.timepoint"
+				@update:model-value="
+					$emit('input-selection-change', {
+						selectedInputVariables: sensitivityOptions.selectedInputOptions,
+						timepoint: $event
+					})
+				"
+			/>
+		</template>
 		<tera-chart-settings-item
 			v-for="s of targetSettings"
 			:key="s.id"
@@ -48,9 +77,12 @@
 import TeraCheckbox from '@/components/widgets/tera-checkbox.vue';
 import TeraChartSettingsItem from '@/components/widgets/tera-chart-settings-item.vue';
 import TeraChartControl from '@/components/workflow/tera-chart-control.vue';
+import MultiSelect from 'primevue/multiselect';
 import { ChartSetting, ChartSettingType } from '@/types/common';
 import { computed } from 'vue';
 import { EnsembleVariableChartSettingOption, getEnsembleChartSettingOptions } from '@/services/chart-settings';
+import _ from 'lodash';
+import TeraInputNumber from './tera-input-number.vue';
 
 const props = defineProps<{
 	title: string;
@@ -61,8 +93,19 @@ const props = defineProps<{
 	// Selected dropdown options
 	selectedOptions: string[];
 	isSimulateEnsembleSettings?: boolean;
+	sensitivityOptions?: {
+		inputOptions: string[];
+		selectedInputOptions: string[];
+		timepoint: number;
+	};
 }>();
-const emits = defineEmits(['open', 'remove', 'selection-change', 'toggle-ensemble-variable-setting-option']);
+const emits = defineEmits([
+	'open',
+	'remove',
+	'selection-change',
+	'toggle-ensemble-variable-setting-option',
+	'input-selection-change'
+]);
 
 // Settings of the same type that we want to interact with.
 const targetSettings = computed(() => props.settings.filter((s) => s.type === props.type));

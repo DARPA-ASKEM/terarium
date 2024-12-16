@@ -4,6 +4,8 @@ import {
 	ChartSetting,
 	ChartSettingEnsembleVariable,
 	ChartSettingEnsembleVariableOptions,
+	ChartSettingSensitivity,
+	ChartSettingSensitivityOptions,
 	ChartSettingType
 } from '@/types/common';
 import { v4 as uuidv4 } from 'uuid';
@@ -75,7 +77,7 @@ export function createNewChartSetting(
 	name: string,
 	type: ChartSettingType,
 	selectedVariables: string[],
-	options: ChartSettingEnsembleVariableOptions
+	options: ChartSettingEnsembleVariableOptions | ChartSettingSensitivityOptions
 ): ChartSetting {
 	const setting: ChartSetting = {
 		id: uuidv4(),
@@ -84,7 +86,9 @@ export function createNewChartSetting(
 		type,
 		scale: ''
 	};
-	if (isChartSettingEnsembleVariable(setting)) Object.assign(setting, options);
+	if (isChartSettingEnsembleVariable(setting) || setting.type === ChartSettingType.SENSITIVITY)
+		Object.assign(setting, options);
+
 	return setting;
 }
 
@@ -112,6 +116,34 @@ export function updateChartSettingsBySelectedVariables(
 		return found ?? createNewChartSetting(variable, type, [variable], existingEnsembleOptions);
 	});
 	const newSettings: ChartSetting[] = [...previousSettings, ...selectedSettings];
+	return newSettings;
+}
+
+export function updateSensitivityChartSettingOption(
+	settings: ChartSettingSensitivity[],
+	options: { selectedVariables?: string[]; selectedInputVariables?: string[]; timepoint?: number }
+) {
+	// previous settings without the settings of the given type
+	const previousSettings = settings.filter((setting) => setting.type !== ChartSettingType.SENSITIVITY);
+
+	const selectedSettings = options.selectedVariables?.map((variable) => {
+		const found = settings.find(
+			(setting) => setting.selectedVariables[0] === variable && setting.type === ChartSettingType.SENSITIVITY
+		);
+		if (found) {
+			found.selectedInputVariables = options.selectedInputVariables ?? [];
+			found.timepoint = options.timepoint ?? 0;
+		}
+		return (
+			found ??
+			createNewChartSetting(variable, ChartSettingType.SENSITIVITY, [variable], {
+				selectedInputVariables: options.selectedInputVariables ?? [],
+				timepoint: options.timepoint ?? 0
+			})
+		);
+	});
+
+	const newSettings: ChartSetting[] = [...previousSettings, ...(selectedSettings ?? [])];
 	return newSettings;
 }
 

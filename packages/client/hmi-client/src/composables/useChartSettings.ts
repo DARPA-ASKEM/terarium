@@ -1,12 +1,13 @@
 import { cloneDeep } from 'lodash';
 import { ref, computed } from 'vue';
-import { ChartSetting, ChartSettingEnsembleVariable, ChartSettingType } from '@/types/common';
+import { ChartSetting, ChartSettingEnsembleVariable, ChartSettingSensitivity, ChartSettingType } from '@/types/common';
 import {
 	addMultiVariableChartSetting,
 	EnsembleVariableChartSettingOption,
 	removeChartSettingById,
 	updateChartSettingsBySelectedVariables,
-	updateEnsembleVariableChartSettingOption
+	updateEnsembleVariableChartSettingOption,
+	updateSensitivityChartSettingOption
 } from '@/services/chart-settings';
 import { WorkflowNode } from '@/types/workflow';
 
@@ -49,8 +50,11 @@ export function useChartSettings(
 		chartSettings.value.filter((setting) => setting.type === ChartSettingType.VARIABLE_COMPARISON)
 	);
 
-	const selectedSensitivityChartSettings = computed(() =>
-		chartSettings.value.filter((setting) => setting.type === ChartSettingType.SENSITIVITY)
+	const selectedSensitivityChartSettings = computed(
+		() =>
+			chartSettings.value.filter(
+				(setting) => setting.type === ChartSettingType.SENSITIVITY
+			) as ChartSettingSensitivity[]
 	);
 
 	// Methods to manage chart settings
@@ -101,6 +105,17 @@ export function useChartSettings(
 		});
 	};
 
+	const updateSensitivityChartSettings = (options: {
+		selectedVariables?: string[];
+		selectedInputVariables?: string[];
+		timepoint?: number;
+	}) => {
+		emit('update-state', {
+			...props.node.state,
+			chartSettings: updateSensitivityChartSettingOption(chartSettings.value as ChartSettingSensitivity[], options)
+		});
+	};
+
 	const updateChartPrimaryColor = (settings: ChartSetting, color: string) => {
 		const index = chartSettings.value.findIndex((chart) => chart.id === settings.id);
 		if (index !== -1) {
@@ -130,6 +145,7 @@ export function useChartSettings(
 		updateChartPrimaryColor,
 		updateChartSettingsScale,
 		addComparisonChartSettings,
-		updateEnsembleVariableSettingOption
+		updateEnsembleVariableSettingOption,
+		updateSensitivityChartSettings
 	};
 }
