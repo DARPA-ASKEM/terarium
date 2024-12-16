@@ -1,10 +1,5 @@
 <template>
-	<tera-asset
-		:id="assetId"
-		:name="document?.name ?? ''"
-		:overline="document?.source ?? ''"
-		:is-loading="documentLoading"
-	>
+	<tera-asset :id="assetId" :name="document?.name ?? ''" :is-loading="documentLoading">
 		<p class="pl-3" v-if="documentLoading">PDF Loading...</p>
 		<tera-pdf-embed
 			v-else-if="view === DocumentView.PDF && pdfLink"

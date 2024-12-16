@@ -1,5 +1,5 @@
-import { percentile } from '@/utils/math';
 import { isEmpty, pick } from 'lodash';
+import { percentile } from '@/utils/math';
 import { VisualizationSpec } from 'vega-embed';
 import { v4 as uuidv4 } from 'uuid';
 import type { ChartAnnotation, FunmanInterval } from '@/types/Types';
@@ -28,6 +28,7 @@ interface BaseChartOptions {
 	legend?: boolean;
 	autosize?: AUTOSIZE;
 	dateOptions?: DateOptions;
+	scale?: string;
 }
 
 export interface DateOptions {
@@ -38,6 +39,7 @@ export interface ForecastChartOptions extends BaseChartOptions {
 	translationMap?: Record<string, string>;
 	colorscheme?: string[];
 	fitYDomain?: boolean;
+	legendProperties?: Record<string, any>;
 }
 
 export interface ForecastChartLayer {
@@ -47,15 +49,23 @@ export interface ForecastChartLayer {
 	groupField?: string;
 }
 
+export interface SensitivityChartLayer {
+	data: Record<string, any>[];
+	inputVariables: string[];
+	outputVariable: string;
+}
+
 export interface HistogramChartOptions extends BaseChartOptions {
 	maxBins?: number;
 	variables: { field: string; label?: string; width: number; color: string }[];
+	legendProperties?: Record<string, any>;
 }
 
 export interface ErrorChartOptions extends Omit<BaseChartOptions, 'height' | 'yAxisTitle' | 'legend'> {
 	height?: number;
 	areaChartHeight?: number;
 	boxPlotHeight?: number;
+	color?: string;
 	variables: { field: string; label?: string }[];
 }
 
@@ -90,8 +100,8 @@ export function createErrorChart(dataset: Record<string, any>[], options: ErrorC
 	const labelFontWeight = 'normal';
 	const globalFont = 'Figtree';
 
-	const areaChartColor = '#1B8073';
-	const dotColor = '#67B5AC';
+	const areaChartColor = options.color ?? '#1B8073';
+	const dotColor = options.color ?? '#1B8073';
 	const boxPlotColor = '#000';
 
 	const width = options.width;
@@ -142,6 +152,7 @@ export function createErrorChart(dataset: Record<string, any>[], options: ErrorC
 		},
 		point: {
 			color: dotColor,
+			opacity: 0.7,
 			filled: true
 		},
 		boxplot: {
@@ -215,7 +226,14 @@ export function createErrorChart(dataset: Record<string, any>[], options: ErrorC
 						y: {
 							field: 'Variable Label',
 							scale: { range: [boxPlotYPosition, boxPlotYPosition] },
-							axis: { grid: true, labels: true, orient: 'left', offset: 5 }
+							axis: {
+								grid: true,
+								labels: true,
+								orient: 'left',
+								offset: 5,
+								labelAngle: -90,
+								labelLimit: areaChartHeight + boxPlotHeight + gap
+							}
 						}
 					}
 				},
@@ -290,7 +308,8 @@ export function createHistogramChart(dataset: Record<string, any>[], options: Hi
 		symbolStrokeWidth: 4,
 		symbolSize: 200,
 		labelFontSize: 12,
-		labelOffset: 4
+		labelOffset: 4,
+		...options.legendProperties
 	};
 
 	const spec: VisualizationSpec = {
@@ -425,12 +444,12 @@ export function createForecastChart(
 		strokeColor: null,
 		orient: 'top',
 		direction: isCompact ? 'vertical' : 'horizontal',
-		columns: Math.floor(options.width / 100),
 		symbolStrokeWidth: isCompact ? 2 : 4,
 		symbolSize: 200,
 		labelFontSize: isCompact ? 8 : 12,
 		labelOffset: isCompact ? 2 : 4,
-		labelLimit: isCompact ? 50 : 150
+		labelLimit: isCompact ? 50 : 150,
+		...options.legendProperties
 	};
 
 	// Start building
@@ -444,7 +463,13 @@ export function createForecastChart(
 			type: options.autosize || AUTOSIZE.FIT_X
 		},
 		config: {
-			font: globalFont
+			font: globalFont,
+			legend: {
+				layout: {
+					direction: legendProperties.direction,
+					anchor: 'start'
+				}
+			}
 		},
 
 		// layers
@@ -491,6 +516,10 @@ export function createForecastChart(
 			axis: yaxis
 		};
 
+		if (options.scale === 'log') {
+			encodingY.scale = { type: 'symlog' };
+		}
+
 		if (options.fitYDomain && layer.data[0]) {
 			// gets the other fieldname
 			const yField = Object.keys(layer.data[0]).find((elem) => elem !== layer.timeField);
@@ -530,7 +559,7 @@ export function createForecastChart(
 	};
 
 	// Build sample layer
-	if (samplingLayer && !isEmpty(samplingLayer.variables)) {
+	if (samplingLayer && !isEmpty(samplingLayer.variables) && !isEmpty(samplingLayer.data)) {
 		const layerSpec = newLayer(samplingLayer, 'line');
 		const encoding = layerSpec.layer[0].encoding;
 		Object.assign(encoding, {
@@ -543,7 +572,7 @@ export function createForecastChart(
 	}
 
 	// Build statistical layer
-	if (statisticsLayer && !isEmpty(statisticsLayer.variables)) {
+	if (statisticsLayer && !isEmpty(statisticsLayer.variables) && !isEmpty(statisticsLayer.data)) {
 		const layerSpec = newLayer(statisticsLayer, 'line');
 		const lineSubLayer = layerSpec.layer[0];
 		const tooltipSubLayer = structuredClone(lineSubLayer);
@@ -593,13 +622,13 @@ export function createForecastChart(
 	}
 
 	// Build ground truth layer
-	if (groundTruthLayer && !isEmpty(groundTruthLayer.variables)) {
+	if (groundTruthLayer && !isEmpty(groundTruthLayer.variables) && !isEmpty(groundTruthLayer.data)) {
 		const layerSpec = newLayer(groundTruthLayer, 'point');
 		const encoding = layerSpec.layer[0].encoding;
 
-		// FIXME: variables not aligned, set unique color for now
-		encoding.color.scale.range = ['#1B8073'];
-		// encoding.color.scale.range = options.colorscheme || CATEGORICAL_SCHEME;
+		encoding.color.scale.range = options.colorscheme
+			? structuredClone(options.colorscheme).reverse()
+			: CATEGORICAL_SCHEME;
 
 		if (options.legend === true) {
 			encoding.color.legend = {
@@ -615,7 +644,62 @@ export function createForecastChart(
 	return spec;
 }
 
+/**
+ * FIXME: The design calls for combinations of different types of charts
+ * in the grid, which we don't know how to achieve currently with vegalite
+ * */
+export function createSimulateSensitivityScatter(samplingLayer: SensitivityChartLayer, options: ForecastChartOptions) {
+	// Start building
+	const spec: any = {
+		$schema: VEGALITE_SCHEMA,
+		title: `${samplingLayer.outputVariable} sensitivity`,
+		description: '',
+		repeat: {
+			row: samplingLayer.inputVariables,
+			column: samplingLayer.inputVariables
+		},
+		data: { values: samplingLayer.data },
+		spec: {
+			width: options.width,
+			height: options.height,
+			mark: { type: 'point', filled: true },
+			encoding: {
+				x: {
+					field: { repeat: 'row' },
+					type: 'quantitative',
+					axis: {
+						gridColor: '#EEE'
+					},
+					scale: {
+						zero: false,
+						nice: false
+					}
+				},
+				y: {
+					field: { repeat: 'column' },
+					type: 'quantitative',
+					axis: {
+						gridColor: '#EEE'
+					},
+					scale: {
+						zero: false,
+						nice: false
+					}
+				},
+				color: {
+					field: samplingLayer.outputVariable,
+					type: 'quantitative'
+				},
+				size: { value: 80 }
+			}
+		}
+	};
+
+	return spec;
+}
+
 export function applyForecastChartAnnotations(chartSpec: any, annotations: ChartAnnotation[]) {
+	if (isEmpty(annotations)) return chartSpec;
 	const targetLayerIndex = 1; // Assume the target layer is the second layer which is the statistic layer
 	const layerSpecs = annotations.map((a) => a.layerSpec);
 	if (!chartSpec.layer[targetLayerIndex]) return chartSpec;
@@ -667,15 +751,14 @@ export function createForecastChartAnnotation(axis: 'x' | 'y', datum: number, la
 
 export function createSuccessCriteriaChart(
 	riskResults: any,
-	targetVariable: string,
 	threshold: number,
 	isMinimized: boolean,
 	alpha: number,
 	options: BaseChartOptions
 ): any {
 	// FIXME: risk results can be null/undefined sometimes
-	const data = riskResults?.[targetVariable]?.qoi || [];
-	const risk = riskResults?.[targetVariable]?.risk?.[0] || 0;
+	const data = riskResults.data;
+	const risk = riskResults.risk;
 	const binCount = Math.floor(Math.sqrt(data.length)) ?? 1;
 	const alphaPercentile = percentile(data, alpha);
 
@@ -823,12 +906,14 @@ export function createInterventionChartMarkers(
 			type: 'text',
 			align: 'left',
 			angle: 90,
-			dx: options.labelXOffset,
-			dy: -10
+			dx: options.labelXOffset || 0 - 45,
+			dy: -10,
+			limit: 140,
+			ellipsis: '...'
 		},
 		encoding: {
 			x: { field: 'time', type: 'quantitative' },
-			y: { field: 'value', type: 'quantitative' },
+			y: 0,
 			text: { field: 'name', type: 'nominal' }
 		}
 	};

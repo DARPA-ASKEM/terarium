@@ -17,6 +17,7 @@ import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
+import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Service;
 import software.uncharted.terarium.hmiserver.configuration.Config;
 import software.uncharted.terarium.hmiserver.configuration.ElasticsearchConfiguration;
@@ -25,6 +26,7 @@ import software.uncharted.terarium.hmiserver.models.dataservice.dataset.Dataset;
 import software.uncharted.terarium.hmiserver.models.dataservice.dataset.DatasetColumn;
 import software.uncharted.terarium.hmiserver.repository.data.DatasetRepository;
 import software.uncharted.terarium.hmiserver.service.elasticsearch.ElasticsearchService;
+import software.uncharted.terarium.hmiserver.service.gollm.EmbeddingService;
 import software.uncharted.terarium.hmiserver.service.s3.S3ClientService;
 import software.uncharted.terarium.hmiserver.utils.rebac.Schema;
 
@@ -37,6 +39,8 @@ public class DatasetService extends TerariumAssetServiceWithSearch<Dataset, Data
 		final Config config,
 		final ElasticsearchConfiguration elasticConfig,
 		final ElasticsearchService elasticService,
+		final EmbeddingService embeddingService,
+		final Environment env,
 		final ProjectService projectService,
 		final ProjectAssetService projectAssetService,
 		final S3ClientService s3ClientService,
@@ -47,6 +51,8 @@ public class DatasetService extends TerariumAssetServiceWithSearch<Dataset, Data
 			config,
 			elasticConfig,
 			elasticService,
+			embeddingService,
+			env,
 			projectService,
 			projectAssetService,
 			s3ClientService,
@@ -76,7 +82,10 @@ public class DatasetService extends TerariumAssetServiceWithSearch<Dataset, Data
 	@Observed(name = "function_profile")
 	public Dataset createAsset(final Dataset asset, final UUID projectId, final Schema.Permission hasWritePermission)
 		throws IOException {
-		extractColumns(asset);
+		// If the columns are already set, don't add them again (happens when copying a dataset to another project).
+		if (asset.getColumns() == null || asset.getColumns().isEmpty()) {
+			extractColumns(asset);
+		}
 		verifyColumnRelationship(asset);
 		return super.createAsset(asset, projectId, hasWritePermission);
 	}
@@ -124,13 +133,13 @@ public class DatasetService extends TerariumAssetServiceWithSearch<Dataset, Data
 	@Observed(name = "function_profile")
 	private Dataset extractColumns(final Dataset dataset) throws IOException {
 		if (dataset.getFileNames() != null) {
-			for (String filename : dataset.getFileNames()) {
+			for (final String filename : dataset.getFileNames()) {
 				if (filename.endsWith(Dataset.NC_EXTENSION)) {
 					continue;
 				}
-				CSVParser csvParser = getCSVFileParser(filename, dataset.getId());
+				final CSVParser csvParser = getCSVFileParser(filename, dataset.getId());
 				if (csvParser == null) continue;
-				List<String> headers = new ArrayList<>(csvParser.getHeaderMap().keySet());
+				final List<String> headers = new ArrayList<>(csvParser.getHeaderMap().keySet());
 				addDatasetColumns(dataset, filename, headers);
 			}
 		}
@@ -140,9 +149,9 @@ public class DatasetService extends TerariumAssetServiceWithSearch<Dataset, Data
 	/**
 	 * Add the columns to the dataset.
 	 *
-	 * @param dataset the dataset to add the columns to
+	 * @param dataset  the dataset to add the columns to
 	 * @param fileName the name of the file
-	 * @param headers the headers to add
+	 * @param headers  the headers to add
 	 */
 	@Observed(name = "function_profile")
 	public static void addDatasetColumns(final Dataset dataset, final String fileName, final List<String> headers) {
@@ -186,12 +195,14 @@ public class DatasetService extends TerariumAssetServiceWithSearch<Dataset, Data
 	}
 
 	/**
-	 * Verify that the columns have the correct relationship to the dataset. This is needed
-	 * because the columns are not directly related to the dataset in the database by default.
+	 * Verify that the columns have the correct relationship to the dataset. This is
+	 * needed
+	 * because the columns are not directly related to the dataset in the database
+	 * by default.
 	 *
 	 * @param asset the dataset to verify
 	 */
-	private static void verifyColumnRelationship(Dataset asset) {
+	private static void verifyColumnRelationship(final Dataset asset) {
 		Optional.ofNullable(asset.getColumns()).ifPresent(columns -> columns.forEach(column -> column.setDataset(asset)));
 	}
 
@@ -201,8 +212,8 @@ public class DatasetService extends TerariumAssetServiceWithSearch<Dataset, Data
 	 * @param csv the CSV to calculate the statistics for
 	 * @return the statistics for the columns
 	 */
-	public static List<CsvColumnStats> calculateColumnStatistics(List<List<String>> csv) {
-		List<CsvColumnStats> stats = new ArrayList<>();
+	public static List<CsvColumnStats> calculateColumnStatistics(final List<List<String>> csv) {
+		final List<CsvColumnStats> stats = new ArrayList<>();
 		csv.get(0).forEach(column -> stats.add(getStats(getColumn(csv, csv.get(0).indexOf(column)))));
 		return stats;
 	}

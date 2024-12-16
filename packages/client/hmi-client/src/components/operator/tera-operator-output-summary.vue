@@ -76,17 +76,14 @@ function cancelEdit() {
 const poller = new Poller<Summary>();
 async function pollSummary() {
 	isLoading.value = true;
-	poller
-		.setInterval(3000)
-		.setThreshold(15)
-		.setPollAction(async () => {
-			const summaryMap = await getSummaries([props.summaryId]);
-			const summaryObj = summaryMap[props.summaryId];
-			if (summaryObj && summaryObj.generatedSummary) {
-				return { data: summaryObj, progress: null, error: null };
-			}
-			return { data: null, progress: null, error: null };
-		});
+	poller.setThreshold(15).setPollAction(async () => {
+		const summaryMap = await getSummaries([props.summaryId]);
+		const summaryObj = summaryMap[props.summaryId];
+		if (summaryObj && summaryObj.generatedSummary) {
+			return { data: summaryObj, progress: null, error: null };
+		}
+		return { data: null, progress: null, error: null };
+	});
 	const pollerResult = await poller.start();
 	if (pollerResult.state === PollerState.Cancelled) {
 		return;
@@ -136,12 +133,11 @@ section {
 	& > .summary {
 		display: flex;
 		width: 100%;
-		font-size: var(--font-caption);
 		color: var(--text-color-primary);
 		cursor: text;
 
 		img {
-			padding-right: var(--gap-small);
+			padding-right: var(--gap-2);
 			width: 21px;
 		}
 	}
@@ -150,9 +146,9 @@ section {
 		font-size: var(--font-caption);
 	}
 
-	padding-bottom: var(--gap-small);
+	padding-bottom: var(--gap-2);
 	border-radius: var(--border-radius);
-	gap: var(--gap-small);
+	gap: var(--gap-2);
 
 	& > textarea {
 		flex: 1;

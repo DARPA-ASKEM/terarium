@@ -1,28 +1,28 @@
 <template>
-	<section class="flex flex-column gap-3">
+	<section class="flex flex-column gap-2">
 		<span class="flex align-items-center gap-3">
 			<h6>{{ symbol }}</h6>
 			<span class="name">
-				<template v-if="featureConfig.isPreview">{{ item.name }}</template>
+				<template v-if="featureConfig.isPreview">{{ nameText }}</template>
 				<tera-input-text
 					v-else
 					placeholder="Add a name"
-					:model-value="item.name ?? ''"
-					@update:model-value="$emit('update-item', { key: 'name', value: $event })"
+					v-model="nameText"
+					@change="$emit('update-item', { key: 'name', value: nameText })"
 				/>
 			</span>
 			<span class="unit">
-				<template v-if="item.input && item.output">
-					<span><label>Input:</label> {{ item.input }}</span>
-					<span class="ml-"><label>Output:</label> {{ item.output }}</span>
+				<template v-if="input && output">
+					<span><label>Input:</label> {{ input }}</span>
+					<span class="ml-"><label>Output:</label> {{ output }}</span>
 				</template>
 				<!--amr_to_mmt doesn't like unit expressions with spaces, removing them here before they are saved to the amr-->
 				<template v-else-if="showUnit">
-					<template v-if="featureConfig.isPreview"><label>Unit</label>{{ item.unitExpression }}</template>
+					<template v-if="featureConfig.isPreview"><label>Unit</label>{{ unitExpression }}</template>
 					<!-- we use a dropdown for units with time semantic-->
 					<Dropdown
 						v-else-if="isTimePart"
-						:model-value="item.unitExpression"
+						v-model="unitExpression"
 						placeholder="Add a time unit"
 						option-label="label"
 						option-value="value"
@@ -31,15 +31,15 @@
 							{ label: 'Months', value: CalendarDateType.MONTH },
 							{ label: 'Years', value: CalendarDateType.YEAR }
 						]"
-						@change="$emit('update-item', { key: 'unitExpression', value: $event.value })"
+						@change="$emit('update-item', { key: 'unitExpression', value: unitExpression })"
 					/>
 					<tera-input-text
 						v-else
 						label="Unit"
 						placeholder="Add a unit"
 						:characters-to-reject="[' ']"
-						:model-value="item.unitExpression ?? ''"
-						@update:model-value="$emit('update-item', { key: 'unitExpression', value: $event })"
+						v-model="unitExpression"
+						@change="$emit('update-item', { key: 'unitExpression', value: unitExpression })"
 					/>
 				</template>
 			</span>
@@ -47,7 +47,7 @@
 			<span v-if="!featureConfig.isPreview" class="flex ml-auto gap-3">
 				<!-- Three states of description buttons: Hide / Show / Add description -->
 				<Button
-					v-if="(item.description && showDescription) || (!item.description && showDescription)"
+					v-if="(descriptionText && showDescription) || (!descriptionText && showDescription)"
 					text
 					size="small"
 					label="Hide description"
@@ -57,7 +57,7 @@
 					v-else-if="!showDescription"
 					text
 					size="small"
-					:label="item.description ? 'Show description' : 'Add description'"
+					:label="descriptionText ? 'Show description' : 'Add description'"
 					@click="showDescription = true"
 				/>
 				<span v-if="showConcept" class="concept">
@@ -79,18 +79,18 @@
 			</span>
 		</span>
 		<katex-element
-			v-if="item.expression"
+			v-if="expression"
 			class="expression"
-			:expression="stringToLatexExpression(item.expression)"
+			:expression="stringToLatexExpression(expression)"
 			:throw-on-error="false"
 		/>
 		<span class="description">
-			<template v-if="featureConfig.isPreview">{{ item.description }}</template>
+			<template v-if="featureConfig.isPreview">{{ descriptionText }}</template>
 			<tera-input-text
 				v-if="showDescription"
 				placeholder="Add a description"
-				:model-value="item.description ?? ''"
-				@update:model-value="$emit('update-item', { key: 'description', value: $event })"
+				v-model="descriptionText"
+				@change="$emit('update-item', { key: 'description', value: descriptionText })"
 			/>
 		</span>
 	</section>
@@ -101,7 +101,6 @@ import { ref, computed, watch } from 'vue';
 import TeraInputText from '@/components/widgets/tera-input-text.vue';
 import AutoComplete from 'primevue/autocomplete';
 import Button from 'primevue/button';
-import type { ModelPartItem } from '@/types/Model';
 import { stringToLatexExpression } from '@/services/model';
 import type { DKG } from '@/types/Types';
 import { getCurieFromGroundingIdentifier, getNameOfCurieCached, searchCuriesEntities } from '@/services/concept';
@@ -110,20 +109,31 @@ import Dropdown from 'primevue/dropdown';
 import { CalendarDateType } from '@/types/common';
 
 const props = defineProps<{
-	item: ModelPartItem;
+	description?: string;
+	name?: string;
+	unitExpression?: string;
+	templateId?: string;
+	id?: string;
+	grounding?: any;
+	expression?: string;
+	input?: any;
+	output?: any;
 	featureConfig: FeatureConfig;
 	isTimePart?: boolean;
 }>();
 
 const emit = defineEmits(['update-item']);
 
+const nameText = ref(props.name);
+const unitExpression = ref(props.unitExpression);
+const descriptionText = ref(props.description);
 const query = ref('');
 const results = ref<DKG[]>([]);
 
-const symbol = computed(() => (props.item.templateId ? `${props.item.templateId}, ${props.item.id}` : props.item.id));
+const symbol = computed(() => (props.templateId ? `${props.templateId}, ${props.id}` : props.id));
 
 // If we are in preview mode and there is no content, show nothing
-const showUnit = computed(() => !(props.featureConfig.isPreview && !props.item.unitExpression));
+const showUnit = computed(() => !(props.featureConfig.isPreview && !unitExpression.value));
 const showConcept = computed(() => !(props.featureConfig.isPreview && !query.value));
 
 // Used if an option isn't selected from the Autocomplete suggestions but is typed in regularly
@@ -142,15 +152,22 @@ function applyValidConcept() {
 }
 
 watch(
-	() => props.item.grounding?.identifiers,
+	() => props.grounding?.identifiers,
 	async (identifiers) => {
 		if (identifiers) query.value = await getNameOfCurieCached(getCurieFromGroundingIdentifier(identifiers));
 	},
 	{ immediate: true }
 );
 
-const showDescription = ref(false);
-if (props.item.description) showDescription.value = true;
+watch(
+	() => props.description,
+	(newDescription) => {
+		showDescription.value = !!newDescription;
+		descriptionText.value = newDescription;
+	},
+	{ deep: true }
+);
+const showDescription = ref(!!descriptionText.value);
 </script>
 
 <style scoped>
@@ -169,16 +186,21 @@ h6::after {
 	margin-left: var(--gap-2);
 }
 
-.unit {
-	max-width: 20rem;
-	overflow: auto;
-}
-
 .unit,
 .concept {
 	display: flex;
 	align-items: center;
 	gap: var(--gap-1);
+}
+
+.unit {
+	overflow: auto;
+}
+
+.expression {
+	min-height: 2rem;
+	max-height: 12rem;
+	overflow: auto;
 }
 
 :deep(.p-autocomplete-input) {

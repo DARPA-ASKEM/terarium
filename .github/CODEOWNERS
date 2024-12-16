@@ -10,14 +10,18 @@
 * @dgauldie @mwdchang @YohannParis
 
 # Client code owners
-/packages/client/ @YohannParis @mwdchang @jryu01 @Tom-Szendrey @shawnyama @blanchco @asylves1
+/packages/client/ @YohannParis @mwdchang @jryu01 @Tom-Szendrey @shawnyama @blanchco @asylves1 @mloppie
 
 # Backend services owners
 /packages/server/ @dgauldie @dvince2 @YohannParis
-/packages/taskrunner/ @kbirk @YohannParis
+/packages/taskrunner/ @dgauldie @YohannParis
 
 # Documentation owners
 docs/*  @dgauldie @pascaleproulx @YohannParis @dvince2
+
+
+# Generated Types - removing generated types from codeowners to reduce client owners spam.
+packages/client/hmi-client/src/types/Types.ts
 
 # CODEOWNERS prevent renovate automerge since it will automatically ask for review
 # See documentation for more details: https://docs.renovatebot.com/key-concepts/automerge/#codeowners

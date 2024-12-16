@@ -33,9 +33,9 @@ We want to stratified the model by several age groups to simulate how contact ra
    1. `Output - 2`  is available in the output selection dropdown in the top-right corner
    2. A new model with the same structure as the SEIRHD model appears in the right half of the interface
    3. The states `S, E, I` of the new model have 18 nodes that are circle-packed within them, representing the new stratified states `S_0to4, S_5to9, ...`
-9. Select and double-click the transition `template-1` between the states `S, E` to expand the matrix view of this transition
+9. Select and double-click the transition `template-2` between the states `E, I` to expand the matrix view of this transition
    1. The shape of the matrix `18 x 18`
-   2. The rows are `S_0to4, S_10to14, ...` and the columns are `E_0to4, E_10to14, ...`
+   2. The rows are `E_0to4, E_10to14, ...` and the columns are `I_0to4, I_10to14, ...`
    3. All off-diagonal values are `n/a`
    4. Toggle **Evaluate expression** in the top-right corner to numerically evaluate the parameters in the math expressions
    5. Click **OK** to close this view
@@ -44,8 +44,8 @@ We want to stratified the model by several age groups to simulate how contact ra
    2. An expanded view of the `18 x 18` matrix of `c` is shown
    3. Select `subjectControllers` in the top-left dropdown
    4. Every entry of the matrix should have a value of type `c_*_*`
-11. Click on the **...** in the top-right corner to save this stratified model as `test 1`
-   1. Confirm that `test 1` does appear in the **Models** section of the **Resources** panel on the left of the interface
+11. Click on the **Save for reuse** button in the top-right corner to save this stratified model into your project
+   1. Confirm that it appears in the **Models** section of the **Resources** panel on the left of the interface
 12. Click **X** in the top-right corner to exit
 13. Right-click on the canvas to add a `Configure model` operator under **Config & Intervention**
 14. Connect the output port of the `Stratify model` operator to the **Model** input port of the `Configure model` operator
@@ -117,7 +117,7 @@ Next, let's stratify the model to again to introduce the dependency of the infec
    5. Allow existing interactions to involve multiple strata: _False_
 5. Click **Stratify**
 6. Confirm that a new stratified model appears on the right
-   1. The `template-7` transition is now a `3 x 3` matrix, representing the three different possible vaccination processes (from unvaccinated to vaccinated by any of the three vaccines)
+   1. The `template-7` transition is now a `1 x 3` matrix, representing the three different possible vaccination processes (from unvaccinated to vaccinated by any of the three vaccines)
    2. Check that there are now four stratified `S` states: `S_unvaccinated, S_vaccinated_jj, S_vaccinated_moderna, S_vaccinated_pfizer`
    3. The parameter `v` is a `4 x 1` matrix (in 'subjectOutcome' view) with those values `v_unvaccinated, v_vaccinated`
 

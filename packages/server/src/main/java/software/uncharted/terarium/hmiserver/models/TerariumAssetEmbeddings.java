@@ -8,12 +8,12 @@ import lombok.Data;
 public class TerariumAssetEmbeddings {
 
 	@Data
-	public static class Embeddings {
+	public static class Embedding {
 
 		private String embeddingId;
 		private double[] vector;
-		private long[] spans;
+		private long[] span;
 	}
 
-	private List<Embeddings> embeddings = new ArrayList<>();
+	private List<Embedding> embeddings = new ArrayList<>();
 }

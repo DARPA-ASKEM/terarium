@@ -2,6 +2,7 @@ import { useProjects } from '@/composables/project';
 import {
 	CloneProjectStatusUpdate,
 	ExtractionStatusUpdate,
+	ModelEnrichmentStatusUpdate,
 	NotificationItem,
 	NotificationItemStatus
 } from '@/types/common';
@@ -20,8 +21,8 @@ import {
 import { logger } from '@/utils/logger';
 import { snakeToCapitalSentence } from '@/utils/text';
 import { Ref } from 'vue';
+import { getModel } from '@/services/model';
 import { getDocumentAsset } from './document-assets';
-import { getModel } from './model';
 import { getWorkflow } from './workflow';
 
 type NotificationEventData = TaskResponse | StatusUpdate<unknown>;
@@ -145,21 +146,12 @@ export const createNotificationEventHandlers = (notificationItems: Ref<Notificat
 				created.sourceName = project?.name ?? 'Source Project';
 			});
 	});
-
 	registerHandler<ExtractionStatusUpdate>(ClientEventType.ExtractionPdf, (event, created) => {
 		created.assetId = event.data.data.documentId;
 		created.pageType = AssetType.Document;
 		created.typeDisplayName = 'PDF Extraction';
 		getDocumentAsset(created.assetId, created.projectId).then((document) =>
 			Object.assign(created, { sourceName: document?.name || '' })
-		);
-	});
-	registerHandler<TaskResponse>(ClientEventType.TaskGollmModelCard, (event, created) => {
-		created.supportCancel = true;
-		created.assetId = event.data.additionalProperties.modelId as string;
-		created.pageType = AssetType.Model;
-		getModel(created.assetId, created.projectId).then((model) =>
-			Object.assign(created, { sourceName: model?.name || '' })
 		);
 	});
 	registerHandler<TaskResponse>(ClientEventType.TaskGollmConfigureModelFromDocument, (event, created) => {
@@ -214,6 +206,28 @@ export const createNotificationEventHandlers = (notificationItems: Ref<Notificat
 			created.typeDisplayName = `${snakeToCapitalSentence(event.data.data.simulationType)} (${event.data.data.simulationEngine.toLowerCase()})`;
 		}
 	);
+	registerHandler<ModelEnrichmentStatusUpdate>(ClientEventType.KnowledgeEnrichmentModel, (event, created) => {
+		created.sourceName = 'Model Enrichment';
+		// Check if the event data contains a workflowId and nodeId
+		if (event.data.data?.workflowId && event.data.data?.nodeId) {
+			created.assetId = event.data.data.workflowId as string;
+			created.pageType = AssetType.Workflow;
+			created.nodeId = event.data.data.nodeId as string;
+			getWorkflow(created.assetId, created.projectId).then((workflow) =>
+				Object.assign(created, { context: workflow?.name || '' })
+			);
+		}
+
+		// We display the model page from where the enrichment model was triggered
+		else {
+			created.assetId = event.data.data.modelId as string;
+			created.pageType = AssetType.Model;
+			created.typeDisplayName = 'Model Enrichment';
+			getModel(created.assetId, created.projectId).then((model) =>
+				Object.assign(created, { sourceName: model?.name || '' })
+			);
+		}
+	});
 
 	const getHandler = (eventType: ClientEventType) => handlers[eventType] ?? (() => {});
 

@@ -1,5 +1,6 @@
 package software.uncharted.terarium.hmiserver.models.dataservice.workflow;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import io.hypersistence.utils.hibernate.type.json.JsonType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -36,6 +37,10 @@ public class Workflow extends TerariumAsset {
 	@Column(columnDefinition = "json")
 	private List<WorkflowEdge> edges;
 
+	@Type(JsonType.class)
+	@Column(columnDefinition = "json")
+	private JsonNode scenario;
+
 	@Override
 	public Workflow clone() {
 		final Workflow clone = new Workflow();
@@ -65,6 +70,8 @@ public class Workflow extends TerariumAsset {
 			final WorkflowEdge clonedEdge = edge.clone(clone.getId(), clonedSourceId, clonedTargetId);
 			clone.getEdges().add(clonedEdge);
 		}
+
+		clone.setScenario(this.getScenario());
 		return clone;
 	}
 }

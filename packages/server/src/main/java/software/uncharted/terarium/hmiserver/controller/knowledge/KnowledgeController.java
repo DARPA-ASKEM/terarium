@@ -26,6 +26,7 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeoutException;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
+import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.http.HttpEntity;
@@ -45,8 +46,8 @@ import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
+import software.uncharted.terarium.hmiserver.models.ClientEventType;
 import software.uncharted.terarium.hmiserver.models.dataservice.Grounding;
-import software.uncharted.terarium.hmiserver.models.dataservice.Identifier;
 import software.uncharted.terarium.hmiserver.models.dataservice.code.Code;
 import software.uncharted.terarium.hmiserver.models.dataservice.code.CodeFile;
 import software.uncharted.terarium.hmiserver.models.dataservice.dataset.Dataset;
@@ -55,23 +56,18 @@ import software.uncharted.terarium.hmiserver.models.dataservice.document.Documen
 import software.uncharted.terarium.hmiserver.models.dataservice.model.Model;
 import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.ModelHeader;
 import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.ModelMetadata;
-import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.ModelParameter;
-import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.semantics.Observable;
-import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.semantics.State;
-import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.semantics.Transition;
 import software.uncharted.terarium.hmiserver.models.dataservice.provenance.Provenance;
 import software.uncharted.terarium.hmiserver.models.dataservice.provenance.ProvenanceRelationType;
 import software.uncharted.terarium.hmiserver.models.dataservice.provenance.ProvenanceType;
-import software.uncharted.terarium.hmiserver.models.dataservice.regnet.RegNetVertex;
 import software.uncharted.terarium.hmiserver.models.extractionservice.ExtractionResponse;
-import software.uncharted.terarium.hmiserver.models.task.CompoundTask;
+import software.uncharted.terarium.hmiserver.models.mira.DKG;
 import software.uncharted.terarium.hmiserver.models.task.TaskRequest;
 import software.uncharted.terarium.hmiserver.models.task.TaskRequest.TaskType;
 import software.uncharted.terarium.hmiserver.models.task.TaskResponse;
-import software.uncharted.terarium.hmiserver.proxies.mira.MIRAProxy;
 import software.uncharted.terarium.hmiserver.proxies.mit.MitProxy;
 import software.uncharted.terarium.hmiserver.proxies.skema.SkemaUnifiedProxy;
 import software.uncharted.terarium.hmiserver.security.Roles;
+import software.uncharted.terarium.hmiserver.service.ClientEventService;
 import software.uncharted.terarium.hmiserver.service.CurrentUserService;
 import software.uncharted.terarium.hmiserver.service.ExtractionService;
 import software.uncharted.terarium.hmiserver.service.data.CodeService;
@@ -79,14 +75,15 @@ import software.uncharted.terarium.hmiserver.service.data.DatasetService;
 import software.uncharted.terarium.hmiserver.service.data.DocumentAssetService;
 import software.uncharted.terarium.hmiserver.service.data.ModelService;
 import software.uncharted.terarium.hmiserver.service.data.ProjectService;
-import software.uncharted.terarium.hmiserver.service.data.ProvenanceSearchService;
 import software.uncharted.terarium.hmiserver.service.data.ProvenanceService;
-import software.uncharted.terarium.hmiserver.service.tasks.EnrichAmrResponseHandler;
+import software.uncharted.terarium.hmiserver.service.notification.NotificationGroupInstance;
+import software.uncharted.terarium.hmiserver.service.notification.NotificationService;
 import software.uncharted.terarium.hmiserver.service.tasks.EquationsCleanupResponseHandler;
+import software.uncharted.terarium.hmiserver.service.tasks.LatexToAMRResponseHandler;
 import software.uncharted.terarium.hmiserver.service.tasks.TaskService;
 import software.uncharted.terarium.hmiserver.service.tasks.TaskService.TaskMode;
-import software.uncharted.terarium.hmiserver.service.tasks.TaskUtilities;
 import software.uncharted.terarium.hmiserver.utils.ByteMultipartFile;
+import software.uncharted.terarium.hmiserver.utils.JsonUtil;
 import software.uncharted.terarium.hmiserver.utils.Messages;
 import software.uncharted.terarium.hmiserver.utils.StringMultipartFile;
 import software.uncharted.terarium.hmiserver.utils.rebac.Schema;
@@ -101,14 +98,11 @@ public class KnowledgeController {
 
 	private final SkemaUnifiedProxy skemaUnifiedProxy;
 	private final MitProxy mitProxy;
-	private final MIRAProxy miraProxy;
 
 	private final DocumentAssetService documentService;
 	private final DatasetService datasetService;
 	private final ModelService modelService;
 	private final ProvenanceService provenanceService;
-	private final ProvenanceSearchService provenanceSearchService;
-	private final DocumentAssetService documentAssetService;
 
 	private final CodeService codeService;
 
@@ -117,6 +111,8 @@ public class KnowledgeController {
 
 	private final ProjectService projectService;
 	private final CurrentUserService currentUserService;
+	private final ClientEventService clientEventService;
+	private final NotificationService notificationService;
 
 	private final EquationsCleanupResponseHandler equationsCleanupResponseHandler;
 
@@ -130,142 +126,60 @@ public class KnowledgeController {
 		taskService.addResponseHandler(equationsCleanupResponseHandler);
 	}
 
-	private void enrichModel(
-		final UUID projectId,
-		final UUID documentId,
-		final UUID modelId,
-		final Schema.Permission permission,
-		final boolean overwrite
+	/**
+	 * Clean up a list of equations
+	 *
+	 * @return List of cleaned-up equations
+	 */
+	@PostMapping("/clean-equations")
+	@Secured(Roles.USER)
+	public ResponseEntity<EquationCleanupResponse> getCleanedEquations(
+		@RequestBody final List<String> equations,
+		@RequestParam(name = "project-id", required = false) final UUID projectId
 	) {
-		// Grab the document
-		final Optional<DocumentAsset> document = documentAssetService.getAsset(documentId, permission);
-		if (document.isEmpty()) {
-			log.warn(String.format("Document %s not found", documentId));
-			throw new ResponseStatusException(HttpStatus.NOT_FOUND, messages.get("document.not-found"));
-		}
-
-		// make sure there is text in the document
-		if (document.get().getText() == null || document.get().getText().isEmpty()) {
-			log.warn(String.format("Document %s has no extracted text", documentId));
-			throw new ResponseStatusException(HttpStatus.NOT_FOUND, messages.get("document.extraction.not-done"));
-		}
-
-		// Grab the model
-		Optional<Model> model = modelService.getAsset(modelId, permission);
-		if (model.isEmpty()) {
-			log.warn(String.format("Model %s not found", modelId));
-			throw new ResponseStatusException(HttpStatus.NOT_FOUND, messages.get("model.not-found"));
-		}
-
-		final EnrichAmrResponseHandler.Input input = new EnrichAmrResponseHandler.Input();
-		try {
-			input.setResearchPaper(mapper.writeValueAsString(document.get().getExtractions()));
-		} catch (JsonProcessingException e) {
-			log.error("Unable to serialize document text", e);
-			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("generic.io-error.write"));
-		}
-		// stripping the metadata from the model before its sent since it can cause
-		// gollm to fail with massive inputs
-		model.get().setMetadata(null);
+		TaskRequest cleanupReq = cleanupEquationsTaskRequest(projectId, equations);
+		TaskResponse cleanupResp = null;
+		List<String> cleanedEquations = new ArrayList<>(equations); // Have original equations as a fallback
+		boolean wasCleaned = false;
 
 		try {
-			final String amr = mapper.writeValueAsString(model.get());
-			input.setAmr(amr);
+			cleanupResp = taskService.runTask(TaskMode.SYNC, cleanupReq);
+			// Get the equations from the cleanup response
+			if (cleanupResp != null && cleanupResp.getOutput() != null) {
+				try {
+					JsonNode output = mapper.readValue(cleanupResp.getOutput(), JsonNode.class);
+					if (output.get("response") != null && output.get("response").get("equations") != null) {
+						cleanedEquations.clear(); // Clear original equations before adding cleaned ones
+						wasCleaned = true;
+						for (JsonNode eq : output.get("response").get("equations")) {
+							cleanedEquations.add(eq.asText());
+						}
+					}
+				} catch (IOException e) {
+					log.warn("Unable to retrieve cleaned-up equations from GoLLM response. Reverting to original equations.", e);
+				}
+			}
 		} catch (final JsonProcessingException e) {
-			log.error("Unable to serialize model card", e);
-			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("task.gollm.json-processing"));
-		}
-
-		// Create the tasks
-		final TaskRequest enrichAmrRequest;
-		try {
-			enrichAmrRequest = TaskUtilities.getEnrichAMRTaskRequest(
-				currentUserService.get().getId(),
-				document.get(),
-				model.get(),
-				projectId,
-				overwrite
-			);
-		} catch (IOException e) {
-			log.error("Unable to create Enrich AMR task", e);
-			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("generic.io-error.write"));
-		}
-
-		final TaskRequest modelCardRequest;
-		try {
-			modelCardRequest = TaskUtilities.getModelCardTask(
-				currentUserService.get().getId(),
-				document.get(),
-				model.get(),
-				projectId
-			);
-		} catch (IOException e) {
-			log.error("Unable to create Model Card task", e);
-			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("generic.io-error.write"));
-		}
-
-		final TaskRequest req = new CompoundTask(enrichAmrRequest, modelCardRequest);
-		try {
-			taskService.runTask(TaskMode.SYNC, req);
-		} catch (final JsonProcessingException e) {
-			log.error("Unable to serialize input", e);
-			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("task.gollm.json-processing"));
+			log.warn("Unable to clean-up equations due to a JsonProcessingException. Reverting to original equations.", e);
 		} catch (final TimeoutException e) {
-			log.warn("Timeout while waiting for task response", e);
-			throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, messages.get("task.gollm.timeout"));
+			log.warn("Unable to clean-up equations due to a TimeoutException. Reverting to original equations.", e);
 		} catch (final InterruptedException e) {
-			log.warn("Interrupted while waiting for task response", e);
-			throw new ResponseStatusException(HttpStatus.UNPROCESSABLE_ENTITY, messages.get("task.gollm.interrupted"));
+			log.warn("Unable to clean-up equations due to a InterruptedException. Reverting to original equations.", e);
 		} catch (final ExecutionException e) {
-			log.error("Error while waiting for task response", e);
-			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("task.gollm.execution-failure"));
+			log.warn("Unable to clean-up equations due to a ExecutionException. Reverting to original equations.", e);
 		}
 
-		// at this point the initial enrichment has happened.
-		model = modelService.getAsset(modelId, permission);
-		if (model.isEmpty()) {
-			//this would be a very strange case
-			log.warn(String.format("Model %s not found", modelId));
-			throw new ResponseStatusException(HttpStatus.NOT_FOUND, messages.get("model.not-found"));
-		}
+		return ResponseEntity.ok(new EquationCleanupResponse(cleanedEquations, wasCleaned));
+	}
 
-		// Update State Grounding
-		if (!model.get().isRegnet()) {
-			List<State> states = model.get().getStates();
-			states.forEach(state -> TaskUtilities.performDKGSearchAndSetGrounding(miraProxy, state));
-			model.get().setStates(states);
-		} else if (model.get().isRegnet()) {
-			List<RegNetVertex> vertices = model.get().getVerticies();
-			vertices.forEach(vertex -> TaskUtilities.performDKGSearchAndSetGrounding(miraProxy, vertex));
-			model.get().setVerticies(vertices);
-		}
+	@Data
+	public static class NotificationProperties {
 
-		//Update Observable Grounding
-		if (model.get().getObservables() != null && !model.get().getObservables().isEmpty()) {
-			List<Observable> observables = model.get().getObservables();
-			observables.forEach(observable -> TaskUtilities.performDKGSearchAndSetGrounding(miraProxy, observable));
-			model.get().setObservables(observables);
-		}
-
-		//Update Parameter Grounding
-		if (model.get().getParameters() != null && !model.get().getParameters().isEmpty()) {
-			List<ModelParameter> parameters = model.get().getParameters();
-			parameters.forEach(parameter -> TaskUtilities.performDKGSearchAndSetGrounding(miraProxy, parameter));
-			model.get().setParameters(parameters);
-		}
-
-		//Update Transition Grounding
-		if (model.get().getTransitions() != null && !model.get().getTransitions().isEmpty()) {
-			List<Transition> transitions = model.get().getTransitions();
-			transitions.forEach(transition -> TaskUtilities.performDKGSearchAndSetGrounding(miraProxy, transition));
-			model.get().setTransitions(transitions);
-		}
-
-		try {
-			modelService.updateAsset(model.get(), projectId, permission);
-		} catch (IOException e) {
-			throw new RuntimeException(e);
-		}
+		private UUID projectId;
+		private UUID modelId;
+		private UUID documentId;
+		private UUID workflowId;
+		private UUID nodeId;
 	}
 
 	/**
@@ -284,34 +198,30 @@ public class KnowledgeController {
 			projectId
 		);
 
-		log.info("equations-to-model request: {}", req);
+		// Parse the request
+		UUID documentId = JsonUtil.parseUuidFromRequest(req, "documentId");
+		UUID modelId = JsonUtil.parseUuidFromRequest(req, "modelId");
 
-		final Model responseAMR;
+		// Create the notification properties
+		final NotificationProperties notificationProperties = new NotificationProperties();
+		notificationProperties.setProjectId(projectId);
+		notificationProperties.setDocumentId(documentId);
+		notificationProperties.setModelId(modelId);
+		notificationProperties.setWorkflowId(JsonUtil.parseUuidFromRequest(req, "workflowId"));
+		notificationProperties.setNodeId(JsonUtil.parseUuidFromRequest(req, "nodeId"));
 
-		UUID documentId = null;
-		final String documentIdString = req.get("documentId") != null ? req.get("documentId").asText() : null;
-		if (documentIdString != null) {
-			try {
-				// Get the document id if it is a valid UUID
-				documentId = UUID.fromString(documentIdString);
-			} catch (final IllegalArgumentException e) {
-				log.warn(String.format("Invalid document UUID supplied: %s", documentIdString), e);
-				throw new ResponseStatusException(HttpStatus.BAD_REQUEST, messages.get("generic.invalid-uuid"));
-			}
-		}
+		// Create the notification group
+		final NotificationGroupInstance<NotificationProperties> notificationInterface = new NotificationGroupInstance<>(
+			clientEventService,
+			notificationService,
+			ClientEventType.KNOWLEDGE_ENRICHMENT_MODEL,
+			projectId,
+			notificationProperties,
+			currentUserService.get().getId()
+		);
 
-		// Check if a model ID is supplied and try to extract it
-		UUID modelId = null;
-		final String modelIdString = req.get("modelId") != null ? req.get("modelId").asText() : null;
-		if (modelIdString != null) {
-			try {
-				// Get the model id if it is a valid UUID
-				modelId = UUID.fromString(modelIdString);
-			} catch (final IllegalArgumentException e) {
-				log.warn(String.format("Invalid model UUID supplied: %s", modelIdString), e);
-				throw new ResponseStatusException(HttpStatus.BAD_REQUEST, messages.get("generic.invalid-uuid"));
-			}
-		}
+		notificationInterface.sendMessage("Beginning model enrichment using document extraction...");
+		log.info("Beginning model {} enrichment using document {} extraction...", modelId, documentId);
 
 		// Cleanup equations from the request
 		List<String> equations = new ArrayList<>();
@@ -334,6 +244,8 @@ public class KnowledgeController {
 			log.warn("Unable to clean-up equations due to a ExecutionException. Reverting to original equations.", e);
 		}
 
+		notificationInterface.sendMessage("Equations cleaned up.");
+
 		// get the equations from the cleanup response, or use the original equations
 		JsonNode equationsReq = req.get("equations");
 		if (cleanupResp != null && cleanupResp.getOutput() != null) {
@@ -343,71 +255,94 @@ public class KnowledgeController {
 					equationsReq = output.get("response").get("equations");
 				}
 			} catch (IOException e) {
-				log.warn("Unable to retrive cleaned-up equations from GoLLM response. Reverting to original equations.", e);
+				log.warn("Unable to retrieve cleaned-up equations from GoLLM response. Reverting to original equations.", e);
 			}
 		}
 
-		// Create a new request with the cleaned-up equations, so that we don't modify the original request.
-		JsonNode newReq = req.deepCopy();
-		((ObjectNode) newReq).set("equations", equationsReq);
-
-		// Get an AMR from Skema Unified Service
-		try {
-			responseAMR = skemaUnifiedProxy.consolidatedEquationsToAMR(newReq).getBody();
-			if (responseAMR == null) {
-				log.warn("Skema Unified Service did not return a valid AMR based on the provided equations");
-				throw new ResponseStatusException(HttpStatus.UNPROCESSABLE_ENTITY, messages.get("skema.bad-equations"));
-			}
-		} catch (final FeignException e) {
-			log.error(
-				"An exception occurred while Skema Unified Service was trying to produce an AMR based on the provided equations",
-				e
-			);
-			throw handleSkemaFeignException(e);
-		} catch (final Exception e) {
-			log.error(
-				"An unhandled error occurred while Skema Unified Service was trying to produce an AMR based on the provided equations",
-				e
-			);
-			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("skema.internal-error"));
+		// Get an AMR from Skema Unified Service or MIRA
+		final Model responseAMR;
+		String extractionService = "mira";
+		if (req.get("extractionService") != null) {
+			extractionService = req.get("extractionService").asText();
 		}
+
+		if (extractionService.equals("mira")) {
+			final TaskRequest taskReq = new TaskRequest();
+			final String latex = req.get("equations").toString();
+			taskReq.setType(TaskType.MIRA);
+			try {
+				taskReq.setInput(latex.getBytes());
+				taskReq.setScript(LatexToAMRResponseHandler.NAME);
+				taskReq.setUserId(currentUserService.get().getId());
+				final TaskResponse taskResp = taskService.runTaskSync(taskReq);
+				final JsonNode taskResponseJSON = mapper.readValue(taskResp.getOutput(), JsonNode.class);
+
+				final ObjectNode amrNode = taskResponseJSON.get("response").get("amr").deepCopy();
+				responseAMR = mapper.convertValue(amrNode, Model.class);
+			} catch (Exception e) {
+				log.error("failed to convert LaTeX equations to AMR", e);
+				throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "failed to convert latex equations to AMR");
+			}
+		} else {
+			try {
+				// Create a request for SKEMA with the cleaned-up equations.
+				final JsonNode skemaRequest = mapper.createObjectNode().put("model", "petrinet").set("equations", equationsReq);
+				responseAMR = skemaUnifiedProxy.consolidatedEquationsToAMR(skemaRequest).getBody();
+				if (responseAMR == null) {
+					log.warn("Skema Unified Service did not return a valid AMR based on the provided equations");
+					throw new ResponseStatusException(HttpStatus.UNPROCESSABLE_ENTITY, messages.get("skema.bad-equations"));
+				}
+			} catch (final FeignException e) {
+				log.error(
+					"An exception occurred while Skema Unified Service was trying to produce an AMR based on the provided equations",
+					e
+				);
+				throw handleSkemaFeignException(e);
+			} catch (final Exception e) {
+				log.error(
+					"An unhandled error occurred while Skema Unified Service was trying to produce an AMR based on the provided equations",
+					e
+				);
+				throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("skema.internal-error"));
+			}
+		}
+
+		// We only handle Petri Net models
+		if (!responseAMR.isPetrinet()) {
+			throw new ResponseStatusException(HttpStatus.UNPROCESSABLE_ENTITY, messages.get("skema.bad-equations.petrinet"));
+		}
+
+		notificationInterface.sendMessage("AMR extracted via SKEMA.");
 
 		// If no model id is provided, create a new model asset
+		Model model;
 		if (modelId == null) {
 			try {
-				final Model model = modelService.createAsset(responseAMR, projectId, permission);
-				// enrich the model with the document
-				if (documentId != null) {
-					enrichModel(projectId, documentId, model.getId(), permission, true);
-				}
-				return ResponseEntity.ok(model.getId());
+				model = modelService.createAsset(responseAMR, projectId, permission);
 			} catch (final IOException e) {
-				log.error("An error occurred while trying to create a Model asset.", e);
+				log.error("An error occurred while trying to create a model.", e);
 				throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, messages.get("postgres.service-unavailable"));
 			}
-		}
 
-		// If a model id is provided, update the existing model
-		final Optional<Model> model;
-
-		model = modelService.getAsset(modelId, permission);
-		if (model.isEmpty()) {
-			log.error(String.format("The model id %s does not exist.", modelId));
-			throw new ResponseStatusException(HttpStatus.BAD_REQUEST, messages.get("model.not-found"));
-		}
-
-		responseAMR.setId(model.get().getId());
-		try {
-			modelService.updateAsset(responseAMR, projectId, permission);
-			// enrich the model with the document
-			if (documentId != null) {
-				enrichModel(projectId, documentId, responseAMR.getId(), permission, true);
+			notificationInterface.sendMessage("Model created.");
+			// If a model id is provided, update the existing model
+		} else {
+			try {
+				model = modelService
+					.updateAsset(responseAMR, projectId, permission)
+					.orElseThrow(() -> new IOException("Model not found"));
+			} catch (final IOException | IllegalArgumentException e) {
+				log.error("An error occurred while trying to update a model.", e);
+				throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, messages.get("postgres.service-unavailable"));
 			}
-			return ResponseEntity.ok(model.get().getId());
-		} catch (final IOException e) {
-			log.error(String.format("Unable to update the model with id %s.", modelId), e);
-			throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, messages.get("postgres.service-unavailable"));
+
+			notificationInterface.sendMessage("Model updated.");
 		}
+
+		notificationInterface.sendFinalMessage("Model from equations done.");
+
+		// Return the model id
+		return ResponseEntity.ok(model.getId());
 	}
 
 	@PostMapping("/base64-equations-to-model")
@@ -802,10 +737,10 @@ public class KnowledgeController {
 				if (groundings.getIdentifiers() == null) {
 					groundings.setIdentifiers(new ArrayList<>());
 				}
-				groundings.getIdentifiers().add(new Identifier(g.get(0).asText(), g.get(1).asText()));
+				groundings.getIdentifiers().add(new DKG(g.get(0).asText(), g.get(1).asText(), "", null, null));
 			}
 
-			// remove groundings from annotation object
+			// remove groundings from an annotation object
 			((ObjectNode) annotation).remove("dkg_groundings");
 
 			col.setGrounding(groundings);
@@ -927,7 +862,7 @@ public class KnowledgeController {
 				f.get();
 			} catch (InterruptedException | ExecutionException e) {
 				log.error("Error extracting PDF", e);
-				throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("document.extracton.failed"));
+				throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("document.extraction.failed"));
 			}
 		}
 		return ResponseEntity.accepted().build();
@@ -979,5 +914,16 @@ public class KnowledgeController {
 		req.setAdditionalProperties(props);
 
 		return req;
+	}
+
+	private static class EquationCleanupResponse {
+
+		public List<String> cleanedEquations;
+		public boolean wasCleaned;
+
+		public EquationCleanupResponse(List<String> cleanedEquations, boolean wasCleaned) {
+			this.cleanedEquations = cleanedEquations;
+			this.wasCleaned = wasCleaned;
+		}
 	}
 }

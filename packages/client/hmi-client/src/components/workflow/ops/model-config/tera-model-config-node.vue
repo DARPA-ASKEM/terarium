@@ -1,8 +1,10 @@
 <template>
 	<section>
-		<div v-if="!isEmpty(node.state.transientModelConfig.id)" class="pl-2 pr-2 pb-3">
-			<h6 class="pb-2">{{ node.state.transientModelConfig.name }}</h6>
-			<p>{{ node.state.transientModelConfig.description }}</p>
+		<div v-if="!isEmpty(node.state.transientModelConfig.id)" class="configuration-card">
+			<div class="content">
+				<h6 class="pb-1 line-wrap">{{ node.state.transientModelConfig.name }}</h6>
+				<p class="text-sm">{{ node.state.transientModelConfig.description }}</p>
+			</div>
 		</div>
 		<tera-operator-placeholder v-else :node="node" />
 
@@ -126,7 +128,30 @@ watch(
 );
 </script>
 <style scoped>
+.configuration-card {
+	background: var(--surface-section);
+	border: 1px solid var(--surface-border-light);
+	border-radius: var(--border-radius);
+	box-shadow: 0 2px 4px -1px rgba(0, 0, 0, 0.08);
+	overflow: hidden;
+	margin-bottom: var(--gap-1);
+}
+
+.configuration-card .content {
+	padding-top: var(--gap-2);
+	padding-right: var(--gap-2);
+	padding-bottom: var(--gap-3);
+	padding-left: var(--gap-2-5);
+	border-left: 4px solid var(--primary-color);
+}
+
+.line-wrap {
+	white-space: normal;
+	overflow-wrap: break-word;
+	word-break: break-word;
+	max-width: 100%;
+}
 h6 + p {
-	color: var(--text-color-subdued);
+	color: var(--text-color);
 }
 </style>

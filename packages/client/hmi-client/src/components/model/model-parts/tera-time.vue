@@ -8,7 +8,6 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue';
 import { ModelPartItem } from '@/types/Model';
 import type { State } from '@/types/Types';
 import TeraModelPart from '@/components/model/model-parts/tera-model-part.vue';
@@ -21,17 +20,13 @@ const props = defineProps<{
 	featureConfig: FeatureConfig;
 }>();
 
-const timeList = computed<
-	{
-		base: ModelPartItem;
-		children: ModelPartItem[];
-		isParent: boolean;
-	}[]
->(() =>
-	props.time.map(({ id, name, description, grounding, units }) => ({
-		base: { id, name, description, grounding, unitExpression: units?.expression },
-		children: [],
-		isParent: false
-	}))
-);
+const timeList: {
+	base: ModelPartItem;
+	children: ModelPartItem[];
+	isParent: boolean;
+}[] = props.time.map(({ id, name, description, grounding, units }) => ({
+	base: { id, name, description, grounding, unitExpression: units?.expression },
+	children: [],
+	isParent: false
+}));
 </script>

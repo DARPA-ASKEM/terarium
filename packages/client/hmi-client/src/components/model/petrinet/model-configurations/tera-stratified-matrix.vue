@@ -116,7 +116,7 @@ const props = defineProps<{
 	matrixType?: string;
 }>();
 
-const emit = defineEmits(['update-cell-value']);
+const emit = defineEmits(['update-cell-values']);
 
 const matrixTypes = ['subjectOutcome', 'subjectControllers', 'outcomeControllers', 'other'];
 const matrixType = ref(props.matrixType || 'subjectOutcome');
@@ -143,8 +143,8 @@ let timerId = -1;
 const clipboardText = ref('');
 const updateByMatrixBulk = (matrixToUpdate: MiraMatrix, text: string) => {
 	const parseResult = dsvParse(text);
+	const updateList: { id: string; value: number }[] = [];
 
-	// FIXME: Not very efficient, maybe emit in bulk rather than one-by-one
 	matrixToUpdate.forEach((row) => {
 		row.forEach(async (matrixEntry) => {
 			// If we have label information, use them as they may be more accurate, otherwise use indices
@@ -153,10 +153,9 @@ const updateByMatrixBulk = (matrixToUpdate: MiraMatrix, text: string) => {
 					(entry) => entry.rowLabel === matrixEntry.rowCriteria && entry.colLabel === matrixEntry.colCriteria
 				);
 				if (match) {
-					emit('update-cell-value', {
-						variableName: matrixEntry.content.id,
-						newValue: match.value,
-						mathml: (await pythonInstance.parseExpression(`${match.value}`)).mathml
+					updateList.push({
+						id: matrixEntry.content.id,
+						value: match.value
 					});
 				}
 			} else {
@@ -164,15 +163,16 @@ const updateByMatrixBulk = (matrixToUpdate: MiraMatrix, text: string) => {
 					(entry) => entry.rowIdx === matrixEntry.row && entry.colIdx === matrixEntry.col
 				);
 				if (match) {
-					emit('update-cell-value', {
-						variableName: matrixEntry.content.id,
-						newValue: match.value,
-						mathml: (await pythonInstance.parseExpression(`${match.value}`)).mathml
+					updateList.push({
+						id: matrixEntry.content.id,
+						value: match.value
 					});
 				}
 			}
 		});
 	});
+
+	emit('update-cell-values', updateList);
 };
 
 const pasteItemProcessor = async (item: DataTransferItem) => {
@@ -270,7 +270,7 @@ async function updateCellValue(variableName: string, rowIdx: number, colIdx: num
 	const mathml = (await pythonInstance.parseExpression(newValue)).mathml;
 
 	currentMatrixtype.value = matrixType.value;
-	emit('update-cell-value', { variableName, newValue, mathml });
+	emit('update-cell-values', [{ id: variableName, value: newValue, mathml }]);
 }
 
 function resetEditState() {
@@ -388,8 +388,8 @@ watch(
 	padding-left: 2rem;
 }
 .cell-input {
-	padding-left: var(--gap-small);
-	padding-right: var(--gap);
+	padding-left: var(--gap-2);
+	padding-right: var(--gap-4);
 	margin-bottom: 0 !important;
 	font-feature-settings: 'tnum';
 	text-align: right;
@@ -415,7 +415,7 @@ watch(
 
 .p-dropdown {
 	min-width: 11rem;
-	margin-bottom: var(--gap);
+	margin-bottom: var(--gap-4);
 }
 
 .subdue {
@@ -435,6 +435,6 @@ section {
 	justify-content: space-between;
 }
 .matrix-toolbar Button {
-	margin-bottom: var(--gap);
+	margin-bottom: var(--gap-4);
 }
 </style>

@@ -53,6 +53,7 @@
 								size="small"
 								icon="pi pi-play"
 								@click="runCodeStratify"
+								:disabled="isEmpty(codeText)"
 							/>
 						</template>
 					</tera-notebook-jupyter-input>
@@ -95,6 +96,7 @@
 
 <script setup lang="ts">
 import '@/ace-config';
+import { isEmpty, cloneDeep, debounce, isEqual, last } from 'lodash';
 import TeraDrilldownPreview from '@/components/drilldown/tera-drilldown-preview.vue';
 import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.vue';
 import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
@@ -111,7 +113,6 @@ import type { Model } from '@/types/Types';
 import { AMRSchemaNames } from '@/types/common';
 import { OperatorStatus, WorkflowNode } from '@/types/workflow';
 import { logger } from '@/utils/logger';
-import { cloneDeep, debounce, isEqual, last } from 'lodash';
 import Button from 'primevue/button';
 import { v4 as uuidv4 } from 'uuid';
 import { onMounted, onUnmounted, ref, watch } from 'vue';
@@ -487,7 +488,7 @@ onUnmounted(() => {
 
 <style scoped>
 .notebook-section:deep(main) {
-	gap: var(--gap-small);
+	gap: var(--gap-2);
 	position: relative;
 }
 
@@ -501,7 +502,7 @@ onUnmounted(() => {
 .form-section {
 	display: flex;
 	flex-direction: column;
-	gap: var(--gap-small);
+	gap: var(--gap-2);
 }
 
 .wizard-section {

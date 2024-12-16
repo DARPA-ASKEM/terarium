@@ -20,6 +20,24 @@ export async function modelCard(modelId: string, documentId?: string): Promise<v
 	}
 }
 
+/**
+ * Fetches dataset card data from the server and wait for task to finish.
+ * @param {string} datasetId - The model ID.
+ * @param {string} documentId - The document ID.
+ */
+export async function datasetCard(datasetId: string, documentId?: string): Promise<void> {
+	try {
+		await API.get<TaskResponse>('/gollm/enrich-dataset', {
+			params: {
+				'dataset-id': datasetId,
+				'document-id': documentId
+			}
+		});
+	} catch (err) {
+		logger.error(err);
+	}
+}
+
 export async function interventionPolicyFromDocument(
 	documentId: string,
 	modelId: string,
@@ -39,7 +57,7 @@ export async function interventionPolicyFromDocument(
 
 export async function enrichModelMetadata(modelId: string, documentId: string, overwrite: boolean): Promise<void> {
 	try {
-		await API.get<TaskResponse>('/gollm/enrich-model-metadata', {
+		await API.get('/gollm/enrich-model-metadata', {
 			params: {
 				'model-id': modelId,
 				'document-id': documentId,
@@ -104,10 +122,16 @@ export async function configureModelFromDataset(
 	return data;
 }
 
-export async function compareModels(modelIds: string[], workflowId?: string, nodeId?: string): Promise<TaskResponse> {
+export async function compareModels(
+	modelIds: string[],
+	goal?: string,
+	workflowId?: string,
+	nodeId?: string
+): Promise<TaskResponse> {
 	const { data } = await API.get<TaskResponse>('/gollm/compare-models', {
 		params: {
 			'model-ids': modelIds.join(','),
+			goal,
 			'workflow-id': workflowId,
 			'node-id': nodeId
 		}

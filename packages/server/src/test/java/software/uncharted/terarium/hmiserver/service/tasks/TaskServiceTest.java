@@ -5,16 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
 import java.util.Random;
-import java.util.Set;
-import java.util.UUID;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import lombok.extern.slf4j.Slf4j;
@@ -152,7 +143,7 @@ public class TaskServiceTest extends TerariumApplicationTests {
 		req.setType(TaskType.GOLLM);
 		req.setScript("gollm:embedding");
 		req.setInput(
-			("{\"text\":\"What kind of dinosaur is the coolest?\",\"embedding_model\":\"text-embedding-ada-002\"}").getBytes()
+			("{\"text\": [\"What kind of dinosaur is the coolest?\"],\"embedding_model\":\"text-embedding-ada-002\"}").getBytes()
 		);
 
 		final AdditionalProps add = new AdditionalProps();
@@ -365,11 +356,29 @@ public class TaskServiceTest extends TerariumApplicationTests {
 
 	// @Test
 	@WithUserDetails(MockUser.URSULA)
-	public void testItCanSendLatexToSymPyRequest() throws Exception {
+	public void testItCanSendLatexToAMRRequest() throws Exception {
 		final TaskRequest req = new TaskRequest();
 		req.setType(TaskType.MIRA);
-		req.setScript("mira_task:latex_to_sympy");
-		req.setInput("\\frac{a}{b} + c".getBytes());
+		req.setScript("mira_task:latex_to_amr");
+
+		String input =
+			"[ \"\\\\frac{d S(t)}{d t} = - b_q S(t) I(t)\",  \"\\\\frac{d E(t)}{d t} = b_q S(t) I(t) - r_X E(t)\",  \"\\\\frac{d I(t)}{d t} = r_X E(t) - g_p_q I(t)\",  \"\\\\frac{d R(t)}{d t} = g_p_q I(t)\"]";
+		req.setInput(input.getBytes());
+		final TaskResponse resp = taskService.runTaskSync(req);
+
+		log.info(new String(resp.getOutput()));
+	}
+
+	// @Test
+	@WithUserDetails(MockUser.URSULA)
+	public void testItCanSendTextExtractionRequest() throws Exception {
+		final ClassPathResource resource = new ClassPathResource("equation/SIDARTHE paper.pdf");
+		final byte[] content = Files.readAllBytes(resource.getFile().toPath());
+
+		final TaskRequest req = new TaskRequest();
+		req.setType(TaskType.TEXT_EXTRACTION);
+		req.setScript(ExtractTextResponseHandler.NAME);
+		req.setInput(content);
 
 		final TaskResponse resp = taskService.runTaskSync(req);
 
@@ -424,58 +433,5 @@ public class TaskServiceTest extends TerariumApplicationTests {
 		final TaskFuture future3 = taskService.runTaskAsync(req);
 		Assertions.assertEquals(TaskStatus.SUCCESS, future3.getFinal(TIMEOUT_SECONDS, TimeUnit.SECONDS).getStatus());
 		Assertions.assertEquals(future2.getId(), future3.getId());
-	}
-
-	// @Test
-	@WithUserDetails(MockUser.URSULA)
-	public void testItCanCacheWithConcurrency() throws Exception {
-		final int NUM_REQUESTS = 1024;
-		final int NUM_UNIQUE_REQUESTS = 32;
-		final int NUM_THREADS = 24;
-		final int TIMEOUT_MINUTES = 1;
-
-		final List<byte[]> reqInput = new ArrayList<>();
-		for (int i = 0; i < NUM_UNIQUE_REQUESTS; i++) {
-			// success tasks
-			reqInput.add(("{\"input\":\"" + generateRandomString(1024) + "\"},\"include_progress\":true").getBytes());
-		}
-		for (int i = 0; i < NUM_UNIQUE_REQUESTS; i++) {
-			// failure tasks
-			reqInput.add(("{\"input\":\"" + generateRandomString(1024) + "\", \"should_fail\": true}").getBytes());
-		}
-
-		final ExecutorService executor = Executors.newFixedThreadPool(NUM_THREADS);
-
-		final Set<UUID> successTaskIds = Collections.newSetFromMap(new ConcurrentHashMap<>());
-		final List<Future<?>> futures = new ArrayList<>();
-
-		final Random rand = new Random();
-
-		for (int i = 0; i < NUM_REQUESTS; i++) {
-			final Future<?> future = executor.submit(() -> {
-				try {
-					final TaskRequest req = new TaskRequest();
-					req.setTimeoutMinutes(TIMEOUT_MINUTES);
-					req.setType(TaskType.GOLLM);
-					req.setScript("echo.py");
-					req.setInput(reqInput.get(rand.nextInt(NUM_UNIQUE_REQUESTS * 2)));
-
-					final TaskResponse resp = taskService.runTaskSync(req);
-					successTaskIds.add(resp.getId());
-				} catch (final RuntimeException e) {} catch (final Exception e) {
-					log.error("Error in test", e);
-				}
-			});
-			futures.add(future);
-		}
-
-		// wait for all the responses to be send
-		for (final Future<?> future : futures) {
-			future.get(TIMEOUT_MINUTES * 2, TimeUnit.MINUTES);
-		}
-
-		for (final UUID taskId : successTaskIds) {
-			log.info("Task ID: {}", taskId.toString());
-		}
 	}
 }

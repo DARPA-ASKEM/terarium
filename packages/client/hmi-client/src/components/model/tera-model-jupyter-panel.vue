@@ -235,7 +235,6 @@ const saveAsNewModel = async () => {
 	// newDataset.fileNames = [filename];
 	// const result = await createNewDataset(newDataset);
 
-	// import { KernelConnection as JupyterKernelConnection } from '@/services/jupyter';
 	const session = jupyterSession.session;
 	const kernel = session?.kernel as IKernelConnection;
 	const messageBody = {
@@ -279,7 +278,6 @@ const confirmReset = () => {
 This will reset the kernel back to its starting state, but keep all of your prompts and code cells.
 The code cells will need to be rerun.`,
 		header: 'Confirmation',
-		icon: 'pi pi-exclamation-triangle',
 		accept: () => {
 			resetKernel();
 		}

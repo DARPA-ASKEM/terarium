@@ -53,15 +53,14 @@
 							{{ capitalize(type) }}s
 							<aside>({{ assetItems.length }})</aside>
 						</header>
-						<!-- New asset buttons for some types -->
 						<Button
-							v-if="type === AssetType.Model || type === AssetType.Workflow"
+							v-if="type === AssetType.Workflow"
 							class="new-button"
 							icon="pi pi-plus"
 							label="New"
 							size="small"
 							text
-							@click.stop="emit('open-new-asset', type)"
+							@click.stop="emit('open-new-workflow')"
 						/>
 					</div>
 				</template>
@@ -163,7 +162,7 @@ defineProps<{
 	assetId: string;
 }>();
 
-const emit = defineEmits(['open-asset', 'remove-asset', 'open-new-asset']);
+const emit = defineEmits(['open-asset', 'remove-asset', 'open-new-workflow']);
 
 const overview = { assetId: '', pageType: ProjectPages.OVERVIEW };
 
@@ -263,7 +262,7 @@ nav > header {
 
 .new-button {
 	&:deep() {
-		padding: 0 var(--gap-xsmall);
+		padding: 0 var(--gap-1);
 	}
 
 	&:deep(.pi-plus) {

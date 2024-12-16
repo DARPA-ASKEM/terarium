@@ -98,7 +98,7 @@ const getCreateTimeById = (id: string) => {
 	font-size: var(--font-caption);
 	color: var(--primary-color);
 	display: flex;
-	gap: var(--gap-small);
+	gap: var(--gap-2);
 	align-items: center;
 	margin-left: auto;
 }

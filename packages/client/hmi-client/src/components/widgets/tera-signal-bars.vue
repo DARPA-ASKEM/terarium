@@ -7,26 +7,33 @@
 			</template>
 		</Dropdown>
 		<!-- Signal Bars -->
-		<ul>
-			<li v-for="n in numberOfBars" :key="n" :class="{ active: n <= modelValue }" :style="getBarStyle(n)" />
+		<ul v-if="minOption > 0">
+			<li v-for="n in options.length" :key="n" :class="{ active: n <= modelValue }" :style="getBarStyle(n)" />
+		</ul>
+		<ul v-if="minOption <= 0">
+			<li v-for="n in options.length - 1" :key="n" :class="{ active: n <= modelValue }" :style="getBarStyle(n)" />
 		</ul>
 	</div>
 </template>
 
 <script setup lang="ts">
+import _ from 'lodash';
 import Dropdown from 'primevue/dropdown';
 import { ref } from 'vue';
 
 const baseDelay = 0.03; // transition delay for each bar
 const barWidth = 2; // width for each bar
-const maxNumberOfBars = 15; // just setting a max number of bars arbitrarily
 
 const props = defineProps({
 	modelValue: {
 		type: Number,
 		required: true
 	},
-	numberOfBars: {
+	minOption: {
+		type: Number,
+		default: 0
+	},
+	maxOption: {
 		type: Number,
 		default: 10
 	},
@@ -39,9 +46,8 @@ const props = defineProps({
 const emit = defineEmits(['update:modelValue']);
 
 const previousValue = ref(props.modelValue);
-const numberOfBars = Math.min(props.numberOfBars, maxNumberOfBars);
 
-const options: number[] = Array.from({ length: numberOfBars + 1 }, (_, i) => i);
+const options: number[] = _.range(props.minOption, props.maxOption + 1, 1);
 
 // fun styling for the bars :)
 const getBarStyle = (n: number) => {

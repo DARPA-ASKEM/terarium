@@ -1,5 +1,5 @@
 <template>
-	<Accordion multiple :active-index="[0, 1, 2]">
+	<Accordion multiple :active-index="currentActiveIndicies">
 		<AccordionTab v-if="!isEmpty(clonedState.equations)">
 			<template #header>
 				<header>
@@ -85,6 +85,8 @@ const props = defineProps<{
 
 const emit = defineEmits(['update']);
 
+const currentActiveIndicies = ref([0, 1, 2]);
+
 const clonedState = ref(cloneDeep(props.state));
 
 const countEquations = computed(() => {
@@ -118,7 +120,7 @@ function onUpdateInclude(asset: AssetBlock<DocumentExtraction>) {
 
 <style scoped>
 :deep(.p-accordion-content > :not(:last-child)) {
-	margin-bottom: var(--gap-small);
+	margin-bottom: var(--gap-2);
 }
 
 .sub-text {

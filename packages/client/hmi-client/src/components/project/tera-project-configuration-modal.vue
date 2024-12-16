@@ -56,7 +56,7 @@
 									<img src="@assets/images/project-thumbnails/default.png" alt="Default thumbnail image" />
 								</label>
 							</li>
-							<li v-for="i in 14" :key="i">
+							<li v-for="i in 53" :key="i">
 								<input type="radio" name="thumbnail" :id="`thumbnail-0${i}`" v-model="thumbnail" :value="`0${i}`" />
 								<label :for="`thumbnail-0${i}`">
 									<img
@@ -142,7 +142,7 @@ function applyConfiguration() {
 <style scoped>
 :deep(.content) {
 	display: flex;
-	gap: var(--gap);
+	gap: var(--gap-4);
 }
 
 section {
@@ -154,13 +154,13 @@ form {
 	display: flex;
 	flex-direction: column;
 	width: 100%;
-	gap: var(--gap);
+	gap: var(--gap-4);
 }
 
 label span {
 	color: var(--text-color-subdued);
 	font-size: var(--font-caption);
-	margin-left: var(--gap);
+	margin-left: var(--gap-4);
 	text-transform: lowercase;
 }
 
@@ -172,7 +172,7 @@ p {
 ul {
 	display: flex;
 	flex-wrap: wrap;
-	gap: var(--gap-small);
+	gap: var(--gap-2);
 	list-style: none;
 }
 
@@ -213,7 +213,7 @@ li {
 
 .select-thumbnail-panel {
 	background: var(--surface-50);
-	padding: var(--gap);
+	padding: var(--gap-4);
 	border-radius: var(--border-radius);
 	border: 1px solid var(--surface-border-light);
 	max-height: 100%;
@@ -221,7 +221,7 @@ li {
 	overflow-y: scroll;
 	width: 50vw;
 	height: 20vw;
-	margin-top: var(--gap-small);
+	margin-top: var(--gap-2);
 }
 .modal-content-container {
 	display: flex;

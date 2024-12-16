@@ -8,12 +8,32 @@
 			<tera-drilldown-section>
 				<!-- LLM generated overview -->
 				<section class="comparison-overview">
-					<Accordion :activeIndex="0">
+					<Accordion multiple :activeIndex="currentActiveIndicies">
 						<AccordionTab header="Overview">
-							<p v-if="isEmpty(overview)" class="subdued">
-								<i class="pi pi-spin pi-spinner mr-1" />
+							<template #header>
+								<div class="flex align-items-start gap-2 ml-4 w-full">
+									<Textarea
+										v-model="goalQuery"
+										autoResize
+										rows="1"
+										placeholder="What is your goal? (Optional)"
+										class="w-full"
+										@keydown.stop
+										@click.stop
+									/>
+									<Button
+										class="flex-shrink-0"
+										label="Compare"
+										icon="pi pi-sparkles"
+										size="small"
+										:loading="isProcessingComparison"
+										@click.stop="onClickCompare"
+									/>
+								</div>
+							</template>
+							<tera-progress-spinner v-if="isProcessingComparison" is-centered :font-size="3">
 								Analyzing models metadata to generate a detailed comparison analysis...
-							</p>
+							</tera-progress-spinner>
 							<p v-html="overview" v-else class="markdown-text" />
 						</AccordionTab>
 					</Accordion>
@@ -82,7 +102,7 @@
 					>
 						<template #toolbar-right-side>
 							<Button label="Reset" outlined severity="secondary" size="small" @click="resetNotebook" />
-							<Button icon="pi pi-play" label="Run" size="small" @click="runCode" />
+							<Button icon="pi pi-play" label="Run" size="small" @click="runCode" :disabled="isEmpty(code)" />
 						</template>
 					</tera-notebook-jupyter-input>
 				</div>
@@ -96,12 +116,7 @@
 					:options="{ showPrintMargin: false }"
 				/>
 			</tera-drilldown-section>
-			<tera-drilldown-preview>
-				<tera-progress-spinner
-					v-if="isLoadingStructuralComparisons && isEmpty(structuralComparisons)"
-					is-centered
-					:font-size="3"
-				/>
+			<tera-drilldown-preview :is-loading="isLoadingStructuralComparisons && isEmpty(structuralComparisons)">
 				<ul>
 					<li v-for="(image, index) in structuralComparisons" :key="index">
 						<label>Comparison {{ index + 1 }}: {{ getTitle(index) }}</label>
@@ -136,7 +151,7 @@
 </template>
 
 <script setup lang="ts">
-import { cloneDeep, isEmpty } from 'lodash';
+import { cloneDeep, debounce, isEmpty } from 'lodash';
 import { v4 as uuidv4 } from 'uuid';
 import markdownit from 'markdown-it';
 import Accordion from 'primevue/accordion';
@@ -152,19 +167,17 @@ import { ClientEvent, ClientEventType, type Model, TaskResponse, TaskStatus } fr
 import { OperatorStatus, WorkflowNode, WorkflowPortStatus } from '@/types/workflow';
 import { logger } from '@/utils/logger';
 import Button from 'primevue/button';
-import { onMounted, onUnmounted, ref } from 'vue';
+import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
 import { VAceEditor } from 'vue3-ace-editor';
 import { VAceEditorInstance } from 'vue3-ace-editor/types';
-
 import TeraNotebookJupyterInput from '@/components/llm/tera-notebook-jupyter-input.vue';
 import Image from 'primevue/image';
-import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue';
-
 import { saveCodeToState } from '@/services/notebook';
 import { addImage, deleteImages, getImages } from '@/services/image';
 import TeraColumnarPanel from '@/components/widgets/tera-columnar-panel.vue';
 import { b64DecodeUnicode } from '@/utils/binary';
 import { useClientEvent } from '@/composables/useClientEvent';
+import Textarea from 'primevue/textarea';
 import { ModelComparisonOperationState } from './model-comparison-operation';
 
 const props = defineProps<{
@@ -172,6 +185,13 @@ const props = defineProps<{
 }>();
 
 const emit = defineEmits(['update-state', 'update-status', 'close']);
+
+const goalQuery = ref(props.node.state.goal);
+const isProcessingComparison = ref(false);
+
+const modelIds = computed(() =>
+	props.node.inputs.filter((input) => input.status === WorkflowPortStatus.CONNECTED).map((input) => input.value?.[0])
+);
 
 enum Tabs {
 	Wizard = 'Wizard',
@@ -187,6 +207,7 @@ const sampleAgentQuestions = [
 ];
 let compareModelsTaskId = '';
 
+const currentActiveIndicies = ref([0]);
 const modelsToCompare = ref<Model[]>([]);
 const modelCardsToCompare = ref<any[]>([]);
 const fields = ref<string[]>([]);
@@ -247,6 +268,12 @@ function resetNotebook() {
 	code.value = '';
 	emptyImages();
 	updateCodeState();
+}
+function onUpdateGoalQuery(goal: string) {
+	const state = cloneDeep(props.node.state);
+	goalQuery.value = goal;
+	state.goal = goal;
+	emit('update-state', state);
 }
 
 function runCode() {
@@ -459,52 +486,81 @@ function generateOverview(output: string) {
 	emit('update-status', OperatorStatus.DEFAULT); // This is a custom way of granting a default status to the operator, since it has no output
 }
 
+function updatePreviousRunId() {
+	const state = cloneDeep(props.node.state);
+	state.previousRunId = uuidv4();
+	emit('update-state', state);
+}
+
+function onClickCompare() {
+	// If there is no previous run ID, or the node has already run, update the previousRunId
+	if (!props.node.state.previousRunId || props.node.state.hasRun) {
+		updatePreviousRunId();
+	}
+	processCompareModels();
+}
+
 // Create a task to compare the models
-async function processCompareModels(modelIds: string[]) {
-	const taskRes = await compareModels(modelIds, props.node.workflowId, props.node.id);
+const processCompareModels = async () => {
+	isProcessingComparison.value = true;
+
+	// Add a unique ID to the request to avoid caching
+	if (!props.node.state.previousRunId) updatePreviousRunId();
+	const request = `
+  		RequestID: ${props.node.state.previousRunId}
+  		${goalQuery.value}
+		`;
+
+	const taskRes = await compareModels(modelIds.value, request, props.node.workflowId, props.node.id);
 	compareModelsTaskId = taskRes.id;
 	if (taskRes.status === TaskStatus.Success) {
 		generateOverview(taskRes.output);
 	}
-}
+	const state = cloneDeep(props.node.state);
+	state.hasRun = true;
+	emit('update-state', state);
+	isProcessingComparison.value = false;
+};
 
 // Listen for the task completion event
 useClientEvent(ClientEventType.TaskGollmCompareModel, (event: ClientEvent<TaskResponse>) => {
-	if (
-		!event.data ||
-		event.data.id !== compareModelsTaskId ||
-		!isEmpty(overview.value) ||
-		event.data.status !== TaskStatus.Success
-	) {
-		return;
+	if (!event.data || event.data.id !== compareModelsTaskId) return;
+
+	if ([TaskStatus.Queued, TaskStatus.Running, TaskStatus.Cancelling].includes(event.data.status)) {
+		isProcessingComparison.value = true;
+	} else if (event.data.status === TaskStatus.Success) {
+		generateOverview(event.data.output);
+		isProcessingComparison.value = false;
+	} else if ([TaskStatus.Failed, TaskStatus.Cancelled].includes(event.data.status)) {
+		isProcessingComparison.value = false;
 	}
-	generateOverview(event.data.output);
 });
 
 onMounted(async () => {
+	if (props.node.state.hasRun) {
+		processCompareModels();
+	}
+
 	if (!isEmpty(props.node.state.comparisonImageIds)) {
 		isLoadingStructuralComparisons.value = true;
 		structuralComparisons.value = await getImages(props.node.state.comparisonImageIds);
 		isLoadingStructuralComparisons.value = false;
 	}
 
-	const modelIds: string[] = props.node.inputs
-		.filter((input) => input.status === WorkflowPortStatus.CONNECTED)
-		.map((input) => input.value?.[0]);
-
-	modelsToCompare.value = (await Promise.all(modelIds.map(async (modelId) => getModel(modelId)))).filter(
+	modelsToCompare.value = (await Promise.all(modelIds.value.map(async (modelId) => getModel(modelId)))).filter(
 		Boolean
 	) as Model[];
 	modelCardsToCompare.value = modelsToCompare.value.map(({ metadata }) => metadata?.gollmCard);
 	fields.value = [...new Set(modelCardsToCompare.value.flatMap((card) => (card ? Object.keys(card) : [])))];
 
-	await buildJupyterContext();
-	await processCompareModels(modelIds);
+	buildJupyterContext();
 });
 
 onUnmounted(() => {
 	kernelManager.shutdown();
 });
+
+watch(goalQuery, debounce(onUpdateGoalQuery, 1000));
 </script>
 
 <style scoped>
@@ -532,12 +588,12 @@ table {
 	& th:first-child,
 	td:first-child {
 		width: 8%;
-		padding: var(--gap-small) 0;
+		padding: var(--gap-2) 0;
 		font-weight: 600;
 	}
 
 	& td:not(:first-child) {
-		padding: var(--gap-small);
+		padding: var(--gap-2);
 	}
 
 	& .value {
@@ -556,16 +612,16 @@ table {
 ul {
 	display: flex;
 	flex-direction: column;
-	gap: var(--gap);
+	gap: var(--gap-4);
 
 	& > li {
 		display: flex;
 		flex-direction: column;
-		gap: var(--gap-xsmall);
+		gap: var(--gap-1);
 
 		& > span {
 			width: fit-content;
-			margin-right: var(--gap-xxlarge);
+			margin-right: var(--gap-12);
 		}
 	}
 }
@@ -573,24 +629,24 @@ ul {
 /* TODO: Improve this pattern later same in (tera-model-input) */
 
 .notebook-section:deep(main) {
-	gap: var(--gap-small);
+	gap: var(--gap-2);
 	position: relative;
 }
 
 .toolbar-right-side {
 	position: absolute;
-	top: var(--gap);
+	top: var(--gap-4);
 	right: 0;
-	gap: var(--gap-small);
+	gap: var(--gap-2);
 	display: flex;
 	align-items: center;
 }
 
 .comparison-overview {
-	border: 1px solid var(--surface-border);
+	border: 1px solid var(--surface-border-light);
 	border-radius: var(--border-radius-medium);
 	padding: var(--gap-2);
-	margin: var(--gap-4) var(--gap-4) 0;
+	margin: var(--gap-4);
 }
 
 .subdued {
@@ -608,47 +664,47 @@ ul {
 	margin-bottom: var(--gap-4);
 	overflow-x: auto;
 	padding: 0 var(--gap-4);
-}
 
-.legend-circle {
-	padding: var(--gap-small) var(--gap);
-	background-color: var(--surface-0);
-	border: 1px solid var(--surface-border);
-	border-radius: 50%;
-	font-family: 'Times New Roman', Times, serif;
-}
+	.legend-circle {
+		padding: var(--gap-2) var(--gap-4);
+		background-color: var(--surface-0);
+		border: 1px solid var(--surface-border);
+		border-radius: 50%;
+		font-family: 'Times New Roman', Times, serif;
+	}
 
-.legend-square {
-	padding: var(--gap-xsmall) var(--gap);
-	background-color: var(--surface-0);
-	border: 1px solid var(--surface-border);
-	font-family: 'Times New Roman', Times, serif;
-}
+	.legend-square {
+		padding: var(--gap-1) var(--gap-4);
+		background-color: var(--surface-0);
+		border: 1px solid var(--surface-border);
+		font-family: 'Times New Roman', Times, serif;
+	}
 
-.legend-line {
-	position: relative;
-}
+	.legend-line {
+		position: relative;
+	}
 
-.legend-line::before {
-	content: '';
-	position: absolute;
-	top: 50%;
-	left: 0;
-	width: 2px;
-	height: 24px;
-	transform: translate(-10px, -10px);
-}
-.legend-line.red::before {
-	background-color: red;
-}
-.legend-line.orange::before {
-	background-color: orange;
-}
-.legend-line.blue::before {
-	background-color: blue;
-}
-.legend-line.green::before {
-	background-color: lightgreen;
+	.legend-line::before {
+		content: '';
+		position: absolute;
+		top: 50%;
+		left: 0;
+		width: 2px;
+		height: 24px;
+		transform: translate(-10px, -10px);
+	}
+	.legend-line.red::before {
+		background-color: red;
+	}
+	.legend-line.orange::before {
+		background-color: orange;
+	}
+	.legend-line.blue::before {
+		background-color: blue;
+	}
+	.legend-line.green::before {
+		background-color: lightgreen;
+	}
 }
 
 .label {

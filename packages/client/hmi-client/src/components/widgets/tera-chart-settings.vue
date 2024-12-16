@@ -12,21 +12,47 @@
 			@configuration-change="$emit('selection-change', $event.selectedVariable, type)"
 		/>
 		<tera-chart-settings-item
-			v-for="s of settings.filter((s) => s.type === type)"
+			v-for="s of targetSettings"
 			:key="s.id"
 			:settings="s"
 			@open="$emit('open', s)"
 			@remove="$emit('remove', s.id)"
 		/>
+		<template v-if="type === ChartSettingType.VARIABLE_ENSEMBLE">
+			<tera-checkbox
+				:disabled="selectedOptions.length === 0"
+				label="Show individual models"
+				:model-value="Boolean(ensembleChartOptions.showIndividualModels)"
+				@update:model-value="toggleEnsembleChartOption('showIndividualModels', $event)"
+			/>
+			<!-- Disabling following two checkboxes for now since their functionalities aren't implemented yet -->
+			<!-- <tera-checkbox
+				class="pl-5"
+				:disabled="selectedOptions.length === 0"
+				label="Relative to ensemble"
+				:model-value="Boolean(ensembleChartOptions.relativeToEnsemble)"
+				@update:model-value="toggleEnsembleChartOption('relativeToEnsemble', $event)"
+			/>
+			<tera-checkbox
+				v-if="isSimulateEnsembleSettings"
+				label="Show individual models with weights"
+				:disabled="selectedOptions.length === 0"
+				:model-value="Boolean(ensembleChartOptions.showIndividualModelsWithWeight)"
+				@update:model-value="toggleEnsembleChartOption('showIndividualModelsWithWeight', $event)"
+			/> -->
+		</template>
 	</div>
 </template>
 
 <script setup lang="ts">
+import TeraCheckbox from '@/components/widgets/tera-checkbox.vue';
 import TeraChartSettingsItem from '@/components/widgets/tera-chart-settings-item.vue';
 import TeraChartControl from '@/components/workflow/tera-chart-control.vue';
 import { ChartSetting, ChartSettingType } from '@/types/common';
+import { computed } from 'vue';
+import { EnsembleVariableChartSettingOption, getEnsembleChartSettingOptions } from '@/services/chart-settings';
 
-defineProps<{
+const props = defineProps<{
 	title: string;
 	settings: ChartSetting[];
 	type: ChartSettingType;
@@ -34,8 +60,18 @@ defineProps<{
 	selectOptions: string[];
 	// Selected dropdown options
 	selectedOptions: string[];
+	isSimulateEnsembleSettings?: boolean;
 }>();
-defineEmits(['open', 'remove', 'selection-change']);
+const emits = defineEmits(['open', 'remove', 'selection-change', 'toggle-ensemble-variable-setting-option']);
+
+// Settings of the same type that we want to interact with.
+const targetSettings = computed(() => props.settings.filter((s) => s.type === props.type));
+
+// ------------------- Ensemble chart options -------------------
+const ensembleChartOptions = computed(() => getEnsembleChartSettingOptions(targetSettings.value));
+const toggleEnsembleChartOption = (option: EnsembleVariableChartSettingOption, value: boolean) => {
+	emits('toggle-ensemble-variable-setting-option', option, value);
+};
 </script>
 <style scoped>
 .chart-settings {

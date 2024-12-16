@@ -81,12 +81,12 @@ section {
 	display: flex;
 	flex-direction: column;
 	align-items: center;
-	gap: var(--gap-small);
+	gap: var(--gap-2);
 
 	& > .matrix {
 		display: grid;
 		grid-template-columns: auto auto;
-		gap: var(--gap-small);
+		gap: var(--gap-2);
 	}
 
 	& > .matrix-grid {
@@ -135,12 +135,12 @@ section {
 h5 {
 	display: flex;
 	align-items: center;
-	gap: var(--gap-small);
+	gap: var(--gap-2);
 }
 
 p {
 	font-size: var(--font-caption);
 	color: var(--primary-color);
-	padding: var(--gap-small) 0;
+	padding: var(--gap-2) 0;
 }
 </style>

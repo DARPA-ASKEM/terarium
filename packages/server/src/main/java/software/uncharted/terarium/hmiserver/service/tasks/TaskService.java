@@ -32,7 +32,7 @@ import org.springframework.amqp.rabbit.annotation.QueueBinding;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.amqp.rabbit.connection.CachingConnectionFactory;
 import org.springframework.amqp.rabbit.core.RabbitAdmin;
-import org.springframework.amqp.rabbit.listener.SimpleMessageListenerContainer;
+import org.springframework.amqp.rabbit.listener.DirectMessageListenerContainer;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Service;
@@ -57,7 +57,7 @@ import software.uncharted.terarium.hmiserver.service.notification.NotificationSe
 @RequiredArgsConstructor
 public class TaskService {
 
-	public static enum TaskMode {
+	public enum TaskMode {
 		@JsonAlias("sync")
 		SYNC("sync"),
 		@JsonAlias("async")
@@ -83,8 +83,9 @@ public class TaskService {
 	private static class TaskRequestWithId extends TaskRequest {
 
 		private UUID id;
+		private String routingKey;
 
-		TaskRequestWithId(final TaskRequest req) {
+		TaskRequestWithId(final TaskRequest req, final String rk) {
 			id = UUID.randomUUID();
 			type = req.getType();
 			script = req.getScript();
@@ -93,6 +94,7 @@ public class TaskService {
 			projectId = req.getProjectId();
 			timeoutMinutes = req.getTimeoutMinutes();
 			additionalProperties = req.getAdditionalProperties();
+			routingKey = rk;
 		}
 
 		public TaskResponse createResponse(final TaskStatus status, final String stdout, final String stderr) {
@@ -105,6 +107,7 @@ public class TaskService {
 				.setAdditionalProperties(getAdditionalProperties())
 				.setStdout(stdout)
 				.setStderr(stderr)
+				.setRoutingKey(getRoutingKey())
 				.setRequestSHA256(getSHA256());
 		}
 	}
@@ -152,18 +155,26 @@ public class TaskService {
 	@Value("${terarium.taskrunner.response-cache-max-idle-seconds:7200}") // 2 hours
 	private long CACHE_MAX_IDLE_SECONDS;
 
-	// private final Map<String, RabbitTemplate> rabbitTemplates;
 	private Map<String, RabbitAdmin> rabbitAdmins;
+	private Map<String, RabbitAdmin> rabbitAdminsByConnection;
+	private Map<String, URI> rabbitURIByKey;
+
+	private final Map<String, CachingConnectionFactory> connectionFactories = new HashMap<>();
 	private final Config config;
 	private final ObjectMapper objectMapper;
 	private final NotificationService notificationService;
 	private final ClientEventService clientEventService;
 
-	private final Map<String, SimpleMessageListenerContainer> taskResponseConsumers = new HashMap<>();
+	private final Map<String, DirectMessageListenerContainer> taskResponseConsumers = new HashMap<>();
 
 	private final Map<String, TaskResponseHandler> responseHandlers = new ConcurrentHashMap<>();
 
 	private final RedissonClient redissonClient;
+
+	@Value("${terarium.taskrunner.deploymentRoutingKey:default}")
+	private String deploymentRoutingKey;
+
+	private final String instanceRoutingKey = UUID.randomUUID().toString();
 
 	private RMapCache<String, TaskResponse> responseCache;
 	private final Map<UUID, CompletableTaskFuture> futures = new ConcurrentHashMap<>();
@@ -263,7 +274,7 @@ public class TaskService {
 		rabbitAdmin.deleteQueue(queueName);
 	}
 
-	private void convertAndSend(final TaskType requestType, final String queue, final String msg) {
+	private void convertAndSendToDefaultExchange(final TaskType requestType, final String queue, final String msg) {
 		RabbitAdmin rabbitAdmin = rabbitAdmins.get(requestType.toString());
 		if (rabbitAdmin == null) {
 			rabbitAdmin = rabbitAdmins.get("default");
@@ -281,6 +292,13 @@ public class TaskService {
 		if (rabbitAdmin == null) {
 			rabbitAdmin = rabbitAdmins.get("default");
 		}
+
+		log.info(
+			"Sending message to exchange: {} with routing key: {} to rabbit instance: {}",
+			exchange,
+			routingKey,
+			requestType
+		);
 
 		rabbitAdmin.getRabbitTemplate().convertAndSend(exchange, routingKey, msg);
 	}
@@ -311,7 +329,7 @@ public class TaskService {
 				autoDelete = "false",
 				type = ExchangeTypes.DIRECT
 			),
-			key = ""
+			key = "${terarium.taskrunner.deploymentRoutingKey}"
 		),
 		concurrency = "1"
 	)
@@ -353,21 +371,34 @@ public class TaskService {
 	private void initRabbitAdmins() {
 		try {
 			rabbitAdmins = new HashMap<>();
+			rabbitAdminsByConnection = new HashMap<>();
+			rabbitURIByKey = new HashMap<>();
 			for (final Map.Entry<String, RabbitConfig> entry : taskRunnerConfiguration.getRabbitmq().entrySet()) {
 				final String key = entry.getKey();
 				final RabbitConfig rabbitConfig = entry.getValue();
 
 				final URI rabbitAddress = new URI(rabbitConfig.getAddresses());
 
-				final CachingConnectionFactory connectionFactory = new CachingConnectionFactory();
-				connectionFactory.setUri(rabbitAddress);
-				connectionFactory.setUsername(rabbitConfig.getUsername());
-				connectionFactory.setPassword(rabbitConfig.getPassword());
+				final CachingConnectionFactory connectionFactory;
+				final RabbitAdmin rabbitAdmin;
+				if (!connectionFactories.containsKey(rabbitAddress.toString())) {
+					connectionFactory = new CachingConnectionFactory();
+					connectionFactory.setUri(rabbitAddress);
+					connectionFactory.setUsername(rabbitConfig.getUsername());
+					connectionFactory.setPassword(rabbitConfig.getPassword());
 
-				final RabbitAdmin rabbitAdmin = new RabbitAdmin(connectionFactory);
+					rabbitAdmin = new RabbitAdmin(connectionFactory);
+
+					connectionFactories.put(rabbitAddress.toString(), connectionFactory);
+					rabbitAdminsByConnection.put(rabbitAddress.toString(), rabbitAdmin);
+				} else {
+					connectionFactory = connectionFactories.get(rabbitAddress.toString());
+					rabbitAdmin = rabbitAdminsByConnection.get(rabbitAddress.toString());
+				}
 
 				log.info("Creating taskrunner rabbit admin for type: {}", key);
 				rabbitAdmins.put(key, rabbitAdmin);
+				rabbitURIByKey.put(key, rabbitAddress);
 			}
 		} catch (final Exception e) {
 			throw new RuntimeException("Error initializing rabbit admins", e);
@@ -379,42 +410,46 @@ public class TaskService {
 			final String type = entry.getKey();
 			final RabbitAdmin rabbitAdmin = entry.getValue();
 
-			log.info("Creating consumer for rabbit admin: {}", type);
+			final URI rabbitAddress = rabbitURIByKey.get(type);
 
-			// This is a shared queue, messages will round robin between every instance of
-			// the hmi-server. Any operation that must occur once and only once should be
-			// triggered here.
+			// only create a consumer per unique rabbit address
+			if (!taskResponseConsumers.containsKey(rabbitAddress.toString())) {
+				// This is a shared queue, messages will round robin between every instance of
+				// the hmi-server. Any operation that must occur once and only once should be
+				// triggered here.
 
-			// NOTE: when running local and hitting an external rabbitmq instance, we need a
-			// unique queue to ensure the local server also gets it.
-			final String queueName = !isRunningLocalProfile()
-				? TASK_RUNNER_RESPONSE_QUEUE
-				: TASK_RUNNER_RESPONSE_QUEUE + "-local-" + UUID.randomUUID().toString();
+				// NOTE: when running local and hitting an external rabbitmq instance, we need a
+				// unique queue to ensure the local server also gets it.
+				final String queueName = !isRunningLocalProfile()
+					? TASK_RUNNER_RESPONSE_QUEUE
+					: TASK_RUNNER_RESPONSE_QUEUE + "-local-" + UUID.randomUUID();
 
-			// Declare a direct exchange
-			final DirectExchange exchange = new DirectExchange(TASK_RUNNER_RESPONSE_EXCHANGE, IS_DURABLE_QUEUES, false);
-			rabbitAdmin.declareExchange(exchange);
+				// Declare a direct exchange
+				final DirectExchange exchange = new DirectExchange(TASK_RUNNER_RESPONSE_EXCHANGE, IS_DURABLE_QUEUES, false);
+				rabbitAdmin.declareExchange(exchange);
 
-			// Declare a queue
-			final Queue queue = new Queue(queueName, IS_DURABLE_QUEUES, false, false);
-			rabbitAdmin.declareQueue(queue);
+				// Declare a queue
+				final Queue queue = new Queue(queueName, IS_DURABLE_QUEUES, false, true);
+				rabbitAdmin.declareQueue(queue);
 
-			// Bind the queue to the exchange with a routing key
-			final Binding binding = BindingBuilder.bind(queue).to(exchange).with("");
-			rabbitAdmin.declareBinding(binding);
+				// Bind the queue to the exchange with a routing key
+				final Binding binding = BindingBuilder.bind(queue).to(exchange).with(instanceRoutingKey);
+				rabbitAdmin.declareBinding(binding);
 
-			final SimpleMessageListenerContainer container = new SimpleMessageListenerContainer(
-				rabbitAdmin.getRabbitTemplate().getConnectionFactory()
-			);
+				final DirectMessageListenerContainer container = new DirectMessageListenerContainer(
+					rabbitAdmin.getRabbitTemplate().getConnectionFactory()
+				);
 
-			container.setQueueNames(queueName);
-			container.setMessageListener(message -> {
-				onTaskResponseOneInstanceReceives(message);
-			});
-			container.start();
+				container.setPrefetchCount(1);
+				container.setQueueNames(queueName);
+				container.setMessageListener(message -> {
+					onTaskResponseOneInstanceReceives(message);
+				});
+				container.start();
 
-			log.info("Consumer on queue {} started for rabbit admin: {}", queueName, type);
-			taskResponseConsumers.put(type, container);
+				log.info("Consumer on queue {} started for rabbit admin: {}", queueName, rabbitAddress.toString());
+				taskResponseConsumers.put(rabbitAddress.toString(), container);
+			}
 		}
 	}
 
@@ -507,8 +542,6 @@ public class TaskService {
 				}
 			}
 
-			log.info("Broadcasting task response for task id {} and status {}", resp.getId(), resp.getStatus());
-
 			// once the handler has executed and the response cache is up to date, we now
 			// will broadcast to all hmi-server instances to dispatch the clientside events
 			broadcastTaskResponseToAllInstances(resp);
@@ -530,7 +563,7 @@ public class TaskService {
 
 			notificationService.createNotificationGroup(group);
 		} catch (final Exception e) {
-			log.error("Failed to create notificaiton group for id: {}", req.getId(), e);
+			log.error("Failed to create notification group for id: {}", req.getId(), e);
 		}
 
 		try {
@@ -589,10 +622,13 @@ public class TaskService {
 	private void broadcastTaskResponseToAllInstances(final TaskResponse resp) {
 		try {
 			final String jsonStr = objectMapper.writeValueAsString(resp);
+
+			log.info("Broadcasting task response for task id {} and status {}", resp.getId(), resp.getStatus());
+
 			rabbitAdmins
 				.get("default")
 				.getRabbitTemplate()
-				.convertAndSend(TASK_RUNNER_RESPONSE_BROADCAST_EXCHANGE, "", jsonStr);
+				.convertAndSend(TASK_RUNNER_RESPONSE_BROADCAST_EXCHANGE, deploymentRoutingKey, jsonStr);
 		} catch (final JsonProcessingException e) {
 			log.error("Error serializing handler error response", e);
 		}
@@ -629,28 +665,38 @@ public class TaskService {
 			throw new RuntimeException("TaskRequest must have a script set");
 		}
 
-		final TaskRequestWithId req = new TaskRequestWithId(r);
+		final TaskRequestWithId req = new TaskRequestWithId(r, instanceRoutingKey);
 
 		// create sha256 hash of the request
 		final String hash = req.getSHA256();
 
-		log.info("Checking for cached response under SHA: {} for {} for script: {}", hash, req.getId(), req.getScript());
+		try {
+			log.info("Checking for cached response under SHA: {} for {} for script: {}", hash, req.getId(), req.getScript());
+			// check if there is an existing response for the hash
+			final TaskResponse resp = responseCache.get(hash);
 
-		// check if there is an existing response for the hash
-		final TaskResponse resp = responseCache.get(hash);
+			if (resp != null) {
+				// a task id already exits for the SHA256, this means the request has already
+				// been dispatched.
+				log.info("Task response found in cache for SHA: {}", hash);
 
-		if (resp != null) {
-			// a task id already exits for the SHA256, this means the request has already
-			// been dispatched.
-			log.info("Task response found in cache for SHA: {}", hash);
+				// create and return a completed task future
+				final CompletableTaskFuture future = new CompletableTaskFuture(req, resp);
 
-			// create and return a completed task future
-			final CompletableTaskFuture future = new CompletableTaskFuture(req, resp);
+				// process the cached response as if it were a new response
+				processCachedTaskResponse(req, future.getLatest());
 
-			// process the cached response as if it were a new response
-			processCachedTaskResponse(req, future.getLatest());
-
-			return future;
+				return future;
+			}
+		} catch (final Exception e) {
+			log.warn(
+				"Failed to check for cached response under SHA: {} for {} for script: {}, re-sending request",
+				hash,
+				req.getId(),
+				req.getScript()
+			);
+			// remove the bad entry
+			responseCache.remove(hash);
 		}
 
 		// no cache entry for task, send a new one
@@ -673,7 +719,7 @@ public class TaskService {
 		// now send request
 		final String requestQueue = String.format("%s-%s", TASK_RUNNER_REQUEST_QUEUE, req.getType().toString());
 
-		log.info("Readying task: {} with SHA: {} to send on queue: {}", req.getId(), hash, req.getType().toString());
+		log.info("Readying task: {} with SHA: {} to send on queue: {}", req.getId(), hash, req.getType());
 
 		// ensure the request queue exists
 		declareQueue(req.getType(), requestQueue);
@@ -682,19 +728,24 @@ public class TaskService {
 		// cancellation can be send before the request is consumed on the other end if
 		// there is contention. We need this queue to exist to hold the message.
 		final String queueName = req.getId().toString();
-		final String routingKey = req.getId().toString();
-		declareAndBindTransientQueueWithRoutingKey(req.getType(), TASK_RUNNER_CANCELLATION_EXCHANGE, queueName, routingKey);
+		final String cancellationRoutingKey = req.getId().toString();
+		declareAndBindTransientQueueWithRoutingKey(
+			req.getType(),
+			TASK_RUNNER_CANCELLATION_EXCHANGE,
+			queueName,
+			cancellationRoutingKey
+		);
 
 		try {
 			// send the request to the task runner
 			log.info("Dispatching request for task id: {}", req.getId());
 			final String jsonStr = objectMapper.writeValueAsString(req);
-			convertAndSend(r.getType(), requestQueue, jsonStr);
+			convertAndSendToDefaultExchange(r.getType(), requestQueue, jsonStr);
 
 			// publish the queued task response
 			final TaskResponse queuedResponse = req.createResponse(TaskStatus.QUEUED, "", "");
 			final String respJsonStr = objectMapper.writeValueAsString(queuedResponse);
-			convertAndSend(r.getType(), TASK_RUNNER_RESPONSE_EXCHANGE, "", respJsonStr);
+			convertAndSend(r.getType(), TASK_RUNNER_RESPONSE_EXCHANGE, req.getRoutingKey(), respJsonStr);
 
 			// create and return the future
 			final CompletableTaskFuture future = new CompletableTaskFuture(req.getId());

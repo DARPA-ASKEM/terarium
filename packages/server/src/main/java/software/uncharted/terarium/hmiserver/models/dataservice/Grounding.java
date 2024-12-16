@@ -14,6 +14,7 @@ import org.hibernate.annotations.Type;
 import software.uncharted.terarium.hmiserver.annotations.TSModel;
 import software.uncharted.terarium.hmiserver.annotations.TSOptional;
 import software.uncharted.terarium.hmiserver.models.TerariumEntity;
+import software.uncharted.terarium.hmiserver.models.mira.DKG;
 
 /** Represents a grounding document from TDS */
 @Data
@@ -29,7 +30,7 @@ public class Grounding extends TerariumEntity {
 	/** Ontological identifier per DKG */
 	@Type(JsonType.class)
 	@Column(columnDefinition = "json")
-	private List<Identifier> identifiers;
+	private List<DKG> identifiers;
 
 	/** (Optional) Additional context that informs the grounding */
 	@TSOptional

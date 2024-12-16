@@ -61,11 +61,17 @@ public class WorkflowService extends TerariumAssetServiceWithoutSearch<Workflow,
 		if (asset.getNodes() != null) {
 			for (final WorkflowNode<?> node : asset.getNodes()) {
 				node.setWorkflowId(asset.getId());
+				if (node.getVersion() == null) {
+					node.setVersion(1L);
+				}
 			}
 		}
 		if (asset.getEdges() != null) {
 			for (final WorkflowEdge edge : asset.getEdges()) {
 				edge.setWorkflowId(asset.getId());
+				if (edge.getVersion() == null) {
+					edge.setVersion(1L);
+				}
 			}
 		}
 		return super.createAsset(asset, projectId, hasWritePermission);
@@ -78,6 +84,7 @@ public class WorkflowService extends TerariumAssetServiceWithoutSearch<Workflow,
 		final UUID projectId,
 		final Schema.Permission hasWritePermission
 	) throws IOException, IllegalArgumentException {
+		final long updateStart = System.currentTimeMillis();
 		// Fetch database copy, we will update into it
 		final Workflow dbWorkflow = getAsset(asset.getId(), hasWritePermission).get();
 
@@ -88,6 +95,7 @@ public class WorkflowService extends TerariumAssetServiceWithoutSearch<Workflow,
 
 		dbWorkflow.setName(asset.getName());
 		dbWorkflow.setDescription(asset.getDescription());
+		dbWorkflow.setScenario(asset.getScenario());
 
 		// Prep: sane state, cache the nodes/edges to update for easy retrival
 		if (asset.getNodes() != null) {
@@ -97,21 +105,6 @@ public class WorkflowService extends TerariumAssetServiceWithoutSearch<Workflow,
 					node.setVersion(1L);
 				}
 				nodeMap.put(node.getId(), node);
-
-				// Debugging possible sync issue - October 2024
-				log.info("Node id=" + node.getId() + ",  status=" + node.getStatus() + ", deleted=" + node.getIsDeleted());
-				if (node.getOutputs() != null) {
-					for (final JsonNode o : node.getOutputs()) {
-						final JsonNode oValue = o.get("value").get(0);
-						if (oValue != null) {
-							log.info("  Out: " + oValue.asText());
-						} else {
-							log.info("  Out: null");
-						}
-					}
-				} else {
-					log.info("  no outputs");
-				}
 			}
 		}
 		if (asset.getEdges() != null) {
@@ -137,19 +130,14 @@ public class WorkflowService extends TerariumAssetServiceWithoutSearch<Workflow,
 				final JsonNode nodeContent = this.objectMapper.valueToTree(node);
 				final JsonNode dbNodeContent = this.objectMapper.valueToTree(dbNode);
 
+				// No changes, skip
 				if (nodeContent.equals(dbNodeContent)) {
 					nodeMap.remove(node.getId());
 					continue;
 				}
 
-				// FIXME: backwards compatibility for older workflows, remove in a few month.
-				// Aug 2024
-				if (dbNode.getVersion() == null) {
-					dbNode.setVersion(1L);
-					continue;
-				}
-
-				if (dbNode.getVersion().equals(node.getVersion())) {
+				// Only update if if node is not already deleted in the db
+				if (dbNode.getIsDeleted() == false && dbNode.getVersion().equals(node.getVersion())) {
 					node.setVersion(dbNode.getVersion() + 1L);
 					dbWorkflowNodes.set(index, node);
 				}
@@ -169,18 +157,14 @@ public class WorkflowService extends TerariumAssetServiceWithoutSearch<Workflow,
 				final JsonNode edgeContent = this.objectMapper.valueToTree(edge);
 				final JsonNode dbEdgeContent = this.objectMapper.valueToTree(dbEdge);
 
+				// No changes, skip
 				if (edgeContent.equals(dbEdgeContent)) {
 					edgeMap.remove(edge.getId());
 					continue;
 				}
 
-				// FIXME: backwards compatibility for older workflows, remove in a few month.
-				// Aug 2024
-				if (dbEdge.getVersion() == null) {
-					dbEdge.setVersion(1L);
-				}
-
-				if (dbEdge.getVersion().equals(edge.getVersion())) {
+				// Only update if if edge is not already deleted in the db
+				if (dbEdge.getIsDeleted() == false && dbEdge.getVersion().equals(edge.getVersion())) {
 					edge.setVersion(dbEdge.getVersion() + 1L);
 					dbWorkflowEdges.set(index, edge);
 				}
@@ -207,7 +191,15 @@ public class WorkflowService extends TerariumAssetServiceWithoutSearch<Workflow,
 			dbWorkflowEdges.add(pair.getValue());
 		}
 
-		return super.updateAsset(dbWorkflow, projectId, hasWritePermission);
+		final long resolveEnd = System.currentTimeMillis();
+		log.info("Resolve workflow " + dbWorkflow.getId() + " took " + (resolveEnd - updateStart));
+
+		final Optional<Workflow> result = super.updateAsset(dbWorkflow, projectId, hasWritePermission);
+
+		final long updateEnd = System.currentTimeMillis();
+		log.info("Update workflow to DB " + dbWorkflow.getId() + " took " + (updateEnd - resolveEnd));
+
+		return result;
 	}
 
 	@Override

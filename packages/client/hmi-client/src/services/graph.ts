@@ -132,7 +132,7 @@ export const rerouteEdges = (nodes: INode<any>[], edges: IEdge<any>[]) => {
 			pointB: { shape: shapeB, side: sideB, distance: 0.5 },
 			shapeMargin: 20,
 			globalBoundsMargin: 10,
-			globalBounds: { left: -8000, top: -8000, width: 8000, height: 8000 },
+			globalBounds: { left: -2000, top: -2000, width: 4000, height: 4000 },
 			obstacles
 		};
 
@@ -151,6 +151,30 @@ export const rerouteEdges = (nodes: INode<any>[], edges: IEdge<any>[]) => {
 		}
 		const path = OrthogonalConnector.route(orthoOptions);
 		edge.points = path;
+
+		// Just in case algorithm fails to return, set manual edge points so
+		// at least it renders
+		if (edge.points.length === 0) {
+			console.warn(`failed ortho edge ${edge.source} => ${edge.target}`);
+			const startX = sideA === 'right' ? shapeA.cx + 0.5 * shapeA.width : shapeA.cx - 0.5 * shapeA.width;
+			const startY = shapeA.cy;
+
+			const endX = sideB === 'right' ? shapeB.cx + 0.5 * shapeB.width : shapeB.cx - 0.5 * shapeB.width;
+			const endY = shapeA.cy;
+
+			edge.points.push({
+				x: startX,
+				y: startY
+			});
+			edge.points.push({
+				x: startX + 0.5 * (endX - startX),
+				y: startY + 0.5 * (endY - startY) + 40
+			});
+			edge.points.push({
+				x: endX,
+				y: endY
+			});
+		}
 
 		sourceNodeCounter.set(edge.source, sourceCounter);
 		targetNodeCounter.set(edge.target, targetCounter);
@@ -172,9 +196,15 @@ export const runDagreLayout = <V, E>(graphData: IGraph<V, E>, lr: boolean = true
 		});
 		node.nodes.forEach((child) => g.setParent(child.id, node.id));
 	});
+
 	// Set state/transitions edges
+	// Ignore
+	// - observable edges, they are realized at interaction time
+	// - controller edges, they are routed after initial layout because they can
+	//   intefere with the general topological structure
 	graphData.edges.forEach((edge: IEdge<any>) => {
 		if (edge.data?.isObservable) return;
+		if (edge.data?.isController) return;
 		g.setEdge(edge.source, edge.target);
 	});
 
@@ -268,7 +298,17 @@ export const runDagreLayout = <V, E>(graphData: IGraph<V, E>, lr: boolean = true
 			if (node.y + 0.5 * node.height > maxY) maxY = node.y + 0.5 * node.height;
 		});
 
-		rerouteEdges(graphData.nodes, graphData.edges);
+		// manual route controller edges
+		rerouteEdges(
+			graphData.nodes,
+			graphData.edges.filter((edge: IEdge<any>) => edge.data?.isController === true)
+		);
+
+		// FIXME: temp hack, need to optimize OrthogonalConnector
+		const nonControllerEdges = graphData.edges.filter((edge: IEdge<any>) => edge.data?.isController !== true);
+		if (nonControllerEdges.length < 100) {
+			rerouteEdges(graphData.nodes, nonControllerEdges);
+		}
 
 		// Give the bounds a little extra buffer
 		const buffer = 10;

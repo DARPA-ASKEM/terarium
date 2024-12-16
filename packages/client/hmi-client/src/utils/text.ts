@@ -13,6 +13,10 @@ function highlightText(text: string, searchTerms: string): string {
 	return text.replace(search, (match) => emphasis(match));
 }
 
+function capitalize(string: string) {
+	return upperFirst(lowerCase(string));
+}
+
 /**
  * Convert a pascal case string to a capital sentence, avoids acronyms.
  * Most useful for converting enum of model framework to human-readable string:
@@ -37,4 +41,21 @@ function snakeToCapitalSentence(snakeCaseString: string) {
 	return startCase(toLower(snakeCaseString));
 }
 
-export { highlightText as highlight, pascalCaseToCapitalSentence, snakeToCapitalized, snakeToCapitalSentence };
+function formatListWithConjunction(stringList: string[]) {
+	let formattedString = '';
+	if (stringList.length > 1) {
+		formattedString = `${stringList.slice(0, -1).join(', ')} and ${stringList.slice(-1)}`;
+	} else if (stringList[0]) {
+		formattedString = stringList[0];
+	}
+	return formattedString;
+}
+
+export {
+	highlightText as highlight,
+	pascalCaseToCapitalSentence,
+	snakeToCapitalized,
+	snakeToCapitalSentence,
+	formatListWithConjunction,
+	capitalize
+};

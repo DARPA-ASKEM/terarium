@@ -18,11 +18,11 @@ import org.springframework.security.test.context.support.WithUserDetails;
 import software.uncharted.terarium.hmiserver.TerariumApplicationTests;
 import software.uncharted.terarium.hmiserver.configuration.MockUser;
 import software.uncharted.terarium.hmiserver.models.dataservice.Grounding;
-import software.uncharted.terarium.hmiserver.models.dataservice.Identifier;
 import software.uncharted.terarium.hmiserver.models.dataservice.document.DocumentAsset;
 import software.uncharted.terarium.hmiserver.models.dataservice.document.DocumentExtraction;
 import software.uncharted.terarium.hmiserver.models.dataservice.document.ExtractionAssetType;
 import software.uncharted.terarium.hmiserver.models.dataservice.project.Project;
+import software.uncharted.terarium.hmiserver.models.mira.DKG;
 
 @Slf4j
 public class DocumentServiceTests extends TerariumApplicationTests {
@@ -63,7 +63,7 @@ public class DocumentServiceTests extends TerariumApplicationTests {
 		final Grounding grounding = new Grounding();
 		grounding.setContext(mapper.createObjectNode().put("hello", "world-" + key).put("foo", "bar-" + key));
 		grounding.setIdentifiers(new ArrayList<>());
-		grounding.getIdentifiers().add(new Identifier("curie", "maria"));
+		grounding.getIdentifiers().add(new DKG("curie", "maria", "", null, null));
 		return grounding;
 	}
 
@@ -106,8 +106,8 @@ public class DocumentServiceTests extends TerariumApplicationTests {
 		Assertions.assertNotNull(after.getGrounding().getId());
 		Assertions.assertNotNull(after.getGrounding().getCreatedOn());
 		Assertions.assertNotNull(after.getGrounding().getIdentifiers());
-		Assertions.assertNotNull(after.getGrounding().getIdentifiers().get(0).curie());
-		Assertions.assertNotNull(after.getGrounding().getIdentifiers().get(0).name());
+		Assertions.assertNotNull(after.getGrounding().getIdentifiers().get(0).getCurie());
+		Assertions.assertNotNull(after.getGrounding().getIdentifiers().get(0).getName());
 		Assertions.assertNotNull(after.getGrounding().getContext());
 		Assertions.assertEquals(after.getGrounding().getContext().size(), 2);
 	}

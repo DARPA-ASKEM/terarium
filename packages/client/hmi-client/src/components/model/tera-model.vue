@@ -1,46 +1,17 @@
 <template>
 	<tera-asset
 		v-bind="$attrs"
-		:feature-config="featureConfig"
 		:id="assetId"
 		:is-loading="isModelLoading"
-		:is-naming-asset="isNaming"
-		:name="temporaryModel?.header.name"
-		@close-preview="emit('close-preview')"
 		:show-table-of-contents="!isWorkflow"
+		:name="temporaryModel?.header.name"
+		@rename="updateModelName"
 	>
-		<template #name-input>
-			<tera-input-text
-				v-if="isNaming"
-				v-model.lazy="newName"
-				@keyup.enter="updateModelName"
-				@keyup.esc="updateModelName"
-				auto-focus
-				class="w-4"
-				placeholder="Title of new model"
-			/>
-			<div v-if="isNaming" class="flex flex-nowrap ml-1 mr-3">
-				<Button
-					icon="pi pi-check"
-					rounded
-					text
-					@click="updateModelName"
-					title="This will rename the model and save all current changes."
-				/>
-			</div>
-		</template>
-		<template #edit-buttons v-if="!featureConfig.isPreview">
+		<template #edit-buttons>
 			<Button icon="pi pi-ellipsis-v" text rounded @click="toggleOptionsMenu" />
 			<ContextMenu ref="optionsMenu" :model="optionsMenuItems" popup :pt="optionsMenuPt" />
 			<aside class="btn-group">
 				<tera-asset-enrichment :asset-type="AssetType.Model" :assetId="assetId" @finished-job="fetchModel" />
-				<Button
-					label="Reset"
-					severity="secondary"
-					outlined
-					@click="onReset"
-					:disabled="!(hasChanged && hasEditPermission)"
-				/>
 				<Button
 					v-if="isSaveForReuse"
 					label="Save for re-use"
@@ -53,17 +24,18 @@
 				<Button label="Save" @click="onSave" :disabled="!(hasChanged && hasEditPermission)" />
 			</aside>
 		</template>
-		<section v-if="temporaryModel">
-			<tera-model-description
-				:feature-config="featureConfig"
+		<section v-if="temporaryModel && mmtData">
+			<tera-model-description :model="temporaryModel" :mmt-data="mmtData" @update-model="updateTemporaryModel" />
+			<tera-petrinet-parts
 				:model="temporaryModel"
-				@update-model="updateTemporaryModel"
-			/>
-			<tera-model-parts
-				class="mt-0"
-				:feature-config="featureConfig"
-				:model="temporaryModel"
-				@update-model="updateTemporaryModel"
+				:mmt="mmtData.mmt"
+				:mmt-params="mmtData.template_params"
+				:feature-config="{ isPreview: false }"
+				@update-state="(e: any) => onUpdateModelPart('state', e)"
+				@update-parameter="(e: any) => onUpdateModelPart('parameter', e)"
+				@update-observable="(e: any) => onUpdateModelPart('observable', e)"
+				@update-transition="(e: any) => onUpdateModelPart('transition', e)"
+				@update-time="(e: any) => onUpdateModelPart('time', e)"
 			/>
 		</section>
 	</tera-asset>
@@ -76,35 +48,37 @@
 		:open-on-save="!isWorkflow"
 		@close-modal="showSaveModal = false"
 		@on-save="onModalSave"
+		@on-update="onModalSave"
 	/>
 </template>
 
 <script setup lang="ts">
-import { computed, PropType, ref, watch } from 'vue';
+import { computed, ref, watch, onMounted } from 'vue';
 import { cloneDeep, isEmpty, isEqual } from 'lodash';
 import Button from 'primevue/button';
 import ContextMenu from 'primevue/contextmenu';
 import TeraAsset from '@/components/asset/tera-asset.vue';
 import TeraAssetEnrichment from '@/components/widgets/tera-asset-enrichment.vue';
-import TeraInputText from '@/components/widgets/tera-input-text.vue';
 import TeraModelDescription from '@/components/model/petrinet/tera-model-description.vue';
-import TeraModelParts from '@/components/model/tera-model-parts.vue';
+import TeraPetrinetParts from '@/components/model/petrinet/tera-petrinet-parts.vue';
 import TeraSaveAssetModal from '@/components/project/tera-save-asset-modal.vue';
-import { getModel, updateModel } from '@/services/model';
-import type { FeatureConfig } from '@/types/common';
-import { AssetType, ClientEvent, ClientEventType, type Model, TaskResponse, TaskStatus } from '@/types/Types';
-import { useClientEvent } from '@/composables/useClientEvent';
+import { getModel, updateModel, getMMT } from '@/services/model';
+import { AssetType, type Model } from '@/types/Types';
 import { useProjects } from '@/composables/project';
 import { logger } from '@/utils/logger';
+import { MMT } from '@/model-representation/mira/mira-common';
+import {
+	updateState,
+	updateParameter,
+	updateObservable,
+	updateTransition,
+	updateTime
+} from '@/model-representation/service';
 
 const props = defineProps({
 	assetId: {
 		type: String,
 		default: ''
-	},
-	featureConfig: {
-		type: Object as PropType<FeatureConfig>,
-		default: { isPreview: false } as FeatureConfig
 	},
 	isWorkflow: {
 		type: Boolean,
@@ -116,37 +90,24 @@ const props = defineProps({
 	}
 });
 
-const emit = defineEmits(['close-preview', 'on-save']);
-
-// Listen for the task completion event
-useClientEvent(ClientEventType.TaskGollmModelCard, (event: ClientEvent<TaskResponse>) => {
-	if (
-		!event.data ||
-		event.data.status !== TaskStatus.Success ||
-		event.data.additionalProperties.modelId !== props.assetId
-	) {
-		return;
-	}
-	fetchModel();
-});
+const emit = defineEmits(['on-save']);
 
 const model = ref<Model | null>(null);
 const temporaryModel = ref<Model | null>(null);
+const mmtData = ref<MMT | null>(null);
 
-const newName = ref('New Model');
-const isRenaming = ref(false);
 const isModelLoading = ref(false);
 const showSaveModal = ref(false);
-const isNaming = computed(() => isEmpty(props.assetId) || isRenaming.value);
 const hasChanged = computed(() => !isEqual(model.value, temporaryModel.value));
 const hasEditPermission = useProjects().hasEditPermission();
 
 // Edit menu
-function onReset() {
-	temporaryModel.value = cloneDeep(model.value);
-}
-function onSave() {
-	saveModelContent();
+async function onSave() {
+	if (!hasEditPermission || !temporaryModel.value) return;
+	await updateModel(temporaryModel.value);
+	logger.info('Changes to the model has been saved.');
+	await useProjects().refresh();
+	await fetchModel();
 }
 function onSaveAs() {
 	showSaveModal.value = true;
@@ -167,29 +128,8 @@ function onModalSave(event: any) {
 // User menu
 const toggleOptionsMenu = (event) => optionsMenu.value.toggle(event);
 const optionsMenu = ref();
-const optionsMenuItems = computed(() => [
-	{
-		icon: 'pi pi-pencil',
-		label: 'Rename',
-		command() {
-			isRenaming.value = true;
-			newName.value = temporaryModel.value?.header.name ?? '';
-		}
-	},
-	{
-		icon: 'pi pi-plus',
-		label: 'Add to project',
-		items:
-			useProjects()
-				.allProjects.value?.filter((project) => project.id !== useProjects().activeProject.value?.id)
-				.map((project) => ({
-					label: project.name,
-					command: async () => {
-						const response = await useProjects().addAsset(AssetType.Model, props.assetId, project.id);
-						if (response) logger.info(`Added asset to ${project.name}`);
-					}
-				})) ?? []
-	},
+// TODO: Could be moved into tera-asset.vue
+const optionsMenuItems = ref<any[]>([
 	{
 		icon: 'pi pi-download',
 		label: 'Download',
@@ -203,7 +143,6 @@ const optionsMenuItems = computed(() => [
 				a.click();
 				a.remove();
 			}
-			emit('close-preview');
 		}
 	}
 ]);
@@ -213,36 +152,87 @@ const optionsMenuPt = {
 	}
 };
 
-async function saveModelContent() {
-	if (!hasEditPermission || !temporaryModel.value) return;
-	await updateModel(temporaryModel.value);
-	logger.info('Changes to the model has been saved.');
-	await useProjects().refresh();
-	await fetchModel();
-}
-
-async function updateModelName() {
-	if (temporaryModel.value && !isEmpty(newName.value)) {
-		temporaryModel.value.header.name = newName.value;
-	}
-	isRenaming.value = false;
+async function updateModelName(name: string) {
+	if (!temporaryModel.value) return;
+	temporaryModel.value.header.name = name;
 	onSave();
 }
 
+async function refreshMMT() {
+	if (!temporaryModel.value) return;
+	const response = await getMMT(temporaryModel.value);
+	if (!response) return;
+	mmtData.value = response;
+}
+
 function updateTemporaryModel(newModel: Model) {
+	let doMmtUpdate = false;
+	// Only update the MMT when the semantics of the model changes
+	if (
+		!isEqual(temporaryModel.value?.model, newModel.model) ||
+		!isEqual(temporaryModel.value?.semantics, newModel.semantics)
+	) {
+		doMmtUpdate = true;
+	}
 	temporaryModel.value = cloneDeep(newModel);
+	if (doMmtUpdate) refreshMMT();
+}
+
+function onUpdateModelPart(property: 'state' | 'parameter' | 'observable' | 'transition' | 'time', event: any) {
+	if (!temporaryModel.value) return;
+	const newModel = cloneDeep(temporaryModel.value);
+	const { id, key, value } = event;
+	switch (property) {
+		case 'state':
+			updateState(newModel, id, key, value);
+			break;
+		case 'parameter':
+			updateParameter(newModel, id, key, value);
+			break;
+		case 'observable':
+			updateObservable(newModel, id, key, value);
+			break;
+		case 'transition':
+			updateTransition(newModel, id, key, value);
+			break;
+		case 'time':
+			updateTime(newModel, key, value);
+			break;
+		default:
+			break;
+	}
+	updateTemporaryModel(newModel);
 }
 
 async function fetchModel() {
 	model.value = await getModel(props.assetId);
 	temporaryModel.value = cloneDeep(model.value);
+	await refreshMMT();
 }
 
+onMounted(async () => {
+	const addProjectMenuItems = (await useProjects().getAllExceptActive()).map((project) => ({
+		label: project.name,
+		command: async () => {
+			const response = await useProjects().addAsset(AssetType.Model, props.assetId, project.id);
+			if (response) logger.info(`Added asset to ${project.name}`);
+		}
+	}));
+	if (addProjectMenuItems.length === 0) return;
+	optionsMenuItems.value.splice(1, 0, {
+		icon: 'pi pi-plus',
+		label: 'Add to project',
+		items: addProjectMenuItems
+	});
+});
+
 watch(
-	() => [props.assetId],
+	() => props.assetId,
 	async () => {
 		// Reset view of model page
-		isRenaming.value = false;
+		model.value = null;
+		temporaryModel.value = null;
+		mmtData.value = null;
 		if (!isEmpty(props.assetId)) {
 			isModelLoading.value = true;
 			await fetchModel();
@@ -257,7 +247,7 @@ watch(
 .btn-group {
 	display: flex;
 	align-items: center;
-	gap: var(--gap-small);
+	gap: var(--gap-2);
 	margin-left: auto;
 }
 </style>

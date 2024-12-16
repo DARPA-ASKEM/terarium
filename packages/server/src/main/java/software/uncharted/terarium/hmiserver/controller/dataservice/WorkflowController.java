@@ -154,10 +154,8 @@ public class WorkflowController {
 		@RequestBody final Workflow workflow,
 		@RequestParam(name = "project-id", required = false) final UUID projectId
 	) {
-		final Schema.Permission permission = projectService.checkPermissionCanWrite(
-			currentUserService.get().getId(),
-			projectId
-		);
+		final String userId = currentUserService.get().getId();
+		final Schema.Permission permission = projectService.checkPermissionCanWrite(userId, projectId);
 
 		workflow.setId(id);
 		final Optional<Workflow> updated;
@@ -183,6 +181,7 @@ public class WorkflowController {
 		final ClientEvent<Workflow> event = ClientEvent.<Workflow>builder()
 			.type(ClientEventType.WORKFLOW_UPDATE)
 			.data(updated.get())
+			.userId(userId)
 			.build();
 
 		try {

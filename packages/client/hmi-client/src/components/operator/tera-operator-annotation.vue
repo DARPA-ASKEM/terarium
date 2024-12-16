@@ -96,13 +96,12 @@ section {
 		display: flex;
 		justify-content: space-between;
 		width: 100%;
-		font-size: var(--font-caption);
 		color: var(--text-color-primary);
 		cursor: text;
 	}
 
 	& > .p-inputtext {
-		font-size: var(--font-caption);
+		padding-top: 0.325rem;
 	}
 
 	&.in-node {
@@ -122,9 +121,9 @@ section {
 
 	/* In drilldown */
 	&:not(.in-node) {
-		padding-bottom: var(--gap-small);
+		padding-bottom: var(--gap-2);
 		border-radius: var(--border-radius);
-		gap: var(--gap-small);
+		gap: var(--gap-2);
 		& > textarea {
 			flex: 1;
 			align-self: center;

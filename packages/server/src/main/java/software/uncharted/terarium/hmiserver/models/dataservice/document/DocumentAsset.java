@@ -1,7 +1,9 @@
 package software.uncharted.terarium.hmiserver.models.dataservice.document;
 
 import com.fasterxml.jackson.annotation.JsonAlias;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import io.hypersistence.utils.hibernate.type.json.JsonType;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
@@ -19,11 +21,14 @@ import java.util.Map;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
+import lombok.extern.slf4j.Slf4j;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.annotations.Type;
+import software.uncharted.terarium.hmiserver.annotations.TSIgnore;
 import software.uncharted.terarium.hmiserver.annotations.TSModel;
 import software.uncharted.terarium.hmiserver.annotations.TSOptional;
 import software.uncharted.terarium.hmiserver.models.TerariumAsset;
+import software.uncharted.terarium.hmiserver.models.TerariumAssetEmbeddingType;
 import software.uncharted.terarium.hmiserver.models.dataservice.Grounding;
 
 @EqualsAndHashCode(callSuper = true)
@@ -31,6 +36,7 @@ import software.uncharted.terarium.hmiserver.models.dataservice.Grounding;
 @TSModel
 @Accessors(chain = true)
 @Entity
+@Slf4j
 public class DocumentAsset extends TerariumAsset {
 
 	@Serial
@@ -84,6 +90,17 @@ public class DocumentAsset extends TerariumAsset {
 	@JdbcTypeCode(Types.BINARY)
 	private byte[] thumbnail;
 
+	public List<ExtractedDocumentPage> getExtractions() {
+		if (
+			this.extractions.size() == 0 &&
+			this.fileNames.size() > 0 &&
+			(this.fileNames.get(0).endsWith(".txt") || this.fileNames.get(0).endsWith(".md"))
+		) {
+			extractions = List.of(new ExtractedDocumentPage().setPageNumber(1).setText(text));
+		}
+		return this.extractions;
+	}
+
 	@Override
 	public List<String> getFileNames() {
 		if (this.fileNames == null) {
@@ -107,6 +124,7 @@ public class DocumentAsset extends TerariumAsset {
 		super.cloneSuperFields(clone);
 
 		clone.documentUrl = this.documentUrl;
+		clone.thumbnail = this.thumbnail;
 
 		if (this.metadata != null) {
 			clone.metadata = new HashMap<>();
@@ -134,5 +152,21 @@ public class DocumentAsset extends TerariumAsset {
 		}
 
 		return clone;
+	}
+
+	@JsonIgnore
+	@TSIgnore
+	public String getEmbeddingSourceText() {
+		try {
+			if (getMetadata() != null && getMetadata().containsKey("gollmCard")) {
+				// update embeddings
+				final JsonNode card = getMetadata().get("gollmCard");
+				final ObjectMapper objectMapper = new ObjectMapper();
+				return objectMapper.writeValueAsString(card);
+			}
+			return null;
+		} catch (final Exception e) {
+			throw new RuntimeException("Failed to serialize model embedding text into JSON", e);
+		}
 	}
 }

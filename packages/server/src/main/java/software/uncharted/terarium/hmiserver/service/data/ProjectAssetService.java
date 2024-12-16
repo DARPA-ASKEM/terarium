@@ -14,7 +14,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import software.uncharted.terarium.hmiserver.models.TerariumAsset;
 import software.uncharted.terarium.hmiserver.models.dataservice.AssetType;
-import software.uncharted.terarium.hmiserver.models.dataservice.model.Model;
 import software.uncharted.terarium.hmiserver.models.dataservice.project.Project;
 import software.uncharted.terarium.hmiserver.models.dataservice.project.ProjectAsset;
 import software.uncharted.terarium.hmiserver.repository.data.ProjectAssetRepository;
@@ -27,14 +26,16 @@ import software.uncharted.terarium.hmiserver.utils.rebac.Schema;
 public class ProjectAssetService {
 
 	final ProjectAssetRepository projectAssetRepository;
+	final ProjectSearchService projectSearchService;
 
 	final ReBACService reBACService;
 
 	/**
-	 * Find all active assets for a project. Active assets are defined as those that are not deleted and not temporary.
+	 * Find all active assets for a project. Active assets are defined as those that
+	 * are not deleted and not temporary.
 	 *
 	 * @param projectId The project ID
-	 * @param types The types of assets to find
+	 * @param types     The types of assets to find
 	 * @return The list of active assets for the project
 	 */
 	@Observed(name = "function_profile")
@@ -63,6 +64,9 @@ public class ProjectAssetService {
 		}
 		asset.setDeletedOn(Timestamp.from(Instant.now()));
 		projectAssetRepository.save(asset);
+
+		projectSearchService.removeProjectAssetEmbedding(projectId, originalAssetId);
+
 		return true;
 	}
 
@@ -83,17 +87,25 @@ public class ProjectAssetService {
 
 		project.getProjectAssets().add(projectAsset);
 
+		// update the asset embeddings in the project document
+		try {
+			projectSearchService.generateAndUpsertProjectAssetEmbeddings(project.getId(), asset);
+		} catch (final Exception e) {
+			log.error("Error generating embeddings for project asset", e);
+		}
+
 		return Optional.of(projectAsset);
 	}
 
 	@Observed(name = "function_profile")
-	public Optional<ProjectAsset> updateProjectAsset(
+	private Optional<ProjectAsset> updateProjectAsset(
 		final ProjectAsset projectAsset,
 		final Schema.Permission hasWritePermission
 	) {
 		if (!projectAssetRepository.existsById(projectAsset.getId())) {
 			return Optional.empty();
 		}
+
 		return Optional.of(projectAssetRepository.save(projectAsset));
 	}
 
@@ -104,6 +116,13 @@ public class ProjectAssetService {
 			projectAssets.forEach(projectAsset -> {
 				projectAsset.setAssetName(asset.getName());
 				updateProjectAsset(projectAsset, hasWritePermission);
+
+				try {
+					// update the asset embeddings in the project document
+					projectSearchService.generateAndUpsertProjectAssetEmbeddings(projectAsset.getProject().getId(), asset);
+				} catch (final Exception e) {
+					log.error("Error generating embeddings for project asset", e);
+				}
 			});
 		} else {
 			log.warn(

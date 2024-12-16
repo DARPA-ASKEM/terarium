@@ -67,25 +67,21 @@ export function generateConstraintExpression(config: ConstraintGroup) {
 		if (constraintType === ConstraintType.Increasing || constraintType === ConstraintType.Decreasing) {
 			expressionPart = `d/dt ${expressionPart}`;
 		}
-		if (i === variables.length - 1) {
-			if (
-				constraintType === ConstraintType.LessThan ||
-				constraintType === ConstraintType.LessThanOrEqualTo ||
-				constraintType === ConstraintType.Decreasing
-			) {
-				expressionPart += constraintType === ConstraintType.LessThan ? `<` : `\\leq`;
-				expressionPart += constraintType === ConstraintType.Decreasing ? '0' : `${interval?.ub ?? 0}`;
-			} else {
-				expressionPart += constraintType === ConstraintType.GreaterThan ? `>` : `\\geq`;
-				expressionPart += constraintType === ConstraintType.Increasing ? '0' : `${interval?.lb ?? 0}`;
-			}
+		if (
+			constraintType === ConstraintType.LessThan ||
+			constraintType === ConstraintType.LessThanOrEqualTo ||
+			constraintType === ConstraintType.Decreasing
+		) {
+			expressionPart += constraintType === ConstraintType.LessThan ? `<` : `\\leq`;
+			expressionPart += constraintType === ConstraintType.Decreasing ? '0' : `${interval?.ub ?? 0}`;
 		} else {
-			expressionPart += ',';
+			expressionPart += constraintType === ConstraintType.GreaterThan ? `>` : `\\geq`;
+			expressionPart += constraintType === ConstraintType.Increasing ? '0' : `${interval?.lb ?? 0}`;
 		}
-		expression += expressionPart;
+		// Adding the "for all in timepoints" in the same expression helps with text alignment
+		expression += `${expressionPart} \\ \\forall \\ t \\in [${timepoints.lb}, ${timepoints.ub}] \\newline `;
 	}
-	// Adding the "for all in timepoints" in the same expression helps with text alignment
-	return `${expression} \\ \\forall \\ t \\in [${timepoints.lb}, ${timepoints.ub}]`;
+	return expression;
 }
 
 export const processFunman = (result: any) => {

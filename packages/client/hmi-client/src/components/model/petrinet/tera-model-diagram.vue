@@ -62,7 +62,7 @@
 </template>
 
 <script setup lang="ts">
-import { isEmpty, isEqual } from 'lodash';
+import { isEmpty, isEqual, debounce } from 'lodash';
 import { ref, watch, computed, nextTick, onMounted, onUnmounted } from 'vue';
 import Button from 'primevue/button';
 import SelectButton from 'primevue/selectbutton';
@@ -73,7 +73,7 @@ import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue'
 import TeraResizablePanel from '@/components/widgets/tera-resizable-panel.vue';
 import TeraTooltip from '@/components/widgets/tera-tooltip.vue';
 import { isStratifiedModel, emptyMiraModel, convertToIGraph } from '@/model-representation/mira/mira';
-import { MiraModel, MiraTemplateParams, ObservableSummary } from '@/model-representation/mira/mira-common';
+import { MiraModel, MiraTemplateParams, ObservableSummary, MMT } from '@/model-representation/mira/mira-common';
 import { NestedPetrinetRenderer } from '@/model-representation/petrinet/nested-petrinet-renderer';
 import { PetrinetRenderer } from '@/model-representation/petrinet/petrinet-renderer';
 import { getModelRenderer } from '@/model-representation/service';
@@ -83,9 +83,11 @@ import { AMRSchemaNames, type FeatureConfig } from '@/types/common';
 import { StratifiedMatrix } from '@/types/Model';
 import type { Model } from '@/types/Types';
 import { observeElementSizeChange } from '@/utils/observer';
+import { svgToImage } from '@/utils/svg';
 
 const props = defineProps<{
 	model: Model;
+	mmtData?: MMT;
 	featureConfig?: FeatureConfig;
 }>();
 
@@ -121,11 +123,17 @@ async function renderGraph() {
 	// Sanity guard
 	if (mmt.value.templates.length === 0) return;
 
-	renderer = getModelRenderer(
-		mmt.value,
-		graphElement.value as HTMLDivElement,
-		stratifiedView.value === StratifiedView.Collapsed
-	);
+	// Abstract the container element so we can render off the DOM
+	let elem = graphElement.value;
+	if (props.featureConfig?.isPreview && graphElement.value) {
+		const originalElem = graphElement.value;
+		elem = document.createElement('div');
+		elem.style.width = `${originalElem.clientWidth}px`;
+		elem.style.height = `${originalElem.clientHeight}px`;
+	}
+
+	renderer = getModelRenderer(mmt.value, elem as HTMLDivElement, stratifiedView.value === StratifiedView.Collapsed);
+
 	if (renderer.constructor === NestedPetrinetRenderer && renderer.dims?.length) {
 		graphLegendLabels.value = renderer.dims;
 		graphLegendColors.value = renderer.depthColorList;
@@ -134,6 +142,41 @@ async function renderGraph() {
 		graphLegendColors.value = [];
 	}
 
+	// If interactive, setup events and handlers
+	if (!props.featureConfig?.isPreview) {
+		makeGraphInteractive(renderer);
+	}
+
+	// Prepare data
+	const graphData = convertToIGraph(
+		mmt.value,
+		observableSummary,
+		isStratified.value && stratifiedView.value === StratifiedView.Collapsed
+	);
+
+	// Render graph, this will either render to the DOM or a virutal element
+	if (renderer) {
+		renderer.isGraphDirty = true;
+		await renderer.setData(graphData);
+		await renderer.render();
+	}
+
+	// If not interactive, convert elem buffer into image
+	if (props.featureConfig?.isPreview && graphElement.value) {
+		const svg = elem?.querySelector('svg') as SVGElement;
+
+		// Carry background from container
+		svg.style.background = '#f9fbfa';
+
+		const image = await svgToImage(svg);
+		graphElement.value.innerHTML = '';
+		graphElement.value.appendChild(image);
+		elem = null;
+	}
+}
+
+// eslint-disable-next-line
+function makeGraphInteractive(renderer: PetrinetRenderer | NestedPetrinetRenderer) {
 	renderer.on('node-click', (_eventName, _event, selection) => {
 		const { id, data } = selection.datum();
 		if (data.type === NodeType.Transition && data.isStratified) {
@@ -173,19 +216,6 @@ async function renderGraph() {
 		const { data } = selection.datum();
 		if (data.type === NodeType.Transition && data.isStratified) hoveredTransitionId.value = '';
 	});
-
-	// Render graph
-	const graphData = convertToIGraph(
-		mmt.value,
-		observableSummary,
-		isStratified.value && stratifiedView.value === StratifiedView.Collapsed
-	);
-
-	if (renderer) {
-		renderer.isGraphDirty = true;
-		await renderer.setData(graphData);
-		await renderer.render();
-	}
 }
 
 async function toggleCollapsedView(view: StratifiedView) {
@@ -194,19 +224,18 @@ async function toggleCollapsedView(view: StratifiedView) {
 }
 
 watch(
-	() => [props.model.model, props.model?.semantics, graphElement.value],
-	(newValue, oldValue) => {
-		if (isEqual(newValue, oldValue) || modelType.value === AMRSchemaNames.DECAPODES || graphElement.value === null)
+	() => [props.model.model, props.model?.semantics, props.mmtData, graphElement.value],
+	async (newValue, oldValue) => {
+		if (isEqual(newValue, oldValue) || modelType.value === AMRSchemaNames.DECAPODES || graphElement.value === null) {
 			return;
-
-		getMMT(props.model).then((response) => {
-			if (response) {
-				mmt.value = response.mmt;
-				mmtParams.value = response.template_params;
-				observableSummary = response.observable_summary;
-				renderGraph();
-			}
-		});
+		}
+		// If no MMT data is provided from the parent component, fetch it from the server
+		const mmtData = props.mmtData ?? (await getMMT(props.model));
+		if (!mmtData) return;
+		mmt.value = mmtData.mmt;
+		mmtParams.value = mmtData.template_params;
+		observableSummary = mmtData.observable_summary;
+		renderGraph();
 	},
 	{ immediate: true, deep: true }
 );
@@ -215,7 +244,9 @@ watch(
 let graphResizeObserver: ResizeObserver;
 onMounted(() => {
 	if (graphElement.value) {
-		graphResizeObserver = observeElementSizeChange(graphElement.value, renderGraph);
+		// FIXME: This debounce prevents the graph from being rendered multiple times in a row.
+		// This happens in cases where there is a slight change in width when a scrollbar is shown or hidden. eg. opening/closing the transitions accordion in the model page
+		graphResizeObserver = observeElementSizeChange(graphElement.value, debounce(renderGraph, 2000));
 	}
 });
 onUnmounted(() => {

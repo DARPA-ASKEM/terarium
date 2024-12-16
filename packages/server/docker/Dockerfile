@@ -1,4 +1,4 @@
-FROM eclipse-temurin:21.0.4_7-jdk-noble AS builder
+FROM eclipse-temurin:21.0.5_11-jdk-noble AS builder
 
 WORKDIR /app
 COPY /packages/server .
@@ -12,7 +12,7 @@ RUN mkdir -p ./layers \
 WORKDIR /app/layers
 RUN java -Djarmode=layertools -jar ./*-SNAPSHOT.jar extract
 
-FROM eclipse-temurin:21.0.4_7-jre-noble
+FROM eclipse-temurin:21.0.5_11-jre-noble
 
 WORKDIR /app
 
@@ -27,4 +27,4 @@ COPY --from=builder ${LAYERS}/dependencies/ ./
 COPY --from=builder ${LAYERS}/snapshot-dependencies/ ./
 COPY --from=builder ${LAYERS}/spring-boot-loader/ ./
 COPY --from=builder ${LAYERS}/application/ ./
-ENTRYPOINT ["java", "org.springframework.boot.loader.JarLauncher"]
+ENTRYPOINT ["java", "-XX:InitialRAMPercentage=10", "-XX:MinRAMPercentage=50", "-XX:MaxRAMPercentage=50", "org.springframework.boot.loader.JarLauncher"]

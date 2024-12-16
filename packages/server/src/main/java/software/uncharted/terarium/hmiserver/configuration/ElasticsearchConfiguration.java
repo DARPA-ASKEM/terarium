@@ -71,6 +71,14 @@ public class ElasticsearchConfiguration {
 		return String.join("_", index.prefix, index.workflowRoot, index.suffix);
 	}
 
+	public String getEpiDKGIndex() {
+		return index.epiDKGRoot;
+	}
+
+	public String getClimateDKGIndex() {
+		return index.climateDKGRoot;
+	}
+
 	public String getProjectAlias() {
 		return String.join("_", index.prefix, index.projectRoot);
 	}
@@ -115,6 +123,14 @@ public class ElasticsearchConfiguration {
 		return String.join("_", index.prefix, index.workflowRoot);
 	}
 
+	public String getEpiDKGAlias() {
+		return index.epiDKGRoot;
+	}
+
+	public String getClimateDKGAlias() {
+		return index.climateDKGRoot;
+	}
+
 	public record Index(
 		String prefix,
 		String suffix,
@@ -128,6 +144,8 @@ public class ElasticsearchConfiguration {
 		String modelConfigurationRoot,
 		String notebookSessionRoot,
 		String simulationRoot,
-		String workflowRoot
+		String workflowRoot,
+		String epiDKGRoot,
+		String climateDKGRoot
 	) {}
 }

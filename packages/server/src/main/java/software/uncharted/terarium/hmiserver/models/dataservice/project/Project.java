@@ -1,6 +1,8 @@
 package software.uncharted.terarium.hmiserver.models.dataservice.project;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Entity;
@@ -11,23 +13,30 @@ import jakarta.persistence.Transient;
 import java.io.Serial;
 import java.sql.Types;
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
+import lombok.extern.slf4j.Slf4j;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.annotations.Where;
+import software.uncharted.terarium.hmiserver.annotations.TSIgnore;
 import software.uncharted.terarium.hmiserver.annotations.TSModel;
 import software.uncharted.terarium.hmiserver.annotations.TSOptional;
 import software.uncharted.terarium.hmiserver.models.TerariumAsset;
+import software.uncharted.terarium.hmiserver.models.TerariumAssetEmbeddingType;
 
 @EqualsAndHashCode(callSuper = true)
 @Data
 @Accessors(chain = true)
 @TSModel
 @Entity
+@Slf4j
 public class Project extends TerariumAsset {
 
 	@Serial
@@ -65,13 +74,19 @@ public class Project extends TerariumAsset {
 	@Schema(accessMode = Schema.AccessMode.READ_ONLY, defaultValue = "{}")
 	private Map<String, String> metadata;
 
+	@TSOptional
+	private Boolean sampleProject = false;
+
 	/** Information for the front-end to display/filter the project accordingly. */
 	@TSOptional
 	@Transient
 	@Schema(accessMode = Schema.AccessMode.READ_ONLY)
 	private Boolean publicProject;
 
-	/** Information for the front-end to enable/disable features based on user permissions (Read/Write). */
+	/**
+	 * Information for the front-end to enable/disable features based on user
+	 * permissions (Read/Write).
+	 */
 	@TSOptional
 	@Transient
 	@Schema(accessMode = Schema.AccessMode.READ_ONLY)
@@ -90,6 +105,9 @@ public class Project extends TerariumAsset {
 		}
 		if (project.getThumbnail() != null) {
 			existingProject.setThumbnail(project.getThumbnail());
+		}
+		if (project.getSampleProject() != null) {
+			existingProject.setSampleProject(project.getSampleProject());
 		}
 		return existingProject;
 	}
@@ -110,5 +128,44 @@ public class Project extends TerariumAsset {
 		cloned.publicProject = publicProject;
 		cloned.userPermission = userPermission;
 		return cloned;
+	}
+
+	@JsonIgnore
+	@TSIgnore
+	public String getEmbeddingSourceText() {
+		try {
+			if (overviewContent != null) {
+				return getOverviewAsReadableString();
+			}
+			final ObjectMapper objectMapper = new ObjectMapper();
+			return objectMapper.writeValueAsString(this);
+		} catch (final Exception e) {
+			throw new RuntimeException("Failed to serialize project embedding text into JSON", e);
+		}
+	}
+
+	@TSIgnore
+	public String getOverviewAsReadableString() {
+		if (overviewContent == null) {
+			return null;
+		}
+
+		// remove image tags
+		final String regex = "<img\\b[^>]*>(.*?)<\\/img>|<img\\b[^>]*\\/>";
+		final Pattern pattern = Pattern.compile(regex, Pattern.CASE_INSENSITIVE);
+		final Matcher matcher = pattern.matcher(new String(overviewContent));
+		return matcher.replaceAll("");
+	}
+
+	@JsonIgnore
+	@TSIgnore
+	public Map<TerariumAssetEmbeddingType, String> getEmbeddingsSourceByType() {
+		final Map<TerariumAssetEmbeddingType, String> sources = super.getEmbeddingsSourceByType();
+
+		if (overviewContent != null) {
+			sources.put(TerariumAssetEmbeddingType.OVERVIEW, getOverviewAsReadableString());
+		}
+
+		return sources;
 	}
 }

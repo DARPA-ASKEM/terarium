@@ -12,6 +12,9 @@ const FONT_SIZE_SMALL = 18;
 const FONT_SIZE_REGULAR = 24;
 const FONT_SIZE_LARGE = 36;
 
+const NODE_COLOR = '#E0E0E0';
+const TEXT_COLOR = 'rgb(16, 24, 40)';
+
 function setFontSize(label: string) {
 	if (label.length < 3) {
 		return FONT_SIZE_LARGE;
@@ -104,7 +107,7 @@ export class NestedPetrinetRenderer extends PetrinetRenderer {
 			.classed('shape selectableNode', true)
 			.attr('r', (d) => 0.55 * d.width)
 			.attr('fill', (d) => (d.data.strataType ? getNodeTypeColor(d.data.strataType) : getNestedTypeColor('base')))
-			.attr('stroke', 'var(--petri-nodeBorder)')
+			.attr('stroke', NODE_COLOR)
 			.attr('stroke-width', 1)
 			.style('cursor', 'pointer');
 
@@ -118,9 +121,9 @@ export class NestedPetrinetRenderer extends PetrinetRenderer {
 			.attr('x', (d) => -d.width * 0.5)
 			.attr('rx', '6')
 			.attr('ry', '6')
-			.style('fill', (d) => (d.data.strataType ? getNodeTypeColor(d.data.strataType) : 'var(--petri-nodeFill'))
+			.style('fill', (d) => (d.data.strataType ? getNodeTypeColor(d.data.strataType) : NODE_COLOR))
 			.style('cursor', 'pointer')
-			.attr('stroke', 'var(--petri-nodeBorder)')
+			.attr('stroke', NODE_COLOR)
 			.attr('stroke-width', 1);
 
 		// transitions label text
@@ -133,7 +136,7 @@ export class NestedPetrinetRenderer extends PetrinetRenderer {
 			.style('font-size', (d) => setFontSize(d.id))
 			.style('stroke', '#FFF')
 			.style('paint-order', 'stroke')
-			.style('fill', 'var(--text-color-primary')
+			.style('fill', TEXT_COLOR)
 			.style('pointer-events', 'none')
 			.html((d) => d.id);
 
@@ -149,7 +152,7 @@ export class NestedPetrinetRenderer extends PetrinetRenderer {
 			.style('stroke', '#FFF')
 			.style('stroke-width', '3px')
 			.style('stroke-linecap', 'butt')
-			.style('fill', 'var(--text-color-primary')
+			.style('fill', TEXT_COLOR)
 			.style('pointer-events', 'none')
 			.html((d) => {
 				if (d.data.expression) return d.data.expression;
@@ -168,7 +171,7 @@ export class NestedPetrinetRenderer extends PetrinetRenderer {
 			// .attr('ry', 6)
 			.style('fill', (d) => (d.data.strataType ? getNodeTypeColor(d.data.strataType) : '#ffffff'))
 			.style('cursor', 'pointer')
-			.attr('stroke', 'var(--petri-nodeBorder)')
+			.attr('stroke', NODE_COLOR)
 			.attr('stroke-width', 1);
 
 		const renderNestedNodes = (
@@ -188,6 +191,21 @@ export class NestedPetrinetRenderer extends PetrinetRenderer {
 			}
 
 			const nestedNodesLen = Object.keys(node).filter((d) => d !== '_key').length;
+			if (nestedNodesLen >= CIRCLE_PACKING_CHILD_NORMALIZED_VECTORS.length) {
+				select(g[idx])
+					.append('text')
+					.classed('latex-font', true)
+					.attr('y', parentRadius)
+					.style('font-size', 0.6 * parentRadius)
+					.attr('stroke-width', '0.5px')
+					.style('text-anchor', 'middle')
+					.style('paint-order', 'stroke')
+					.style('fill', TEXT_COLOR)
+					.style('pointer-events', 'none')
+					.text(`${nestedNodesLen} groups`);
+
+				return;
+			}
 
 			Object.entries(node).forEach((kvPair, i) => {
 				if (kvPair[0] === '_key') return;
@@ -258,7 +276,7 @@ export class NestedPetrinetRenderer extends PetrinetRenderer {
 			.attr('stroke-width', '0.5px')
 			.style('text-anchor', 'middle')
 			.style('paint-order', 'stroke')
-			.style('fill', 'var(--text-color-primary)')
+			.style('fill', TEXT_COLOR)
 			.style('pointer-events', 'none')
 			.style('text-shadow', '1px 0 0 #fff, 0 -1px 0 #fff, -1px 0 0 #fff, 0 1px 0 #fff')
 			.text((d) => d.id);
@@ -273,9 +291,9 @@ export class NestedPetrinetRenderer extends PetrinetRenderer {
 			.attr('x', (d) => -d.width * 0.5)
 			.attr('rx', '6')
 			.attr('ry', '6')
-			.style('fill', 'var(--petri-nodeFill)')
+			.style('fill', NODE_COLOR)
 			.style('cursor', 'pointer')
-			.attr('stroke', 'var(--petri-nodeBorder)')
+			.attr('stroke', NODE_COLOR)
 			.attr('stroke-width', 1);
 
 		// observables text
@@ -288,7 +306,7 @@ export class NestedPetrinetRenderer extends PetrinetRenderer {
 			.style('font-size', (d) => setFontSize(d.id))
 			.style('stroke', '#FFF')
 			.style('paint-order', 'stroke')
-			.style('fill', 'var(--text-color-primary')
+			.style('fill', TEXT_COLOR)
 			.style('pointer-events', 'none')
 			.text((d) => d.id);
 	}

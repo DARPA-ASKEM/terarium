@@ -1,6 +1,7 @@
 package software.uncharted.terarium.hmiserver.service;
 
 import java.io.IOException;
+import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -236,41 +237,47 @@ public class TerariumAssetCloneService {
 		// set the current user id
 		projectExport.getProject().setUserId(userId);
 		projectExport.getProject().setUserName(userName);
+		projectExport.getProject().setCreatedOn(new Timestamp(System.currentTimeMillis()));
+		projectExport.getProject().setUpdatedOn(new Timestamp(System.currentTimeMillis()));
 
 		// create the project
 		final Project project = projectService.createProject(projectExport.getProject());
 
 		for (final AssetExport assetExport : projectExport.getAssets()) {
-			final AssetType assetType = assetExport.getType();
+			try {
+				final AssetType assetType = assetExport.getType();
 
-			final ITerariumAssetService terariumAssetService = terariumAssetServices.getServiceByType(assetType);
+				final ITerariumAssetService terariumAssetService = terariumAssetServices.getServiceByType(assetType);
 
-			TerariumAsset asset = assetExport.getAsset();
+				TerariumAsset asset = assetExport.getAsset();
 
-			// upload the files (do this first as the asset creation my use the files)
-			for (final Map.Entry<String, FileExport> entry : assetExport.getFiles().entrySet()) {
-				final String filename = entry.getKey();
-				final FileExport fileExport = entry.getValue();
+				// upload the files (do this first as the asset creation my use the files)
+				for (final Map.Entry<String, FileExport> entry : assetExport.getFiles().entrySet()) {
+					final String filename = entry.getKey();
+					final FileExport fileExport = entry.getValue();
 
-				terariumAssetService.uploadFile(asset.getId(), filename, fileExport);
-			}
+					terariumAssetService.uploadFile(asset.getId(), filename, fileExport);
+				}
 
-			// create the asset
-			asset = (TerariumAsset) terariumAssetService.createAsset(
-				assetExport.getAsset(),
-				project.getId(),
-				Schema.Permission.WRITE
-			);
+				// create the asset
+				asset = (TerariumAsset) terariumAssetService.createAsset(
+					assetExport.getAsset(),
+					project.getId(),
+					Schema.Permission.WRITE
+				);
 
-			// add the asset to the project
-			final Optional<ProjectAsset> projectAsset = projectAssetService.createProjectAsset(
-				project,
-				assetType,
-				asset,
-				Schema.Permission.WRITE
-			);
-			if (projectAsset.isEmpty()) {
-				throw new RuntimeException("Failed to create project asset");
+				// add the asset to the project
+				final Optional<ProjectAsset> projectAsset = projectAssetService.createProjectAsset(
+					project,
+					assetType,
+					asset,
+					Schema.Permission.WRITE
+				);
+				if (projectAsset.isEmpty()) {
+					throw new RuntimeException("Failed to create project asset");
+				}
+			} catch (final Exception e) {
+				log.warn("Failed to import asset {}, skipping", assetExport.getAsset().getId(), e);
 			}
 		}
 

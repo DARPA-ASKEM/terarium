@@ -94,9 +94,9 @@ const renderedRuns = computed<RunResults>(() => {
 });
 
 const lineWidthArray = computed(() => {
-	// If we have a meanline, make it bigger
+	// If we have a mean line, make it bigger
 	if (props.hasMeanLine) {
-		const output = Array(Math.max(Object.keys(renderedRuns.value).length - 1 ?? 0 - 1, 0)).fill(1);
+		const output = Array(Math.max((Object.keys(renderedRuns.value).length ?? 0) - 1, 0)).fill(1);
 		output.push(3);
 		return output;
 	}
@@ -296,7 +296,7 @@ onMounted(() => {
 .custom-chip {
 	border: 1px solid var(--surface-border-light);
 	border-radius: var(--border-radius-bigger);
-	padding: var(--gap-xsmall) var(--gap);
+	padding: var(--gap-1) var(--gap-4);
 	color: var(--surface-0);
 }
 */
@@ -304,7 +304,7 @@ onMounted(() => {
 	background-color: var(--surface-0);
 	border: 1px solid var(--surface-border-light);
 	border-radius: var(--border-radius);
-	padding: var(--gap-small);
+	padding: var(--gap-2);
 	position: relative;
 }
 .multiselect-title {
@@ -319,7 +319,7 @@ onMounted(() => {
 }
 
 .p-chart {
-	margin-top: var(--gap-small);
+	margin-top: var(--gap-2);
 }
 
 .p-multiselect {

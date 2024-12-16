@@ -24,7 +24,7 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
-import org.springframework.amqp.rabbit.listener.SimpleMessageListenerContainer;
+import org.springframework.amqp.rabbit.listener.DirectMessageListenerContainer;
 import org.springframework.beans.factory.annotation.Autowired;
 import software.uncharted.terarium.taskrunner.TaskRunnerApplicationTests;
 import software.uncharted.terarium.taskrunner.models.task.TaskRequest;
@@ -51,6 +51,8 @@ public class TaskRunnerServiceTests extends TaskRunnerApplicationTests {
 	private final String SCRIPT_PATH = getClass().getResource("/echo.py").getPath();
 	private final String TASK_RUNNER_RESPONSE_QUEUE = "terarium-response-queue-test";
 
+	String responseRoutingKey = "test-routing-key";
+
 	@BeforeEach
 	public void setup() {
 		taskRunnerService.destroyQueues();
@@ -58,7 +60,7 @@ public class TaskRunnerServiceTests extends TaskRunnerApplicationTests {
 		taskRunnerService.declareAndBindTransientQueueWithRoutingKey(
 			taskRunnerService.TASK_RUNNER_RESPONSE_EXCHANGE,
 			TASK_RUNNER_RESPONSE_QUEUE,
-			""
+			responseRoutingKey
 		);
 	}
 
@@ -95,9 +97,10 @@ public class TaskRunnerServiceTests extends TaskRunnerApplicationTests {
 
 		final CompletableFuture<Void> processFuture = new CompletableFuture<>();
 
-		final SimpleMessageListenerContainer container = new SimpleMessageListenerContainer(
+		final DirectMessageListenerContainer container = new DirectMessageListenerContainer(
 			rabbitTemplate.getConnectionFactory()
 		);
+		container.setPrefetchCount(1);
 		container.setQueueNames(TASK_RUNNER_RESPONSE_QUEUE);
 		container.setMessageListener(message -> {
 			try {
@@ -139,15 +142,16 @@ public class TaskRunnerServiceTests extends TaskRunnerApplicationTests {
 		final TaskRequest req = new TaskRequest();
 		req.setId(UUID.randomUUID());
 		req.setScript(SCRIPT_PATH);
-		req.setInput(new String(TEST_INPUT_WITH_PROGRESS).getBytes());
+		req.setInput(TEST_INPUT_WITH_PROGRESS.getBytes());
 		req.setTimeoutMinutes(1);
+		req.setRoutingKey(responseRoutingKey);
 
 		final String reqStr = mapper.writeValueAsString(req);
 		rabbitTemplate.convertAndSend(taskRunnerService.TASK_RUNNER_REQUEST_QUEUE, reqStr);
 
 		final List<TaskResponse> responses = consumeAllResponses();
 
-		Assertions.assertTrue(responses.size() == 7);
+		Assertions.assertEquals(7, responses.size());
 		Assertions.assertEquals(TaskStatus.RUNNING, responses.get(0).getStatus());
 		Assertions.assertEquals(TaskStatus.RUNNING, responses.get(1).getStatus());
 		Assertions.assertEquals(TaskStatus.RUNNING, responses.get(2).getStatus());
@@ -162,15 +166,16 @@ public class TaskRunnerServiceTests extends TaskRunnerApplicationTests {
 		final TaskRequest req = new TaskRequest();
 		req.setId(UUID.randomUUID());
 		req.setScript(SCRIPT_PATH);
-		req.setInput(new String(FAILURE_INPUT).getBytes());
+		req.setInput(FAILURE_INPUT.getBytes());
 		req.setTimeoutMinutes(1);
+		req.setRoutingKey(responseRoutingKey);
 
 		final String reqStr = mapper.writeValueAsString(req);
 		rabbitTemplate.convertAndSend(taskRunnerService.TASK_RUNNER_REQUEST_QUEUE, reqStr);
 
 		final List<TaskResponse> responses = consumeAllResponses();
 
-		Assertions.assertTrue(responses.size() == 2);
+		Assertions.assertEquals(2, responses.size());
 		Assertions.assertEquals(TaskStatus.RUNNING, responses.get(0).getStatus());
 		Assertions.assertEquals(TaskStatus.FAILED, responses.get(1).getStatus());
 	}
@@ -180,8 +185,9 @@ public class TaskRunnerServiceTests extends TaskRunnerApplicationTests {
 		final TaskRequest req = new TaskRequest();
 		req.setId(UUID.randomUUID());
 		req.setScript(SCRIPT_PATH);
-		req.setInput(new String(TEST_INPUT_WITH_PROGRESS).getBytes());
+		req.setInput(TEST_INPUT_WITH_PROGRESS.getBytes());
 		req.setTimeoutMinutes(1);
+		req.setRoutingKey(responseRoutingKey);
 
 		final String reqStr = mapper.writeValueAsString(req);
 		rabbitTemplate.convertAndSend(taskRunnerService.TASK_RUNNER_REQUEST_QUEUE, reqStr);
@@ -201,7 +207,7 @@ public class TaskRunnerServiceTests extends TaskRunnerApplicationTests {
 			}
 		}
 
-		Assertions.assertTrue(responses.size() == 3);
+		Assertions.assertEquals(3, responses.size());
 		Assertions.assertEquals(TaskStatus.RUNNING, responses.get(0).getStatus());
 		Assertions.assertEquals(TaskStatus.CANCELLING, responses.get(1).getStatus());
 		Assertions.assertEquals(TaskStatus.CANCELLED, responses.get(2).getStatus());
@@ -212,8 +218,9 @@ public class TaskRunnerServiceTests extends TaskRunnerApplicationTests {
 		final TaskRequest req = new TaskRequest();
 		req.setId(UUID.randomUUID());
 		req.setScript(SCRIPT_PATH);
-		req.setInput(new String(TEST_INPUT_WITH_PROGRESS).getBytes());
+		req.setInput(TEST_INPUT_WITH_PROGRESS.getBytes());
 		req.setTimeoutMinutes(1);
+		req.setRoutingKey(responseRoutingKey);
 
 		// we have to create this queue before sending the cancellation to know that
 		// there is a queue to get the msg
@@ -235,7 +242,7 @@ public class TaskRunnerServiceTests extends TaskRunnerApplicationTests {
 
 		final List<TaskResponse> responses = consumeAllResponses();
 
-		Assertions.assertTrue(responses.size() == 1);
+		Assertions.assertEquals(1, responses.size());
 		Assertions.assertEquals(TaskStatus.CANCELLED, responses.get(0).getStatus());
 	}
 
@@ -253,9 +260,10 @@ public class TaskRunnerServiceTests extends TaskRunnerApplicationTests {
 		final List<Future<?>> requestFutures = new ArrayList<>();
 		final ConcurrentHashMap<UUID, CompletableFuture<Void>> responseFutures = new ConcurrentHashMap<>();
 
-		final SimpleMessageListenerContainer container = new SimpleMessageListenerContainer(
+		final DirectMessageListenerContainer container = new DirectMessageListenerContainer(
 			rabbitTemplate.getConnectionFactory()
 		);
+		container.setPrefetchCount(1);
 		container.setQueueNames(TASK_RUNNER_RESPONSE_QUEUE);
 		container.setMessageListener(message -> {
 			try {
@@ -284,6 +292,7 @@ public class TaskRunnerServiceTests extends TaskRunnerApplicationTests {
 					req.setId(UUID.randomUUID());
 					req.setScript(SCRIPT_PATH);
 					req.setTimeoutMinutes(1);
+					req.setRoutingKey(responseRoutingKey);
 
 					// allocate the response stuff
 					responsesPerReq.put(req.getId(), Collections.synchronizedList(new ArrayList<>()));
@@ -306,17 +315,17 @@ public class TaskRunnerServiceTests extends TaskRunnerApplicationTests {
 					switch (randomNumber) {
 						case 0:
 							// success
-							req.setInput(new String(TEST_INPUT).getBytes());
+							req.setInput(TEST_INPUT.getBytes());
 							expectedResponses.put(req.getId(), List.of(List.of(TaskStatus.RUNNING, TaskStatus.SUCCESS)));
 							break;
 						case 1:
 							// failure
-							req.setInput(new String(FAILURE_INPUT).getBytes());
+							req.setInput(FAILURE_INPUT.getBytes());
 							expectedResponses.put(req.getId(), List.of(List.of(TaskStatus.RUNNING, TaskStatus.FAILED)));
 							break;
 						case 2:
 							// cancellation
-							req.setInput(new String(TEST_INPUT).getBytes());
+							req.setInput(TEST_INPUT.getBytes());
 							shouldCancelBefore = true;
 							expectedResponses.put(
 								req.getId(),
@@ -327,7 +336,7 @@ public class TaskRunnerServiceTests extends TaskRunnerApplicationTests {
 							break;
 						case 3:
 							// cancellation
-							req.setInput(new String(TEST_INPUT).getBytes());
+							req.setInput(TEST_INPUT.getBytes());
 							shouldCancelAfter = true;
 							expectedResponses.put(
 								req.getId(),

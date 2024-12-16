@@ -13,13 +13,19 @@ from gollm_openai.prompts.config_from_dataset import (
     CONFIGURE_FROM_DATASET_MATRIX_PROMPT
 )
 from gollm_openai.prompts.config_from_document import CONFIGURE_FROM_DOCUMENT_PROMPT
+from gollm_openai.prompts.dataset_enrichment import DATASET_ENRICH_PROMPT
 from gollm_openai.prompts.equations_cleanup import EQUATIONS_CLEANUP_PROMPT
 from gollm_openai.prompts.equations_from_image import EQUATIONS_FROM_IMAGE_PROMPT
 from gollm_openai.prompts.general_instruction import GENERAL_INSTRUCTION_PROMPT
 from gollm_openai.prompts.interventions_from_document import INTERVENTIONS_FROM_DOCUMENT_PROMPT
-from gollm_openai.prompts.latex_style_guide import LATEXT_STYLE_GUIDE
+from gollm_openai.prompts.latex_style_guide import LATEX_STYLE_GUIDE
 from gollm_openai.prompts.model_card import INSTRUCTIONS
-from gollm_openai.prompts.model_meta_compare import MODEL_METADATA_COMPARE_PROMPT
+from gollm_openai.prompts.model_meta_compare import (
+    MODEL_METADATA_COMPARE_PROMPT,
+    MODEL_METADATA_COMPARE_GOAL_PROMPT
+)
+from gollm_openai.prompts.latex_to_sympy import LATEX_TO_SYMPY_PROMPT
+
 from openai import OpenAI
 from openai.types.chat.completion_create_params import ResponseFormat
 from typing import List
@@ -31,6 +37,7 @@ from utils import (
 )
 
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+GPT_MODEL = "gpt-4o-2024-08-06"
 
 
 def escape_curly_braces(text: str):
@@ -72,6 +79,33 @@ def get_image_format_string(image_format: str) -> str:
     return format_strings.get(image_format.lower())
 
 
+def latex_to_sympy(equations: List[str]) -> str:
+    print("latex to sympy ...")
+
+    prompt = LATEX_TO_SYMPY_PROMPT.format(
+        latex_equations=",\n".join(equations)
+    )
+
+    client = OpenAI()
+    output = client.chat.completions.create(
+        model=GPT_MODEL,
+        frequency_penalty=0,
+        max_tokens=4000,
+        presence_penalty=0,
+        seed=905,
+        temperature=0,
+        top_p=1,
+        response_format={
+            "type": "text"
+        },
+        messages=[
+            {"role": "user", "content": prompt},
+        ]
+    )
+    return output.choices[0].message.content
+
+
+
 def equations_cleanup(equations: List[str]) -> dict:
     print("Reformatting equations...")
 
@@ -83,13 +117,13 @@ def equations_cleanup(equations: List[str]) -> dict:
 
     print("Building prompt to reformat equations...")
     prompt = EQUATIONS_CLEANUP_PROMPT.format(
-        style_guide=LATEXT_STYLE_GUIDE,
+        style_guide=LATEX_STYLE_GUIDE,
         equations="\n".join(equations)
     )
 
     client = OpenAI()
     output = client.chat.completions.create(
-        model="gpt-4o-2024-08-06",
+        model=GPT_MODEL,
         top_p=1,
         frequency_penalty=0,
         presence_penalty=0,
@@ -129,12 +163,12 @@ def equations_from_image(image: str) -> dict:
 
     print("Building prompt to extract equations an image...")
     prompt = EQUATIONS_FROM_IMAGE_PROMPT.format(
-        style_guide=LATEXT_STYLE_GUIDE
+        style_guide=LATEX_STYLE_GUIDE
     )
 
     client = OpenAI()
     output = client.chat.completions.create(
-        model="gpt-4o-2024-08-06",
+        model=GPT_MODEL,
         top_p=1,
         frequency_penalty=0,
         presence_penalty=0,
@@ -185,7 +219,7 @@ def interventions_from_document(research_paper: str, amr: str) -> dict:
     print("Sending request to OpenAI API...")
     client = OpenAI()
     output = client.chat.completions.create(
-        model="gpt-4o-2024-08-06",
+        model=GPT_MODEL,
         frequency_penalty=0,
         max_tokens=4000,
         presence_penalty=0,
@@ -231,7 +265,7 @@ def model_config_from_document(research_paper: str, amr: str) -> dict:
     print("Sending request to OpenAI API...")
     client = OpenAI()
     output = client.chat.completions.create(
-        model="gpt-4o-2024-08-06",
+        model=GPT_MODEL,
         frequency_penalty=0,
         max_tokens=4000,
         presence_penalty=0,
@@ -276,7 +310,7 @@ def amr_enrichment_chain(amr: str, research_paper: str) -> dict:
 
     client = OpenAI()
     output = client.chat.completions.create(
-        model="gpt-4o-2024-08-06",
+        model=GPT_MODEL,
         max_tokens=16000,
         top_p=1,
         frequency_penalty=0,
@@ -287,6 +321,49 @@ def amr_enrichment_chain(amr: str, research_paper: str) -> dict:
             "type": "json_schema",
             "json_schema": {
                 "name": "model_configurations",
+                "schema": response_schema
+            }
+        },
+        messages=[
+            {"role": "user", "content": prompt},
+        ],
+    )
+
+    print("Received response from OpenAI API. Formatting response to work with HMI...")
+    output_json = json.loads(output.choices[0].message.content)
+
+    return unescape_curly_braces(output_json)
+
+
+def dataset_enrichment_chain(research_paper: str, dataset: str) -> dict:
+    print("Extracting and formatting research paper...")
+    research_paper = normalize_greek_alphabet(research_paper)
+
+    print("Uploading and validating dataset enrichment schema...")
+    config_path = os.path.join(SCRIPT_DIR, 'schemas', 'dataset_enrichment.json')
+    with open(config_path, 'r') as config_file:
+        response_schema = json.load(config_file)
+    validate_schema(response_schema)
+
+    print("Building prompt to extract dataset enrichments from a research paper...")
+    prompt = DATASET_ENRICH_PROMPT.format(
+        research_paper=escape_curly_braces(research_paper),
+        dataset=dataset
+    )
+
+    client = OpenAI()
+    output = client.chat.completions.create(
+        model=GPT_MODEL,
+        max_tokens=16000,
+        top_p=1,
+        frequency_penalty=0,
+        presence_penalty=0,
+        seed=123,
+        temperature=0,
+        response_format={
+            "type": "json_schema",
+            "json_schema": {
+                "name": "dataset_enrichment",
                 "schema": response_schema
             }
         },
@@ -320,7 +397,7 @@ def model_card_chain(amr: str, research_paper: str = None) -> dict:
 
     client = OpenAI()
     output = client.chat.completions.create(
-        model="gpt-4o-2024-08-06",
+        model=GPT_MODEL,
         temperature=0,
         frequency_penalty=0,
         max_tokens=16000,
@@ -354,7 +431,7 @@ def condense_chain(query: str, chunks: List[str], max_tokens: int = 16385) -> st
         )
     client = OpenAI()
     output = client.chat.completions.create(
-        model="gpt-4o-2024-08-06",
+        model=GPT_MODEL,
         top_p=1,
         frequency_penalty=0,
         presence_penalty=0,
@@ -372,7 +449,7 @@ def generate_response(instruction: str, response_format: ResponseFormat | None =
     prompt = GENERAL_INSTRUCTION_PROMPT.format(instruction=instruction)
     client = OpenAI()
     output = client.chat.completions.create(
-        model="gpt-4o-2024-08-06",
+        model=GPT_MODEL,
         top_p=1,
         frequency_penalty=0,
         presence_penalty=0,
@@ -385,6 +462,21 @@ def generate_response(instruction: str, response_format: ResponseFormat | None =
         ],
     )
     return output.choices[0].message.content
+
+
+def bulk_embedding_chain(texts: List[str]) -> List:
+    print("Creating embeddings for texts...")
+    client = OpenAI()
+    response = client.embeddings.create(
+        model="text-embedding-ada-002",
+        input=texts
+    )
+
+    embeddings = []
+    for item in response.data:
+        embeddings.append(item.embedding)
+
+    return embeddings
 
 
 def embedding_chain(text: str) -> List:
@@ -419,7 +511,7 @@ def model_config_from_dataset(amr: str, dataset: List[str], matrix: str) -> dict
     print("Sending request to OpenAI API...")
     client = OpenAI()
     output = client.chat.completions.create(
-        model="gpt-4o-2024-08-06",
+        model=GPT_MODEL,
         frequency_penalty=0,
         max_tokens=10000,
         presence_penalty=0,
@@ -446,7 +538,8 @@ def model_config_from_dataset(amr: str, dataset: List[str], matrix: str) -> dict
     return unescape_curly_braces(model_config_adapter(output_json))
 
 
-def compare_models(amrs: List[str]) -> dict:
+def compare_models(amrs: List[str], goal: str) -> dict:
+
     print("Comparing models...")
 
     print("Building prompt to compare models...")
@@ -454,6 +547,11 @@ def compare_models(amrs: List[str]) -> dict:
     prompt = MODEL_METADATA_COMPARE_PROMPT.format(
         amrs=joined_escaped_amrs
     )
+    if goal is not None and goal != '':
+        prompt += MODEL_METADATA_COMPARE_GOAL_PROMPT.format(goal=goal)
+    prompt += "Answer:"
+
+    print(prompt)
 
     print("Uploading and validating compare models schema...")
     config_path = os.path.join(SCRIPT_DIR, 'schemas', 'compare_models.json')
@@ -463,7 +561,7 @@ def compare_models(amrs: List[str]) -> dict:
 
     client = OpenAI()
     output = client.chat.completions.create(
-        model="gpt-4o-2024-08-06",
+        model=GPT_MODEL,
         top_p=1,
         frequency_penalty=0,
         presence_penalty=0,

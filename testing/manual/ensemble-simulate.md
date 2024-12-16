@@ -17,32 +17,31 @@ Report any issues into GitHub: [open an issue](https://github.com/DARPA-ASKEM/te
 2. Upload `Giordano2020 - SIDARTHE model of COVID-19 spread in Italy` and `Test SIR` into your project
 3. Drag and drop both models into your workflow
 4. Link both models to individual  _Configure Model_ operators
-6. Save each configuration by giving it a name and clicking `Run`
+5. Ensure that both configurations are the same scale. AKA both should have Susceptible and S ~= 1.
 
 ### 3. Ensemble Simulate Operator setup
 1. Link both configurations to a new `Simulate ensemble` node
 2. Open the `Simulate ensemble` node by clicking on edit
 3. Add the following mappings titling the ensemble variable
-  EnsembleVariableOne  `SIR's` S with `Giordano2020`'s Susceptible
-  EnsembleVariableTwo  `SIR's` I with `Giordano2020`'s Cases
-  EnsembleVariableThree  `SIR's` R with `Giordano2020`'s Healed
+  `Sus`  SIR's `S` with Giordano2020's `Susceptible`
+  `Inf`  SIR's `I` with Giordano2020's `Cases`
 4. Hit `Run`
 
 ### Validation:
-Run should complete (Very quickly)
+Run should complete 
 you should see the following options in your chart's dropdown:
-  EnsembleVariableOne
-  EnsembleVariableTwo
-  EnsembleVariableThree
+  `Sus`
+  `Inf`
   (or whatever arbitrary name you gave your mappings)
 
 ### Misc:
 You should be able to add mapping as well as delete mapping. close and open the drilldown and see saved changes.
-You should be able to set weights to whatever you like as well as hit the `Set weights to be equal` to reset them.
+You should be able to set weights to a number between 1 and 10. The signal bars should line up with your selection.
 You should be able to utilize the `Stop` button to stop the run. In order to do this is may help to increase the
 defaults to make a longer lasting run so you dont need to rely on reaction time
 
-Once complete:
+# Once complete: (Old charts)
 You should be able to add and delete charts
-You should see changes to the select on the charts duplicated in the node as well as the drilldown views
-You should be able to save the dataset
+You should be able to plot your mapped variables `Sus` along with model_#/`Susceptible` and `model_#/Cases` (and whatever other vars you want to investigate)
+You should be able to save the dataset using the `Save for reuse` button in the output panel.
+You should be able to plug this node into a `tranform dataset` node

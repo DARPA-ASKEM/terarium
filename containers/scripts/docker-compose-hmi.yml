@@ -43,6 +43,8 @@ services:
       TERARIUM_KEYCLOAK_CLIENT-ID: "${secret_terarium_keycloak_client_id}"
       TERARIUM_KEYCLOAK_REALM: "${secret_terarium_keycloak_realm}"
       TERARIUM_KEYCLOAK_URL: "${secret_terarium_keycloak_url}"
+      TERARIUM_KEYCLOAK_API-SERVICE-NAME: "${secret_terarium_keycloak_api_service_name}"
+      TERARIUM_KEYCLOAK_ADMIN-API-SERVICE-NAME: "${secret_terarium_keycloak_admin_api_service_name}"
       TERARIUM_MQ-ADDRESSES: "amqp://${local_host_name}:5672"
       TERARIUM_MQ-PASSWORD: "terarium123"
       TERARIUM_MQ-USERNAME: "terarium"
@@ -56,15 +58,6 @@ services:
       TGPT_WS_URL: "ws://${local_host_name}:3050/beaker_ws/"
       XDD_API-ES-KEY: "${secret_xdd_api_es_key}"
       XDD_API-KEY: "${secret_xdd_api_key}"
-    #      GITHUB_URL: https://api.github.com
-    #      JSDELIVR_URL: https://cdn.jsdelivr.net
-    #      MIRA-API_URL: http://34.230.33.149:8771
-    #      MIT-PROXY_URL: https://mit-proxy.dev.terarium.ai
-    #      SKEMA-PY_URL: https://skema-py.dev.terarium.ai
-    #      SKEMA-RS_URL: https://skema-rs.dev.terarium.ai
-    #      SKEMA-UNIFIED_URL: https://skema-unified.dev.terarium.ai
-    #      XDD-DEV-SERVICE_URL: https://xdddev.chtc.io
-    #      XDD-PROD-SERVICE_URL: https://xdd.wisc.edu
     depends_on:
       postgres:
         condition: service_healthy

@@ -2,6 +2,7 @@
 	<!-- add 'debug-mode' to debug this -->
 	<tera-infinite-canvas
 		v-if="!isWorkflowLoading"
+		ref="canvasRef"
 		@click="onCanvasClick()"
 		@contextmenu="toggleContextMenu"
 		@save-transform="saveTransform"
@@ -15,29 +16,7 @@
 		<!-- toolbar -->
 		<template #foreground>
 			<div class="toolbar glass">
-				<div class="button-group w-full">
-					<div v-if="isRenamingWorkflow" class="rename-workflow w-full">
-						<InputText
-							class="p-inputtext w-full"
-							v-model.lazy="newWorkflowName"
-							placeholder="Workflow name"
-							@keyup.enter="updateWorkflowName"
-							@keyup.esc="updateWorkflowName"
-							v-focus
-						/>
-						<div class="flex flex-nowrap ml-1 mr-3">
-							<Button icon="pi pi-check" rounded text @click="updateWorkflowName" />
-						</div>
-					</div>
-					<h4 v-else>{{ wf.getName() }}</h4>
-					<Button
-						v-if="!isRenamingWorkflow"
-						icon="pi pi-ellipsis-v"
-						class="p-button-icon-only p-button-text p-button-rounded"
-						@click="toggleOptionsMenu"
-					/>
-				</div>
-				<Menu ref="optionsMenu" :model="optionsMenuItems" :popup="true" />
+				<tera-toggleable-input :model-value="wf.getName()" @update:model-value="updateWorkflowName" tag="h4" />
 				<div class="button-group">
 					<Button
 						id="add-component-btn"
@@ -53,8 +32,8 @@
 			</div>
 			<div class="warning-banner" :class="{ visible: warningBanner && hasInvalidNodes }">
 				A yellow header indicates that the node is stale due to upstream changes. Rerun to update.
-				<a class="ml-auto mr-4 underline" @click="dontShowAgain">Don't show this again</a
-				><Button class="mr-2" icon="pi pi-times" text @click="warningBanner = false" />
+				<a class="ml-auto mr-4" @click="dontShowAgain">Don't show this again</a
+				><Button class="mr-2" icon="pi pi-times" size="small" text rounded @click="warningBanner = false" />
 			</div>
 		</template>
 		<!-- data -->
@@ -93,7 +72,7 @@
 							:is="registry.getNode(node.operationType)"
 							:node="node"
 							@append-output="(event: any) => appendOutput(node, event)"
-							@append-input-port="(event: any) => appendInputPort(node, event)"
+							@append-input-port="(event: any) => workflowService.appendInputPort(node, event)"
 							@update-state="(event: any) => updateWorkflowNodeState(node, event)"
 							@open-drilldown="addOperatorToRoute(node.id)"
 						/>
@@ -193,13 +172,12 @@ import {
 // Operation imports
 import TeraOperator from '@/components/operator/tera-operator.vue';
 import Button from 'primevue/button';
-import InputText from 'primevue/inputtext';
-import Menu from 'primevue/menu';
+import TeraToggleableInput from '@/components/widgets/tera-toggleable-input.vue';
 import ContextMenu from 'primevue/contextmenu';
 import * as workflowService from '@/services/workflow';
-import { OperatorImport, OperatorNodeSize, getNodeMenu } from '@/services/workflow';
+import { OperatorImport, OperatorNodeSize } from '@/services/workflow';
 import * as d3 from 'd3';
-import { AssetType, ClientEventType, EventType } from '@/types/Types';
+import { AssetType, ClientEventType, EventType, ClientEvent } from '@/types/Types';
 import { useDragEvent } from '@/services/drag-drop';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -210,6 +188,7 @@ import { useRouter, useRoute } from 'vue-router';
 import { MenuItem } from 'primevue/menuitem';
 import * as EventService from '@/services/event';
 import { useProjects } from '@/composables/project';
+import useAuthStore from '@/stores/auth';
 import { cloneNoteBookSession } from '@/services/notebook-session';
 import * as SimulateCiemssOp from '@/components/workflow/ops/simulate-ciemss/mod';
 import * as StratifyMiraOp from '@/components/workflow/ops/stratify-mira/mod';
@@ -222,18 +201,18 @@ import * as ModelConfigOp from '@/components/workflow/ops/model-config/mod';
 import * as CalibrateCiemssOp from '@/components/workflow/ops/calibrate-ciemss/mod';
 import * as CalibrateEnsembleCiemssOp from '@/components/workflow/ops/calibrate-ensemble-ciemss/mod';
 import * as DatasetTransformerOp from '@/components/workflow/ops/dataset-transformer/mod';
-import * as SubsetDataOp from '@/components/workflow/ops/subset-data/mod';
-import * as CodeAssetOp from '@/components/workflow/ops/code-asset/mod';
 import * as OptimizeCiemssOp from '@/components/workflow/ops/optimize-ciemss/mod';
 import * as DocumentOp from '@/components/workflow/ops/document/mod';
 import * as ModelFromDocumentOp from '@/components/workflow/ops/model-from-equations/mod';
 import * as ModelComparisonOp from '@/components/workflow/ops/model-comparison/mod';
-import * as RegriddingOp from '@/components/workflow/ops/regridding/mod';
+import * as CompareDatasetsOp from '@/components/workflow/ops/compare-datasets/mod';
 import * as InterventionPolicyOp from '@/components/workflow/ops/intervention-policy/mod';
 import { subscribe, unsubscribe } from '@/services/ClientEventService';
 import { activeProjectId } from '@/composables/activeProject';
 
 const WORKFLOW_SAVE_INTERVAL = 4000;
+
+const currentUserId = useAuthStore().user?.id;
 
 const registry = new workflowService.WorkflowRegistry();
 registry.registerOp(SimulateCiemssOp);
@@ -247,21 +226,19 @@ registry.registerOp(CalibrateEnsembleCiemssOp);
 registry.registerOp(ModelConfigOp);
 registry.registerOp(CalibrateCiemssOp);
 registry.registerOp(DatasetTransformerOp);
-registry.registerOp(CodeAssetOp);
-registry.registerOp(SubsetDataOp);
 registry.registerOp(OptimizeCiemssOp);
 registry.registerOp(DocumentOp);
 registry.registerOp(ModelFromDocumentOp);
 registry.registerOp(ModelComparisonOp);
-registry.registerOp(RegriddingOp);
 registry.registerOp(InterventionPolicyOp);
+registry.registerOp(CompareDatasetsOp);
 
 // Will probably be used later to save the workflow in the project
 const props = defineProps<{
 	assetId: string;
 }>();
 
-const outputPortMenu = ref(getNodeMenu(registry.operationMap));
+const outputPortMenu = ref(workflowService.getNodeMenu(registry.operationMap));
 const upstreamOperatorsNav = ref<MenuItem[]>([]);
 const downstreamOperatorsNav = ref<MenuItem[]>([]);
 const drilldownSpawnAnimation = ref<'left' | 'right' | 'scale'>('scale');
@@ -276,7 +253,6 @@ let canvasTransform = { x: 0, y: 0, k: 1 };
 let currentPortPosition: Position = { x: 0, y: 0 };
 let isMouseOverPort: boolean = false;
 let saveTimer: any = null;
-let pendingSave = false;
 let isDragging = false;
 
 let startTime: number = 0;
@@ -290,48 +266,31 @@ const dialogIsOpened = ref(false);
 const wf = ref<workflowService.WorkflowWrapper>(new workflowService.WorkflowWrapper());
 const contextMenu = ref();
 
-const isRenamingWorkflow = ref(false);
-const newWorkflowName = ref('');
 const currentProjectId = ref<string | null>(null);
 
-const optionsMenu = ref();
-const optionsMenuItems = ref([
-	{
-		icon: 'pi pi-pencil',
-		label: 'Rename',
-		command() {
-			isRenamingWorkflow.value = true;
-			newWorkflowName.value = wf.value?.getName() ?? '';
-		}
-	}
-]);
-
-const toggleOptionsMenu = (event: MouseEvent) => {
-	optionsMenu.value.toggle(event);
-};
 const teraOperatorRefs = ref();
+const canvasRef = ref();
 
-async function updateWorkflowName() {
+async function updateWorkflowName(newName: string) {
 	const workflowClone = cloneDeep(wf.value.dump());
-	workflowClone.name = newWorkflowName.value;
+	workflowClone.name = newName;
 	await workflowService.saveWorkflow(workflowClone);
 	await useProjects().refresh();
-	isRenamingWorkflow.value = false;
 	wf.value.load(await workflowService.getWorkflow(props.assetId));
 }
 
 // eslint-disable-next-line
 const _saveWorkflow = async () => {
-	pendingSave = false;
 	await workflowService.saveWorkflow(wf.value.dump(), currentProjectId.value ?? undefined);
 	// wf.value.update(updated);
 };
 // eslint-disable-next-line
-const _updateWorkflow = (event: any) => {
+const _updateWorkflow = (event: ClientEvent<any>) => {
 	if (event.data.id !== wf.value.getId()) {
 		return;
 	}
-	const delayUpdate = pendingSave || isDragging;
+
+	const delayUpdate = isDragging || event.userId === currentUserId;
 	wf.value.update(event.data as Workflow, delayUpdate);
 };
 
@@ -339,19 +298,8 @@ const saveWorkflowDebounced = debounce(_saveWorkflow, 400);
 const updateWorkflowHandler = debounce(_updateWorkflow, 250);
 
 const saveWorkflowHandler = () => {
-	pendingSave = true;
 	saveWorkflowDebounced();
 };
-
-function appendInputPort(node: WorkflowNode<any>, port: { type: string; label?: string; value: any }) {
-	node.inputs.push({
-		id: uuidv4(),
-		type: port.type,
-		label: port.label,
-		isOptional: false,
-		status: WorkflowPortStatus.NOT_CONNECTED
-	});
-}
 
 /**
  * The operator creates a new output, this will mark the
@@ -471,7 +419,7 @@ const duplicateBranch = (nodeId: string) => {
 const cloneNoteBookSessions = async () => {
 	const sessionIdSet = new Set<string>();
 
-	const operationList = [DatasetTransformerOp.operation.name, RegriddingOp.operation.name];
+	const operationList = [DatasetTransformerOp.operation.name];
 
 	for (let i = 0; i < wf.value.getNodes().length; i++) {
 		const node = wf.value.getNodes()[i];
@@ -603,6 +551,10 @@ const contextMenuItems: MenuItem[] = [
 			{
 				label: CalibrateEnsembleCiemssOp.operation.displayName,
 				command: addOperatorToWorkflow(CalibrateEnsembleCiemssOp)
+			},
+			{
+				label: CompareDatasetsOp.operation.displayName,
+				command: addOperatorToWorkflow(CompareDatasetsOp)
 			}
 		]
 	},
@@ -612,14 +564,6 @@ const contextMenuItems: MenuItem[] = [
 			{
 				label: DatasetTransformerOp.operation.displayName,
 				command: addOperatorToWorkflow(DatasetTransformerOp)
-			},
-			{
-				label: SubsetDataOp.operation.displayName,
-				command: addOperatorToWorkflow(SubsetDataOp)
-			},
-			{
-				label: RegriddingOp.operation.displayName,
-				command: addOperatorToWorkflow(RegriddingOp)
 			}
 		]
 	}
@@ -628,6 +572,13 @@ const addComponentMenu = ref();
 const showAddComponentMenu = () => {
 	const el = document.querySelector('#add-component-btn');
 	const coords = el?.getBoundingClientRect();
+
+	// Places new operators roughly in the centre
+	if (canvasRef.value) {
+		const box = (canvasRef.value.$el as HTMLDivElement).getBoundingClientRect();
+		newNodePosition.x = (Math.random() * 50 + 0.5 * box.width - canvasTransform.x) / canvasTransform.k;
+		newNodePosition.y = (Math.random() * 50 + 0.5 * box.height - canvasTransform.y) / canvasTransform.k;
+	}
 
 	if (coords) {
 		const event = new PointerEvent('click', {
@@ -660,10 +611,6 @@ function onDrop(event: DragEvent) {
 			case AssetType.Dataset:
 				operation = DatasetOp.operation;
 				state = { datasetId: assetId };
-				break;
-			case AssetType.Code:
-				operation = CodeAssetOp.operation;
-				state = { codeAssetId: assetId };
 				break;
 			case AssetType.Document:
 				operation = DocumentOp.operation;
@@ -960,9 +907,6 @@ const dontShowAgain = () => {
 watch(
 	() => props.assetId,
 	async (newId, oldId) => {
-		isRenamingWorkflow.value = false; // Closes rename input if opened in previous workflow
-		pendingSave = false;
-
 		// Save previous workflow, if applicable
 		if (newId !== oldId && oldId) {
 			saveWorkflowHandler();
@@ -1056,13 +1000,15 @@ onUnmounted(() => {
 
 .warning-banner {
 	width: 100%;
+	font-size: var(--font-caption);
+	border-bottom: 1px solid var(--surface-border-light);
 	display: flex;
 	align-items: center;
 	background-color: var(--surface-warning);
 	height: 0;
 	overflow: hidden;
 	padding-left: 1rem;
-	transition: height 0.5s ease-out;
+	transition: height 0.15s ease-out;
 	&.visible {
 		height: 2rem;
 	}

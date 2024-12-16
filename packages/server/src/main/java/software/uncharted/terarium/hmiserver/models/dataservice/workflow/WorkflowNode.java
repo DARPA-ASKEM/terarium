@@ -24,6 +24,9 @@ public class WorkflowNode<T> extends SupportAdditionalProperties implements Seri
 
 	private Boolean isDeleted;
 
+	private String createdBy;
+	private Long createdAt;
+
 	private String displayName;
 	private String operationType;
 

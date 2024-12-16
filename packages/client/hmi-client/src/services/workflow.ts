@@ -23,6 +23,8 @@ import {
 	Transform
 } from '@/types/workflow';
 import { useProjects } from '@/composables/project';
+import useAuthStore from '@/stores/auth';
+import dagre from 'dagre';
 
 /**
  * A wrapper class around the workflow data struture to make it easier
@@ -133,7 +135,7 @@ export class WorkflowWrapper {
 			}
 		}
 
-		// New eleemnts
+		// New elements
 		[...updatedNodeMap.values()].forEach((node) => this.wf.nodes.push(node));
 		[...updatedEdgeMap.values()].forEach((edge) => this.wf.edges.push(edge));
 	}
@@ -210,6 +212,13 @@ export class WorkflowWrapper {
 	}
 
 	addNode(op: Operation, pos: Position, options: { size?: OperatorNodeSize; state?: any }) {
+		let currentUserName: string | undefined = '';
+		try {
+			currentUserName = useAuthStore().user?.username;
+		} catch (err) {
+			// do nothing
+		}
+
 		const nodeSize: Size = getOperatorNodeSize(options.size ?? OperatorNodeSize.medium);
 
 		const node: WorkflowNode<any> = {
@@ -222,8 +231,12 @@ export class WorkflowWrapper {
 			x: pos.x,
 			y: pos.y,
 
+			createdBy: currentUserName,
+			createdAt: Date.now(),
+
 			active: null,
 			state: options.state ?? {},
+			uniqueInputs: op.uniqueInputs ?? false,
 
 			inputs: op.inputs.map((port) => ({
 				id: uuidv4(),
@@ -288,6 +301,13 @@ export class WorkflowWrapper {
 	 *
 	 * */
 	addEdge(sourceId: string, sourcePortId: string, targetId: string, targetPortId: string, points: Position[]) {
+		let currentUserName: string | undefined = '';
+		try {
+			currentUserName = useAuthStore().user?.username;
+		} catch (err) {
+			// do nothing
+		}
+
 		const sourceNode = this.wf.nodes.find((d) => d.id === sourceId);
 		const targetNode = this.wf.nodes.find((d) => d.id === targetId);
 		if (!sourceNode || !targetNode) return;
@@ -322,6 +342,15 @@ export class WorkflowWrapper {
 			return;
 		}
 
+		// check if the port value is unique, if so, we should not connect the incoming edge
+		if (
+			targetNode.inputs.some(
+				(input) => targetNode.uniqueInputs && input.value?.[0] && input.value?.[0] === sourceOutputPort.value?.[0]
+			)
+		) {
+			return;
+		}
+
 		// Transfer data value/reference
 		targetInputPort.label = sourceOutputPort.label;
 		if (outputTypes.length > 1) {
@@ -347,6 +376,8 @@ export class WorkflowWrapper {
 			sourcePortId,
 			target: targetId,
 			targetPortId,
+			createdBy: currentUserName,
+			createdAt: Date.now(),
 			points: _.cloneDeep(points)
 		};
 		this.wf.edges.push(edge);
@@ -466,6 +497,37 @@ export class WorkflowWrapper {
 	}
 
 	/**
+	 * Sets the state and/or output for a given workflow node.
+	 *
+	 * @param {WorkflowNode<any>} node - The workflow node to set options for.
+	 * @param {Object} options - The options to set for the node.
+	 * @param {any} [options.state] - The state to set for the node.
+	 * @param {any} [options.outputValue] - The output value to set for the node.
+	 */
+	updateNode(
+		node: WorkflowNode<any>,
+		options: {
+			state: any;
+			output?: Partial<WorkflowOutput<any>>;
+		}
+	) {
+		// set state and statuses as invalid initially
+		node.status = OperatorStatus.INVALID;
+		node.state = Object.assign(node.state, options.state);
+		const outputPort = node.outputs[0];
+		outputPort.operatorStatus = node.status;
+
+		// if there is an output set the output port and set statuses to success
+		if (!_.isEmpty(options.output)) {
+			node.active = outputPort.id;
+			node.status = OperatorStatus.SUCCESS;
+			outputPort.operatorStatus = node.status;
+			Object.assign(outputPort, options.output);
+			this.selectOutput(node, outputPort.id);
+		}
+	}
+
+	/**
 	 * Updates the operator's state using the data from a specified WorkflowOutput. If the operator's
 	 * current state was not previously stored as a WorkflowOutput, this function first saves the current state
 	 * as a new WorkflowOutput. It then replaces the operator's existing state with the data from the specified WorkflowOutput.
@@ -574,6 +636,43 @@ export class WorkflowWrapper {
 			downstreamNodes: outputEdges.map((e) => e.target && cache.get(e.target)).filter(Boolean) as WorkflowNode<any>[]
 		};
 	};
+
+	runDagreLayout() {
+		const g = new dagre.graphlib.Graph({ compound: true });
+		g.setGraph({});
+		g.setDefaultEdgeLabel(() => ({}));
+		g.graph().rankDir = 'LR';
+		g.graph().nodesep = 120;
+		g.graph().ranksep = 120;
+		this.getNodes().forEach((node) => {
+			g.setNode(node.id, {
+				label: node.displayName,
+				width: node.width,
+				height: node.height
+			});
+		});
+
+		this.getEdges().forEach((edge) => {
+			g.setEdge(edge.source, edge.target);
+		});
+
+		dagre.layout(g);
+
+		this.getNodes().forEach((node) => {
+			const n = g.node(node.id);
+			if (!n) return;
+			node.x = n.x;
+			node.y = n.y;
+		});
+	}
+
+	setWorkflowName(name: string) {
+		this.wf.name = name;
+	}
+
+	setWorkflowScenario(scenario: any) {
+		this.wf.scenario = scenario;
+	}
 }
 
 /**
@@ -807,10 +906,6 @@ export function cascadeInvalidateDownstream(
 // Operator
 ///
 
-export function getActiveOutput(node: WorkflowNode<any>) {
-	return node.outputs.find((o) => o.id === node.active);
-}
-
 /**
  * Update the output of a node referenced by the output id
  * @param node
@@ -953,4 +1048,14 @@ export function setLocalStorageTransform(id: string, canvasTransform: { x: numbe
 	const workflowTransformations = JSON.parse(terariumWorkflowTransforms);
 	workflowTransformations.workflows[id] = canvasTransform;
 	localStorage.setItem('terariumWorkflowTransforms', JSON.stringify(workflowTransformations));
+}
+
+export function appendInputPort(node: WorkflowNode<any>, port: { type: string; label?: string }) {
+	node.inputs.push({
+		id: uuidv4(),
+		type: port.type,
+		label: port.label,
+		isOptional: false,
+		status: WorkflowPortStatus.NOT_CONNECTED
+	});
 }

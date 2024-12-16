@@ -89,7 +89,7 @@ const authors = computed(() => {
 		padding: 0.5rem 1rem;
 		display: flex;
 		flex-direction: column;
-		gap: var(--gap-small);
+		gap: var(--gap-2);
 
 		& > li.multiple {
 			display: flex;

@@ -79,13 +79,6 @@ function start_local() {
   cd - || exit
 }
 
-function start_staging() {
-  echo "Starting local server pointing to staging keycloak"
-  cd ${SERVER_DIR} || exit
-  ./gradlew bootRun --args='--spring.profiles.active=default,secrets,local,staging-keycloak'
-  cd - || exit
-}
-
 function build_docker_compose() {
   cat containers/common.env containers/secrets.env > containers/.env
   docker compose --env-file containers/.env --file containers/docker-compose-full.yml $(for customfile in `ls docker-compose.custom*.y*ml 2> /dev/null`; do echo -n " -f $customfile"; done) config > ./docker-compose.yml
@@ -130,6 +123,7 @@ COMMAND=${COMMAND:-"help"}
 ENVIRONMENT=${ENVIRONMENT:-"local"}
 SERVER=${SERVER:-"false"}
 
+# We keep staging as a valid environment for legacy purposes
 VALID_ENVIRONMENTS=("local" "staging" "full" "ll")
 ENVIRONMENT_IS_VALID=0
 for env in ${VALID_ENVIRONMENTS[@]}; do
@@ -170,7 +164,7 @@ case ${COMMAND} in
       if [ ${ENVIRONMENT} == "local" ]; then
         start_local
       elif [ ${ENVIRONMENT} == "staging" ]; then
-        start_staging
+        start_local
       fi
       delete_secrets
     fi
@@ -214,14 +208,14 @@ case ${COMMAND} in
 
       start
         ENVIRONMENT
-          local | staging | full | ll (default: local)  Indicate which environment to develop against
+          local | full | ll (default: local)  Indicate which environment to develop against
               (ll: local_lean to run local with the absolute minimal support to run hmiServer for development)
 
         run (default: null) Indicate whether to run the server after starting the containers
 
       stop
         ENVIRONMENT
-          local | staging | full | ll (default: local)  Indicate which containers to stop
+          local | full | ll (default: local)  Indicate which containers to stop
 
       OTHER COMMANDS:
         encrypt

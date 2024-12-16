@@ -7,7 +7,7 @@
 			<section class="main-section">
 				<section>
 					<label class="subheader">Add documents, models or datasets to your project here.</label>
-					<div class="supported-resources">
+					<div class="supported-resources py-3">
 						<div><i class="pi pi-file" /><span>Documents</span><span>(PDF, md, txt)</span></div>
 						<div><i class="pi pi-share-alt" /><span>Models</span><span>(AMR, sbml, vensim, stella)</span></div>
 						<div><dataset-icon /><span>Datasets</span><span>(csv, netcdf)</span></div>
@@ -55,18 +55,6 @@
 						@imported-files-updated="(value) => (importedFiles = value)"
 					></tera-drag-and-drop-importer>
 				</section>
-				<section v-if="importedFiles.length < 1">
-					<label>Or upload from a Github repository URL</label>
-					<tera-input-text v-model="urlToUpload" class="upload-from-github-url" />
-				</section>
-				<tera-import-github-file
-					:visible="isImportGithubFileModalVisible"
-					:url-string="urlToUpload"
-					@close="
-						isImportGithubFileModalVisible = false;
-						emit('close');
-					"
-				/>
 			</section>
 		</template>
 		<template #footer>
@@ -90,13 +78,11 @@ import useAuthStore from '@/stores/auth';
 import { ref } from 'vue';
 import TeraDragAndDropImporter from '@/components/extracting/tera-drag-n-drop-importer.vue';
 import { useToastService } from '@/services/toast';
-import TeraImportGithubFile from '@/components/widgets/tera-import-github-file.vue';
 import { extractPDF } from '@/services/knowledge';
 import DatasetIcon from '@/assets/svg/icons/dataset.svg?component';
 import { uploadArtifactToProject } from '@/services/artifact';
 import { createModel, createModelAndModelConfig, processAndAddModelToProject, validateAMRFile } from '@/services/model';
 import { createProvenance, RelationshipType } from '@/services/provenance';
-import TeraInputText from '@/components//widgets/tera-input-text.vue';
 
 defineProps<{
 	visible: boolean;

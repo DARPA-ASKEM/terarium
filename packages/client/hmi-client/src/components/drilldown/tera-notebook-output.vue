@@ -31,7 +31,7 @@ const isHidden = ref<boolean>(false);
 <style scoped>
 .container {
 	background-color: var(--surface-100);
-	padding: var(--gap-small);
+	padding: var(--gap-2);
 	border-radius: var(--border-radius);
 	border: 1px solid var(--surface-border-light);
 	/* Shadow/medium */

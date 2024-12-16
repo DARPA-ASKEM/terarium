@@ -16,10 +16,10 @@ import org.springframework.security.test.context.support.WithUserDetails;
 import software.uncharted.terarium.hmiserver.TerariumApplicationTests;
 import software.uncharted.terarium.hmiserver.configuration.MockUser;
 import software.uncharted.terarium.hmiserver.models.dataservice.Grounding;
-import software.uncharted.terarium.hmiserver.models.dataservice.Identifier;
 import software.uncharted.terarium.hmiserver.models.dataservice.dataset.Dataset;
 import software.uncharted.terarium.hmiserver.models.dataservice.dataset.DatasetColumn;
 import software.uncharted.terarium.hmiserver.models.dataservice.project.Project;
+import software.uncharted.terarium.hmiserver.models.mira.DKG;
 
 @Slf4j
 public class DatasetServiceTests extends TerariumApplicationTests {
@@ -60,7 +60,7 @@ public class DatasetServiceTests extends TerariumApplicationTests {
 		final Grounding grounding = new Grounding();
 		grounding.setContext(mapper.createObjectNode().put("hello", "world-" + key).put("foo", "bar-" + key));
 		grounding.setIdentifiers(new ArrayList<>());
-		grounding.getIdentifiers().add(new Identifier("curie", "maria"));
+		grounding.getIdentifiers().add(new DKG("curie", "maria", "", null, null));
 		return grounding;
 	}
 
@@ -116,8 +116,8 @@ public class DatasetServiceTests extends TerariumApplicationTests {
 			Assertions.assertNotNull(col.getGrounding().getCreatedOn());
 			Assertions.assertNotNull(col.getGrounding().getIdentifiers());
 			Assertions.assertEquals(col.getGrounding().getIdentifiers().size(), 1);
-			Assertions.assertNotNull(col.getGrounding().getIdentifiers().get(0).curie());
-			Assertions.assertNotNull(col.getGrounding().getIdentifiers().get(0).name());
+			Assertions.assertNotNull(col.getGrounding().getIdentifiers().get(0).getCurie());
+			Assertions.assertNotNull(col.getGrounding().getIdentifiers().get(0).getName());
 			Assertions.assertNotNull(col.getGrounding().getContext());
 			Assertions.assertEquals(col.getGrounding().getContext().size(), 2);
 		}
@@ -126,8 +126,8 @@ public class DatasetServiceTests extends TerariumApplicationTests {
 		Assertions.assertNotNull(after.getGrounding().getId());
 		Assertions.assertNotNull(after.getGrounding().getCreatedOn());
 		Assertions.assertNotNull(after.getGrounding().getIdentifiers());
-		Assertions.assertNotNull(after.getGrounding().getIdentifiers().get(0).curie());
-		Assertions.assertNotNull(after.getGrounding().getIdentifiers().get(0).name());
+		Assertions.assertNotNull(after.getGrounding().getIdentifiers().get(0).getCurie());
+		Assertions.assertNotNull(after.getGrounding().getIdentifiers().get(0).getName());
 		Assertions.assertNotNull(after.getGrounding().getContext());
 		Assertions.assertEquals(after.getGrounding().getContext().size(), 2);
 	}
@@ -169,8 +169,8 @@ public class DatasetServiceTests extends TerariumApplicationTests {
 			Assertions.assertNotNull(col.getGrounding().getCreatedOn());
 			Assertions.assertNotNull(col.getGrounding().getIdentifiers());
 			Assertions.assertEquals(col.getGrounding().getIdentifiers().size(), 1);
-			Assertions.assertNotNull(col.getGrounding().getIdentifiers().get(0).curie());
-			Assertions.assertNotNull(col.getGrounding().getIdentifiers().get(0).name());
+			Assertions.assertNotNull(col.getGrounding().getIdentifiers().get(0).getCurie());
+			Assertions.assertNotNull(col.getGrounding().getIdentifiers().get(0).getName());
 			Assertions.assertNotNull(col.getGrounding().getContext());
 			Assertions.assertEquals(col.getGrounding().getContext().size(), 2);
 		}

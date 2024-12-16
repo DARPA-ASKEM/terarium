@@ -10,7 +10,7 @@
 			<tera-slider-panel
 				v-if="pdfData.length"
 				v-model:is-open="isDocViewerOpen"
-				header="Document Viewer"
+				header="Document viewer"
 				content-width="700px"
 			>
 				<template #content>
@@ -31,6 +31,7 @@
 							<tera-input-text v-model="filterModelConfigurationsText" placeholder="Filter" class="w-full" />
 							<Button
 								label="Extract from inputs"
+								icon="pi pi-sparkles"
 								severity="primary"
 								class="white-space-nowrap min-w-min"
 								size="small"
@@ -50,6 +51,7 @@
 								<tera-model-configuration-item
 									:configuration="configuration"
 									:selected="selectedConfigId === configuration.id"
+									:empty-input-count="missingInputCount(configuration)"
 									@click="onSelectConfiguration(configuration)"
 									@delete="fetchConfigurations(model.id)"
 									@download="downloadModelArchive(configuration)"
@@ -63,7 +65,7 @@
 				</template>
 			</tera-slider-panel>
 		</template>
-		<tera-drilldown-section :is-loading="initializing" :tabName="ConfigTabs.Wizard" class="px-3 mb-10">
+		<tera-drilldown-section :is-loading="initializing" :tabName="DrilldownTabs.Wizard" class="px-3 mb-10">
 			<template #header-controls-left>
 				<tera-toggleable-input
 					v-if="typeof knobs.transientModelConfig.name === 'string'"
@@ -119,6 +121,8 @@
 							showIcon
 							iconDisplay="input"
 							@date-select="knobs.transientModelConfig.temporalContext = $event"
+							show-button-bar
+							@clear-click="delete knobs.transientModelConfig.temporalContext"
 						/>
 					</div>
 				</AccordionTab>
@@ -138,7 +142,7 @@
 						:model-configurations="filteredModelConfigurations"
 						:mmt="configuredMmt"
 						:mmt-params="mmtParams"
-						@update-expression="setInitialExpression(knobs.transientModelConfig, $event.id, $event.value)"
+						@update-expressions="setInitialExpressions(knobs.transientModelConfig, $event)"
 						@update-source="setInitialSource(knobs.transientModelConfig, $event.id, $event.value)"
 					/>
 					<tera-parameter-table
@@ -151,15 +155,9 @@
 						@update-parameters="setParameterDistributions(knobs.transientModelConfig, $event)"
 						@update-source="setParameterSource(knobs.transientModelConfig, $event.id, $event.value)"
 					/>
-					<Accordion :active-index="0" v-if="!isEmpty(calibratedConfigObservables)">
+					<Accordion :active-index="observableActiveIndicies" v-if="!isEmpty(observablesList)">
 						<AccordionTab header="Observables">
-							<tera-observables
-								class="pl-4"
-								:model="model"
-								:mmt="configuredMmt"
-								:observables="calibratedConfigObservables"
-								:feature-config="{ isPreview: true }"
-							/>
+							<tera-model-part class="pl-4" :items="observablesList" :feature-config="{ isPreview: true }" />
 						</AccordionTab>
 					</Accordion>
 					<!-- vertical spacer at end of page -->
@@ -167,7 +165,7 @@
 				</template>
 			</template>
 		</tera-drilldown-section>
-		<tera-columnar-panel :tabName="ConfigTabs.Notebook">
+		<tera-columnar-panel :tabName="DrilldownTabs.Notebook">
 			<tera-drilldown-section class="notebook-section">
 				<div class="toolbar">
 					<Suspense>
@@ -182,7 +180,7 @@
 						>
 							<template #toolbar-right-side>
 								<tera-input-text v-model="knobs.transientModelConfig.name" placeholder="Configuration Name" />
-								<Button icon="pi pi-play" label="Run" @click="runFromCode" />
+								<Button icon="pi pi-play" label="Run" @click="runFromCode" :disabled="isEmpty(codeText)" />
 							</template>
 						</tera-notebook-jupyter-input>
 					</Suspense>
@@ -215,6 +213,7 @@
 		:asset-type="AssetType.ModelConfiguration"
 		@close-modal="showSaveModal = false"
 		@on-save="onSaveAsModelConfiguration"
+		@on-update="onSaveAsModelConfiguration"
 	/>
 
 	<!-- Matrix effect easter egg  -->
@@ -238,7 +237,7 @@ import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
 import TeraNotebookError from '@/components/drilldown/tera-notebook-error.vue';
 import TeraNotebookJupyterInput from '@/components/llm/tera-notebook-jupyter-input.vue';
 import TeraModelDiagram from '@/components/model/petrinet/tera-model-diagram.vue';
-import TeraObservables from '@/components/model/model-parts/tera-observables.vue';
+import TeraModelPart from '@/components/model/model-parts/tera-model-part.vue';
 import TeraInitialTable from '@/components/model/petrinet/tera-initial-table.vue';
 import TeraParameterTable from '@/components/model/petrinet/tera-parameter-table.vue';
 import { downloadDocumentAsset, getDocumentAsset, getDocumentFileAsText } from '@/services/document-assets';
@@ -254,20 +253,28 @@ import { getMMT, getModel, getModelConfigurationsForModel, getCalendarSettingsFr
 import {
 	createModelConfiguration,
 	getArchive,
+	getModelInitials,
+	getMissingInputAmount,
+	getModelParameters,
 	getModelConfigurationById,
-	setInitialExpression,
+	setInitialExpressions,
 	setInitialSource,
 	setParameterDistributions,
 	setParameterSource,
 	updateModelConfiguration
 } from '@/services/model-configurations';
 import { useToastService } from '@/services/toast';
-import type { Model, ModelConfiguration, TaskResponse } from '@/types/Types';
-import { AssetType, Observable } from '@/types/Types';
+import type { Initial, Model, ModelConfiguration, TaskResponse } from '@/types/Types';
+import { AssetType, ModelParameter } from '@/types/Types';
 import type { WorkflowNode } from '@/types/workflow';
 import { OperatorStatus } from '@/types/workflow';
 import { logger } from '@/utils/logger';
-import { isModelMissingMetadata } from '@/model-representation/service';
+import {
+	isModelMissingMetadata,
+	getParameters as getAmrParameters,
+	getInitials as getAmrInitials,
+	createObservablesList
+} from '@/model-representation/service';
 import Message from 'primevue/message';
 import TeraColumnarPanel from '@/components/widgets/tera-columnar-panel.vue';
 import TeraSliderPanel from '@/components/widgets/tera-slider-panel.vue';
@@ -279,6 +286,9 @@ import { useProjects } from '@/composables/project';
 import TeraPdfPanel from '@/components/widgets/tera-pdf-panel.vue';
 import Calendar from 'primevue/calendar';
 import { CalendarSettings } from '@/utils/date';
+import { DrilldownTabs } from '@/types/common';
+import { formatListWithConjunction } from '@/utils/text';
+import { DistributionType } from '@/services/distribution';
 import {
 	blankModelConfig,
 	isModelConfigsEqual,
@@ -288,29 +298,27 @@ import {
 } from './model-config-operation';
 import TeraModelConfigurationItem from './tera-model-configuration-item.vue';
 
-enum ConfigTabs {
-	Wizard = 'Wizard',
-	Notebook = 'Notebook'
-}
-
 const props = defineProps<{
 	node: WorkflowNode<ModelConfigOperationState>;
 }>();
+
+const emit = defineEmits(['append-output', 'update-state', 'select-output', 'close']);
 
 const isFetchingPDF = ref(false);
 const isDocViewerOpen = ref(true);
 
 const currentActiveIndexes = ref([0, 1, 2]);
+const observableActiveIndicies = ref([0]);
 const pdfData = ref<{ document: any; data: string; isPdf: boolean; name: string }[]>([]);
 const pdfPanelRef = ref();
-const pdfViewer = computed(() => pdfPanelRef.value?.pdfRef[0]);
+const pdfViewer = computed(() => pdfPanelRef.value?.pdfRef);
 
 const isSidebarOpen = ref(true);
 const isEditingDescription = ref(false);
 const newDescription = ref('');
 const descriptionTextareaRef = ref<ComponentPublicInstance<typeof Textarea> | null>(null);
 
-const emit = defineEmits(['append-output', 'update-state', 'select-output', 'close']);
+let originalConfig: ModelConfiguration | null = null;
 
 interface BasicKnobs {
 	transientModelConfig: ModelConfiguration;
@@ -320,26 +328,18 @@ const knobs = ref<BasicKnobs>({
 	transientModelConfig: blankModelConfig
 });
 
-const calibratedConfigObservables = computed<Observable[]>(() =>
-	knobs.value.transientModelConfig.observableSemanticList.map(({ referenceId, states, expression }) => ({
-		id: referenceId,
-		name: referenceId,
-		states,
-		expression
-	}))
-);
+const getTotalInput = (modelConfiguration: ModelConfiguration) =>
+	modelConfiguration.initialSemanticList.length + modelConfiguration.parameterSemanticList.length;
 
 // Check if the model configuration is the same as the original
-const isModelConfigChanged = computed(
-	() => !isModelConfigsEqual(originalConfig.value, knobs.value.transientModelConfig)
-);
+const isModelConfigChanged = computed(() => !isModelConfigsEqual(originalConfig, knobs.value.transientModelConfig));
 
 // Save button is disabled if the model configuration name is empty, the values have changed, or the configuration is the same as the original
 const isSaveDisabled = computed(
 	() =>
 		knobs.value.transientModelConfig.name === '' ||
-		isModelConfigsEqual(originalConfig.value, knobs.value.transientModelConfig) ||
-		!isModelConfigValuesEqual(originalConfig.value, knobs.value.transientModelConfig)
+		isModelConfigsEqual(originalConfig, knobs.value.transientModelConfig) ||
+		!isModelConfigValuesEqual(originalConfig, knobs.value.transientModelConfig)
 );
 
 const kernelManager = new KernelSessionManager();
@@ -492,7 +492,6 @@ const extractConfigurationsFromInputs = async () => {
 
 const selectedOutputId = ref<string>('');
 const selectedConfigId = computed(() => props.node.outputs.find((o) => o.id === selectedOutputId.value)?.value?.[0]);
-const originalConfig = ref<ModelConfiguration | null>(null);
 
 const documentIds = computed(() =>
 	props.node.inputs
@@ -507,11 +506,43 @@ const datasetIds = computed(() =>
 		.filter((id): id is string => id !== undefined)
 );
 
+const observables = computed(() => model.value?.semantics?.ode?.observables ?? []);
+const observablesList = computed(() => createObservablesList(observables.value));
+
 const modelConfigurations = ref<ModelConfiguration[]>([]);
 
 const initializing = ref(false);
 const isFetching = ref(false);
 const isLoading = ref(false);
+
+const amrInitials = ref<Initial[]>([]);
+const amrParameters = ref<ModelParameter[]>([]);
+
+const getMissingInputsMessage = (amount, total) => {
+	if (!total) return '';
+	const percent = (amount / total) * 100;
+	return amount ? `Missing values: ${amount}/${total} (${percent.toFixed(0)}%)` : '';
+};
+
+const missingInputCount = (modelConfiguration: ModelConfiguration) => {
+	if (selectedConfigId.value === modelConfiguration.id) {
+		return selectedConfigMissingInputCount.value;
+	}
+	const inferredParameterList = modelConfiguration.inferredParameterList?.length ?? 0;
+	const total = amrInitials.value.length + amrParameters.value.length;
+	const amount = total - getTotalInput(modelConfiguration) - inferredParameterList;
+	return getMissingInputsMessage(amount, total);
+};
+
+const selectedConfigMissingInputCount = computed(() => {
+	if (initializing.value) {
+		return '';
+	}
+	const inferredParameterAmount = knobs.value.transientModelConfig.inferredParameterList?.length ?? 0;
+	const amount = getMissingInputAmount(knobs.value.transientModelConfig) - inferredParameterAmount;
+	const total = getTotalInput(knobs.value.transientModelConfig);
+	return getMissingInputsMessage(amount, total);
+});
 
 const model = ref<Model | null>(null);
 const mmt = ref<MiraModel>(emptyMiraModel());
@@ -608,11 +639,33 @@ const initialize = async (overwriteWithState: boolean = false) => {
 		// Apply a configuration if one hasn't been applied yet
 		applyConfigValues(modelConfigurations.value[0]);
 	} else {
-		originalConfig.value = await getModelConfigurationById(selectedConfigId.value);
+		originalConfig = await getModelConfigurationById(selectedConfigId.value);
 		if (!overwriteWithState) {
-			knobs.value.transientModelConfig = cloneDeep(originalConfig.value);
+			knobs.value.transientModelConfig = cloneDeep(originalConfig);
 		} else {
 			knobs.value.transientModelConfig = cloneDeep(state.transientModelConfig);
+		}
+	}
+
+	if (model.value) {
+		amrInitials.value = getAmrInitials(model.value);
+		amrParameters.value = getAmrParameters(model.value);
+		const initials = getModelInitials(knobs.value.transientModelConfig, mmt.value.annotations.name, amrInitials.value);
+		if (initials.length) {
+			knobs.value.transientModelConfig.initialSemanticList = initials;
+		}
+		const parameters = getModelParameters(
+			knobs.value.transientModelConfig,
+			mmt.value.annotations.name,
+			amrParameters.value
+		);
+
+		parameters.forEach((parameter) => {
+			const type = parameter.distribution.type;
+			parameter.distribution.type = type === 'Uniform' ? DistributionType.Uniform : type;
+		});
+		if (parameters.length) {
+			knobs.value.transientModelConfig.parameterSemanticList = parameters;
 		}
 	}
 
@@ -635,18 +688,32 @@ const initialize = async (overwriteWithState: boolean = false) => {
 };
 
 const onSelectConfiguration = async (config: ModelConfiguration) => {
-	if (pdfViewer.value && config.extractionPage) {
-		pdfViewer.value.goToPage(config.extractionPage);
+	let tabIndex = 0;
+	if (pdfPanelRef.value && config.extractionDocumentId) {
+		tabIndex = await pdfPanelRef.value.selectPdf(config.extractionDocumentId);
+		await nextTick();
 	}
-	// Checks if there are unsaved changes to current model configuration
-	if (isModelConfigsEqual(originalConfig.value, knobs.value.transientModelConfig)) {
+
+	if (pdfViewer.value && config.extractionPage) {
+		pdfViewer.value[tabIndex].goToPage(config.extractionPage);
+	}
+
+	const { transientModelConfig } = knobs.value;
+	// If no changes were made switch right away
+	if (isModelConfigsEqual(originalConfig, transientModelConfig)) {
 		applyConfigValues(config);
 		return;
 	}
 
+	const lostItems: string[] = [];
+
+	if (!isModelConfigValuesEqual(transientModelConfig, originalConfig)) lostItems.push('values');
+	if (transientModelConfig.name !== originalConfig?.name) lostItems.push('name');
+	if (transientModelConfig.description !== originalConfig?.description) lostItems.push('description');
+
 	confirm.require({
-		header: 'Are you sure you want to select this configuration?',
-		message: `This will apply the configuration "${config.name}" to the model.  All current values will be replaced.`,
+		header: `Unsaved changes`,
+		message: `Changes made to the ${formatListWithConjunction(lostItems)} will be lost.`,
 		accept: () => {
 			applyConfigValues(config);
 		},
@@ -695,10 +762,10 @@ const onConfirmEditDescription = () => {
 
 const resetConfiguration = () => {
 	confirm.require({
-		header: 'Are you sure you want to reset the configuration?',
-		message: 'This will reset all values original values of the configuration.',
+		header: 'Reset configuration',
+		message: 'All edits done to this configuration will be reverted.',
 		accept: () => {
-			if (originalConfig.value) knobs.value.transientModelConfig = cloneDeep(originalConfig.value);
+			if (originalConfig) knobs.value.transientModelConfig = cloneDeep(originalConfig);
 		},
 		acceptLabel: 'Confirm',
 		rejectLabel: 'Cancel'
@@ -827,21 +894,21 @@ onUnmounted(() => {
 }
 
 .notebook-section {
-	background-color: var(--surface-disabled);
-	border-right: 1px solid var(--surface-border-dark);
-	padding: var(--gap);
+	background-color: var(--surface-200);
+	border-right: 1px solid var(--surface-border-light);
+	padding: var(--gap-4);
 }
 
 .notebook-section:deep(main) {
-	gap: var(--gap-small);
+	gap: var(--gap-2);
 	position: relative;
 }
 
 .toolbar-right-side {
 	position: absolute;
-	top: var(--gap);
+	top: var(--gap-4);
 	right: 0;
-	gap: var(--gap-small);
+	gap: var(--gap-2);
 	display: flex;
 	align-items: center;
 }
@@ -861,7 +928,7 @@ onUnmounted(() => {
 
 .sort-by-label {
 	color: var(--text-color-subdued);
-	padding-right: var(--gap-small);
+	padding-right: var(--gap-2);
 }
 
 :deep(.pi-spinner) {
@@ -925,6 +992,7 @@ button.start-edit {
 
 .executed-code {
 	white-space: pre-wrap;
+	padding: var(--gap-4);
 }
 :deep(.content-wrapper) {
 	& > section {

@@ -99,15 +99,21 @@
 		color: var(--text-color-secondary);
 	}
 
-	/* Make button labels regular font weight */
+	/* Make button labels regular font weight and whitespace nowrap */
 	.p-button-label {
 		font-weight: var(--font-weight);
+		white-space: nowrap;
+	}
+
+	/* Make tab font size same as body */
+	.p-tabview-title {
+		font-size: var(--font-size);
 	}
 
 	/* Fixing the confirm dialog text placement and reject button styling */
 	.p-confirm-dialog-message {
 		margin-left: 0 !important;
-		margin-top: var(--gap);
+		margin-top: var(--gap-4);
 	}
 	.p-confirm-dialog-reject {
 		background-color: var(--surface-0);
@@ -119,6 +125,12 @@
 	/* Correct button font weight */
 	.p-button-label {
 		font-weight: var(--font-weight);
+	}
+
+	/* Correct padding for messages */
+	.p-message .p-message-text {
+		padding: var(--gap-2);
+		color: var(--text-color)
 	}
 
 	/* Fill checkboxes with color when selected */
@@ -135,6 +147,17 @@
 		color: var(--surface-0);
 	}
 
+	/* Ensure long autocomplete items line wrap */
+	.p-autocomplete-panel {
+		max-width: 600px;
+		max-height: 300px !important;
+		box-shadow: 0 3px 6px 0 rgba(0, 0, 0, 0.1);
+		.p-autocomplete-items {
+			.p-autocomplete-item {
+				white-space: normal;
+			}
+		}
+	}
 	/* SplitButton menu height and width fix */
 	.p-tieredmenu {
 		width: auto;
@@ -182,7 +205,7 @@
 		background-color: var(--surface-0);
 		border: solid 1px var(--surface-border-light);
 		border-radius: 3px;
-		padding: var(--gap-small);
+		padding: var(--gap-2);
 	}
 
 	.ace-editor {
@@ -203,15 +226,19 @@
 		}
 
 		& p {
-			padding-bottom: var(--gap);
+			padding-bottom: var(--gap-4);
 		}
 
 		& ul {
 			list-style-position: inside;
-			padding-bottom: var(--gap);
+			padding-bottom: var(--gap-4);
 			padding-left: var(--gap-2);
 			gap: 0;
 		}
 	}
 
+	/* Adjust tooltip width to support longer text */
+	.p-tooltip {
+		max-width: 380px;
+	}
 }

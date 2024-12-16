@@ -1,6 +1,7 @@
 import { Operation, WorkflowOperationTypes, BaseState } from '@/types/workflow';
 import type { FunmanInterval, TimeSpan } from '@/types/Types';
 import { ChartSetting } from '@/types/common';
+import { NotebookHistory } from '@/services/notebook';
 
 const DOCUMENTATION_URL = 'https://github.com/siftech/funman';
 
@@ -54,6 +55,8 @@ export interface FunmanOperationState extends BaseState {
 	requestParameters: RequestParameter[];
 	chartSettings: ChartSetting[] | null;
 	currentProgress: number;
+	notebookHistory: NotebookHistory[];
+	hasCodeRun: boolean;
 }
 
 export const FunmanOperation: Operation = {
@@ -79,7 +82,9 @@ export const FunmanOperation: Operation = {
 			inProgressId: '',
 			runId: '',
 			chartSettings: null,
-			currentProgress: 0
+			currentProgress: 0,
+			notebookHistory: [],
+			hasCodeRun: false
 		};
 		return init;
 	}

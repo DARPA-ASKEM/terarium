@@ -4,6 +4,7 @@ import { EventSource } from 'extended-eventsource';
 import { ServerError } from '@/types/ServerError';
 import { Ref, ref } from 'vue';
 import { activeProjectId } from '@/composables/activeProject';
+import { isEmpty } from 'lodash';
 import useAuthStore from '../stores/auth';
 
 export class FatalError extends Error {}
@@ -31,7 +32,7 @@ API.interceptors.request.use(
 		const auth = useAuthStore();
 		config.headers.setAuthorization(`Bearer ${auth.getToken()}`);
 		// ActiveProjectId is often not available when the API is called from a global context or immediately after pages are hard refreshed, so we need to check the URL for the project id
-		const projectId = getProjectId();
+		const projectId = isEmpty(activeProjectId.value) ? getProjectIdFromUrl() : activeProjectId.value;
 		console.log('projectId', projectId);
 		if (projectId) {
 			if (config.params) {
@@ -112,9 +113,9 @@ export interface PollerResult<T> {
 }
 
 export class Poller<T> {
-	pollingInterval = 2000;
+	pollingInterval = 3000;
 
-	pollingThreshold = 10;
+	pollingThreshold = 150;
 
 	keepGoing = false;
 

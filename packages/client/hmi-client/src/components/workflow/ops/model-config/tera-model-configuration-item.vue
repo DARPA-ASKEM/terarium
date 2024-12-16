@@ -4,9 +4,17 @@
 			<h6>{{ configuration.name }}</h6>
 			<Button text icon="pi pi-ellipsis-v" @click.stop="toggleContextMenu" />
 		</header>
-		<ContextMenu ref="contextMenu" :model="contextMenuItems" />
+		<ContextMenu
+			ref="contextMenu"
+			:model="contextMenuItems"
+			@focus="() => {}"
+			@blur="hideContextMenu"
+			@mouseenter="contextMenuInFocus = true"
+			@mouseleave="contextMenuInFocus = false"
+		/>
 		<p>{{ configuration.description }}</p>
 		<p>{{ formatTimestamp(configuration.createdOn) }}</p>
+		<span v-if="emptyInputCount" :class="{ 'input-count': emptyInputCount }">{{ emptyInputCount }}</span>
 	</div>
 </template>
 
@@ -23,10 +31,11 @@ const emit = defineEmits(['delete', 'use', 'download']);
 const props = defineProps<{
 	configuration: ModelConfiguration;
 	selected?: boolean;
+	emptyInputCount?: string;
 }>();
 
 const confirm = useConfirm();
-
+const contextMenuInFocus = ref(false);
 const contextMenu = ref();
 const contextMenuItems = ref([
 	{
@@ -55,6 +64,12 @@ const contextMenuItems = ref([
 
 const toggleContextMenu = (event) => {
 	contextMenu.value.toggle(event);
+};
+
+const hideContextMenu = () => {
+	if (!contextMenuInFocus.value) {
+		contextMenu.value.hide();
+	}
 };
 
 const onDeleteConfiguration = () => {
@@ -89,7 +104,7 @@ div {
 
 	&,
 	&.selected {
-		transition: border-left-color 250ms;
+		transition: border-left-color 15ms;
 	}
 }
 
@@ -102,10 +117,18 @@ header {
 	}
 }
 
-p {
+p,
+span {
 	color: var(--text-color-subdued);
 	font-size: var(--font-caption);
 	padding-right: var(--gap-6);
+
+	&.input-count {
+		background-color: var(--error-background);
+	}
+}
+span {
+	padding-right: unset;
 }
 
 p + p {

@@ -7,6 +7,7 @@ const DOCUMENTATION_URL =
 
 export interface EquationBlock {
 	text: string;
+	isEditedByAI?: boolean;
 	pageNumber?: number;
 	extractionError?: boolean;
 }

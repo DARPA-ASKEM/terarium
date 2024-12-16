@@ -37,12 +37,12 @@ const thought = computed(() => {
 
 <style scoped>
 .thought-bubble {
-	padding: 0 var(--gap-small) var(--gap-small) var(--gap-small);
+	padding: 0 var(--gap-2) var(--gap-2) var(--gap-2);
 }
 .thought-bubble-title {
 	font-weight: var(--font-weight-semibold);
 }
 .thought-button {
-	padding: var(--gap-small);
+	padding: var(--gap-2);
 }
 </style>

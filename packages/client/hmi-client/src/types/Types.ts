@@ -3,9 +3,27 @@
 
 export interface ClientConfig {
     baseUrl: string;
+    documentationUrl: string;
     clientLogShippingEnabled: boolean;
     clientLogShippingIntervalMillis: number;
     sseHeartbeatIntervalMillis: number;
+}
+
+export interface ProjectSearchResult {
+    projectId?: string;
+    score?: number;
+    assets?: ProjectSearchResultAsset[];
+}
+
+export interface ProjectSearchResultAsset {
+    assetId: string;
+    assetType: AssetType;
+    assetName: string;
+    assetShortDescription: string;
+    createdOn: Date;
+    embeddingContent: string;
+    embeddingType: TerariumAssetEmbeddingType;
+    score: number;
 }
 
 export interface ClientEvent<T> {
@@ -14,6 +32,7 @@ export interface ClientEvent<T> {
     type: ClientEventType;
     projectId?: string;
     notificationGroupId?: string;
+    userId?: string;
     data: T;
 }
 
@@ -114,13 +133,8 @@ export interface CsvColumnStats {
 }
 
 export interface Grounding extends TerariumEntity {
-    identifiers: Identifier[];
+    identifiers: DKG[];
     context?: any;
-}
-
-export interface Identifier {
-    curie: string;
-    name: string;
 }
 
 export interface PresignedURL {
@@ -275,14 +289,12 @@ export interface Author {
 }
 
 export interface State extends GroundedSemantic {
-    description?: string;
     units?: ModelUnit;
 }
 
 export interface Transition extends GroundedSemantic {
     input: string[];
     output: string[];
-    description?: string;
     expression?: string;
     properties?: Properties;
 }
@@ -299,6 +311,7 @@ export interface Project extends TerariumAsset {
     overviewContent?: any;
     projectAssets: ProjectAsset[];
     metadata?: { [index: string]: string };
+    sampleProject?: boolean;
     publicProject?: boolean;
     userPermission?: string;
 }
@@ -473,7 +486,7 @@ export interface DKG {
     curie: string;
     name: string;
     description: string;
-    link: string;
+    locations?: string[];
 }
 
 export interface EntitySimilarityResult {
@@ -685,6 +698,7 @@ export interface TaskResponse {
     stdout: string;
     stderr: string;
     requestSHA256: string;
+    routingKey: string;
 }
 
 export interface Annotation {
@@ -712,6 +726,12 @@ export interface UserEvent {
     user: UserOld;
     id: string;
     message: any;
+}
+
+export interface ProjectSearchResponse {
+    projectId: string;
+    score: number;
+    hits: ProjectSearchAsset[];
 }
 
 export interface SimulationNotificationData {
@@ -803,6 +823,7 @@ export interface ModelUnit {
 export interface GroundedSemantic {
     id: string;
     name?: string;
+    description?: string;
     grounding?: ModelGrounding;
 }
 
@@ -833,6 +854,13 @@ export interface PermissionRole {
 export interface UserOld {
     username: string;
     roles: string[];
+}
+
+export interface ProjectSearchAsset {
+    assetId: string;
+    assetType: AssetType;
+    embeddingType: TerariumAssetEmbeddingType;
+    score: number;
 }
 
 export interface AuthorityInstance {
@@ -908,7 +936,6 @@ export interface Initial {
 }
 
 export interface ModelParameter extends GroundedSemantic {
-    description?: string;
     value?: number;
     distribution?: ModelDistribution;
     units?: ModelUnit;
@@ -916,7 +943,6 @@ export interface ModelParameter extends GroundedSemantic {
 
 export interface Observable extends GroundedSemantic {
     states?: string[];
-    description?: string;
     units?: ModelUnit;
     expression?: string;
     expression_mathml?: string;
@@ -1031,6 +1057,8 @@ export enum AssetType {
     ModelConfiguration = "model-configuration",
     Artifact = "artifact",
     InterventionPolicy = "intervention-policy",
+    NotebookSession = "notebook-session",
+    Project = "project",
 }
 
 export enum EvaluationScenarioStatus {
@@ -1052,10 +1080,17 @@ export enum TaskStatus {
     Cancelled = "CANCELLED",
 }
 
+export enum TerariumAssetEmbeddingType {
+    Overview = "OVERVIEW",
+    Name = "NAME",
+    Description = "DESCRIPTION",
+}
+
 export enum ClientEventType {
     ChartAnnotationCreate = "CHART_ANNOTATION_CREATE",
     ChartAnnotationDelete = "CHART_ANNOTATION_DELETE",
     CloneProject = "CLONE_PROJECT",
+    KnowledgeEnrichmentModel = "KNOWLEDGE_ENRICHMENT_MODEL",
     Extraction = "EXTRACTION",
     ExtractionPdf = "EXTRACTION_PDF",
     FileUploadProgress = "FILE_UPLOAD_PROGRESS",
@@ -1071,6 +1106,7 @@ export enum ClientEventType {
     TaskGollmConfigureModelFromDataset = "TASK_GOLLM_CONFIGURE_MODEL_FROM_DATASET",
     TaskGollmConfigureModelFromDocument = "TASK_GOLLM_CONFIGURE_MODEL_FROM_DOCUMENT",
     TaskGollmEnrichAmr = "TASK_GOLLM_ENRICH_AMR",
+    TaskGollmEnrichDataset = "TASK_GOLLM_ENRICH_DATASET",
     TaskGollmEquationsFromImage = "TASK_GOLLM_EQUATIONS_FROM_IMAGE",
     TaskGollmGenerateSummary = "TASK_GOLLM_GENERATE_SUMMARY",
     TaskGollmInterventionsFromDocument = "TASK_GOLLM_INTERVENTIONS_FROM_DOCUMENT",

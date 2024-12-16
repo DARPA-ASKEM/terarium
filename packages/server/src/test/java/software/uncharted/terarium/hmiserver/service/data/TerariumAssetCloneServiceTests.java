@@ -18,7 +18,6 @@ import software.uncharted.terarium.hmiserver.configuration.MockUser;
 import software.uncharted.terarium.hmiserver.models.TerariumAsset;
 import software.uncharted.terarium.hmiserver.models.dataservice.AssetType;
 import software.uncharted.terarium.hmiserver.models.dataservice.Grounding;
-import software.uncharted.terarium.hmiserver.models.dataservice.Identifier;
 import software.uncharted.terarium.hmiserver.models.dataservice.document.DocumentAsset;
 import software.uncharted.terarium.hmiserver.models.dataservice.document.DocumentExtraction;
 import software.uncharted.terarium.hmiserver.models.dataservice.document.ExtractionAssetType;
@@ -29,6 +28,7 @@ import software.uncharted.terarium.hmiserver.models.dataservice.workflow.Transfo
 import software.uncharted.terarium.hmiserver.models.dataservice.workflow.Workflow;
 import software.uncharted.terarium.hmiserver.models.dataservice.workflow.WorkflowEdge;
 import software.uncharted.terarium.hmiserver.models.dataservice.workflow.WorkflowNode;
+import software.uncharted.terarium.hmiserver.models.mira.DKG;
 import software.uncharted.terarium.hmiserver.service.TerariumAssetCloneService;
 
 public class TerariumAssetCloneServiceTests extends TerariumApplicationTests {
@@ -74,7 +74,7 @@ public class TerariumAssetCloneServiceTests extends TerariumApplicationTests {
 		final Grounding grounding = new Grounding();
 		grounding.setContext(objectMapper.createObjectNode().put("hello", "world-" + key).put("foo", "bar-" + key));
 		grounding.setIdentifiers(new ArrayList<>());
-		grounding.getIdentifiers().add(new Identifier("curie", "maria"));
+		grounding.getIdentifiers().add(new DKG("curie", "maria", "", null, null));
 		return grounding;
 	}
 
@@ -133,7 +133,7 @@ public class TerariumAssetCloneServiceTests extends TerariumApplicationTests {
 					after.getId(),
 					filename,
 					ContentType.TEXT_PLAIN,
-					new String("This is my sample file containing" + filename).getBytes()
+					("This is my sample file containing" + filename).getBytes()
 				);
 			}
 		}
@@ -182,7 +182,7 @@ public class TerariumAssetCloneServiceTests extends TerariumApplicationTests {
 					after.getId(),
 					filename,
 					ContentType.TEXT_PLAIN,
-					new String("This is my sample file containing" + filename).getBytes()
+					("This is my sample file containing" + filename).getBytes()
 				);
 			}
 		}

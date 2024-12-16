@@ -12,7 +12,7 @@
 			<div class="actions">
 				<slot name="actions" />
 			</div>
-			<a v-if="documentationUrl" :href="documentationUrl" rel="noopener noreferrer">Documentation</a>
+			<a v-if="documentationUrl" :href="documentationUrl" rel="noopener noreferrer">Help</a>
 		</div>
 	</header>
 </template>
@@ -39,7 +39,7 @@ const onTabChange = (event: TabViewChangeEvent) => {
 header {
 	display: flex;
 	flex-direction: column;
-	gap: var(--gap-small);
+	gap: var(--gap-2);
 	background-color: var(--surface-highlight);
 	padding-top: 1rem;
 	padding-left: 1.5rem;
@@ -69,8 +69,7 @@ header > * {
 
 header .title {
 	white-space: nowrap;
-	overflow: hidden;
-	text-overflow: ellipsis;
+	min-width: fit-content;
 }
 
 header .tabs-row {
@@ -84,12 +83,18 @@ header .tabs-row:deep(.p-tabview .p-tabview-panels) {
 }
 
 a {
-	height: 3rem;
 	display: flex;
 	align-items: center;
 	color: var(--primary-color);
 	margin-left: auto;
-	margin-right: var(--gap);
+	margin-right: var(--gap-4);
+	margin-bottom: 2px;
+	font-size: var(--font-caption);
+	padding: var(--gap-3);
+	border-radius: var(--border-radius-medium);
+}
+a:hover {
+	background-color: rgba(27, 128, 115, 0.04);
 }
 
 :deep(.p-tabview-header:not(.p-highlight) .p-tabview-nav-link) {
@@ -106,7 +111,7 @@ a {
 .actions {
 	display: flex;
 	justify-content: flex-end;
-	gap: var(--gap-small);
+	gap: var(--gap-2);
 	padding-bottom: var(--gap-1);
 	flex: 1;
 }
