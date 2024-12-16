@@ -49,9 +49,11 @@ import software.uncharted.terarium.hmiserver.service.data.ProjectService;
 import software.uncharted.terarium.hmiserver.service.tasks.AMRToMMTResponseHandler;
 import software.uncharted.terarium.hmiserver.service.tasks.GenerateModelLatexResponseHandler;
 import software.uncharted.terarium.hmiserver.service.tasks.LatexToAMRResponseHandler;
+import software.uncharted.terarium.hmiserver.service.tasks.LatexToSympyResponseHandler;
 import software.uncharted.terarium.hmiserver.service.tasks.MdlToStockflowResponseHandler;
 import software.uncharted.terarium.hmiserver.service.tasks.SbmlToPetrinetResponseHandler;
 import software.uncharted.terarium.hmiserver.service.tasks.StellaToStockflowResponseHandler;
+import software.uncharted.terarium.hmiserver.service.tasks.SympyToAMRResponseHandler;
 import software.uncharted.terarium.hmiserver.service.tasks.TaskService;
 import software.uncharted.terarium.hmiserver.utils.Messages;
 import software.uncharted.terarium.hmiserver.utils.rebac.Schema;
@@ -269,6 +271,34 @@ public class MiraController {
 		}
 	)
 	public ResponseEntity<JsonNode> latexToAMR(@RequestBody final String latex) {
+		// 1. Convert latex to sympy code string
+		final TaskRequest latexToSympyRequest = new TaskRequest();
+		final TaskResponse latexToSympyResponse;
+
+		try {
+			latexToSympyRequest.setType(TaskType.GOLLM);
+			latexToSympyRequest.setInput(latex.getBytes());
+			latexToSympyRequest.setScript(LatexToSympyResponseHandler.NAME);
+			latexToSympyRequest.setUserId(currentUserService.get().getId());
+			latexToSympyResponse = taskService.runTaskSync(latexToSympyRequest);
+		} catch (final JsonProcessingException e) {} catch (final TimeoutException e) {} catch (
+			final InterruptedException e
+		) {} catch (final ExecutionException e) {}
+
+		// 2. Convert sympy code string to amr
+		final TaskRequest sympyToAMRRequest = new TaskRequest();
+		final TaskResponse sympyToAMRResponse;
+
+		try {
+			sympyToAMRRequest.setType(TaskType.MIRA);
+			sympyToAMRRequest.setInput(latex.getBytes());
+			sympyToAMRRequest.setScript(SympyToAMRResponseHandler.NAME);
+			sympyToAMRRequest.setUserId(currentUserService.get().getId());
+			sympyToAMRResponse = taskService.runTaskSync(sympyToAMRRequest);
+		} catch (final JsonProcessingException e) {} catch (final TimeoutException e) {} catch (
+			final InterruptedException e
+		) {} catch (final ExecutionException e) {}
+
 		// create request:
 		final TaskRequest req = new TaskRequest();
 		req.setType(TaskType.MIRA);
