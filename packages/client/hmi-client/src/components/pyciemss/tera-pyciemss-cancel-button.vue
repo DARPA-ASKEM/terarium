@@ -3,6 +3,7 @@
 </template>
 
 <script setup lang="ts">
+import _ from 'lodash';
 import { computed, ref } from 'vue';
 import Button from 'primevue/button';
 import { cancelCiemssJob } from '@/services/models/simulation-service';
@@ -13,9 +14,7 @@ const props = defineProps<{
 }>();
 
 const isCancelling = ref(false);
-const disabled = computed(
-	() => props.simulationRunId === '' || props.simulationRunId?.length === 0 || isCancelling.value
-);
+const disabled = computed(() => _.isEmpty(props.simulationRunId) || isCancelling.value);
 
 const cancelSimulation = async () => {
 	if (!props.simulationRunId) return;
