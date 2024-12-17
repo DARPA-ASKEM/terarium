@@ -351,6 +351,7 @@ async function buildJupyterContext() {
 }
 
 function hasNonEmptyValue(obj) {
+	if (!obj) return false;
 	return Object.values(obj).some((value) => !isEmpty(value));
 }
 
@@ -512,13 +513,15 @@ const processCompareModels = async () => {
 		`;
 
 	const taskRes = await compareModels(modelIds.value, request, props.node.workflowId, props.node.id);
-	compareModelsTaskId = taskRes.id;
 	if (taskRes.status === TaskStatus.Success) {
+		compareModelsTaskId = taskRes.id;
 		generateOverview(taskRes.output);
+
+		const state = cloneDeep(props.node.state);
+		state.hasRun = true;
+		emit('update-state', state);
 	}
-	const state = cloneDeep(props.node.state);
-	state.hasRun = true;
-	emit('update-state', state);
+
 	isProcessingComparison.value = false;
 };
 
