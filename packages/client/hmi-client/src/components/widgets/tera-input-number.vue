@@ -44,7 +44,7 @@ const inputField = ref<HTMLInputElement | null>(null);
 const error = ref('');
 const maskedValue = ref('');
 const isFocused = ref(false);
-const getDisabled = props.disabled ?? false;
+const getDisabled = computed(() => props.disabled ?? false);
 const focusInput = () => {
 	inputField.value?.focus();
 };
@@ -111,7 +111,7 @@ watch(
 
 // Handle the arrow key presses
 function handleArrowKeys(event: KeyboardEvent) {
-	if (getDisabled) return;
+	if (getDisabled.value) return;
 
 	const step = 1; // You can adjust this step size if needed
 	const currentValue = toNumber(maskedValue.value);

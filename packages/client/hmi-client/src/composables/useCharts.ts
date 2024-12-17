@@ -5,9 +5,11 @@ import { VisualizationSpec } from 'vega-embed';
 import {
 	applyForecastChartAnnotations,
 	AUTOSIZE,
+	SENSITIVITY_COLOUR_SCHEME,
 	CATEGORICAL_SCHEME,
 	createErrorChart,
 	createForecastChart,
+	createForecastChartAnnotation,
 	createHistogramChart,
 	createInterventionChartMarkers,
 	createSimulateSensitivityScatter,
@@ -15,7 +17,7 @@ import {
 } from '@/services/charts';
 import { flattenInterventionData } from '@/services/intervention-policy';
 import { DataArray, extractModelConfigIdsInOrder, extractModelConfigIds } from '@/services/models/simulation-service';
-import { ChartSetting, ChartSettingEnsembleVariable, ChartSettingType } from '@/types/common';
+import { ChartSetting, ChartSettingEnsembleVariable, ChartSettingSensitivity, ChartSettingType } from '@/types/common';
 import { Intervention, Model, ModelConfiguration } from '@/types/Types';
 import { displayNumber } from '@/utils/number';
 import { getUnitsFromModelParts, getVegaDateOptions } from '@/services/model';
@@ -694,10 +696,86 @@ export function useCharts(
 		return weightsCharts;
 	};
 
-	const useSimulateSensitivityCharts = (chartSettings: ComputedRef<ChartSetting[]>) => {
+	function createSensitivityBins(
+		records: Record<string, any>[],
+		selectedVariable: string,
+		numBins: number = 7
+	): Map<string, number[]> {
+		if (numBins < 1) {
+			throw new Error('Number of bins must be at least 1.');
+		}
+
+		// Extract the selected variable values and ensure they are numeric
+		const samples = records.map((record) => {
+			const value = record[selectedVariable];
+			const id = record.sample_id;
+			if (typeof value !== 'number') {
+				throw new Error(`The selected variable "${selectedVariable}" must map to numeric values.`);
+			}
+			return { id, value };
+		});
+
+		// Sort the samples by value in ascending order
+		const sortedSamples = [...samples].sort((a, b) => a.value - b.value);
+
+		// Extract values for threshold calculation
+		const sortedValues = sortedSamples.map((sample) => sample.value);
+		const minValue = sortedValues[0];
+		const maxValue = sortedValues[sortedValues.length - 1];
+
+		// Calculate the quantile thresholds
+		const thresholds: number[] = [];
+		for (let i = 1; i < numBins; i++) {
+			const quantileIndex = (i / numBins) * (sortedValues.length - 1);
+			const lowerIndex = Math.floor(quantileIndex);
+			const upperIndex = Math.ceil(quantileIndex);
+
+			// Interpolate if necessary
+			const quantileValue =
+				lowerIndex === upperIndex
+					? sortedValues[lowerIndex]
+					: sortedValues[lowerIndex] +
+						(sortedValues[upperIndex] - sortedValues[lowerIndex]) * (quantileIndex - lowerIndex);
+			thresholds.push(quantileValue);
+		}
+
+		// Generate labels for each quantile
+		const labels: string[] = [];
+		let previousThreshold = minValue;
+		thresholds.forEach((threshold) => {
+			labels.push(`[${previousThreshold}, ${threshold}]`);
+			previousThreshold = threshold;
+		});
+		labels.push(`[${previousThreshold}, ${maxValue}]`);
+
+		// Assign bins to records and create the result map
+		const result = new Map<string, number[]>();
+		labels.forEach((label) => result.set(label, []));
+
+		samples.forEach((sample) => {
+			let bin = 0; // Default bin if the value is below the first threshold
+			for (let i = 0; i < thresholds.length; i++) {
+				if (sample.value <= thresholds[i]) {
+					bin = i + 1;
+					break;
+				}
+			}
+			if (bin === 0) {
+				bin = numBins; // Assign the last bin if the value exceeds all thresholds
+			}
+			const label = labels[bin - 1];
+			result.get(label)!.push(sample.id);
+		});
+
+		return result;
+	}
+
+	const useSimulateSensitivityCharts = (chartSettings: ComputedRef<ChartSettingSensitivity[]>) => {
 		const sensitivity = computed(() => {
-			const timestep = _.last(chartData.value?.result)?.timepoint_id;
-			const sliceData = chartData.value?.result.filter((d: any) => d.timepoint_id === timestep) as any[];
+			// pick the first setting's timepoint for now
+			const timepoint = chartSettings.value[0].timepoint;
+			const { result } = chartData.value as ChartData;
+			const sliceData = result.filter((d: any) => d.timepoint_id === timepoint) as any[];
 
 			// Translate names ahead of time, because we can't seem to customize titles
 			// in vegalite with repeat
@@ -715,20 +793,37 @@ export function useCharts(
 				return r;
 			});
 
-			// FIXME: Let modeller pick the input variables
-			let inputVariables: string[] = [];
-			if (model && model.value && model.value.semantics?.ode) {
-				const ode = model.value.semantics.ode;
-				const initials = ode.initials?.map((initial) => initial.expression) as string[];
-				inputVariables = ode.parameters
-					?.filter((parameter) => !initials.includes(parameter.id))
-					.map((parameter) => parameter.id) as string[];
-			}
+			const inputVariables: string[] = chartSettings.value[0].selectedInputVariables ?? [];
 
-			const charts: Record<string, VisualizationSpec> = {};
+			const charts: Record<string, { lineChart: VisualizationSpec; scatterChart: VisualizationSpec }> = {};
 
 			// eslint-disable-next-line
 			chartSettings.value.forEach((settings) => {
+				const selectedVariable = `${settings.selectedVariables[0]}_state`;
+				const { options } = createForecastChartOptions(settings);
+				const bins = createSensitivityBins(sliceData, selectedVariable);
+
+				options.bins = bins;
+				options.colorscheme = SENSITIVITY_COLOUR_SCHEME;
+				options.legend = true;
+				options.title = `${settings.selectedVariables[0]} sensitivity`;
+				options.legendProperties = { direction: 'vertical', columns: 1, labelLimit: 500 };
+
+				const lineSpec = createForecastChart(
+					{
+						data: result,
+						variables: [selectedVariable],
+						timeField: 'timepoint_id',
+						groupField: 'sample_id'
+					},
+					null,
+					null,
+					options
+				);
+				// Add sensitivity annotation
+				const annotation = createForecastChartAnnotation('x', timepoint, 'Sensitivity analysis');
+				lineSpec.layer[0].layer.push(annotation.layerSpec);
+
 				const spec = createSimulateSensitivityScatter(
 					{
 						data: sliceDataTranslated,
@@ -740,10 +835,11 @@ export function useCharts(
 						height: 150,
 						xAxisTitle: '',
 						yAxisTitle: '',
-						translationMap: chartData.value?.translationMap || {}
+						bins,
+						colorscheme: SENSITIVITY_COLOUR_SCHEME
 					}
 				);
-				charts[settings.id] = spec;
+				charts[settings.id] = { lineChart: lineSpec, scatterChart: spec };
 			});
 			return charts;
 		});

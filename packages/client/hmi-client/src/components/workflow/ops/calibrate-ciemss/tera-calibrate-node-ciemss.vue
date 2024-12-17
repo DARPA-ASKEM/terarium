@@ -171,8 +171,6 @@ const variableCharts = useVariableCharts(selectedVariableSettings, groundTruth);
 const poller = new Poller();
 const pollResult = async (runId: string) => {
 	poller
-		.setInterval(3000)
-		.setThreshold(350)
 		.setPollAction(async () => pollAction(runId))
 		.setProgressAction((data: Simulation) => {
 			if (data?.updates?.length) {
@@ -185,7 +183,7 @@ const pollResult = async (runId: string) => {
 				updateLossChartSpec(lossValues);
 			}
 			if (runId === props.node.state.inProgressCalibrationId && data.updates.length > 0) {
-				const checkpoint = _.first(data.updates);
+				const checkpoint = _.last(data.updates);
 				if (checkpoint) {
 					const state = _.cloneDeep(props.node.state);
 					state.currentProgress = +((100 * checkpoint.data.progress) / state.numIterations).toFixed(2);

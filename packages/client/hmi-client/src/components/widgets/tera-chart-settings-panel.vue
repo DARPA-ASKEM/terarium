@@ -45,7 +45,7 @@
 				</div>
 				<section v-if="isColorPickerEnabled">
 					<h6>Color Picker</h6>
-					<input type="color" :value="primaryColor" @change="onColorChange($event)" />
+					<input type="color" :value="activeSettings?.primaryColor ?? ''" @change="onColorChange($event)" />
 				</section>
 			</div>
 		</div>
@@ -54,7 +54,7 @@
 
 <script setup lang="ts">
 import _ from 'lodash';
-import { ref, computed, watch } from 'vue';
+import { ref, computed } from 'vue';
 import Button from 'primevue/button';
 import { ChartSetting, ChartSettingType } from '@/types/common';
 import { ChartAnnotation } from '@/types/Types';
@@ -73,20 +73,15 @@ const props = defineProps<{
 	generateAnnotation?: (setting: ChartSetting, query: string) => Promise<ChartAnnotation | null>;
 }>();
 
-const emit = defineEmits([
-	'close',
-	'update-settings-scale',
-	'delete-annotation',
-	'create-annotation',
-	'update-settings-color'
-]);
+const emit = defineEmits(['close', 'delete-annotation', 'create-annotation', 'update-settings']);
 
+// Log scale
 const useLog = computed(() => props.activeSettings?.scale === 'log');
-
 const toggleLogScale = (useLogScale: boolean) => {
-	emit('update-settings-scale', useLogScale);
+	emit('update-settings', { scale: useLogScale ? 'log' : '' });
 };
 
+// Primary color
 const isColorPickerEnabled = computed(() => {
 	const type = props.activeSettings?.type;
 	if (type) {
@@ -94,23 +89,20 @@ const isColorPickerEnabled = computed(() => {
 	}
 	return false;
 });
+const onColorChange = (event) => {
+	emit('update-settings', { primaryColor: event.target?.value });
+};
 
+// Chart Annotations
 const chartAnnotations = computed(() => {
 	if (props.annotations === undefined) {
 		return undefined;
 	}
 	return props.annotations.filter((annotation) => annotation.chartId === props.activeSettings?.id);
 });
-
 const isGeneratingAnnotation = ref(false);
 const generateAnnotationQuery = ref<string>('');
 const showAnnotationInput = ref<Boolean>(false);
-const primaryColor = ref(props.activeSettings?.primaryColor ?? '');
-
-const onColorChange = (event) => {
-	primaryColor.value = event.target?.value;
-	emit('update-settings-color', event.target?.value);
-};
 
 const createAnnotation = async () => {
 	if (props.generateAnnotation === undefined || props.activeSettings === null) {
@@ -130,17 +122,6 @@ const cancelGenerateAnnotation = () => {
 	generateAnnotationQuery.value = '';
 	showAnnotationInput.value = false;
 };
-
-watch(
-	() => props.activeSettings,
-	() => {
-		if (!props.activeSettings) {
-			primaryColor.value = '';
-		} else if (props.activeSettings?.primaryColor) {
-			primaryColor.value = props.activeSettings.primaryColor;
-		}
-	}
-);
 </script>
 
 <style scoped>
