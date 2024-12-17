@@ -55,6 +55,7 @@ import software.uncharted.terarium.hmiserver.service.CurrentUserService;
 import software.uncharted.terarium.hmiserver.service.data.DatasetService;
 import software.uncharted.terarium.hmiserver.service.data.ProjectAssetService;
 import software.uncharted.terarium.hmiserver.service.data.ProjectService;
+import software.uncharted.terarium.hmiserver.service.gollm.DatasetStatistics;
 import software.uncharted.terarium.hmiserver.utils.Messages;
 import software.uncharted.terarium.hmiserver.utils.rebac.Schema;
 
@@ -69,6 +70,7 @@ public class DatasetController {
 	final Config config;
 
 	final DatasetService datasetService;
+	final DatasetStatistics datasetStatistics;
 	final ClimateDataProxy climateDataProxy;
 
 	final JsDelivrProxy githubProxy;
@@ -715,6 +717,13 @@ public class DatasetController {
 				// add the filename to existing file names
 				if (!updatedDataset.get().getFileNames().contains(filename)) {
 					updatedDataset.get().getFileNames().add(filename);
+				}
+
+				// Calculate the statistics for the columns
+				try {
+					datasetStatistics.add(updatedDataset.get());
+				} catch (final Exception e) {
+					log.error("Error calculating statistics for dataset {}", updatedDataset.get().getId(), e);
 				}
 
 				datasetService.updateAsset(updatedDataset.get(), projectId, hasWritePermission);

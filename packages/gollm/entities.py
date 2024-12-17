@@ -21,7 +21,7 @@ class ConfigureModelDataset(BaseModel):
 
 
 class DatasetStatistics(BaseModel):
-    dataset: str  # expects a stringified CSV file
+    datasetUrl: str  # expects a URL of a CSV file
 
 
 class DatasetCardModel(BaseModel):

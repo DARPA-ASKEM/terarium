@@ -8,7 +8,6 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 import lombok.Data;
@@ -130,6 +129,7 @@ public class DatasetStatistics {
 				}
 
 				column.updateMetadata(metadata);
+				log.info("Updated metadata for column {}", column.getMetadata());
 			});
 	}
 }

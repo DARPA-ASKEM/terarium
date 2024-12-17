@@ -4,19 +4,19 @@ import numpy as np
 from entities import DatasetStatistics
 from taskrunner import TaskRunnerInterface
 
-def analyze_csv(csv_string):
+def analyze_csv(csv_url):
     """
-    Analyze a CSV from a string input.
+    Analyze a CSV from an URL.
 
     Parameters:
-    csv_string (str): CSV content as a string
+    csv_url (str): CSV URL
 
     Returns:
     dict: Comprehensive statistical summary
     """
     try:
         # Read CSV from string
-        df = pd.read_csv(io.StringIO(csv_string))
+        df = pd.read_csv(csv_url)
 
         # Prepare a dictionary to store results
         stats_summary = {}
@@ -75,10 +75,11 @@ def main():
         taskrunner.on_cancellation(cleanup)
 
         input_dict = taskrunner.read_input_dict_with_timeout()
-        inputs = DatasetStatistics(**input_dict)
+        csv_url = DatasetStatistics(**input_dict).datasetUrl
+        taskrunner.log(f"Reading CSV from {csv_url}")
 
         taskrunner.log("Creating statistics from input")
-        response = analyze_csv(inputs.dataset)
+        response = analyze_csv(csv_url)
         taskrunner.log("Statistics from input created")
 
         taskrunner.write_output_dict_with_timeout({"response": response})
