@@ -99,6 +99,7 @@ export function createNewChartSetting(
 	selectedVariables: string[],
 	options: Partial<ChartSetting> = {}
 ): ChartSetting {
+	// Default setting
 	const setting: ChartSetting = {
 		id: uuidv4(),
 		name,
@@ -107,7 +108,10 @@ export function createNewChartSetting(
 		scale: '',
 		primaryColor: CATEGORICAL_SCHEME[0]
 	};
-	// Apply the provided options to the new setting.
+	if (isChartSettingEnsembleVariable(setting)) {
+		setting.showIndividualModels = true;
+	}
+	// Apply and override defaults with the provided options.
 	Object.assign(setting, options);
 
 	return setting;
