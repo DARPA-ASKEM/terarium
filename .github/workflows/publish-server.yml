@@ -6,6 +6,7 @@ name: Build and Publish hmi-server
 
 # yamllint disable-line rule:truthy
 on:
+  workflow_dispatch:
   push:
     paths:
       - 'packages/server/**'
