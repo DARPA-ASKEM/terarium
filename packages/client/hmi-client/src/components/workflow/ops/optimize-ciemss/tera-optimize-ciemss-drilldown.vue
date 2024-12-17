@@ -201,6 +201,11 @@
 		<!-- Preview tab -->
 		<template #preview>
 			<tera-drilldown-section
+				:is-loading="showSpinner"
+				:loading-progress="props.node.state.currentProgress"
+				:loading-message="'of maximum iterations complete'"
+				:is-blank="showSpinner && node.state.inProgressOptimizeId === ''"
+				:blank-message="'Optimize complete. Running simulations'"
 				class="ml-3 mr-3"
 				:class="{
 					'failed-run': optimizationResult.success === 'False',
@@ -219,12 +224,6 @@
 						@click="showSaveInterventionPolicy = true"
 					/>
 				</template>
-				<tera-progress-spinner v-if="showSpinner" :font-size="2" is-centered style="height: 100%">
-					<div v-if="node.state.inProgressOptimizeId !== ''">
-						{{ props.node.state.currentProgress }}% of maximum iterations complete
-					</div>
-					<div v-else>Optimize complete. Running simulations</div>
-				</tera-progress-spinner>
 				<tera-operator-output-summary v-if="node.state.summaryId && !showSpinner" :summary-id="node.state.summaryId" />
 				<!-- Optimize result.json display: -->
 				<div
@@ -334,8 +333,9 @@
 						"
 						:active-settings="activeChartSettings"
 						:generate-annotation="generateAnnotation"
+						@update-settings="updateActiveChartSettings"
 						@delete-annotation="deleteAnnotation"
-						@close="activeChartSettings = null"
+						@close="setActiveChartSettings(null)"
 					/>
 				</template>
 				<template #content>
@@ -366,7 +366,7 @@
 							:type="ChartSettingType.INTERVENTION"
 							:select-options="_.keys(preProcessedInterventionsData)"
 							:selected-options="selectedInterventionSettings.map((s) => s.selectedVariables[0])"
-							@open="activeChartSettings = $event"
+							@open="setActiveChartSettings($event)"
 							@remove="removeChartSettings"
 							@selection-change="updateChartSettings"
 						/>
@@ -377,7 +377,7 @@
 							:type="ChartSettingType.VARIABLE"
 							:select-options="modelStateAndObsOptions.map((ele) => ele.label)"
 							:selected-options="selectedVariableSettings.map((s) => s.selectedVariables[0])"
-							@open="activeChartSettings = $event"
+							@open="setActiveChartSettings($event)"
 							@remove="removeChartSettings"
 							@selection-change="updateChartSettings"
 						/>
@@ -388,7 +388,7 @@
 							:type="ChartSettingType.VARIABLE_COMPARISON"
 							:select-options="simulationChartOptions"
 							:selected-options="comparisonChartsSettingsSelection"
-							@open="activeChartSettings = $event"
+							@open="setActiveChartSettings($event)"
 							@remove="removeChartSettings"
 							@selection-change="comparisonChartsSettingsSelection = $event"
 						/>
@@ -436,7 +436,6 @@ import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.
 import TeraSaveDatasetFromSimulation from '@/components/dataset/tera-save-dataset-from-simulation.vue';
 import TeraPyciemssCancelButton from '@/components/pyciemss/tera-pyciemss-cancel-button.vue';
 import TeraOperatorOutputSummary from '@/components/operator/tera-operator-output-summary.vue';
-import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue';
 import { getModelByModelConfigurationId, getCalendarSettingsFromModel } from '@/services/model';
 import { getModelConfigurationById } from '@/services/model-configurations';
 import {
@@ -992,7 +991,9 @@ const {
 	comparisonChartsSettingsSelection,
 	removeChartSettings,
 	updateChartSettings,
-	addComparisonChartSettings
+	addComparisonChartSettings,
+	updateActiveChartSettings,
+	setActiveChartSettings
 } = useChartSettings(props, emit);
 
 const {

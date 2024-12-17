@@ -1,12 +1,13 @@
 import { cloneDeep } from 'lodash';
-import { ref, computed } from 'vue';
-import { ChartSetting, ChartSettingEnsembleVariable, ChartSettingType } from '@/types/common';
+import { ref, computed, watch } from 'vue';
+import { ChartSetting, ChartSettingEnsembleVariable, ChartSettingSensitivity, ChartSettingType } from '@/types/common';
 import {
 	addMultiVariableChartSetting,
 	EnsembleVariableChartSettingOption,
 	removeChartSettingById,
 	updateChartSettingsBySelectedVariables,
-	updateAllChartSettings
+	updateAllChartSettings,
+	updateSensitivityChartSettingOption
 } from '@/services/chart-settings';
 import { WorkflowNode } from '@/types/workflow';
 
@@ -49,9 +50,24 @@ export function useChartSettings(
 		chartSettings.value.filter((setting) => setting.type === ChartSettingType.VARIABLE_COMPARISON)
 	);
 
-	const selectedSensitivityChartSettings = computed(() =>
-		chartSettings.value.filter((setting) => setting.type === ChartSettingType.SENSITIVITY)
+	const selectedSensitivityChartSettings = computed(
+		() =>
+			chartSettings.value.filter(
+				(setting) => setting.type === ChartSettingType.SENSITIVITY
+			) as ChartSettingSensitivity[]
 	);
+
+	watch(chartSettings, (settings) => {
+		// Update active chart settings
+		if (activeChartSettings.value) {
+			const updated = settings.find((setting) => setting.id === activeChartSettings.value?.id);
+			activeChartSettings.value = updated ?? null;
+		}
+	});
+
+	const setActiveChartSettings = (setting: ChartSetting | null) => {
+		activeChartSettings.value = setting;
+	};
 
 	// Methods to manage chart settings
 	const removeChartSettings = (chartId: string) => {
@@ -66,20 +82,6 @@ export function useChartSettings(
 			...props.node.state,
 			chartSettings: updateChartSettingsBySelectedVariables(chartSettings.value, type, selectedVariables)
 		});
-	};
-
-	const updateChartSettingsScale = (id: string, useLog: boolean) => {
-		const state = cloneDeep(props.node.state);
-		if (state.chartSettings) {
-			const setting = state.chartSettings.find((settings) => settings.id === id);
-			if (setting) {
-				setting.scale = useLog === true ? 'log' : '';
-				if (activeChartSettings.value) {
-					activeChartSettings.value.scale = setting.scale;
-				}
-				emit('update-state', state);
-			}
-		}
 	};
 
 	const addComparisonChartSettings = () => {
@@ -114,9 +116,44 @@ export function useChartSettings(
 		});
 	};
 
+	const updateSensitivityChartSettings = (options: {
+		selectedVariables?: string[];
+		selectedInputVariables?: string[];
+		timepoint?: number;
+	}) => {
+		emit('update-state', {
+			...props.node.state,
+			chartSettings: updateSensitivityChartSettingOption(chartSettings.value as ChartSettingSensitivity[], options)
+		});
+	};
+
+	/**
+	 * Find and update a chart setting by its id.
+	 * @param id - The id of the chart setting to update.
+	 * @param update - The partial update to apply to the chart setting.
+	 */
+	const findAndUpdateChartSettingsById = (id: string, update: Partial<ChartSetting>) => {
+		const state = cloneDeep(props.node.state);
+		if (state.chartSettings) {
+			const setting = state.chartSettings.find((settings) => settings.id === id);
+			if (setting) {
+				Object.assign(setting, update);
+				emit('update-state', state);
+			}
+		}
+	};
+
+	/**
+	 * Update the active chart settings with a partial update.
+	 * @param update - The partial update to apply to the active chart settings.
+	 */
+	const updateActiveChartSettings = (update: Partial<ChartSetting>) => {
+		findAndUpdateChartSettingsById(activeChartSettings.value?.id ?? '', update);
+	};
+
 	return {
 		chartSettings,
-		activeChartSettings,
+		activeChartSettings: computed(() => activeChartSettings.value),
 		comparisonChartsSettingsSelection,
 		selectedVariableSettings,
 		selectedEnsembleVariableSettings,
@@ -125,11 +162,14 @@ export function useChartSettings(
 		selectedInterventionSettings,
 		selectedComparisonChartSettings,
 		selectedSensitivityChartSettings,
+		setActiveChartSettings,
+		updateActiveChartSettings,
 		removeChartSettings,
 		updateChartSettings,
-		updateChartSettingsScale,
 		addComparisonChartSettings,
 		updateEnsembleVariableSettingOption,
-		updateQauntilesOptions
+		updateQauntilesOptions,
+		updateSensitivityChartSettings,
+		findAndUpdateChartSettingsById
 	};
 }

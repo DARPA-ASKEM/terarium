@@ -10,6 +10,19 @@ export const pointOnPath = (pathEl: SVGPathElement, percent: number) => {
 	return point;
 };
 
+/**
+ * Given a path element, create a new point-list from start to end, sampled by number of "steps"
+ * */
+export const partialPath = (pathEl: SVGPathElement, start: number, end: number, steps: number) => {
+	const newPoints: DOMPoint[] = [];
+	for (let i = 0; i <= steps; i++) {
+		const length = start + ((end - start) * i) / steps;
+		const point = pathEl.getPointAtLength(length);
+		newPoints.push(point);
+	}
+	return newPoints;
+};
+
 // Note: Being evaluated for now, not in use
 // @ts-ignore
 // eslint-disable-next-line
@@ -40,11 +53,15 @@ export const svgToImage = (svgElement: SVGElement): Promise<HTMLImageElement> =>
 	const serializer = new XMLSerializer();
 	// embedExternalStyles(svgElement);
 
+	const w = svgElement.clientWidth || parseFloat(svgElement.getAttribute('width') as string);
+	const h = svgElement.clientHeight || parseFloat(svgElement.getAttribute('height') as string);
+
 	const svgString = serializer.serializeToString(svgElement);
 	const svgBlob = new Blob([svgString], { type: 'image/svg+xml;charset=utf-8' });
 	const url = URL.createObjectURL(svgBlob);
-	const img = new Image(svgElement.clientWidth, svgElement.clientHeight);
-	const finalImg = new Image(svgElement.clientWidth, svgElement.clientHeight);
+
+	const img = new Image(w, h);
+	const finalImg = new Image(w, h);
 
 	return new Promise((resolve, reject) => {
 		img.addEventListener('load', (e: any) => {

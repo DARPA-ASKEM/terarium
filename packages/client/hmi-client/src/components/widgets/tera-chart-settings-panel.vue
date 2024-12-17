@@ -43,6 +43,10 @@
 						/>
 					</div>
 				</div>
+				<section v-if="isColorPickerEnabled">
+					<h6>Color Picker</h6>
+					<input type="color" :value="activeSettings?.primaryColor ?? ''" @change="onColorChange($event)" />
+				</section>
 			</div>
 		</div>
 	</transition>
@@ -52,7 +56,7 @@
 import _ from 'lodash';
 import { ref, computed } from 'vue';
 import Button from 'primevue/button';
-import { ChartSetting } from '@/types/common';
+import { ChartSetting, ChartSettingType } from '@/types/common';
 import { ChartAnnotation } from '@/types/Types';
 import TeraInputText from '@/components/widgets/tera-input-text.vue';
 import TeraCheckbox from '@/components/widgets/tera-checkbox.vue';
@@ -69,14 +73,27 @@ const props = defineProps<{
 	generateAnnotation?: (setting: ChartSetting, query: string) => Promise<ChartAnnotation | null>;
 }>();
 
-const emit = defineEmits(['close', 'update-settings-scale', 'delete-annotation', 'create-annotation']);
+const emit = defineEmits(['close', 'delete-annotation', 'create-annotation', 'update-settings']);
 
+// Log scale
 const useLog = computed(() => props.activeSettings?.scale === 'log');
-
 const toggleLogScale = (useLogScale: boolean) => {
-	emit('update-settings-scale', useLogScale);
+	emit('update-settings', { scale: useLogScale ? 'log' : '' });
 };
 
+// Primary color
+const isColorPickerEnabled = computed(() => {
+	const type = props.activeSettings?.type;
+	if (type) {
+		return ![ChartSettingType.ERROR_DISTRIBUTION, ChartSettingType.VARIABLE_COMPARISON].includes(type);
+	}
+	return false;
+});
+const onColorChange = (event) => {
+	emit('update-settings', { primaryColor: event.target?.value });
+};
+
+// Chart Annotations
 const chartAnnotations = computed(() => {
 	if (props.annotations === undefined) {
 		return undefined;

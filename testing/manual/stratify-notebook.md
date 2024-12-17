@@ -29,7 +29,7 @@ Enter the following prompts one at a time, click on the "airplane", wait for the
 model = stratify(
     template_model=model,
     key= "Age",
-    strata=['young', 'old'],
+    strata=['young', 'middle', 'old'],
     structure= [],
     directed=False, # Should the reverse direction conversions be added based on the given structure?
     cartesian_control=False, # True if populations of different strata can interact, False otherwise
