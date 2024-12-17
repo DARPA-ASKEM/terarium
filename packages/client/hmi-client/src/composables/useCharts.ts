@@ -1,4 +1,4 @@
-import _, { capitalize } from 'lodash';
+import _, { capitalize, cloneDeep } from 'lodash';
 import { mean, variance } from 'd3';
 import { computed, ComputedRef, Ref } from 'vue';
 import { VisualizationSpec } from 'vega-embed';
@@ -295,7 +295,7 @@ export function useCharts(
 			);
 			// Make baseline black
 			const baselineIndex = datasetNames.indexOf(baselineName.value ?? '');
-			const colorScheme = CATEGORICAL_SCHEME;
+			const colorScheme = cloneDeep(CATEGORICAL_SCHEME);
 			colorScheme[baselineIndex] = 'black';
 
 			chartSettings.value.forEach((settings) => {
