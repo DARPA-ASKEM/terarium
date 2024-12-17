@@ -366,7 +366,7 @@ import VegaChart from '@/components/widgets/VegaChart.vue';
 import { ChartSettingType, CiemssPresetTypes, DrilldownTabs } from '@/types/common';
 import { useCharts } from '@/composables/useCharts';
 import { useChartSettings } from '@/composables/useChartSettings';
-import { deleteAnnotation } from '@/services/chart-settings';
+import { deleteAnnotation, updateChartSettingsBySelectedVariables } from '@/services/chart-settings';
 import { DataArray } from '@/utils/stats';
 import {
 	CalibrateEnsembleCiemssOperationState,
@@ -499,6 +499,22 @@ const setPresetValues = (data: CiemssPresetTypes) => {
 	}
 };
 
+const initDefaultChartSettings = (state: CalibrateEnsembleCiemssOperationState) => {
+	const mappedEnsembleVariables = knobs.value.ensembleMapping.map((c) => c.newName);
+	if (_.isEmpty(state.chartSettings)) {
+		state.chartSettings = updateChartSettingsBySelectedVariables(
+			state.chartSettings ?? [],
+			ChartSettingType.VARIABLE_ENSEMBLE,
+			mappedEnsembleVariables
+		);
+		state.chartSettings = updateChartSettingsBySelectedVariables(
+			state.chartSettings,
+			ChartSettingType.ERROR_DISTRIBUTION,
+			mappedEnsembleVariables
+		);
+	}
+};
+
 const runEnsemble = async () => {
 	if (!datasetId.value || !currentDatasetFileName.value) return;
 
@@ -539,6 +555,8 @@ const runEnsemble = async () => {
 		state.currentProgress = 0;
 		state.inProgressCalibrationId = response?.simulationId;
 		state.inProgressForecastId = '';
+		// Add default chart settings based on the ensemble mapping on the first run
+		initDefaultChartSettings(state);
 		emit('update-state', state);
 	}
 };
