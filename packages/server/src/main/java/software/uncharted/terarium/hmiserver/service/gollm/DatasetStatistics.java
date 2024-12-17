@@ -125,20 +125,16 @@ public class DatasetStatistics {
 				final NumericColumnStats numericStats = response.getNumericColumns().get(column.getName());
 				final NonNumericColumnStats nonNumericStats = response.getNonNumericColumns().get(column.getName());
 
-				if (numericStats != null) {
-					column.setDataType(DatasetColumn.mapDataType(numericStats.getDataType()));
-					try {
+				try {
+					if (numericStats != null) {
+						column.setDataType(DatasetColumn.mapDataType(numericStats.getDataType()));
 						((ObjectNode) metadata).put("stats", objectMapper.writeValueAsString(numericStats));
-					} catch (JsonProcessingException e) {
-						log.error("Error serializing statistics for column {}", column.getName(), e);
-					}
-				} else if (nonNumericStats != null) {
-					column.setDataType(DatasetColumn.mapDataType(nonNumericStats.getDataType()));
-					try {
+					} else if (nonNumericStats != null) {
+						column.setDataType(DatasetColumn.mapDataType(nonNumericStats.getDataType()));
 						((ObjectNode) metadata).put("stats", objectMapper.writeValueAsString(nonNumericStats));
-					} catch (JsonProcessingException e) {
-						log.error("Error serializing statistics for column {}", column.getName(), e);
 					}
+				} catch (JsonProcessingException e) {
+					log.error("Error serializing statistics for column {}", column.getName(), e);
 				}
 
 				column.updateMetadata(metadata);
