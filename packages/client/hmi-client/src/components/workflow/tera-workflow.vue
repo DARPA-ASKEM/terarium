@@ -293,8 +293,8 @@ const _updateWorkflow = (event: ClientEvent<any>) => {
 	wf.value.update(event.data as Workflow);
 };
 
-const saveWorkflowDebounced = debounce(_saveWorkflow, 400);
-const updateWorkflowHandler = debounce(_updateWorkflow, 250);
+const saveWorkflowDebounced = debounce(_saveWorkflow, 1000);
+const updateWorkflowHandler = debounce(_updateWorkflow, 800);
 
 const saveWorkflowHandler = () => {
 	saveWorkflowDebounced();
