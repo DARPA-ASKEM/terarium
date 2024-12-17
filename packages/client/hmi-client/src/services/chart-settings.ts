@@ -109,6 +109,7 @@ export function createNewChartSetting(
 		primaryColor: CATEGORICAL_SCHEME[0]
 	};
 	if (isChartSettingEnsembleVariable(setting)) {
+		// Default options for ensemble variable chart
 		setting.showIndividualModels = true;
 	}
 	// Apply and override defaults with the provided options.
