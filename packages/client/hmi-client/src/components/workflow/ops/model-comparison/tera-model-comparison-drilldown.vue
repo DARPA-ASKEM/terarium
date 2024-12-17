@@ -103,12 +103,7 @@
 					<AccordionTab header="Concept graph comparison" v-if="!isGraphComparisonEmpty">
 						<template v-for="(value, pair) in conceptComparison.concept_graph_comparison" :key="pair">
 							<h6>Concept comparison {{ pair }}</h6>
-							<image
-								width="500px"
-								height="1000px"
-								:src="`data:image/png;base64,${value}`"
-								:alt="`Concept comparison ${pair}`"
-							/>
+							<img :src="`data:image/png;base64,${value}`" :alt="`Concept comparison ${pair}`" />
 						</template>
 					</AccordionTab>
 				</Accordion>
