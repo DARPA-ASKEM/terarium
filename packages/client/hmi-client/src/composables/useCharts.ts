@@ -226,22 +226,25 @@ export function useCharts(
 	};
 
 	// Generate annotations for a chart
-	const generateAnnotation = async (setting: ChartSetting, query: string, isCompareDataset: boolean = false) => {
+	const generateAnnotation = async (
+		setting: ChartSetting,
+		query: string,
+		compareDatasetsPlotType: PlotValue | null = null
+	) => {
 		if (!chartData.value) return null;
 
 		let statLayerVariables: string[] = [];
 		let options: ForecastChartOptions | null = null;
 
-		if (isCompareDataset) {
+		if (compareDatasetsPlotType) {
 			statLayerVariables = setting.selectedVariables;
 			options = {
 				title: setting.selectedVariables[0],
 				legend: true,
 				width: chartSize.value.width,
 				height: chartSize.value.height,
-				translationMap: chartData.value.translationMap || {},
 				xAxisTitle: getUnit('_time') || 'Time',
-				yAxisTitle: capitalize(setting.selectedVariables[0]),
+				yAxisTitle: capitalize(compareDatasetsPlotType),
 				scale: setting.scale
 			};
 		} else {
