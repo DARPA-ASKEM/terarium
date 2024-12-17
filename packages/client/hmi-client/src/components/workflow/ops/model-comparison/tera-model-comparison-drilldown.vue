@@ -206,6 +206,7 @@ import { useClientEvent } from '@/composables/useClientEvent';
 import Textarea from 'primevue/textarea';
 import { CompareModelsConceptsResponse, getCompareModelConcepts } from '@/services/concept';
 import TeraCsvTable from '@/components/widgets/tera-csv-table.vue';
+import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue';
 import { ModelComparisonOperationState } from './model-comparison-operation';
 
 const props = defineProps<{
