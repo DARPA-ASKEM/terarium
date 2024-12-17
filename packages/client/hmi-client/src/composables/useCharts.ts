@@ -305,7 +305,8 @@ export function useCharts(
 							height: chartSize.value.height,
 							xAxisTitle: getUnit('_time') || 'Time',
 							yAxisTitle: capitalize(selectedPlotType.value),
-							scale: settings.scale
+							scale: settings.scale,
+							legendProperties: { direction: 'vertical', columns: 3 }
 						}
 					),
 					annotations
