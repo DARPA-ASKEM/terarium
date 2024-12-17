@@ -303,25 +303,6 @@ export function useCharts(
 		return interventionCharts;
 	};
 
-	const generateAnnotationForCompareDatasets = async (
-		setting: ChartSetting,
-		query: string,
-		statLayerVariables: any
-	) => {
-		if (!chartData.value) return null;
-		const options = {
-			title: setting.selectedVariables[0],
-			legend: true,
-			width: chartSize.value.width,
-			height: chartSize.value.height,
-			translationMap: chartData.value.translationMap || {},
-			xAxisTitle: getUnit('_time') || 'Time',
-			yAxisTitle: capitalize(setting.selectedVariables[0]),
-			scale: setting.scale
-		};
-		return generateAndSaveForecastChartAnnotation(setting, query, 'timepoint_id', statLayerVariables, options);
-	};
-
 	const useCompareDatasetCharts = (
 		chartSettings: ComputedRef<ChartSetting[]>,
 		selectedPlotType: ComputedRef<PlotValue>,
@@ -901,7 +882,6 @@ export function useCharts(
 
 	return {
 		generateAnnotation,
-		generateAnnotationForCompareDatasets,
 		getChartAnnotationsByChartId,
 		useInterventionCharts,
 		useVariableCharts,
