@@ -108,7 +108,7 @@ public class TaskService {
 				.setStdout(stdout)
 				.setStderr(stderr)
 				.setRoutingKey(getRoutingKey())
-				.setNoCache(noCache)
+				.setUseCache(useCache)
 				.setRequestSHA256(getSHA256());
 		}
 	}
@@ -477,7 +477,7 @@ public class TaskService {
 				resp.setOutput(e.getMessage().getBytes());
 			}
 
-			if (resp.getStatus() == TaskStatus.SUCCESS && !resp.isNoCache()) {
+			if (resp.getStatus() == TaskStatus.SUCCESS && resp.isUseCache()) {
 				try {
 					// add to the response cache
 					log.info(
@@ -671,7 +671,7 @@ public class TaskService {
 		// create sha256 hash of the request
 		final String hash = req.getSHA256();
 
-		if (!req.isNoCache()) {
+		if (req.isUseCache()) {
 			try {
 				log.info(
 					"Checking for cached response under SHA: {} for {} for script: {}",
