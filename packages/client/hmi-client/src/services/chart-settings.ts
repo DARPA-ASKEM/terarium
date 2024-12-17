@@ -111,6 +111,7 @@ export function createNewChartSetting(
 	if (isChartSettingEnsembleVariable(setting)) {
 		// Default options for ensemble variable chart
 		setting.showIndividualModels = true;
+		setting.relativeToEnsemble = false;
 	}
 	// Apply and override defaults with the provided options.
 	Object.assign(setting, options);
