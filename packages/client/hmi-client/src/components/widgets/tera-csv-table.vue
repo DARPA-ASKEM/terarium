@@ -11,7 +11,13 @@
 		:globalFilter="true"
 		:sortMode="'multiple'"
 	>
-		<Column v-for="col in columns" :key="col.field" :field="col.field" :header="col.header" :sortable="true" />
+		<Column
+			v-for="col in columns"
+			:key="col.field as string"
+			:field="col.field"
+			:header="col.header"
+			:sortable="true"
+		/>
 	</DataTable>
 </template>
 
@@ -19,7 +25,7 @@
 import { onMounted, ref } from 'vue';
 import { isEmpty } from 'lodash';
 import DataTable from 'primevue/datatable';
-import Column from 'primevue/column';
+import Column, { ColumnProps } from 'primevue/column';
 import Papa from 'papaparse';
 
 // Define props for the component
@@ -31,7 +37,7 @@ const props = defineProps({
 });
 
 const csvData = ref([]);
-const columns = ref([]);
+const columns = ref<ColumnProps[]>([]);
 const isLoading = ref(true);
 const error = ref(null);
 
@@ -47,7 +53,10 @@ function rowReplaceEmptyKey(row: any) {
 
 function onComplete(results: any) {
 	// If the CSV has an empty header, just use 'empty' as the field name
-	columns.value = results.meta.fields.map((field: any) => ({ field: isEmpty(field) ? 'empty' : field, header: field }));
+	columns.value = results.meta.fields.map((field: string) => ({
+		field: isEmpty(field) ? 'empty' : field,
+		header: field
+	}));
 	csvData.value = results.data.map(rowReplaceEmptyKey);
 	isLoading.value = false;
 }
