@@ -26,6 +26,7 @@ import software.uncharted.terarium.hmiserver.models.dataservice.dataset.Dataset;
 import software.uncharted.terarium.hmiserver.models.dataservice.dataset.DatasetColumn;
 import software.uncharted.terarium.hmiserver.repository.data.DatasetRepository;
 import software.uncharted.terarium.hmiserver.service.elasticsearch.ElasticsearchService;
+import software.uncharted.terarium.hmiserver.service.gollm.DatasetStatistics;
 import software.uncharted.terarium.hmiserver.service.gollm.EmbeddingService;
 import software.uncharted.terarium.hmiserver.service.s3.S3ClientService;
 import software.uncharted.terarium.hmiserver.utils.rebac.Schema;
@@ -33,6 +34,8 @@ import software.uncharted.terarium.hmiserver.utils.rebac.Schema;
 @Slf4j
 @Service
 public class DatasetService extends TerariumAssetServiceWithSearch<Dataset, DatasetRepository> {
+
+	private final DatasetStatistics datasetStatistics;
 
 	public DatasetService(
 		final ObjectMapper objectMapper,
@@ -44,6 +47,7 @@ public class DatasetService extends TerariumAssetServiceWithSearch<Dataset, Data
 		final ProjectService projectService,
 		final ProjectAssetService projectAssetService,
 		final S3ClientService s3ClientService,
+		final DatasetStatistics datasetStatistics,
 		final DatasetRepository repository
 	) {
 		super(
@@ -59,6 +63,7 @@ public class DatasetService extends TerariumAssetServiceWithSearch<Dataset, Data
 			repository,
 			Dataset.class
 		);
+		this.datasetStatistics = datasetStatistics;
 	}
 
 	@Override
@@ -87,7 +92,16 @@ public class DatasetService extends TerariumAssetServiceWithSearch<Dataset, Data
 			extractColumns(asset);
 		}
 		verifyColumnRelationship(asset);
-		return super.createAsset(asset, projectId, hasWritePermission);
+		final Dataset dataset = super.createAsset(asset, projectId, hasWritePermission);
+
+		// Calculate the statistics for the columns
+		try {
+			datasetStatistics.add(dataset.getId());
+		} catch (final Exception e) {
+			log.error("Error calculating statistics for dataset {}", dataset.getId(), e);
+		}
+
+		return dataset;
 	}
 
 	@Override
