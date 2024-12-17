@@ -7,7 +7,8 @@ import {
 	removeChartSettingById,
 	updateChartSettingsBySelectedVariables,
 	updateAllChartSettings,
-	updateSensitivityChartSettingOption
+	updateSensitivityChartSettingOption,
+	CHART_SETTING_WITH_QUANTILES_OPTIONS
 } from '@/services/chart-settings';
 import { WorkflowNode } from '@/types/workflow';
 
@@ -108,11 +109,7 @@ export function useChartSettings(
 	const updateQauntilesOptions = (options: { showQuantiles: boolean; quantiles: number[] }) => {
 		emit('update-state', {
 			...props.node.state,
-			chartSettings: updateAllChartSettings(chartSettings.value, options, [
-				ChartSettingType.VARIABLE_ENSEMBLE,
-				ChartSettingType.VARIABLE_COMPARISON,
-				ChartSettingType.VARIABLE
-			])
+			chartSettings: updateAllChartSettings(chartSettings.value, options, CHART_SETTING_WITH_QUANTILES_OPTIONS)
 		});
 	};
 

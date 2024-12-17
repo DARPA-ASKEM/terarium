@@ -48,6 +48,7 @@ import * as d3 from 'd3';
 import { ChartSetting } from '@/types/common';
 import RadioButton from 'primevue/radiobutton';
 import MultiSelect from 'primevue/multiselect';
+import { getQauntileChartSettingOptions } from '@/services/chart-settings';
 
 // This ui component manages updating the quantiles options for all provided chart settings.
 // Changes to the quantiles options are applied to all applicable chart settings and all settings have the same quantiles options.
@@ -60,15 +61,9 @@ const props = defineProps<{
 }>();
 const emits = defineEmits(['update-options']);
 
-const options = computed(() => {
-	const settingsWithQuantilesOption = props.settings.find((s) => s.showQuantiles || Boolean(s.quantiles?.length));
-	return settingsWithQuantilesOption
-		? {
-				showQuantiles: settingsWithQuantilesOption.showQuantiles,
-				quantiles: settingsWithQuantilesOption.quantiles
-			}
-		: { showQuantiles: false, quantiles: [] };
-});
+const options = computed(
+	() => getQauntileChartSettingOptions(props.settings) ?? { showQuantiles: false, quantiles: [] }
+);
 
 const radioButtonValue = computed(() => (options.value.showQuantiles ? 'quantile' : 'default'));
 const onRadioButtonChange = (value: 'default' | 'quantile') => {
