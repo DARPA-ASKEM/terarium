@@ -182,8 +182,13 @@
 								<template v-for="setting of selectedSensitivityChartSettings" :key="setting.id">
 									<vega-chart
 										expandable
-										:are-embed-actions-visible="true"
-										:visualization-spec="testSensitivity[setting.id]"
+										are-embed-actions-visible
+										:visualization-spec="sensitivityCharts[setting.id].lineChart"
+									/>
+									<vega-chart
+										expandable
+										are-embed-actions-visible
+										:visualization-spec="sensitivityCharts[setting.id].scatterChart"
 									/>
 								</template>
 							</AccordionTab>
@@ -222,10 +227,9 @@
 						"
 						:active-settings="activeChartSettings"
 						:generate-annotation="generateAnnotation"
-						@update-settings-scale="updateChartSettingsScale(activeChartSettings?.id as string, $event)"
-						@update-settings-color="onColorChange"
+						@update-settings="updateActiveChartSettings"
 						@delete-annotation="deleteAnnotation"
-						@close="activeChartSettings = null"
+						@close="setActiveChartSettings(null)"
 					/>
 				</template>
 				<template #content>
@@ -236,7 +240,7 @@
 							:type="ChartSettingType.INTERVENTION"
 							:select-options="Object.keys(groupedInterventionOutputs)"
 							:selected-options="selectedInterventionSettings.map((s) => s.selectedVariables[0])"
-							@open="activeChartSettings = $event"
+							@open="setActiveChartSettings($event)"
 							@remove="removeChartSettings"
 							@selection-change="updateChartSettings"
 						/>
@@ -249,7 +253,7 @@
 								Object.keys(pyciemssMap).filter((c) => ['state', 'observable'].includes(modelPartTypesMap[c]))
 							"
 							:selected-options="selectedVariableSettings.map((s) => s.selectedVariables[0])"
-							@open="activeChartSettings = $event"
+							@open="setActiveChartSettings($event)"
 							@remove="removeChartSettings"
 							@selection-change="updateChartSettings"
 						/>
@@ -260,7 +264,7 @@
 							:type="ChartSettingType.VARIABLE_COMPARISON"
 							:select-options="Object.keys(pyciemssMap)"
 							:selected-options="comparisonChartsSettingsSelection"
-							@open="activeChartSettings = $event"
+							@open="setActiveChartSettings($event)"
 							@remove="removeChartSettings"
 							@selection-change="comparisonChartsSettingsSelection = $event"
 						/>
@@ -293,9 +297,28 @@
 								Object.keys(pyciemssMap).filter((c) => ['state', 'observable'].includes(modelPartTypesMap[c]))
 							"
 							:selected-options="selectedSensitivityChartSettings.map((s) => s.selectedVariables[0])"
-							@open="activeChartSettings = $event"
+							@open="setActiveChartSettings($event)"
 							@remove="removeChartSettings"
-							@selection-change="updateChartSettings"
+							:sensitivity-options="{
+								inputOptions: Object.keys(pyciemssMap).filter((c) => ['parameter'].includes(modelPartTypesMap[c])),
+								selectedInputOptions: selectedSensitivityChartSettings[0]?.selectedInputVariables ?? [],
+								timepoint: selectedSensitivityChartSettings[0]?.timepoint ?? 0
+							}"
+							@selection-change="
+								(e) =>
+									updateSensitivityChartSettings({
+										selectedVariables: e,
+										selectedInputVariables: selectedSensitivityChartSettings[0]?.selectedInputVariables ?? [],
+										timepoint: selectedSensitivityChartSettings[0]?.timepoint ?? 0
+									})
+							"
+							@sensitivity-selection-change="
+								(e) =>
+									updateSensitivityChartSettings({
+										selectedVariables: selectedSensitivityChartSettings.map((s) => s.selectedVariables[0]),
+										...e
+									})
+							"
 						/>
 					</div>
 				</template>
@@ -532,9 +555,10 @@ const {
 	comparisonChartsSettingsSelection,
 	removeChartSettings,
 	updateChartSettings,
-	updateChartSettingsScale,
 	addComparisonChartSettings,
-	updateChartPrimaryColor
+	updateSensitivityChartSettings,
+	updateActiveChartSettings,
+	setActiveChartSettings
 } = useChartSettings(props, emit);
 
 const {
@@ -556,7 +580,7 @@ const {
 const interventionCharts = useInterventionCharts(selectedInterventionSettings, true);
 const variableCharts = useVariableCharts(selectedVariableSettings, null);
 const comparisonCharts = useComparisonCharts(selectedComparisonChartSettings);
-const testSensitivity = useSimulateSensitivityCharts(selectedSensitivityChartSettings);
+const sensitivityCharts = useSimulateSensitivityCharts(selectedSensitivityChartSettings);
 
 const updateState = () => {
 	const state = _.cloneDeep(props.node.state);
@@ -746,10 +770,6 @@ watch(
 	},
 	{ immediate: true }
 );
-
-const onColorChange = (color: string) => {
-	if (activeChartSettings.value) updateChartPrimaryColor(activeChartSettings.value, color);
-};
 
 onMounted(() => {
 	buildJupyterContext();

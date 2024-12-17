@@ -37,7 +37,7 @@
 								option-value="id"
 								:loading="isFetchingDatasets"
 								placeholder="Optional"
-								@change="createCharts"
+								@change="generateChartData"
 							/>
 
 							<label>Comparison tables</label>
@@ -52,7 +52,7 @@
 							v-model="timepointHeaderName"
 							:options="commonHeaderNames"
 							placeholder="Select timepoint header"
-							@change="createCharts"
+							@change="generateChartData"
 						/>
 						<template v-if="knobs.selectedCompareOption === CompareValue.RANK">
 							<label>Specifiy criteria of interest</label>
@@ -80,21 +80,21 @@
 		</template>
 
 		<tera-drilldown-section :tabName="DrilldownTabs.Wizard">
-			<Accordion multiple :active-index="activeIndices">
-				<AccordionTab header="Summary"> </AccordionTab>
-				<AccordionTab header="Variables">
-					<template v-for="(compareChart, index) in selectedCharts">
-						<vega-chart
-							v-if="!isEmpty(compareChart)"
-							:key="index"
-							:visualization-spec="compareChart"
-							:are-embed-actions-visible="false"
-							expandable
-						/>
-					</template>
-				</AccordionTab>
-				<AccordionTab header="Comparison table"> </AccordionTab>
-			</Accordion>
+			<div ref="outputPanel">
+				<Accordion multiple :active-index="activeIndices">
+					<AccordionTab header="Summary"> </AccordionTab>
+					<AccordionTab header="Variables">
+						<template v-for="setting of selectedVariableSettings" :key="setting.id">
+							<vega-chart
+								:visualization-spec="variableCharts[setting.id]"
+								:are-embed-actions-visible="false"
+								expandable
+							/>
+						</template>
+					</AccordionTab>
+					<AccordionTab header="Comparison table"> </AccordionTab>
+				</Accordion>
+			</div>
 		</tera-drilldown-section>
 
 		<tera-drilldown-section :tabName="DrilldownTabs.Notebook"> </tera-drilldown-section>
@@ -106,6 +106,22 @@
 				header="Output settings"
 				content-width="360px"
 			>
+				<template #overlay>
+					<tera-chart-settings-panel
+						:annotations="
+							[ChartSettingType.VARIABLE, ChartSettingType.VARIABLE_COMPARISON].includes(
+								activeChartSettings?.type as ChartSettingType
+							)
+								? getChartAnnotationsByChartId(activeChartSettings?.id ?? '')
+								: undefined
+						"
+						:active-settings="activeChartSettings"
+						:generate-annotation="generateAnnotation"
+						@delete-annotation="deleteAnnotation"
+						@update-settings="updateActiveChartSettings"
+						@close="setActiveChartSettings(null)"
+					/>
+				</template>
 				<template #content>
 					<div class="output-settings-panel">
 						<tera-chart-control
@@ -123,7 +139,7 @@
 							v-for="settings of chartSettings.filter((setting) => setting.type === ChartSettingType.VARIABLE)"
 							:key="settings.id"
 							:settings="settings"
-							@open="activeChartSettings = settings"
+							@open="setActiveChartSettings(settings)"
 							@remove="removeChartSettings"
 						/>
 						<label>How do you want to plot the values?</label>
@@ -132,7 +148,7 @@
 								v-model="knobs.selectedPlotType"
 								:value="option.value"
 								name="plotValues"
-								@change="createCharts"
+								@change="generateChartData"
 							/>
 							<label class="pl-2 py-1" :for="option.value">{{ option.label }}</label>
 						</div>
@@ -148,7 +164,7 @@ import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
 import { WorkflowNode, WorkflowPortStatus } from '@/types/workflow';
 import TeraSliderPanel from '@/components/widgets/tera-slider-panel.vue';
 import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.vue';
-import { DrilldownTabs, ChartSettingType, type ChartSetting } from '@/types/common';
+import { DrilldownTabs, ChartSettingType } from '@/types/common';
 import { onMounted, ref, watch, computed } from 'vue';
 import Button from 'primevue/button';
 import Accordion from 'primevue/accordion';
@@ -158,12 +174,15 @@ import { Dataset } from '@/types/Types';
 import { getDataset, getRawContent } from '@/services/dataset';
 import TeraCheckbox from '@/components/widgets/tera-checkbox.vue';
 import RadioButton from 'primevue/radiobutton';
-import { isEmpty, cloneDeep, capitalize, isEqual } from 'lodash';
+import { isEmpty, cloneDeep } from 'lodash';
 import VegaChart from '@/components/widgets/VegaChart.vue';
-import { createForecastChart, AUTOSIZE } from '@/services/charts';
+import { deleteAnnotation } from '@/services/chart-settings';
 import TeraChartSettingsItem from '@/components/widgets/tera-chart-settings-item.vue';
 import TeraChartControl from '@/components/workflow/tera-chart-control.vue';
+import TeraChartSettingsPanel from '@/components/widgets/tera-chart-settings-panel.vue';
 import { useChartSettings } from '@/composables/useChartSettings';
+import { useDrilldownChartSize } from '@/composables/useDrilldownChartSize';
+import { useCharts, type ChartData } from '@/composables/useCharts';
 import TeraCriteriaOfInterestCard from './tera-criteria-of-interest-card.vue';
 import {
 	blankCriteriaOfInterest,
@@ -203,15 +222,20 @@ const isFetchingDatasets = ref(false);
 const isSimulationsFromSameModel = ref(true);
 const isATESelected = ref(false);
 
-const compareCharts = ref<any[]>([]);
+const {
+	activeChartSettings,
+	chartSettings,
+	selectedVariableSettings,
+	removeChartSettings,
+	updateChartSettings,
+	updateActiveChartSettings,
+	setActiveChartSettings
+} = useChartSettings(props, emit);
 
-const { activeChartSettings, chartSettings, selectedVariableSettings, removeChartSettings, updateChartSettings } =
-	useChartSettings(props, emit);
+const outputPanel = ref(null);
+const chartSize = useDrilldownChartSize(outputPanel);
 
-const selectedCharts = computed(() => {
-	const selectedChartIds = selectedVariableSettings.value.map((setting) => setting.selectedVariables[0]);
-	return compareCharts.value.filter((chart) => selectedChartIds.includes(chart.title.text));
-});
+const chartData = ref<ChartData | null>(null);
 
 const onRun = () => {
 	console.log('run');
@@ -219,11 +243,22 @@ const onRun = () => {
 
 interface BasicKnobs {
 	criteriaOfInterestCards: CriteriaOfInterestCard[];
-	selectedPlotType: PlotValue;
 	selectedCompareOption: CompareValue;
 	selectedDataset: string | null;
-	chartSettings: ChartSetting[] | null;
+	selectedPlotType: PlotValue;
 }
+
+const knobs = ref<BasicKnobs>({
+	criteriaOfInterestCards: [],
+	selectedCompareOption: CompareValue.IMPACT,
+	selectedDataset: null,
+	selectedPlotType: PlotValue.PERCENTAGE
+});
+
+const selectedPlotType = computed(() => knobs.value.selectedPlotType);
+const baselineName = computed(
+	() => datasets.value.find((dataset) => dataset.id === knobs.value.selectedDataset)?.name ?? null
+);
 
 const addCriteria = () => {
 	knobs.value.criteriaOfInterestCards.push(blankCriteriaOfInterest);
@@ -237,13 +272,16 @@ const updateCriteria = (card: Partial<CriteriaOfInterestCard>, index: number) =>
 	Object.assign(knobs.value.criteriaOfInterestCards[index], card);
 };
 
-const knobs = ref<BasicKnobs>({
-	criteriaOfInterestCards: [],
-	selectedPlotType: PlotValue.PERCENTAGE,
-	selectedCompareOption: CompareValue.IMPACT,
-	selectedDataset: null,
-	chartSettings: null
-});
+const { generateAnnotation, getChartAnnotationsByChartId, useCompareDatasetCharts } = useCharts(
+	props.node.id,
+	null,
+	null,
+	chartData,
+	chartSize,
+	null,
+	null
+);
+const variableCharts = useCompareDatasetCharts(selectedVariableSettings, selectedPlotType, baselineName);
 
 const initialize = async () => {
 	const state = cloneDeep(props.node.state);
@@ -264,7 +302,7 @@ const initialize = async () => {
 
 	if (!knobs.value.selectedDataset) knobs.value.selectedDataset = datasets.value[0]?.id ?? null;
 
-	createCharts();
+	generateChartData();
 };
 
 // Following two funcs are util like
@@ -292,17 +330,19 @@ function findDuplicates(strings: string[]): string[] {
 	return duplicates;
 }
 
-async function createCharts() {
-	// FIXME: Temporary check, useChartSettings updates the state directly but the knobs are not updated
-	// If this isn't synced the chartSettings will be reverted to the previous state
-	if (!isEqual(props.node.state.chartSettings, knobs.value.chartSettings)) {
-		knobs.value.chartSettings = props.node.state.chartSettings;
-	}
-
+async function generateChartData() {
 	if (datasets.value.length <= 1) return;
-	compareCharts.value = [];
 
-	const rawContents = await Promise.all(datasets.value.map((dataset) => getRawContent(dataset)));
+	const rawContents = await Promise.all(
+		datasets.value.map((dataset) => {
+			// Compare the summaries so find its csv file like this
+			let summaryIndex = dataset?.fileNames?.findIndex((name) => name === 'result_summary.csv');
+			// If the summary isn't found, use the first file (it could be the first one if you downloaded the summary csv)
+			if (!summaryIndex || summaryIndex === -1) summaryIndex = 0;
+			return getRawContent(dataset, -1, summaryIndex); // Setting the csv row limit to -1 to get all rows
+		})
+	);
+
 	const transposedRawContents = rawContents.map((content) => ({ ...content, csv: transposeArrays(content?.csv) }));
 
 	// Collect common header names if not done yet
@@ -327,7 +367,7 @@ async function createCharts() {
 	const selectedIndex = datasets.value.findIndex((dataset) => dataset.id === knobs.value.selectedDataset);
 	if (selectedIndex === -1) return;
 
-	const { selectedPlotType } = knobs.value;
+	const allData: any[] = [];
 
 	// Go through every common header (column loop)
 	commonHeaderNames.value?.forEach((headerName) => {
@@ -349,44 +389,27 @@ async function createCharts() {
 
 			referenceColumn.forEach((referencePoint: number, index: number) => {
 				let value = 0;
-				if (selectedPlotType === PlotValue.DIFFERENCE) {
+				if (selectedPlotType.value === PlotValue.DIFFERENCE) {
 					value = columnToSubtract[index] - referencePoint; // difference
-				} else if (selectedPlotType === PlotValue.PERCENTAGE) {
+				} else if (selectedPlotType.value === PlotValue.PERCENTAGE) {
 					value = ((columnToSubtract[index] - referencePoint) / referencePoint) * 100; // percentage
-				} else if (selectedPlotType === PlotValue.VALUE) {
+				} else if (selectedPlotType.value === PlotValue.VALUE) {
 					value = parseFloat(columnToSubtract[index]); // trajectory
 				}
 				if (data[index] === undefined) {
 					data.push({
+						headerName,
 						[name]: value,
-						timepoint: parseFloat(timepoints[index])
+						timepoint_id: parseFloat(timepoints[index])
 					});
 				} else {
 					data[index][name] = value;
 				}
 			});
 		});
-		compareCharts.value.push(
-			createForecastChart(
-				null,
-				{
-					data,
-					variables: variableNames,
-					timeField: 'timepoint'
-				},
-				null,
-				{
-					title: headerName,
-					xAxisTitle: 'Timepoint',
-					yAxisTitle: capitalize(selectedPlotType),
-					width: 600,
-					height: 300,
-					legend: true,
-					autosize: AUTOSIZE.FIT
-				}
-			)
-		);
+		allData.push(...data);
 	});
+	chartData.value = { result: [], resultSummary: allData, pyciemssMap: {}, translationMap: {} };
 }
 
 onMounted(() => {
@@ -397,7 +420,10 @@ watch(
 	() => knobs.value,
 	() => {
 		const state = cloneDeep(props.node.state);
-		Object.assign(state, knobs.value);
+		state.criteriaOfInterestCards = knobs.value.criteriaOfInterestCards;
+		state.selectedCompareOption = knobs.value.selectedCompareOption;
+		state.selectedDataset = knobs.value.selectedDataset;
+		state.selectedPlotType = knobs.value.selectedPlotType;
 		emit('update-state', state);
 	},
 	{ deep: true }
