@@ -140,8 +140,6 @@ export async function fetchOutputData(preForecastId: string, postForecastId: str
 	const { result, resultSummary } = mergeResults(runResultPre, runResult, runResultSummaryPre, runResultSummary);
 
 	const resultGroupByTimepoint = processAndSortSamplesByTimepoint(result);
-	console.log(result, resultSummary);
-	console.log(resultGroupByTimepoint);
 	return {
 		result,
 		resultSummary,
