@@ -21,10 +21,8 @@ import software.uncharted.terarium.hmiserver.models.dataservice.dataset.DatasetC
 import software.uncharted.terarium.hmiserver.models.task.TaskRequest;
 import software.uncharted.terarium.hmiserver.models.task.TaskRequest.TaskType;
 import software.uncharted.terarium.hmiserver.models.task.TaskResponse;
-import software.uncharted.terarium.hmiserver.service.data.DatasetService;
 import software.uncharted.terarium.hmiserver.service.tasks.TaskService;
 import software.uncharted.terarium.hmiserver.utils.Messages;
-import software.uncharted.terarium.hmiserver.utils.rebac.Schema;
 
 @Service
 @Slf4j
@@ -34,13 +32,12 @@ public class DatasetStatistics {
 
 	private final ObjectMapper objectMapper;
 	private final TaskService taskService;
-	private final DatasetService datasetService;
 	final Messages messages;
 
 	@Data
 	public static class DatasetStatisticsRequest {
 
-		private UUID datasetId;
+		private String datasetUrl;
 	}
 
 	// Following is based on the response from the Gollm service
@@ -80,20 +77,15 @@ public class DatasetStatistics {
 
 	/**
 	 * Add statistics to the columns of a Dataset
-	 * @param datasetId - The UUID of the Dataset
+	 * @param dataset - The Dataset
 	 * @throws IllegalArgumentException - If the Dataset does not exist or the statistics have already been calculated
 	 * @throws IOException - If there is an error reading the response from the Gollm service
 	 * @throws ExecutionException - If there is an error running the Task
 	 * @throws InterruptedException - If the Task is interrupted
 	 * @throws TimeoutException - If the Task times out
 	 */
-	public void add(final UUID datasetId)
+	public void add(final Dataset dataset)
 		throws IllegalArgumentException, IOException, ExecutionException, InterruptedException, TimeoutException {
-		// Check that the Dataset exists
-		final Dataset dataset = datasetService
-			.getAsset(datasetId, Schema.Permission.READ)
-			.orElseThrow(() -> new IllegalArgumentException(messages.get("dataset.not-found")));
-
 		// Check that the Statistics have already been calculated, as Dataset are immutable
 		final boolean isStatisticsExist = dataset.getColumns().stream().anyMatch(column -> column.getMetadata() != null);
 		if (isStatisticsExist) {
@@ -102,7 +94,7 @@ public class DatasetStatistics {
 
 		// Create the request to the Gollm service
 		final DatasetStatisticsRequest request = new DatasetStatisticsRequest();
-		request.setDatasetId(datasetId);
+		request.setDatasetUrl(dataset.getDatasetUrl());
 
 		final TaskRequest taskRequest = new TaskRequest();
 		taskRequest.setType(TaskType.GOLLM);

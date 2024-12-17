@@ -92,16 +92,7 @@ public class DatasetService extends TerariumAssetServiceWithSearch<Dataset, Data
 			extractColumns(asset);
 		}
 		verifyColumnRelationship(asset);
-		final Dataset dataset = super.createAsset(asset, projectId, hasWritePermission);
-
-		// Calculate the statistics for the columns
-		try {
-			datasetStatistics.add(dataset.getId());
-		} catch (final Exception e) {
-			log.error("Error calculating statistics for dataset {}", dataset.getId(), e);
-		}
-
-		return dataset;
+		return super.createAsset(asset, projectId, hasWritePermission);
 	}
 
 	@Override
@@ -155,6 +146,13 @@ public class DatasetService extends TerariumAssetServiceWithSearch<Dataset, Data
 				if (csvParser == null) continue;
 				final List<String> headers = new ArrayList<>(csvParser.getHeaderMap().keySet());
 				addDatasetColumns(dataset, filename, headers);
+
+				// Calculate the statistics for the columns
+				try {
+					datasetStatistics.add(dataset);
+				} catch (final Exception e) {
+					log.error("Error calculating statistics for dataset {}", dataset.getId(), e);
+				}
 			}
 		}
 		return dataset;
