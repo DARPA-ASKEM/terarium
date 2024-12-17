@@ -55,6 +55,10 @@
 						/>
 					</div>
 				</div>
+				<section v-if="isColorPickerEnabled">
+					<h6>Color Picker</h6>
+					<input type="color" :value="activeSettings?.primaryColor ?? ''" @change="onColorChange($event)" />
+				</section>
 			</div>
 		</div>
 	</transition>
@@ -64,7 +68,7 @@
 import _ from 'lodash';
 import { ref, computed } from 'vue';
 import Button from 'primevue/button';
-import { ChartSetting } from '@/types/common';
+import { ChartSetting, ChartSettingType } from '@/types/common';
 import { ChartAnnotation } from '@/types/Types';
 import TeraInputText from '@/components/widgets/tera-input-text.vue';
 import TeraCheckbox from '@/components/widgets/tera-checkbox.vue';
@@ -84,19 +88,20 @@ const props = defineProps<{
 
 const emit = defineEmits([
 	'close',
-	'update-settings-scale',
+	'update-settings',
 	'delete-annotation',
 	'create-annotation',
 	'update-small-multiples',
 	'update-share-y-axis'
 ]);
 
+// Log scale
 const useLog = computed(() => props.activeSettings?.scale === 'log');
 const isSmallMultiples = ref<boolean>(false);
 const isShareYAxis = ref<boolean>(false);
 
 const toggleLogScale = (useLogScale: boolean) => {
-	emit('update-settings-scale', useLogScale);
+	emit('update-settings', { scale: useLogScale ? 'log' : '' });
 };
 
 const toggleSmallMultiples = (smallMultiples: boolean) => {
@@ -107,6 +112,19 @@ const toggleShareYAxis = (shareYAxis: boolean) => {
 	emit('update-share-y-axis', shareYAxis);
 };
 
+// Primary color
+const isColorPickerEnabled = computed(() => {
+	const type = props.activeSettings?.type;
+	if (type) {
+		return ![ChartSettingType.ERROR_DISTRIBUTION, ChartSettingType.VARIABLE_COMPARISON].includes(type);
+	}
+	return false;
+});
+const onColorChange = (event) => {
+	emit('update-settings', { primaryColor: event.target?.value });
+};
+
+// Chart Annotations
 const chartAnnotations = computed(() => {
 	if (props.annotations === undefined) {
 		return undefined;

@@ -11,6 +11,8 @@ const VEGALITE_SCHEMA = 'https://vega.github.io/schema/vega-lite/v5.json';
 
 export const CATEGORICAL_SCHEME = ['#1B8073', '#6495E8', '#8F69B9', '#D67DBF', '#E18547', '#D2C446', '#84594D'];
 
+// diverging categorical colour scheme for the sensitivity chart (from a deep blue -> a deep red)
+export const SENSITIVITY_COLOUR_SCHEME = ['#4575B4', '#91BFDB', '#E0F3F8', '#FFFFBF', '#FEE090', '#FC8D59', '#D73027'];
 export enum AUTOSIZE {
 	FIT = 'fit',
 	FIT_X = 'fit-x',
@@ -40,6 +42,7 @@ export interface ForecastChartOptions extends BaseChartOptions {
 	colorscheme?: string[];
 	fitYDomain?: boolean;
 	legendProperties?: Record<string, any>;
+	bins?: Map<string, number[]>;
 }
 
 export interface ForecastChartLayer {
@@ -498,6 +501,21 @@ export function createForecastChart(
 			]
 		};
 
+		// group by bins id if present
+		if (options.bins) {
+			let calculateExpr = '';
+			options.bins?.forEach((sampleIds, bin) => {
+				calculateExpr += `indexof([${sampleIds}], datum.sample_id) >= 0 ? '${bin}' : `;
+			});
+			calculateExpr += '0';
+
+			header.transform.push({
+				// @ts-ignore
+				calculate: calculateExpr,
+				as: ['group']
+			});
+		}
+
 		let dateExpression;
 		if (options.dateOptions) {
 			dateExpression = formatDateLabelFn(options.dateOptions.startDate, 'datum.value', options.dateOptions.dateFormat);
@@ -537,13 +555,13 @@ export function createForecastChart(
 			x: encodingX,
 			y: encodingY,
 			color: {
-				field: 'variableField',
+				field: options.bins ? 'group' : 'variableField',
 				type: 'nominal',
 				scale: {
-					domain: layer.variables,
+					domain: options.bins ? Array.from(options.bins.keys()) : layer.variables,
 					range: options.colorscheme || CATEGORICAL_SCHEME
 				},
-				legend: false
+				legend: options.bins ? { ...legendProperties } : null
 			}
 		};
 
@@ -565,7 +583,7 @@ export function createForecastChart(
 		Object.assign(encoding, {
 			detail: { field: samplingLayer.groupField, type: 'nominal' },
 			strokeWidth: { value: 1 },
-			opacity: { value: 0.1 }
+			opacity: { value: options.bins ? 1.0 : 0.1 }
 		});
 
 		spec.layer.push(layerSpec);
@@ -650,15 +668,25 @@ export function createForecastChart(
  * */
 export function createSimulateSensitivityScatter(samplingLayer: SensitivityChartLayer, options: ForecastChartOptions) {
 	// Start building
+	let calculateExpr = '';
+	options.bins?.forEach((sampleIds, quantile) => {
+		calculateExpr += `indexof([${sampleIds}], datum.sample_id) >= 0 ? '${quantile}' : `;
+	});
+	calculateExpr += '0';
 	const spec: any = {
 		$schema: VEGALITE_SCHEMA,
-		title: `${samplingLayer.outputVariable} sensitivity`,
 		description: '',
 		repeat: {
 			row: samplingLayer.inputVariables,
 			column: samplingLayer.inputVariables
 		},
 		data: { values: samplingLayer.data },
+		transform: [
+			{
+				calculate: calculateExpr,
+				as: 'quantile'
+			}
+		],
 		spec: {
 			width: options.width,
 			height: options.height,
@@ -687,9 +715,15 @@ export function createSimulateSensitivityScatter(samplingLayer: SensitivityChart
 					}
 				},
 				color: {
-					field: samplingLayer.outputVariable,
-					type: 'quantitative'
+					field: 'quantile',
+					type: 'nominal',
+					scale: {
+						domain: options.bins ? Array.from(options.bins.keys()) : samplingLayer.outputVariable,
+						range: options.colorscheme || CATEGORICAL_SCHEME
+					},
+					legend: null
 				},
+				detail: { field: 'sample_id', type: 'nominal' },
 				size: { value: 80 }
 			}
 		}
@@ -1312,41 +1346,5 @@ export function createFunmanParameterCharts(
 				}
 			]
 		}
-	};
-}
-
-// Similar to createForecastChart, see about deprecating this later
-export function createDatasetCompareChart(values: any[], headerName: string) {
-	const globalFont = 'Figtree';
-
-	return {
-		$schema: VEGALITE_SCHEMA,
-		config: {
-			font: globalFont
-		},
-		title: {
-			text: headerName,
-			anchor: 'start',
-			frame: 'group',
-			offset: 10,
-			fontSize: 14
-		},
-		width: 600,
-		height: 300,
-		data: {
-			values
-		},
-		layer: [
-			{
-				mark: {
-					type: 'line'
-				},
-				encoding: {
-					x: { field: 'timepoint', type: 'quantitative' },
-					y: { field: 'value', type: 'quantitative' },
-					color: { field: 'name', type: 'nominal' }
-				}
-			}
-		]
 	};
 }
