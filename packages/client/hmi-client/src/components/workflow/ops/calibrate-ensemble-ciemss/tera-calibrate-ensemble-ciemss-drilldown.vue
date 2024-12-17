@@ -371,6 +371,7 @@ import { useCharts } from '@/composables/useCharts';
 import { useChartSettings } from '@/composables/useChartSettings';
 import { deleteAnnotation } from '@/services/chart-settings';
 import { DataArray } from '@/utils/stats';
+import { GroupedDataArray } from '@/services/charts';
 import {
 	CalibrateEnsembleCiemssOperationState,
 	CalibrateEnsembleMappingRow,
@@ -599,7 +600,7 @@ const outputData = ref<{
 	result: DataArray;
 	resultSummary: DataArray;
 	pyciemssMap: Record<string, string>;
-	resultGroupByTimepoint: Record<string, number[]>[];
+	resultGroupByTimepoint: GroupedDataArray;
 } | null>(null);
 const groundTruthData = computed<DataArray>(() => parseCsvAsset(csvAsset.value as CsvAsset));
 const chartSize = useDrilldownChartSize(chartWidthDiv);

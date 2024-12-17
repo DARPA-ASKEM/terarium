@@ -1,5 +1,5 @@
 import _ from 'lodash';
-import { createForecastChart, AUTOSIZE } from '@/services/charts';
+import { createForecastChart, AUTOSIZE, GroupedDataArray } from '@/services/charts';
 import {
 	DataArray,
 	extractModelConfigIdsInOrder,
@@ -109,7 +109,7 @@ const processAndSortSamplesByTimepoint = (result: DataArray) => {
 	// Sort sample values for each variable grouped by timepoint_id (this precomputed data will be used to calculate the quantiles on the fly)
 	// If this becomes a performance bottleneck, we can consider using web workers or chunked sorting with setTimeout to avoid blocking the main thread.
 	const grouped = _.groupBy(result, 'timepoint_id');
-	const resultGroupByTimepointId: Record<string, number[]>[] = [];
+	const resultGroupByTimepointId: GroupedDataArray = [];
 	Object.entries(grouped).forEach(([timepointId, samples]) => {
 		const obj: Record<string, number[]> = {};
 		samples.forEach((sample) => {
@@ -153,7 +153,7 @@ export function buildChartData(
 	outputData: {
 		result: DataArray;
 		resultSummary: DataArray;
-		resultGroupByTimepoint: Record<string, number[]>[];
+		resultGroupByTimepoint: GroupedDataArray;
 		pyciemssMap: Record<string, string>;
 	} | null,
 	mappings: CalibrateEnsembleMappingRow[]

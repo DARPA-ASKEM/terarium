@@ -14,7 +14,8 @@ import {
 	createInterventionChartMarkers,
 	createQuantilesForecastChart,
 	createSimulateSensitivityScatter,
-	ForecastChartOptions
+	ForecastChartOptions,
+	GroupedDataArray
 } from '@/services/charts';
 import { flattenInterventionData } from '@/services/intervention-policy';
 import { DataArray, extractModelConfigIdsInOrder, extractModelConfigIds } from '@/services/models/simulation-service';
@@ -32,8 +33,6 @@ import { SimulateEnsembleMappingRow } from '@/components/workflow/ops/simulate-e
 import { getModelConfigName } from '@/services/model-configurations';
 import { EnsembleErrorData } from '@/components/workflow/ops/calibrate-ensemble-ciemss/calibrate-ensemble-util';
 import { useChartAnnotations } from './useChartAnnotations';
-
-export type GroupedDataArray = Record<string, number[]>[];
 
 export interface ChartData {
 	result: DataArray;
