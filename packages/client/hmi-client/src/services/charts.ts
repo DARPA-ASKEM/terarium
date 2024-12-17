@@ -677,7 +677,6 @@ const buildQuantileChartData = (data: GroupedDataArray, selectVariables: string[
 		quantile: number;
 	}[] = [];
 	data.forEach((d, index) => {
-		const datum = {};
 		selectVariables.forEach((variable) => {
 			const values = d[variable] ?? [];
 			[...quantiles]
@@ -692,7 +691,6 @@ const buildQuantileChartData = (data: GroupedDataArray, selectVariables: string[
 					});
 				});
 		});
-		return datum;
 	});
 	return result;
 };
