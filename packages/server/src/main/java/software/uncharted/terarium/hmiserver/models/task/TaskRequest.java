@@ -52,6 +52,7 @@ public class TaskRequest implements Serializable {
 	protected int timeoutMinutes = 5;
 	protected String userId;
 	protected UUID projectId;
+	protected boolean noCache = false;
 
 	// Sometimes we have context specific variables what we want to associate with a
 	// request but aren't actually used by the task on the other side but are

@@ -108,6 +108,7 @@ public class TaskService {
 				.setStdout(stdout)
 				.setStderr(stderr)
 				.setRoutingKey(getRoutingKey())
+				.setNoCache(noCache)
 				.setRequestSHA256(getSHA256());
 		}
 	}
@@ -476,7 +477,7 @@ public class TaskService {
 				resp.setOutput(e.getMessage().getBytes());
 			}
 
-			if (resp.getStatus() == TaskStatus.SUCCESS) {
+			if (resp.getStatus() == TaskStatus.SUCCESS && !resp.isNoCache()) {
 				try {
 					// add to the response cache
 					log.info(
@@ -670,33 +671,40 @@ public class TaskService {
 		// create sha256 hash of the request
 		final String hash = req.getSHA256();
 
-		try {
-			log.info("Checking for cached response under SHA: {} for {} for script: {}", hash, req.getId(), req.getScript());
-			// check if there is an existing response for the hash
-			final TaskResponse resp = responseCache.get(hash);
+		if (!req.isNoCache()) {
+			try {
+				log.info(
+					"Checking for cached response under SHA: {} for {} for script: {}",
+					hash,
+					req.getId(),
+					req.getScript()
+				);
+				// check if there is an existing response for the hash
+				final TaskResponse resp = responseCache.get(hash);
 
-			if (resp != null) {
-				// a task id already exits for the SHA256, this means the request has already
-				// been dispatched.
-				log.info("Task response found in cache for SHA: {}", hash);
+				if (resp != null) {
+					// a task id already exits for the SHA256, this means the request has already
+					// been dispatched.
+					log.info("Task response found in cache for SHA: {}", hash);
 
-				// create and return a completed task future
-				final CompletableTaskFuture future = new CompletableTaskFuture(req, resp);
+					// create and return a completed task future
+					final CompletableTaskFuture future = new CompletableTaskFuture(req, resp);
 
-				// process the cached response as if it were a new response
-				processCachedTaskResponse(req, future.getLatest());
+					// process the cached response as if it were a new response
+					processCachedTaskResponse(req, future.getLatest());
 
-				return future;
+					return future;
+				}
+			} catch (final Exception e) {
+				log.warn(
+					"Failed to check for cached response under SHA: {} for {} for script: {}, re-sending request",
+					hash,
+					req.getId(),
+					req.getScript()
+				);
+				// remove the bad entry
+				responseCache.remove(hash);
 			}
-		} catch (final Exception e) {
-			log.warn(
-				"Failed to check for cached response under SHA: {} for {} for script: {}, re-sending request",
-				hash,
-				req.getId(),
-				req.getScript()
-			);
-			// remove the bad entry
-			responseCache.remove(hash);
 		}
 
 		// no cache entry for task, send a new one
