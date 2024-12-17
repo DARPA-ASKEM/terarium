@@ -3,11 +3,12 @@
  */
 
 import API from '@/api/api';
-import type { Curies, DatasetColumn, DKG, EntitySimilarityResult, State } from '@/types/Types';
+import type { Curies, DatasetColumn, DKG, EntitySimilarityResult, State, Model } from '@/types/Types';
 import { logger } from '@/utils/logger';
 import { isEmpty } from 'lodash';
 import { CalibrateMap } from '@/services/calibrate-workflow';
 import { FIFOCache } from '@/utils/FifoCache';
+import { Workflow, WorkflowNode } from '@/types/workflow';
 
 interface Entity {
 	id: string;
@@ -289,6 +290,32 @@ const autoModelMapping = async (modelOneOptions: State[], modelTwoOptions: State
 	return result;
 };
 
+/**
+ * Compare multiple models and return the concepts that are common between them
+ * @param modelIds - List of model ids to compare
+ * @returns
+ */
+interface CompareModelsConceptsRequest {
+	modelIds: Array<Model['id']>;
+	workflowId?: Workflow['id'];
+	nodeId?: WorkflowNode<any>['id'];
+}
+interface CompareModelsConceptsResponse {
+	concept_context_comparison?: string;
+	tabular_comparison?: { [key: string]: string };
+	concept_graph_comparison?: { [key: string]: string };
+}
+async function getCompareModelConcepts(
+	modelIds: Array<Model['id']>,
+	workflowId?: Workflow['id'],
+	nodeId?: WorkflowNode<any>['id']
+) {
+	const request: CompareModelsConceptsRequest = { modelIds, workflowId, nodeId };
+	const response = await API.post('/mira/compare-models-concepts', request);
+	if (response?.status !== 200) return null;
+	return (response?.data.response as CompareModelsConceptsResponse) ?? null;
+}
+
 export {
 	getCuriesEntities,
 	getEntitySimilarity,
@@ -298,5 +325,7 @@ export {
 	parseCurie,
 	autoModelMapping,
 	autoCalibrationMapping,
-	autoEntityMapping
+	autoEntityMapping,
+	getCompareModelConcepts,
+	type CompareModelsConceptsResponse
 };
