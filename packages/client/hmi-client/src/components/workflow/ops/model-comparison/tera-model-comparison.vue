@@ -513,15 +513,15 @@ const processCompareModels = async () => {
 		`;
 
 	const taskRes = await compareModels(modelIds.value, request, props.node.workflowId, props.node.id);
-	if (taskRes.status === TaskStatus.Success) {
-		compareModelsTaskId = taskRes.id;
-		generateOverview(taskRes.output);
+	compareModelsTaskId = taskRes.id;
 
-		const state = cloneDeep(props.node.state);
-		state.hasRun = true;
-		emit('update-state', state);
+	if (taskRes.status === TaskStatus.Success) {
+		generateOverview(taskRes.output);
 	}
 
+	const state = cloneDeep(props.node.state);
+	state.hasRun = true;
+	emit('update-state', state);
 	isProcessingComparison.value = false;
 };
 
