@@ -54,7 +54,7 @@ import {
 	getDownloadURL,
 	updateDataset
 } from '@/services/dataset';
-import { AssetType, type CsvAsset, type Dataset, PresignedURL } from '@/types/Types';
+import { AssetType, type CsvAsset, type Dataset } from '@/types/Types';
 import TeraAsset from '@/components/asset/tera-asset.vue';
 import Editor from 'primevue/editor';
 import { DatasetSource } from '@/types/Dataset';
@@ -95,18 +95,7 @@ const optionsMenuPt = {
 		class: 'max-h-30rem overflow-y-scroll'
 	}
 };
-const optionsMenuItems = ref<any[]>([
-	{
-		icon: 'pi pi-download',
-		label: 'Download',
-		command: async () => {
-			const presignedUrl: PresignedURL | null = await downloadFileFromDataset();
-			if (presignedUrl) {
-				window.open(presignedUrl.url, '_blank');
-			}
-		}
-	}
-]);
+const optionsMenuItems = ref<any[]>([]);
 
 const isSaved = computed(() => isEqual(dataset.value, transientDataset.value));
 const columnInformation = computed(
@@ -149,14 +138,21 @@ const toggleOptionsMenu = (event) => {
 	optionsMenu.value.toggle(event);
 };
 
-async function downloadFileFromDataset(): Promise<PresignedURL | null> {
-	if (dataset.value) {
-		const { id, fileNames } = dataset.value;
-		if (id && fileNames && fileNames.length > 0 && !isEmpty(fileNames[0])) {
-			return (await getDownloadURL(id, fileNames[0])) ?? null;
-		}
+async function downloadFileFromDataset(fileName: string | null = null) {
+	if (!dataset.value?.id) return;
+
+	if (!fileName) fileName = dataset.value?.fileNames?.[0] ?? null;
+	if (!fileName) return;
+
+	const presignedURL = (await getDownloadURL(dataset.value.id, fileName)) ?? null;
+	if (presignedURL) {
+		const link = document.createElement('a');
+		link.href = presignedURL.url;
+		link.download = fileName;
+		document.body.appendChild(link);
+		link.click();
+		document.body.removeChild(link);
 	}
-	return null;
 }
 
 async function updateDatasetContent() {
@@ -191,6 +187,19 @@ const fetchDataset = async () => {
 
 	if (dataset.value?.esgfId && !image.value) {
 		image.value = await getClimateDatasetPreview(dataset.value.esgfId);
+	}
+
+	// Add download options to the ellipsis menu
+	if (dataset.value?.fileNames) {
+		optionsMenuItems.value.push({
+			label: 'Download',
+			icon: 'pi pi-download',
+			items: dataset.value.fileNames.map((fileName) => ({
+				icon: 'pi pi-file',
+				label: fileName,
+				command: () => downloadFileFromDataset(fileName)
+			}))
+		});
 	}
 };
 

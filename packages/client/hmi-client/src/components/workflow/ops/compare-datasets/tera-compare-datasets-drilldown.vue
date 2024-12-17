@@ -329,7 +329,16 @@ function findDuplicates(strings: string[]): string[] {
 async function generateChartData() {
 	if (datasets.value.length <= 1) return;
 
-	const rawContents = await Promise.all(datasets.value.map((dataset) => getRawContent(dataset)));
+	const rawContents = await Promise.all(
+		datasets.value.map((dataset) => {
+			// Compare the summaries so find its csv file like this
+			let summaryIndex = dataset?.fileNames?.findIndex((name) => name === 'result_summary.csv');
+			// If the summary isn't found, use the first file (it could be the first one if you downloaded the summary csv)
+			if (!summaryIndex || summaryIndex === -1) summaryIndex = 0;
+			return getRawContent(dataset, -1, summaryIndex); // Setting the csv row limit to -1 to get all rows
+		})
+	);
+
 	const transposedRawContents = rawContents.map((content) => ({ ...content, csv: transposeArrays(content?.csv) }));
 
 	// Collect common header names if not done yet
