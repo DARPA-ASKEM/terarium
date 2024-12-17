@@ -61,7 +61,7 @@ export function addMultiVariableChartSetting(
 }
 
 /**
- * Get ensemble chart setting options from the chart settings. Assumes that all ensemble variables have the same options.
+ * Get ensemble chart setting options from the chart settings. Assumes that all ensemble settings have the same options.
  * @param chartSettings
  * @returns The ensemble chart setting options.
  */
