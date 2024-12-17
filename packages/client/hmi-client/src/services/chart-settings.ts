@@ -60,22 +60,22 @@ export function addMultiVariableChartSetting(
 	return [...settings, newSetting];
 }
 
-// Extract ensemble variable chart options from the chart settings for each variable and merge into single option.
-export function getEnsembleChartSettingOptions(chartSettings: ChartSetting[]) {
-	// default options
-	const options: ChartSettingEnsembleVariableOptions = {
-		showIndividualModels: false,
-		relativeToEnsemble: false,
-		showIndividualModelsWithWeight: undefined // only applicable for the simulate ensemble otherwise undefined
-	};
-	// Merge options from all ensemble variables since each variable setting has its own options but all controlled by the single parent scope UI.
-	chartSettings.forEach((s) => {
-		if (!isChartSettingEnsembleVariable(s)) return;
-		options.showIndividualModels = options.showIndividualModels || s.showIndividualModels;
-		options.relativeToEnsemble = options.relativeToEnsemble || s.relativeToEnsemble;
-		options.showIndividualModelsWithWeight = options.showIndividualModelsWithWeight || s.showIndividualModelsWithWeight;
-	});
-	return options;
+/**
+ * Get ensemble chart setting options from the chart settings. Assumes that all ensemble variables have the same options.
+ * @param chartSettings
+ * @returns The ensemble chart setting options.
+ */
+export function getEnsembleChartSettingOptions(
+	chartSettings: ChartSetting[]
+): ChartSettingEnsembleVariableOptions | null {
+	const ensembleSettings = chartSettings.find(isChartSettingEnsembleVariable);
+	return ensembleSettings
+		? {
+				showIndividualModels: ensembleSettings.showIndividualModels,
+				relativeToEnsemble: ensembleSettings.relativeToEnsemble,
+				showIndividualModelsWithWeight: ensembleSettings.showIndividualModelsWithWeight
+			}
+		: null;
 }
 
 /**
