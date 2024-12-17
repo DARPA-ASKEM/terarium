@@ -1113,6 +1113,7 @@ export enum ClientEventType {
     TaskGollmModelCard = "TASK_GOLLM_MODEL_CARD",
     TaskMiraAmrToMmt = "TASK_MIRA_AMR_TO_MMT",
     TaskMiraGenerateModelLatex = "TASK_MIRA_GENERATE_MODEL_LATEX",
+    TaskMiraCompareModelsConcepts = "TASK_MIRA_COMPARE_MODELS_CONCEPTS",
     TaskUndefinedEvent = "TASK_UNDEFINED_EVENT",
     WorkflowDelete = "WORKFLOW_DELETE",
     WorkflowUpdate = "WORKFLOW_UPDATE",
