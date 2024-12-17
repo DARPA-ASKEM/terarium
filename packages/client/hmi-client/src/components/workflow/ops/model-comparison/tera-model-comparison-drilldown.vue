@@ -141,12 +141,7 @@
 					:options="{ showPrintMargin: false }"
 				/>
 			</tera-drilldown-section>
-			<tera-drilldown-preview>
-				<tera-progress-spinner
-					v-if="isLoadingStructuralComparisons && isEmpty(structuralComparisons)"
-					is-centered
-					:font-size="3"
-				/>
+			<tera-drilldown-preview :is-loading="isLoadingStructuralComparisons && isEmpty(structuralComparisons)">
 				<ul>
 					<li v-for="(image, index) in structuralComparisons" :key="index">
 						<label>Comparison {{ index + 1 }}: {{ getTitle(index) }}</label>
@@ -202,7 +197,6 @@ import { VAceEditor } from 'vue3-ace-editor';
 import { VAceEditorInstance } from 'vue3-ace-editor/types';
 import TeraNotebookJupyterInput from '@/components/llm/tera-notebook-jupyter-input.vue';
 import Image from 'primevue/image';
-import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue';
 import { saveCodeToState } from '@/services/notebook';
 import { addImage, deleteImages, getImages } from '@/services/image';
 import TeraColumnarPanel from '@/components/widgets/tera-columnar-panel.vue';
@@ -385,6 +379,7 @@ async function buildJupyterContext() {
 }
 
 function hasNonEmptyValue(obj) {
+	if (!obj) return false;
 	return Object.values(obj).some((value) => !isEmpty(value));
 }
 
@@ -547,9 +542,11 @@ const processCompareModels = async () => {
 
 	const taskRes = await compareModels(modelIds.value, request, props.node.workflowId, props.node.id);
 	compareModelsTaskId = taskRes.id;
+
 	if (taskRes.status === TaskStatus.Success) {
 		generateOverview(taskRes.output);
 	}
+
 	const state = cloneDeep(props.node.state);
 	state.hasRun = true;
 	emit('update-state', state);
