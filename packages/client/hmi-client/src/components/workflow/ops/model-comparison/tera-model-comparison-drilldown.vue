@@ -90,6 +90,7 @@
 					v-if="!isConceptComparisonEmpty && !isConceptComparisonLoading"
 					:activeIndex="comparisonContextActiveIndexes"
 					class="comparison-context"
+					multiple
 				>
 					<AccordionTab header="Concept context comparison" v-if="!isContextComparisonEmpty">
 						<tera-csv-table :csv-text="conceptComparison.concept_context_comparison!" />
@@ -711,7 +712,7 @@ ul {
 	border: 1px solid var(--surface-border-light);
 	border-radius: var(--border-radius-medium);
 	padding: var(--gap-2);
-	margin: var(--gap-4) var(--gap-4) 0;
+	margin: var(--gap-12) var(--gap-4);
 
 	& + & {
 		margin-top: var(--gap-4);
