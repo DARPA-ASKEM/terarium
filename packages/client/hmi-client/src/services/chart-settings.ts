@@ -113,6 +113,11 @@ export function createNewChartSetting(
 		setting.showIndividualModels = true;
 		setting.relativeToEnsemble = false;
 	}
+	if (CHART_SETTING_WITH_QUANTILES_OPTIONS.includes(type)) {
+		// Default options for quantile chart
+		setting.showQuantiles = false;
+		setting.quantiles = [0.95, 0.5];
+	}
 	// Apply and override defaults with the provided options.
 	Object.assign(setting, options);
 
