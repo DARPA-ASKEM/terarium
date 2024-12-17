@@ -117,9 +117,9 @@
 						"
 						:active-settings="activeChartSettings"
 						:generate-annotation="generateAnnotation"
-						@update-settings-scale="updateChartSettingsScale(activeChartSettings?.id as string, $event)"
 						@delete-annotation="deleteAnnotation"
-						@close="activeChartSettings = null"
+						@update-settings="updateActiveChartSettings"
+						@close="setActiveChartSettings(null)"
 					/>
 				</template>
 				<template #content>
@@ -139,7 +139,7 @@
 							v-for="settings of chartSettings.filter((setting) => setting.type === ChartSettingType.VARIABLE)"
 							:key="settings.id"
 							:settings="settings"
-							@open="activeChartSettings = settings"
+							@open="setActiveChartSettings(settings)"
 							@remove="removeChartSettings"
 						/>
 						<label>How do you want to plot the values?</label>
@@ -228,7 +228,8 @@ const {
 	selectedVariableSettings,
 	removeChartSettings,
 	updateChartSettings,
-	updateChartSettingsScale
+	updateActiveChartSettings,
+	setActiveChartSettings
 } = useChartSettings(props, emit);
 
 const outputPanel = ref(null);
