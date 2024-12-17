@@ -699,7 +699,7 @@ export interface TaskResponse {
     stderr: string;
     requestSHA256: string;
     routingKey: string;
-    noCache: boolean;
+    useCache: boolean;
 }
 
 export interface Annotation {
