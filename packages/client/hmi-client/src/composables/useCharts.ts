@@ -226,9 +226,32 @@ export function useCharts(
 	};
 
 	// Generate annotations for a chart
-	const generateAnnotation = async (setting: ChartSetting, query: string) => {
+	const generateAnnotation = async (setting: ChartSetting, query: string, isCompareDataset: boolean = false) => {
 		if (!chartData.value) return null;
-		const { statLayerVariables, options } = createForecastChartOptions(setting);
+
+		let statLayerVariables: string[] = [];
+		let options: ForecastChartOptions | null = null;
+
+		if (isCompareDataset) {
+			statLayerVariables = setting.selectedVariables;
+			options = {
+				title: setting.selectedVariables[0],
+				legend: true,
+				width: chartSize.value.width,
+				height: chartSize.value.height,
+				translationMap: chartData.value.translationMap || {},
+				xAxisTitle: getUnit('_time') || 'Time',
+				yAxisTitle: capitalize(setting.selectedVariables[0]),
+				scale: setting.scale
+			};
+		} else {
+			const forecastChartOptions = createForecastChartOptions(setting);
+			statLayerVariables = forecastChartOptions.statLayerVariables;
+			options = forecastChartOptions.options;
+		}
+
+		if (!options) return null;
+
 		if (setting.type === ChartSettingType.VARIABLE_ENSEMBLE) {
 			options.translationMap = addModelConfigNameToTranslationMap(
 				options.translationMap ?? {},
@@ -278,6 +301,25 @@ export function useCharts(
 			return charts;
 		});
 		return interventionCharts;
+	};
+
+	const generateAnnotationForCompareDatasets = async (
+		setting: ChartSetting,
+		query: string,
+		statLayerVariables: any
+	) => {
+		if (!chartData.value) return null;
+		const options = {
+			title: setting.selectedVariables[0],
+			legend: true,
+			width: chartSize.value.width,
+			height: chartSize.value.height,
+			translationMap: chartData.value.translationMap || {},
+			xAxisTitle: getUnit('_time') || 'Time',
+			yAxisTitle: capitalize(setting.selectedVariables[0]),
+			scale: setting.scale
+		};
+		return generateAndSaveForecastChartAnnotation(setting, query, 'timepoint_id', statLayerVariables, options);
 	};
 
 	const useCompareDatasetCharts = (
@@ -859,6 +901,7 @@ export function useCharts(
 
 	return {
 		generateAnnotation,
+		generateAnnotationForCompareDatasets,
 		getChartAnnotationsByChartId,
 		useInterventionCharts,
 		useVariableCharts,
