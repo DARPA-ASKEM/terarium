@@ -6,7 +6,7 @@ import {
 	EnsembleVariableChartSettingOption,
 	removeChartSettingById,
 	updateChartSettingsBySelectedVariables,
-	updateEnsembleVariableChartSettingOption
+	updateAllChartSettings
 } from '@/services/chart-settings';
 import { WorkflowNode } from '@/types/workflow';
 
@@ -97,7 +97,20 @@ export function useChartSettings(
 	const updateEnsembleVariableSettingOption = (option: EnsembleVariableChartSettingOption, value: boolean) => {
 		emit('update-state', {
 			...props.node.state,
-			chartSettings: updateEnsembleVariableChartSettingOption(chartSettings.value, option, value)
+			chartSettings: updateAllChartSettings(chartSettings.value, { [option]: value }, [
+				ChartSettingType.VARIABLE_ENSEMBLE
+			])
+		});
+	};
+
+	const updateQauntilesOptions = (options: { showQuantiles: boolean; quantiles: number[] }) => {
+		emit('update-state', {
+			...props.node.state,
+			chartSettings: updateAllChartSettings(chartSettings.value, options, [
+				ChartSettingType.VARIABLE_ENSEMBLE,
+				ChartSettingType.VARIABLE_COMPARISON,
+				ChartSettingType.VARIABLE
+			])
 		});
 	};
 
@@ -116,6 +129,7 @@ export function useChartSettings(
 		updateChartSettings,
 		updateChartSettingsScale,
 		addComparisonChartSettings,
-		updateEnsembleVariableSettingOption
+		updateEnsembleVariableSettingOption,
+		updateQauntilesOptions
 	};
 }

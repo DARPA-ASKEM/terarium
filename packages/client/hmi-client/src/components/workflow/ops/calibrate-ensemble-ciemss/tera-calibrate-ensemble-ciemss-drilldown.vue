@@ -307,6 +307,8 @@
 							@update:model-value="emit('update-state', { ...node.state, showModelWeightsCharts: $event })"
 						/>
 						<Divider />
+						<tera-chart-settings-quantiles :settings="chartSettings" @update-options="updateQauntilesOptions" />
+						<Divider />
 					</div>
 				</template>
 			</tera-slider-panel>
@@ -344,6 +346,7 @@ import TeraPyciemssCancelButton from '@/components/pyciemss/tera-pyciemss-cancel
 import TeraSliderPanel from '@/components/widgets/tera-slider-panel.vue';
 import TeraChartSettings from '@/components/widgets/tera-chart-settings.vue';
 import TeraChartSettingsPanel from '@/components/widgets/tera-chart-settings-panel.vue';
+import TeraChartSettingsQuantiles from '@/components/widgets/tera-chart-settings-quantiles.vue';
 import TeraCheckbox from '@/components/widgets/tera-checkbox.vue';
 import TeraInputText from '@/components/widgets/tera-input-text.vue';
 import TeraSignalBars from '@/components/widgets/tera-signal-bars.vue';
@@ -607,7 +610,8 @@ const {
 	updateChartSettings,
 	selectedEnsembleVariableSettings,
 	selectedErrorVariableSettings,
-	updateEnsembleVariableSettingOption
+	updateEnsembleVariableSettingOption,
+	updateQauntilesOptions
 } = useChartSettings(props, emit);
 
 const {

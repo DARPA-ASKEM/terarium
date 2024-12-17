@@ -377,7 +377,6 @@ export function useCharts(
 		chartSettings: ComputedRef<ChartSettingEnsembleVariable[]>,
 		groundTruthData: ComputedRef<DataArray> | null
 	) => {
-		const isDefaultFormat = false;
 		const ensembleVariableCharts = computed(() => {
 			const charts: Record<string, VisualizationSpec[]> = {};
 			if (!isChartReadyToBuild.value || !isRefReady(groundTruthData)) return chartData;
@@ -397,7 +396,7 @@ export function useCharts(
 						options.width = chartSize.value.width / (modelConfigIds.length + 1);
 						options.legendProperties = { direction: 'vertical', columns: 1, labelLimit: options.width };
 						options.colorscheme = [BASE_GREY, CATEGORICAL_SCHEME[index % CATEGORICAL_SCHEME.length]];
-						const smallChart = isDefaultFormat
+						const smallChart = !setting.showQuantiles
 							? applyForecastChartAnnotations(
 									createForecastChart(
 										{
@@ -423,7 +422,7 @@ export function useCharts(
 							: createQuantilesForecastChart(
 									chartData.value?.resultGroupByTimepoint ?? [],
 									sampleLayerVariables,
-									[],
+									setting.quantiles ?? [],
 									options
 								);
 						return smallChart;
@@ -437,7 +436,7 @@ export function useCharts(
 						false,
 						true
 					);
-					const chart = isDefaultFormat
+					const chart = !setting.showQuantiles
 						? applyForecastChartAnnotations(
 								createForecastChart(
 									{
@@ -463,7 +462,7 @@ export function useCharts(
 						: createQuantilesForecastChart(
 								chartData.value?.resultGroupByTimepoint ?? [],
 								sampleLayerVariables,
-								[],
+								setting.quantiles ?? [],
 								options
 							);
 					charts[setting.id] = [chart];

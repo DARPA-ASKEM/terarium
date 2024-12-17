@@ -209,6 +209,8 @@ export interface ChartSettingBase {
 	selectedVariables: string[];
 	type: ChartSettingType;
 	scale?: string;
+	showQuantiles?: boolean;
+	quantiles?: number[];
 }
 
 export const ProgrammingLanguageVersion: { [key in ProgrammingLanguage]: string } = {

@@ -651,9 +651,6 @@ export function createForecastChart(
 export type GroupedDataArray = Record<string, number[]>[];
 
 const buildQuantileChartData = (data: GroupedDataArray, selectVariables: string[], quantiles: number[]) => {
-	// quantiles = [0.5, 0.55, 0.60, 0.65, 0.70, 0.75, 0.80, 0.85, 0.90, 0.95, 0.99];
-	// quantiles = [0.5, 0.75, 0.99];
-	quantiles = [0.5, 0.99, 0.9];
 	const result: {
 		x: number;
 		lower: number;
@@ -665,8 +662,8 @@ const buildQuantileChartData = (data: GroupedDataArray, selectVariables: string[
 		const datum = {};
 		selectVariables.forEach((variable) => {
 			const values = d[variable] ?? [];
-			quantiles
-				.sort((a, b) => b - a)
+			[...quantiles]
+				.sort((a, b) => b - a) // Sort in descending order so that data with higher quantiles are drawn first
 				.forEach((q) => {
 					result.push({
 						x: index,
@@ -679,8 +676,6 @@ const buildQuantileChartData = (data: GroupedDataArray, selectVariables: string[
 		});
 		return datum;
 	});
-	console.log('------ range area data ------');
-	console.log(result);
 	return result;
 };
 
