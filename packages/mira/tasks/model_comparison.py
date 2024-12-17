@@ -1,3 +1,4 @@
+import os
 import sys
 import itertools
 import traceback
@@ -11,6 +12,28 @@ from taskrunner import TaskRunnerInterface
 from mira.metamodel import *
 from mira.sources.amr.petrinet import template_model_from_amr_json
 from mira.metamodel.utils import is_ontological_child
+
+def png_to_base64_and_delete(file_path: str) -> str:
+    """Read a PNG file, return its Base64 string, and delete the original file.
+
+    Parameters
+    ----------
+    file_path : str
+        Path to the PNG file.
+
+    Returns
+    -------
+    str
+        Base64-encoded string of the PNG file.
+    """
+    # Read the file and encode it in Base64
+    with open(file_path, "rb") as image_file:
+        base64_string = base64.b64encode(image_file.read()).decode("utf-8")
+
+    # Delete the original file
+    os.remove(file_path)
+
+    return base64_string
 
 class CompareModelConcepts(BaseModel):
     amrs: List[str]  # expects AMRs to be a stringifies JSON object
@@ -82,10 +105,10 @@ def main():
             taskrunner.log(f"Concept graph comparison — between {tags[i]} and {tags[j]}")
 
             # Create the image from TemplateModelDelta
-            png_bytes = tmd.draw_jupyter(name=f"{tags[i]}-{tags[j]}.png", args="-Grankdir=LR").data
+            tmd.draw_jupyter(name=f"{tags[i]}-{tags[j]}.png", args="-Grankdir=LR")
 
             # Store the base64 encoded image in the dictionary
-            image_base64 = base64.b64encode(png_bytes).decode('utf-8')
+            image_base64 = png_to_base64_and_delete(f"{tags[i]}-{tags[j]}.png")
             concept_graph_comparison[f"{tags[i]} — {tags[j]}"] = image_base64
 
         previous_end = end
