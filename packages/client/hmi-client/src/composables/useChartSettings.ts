@@ -104,9 +104,9 @@ export function useChartSettings(
 	};
 
 	const updateSensitivityChartSettings = (options: {
-		selectedVariables?: string[];
-		selectedInputVariables?: string[];
-		timepoint?: number;
+		selectedVariables: string[];
+		selectedInputVariables: string[];
+		timepoint: number;
 	}) => {
 		emit('update-state', {
 			...props.node.state,

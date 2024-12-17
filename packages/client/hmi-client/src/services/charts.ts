@@ -4,10 +4,29 @@ import { VisualizationSpec } from 'vega-embed';
 import { v4 as uuidv4 } from 'uuid';
 import type { ChartAnnotation, FunmanInterval } from '@/types/Types';
 import { CalendarDateType } from '@/types/common';
+import { countDigits, fixPrecisionError } from '@/utils/number';
+import { format } from 'd3';
 import { flattenInterventionData } from './intervention-policy';
 import type { FunmanBox, FunmanConstraintsResponse } from './models/funman-service';
 
 const VEGALITE_SCHEMA = 'https://vega.github.io/schema/vega-lite/v5.json';
+
+const NUMBER_FORMAT = '.3~s';
+export const expressionFunctions = {
+	// chartNumberFormatter is a custom number format that will display numbers in a more readable format
+	chartNumberFormatter: (value: number) => {
+		const correctedValue = fixPrecisionError(value);
+		if (value > -1 && value < 1) {
+			return countDigits(correctedValue) > 6 ? correctedValue.toExponential(3) : correctedValue.toString();
+		}
+		return format(NUMBER_FORMAT)(correctedValue);
+	},
+	// Just show full value in tooltip
+	tooltipFormatter: (value) => {
+		if (value === undefined) return 'N/A';
+		return fixPrecisionError(value);
+	}
+};
 
 export const CATEGORICAL_SCHEME = ['#1B8073', '#6495E8', '#8F69B9', '#D67DBF', '#E18547', '#D2C446', '#84594D'];
 

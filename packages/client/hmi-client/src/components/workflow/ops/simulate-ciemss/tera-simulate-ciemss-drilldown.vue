@@ -302,14 +302,16 @@
 							:sensitivity-options="{
 								inputOptions: Object.keys(pyciemssMap).filter((c) => ['parameter'].includes(modelPartTypesMap[c])),
 								selectedInputOptions: selectedSensitivityChartSettings[0]?.selectedInputVariables ?? [],
-								timepoint: selectedSensitivityChartSettings[0]?.timepoint ?? 0
+								timepoint:
+									selectedSensitivityChartSettings[0]?.timepoint ?? _.last(runResults[selectedRunId])?.timepoint_id
 							}"
 							@selection-change="
 								(e) =>
 									updateSensitivityChartSettings({
 										selectedVariables: e,
 										selectedInputVariables: selectedSensitivityChartSettings[0]?.selectedInputVariables ?? [],
-										timepoint: selectedSensitivityChartSettings[0]?.timepoint ?? 0
+										timepoint:
+											selectedSensitivityChartSettings[0]?.timepoint ?? _.last(runResults[selectedRunId])?.timepoint_id
 									})
 							"
 							@sensitivity-selection-change="

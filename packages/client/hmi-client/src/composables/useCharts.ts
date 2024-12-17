@@ -13,7 +13,8 @@ import {
 	createHistogramChart,
 	createInterventionChartMarkers,
 	createSimulateSensitivityScatter,
-	ForecastChartOptions
+	ForecastChartOptions,
+	expressionFunctions
 } from '@/services/charts';
 import { flattenInterventionData } from '@/services/intervention-policy';
 import { DataArray, extractModelConfigIdsInOrder, extractModelConfigIds } from '@/services/models/simulation-service';
@@ -754,10 +755,15 @@ export function useCharts(
 		const labels: string[] = [];
 		let previousThreshold = minValue;
 		thresholds.forEach((threshold) => {
-			labels.push(`[${previousThreshold}, ${threshold}]`);
+			labels.push(
+				`[${expressionFunctions.tooltipFormatter(previousThreshold)}, ${expressionFunctions.tooltipFormatter(threshold)}]`
+			);
 			previousThreshold = threshold;
 		});
-		labels.push(`[${previousThreshold}, ${maxValue}]`);
+
+		labels.push(
+			`[${expressionFunctions.tooltipFormatter(previousThreshold)}, ${expressionFunctions.tooltipFormatter(maxValue)}]`
+		);
 
 		// Assign bins to records and create the result map
 		const result = new Map<string, number[]>();
@@ -807,10 +813,10 @@ export function useCharts(
 			const inputVariables: string[] = chartSettings.value[0].selectedInputVariables ?? [];
 
 			const charts: Record<string, { lineChart: VisualizationSpec; scatterChart: VisualizationSpec }> = {};
-
 			// eslint-disable-next-line
 			chartSettings.value.forEach((settings) => {
-				const selectedVariable = `${settings.selectedVariables[0]}_state`;
+				const selectedVariable =
+					chartData.value?.pyciemssMap[settings.selectedVariables[0]] || settings.selectedVariables[0];
 				const { options } = createForecastChartOptions(settings);
 				const bins = createSensitivityBins(sliceData, selectedVariable);
 
