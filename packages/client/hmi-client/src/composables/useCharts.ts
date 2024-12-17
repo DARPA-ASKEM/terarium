@@ -282,32 +282,43 @@ export function useCharts(
 
 	const useCompareDatasetCharts = (
 		chartSettings: ComputedRef<ChartSetting[]>,
-		selectedPlotType: ComputedRef<PlotValue>
+		selectedPlotType: ComputedRef<PlotValue>,
+		baselineName: ComputedRef<string | null>
 	) => {
 		const compareDatasetCharts = computed(() => {
 			const charts: Record<string, VisualizationSpec> = {};
 			if (!isChartReadyToBuild.value) return charts;
 			const { resultSummary } = chartData.value as ChartData;
+
+			const datasetNames = Object.keys(resultSummary[0]).filter(
+				(key) => key !== 'timepoint_id' && key !== 'headerName'
+			);
+			// Make baseline black
+			const baselineIndex = datasetNames.indexOf(baselineName.value ?? '');
+			const colorScheme = CATEGORICAL_SCHEME;
+			colorScheme[baselineIndex] = 'black';
+
 			chartSettings.value.forEach((settings) => {
-				const variable = settings.selectedVariables[0];
+				const headerName = settings.selectedVariables[0];
 				const annotations = getChartAnnotationsByChartId(settings.id);
 				const chart = applyForecastChartAnnotations(
 					createForecastChart(
 						null,
 						{
-							data: resultSummary.filter((d) => d.headerName === variable),
-							variables: Object.keys(resultSummary[0]).filter((key) => key !== 'timepoint_id' && key !== 'headerName'),
+							data: resultSummary.filter((d) => d.headerName === headerName),
+							variables: datasetNames,
 							timeField: 'timepoint_id'
 						},
 						null,
 						{
-							title: variable,
+							title: headerName,
 							legend: true,
 							width: chartSize.value.width,
 							height: chartSize.value.height,
 							xAxisTitle: getUnit('_time') || 'Time',
 							yAxisTitle: capitalize(selectedPlotType.value),
 							scale: settings.scale,
+							colorscheme: colorScheme,
 							legendProperties: { direction: 'vertical', columns: 3 }
 						}
 					),

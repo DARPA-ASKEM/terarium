@@ -256,6 +256,9 @@ const knobs = ref<BasicKnobs>({
 });
 
 const selectedPlotType = computed(() => knobs.value.selectedPlotType);
+const baselineName = computed(
+	() => datasets.value.find((dataset) => dataset.id === knobs.value.selectedDataset)?.name ?? null
+);
 
 const addCriteria = () => {
 	knobs.value.criteriaOfInterestCards.push(blankCriteriaOfInterest);
@@ -278,7 +281,7 @@ const { generateAnnotation, getChartAnnotationsByChartId, useCompareDatasetChart
 	null,
 	null
 );
-const variableCharts = useCompareDatasetCharts(selectedVariableSettings, selectedPlotType);
+const variableCharts = useCompareDatasetCharts(selectedVariableSettings, selectedPlotType, baselineName);
 
 const initialize = async () => {
 	const state = cloneDeep(props.node.state);
