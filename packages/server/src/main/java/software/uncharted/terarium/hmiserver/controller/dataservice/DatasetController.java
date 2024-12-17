@@ -271,7 +271,7 @@ public class DatasetController {
 		@RequestParam("filename") final String filename,
 		@RequestParam(name = "limit", defaultValue = "" + DEFAULT_CSV_LIMIT, required = false) final Integer limit
 	) {
-		CSVParser csvParser;
+		final CSVParser csvParser;
 		try {
 			csvParser = datasetService.getCSVFileParser(filename, datasetId);
 			if (csvParser == null) {
