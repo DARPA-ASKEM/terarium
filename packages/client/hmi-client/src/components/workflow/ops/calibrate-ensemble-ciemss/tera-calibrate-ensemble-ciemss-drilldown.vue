@@ -337,7 +337,7 @@ import TeraInputNumber from '@/components/widgets/tera-input-number.vue';
 import AccordionTab from 'primevue/accordiontab';
 import Accordion from 'primevue/accordion';
 import Dropdown from 'primevue/dropdown';
-import { setupDatasetInput, setupCsvAsset, setupModelInput, parseCsvAsset } from '@/services/calibrate-workflow';
+import { setupDatasetInput, setupCsvAsset, parseCsvAsset } from '@/services/calibrate-workflow';
 import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
 import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.vue';
 import TeraSaveDatasetFromSimulation from '@/components/dataset/tera-save-dataset-from-simulation.vue';
@@ -383,7 +383,8 @@ import {
 	fetchOutputData,
 	buildChartData,
 	getEnsembleErrorData,
-	EnsembleErrorData
+	EnsembleErrorData,
+	fetchModelConfigurations
 } from './calibrate-ensemble-util';
 
 const props = defineProps<{
@@ -562,21 +563,25 @@ const runEnsemble = async () => {
 };
 
 onMounted(async () => {
-	allModelConfigurations.value = [];
-	const modelConfigurationIds: string[] = [];
-	props.node.inputs.forEach((ele) => {
-		if (ele.value && ele.type === 'modelConfigId') modelConfigurationIds.push(ele.value[0]);
-	});
-	if (!modelConfigurationIds) return;
+	const configs = await fetchModelConfigurations(props.node.inputs);
+	if (!configs) return;
+	allModelConfigurations.value = configs.allModelConfigurations;
+	allModelOptions.value = configs.allModelOptions;
 
-	// Model configuration input
-	await Promise.all(
-		modelConfigurationIds.map(async (id) => {
-			const { modelConfiguration, modelOptions } = await setupModelInput(id);
-			if (modelConfiguration) allModelConfigurations.value.push(modelConfiguration);
-			if (modelOptions) allModelOptions.value.push(modelOptions);
-		})
-	);
+	// const modelConfigurationIds: string[] = [];
+	// props.node.inputs.forEach((ele) => {
+	// 	if (ele.value && ele.type === 'modelConfigId') modelConfigurationIds.push(ele.value[0]);
+	// });
+	// if (!modelConfigurationIds) return;
+
+	// // Model configuration input
+	// await Promise.all(
+	// 	modelConfigurationIds.map(async (id) => {
+	// 		const { modelConfiguration, modelOptions } = await setupModelInput(id);
+	// 		if (modelConfiguration) allModelConfigurations.value.push(modelConfiguration);
+	// 		if (modelOptions) allModelOptions.value.push(modelOptions);
+	// 	})
+	// );
 
 	// dataset input
 	if (datasetId.value) {
