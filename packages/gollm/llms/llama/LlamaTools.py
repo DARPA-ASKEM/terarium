@@ -3,6 +3,7 @@ import os
 from typing import List
 
 import boto3
+
 from common.LlmToolsInterface import LlmToolsInterface
 from common.prompts.amr_enrichment import ENRICH_PROMPT
 from common.prompts.chart_annotation import CHART_ANNOTATION_PROMPT
@@ -40,6 +41,10 @@ GPT_MODEL = "us.meta.llama3-2-90b-instruct-v1:0"
 
 class LlamaTools(LlmToolsInterface):
 
+    def __init__(self, bedrock_access_key=None, bedrock_secret_access_key=None):
+        self.bedrock_access_key = bedrock_access_key
+        self.bedrock_secret_access_key = bedrock_secret_access_key
+
     def send_to_llm(self, prompt: str, schema: str, max_tokens=2048) -> dict:
         print("Sending request to AWS Bedrock (Llama)...")
         #send prompt to AWS Bedrock
@@ -47,8 +52,8 @@ class LlamaTools(LlmToolsInterface):
         client = boto3.client(
             "bedrock-runtime",
             region_name="us-west-2",
-            aws_access_key_id = os.environ.get("BEDROCK_ACCESS_KEY"),
-            aws_secret_access_key = os.environ.get("BEDROCK_SECRET_ACCESS_KEY")
+            aws_access_key_id = os.environ.get("BEDROCK_ACCESS_KEY") if self.bedrock_access_key is None else self.bedrock_access_key,
+            aws_secret_access_key = os.environ.get("BEDROCK_SECRET_ACCESS_KEY") if self.bedrock_secret_access_key is None else self.bedrock_secret_access_key
         )
 
         request = json.dumps({

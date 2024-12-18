@@ -206,25 +206,25 @@ export async function generateForecastChartAnnotation(
 	const preamble = `
 		Here is the information of the existing target chart spec where you need to add the annotations:
     - The existing chart follows a similar pattern as the above Example Chart Spec like:
-        {
+        {{
           ...
           "transform": [
-            {
+            {{
               "fold": ${JSON.stringify(variables)},
               "as": ["variableField', "valueField"]
-            }
+            }}
           ],
           "layer": [
-            {
+            {{
               ...
-              "encoding": {
-                "x": {"field": "${timeField}", "type": "quantitative", "axis": {"title": "${axisTitle.x}"}},
-                "y": {"field": "valueField", "type": "quantitative", "axis": {"title": "${axisTitle.y}"}}
-              }
-            }
+              "encoding": {{
+                "x": {{"field": "${timeField}", "type": "quantitative", "axis": {{"title": "${axisTitle.x}"}}}},
+                "y": {{"field": "valueField", "type": "quantitative", "axis": {{"title": "${axisTitle.y}"}}}}
+              }}
+            }}
             ...
           ]
-        }
+        }}
     - Assume all unknown variables except the time field are for the y-axis and are renamed to the valueField.
     - Make sure possible values for 'valueField' are ${JSON.stringify(variables)} and try best to translate the variables mentioned from the request to the variables for the 'valueField'.
     - Leverage this variable to human readable name mapping: ${JSON.stringify(translateMap)} if needed.
@@ -245,9 +245,8 @@ export async function generateForecastChartAnnotation(
 	);
 	const str = b64DecodeUnicode(data.output);
 	const result = JSON.parse(str);
-	const layerSpec = JSON.parse(result.response);
 	return {
 		request,
-		layerSpec
+		layerSpec: result.response
 	};
 }

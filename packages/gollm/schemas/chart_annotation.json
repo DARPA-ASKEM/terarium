@@ -232,7 +232,12 @@
             ],
             "additionalProperties": false
           }
-        }
+        },
+        "required": [
+          "mark",
+          "encoding"
+        ],
+        "additionalProperties": false
       }
     }
   },

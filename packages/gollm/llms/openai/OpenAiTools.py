@@ -2,6 +2,8 @@ import json
 import os
 from typing import List
 
+from openai import OpenAI
+
 from common.LlmToolsInterface import LlmToolsInterface
 from common.prompts.amr_enrichment import ENRICH_PROMPT
 from common.prompts.chart_annotation import CHART_ANNOTATION_PROMPT
@@ -32,16 +34,18 @@ from common.utils import (
     escape_curly_braces,
     unescape_curly_braces
 )
-from openai import OpenAI
 
 GPT_MODEL = "gpt-4o-2024-08-06"
 
 
 class OpenAiTools(LlmToolsInterface):
 
+    def __init__(self, api_key=None):
+        self.api_key = api_key
+
     def send_to_llm(self, prompt: str, schema: str, max_tokens=16384) -> dict:
         print("Sending request to OpenAI API...")
-        client = OpenAI()
+        client = OpenAI() if self.api_key is None else OpenAI(api_key=self.api_key)
         output = client.chat.completions.create(
             model=GPT_MODEL,
             top_p=1,
@@ -68,7 +72,7 @@ class OpenAiTools(LlmToolsInterface):
 
 
     def send_image_to_llm(self, prompt: str, schema: str, image_url: str, max_tokens=16384) -> dict:
-        client = OpenAI()
+        client = OpenAI(self.api_key)
         output = client.chat.completions.create(
             model=GPT_MODEL,
             top_p=1,
