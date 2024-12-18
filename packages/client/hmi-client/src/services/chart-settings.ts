@@ -5,7 +5,6 @@ import {
 	ChartSettingEnsembleVariable,
 	ChartSettingEnsembleVariableOptions,
 	ChartSettingSensitivity,
-	ChartSettingSensitivityOptions,
 	ChartSettingType
 } from '@/types/common';
 import { v4 as uuidv4 } from 'uuid';
@@ -26,6 +25,12 @@ export type EnsembleVariableChartSettingOption =
 export function isChartSettingEnsembleVariable(setting: ChartSetting): setting is ChartSettingEnsembleVariable {
 	return (<ChartSettingEnsembleVariable>setting).type === ChartSettingType.VARIABLE_ENSEMBLE;
 }
+
+export const CHART_SETTING_WITH_QUANTILES_OPTIONS = [
+	ChartSettingType.VARIABLE_ENSEMBLE,
+	ChartSettingType.VARIABLE_COMPARISON,
+	ChartSettingType.VARIABLE
+];
 
 /**
  * Adds a new multi-variable chart setting to the provided settings array if it doesn't already exist.
@@ -55,30 +60,46 @@ export function addMultiVariableChartSetting(
 	return [...settings, newSetting];
 }
 
-// Extract ensemble variable chart options from the chart settings for each variable and merge into single option.
-export function getEnsembleChartSettingOptions(chartSettings: ChartSetting[]) {
-	// default options
-	const options: ChartSettingEnsembleVariableOptions = {
-		showIndividualModels: false,
-		relativeToEnsemble: false,
-		showIndividualModelsWithWeight: undefined // only applicable for the simulate ensemble otherwise undefined
-	};
-	// Merge options from all ensemble variables since each variable setting has its own options but all controlled by the single parent scope UI.
-	chartSettings.forEach((s) => {
-		if (!isChartSettingEnsembleVariable(s)) return;
-		options.showIndividualModels = options.showIndividualModels || s.showIndividualModels;
-		options.relativeToEnsemble = options.relativeToEnsemble || s.relativeToEnsemble;
-		options.showIndividualModelsWithWeight = options.showIndividualModelsWithWeight || s.showIndividualModelsWithWeight;
-	});
-	return options;
+/**
+ * Get ensemble chart setting options from the chart settings. Assumes that all ensemble settings have the same options.
+ * @param chartSettings
+ * @returns The ensemble chart setting options.
+ */
+export function getEnsembleChartSettingOptions(
+	chartSettings: ChartSetting[]
+): ChartSettingEnsembleVariableOptions | null {
+	const ensembleSettings = chartSettings.find(isChartSettingEnsembleVariable);
+	return ensembleSettings
+		? {
+				showIndividualModels: ensembleSettings.showIndividualModels,
+				relativeToEnsemble: ensembleSettings.relativeToEnsemble,
+				showIndividualModelsWithWeight: ensembleSettings.showIndividualModelsWithWeight
+			}
+		: null;
+}
+
+/**
+ * Get existing qauntile chart setting options from the chart settings with the assumed that all applicable settings have the same options.
+ * @param chartSettings - The array of chart settings.
+ * @returns - The quantile chart setting options.
+ */
+export function getQauntileChartSettingOptions(chartSettings: ChartSetting[]) {
+	const settingsWithQuantilesOption = chartSettings.find((s) => s.showQuantiles || Boolean(s.quantiles?.length));
+	return settingsWithQuantilesOption
+		? {
+				showQuantiles: settingsWithQuantilesOption.showQuantiles,
+				quantiles: settingsWithQuantilesOption.quantiles
+			}
+		: null;
 }
 
 export function createNewChartSetting(
 	name: string,
 	type: ChartSettingType,
 	selectedVariables: string[],
-	options: ChartSettingEnsembleVariableOptions | ChartSettingSensitivityOptions
+	options: Partial<ChartSetting> = {}
 ): ChartSetting {
+	// Default setting
 	const setting: ChartSetting = {
 		id: uuidv4(),
 		name,
@@ -87,8 +108,18 @@ export function createNewChartSetting(
 		scale: '',
 		primaryColor: CATEGORICAL_SCHEME[0]
 	};
-	if (isChartSettingEnsembleVariable(setting) || setting.type === ChartSettingType.SENSITIVITY)
-		Object.assign(setting, options);
+	if (isChartSettingEnsembleVariable(setting)) {
+		// Default options for ensemble variable chart
+		setting.showIndividualModels = true;
+		setting.relativeToEnsemble = false;
+	}
+	if (CHART_SETTING_WITH_QUANTILES_OPTIONS.includes(type)) {
+		// Default options for quantile chart
+		setting.showQuantiles = false;
+		setting.quantiles = [0.95, 0.5];
+	}
+	// Apply and override defaults with the provided options.
+	Object.assign(setting, options);
 
 	return setting;
 }
@@ -107,14 +138,20 @@ export function updateChartSettingsBySelectedVariables(
 	type: ChartSettingType,
 	variableSelection: string[]
 ) {
-	// Note: New ensemble settings will have the same options as the existing ensemble variables.
-	const existingEnsembleOptions = getEnsembleChartSettingOptions(settings);
+	// Extract existing chart setting options that were applied to multiple charts for the new settings to inherit.
+	// So that the new settings will have the same options as the existing settings.
+	const existingOptions: Partial<ChartSetting> = {};
+	if (CHART_SETTING_WITH_QUANTILES_OPTIONS.includes(type))
+		Object.assign(existingOptions, getQauntileChartSettingOptions(settings));
+	if (type === ChartSettingType.VARIABLE_ENSEMBLE)
+		Object.assign(existingOptions, getEnsembleChartSettingOptions(settings));
+
 	// previous settings without the settings of the given type
 	const previousSettings = settings.filter((setting) => setting.type !== type);
 	// selected settings for the given type
 	const selectedSettings = variableSelection.map((variable) => {
 		const found = settings.find((setting) => setting.selectedVariables[0] === variable && setting.type === type);
-		return found ?? createNewChartSetting(variable, type, [variable], existingEnsembleOptions);
+		return found ?? createNewChartSetting(variable, type, [variable], existingOptions);
 	});
 	const newSettings: ChartSetting[] = [...previousSettings, ...selectedSettings];
 	return newSettings;
@@ -146,14 +183,21 @@ export function updateSensitivityChartSettingOption(
 	return newSettings;
 }
 
-export function updateEnsembleVariableChartSettingOption(
+/**
+ * Update all chart settings with the given update object. If includeTypes is provided, only the settings with the specified types will be updated.
+ * @param settings - The current array of chart settings.
+ * @param update - The partial update to apply to the chart settings.
+ * @param includeTypes - The types of chart settings to update.
+ * @returns The updated array of chart settings.
+ */
+export function updateAllChartSettings(
 	settings: ChartSetting[],
-	option: EnsembleVariableChartSettingOption,
-	value: boolean
+	update: Partial<ChartSetting>,
+	includeTypes?: ChartSettingType[]
 ) {
 	const newSettings = settings.map((setting) => {
-		if (isChartSettingEnsembleVariable(setting)) {
-			setting[option] = value;
+		if (includeTypes === undefined || includeTypes.includes(setting.type)) {
+			Object.assign(setting, update);
 		}
 		return setting;
 	});

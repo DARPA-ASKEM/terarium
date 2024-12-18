@@ -218,6 +218,8 @@ export interface ChartSettingBase {
 	type: ChartSettingType;
 	primaryColor?: string;
 	scale?: string;
+	showQuantiles?: boolean;
+	quantiles?: number[];
 }
 
 export const ProgrammingLanguageVersion: { [key in ProgrammingLanguage]: string } = {

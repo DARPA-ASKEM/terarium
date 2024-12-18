@@ -104,6 +104,7 @@ async function getBulkDatasets(datasetIDs: string[]) {
  */
 async function downloadRawFile(datasetId: string, filename: string, limit: number = 100): Promise<CsvAsset | null> {
 	const URL = `/datasets/${datasetId}/download-csv?filename=${filename}&limit=${limit}`;
+	console.log('URL', URL);
 	const response = await API.get(URL).catch((error) => {
 		logger.error(`Error: data-service was not able to retrieve the dataset's rawfile ${error}`);
 	});
@@ -238,12 +239,12 @@ async function createDatasetFromSimulationResult(
 	projectId: string,
 	simulationId: string,
 	datasetName: string | null,
-	addtoProject?: boolean
+	addToProject?: boolean
 ): Promise<Dataset | null> {
-	if (addtoProject === undefined) addtoProject = true;
+	if (addToProject === undefined) addToProject = true;
 	try {
 		const response: AxiosResponse<Dataset> = await API.post(
-			`/simulations/${simulationId}/create-result-as-dataset/${projectId}?dataset-name=${datasetName}&add-to-project=${addtoProject}`
+			`/simulations/${simulationId}/create-result-as-dataset/${projectId}?dataset-name=${datasetName}&add-to-project=${addToProject}`
 		);
 		return response.data as Dataset;
 	} catch (error) {
@@ -347,17 +348,21 @@ const getCsvColumnStats = (csvColumn: number[]): CsvColumnStats => {
 	return { bins, minValue, maxValue, mean, median, sd };
 };
 
-async function getRawContent(dataset: Dataset) {
+async function getRawContent(
+	dataset: Dataset,
+	limit: number = 100,
+	fileNameIndex: number = 0
+): Promise<CsvAsset | null> {
 	// If it's an ESGF dataset or a NetCDF file, we don't want to download the raw content
 	if (!dataset?.id || dataset.esgfId || dataset.metadata?.format === 'netcdf') return null;
 	// We are assuming here there is only a single csv file.
 	if (
 		dataset.fileNames &&
 		!isEmpty(dataset.fileNames) &&
-		!isEmpty(dataset.fileNames[0]) &&
-		dataset.fileNames[0].endsWith('.csv')
+		!isEmpty(dataset.fileNames[fileNameIndex]) &&
+		dataset.fileNames[fileNameIndex].endsWith('.csv')
 	) {
-		const response = await downloadRawFile(dataset.id, dataset.fileNames[0]);
+		const response = await downloadRawFile(dataset.id, dataset.fileNames[fileNameIndex], limit);
 		return response;
 	}
 	return null;

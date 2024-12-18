@@ -5,12 +5,14 @@
 			:are-embed-actions-visible="false"
 			:visualization-spec="lossChartSpec"
 		/>
-		<vega-chart
-			v-for="(chart, index) of ensembleVariableCharts"
-			:key="index"
-			:interactive="false"
-			:visualization-spec="chart"
-		/>
+		<div v-if="outputData">
+			<vega-chart
+				v-for="(chart, index) of ensembleVariableCharts"
+				:key="index"
+				:interactive="false"
+				:visualization-spec="chart"
+			/>
+		</div>
 		<tera-progress-spinner
 			v-if="inProgressCalibrationId || inProgressForecastId"
 			:font-size="2"
@@ -52,6 +54,7 @@ import VegaChart from '@/components/widgets/VegaChart.vue';
 import { useProjects } from '@/composables/project';
 import { useChartSettings } from '@/composables/useChartSettings';
 import { useCharts } from '@/composables/useCharts';
+import { GroupedDataArray } from '@/services/charts';
 import {
 	CalibrateEnsembleCiemssOperation,
 	CalibrateEnsembleCiemssOperationState
@@ -83,9 +86,12 @@ const lossChartSpec = ref();
 const chartSize = { width: 180, height: 120 };
 
 // Charts setup
-const outputData = ref<{ result: DataArray; resultSummary: DataArray; pyciemssMap: Record<string, string> } | null>(
-	null
-);
+const outputData = ref<{
+	result: DataArray;
+	resultSummary: DataArray;
+	pyciemssMap: Record<string, string>;
+	resultGroupByTimepoint: GroupedDataArray;
+} | null>(null);
 const groundTruthData = computed<DataArray>(() => parseCsvAsset(csvAsset.value as CsvAsset));
 const selectedOutputMapping = computed(() => getSelectedOutputEnsembleMapping(props.node));
 const { selectedEnsembleVariableSettings } = useChartSettings(props, emit);
@@ -108,7 +114,6 @@ const ensembleVariableCharts = computed(() => {
 		spec.height = chartSize.height + 100;
 		return spec;
 	});
-	console.log(ensembleCharts);
 	return ensembleCharts;
 });
 // ----------------------------

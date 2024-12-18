@@ -5,7 +5,7 @@
 			<tera-checkbox
 				:disabled="selectedOptions.length === 0"
 				label="Show individual models"
-				:model-value="Boolean(ensembleChartOptions.showIndividualModels)"
+				:model-value="Boolean(ensembleChartOptions?.showIndividualModels)"
 				@update:model-value="toggleEnsembleChartOption('showIndividualModels', $event)"
 			/>
 			<!-- Disabling following two checkboxes for now since their functionalities aren't implemented yet -->

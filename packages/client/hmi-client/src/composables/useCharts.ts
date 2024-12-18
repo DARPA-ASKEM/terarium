@@ -1,4 +1,4 @@
-import _ from 'lodash';
+import _, { capitalize, cloneDeep } from 'lodash';
 import { mean, variance } from 'd3';
 import { computed, ComputedRef, Ref } from 'vue';
 import { VisualizationSpec } from 'vega-embed';
@@ -12,8 +12,10 @@ import {
 	createForecastChartAnnotation,
 	createHistogramChart,
 	createInterventionChartMarkers,
+	createQuantilesForecastChart,
 	createSimulateSensitivityScatter,
-	ForecastChartOptions
+	ForecastChartOptions,
+	GroupedDataArray
 } from '@/services/charts';
 import { flattenInterventionData } from '@/services/intervention-policy';
 import { DataArray, extractModelConfigIdsInOrder, extractModelConfigIds } from '@/services/models/simulation-service';
@@ -30,6 +32,7 @@ import {
 import { SimulateEnsembleMappingRow } from '@/components/workflow/ops/simulate-ensemble-ciemss/simulate-ensemble-ciemss-operation';
 import { getModelConfigName } from '@/services/model-configurations';
 import { EnsembleErrorData } from '@/components/workflow/ops/calibrate-ensemble-ciemss/calibrate-ensemble-util';
+import { PlotValue } from '@/components/workflow/ops/compare-datasets/compare-datasets-operation';
 import { useChartAnnotations } from './useChartAnnotations';
 
 export interface ChartData {
@@ -37,6 +40,7 @@ export interface ChartData {
 	resultSummary: DataArray;
 	pyciemssMap: Record<string, string>;
 	translationMap: Record<string, string>;
+	resultGroupByTimepoint?: GroupedDataArray;
 }
 
 type EnsembleVariableMappings = CalibrateEnsembleMappingRow[] | SimulateEnsembleMappingRow[];
@@ -220,6 +224,7 @@ export function useCharts(
 			sampleLayerVariables = variables.map((d) => `${chartData.value?.pyciemssMap[d]}`);
 			delete options.colorscheme;
 		}
+
 		return { statLayerVariables, sampleLayerVariables, options };
 	};
 
@@ -278,6 +283,57 @@ export function useCharts(
 		return interventionCharts;
 	};
 
+	const useCompareDatasetCharts = (
+		chartSettings: ComputedRef<ChartSetting[]>,
+		selectedPlotType: ComputedRef<PlotValue>,
+		baselineName: ComputedRef<string | null>
+	) => {
+		const compareDatasetCharts = computed(() => {
+			const charts: Record<string, VisualizationSpec> = {};
+			if (!isChartReadyToBuild.value) return charts;
+			const { resultSummary } = chartData.value as ChartData;
+
+			const datasetNames = Object.keys(resultSummary[0]).filter(
+				(key) => key !== 'timepoint_id' && key !== 'headerName'
+			);
+			// Make baseline black
+			const baselineIndex = datasetNames.indexOf(baselineName.value ?? '');
+			const colorScheme = cloneDeep(CATEGORICAL_SCHEME);
+			colorScheme[baselineIndex] = 'black';
+
+			chartSettings.value.forEach((settings) => {
+				const headerName = settings.selectedVariables[0];
+				const annotations = getChartAnnotationsByChartId(settings.id);
+				const chart = applyForecastChartAnnotations(
+					createForecastChart(
+						null,
+						{
+							data: resultSummary.filter((d) => d.headerName === headerName),
+							variables: datasetNames,
+							timeField: 'timepoint_id'
+						},
+						null,
+						{
+							title: headerName,
+							legend: true,
+							width: chartSize.value.width,
+							height: chartSize.value.height,
+							xAxisTitle: getUnit('_time') || 'Time',
+							yAxisTitle: capitalize(selectedPlotType.value),
+							scale: settings.scale,
+							colorscheme: colorScheme,
+							legendProperties: { direction: 'vertical', columns: 3 }
+						}
+					),
+					annotations
+				);
+				charts[settings.id] = chart;
+			});
+			return charts;
+		});
+		return compareDatasetCharts;
+	};
+
 	// Create variable charts based on chart settings
 	const useVariableCharts = (
 		chartSettings: ComputedRef<ChartSetting[]>,
@@ -287,13 +343,13 @@ export function useCharts(
 			const charts: Record<string, VisualizationSpec> = {};
 			if (!isChartReadyToBuild.value || !isRefReady(groundTruthData)) return charts;
 			const { result, resultSummary } = chartData.value as ChartData;
-
 			// eslint-disable-next-line
 			chartSettings.value.forEach((settings) => {
 				const variable = settings.selectedVariables[0];
 				const annotations = getChartAnnotationsByChartId(settings.id);
 				const datasetVar = modelVarToDatasetVar(mapping?.value || [], variable);
 				const { sampleLayerVariables, statLayerVariables, options } = createForecastChartOptions(settings);
+
 				const chart = applyForecastChartAnnotations(
 					createForecastChart(
 						{
@@ -394,28 +450,35 @@ export function useCharts(
 						options.width = chartSize.value.width / (modelConfigIds.length + 1);
 						options.legendProperties = { direction: 'vertical', columns: 1, labelLimit: options.width };
 						options.colorscheme = [BASE_GREY, CATEGORICAL_SCHEME[index % CATEGORICAL_SCHEME.length]];
-						const smallChart = applyForecastChartAnnotations(
-							createForecastChart(
-								{
-									data: result,
-									variables: sampleLayerVariables,
-									timeField: 'timepoint_id',
-									groupField: 'sample_id'
-								},
-								{
-									data: resultSummary,
-									variables: statLayerVariables,
-									timeField: 'timepoint_id'
-								},
-								groundTruthData && {
-									data: groundTruthData.value,
-									variables: datasetVar ? [datasetVar] : [],
-									timeField: modelVarToDatasetVar(mapping?.value || [], 'timepoint_id')
-								},
-								options
-							),
-							annotations
-						);
+						const smallChart = !setting.showQuantiles
+							? applyForecastChartAnnotations(
+									createForecastChart(
+										{
+											data: result,
+											variables: sampleLayerVariables,
+											timeField: 'timepoint_id',
+											groupField: 'sample_id'
+										},
+										{
+											data: resultSummary,
+											variables: statLayerVariables,
+											timeField: 'timepoint_id'
+										},
+										groundTruthData && {
+											data: groundTruthData.value,
+											variables: datasetVar ? [datasetVar] : [],
+											timeField: modelVarToDatasetVar(mapping?.value || [], 'timepoint_id')
+										},
+										options
+									),
+									annotations
+								)
+							: createQuantilesForecastChart(
+									chartData.value?.resultGroupByTimepoint ?? [],
+									sampleLayerVariables,
+									setting.quantiles ?? [],
+									options
+								);
 						return smallChart;
 					});
 					charts[setting.id] = smallMultiplesCharts;
@@ -427,28 +490,35 @@ export function useCharts(
 						false,
 						true
 					);
-					const chart = applyForecastChartAnnotations(
-						createForecastChart(
-							{
-								data: result,
-								variables: sampleLayerVariables,
-								timeField: 'timepoint_id',
-								groupField: 'sample_id'
-							},
-							{
-								data: resultSummary,
-								variables: statLayerVariables,
-								timeField: 'timepoint_id'
-							},
-							groundTruthData && {
-								data: groundTruthData.value,
-								variables: datasetVar ? [datasetVar] : [],
-								timeField: modelVarToDatasetVar(mapping?.value || [], 'timepoint_id')
-							},
-							options
-						),
-						annotations
-					);
+					const chart = !setting.showQuantiles
+						? applyForecastChartAnnotations(
+								createForecastChart(
+									{
+										data: result,
+										variables: sampleLayerVariables,
+										timeField: 'timepoint_id',
+										groupField: 'sample_id'
+									},
+									{
+										data: resultSummary,
+										variables: statLayerVariables,
+										timeField: 'timepoint_id'
+									},
+									groundTruthData && {
+										data: groundTruthData.value,
+										variables: datasetVar ? [datasetVar] : [],
+										timeField: modelVarToDatasetVar(mapping?.value || [], 'timepoint_id')
+									},
+									options
+								),
+								annotations
+							)
+						: createQuantilesForecastChart(
+								chartData.value?.resultGroupByTimepoint ?? [],
+								sampleLayerVariables,
+								setting.quantiles ?? [],
+								options
+							);
 					charts[setting.id] = [chart];
 				}
 			});
@@ -810,6 +880,7 @@ export function useCharts(
 		useInterventionCharts,
 		useVariableCharts,
 		useComparisonCharts,
+		useCompareDatasetCharts,
 		useEnsembleVariableCharts,
 		useErrorChart,
 		useParameterDistributionCharts,

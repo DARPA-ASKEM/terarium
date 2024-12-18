@@ -309,6 +309,8 @@
 							@update:model-value="emit('update-state', { ...node.state, showModelWeightsCharts: $event })"
 						/>
 						<Divider />
+						<tera-chart-settings-quantiles :settings="chartSettings" @update-options="updateQauntilesOptions" />
+						<Divider />
 					</div>
 				</template>
 			</tera-slider-panel>
@@ -345,6 +347,7 @@ import TeraPyciemssCancelButton from '@/components/pyciemss/tera-pyciemss-cancel
 import TeraSliderPanel from '@/components/widgets/tera-slider-panel.vue';
 import TeraChartSettings from '@/components/widgets/tera-chart-settings.vue';
 import TeraChartSettingsPanel from '@/components/widgets/tera-chart-settings-panel.vue';
+import TeraChartSettingsQuantiles from '@/components/widgets/tera-chart-settings-quantiles.vue';
 import TeraCheckbox from '@/components/widgets/tera-checkbox.vue';
 import TeraInputText from '@/components/widgets/tera-input-text.vue';
 import TeraSignalBars from '@/components/widgets/tera-signal-bars.vue';
@@ -368,6 +371,7 @@ import { useCharts } from '@/composables/useCharts';
 import { useChartSettings } from '@/composables/useChartSettings';
 import { deleteAnnotation, updateChartSettingsBySelectedVariables } from '@/services/chart-settings';
 import { DataArray } from '@/utils/stats';
+import { GroupedDataArray } from '@/services/charts';
 import {
 	CalibrateEnsembleCiemssOperationState,
 	CalibrateEnsembleMappingRow,
@@ -615,9 +619,12 @@ onMounted(async () => {
 // -------------- Charts && chart settings ----------------
 const chartWidthDiv = ref(null);
 const isOutputSettingsPanelOpen = ref(false);
-const outputData = ref<{ result: DataArray; resultSummary: DataArray; pyciemssMap: Record<string, string> } | null>(
-	null
-);
+const outputData = ref<{
+	result: DataArray;
+	resultSummary: DataArray;
+	pyciemssMap: Record<string, string>;
+	resultGroupByTimepoint: GroupedDataArray;
+} | null>(null);
 const groundTruthData = computed<DataArray>(() => parseCsvAsset(csvAsset.value as CsvAsset));
 const chartSize = useDrilldownChartSize(chartWidthDiv);
 const selectedOutputMapping = computed(() => getSelectedOutputEnsembleMapping(props.node));
@@ -629,6 +636,7 @@ const {
 	selectedEnsembleVariableSettings,
 	selectedErrorVariableSettings,
 	updateEnsembleVariableSettingOption,
+	updateQauntilesOptions,
 	updateActiveChartSettings,
 	setActiveChartSettings
 } = useChartSettings(props, emit);
