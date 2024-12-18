@@ -572,21 +572,6 @@ onMounted(async () => {
 	allModelConfigurations.value = configs.allModelConfigurations;
 	allModelOptions.value = configs.allModelOptions;
 
-	// const modelConfigurationIds: string[] = [];
-	// props.node.inputs.forEach((ele) => {
-	// 	if (ele.value && ele.type === 'modelConfigId') modelConfigurationIds.push(ele.value[0]);
-	// });
-	// if (!modelConfigurationIds) return;
-
-	// // Model configuration input
-	// await Promise.all(
-	// 	modelConfigurationIds.map(async (id) => {
-	// 		const { modelConfiguration, modelOptions } = await setupModelInput(id);
-	// 		if (modelConfiguration) allModelConfigurations.value.push(modelConfiguration);
-	// 		if (modelOptions) allModelOptions.value.push(modelOptions);
-	// 	})
-	// );
-
 	// dataset input
 	if (datasetId.value) {
 		// Get dataset
