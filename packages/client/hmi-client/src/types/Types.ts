@@ -194,6 +194,7 @@ export interface DatasetColumn extends TerariumEntity {
     name: string;
     fileName: string;
     dataType: ColumnType;
+    stats?: ColumnStats;
     formatStr?: string;
     annotations: string[];
     metadata?: any;
@@ -755,6 +756,11 @@ export interface Links {
     self: string;
 }
 
+export interface ColumnStats {
+    numericStats: NumericColumnStats;
+    nonNumericStats: NonNumericColumnStats;
+}
+
 export interface DocumentExtraction {
     fileName: string;
     assetType: ExtractionAssetType;
@@ -867,6 +873,26 @@ export interface AuthorityInstance {
     id: number;
     mask: number;
     authority: Authority;
+}
+
+export interface NumericColumnStats {
+    dataType: string;
+    mean: number;
+    median: number;
+    min: number;
+    max: number;
+    stdDev: number;
+    quartiles: number[];
+    uniqueValues: number;
+    missingValues: number;
+    histogramBins: number[];
+}
+
+export interface NonNumericColumnStats {
+    dataType: string;
+    uniqueValues: number;
+    mostCommon: { [index: string]: number };
+    missingValues: number;
 }
 
 export interface OdeSemantics {

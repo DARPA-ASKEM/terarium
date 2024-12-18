@@ -44,34 +44,10 @@ public class DatasetStatistics {
 	@Data
 	public static class DatasetStatisticsResponse {
 
-		private Map<String, NumericColumnStats> numericColumns;
-		private Map<String, NonNumericColumnStats> nonNumericColumns;
+		private Map<String, DatasetColumn.NumericColumnStats> numericColumns;
+		private Map<String, DatasetColumn.NonNumericColumnStats> nonNumericColumns;
 		private int totalRows;
 		private int totalColumns;
-	}
-
-	@Data
-	public static class NumericColumnStats {
-
-		private String dataType;
-		private Double mean;
-		private Double median;
-		private Double min;
-		private Double max;
-		private Double stdDev;
-		private List<Double> quartiles;
-		private int uniqueValues;
-		private int missingValues;
-		private List<Double> histogramBins;
-	}
-
-	@Data
-	public static class NonNumericColumnStats {
-
-		private String dataType;
-		private int uniqueValues;
-		private Map<String, Long> mostCommon;
-		private int missingValues;
 	}
 
 	/**
@@ -106,30 +82,21 @@ public class DatasetStatistics {
 		final JsonNode output = objectMapper.readTree(outputBytes);
 		final DatasetStatisticsResponse response = objectMapper.convertValue(output, DatasetStatisticsResponse.class);
 
-		// For each column, update the metadata with the statistics
+		// For each column, update the statistics
 		dataset
 			.getColumns()
 			.stream()
 			.filter(Objects::nonNull)
 			.forEach(column -> {
-				final JsonNode metadata = objectMapper.createObjectNode();
-				final NumericColumnStats numericStats = response.getNumericColumns().get(column.getName());
-				final NonNumericColumnStats nonNumericStats = response.getNonNumericColumns().get(column.getName());
-
-				try {
-					if (numericStats != null) {
-						column.setDataType(DatasetColumn.mapDataType(numericStats.getDataType()));
-						((ObjectNode) metadata).put("stats", objectMapper.writeValueAsString(numericStats));
-					} else if (nonNumericStats != null) {
-						column.setDataType(DatasetColumn.mapDataType(nonNumericStats.getDataType()));
-						((ObjectNode) metadata).put("stats", objectMapper.writeValueAsString(nonNumericStats));
-					}
-				} catch (JsonProcessingException e) {
-					log.error("Error serializing statistics for column {}", column.getName(), e);
+				if (column.getStats() == null) {
+					column.setStats(new DatasetColumn.ColumnStats());
 				}
+				column
+					.getStats()
+					.setNumericStats(response.getNumericColumns().get(column.getName()))
+					.setNonNumericStats(response.getNonNumericColumns().get(column.getName()));
 
-				column.updateMetadata(metadata);
-				log.info("Updated metadata for column {}", column.getMetadata());
+				log.info("Updated statistics for column {}", column.getName());
 			});
 	}
 }

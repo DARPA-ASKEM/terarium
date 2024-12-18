@@ -16,6 +16,7 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToOne;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
@@ -52,6 +53,11 @@ public class DatasetColumn extends TerariumEntity {
 	@JsonAlias("data_type")
 	@Enumerated(EnumType.STRING)
 	private ColumnType dataType;
+
+	/** (Optional) Column statistics */
+	@TSOptional
+	@Type(JsonType.class)
+	private ColumnStats stats;
 
 	/** (Optional) String that describes the formatting of the value */
 	@TSOptional
@@ -165,5 +171,36 @@ public class DatasetColumn extends TerariumEntity {
 			// Default case
 			default -> ColumnType.UNKNOWN;
 		};
+	}
+
+	@Data
+	public static class ColumnStats {
+
+		private NumericColumnStats numericStats;
+		private NonNumericColumnStats nonNumericStats;
+	}
+
+	@Data
+	public static class NumericColumnStats {
+
+		private String dataType;
+		private Double mean;
+		private Double median;
+		private Double min;
+		private Double max;
+		private Double stdDev;
+		private List<Double> quartiles;
+		private int uniqueValues;
+		private int missingValues;
+		private List<Double> histogramBins;
+	}
+
+	@Data
+	public static class NonNumericColumnStats {
+
+		private String dataType;
+		private int uniqueValues;
+		private Map<String, Long> mostCommon;
+		private int missingValues;
 	}
 }
