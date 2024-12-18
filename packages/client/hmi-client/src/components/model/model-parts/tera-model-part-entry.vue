@@ -11,7 +11,7 @@
 					@change="$emit('update-item', { key: 'name', value: nameText })"
 				/>
 			</span>
-			<span class="unit">
+			<span class="unit" :class="{ time: isTimePart }">
 				<template v-if="input && output">
 					<span><label>Input:</label> {{ input }}</span>
 					<span class="ml-"><label>Output:</label> {{ output }}</span>
@@ -193,7 +193,7 @@ h6::after {
 	gap: var(--gap-1);
 }
 
-.unit {
+.unit:not(.time) {
 	overflow: auto;
 }
 
