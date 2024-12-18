@@ -732,6 +732,82 @@ export function createSimulateSensitivityScatter(samplingLayer: SensitivityChart
 	return spec;
 }
 
+export function createSensitivtyScoreRankingChart(scoreData: Record<string, any>[], options: BaseChartOptions) {
+	console.log(options);
+	scoreData = [
+		{
+			key: 'var1',
+			sensitivity_score: 650,
+			std: 20
+		},
+		{
+			key: 'var2',
+			sensitivity_score: 500,
+			std: 30
+		},
+		{
+			key: 'var3',
+			sensitivity_score: 400,
+			std: 40
+		},
+		{
+			key: 'var4',
+			sensitivity_score: 300,
+			std: 50
+		}
+	];
+
+	const spec: any = {
+		$schema: VEGALITE_SCHEMA,
+		description: '',
+		data: {
+			values: scoreData
+		},
+		transform: [
+			{
+				calculate: 'datum.sensitivity_score + datum.std',
+				as: 'upper_std'
+			},
+			{
+				calculate: 'datum.sensitivity_score - datum.std',
+				as: 'lower_std'
+			}
+		],
+		layer: [
+			{
+				mark: { type: 'bar' },
+				encoding: {
+					x: {
+						field: 'key',
+						type: 'ordinal'
+					},
+					y: {
+						field: 'sensitivity_score',
+						type: 'quantitative'
+					}
+				}
+			},
+			{
+				mark: { type: 'errorbar' },
+				encoding: {
+					x: {
+						field: 'key',
+						type: 'ordinal'
+					},
+					y: {
+						field: 'upper_std',
+						type: 'quantitative',
+						scale: { zero: false }
+					},
+					y2: { field: 'lower_std' }
+				}
+			}
+		]
+	};
+
+	return spec;
+}
+
 export function applyForecastChartAnnotations(chartSpec: any, annotations: ChartAnnotation[]) {
 	if (isEmpty(annotations)) return chartSpec;
 	const targetLayerIndex = 1; // Assume the target layer is the second layer which is the statistic layer

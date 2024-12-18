@@ -190,6 +190,11 @@
 										are-embed-actions-visible
 										:visualization-spec="sensitivityCharts[setting.id].scatterChart"
 									/>
+									<vega-chart
+										expandable
+										are-embed-actions-visible
+										:visualization-spec="sensitivityCharts[setting.id].rankingChart"
+									/>
 								</template>
 							</AccordionTab>
 						</Accordion>

@@ -13,7 +13,8 @@ import {
 	createHistogramChart,
 	createInterventionChartMarkers,
 	createSimulateSensitivityScatter,
-	ForecastChartOptions
+	ForecastChartOptions,
+	createSensitivtyScoreRankingChart
 } from '@/services/charts';
 import { flattenInterventionData } from '@/services/intervention-policy';
 import { DataArray, extractModelConfigIdsInOrder, extractModelConfigIds } from '@/services/models/simulation-service';
@@ -806,7 +807,10 @@ export function useCharts(
 
 			const inputVariables: string[] = chartSettings.value[0].selectedInputVariables ?? [];
 
-			const charts: Record<string, { lineChart: VisualizationSpec; scatterChart: VisualizationSpec }> = {};
+			const charts: Record<
+				string,
+				{ lineChart: VisualizationSpec; scatterChart: VisualizationSpec; rankingChart: VisualizationSpec }
+			> = {};
 
 			// eslint-disable-next-line
 			chartSettings.value.forEach((settings) => {
@@ -850,7 +854,10 @@ export function useCharts(
 						colorscheme: SENSITIVITY_COLOUR_SCHEME
 					}
 				);
-				charts[settings.id] = { lineChart: lineSpec, scatterChart: spec };
+
+				const rankingSpec = createSensitivtyScoreRankingChart([], options);
+
+				charts[settings.id] = { lineChart: lineSpec, scatterChart: spec, rankingChart: rankingSpec };
 			});
 			return charts;
 		});
