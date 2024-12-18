@@ -22,6 +22,7 @@ import org.springframework.stereotype.Service;
 import software.uncharted.terarium.hmiserver.configuration.Config;
 import software.uncharted.terarium.hmiserver.configuration.ElasticsearchConfiguration;
 import software.uncharted.terarium.hmiserver.models.dataservice.CsvColumnStats;
+import software.uncharted.terarium.hmiserver.models.dataservice.PresignedURL;
 import software.uncharted.terarium.hmiserver.models.dataservice.dataset.Dataset;
 import software.uncharted.terarium.hmiserver.models.dataservice.dataset.DatasetColumn;
 import software.uncharted.terarium.hmiserver.repository.data.DatasetRepository;
@@ -149,7 +150,11 @@ public class DatasetService extends TerariumAssetServiceWithSearch<Dataset, Data
 
 				// Calculate the statistics for the columns
 				try {
-					datasetStatistics.add(dataset);
+					final PresignedURL datasetUrl = getDownloadUrl(dataset.getId(), filename).orElseThrow(() ->
+						new Exception("Download URL not found")
+					);
+
+					datasetStatistics.add(dataset, datasetUrl);
 				} catch (final Exception e) {
 					log.error("Error calculating statistics for dataset {}", dataset.getId(), e);
 				}

@@ -56,6 +56,8 @@ public class DatasetColumn extends TerariumEntity {
 
 	/** (Optional) Column statistics */
 	@TSOptional
+	@Column(columnDefinition = "json")
+	@Type(JsonType.class)
 	private DatasetColumnStats stats;
 
 	/** (Optional) String that describes the formatting of the value */
@@ -110,6 +112,7 @@ public class DatasetColumn extends TerariumEntity {
 		}
 
 		if (this.grounding != null) clone.grounding = this.grounding.clone();
+		if (this.stats != null) clone.stats = this.stats;
 
 		clone.description = this.description;
 

@@ -1,11 +1,8 @@
 package software.uncharted.terarium.hmiserver.service.gollm;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import java.io.IOException;
-import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.ExecutionException;
@@ -23,7 +20,6 @@ import software.uncharted.terarium.hmiserver.models.dataservice.dataset.DatasetC
 import software.uncharted.terarium.hmiserver.models.task.TaskRequest;
 import software.uncharted.terarium.hmiserver.models.task.TaskRequest.TaskType;
 import software.uncharted.terarium.hmiserver.models.task.TaskResponse;
-import software.uncharted.terarium.hmiserver.service.data.DatasetService;
 import software.uncharted.terarium.hmiserver.service.tasks.TaskService;
 import software.uncharted.terarium.hmiserver.utils.Messages;
 
@@ -36,7 +32,6 @@ public class DatasetStatistics {
 	private final ObjectMapper objectMapper;
 	private final TaskService taskService;
 	final Messages messages;
-	private final DatasetService datasetService;
 
 	@Data
 	public static class DatasetStatisticsRequest {
@@ -64,7 +59,7 @@ public class DatasetStatistics {
 	 * @throws InterruptedException If the Task is interrupted
 	 * @throws TimeoutException If the Task times out
 	 */
-	public void add(final Dataset dataset)
+	public void add(final Dataset dataset, final PresignedURL datasetUrl)
 		throws IllegalArgumentException, IOException, ExecutionException, InterruptedException, TimeoutException {
 		// Check that the Statistics have already been calculated, as Dataset are immutable
 		final boolean isStatisticsExist = dataset.getColumns().stream().anyMatch(column -> column.getStats() != null);
@@ -74,9 +69,6 @@ public class DatasetStatistics {
 
 		// Create the request to the Gollm service
 		final DatasetStatisticsRequest request = new DatasetStatisticsRequest();
-		final PresignedURL datasetUrl = datasetService
-			.getDownloadUrl(dataset.getId(), dataset.getFileNames().get(0))
-			.orElseThrow(() -> new IllegalArgumentException(messages.get("dataset.download.url.not.found")));
 		request.setDatasetUrl(datasetUrl.toString());
 
 		final TaskRequest taskRequest = new TaskRequest();

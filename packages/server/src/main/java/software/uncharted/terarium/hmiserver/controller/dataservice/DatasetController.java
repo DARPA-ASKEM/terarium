@@ -721,7 +721,11 @@ public class DatasetController {
 
 				// Calculate the statistics for the columns
 				try {
-					datasetStatistics.add(updatedDataset.get());
+					final PresignedURL datasetUrl = datasetService
+						.getDownloadUrl(updatedDataset.get().getId(), filename)
+						.orElseThrow(() -> new IllegalArgumentException(messages.get("dataset.download.url.not.found")));
+
+					datasetStatistics.add(updatedDataset.get(), datasetUrl);
 				} catch (final Exception e) {
 					log.error("Error calculating statistics for dataset {}", updatedDataset.get().getId(), e);
 				}
