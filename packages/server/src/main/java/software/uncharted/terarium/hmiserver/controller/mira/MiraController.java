@@ -45,8 +45,10 @@ import software.uncharted.terarium.hmiserver.security.Roles;
 import software.uncharted.terarium.hmiserver.service.CurrentUserService;
 import software.uncharted.terarium.hmiserver.service.data.ArtifactService;
 import software.uncharted.terarium.hmiserver.service.data.ModelConfigurationService;
+import software.uncharted.terarium.hmiserver.service.data.ModelService;
 import software.uncharted.terarium.hmiserver.service.data.ProjectService;
 import software.uncharted.terarium.hmiserver.service.tasks.AMRToMMTResponseHandler;
+import software.uncharted.terarium.hmiserver.service.tasks.CompareModelsConceptsResponseHandler;
 import software.uncharted.terarium.hmiserver.service.tasks.GenerateModelLatexResponseHandler;
 import software.uncharted.terarium.hmiserver.service.tasks.LatexToAMRResponseHandler;
 import software.uncharted.terarium.hmiserver.service.tasks.MdlToStockflowResponseHandler;
@@ -65,10 +67,12 @@ public class MiraController {
 	private final ObjectMapper objectMapper;
 	private final ArtifactService artifactService;
 	private final TaskService taskService;
+	private final ModelService modelService;
 	private final MIRAProxy proxy;
 	private final StellaToStockflowResponseHandler stellaToStockflowResponseHandler;
 	private final MdlToStockflowResponseHandler mdlToStockflowResponseHandler;
 	private final SbmlToPetrinetResponseHandler sbmlToPetrinetResponseHandler;
+	private final CompareModelsConceptsResponseHandler compareModelsConceptsResponseHandler;
 	private final ProjectService projectService;
 	private final CurrentUserService currentUserService;
 	private final ModelConfigurationService modelConfigurationService;
@@ -80,12 +84,6 @@ public class MiraController {
 
 		UUID artifactId;
 		UUID projectId;
-	}
-
-	@Data
-	public static class ModelConversionResponse {
-
-		public Model response;
 	}
 
 	private static boolean endsWith(final String filename, final List<String> suffixes) {
@@ -109,6 +107,113 @@ public class MiraController {
 		taskService.addResponseHandler(stellaToStockflowResponseHandler);
 		taskService.addResponseHandler(mdlToStockflowResponseHandler);
 		taskService.addResponseHandler(sbmlToPetrinetResponseHandler);
+		taskService.addResponseHandler(compareModelsConceptsResponseHandler);
+	}
+
+	@Data
+	public static class CompareModelsConceptsRequest {
+
+		final List<UUID> modelIds;
+		final UUID workflowId;
+		final UUID nodeId;
+	}
+
+	@PostMapping("/compare-models-concepts")
+	@Secured(Roles.USER)
+	@Operation(summary = "Compare multiple AMR")
+	@ApiResponses(
+		value = {
+			@ApiResponse(
+				responseCode = "200",
+				description = "Dispatched successfully",
+				content = @Content(
+					mediaType = "application/json",
+					schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = TaskResponse.class)
+				)
+			),
+			@ApiResponse(
+				responseCode = "400",
+				description = "Less than 2 models provided for comparison",
+				content = @Content
+			),
+			@ApiResponse(responseCode = "500", description = "There was an issue dispatching the request", content = @Content)
+		}
+	)
+	public ResponseEntity<JsonNode> compareModelsConcepts(
+		@RequestBody final CompareModelsConceptsRequest request,
+		@RequestParam(name = "project-id", required = false) final UUID projectId
+	) {
+		// if the number of models is less than 2, return an error
+		if (request.modelIds.size() < 2) {
+			log.warn("Less than 2 models provided for comparison");
+			throw new ResponseStatusException(HttpStatus.BAD_REQUEST, messages.get("mira.bad-number"));
+		}
+
+		// Create the task request
+		final TaskRequest taskRequest = new TaskRequest();
+		taskRequest.setType(TaskType.MIRA);
+		taskRequest.setScript(CompareModelsConceptsResponseHandler.NAME);
+		taskRequest.setUserId(currentUserService.get().getId());
+		taskRequest.setProjectId(projectId);
+
+		// Set the task request additional properties
+		final CompareModelsConceptsResponseHandler.Properties properties =
+			new CompareModelsConceptsResponseHandler.Properties();
+		properties.setModelIds(request.modelIds);
+		properties.setWorkflowId(request.workflowId);
+		properties.setNodeId(request.nodeId);
+		taskRequest.setAdditionalProperties(properties);
+
+		// Fetch the models
+		final List<String> amrs = new ArrayList<>();
+		for (final UUID modelId : request.modelIds) {
+			final Model model = modelService
+				.getAsset(modelId, Schema.Permission.READ)
+				.orElseThrow(() -> {
+					log.warn("Model {} not found", modelId);
+					return new ResponseStatusException(HttpStatus.NOT_FOUND, messages.get("model.not-found"));
+				});
+
+			amrs.add(model.serializeWithoutTerariumFields(null, null));
+		}
+
+		// Add the models as task request input
+		final CompareModelsConceptsResponseHandler.Input input = new CompareModelsConceptsResponseHandler.Input();
+		input.setAmrs(amrs);
+		try {
+			taskRequest.setInput(objectMapper.writeValueAsBytes(input));
+		} catch (final JsonProcessingException e) {
+			log.error("Unable to serialize input", e);
+			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("generic.io-error.write"));
+		}
+
+		// Send the task request
+		final TaskResponse taskResponse;
+		try {
+			taskResponse = taskService.runTaskSync(taskRequest);
+		} catch (final JsonProcessingException e) {
+			log.error("Unable to serialize input", e);
+			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("task.mira.json-processing"));
+		} catch (final TimeoutException e) {
+			log.warn("Timeout while waiting for task response", e);
+			throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, messages.get("task.mira.timeout"));
+		} catch (final InterruptedException e) {
+			log.warn("Interrupted while waiting for task response", e);
+			throw new ResponseStatusException(HttpStatus.UNPROCESSABLE_ENTITY, messages.get("task.mira.interrupted"));
+		} catch (final ExecutionException e) {
+			log.error("Error while waiting for task response", e);
+			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("task.mira.execution-failure"));
+		}
+
+		final JsonNode comparisonResult;
+		try {
+			comparisonResult = objectMapper.readValue(taskResponse.getOutput(), JsonNode.class);
+		} catch (final IOException e) {
+			log.error("Unable to deserialize output", e);
+			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("generic.io-error.read"));
+		}
+
+		return ResponseEntity.ok().body(comparisonResult);
 	}
 
 	@GetMapping("/geoname-search")
