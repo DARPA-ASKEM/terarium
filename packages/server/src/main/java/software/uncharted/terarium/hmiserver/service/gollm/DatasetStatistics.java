@@ -82,17 +82,7 @@ public class DatasetStatistics {
 		final JsonNode output = objectMapper.readTree(outputBytes);
 		final DatasetStatisticsResponse response = objectMapper.convertValue(output, DatasetStatisticsResponse.class);
 
-		Map<String, NumericColumnStats> numericColumnStats = null;
-		if (response.getNumericColumns() != null) {
-			numericColumnStats = response.getNumericColumns();
-		}
-
-		Map<String, NonNumericColumnStats> nonNumericColumnStats = null;
-		if (response.getNonNumericColumns() != null) {
-			nonNumericColumnStats = response.getNonNumericColumns();
-		}
-
-		if (numericColumnStats == null && nonNumericColumnStats == null) {
+		if (response.getNumericColumns() == null && response.getNonNumericColumns() == null) {
 			log.info("No statistics found for dataset {}", dataset.getId());
 			return;
 		}
