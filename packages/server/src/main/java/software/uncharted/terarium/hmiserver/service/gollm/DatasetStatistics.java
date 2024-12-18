@@ -1,5 +1,6 @@
 package software.uncharted.terarium.hmiserver.service.gollm;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.IOException;
@@ -44,9 +45,16 @@ public class DatasetStatistics {
 	@Data
 	public static class DatasetStatisticsResponse {
 
+		@JsonProperty("numeric_columns")
 		private Map<String, NumericColumnStats> numericColumns;
+
+		@JsonProperty("non_numeric_columns")
 		private Map<String, NonNumericColumnStats> nonNumericColumns;
+
+		@JsonProperty("total_rows")
 		private int totalRows;
+
+		@JsonProperty("total_columns")
 		private int totalColumns;
 	}
 
