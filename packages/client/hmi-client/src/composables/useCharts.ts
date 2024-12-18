@@ -328,43 +328,89 @@ export function useCharts(
 		return variableCharts;
 	};
 
+	function createComparisonChart(
+		selectedVars,
+		result,
+		resultSummary,
+		statLayerVariables,
+		sampleLayerVariables,
+		options,
+		annotations
+	) {
+		const chart = applyForecastChartAnnotations(
+			createForecastChart(
+				{
+					data: result,
+					variables: sampleLayerVariables,
+					timeField: 'timepoint_id',
+					groupField: 'sample_id'
+				},
+				{
+					data: resultSummary,
+					variables: statLayerVariables,
+					timeField: 'timepoint_id'
+				},
+				null,
+				options
+			),
+			annotations
+		);
+		if (interventions?.value) {
+			_.keys(groupedInterventionOutputs.value).forEach((key) => {
+				if (selectedVars.includes(key)) {
+					chart.layer.push(...createInterventionChartMarkers(groupedInterventionOutputs.value[key]));
+				}
+			});
+		}
+		return chart;
+	}
+
 	// Create comparison charts based on chart settings
 	const useComparisonCharts = (chartSettings: ComputedRef<ChartSetting[]>) => {
 		const comparisonCharts = computed(() => {
-			const charts: Record<string, VisualizationSpec> = {};
+			const charts: Record<string, VisualizationSpec | VisualizationSpec[]> = {};
 			if (!isChartReadyToBuild.value) return charts;
 			const { result, resultSummary } = chartData.value as ChartData;
+			const yMinExtent = 0;
+
 			chartSettings.value.forEach((setting) => {
 				const selectedVars = setting.selectedVariables;
+
 				const { statLayerVariables, sampleLayerVariables, options } = createForecastChartOptions(setting);
 				const annotations = getChartAnnotationsByChartId(setting.id);
-
-				const chart = applyForecastChartAnnotations(
-					createForecastChart(
-						{
-							data: result,
-							variables: sampleLayerVariables,
-							timeField: 'timepoint_id',
-							groupField: 'sample_id'
-						},
-						{
-							data: resultSummary,
-							variables: statLayerVariables,
-							timeField: 'timepoint_id'
-						},
-						null,
-						options
-					),
-					annotations
-				);
-				if (interventions?.value) {
-					_.keys(groupedInterventionOutputs.value).forEach((key) => {
-						if (selectedVars.includes(key)) {
-							chart.layer.push(...createInterventionChartMarkers(groupedInterventionOutputs.value[key]));
-						}
-					});
+				if (setting.shareYAxis && setting.selectedVariables.length > 1) {
+					// find max y for each variable
+					const maxY = 0;
+					if (yMinExtent < maxY) {
+						// options.yMinExtent = maxY;
+					}
 				}
-				charts[setting.id] = chart;
+				if (setting.smallMultiples && setting.selectedVariables.length > 1) {
+					// create multiples
+					const splitCharts: VisualizationSpec[] = selectedVars.map((selectedVar, index) =>
+						createComparisonChart(
+							[selectedVar],
+							result,
+							resultSummary,
+							[statLayerVariables[index]],
+							[sampleLayerVariables[index]],
+							options,
+							annotations
+						)
+					);
+					charts[setting.id] = splitCharts;
+				} else {
+					const chart = createComparisonChart(
+						selectedVars,
+						result,
+						resultSummary,
+						statLayerVariables,
+						sampleLayerVariables,
+						options,
+						annotations
+					);
+					charts[setting.id] = chart;
+				}
 			});
 			return charts;
 		});

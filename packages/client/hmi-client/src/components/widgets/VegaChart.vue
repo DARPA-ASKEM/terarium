@@ -65,7 +65,7 @@ const defaultChartConfig: Partial<Config> = {
 
 const props = withDefaults(
 	defineProps<{
-		visualizationSpec: VisualizationSpec;
+		visualizationSpec: VisualizationSpec | VisualizationSpec[] | undefined;
 		areEmbedActionsVisible?: boolean;
 		/**
 		 * A list of signal names for Vega interval-type selections.

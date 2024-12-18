@@ -31,6 +31,7 @@ interface BaseChartOptions {
 	autosize?: AUTOSIZE;
 	dateOptions?: DateOptions;
 	scale?: string;
+	yMinExtent?: number;
 }
 
 export interface DateOptions {
@@ -472,6 +473,9 @@ export function createForecastChart(
 					direction: legendProperties.direction,
 					anchor: 'start'
 				}
+			},
+			axisY: {
+				minExtent: options.yMinExtent || undefined
 			}
 		},
 

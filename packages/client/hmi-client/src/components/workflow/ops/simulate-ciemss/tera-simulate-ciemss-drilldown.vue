@@ -171,7 +171,13 @@
 							</AccordionTab>
 							<AccordionTab header="Comparison charts">
 								<template v-for="setting of selectedComparisonChartSettings" :key="setting.id">
+									<div v-if="_.isArray(comparisonCharts[setting.id])">
+										<div v-for="(chart, index) of comparisonCharts[setting.id]" :key="setting.id + index">
+											<vega-chart expandable :are-embed-actions-visible="true" :visualization-spec="chart" />
+										</div>
+									</div>
 									<vega-chart
+										v-else
 										expandable
 										:are-embed-actions-visible="true"
 										:visualization-spec="comparisonCharts[setting.id]"
