@@ -91,10 +91,14 @@ public class DatasetStatistics {
 				if (column.getStats() == null) {
 					column.setStats(new DatasetColumnStats());
 				}
-				column
-					.getStats()
-					.setNumericStats(response.getNumericColumns().get(column.getName()))
-					.setNonNumericStats(response.getNonNumericColumns().get(column.getName()));
+
+				// Get the statistics for the column
+				if (response.getNumericColumns() != null && response.getNumericColumns().containsKey(column.getName())) {
+					column.getStats().setNumericStats(response.getNumericColumns().get(column.getName()));
+				}
+				if (response.getNonNumericColumns() != null && response.getNonNumericColumns().containsKey(column.getName())) {
+					column.getStats().setNonNumericStats(response.getNonNumericColumns().get(column.getName()));
+				}
 
 				log.info("Updated statistics for column {}", column.getName());
 			});
