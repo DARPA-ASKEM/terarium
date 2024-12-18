@@ -95,6 +95,7 @@ public class TaskService {
 			timeoutMinutes = req.getTimeoutMinutes();
 			additionalProperties = req.getAdditionalProperties();
 			routingKey = rk;
+			useCache = req.isUseCache();
 		}
 
 		public TaskResponse createResponse(final TaskStatus status, final String stdout, final String stderr) {
