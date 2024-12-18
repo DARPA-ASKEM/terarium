@@ -12,9 +12,11 @@ import {
 	createForecastChartAnnotation,
 	createHistogramChart,
 	createInterventionChartMarkers,
+	createQuantilesForecastChart,
 	createSimulateSensitivityScatter,
 	ForecastChartOptions,
-	expressionFunctions
+	expressionFunctions,
+	GroupedDataArray
 } from '@/services/charts';
 import { flattenInterventionData } from '@/services/intervention-policy';
 import { DataArray, extractModelConfigIdsInOrder, extractModelConfigIds } from '@/services/models/simulation-service';
@@ -39,6 +41,7 @@ export interface ChartData {
 	resultSummary: DataArray;
 	pyciemssMap: Record<string, string>;
 	translationMap: Record<string, string>;
+	resultGroupByTimepoint?: GroupedDataArray;
 }
 
 type EnsembleVariableMappings = CalibrateEnsembleMappingRow[] | SimulateEnsembleMappingRow[];
@@ -448,28 +451,35 @@ export function useCharts(
 						options.width = chartSize.value.width / (modelConfigIds.length + 1);
 						options.legendProperties = { direction: 'vertical', columns: 1, labelLimit: options.width };
 						options.colorscheme = [BASE_GREY, CATEGORICAL_SCHEME[index % CATEGORICAL_SCHEME.length]];
-						const smallChart = applyForecastChartAnnotations(
-							createForecastChart(
-								{
-									data: result,
-									variables: sampleLayerVariables,
-									timeField: 'timepoint_id',
-									groupField: 'sample_id'
-								},
-								{
-									data: resultSummary,
-									variables: statLayerVariables,
-									timeField: 'timepoint_id'
-								},
-								groundTruthData && {
-									data: groundTruthData.value,
-									variables: datasetVar ? [datasetVar] : [],
-									timeField: modelVarToDatasetVar(mapping?.value || [], 'timepoint_id')
-								},
-								options
-							),
-							annotations
-						);
+						const smallChart = !setting.showQuantiles
+							? applyForecastChartAnnotations(
+									createForecastChart(
+										{
+											data: result,
+											variables: sampleLayerVariables,
+											timeField: 'timepoint_id',
+											groupField: 'sample_id'
+										},
+										{
+											data: resultSummary,
+											variables: statLayerVariables,
+											timeField: 'timepoint_id'
+										},
+										groundTruthData && {
+											data: groundTruthData.value,
+											variables: datasetVar ? [datasetVar] : [],
+											timeField: modelVarToDatasetVar(mapping?.value || [], 'timepoint_id')
+										},
+										options
+									),
+									annotations
+								)
+							: createQuantilesForecastChart(
+									chartData.value?.resultGroupByTimepoint ?? [],
+									sampleLayerVariables,
+									setting.quantiles ?? [],
+									options
+								);
 						return smallChart;
 					});
 					charts[setting.id] = smallMultiplesCharts;
@@ -481,28 +491,35 @@ export function useCharts(
 						false,
 						true
 					);
-					const chart = applyForecastChartAnnotations(
-						createForecastChart(
-							{
-								data: result,
-								variables: sampleLayerVariables,
-								timeField: 'timepoint_id',
-								groupField: 'sample_id'
-							},
-							{
-								data: resultSummary,
-								variables: statLayerVariables,
-								timeField: 'timepoint_id'
-							},
-							groundTruthData && {
-								data: groundTruthData.value,
-								variables: datasetVar ? [datasetVar] : [],
-								timeField: modelVarToDatasetVar(mapping?.value || [], 'timepoint_id')
-							},
-							options
-						),
-						annotations
-					);
+					const chart = !setting.showQuantiles
+						? applyForecastChartAnnotations(
+								createForecastChart(
+									{
+										data: result,
+										variables: sampleLayerVariables,
+										timeField: 'timepoint_id',
+										groupField: 'sample_id'
+									},
+									{
+										data: resultSummary,
+										variables: statLayerVariables,
+										timeField: 'timepoint_id'
+									},
+									groundTruthData && {
+										data: groundTruthData.value,
+										variables: datasetVar ? [datasetVar] : [],
+										timeField: modelVarToDatasetVar(mapping?.value || [], 'timepoint_id')
+									},
+									options
+								),
+								annotations
+							)
+						: createQuantilesForecastChart(
+								chartData.value?.resultGroupByTimepoint ?? [],
+								sampleLayerVariables,
+								setting.quantiles ?? [],
+								options
+							);
 					charts[setting.id] = [chart];
 				}
 			});
