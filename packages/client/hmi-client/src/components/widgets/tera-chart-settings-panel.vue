@@ -86,30 +86,23 @@ const props = defineProps<{
 	generateAnnotation?: (setting: ChartSetting, query: string) => Promise<ChartAnnotation | null>;
 }>();
 
-const emit = defineEmits([
-	'close',
-	'update-settings',
-	'delete-annotation',
-	'create-annotation',
-	'update-small-multiples',
-	'update-share-y-axis'
-]);
+const emit = defineEmits(['close', 'update-settings', 'delete-annotation', 'create-annotation']);
 
 // Log scale
 const useLog = computed(() => props.activeSettings?.scale === 'log');
-const isSmallMultiples = ref<boolean>(false);
-const isShareYAxis = ref<boolean>(false);
+const isSmallMultiples = computed(() => props.activeSettings?.smallMultiples);
+const isShareYAxis = computed(() => props.activeSettings?.shareYAxis);
 
 const toggleLogScale = (useLogScale: boolean) => {
 	emit('update-settings', { scale: useLogScale ? 'log' : '' });
 };
 
 const toggleSmallMultiples = (smallMultiples: boolean) => {
-	emit('update-small-multiples', smallMultiples);
+	emit('update-settings', { smallMultiples: !!smallMultiples });
 };
 
 const toggleShareYAxis = (shareYAxis: boolean) => {
-	emit('update-share-y-axis', shareYAxis);
+	emit('update-settings', { shareYAxis: !!shareYAxis });
 };
 
 // Primary color

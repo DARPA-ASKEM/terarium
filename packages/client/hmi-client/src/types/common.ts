@@ -218,6 +218,8 @@ export interface ChartSettingBase {
 	type: ChartSettingType;
 	primaryColor?: string;
 	scale?: string;
+	smallMultiples?: boolean;
+	shareYAxis?: boolean;
 }
 
 export const ProgrammingLanguageVersion: { [key in ProgrammingLanguage]: string } = {

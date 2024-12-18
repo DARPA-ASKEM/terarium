@@ -227,6 +227,7 @@
 						"
 						:active-settings="activeChartSettings"
 						:generate-annotation="generateAnnotation"
+						:comparison="activeChartSettings?.type === ChartSettingType.VARIABLE_COMPARISON"
 						@update-settings="updateActiveChartSettings"
 						@delete-annotation="deleteAnnotation"
 						@close="setActiveChartSettings(null)"
