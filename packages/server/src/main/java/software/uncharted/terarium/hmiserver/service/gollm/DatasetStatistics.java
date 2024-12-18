@@ -55,12 +55,12 @@ public class DatasetStatistics {
 
 	/**
 	 * Add statistics to the columns of a Dataset
-	 * @param dataset - The Dataset
-	 * @throws IllegalArgumentException - If the Dataset does not exist, the statistics have already been calculated, or the download URL is not found
-	 * @throws IOException - If there is an error reading the response from the Gollm service
-	 * @throws ExecutionException - If there is an error running the Task
-	 * @throws InterruptedException - If the Task is interrupted
-	 * @throws TimeoutException - If the Task times out
+	 * @param dataset The Dataset
+	 * @throws IllegalArgumentException If the Dataset does not exist, the statistics have already been calculated, or the download URL is not found
+	 * @throws IOException If there is an error reading the response from the Gollm service
+	 * @throws ExecutionException If there is an error running the Task
+	 * @throws InterruptedException If the Task is interrupted
+	 * @throws TimeoutException If the Task times out
 	 */
 	public void add(final Dataset dataset)
 		throws IllegalArgumentException, IOException, ExecutionException, InterruptedException, TimeoutException {
@@ -104,5 +104,7 @@ public class DatasetStatistics {
 
 				log.info("Updated statistics for column {}", column.getName());
 			});
+
+		log.info("Updated statistics for dataset {}, {}", dataset.getName(), dataset.getId());
 	}
 }
