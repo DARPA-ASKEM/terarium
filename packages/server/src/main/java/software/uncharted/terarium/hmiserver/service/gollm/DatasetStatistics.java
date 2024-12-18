@@ -17,7 +17,9 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import software.uncharted.terarium.hmiserver.models.dataservice.PresignedURL;
 import software.uncharted.terarium.hmiserver.models.dataservice.dataset.Dataset;
-import software.uncharted.terarium.hmiserver.models.dataservice.dataset.DatasetColumn;
+import software.uncharted.terarium.hmiserver.models.dataservice.dataset.DatasetColumnStats;
+import software.uncharted.terarium.hmiserver.models.dataservice.dataset.DatasetColumnStats.NonNumericColumnStats;
+import software.uncharted.terarium.hmiserver.models.dataservice.dataset.DatasetColumnStats.NumericColumnStats;
 import software.uncharted.terarium.hmiserver.models.task.TaskRequest;
 import software.uncharted.terarium.hmiserver.models.task.TaskRequest.TaskType;
 import software.uncharted.terarium.hmiserver.models.task.TaskResponse;
@@ -47,8 +49,8 @@ public class DatasetStatistics {
 	@Data
 	public static class DatasetStatisticsResponse {
 
-		private Map<String, DatasetColumn.NumericColumnStats> numericColumns;
-		private Map<String, DatasetColumn.NonNumericColumnStats> nonNumericColumns;
+		private Map<String, NumericColumnStats> numericColumns;
+		private Map<String, NonNumericColumnStats> nonNumericColumns;
 		private int totalRows;
 		private int totalColumns;
 	}
@@ -95,7 +97,7 @@ public class DatasetStatistics {
 			.filter(Objects::nonNull)
 			.forEach(column -> {
 				if (column.getStats() == null) {
-					column.setStats(new DatasetColumn.ColumnStats());
+					column.setStats(new DatasetColumnStats());
 				}
 				column
 					.getStats()

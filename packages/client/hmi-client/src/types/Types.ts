@@ -194,13 +194,18 @@ export interface DatasetColumn extends TerariumEntity {
     name: string;
     fileName: string;
     dataType: ColumnType;
-    stats?: ColumnStats;
+    stats?: DatasetColumnStats;
     formatStr?: string;
     annotations: string[];
     metadata?: any;
     grounding?: Grounding;
     description?: string;
     dataset?: Dataset;
+}
+
+export interface DatasetColumnStats {
+    numericStats: NumericColumnStats;
+    nonNumericStats: NonNumericColumnStats;
 }
 
 export interface DocumentAsset extends TerariumAsset {
@@ -756,9 +761,24 @@ export interface Links {
     self: string;
 }
 
-export interface ColumnStats {
-    numericStats: NumericColumnStats;
-    nonNumericStats: NonNumericColumnStats;
+export interface NumericColumnStats {
+    dataType: string;
+    mean: number;
+    median: number;
+    min: number;
+    max: number;
+    stdDev: number;
+    quartiles: number[];
+    uniqueValues: number;
+    missingValues: number;
+    histogramBins: number[];
+}
+
+export interface NonNumericColumnStats {
+    dataType: string;
+    uniqueValues: number;
+    mostCommon: { [index: string]: number };
+    missingValues: number;
 }
 
 export interface DocumentExtraction {
@@ -873,26 +893,6 @@ export interface AuthorityInstance {
     id: number;
     mask: number;
     authority: Authority;
-}
-
-export interface NumericColumnStats {
-    dataType: string;
-    mean: number;
-    median: number;
-    min: number;
-    max: number;
-    stdDev: number;
-    quartiles: number[];
-    uniqueValues: number;
-    missingValues: number;
-    histogramBins: number[];
-}
-
-export interface NonNumericColumnStats {
-    dataType: string;
-    uniqueValues: number;
-    mostCommon: { [index: string]: number };
-    missingValues: number;
 }
 
 export interface OdeSemantics {

@@ -56,8 +56,7 @@ public class DatasetColumn extends TerariumEntity {
 
 	/** (Optional) Column statistics */
 	@TSOptional
-	@Type(JsonType.class)
-	private ColumnStats stats;
+	private DatasetColumnStats stats;
 
 	/** (Optional) String that describes the formatting of the value */
 	@TSOptional
@@ -171,36 +170,5 @@ public class DatasetColumn extends TerariumEntity {
 			// Default case
 			default -> ColumnType.UNKNOWN;
 		};
-	}
-
-	@Data
-	public static class ColumnStats {
-
-		private NumericColumnStats numericStats;
-		private NonNumericColumnStats nonNumericStats;
-	}
-
-	@Data
-	public static class NumericColumnStats {
-
-		private String dataType;
-		private Double mean;
-		private Double median;
-		private Double min;
-		private Double max;
-		private Double stdDev;
-		private List<Double> quartiles;
-		private int uniqueValues;
-		private int missingValues;
-		private List<Double> histogramBins;
-	}
-
-	@Data
-	public static class NonNumericColumnStats {
-
-		private String dataType;
-		private int uniqueValues;
-		private Map<String, Long> mostCommon;
-		private int missingValues;
 	}
 }
