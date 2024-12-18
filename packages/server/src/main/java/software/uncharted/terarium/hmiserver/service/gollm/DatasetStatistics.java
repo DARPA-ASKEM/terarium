@@ -91,7 +91,7 @@ public class DatasetStatistics {
 		final DatasetStatisticsResponse response = objectMapper.convertValue(output, DatasetStatisticsResponse.class);
 
 		if (response.getNumericColumns() == null && response.getNonNumericColumns() == null) {
-			log.info("No statistics found for dataset {}", dataset.getId());
+			log.info("No statistics found for dataset {}, {}", dataset.getName(), dataset.getId());
 			return;
 		}
 
@@ -113,7 +113,7 @@ public class DatasetStatistics {
 					column.getStats().setNonNumericStats(response.getNonNumericColumns().get(column.getName()));
 				}
 
-				log.info("Updated statistics for column {}", column.getName());
+				log.info("Updated statistics for column {} {}", column.getName(), column.getStats());
 			});
 
 		log.info("Updated statistics for dataset {}, {}", dataset.getName(), dataset.getId());
