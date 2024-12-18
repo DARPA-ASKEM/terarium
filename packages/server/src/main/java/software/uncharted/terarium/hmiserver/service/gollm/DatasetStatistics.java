@@ -69,7 +69,7 @@ public class DatasetStatistics {
 
 		// Create the request to the Gollm service
 		final DatasetStatisticsRequest request = new DatasetStatisticsRequest();
-		request.setDatasetUrl(datasetUrl.toString());
+		request.setDatasetUrl(datasetUrl.getUrl());
 
 		final TaskRequest taskRequest = new TaskRequest();
 		taskRequest.setType(TaskType.GOLLM);
@@ -81,6 +81,21 @@ public class DatasetStatistics {
 		final byte[] outputBytes = taskResponse.getOutput();
 		final JsonNode output = objectMapper.readTree(outputBytes);
 		final DatasetStatisticsResponse response = objectMapper.convertValue(output, DatasetStatisticsResponse.class);
+
+		Map<String, NumericColumnStats> numericColumnStats = null;
+		if (response.getNumericColumns() != null) {
+			numericColumnStats = response.getNumericColumns();
+		}
+
+		Map<String, NonNumericColumnStats> nonNumericColumnStats = null;
+		if (response.getNonNumericColumns() != null) {
+			nonNumericColumnStats = response.getNonNumericColumns();
+		}
+
+		if (numericColumnStats == null && nonNumericColumnStats == null) {
+			log.info("No statistics found for dataset {}", dataset.getId());
+			return;
+		}
 
 		// For each column, update the statistics
 		dataset
