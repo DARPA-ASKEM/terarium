@@ -217,7 +217,10 @@ watch(
 					expressionFunctions // Register expression functions
 				}
 			);
-			const dataURL = await viz.view.toImageURL('png');
+
+			// svg or png, svg seems to yield crisper renderings at a cost of a
+			// much higher size
+			const dataURL = await viz.view.toImageURL('svg');
 			imageDataURL.value = dataURL;
 
 			// dispose
