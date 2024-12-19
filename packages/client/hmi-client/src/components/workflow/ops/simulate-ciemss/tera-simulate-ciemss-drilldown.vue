@@ -482,7 +482,8 @@ enum OutputView {
 
 const speedPreset = Object.freeze({
 	numSamples: 10,
-	method: CiemssMethodOptions.euler
+	method: CiemssMethodOptions.euler,
+	stepSize: 0.1
 });
 
 const qualityPreset = Object.freeze({
@@ -546,6 +547,7 @@ const setPresetValues = (data: CiemssPresetTypes) => {
 	if (data === CiemssPresetTypes.Fast) {
 		numSamples.value = speedPreset.numSamples;
 		method.value = speedPreset.method;
+		solverStepSize.value = speedPreset.stepSize;
 	}
 	updateState();
 };
