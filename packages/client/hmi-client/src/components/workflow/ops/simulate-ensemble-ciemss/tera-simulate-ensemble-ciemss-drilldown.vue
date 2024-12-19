@@ -172,7 +172,11 @@
 									</div>
 									<div v-if="knobs.method === CiemssMethodOptions.euler" class="label-and-input">
 										<label>Solver step size</label>
-										<tera-input-number v-model="knobs.stepSize" />
+										<tera-input-number
+											:disabled="knobs.method !== CiemssMethodOptions.euler"
+											:min="0"
+											v-model="knobs.stepSize"
+										/>
 									</div>
 								</div>
 							</div>

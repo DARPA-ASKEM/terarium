@@ -154,7 +154,11 @@
 									</div>
 									<div class="label-and-input">
 										<label for="num-steps">Solver step size</label>
-										<tera-input-number v-model="knobs.extra.stepSize" />
+										<tera-input-number
+											:disabled="knobs.extra.solverMethod !== CiemssMethodOptions.euler"
+											:min="0"
+											v-model="knobs.extra.stepSize"
+										/>
 									</div>
 								</div>
 								<div class="spacer m-3" />
