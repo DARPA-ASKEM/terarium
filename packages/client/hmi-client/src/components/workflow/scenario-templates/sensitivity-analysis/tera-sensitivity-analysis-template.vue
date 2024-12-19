@@ -35,6 +35,7 @@
 						:disabled="!selectedModelConfiguration"
 						:loading="isFetchingModelConfiguration || isFetchingModelInformation"
 						@update:model-value="onParameterSelect($event, i)"
+						filter
 					>
 						<template #option="slotProps">
 							<span>{{ displayParameter(modelParameters, slotProps.option.referenceId) }}</span>
@@ -73,7 +74,7 @@
 				:disabled="isEmpty(modelStateOptions) || isFetchingModelInformation"
 				:model-value="scenario.simulateSpec.ids"
 				placeholder="Select output metrics"
-				option-label="name"
+				option-label="id"
 				option-value="id"
 				:options="modelStateOptions"
 				@update:model-value="scenario.setSimulateSpec($event)"
@@ -168,7 +169,9 @@ watch(
 		isFetchingModelConfiguration.value = true;
 		selectedModelConfiguration.value = await getModelConfigurationById(modelConfigId);
 		if (!selectedModelConfiguration.value) return;
-		modelParameters.value = getParameters(selectedModelConfiguration.value);
+		modelParameters.value = getParameters(selectedModelConfiguration.value).sort((a, b) =>
+			a.referenceId.localeCompare(b.referenceId)
+		);
 		isFetchingModelConfiguration.value = false;
 	}
 );
