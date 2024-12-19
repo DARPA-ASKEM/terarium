@@ -8,10 +8,10 @@ import {
 	getSimulation,
 	parseEnsemblePyciemssMap
 } from '@/services/models/simulation-service';
-import { EnsembleModelConfigs } from '@/types/Types';
+import { EnsembleModelConfigs, ModelConfiguration } from '@/types/Types';
 import { WorkflowNode } from '@/types/workflow';
 import { getActiveOutput } from '@/components/workflow/util';
-import { CalibrateMap } from '@/services/calibrate-workflow';
+import { CalibrateMap, setupModelInput } from '@/services/calibrate-workflow';
 import {
 	CalibrateEnsembleCiemssOperationState,
 	CalibrateEnsembleMappingRow,
@@ -146,6 +146,28 @@ export async function fetchOutputData(preForecastId: string, postForecastId: str
 		resultGroupByTimepoint,
 		pyciemssMap
 	};
+}
+
+export async function fetchModelConfigurations(
+	nodeInputs: WorkflowNode<CalibrateEnsembleCiemssOperationState>['inputs']
+) {
+	const allModelOptions: any[][] = [];
+	const allModelConfigurations: ModelConfiguration[] = [];
+	const modelConfigurationIds: string[] = [];
+	nodeInputs.forEach((ele) => {
+		if (ele.value && ele.type === 'modelConfigId') modelConfigurationIds.push(ele.value[0]);
+	});
+	if (!modelConfigurationIds) return null;
+
+	// Model configuration input
+	await Promise.all(
+		modelConfigurationIds.map(async (id) => {
+			const { modelConfiguration, modelOptions } = await setupModelInput(id);
+			if (modelConfiguration) allModelConfigurations.push(modelConfiguration);
+			if (modelOptions) allModelOptions.push(modelOptions);
+		})
+	);
+	return { allModelConfigurations, allModelOptions };
 }
 
 // Build chart data by adding variable translation map to the given output data
