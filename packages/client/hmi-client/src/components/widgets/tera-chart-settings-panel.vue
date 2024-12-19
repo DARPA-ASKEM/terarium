@@ -90,7 +90,10 @@ const emit = defineEmits(['close', 'update-settings', 'delete-annotation', 'crea
 
 // Log scale
 const useLog = computed(() => props.activeSettings?.scale === 'log');
-const isSmallMultiples = computed(() => props.activeSettings?.smallMultiples);
+const isSmallMultiples = computed(() => {
+	const { smallMultiples, selectedVariables } = <ChartSetting>props.activeSettings;
+	return smallMultiples || selectedVariables?.length > 5;
+});
 const isShareYAxis = computed(() => props.activeSettings?.shareYAxis);
 
 const toggleLogScale = (useLogScale: boolean) => {

@@ -380,9 +380,16 @@ export function useCharts(
 				const annotations = getChartAnnotationsByChartId(setting.id);
 				if (setting.shareYAxis && setting.selectedVariables.length > 1) {
 					// find max y for each variable
-					const maxY = 0;
-					if (yMinExtent < maxY) {
-						// options.yMinExtent = maxY;
+					let maxY = 0;
+					result.forEach((row) => {
+						setting.selectedVariables.forEach((selectedVar) => {
+							if (row[selectedVar] > maxY) {
+								maxY = row[selectedVar];
+							}
+						});
+					});
+					if (maxY && yMinExtent < maxY) {
+						options.yMinExtent = maxY;
 					}
 				}
 				if (setting.smallMultiples && setting.selectedVariables.length > 1) {

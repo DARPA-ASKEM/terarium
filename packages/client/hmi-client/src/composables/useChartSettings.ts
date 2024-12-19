@@ -103,9 +103,6 @@ export function useChartSettings(
 		});
 	};
 
-	const updateSmallMultiples = () => {};
-
-	const updateShareYAxis = () => {};
 	const updateSensitivityChartSettings = (options: {
 		selectedVariables?: string[];
 		selectedInputVariables?: string[];
@@ -156,8 +153,6 @@ export function useChartSettings(
 		updateActiveChartSettings,
 		removeChartSettings,
 		updateChartSettings,
-		updateSmallMultiples,
-		updateShareYAxis,
 		addComparisonChartSettings,
 		updateEnsembleVariableSettingOption,
 		updateSensitivityChartSettings,

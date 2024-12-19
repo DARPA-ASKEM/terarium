@@ -473,9 +473,6 @@ export function createForecastChart(
 					direction: legendProperties.direction,
 					anchor: 'start'
 				}
-			},
-			axisY: {
-				minExtent: options.yMinExtent || undefined
 			}
 		},
 
@@ -711,7 +708,8 @@ export function createSimulateSensitivityScatter(samplingLayer: SensitivityChart
 					field: { repeat: 'column' },
 					type: 'quantitative',
 					axis: {
-						gridColor: '#EEE'
+						gridColor: '#EEE',
+						domain: options.yMinExtent ? [0, options.yMinExtent] : undefined
 					},
 					scale: {
 						zero: false,
