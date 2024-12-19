@@ -9,6 +9,7 @@ public class TaskNotificationEventTypes {
 
 	private static final Map<String, ClientEventType> clientEventTypes = Map.ofEntries(
 		Map.entry(AMRToMMTResponseHandler.NAME, ClientEventType.TASK_MIRA_AMR_TO_MMT),
+		Map.entry(DatasetStatisticsResponseHandler.NAME, ClientEventType.TASK_GOLLM_DATASET_STATISTICS),
 		Map.entry(CompareModelsConceptsResponseHandler.NAME, ClientEventType.TASK_MIRA_COMPARE_MODELS_CONCEPTS),
 		Map.entry(CompareModelsResponseHandler.NAME, ClientEventType.TASK_GOLLM_COMPARE_MODEL),
 		Map.entry(ConfigureModelFromDatasetResponseHandler.NAME, ClientEventType.TASK_GOLLM_CONFIGURE_MODEL_FROM_DATASET),
