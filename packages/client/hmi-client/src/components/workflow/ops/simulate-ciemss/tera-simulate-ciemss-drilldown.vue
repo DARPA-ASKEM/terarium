@@ -302,14 +302,14 @@
 							:sensitivity-options="{
 								inputOptions: Object.keys(pyciemssMap).filter((c) => ['parameter'].includes(modelPartTypesMap[c])),
 								selectedInputOptions: selectedSensitivityChartSettings[0]?.selectedInputVariables ?? [],
-								timepoint: selectedSensitivityChartSettings[0]?.timepoint ?? 0
+								timepoint: selectedSensitivityChartSettings[0]?.timepoint ?? lastTimepoint
 							}"
 							@selection-change="
 								(e) =>
 									updateSensitivityChartSettings({
 										selectedVariables: e,
 										selectedInputVariables: selectedSensitivityChartSettings[0]?.selectedInputVariables ?? [],
-										timepoint: selectedSensitivityChartSettings[0]?.timepoint ?? 0
+										timepoint: selectedSensitivityChartSettings[0]?.timepoint ?? lastTimepoint
 									})
 							"
 							@sensitivity-selection-change="
@@ -423,6 +423,11 @@ const codeText = ref('');
 const modelConfiguration = ref<ModelConfiguration | null>(null);
 const model = ref<Model | null>(null);
 
+const lastTimepoint = computed<number>(() => {
+	if (!runResults.value || !selectedRunId.value) return 0;
+	const lastResult = _.last(runResults.value[selectedRunId.value]);
+	return lastResult!.timepoint_id ?? 0;
+});
 const modelStateUnits = computed(() => {
 	const states = model.value?.model.states;
 	let units = {};
