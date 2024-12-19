@@ -15,13 +15,15 @@
 				<template #header>
 					<div class="flex gap-2 ml-auto">
 						<tera-pyciemss-cancel-button :simulation-run-id="cancelRunId" />
-						<Button
-							:disabled="isRunDisabled"
-							label="Run"
-							icon="pi pi-play"
-							@click="runEnsemble"
-							:loading="!!inProgressCalibrationId || !!inProgressForecastId"
-						/>
+						<div v-tooltip="runButtonMessage">
+							<Button
+								:disabled="isRunDisabled"
+								label="Run"
+								icon="pi pi-play"
+								@click="runEnsemble"
+								:loading="!!inProgressCalibrationId || !!inProgressForecastId"
+							/>
+						</div>
 					</div>
 				</template>
 				<template #content>
@@ -414,9 +416,28 @@ const currentActiveIndicies = ref([0, 1, 2]);
 
 const isSidebarOpen = ref(true);
 const selectedOutputId = ref<string>();
-const isRunDisabled = computed(
-	() => !knobs.value.ensembleMapping[0] || !datasetId.value || allModelConfigurations.value.length < 2
+
+// Checks for disabling run button:
+const isMappingfilled = computed(
+	() =>
+		knobs.value.ensembleMapping.length !== 0 && knobs.value.ensembleMapping[0].newName && knobs.value.timestampColName
 );
+
+const areNodeInputsFilled = computed(() => datasetId.value && allModelConfigurations.value.length >= 2);
+
+const isRunDisabled = computed(() => !isMappingfilled.value || !areNodeInputsFilled.value);
+
+const mappingFilledTooltip = computed(() =>
+	!isMappingfilled.value ? 'Must contain a Timestep column and at least one mapping. \n' : ''
+);
+const nodeInputsFilledTooltip = computed(() =>
+	!areNodeInputsFilled.value ? 'Must contain one dataset and at least two model configurations.\n' : ''
+);
+
+const runButtonMessage = computed(() =>
+	isRunDisabled.value ? `${mappingFilledTooltip.value} ${nodeInputsFilledTooltip.value}` : ''
+);
+
 const cancelRunId = computed(
 	() =>
 		props.node.state.inProgressForecastId ||
