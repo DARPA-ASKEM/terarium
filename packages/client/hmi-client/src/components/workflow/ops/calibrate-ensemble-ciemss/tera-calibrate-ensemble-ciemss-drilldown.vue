@@ -428,7 +428,7 @@ const areNodeInputsFilled = computed(() => datasetId.value && allModelConfigurat
 const isRunDisabled = computed(() => !isMappingfilled.value || !areNodeInputsFilled.value);
 
 const mappingFilledTooltip = computed(() =>
-	!isMappingfilled.value ? 'Must contain a Timestep column and at least one mapping. \n' : ''
+	!isMappingfilled.value ? 'Must contain a Timestamp column and at least one mapping. \n' : ''
 );
 const nodeInputsFilledTooltip = computed(() =>
 	!areNodeInputsFilled.value ? 'Must contain one dataset and at least two model configurations.\n' : ''
