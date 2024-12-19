@@ -207,9 +207,12 @@ public class ModelConfigurationService
 	}
 
 	public static Model createAMRFromConfiguration(final Model model, final ModelConfiguration modelConfiguration) {
-		setModelParameters(model.getParameters(), modelConfiguration.getParameterSemanticList());
-		setModelInitials(model.getInitials(), modelConfiguration.getInitialSemanticList());
-		setModelObservables(model.getObservables(), modelConfiguration.getObservableSemanticList());
+		// Do not bother setting when we have simulationId as we will use that calibration's inferred parameters.
+		if (modelConfiguration.getSimulationId() == null) {
+			setModelParameters(model.getParameters(), modelConfiguration.getParameterSemanticList());
+			setModelInitials(model.getInitials(), modelConfiguration.getInitialSemanticList());
+			setModelObservables(model.getObservables(), modelConfiguration.getObservableSemanticList());
+		}
 		return model.clone();
 	}
 
