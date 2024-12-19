@@ -137,7 +137,7 @@ import { displayParameter } from '../scenario-template-utils';
 
 const header: ScenarioHeader = Object.freeze({
 	title: 'Horizon scanning template',
-	question: 'How does extreme scenarios impact the outcome of different interventions?',
+	question: 'How do extreme scenarios impact the outcome of different interventions?',
 	description:
 		'Configure the model to represent the extremes of uncertainty for some parameters, then simulate into the near future with different intervention policies and compare the outcomes.',
 	examples: ['Potential emergence of a new variant.', 'Rapidly waning immunity.']
