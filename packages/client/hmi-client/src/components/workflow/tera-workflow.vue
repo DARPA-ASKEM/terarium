@@ -188,7 +188,7 @@ import { useRouter, useRoute } from 'vue-router';
 import { MenuItem } from 'primevue/menuitem';
 import * as EventService from '@/services/event';
 import { useProjects } from '@/composables/project';
-import useAuthStore from '@/stores/auth';
+// import useAuthStore from '@/stores/auth';
 import { cloneNoteBookSession } from '@/services/notebook-session';
 import * as SimulateCiemssOp from '@/components/workflow/ops/simulate-ciemss/mod';
 import * as StratifyMiraOp from '@/components/workflow/ops/stratify-mira/mod';
@@ -212,7 +212,7 @@ import { activeProjectId } from '@/composables/activeProject';
 
 const WORKFLOW_SAVE_INTERVAL = 4000;
 
-const currentUserId = useAuthStore().user?.id;
+// const currentUserId = useAuthStore().user?.id;
 
 const registry = new workflowService.WorkflowRegistry();
 registry.registerOp(SimulateCiemssOp);
@@ -286,7 +286,6 @@ const _saveWorkflow = async () => {
 };
 // eslint-disable-next-line
 const _updateWorkflow = (event: ClientEvent<any>) => {
-	console.debug(currentUserId);
 	if (event.data.id !== wf.value.getId()) {
 		return;
 	}
