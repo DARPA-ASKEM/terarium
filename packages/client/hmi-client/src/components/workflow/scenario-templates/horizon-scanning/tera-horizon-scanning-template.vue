@@ -19,7 +19,7 @@
 					:options="interventionPolicies"
 					option-label="name"
 					option-value="id"
-					placeholder="Select an intervention policy"
+					placeholder="Select an intervention policy (optional)"
 					@update:model-value="scenario.setInterventionSpec($event, i)"
 					:key="i"
 					:disabled="isEmpty(interventionPolicies)"
