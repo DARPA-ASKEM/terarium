@@ -502,6 +502,16 @@ watch(
 	},
 	{ deep: true }
 );
+
+watch(
+	() => props.node.state?.forecastId,
+	async () => {
+		if (!props.node.state?.forecastId) return;
+
+		const response = await getRunResultCiemss(props.node.state?.forecastId, 'result.csv');
+		runResults.value = response.runResults;
+	}
+);
 </script>
 
 <style scoped>
