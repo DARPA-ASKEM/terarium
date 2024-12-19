@@ -220,6 +220,8 @@ export interface ChartSettingBase {
 	scale?: string;
 	smallMultiples?: boolean;
 	shareYAxis?: boolean;
+	showQuantiles?: boolean;
+	quantiles?: number[];
 }
 
 export const ProgrammingLanguageVersion: { [key in ProgrammingLanguage]: string } = {

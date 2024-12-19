@@ -3385,6 +3385,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@types/papaparse@npm:^5":
+  version: 5.3.15
+  resolution: "@types/papaparse@npm:5.3.15"
+  dependencies:
+    "@types/node": "npm:*"
+  checksum: 10/1321b54c80e59b7ac24b15297af8b2b9dc9d83c2d293c8f8acfd7e25d89e9f1efbac2a69940ffb3ff13d387f0e5fbd50c8a4a362849ff789dbeab7931a9e3290
+  languageName: node
+  linkType: hard
+
 "@types/prop-types@npm:*":
   version: 15.7.13
   resolution: "@types/prop-types@npm:15.7.13"
@@ -8656,6 +8665,7 @@ __metadata:
     "@types/lodash": "npm:4.17.13"
     "@types/markdown-it": "npm:14.1.2"
     "@types/node": "npm:18.19.3"
+    "@types/papaparse": "npm:^5"
     "@uncharted.software/design-tokens": "npm:1.1.0"
     "@vitejs/plugin-vue": "npm:4.6.2"
     "@vitest/coverage-c8": "npm:0.24.5"
@@ -8681,6 +8691,7 @@ __metadata:
     mathlive: "npm:0.89.2"
     mathml-to-latex: "npm:1.2.0"
     oidc-spa: "npm:4.6.2"
+    papaparse: "npm:5.4.1"
     path-browserify: "npm:1.0.1"
     pinia: "npm:2.1.7"
     pixi-viewport: "npm:4.37.0"
@@ -11825,6 +11836,13 @@ __metadata:
   version: 1.0.1
   resolution: "package-json-from-dist@npm:1.0.1"
   checksum: 10/58ee9538f2f762988433da00e26acc788036914d57c71c246bf0be1b60cdbd77dd60b6a3e1a30465f0b248aeb80079e0b34cb6050b1dfa18c06953bb1cbc7602
+  languageName: node
+  linkType: hard
+
+"papaparse@npm:5.4.1":
+  version: 5.4.1
+  resolution: "papaparse@npm:5.4.1"
+  checksum: 10/5e6dc978187182ad2efa1d264ffe73d2042cd23b8fb1dcb0b0f5c8c7c772c11e3eb4e166fb0893880ed24529a96abe9065d704cc5b4cb96abf037413cfe43788
   languageName: node
   linkType: hard
 

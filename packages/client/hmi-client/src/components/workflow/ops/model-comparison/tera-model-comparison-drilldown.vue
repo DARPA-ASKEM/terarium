@@ -8,7 +8,7 @@
 			<tera-drilldown-section>
 				<!-- LLM generated overview -->
 				<section class="comparison-overview">
-					<Accordion multiple :activeIndex="currentActiveIndicies">
+					<Accordion multiple :activeIndex="currentActiveIndices">
 						<AccordionTab header="Overview">
 							<template #header>
 								<div class="flex align-items-start gap-2 ml-4 w-full">
@@ -85,6 +85,32 @@
 						</tbody>
 					</table>
 				</div>
+				<!-- Comparison context -->
+				<Accordion
+					v-if="!isConceptComparisonEmpty && !isConceptComparisonLoading"
+					:activeIndex="comparisonContextActiveIndexes"
+					class="comparison-context"
+					multiple
+				>
+					<AccordionTab header="Concept context comparison" v-if="!isContextComparisonEmpty">
+						<tera-csv-table :csv-text="conceptComparison.concept_context_comparison!" />
+					</AccordionTab>
+					<AccordionTab header="Tabular concept comparison" v-if="!isTabularComparisonEmpty">
+						<template v-for="(value, pair) in conceptComparison.tabular_comparison" :key="pair">
+							<h6>Tabular comparison {{ pair }}</h6>
+							<tera-csv-table :csv-text="value" />
+						</template>
+					</AccordionTab>
+					<AccordionTab header="Concept graph comparison" v-if="!isGraphComparisonEmpty">
+						<template v-for="(value, pair) in conceptComparison.concept_graph_comparison" :key="pair">
+							<h6>Concept comparison {{ pair }}</h6>
+							<img :src="`data:image/png;base64,${value}`" :alt="`Concept comparison ${pair}`" />
+						</template>
+					</AccordionTab>
+				</Accordion>
+				<tera-progress-spinner v-if="isConceptComparisonLoading" is-centered :font-size="3" class="max-w-25rem">
+					Creating a context, tabular, and graph concept comparison between the {{ modelIds.length }} models...
+				</tera-progress-spinner>
 			</tera-drilldown-section>
 		</div>
 		<tera-columnar-panel :tabName="Tabs.Notebook">
@@ -178,6 +204,9 @@ import TeraColumnarPanel from '@/components/widgets/tera-columnar-panel.vue';
 import { b64DecodeUnicode } from '@/utils/binary';
 import { useClientEvent } from '@/composables/useClientEvent';
 import Textarea from 'primevue/textarea';
+import { CompareModelsConceptsResponse, getCompareModelConcepts } from '@/services/concept';
+import TeraCsvTable from '@/components/widgets/tera-csv-table.vue';
+import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue';
 import { ModelComparisonOperationState } from './model-comparison-operation';
 
 const props = defineProps<{
@@ -207,7 +236,7 @@ const sampleAgentQuestions = [
 ];
 let compareModelsTaskId = '';
 
-const currentActiveIndicies = ref([0]);
+const currentActiveIndices = ref([0]);
 const modelsToCompare = ref<Model[]>([]);
 const modelCardsToCompare = ref<any[]>([]);
 const fields = ref<string[]>([]);
@@ -269,6 +298,7 @@ function resetNotebook() {
 	emptyImages();
 	updateCodeState();
 }
+
 function onUpdateGoalQuery(goal: string) {
 	const state = cloneDeep(props.node.state);
 	goalQuery.value = goal;
@@ -351,6 +381,7 @@ async function buildJupyterContext() {
 }
 
 function hasNonEmptyValue(obj) {
+	if (!obj) return false;
 	return Object.values(obj).some((value) => !isEmpty(value));
 }
 
@@ -513,14 +544,46 @@ const processCompareModels = async () => {
 
 	const taskRes = await compareModels(modelIds.value, request, props.node.workflowId, props.node.id);
 	compareModelsTaskId = taskRes.id;
+
 	if (taskRes.status === TaskStatus.Success) {
 		generateOverview(taskRes.output);
 	}
+
 	const state = cloneDeep(props.node.state);
 	state.hasRun = true;
 	emit('update-state', state);
 	isProcessingComparison.value = false;
 };
+
+/* Concept comparison */
+
+const conceptComparison = ref<CompareModelsConceptsResponse>({});
+const isConceptComparisonLoading = ref(false);
+const isContextComparisonEmpty = computed(() => isEmpty(conceptComparison.value.concept_context_comparison));
+const isTabularComparisonEmpty = computed(() => isEmpty(conceptComparison.value.tabular_comparison));
+const isGraphComparisonEmpty = computed(() => isEmpty(conceptComparison.value.concept_graph_comparison));
+const isConceptComparisonEmpty = computed(
+	() => isContextComparisonEmpty.value && isTabularComparisonEmpty.value && isGraphComparisonEmpty.value
+);
+const comparisonContextActiveIndexes = ref([0, 1, 2]);
+
+function processConceptComparison() {
+	if (isEmpty(modelIds.value)) return;
+	isConceptComparisonLoading.value = true;
+	conceptComparison.value = {};
+	getCompareModelConcepts(modelIds.value, props.node.workflowId, props.node.id)
+		.then((response) => {
+			if (response) conceptComparison.value = response;
+		})
+		.catch((error) => {
+			logger.error(`Error comparing concepts: ${error}`);
+		})
+		.finally(() => {
+			isConceptComparisonLoading.value = false;
+		});
+}
+
+/* End of concept comparison */
 
 // Listen for the task completion event
 useClientEvent(ClientEventType.TaskGollmCompareModel, (event: ClientEvent<TaskResponse>) => {
@@ -540,6 +603,9 @@ onMounted(async () => {
 	if (props.node.state.hasRun) {
 		processCompareModels();
 	}
+
+	// Run asynchronously the concept comparison of the models
+	processConceptComparison();
 
 	if (!isEmpty(props.node.state.comparisonImageIds)) {
 		isLoadingStructuralComparisons.value = true;
@@ -642,11 +708,26 @@ ul {
 	align-items: center;
 }
 
-.comparison-overview {
+.comparison-overview,
+.comparison-context {
 	border: 1px solid var(--surface-border-light);
 	border-radius: var(--border-radius-medium);
 	padding: var(--gap-2);
-	margin: var(--gap-4);
+	margin: var(--gap-12) var(--gap-4);
+
+	& + & {
+		margin-top: var(--gap-4);
+	}
+}
+
+.comparison-context h6 {
+	&:not(:first-of-type) {
+		margin-top: var(--gap-8);
+	}
+
+	& + * {
+		margin-top: var(--gap-4);
+	}
 }
 
 .subdued {

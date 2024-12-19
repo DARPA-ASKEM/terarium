@@ -13,6 +13,7 @@ setup(
             "mira_task:stella_to_stockflow=tasks.stella_to_stockflow:main",
             "mira_task:amr_to_mmt=tasks.amr_to_mmt:main",
             "mira_task:generate_model_latex=tasks.generate_model_latex:main",
+            "mira_task:model_comparison=tasks.model_comparison:main",
             "mira_task:sympy_to_amr=tasks.sympy_to_amr:main",
         ],
     },

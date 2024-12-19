@@ -1,3 +1,4 @@
+import * as d3 from 'd3';
 import { isEmpty, pick } from 'lodash';
 import { percentile } from '@/utils/math';
 import { VisualizationSpec } from 'vega-embed';
@@ -660,6 +661,170 @@ export function createForecastChart(
 		}
 		spec.layer.push(layerSpec);
 	}
+	return spec;
+}
+
+/**
+ * e.g. [{variable1: [1, 2, 3], variable2: [4, 5, 6]}, ...] where each item in the variable array is a sample value. Sample values must be sorted in ascending order.
+ */
+export type GroupedDataArray = Record<string, number[]>[];
+
+const buildQuantileChartData = (data: GroupedDataArray, selectVariables: string[], quantiles: number[]) => {
+	const result: {
+		x: number;
+		lower: number;
+		upper: number;
+		variable: string;
+		quantile: number;
+	}[] = [];
+	data.forEach((d, index) => {
+		selectVariables.forEach((variable) => {
+			const values = d[variable] ?? [];
+			[...quantiles]
+				.sort((a, b) => b - a) // Sort in descending order so that data with higher quantiles are drawn first
+				.forEach((q) => {
+					result.push({
+						x: index,
+						lower: d3.quantile(values, 1 - q) ?? NaN,
+						upper: d3.quantile(values, q) ?? NaN,
+						variable,
+						quantile: q
+					});
+				});
+		});
+	});
+	return result;
+};
+
+export function createQuantilesForecastChart(
+	data: GroupedDataArray,
+	variables: string[],
+	quantiles: number[],
+	options: ForecastChartOptions
+) {
+	const axisColor = '#EEE';
+	const labelColor = '#667085';
+	const labelFontWeight = 'normal';
+	const globalFont = 'Figtree';
+	const titleObj = options.title
+		? {
+				text: options.title,
+				anchor: 'start',
+				subtitle: ' ',
+				subtitlePadding: 4
+			}
+		: null;
+
+	const xaxis: any = {
+		domainColor: axisColor,
+		tickColor: { value: axisColor },
+		labelColor: { value: labelColor },
+		labelFontWeight,
+		title: options.xAxisTitle,
+		gridColor: '#EEE',
+		gridOpacity: 1.0
+	};
+	const yaxis = structuredClone(xaxis);
+	yaxis.title = options.yAxisTitle;
+
+	const translationMap = options.translationMap;
+	let labelExpr = '';
+	let varDisplayNameExpr = '';
+	if (translationMap) {
+		Object.keys(translationMap)
+			.filter((key) => variables.includes(key))
+			.forEach((key) => {
+				labelExpr += `datum.value === '${key}' ? '${translationMap[key]}' : `;
+				varDisplayNameExpr += `datum.variable === '${key}' ? '${translationMap[key]}' : `;
+			});
+		labelExpr += " 'other'";
+		varDisplayNameExpr += " 'other'";
+	}
+
+	const isCompact = options.width < 200;
+
+	const legendProperties = {
+		title: null,
+		padding: { value: 0 },
+		strokeColor: null,
+		orient: 'top',
+		direction: isCompact ? 'vertical' : 'horizontal',
+		symbolStrokeWidth: isCompact ? 2 : 4,
+		symbolSize: 200,
+		labelFontSize: isCompact ? 8 : 12,
+		labelOffset: isCompact ? 2 : 4,
+		labelLimit: isCompact ? 50 : 150,
+		...options.legendProperties
+	};
+
+	const yScale = { type: options.scale === 'log' ? 'symlog' : 'linear' };
+
+	const spec: any = {
+		$schema: VEGALITE_SCHEMA,
+		title: titleObj,
+		description: '',
+		width: options.width,
+		height: options.height,
+		autosize: {
+			type: options.autosize || AUTOSIZE.FIT_X
+		},
+		config: {
+			font: globalFont,
+			legend: {
+				layout: {
+					direction: legendProperties.direction,
+					anchor: 'start'
+				}
+			}
+		},
+		data: { values: buildQuantileChartData(data, variables, quantiles) },
+		transform: [
+			{
+				calculate: varDisplayNameExpr,
+				as: 'varDisplayName'
+			}
+		],
+		layer: [
+			{
+				mark: {
+					type: 'errorband',
+					extent: 'ci',
+					borders: true
+				},
+				encoding: {
+					x: { field: 'x', type: 'quantitative', axis: { ...xaxis } },
+					y: { field: 'lower', type: 'quantitative', axis: { ...yaxis }, scale: yScale },
+					y2: { field: 'upper', type: 'quantitative' },
+					color: {
+						field: 'variable',
+						type: 'nominal',
+						scale: {
+							domain: variables,
+							range: options.colorscheme || CATEGORICAL_SCHEME
+						},
+						legend: options.legend
+							? {
+									...legendProperties,
+									labelExpr: labelExpr.length && labelExpr
+								}
+							: false
+					},
+					opacity: {
+						field: 'quantile',
+						type: 'quantitative',
+						scale: { domain: [0.5, 1], range: [1, 0.1] },
+						legend: false
+					},
+					tooltip: [
+						{ field: 'varDisplayName', title: ' ' },
+						{ field: 'quantile', title: 'Quantile', format: '.0%' },
+						{ field: 'lower', title: 'Lower Bound' },
+						{ field: 'upper', title: 'Upper Bound' }
+					]
+				}
+			}
+		]
+	};
 	return spec;
 }
 
