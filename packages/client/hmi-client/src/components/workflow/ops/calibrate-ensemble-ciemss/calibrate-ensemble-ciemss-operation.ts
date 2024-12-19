@@ -71,6 +71,7 @@ export const CalibrateEnsembleCiemssOperation: Operation = {
 	imageUrl: calibrateEnsembleCiemss,
 	inputs: [
 		{ type: 'datasetId', label: 'Dataset' },
+		{ type: 'modelConfigId', label: 'Model configuration' },
 		{ type: 'modelConfigId', label: 'Model configuration' }
 	],
 	outputs: [{ type: 'datasetId' }],
