@@ -25,7 +25,9 @@
 						/>
 						<span class="flex gap-2">
 							<tera-pyciemss-cancel-button class="mr-auto" :simulation-run-id="cancelRunId" />
-							<Button label="Run" icon="pi pi-play" @click="runCalibrate" :disabled="disableRunButton" />
+							<div v-tooltip="runButtonMessage">
+								<Button label="Run" icon="pi pi-play" @click="runCalibrate" :disabled="isRunDisabled" />
+							</div>
 						</span>
 					</div>
 
@@ -700,13 +702,24 @@ const resetState = () => {
 	});
 };
 
-const disableRunButton = computed(
-	() =>
-		!currentDatasetFileName.value ||
-		!csvAsset.value ||
-		!modelConfigId.value ||
-		!datasetId.value ||
-		knobs.value.timestampColName === ''
+// Checks for disabling run button:
+const isMappingfilled = computed(
+	() => mapping.value.find((ele) => ele.datasetVariable && ele.modelVariable) && knobs.value.timestampColName
+);
+
+const areNodeInputsFilled = computed(() => datasetId.value && modelConfigId.value);
+
+const isRunDisabled = computed(() => !isMappingfilled.value || !areNodeInputsFilled.value);
+
+const mappingFilledTooltip = computed(() =>
+	!isMappingfilled.value ? 'Must contain a Timestamp column and at least one mapping. \n' : ''
+);
+const nodeInputsFilledTooltip = computed(() =>
+	!areNodeInputsFilled.value ? 'Must a valid dataset and model configuration\n' : ''
+);
+
+const runButtonMessage = computed(() =>
+	isRunDisabled.value ? `${mappingFilledTooltip.value} ${nodeInputsFilledTooltip.value}` : ''
 );
 
 const selectedOutputId = ref<string>();
