@@ -163,7 +163,11 @@
 								</div>
 								<div class="label-and-input">
 									<label for="num-steps">Solver step size</label>
-									<tera-input-number inputId="integeronly" v-model="knobs.stepSize" />
+									<tera-input-number
+										:disabled="knobs.method !== CiemssMethodOptions.euler"
+										:min="0"
+										v-model="knobs.stepSize"
+									/>
 								</div>
 							</div>
 							<div class="spacer m-4" />
@@ -594,7 +598,8 @@ const speedPreset = Object.freeze({
 	numSamples: 1,
 	method: CiemssMethodOptions.euler,
 	numIterations: 10,
-	learningRate: 0.1
+	learningRate: 0.1,
+	stepSize: 0.1
 });
 
 const qualityPreset = Object.freeze({
@@ -681,6 +686,7 @@ const setPresetValues = (data: CiemssPresetTypes) => {
 		knobs.value.method = speedPreset.method;
 		knobs.value.numIterations = speedPreset.numIterations;
 		knobs.value.learningRate = speedPreset.learningRate;
+		knobs.value.stepSize = speedPreset.stepSize;
 	}
 };
 

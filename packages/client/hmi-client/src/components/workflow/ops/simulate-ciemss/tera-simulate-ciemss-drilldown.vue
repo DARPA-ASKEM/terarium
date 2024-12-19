@@ -75,9 +75,14 @@
 									@update:model-value="updateState"
 								/>
 							</div>
-							<div v-if="method === CiemssMethodOptions.euler" class="label-and-input">
+							<div class="label-and-input">
 								<label for="num-samples">Solver Step Size</label>
-								<tera-input-number v-model="solverStepSize" :min="0" @update:model-value="updateState" />
+								<tera-input-number
+									v-model="solverStepSize"
+									:disabled="method !== CiemssMethodOptions.euler"
+									:min="0"
+									@update:model-value="updateState"
+								/>
 							</div>
 						</div>
 						<template v-if="interventionPolicy && model">
