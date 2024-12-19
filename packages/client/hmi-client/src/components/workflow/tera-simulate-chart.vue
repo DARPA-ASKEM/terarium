@@ -161,7 +161,7 @@ const CHART_OPTIONS = {
 };
 
 // data for rendering ui
-let stateVariablesList: string[] = [];
+const stateVariablesList = ref<string[]>([]);
 const chartData = ref({});
 
 const selectedVariable = ref<string[]>(props.chartConfig.selectedVariable);
@@ -219,8 +219,8 @@ const watchRunResults = async (runResults) => {
 
 	// assume that the state variables for all runs will be identical
 	// take first run and parse it for state variables
-	if (!stateVariablesList.length) {
-		stateVariablesList = Object.keys(renderedRuns.value[Object.keys(renderedRuns.value)[0]][0]).filter(
+	if (!stateVariablesList.value.length) {
+		stateVariablesList.value = Object.keys(renderedRuns.value[Object.keys(renderedRuns.value)[0]][0]).filter(
 			(key) => key !== 'timestamp'
 		);
 	}
