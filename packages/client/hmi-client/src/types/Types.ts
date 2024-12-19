@@ -763,23 +763,23 @@ export interface Links {
 }
 
 export interface NumericColumnStats {
-    dataType: string;
     mean: number;
     median: number;
     min: number;
     max: number;
-    stdDev: number;
     quartiles: number[];
-    uniqueValues: number;
-    missingValues: number;
-    histogramBins: number[];
+    data_type: string;
+    std_dev: number;
+    unique_values: number;
+    missing_values: number;
+    histogram_bins: number[];
 }
 
 export interface NonNumericColumnStats {
-    dataType: string;
-    uniqueValues: number;
-    mostCommon: { [index: string]: number };
-    missingValues: number;
+    data_type: string;
+    unique_values: number;
+    most_common: { [index: string]: number };
+    missing_values: number;
 }
 
 export interface DocumentExtraction {
