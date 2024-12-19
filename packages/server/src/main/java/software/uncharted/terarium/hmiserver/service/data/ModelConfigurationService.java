@@ -210,9 +210,9 @@ public class ModelConfigurationService
 		// Do not bother setting when we have simulationId as we will use that calibration's inferred parameters.
 		if (modelConfiguration.getSimulationId() == null) {
 			setModelParameters(model.getParameters(), modelConfiguration.getParameterSemanticList());
-			setModelInitials(model.getInitials(), modelConfiguration.getInitialSemanticList());
-			setModelObservables(model.getObservables(), modelConfiguration.getObservableSemanticList());
 		}
+		setModelInitials(model.getInitials(), modelConfiguration.getInitialSemanticList());
+		setModelObservables(model.getObservables(), modelConfiguration.getObservableSemanticList());
 		return model.clone();
 	}
 
