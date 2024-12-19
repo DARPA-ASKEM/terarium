@@ -579,7 +579,11 @@ const knobs = ref<BasicKnobs>({
 });
 
 const presetType = computed(() => {
-	if (knobs.value.numSamples === speedPreset.numSamples && knobs.value.method === speedPreset.method) {
+	if (
+		knobs.value.numSamples === speedPreset.numSamples &&
+		knobs.value.method === speedPreset.method &&
+		knobs.value.stepSize === speedPreset.stepSize
+	) {
 		return CiemssPresetTypes.Fast;
 	}
 	if (knobs.value.numSamples === qualityPreset.numSamples && knobs.value.method === qualityPreset.method) {

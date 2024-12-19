@@ -523,7 +523,11 @@ const pyciemssMap = ref<Record<string, string>>({});
 const kernelManager = new KernelSessionManager();
 
 const presetType = computed(() => {
-	if (numSamples.value === speedPreset.numSamples && method.value === speedPreset.method) {
+	if (
+		numSamples.value === speedPreset.numSamples &&
+		method.value === speedPreset.method &&
+		solverStepSize.value === speedPreset.stepSize
+	) {
 		return CiemssPresetTypes.Fast;
 	}
 	if (numSamples.value === qualityPreset.numSamples && method.value === qualityPreset.method) {
