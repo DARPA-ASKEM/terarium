@@ -84,7 +84,6 @@ public class WorkflowService extends TerariumAssetServiceWithoutSearch<Workflow,
 		final UUID projectId,
 		final Schema.Permission hasWritePermission
 	) throws IOException, IllegalArgumentException {
-		final long updateStart = System.currentTimeMillis();
 		// Fetch database copy, we will update into it
 		final Workflow dbWorkflow = getAsset(asset.getId(), hasWritePermission).get();
 
@@ -191,14 +190,7 @@ public class WorkflowService extends TerariumAssetServiceWithoutSearch<Workflow,
 			dbWorkflowEdges.add(pair.getValue());
 		}
 
-		final long resolveEnd = System.currentTimeMillis();
-		log.info("Resolve workflow " + dbWorkflow.getId() + " took " + (resolveEnd - updateStart));
-
 		final Optional<Workflow> result = super.updateAsset(dbWorkflow, projectId, hasWritePermission);
-
-		final long updateEnd = System.currentTimeMillis();
-		log.info("Update workflow to DB " + dbWorkflow.getId() + " took " + (updateEnd - resolveEnd));
-
 		return result;
 	}
 
