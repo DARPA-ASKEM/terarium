@@ -5,7 +5,7 @@ setup(
     version="0.1.0",
     packages=find_packages(),
     install_requires=[
-        "openai==1.57.2",
+        "openai==1.58.1",
         "httpx==0.28.1",
         "pandas",
         "pydantic==2.10.2",
