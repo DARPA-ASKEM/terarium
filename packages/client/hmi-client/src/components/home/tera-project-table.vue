@@ -37,8 +37,6 @@
 							<i class="pi pi-user" />
 							{{ data.metadata?.['contributor-count'] ?? 1 }}
 						</span>
-					</div>
-					<div class="stats mt-3">
 						<span
 							v-for="metadataField in Object.keys(metadataCountToAssetNameMap)"
 							:key="metadataField"
@@ -170,7 +168,7 @@ watch(
 
 :deep(.p-datatable-tbody > tr > td),
 :deep(.p-datatable-thead > tr > th) {
-	vertical-align: top;
+	vertical-align: center;
 	padding: var(--gap-3) var(--gap-5);
 }
 
@@ -253,5 +251,7 @@ watch(
 :deep(.p-paginator) {
 	border-radius: 0;
 	padding: var(--gap-2) var(--gap-4);
+	background: var(--surface-glass);
+	backdrop-filter: blur(4px);
 }
 </style>
