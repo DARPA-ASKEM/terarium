@@ -1,5 +1,7 @@
 package software.uncharted.terarium.hmiserver.service.gollm;
 
+import static software.uncharted.terarium.hmiserver.models.dataservice.dataset.DatasetColumn.mapDataType;
+
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -27,7 +29,6 @@ import software.uncharted.terarium.hmiserver.utils.Messages;
 @Service
 @Slf4j
 @RequiredArgsConstructor
-@Async
 public class DatasetStatistics {
 
 	private final ObjectMapper objectMapper;
@@ -107,10 +108,18 @@ public class DatasetStatistics {
 
 				// Get the statistics for the column
 				if (response.getNumericColumns() != null && response.getNumericColumns().containsKey(column.getName())) {
-					column.getStats().setNumericStats(response.getNumericColumns().get(column.getName()));
+					final DatasetColumnStats.NumericColumnStats responseNumericColumn = response
+						.getNumericColumns()
+						.get(column.getName());
+					column.setDataType(mapDataType(responseNumericColumn.getDataType()));
+					column.getStats().setNumericStats(responseNumericColumn);
 				}
 				if (response.getNonNumericColumns() != null && response.getNonNumericColumns().containsKey(column.getName())) {
-					column.getStats().setNonNumericStats(response.getNonNumericColumns().get(column.getName()));
+					final DatasetColumnStats.NonNumericColumnStats responseNonNumericColumn = response
+						.getNonNumericColumns()
+						.get(column.getName());
+					column.setDataType(mapDataType(responseNonNumericColumn.getDataType()));
+					column.getStats().setNonNumericStats(responseNonNumericColumn);
 				}
 
 				log.info("Updated statistics for column {} {}", column.getName(), column.getStats());
