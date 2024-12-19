@@ -21,8 +21,10 @@ Report any issues into GitHub: [open an issue](https://github.com/DARPA-ASKEM/te
 3. The asset should download successfully.
 
 ### 4. Send Asset to another project
-1. For each asset, open the asset details page
+1. For each asset, open the asset details page.
 2. In the top middle `...` menu select `Add to project`
 3. Choose a project to add the file to.
 4. Select the other project.
 5. Check that the file has been added successfully.
+
+** Note, the Document operator does not have 'Add to project'
