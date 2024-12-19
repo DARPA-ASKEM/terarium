@@ -22,10 +22,12 @@ import org.springframework.stereotype.Service;
 import software.uncharted.terarium.hmiserver.configuration.Config;
 import software.uncharted.terarium.hmiserver.configuration.ElasticsearchConfiguration;
 import software.uncharted.terarium.hmiserver.models.dataservice.CsvColumnStats;
+import software.uncharted.terarium.hmiserver.models.dataservice.PresignedURL;
 import software.uncharted.terarium.hmiserver.models.dataservice.dataset.Dataset;
 import software.uncharted.terarium.hmiserver.models.dataservice.dataset.DatasetColumn;
 import software.uncharted.terarium.hmiserver.repository.data.DatasetRepository;
 import software.uncharted.terarium.hmiserver.service.elasticsearch.ElasticsearchService;
+import software.uncharted.terarium.hmiserver.service.gollm.DatasetStatistics;
 import software.uncharted.terarium.hmiserver.service.gollm.EmbeddingService;
 import software.uncharted.terarium.hmiserver.service.s3.S3ClientService;
 import software.uncharted.terarium.hmiserver.utils.rebac.Schema;
@@ -33,6 +35,8 @@ import software.uncharted.terarium.hmiserver.utils.rebac.Schema;
 @Slf4j
 @Service
 public class DatasetService extends TerariumAssetServiceWithSearch<Dataset, DatasetRepository> {
+
+	private final DatasetStatistics datasetStatistics;
 
 	public DatasetService(
 		final ObjectMapper objectMapper,
@@ -44,6 +48,7 @@ public class DatasetService extends TerariumAssetServiceWithSearch<Dataset, Data
 		final ProjectService projectService,
 		final ProjectAssetService projectAssetService,
 		final S3ClientService s3ClientService,
+		final DatasetStatistics datasetStatistics,
 		final DatasetRepository repository
 	) {
 		super(
@@ -59,6 +64,7 @@ public class DatasetService extends TerariumAssetServiceWithSearch<Dataset, Data
 			repository,
 			Dataset.class
 		);
+		this.datasetStatistics = datasetStatistics;
 	}
 
 	@Override
@@ -141,6 +147,17 @@ public class DatasetService extends TerariumAssetServiceWithSearch<Dataset, Data
 				if (csvParser == null) continue;
 				final List<String> headers = new ArrayList<>(csvParser.getHeaderMap().keySet());
 				addDatasetColumns(dataset, filename, headers);
+
+				// Calculate the statistics for the columns
+				try {
+					final PresignedURL datasetUrl = getDownloadUrl(dataset.getId(), filename).orElseThrow(() ->
+						new Exception("Download URL not found")
+					);
+
+					datasetStatistics.add(dataset, datasetUrl);
+				} catch (final Exception e) {
+					log.error("Error calculating statistics for dataset {}", dataset.getId(), e);
+				}
 			}
 		}
 		return dataset;
