@@ -61,8 +61,7 @@ def main():
             }
 
             # Add distribution binning
-            column_stats['histogram_bins'] = np.histogram(df[column].dropna(), bins='auto')[1].tolist()
-
+            column_stats['histogram_bins'] = np.histogram(df[column].dropna(), bins=min(10, 'auto'))[1].tolist()
             stats_summary[column] = column_stats
 
         # Non-numeric column analysis
