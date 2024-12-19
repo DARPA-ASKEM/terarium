@@ -325,7 +325,11 @@ const showAddMappingInput = ref(false);
 const listModelLabels = ref<string[]>([]);
 
 const presetType = computed(() => {
-	if (knobs.value.numSamples === speedValues.numSamples && knobs.value.method === speedValues.method) {
+	if (
+		knobs.value.numSamples === speedValues.numSamples &&
+		knobs.value.method === speedValues.method &&
+		knobs.value.stepSize === speedValues.stepSize
+	) {
 		return CiemssPresetTypes.Fast;
 	}
 	if (knobs.value.numSamples === normalValues.numSamples && knobs.value.method === normalValues.method) {
@@ -375,6 +379,7 @@ const setPresetValues = (data: CiemssPresetTypes) => {
 	if (data === CiemssPresetTypes.Fast) {
 		knobs.value.numSamples = speedValues.numSamples;
 		knobs.value.method = speedValues.method;
+		knobs.value.stepSize = speedValues.stepSize;
 	}
 };
 
