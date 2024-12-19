@@ -64,7 +64,9 @@ const runResults = ref<RunResults>({});
 const csvAsset = shallowRef<CsvAsset | undefined>(undefined);
 
 const areInputsFilled = computed(
-	() => props.node.inputs[0].value && props.node.inputs[1].value && props.node.inputs[2].value
+	() =>
+		props.node.inputs[0].value &&
+		props.node.inputs.filter((ele) => ele.type === 'modelConfigId' && ele.value).length >= 2
 );
 const inProgressCalibrationId = computed(() => props.node.state.inProgressCalibrationId);
 const inProgressForecastId = computed(() => props.node.state.inProgressForecastId);
