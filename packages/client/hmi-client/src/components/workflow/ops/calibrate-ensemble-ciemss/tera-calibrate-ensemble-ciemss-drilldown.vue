@@ -124,7 +124,7 @@
 								<label> Preset </label>
 								<Dropdown
 									class="flex-1"
-									v-model="knobs.extra.presetType"
+									v-model="presetType"
 									placeholder="Select an option"
 									:options="[CiemssPresetTypes.Fast, CiemssPresetTypes.Normal]"
 									@update:model-value="setPresetValues"
@@ -154,7 +154,11 @@
 									</div>
 									<div class="label-and-input">
 										<label for="num-steps">Solver step size</label>
-										<tera-input-number v-model="knobs.extra.stepSize" />
+										<tera-input-number
+											:disabled="knobs.extra.solverMethod !== CiemssMethodOptions.euler"
+											:min="0"
+											v-model="knobs.extra.stepSize"
+										/>
 									</div>
 								</div>
 								<div class="spacer m-3" />
@@ -509,6 +513,27 @@ const messageHandler = (event: ClientEvent<any>) => {
 	lossChartRef.value.view.change(LOSS_CHART_DATA_SOURCE, vega.changeset().insert(data)).resize().run();
 };
 
+const presetType = computed(() => {
+	if (
+		knobs.value.extra.numParticles === speedPreset.numSamples &&
+		knobs.value.extra.solverMethod === speedPreset.method &&
+		knobs.value.extra.numIterations === speedPreset.numIterations &&
+		knobs.value.extra.learningRate === speedPreset.learningRate &&
+		knobs.value.extra.stepSize === speedPreset.stepSize
+	) {
+		return CiemssPresetTypes.Fast;
+	}
+	if (
+		knobs.value.extra.numParticles === qualityPreset.numSamples &&
+		knobs.value.extra.solverMethod === qualityPreset.method &&
+		knobs.value.extra.numIterations === qualityPreset.numIterations &&
+		knobs.value.extra.learningRate === qualityPreset.learningRate
+	) {
+		return CiemssPresetTypes.Normal;
+	}
+	return '';
+});
+
 const setPresetValues = (data: CiemssPresetTypes) => {
 	if (data === CiemssPresetTypes.Normal) {
 		knobs.value.extra.numParticles = qualityPreset.numSamples;
@@ -521,6 +546,7 @@ const setPresetValues = (data: CiemssPresetTypes) => {
 		knobs.value.extra.solverMethod = speedPreset.method;
 		knobs.value.extra.numIterations = speedPreset.numIterations;
 		knobs.value.extra.learningRate = speedPreset.learningRate;
+		knobs.value.extra.stepSize = speedPreset.stepSize;
 	}
 };
 

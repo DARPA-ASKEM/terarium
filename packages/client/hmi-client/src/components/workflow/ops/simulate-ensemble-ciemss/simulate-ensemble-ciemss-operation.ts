@@ -18,7 +18,8 @@ export interface SimulateEnsembleWeights {
 
 export const speedValues = Object.freeze({
 	numSamples: 1,
-	method: CiemssMethodOptions.euler
+	method: CiemssMethodOptions.euler,
+	stepSize: 0.1
 });
 
 export const normalValues = Object.freeze({
