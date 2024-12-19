@@ -171,6 +171,11 @@ public class ModelService extends TerariumAssetServiceWithSearch<Model, ModelRep
 		if (asset.getHeader() != null && asset.getHeader().getName() != null) {
 			asset.setName(asset.getHeader().getName());
 		}
+
+		// set a time parameter and default to day for the model if it doesn't exist
+		if (asset.getSemantics().getOde().getTime() == null || asset.getSemantics().getOde().getTime().get("id") == null) {
+			asset.getSemantics().getOde().setTime(objectMapper.createObjectNode().put("id", "t"));
+		}
 		final Model created = super.createAsset(asset, projectId, hasWritePermission);
 
 		generateAndUpsertEmbeddings(created);

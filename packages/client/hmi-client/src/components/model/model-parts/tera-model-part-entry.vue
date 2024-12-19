@@ -11,10 +11,10 @@
 					@change="$emit('update-item', { key: 'name', value: nameText })"
 				/>
 			</span>
-			<span class="unit">
+			<span class="unit" :class="{ time: isTimePart }">
 				<template v-if="input && output">
 					<span><label>Input:</label> {{ input }}</span>
-					<span class="ml-"><label>Output:</label> {{ output }}</span>
+					<span><label>Output:</label> {{ output }}</span>
 				</template>
 				<!--amr_to_mmt doesn't like unit expressions with spaces, removing them here before they are saved to the amr-->
 				<template v-else-if="showUnit">
@@ -193,7 +193,7 @@ h6::after {
 	gap: var(--gap-1);
 }
 
-.unit {
+.unit:not(.time) {
 	overflow: auto;
 }
 
