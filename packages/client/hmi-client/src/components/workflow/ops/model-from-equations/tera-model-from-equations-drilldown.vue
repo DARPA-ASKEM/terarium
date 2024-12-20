@@ -35,7 +35,7 @@
 										:value="RunType.mira"
 										@click="switchRunType(RunType.mira)"
 									/>
-									<label for="static" class="ml-2">Mira</label>
+									<label for="static" class="ml-2 text-sm">Mira</label>
 									<RadioButton
 										:model-value="runType"
 										:input-id="uniqueId()"
@@ -44,7 +44,7 @@
 										class="ml-3"
 										@click="switchRunType(RunType.skema)"
 									/>
-									<label for="dynamic" class="ml-2 mr-3">Skema</label>
+									<label for="dynamic" class="ml-2 mr-3 text-sm">SKEMA</label>
 
 									<Button class="h-3rem mr-1" label="Reset" severity="secondary" outlined />
 									<Button class="h-3rem mr-1" label="Run" @click="onRun(runType)" />
