@@ -15,6 +15,7 @@ import { DistributionType } from '@/services/distribution';
 import { calculateUncertaintyRange } from '@/utils/math';
 import { getInterventionPolicyById } from '@/services/intervention-policy';
 import { useProjects } from '@/composables/project';
+import { getMeanCompareDatasetVariables } from '../scenario-template-utils';
 
 export interface HorizonScanningParameter {
 	id: string;
@@ -207,6 +208,19 @@ export class HorizonScanningScenario extends BaseScenario {
 			ChartSettingType.VARIABLE,
 			this.simulateSpec.ids
 		);
+
+		let compareDatasetChartSettings: ChartSetting[] = [];
+		compareDatasetChartSettings = updateChartSettingsBySelectedVariables(
+			compareDatasetChartSettings,
+			ChartSettingType.VARIABLE,
+			getMeanCompareDatasetVariables(this.simulateSpec.ids, modelConfig)
+		);
+
+		wf.updateNode(compareDatasetNode, {
+			state: {
+				chartSettings: compareDatasetChartSettings
+			}
+		});
 
 		// 2. create model config nodes for each paramter for both the low and high values and attach them to the model node
 		const modelConfigPromises = this.parameters.flatMap(async (parameter) => {

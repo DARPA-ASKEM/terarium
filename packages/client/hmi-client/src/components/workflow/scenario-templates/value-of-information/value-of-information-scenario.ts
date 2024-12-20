@@ -17,7 +17,7 @@ import { updateChartSettingsBySelectedVariables } from '@/services/chart-setting
 import { AssetType, ParameterSemantic } from '@/types/Types';
 import { getInterventionPolicyById } from '@/services/intervention-policy';
 import { useProjects } from '@/composables/project';
-import { switchToUniformDistribution } from '../scenario-template-utils';
+import { getMeanCompareDatasetVariables, switchToUniformDistribution } from '../scenario-template-utils';
 
 /*
  * Value of information scenario
@@ -194,6 +194,19 @@ export class ValueOfInformationScenario extends BaseScenario {
 			ChartSettingType.VARIABLE,
 			this.simulateSpec.ids
 		);
+
+		let compareDatasetChartSettings: ChartSetting[] = [];
+		compareDatasetChartSettings = updateChartSettingsBySelectedVariables(
+			compareDatasetChartSettings,
+			ChartSettingType.VARIABLE,
+			getMeanCompareDatasetVariables(this.simulateSpec.ids, modelConfig)
+		);
+
+		wf.updateNode(compareDatasetNode, {
+			state: {
+				chartSettings: compareDatasetChartSettings
+			}
+		});
 
 		// 2. create model config nodes for each paramter and attach them to the model node
 		const modelConfigPromises = this.parameters.map(async (parameter) => {
