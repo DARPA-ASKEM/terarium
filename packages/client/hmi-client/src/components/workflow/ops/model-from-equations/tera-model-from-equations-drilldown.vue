@@ -26,14 +26,28 @@
 						<header class="pb-2">
 							<nav class="flex justify-content-between pb-2">
 								<span class="flex align-items-center">Specify which equations to use for this model.</span>
-								<section class="white-space-nowrap min-w-min">
-									<Button class="mr-1" label="Reset" severity="secondary" outlined />
-
-									<SplitButton
-										label="Run"
-										:model="runItems"
-										:disabled="isDocumentLoading || isEmpty(includedEquations) || isModelLoading"
+								<section class="flex align-items-center min-w-min">
+									<RadioButton
+										class="ml-3"
+										:model-value="runType"
+										:input-id="uniqueId()"
+										:name="RunType.mira"
+										:value="RunType.mira"
+										@click="switchRunType(RunType.mira)"
 									/>
+									<label for="static" class="ml-2 text-sm">MIRA</label>
+									<RadioButton
+										:model-value="runType"
+										:input-id="uniqueId()"
+										:name="RunType.skema"
+										:value="RunType.skema"
+										class="ml-3"
+										@click="switchRunType(RunType.skema)"
+									/>
+									<label for="dynamic" class="ml-2 mr-3 text-sm">SKEMA</label>
+
+									<Button class="h-3rem mr-1" label="Reset" severity="secondary" outlined />
+									<Button class="h-3rem mr-1" label="Run" @click="onRun(runType)" />
 								</section>
 							</nav>
 							<section class="header-group">
@@ -184,7 +198,7 @@ import TeraDrilldownPreview from '@/components/drilldown/tera-drilldown-preview.
 import TeraAssetBlock from '@/components/widgets/tera-asset-block.vue';
 import { computed, onMounted, onBeforeUnmount, ref, watch } from 'vue';
 import type { Card, DocumentAsset, Model } from '@/types/Types';
-import { cloneDeep, isEmpty } from 'lodash';
+import { cloneDeep, isEmpty, uniqueId } from 'lodash';
 import { equationsToAMR, getCleanedEquations, type EquationsToAMRRequest } from '@/services/knowledge';
 import { downloadDocumentAsset, getDocumentAsset, getDocumentFileAsText } from '@/services/document-assets';
 import { equationsFromImage } from '@/services/goLLM';
@@ -198,7 +212,7 @@ import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.
 import TeraPdfEmbed from '@/components/widgets/tera-pdf-embed.vue';
 import TeraTextEditor from '@/components/documents/tera-text-editor.vue';
 import { logger } from '@/utils/logger';
-import SplitButton from 'primevue/splitbutton';
+import RadioButton from 'primevue/radiobutton';
 import { ModelFromEquationsState, EquationBlock } from './model-from-equations-operation';
 
 const emit = defineEmits(['close', 'update-state', 'append-output', 'update-output', 'select-output']);
@@ -208,16 +222,15 @@ const props = defineProps<{
 
 const selectedOutputId = ref<string>('');
 
-const runItems = [
-	{
-		label: 'SKEMA',
-		command: () => onRun('skema')
-	},
-	{
-		label: 'Mira',
-		command: () => onRun('mira')
-	}
-];
+enum RunType {
+	mira = 'mira',
+	skema = 'skema'
+}
+
+const runType = ref(RunType.mira);
+function switchRunType(type: RunType) {
+	runType.value = type;
+}
 
 const clonedState = ref<ModelFromEquationsState>({
 	equations: [],

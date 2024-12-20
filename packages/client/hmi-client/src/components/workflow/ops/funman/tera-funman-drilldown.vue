@@ -156,7 +156,11 @@
 			</template>
 		</tera-slider-panel>
 		<template #preview>
-			<tera-drilldown-preview :is-loading="showSpinner" :loading-progress="props.node.state.currentProgress">
+			<tera-drilldown-preview
+				:is-loading="showSpinner"
+				:loading-progress="props.node.state.currentProgress"
+				class="p-4"
+			>
 				<template v-if="!isEmpty(node.state.runId)">
 					<header class="flex align-items-start">
 						<div>
@@ -386,6 +390,7 @@ import { toScientificNotation } from '@/utils/number';
 import { removeChartSettingById, updateChartSettingsBySelectedVariables } from '@/services/chart-settings';
 import { nodeOutputLabel } from '@/components/workflow/util';
 import { formatJSON } from '@/services/code';
+import TeraDrilldownPreview from '@/components/drilldown/tera-drilldown-preview.vue';
 import { FunmanOperationState, Constraint, ConstraintType, CompartmentalConstraint } from './funman-operation';
 
 const props = defineProps<{
