@@ -38,7 +38,7 @@ def main():
         taskrunner.log("Creating statistics from input")
 
         # Read CSV from string
-        df = pd.read_csv(csv_url)
+        df = pd.read_csv(csv_url, low_memory=False)
 
         taskrunner.log(f"Read {len(df)} rows and {len(df.columns)} columns")
 
@@ -61,7 +61,9 @@ def main():
             }
 
             # Add distribution binning
-            column_stats['histogram_bins'] = np.histogram(df[column].dropna(), bins=min(10, 'auto'))[1].tolist()
+            # If there are fewer than 10 unique values, use that number of bins, otherwise use 10
+            n_bins = min(10, df[column].nunique()) if df[column].nunique() > 1 else 2
+            column_stats['histogram_bins'] = np.histogram(df[column].dropna(), bins=n_bins)[1].tolist()
             stats_summary[column] = column_stats
 
         # Non-numeric column analysis
