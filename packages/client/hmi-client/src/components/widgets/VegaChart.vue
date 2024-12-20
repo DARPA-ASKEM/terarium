@@ -65,7 +65,7 @@ const defaultChartConfig: Partial<Config> = {
 
 const props = withDefaults(
 	defineProps<{
-		visualizationSpec: VisualizationSpec | VisualizationSpec[] | undefined;
+		visualizationSpec: VisualizationSpec;
 		areEmbedActionsVisible?: boolean;
 		/**
 		 * A list of signal names for Vega interval-type selections.
@@ -226,7 +226,7 @@ watch(
 		const spec = deepToRaw(props.visualizationSpec);
 
 		if (interactive.value === false) {
-			// console.log('render png');
+			// render png
 			const shadowContainer = document.createElement('div');
 			const viz = await embed(
 				shadowContainer,
@@ -248,7 +248,7 @@ watch(
 
 			emit('done-render');
 		} else {
-			// console.log('render interactive');
+			// render interactive
 			if (!vegaContainer.value) return;
 			vegaVisualization.value?.finalize(); // dispose previous visualization before creating a new one
 			vegaVisualization.value = await createVegaVisualization(vegaContainer.value, spec, props.config, {

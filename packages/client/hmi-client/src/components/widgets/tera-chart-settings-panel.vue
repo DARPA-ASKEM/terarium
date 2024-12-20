@@ -19,12 +19,13 @@
 						:model-value="Boolean(isSmallMultiples)"
 						@update:model-value="toggleSmallMultiples($event)"
 					/>
-					<tera-checkbox
+					<!-- TODO: we want this but it is under research for how to get it to work in vega-lite -->
+					<!-- <tera-checkbox
 						v-if="comparison && isSmallMultiples"
 						label="Share Y Axis"
 						:model-value="Boolean(isShareYAxis)"
 						@update:model-value="toggleShareYAxis($event)"
-					/>
+					/> -->
 				</div>
 
 				<div v-if="chartAnnotations !== undefined" class="annotation-items">
@@ -94,7 +95,7 @@ const isSmallMultiples = computed(() => {
 	const { smallMultiples, selectedVariables } = <ChartSetting>props.activeSettings;
 	return smallMultiples || selectedVariables?.length > 5;
 });
-const isShareYAxis = computed(() => props.activeSettings?.shareYAxis);
+// const isShareYAxis = computed(() => props.activeSettings?.shareYAxis);
 
 const toggleLogScale = (useLogScale: boolean) => {
 	emit('update-settings', { scale: useLogScale ? 'log' : '' });
@@ -104,9 +105,9 @@ const toggleSmallMultiples = (smallMultiples: boolean) => {
 	emit('update-settings', { smallMultiples: !!smallMultiples });
 };
 
-const toggleShareYAxis = (shareYAxis: boolean) => {
-	emit('update-settings', { shareYAxis: !!shareYAxis });
-};
+// const toggleShareYAxis = (shareYAxis: boolean) => {
+// 	emit('update-settings', { shareYAxis: !!shareYAxis });
+// };
 
 // Primary color
 const isColorPickerEnabled = computed(() => {

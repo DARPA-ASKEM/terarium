@@ -424,7 +424,7 @@ export function useCharts(
 	// Create comparison charts based on chart settings
 	const useComparisonCharts = (chartSettings: ComputedRef<ChartSetting[]>) => {
 		const comparisonCharts = computed(() => {
-			const charts: Record<string, VisualizationSpec | VisualizationSpec[]> = {};
+			const charts: Record<string, VisualizationSpec> = {};
 			if (!isChartReadyToBuild.value) return charts;
 			const { result, resultSummary } = chartData.value as ChartData;
 			const yMinExtent = 0;
@@ -450,8 +450,8 @@ export function useCharts(
 				}
 				if (setting.smallMultiples && setting.selectedVariables.length > 1) {
 					// create multiples
-					const splitCharts: VisualizationSpec[] = selectedVars.map((selectedVar, index) =>
-						createComparisonChart(
+					selectedVars.forEach((selectedVar, index) => {
+						charts[setting.id + selectedVar] = createComparisonChart(
 							[selectedVar],
 							result,
 							resultSummary,
@@ -459,9 +459,8 @@ export function useCharts(
 							[sampleLayerVariables[index]],
 							options,
 							annotations
-						)
-					);
-					charts[setting.id] = splitCharts;
+						);
+					});
 				} else {
 					const chart = createComparisonChart(
 						selectedVars,
