@@ -43,7 +43,7 @@ class OpenAiTools(LlmToolsInterface):
     def __init__(self, api_key=None):
         self.api_key = api_key
 
-    def send_to_llm(self, prompt: str, schema: str, max_tokens=16384) -> dict:
+    def send_to_llm_with_json_output(self, prompt: str, schema: str, max_tokens=16384) -> dict:
         print("Sending request to OpenAI API...")
         client = OpenAI() if self.api_key is None else OpenAI(api_key=self.api_key)
         output = client.chat.completions.create(
@@ -71,8 +71,28 @@ class OpenAiTools(LlmToolsInterface):
         return unescape_curly_braces(output_json)
 
 
-    def send_image_to_llm(self, prompt: str, schema: str, image_url: str, max_tokens=16384) -> dict:
-        client = OpenAI(self.api_key)
+    def send_to_llm_with_string_output(self, prompt: str, max_tokens=16384) -> str:
+        print("Sending request to OpenAI API...")
+        client = OpenAI() if self.api_key is None else OpenAI(api_key=self.api_key)
+        output = client.chat.completions.create(
+            model=GPT_MODEL,
+            top_p=1,
+            frequency_penalty=0,
+            presence_penalty=0,
+            temperature=0,
+            seed=123,
+            max_tokens=max_tokens,
+            messages=[
+                {"role": "user", "content": prompt},
+            ]
+        )
+        print("Received response from OpenAI API...")
+        return output.choices[0].message.content
+
+
+    def send_image_to_llm_with_json_output(self, prompt: str, schema: str, image_url: str, max_tokens=16384) -> dict:
+        print("Sending request to OpenAI API...")
+        client = OpenAI() if self.api_key is None else OpenAI(api_key=self.api_key)
         output = client.chat.completions.create(
             model=GPT_MODEL,
             top_p=1,

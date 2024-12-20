@@ -1,3 +1,6 @@
+import json
+import re
+
 import jsonschema
 import tiktoken
 
@@ -125,3 +128,18 @@ def get_image_format_string(image_format: str) -> str:
         "exr": f"data:image/exr:base64,"
     }
     return format_strings.get(image_format.lower())
+
+
+def extract_json_object(string_with_json: str) -> dict:
+    # Regular expression to match the JSON object
+    json_pattern = r'(\{.*\})'
+
+    # Search for the JSON object using the pattern
+    match = re.search(json_pattern, string_with_json, re.DOTALL)
+
+    # If a match is found, return the JSON part as an object
+    if match:
+        extracted_json = match.group(1)
+        return json.loads(extracted_json)
+    else:
+        return None  # Return None if no JSON object is found

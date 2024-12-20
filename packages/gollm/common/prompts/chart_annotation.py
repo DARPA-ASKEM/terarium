@@ -145,7 +145,8 @@ Answer:
 
 {preamble}
 
-Give me the layer object to be added to the existing chart spec based on the following user instruction.
+Give me the layer object described by the json schema found at https://vega.github.io/schema/vega-lite/v5.json to be added to the existing chart spec based on the following user instruction.
+Do not respond in full sentences; only create a JSON object that satisfies the JSON schema specified in https://vega.github.io/schema/vega-lite/v5.json. Make sure you follow the JSON standard for the data types and format.
 
 --- INSTRUCTION START ---
 

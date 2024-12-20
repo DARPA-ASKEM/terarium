@@ -5,7 +5,8 @@ import os
 from typing import List
 
 from common import LlmToolsInterface
-from common.utils import validate_schema, model_config_adapter, get_image_format_string
+from common.utils import validate_schema, model_config_adapter, get_image_format_string, extract_json_object, \
+    unescape_curly_braces
 
 # define a constant for the absolute path of the schemas directory
 SCHEMAS_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'schemas')
@@ -19,7 +20,7 @@ def enrich_model_chain(llm: LlmToolsInterface, amr: str, research_paper: str) ->
     validate_schema(response_schema)
 
     prompt = llm.create_enrich_model_prompt(amr, research_paper, response_schema)
-    return llm.send_to_llm(prompt, response_schema)
+    return llm.send_to_llm_with_json_output(prompt, response_schema)
 
 
 def model_config_from_dataset_chain(llm: LlmToolsInterface, amr: str, dataset: List[str], matrix: str) -> dict:
@@ -30,7 +31,7 @@ def model_config_from_dataset_chain(llm: LlmToolsInterface, amr: str, dataset: L
     validate_schema(response_schema)
 
     prompt = llm.create_config_from_dataset_prompt(amr, dataset, matrix, response_schema)
-    output = llm.send_to_llm(prompt, response_schema)
+    output = llm.send_to_llm_with_json_output(prompt, response_schema)
 
     print("There are ", len(output["conditions"]), "conditions identified from the datasets.")
 
@@ -45,7 +46,7 @@ def model_config_from_document_chain(llm: LlmToolsInterface, research_paper: str
     validate_schema(response_schema)
 
     prompt = llm.create_config_from_document_prompt(amr, research_paper, response_schema)
-    output = llm.send_to_llm(prompt, response_schema)
+    output = llm.send_to_llm_with_json_output(prompt, response_schema)
 
     print("There are ", len(output["conditions"]), "conditions identified from the text.")
 
@@ -60,7 +61,7 @@ def enrich_dataset_chain(llm: LlmToolsInterface, research_paper: str, dataset: s
     validate_schema(response_schema)
 
     prompt = llm.create_enrich_dataset_prompt(dataset, research_paper, response_schema)
-    return llm.send_to_llm(prompt, response_schema)
+    return llm.send_to_llm_with_json_output(prompt, response_schema)
 
 
 def cleanup_equations_chain(llm: LlmToolsInterface, equations: List[str]) -> dict:
@@ -71,7 +72,7 @@ def cleanup_equations_chain(llm: LlmToolsInterface, equations: List[str]) -> dic
     validate_schema(response_schema)
 
     prompt = llm.create_cleanup_equations_prompt(equations, response_schema)
-    return llm.send_to_llm(prompt, response_schema)
+    return llm.send_to_llm_with_json_output(prompt, response_schema)
 
 
 def equations_from_image_chain(llm: LlmToolsInterface, image: str) -> dict:
@@ -102,7 +103,7 @@ def interventions_from_document_chain(llm: LlmToolsInterface, research_paper: st
     validate_schema(response_schema)
 
     prompt = llm.create_interventions_from_document_prompt(amr, research_paper, response_schema)
-    output = llm.send_to_llm(prompt, response_schema)
+    output = llm.send_to_llm_with_json_output(prompt, response_schema)
 
     print("There are ", len(output["interventionPolicies"]), "intervention policies identified from the text.")
 
@@ -117,7 +118,7 @@ def model_card_chain(llm: LlmToolsInterface, amr: str, research_paper: str = Non
     validate_schema(response_schema)
 
     prompt = llm.create_model_card_prompt(amr, research_paper, response_schema)
-    return llm.send_to_llm(prompt, response_schema)
+    return llm.send_to_llm_with_json_output(prompt, response_schema)
 
 
 def compare_models_chain(llm: LlmToolsInterface, amrs: List[str], goal: str) -> dict:
@@ -128,20 +129,15 @@ def compare_models_chain(llm: LlmToolsInterface, amrs: List[str], goal: str) -> 
     validate_schema(response_schema)
 
     prompt = llm.create_compare_models_prompt(amrs, goal, response_schema)
-    return llm.send_to_llm(prompt, response_schema)
+    return llm.send_to_llm_with_json_output(prompt, response_schema)
 
 
 def general_query_chain(llm: LlmToolsInterface, instruction: str) -> str:
     prompt = llm.create_generate_respose_prompt(instruction)
-    return llm.send_to_llm(prompt, None)
+    return llm.send_to_llm_with_string_output(prompt, None)
 
 
 def chart_annotation_chain(llm: LlmToolsInterface, preamble: str, instruction: str) -> dict:
-    print("Uploading and validating chart annotation schema...")
-    config_path = os.path.join(SCHEMAS_DIR, 'chart_annotation.json')
-    with open(config_path, 'r') as config_file:
-        response_schema = json.load(config_file)
-    validate_schema(response_schema)
-
-    prompt = llm.create_chart_annotation_prompt(preamble, instruction, response_schema)
-    return llm.send_to_llm(prompt, response_schema)
+    prompt = llm.create_chart_annotation_prompt(preamble, instruction)
+    chart_annotation_string = llm.send_to_llm_with_string_output(prompt)
+    return unescape_curly_braces(extract_json_object(chart_annotation_string))

@@ -3,12 +3,17 @@ from typing import List
 
 class LlmToolsInterface:
 
-    def send_to_llm(self, prompt: str, schema: str, max_tokens: int) -> dict:
+    def send_to_llm_with_json_output(self, prompt: str, schema: str, max_tokens: int) -> dict:
         """Send a request to an LLM API"""
         pass
 
 
-    def send_image_to_llm(self, prompt: str, schema: str, image_url: str, max_tokens: int) -> dict:
+    def send_to_llm_with_string_output(self, prompt: str, max_tokens: int) -> str:
+        """Send a request to an LLM API"""
+        pass
+
+
+    def send_image_to_llm_with_json_output(self, prompt: str, schema: str, image_url: str, max_tokens: int) -> dict:
         """Send a request to an LLM API with an image"""
         pass
 

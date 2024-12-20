@@ -45,7 +45,7 @@ class LlamaTools(LlmToolsInterface):
         self.bedrock_access_key = bedrock_access_key
         self.bedrock_secret_access_key = bedrock_secret_access_key
 
-    def send_to_llm(self, prompt: str, schema: str, max_tokens=2048) -> dict:
+    def send_to_llm_with_json_output(self, prompt: str, schema: str, max_tokens=2048) -> dict:
         print("Sending request to AWS Bedrock (Llama)...")
         #send prompt to AWS Bedrock
 
@@ -75,15 +75,44 @@ class LlamaTools(LlmToolsInterface):
         return unescape_curly_braces(response_text)
 
 
-    def send_image_to_llm(self, prompt: str, schema: str, image_url: str, max_tokens=2048) -> dict:
+    def send_to_llm_with_string_output(self, prompt: str, max_tokens=2048) -> str:
         print("Sending request to AWS Bedrock (Llama)...")
         #send prompt to AWS Bedrock
 
         client = boto3.client(
             "bedrock-runtime",
             region_name="us-west-2",
-            aws_access_key_id = os.environ.get("BEDROCK_ACCESS_KEY"),
-            aws_secret_access_key = os.environ.get("BEDROCK_SECRET_ACCESS_KEY")
+            aws_access_key_id = os.environ.get("BEDROCK_ACCESS_KEY") if self.bedrock_access_key is None else self.bedrock_access_key,
+            aws_secret_access_key = os.environ.get("BEDROCK_SECRET_ACCESS_KEY") if self.bedrock_secret_access_key is None else self.bedrock_secret_access_key
+        )
+
+        request = json.dumps({
+            "prompt": prompt,
+            "max_gen_len": max_tokens,
+            "temperature": 0,
+            "top_p": 1,
+        })
+
+        response = client.invoke_model(
+            modelId=GPT_MODEL,
+            body=request,
+            contentType="application/json"
+        )
+
+        print("Received response from AWS Bedrock (Llama)...")
+        model_response = json.loads(response["body"].read())
+        return model_response["generation"]
+
+
+    def send_image_to_llm_with_json_output(self, prompt: str, schema: str, image_url: str, max_tokens=2048) -> dict:
+        print("Sending request to AWS Bedrock (Llama)...")
+        #send prompt to AWS Bedrock
+
+        client = boto3.client(
+            "bedrock-runtime",
+            region_name="us-west-2",
+            aws_access_key_id = os.environ.get("BEDROCK_ACCESS_KEY") if self.bedrock_access_key is None else self.bedrock_access_key,
+            aws_secret_access_key = os.environ.get("BEDROCK_SECRET_ACCESS_KEY") if self.bedrock_secret_access_key is None else self.bedrock_secret_access_key
         )
 
         request = json.dumps({

@@ -245,8 +245,9 @@ export async function generateForecastChartAnnotation(
 	);
 	const str = b64DecodeUnicode(data.output);
 	const result = JSON.parse(str);
+	const layerSpec = result.response?.layer[0] ?? null;
 	return {
 		request,
-		layerSpec: result.response
+		layerSpec
 	};
 }
