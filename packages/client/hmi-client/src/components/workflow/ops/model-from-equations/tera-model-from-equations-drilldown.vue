@@ -35,7 +35,7 @@
 										:value="RunType.mira"
 										@click="switchRunType(RunType.mira)"
 									/>
-									<label for="static" class="ml-2 text-sm">Mira</label>
+									<label for="static" class="ml-2 text-sm">MIRA</label>
 									<RadioButton
 										:model-value="runType"
 										:input-id="uniqueId()"
