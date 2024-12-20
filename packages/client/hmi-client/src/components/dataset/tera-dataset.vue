@@ -37,7 +37,13 @@
 			</AccordionTab>
 			<AccordionTab header="Data" v-if="!isEmpty(dataset?.fileNames)">
 				<tera-progress-spinner v-if="!rawContent" :font-size="2" is-centered />
-				<tera-dataset-datatable v-else :rows="100" :raw-content="rawContent" />
+				<tera-dataset-datatable
+					v-else
+					:rows="100"
+					:raw-content="rawContent"
+					:columns="dataset?.columns ?? []"
+					:row-count="dataset?.metadata?.['total_rows'] ?? 0"
+				/>
 			</AccordionTab>
 		</Accordion>
 	</tera-asset>
