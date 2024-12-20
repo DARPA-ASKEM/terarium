@@ -116,5 +116,4 @@ Use the following contact matrix as a reference for model-mapping datasets:
 {matrix}
 
 ---END MATRIX---
-
 """

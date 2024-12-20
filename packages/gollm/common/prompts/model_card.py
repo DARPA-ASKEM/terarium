@@ -1,4 +1,4 @@
-INSTRUCTIONS = """
+MODEL_CARD_PROMPT = """
 You are a helpful agent designed to populate metadata of a given AMR model.
 
 You may have access to a document that describes the given AMR model and a JSON representation of the AMR model we want populated.
@@ -16,8 +16,4 @@ Use the following JSON representation of an AMR model as a reference:
 ---MODEL START--
 {amr}
 ---MODEL END---
-
-Do not respond in full sentences; only create a JSON object that satisfies the JSON schema specified in the response format. Verify and format your answer against the JSON schema. Do not modify the JSON schema to fit your response.
-
-Answer:
 """

@@ -29,8 +29,4 @@ For each condition, create a model configuration JSON object that satisfies the 
 6. `observableSemanticList` should be an empty list.
 7. `inferredParameterList` should be an empty list.
 8. Determine what page the information was extracted from and set the `extractionPage` value to that page number. If the page number cannot be determined, set it to 0. Only pick one page number. Do not provide a range.
-
-Do not respond in full sentences; only create a JSON object that satisfies the JSON schema specified in the response format. Make sure you follow the JSON standard for the data types and format.
-
-Answer:
 """

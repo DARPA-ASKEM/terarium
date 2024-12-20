@@ -1,7 +1,8 @@
 import inspect
 from datetime import datetime
-from pydantic import BaseModel, root_validator
 from typing import List, Callable, Type
+
+from pydantic import BaseModel, root_validator
 
 
 class ConfigureModelDocument(BaseModel):
@@ -38,6 +39,11 @@ class EquationsCleanup(BaseModel):
 
 class EquationsFromImage(BaseModel):
     image: str  # expects a base64 encoded image
+
+
+class ChartAnnotationModel(BaseModel):
+    preamble: str
+    instruction: str
 
 
 class EmbeddingModel(BaseModel):

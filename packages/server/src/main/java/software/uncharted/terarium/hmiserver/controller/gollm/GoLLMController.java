@@ -4,8 +4,6 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.Parameter;
-import io.swagger.v3.oas.annotations.enums.ParameterIn;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
@@ -52,13 +50,13 @@ import software.uncharted.terarium.hmiserver.service.data.DatasetService;
 import software.uncharted.terarium.hmiserver.service.data.DocumentAssetService;
 import software.uncharted.terarium.hmiserver.service.data.ModelService;
 import software.uncharted.terarium.hmiserver.service.data.ProjectService;
+import software.uncharted.terarium.hmiserver.service.tasks.ChartAnnotationResponseHandler;
 import software.uncharted.terarium.hmiserver.service.tasks.CompareModelsResponseHandler;
 import software.uncharted.terarium.hmiserver.service.tasks.ConfigureModelFromDatasetResponseHandler;
 import software.uncharted.terarium.hmiserver.service.tasks.ConfigureModelFromDocumentResponseHandler;
 import software.uncharted.terarium.hmiserver.service.tasks.EnrichAmrResponseHandler;
 import software.uncharted.terarium.hmiserver.service.tasks.EnrichDatasetResponseHandler;
 import software.uncharted.terarium.hmiserver.service.tasks.EquationsFromImageResponseHandler;
-import software.uncharted.terarium.hmiserver.service.tasks.GenerateResponseHandler;
 import software.uncharted.terarium.hmiserver.service.tasks.GenerateSummaryHandler;
 import software.uncharted.terarium.hmiserver.service.tasks.InterventionsFromDocumentResponseHandler;
 import software.uncharted.terarium.hmiserver.service.tasks.ModelCardResponseHandler;
@@ -89,7 +87,7 @@ public class GoLLMController {
 	private final EnrichAmrResponseHandler enrichAmrResponseHandler;
 	private final EnrichDatasetResponseHandler enrichDatasetResponseHandler;
 	private final EquationsFromImageResponseHandler equationsFromImageResponseHandler;
-	private final GenerateResponseHandler generateResponseHandler;
+	private final ChartAnnotationResponseHandler chartAnnotationResponseHandler;
 	private final GenerateSummaryHandler generateSummaryHandler;
 	private final InterventionsFromDocumentResponseHandler interventionsFromDocumentResponseHandler;
 	private final ModelCardResponseHandler modelCardResponseHandler;
@@ -104,7 +102,7 @@ public class GoLLMController {
 		taskService.addResponseHandler(enrichAmrResponseHandler);
 		taskService.addResponseHandler(enrichDatasetResponseHandler);
 		taskService.addResponseHandler(equationsFromImageResponseHandler);
-		taskService.addResponseHandler(generateResponseHandler);
+		taskService.addResponseHandler(chartAnnotationResponseHandler);
 		taskService.addResponseHandler(generateSummaryHandler);
 		taskService.addResponseHandler(interventionsFromDocumentResponseHandler);
 		taskService.addResponseHandler(modelCardResponseHandler);
@@ -679,7 +677,7 @@ public class GoLLMController {
 			@ApiResponse(responseCode = "500", description = "There was an issue dispatching the request", content = @Content)
 		}
 	)
-	public ResponseEntity<TaskResponse> createGenerateResponseTask(
+	public ResponseEntity<TaskResponse> createGenerateSummaryTask(
 		@RequestParam(name = "mode", required = false, defaultValue = "SYNC") final TaskMode mode,
 		@RequestParam(name = "previousSummaryId", required = false) final UUID previousSummaryId,
 		@RequestParam(name = "project-id", required = false) final UUID projectId,
@@ -1070,9 +1068,16 @@ public class GoLLMController {
 		return ResponseEntity.ok().body(resp);
 	}
 
-	@PostMapping("/generate-response")
+	@Data
+	public static class ChartAnnotationRequestBody {
+
+		private String preamble = "";
+		private String instruction;
+	}
+
+	@PostMapping("/chart-annotation")
 	@Secured(Roles.USER)
-	@Operation(summary = "Dispatch a `GoLLM Generate Response` task.")
+	@Operation(summary = "Dispatch a `GoLLM Chart Annotation` task.")
 	@ApiResponses(
 		value = {
 			@ApiResponse(
@@ -1099,40 +1104,19 @@ public class GoLLMController {
 	public ResponseEntity<TaskResponse> createGenerateResponseTask(
 		@RequestParam(name = "mode", required = false, defaultValue = "SYNC") final TaskMode mode,
 		@RequestParam(name = "project-id", required = false) final UUID projectId,
-		@Parameter(
-			name = "response-format",
-			description = "The format of the response, either 'json' or OpenAI response_format json object, if not provided, the response will be in the default text format",
-			schema = @io.swagger.v3.oas.annotations.media.Schema(
-				oneOf = { JsonNode.class, String.class },
-				allowableValues = { "json" }
-			),
-			in = ParameterIn.QUERY
-		) @RequestParam(name = "response-format", required = false) final Object responseFormat,
-		@RequestBody final String instruction
+		@RequestBody final ChartAnnotationRequestBody body
 	) {
 		JsonNode resFormat = null;
 
-		if (responseFormat instanceof JsonNode) {
-			resFormat = (JsonNode) responseFormat;
-		} else if (responseFormat instanceof final String format) {
-			if (format.equals("json")) {
-				try {
-					resFormat = objectMapper.readTree("{\"type\": \"json_object\"}");
-				} catch (final JsonProcessingException e) {
-					throw new IllegalArgumentException("Invalid JSON format for response-format parameter");
-				}
-			}
-		}
-
 		// set task input
-		final GenerateResponseHandler.Input input = new GenerateResponseHandler.Input();
-		input.setInstruction(instruction);
-		input.setResponseFormat(resFormat);
+		final ChartAnnotationResponseHandler.Input input = new ChartAnnotationResponseHandler.Input();
+		input.setPreamble(body.getPreamble());
+		input.setInstruction(body.getInstruction());
 
 		// create the task
 		final TaskRequest req = new TaskRequest();
 		req.setType(TaskType.GOLLM);
-		req.setScript(GenerateResponseHandler.NAME);
+		req.setScript(ChartAnnotationResponseHandler.NAME);
 		req.setUserId(currentUserService.get().getId());
 
 		try {
