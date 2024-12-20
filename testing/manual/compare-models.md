@@ -38,11 +38,12 @@ Report any issues into GitHub: [open an issue](https://github.com/DARPA-ASKEM/te
 8. Add a goal of comparison such as "which model is best to simulate covid spread in Canada" and click on the compare button
    - The summary should now address the goal and make a recommendation
 
-### 3. Compare models with partial model cards
+### 4. Compare models with partial model cards
 1. Enrich the Bertozzi2020 and Fang2020 models with their respective documents 
 2. Re-open the "Compare models" operator
 3. Open the drilldown
 4. Ensure that when the drill-down starts:
+   - The summary regenerates automatically
    - The model graphs are displayed
    - Model card information is displayed for Bertozzi2020 and Fang2020
    - There is a "Concept context comparison" section
@@ -57,23 +58,24 @@ Report any issues into GitHub: [open an issue](https://github.com/DARPA-ASKEM/te
    - The summary should address the goal and make a recommendation
 
 
-### 4. Compare models all with model cards
+### 5. Compare models all with model cards
 1. Finally, enrich the Tang2020 models with its respective document
 2. Re-open the "Compare models" operator
 3. Open the drilldown
 4. Ensure that when the drill-down starts:
+   - The summary regenerates automatically
    - The overview begins to generate
    - The model graphs are displayed
    - Model card information is displayed for all models
-5. Clear the goal and click on the "Compare" button. When the overview is generated, it should only compare the metadata information from each model and not look at the structure.
+6. Clear the goal and click on the "Compare" button. When the overview is generated, it should only compare the metadata information from each model and not look at the structure.
    - It should have a title that states it is comparing all 3 models
    - It should have a summary of the comparison
    - It should compare the structure of ALL the models
    - It should compare the metadata information for ALL the models
-6. Add a goal of comparison and click on the compare button
+7. Add a goal of comparison and click on the compare button
    - The summary should address the goal and make a recommendation
 
-### 5. Working with the Compare models drilldown: NOTEBOOK
+### 6. Working with the Compare models drilldown: NOTEBOOK
 1. Switch to the **Notebook** tab.
 2. Type "Compare models" into the AI assistant and press the **Send** icon (or enter)
 3. It should generate some Python code.
