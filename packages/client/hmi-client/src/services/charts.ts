@@ -1,16 +1,38 @@
+import * as d3 from 'd3';
 import { isEmpty, pick } from 'lodash';
 import { percentile } from '@/utils/math';
 import { VisualizationSpec } from 'vega-embed';
 import { v4 as uuidv4 } from 'uuid';
 import type { ChartAnnotation, FunmanInterval } from '@/types/Types';
 import { CalendarDateType } from '@/types/common';
+import { countDigits, fixPrecisionError } from '@/utils/number';
+import { format } from 'd3';
 import { flattenInterventionData } from './intervention-policy';
 import type { FunmanBox, FunmanConstraintsResponse } from './models/funman-service';
 
 const VEGALITE_SCHEMA = 'https://vega.github.io/schema/vega-lite/v5.json';
 
+const NUMBER_FORMAT = '.3~s';
+export const expressionFunctions = {
+	// chartNumberFormatter is a custom number format that will display numbers in a more readable format
+	chartNumberFormatter: (value: number) => {
+		const correctedValue = fixPrecisionError(value);
+		if (value > -1 && value < 1) {
+			return countDigits(correctedValue) > 6 ? correctedValue.toExponential(3) : correctedValue.toString();
+		}
+		return format(NUMBER_FORMAT)(correctedValue);
+	},
+	// Just show full value in tooltip
+	tooltipFormatter: (value) => {
+		if (value === undefined) return 'N/A';
+		return fixPrecisionError(value);
+	}
+};
+
 export const CATEGORICAL_SCHEME = ['#1B8073', '#6495E8', '#8F69B9', '#D67DBF', '#E18547', '#D2C446', '#84594D'];
 
+// diverging categorical colour scheme for the sensitivity chart (from a deep blue -> a deep red)
+export const SENSITIVITY_COLOUR_SCHEME = ['#4575B4', '#91BFDB', '#E0F3F8', '#FFFFBF', '#FEE090', '#FC8D59', '#D73027'];
 export enum AUTOSIZE {
 	FIT = 'fit',
 	FIT_X = 'fit-x',
@@ -40,6 +62,7 @@ export interface ForecastChartOptions extends BaseChartOptions {
 	colorscheme?: string[];
 	fitYDomain?: boolean;
 	legendProperties?: Record<string, any>;
+	bins?: Map<string, number[]>;
 }
 
 export interface ForecastChartLayer {
@@ -498,6 +521,21 @@ export function createForecastChart(
 			]
 		};
 
+		// group by bins id if present
+		if (options.bins) {
+			let calculateExpr = '';
+			options.bins?.forEach((sampleIds, bin) => {
+				calculateExpr += `indexof([${sampleIds}], datum.sample_id) >= 0 ? '${bin}' : `;
+			});
+			calculateExpr += '0';
+
+			header.transform.push({
+				// @ts-ignore
+				calculate: calculateExpr,
+				as: ['group']
+			});
+		}
+
 		let dateExpression;
 		if (options.dateOptions) {
 			dateExpression = formatDateLabelFn(options.dateOptions.startDate, 'datum.value', options.dateOptions.dateFormat);
@@ -537,13 +575,13 @@ export function createForecastChart(
 			x: encodingX,
 			y: encodingY,
 			color: {
-				field: 'variableField',
+				field: options.bins ? 'group' : 'variableField',
 				type: 'nominal',
 				scale: {
-					domain: layer.variables,
+					domain: options.bins ? Array.from(options.bins.keys()) : layer.variables,
 					range: options.colorscheme || CATEGORICAL_SCHEME
 				},
-				legend: false
+				legend: options.bins ? { ...legendProperties } : null
 			}
 		};
 
@@ -565,7 +603,7 @@ export function createForecastChart(
 		Object.assign(encoding, {
 			detail: { field: samplingLayer.groupField, type: 'nominal' },
 			strokeWidth: { value: 1 },
-			opacity: { value: 0.1 }
+			opacity: { value: options.bins ? 1.0 : 0.1 }
 		});
 
 		spec.layer.push(layerSpec);
@@ -645,20 +683,194 @@ export function createForecastChart(
 }
 
 /**
+ * e.g. [{variable1: [1, 2, 3], variable2: [4, 5, 6]}, ...] where each item in the variable array is a sample value. Sample values must be sorted in ascending order.
+ */
+export type GroupedDataArray = Record<string, number[]>[];
+
+const buildQuantileChartData = (data: GroupedDataArray, selectVariables: string[], quantiles: number[]) => {
+	const result: {
+		x: number;
+		lower: number;
+		upper: number;
+		variable: string;
+		quantile: number;
+	}[] = [];
+	data.forEach((d, index) => {
+		selectVariables.forEach((variable) => {
+			const values = d[variable] ?? [];
+			[...quantiles]
+				.sort((a, b) => b - a) // Sort in descending order so that data with higher quantiles are drawn first
+				.forEach((q) => {
+					result.push({
+						x: index,
+						lower: d3.quantile(values, 1 - q) ?? NaN,
+						upper: d3.quantile(values, q) ?? NaN,
+						variable,
+						quantile: q
+					});
+				});
+		});
+	});
+	return result;
+};
+
+export function createQuantilesForecastChart(
+	data: GroupedDataArray,
+	variables: string[],
+	quantiles: number[],
+	options: ForecastChartOptions
+) {
+	const axisColor = '#EEE';
+	const labelColor = '#667085';
+	const labelFontWeight = 'normal';
+	const globalFont = 'Figtree';
+	const titleObj = options.title
+		? {
+				text: options.title,
+				anchor: 'start',
+				subtitle: ' ',
+				subtitlePadding: 4
+			}
+		: null;
+
+	const xaxis: any = {
+		domainColor: axisColor,
+		tickColor: { value: axisColor },
+		labelColor: { value: labelColor },
+		labelFontWeight,
+		title: options.xAxisTitle,
+		gridColor: '#EEE',
+		gridOpacity: 1.0
+	};
+	const yaxis = structuredClone(xaxis);
+	yaxis.title = options.yAxisTitle;
+
+	const translationMap = options.translationMap;
+	let labelExpr = '';
+	let varDisplayNameExpr = '';
+	if (translationMap) {
+		Object.keys(translationMap)
+			.filter((key) => variables.includes(key))
+			.forEach((key) => {
+				labelExpr += `datum.value === '${key}' ? '${translationMap[key]}' : `;
+				varDisplayNameExpr += `datum.variable === '${key}' ? '${translationMap[key]}' : `;
+			});
+		labelExpr += " 'other'";
+		varDisplayNameExpr += " 'other'";
+	}
+
+	const isCompact = options.width < 200;
+
+	const legendProperties = {
+		title: null,
+		padding: { value: 0 },
+		strokeColor: null,
+		orient: 'top',
+		direction: isCompact ? 'vertical' : 'horizontal',
+		symbolStrokeWidth: isCompact ? 2 : 4,
+		symbolSize: 200,
+		labelFontSize: isCompact ? 8 : 12,
+		labelOffset: isCompact ? 2 : 4,
+		labelLimit: isCompact ? 50 : 150,
+		...options.legendProperties
+	};
+
+	const yScale = { type: options.scale === 'log' ? 'symlog' : 'linear' };
+
+	const spec: any = {
+		$schema: VEGALITE_SCHEMA,
+		title: titleObj,
+		description: '',
+		width: options.width,
+		height: options.height,
+		autosize: {
+			type: options.autosize || AUTOSIZE.FIT_X
+		},
+		config: {
+			font: globalFont,
+			legend: {
+				layout: {
+					direction: legendProperties.direction,
+					anchor: 'start'
+				}
+			}
+		},
+		data: { values: buildQuantileChartData(data, variables, quantiles) },
+		transform: [
+			{
+				calculate: varDisplayNameExpr,
+				as: 'varDisplayName'
+			}
+		],
+		layer: [
+			{
+				mark: {
+					type: 'errorband',
+					extent: 'ci',
+					borders: true
+				},
+				encoding: {
+					x: { field: 'x', type: 'quantitative', axis: { ...xaxis } },
+					y: { field: 'lower', type: 'quantitative', axis: { ...yaxis }, scale: yScale },
+					y2: { field: 'upper', type: 'quantitative' },
+					color: {
+						field: 'variable',
+						type: 'nominal',
+						scale: {
+							domain: variables,
+							range: options.colorscheme || CATEGORICAL_SCHEME
+						},
+						legend: options.legend
+							? {
+									...legendProperties,
+									labelExpr: labelExpr.length && labelExpr
+								}
+							: false
+					},
+					opacity: {
+						field: 'quantile',
+						type: 'quantitative',
+						scale: { domain: [0.5, 1], range: [1, 0.1] },
+						legend: false
+					},
+					tooltip: [
+						{ field: 'varDisplayName', title: ' ' },
+						{ field: 'quantile', title: 'Quantile', format: '.0%' },
+						{ field: 'lower', title: 'Lower Bound' },
+						{ field: 'upper', title: 'Upper Bound' }
+					]
+				}
+			}
+		]
+	};
+	return spec;
+}
+
+/**
  * FIXME: The design calls for combinations of different types of charts
  * in the grid, which we don't know how to achieve currently with vegalite
  * */
 export function createSimulateSensitivityScatter(samplingLayer: SensitivityChartLayer, options: ForecastChartOptions) {
 	// Start building
+	let calculateExpr = '';
+	options.bins?.forEach((sampleIds, quantile) => {
+		calculateExpr += `indexof([${sampleIds}], datum.sample_id) >= 0 ? '${quantile}' : `;
+	});
+	calculateExpr += '0';
 	const spec: any = {
 		$schema: VEGALITE_SCHEMA,
-		title: `${samplingLayer.outputVariable} sensitivity`,
 		description: '',
 		repeat: {
 			row: samplingLayer.inputVariables,
 			column: samplingLayer.inputVariables
 		},
 		data: { values: samplingLayer.data },
+		transform: [
+			{
+				calculate: calculateExpr,
+				as: 'quantile'
+			}
+		],
 		spec: {
 			width: options.width,
 			height: options.height,
@@ -687,9 +899,15 @@ export function createSimulateSensitivityScatter(samplingLayer: SensitivityChart
 					}
 				},
 				color: {
-					field: samplingLayer.outputVariable,
-					type: 'quantitative'
+					field: 'quantile',
+					type: 'nominal',
+					scale: {
+						domain: options.bins ? Array.from(options.bins.keys()) : samplingLayer.outputVariable,
+						range: options.colorscheme || CATEGORICAL_SCHEME
+					},
+					legend: null
 				},
+				detail: { field: 'sample_id', type: 'nominal' },
 				size: { value: 80 }
 			}
 		}

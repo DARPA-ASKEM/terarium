@@ -25,7 +25,9 @@
 						/>
 						<span class="flex gap-2">
 							<tera-pyciemss-cancel-button class="mr-auto" :simulation-run-id="cancelRunId" />
-							<Button label="Run" icon="pi pi-play" @click="runCalibrate" :disabled="disableRunButton" />
+							<div v-tooltip="runButtonMessage">
+								<Button label="Run" icon="pi pi-play" @click="runCalibrate" :disabled="isRunDisabled" />
+							</div>
 						</span>
 					</div>
 
@@ -223,7 +225,13 @@
 
 		<!-- Output section -->
 		<template #preview>
-			<tera-drilldown-section v-if="showOutputSection">
+			<tera-drilldown-section
+				:is-loading="isLoading"
+				:show-slot-while-loading="true"
+				:loading-progress="props.node.state.currentProgress"
+				:is-blank="!showOutputSection"
+				:blank-message="'Click \'Run\' to begin calibrating'"
+			>
 				<template #header-controls-left>
 					<h5 v-if="configuredModelConfig?.name" class="ml-3">{{ configuredModelConfig.name }}</h5>
 				</template>
@@ -246,7 +254,7 @@
 					class="p-3"
 					:summary-id="node.state.summaryId"
 				/>
-				<Accordion :active-index="lossActiveIndex" class="px-2" v-if="!isLoading">
+				<Accordion :active-index="lossActiveIndex" @update:active-index="updateLossTab" class="px-2">
 					<AccordionTab header="Loss">
 						<!-- Loss chart -->
 						<div ref="lossChartContainer">
@@ -343,17 +351,7 @@
 						<p class="helpMessage">Connect a model configuration and dataset</p>
 					</section>
 				</div>
-
-				<section v-else class="emptyState">
-					<tera-progress-spinner :font-size="2" is-centered style="height: 12rem" />
-					<p>Processing...{{ props.node.state.currentProgress }}%</p>
-				</section>
 			</tera-drilldown-section>
-			<!-- Empty state if calibrate hasn't been run yet -->
-			<section v-else class="output-section-empty-state">
-				<Vue3Lottie :animationData="EmptySeed" :height="150" loop autoplay />
-				<p class="helpMessage">Click 'Run' to begin calibrating</p>
-			</section>
 		</template>
 
 		<template #sidebar-right>
@@ -376,7 +374,8 @@
 						:active-settings="activeChartSettings"
 						:generate-annotation="generateAnnotation"
 						@delete-annotation="deleteAnnotation"
-						@close="activeChartSettings = null"
+						@update-settings="updateActiveChartSettings"
+						@close="setActiveChartSettings(null)"
 					/>
 				</template>
 				<template #content>
@@ -387,7 +386,7 @@
 							:type="ChartSettingType.DISTRIBUTION_COMPARISON"
 							:select-options="Object.keys(pyciemssMap).filter((c) => modelPartTypesMap[c] === 'parameter')"
 							:selected-options="selectedParameterSettings.map((s) => s.selectedVariables[0])"
-							@open="activeChartSettings = $event"
+							@open="setActiveChartSettings($event)"
 							@remove="removeChartSettings"
 							@selection-change="updateChartSettings"
 						/>
@@ -398,7 +397,7 @@
 							:type="ChartSettingType.INTERVENTION"
 							:select-options="Object.keys(groupedInterventionOutputs)"
 							:selected-options="selectedInterventionSettings.map((s) => s.selectedVariables[0])"
-							@open="activeChartSettings = $event"
+							@open="setActiveChartSettings($event)"
 							@remove="removeChartSettings"
 							@selection-change="updateChartSettings"
 						/>
@@ -411,7 +410,7 @@
 								Object.keys(pyciemssMap).filter((c) => ['state', 'observable'].includes(modelPartTypesMap[c]))
 							"
 							:selected-options="selectedVariableSettings.map((s) => s.selectedVariables[0])"
-							@open="activeChartSettings = $event"
+							@open="setActiveChartSettings($event)"
 							@remove="removeChartSettings"
 							@selection-change="updateChartSettings"
 						/>
@@ -426,7 +425,7 @@
 									.filter((c) => selectedOutputMapping.find((s) => s.modelVariable === c))
 							"
 							:selected-options="selectedErrorVariableSettings.map((s) => s.selectedVariables[0])"
-							@open="activeChartSettings = $event"
+							@open="setActiveChartSettings($event)"
 							@remove="removeChartSettings"
 							@selection-change="updateChartSettings"
 						/>
@@ -441,7 +440,7 @@
 								)
 							"
 							:selected-options="comparisonChartsSettingsSelection"
-							@open="activeChartSettings = $event"
+							@open="setActiveChartSettings($event)"
 							@remove="removeChartSettings"
 							@selection-change="comparisonChartsSettingsSelection = $event"
 						/>
@@ -495,11 +494,8 @@ import {
 	parseCsvAsset
 } from '@/services/calibrate-workflow';
 import { deleteAnnotation, updateChartSettingsBySelectedVariables } from '@/services/chart-settings';
-import { Vue3Lottie } from 'vue3-lottie';
-import EmptySeed from '@/assets/images/lottie-empty-seed.json';
 import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
 import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.vue';
-import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue';
 import TeraNotebookError from '@/components/drilldown/tera-notebook-error.vue';
 import TeraOperatorOutputSummary from '@/components/operator/tera-operator-output-summary.vue';
 import TeraSliderPanel from '@/components/widgets/tera-slider-panel.vue';
@@ -621,7 +617,7 @@ const datasetColumns = ref<DatasetColumn[]>();
 const csvAsset = shallowRef<CsvAsset | undefined>(undefined);
 const groundTruthData = computed<DataArray>(() => parseCsvAsset(csvAsset.value as CsvAsset));
 
-const lossActiveIndex = ref([0]);
+const lossActiveIndex = ref<number | null>(0);
 const currentActiveIndicies = ref([0, 1, 2, 3, 4]);
 
 const modelConfig = ref<ModelConfiguration | null>(null);
@@ -706,13 +702,24 @@ const resetState = () => {
 	});
 };
 
-const disableRunButton = computed(
-	() =>
-		!currentDatasetFileName.value ||
-		!csvAsset.value ||
-		!modelConfigId.value ||
-		!datasetId.value ||
-		knobs.value.timestampColName === ''
+// Checks for disabling run button:
+const isMappingfilled = computed(
+	() => mapping.value.find((ele) => ele.datasetVariable && ele.modelVariable) && knobs.value.timestampColName
+);
+
+const areNodeInputsFilled = computed(() => datasetId.value && modelConfigId.value);
+
+const isRunDisabled = computed(() => !isMappingfilled.value || !areNodeInputsFilled.value);
+
+const mappingFilledTooltip = computed(() =>
+	!isMappingfilled.value ? 'Must contain a Timestamp column and at least one filled in mapping. \n' : ''
+);
+const nodeInputsFilledTooltip = computed(() =>
+	!areNodeInputsFilled.value ? 'Must a valid dataset and model configuration\n' : ''
+);
+
+const runButtonMessage = computed(() =>
+	isRunDisabled.value ? `${mappingFilledTooltip.value} ${nodeInputsFilledTooltip.value}` : ''
 );
 
 const selectedOutputId = ref<string>();
@@ -757,7 +764,9 @@ const {
 	comparisonChartsSettingsSelection,
 	removeChartSettings,
 	updateChartSettings,
-	addComparisonChartSettings
+	addComparisonChartSettings,
+	updateActiveChartSettings,
+	setActiveChartSettings
 } = useChartSettings(props, emit);
 
 const {
@@ -839,7 +848,12 @@ const initDefaultChartSettings = (state: CalibrationOperationStateCiemss) => {
 	);
 };
 
+const updateLossTab = (activeTab: number | undefined) => {
+	lossActiveIndex.value = activeTab ?? null;
+};
+
 const runCalibrate = async () => {
+	lossActiveIndex.value = 0; // ensure loss tab open on run
 	if (!modelConfigId.value || !datasetId.value || !currentDatasetFileName.value) return;
 
 	const formattedMap: { [index: string]: string } = {};

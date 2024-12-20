@@ -97,7 +97,7 @@ export class HorizonScanningScenario extends BaseScenario {
 		this.modelConfigSpec.id = id;
 	}
 
-	setCalibrateSpec(ids: string[]) {
+	setSimulateSpec(ids: string[]) {
 		this.simulateSpec.ids = ids;
 	}
 
@@ -123,7 +123,7 @@ export class HorizonScanningScenario extends BaseScenario {
 
 	setParameter(parameter: ParameterSemantic, index: number) {
 		let low = 0;
-		let high = 0;
+		let high = 1;
 		if (parameter.distribution.type === DistributionType.Constant) {
 			const { min, max } = calculateUncertaintyRange(parameter.distribution.parameters.value, 10);
 			low = min;
@@ -142,7 +142,8 @@ export class HorizonScanningScenario extends BaseScenario {
 			workflowName: this.workflowName,
 			modelSpec: this.modelSpec,
 			modelConfigSpec: this.modelConfigSpec,
-			simulateSpec: this.simulateSpec
+			simulateSpec: this.simulateSpec,
+			interventionSpecs: this.interventionSpecs
 		};
 	}
 

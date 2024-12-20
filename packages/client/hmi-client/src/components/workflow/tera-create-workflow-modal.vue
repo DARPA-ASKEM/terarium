@@ -53,11 +53,13 @@ import TeraSituationalAwarenessTemplate from '@/components/workflow/scenario-tem
 import TeraSensitivityAnalysisTemplate from '@/components/workflow/scenario-templates/sensitivity-analysis/tera-sensitivity-analysis-template.vue';
 import TeraDecisionMakingTemplate from '@/components/workflow/scenario-templates/decision-making/tera-decision-making-template.vue';
 import TeraHorizonScanningTemplate from '@/components/workflow/scenario-templates/horizon-scanning/tera-horizon-scanning-template.vue';
+import TeraValueOfInformationTemplate from '@/components/workflow/scenario-templates/value-of-information/tera-value-of-information-template.vue';
 import { BlankCanvasScenario } from '@/components/workflow/scenario-templates/blank-canvas/blank-canvas-scenario';
 import { SituationalAwarenessScenario } from '@/components/workflow/scenario-templates/situational-awareness/situational-awareness-scenario';
 import { SensitivityAnalysisScenario } from '@/components/workflow/scenario-templates/sensitivity-analysis/sensitivity-analysis-scenario';
 import { DecisionMakingScenario } from '@/components/workflow/scenario-templates/decision-making/decision-making-scenario';
 import { HorizonScanningScenario } from '@/components/workflow/scenario-templates/horizon-scanning/horizon-scanning-scenario';
+import { ValueOfInformationScenario } from '@/components/workflow/scenario-templates/value-of-information/value-of-information-scenario';
 
 interface ScenarioItem {
 	name: string;
@@ -105,6 +107,14 @@ const scenarioMap = ref(
 				name: HorizonScanningScenario.templateName,
 				instance: new HorizonScanningScenario(),
 				component: markRaw(TeraHorizonScanningTemplate)
+			}
+		],
+		[
+			ValueOfInformationScenario.templateId,
+			{
+				name: ValueOfInformationScenario.templateName,
+				instance: new ValueOfInformationScenario(),
+				component: markRaw(TeraValueOfInformationTemplate)
 			}
 		]
 	])

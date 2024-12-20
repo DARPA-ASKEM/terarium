@@ -35,13 +35,16 @@
 						:disabled="!selectedModelConfiguration"
 						:loading="isFetchingModelConfiguration || isFetchingModelInformation"
 						@update:model-value="onParameterSelect($event, i)"
+						filter
 					>
 						<template #option="slotProps">
-							<span>{{ displayParameter(slotProps.option.referenceId) }}</span>
+							<span>{{ displayParameter(modelParameters, slotProps.option.referenceId) }}</span>
 						</template>
 
 						<template #value="slotProps">
-							<span v-if="displayParameter(slotProps.value)">{{ displayParameter(slotProps.value) }}</span>
+							<span v-if="displayParameter(modelParameters, slotProps.value)">{{
+								displayParameter(modelParameters, slotProps.value)
+							}}</span>
 							<span v-else>{{ slotProps.placeholder }}</span>
 						</template>
 					</Dropdown>
@@ -71,10 +74,10 @@
 				:disabled="isEmpty(modelStateOptions) || isFetchingModelInformation"
 				:model-value="scenario.simulateSpec.ids"
 				placeholder="Select output metrics"
-				option-label="name"
+				option-label="id"
 				option-value="id"
 				:options="modelStateOptions"
-				@update:model-value="scenario.setCalibrateSpec($event)"
+				@update:model-value="scenario.setSimulateSpec($event)"
 				:loading="isFetchingModelInformation"
 				filter
 			/>
@@ -94,10 +97,10 @@ import Dropdown from 'primevue/dropdown';
 import MultiSelect from 'primevue/multiselect';
 import Button from 'primevue/button';
 import { getModelConfigurationById, getParameter, getParameters } from '@/services/model-configurations';
-import { DistributionType } from '@/services/distribution';
 import TeraInputNumber from '@/components/widgets/tera-input-number.vue';
 import { ScenarioHeader } from '../base-scenario';
 import TeraScenarioTemplate from '../tera-scenario-template.vue';
+import { displayParameter } from '../scenario-template-utils';
 
 const header: ScenarioHeader = Object.freeze({
 	title: 'Sensitivity analysis template',
@@ -129,23 +132,6 @@ const onParameterSelect = (parameterId: string, index: number) => {
 	const parameter = _.cloneDeep(getParameter(selectedModelConfiguration.value, parameterId));
 	if (!parameter) return;
 	props.scenario.setParameter(parameter, index);
-};
-
-const displayParameter = (parameterName: string) => {
-	let value = '';
-	const parameter = modelParameters.value.find((p) => p.referenceId === parameterName);
-	switch (parameter?.distribution.type) {
-		case DistributionType.Constant:
-			value = `${parameter.distribution.parameters.value}`;
-			break;
-		case DistributionType.Uniform:
-			value = `${parameter.distribution.parameters.minimum} - ${parameter.distribution.parameters.maximum}`;
-			break;
-		default:
-			return '';
-	}
-
-	return `${parameterName}  [${value}]`;
 };
 
 watch(
@@ -183,7 +169,9 @@ watch(
 		isFetchingModelConfiguration.value = true;
 		selectedModelConfiguration.value = await getModelConfigurationById(modelConfigId);
 		if (!selectedModelConfiguration.value) return;
-		modelParameters.value = getParameters(selectedModelConfiguration.value);
+		modelParameters.value = getParameters(selectedModelConfiguration.value).sort((a, b) =>
+			a.referenceId.localeCompare(b.referenceId)
+		);
 		isFetchingModelConfiguration.value = false;
 	}
 );

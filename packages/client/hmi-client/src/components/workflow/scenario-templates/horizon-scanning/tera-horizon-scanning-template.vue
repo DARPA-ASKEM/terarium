@@ -67,13 +67,16 @@
 						:disabled="!selectedModelConfiguration"
 						:loading="isFetchingModelConfiguration || isFetchingModelInformation"
 						@update:model-value="onParameterSelect($event, i)"
+						filter
 					>
 						<template #option="slotProps">
-							<span>{{ displayParameter(slotProps.option.referenceId) }}</span>
+							<span>{{ displayParameter(modelParameters, slotProps.option.referenceId) }}</span>
 						</template>
 
 						<template #value="slotProps">
-							<span v-if="displayParameter(slotProps.value)">{{ displayParameter(slotProps.value) }}</span>
+							<span v-if="displayParameter(modelParameters, slotProps.value)">{{
+								displayParameter(modelParameters, slotProps.value)
+							}}</span>
 							<span v-else>{{ slotProps.placeholder }}</span>
 						</template>
 					</Dropdown>
@@ -104,10 +107,10 @@
 				:disabled="isEmpty(modelStateOptions) || isFetchingModelInformation"
 				:model-value="scenario.simulateSpec.ids"
 				placeholder="Select output metrics"
-				option-label="name"
+				option-label="id"
 				option-value="id"
 				:options="modelStateOptions"
-				@update:model-value="scenario.setCalibrateSpec($event)"
+				@update:model-value="scenario.setSimulateSpec($event)"
 				:loading="isFetchingModelInformation"
 				filter
 			/>
@@ -127,14 +130,14 @@ import { HorizonScanningScenario } from '@/components/workflow/scenario-template
 import { getInterventionPoliciesForModel, getModel, getModelConfigurationsForModel } from '@/services/model';
 import { AssetType, InterventionPolicy, ModelConfiguration, ParameterSemantic } from '@/types/Types';
 import { getModelConfigurationById, getParameter, getParameters } from '@/services/model-configurations';
-import { DistributionType } from '@/services/distribution';
 import TeraInputNumber from '@/components/widgets/tera-input-number.vue';
 import { ScenarioHeader } from '../base-scenario';
 import TeraScenarioTemplate from '../tera-scenario-template.vue';
+import { displayParameter } from '../scenario-template-utils';
 
 const header: ScenarioHeader = Object.freeze({
 	title: 'Horizon scanning template',
-	question: 'How does extreme scenarios impact the outcome of different interventions?',
+	question: 'How do extreme scenarios impact the outcome of different interventions?',
 	description:
 		'Configure the model to represent the extremes of uncertainty for some parameters, then simulate into the near future with different intervention policies and compare the outcomes.',
 	examples: ['Potential emergence of a new variant.', 'Rapidly waning immunity.']
@@ -165,23 +168,6 @@ const onParameterSelect = (parameterId: string, index: number) => {
 	const parameter = _.cloneDeep(getParameter(selectedModelConfiguration.value, parameterId));
 	if (!parameter) return;
 	props.scenario.setParameter(parameter, index);
-};
-
-const displayParameter = (parameterName: string) => {
-	let value = '';
-	const parameter = modelParameters.value.find((p) => p.referenceId === parameterName);
-	switch (parameter?.distribution.type) {
-		case DistributionType.Constant:
-			value = `${parameter.distribution.parameters.value}`;
-			break;
-		case DistributionType.Uniform:
-			value = `${parameter.distribution.parameters.minimum} - ${parameter.distribution.parameters.maximum}`;
-			break;
-		default:
-			return '';
-	}
-
-	return `${parameterName}  [${value}]`;
 };
 
 watch(
@@ -221,7 +207,9 @@ watch(
 		isFetchingModelConfiguration.value = true;
 		selectedModelConfiguration.value = await getModelConfigurationById(modelConfigId);
 		if (!selectedModelConfiguration.value) return;
-		modelParameters.value = getParameters(selectedModelConfiguration.value);
+		modelParameters.value = getParameters(selectedModelConfiguration.value).sort((a, b) =>
+			a.referenceId.localeCompare(b.referenceId)
+		);
 		isFetchingModelConfiguration.value = false;
 	}
 );
