@@ -5,6 +5,7 @@ import static software.uncharted.terarium.hmiserver.models.dataservice.dataset.D
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import java.io.IOException;
 import java.util.Map;
 import java.util.Objects;
@@ -95,6 +96,15 @@ public class DatasetStatistics {
 			log.info("No statistics found for dataset {}, {}", dataset.getName(), dataset.getId());
 			return;
 		}
+
+		// Update the numbers of rows and columns
+		JsonNode metadata = dataset.getMetadata();
+		if (metadata == null) {
+			metadata = objectMapper.createObjectNode();
+		}
+		((ObjectNode) metadata).put("total_columns", response.getTotalColumns());
+		((ObjectNode) metadata).put("total_rows", response.getTotalRows());
+		dataset.setMetadata(metadata);
 
 		// For each column, update the statistics
 		dataset

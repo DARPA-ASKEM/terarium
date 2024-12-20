@@ -3,8 +3,8 @@
 		<!-- Toggle histograms & column summary charts -->
 		<div class="datatable-toolbar">
 			<span class="datatable-toolbar-item">
-				{{ rawContent.headers.length || 'No' }} columns | {{ rawContent.rowCount || 'No' }} rows
-				{{ rawContent.rowCount != rawContent.csv.length ? '(' + rawContent.csv.length + ' showing)' : '' }}
+				{{ columns.length || 'No' }} columns | {{ rowCount || 'No' }} rows
+				{{ rowCount != rawContent.csv.length ? '(' + rawContent.csv.length + ' showing)' : '' }}
 			</span>
 			<span class="datatable-toolbar-item" style="margin-left: auto">
 				Show column summaries<InputSwitch v-model="showSummaries" />
@@ -103,7 +103,7 @@ import { isEmpty } from 'lodash';
 import { ref, watch, nextTick } from 'vue';
 import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
-import type { CsvAsset } from '@/types/Types';
+import type { CsvAsset, DatasetColumn } from '@/types/Types';
 import MultiSelect from 'primevue/multiselect';
 import Button from 'primevue/button';
 import Chart from 'primevue/chart';
@@ -129,6 +129,8 @@ const props = defineProps<{
 	previousHeaders?: String[] | null;
 	paginatorPosition?: 'bottom' | 'both' | 'top' | undefined;
 	tableStyle?: String;
+	columns: DatasetColumn[];
+	rowCount: number;
 }>();
 
 const CATEGORYPERCENTAGE = 1.0;
