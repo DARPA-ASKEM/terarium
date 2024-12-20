@@ -144,6 +144,7 @@ public class Project extends TerariumAsset {
 		}
 	}
 
+	@JsonIgnore
 	@TSIgnore
 	public String getOverviewAsReadableString() {
 		if (overviewContent == null) {
