@@ -26,14 +26,13 @@
 						<header class="pb-2">
 							<nav class="flex justify-content-between pb-2">
 								<span class="flex align-items-center">Specify which equations to use for this model.</span>
-								<section class="white-space-nowrap min-w-min">
+								<section class="flex align-items-center min-w-min">
 									<Button class="mr-1" label="Reset" severity="secondary" outlined />
-
-									<SplitButton
-										label="Run"
-										:model="runItems"
-										:disabled="isDocumentLoading || isEmpty(includedEquations) || isModelLoading"
-									/>
+									<Button class="mr-1" label="Run" @click="onRun(useMira ? 'mira' : 'skema')" />
+									<section class="flex justify-content-between">
+										<InputSwitch class="mr-1" v-model="useMira" />
+										<div class="w-4rem">{{ inputSwitchLabel }}</div>
+									</section>
 								</section>
 							</nav>
 							<section class="header-group">
@@ -198,7 +197,7 @@ import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.
 import TeraPdfEmbed from '@/components/widgets/tera-pdf-embed.vue';
 import TeraTextEditor from '@/components/documents/tera-text-editor.vue';
 import { logger } from '@/utils/logger';
-import SplitButton from 'primevue/splitbutton';
+import InputSwitch from 'primevue/inputswitch';
 import { ModelFromEquationsState, EquationBlock } from './model-from-equations-operation';
 
 const emit = defineEmits(['close', 'update-state', 'append-output', 'update-output', 'select-output']);
@@ -208,16 +207,8 @@ const props = defineProps<{
 
 const selectedOutputId = ref<string>('');
 
-const runItems = [
-	{
-		label: 'SKEMA',
-		command: () => onRun('skema')
-	},
-	{
-		label: 'Mira',
-		command: () => onRun('mira')
-	}
-];
+const useMira = ref(true);
+const inputSwitchLabel = computed(() => (useMira.value ? ' MIRA ' : 'SKEMA'));
 
 const clonedState = ref<ModelFromEquationsState>({
 	equations: [],
