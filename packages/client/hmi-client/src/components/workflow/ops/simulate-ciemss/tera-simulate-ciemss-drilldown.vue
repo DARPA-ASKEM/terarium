@@ -424,9 +424,9 @@ const modelConfiguration = ref<ModelConfiguration | null>(null);
 const model = ref<Model | null>(null);
 
 const lastTimepoint = computed<number>(() => {
-	if (!runResults.value || !selectedRunId.value) return 0;
+	if (isEmpty(runResults.value) || !selectedRunId.value) return 0;
 	const lastResult = _.last(runResults.value[selectedRunId.value]);
-	return lastResult!.timepoint_id ?? 0;
+	return lastResult?.timepoint_id ?? 0;
 });
 const modelStateUnits = computed(() => {
 	const states = model.value?.model.states;
