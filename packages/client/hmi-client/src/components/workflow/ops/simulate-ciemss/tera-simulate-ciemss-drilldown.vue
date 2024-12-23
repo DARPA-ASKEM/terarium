@@ -154,7 +154,8 @@
 				<template v-if="runResults[selectedRunId]">
 					<div v-if="view === OutputView.Charts" ref="outputPanel">
 						<Accordion multiple :active-index="currentActiveIndicies" class="px-2">
-							<AccordionTab header="Interventions over time">
+							<!-- Section: Interventions over time -->
+							<AccordionTab v-if="selectedInterventionSettings.length > 0" header="Interventions over time">
 								<template v-for="setting in selectedInterventionSettings" :key="setting.id">
 									<vega-chart
 										expandable
@@ -163,7 +164,8 @@
 									/>
 								</template>
 							</AccordionTab>
-							<AccordionTab header="Variables over time">
+							<!-- Section: Variables over time -->
+							<AccordionTab v-if="selectedVariableSettings.length > 0" header="Variables over time">
 								<template v-for="setting of selectedVariableSettings" :key="setting.id">
 									<vega-chart
 										expandable
@@ -172,7 +174,8 @@
 									/>
 								</template>
 							</AccordionTab>
-							<AccordionTab header="Comparison charts">
+							<!-- Section: Comparison charts -->
+							<AccordionTab v-if="selectedComparisonChartSettings.length > 0" header="Comparison charts">
 								<template v-for="setting of selectedComparisonChartSettings" :key="setting.id">
 									<vega-chart
 										expandable
@@ -181,7 +184,8 @@
 									/>
 								</template>
 							</AccordionTab>
-							<AccordionTab header="Sensitivity">
+							<!-- Section: Sensitivity -->
+							<AccordionTab v-if="selectedSensitivityChartSettings.length > 0" header="Sensitivity analysis">
 								<template v-for="setting of selectedSensitivityChartSettings" :key="setting.id">
 									<vega-chart
 										expandable
@@ -196,6 +200,26 @@
 								</template>
 							</AccordionTab>
 						</Accordion>
+
+						<!-- Empty state if all sections are empty -->
+						<div
+							v-if="
+								isEmpty(selectedInterventionSettings) &&
+								isEmpty(selectedVariableSettings) &&
+								isEmpty(selectedComparisonChartSettings) &&
+								isEmpty(selectedSensitivityChartSettings)
+							"
+						>
+							<div class="empty-state-chart">
+								<img
+									src="@assets/svg/operator-images/simulate-deterministic.svg"
+									alt=""
+									draggable="false"
+									height="80px"
+								/>
+								<p class="text-center">Configure charts in the output settings.</p>
+							</div>
+						</div>
 
 						<!-- Spacer at bottom of page -->
 						<div style="height: 2rem"></div>
@@ -886,5 +910,17 @@ onUnmounted(() => kernelManager.shutdown());
 		border-top: 1px solid var(--surface-border-alt);
 		width: 100%;
 	}
+}
+.empty-state-chart {
+	display: flex;
+	flex-direction: column;
+	gap: var(--gap-4);
+	justify-content: center;
+	align-items: center;
+	height: 12rem;
+	margin: var(--gap-6);
+	padding: var(--gap-4);
+	background: var(--surface-100);
+	color: var(--text-color-secondary);
 }
 </style>
