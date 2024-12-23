@@ -81,6 +81,7 @@ defineProps<{
 	gap: var(--gap-2);
 	display: flex;
 	flex-direction: column;
+	margin-bottom: var(--gap-1);
 }
 .madlib-dropdown {
 	height: 2rem;
