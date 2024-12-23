@@ -134,7 +134,7 @@
 				<tera-operator-output-summary
 					v-if="node.state.summaryId && runResults[selectedRunId]"
 					:summary-id="node.state.summaryId"
-					class="p-3"
+					class="p-3 pt-0"
 				/>
 				<div class="pl-3 pr-3 flex flex-row align-items-center gap-2">
 					<SelectButton
