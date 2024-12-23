@@ -125,6 +125,9 @@
 				:is-blank="!selectedOutputId"
 				:blank-message="blankMessage"
 			>
+				<template #header-controls-left>
+					<h4 class="ml-4">Output {{ selectedOutputLabel }}</h4>
+				</template>
 				<template #header-controls-right>
 					<Button class="mr-3" label="Save for re-use" severity="secondary" outlined @click="showSaveDataset = true" />
 				</template>
@@ -460,6 +463,11 @@ const datasetId = computed(() => {
 	if (!selectedOutputId.value) return '';
 	const output = props.node.outputs.find((o) => o.id === selectedOutputId.value);
 	return output?.value?.[0] ?? '';
+});
+
+const selectedOutputLabel = computed(() => {
+	const selectedOutput = props.node.outputs.find((output) => output.isSelected);
+	return selectedOutput ? selectedOutput.label : '';
 });
 
 const llmThoughts = ref<any[]>([]);
