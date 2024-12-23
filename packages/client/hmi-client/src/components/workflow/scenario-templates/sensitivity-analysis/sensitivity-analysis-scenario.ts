@@ -10,8 +10,8 @@ import {
 	setParameterDistributions
 } from '@/services/model-configurations';
 import _ from 'lodash';
-import { ChartSetting, ChartSettingType } from '@/types/common';
-import { updateChartSettingsBySelectedVariables } from '@/services/chart-settings';
+import { ChartSetting, ChartSettingSensitivity, ChartSettingType } from '@/types/common';
+import { updateChartSettingsBySelectedVariables, updateSensitivityChartSettingOption } from '@/services/chart-settings';
 import { AssetType, ParameterSemantic } from '@/types/Types';
 import { useProjects } from '@/composables/project';
 import { switchToUniformDistribution } from '../scenario-template-utils';
@@ -170,11 +170,11 @@ export class SensitivityAnalysisScenario extends BaseScenario {
 			this.simulateSpec.ids
 		);
 
-		simulateChartSettings = updateChartSettingsBySelectedVariables(
-			simulateChartSettings,
-			ChartSettingType.SENSITIVITY,
-			this.simulateSpec.ids
-		);
+		simulateChartSettings = updateSensitivityChartSettingOption(simulateChartSettings as ChartSettingSensitivity[], {
+			selectedVariables: this.simulateSpec.ids,
+			selectedInputVariables: this.parameters.map((parameter) => parameter!.referenceId),
+			timepoint: 100
+		});
 
 		wf.updateNode(simulateNode, {
 			state: {

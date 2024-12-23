@@ -423,7 +423,7 @@ const isSidebarOpen = ref(true);
 const isOutputSettingsPanelOpen = ref(false);
 const blankMessage = "Click 'Run' to start the simulation";
 
-const currentActiveIndicies = ref([0, 1, 2]);
+const currentActiveIndicies = ref([0, 1, 2, 3]);
 
 const modelVarUnits = ref<{ [key: string]: string }>({});
 let editor: VAceEditorInstance['_editor'] | null;
