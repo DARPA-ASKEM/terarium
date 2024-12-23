@@ -450,6 +450,8 @@ export function useCharts(
 				}
 				if (setting.smallMultiples && setting.selectedVariables.length > 1) {
 					// create multiples
+					options.width /= 2.1;
+					options.height /= 2.1;
 					selectedVars.forEach((selectedVar, index) => {
 						charts[setting.id + selectedVar] = createComparisonChart(
 							[selectedVar],
