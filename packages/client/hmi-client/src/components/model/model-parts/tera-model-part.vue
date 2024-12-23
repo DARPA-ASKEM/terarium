@@ -2,7 +2,7 @@
 	<ul v-bind="$attrs">
 		<li
 			v-for="({ base, children, isParent }, index) in filteredItems.slice(firstRow, firstRow + MAX_NUMBER_OF_ROWS)"
-			:key="base.id"
+			:key="index"
 			class="model-part"
 		>
 			<template v-if="isParent && !isEmpty(editingState)">
