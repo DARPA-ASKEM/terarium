@@ -75,6 +75,15 @@
 									@update:model-value="updateState"
 								/>
 							</div>
+							<div class="label-and-input">
+								<label for="num-samples">Solver Step Size</label>
+								<tera-input-number
+									v-model="solverStepSize"
+									:disabled="method !== CiemssMethodOptions.euler"
+									:min="0"
+									@update:model-value="updateState"
+								/>
+							</div>
 						</div>
 						<template v-if="interventionPolicy && model">
 							<h4>Intervention Policies</h4>
@@ -451,9 +460,9 @@ const modelConfiguration = ref<ModelConfiguration | null>(null);
 const model = ref<Model | null>(null);
 
 const lastTimepoint = computed<number>(() => {
-	if (!runResults.value || !selectedRunId.value) return 0;
+	if (isEmpty(runResults.value) || !selectedRunId.value) return 0;
 	const lastResult = _.last(runResults.value[selectedRunId.value]);
-	return lastResult!.timepoint_id ?? 0;
+	return lastResult?.timepoint_id ?? 0;
 });
 const modelStateUnits = computed(() => {
 	const states = model.value?.model.states;
@@ -500,6 +509,7 @@ const llmQuery = ref('');
 // input params
 const timespan = ref<TimeSpan>(props.node.state.currentTimespan);
 const numSamples = ref<number>(props.node.state.numSamples);
+const solverStepSize = ref<number>(props.node.state.solverStepSize);
 const method = ref(props.node.state.method);
 
 enum OutputView {
@@ -509,7 +519,8 @@ enum OutputView {
 
 const speedPreset = Object.freeze({
 	numSamples: 10,
-	method: CiemssMethodOptions.euler
+	method: CiemssMethodOptions.euler,
+	stepSize: 0.1
 });
 
 const qualityPreset = Object.freeze({
@@ -544,7 +555,11 @@ const pyciemssMap = ref<Record<string, string>>({});
 const kernelManager = new KernelSessionManager();
 
 const presetType = computed(() => {
-	if (numSamples.value === speedPreset.numSamples && method.value === speedPreset.method) {
+	if (
+		numSamples.value === speedPreset.numSamples &&
+		method.value === speedPreset.method &&
+		solverStepSize.value === speedPreset.stepSize
+	) {
 		return CiemssPresetTypes.Fast;
 	}
 	if (numSamples.value === qualityPreset.numSamples && method.value === qualityPreset.method) {
@@ -573,6 +588,7 @@ const setPresetValues = (data: CiemssPresetTypes) => {
 	if (data === CiemssPresetTypes.Fast) {
 		numSamples.value = speedPreset.numSamples;
 		method.value = speedPreset.method;
+		solverStepSize.value = speedPreset.stepSize;
 	}
 	updateState();
 };
@@ -624,6 +640,7 @@ const updateState = () => {
 	state.currentTimespan = timespan.value;
 	state.numSamples = numSamples.value;
 	state.method = method.value;
+	state.solverStepSize = solverStepSize.value;
 	emit('update-state', state);
 };
 
@@ -650,7 +667,7 @@ const makeForecastRequest = async (applyInterventions = true) => {
 		},
 		extra: {
 			solver_method: method.value,
-			solver_step_size: 1,
+			solver_step_size: solverStepSize.value,
 			num_samples: numSamples.value
 		},
 		engine: 'ciemss'
@@ -788,6 +805,7 @@ watch(
 		// Update Wizard form fields with current selected output state
 		timespan.value = props.node.state.currentTimespan;
 		numSamples.value = props.node.state.numSamples;
+		solverStepSize.value = props.node.state.solverStepSize;
 		method.value = props.node.state.method;
 
 		lazyLoadSimulationData(selectedRunId.value);

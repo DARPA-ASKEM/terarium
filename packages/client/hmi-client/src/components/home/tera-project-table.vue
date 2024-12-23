@@ -37,8 +37,6 @@
 							<i class="pi pi-user" />
 							{{ data.metadata?.['contributor-count'] ?? 1 }}
 						</span>
-					</div>
-					<div class="stats mt-3">
 						<span
 							v-for="metadataField in Object.keys(metadataCountToAssetNameMap)"
 							:key="metadataField"
@@ -63,7 +61,8 @@
 			</template>
 		</Column>
 		<template #expansion="{ data }">
-			<div v-for="asset in data.assets" :key="asset.assetId" class="flex align-items-center gap-4">
+			<div v-for="asset in data.assets" :key="asset.assetId" class="flex align-items-center gap-1">
+				<span class="ml-4 pi pi-minus secondary-text"></span>
 				<tera-asset-button
 					v-if="asset.assetType != AssetType.Project"
 					:asset="asset"
@@ -170,7 +169,7 @@ watch(
 
 :deep(.p-datatable-tbody > tr > td),
 :deep(.p-datatable-thead > tr > th) {
-	vertical-align: top;
+	vertical-align: center;
 	padding: var(--gap-3) var(--gap-5);
 }
 
@@ -199,7 +198,9 @@ watch(
 
 /* Adjust padding for non-empty expansion rows */
 :deep(.p-datatable-tbody > tr.p-datatable-row-expansion > :not(td:empty)) {
-	padding: var(--gap-2) var(--gap-1);
+	padding: var(--gap-0) var(--gap-1);
+	padding-bottom: var(--gap-4);
+	background: var(--surface-50);
 }
 
 /* Remove padding for empty expansion rows */
@@ -253,5 +254,11 @@ watch(
 :deep(.p-paginator) {
 	border-radius: 0;
 	padding: var(--gap-2) var(--gap-4);
+	background: var(--surface-glass);
+	backdrop-filter: blur(4px);
+}
+
+.secondary-text {
+	color: var(--text-color-secondary);
 }
 </style>
