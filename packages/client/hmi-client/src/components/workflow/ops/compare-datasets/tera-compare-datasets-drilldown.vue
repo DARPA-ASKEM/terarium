@@ -133,6 +133,19 @@
 							:variables="commonHeaderNames"
 							@configuration-change="updateChartSettings($event.selectedVariable, ChartSettingType.VARIABLE)"
 						/>
+						<!-- plot options -->
+						<div class="plot-options">
+							<p class="mb-2">How do you want to plot the values?</p>
+							<div v-for="option in plotOptions" class="flex align-items-center" :key="option.value">
+								<RadioButton
+									v-model="knobs.selectedPlotType"
+									:value="option.value"
+									name="plotValues"
+									@change="generateChartData"
+								/>
+								<label class="pl-2 py-1" :for="option.value">{{ option.label }}</label>
+							</div>
+						</div>
 						<tera-chart-settings-item
 							v-for="settings of chartSettings.filter((setting) => setting.type === ChartSettingType.VARIABLE)"
 							:key="settings.id"
@@ -140,16 +153,6 @@
 							@open="setActiveChartSettings(settings)"
 							@remove="removeChartSettings"
 						/>
-						<label>How do you want to plot the values?</label>
-						<div v-for="option in plotOptions" class="flex align-items-center" :key="option.value">
-							<RadioButton
-								v-model="knobs.selectedPlotType"
-								:value="option.value"
-								name="plotValues"
-								@change="generateChartData"
-							/>
-							<label class="pl-2 py-1" :for="option.value">{{ option.label }}</label>
-						</div>
 					</div>
 				</template>
 			</tera-slider-panel>
@@ -443,5 +446,13 @@ label {
 		border-top: 1px solid var(--surface-border-alt);
 		width: 100%;
 	}
+}
+
+.plot-options {
+	padding: var(--gap-3);
+	background: var(--surface-200);
+	border-radius: var(--border-radius);
+	box-shadow: inset 0 0 6px rgba(0, 0, 0, 0.1);
+	margin-bottom: var(--gap-1);
 }
 </style>

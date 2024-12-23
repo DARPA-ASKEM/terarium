@@ -60,6 +60,6 @@ aside {
 	gap: var(--gap-2);
 	justify-content: space-between;
 	position: relative;
-	margin: var(--gap-2) 0;
+	margin: var(--gap-1) 0;
 }
 </style>
