@@ -21,12 +21,13 @@
 							option-label="label"
 							option-value="value"
 						/>
-						<tera-checkbox
+						<!-- Pascale asked me to hide this until the feature is implemented -->
+						<!-- <tera-checkbox
 							class="pt-2"
 							v-model="isSimulationsFromSameModel"
 							label="All simulations are from the same model"
 							disabled
-						/>
+						/> -->
 						<div class="mb-4" />
 						<template v-if="knobs.selectedCompareOption === CompareValue.IMPACT">
 							<label> Select simulation to use as a baseline (optional) </label>
@@ -223,7 +224,7 @@ const isOutputSettingsOpen = ref(true);
 const activeIndices = ref([0, 1, 2]);
 
 const isFetchingDatasets = ref(false);
-const isSimulationsFromSameModel = ref(true);
+// const isSimulationsFromSameModel = ref(true);
 const isATESelected = ref(false);
 
 const {
