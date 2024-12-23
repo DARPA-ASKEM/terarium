@@ -22,7 +22,7 @@
 				/>
 			</div>
 			<div class="flex gap-2">
-				<Button @click="emit('open-drilldown')" label="Edit" severity="secondary" outlined class="w-full" />
+				<Button @click="emit('open-drilldown')" label="Open" severity="secondary" outlined class="w-full" />
 			</div>
 		</template>
 	</main>

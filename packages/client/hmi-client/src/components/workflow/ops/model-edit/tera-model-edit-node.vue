@@ -5,7 +5,7 @@
 			<template v-if="!node.inputs[0].value">Attach a model</template>
 		</tera-operator-placeholder>
 		<template v-if="node.inputs[0].value">
-			<Button @click="emit('open-drilldown')" label="Edit" severity="secondary" outlined />
+			<Button @click="emit('open-drilldown')" label="Open" severity="secondary" outlined />
 		</template>
 	</section>
 </template>
