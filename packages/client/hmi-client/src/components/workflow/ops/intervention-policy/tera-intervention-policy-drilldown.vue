@@ -143,8 +143,8 @@
 									:are-embed-actions-visible="false"
 									:visualization-spec="preparedCharts[appliedTo]"
 								/>
-								<span class="flex justify-content-end pr-7 pb-6">
-									<label class="pr-2">Display on node thumbnail</label>
+								<span class="flex pb-6">
+									<label class="pr-2 text-sm">Show this chart on node thumbnail</label>
 									<Checkbox
 										v-model="selectedCharts"
 										:input-id="appliedTo"
