@@ -1,6 +1,8 @@
 import sys
+
+from chains import model_card_chain
 from entities import ModelCardModel
-from gollm_openai.tool_utils import model_card_chain
+from llms.openai.OpenAiTools import OpenAiTools
 
 from taskrunner import TaskRunnerInterface
 
@@ -21,7 +23,8 @@ def main():
         input_model = ModelCardModel(**input_dict)
 
         taskrunner.log("Sending request to OpenAI API")
-        response = model_card_chain(amr=input_model.amr, research_paper=input_model.research_paper)
+        llm = OpenAiTools()
+        response = model_card_chain(llm, amr=input_model.amr, research_paper=input_model.research_paper)
         taskrunner.log("Received response from OpenAI API")
 
         taskrunner.write_output_dict_with_timeout({"response": response})

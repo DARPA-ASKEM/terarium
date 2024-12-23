@@ -46,8 +46,4 @@ For each observable found in `semantics.ode.observables` in the AMR model, you w
 For each transition found in `transitions` in the AMR model, you will extract a description using the following rules.
     1. `id` will reference the id of the transition.
     2. `description` will be extracted from the document.
-
-Do not respond in full sentences; only create a JSON object that satisfies the JSON schema specified in the response format.
-
-Answer:
 """

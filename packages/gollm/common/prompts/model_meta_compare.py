@@ -28,3 +28,20 @@ When creating the comparison summary. Consider the following goal of the user wh
 ---GOAL END---
 
 """
+
+MODEL_METADATA_COMPARE_DATA_PROMPT = """
+
+When comparing models and creating the comparison summary, pick the model or models that best support the supplied dataset. Given reasons why the model or models are better suited:
+
+---DATASET START---
+
+{dataset}
+
+---DATASET END---
+
+"""
+
+MODEL_METADATA_COMPARE_GOAL_AND_DATA_PROMPT = """
+If a model is better suited to the goal, but not the dataset, or vice versa, then mention the model or models that are better suited to the goal or dataset. Given reasons why the model or models are better suited.
+
+"""

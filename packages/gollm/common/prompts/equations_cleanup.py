@@ -19,6 +19,4 @@ The equations that you need to reformat are as follows:
 {equations}
 
 --- EQUATIONS END ---
-
-Answer:
 """
