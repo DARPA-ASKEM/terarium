@@ -3,7 +3,7 @@
 		<div class="chart-settings-panel" v-if="activeSettings !== null">
 			<header :class="{ shadow: false }">
 				<Button :icon="`pi pi-times`" @click="$emit('close')" text rounded size="large" />
-				<h4>{{ activeSettings.name }}</h4>
+				<h4 class="line-wrap">{{ activeSettings.name }}</h4>
 			</header>
 			<div class="content">
 				<div class="annotation-items">
@@ -166,6 +166,13 @@ const cancelGenerateAnnotation = () => {
 		}
 		button {
 			height: 2.5rem;
+		}
+		.line-wrap {
+			white-space: wrap;
+			word-wrap: break-all;
+			overflow: hidden;
+			text-overflow: ellipsis;
+			width: 100%;
 		}
 	}
 	.content {
