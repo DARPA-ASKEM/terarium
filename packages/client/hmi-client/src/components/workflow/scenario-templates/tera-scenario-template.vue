@@ -3,7 +3,7 @@
 
 	<template v-if="header.question && header.description">
 		<p class="header-question">{{ header.question }}</p>
-		<p class="pt-2 pb-3">
+		<p class="col-11 px-0 pt-2 pb-4">
 			{{ header.description }}
 		</p>
 	</template>
@@ -14,7 +14,7 @@
 			<li v-for="example in header.examples" :key="example">{{ example }}</li>
 		</ul>
 	</template>
-	<div class="my-3">
+	<div class="my-3 pr-6">
 		<p class="pb-2 label-text">What would you like to call this workflow?</p>
 		<tera-input-text
 			ref="nameInput"
@@ -27,7 +27,7 @@
 		/>
 	</div>
 	<section class="flex" v-if="slots.inputs || slots.outputs">
-		<article v-if="slots.inputs" class="col-5 flex flex-column">
+		<article v-if="slots.inputs" class="col-5 flex flex-column pl-0">
 			<h6>Inputs</h6>
 			<slot name="inputs" />
 		</article>

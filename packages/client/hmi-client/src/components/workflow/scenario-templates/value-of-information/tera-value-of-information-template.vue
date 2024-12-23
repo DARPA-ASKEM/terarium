@@ -9,6 +9,7 @@
 				option-value="assetId"
 				placeholder="Select a model"
 				@update:model-value="scenario.setModelSpec($event)"
+				class="mb-3"
 			/>
 
 			<label>Select intervention policy (historical)</label>
@@ -35,7 +36,7 @@
 			</div>
 			<div>
 				<Button
-					class="py-2"
+					class="py-2 mb-3"
 					size="small"
 					text
 					icon="pi pi-plus"
@@ -53,6 +54,7 @@
 				@update:model-value="scenario.setModelConfigSpec($event)"
 				:disabled="isEmpty(modelConfigurations) || isFetchingModelInformation"
 				:loading="isFetchingModelInformation"
+				class="mb-3"
 			/>
 			<label>Select uncertain parameters of interest and adjust ranges to be explored if needed</label>
 			<template v-for="(parameter, i) in scenario.parameters" :key="i">
