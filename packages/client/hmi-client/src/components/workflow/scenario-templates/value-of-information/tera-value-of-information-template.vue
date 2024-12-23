@@ -12,6 +12,19 @@
 				class="mb-3"
 			/>
 
+			<label>Select configuration representing best and generous estimates of the initial conditions</label>
+			<Dropdown
+				:model-value="scenario.modelConfigSpec.id"
+				placeholder="Select a configuration"
+				:options="filterModelConfigurations"
+				option-label="name"
+				option-value="id"
+				@update:model-value="scenario.setModelConfigSpec($event)"
+				:disabled="isEmpty(modelConfigurations) || isFetchingModelInformation"
+				:loading="isFetchingModelInformation"
+				class="mb-3"
+			/>
+
 			<label>Select intervention policy (historical)</label>
 			<div v-for="(intervention, i) in scenario.interventionSpecs" :key="i" class="flex">
 				<Dropdown
@@ -44,18 +57,7 @@
 					@click="scenario.addInterventionSpec()"
 				/>
 			</div>
-			<label>Select configuration representing best and generous estimates of the initial conditions</label>
-			<Dropdown
-				:model-value="scenario.modelConfigSpec.id"
-				placeholder="Select a configuration"
-				:options="filterModelConfigurations"
-				option-label="name"
-				option-value="id"
-				@update:model-value="scenario.setModelConfigSpec($event)"
-				:disabled="isEmpty(modelConfigurations) || isFetchingModelInformation"
-				:loading="isFetchingModelInformation"
-				class="mb-3"
-			/>
+
 			<label>Select uncertain parameters of interest and adjust ranges to be explored if needed</label>
 			<template v-for="(parameter, i) in scenario.parameters" :key="i">
 				<div class="flex">
