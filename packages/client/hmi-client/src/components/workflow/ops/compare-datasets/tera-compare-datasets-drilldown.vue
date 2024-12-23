@@ -12,7 +12,7 @@
 				content-width="440px"
 			>
 				<template #content>
-					<tera-drilldown-section class="px-2">
+					<tera-drilldown-section class="px-3">
 						<Button class="ml-auto" size="small" label="Run" @click="onRun" />
 						<label>What do you want to compare?</label>
 						<Dropdown
@@ -27,7 +27,7 @@
 							label="All simulations are from the same model"
 							disabled
 						/>
-
+						<div class="mb-4" />
 						<template v-if="knobs.selectedCompareOption === CompareValue.IMPACT">
 							<label> Select simulation to use as a baseline (optional) </label>
 							<Dropdown
@@ -39,14 +39,11 @@
 								placeholder="Optional"
 								@change="generateChartData"
 							/>
-
+							<div class="mb-4" />
 							<label>Comparison tables</label>
-							<tera-checkbox
-								v-model="isATESelected"
-								label="Average treatment effect (ATE)"
-								subtext="Description for ATE."
-							/>
+							<tera-checkbox v-model="isATESelected" label="Average treatment effect (ATE)" />
 						</template>
+						<div class="mb-4" />
 						<label class="mt-2">Timepoint column</label>
 						<Dropdown
 							v-model="timepointHeaderName"
@@ -54,6 +51,7 @@
 							placeholder="Select timepoint header"
 							@change="generateChartData"
 						/>
+						<div class="mb-4" />
 						<template v-if="knobs.selectedCompareOption === CompareValue.RANK">
 							<label>Specifiy criteria of interest</label>
 							<tera-criteria-of-interest-card
