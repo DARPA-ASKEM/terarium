@@ -50,8 +50,7 @@
 				<ProgressBar v-if="isCopying" mode="indeterminate" />
 				<section class="details">
 					<div>
-						<div class="author">{{ project?.userName ?? '——' }}</div>
-						<div>{{ formatDdMmmYyyy(project.updatedOn) }}</div>
+						<div>{{ project?.userName ?? '——' }}</div>
 					</div>
 					<div class="description">
 						{{ project.description }}
@@ -230,18 +229,22 @@ section {
 
 .details:not(.skeleton) {
 	overflow: hidden;
-	opacity: 0;
-	height: 0;
-	transition:
-		opacity 0.5s ease,
-		height 0.3s ease;
-	color: var(--text-color-secondary);
-	font-size: var(--font-caption);
+	& .description {
+		opacity: 0;
+		height: 0;
+		transition:
+			opacity 0.5s ease,
+			height 0.3s ease;
+		color: var(--text-color-secondary);
+		font-size: var(--font-caption);
+	}
 }
 
 .p-card:hover .details:not(.skeleton) {
-	opacity: 100;
-	height: auto;
+	& .description {
+		opacity: 100;
+		height: auto;
+	}
 }
 
 .author {

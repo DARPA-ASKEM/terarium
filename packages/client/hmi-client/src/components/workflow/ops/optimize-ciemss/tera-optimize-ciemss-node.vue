@@ -134,7 +134,8 @@ const startForecast = async (optimizedInterventions?: InterventionPolicy) => {
 		},
 		extra: {
 			num_samples: props.node.state.numSamples,
-			method: props.node.state.solverMethod
+			method: props.node.state.solverMethod,
+			solver_step_size: props.node.state.solverStepSize
 		},
 		engine: 'ciemss'
 	};

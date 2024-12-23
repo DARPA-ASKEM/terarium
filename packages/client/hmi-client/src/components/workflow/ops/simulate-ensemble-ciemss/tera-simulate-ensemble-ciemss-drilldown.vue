@@ -172,7 +172,11 @@
 									</div>
 									<div v-if="knobs.method === CiemssMethodOptions.euler" class="label-and-input">
 										<label>Solver step size</label>
-										<tera-input-number v-model="knobs.stepSize" />
+										<tera-input-number
+											:disabled="knobs.method !== CiemssMethodOptions.euler"
+											:min="0"
+											v-model="knobs.stepSize"
+										/>
 									</div>
 								</div>
 							</div>
@@ -325,7 +329,11 @@ const showAddMappingInput = ref(false);
 const listModelLabels = ref<string[]>([]);
 
 const presetType = computed(() => {
-	if (knobs.value.numSamples === speedValues.numSamples && knobs.value.method === speedValues.method) {
+	if (
+		knobs.value.numSamples === speedValues.numSamples &&
+		knobs.value.method === speedValues.method &&
+		knobs.value.stepSize === speedValues.stepSize
+	) {
 		return CiemssPresetTypes.Fast;
 	}
 	if (knobs.value.numSamples === normalValues.numSamples && knobs.value.method === normalValues.method) {
@@ -375,6 +383,7 @@ const setPresetValues = (data: CiemssPresetTypes) => {
 	if (data === CiemssPresetTypes.Fast) {
 		knobs.value.numSamples = speedValues.numSamples;
 		knobs.value.method = speedValues.method;
+		knobs.value.stepSize = speedValues.stepSize;
 	}
 };
 
@@ -501,6 +510,16 @@ watch(
 		emit('update-state', state);
 	},
 	{ deep: true }
+);
+
+watch(
+	() => props.node.state?.forecastId,
+	async () => {
+		if (!props.node.state?.forecastId) return;
+
+		const response = await getRunResultCiemss(props.node.state?.forecastId, 'result.csv');
+		runResults.value = response.runResults;
+	}
 );
 </script>
 

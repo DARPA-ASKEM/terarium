@@ -40,7 +40,7 @@
 									class="search-input"
 									@keydown.enter="searchedProjects"
 								/>
-								<Button label="Search" @click="searchedProjects" />
+								<Button label="Search" :disabled="searchProjectsQuery.length === 0" @click="searchedProjects" />
 							</span>
 							<Dropdown
 								v-if="view === ProjectsView.Cards"
