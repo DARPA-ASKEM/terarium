@@ -1,7 +1,12 @@
 <template>
 	<div class="critera-of-interest-card">
 		<header class="flex">
-			<tera-toggleable-input :model-value="card.name" tag="h4" @update:model-value="emit('update', { name: $event })" />
+			<tera-toggleable-input
+				:model-value="card.name"
+				tag="h6"
+				@update:model-value="emit('update', { name: $event })"
+				style="left: -0.5rem"
+			/>
 			<Button class="ml-auto" text icon="pi pi-trash" @click="emit('delete')" />
 		</header>
 
@@ -12,6 +17,7 @@
 				:model-value="card.selectedConfiguration"
 				@update:model-value="emit('update', { selectedConfiguration: $event })"
 				placeholder="Select..."
+				class="madlib-dropdown"
 			/>
 			rank interventions based on the
 			<Dropdown
@@ -20,6 +26,7 @@
 				option-label="label"
 				option-value="value"
 				@update:model-value="emit('update', { rank: $event })"
+				class="madlib-dropdown"
 			/>
 			value of
 			<Dropdown
@@ -27,6 +34,7 @@
 				:model-value="card.selectedVariable"
 				@update:model-value="emit('update', { selectedVariable: $event })"
 				placeholder="Select..."
+				class="madlib-dropdown"
 			/>
 			at
 			<Dropdown
@@ -34,6 +42,7 @@
 				:model-value="card.timepoint"
 				option-label="label"
 				option-value="value"
+				class="madlib-dropdown"
 				@update:model-value="emit('update', { timepoint: $event })"
 			/>
 			timepoint.
@@ -72,5 +81,9 @@ defineProps<{
 	gap: var(--gap-2);
 	display: flex;
 	flex-direction: column;
+}
+.madlib-dropdown {
+	height: 2rem;
+	margin-bottom: var(--gap-1);
 }
 </style>

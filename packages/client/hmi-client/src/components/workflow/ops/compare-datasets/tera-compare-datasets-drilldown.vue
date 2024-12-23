@@ -56,7 +56,7 @@
 						<div class="mb-4" />
 						-->
 						<template v-if="knobs.selectedCompareOption === CompareValue.RANK">
-							<label>Specifiy criteria of interest</label>
+							<label>Specify criteria of interest:</label>
 							<tera-criteria-of-interest-card
 								v-for="(card, i) in node.state.criteriaOfInterestCards"
 								:key="i"
