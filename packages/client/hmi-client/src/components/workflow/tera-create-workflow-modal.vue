@@ -1,13 +1,10 @@
 <template>
 	<tera-modal class="w-9">
-		<template #header>
-			<h4>Create a new workflow</h4>
-		</template>
 		<template #default>
-			<div class="grid">
+			<div class="grid" style="height: 70vh">
 				<aside class="flex flex-column col-3">
 					<label class="p-text-secondary pb-2">Select a template</label>
-					<div v-for="[id, { name }] in scenarioMap" :key="id" class="flex align-items-center py-1">
+					<div v-for="[id, { name }] in scenarioMap" :key="id" class="flex align-items-center py-1 template-option">
 						<RadioButton :inputId="id" :value="id" v-model="selectedTemplateId" />
 						<label class="pl-2" :for="id">{{ name }}</label>
 					</div>
@@ -162,3 +159,8 @@ onMounted(() => {
 });
 const getScenario = () => scenarioMap.value.get(selectedTemplateId.value) as ScenarioItem;
 </script>
+<style scoped>
+.template-option:first-of-type {
+	margin-bottom: var(--gap-5);
+}
+</style>
