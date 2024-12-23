@@ -8,6 +8,7 @@
 			placeholder="Select variables to display"
 			@update:model-value="updateSelectedVariable"
 			filter
+			style="max-width: 100%"
 		>
 			<template v-slot:value>
 				<template v-for="(variable, index) in selectedVariable" :key="index">
