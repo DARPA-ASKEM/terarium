@@ -44,6 +44,8 @@
 							<tera-checkbox v-model="isATESelected" label="Average treatment effect (ATE)" />
 						</template>
 						<div class="mb-4" />
+						<!-- Pascale asked me to omit this timepoint selector, but I'm keeping it here until we are certain it's not needed -->
+						<!--
 						<label class="mt-2">Timepoint column</label>
 						<Dropdown
 							v-model="timepointHeaderName"
@@ -52,6 +54,7 @@
 							@change="generateChartData"
 						/>
 						<div class="mb-4" />
+						-->
 						<template v-if="knobs.selectedCompareOption === CompareValue.RANK">
 							<label>Specifiy criteria of interest</label>
 							<tera-criteria-of-interest-card
