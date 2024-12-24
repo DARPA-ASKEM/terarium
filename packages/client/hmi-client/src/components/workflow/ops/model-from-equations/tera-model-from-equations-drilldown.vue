@@ -85,11 +85,13 @@
 										<h6 v-else>Manually entered</h6>
 									</template>
 									<section>
-										<Checkbox
-											v-model="equation.includeInProcess"
-											@update:model-value="onCheckBoxChange(equation)"
-											:binary="true"
-										/>
+										<section class="checkbox-container">
+											<Checkbox
+												v-model="equation.includeInProcess"
+												@update:model-value="onCheckBoxChange(equation)"
+												:binary="true"
+											/>
+										</section>
 										<div class="block-container">
 											<tera-math-editor
 												v-if="equation.asset.text"
@@ -598,6 +600,14 @@ watch(
 .secondary-text {
 	color: var(--text-color-subdued);
 }
+.panel-content section {
+	.checkbox-container {
+		min-height: 65px;
+		display: flex;
+		align-items: center;
+	}
+}
+
 /* PrimeVue Override */
 
 .p-panel {
@@ -619,5 +629,9 @@ watch(
 	border-top-left-radius: 0;
 	border-bottom-left-radius: 0;
 	color: #fff;
+}
+
+:deep(.p-panel section) {
+	align-items: start;
 }
 </style>
