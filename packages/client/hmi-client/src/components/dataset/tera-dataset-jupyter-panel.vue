@@ -164,6 +164,7 @@ import { useConfirm } from 'primevue/useconfirm';
 import { useProjects } from '@/composables/project';
 import { programmingLanguageOptions } from '@/types/common';
 import TeraBeakerInput from '@/components/llm/tera-beaker-input.vue';
+import { isEmpty } from 'lodash';
 
 const openDialog = () => {
 	showSaveInput.value = true;
@@ -332,7 +333,10 @@ onMounted(() => {
 				kernelId: jupyterSession.session?.kernel?.id,
 				value: jupyterSession.session?.id
 			};
-			showRerunMessage.value = true;
+			// Show rerun message if there are any cells that have been executed
+			if (props.notebookSession?.data.history?.some((historyItem) => !isEmpty(historyItem.executions))) {
+				showRerunMessage.value = true;
+			}
 		}
 	});
 });
