@@ -8,7 +8,7 @@ setup(
         "openai==1.58.1",
         "httpx==0.28.1",
         "pandas",
-        "pydantic==2.10.2",
+        "pydantic==2.10.4",
         "regex",
         "tiktoken",
         "jsonschema"
