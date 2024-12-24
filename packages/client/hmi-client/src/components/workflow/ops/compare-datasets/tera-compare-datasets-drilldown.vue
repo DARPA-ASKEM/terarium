@@ -224,7 +224,6 @@ const isOutputSettingsOpen = ref(true);
 const activeIndices = ref([0, 1, 2]);
 
 const isFetchingDatasets = ref(false);
-// const isSimulationsFromSameModel = ref(true);
 const isATESelected = ref(false);
 
 const {
