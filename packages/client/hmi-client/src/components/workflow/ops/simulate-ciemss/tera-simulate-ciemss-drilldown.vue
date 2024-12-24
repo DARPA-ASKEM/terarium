@@ -180,7 +180,23 @@
 							</AccordionTab>
 							<AccordionTab header="Comparison charts">
 								<template v-for="setting of selectedComparisonChartSettings" :key="setting.id">
+									<div v-if="setting.smallMultiples">
+										<div
+											v-for="selectedVariable of setting.selectedVariables"
+											:key="setting.id + selectedVariable"
+											class="comparison-chart-container"
+										>
+											<div class="comparison-chart">
+												<vega-chart
+													expandable
+													:are-embed-actions-visible="true"
+													:visualization-spec="comparisonCharts[setting.id + selectedVariable]"
+												/>
+											</div>
+										</div>
+									</div>
 									<vega-chart
+										v-else
 										expandable
 										:are-embed-actions-visible="true"
 										:visualization-spec="comparisonCharts[setting.id]"
@@ -236,6 +252,7 @@
 						"
 						:active-settings="activeChartSettings"
 						:generate-annotation="generateAnnotation"
+						:comparison="activeChartSettings?.type === ChartSettingType.VARIABLE_COMPARISON"
 						@update-settings="updateActiveChartSettings"
 						@delete-annotation="deleteAnnotation"
 						@close="setActiveChartSettings(null)"
@@ -895,6 +912,18 @@ onUnmounted(() => kernelManager.shutdown());
 		border: 0;
 		border-top: 1px solid var(--surface-border-alt);
 		width: 100%;
+	}
+}
+
+.comparison-chart-container {
+	display: flex;
+	flex-direction: column;
+	display: inline-block;
+
+	.comparison-chart {
+		float: left;
+		box-sizing: border-box;
+		width: 40%;
 	}
 }
 </style>
