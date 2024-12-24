@@ -2,7 +2,7 @@
 	<main>
 		<tera-operator-model-preview v-if="model" :model="model" />
 		<tera-operator-placeholder v-else :node="node" />
-		<Button @click="emit('open-drilldown')" label="Edit" severity="secondary" outlined />
+		<Button @click="emit('open-drilldown')" label="Open" severity="secondary" outlined />
 	</main>
 </template>
 

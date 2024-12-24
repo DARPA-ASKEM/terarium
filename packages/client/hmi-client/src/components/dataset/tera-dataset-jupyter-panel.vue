@@ -86,13 +86,19 @@
 			</div>
 		</div>
 		<div class="notebook-container">
+			<!-- Re-run message banner -->
 			<div v-if="showRerunMessage" class="rerun-message">
 				Re-run all the cells to restore the context if you need to make any changes or use them downstream.
 				<Button icon="pi pi-times" text rounded aria-label="Close" @click="showRerunMessage = false" />
 			</div>
-			<ul>
-				<li v-for="(data, idx) in dataContextDescription" :key="idx" class="context-description">{{ data }}</li>
-			</ul>
+
+			<!-- Data context description -->
+			<div class="context-description">
+				<ul>
+					<li v-for="(data, idx) in dataContextDescription" :key="idx">{{ data }}</li>
+				</ul>
+			</div>
+
 			<!-- Jupyter Chat -->
 			<tera-jupyter-chat
 				ref="chat"
@@ -541,6 +547,7 @@ const onDownloadResponse = (payload) => {
 	font-feature-settings: 'tnum';
 	border: none;
 	margin: 0;
+	padding: var(--gap-4) var(--gap-12) 0;
 }
 
 .container {
@@ -671,5 +678,6 @@ const onDownloadResponse = (payload) => {
 .notebook-container {
 	height: calc(100% - 3.5rem);
 	overflow-y: auto;
+	background-color: var(--surface-100);
 }
 </style>
