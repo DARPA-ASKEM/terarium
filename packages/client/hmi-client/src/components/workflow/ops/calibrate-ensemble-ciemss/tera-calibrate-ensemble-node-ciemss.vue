@@ -14,7 +14,7 @@
 			{{ node.state.currentProgress }}%
 		</tera-progress-spinner>
 
-		<Button v-if="areInputsFilled" label="Edit" @click="emit('open-drilldown')" severity="secondary" outlined />
+		<Button v-if="areInputsFilled" label="Open" @click="emit('open-drilldown')" severity="secondary" outlined />
 		<tera-operator-placeholder v-else :node="node">
 			Connect at least two model configurations and dataset
 		</tera-operator-placeholder>

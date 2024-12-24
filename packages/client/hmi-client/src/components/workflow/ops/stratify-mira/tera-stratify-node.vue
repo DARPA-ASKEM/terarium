@@ -4,7 +4,7 @@
 			<template v-if="!node.inputs[0].value">Attach a model</template>
 		</tera-operator-placeholder>
 		<tera-model-diagram v-if="outputPreview" :model="outputPreview" :feature-config="{ isPreview: true }" />
-		<Button v-if="node.inputs[0].value" @click="emit('open-drilldown')" label="Edit" severity="secondary" outlined />
+		<Button v-if="node.inputs[0].value" @click="emit('open-drilldown')" label="Open" severity="secondary" outlined />
 	</section>
 </template>
 

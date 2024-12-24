@@ -2,8 +2,8 @@
 	<transition>
 		<div class="chart-settings-panel" v-if="activeSettings !== null">
 			<header :class="{ shadow: false }">
-				<Button :icon="`pi pi-angle-double-right`" @click="$emit('close')" text rounded size="large" />
-				<h4>{{ activeSettings.name }}</h4>
+				<Button :icon="`pi pi-times`" @click="$emit('close')" text rounded size="large" />
+				<h4 class="line-wrap">{{ activeSettings.name }}</h4>
 			</header>
 			<div class="content">
 				<div class="annotation-items">
@@ -27,7 +27,7 @@
 						@update:model-value="toggleShareYAxis($event)"
 					/> -->
 				</div>
-
+				<Divider />
 				<div v-if="chartAnnotations !== undefined" class="annotation-items">
 					<h5>Annotations</h5>
 					<div v-for="annotation in chartAnnotations" :key="annotation.id" class="annotation-item">
@@ -56,8 +56,9 @@
 						/>
 					</div>
 				</div>
+				<Divider />
 				<section v-if="isColorPickerEnabled">
-					<h6>Color Picker</h6>
+					<h5 class="mb-3">Color picker</h5>
 					<input type="color" :value="activeSettings?.primaryColor ?? ''" @change="onColorChange($event)" />
 				</section>
 			</div>
@@ -71,6 +72,7 @@ import { ref, computed } from 'vue';
 import Button from 'primevue/button';
 import { ChartSetting, ChartSettingType } from '@/types/common';
 import { ChartAnnotation } from '@/types/Types';
+import Divider from 'primevue/divider';
 import TeraInputText from '@/components/widgets/tera-input-text.vue';
 import TeraCheckbox from '@/components/widgets/tera-checkbox.vue';
 
@@ -193,6 +195,13 @@ const cancelGenerateAnnotation = () => {
 		button {
 			height: 2.5rem;
 		}
+		.line-wrap {
+			white-space: wrap;
+			word-wrap: break-all;
+			overflow: hidden;
+			text-overflow: ellipsis;
+			width: 100%;
+		}
 	}
 	.content {
 		padding: var(--gap-4);
@@ -203,7 +212,7 @@ const cancelGenerateAnnotation = () => {
 	}
 	.annotation-items {
 		display: flex;
-		padding-bottom: var(--gap-4);
+		padding-bottom: var(--gap-1);
 		flex-direction: column;
 		gap: var(--gap-2);
 
