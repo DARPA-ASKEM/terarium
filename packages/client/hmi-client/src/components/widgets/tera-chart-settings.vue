@@ -124,6 +124,6 @@ const toggleEnsembleChartOption = (option: EnsembleVariableChartSettingOption, v
 	gap: var(--gap-2);
 }
 .disabled {
-	color: var(--text-color-secondary);
+	color: var(--gray-400);
 }
 </style>
