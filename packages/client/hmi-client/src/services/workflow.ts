@@ -68,28 +68,27 @@ export class WorkflowWrapper {
 		const updatedNodeMap = new Map<string, WorkflowNode<any>>(updatedWF.nodes.map((n) => [n.id, n]));
 		const updatedEdgeMap = new Map<string, WorkflowEdge>(updatedWF.edges.map((e) => [e.id, e]));
 
-		/*
-		if (delayUpdate) {
-			for (let i = 0; i < nodes.length; i++) {
-				const nodeId = nodes[i].id;
-				const updated = updatedNodeMap.get(nodeId);
-				if (updated) {
-					if (!nodes[i].version || (updated.version as number) > (nodes[i].version as number)) {
-						nodes[i].version = updated.version;
-					}
-				}
-			}
-			for (let i = 0; i < edges.length; i++) {
-				const edgeId = edges[i].id;
-				const updated = updatedEdgeMap.get(edgeId);
-				if (updated) {
-					if (!edges[i].version || (updated.version as number) > (edges[i].version as number)) {
-						edges[i].version = updated.version;
-					}
-				}
-			} return;
-		}
-		*/
+		/* FIXME: Comment out to to simplify sync logic, to remove if things are stable - Jan 2025 */
+		// if (delayUpdate) {
+		// 	for (let i = 0; i < nodes.length; i++) {
+		// 		const nodeId = nodes[i].id;
+		// 		const updated = updatedNodeMap.get(nodeId);
+		// 		if (updated) {
+		// 			if (!nodes[i].version || (updated.version as number) > (nodes[i].version as number)) {
+		// 				nodes[i].version = updated.version;
+		// 			}
+		// 		}
+		// 	}
+		// 	for (let i = 0; i < edges.length; i++) {
+		// 		const edgeId = edges[i].id;
+		// 		const updated = updatedEdgeMap.get(edgeId);
+		// 		if (updated) {
+		// 			if (!edges[i].version || (updated.version as number) > (edges[i].version as number)) {
+		// 				edges[i].version = updated.version;
+		// 			}
+		// 		}
+		// 	} return;
+		// }
 
 		// Update and deletes
 		for (let i = 0; i < nodes.length; i++) {
