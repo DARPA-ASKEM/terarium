@@ -16,7 +16,7 @@
 				content-width="420px"
 			>
 				<template #content>
-					<div class="toolbar">
+					<div class="flex align-items-center justify-content-between px-3">
 						<p>{{ blankMessage }}.</p>
 						<span class="flex gap-2">
 							<tera-pyciemss-cancel-button :simulation-run-id="cancelRunIds" />
@@ -104,19 +104,17 @@
 
 		<!-- Notebook -->
 		<tera-drilldown-section :tabName="DrilldownTabs.Notebook" class="notebook-section">
-			<div class="toolbar">
-				<tera-notebook-jupyter-input
-					:kernel-manager="kernelManager"
-					:context-language="'python3'"
-					@llm-output="(data: any) => processLLMOutput(data)"
-					@llm-thought-output="(data: any) => llmThoughts.push(data)"
-					@question-asked="updateLlmQuery"
-				>
-					<template #toolbar-right-side>
-						<Button label="Run" size="small" icon="pi pi-play" @click="runCode" :disabled="isEmpty(codeText)" />
-					</template>
-				</tera-notebook-jupyter-input>
-			</div>
+			<tera-notebook-jupyter-input
+				:kernel-manager="kernelManager"
+				:context-language="'python3'"
+				@llm-output="(data: any) => processLLMOutput(data)"
+				@llm-thought-output="(data: any) => llmThoughts.push(data)"
+				@question-asked="updateLlmQuery"
+			>
+				<template #toolbar-right-side>
+					<Button label="Run" size="small" icon="pi pi-play" @click="runCode" :disabled="isEmpty(codeText)" />
+				</template>
+			</tera-notebook-jupyter-input>
 			<v-ace-editor
 				v-model:value="codeText"
 				@init="initializeAceEditor"
@@ -851,14 +849,6 @@ onUnmounted(() => kernelManager.shutdown());
 </script>
 
 <style scoped>
-.wizard .toolbar {
-	display: flex;
-	align-items: center;
-	justify-content: space-between;
-	padding: var(--gap-1) var(--gap-4);
-	gap: var(--gap-2);
-}
-
 /* Make tera-inputs the same height as the dropdowns */
 .tera-input:deep(main) {
 	padding: 6px;
