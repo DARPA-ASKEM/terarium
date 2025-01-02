@@ -551,10 +551,6 @@ const contextMenuItems: MenuItem[] = [
 			{
 				label: CalibrateEnsembleCiemssOp.operation.displayName,
 				command: addOperatorToWorkflow(CalibrateEnsembleCiemssOp)
-			},
-			{
-				label: CompareDatasetsOp.operation.displayName,
-				command: addOperatorToWorkflow(CompareDatasetsOp)
 			}
 		]
 	},
@@ -564,6 +560,10 @@ const contextMenuItems: MenuItem[] = [
 			{
 				label: DatasetTransformerOp.operation.displayName,
 				command: addOperatorToWorkflow(DatasetTransformerOp)
+			},
+			{
+				label: CompareDatasetsOp.operation.displayName,
+				command: addOperatorToWorkflow(CompareDatasetsOp)
 			}
 		]
 	}

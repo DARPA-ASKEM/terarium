@@ -15,13 +15,15 @@
 				<template #header>
 					<div class="flex gap-2 ml-auto">
 						<tera-pyciemss-cancel-button :simulation-run-id="cancelRunId" />
-						<Button
-							:disabled="isRunDisabled"
-							label="Run"
-							icon="pi pi-play"
-							@click="runEnsemble"
-							:loading="!!inProgressCalibrationId || !!inProgressForecastId"
-						/>
+						<div v-tooltip="runButtonMessage">
+							<Button
+								:disabled="isRunDisabled"
+								label="Run"
+								icon="pi pi-play"
+								@click="runEnsemble"
+								:loading="!!inProgressCalibrationId || !!inProgressForecastId"
+							/>
+						</div>
 					</div>
 				</template>
 				<template #content>
@@ -122,7 +124,7 @@
 								<label> Preset </label>
 								<Dropdown
 									class="flex-1"
-									v-model="knobs.extra.presetType"
+									v-model="presetType"
 									placeholder="Select an option"
 									:options="[CiemssPresetTypes.Fast, CiemssPresetTypes.Normal]"
 									@update:model-value="setPresetValues"
@@ -152,7 +154,11 @@
 									</div>
 									<div class="label-and-input">
 										<label for="num-steps">Solver step size</label>
-										<tera-input-number v-model="knobs.extra.stepSize" />
+										<tera-input-number
+											:disabled="knobs.extra.solverMethod !== CiemssMethodOptions.euler"
+											:min="0"
+											v-model="knobs.extra.stepSize"
+										/>
 									</div>
 								</div>
 								<div class="spacer m-3" />
@@ -415,9 +421,28 @@ const currentActiveIndicies = ref([0, 1, 2]);
 
 const isSidebarOpen = ref(true);
 const selectedOutputId = ref<string>();
-const isRunDisabled = computed(
-	() => !knobs.value.ensembleMapping[0] || !datasetId.value || allModelConfigurations.value.length < 2
+
+// Checks for disabling run button:
+const isMappingfilled = computed(
+	() =>
+		knobs.value.ensembleMapping.length !== 0 && knobs.value.ensembleMapping[0].newName && knobs.value.timestampColName
 );
+
+const areNodeInputsFilled = computed(() => datasetId.value && allModelConfigurations.value.length >= 2);
+
+const isRunDisabled = computed(() => !isMappingfilled.value || !areNodeInputsFilled.value);
+
+const mappingFilledTooltip = computed(() =>
+	!isMappingfilled.value ? 'Must contain a Timestamp column and at least one mapping. \n' : ''
+);
+const nodeInputsFilledTooltip = computed(() =>
+	!areNodeInputsFilled.value ? 'Must contain one dataset and at least two model configurations.\n' : ''
+);
+
+const runButtonMessage = computed(() =>
+	isRunDisabled.value ? `${mappingFilledTooltip.value} ${nodeInputsFilledTooltip.value}` : ''
+);
+
 const cancelRunId = computed(
 	() =>
 		props.node.state.inProgressForecastId ||
@@ -489,6 +514,27 @@ const messageHandler = (event: ClientEvent<any>) => {
 	lossChartRef.value.view.change(LOSS_CHART_DATA_SOURCE, vega.changeset().insert(data)).resize().run();
 };
 
+const presetType = computed(() => {
+	if (
+		knobs.value.extra.numParticles === speedPreset.numSamples &&
+		knobs.value.extra.solverMethod === speedPreset.method &&
+		knobs.value.extra.numIterations === speedPreset.numIterations &&
+		knobs.value.extra.learningRate === speedPreset.learningRate &&
+		knobs.value.extra.stepSize === speedPreset.stepSize
+	) {
+		return CiemssPresetTypes.Fast;
+	}
+	if (
+		knobs.value.extra.numParticles === qualityPreset.numSamples &&
+		knobs.value.extra.solverMethod === qualityPreset.method &&
+		knobs.value.extra.numIterations === qualityPreset.numIterations &&
+		knobs.value.extra.learningRate === qualityPreset.learningRate
+	) {
+		return CiemssPresetTypes.Normal;
+	}
+	return '';
+});
+
 const setPresetValues = (data: CiemssPresetTypes) => {
 	if (data === CiemssPresetTypes.Normal) {
 		knobs.value.extra.numParticles = qualityPreset.numSamples;
@@ -501,6 +547,7 @@ const setPresetValues = (data: CiemssPresetTypes) => {
 		knobs.value.extra.solverMethod = speedPreset.method;
 		knobs.value.extra.numIterations = speedPreset.numIterations;
 		knobs.value.extra.learningRate = speedPreset.learningRate;
+		knobs.value.extra.stepSize = speedPreset.stepSize;
 	}
 };
 

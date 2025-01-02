@@ -22,6 +22,7 @@ public class TaskRequest implements Serializable {
 	protected UUID projectId;
 	protected String requestSHA256;
 	protected String routingKey;
+	protected boolean useCache = true;
 
 	public TaskResponse createResponse(final TaskStatus status, final String stdout, final String stderr) {
 		return new TaskResponse()
@@ -34,6 +35,7 @@ public class TaskRequest implements Serializable {
 			.setStdout(stdout)
 			.setStderr(stderr)
 			.setRoutingKey(routingKey)
+			.setUseCache(useCache)
 			.setRequestSHA256(requestSHA256);
 	}
 }

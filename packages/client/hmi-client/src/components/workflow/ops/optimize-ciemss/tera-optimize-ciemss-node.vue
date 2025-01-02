@@ -22,7 +22,7 @@
 				/>
 			</div>
 			<div class="flex gap-2">
-				<Button @click="emit('open-drilldown')" label="Edit" severity="secondary" outlined class="w-full" />
+				<Button @click="emit('open-drilldown')" label="Open" severity="secondary" outlined class="w-full" />
 			</div>
 		</template>
 	</main>
@@ -134,7 +134,8 @@ const startForecast = async (optimizedInterventions?: InterventionPolicy) => {
 		},
 		extra: {
 			num_samples: props.node.state.numSamples,
-			method: props.node.state.solverMethod
+			method: props.node.state.solverMethod,
+			solver_step_size: props.node.state.solverStepSize
 		},
 		engine: 'ciemss'
 	};

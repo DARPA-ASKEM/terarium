@@ -48,11 +48,11 @@ const options = ref([
 		label: 'Add a note',
 		command: () => emit('show-annotation-editor')
 	},
-	{
-		icon: 'pi pi-external-link',
-		label: 'Open in new window',
-		command: () => emit('open-in-new-window')
-	},
+	// {
+	// 	icon: 'pi pi-external-link',
+	// 	label: 'Open in new window',
+	// 	command: () => emit('open-in-new-window')
+	// },
 	{ icon: 'pi pi-trash', label: 'Remove', command: () => emit('remove-operator') }
 ]);
 </script>

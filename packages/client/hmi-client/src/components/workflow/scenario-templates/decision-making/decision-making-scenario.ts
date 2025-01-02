@@ -11,6 +11,7 @@ import { OperatorNodeSize } from '@/services/workflow';
 import { flattenInterventionData, getInterventionPolicyById } from '@/services/intervention-policy';
 import { ChartSetting, ChartSettingType } from '@/types/common';
 import { updateChartSettingsBySelectedVariables } from '@/services/chart-settings';
+import { getMeanCompareDatasetVariables } from '../scenario-template-utils';
 
 export class DecisionMakingScenario extends BaseScenario {
 	public static templateId = 'decision-making';
@@ -159,6 +160,13 @@ export class DecisionMakingScenario extends BaseScenario {
 			this.simulateSpec.ids
 		);
 
+		let compareDatasetChartSettings: ChartSetting[] = [];
+		compareDatasetChartSettings = updateChartSettingsBySelectedVariables(
+			compareDatasetChartSettings,
+			ChartSettingType.VARIABLE,
+			getMeanCompareDatasetVariables(this.simulateSpec.ids, modelConfig)
+		);
+
 		// 2. Add base simulation (no interventions) and connect it to the compare datasets node
 		const baseSimulateNode = wf.addNode(
 			SimulateOp,
@@ -176,6 +184,12 @@ export class DecisionMakingScenario extends BaseScenario {
 		wf.updateNode(baseSimulateNode, {
 			state: {
 				chartSettings: simulateChartSettings
+			}
+		});
+
+		wf.updateNode(compareDatasetNode, {
+			state: {
+				chartSettings: compareDatasetChartSettings
 			}
 		});
 

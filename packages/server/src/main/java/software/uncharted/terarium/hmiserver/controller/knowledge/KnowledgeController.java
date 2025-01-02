@@ -282,6 +282,7 @@ public class KnowledgeController {
 				latexToSympyRequest.setInput(latex.getBytes());
 				latexToSympyRequest.setScript(LatexToSympyResponseHandler.NAME);
 				latexToSympyRequest.setUserId(currentUserService.get().getId());
+				latexToSympyRequest.setUseCache(false); // Don't cache because LLM can give incorrect result
 				latexToSympyResponse = taskService.runTaskSync(latexToSympyRequest);
 
 				// 2. hand off

@@ -75,6 +75,15 @@
 									@update:model-value="updateState"
 								/>
 							</div>
+							<div class="label-and-input">
+								<label for="num-samples">Solver Step Size</label>
+								<tera-input-number
+									v-model="solverStepSize"
+									:disabled="method !== CiemssMethodOptions.euler"
+									:min="0"
+									@update:model-value="updateState"
+								/>
+							</div>
 						</div>
 						<template v-if="interventionPolicy && model">
 							<h4>Intervention Policies</h4>
@@ -125,13 +134,16 @@
 				:is-blank="!selectedOutputId"
 				:blank-message="blankMessage"
 			>
+				<template #header-controls-left>
+					<h4 class="ml-4">Output {{ selectedOutputLabel }}</h4>
+				</template>
 				<template #header-controls-right>
 					<Button class="mr-3" label="Save for re-use" severity="secondary" outlined @click="showSaveDataset = true" />
 				</template>
 				<tera-operator-output-summary
 					v-if="node.state.summaryId && runResults[selectedRunId]"
 					:summary-id="node.state.summaryId"
-					class="p-3"
+					class="p-3 pt-0"
 				/>
 				<div class="pl-3 pr-3 flex flex-row align-items-center gap-2">
 					<SelectButton
@@ -151,7 +163,8 @@
 				<template v-if="runResults[selectedRunId]">
 					<div v-if="view === OutputView.Charts" ref="outputPanel">
 						<Accordion multiple :active-index="currentActiveIndicies" class="px-2">
-							<AccordionTab header="Interventions over time">
+							<!-- Section: Interventions over time -->
+							<AccordionTab v-if="selectedInterventionSettings.length > 0" header="Interventions over time">
 								<template v-for="setting in selectedInterventionSettings" :key="setting.id">
 									<vega-chart
 										expandable
@@ -160,7 +173,8 @@
 									/>
 								</template>
 							</AccordionTab>
-							<AccordionTab header="Variables over time">
+							<!-- Section: Variables over time -->
+							<AccordionTab v-if="selectedVariableSettings.length > 0" header="Variables over time">
 								<template v-for="setting of selectedVariableSettings" :key="setting.id">
 									<vega-chart
 										expandable
@@ -169,16 +183,34 @@
 									/>
 								</template>
 							</AccordionTab>
-							<AccordionTab header="Comparison charts">
+							<!-- Section: Comparison charts -->
+							<AccordionTab v-if="selectedComparisonChartSettings.length > 0" header="Comparison charts">
 								<template v-for="setting of selectedComparisonChartSettings" :key="setting.id">
+									<div v-if="setting.smallMultiples">
+										<div
+											v-for="selectedVariable of setting.selectedVariables"
+											:key="setting.id + selectedVariable"
+											class="comparison-chart-container"
+										>
+											<div class="comparison-chart">
+												<vega-chart
+													expandable
+													:are-embed-actions-visible="true"
+													:visualization-spec="comparisonCharts[setting.id + selectedVariable]"
+												/>
+											</div>
+										</div>
+									</div>
 									<vega-chart
+										v-else
 										expandable
 										:are-embed-actions-visible="true"
 										:visualization-spec="comparisonCharts[setting.id]"
 									/>
 								</template>
 							</AccordionTab>
-							<AccordionTab header="Sensitivity">
+							<!-- Section: Sensitivity -->
+							<AccordionTab v-if="selectedSensitivityChartSettings.length > 0" header="Sensitivity analysis">
 								<template v-for="setting of selectedSensitivityChartSettings" :key="setting.id">
 									<vega-chart
 										expandable
@@ -193,6 +225,26 @@
 								</template>
 							</AccordionTab>
 						</Accordion>
+
+						<!-- Empty state if all sections are empty -->
+						<div
+							v-if="
+								isEmpty(selectedInterventionSettings) &&
+								isEmpty(selectedVariableSettings) &&
+								isEmpty(selectedComparisonChartSettings) &&
+								isEmpty(selectedSensitivityChartSettings)
+							"
+						>
+							<div class="empty-state-chart">
+								<img
+									src="@assets/svg/operator-images/simulate-deterministic.svg"
+									alt=""
+									draggable="false"
+									height="80px"
+								/>
+								<p class="text-center">Configure charts in the output settings.</p>
+							</div>
+						</div>
 
 						<!-- Spacer at bottom of page -->
 						<div style="height: 2rem"></div>
@@ -213,7 +265,7 @@
 				v-model:is-open="isOutputSettingsPanelOpen"
 				direction="right"
 				class="input-config"
-				header="Output Settings"
+				header="Output settings"
 				content-width="360px"
 			>
 				<template #overlay>
@@ -227,6 +279,7 @@
 						"
 						:active-settings="activeChartSettings"
 						:generate-annotation="generateAnnotation"
+						:comparison="activeChartSettings?.type === ChartSettingType.VARIABLE_COMPARISON"
 						@update-settings="updateActiveChartSettings"
 						@delete-annotation="deleteAnnotation"
 						@close="setActiveChartSettings(null)"
@@ -302,14 +355,14 @@
 							:sensitivity-options="{
 								inputOptions: Object.keys(pyciemssMap).filter((c) => ['parameter'].includes(modelPartTypesMap[c])),
 								selectedInputOptions: selectedSensitivityChartSettings[0]?.selectedInputVariables ?? [],
-								timepoint: selectedSensitivityChartSettings[0]?.timepoint ?? 0
+								timepoint: selectedSensitivityChartSettings[0]?.timepoint ?? lastTimepoint
 							}"
 							@selection-change="
 								(e) =>
 									updateSensitivityChartSettings({
 										selectedVariables: e,
 										selectedInputVariables: selectedSensitivityChartSettings[0]?.selectedInputVariables ?? [],
-										timepoint: selectedSensitivityChartSettings[0]?.timepoint ?? 0
+										timepoint: selectedSensitivityChartSettings[0]?.timepoint ?? lastTimepoint
 									})
 							"
 							@sensitivity-selection-change="
@@ -414,7 +467,7 @@ const isSidebarOpen = ref(true);
 const isOutputSettingsPanelOpen = ref(false);
 const blankMessage = "Click 'Run' to start the simulation";
 
-const currentActiveIndicies = ref([0, 1, 2]);
+const currentActiveIndicies = ref([0, 1, 2, 3]);
 
 const modelVarUnits = ref<{ [key: string]: string }>({});
 let editor: VAceEditorInstance['_editor'] | null;
@@ -423,6 +476,11 @@ const codeText = ref('');
 const modelConfiguration = ref<ModelConfiguration | null>(null);
 const model = ref<Model | null>(null);
 
+const lastTimepoint = computed<number>(() => {
+	if (isEmpty(runResults.value) || !selectedRunId.value) return 0;
+	const lastResult = _.last(runResults.value[selectedRunId.value]);
+	return lastResult?.timepoint_id ?? 0;
+});
 const modelStateUnits = computed(() => {
 	const states = model.value?.model.states;
 	let units = {};
@@ -457,12 +515,18 @@ const datasetId = computed(() => {
 	return output?.value?.[0] ?? '';
 });
 
+const selectedOutputLabel = computed(() => {
+	const selectedOutput = props.node.outputs.find((output) => output.isSelected);
+	return selectedOutput ? selectedOutput.label : '';
+});
+
 const llmThoughts = ref<any[]>([]);
 const llmQuery = ref('');
 
 // input params
 const timespan = ref<TimeSpan>(props.node.state.currentTimespan);
 const numSamples = ref<number>(props.node.state.numSamples);
+const solverStepSize = ref<number>(props.node.state.solverStepSize);
 const method = ref(props.node.state.method);
 
 enum OutputView {
@@ -472,7 +536,8 @@ enum OutputView {
 
 const speedPreset = Object.freeze({
 	numSamples: 10,
-	method: CiemssMethodOptions.euler
+	method: CiemssMethodOptions.euler,
+	stepSize: 0.1
 });
 
 const qualityPreset = Object.freeze({
@@ -507,7 +572,11 @@ const pyciemssMap = ref<Record<string, string>>({});
 const kernelManager = new KernelSessionManager();
 
 const presetType = computed(() => {
-	if (numSamples.value === speedPreset.numSamples && method.value === speedPreset.method) {
+	if (
+		numSamples.value === speedPreset.numSamples &&
+		method.value === speedPreset.method &&
+		solverStepSize.value === speedPreset.stepSize
+	) {
 		return CiemssPresetTypes.Fast;
 	}
 	if (numSamples.value === qualityPreset.numSamples && method.value === qualityPreset.method) {
@@ -536,6 +605,7 @@ const setPresetValues = (data: CiemssPresetTypes) => {
 	if (data === CiemssPresetTypes.Fast) {
 		numSamples.value = speedPreset.numSamples;
 		method.value = speedPreset.method;
+		solverStepSize.value = speedPreset.stepSize;
 	}
 	updateState();
 };
@@ -587,6 +657,7 @@ const updateState = () => {
 	state.currentTimespan = timespan.value;
 	state.numSamples = numSamples.value;
 	state.method = method.value;
+	state.solverStepSize = solverStepSize.value;
 	emit('update-state', state);
 };
 
@@ -613,7 +684,7 @@ const makeForecastRequest = async (applyInterventions = true) => {
 		},
 		extra: {
 			solver_method: method.value,
-			solver_step_size: 1,
+			solver_step_size: solverStepSize.value,
 			num_samples: numSamples.value
 		},
 		engine: 'ciemss'
@@ -751,6 +822,7 @@ watch(
 		// Update Wizard form fields with current selected output state
 		timespan.value = props.node.state.currentTimespan;
 		numSamples.value = props.node.state.numSamples;
+		solverStepSize.value = props.node.state.solverStepSize;
 		method.value = props.node.state.method;
 
 		lazyLoadSimulationData(selectedRunId.value);
@@ -872,6 +944,30 @@ onUnmounted(() => kernelManager.shutdown());
 		border: 0;
 		border-top: 1px solid var(--surface-border-alt);
 		width: 100%;
+	}
+}
+.empty-state-chart {
+	display: flex;
+	flex-direction: column;
+	gap: var(--gap-4);
+	justify-content: center;
+	align-items: center;
+	height: 12rem;
+	margin: var(--gap-6);
+	padding: var(--gap-4);
+	background: var(--surface-100);
+	color: var(--text-color-secondary);
+}
+
+.comparison-chart-container {
+	display: flex;
+	flex-direction: column;
+	display: inline-block;
+
+	.comparison-chart {
+		float: left;
+		box-sizing: border-box;
+		width: 40%;
 	}
 }
 </style>
