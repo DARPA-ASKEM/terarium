@@ -9,7 +9,7 @@
 				:key="m.header.msg_id"
 				:jupyter-message="m"
 			/>
-			<Button label="Edit" @click="emit('open-drilldown')" severity="secondary" outlined />
+			<Button label="Open" @click="emit('open-drilldown')" severity="secondary" outlined />
 		</template>
 	</section>
 </template>

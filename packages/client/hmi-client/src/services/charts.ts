@@ -51,6 +51,7 @@ interface BaseChartOptions {
 	autosize?: AUTOSIZE;
 	dateOptions?: DateOptions;
 	scale?: string;
+	yMinExtent?: number;
 }
 
 export interface DateOptions {
@@ -891,7 +892,8 @@ export function createSimulateSensitivityScatter(samplingLayer: SensitivityChart
 					field: { repeat: 'column' },
 					type: 'quantitative',
 					axis: {
-						gridColor: '#EEE'
+						gridColor: '#EEE',
+						domain: options.yMinExtent ? [0, options.yMinExtent] : undefined
 					},
 					scale: {
 						zero: false,
