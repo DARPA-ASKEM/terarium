@@ -35,8 +35,6 @@
 				</template>
 			</MultiSelect>
 
-			<label>Select time slice of interest</label>
-			/>
 			<div class="mb-2"></div>
 			<label :class="_.isEmpty(selectedOptions) ? 'disabled' : ''">Select time slice of interest</label>
 			<tera-input-number
