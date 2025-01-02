@@ -1,5 +1,5 @@
 import _ from 'lodash';
-import { createForecastChart, AUTOSIZE } from '@/services/charts';
+import { createForecastChart, AUTOSIZE, GroupedDataArray } from '@/services/charts';
 import {
 	DataArray,
 	extractModelConfigIdsInOrder,
@@ -99,6 +99,32 @@ export function getSelectedOutputEnsembleMapping(
 	return mapping;
 }
 
+/**
+ * Group values for each variable by timepoint_id and sort them. This precomputed data will be used to calculate the quantiles on the fly.
+ * @param result Pyciemss result data
+ * @returns Array of objects where each object has variable names as keys and sorted values as values.
+ * e.g. [{variable1: [1, 2, 3], variable2: [4, 5, 6]}, ...] where each item in the variable array is a sample value.
+ */
+const processAndSortSamplesByTimepoint = (result: DataArray) => {
+	// Sort sample values for each variable grouped by timepoint_id (this precomputed data will be used to calculate the quantiles on the fly)
+	// If this becomes a performance bottleneck, we can consider using web workers or chunked sorting with setTimeout to avoid blocking the main thread.
+	const grouped = _.groupBy(result, 'timepoint_id');
+	const resultGroupByTimepointId: GroupedDataArray = [];
+	Object.entries(grouped).forEach(([timepointId, samples]) => {
+		const obj: Record<string, number[]> = {};
+		samples.forEach((sample) => {
+			Object.entries(sample).forEach(([variable, value]) => {
+				if (obj[variable] === undefined) obj[variable] = [];
+				obj[variable].push(value);
+			});
+		});
+		// sort the values for each variable
+		Object.values(obj).forEach((values) => values.sort((a, b) => a - b));
+		resultGroupByTimepointId[timepointId] = obj;
+	});
+	return resultGroupByTimepointId;
+};
+
 export async function fetchOutputData(preForecastId: string, postForecastId: string) {
 	if (!postForecastId || !preForecastId) return null;
 	const runResult = await getRunResultCSV(postForecastId, 'result.csv');
@@ -113,9 +139,11 @@ export async function fetchOutputData(preForecastId: string, postForecastId: str
 	// Merge before/after for chart
 	const { result, resultSummary } = mergeResults(runResultPre, runResult, runResultSummaryPre, runResultSummary);
 
+	const resultGroupByTimepoint = processAndSortSamplesByTimepoint(result);
 	return {
 		result,
 		resultSummary,
+		resultGroupByTimepoint,
 		pyciemssMap
 	};
 }
@@ -125,6 +153,7 @@ export function buildChartData(
 	outputData: {
 		result: DataArray;
 		resultSummary: DataArray;
+		resultGroupByTimepoint: GroupedDataArray;
 		pyciemssMap: Record<string, string>;
 	} | null,
 	mappings: CalibrateEnsembleMappingRow[]
@@ -136,6 +165,8 @@ export function buildChartData(
 		// pyciemssMap keys are formatted as either '{modelConfigId}/{displayVariableName}' for model variables or '{displayVariableName}' for ensemble variables
 		const tokens = key.split('/');
 		const varName = tokens.length > 1 ? tokens[1] : 'Ensemble';
+		translationMap[`${pyciemssMap[key]}`] = `${varName} after calibration`;
+		translationMap[`${pyciemssMap[key]}:pre`] = `${varName} before calibration`;
 		translationMap[`${pyciemssMap[key]}_mean`] = `${varName} after calibration`;
 		translationMap[`${pyciemssMap[key]}_mean:pre`] = `${varName} before calibration`;
 	});

@@ -12,8 +12,9 @@
 			@configuration-change="$emit('selection-change', $event.selectedVariable, type)"
 		/>
 		<template v-if="type === ChartSettingType.SENSITIVITY && sensitivityOptions">
+			<div class="mb-2"></div>
 			<!--FIXME: It might be better to move these inside the panel so that they can be controlled at an individual chart settings level -->
-			<label>Select parameter(s) of interest</label>
+			<label :class="_.isEmpty(selectedOptions) ? 'disabled' : ''">Select parameter(s) of interest</label>
 			<MultiSelect
 				:disabled="_.isEmpty(selectedOptions)"
 				placeholder="Select parameters"
@@ -25,9 +26,17 @@
 						timepoint: sensitivityOptions.timepoint
 					})
 				"
-			/>
+			>
+				<template v-slot:value>
+					<template v-for="(variable, index) in sensitivityOptions.selectedInputOptions" :key="index">
+						<template v-if="index > 0">,&nbsp;</template>
+						<span> {{ variable }} </span>
+					</template>
+				</template>
+			</MultiSelect>
 
-			<label>Select time slice of interest</label>
+			<div class="mb-2"></div>
+			<label :class="_.isEmpty(selectedOptions) ? 'disabled' : ''">Select time slice of interest</label>
 			<tera-input-number
 				:disabled="_.isEmpty(selectedOptions)"
 				:model-value="sensitivityOptions.timepoint"
@@ -38,6 +47,7 @@
 					})
 				"
 			/>
+			<div class="mb-1"></div>
 		</template>
 		<tera-chart-settings-item
 			v-for="s of targetSettings"
@@ -50,7 +60,7 @@
 			<tera-checkbox
 				:disabled="selectedOptions.length === 0"
 				label="Show individual models"
-				:model-value="Boolean(ensembleChartOptions.showIndividualModels)"
+				:model-value="Boolean(ensembleChartOptions?.showIndividualModels)"
 				@update:model-value="toggleEnsembleChartOption('showIndividualModels', $event)"
 			/>
 			<!-- Disabling following two checkboxes for now since their functionalities aren't implemented yet -->
@@ -120,5 +130,8 @@ const toggleEnsembleChartOption = (option: EnsembleVariableChartSettingOption, v
 	display: flex;
 	flex-direction: column;
 	gap: var(--gap-2);
+}
+.disabled {
+	color: var(--gray-400);
 }
 </style>

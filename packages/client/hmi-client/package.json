@@ -50,7 +50,7 @@
 		"extended-eventsource": "1.4.9",
 		"feather-icons": "4.29.2",
 		"graph-scaffolder": "*",
-		"katex": "0.16.11",
+		"katex": "0.16.19",
 		"lodash": "4.17.21",
 		"markdown-it": "14.1.0",
 		"mathlive": "0.89.2",

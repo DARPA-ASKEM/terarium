@@ -19,7 +19,7 @@
 					:options="interventionPolicies"
 					option-label="name"
 					option-value="id"
-					placeholder="Select an intervention policy"
+					placeholder="Select an intervention policy (optional)"
 					@update:model-value="scenario.setInterventionSpec($event, i)"
 					:key="i"
 					:disabled="isEmpty(interventionPolicies)"
@@ -67,6 +67,7 @@
 						:disabled="!selectedModelConfiguration"
 						:loading="isFetchingModelConfiguration || isFetchingModelInformation"
 						@update:model-value="onParameterSelect($event, i)"
+						filter
 					>
 						<template #option="slotProps">
 							<span>{{ displayParameter(modelParameters, slotProps.option.referenceId) }}</span>
@@ -106,7 +107,7 @@
 				:disabled="isEmpty(modelStateOptions) || isFetchingModelInformation"
 				:model-value="scenario.simulateSpec.ids"
 				placeholder="Select output metrics"
-				option-label="name"
+				option-label="id"
 				option-value="id"
 				:options="modelStateOptions"
 				@update:model-value="scenario.setSimulateSpec($event)"
@@ -136,7 +137,7 @@ import { displayParameter } from '../scenario-template-utils';
 
 const header: ScenarioHeader = Object.freeze({
 	title: 'Horizon scanning template',
-	question: 'How does extreme scenarios impact the outcome of different interventions?',
+	question: 'How do extreme scenarios impact the outcome of different interventions?',
 	description:
 		'Configure the model to represent the extremes of uncertainty for some parameters, then simulate into the near future with different intervention policies and compare the outcomes.',
 	examples: ['Potential emergence of a new variant.', 'Rapidly waning immunity.']
@@ -206,7 +207,9 @@ watch(
 		isFetchingModelConfiguration.value = true;
 		selectedModelConfiguration.value = await getModelConfigurationById(modelConfigId);
 		if (!selectedModelConfiguration.value) return;
-		modelParameters.value = getParameters(selectedModelConfiguration.value);
+		modelParameters.value = getParameters(selectedModelConfiguration.value).sort((a, b) =>
+			a.referenceId.localeCompare(b.referenceId)
+		);
 		isFetchingModelConfiguration.value = false;
 	}
 );

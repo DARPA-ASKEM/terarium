@@ -12,7 +12,7 @@
 				content-width="440px"
 			>
 				<template #content>
-					<tera-drilldown-section class="px-2">
+					<tera-drilldown-section class="px-3">
 						<Button class="ml-auto" size="small" label="Run" @click="onRun" />
 						<label>What do you want to compare?</label>
 						<Dropdown
@@ -21,13 +21,14 @@
 							option-label="label"
 							option-value="value"
 						/>
-						<tera-checkbox
+						<!-- Pascale asked me to hide this until the feature is implemented -->
+						<!-- <tera-checkbox
 							class="pt-2"
 							v-model="isSimulationsFromSameModel"
 							label="All simulations are from the same model"
 							disabled
-						/>
-
+						/> -->
+						<div class="mb-4" />
 						<template v-if="knobs.selectedCompareOption === CompareValue.IMPACT">
 							<label> Select simulation to use as a baseline (optional) </label>
 							<Dropdown
@@ -39,14 +40,13 @@
 								placeholder="Optional"
 								@change="generateChartData"
 							/>
-
+							<div class="mb-4" />
 							<label>Comparison tables</label>
-							<tera-checkbox
-								v-model="isATESelected"
-								label="Average treatment effect (ATE)"
-								subtext="Description for ATE."
-							/>
+							<tera-checkbox v-model="isATESelected" label="Average treatment effect (ATE)" />
 						</template>
+						<div class="mb-4" />
+						<!-- Pascale asked me to omit this timepoint selector, but I'm keeping it here until we are certain it's not needed -->
+						<!--
 						<label class="mt-2">Timepoint column</label>
 						<Dropdown
 							v-model="timepointHeaderName"
@@ -54,8 +54,10 @@
 							placeholder="Select timepoint header"
 							@change="generateChartData"
 						/>
+						<div class="mb-4" />
+						-->
 						<template v-if="knobs.selectedCompareOption === CompareValue.RANK">
-							<label>Specifiy criteria of interest</label>
+							<label>Specify criteria of interest:</label>
 							<tera-criteria-of-interest-card
 								v-for="(card, i) in node.state.criteriaOfInterestCards"
 								:key="i"
@@ -135,6 +137,19 @@
 							:variables="commonHeaderNames"
 							@configuration-change="updateChartSettings($event.selectedVariable, ChartSettingType.VARIABLE)"
 						/>
+						<!-- plot options -->
+						<div class="plot-options">
+							<p class="mb-2">How do you want to plot the values?</p>
+							<div v-for="option in plotOptions" class="flex align-items-center" :key="option.value">
+								<RadioButton
+									v-model="knobs.selectedPlotType"
+									:value="option.value"
+									name="plotValues"
+									@change="generateChartData"
+								/>
+								<label class="pl-2 py-1" :for="option.value">{{ option.label }}</label>
+							</div>
+						</div>
 						<tera-chart-settings-item
 							v-for="settings of chartSettings.filter((setting) => setting.type === ChartSettingType.VARIABLE)"
 							:key="settings.id"
@@ -142,16 +157,6 @@
 							@open="setActiveChartSettings(settings)"
 							@remove="removeChartSettings"
 						/>
-						<label>How do you want to plot the values?</label>
-						<div v-for="option in plotOptions" class="flex align-items-center" :key="option.value">
-							<RadioButton
-								v-model="knobs.selectedPlotType"
-								:value="option.value"
-								name="plotValues"
-								@change="generateChartData"
-							/>
-							<label class="pl-2 py-1" :for="option.value">{{ option.label }}</label>
-						</div>
 					</div>
 				</template>
 			</tera-slider-panel>
@@ -219,7 +224,6 @@ const isOutputSettingsOpen = ref(true);
 const activeIndices = ref([0, 1, 2]);
 
 const isFetchingDatasets = ref(false);
-const isSimulationsFromSameModel = ref(true);
 const isATESelected = ref(false);
 
 const {
@@ -445,5 +449,13 @@ label {
 		border-top: 1px solid var(--surface-border-alt);
 		width: 100%;
 	}
+}
+
+.plot-options {
+	padding: var(--gap-3);
+	background: var(--surface-200);
+	border-radius: var(--border-radius);
+	box-shadow: inset 0 0 6px rgba(0, 0, 0, 0.1);
+	margin-bottom: var(--gap-1);
 }
 </style>

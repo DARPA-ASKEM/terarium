@@ -14,9 +14,9 @@
 			{{ node.state.currentProgress }}%
 		</tera-progress-spinner>
 
-		<Button v-if="areInputsFilled" label="Edit" @click="emit('open-drilldown')" severity="secondary" outlined />
+		<Button v-if="areInputsFilled" label="Open" @click="emit('open-drilldown')" severity="secondary" outlined />
 		<tera-operator-placeholder v-else :node="node">
-			Connect a model configuration and dataset
+			Connect at least two model configurations and dataset
 		</tera-operator-placeholder>
 	</main>
 </template>
@@ -63,7 +63,11 @@ const emit = defineEmits(['open-drilldown', 'update-state', 'append-output', 'ap
 const runResults = ref<RunResults>({});
 const csvAsset = shallowRef<CsvAsset | undefined>(undefined);
 
-const areInputsFilled = computed(() => props.node.inputs[0].value && props.node.inputs[1].value);
+const areInputsFilled = computed(
+	() =>
+		props.node.inputs[0].value &&
+		props.node.inputs.filter((ele) => ele.type === 'modelConfigId' && ele.value).length >= 2
+);
 const inProgressCalibrationId = computed(() => props.node.state.inProgressCalibrationId);
 const inProgressForecastId = computed(() => props.node.state.inProgressForecastId);
 const lossValues = ref<{ [key: string]: number }[]>([]);

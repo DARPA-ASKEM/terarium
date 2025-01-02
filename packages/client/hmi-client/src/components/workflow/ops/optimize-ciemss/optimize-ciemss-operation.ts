@@ -54,6 +54,7 @@ export interface OptimizeCiemssOperationState extends BaseState {
 	// Settings
 	endTime: number;
 	numSamples: number;
+	solverStepSize: number;
 	solverMethod: string;
 	maxiter: number;
 	maxfeval: number;
@@ -136,6 +137,7 @@ export const OptimizeCiemssOperation: Operation = {
 		const init: OptimizeCiemssOperationState = {
 			endTime: 90,
 			numSamples: 100,
+			solverStepSize: 0.1,
 			solverMethod: 'dopri5',
 			maxiter: 5,
 			maxfeval: 25,
