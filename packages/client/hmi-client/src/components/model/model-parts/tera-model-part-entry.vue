@@ -12,7 +12,7 @@
 				/>
 			</span>
 			<span class="unit" :class="{ time: isTimePart }">
-				<template v-if="input && output">
+				<template v-if="input || output">
 					<span><label>Input:</label> {{ input }}</span>
 					<span><label>Output:</label> {{ output }}</span>
 				</template>

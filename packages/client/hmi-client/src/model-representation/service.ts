@@ -358,6 +358,8 @@ export enum PartType {
 	TRANSITION = 'TRANSITION'
 }
 
+// FIXME: should refactor so typing is explicit and clear
+// Note "model" is both an AMR model, or it can be a list of transition templates
 export function createPartsList(parts, model, partType) {
 	return Array.from(parts.keys()).map((id) => {
 		const childTargets = parts.get(id) ?? [];
