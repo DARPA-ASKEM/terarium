@@ -55,14 +55,8 @@ export class WorkflowWrapper {
 	 * FIXME: Need to split workflow into different categories and sending the commands
 	 * instead of the result. It is possible here to become de-synced: eg state-update-response
 	 * comes in as we are about to change the output ports.
-	 *
-	 * delayUpdate is a used to indicate there are actions in progress, and an update from
-	 * the DB can potentially overwrite what the user had already done that have yet to be flushed
-	 * to the backend. In situation like this, we will update the version (so our subsequent updates are
-	 * not rejected) and skip the rest. For example, the user may be dragging an operator on the
-	 * canvas when the db upate comes in.
 	 * */
-	update(updatedWF: Workflow, delayUpdate: boolean) {
+	update(updatedWF: Workflow) {
 		if (updatedWF.id !== this.wf.id) {
 			throw new Error(`Workflow failed, inconsistent ids updated=${updatedWF.id} self=${this.wf.id}`);
 		}
@@ -74,27 +68,27 @@ export class WorkflowWrapper {
 		const updatedNodeMap = new Map<string, WorkflowNode<any>>(updatedWF.nodes.map((n) => [n.id, n]));
 		const updatedEdgeMap = new Map<string, WorkflowEdge>(updatedWF.edges.map((e) => [e.id, e]));
 
-		if (delayUpdate) {
-			for (let i = 0; i < nodes.length; i++) {
-				const nodeId = nodes[i].id;
-				const updated = updatedNodeMap.get(nodeId);
-				if (updated) {
-					if (!nodes[i].version || (updated.version as number) > (nodes[i].version as number)) {
-						nodes[i].version = updated.version;
-					}
-				}
-			}
-			for (let i = 0; i < edges.length; i++) {
-				const edgeId = edges[i].id;
-				const updated = updatedEdgeMap.get(edgeId);
-				if (updated) {
-					if (!edges[i].version || (updated.version as number) > (edges[i].version as number)) {
-						edges[i].version = updated.version;
-					}
-				}
-			}
-			return;
-		}
+		/* FIXME: Comment out to to simplify sync logic, to remove if things are stable - Jan 2025 */
+		// if (delayUpdate) {
+		// 	for (let i = 0; i < nodes.length; i++) {
+		// 		const nodeId = nodes[i].id;
+		// 		const updated = updatedNodeMap.get(nodeId);
+		// 		if (updated) {
+		// 			if (!nodes[i].version || (updated.version as number) > (nodes[i].version as number)) {
+		// 				nodes[i].version = updated.version;
+		// 			}
+		// 		}
+		// 	}
+		// 	for (let i = 0; i < edges.length; i++) {
+		// 		const edgeId = edges[i].id;
+		// 		const updated = updatedEdgeMap.get(edgeId);
+		// 		if (updated) {
+		// 			if (!edges[i].version || (updated.version as number) > (edges[i].version as number)) {
+		// 				edges[i].version = updated.version;
+		// 			}
+		// 		}
+		// 	} return;
+		// }
 
 		// Update and deletes
 		for (let i = 0; i < nodes.length; i++) {
