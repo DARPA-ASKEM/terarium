@@ -248,7 +248,6 @@ export class PetrinetRenderer extends BasicRenderer<NodeData, EdgeData> {
 			.attr('marker-end', (d) => {
 				if (d.data?.isController || d.data?.isObservable) return null;
 
-				// TODO: should check if the transition node is terminal
 				if (transitionNodeIds.includes(d.target as string) && !terminalTransitionNodeIds.includes(d.target))
 					return null;
 				return 'url(#arrowhead)';
