@@ -24,8 +24,8 @@ const timeList: {
 	base: ModelPartItem;
 	children: ModelPartItem[];
 	isParent: boolean;
-}[] = props.time.map(({ id, name, description, grounding, units }) => ({
-	base: { id, name, description, grounding, unitExpression: units?.expression },
+}[] = props.time.map(({ id, units }) => ({
+	base: { id, unitExpression: units?.expression },
 	children: [],
 	isParent: false
 }));
