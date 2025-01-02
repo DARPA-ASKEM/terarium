@@ -231,7 +231,6 @@ export class PetrinetRenderer extends BasicRenderer<NodeData, EdgeData> {
 
 		const originNodeIds = this.graph.edges.map((edge) => edge.source);
 		const terminalTransitionNodeIds = transitionNodeIds.filter((id) => !originNodeIds.includes(id));
-		// console.log('!!', terminalTransitionNodeIds);
 
 		selection
 			.append('path')
