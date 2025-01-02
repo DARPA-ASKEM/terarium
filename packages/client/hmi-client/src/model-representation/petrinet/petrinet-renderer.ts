@@ -229,6 +229,10 @@ export class PetrinetRenderer extends BasicRenderer<NodeData, EdgeData> {
 
 		const transitionNodeIds = this.graph.nodes.filter((n) => n.data.type === 'transition').map((n) => n.id);
 
+		const originNodeIds = this.graph.edges.map((edge) => edge.source);
+		const terminalTransitionNodeIds = transitionNodeIds.filter((id) => !originNodeIds.includes(id));
+		// console.log('!!', terminalTransitionNodeIds);
+
 		selection
 			.append('path')
 			.attr('d', (d) => pathFn(d.points))
@@ -244,7 +248,10 @@ export class PetrinetRenderer extends BasicRenderer<NodeData, EdgeData> {
 			})
 			.attr('marker-end', (d) => {
 				if (d.data?.isController || d.data?.isObservable) return null;
-				if (transitionNodeIds.includes(d.target as string)) return null;
+
+				// TODO: should check if the transition node is terminal
+				if (transitionNodeIds.includes(d.target as string) && !terminalTransitionNodeIds.includes(d.target))
+					return null;
 				return 'url(#arrowhead)';
 			});
 
