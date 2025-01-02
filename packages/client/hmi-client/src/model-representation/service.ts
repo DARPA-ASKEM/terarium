@@ -449,8 +449,8 @@ export function createObservablesList(observables: Observable[]) {
 }
 
 export function createTimeList(time) {
-	return time.map(({ id, name, description, grounding, units }) => ({
-		base: { id, name, description, grounding, unitExpression: units?.expression },
+	return time.map(({ id, units }) => ({
+		base: { id, unitExpression: units?.expression },
 		children: [],
 		isParent: false
 	}));
