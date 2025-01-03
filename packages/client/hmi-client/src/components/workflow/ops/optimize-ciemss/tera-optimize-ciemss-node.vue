@@ -103,13 +103,15 @@ const pollResult = async (runId: string) => {
 		.setPollAction(async () => pollAction(runId))
 		.setProgressAction((data: Simulation) => {
 			if (runId === props.node.state.inProgressOptimizeId && data.updates.length > 0) {
+				// TODO: Need to check if "first" is actually the latest update
 				const checkpointData = _.first(data.updates)?.data as CiemssOptimizeStatusUpdate;
 				if (checkpointData) {
 					const state = _.cloneDeep(props.node.state);
-					state.currentProgress = +((100 * checkpointData.progress) / checkpointData.totalPossibleIterations).toFixed(
-						2
-					);
-					emit('update-state', state);
+					const newProgress = +((100 * checkpointData.progress) / checkpointData.totalPossibleIterations).toFixed(2);
+					if (newProgress > state.currentProgress) {
+						state.currentProgress = newProgress;
+						emit('update-state', state);
+					}
 				}
 			}
 		});
