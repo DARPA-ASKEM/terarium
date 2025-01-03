@@ -20,7 +20,7 @@
 					</span>
 					<!--N/A if it's a transition-->
 					<div class="right-side">
-						<template v-if="!featureConfig.isPreview && (!children[0]?.input || !children[0]?.output)">
+						<template v-if="!featureConfig.isPreview && partType !== PartType.TRANSITION">
 							<Button
 								:disabled="getEditingState(index).isEditingChildrenUnits"
 								@click="getEditingState(index).isEditingChildrenUnits = true"
@@ -128,6 +128,7 @@
 								:input="child.input"
 								:output="child.output"
 								:unitExpression="child.unitExpression"
+								:expression="child.expression"
 								:feature-config="featureConfig"
 								@update-item="$emit('update-item', { id: child.id, ...$event })"
 							/>
@@ -156,6 +157,7 @@
 				:input="base.input"
 				:output="base.output"
 				:unitExpression="base.unitExpression"
+				:expression="base.expression"
 				:feature-config="featureConfig"
 				@update-item="$emit('update-item', { id: base.id, ...$event })"
 			/>

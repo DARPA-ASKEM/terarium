@@ -394,7 +394,7 @@ export function createPartsList(parts, model, partType) {
 					input: null,
 					output: null
 				};
-				if (partType === PartType.STATE || PartType.PARAMETER) {
+				if (partType === PartType.STATE || partType === PartType.PARAMETER) {
 					returnObj.unitExpression = t.units?.expression;
 				} else if (partType === PartType.TRANSITION) {
 					returnObj.expression = t.expression;
