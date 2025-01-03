@@ -9,8 +9,20 @@
 				option-value="assetId"
 				placeholder="Select a model"
 				@update:model-value="scenario.setModelSpec($event)"
+				class="mb-3"
 			/>
-
+			<label>Select configuration representing best and generous estimates of the initial conditions</label>
+			<Dropdown
+				:model-value="scenario.modelConfigSpec.id"
+				placeholder="Select a configuration"
+				:options="filterModelConfigurations"
+				option-label="name"
+				option-value="id"
+				@update:model-value="scenario.setModelConfigSpec($event)"
+				:disabled="isEmpty(modelConfigurations) || isFetchingModelInformation"
+				:loading="isFetchingModelInformation"
+				class="mb-3"
+			/>
 			<label>Select intervention policy (historical)</label>
 			<div v-for="(intervention, i) in scenario.interventionSpecs" :key="i" class="flex">
 				<Dropdown
@@ -35,7 +47,7 @@
 			</div>
 			<div>
 				<Button
-					class="py-2"
+					class="py-2 mb-3"
 					size="small"
 					text
 					icon="pi pi-plus"
@@ -43,17 +55,7 @@
 					@click="scenario.addInterventionSpec()"
 				/>
 			</div>
-			<label>Select configuration representing best and generous estimates of the initial conditions</label>
-			<Dropdown
-				:model-value="scenario.modelConfigSpec.id"
-				placeholder="Select a configuration"
-				:options="filterModelConfigurations"
-				option-label="name"
-				option-value="id"
-				@update:model-value="scenario.setModelConfigSpec($event)"
-				:disabled="isEmpty(modelConfigurations) || isFetchingModelInformation"
-				:loading="isFetchingModelInformation"
-			/>
+
 			<label>Select uncertain parameters of interest and adjust ranges to be explored if needed</label>
 			<template v-for="(parameter, i) in scenario.parameters" :key="i">
 				<div class="flex">
@@ -114,7 +116,7 @@
 				:loading="isFetchingModelInformation"
 				filter
 			/>
-			<!-- <img :src="simulate" alt="Simulate chart" /> -->
+			<img :src="horizon" alt="Horizon scanning chart" class="" />
 		</template>
 	</tera-scenario-template>
 </template>
@@ -126,6 +128,7 @@ import Dropdown from 'primevue/dropdown';
 import MultiSelect from 'primevue/multiselect';
 import Button from 'primevue/button';
 import { useProjects } from '@/composables/project';
+import horizon from '@/assets/svg/template-images/horizon-thumbnail.svg';
 import { HorizonScanningScenario } from '@/components/workflow/scenario-templates/horizon-scanning/horizon-scanning-scenario';
 import { getInterventionPoliciesForModel, getModel, getModelConfigurationsForModel } from '@/services/model';
 import { AssetType, InterventionPolicy, ModelConfiguration, ParameterSemantic } from '@/types/Types';

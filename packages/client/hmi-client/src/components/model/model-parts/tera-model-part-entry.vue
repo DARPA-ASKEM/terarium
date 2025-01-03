@@ -2,7 +2,7 @@
 	<section class="flex flex-column gap-2">
 		<span class="flex align-items-center gap-3">
 			<h6>{{ symbol }}</h6>
-			<span class="name">
+			<span v-if="!isTimePart" class="name">
 				<template v-if="featureConfig.isPreview">{{ nameText }}</template>
 				<tera-input-text
 					v-else
@@ -12,7 +12,7 @@
 				/>
 			</span>
 			<span class="unit" :class="{ time: isTimePart }">
-				<template v-if="input && output">
+				<template v-if="input || output">
 					<span><label>Input:</label> {{ input }}</span>
 					<span><label>Output:</label> {{ output }}</span>
 				</template>
@@ -44,7 +44,7 @@
 				</template>
 			</span>
 
-			<span v-if="!featureConfig.isPreview" class="flex ml-auto gap-3">
+			<span v-if="!featureConfig.isPreview && !isTimePart" class="flex ml-auto gap-3">
 				<!-- Three states of description buttons: Hide / Show / Add description -->
 				<Button
 					v-if="(descriptionText && showDescription) || (!descriptionText && showDescription)"
@@ -84,7 +84,7 @@
 			:expression="stringToLatexExpression(expression)"
 			:throw-on-error="false"
 		/>
-		<span class="description">
+		<span v-if="!isTimePart" class="description">
 			<template v-if="featureConfig.isPreview">{{ descriptionText }}</template>
 			<tera-input-text
 				v-if="showDescription"

@@ -9,6 +9,20 @@
 				option-value="assetId"
 				placeholder="Select a model"
 				@update:model-value="scenario.setModelSpec($event)"
+				class="mb-3"
+			/>
+
+			<label>Select configuration representing best and generous estimates of the initial conditions</label>
+			<Dropdown
+				:model-value="scenario.modelConfigSpec.id"
+				placeholder="Select a configuration"
+				:options="filterModelConfigurations"
+				option-label="name"
+				option-value="id"
+				@update:model-value="scenario.setModelConfigSpec($event)"
+				:disabled="isEmpty(modelConfigurations) || isFetchingModelInformation"
+				:loading="isFetchingModelInformation"
+				class="mb-3"
 			/>
 
 			<label>Select intervention policy (historical)</label>
@@ -35,7 +49,7 @@
 			</div>
 			<div>
 				<Button
-					class="py-2"
+					class="py-2 mb-3"
 					size="small"
 					text
 					icon="pi pi-plus"
@@ -43,17 +57,7 @@
 					@click="scenario.addInterventionSpec()"
 				/>
 			</div>
-			<label>Select configuration representing best and generous estimates of the initial conditions</label>
-			<Dropdown
-				:model-value="scenario.modelConfigSpec.id"
-				placeholder="Select a configuration"
-				:options="filterModelConfigurations"
-				option-label="name"
-				option-value="id"
-				@update:model-value="scenario.setModelConfigSpec($event)"
-				:disabled="isEmpty(modelConfigurations) || isFetchingModelInformation"
-				:loading="isFetchingModelInformation"
-			/>
+
 			<label>Select uncertain parameters of interest and adjust ranges to be explored if needed</label>
 			<template v-for="(parameter, i) in scenario.parameters" :key="i">
 				<div class="flex">
