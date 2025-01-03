@@ -9,11 +9,12 @@
 				option-value="assetId"
 				placeholder="Select a model"
 				@update:model-value="scenario.setModelSpec($event)"
+				class="mb-3"
 			/>
 
 			<label>Select configuration representing best starting point pre-interventions</label>
 			<Dropdown
-				class="mb-4"
+				class="mb-3"
 				:model-value="scenario.modelConfigSpec.id"
 				placeholder="Select a configuration"
 				:options="modelConfigurations"
@@ -28,7 +29,7 @@
 				<label>Select intervention policy {{ i + 1 }}</label>
 				<div class="flex">
 					<Dropdown
-						class="flex-1"
+						class="flex-1 mb-3"
 						:model-value="intervention.id"
 						placeholder="Select an intervention policy"
 						:options="interventionPolicies"

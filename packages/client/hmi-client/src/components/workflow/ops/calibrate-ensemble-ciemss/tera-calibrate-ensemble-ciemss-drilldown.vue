@@ -345,7 +345,7 @@ import TeraInputNumber from '@/components/widgets/tera-input-number.vue';
 import AccordionTab from 'primevue/accordiontab';
 import Accordion from 'primevue/accordion';
 import Dropdown from 'primevue/dropdown';
-import { setupDatasetInput, setupCsvAsset, setupModelInput, parseCsvAsset } from '@/services/calibrate-workflow';
+import { setupDatasetInput, setupCsvAsset, parseCsvAsset } from '@/services/calibrate-workflow';
 import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
 import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.vue';
 import TeraSaveDatasetFromSimulation from '@/components/dataset/tera-save-dataset-from-simulation.vue';
@@ -375,7 +375,7 @@ import VegaChart from '@/components/widgets/VegaChart.vue';
 import { ChartSettingType, CiemssPresetTypes, DrilldownTabs } from '@/types/common';
 import { useCharts } from '@/composables/useCharts';
 import { useChartSettings } from '@/composables/useChartSettings';
-import { deleteAnnotation } from '@/services/chart-settings';
+import { deleteAnnotation, updateChartSettingsBySelectedVariables } from '@/services/chart-settings';
 import { DataArray } from '@/utils/stats';
 import { GroupedDataArray } from '@/services/charts';
 import {
@@ -393,7 +393,8 @@ import {
 	fetchOutputData,
 	buildChartData,
 	getEnsembleErrorData,
-	EnsembleErrorData
+	EnsembleErrorData,
+	fetchModelConfigurations
 } from './calibrate-ensemble-util';
 
 const props = defineProps<{
@@ -550,6 +551,22 @@ const setPresetValues = (data: CiemssPresetTypes) => {
 	}
 };
 
+const initDefaultChartSettings = (state: CalibrateEnsembleCiemssOperationState) => {
+	const mappedEnsembleVariables = knobs.value.ensembleMapping.map((c) => c.newName);
+	if (_.isEmpty(state.chartSettings)) {
+		state.chartSettings = updateChartSettingsBySelectedVariables(
+			state.chartSettings ?? [],
+			ChartSettingType.VARIABLE_ENSEMBLE,
+			mappedEnsembleVariables
+		);
+		state.chartSettings = updateChartSettingsBySelectedVariables(
+			state.chartSettings,
+			ChartSettingType.ERROR_DISTRIBUTION,
+			mappedEnsembleVariables
+		);
+	}
+};
+
 const runEnsemble = async () => {
 	if (!datasetId.value || !currentDatasetFileName.value) return;
 
@@ -590,26 +607,17 @@ const runEnsemble = async () => {
 		state.currentProgress = 0;
 		state.inProgressCalibrationId = response?.simulationId;
 		state.inProgressForecastId = '';
+		// Add default chart settings based on the ensemble mapping on the first run
+		initDefaultChartSettings(state);
 		emit('update-state', state);
 	}
 };
 
 onMounted(async () => {
-	allModelConfigurations.value = [];
-	const modelConfigurationIds: string[] = [];
-	props.node.inputs.forEach((ele) => {
-		if (ele.value && ele.type === 'modelConfigId') modelConfigurationIds.push(ele.value[0]);
-	});
-	if (!modelConfigurationIds) return;
-
-	// Model configuration input
-	await Promise.all(
-		modelConfigurationIds.map(async (id) => {
-			const { modelConfiguration, modelOptions } = await setupModelInput(id);
-			if (modelConfiguration) allModelConfigurations.value.push(modelConfiguration);
-			if (modelOptions) allModelOptions.value.push(modelOptions);
-		})
-	);
+	const configs = await fetchModelConfigurations(props.node.inputs);
+	if (!configs) return;
+	allModelConfigurations.value = configs.allModelConfigurations;
+	allModelOptions.value = configs.allModelOptions;
 
 	// dataset input
 	if (datasetId.value) {
