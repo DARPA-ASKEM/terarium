@@ -119,6 +119,7 @@
 							:key="child.id"
 						>
 							<tera-model-part-entry
+								:part-type="partType"
 								:description="child.description"
 								:name="child.name"
 								:id="child.id"
@@ -146,7 +147,7 @@
 			</template>
 			<tera-model-part-entry
 				v-else
-				:is-time-part="!!isTimePart"
+				:part-type="partType"
 				:description="base.description"
 				:name="base.name"
 				:id="base.id"
@@ -184,13 +185,14 @@ import Button from 'primevue/button';
 import type { FeatureConfig } from '@/types/common';
 import TeraInputText from '@/components/widgets/tera-input-text.vue';
 import Paginator from 'primevue/paginator';
+import { PartType } from '@/model-representation/service';
 
 const props = defineProps<{
 	items: any[];
 	featureConfig: FeatureConfig;
 	collapsedItems?: Map<string, string[]>;
 	showMatrix?: boolean;
-	isTimePart?: boolean;
+	partType: PartType;
 	filter?: string;
 }>();
 

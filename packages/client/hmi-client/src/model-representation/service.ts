@@ -355,7 +355,9 @@ export function checkPetrinetAMR(amr: Model) {
 export enum PartType {
 	STATE = 'STATE',
 	PARAMETER = 'PARAMETER',
-	TRANSITION = 'TRANSITION'
+	TRANSITION = 'TRANSITION',
+	OBSERVABLE = 'OBSERVABLE',
+	TIME = 'TIME'
 }
 
 // FIXME: should refactor so typing is explicit and clear
@@ -413,7 +415,7 @@ export function createPartsList(parts, model, partType) {
 			isParent || !basePart
 				? { id: `${id}` }
 				: {
-						id: `${id}`,
+						id: basePart.id,
 						name: basePart.name,
 						description: basePart.description,
 						grounding: basePart.grounding,
