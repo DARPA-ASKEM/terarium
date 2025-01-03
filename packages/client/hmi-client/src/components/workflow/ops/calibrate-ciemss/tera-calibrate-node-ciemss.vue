@@ -187,7 +187,7 @@ const pollResult = async (runId: string) => {
 				if (checkpoint) {
 					const state = _.cloneDeep(props.node.state);
 					const newProgress = +((100 * checkpoint.data.progress) / state.numIterations).toFixed(2);
-					if (newProgress > state.currentProgress) {
+					if (newProgress !== state.currentProgress) {
 						state.currentProgress = newProgress;
 						emit('update-state', state);
 					}
