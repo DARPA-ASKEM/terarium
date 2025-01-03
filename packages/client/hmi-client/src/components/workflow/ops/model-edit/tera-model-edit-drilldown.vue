@@ -9,30 +9,28 @@
 		@update-state="(state: any) => emit('update-state', state)"
 	>
 		<tera-drilldown-section :tabName="DrilldownTabs.Notebook" class="notebook-section">
-			<div class="toolbar">
-				<Suspense>
-					<tera-notebook-jupyter-input
-						:kernel-manager="kernelManager"
-						:default-options="sampleAgentQuestions"
-						:context-language="contextLanguage"
-						@llm-output="(data: any) => appendCode(data, 'code')"
-						@llm-thought-output="(data: any) => llmThoughts.push(data)"
-						@question-asked="updateLlmQuery"
-					>
-						<template #toolbar-right-side>
-							<Button label="Reset" outlined severity="secondary" size="small" @click="resetModel" />
-							<Button
-								icon="pi pi-play"
-								:label="isUpdatingModel ? 'Loading...' : 'Run'"
-								size="small"
-								:loading="isUpdatingModel"
-								@click="runCode"
-								:disabled="isEmpty(codeText)"
-							/>
-						</template>
-					</tera-notebook-jupyter-input>
-				</Suspense>
-			</div>
+			<Suspense>
+				<tera-notebook-jupyter-input
+					:kernel-manager="kernelManager"
+					:default-options="sampleAgentQuestions"
+					:context-language="contextLanguage"
+					@llm-output="(data: any) => appendCode(data, 'code')"
+					@llm-thought-output="(data: any) => llmThoughts.push(data)"
+					@question-asked="updateLlmQuery"
+				>
+					<template #toolbar-right-side>
+						<Button label="Reset" outlined severity="secondary" size="small" @click="resetModel" />
+						<Button
+							icon="pi pi-play"
+							:label="isUpdatingModel ? 'Loading...' : 'Run'"
+							size="small"
+							:loading="isUpdatingModel"
+							@click="runCode"
+							:disabled="isEmpty(codeText)"
+						/>
+					</template>
+				</tera-notebook-jupyter-input>
+			</Suspense>
 			<v-ace-editor
 				v-model:value="codeText"
 				@init="initializeAceEditor"
