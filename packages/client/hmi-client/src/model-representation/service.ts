@@ -424,6 +424,7 @@ export function createPartsList(parts, model, partType) {
 		if (partType === PartType.TRANSITION) {
 			base.templateId = `${id}`;
 			if (basePart) {
+				base.expression = basePart.expression;
 				base.input = basePart.input.join(', ');
 				base.output = basePart.output.join(', ');
 			}
