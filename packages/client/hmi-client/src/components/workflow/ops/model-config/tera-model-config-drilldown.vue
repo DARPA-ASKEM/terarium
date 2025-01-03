@@ -157,7 +157,12 @@
 					/>
 					<Accordion :active-index="observableActiveIndicies" v-if="!isEmpty(observablesList)">
 						<AccordionTab header="Observables">
-							<tera-model-part class="pl-4" :items="observablesList" :feature-config="{ isPreview: true }" />
+							<tera-model-part
+								class="pl-4"
+								:part-type="PartType.OBSERVABLE"
+								:items="observablesList"
+								:feature-config="{ isPreview: true }"
+							/>
 						</AccordionTab>
 					</Accordion>
 					<!-- vertical spacer at end of page -->
@@ -271,7 +276,8 @@ import {
 	isModelMissingMetadata,
 	getParameters as getAmrParameters,
 	getInitials as getAmrInitials,
-	createObservablesList
+	createObservablesList,
+	PartType
 } from '@/model-representation/service';
 import Message from 'primevue/message';
 import TeraColumnarPanel from '@/components/widgets/tera-columnar-panel.vue';
