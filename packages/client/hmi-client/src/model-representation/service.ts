@@ -358,6 +358,9 @@ export enum PartType {
 	TRANSITION = 'TRANSITION'
 }
 
+// FIXME: should refactor so typing is explicit and clear
+// Note "model" is both an AMR model, or it can be a list of transition templates
+// FIXME: Nelson recommended we show subject/outcome/controllers instead of input/output
 export function createPartsList(parts, model, partType) {
 	return Array.from(parts.keys()).map((id) => {
 		const childTargets = parts.get(id) ?? [];
@@ -449,8 +452,8 @@ export function createObservablesList(observables: Observable[]) {
 }
 
 export function createTimeList(time) {
-	return time.map(({ id, name, description, grounding, units }) => ({
-		base: { id, name, description, grounding, unitExpression: units?.expression },
+	return time.map(({ id, units }) => ({
+		base: { id, unitExpression: units?.expression },
 		children: [],
 		isParent: false
 	}));

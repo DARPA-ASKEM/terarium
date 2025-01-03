@@ -186,7 +186,23 @@
 							<!-- Section: Comparison charts -->
 							<AccordionTab v-if="selectedComparisonChartSettings.length > 0" header="Comparison charts">
 								<template v-for="setting of selectedComparisonChartSettings" :key="setting.id">
+									<div v-if="setting.smallMultiples">
+										<div
+											v-for="selectedVariable of setting.selectedVariables"
+											:key="setting.id + selectedVariable"
+											class="comparison-chart-container"
+										>
+											<div class="comparison-chart">
+												<vega-chart
+													expandable
+													:are-embed-actions-visible="true"
+													:visualization-spec="comparisonCharts[setting.id + selectedVariable]"
+												/>
+											</div>
+										</div>
+									</div>
 									<vega-chart
+										v-else
 										expandable
 										:are-embed-actions-visible="true"
 										:visualization-spec="comparisonCharts[setting.id]"
@@ -263,6 +279,7 @@
 						"
 						:active-settings="activeChartSettings"
 						:generate-annotation="generateAnnotation"
+						:comparison="activeChartSettings?.type === ChartSettingType.VARIABLE_COMPARISON"
 						@update-settings="updateActiveChartSettings"
 						@delete-annotation="deleteAnnotation"
 						@close="setActiveChartSettings(null)"
@@ -450,7 +467,7 @@ const isSidebarOpen = ref(true);
 const isOutputSettingsPanelOpen = ref(false);
 const blankMessage = "Click 'Run' to start the simulation";
 
-const currentActiveIndicies = ref([0, 1, 2]);
+const currentActiveIndicies = ref([0, 1, 2, 3]);
 
 const modelVarUnits = ref<{ [key: string]: string }>({});
 let editor: VAceEditorInstance['_editor'] | null;
@@ -940,5 +957,17 @@ onUnmounted(() => kernelManager.shutdown());
 	padding: var(--gap-4);
 	background: var(--surface-100);
 	color: var(--text-color-secondary);
+}
+
+.comparison-chart-container {
+	display: flex;
+	flex-direction: column;
+	display: inline-block;
+
+	.comparison-chart {
+		float: left;
+		box-sizing: border-box;
+		width: 40%;
+	}
 }
 </style>
