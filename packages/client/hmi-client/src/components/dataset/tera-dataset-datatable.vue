@@ -230,6 +230,8 @@ watch(
 				sd: roundStat(stat.sd),
 				chartData: setBarChartData(stat.bins)
 			})) ?? [];
+		// eslint-disable-next-line
+		props.rawContent.headers.sort();
 	},
 	{ immediate: true }
 );
