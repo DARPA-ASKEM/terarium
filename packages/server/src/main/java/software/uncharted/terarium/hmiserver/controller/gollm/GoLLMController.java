@@ -907,7 +907,7 @@ public class GoLLMController {
 	public ResponseEntity<TaskResponse> createEnrichDatasetTask(
 		@RequestParam(name = "dataset-id", required = true) final UUID datasetId,
 		@RequestParam(name = "document-id", required = true) final UUID documentId,
-		@RequestParam(name = "mode", required = false, defaultValue = "ASYNC") final TaskMode mode,
+		@RequestParam(name = "mode", required = false, defaultValue = "SYNC") final TaskMode mode,
 		@RequestParam(name = "project-id", required = false) final UUID projectId,
 		@RequestParam(name = "overwrite", required = false, defaultValue = "false") final boolean overwrite
 	) {
