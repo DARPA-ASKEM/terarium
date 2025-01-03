@@ -55,7 +55,7 @@
 						</div>
 
 						<!-- Number of Samples & Method -->
-						<div class="input-row">
+						<div class="input-row mt-3">
 							<div class="label-and-input">
 								<label for="num-samples">Number of samples</label>
 								<tera-input-number
@@ -75,7 +75,7 @@
 									@update:model-value="updateState"
 								/>
 							</div>
-							<div class="label-and-input">
+							<div class="label-and-input mt-2">
 								<label for="num-samples">Solver Step Size</label>
 								<tera-input-number
 									v-model="solverStepSize"

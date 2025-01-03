@@ -420,6 +420,7 @@ export function createHistogramChart(dataset: Record<string, any>[], options: Hi
  *
  * Then we use the new 'var' and 'value' columns to render timeseries
  * */
+
 export function createForecastChart(
 	samplingLayer: ForecastChartLayer | null,
 	statisticsLayer: ForecastChartLayer | null,
@@ -473,6 +474,7 @@ export function createForecastChart(
 		labelFontSize: isCompact ? 8 : 12,
 		labelOffset: isCompact ? 2 : 4,
 		labelLimit: isCompact ? 50 : 150,
+		symbolType: 'stroke',
 		...options.legendProperties
 	};
 
@@ -656,6 +658,275 @@ export function createForecastChart(
 			]
 		});
 		layerSpec.layer.push(tooltipSubLayer);
+
+		// Add vertical line for tooltip
+		const verticalLineLayer = {
+			mark: {
+				type: 'rule',
+				color: '#AAA',
+				strokeWidth: 2
+			},
+			encoding: {
+				x: {
+					field: statisticsLayer.timeField,
+					type: 'quantitative'
+				},
+				opacity: {
+					condition: [
+						{
+							param: 'hover',
+							value: 0.15,
+							empty: false
+						},
+						{
+							param: 'click',
+							value: 0.15,
+							empty: false
+						}
+					],
+					value: 0
+				}
+			},
+			params: [
+				{
+					name: 'hover',
+					select: {
+						type: 'point',
+						encodings: ['x'],
+						on: 'mouseover',
+						clear: 'mouseout',
+						nearest: true
+					}
+				},
+				{
+					name: 'click',
+					select: {
+						type: 'point',
+						encodings: ['x'],
+						on: 'click',
+						toggle: true,
+						nearest: true
+					}
+				}
+			]
+		};
+		layerSpec.layer.push(verticalLineLayer);
+		// Add a small rectangle behind the timeLabelLayer to make the time more readable
+		const timeLabelBackgroundLayer = {
+			mark: {
+				type: 'rect',
+				color: '#dddddd',
+				opacity: 0.5,
+				width: 30,
+				height: 20,
+				cornerRadius: 4
+			},
+			encoding: {
+				x: {
+					field: statisticsLayer.timeField,
+					type: 'quantitative'
+				},
+				y: {
+					value: 0
+				},
+				opacity: {
+					condition: [
+						{
+							param: 'hover',
+							value: 0.5,
+							empty: false
+						},
+						{
+							param: 'click',
+							value: 0.5,
+							empty: false
+						}
+					],
+					value: 0
+				}
+			}
+		};
+		layerSpec.layer.push(timeLabelBackgroundLayer);
+
+		// Add a label with the current X value (time) for the vertical line
+		const timeLabelLayer = {
+			mark: {
+				type: 'text',
+				align: 'center',
+				color: '#111111',
+				dx: 0,
+				dy: -options.height / 2
+			},
+			encoding: {
+				text: {
+					field: statisticsLayer.timeField,
+					type: 'quantitative'
+				},
+				x: {
+					field: statisticsLayer.timeField,
+					type: 'quantitative'
+				},
+				opacity: {
+					condition: [
+						{
+							param: 'hover',
+							value: 1,
+							empty: false
+						},
+						{
+							param: 'click',
+							value: 1,
+							empty: false
+						}
+					],
+					value: 0
+				}
+			}
+		};
+		layerSpec.layer.push(timeLabelLayer);
+
+		// Add tooltip points for the vertical line
+		const pointLayer = {
+			mark: {
+				type: 'point',
+				size: 50
+			},
+			encoding: {
+				color: {
+					field: 'variableField',
+					type: 'nominal',
+					scale: {
+						domain: statisticsLayer.variables,
+						range: options.colorscheme || CATEGORICAL_SCHEME
+					}
+				},
+				x: {
+					field: statisticsLayer.timeField,
+					type: 'quantitative'
+				},
+				y: {
+					field: 'valueField',
+					type: 'quantitative'
+				},
+				opacity: {
+					condition: [
+						{
+							param: 'hover',
+							value: 1,
+							empty: false
+						},
+						{
+							param: 'click',
+							value: 1,
+							empty: false
+						}
+					],
+					value: 0
+				}
+			}
+		};
+		layerSpec.layer.push(pointLayer);
+
+		// Add labels for each point for tooltip.
+		// This is the base layer with a white stroke around it to make the text readable
+		const labelLayerBase = {
+			mark: {
+				type: 'text',
+				align: 'left',
+				stroke: 'white',
+				strokeWidth: 3,
+				strokeOpacity: 0.5,
+				dx: 5,
+				dy: -5
+			},
+			encoding: {
+				text: {
+					field: 'valueField',
+					type: 'quantitative',
+					format: '.3f'
+				},
+				x: {
+					field: statisticsLayer.timeField,
+					type: 'quantitative'
+				},
+				y: {
+					field: 'valueField',
+					type: 'quantitative'
+				},
+				color: {
+					field: 'variableField',
+					type: 'nominal',
+					scale: {
+						domain: statisticsLayer.variables,
+						range: options.colorscheme || CATEGORICAL_SCHEME
+					}
+				},
+				opacity: {
+					condition: [
+						{
+							param: 'hover',
+							value: 1,
+							empty: false
+						},
+						{
+							param: 'click',
+							value: 1,
+							empty: false
+						}
+					],
+					value: 0
+				}
+			}
+		};
+		layerSpec.layer.push(labelLayerBase);
+		// This is the top layer no stroke
+		const labelLayer = {
+			mark: {
+				type: 'text',
+				align: 'left',
+				dx: 5,
+				dy: -5
+			},
+			encoding: {
+				text: {
+					field: 'valueField',
+					type: 'quantitative',
+					format: '.3f'
+				},
+				x: {
+					field: statisticsLayer.timeField,
+					type: 'quantitative'
+				},
+				y: {
+					field: 'valueField',
+					type: 'quantitative'
+				},
+				color: {
+					field: 'variableField',
+					type: 'nominal',
+					scale: {
+						domain: statisticsLayer.variables,
+						range: options.colorscheme || CATEGORICAL_SCHEME
+					}
+				},
+				opacity: {
+					condition: [
+						{
+							param: 'hover',
+							value: 1,
+							empty: false
+						},
+						{
+							param: 'click',
+							value: 1,
+							empty: false
+						}
+					],
+					value: 0
+				}
+			}
+		};
+		layerSpec.layer.push(labelLayer);
 
 		spec.layer.push(layerSpec);
 	}
