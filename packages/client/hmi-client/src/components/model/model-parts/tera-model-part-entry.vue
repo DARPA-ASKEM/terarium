@@ -1,7 +1,7 @@
 <template>
 	<section class="flex flex-column gap-2">
 		<span class="flex align-items-center gap-3">
-			<h6>{{ symbol }}</h6>
+			<h6>{{ id }}</h6>
 			<span v-if="!isTimePart" class="name">
 				<template v-if="featureConfig.isPreview">{{ nameText }}</template>
 				<tera-input-text
@@ -107,6 +107,7 @@ import { getCurieFromGroundingIdentifier, getNameOfCurieCached, searchCuriesEnti
 import type { FeatureConfig } from '@/types/common';
 import Dropdown from 'primevue/dropdown';
 import { CalendarDateType } from '@/types/common';
+import { PartType } from '@/model-representation/service';
 
 const props = defineProps<{
 	description?: string;
@@ -119,7 +120,7 @@ const props = defineProps<{
 	input?: any;
 	output?: any;
 	featureConfig: FeatureConfig;
-	isTimePart?: boolean;
+	partType: PartType;
 }>();
 
 const emit = defineEmits(['update-item']);
@@ -130,11 +131,13 @@ const descriptionText = ref(props.description);
 const query = ref('');
 const results = ref<DKG[]>([]);
 
-const symbol = computed(() => (props.templateId ? `${props.templateId}, ${props.id}` : props.id));
-
 // If we are in preview mode and there is no content, show nothing
-const showUnit = computed(() => !(props.featureConfig.isPreview && !unitExpression.value));
+const showUnit = computed(
+	() => !(props.featureConfig.isPreview && !unitExpression.value) && props.partType !== PartType.TRANSITION
+);
 const showConcept = computed(() => !(props.featureConfig.isPreview && !query.value));
+
+const isTimePart = props.partType === PartType.TIME;
 
 // Used if an option isn't selected from the Autocomplete suggestions but is typed in regularly
 function applyValidConcept() {

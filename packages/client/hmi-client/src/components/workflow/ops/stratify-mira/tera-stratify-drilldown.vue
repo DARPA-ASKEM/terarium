@@ -37,27 +37,25 @@
 		</div>
 		<div :tabName="StratifyTabs.Notebook">
 			<tera-drilldown-section class="notebook-section">
-				<div class="toolbar">
-					<tera-notebook-jupyter-input
-						:kernel-manager="kernelManager"
-						:default-options="sampleAgentQuestions"
-						:context-language="'python3'"
-						@llm-output="(data: any) => processLLMOutput(data)"
-						@llm-thought-output="(data: any) => llmThoughts.push(data)"
-						@question-asked="updateLlmQuery"
-					>
-						<template #toolbar-right-side>
-							<Button
-								:loading="isStratifyInProgress"
-								:label="isStratifyInProgress ? 'Loading...' : 'Run'"
-								size="small"
-								icon="pi pi-play"
-								@click="runCodeStratify"
-								:disabled="isEmpty(codeText)"
-							/>
-						</template>
-					</tera-notebook-jupyter-input>
-				</div>
+				<tera-notebook-jupyter-input
+					:kernel-manager="kernelManager"
+					:default-options="sampleAgentQuestions"
+					:context-language="'python3'"
+					@llm-output="(data: any) => processLLMOutput(data)"
+					@llm-thought-output="(data: any) => llmThoughts.push(data)"
+					@question-asked="updateLlmQuery"
+				>
+					<template #toolbar-right-side>
+						<Button
+							:loading="isStratifyInProgress"
+							:label="isStratifyInProgress ? 'Loading...' : 'Run'"
+							size="small"
+							icon="pi pi-play"
+							@click="runCodeStratify"
+							:disabled="isEmpty(codeText)"
+						/>
+					</template>
+				</tera-notebook-jupyter-input>
 				<v-ace-editor
 					v-model:value="codeText"
 					@init="initialize"
