@@ -29,16 +29,22 @@
 				<label>Select intervention policy {{ i + 1 }}</label>
 				<div class="flex">
 					<Dropdown
+						ref="interventionDropdowns"
 						class="flex-1 mb-3"
 						:model-value="intervention.id"
 						placeholder="Select an intervention policy"
-						:options="interventionPolicies"
+						:options="combinedInterventionPolicies"
 						option-label="name"
 						option-value="id"
 						@update:model-value="scenario.setInterventionSpecs($event, i)"
-						:disabled="isEmpty(interventionPolicies) || isFetchingModelInformation"
+						:disabled="isFetchingModelInformation"
 						:loading="isFetchingModelInformation"
-					/>
+						filter
+					>
+						<template #filtericon>
+							<Button label="Create new policy" icon="pi pi-plus" size="small" text @click="onOpenPolicyModel(i)" />
+						</template>
+					</Dropdown>
 					<Button
 						v-if="scenario.interventionSpecs.length > 1"
 						text
@@ -75,6 +81,11 @@
 			/>
 		</template>
 	</tera-scenario-template>
+	<tera-new-policy-modal
+		:is-visible="isPolicyModalVisible"
+		@close="isPolicyModalVisible = false"
+		@create="addNewPolicy"
+	/>
 </template>
 
 <script setup lang="ts">
@@ -86,9 +97,11 @@ import { isEmpty } from 'lodash';
 import Dropdown from 'primevue/dropdown';
 import MultiSelect from 'primevue/multiselect';
 import Button from 'primevue/button';
+import { v4 as uuidv4 } from 'uuid';
 import { ScenarioHeader } from '../base-scenario';
 import { DecisionMakingScenario } from './decision-making-scenario';
 import TeraScenarioTemplate from '../tera-scenario-template.vue';
+import TeraNewPolicyModal from '../tera-new-policy-modal.vue';
 
 const header: ScenarioHeader = Object.freeze({
 	title: 'Decision Making Template',
@@ -103,13 +116,38 @@ const header: ScenarioHeader = Object.freeze({
 const isFetchingModelInformation = ref(false);
 const models = computed(() => useProjects().getActiveProjectAssets(AssetType.Model));
 
+const interventionDropdowns = ref();
 const modelConfigurations = ref<ModelConfiguration[]>([]);
 const interventionPolicies = ref<InterventionPolicy[]>([]);
 const modelStateOptions = ref<any[]>([]);
+const isPolicyModalVisible = ref(false);
+// which intervention index is being edited
+const policyModalContext = ref<number | null>(null);
+
+const combinedInterventionPolicies = computed(() => [
+	...interventionPolicies.value,
+	...props.scenario.newInterventionSpecs
+]);
 
 const props = defineProps<{
 	scenario: DecisionMakingScenario;
 }>();
+
+const onOpenPolicyModel = (index: number) => {
+	interventionDropdowns.value[index].hide();
+	policyModalContext.value = index;
+	isPolicyModalVisible.value = true;
+};
+
+const addNewPolicy = (newPolicyName: string) => {
+	if (newPolicyName && policyModalContext.value !== null) {
+		const id = uuidv4();
+		props.scenario.setNewInterventionSpec(id, newPolicyName);
+		props.scenario.setInterventionSpecs(id, policyModalContext.value);
+		isPolicyModalVisible.value = false;
+		policyModalContext.value = null;
+	}
+};
 
 const emit = defineEmits(['save-workflow']);
 

@@ -28,17 +28,23 @@
 			<label>Select intervention policy (historical)</label>
 			<div v-for="(intervention, i) in scenario.interventionSpecs" :key="i" class="flex">
 				<Dropdown
+					ref="interventionDropdowns"
 					class="flex-1 my-1"
 					:model-value="intervention.id"
-					:options="interventionPolicies"
+					:options="combinedInterventionPolicies"
 					option-label="name"
 					option-value="id"
 					placeholder="Select an intervention policy"
 					@update:model-value="scenario.setInterventionSpec($event, i)"
 					:key="i"
-					:disabled="isEmpty(interventionPolicies)"
+					:disabled="isFetchingModelInformation"
 					:loading="isFetchingModelInformation"
-				/>
+					filter
+				>
+					<template #filtericon>
+						<Button label="Create new policy" icon="pi pi-plus" size="small" text @click="onOpenPolicyModel(i)" />
+					</template>
+				</Dropdown>
 				<Button
 					v-if="scenario.interventionSpecs.length > 1"
 					size="small"
@@ -121,6 +127,11 @@
 			<!-- <img :src="simulate" alt="Simulate chart" /> -->
 		</template>
 	</tera-scenario-template>
+	<tera-new-policy-modal
+		:is-visible="isPolicyModalVisible"
+		@close="isPolicyModalVisible = false"
+		@create="addNewPolicy"
+	/>
 </template>
 
 <script setup lang="ts">
@@ -135,9 +146,11 @@ import { getInterventionPoliciesForModel, getModel, getModelConfigurationsForMod
 import { AssetType, InterventionPolicy, ModelConfiguration, ParameterSemantic } from '@/types/Types';
 import { getModelConfigurationById, getParameter, getParameters } from '@/services/model-configurations';
 import TeraInputNumber from '@/components/widgets/tera-input-number.vue';
+import { v4 as uuidv4 } from 'uuid';
 import { ScenarioHeader } from '../base-scenario';
 import TeraScenarioTemplate from '../tera-scenario-template.vue';
 import { displayParameter } from '../scenario-template-utils';
+import teraNewPolicyModal from '../tera-new-policy-modal.vue';
 
 const header: ScenarioHeader = Object.freeze({
 	title: 'Value of information template',
@@ -164,6 +177,15 @@ const modelParameters = ref<ParameterSemantic[]>([]);
 
 const selectedModelConfiguration = ref<ModelConfiguration | null>(null);
 
+const interventionDropdowns = ref();
+const isPolicyModalVisible = ref(false);
+const policyModalContext = ref<number | null>(null);
+
+const combinedInterventionPolicies = computed(() => [
+	...interventionPolicies.value,
+	...props.scenario.newInterventionSpecs
+]);
+
 const props = defineProps<{
 	scenario: ValueOfInformationScenario;
 }>();
@@ -175,6 +197,22 @@ const onParameterSelect = (parameterId: string, index: number) => {
 	const parameter = _.cloneDeep(getParameter(selectedModelConfiguration.value, parameterId));
 	if (!parameter) return;
 	props.scenario.setParameter(parameter, index);
+};
+
+const onOpenPolicyModel = (index: number) => {
+	interventionDropdowns.value[index].hide();
+	policyModalContext.value = index;
+	isPolicyModalVisible.value = true;
+};
+
+const addNewPolicy = (newPolicyName: string) => {
+	if (newPolicyName && policyModalContext.value !== null) {
+		const id = uuidv4();
+		props.scenario.setNewInterventionSpec(id, newPolicyName);
+		props.scenario.setInterventionSpec(id, policyModalContext.value);
+		isPolicyModalVisible.value = false;
+		policyModalContext.value = null;
+	}
 };
 
 watch(
