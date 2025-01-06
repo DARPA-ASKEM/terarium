@@ -253,6 +253,9 @@ async function processPolling(id, propName, inProgressPropName) {
 		state[propName] = id;
 		state[inProgressPropName] = '';
 		emit('update-state', state);
+		if (propName === 'forecastId') {
+			await processResult(id); // Only process and output result for main forecast
+		}
 	}
 }
 
@@ -261,7 +264,6 @@ watch(
 	async (id) => {
 		if (!id || id === '') return;
 		await processPolling(id, 'forecastId', 'inProgressForecastId');
-		await processResult(id); // Only process and output result for main forecast
 	},
 	{ immediate: true }
 );
