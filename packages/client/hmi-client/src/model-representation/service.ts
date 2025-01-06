@@ -355,7 +355,9 @@ export function checkPetrinetAMR(amr: Model) {
 export enum PartType {
 	STATE = 'STATE',
 	PARAMETER = 'PARAMETER',
-	TRANSITION = 'TRANSITION'
+	TRANSITION = 'TRANSITION',
+	OBSERVABLE = 'OBSERVABLE',
+	TIME = 'TIME'
 }
 
 // FIXME: should refactor so typing is explicit and clear
@@ -392,7 +394,7 @@ export function createPartsList(parts, model, partType) {
 					input: null,
 					output: null
 				};
-				if (partType === PartType.STATE || PartType.PARAMETER) {
+				if (partType === PartType.STATE || partType === PartType.PARAMETER) {
 					returnObj.unitExpression = t.units?.expression;
 				} else if (partType === PartType.TRANSITION) {
 					returnObj.expression = t.expression;
@@ -413,7 +415,7 @@ export function createPartsList(parts, model, partType) {
 			isParent || !basePart
 				? { id: `${id}` }
 				: {
-						id: `${id}`,
+						id: basePart.id,
 						name: basePart.name,
 						description: basePart.description,
 						grounding: basePart.grounding,
@@ -422,6 +424,7 @@ export function createPartsList(parts, model, partType) {
 		if (partType === PartType.TRANSITION) {
 			base.templateId = `${id}`;
 			if (basePart) {
+				base.expression = basePart.expression;
 				base.input = basePart.input.join(', ');
 				base.output = basePart.output.join(', ');
 			}
