@@ -133,7 +133,7 @@ def compare_models_chain(llm: LlmToolsInterface, amrs: List[str], goal: str) -> 
 
 
 def general_query_chain(llm: LlmToolsInterface, instruction: str) -> str:
-    prompt = llm.create_generate_respose_prompt(instruction)
+    prompt = llm.create_general_query_prompt(instruction)
     return llm.send_to_llm_with_string_output(prompt, None)
 
 
