@@ -1,6 +1,29 @@
 <template>
 	<div class="chart-settings">
 		<h5>{{ title }}</h5>
+		<template v-if="type === ChartSettingType.VARIABLE_ENSEMBLE">
+			<tera-checkbox
+				:disabled="selectedOptions.length === 0"
+				label="Show individual models"
+				:model-value="Boolean(ensembleChartOptions?.showIndividualModels)"
+				@update:model-value="toggleEnsembleChartOption('showIndividualModels', $event)"
+			/>
+			<!-- Disabling following two checkboxes for now since their functionalities aren't implemented yet -->
+			<!-- <tera-checkbox
+				class="pl-5"
+				:disabled="selectedOptions.length === 0"
+				label="Relative to ensemble"
+				:model-value="Boolean(ensembleChartOptions.relativeToEnsemble)"
+				@update:model-value="toggleEnsembleChartOption('relativeToEnsemble', $event)"
+			/>
+			<tera-checkbox
+				v-if="isSimulateEnsembleSettings"
+				label="Show individual models with weights"
+				:disabled="selectedOptions.length === 0"
+				:model-value="Boolean(ensembleChartOptions.showIndividualModelsWithWeight)"
+				@update:model-value="toggleEnsembleChartOption('showIndividualModelsWithWeight', $event)"
+			/> -->
+		</template>
 		<tera-chart-control
 			:chart-config="{
 				selectedRun: 'fixme',
@@ -26,7 +49,15 @@
 						timepoint: sensitivityOptions.timepoint
 					})
 				"
-			/>
+			>
+				<template v-slot:value>
+					<template v-for="(variable, index) in sensitivityOptions.selectedInputOptions" :key="index">
+						<template v-if="index > 0">,&nbsp;</template>
+						<span> {{ variable }} </span>
+					</template>
+				</template>
+			</MultiSelect>
+
 			<div class="mb-2"></div>
 			<label :class="_.isEmpty(selectedOptions) ? 'disabled' : ''">Select time slice of interest</label>
 			<tera-input-number
@@ -48,29 +79,6 @@
 			@open="$emit('open', s)"
 			@remove="$emit('remove', s.id)"
 		/>
-		<template v-if="type === ChartSettingType.VARIABLE_ENSEMBLE">
-			<tera-checkbox
-				:disabled="selectedOptions.length === 0"
-				label="Show individual models"
-				:model-value="Boolean(ensembleChartOptions?.showIndividualModels)"
-				@update:model-value="toggleEnsembleChartOption('showIndividualModels', $event)"
-			/>
-			<!-- Disabling following two checkboxes for now since their functionalities aren't implemented yet -->
-			<!-- <tera-checkbox
-				class="pl-5"
-				:disabled="selectedOptions.length === 0"
-				label="Relative to ensemble"
-				:model-value="Boolean(ensembleChartOptions.relativeToEnsemble)"
-				@update:model-value="toggleEnsembleChartOption('relativeToEnsemble', $event)"
-			/>
-			<tera-checkbox
-				v-if="isSimulateEnsembleSettings"
-				label="Show individual models with weights"
-				:disabled="selectedOptions.length === 0"
-				:model-value="Boolean(ensembleChartOptions.showIndividualModelsWithWeight)"
-				@update:model-value="toggleEnsembleChartOption('showIndividualModelsWithWeight', $event)"
-			/> -->
-		</template>
 	</div>
 </template>
 

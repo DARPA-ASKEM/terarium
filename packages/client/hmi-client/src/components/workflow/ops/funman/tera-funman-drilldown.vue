@@ -228,6 +228,7 @@
 								<AccordionTab v-if="!isEmpty(calibratedConfigObservables)" header="Observables">
 									<tera-model-part
 										class="pl-4"
+										:part-type="PartType.OBSERVABLE"
 										:items="calibratedConfigObservables"
 										:feature-config="{ isPreview: true }"
 									/>
@@ -391,6 +392,7 @@ import { removeChartSettingById, updateChartSettingsBySelectedVariables } from '
 import { nodeOutputLabel } from '@/components/workflow/util';
 import { formatJSON } from '@/services/code';
 import TeraDrilldownPreview from '@/components/drilldown/tera-drilldown-preview.vue';
+import { PartType } from '@/model-representation/service';
 import { FunmanOperationState, Constraint, ConstraintType, CompartmentalConstraint } from './funman-operation';
 
 const props = defineProps<{
