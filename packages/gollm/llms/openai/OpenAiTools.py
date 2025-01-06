@@ -1,9 +1,5 @@
 import json
 import os
-from typing import List
-
-from openai import OpenAI
-
 from common.LlmToolsInterface import LlmToolsInterface
 from common.prompts.amr_enrichment import ENRICH_PROMPT
 from common.prompts.chart_annotation import CHART_ANNOTATION_PROMPT
@@ -22,6 +18,7 @@ from common.prompts.equations_from_image import EQUATIONS_FROM_IMAGE_PROMPT
 from common.prompts.general_query import GENERAL_QUERY_PROMPT
 from common.prompts.interventions_from_document import INTERVENTIONS_FROM_DOCUMENT_PROMPT
 from common.prompts.latex_style_guide import LATEX_STYLE_GUIDE
+from common.prompts.latex_to_sympy import LATEX_TO_SYMPY_PROMPT
 from common.prompts.model_card import MODEL_CARD_PROMPT
 from common.prompts.model_meta_compare import (
     MODEL_METADATA_COMPARE_PROMPT,
@@ -34,6 +31,8 @@ from common.utils import (
     escape_curly_braces,
     unescape_curly_braces
 )
+from openai import OpenAI
+from typing import List
 
 GPT_MODEL = "gpt-4o-2024-08-06"
 
@@ -226,4 +225,11 @@ class OpenAiTools(LlmToolsInterface):
         return CHART_ANNOTATION_PROMPT.format(
             preamble=preamble,
             instruction=instruction
+        )
+
+
+    def create_latex_to_sympy_prompt(self, equations: List[str], schema=None) -> str:
+        print("Building prompt to transform latex equations to sympy...")
+        return LATEX_TO_SYMPY_PROMPT.format(
+            latex_equations="\n".join(equations)
         )

@@ -1,9 +1,6 @@
+import boto3
 import json
 import os
-from typing import List
-
-import boto3
-
 from common.LlmToolsInterface import LlmToolsInterface
 from common.prompts.amr_enrichment import ENRICH_PROMPT
 from common.prompts.chart_annotation import CHART_ANNOTATION_PROMPT
@@ -22,6 +19,7 @@ from common.prompts.equations_from_image import EQUATIONS_FROM_IMAGE_PROMPT
 from common.prompts.general_query import GENERAL_QUERY_PROMPT
 from common.prompts.interventions_from_document import INTERVENTIONS_FROM_DOCUMENT_PROMPT
 from common.prompts.latex_style_guide import LATEX_STYLE_GUIDE
+from common.prompts.latex_to_sympy import LATEX_TO_SYMPY_PROMPT
 from common.prompts.model_card import MODEL_CARD_PROMPT
 from common.prompts.model_meta_compare import (
     MODEL_METADATA_COMPARE_PROMPT,
@@ -35,6 +33,7 @@ from common.utils import (
     unescape_curly_braces
 )
 from llms.llama.prompts.llama_prompts import LLAMA_START_PROMPT, LLAMA_RETURN_INSTRUCTIONS, LLAMA_END_PROMPT
+from typing import List
 
 GPT_MODEL = "us.meta.llama3-2-90b-instruct-v1:0"
 
@@ -298,3 +297,16 @@ class LlamaTools(LlmToolsInterface):
             schema=schema
         )
         prompt += LLAMA_END_PROMPT
+
+
+    def create_latex_to_sympy_prompt(self, equations: List[str], schema: str) -> str:
+        print("Building prompt to transform latex equations to sympy...")
+        prompt = LLAMA_START_PROMPT
+        prompt += LATEX_TO_SYMPY_PROMPT.format(
+            latex_equations="\n".join(equations)
+        )
+        prompt += LLAMA_RETURN_INSTRUCTIONS.format(
+            schema=schema
+        )
+        prompt += LLAMA_END_PROMPT
+        return prompt

@@ -40,7 +40,7 @@ class LlmToolsInterface:
         pass
 
     def create_equations_from_image_prompt(self, image_url: str, schema: str) -> str:
-        """Create equations from image prompt"""
+        """Create a prompt that extracts latext equations from an image"""
         pass
 
     def create_interventions_from_document_prompt(self, amr: str, document: str, schema: str) -> str:
@@ -61,4 +61,8 @@ class LlmToolsInterface:
 
     def create_chart_annotation_prompt(self, preamble: str, instruction: str, schema: str) -> str:
         """Create a prompt that annotates a chart"""
+        pass
+
+    def create_latex_to_sympy_prompt(self, equations: List[str], schema: str) -> str:
+        """Create a prompt that converts latex to sympy"""
         pass

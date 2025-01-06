@@ -11,7 +11,7 @@ LLAMA_END_PROMPT = """
 """
 
 LLAMA_RETURN_INSTRUCTIONS = """
-Do not respond in full sentences; use the following json schema to create and populate a JSON object.
+Do not respond in full sentences; do not surround the answer in ``` or any other code block; only use the following json schema to create and populate a JSON object.
 
 --- JSON SCHEMA START ---
 

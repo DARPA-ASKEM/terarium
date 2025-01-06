@@ -18,10 +18,9 @@ equation_output = [sympy.Eq(S(t).diff(t), -beta * S(t) * I(t) + b - m * S(t))]
 
 Now, do the same for this LaTeX input:
 
+--- EQUATIONS START ---
+
 {latex_equations}
 
-Respond with just the code and nothing else, do not surround the answer in ```
-
-
-Answer:
+--- EQUATIONS END ---
 """
