@@ -616,7 +616,7 @@ export function createForecastChart(
 	if (statisticsLayer && !isEmpty(statisticsLayer.variables) && !isEmpty(statisticsLayer.data)) {
 		const layerSpec = newLayer(statisticsLayer, 'line');
 		const lineSubLayer = layerSpec.layer[0];
-		// const tooltipSubLayer = structuredClone(lineSubLayer);
+
 		Object.assign(lineSubLayer.encoding, {
 			opacity: { value: 1.0 },
 			strokeWidth: { value: 2 }
@@ -631,33 +631,6 @@ export function createForecastChart(
 				lineSubLayer.encoding.color.legend.labelExpr = labelExpr;
 			}
 		}
-
-		// Build a transparent layer with fat lines as a better hover target for tooltips
-		// const tooltipContent = statisticsLayer.variables?.map((d) => {
-		// 	const tip: any = {
-		// 		field: d,
-		// 		type: 'quantitative'
-		// 	};
-
-		// 	if (options.translationMap && options.translationMap[d]) {
-		// 		tip.title = options.translationMap[d];
-		// 	}
-
-		// 	return tip;
-		// });
-
-		// Object.assign(tooltipSubLayer.encoding, {
-		// 	opacity: { value: 0.00000001 },
-		// 	strokeWidth: { value: 16 },
-		// 	tooltip: [
-		// 		{
-		// 			field: statisticsLayer.timeField,
-		// 			type: 'quantitative'
-		// 		},
-		// 		...(tooltipContent || [])
-		// 	]
-		// });
-		// layerSpec.layer.push(tooltipSubLayer);
 
 		// Add vertical line for tooltip
 		const verticalLineLayer = {
