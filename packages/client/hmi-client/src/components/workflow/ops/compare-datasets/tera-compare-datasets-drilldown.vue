@@ -178,9 +178,9 @@ import Button from 'primevue/button';
 import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
 import Dropdown from 'primevue/dropdown';
-import { Dataset } from '@/types/Types';
+import { Dataset, InterventionPolicy } from '@/types/Types';
 import { getDataset, getRawContent } from '@/services/dataset';
-// import { getInterventionPolicyById } from '@/services/intervention-policy';
+import { getInterventionPolicyById } from '@/services/intervention-policy';
 import TeraCheckbox from '@/components/widgets/tera-checkbox.vue';
 import RadioButton from 'primevue/radiobutton';
 import { isEmpty, cloneDeep } from 'lodash';
@@ -213,6 +213,7 @@ const compareOptions: { label: string; value: CompareValue }[] = [
 ];
 
 const datasets = ref<Dataset[]>([]);
+const interventionPolicies = ref<InterventionPolicy[]>([]);
 
 const commonHeaderNames = ref<string[]>([]);
 const timepointHeaderName = ref<string | null>(null);
@@ -301,13 +302,12 @@ const initialize = async () => {
 	const datasetInputs = inputs.filter(
 		(input) => input.type === 'datasetId' && input.status === WorkflowPortStatus.CONNECTED
 	);
-	const promises = datasetInputs.map((input) => getDataset(input.value![0]));
+	const datasetPromises = datasetInputs.map((input) => getDataset(input.value![0]));
 
 	isFetchingDatasets.value = true;
-	await Promise.all(promises).then((ds) => {
+	await Promise.all(datasetPromises).then((ds) => {
 		ds.forEach((dataset) => {
 			if (!dataset) return;
-			datasets.value.push(dataset);
 			const interventionPolicyId = dataset.metadata?.simulationAttributes?.interventionPolicyId;
 			if (interventionPolicyId) interventionPolicyIds.push(interventionPolicyId);
 		});
@@ -319,6 +319,12 @@ const initialize = async () => {
 	if (!knobs.value.selectedDataset) knobs.value.selectedDataset = datasets.value[0]?.id ?? null;
 
 	generateChartData();
+
+	if (isEmpty(interventionPolicyIds)) return;
+	const interventionPolicyPromises = interventionPolicyIds.map((id) => getInterventionPolicyById(id));
+	await Promise.all(interventionPolicyPromises).then((policies) => {
+		interventionPolicies.value = policies.filter((policy) => policy !== null);
+	});
 };
 
 // Following two funcs are util like

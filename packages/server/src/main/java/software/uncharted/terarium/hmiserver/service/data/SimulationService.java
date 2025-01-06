@@ -120,10 +120,9 @@ public class SimulationService extends TerariumAssetServiceWithoutSearch<Simulat
 			ObjectNode simulationAttributes = mapper.createObjectNode();
 
 			metadata.put("simulationId", simId.toString());
-			if (interventionPolicyId.isPresent()) {
-				simulationAttributes.put("interventionPolicyId", interventionPolicyId.toString());
-				metadata.set("simulationAttributes", simulationAttributes);
-			}
+			interventionPolicyId.ifPresent(id -> simulationAttributes.put("interventionPolicyId", id.toString()));
+			metadata.set("simulationAttributes", simulationAttributes);
+
 			dataset.setMetadata(metadata);
 
 			// Attach the user to the dataset
