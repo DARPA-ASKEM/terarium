@@ -104,7 +104,6 @@ async function getBulkDatasets(datasetIDs: string[]) {
  */
 async function downloadRawFile(datasetId: string, filename: string, limit: number = 100): Promise<CsvAsset | null> {
 	const URL = `/datasets/${datasetId}/download-csv?filename=${filename}&limit=${limit}`;
-	console.log('URL', URL);
 	const response = await API.get(URL).catch((error) => {
 		logger.error(`Error: data-service was not able to retrieve the dataset's rawfile ${error}`);
 	});
@@ -239,13 +238,13 @@ async function createDatasetFromSimulationResult(
 	projectId: string,
 	simulationId: string,
 	datasetName: string | null,
-	addToProject?: boolean
+	addToProject: boolean = true,
+	interventionPolicyId?: string
 ): Promise<Dataset | null> {
-	if (addToProject === undefined) addToProject = true;
 	try {
-		const response: AxiosResponse<Dataset> = await API.post(
-			`/simulations/${simulationId}/create-result-as-dataset/${projectId}?dataset-name=${datasetName}&add-to-project=${addToProject}`
-		);
+		let URL = `/simulations/${simulationId}/create-result-as-dataset/${projectId}?dataset-name=${datasetName}&add-to-project=${addToProject}`;
+		if (interventionPolicyId) URL += `&intervention-policy-id=${interventionPolicyId}`;
+		const response: AxiosResponse<Dataset> = await API.post(URL);
 		return response.data as Dataset;
 	} catch (error) {
 		logger.error(`/simulations/{id}/create-result-as-dataset/{projectId} not responding:  ${error}`, {

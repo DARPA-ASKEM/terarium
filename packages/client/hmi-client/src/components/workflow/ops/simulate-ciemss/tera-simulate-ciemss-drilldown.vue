@@ -435,6 +435,7 @@ import { ChartSettingType, CiemssPresetTypes, DrilldownTabs } from '@/types/comm
 import VegaChart from '@/components/widgets/VegaChart.vue';
 import { KernelSessionManager } from '@/services/jupyter';
 import TeraChartSettings from '@/components/widgets/tera-chart-settings.vue';
+import SelectButton from 'primevue/selectbutton';
 import TeraChartSettingsPanel from '@/components/widgets/tera-chart-settings-panel.vue';
 import TeraDatasetDatatable from '@/components/dataset/tera-dataset-datatable.vue';
 import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';

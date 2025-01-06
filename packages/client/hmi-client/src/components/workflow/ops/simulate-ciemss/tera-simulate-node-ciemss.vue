@@ -168,7 +168,14 @@ Provide a summary in 100 words or less.
 
 	const datasetName = `Forecast run ${runId}`;
 	const projectId = useProjects().activeProject.value?.id ?? '';
-	const datasetResult = await createDatasetFromSimulationResult(projectId, runId, datasetName, false);
+	const datasetResult = await createDatasetFromSimulationResult(
+		projectId,
+		runId,
+		datasetName,
+		false,
+		interventionPolicy.value?.id
+	);
+	console.log('datasetResult', datasetResult);
 	if (!datasetResult) {
 		logger.error('Error creating dataset from simulation result.');
 		return;

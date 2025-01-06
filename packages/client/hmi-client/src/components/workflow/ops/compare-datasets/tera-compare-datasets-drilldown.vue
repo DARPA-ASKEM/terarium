@@ -28,7 +28,12 @@
 							label="All simulations are from the same model"
 							disabled
 						/> -->
-						<div class="mb-4" />
+						<tera-checkbox
+							class="mt-2 mb-4"
+							v-model="areSimulationsFromSameModel"
+							label="All simulations are from the same model"
+							disabled
+						/>
 						<template v-if="knobs.selectedCompareOption === CompareValue.IMPACT">
 							<label> Select simulation to use as a baseline (optional) </label>
 							<Dropdown
@@ -40,11 +45,9 @@
 								placeholder="Optional"
 								@change="generateChartData"
 							/>
-							<div class="mb-4" />
 							<label>Comparison tables</label>
 							<tera-checkbox v-model="isATESelected" label="Average treatment effect (ATE)" />
 						</template>
-						<div class="mb-4" />
 						<!-- Pascale asked me to omit this timepoint selector, but I'm keeping it here until we are certain it's not needed -->
 						<!--
 						<label class="mt-2">Timepoint column</label>
@@ -177,6 +180,7 @@ import AccordionTab from 'primevue/accordiontab';
 import Dropdown from 'primevue/dropdown';
 import { Dataset } from '@/types/Types';
 import { getDataset, getRawContent } from '@/services/dataset';
+// import { getInterventionPolicyById } from '@/services/intervention-policy';
 import TeraCheckbox from '@/components/widgets/tera-checkbox.vue';
 import RadioButton from 'primevue/radiobutton';
 import { isEmpty, cloneDeep } from 'lodash';
@@ -205,7 +209,7 @@ const emit = defineEmits(['update-state', 'update-status', 'close']);
 
 const compareOptions: { label: string; value: CompareValue }[] = [
 	{ label: 'Compare the impact of interventions', value: CompareValue.IMPACT },
-	{ label: 'Rank interventions based on multiple charts', value: CompareValue.RANK }
+	{ label: 'Rank interventions based on multiple criteria', value: CompareValue.RANK }
 ];
 
 const datasets = ref<Dataset[]>([]);
@@ -218,12 +222,14 @@ const plotOptions = [
 	{ label: 'Percent change', value: PlotValue.PERCENTAGE },
 	{ label: 'Difference', value: PlotValue.DIFFERENCE }
 ];
+const interventionPolicyIds: string[] = [];
 
 const isInputSettingsOpen = ref(true);
 const isOutputSettingsOpen = ref(true);
 const activeIndices = ref([0, 1, 2]);
 
 const isFetchingDatasets = ref(false);
+const areSimulationsFromSameModel = ref(true);
 const isATESelected = ref(false);
 
 const {
@@ -299,10 +305,16 @@ const initialize = async () => {
 
 	isFetchingDatasets.value = true;
 	await Promise.all(promises).then((ds) => {
-		const filteredDatasets: Dataset[] = ds.filter((dataset) => dataset !== null);
-		datasets.value.push(...filteredDatasets);
+		ds.forEach((dataset) => {
+			if (!dataset) return;
+			datasets.value.push(dataset);
+			const interventionPolicyId = dataset.metadata?.simulationAttributes?.interventionPolicyId;
+			if (interventionPolicyId) interventionPolicyIds.push(interventionPolicyId);
+		});
 	});
 	isFetchingDatasets.value = false;
+
+	console.log(datasets.value, interventionPolicyIds);
 
 	if (!knobs.value.selectedDataset) knobs.value.selectedDataset = datasets.value[0]?.id ?? null;
 
