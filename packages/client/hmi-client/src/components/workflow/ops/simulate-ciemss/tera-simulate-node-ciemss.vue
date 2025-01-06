@@ -35,7 +35,7 @@
 				/>
 			</section>
 		</template>
-		<Button v-if="areInputsFilled" label="Edit" @click="emit('open-drilldown')" severity="secondary" outlined />
+		<Button v-if="areInputsFilled" label="Open" @click="emit('open-drilldown')" severity="secondary" outlined />
 		<tera-operator-placeholder v-else :node="node"> Connect a model configuration </tera-operator-placeholder>
 	</main>
 </template>
@@ -47,7 +47,7 @@ import Button from 'primevue/button';
 
 import { logger } from '@/utils/logger';
 
-import { updateChartSettingsBySelectedVariables } from '@/services/chart-settings';
+import { updateChartSettingsBySelectedVariables, updateSensitivityChartSettingOption } from '@/services/chart-settings';
 import { createDatasetFromSimulationResult } from '@/services/dataset';
 import { flattenInterventionData, getInterventionPolicyById } from '@/services/intervention-policy';
 import { getModelByModelConfigurationId, getTypesFromModelParts, getUnitsFromModelParts } from '@/services/model';
@@ -67,7 +67,7 @@ import VegaChart from '@/components/widgets/VegaChart.vue';
 import { nodeOutputLabel } from '@/components/workflow/util';
 
 import { ModelConfiguration, type InterventionPolicy, type Model } from '@/types/Types';
-import { ChartSettingType } from '@/types/common';
+import { ChartSettingSensitivity, ChartSettingType } from '@/types/common';
 import type { WorkflowNode } from '@/types/workflow';
 
 import { useChartSettings } from '@/composables/useChartSettings';
@@ -123,6 +123,25 @@ const processResult = async (runId: string) => {
 	}
 
 	const summaryData = await getRunResultCSV(runId, 'result_summary.csv');
+
+	if (
+		(state.chartSettings as ChartSettingSensitivity[]).some((setting) => setting.type === ChartSettingType.SENSITIVITY)
+	) {
+		// If sensitivity chart settings are present, set the timepoint to the last timepoint
+		const selectedSensitivityVariables = state
+			.chartSettings!.filter((setting) => setting.type === ChartSettingType.SENSITIVITY)
+			.flatMap((setting) => setting.selectedVariables);
+		const lastTimepoint = _.last(result)?.timepoint_id;
+		const firstSensitiveSetting = (state.chartSettings as ChartSettingSensitivity[]).find(
+			(setting) => setting.type === ChartSettingType.SENSITIVITY
+		);
+		state.chartSettings = updateSensitivityChartSettingOption(state.chartSettings as ChartSettingSensitivity[], {
+			selectedVariables: selectedSensitivityVariables,
+			selectedInputVariables: firstSensitiveSetting!.selectedInputVariables,
+			timepoint: lastTimepoint
+		});
+		emit('update-state', state);
+	}
 	const start = _.first(summaryData);
 	const end = _.last(summaryData);
 
@@ -235,7 +254,6 @@ async function processPolling(id, propName, inProgressPropName) {
 		state[inProgressPropName] = '';
 		emit('update-state', state);
 	}
-	await processResult(id);
 }
 
 watch(
@@ -243,6 +261,7 @@ watch(
 	async (id) => {
 		if (!id || id === '') return;
 		await processPolling(id, 'forecastId', 'inProgressForecastId');
+		await processResult(id); // Only process and output result for main forecast
 	},
 	{ immediate: true }
 );

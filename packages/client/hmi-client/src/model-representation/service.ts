@@ -355,9 +355,14 @@ export function checkPetrinetAMR(amr: Model) {
 export enum PartType {
 	STATE = 'STATE',
 	PARAMETER = 'PARAMETER',
-	TRANSITION = 'TRANSITION'
+	TRANSITION = 'TRANSITION',
+	OBSERVABLE = 'OBSERVABLE',
+	TIME = 'TIME'
 }
 
+// FIXME: should refactor so typing is explicit and clear
+// Note "model" is both an AMR model, or it can be a list of transition templates
+// FIXME: Nelson recommended we show subject/outcome/controllers instead of input/output
 export function createPartsList(parts, model, partType) {
 	return Array.from(parts.keys()).map((id) => {
 		const childTargets = parts.get(id) ?? [];
@@ -389,7 +394,7 @@ export function createPartsList(parts, model, partType) {
 					input: null,
 					output: null
 				};
-				if (partType === PartType.STATE || PartType.PARAMETER) {
+				if (partType === PartType.STATE || partType === PartType.PARAMETER) {
 					returnObj.unitExpression = t.units?.expression;
 				} else if (partType === PartType.TRANSITION) {
 					returnObj.expression = t.expression;
@@ -410,7 +415,7 @@ export function createPartsList(parts, model, partType) {
 			isParent || !basePart
 				? { id: `${id}` }
 				: {
-						id: `${id}`,
+						id: basePart.id,
 						name: basePart.name,
 						description: basePart.description,
 						grounding: basePart.grounding,
@@ -419,6 +424,7 @@ export function createPartsList(parts, model, partType) {
 		if (partType === PartType.TRANSITION) {
 			base.templateId = `${id}`;
 			if (basePart) {
+				base.expression = basePart.expression;
 				base.input = basePart.input.join(', ');
 				base.output = basePart.output.join(', ');
 			}
@@ -449,8 +455,8 @@ export function createObservablesList(observables: Observable[]) {
 }
 
 export function createTimeList(time) {
-	return time.map(({ id, name, description, grounding, units }) => ({
-		base: { id, name, description, grounding, unitExpression: units?.expression },
+	return time.map(({ id, units }) => ({
+		base: { id, unitExpression: units?.expression },
 		children: [],
 		isParent: false
 	}));

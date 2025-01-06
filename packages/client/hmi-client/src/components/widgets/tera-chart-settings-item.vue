@@ -32,7 +32,12 @@ const borderStyle = computed(() => (props.settings.primaryColor ? `4px solid ${p
 	display: flex;
 	align-items: center;
 	justify-content: space-between;
+	width: 100%;
 }
+.chart-settings-item h6 {
+	width: 80%;
+}
+
 .btn-group {
 	display: flex;
 }

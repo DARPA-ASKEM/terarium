@@ -1,51 +1,6 @@
 <template>
 	<div class="chart-settings">
 		<h5>{{ title }}</h5>
-		<tera-chart-control
-			:chart-config="{
-				selectedRun: 'fixme',
-				selectedVariable: selectedOptions
-			}"
-			:multi-select="true"
-			:show-remove-button="false"
-			:variables="selectOptions"
-			@configuration-change="$emit('selection-change', $event.selectedVariable, type)"
-		/>
-		<template v-if="type === ChartSettingType.SENSITIVITY && sensitivityOptions">
-			<!--FIXME: It might be better to move these inside the panel so that they can be controlled at an individual chart settings level -->
-			<label>Select parameter(s) of interest</label>
-			<MultiSelect
-				:disabled="_.isEmpty(selectedOptions)"
-				placeholder="Select parameters"
-				:model-value="sensitivityOptions.selectedInputOptions"
-				:options="sensitivityOptions.inputOptions"
-				@change="
-					$emit('sensitivity-selection-change', {
-						selectedInputVariables: $event.value,
-						timepoint: sensitivityOptions.timepoint
-					})
-				"
-			/>
-
-			<label>Select time slice of interest</label>
-			<tera-input-number
-				:disabled="_.isEmpty(selectedOptions)"
-				:model-value="sensitivityOptions.timepoint"
-				@update:model-value="
-					$emit('sensitivity-selection-change', {
-						selectedInputVariables: sensitivityOptions.selectedInputOptions,
-						timepoint: $event
-					})
-				"
-			/>
-		</template>
-		<tera-chart-settings-item
-			v-for="s of targetSettings"
-			:key="s.id"
-			:settings="s"
-			@open="$emit('open', s)"
-			@remove="$emit('remove', s.id)"
-		/>
 		<template v-if="type === ChartSettingType.VARIABLE_ENSEMBLE">
 			<tera-checkbox
 				:disabled="selectedOptions.length === 0"
@@ -69,6 +24,61 @@
 				@update:model-value="toggleEnsembleChartOption('showIndividualModelsWithWeight', $event)"
 			/> -->
 		</template>
+		<tera-chart-control
+			:chart-config="{
+				selectedRun: 'fixme',
+				selectedVariable: selectedOptions
+			}"
+			:multi-select="true"
+			:show-remove-button="false"
+			:variables="selectOptions"
+			@configuration-change="$emit('selection-change', $event.selectedVariable, type)"
+		/>
+		<template v-if="type === ChartSettingType.SENSITIVITY && sensitivityOptions">
+			<div class="mb-2"></div>
+			<!--FIXME: It might be better to move these inside the panel so that they can be controlled at an individual chart settings level -->
+			<label :class="_.isEmpty(selectedOptions) ? 'disabled' : ''">Select parameter(s) of interest</label>
+			<MultiSelect
+				:disabled="_.isEmpty(selectedOptions)"
+				placeholder="Select parameters"
+				:model-value="sensitivityOptions.selectedInputOptions"
+				:options="sensitivityOptions.inputOptions"
+				@change="
+					$emit('sensitivity-selection-change', {
+						selectedInputVariables: $event.value,
+						timepoint: sensitivityOptions.timepoint
+					})
+				"
+			>
+				<template v-slot:value>
+					<template v-for="(variable, index) in sensitivityOptions.selectedInputOptions" :key="index">
+						<template v-if="index > 0">,&nbsp;</template>
+						<span> {{ variable }} </span>
+					</template>
+				</template>
+			</MultiSelect>
+
+			<div class="mb-2"></div>
+			<label :class="_.isEmpty(selectedOptions) ? 'disabled' : ''">Select time slice of interest</label>
+			<tera-input-number
+				:disabled="_.isEmpty(selectedOptions)"
+				:model-value="sensitivityOptions.timepoint"
+				@update:model-value="
+					$emit('sensitivity-selection-change', {
+						selectedInputVariables: sensitivityOptions.selectedInputOptions,
+						timepoint: $event
+					})
+				"
+			/>
+			<div class="mb-1"></div>
+		</template>
+		<tera-chart-settings-item
+			v-for="s of targetSettings"
+			:key="s.id"
+			:settings="s"
+			@open="$emit('open', s)"
+			@remove="$emit('remove', s.id)"
+		/>
 	</div>
 </template>
 
@@ -120,5 +130,8 @@ const toggleEnsembleChartOption = (option: EnsembleVariableChartSettingOption, v
 	display: flex;
 	flex-direction: column;
 	gap: var(--gap-2);
+}
+.disabled {
+	color: var(--gray-400);
 }
 </style>

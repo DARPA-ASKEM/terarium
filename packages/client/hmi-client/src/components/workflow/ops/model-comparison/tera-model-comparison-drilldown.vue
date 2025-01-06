@@ -117,21 +117,19 @@
 			<!--TODO: The notebook input and buttons works well here, but it the html/css
 				organization should be refactored here (same for tera-model-edit)-->
 			<tera-drilldown-section class="notebook-section">
-				<div class="toolbar">
-					<tera-notebook-jupyter-input
-						:kernelManager="kernelManager"
-						:defaultOptions="sampleAgentQuestions"
-						@llm-output="appendCode"
-						@llm-thought-output="(data: any) => llmThoughts.push(data)"
-						@question-asked="llmThoughts = []"
-						:context-language="contextLanguage"
-					>
-						<template #toolbar-right-side>
-							<Button label="Reset" outlined severity="secondary" size="small" @click="resetNotebook" />
-							<Button icon="pi pi-play" label="Run" size="small" @click="runCode" :disabled="isEmpty(code)" />
-						</template>
-					</tera-notebook-jupyter-input>
-				</div>
+				<tera-notebook-jupyter-input
+					:kernelManager="kernelManager"
+					:defaultOptions="sampleAgentQuestions"
+					@llm-output="appendCode"
+					@llm-thought-output="(data: any) => llmThoughts.push(data)"
+					@question-asked="llmThoughts = []"
+					:context-language="contextLanguage"
+				>
+					<template #toolbar-right-side>
+						<Button label="Reset" outlined severity="secondary" size="small" @click="resetNotebook" />
+						<Button icon="pi pi-play" label="Run" size="small" @click="runCode" :disabled="isEmpty(code)" />
+					</template>
+				</tera-notebook-jupyter-input>
 				<v-ace-editor
 					v-model:value="code"
 					@init="initializeAceEditor"
@@ -697,15 +695,6 @@ ul {
 .notebook-section:deep(main) {
 	gap: var(--gap-2);
 	position: relative;
-}
-
-.toolbar-right-side {
-	position: absolute;
-	top: var(--gap-4);
-	right: 0;
-	gap: var(--gap-2);
-	display: flex;
-	align-items: center;
 }
 
 .comparison-overview,

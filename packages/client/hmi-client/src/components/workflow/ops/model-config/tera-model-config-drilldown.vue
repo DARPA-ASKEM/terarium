@@ -157,7 +157,12 @@
 					/>
 					<Accordion :active-index="observableActiveIndicies" v-if="!isEmpty(observablesList)">
 						<AccordionTab header="Observables">
-							<tera-model-part class="pl-4" :items="observablesList" :feature-config="{ isPreview: true }" />
+							<tera-model-part
+								class="pl-4"
+								:part-type="PartType.OBSERVABLE"
+								:items="observablesList"
+								:feature-config="{ isPreview: true }"
+							/>
 						</AccordionTab>
 					</Accordion>
 					<!-- vertical spacer at end of page -->
@@ -167,24 +172,22 @@
 		</tera-drilldown-section>
 		<tera-columnar-panel :tabName="DrilldownTabs.Notebook">
 			<tera-drilldown-section class="notebook-section">
-				<div class="toolbar">
-					<Suspense>
-						<tera-notebook-jupyter-input
-							:kernel-manager="kernelManager"
-							:defaultOptions="sampleAgentQuestions"
-							:maxChars="60"
-							:context-language="contextLanguage"
-							@llm-output="(data: any) => appendCode(data, 'code')"
-							@llm-thought-output="(data: any) => updateThoughts(data)"
-							@question-asked="updateLlmQuery"
-						>
-							<template #toolbar-right-side>
-								<tera-input-text v-model="knobs.transientModelConfig.name" placeholder="Configuration Name" />
-								<Button icon="pi pi-play" label="Run" @click="runFromCode" :disabled="isEmpty(codeText)" />
-							</template>
-						</tera-notebook-jupyter-input>
-					</Suspense>
-				</div>
+				<Suspense>
+					<tera-notebook-jupyter-input
+						:kernel-manager="kernelManager"
+						:defaultOptions="sampleAgentQuestions"
+						:maxChars="60"
+						:context-language="contextLanguage"
+						@llm-output="(data: any) => appendCode(data, 'code')"
+						@llm-thought-output="(data: any) => updateThoughts(data)"
+						@question-asked="updateLlmQuery"
+					>
+						<template #toolbar-right-side>
+							<tera-input-text v-model="knobs.transientModelConfig.name" placeholder="Configuration Name" />
+							<Button icon="pi pi-play" label="Run" @click="runFromCode" :disabled="isEmpty(codeText)" />
+						</template>
+					</tera-notebook-jupyter-input>
+				</Suspense>
 				<v-ace-editor
 					v-model:value="codeText"
 					@init="initializeEditor"
@@ -273,7 +276,8 @@ import {
 	isModelMissingMetadata,
 	getParameters as getAmrParameters,
 	getInitials as getAmrInitials,
-	createObservablesList
+	createObservablesList,
+	PartType
 } from '@/model-representation/service';
 import Message from 'primevue/message';
 import TeraColumnarPanel from '@/components/widgets/tera-columnar-panel.vue';
@@ -902,15 +906,6 @@ onUnmounted(() => {
 .notebook-section:deep(main) {
 	gap: var(--gap-2);
 	position: relative;
-}
-
-.toolbar-right-side {
-	position: absolute;
-	top: var(--gap-4);
-	right: 0;
-	gap: var(--gap-2);
-	display: flex;
-	align-items: center;
 }
 
 #matrix-canvas {

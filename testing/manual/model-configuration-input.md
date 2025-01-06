@@ -63,3 +63,9 @@ Report any issues into GitHub: [open an issue](https://github.com/DARPA-ASKEM/te
 1. For any configuration where changes have been made but not saved, click the **Reset** button.
 2. Verify that all unsaved changes are discarded and the configuration reverts to its original state before any modifications were made.
 
+### 7. Setting a date at timepoint 0 in model configuration
+1. In the model node select a time unit if one hasn't already been selected (the options are days, months, years) and save the model.
+2. In the model configuration node you should now have an option to select a date to start at timepoint 0, select a date of your choosing and save.
+3. Connect the model configuration node to a simulate node and press run in the simulate node.
+4. You should observe that the x-axis of the charts will use dates rather than integers starting at the selected date in the model configuration.
+

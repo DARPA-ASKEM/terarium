@@ -5,7 +5,7 @@ httpx==0.28.1
 jsonschema
 openai
 pandas
-pydantic==2.10.2
+pydantic==2.10.4
 regex
 tiktoken
 uvicorn
