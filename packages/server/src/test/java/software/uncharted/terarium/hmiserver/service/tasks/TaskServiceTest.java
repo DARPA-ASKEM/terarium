@@ -182,9 +182,8 @@ public class TaskServiceTest extends TerariumApplicationTests {
 		req.setType(TaskType.GOLLM);
 		req.setScript(ChartAnnotationResponseHandler.NAME);
 		final ChartAnnotationResponseHandler.Input input = new ChartAnnotationResponseHandler.Input();
+		input.setPreamble("This is a preamble");
 		input.setInstruction("Give me a simple random json object");
-		final JsonNode resFormat = new ObjectMapper().readTree("{\"type\": \"json_object\"}");
-		input.setResponseFormat(resFormat);
 		req.setInput(input);
 
 		final TaskResponse resp = taskService.runTaskSync(req);
