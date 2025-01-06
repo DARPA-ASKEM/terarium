@@ -1,8 +1,7 @@
 import inspect
 from datetime import datetime
-from typing import List, Callable, Type
-
 from pydantic import BaseModel, root_validator
+from typing import List, Callable, Type
 
 
 class ConfigureModelDocument(BaseModel):
@@ -20,9 +19,11 @@ class ConfigureModelDataset(BaseModel):
     amr: str  # expects AMR in a stringified JSON object
     matrix: str = None
 
+
 class DatasetCardModel(BaseModel):
     dataset: str  # expects a stringified JSON object
     research_paper: str = None
+
 
 class ModelCardModel(BaseModel):
     amr: str  # expects AMR in a stringified JSON object
@@ -33,7 +34,8 @@ class ModelCompareModel(BaseModel):
     amrs: List[str]  # expects AMRs to be a stringified JSON object
     goal: str = None
 
-class EquationsCleanup(BaseModel):
+
+class EquationsModel(BaseModel):
     equations: List[str]
 
 
