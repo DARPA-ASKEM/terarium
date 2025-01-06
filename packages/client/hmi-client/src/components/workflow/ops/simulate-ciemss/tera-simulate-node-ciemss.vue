@@ -264,7 +264,6 @@ watch(
 		if (props.node.state.inProgressForecastId) {
 			const forecastId = props.node.state.inProgressForecastId;
 			response = await pollResult(forecastId);
-			await processResult(id); // Only process and output result for main forecast
 		}
 		if (response?.state !== PollerState.Done) {
 			doneProcess = false;
@@ -276,6 +275,7 @@ watch(
 			state.inProgressForecastId = '';
 			state.inProgressBaseForecastId = '';
 			emit('update-state', state);
+			await processResult(state.forecastId); // Only process and output result for main forecast
 		}
 	},
 	{ immediate: true }
