@@ -907,7 +907,7 @@ public class GoLLMController {
 	public ResponseEntity<TaskResponse> createEnrichDatasetTask(
 		@RequestParam(name = "dataset-id", required = true) final UUID datasetId,
 		@RequestParam(name = "document-id", required = true) final UUID documentId,
-		@RequestParam(name = "mode", required = false, defaultValue = "ASYNC") final TaskMode mode,
+		@RequestParam(name = "mode", required = false, defaultValue = "SYNC") final TaskMode mode,
 		@RequestParam(name = "project-id", required = false) final UUID projectId,
 		@RequestParam(name = "overwrite", required = false, defaultValue = "false") final boolean overwrite
 	) {
@@ -924,7 +924,7 @@ public class GoLLMController {
 		}
 
 		// make sure there is a text in the document
-		if (document.get().getText() == null || document.get().getText().isEmpty()) {
+		if (document.isPresent() && (document.get().getText() == null || document.get().getText().isEmpty())) {
 			log.warn(String.format("Document %s has no extracted text", documentId));
 			throw new ResponseStatusException(HttpStatus.NOT_FOUND, messages.get("document.extraction.not-done"));
 		}
@@ -946,7 +946,7 @@ public class GoLLMController {
 				overwrite
 			);
 		} catch (final IOException e) {
-			log.error("Unable to create Enrich AMR task", e);
+			log.error("Unable to create Enrich Dataset task", e);
 			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("generic.io-error.write"));
 		}
 
