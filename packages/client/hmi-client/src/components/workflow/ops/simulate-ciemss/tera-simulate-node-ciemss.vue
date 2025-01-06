@@ -257,7 +257,7 @@ watch(
 			const baseForecastId = props.node.state.inProgressBaseForecastId;
 			response = await pollResult(baseForecastId);
 		}
-		if (response?.state !== PollerState.Done) {
+		if (response?.state && response.state !== PollerState.Done) {
 			doneProcess = false;
 		}
 
@@ -265,7 +265,7 @@ watch(
 			const forecastId = props.node.state.inProgressForecastId;
 			response = await pollResult(forecastId);
 		}
-		if (response?.state !== PollerState.Done) {
+		if (response?.state && response.state !== PollerState.Done) {
 			doneProcess = false;
 		}
 		if (doneProcess) {
