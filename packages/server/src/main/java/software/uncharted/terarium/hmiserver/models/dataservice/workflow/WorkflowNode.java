@@ -2,6 +2,7 @@ package software.uncharted.terarium.hmiserver.models.dataservice.workflow;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import lombok.Data;
@@ -43,13 +44,13 @@ public class WorkflowNode<T> extends SupportAdditionalProperties implements Seri
 	private Double height;
 
 	// State
-	private T state;
+	private JsonNode state;
 
 	@TSOptional
 	private UUID active;
 
-	private List<JsonNode> inputs;
-	private List<JsonNode> outputs;
+	private List<InputPort> inputs;
+	private List<OutputPort> outputs;
 
 	private String status;
 

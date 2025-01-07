@@ -2,9 +2,12 @@ package software.uncharted.terarium.hmiserver.service.data;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import io.micrometer.observation.annotation.Observed;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -13,9 +16,12 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import software.uncharted.terarium.hmiserver.configuration.Config;
+import software.uncharted.terarium.hmiserver.models.dataservice.workflow.InputPort;
+import software.uncharted.terarium.hmiserver.models.dataservice.workflow.OutputPort;
 import software.uncharted.terarium.hmiserver.models.dataservice.workflow.Workflow;
 import software.uncharted.terarium.hmiserver.models.dataservice.workflow.WorkflowEdge;
 import software.uncharted.terarium.hmiserver.models.dataservice.workflow.WorkflowNode;
@@ -202,8 +208,163 @@ public class WorkflowService extends TerariumAssetServiceWithoutSearch<Workflow,
 		return result;
 	}
 
+	@Observed(name = "function_profile")
+	private void cascadeInvalidStatus(final WorkflowNode<?> sourceNode, final Map<UUID, List<WorkflowNode>> nodeCache) {
+		List<WorkflowNode> downstreamNodes = nodeCache.get(sourceNode.getId());
+		for (final WorkflowNode node : downstreamNodes) {
+			node.setStatus("invalid");
+			cascadeInvalidStatus(node, nodeCache);
+		}
+	}
+
+	/**
+	 * Updates the operator's state using the data from a specified WorkflowOutput. If the operator's
+	 * current state was not previously stored as a WorkflowOutput, this function first saves the current state
+	 * as a new WorkflowOutput. It then replaces the operator's existing state with the data from the specified WorkflowOutput.
+	 *
+	 **/
+	@Observed(name = "function_profile")
+	public void selectOutput(final Workflow workflow, final WorkflowNode<?> operator, UUID selectedId) throws Exception {
+		for (final OutputPort port : operator.getOutputs()) {
+			port.setIsSelected(false);
+			port.setStatus("not connected");
+		}
+
+		// Update the Operator state with the selected one
+		final OutputPort selected = operator
+			.getOutputs()
+			.stream()
+			.filter(port -> port.getId() == selectedId)
+			.findAny()
+			.orElse(null);
+
+		if (selected == null) {
+			throw new Exception("Cannot find port " + selectedId);
+		}
+
+		selected.setIsSelected(true);
+		operator.setState(deepMergeWithOverwrite(operator.getState(), selected.getState()));
+		operator.setStatus(selected.getOperatorStatus());
+		operator.setActive(selected.getId());
+
+		// If this output is connected to input port(s), update the input port(s)
+		for (final WorkflowEdge edge : workflow.getEdges()) {
+			if (edge.getIsDeleted() != false && edge.getSource() == operator.getId()) {
+				return;
+			}
+		}
+
+		selected.setStatus("connected");
+
+		final Map<UUID, WorkflowNode<?>> nodeMap = new HashMap<>();
+		final Map<UUID, List<WorkflowNode<?>>> nodeCache = new HashMap<>();
+		for (final WorkflowNode<?> node : workflow.getNodes()) {
+			if (node.getIsDeleted() == false) {
+				nodeMap.put(node.getId(), node);
+			}
+		}
+		nodeCache.put(selected.getId(), new ArrayList());
+
+		for (final WorkflowEdge edge : workflow.getEdges()) {
+			if (edge.getIsDeleted() == true) continue;
+
+			if (edge.getSource() == operator.getId()) {
+				final WorkflowNode<?> targetNode = workflow
+					.getNodes()
+					.stream()
+					.filter(node -> node.getId() == edge.getTarget())
+					.findAny()
+					.orElse(null);
+				if (targetNode == null) continue;
+
+				// Update the input port of the target node
+				final InputPort targetPort = targetNode
+					.getInputs()
+					.stream()
+					.filter(port -> port.getId() == edge.getTargetPortId())
+					.findAny()
+					.orElse(null);
+				if (targetPort == null) continue;
+
+				// Sync edge source port to selected output
+				edge.setSourcePortId(selected.getId());
+
+				//
+				// Handle compound type unwrangling, this is very similar to what
+				// we do in addEdge(...) but s already connected.
+				///
+				final List<String> selectedTypes = splitAndTrim(selected.getType());
+				final List<String> allowedInputTypes = splitAndTrim(targetPort.getType());
+				final List<String> intersectionTypes = findIntersection(selectedTypes, allowedInputTypes);
+
+				// Sanity check: multiple matches found
+				if (intersectionTypes.size() > 1) {
+					log.warn("Ambiguous matching types " + selectedTypes + " " + allowedInputTypes);
+					continue;
+				}
+
+				// Sanity check: no matches found
+				if (intersectionTypes.size() == 0) {
+					log.warn("No matching types " + selectedTypes + " " + allowedInputTypes);
+					continue;
+				}
+
+				// Finally we should be okay at this point
+				if (selectedTypes.size() > 1) {
+					String concreteType = intersectionTypes.get(0);
+					if (selected.getValue() != null) {
+						ArrayNode arrayNode = objectMapper.createArrayNode();
+						arrayNode.add(selected.getValue().get(0).get(concreteType));
+						targetPort.setValue(arrayNode);
+					}
+				} else {
+					targetPort.setValue(selected.getValue());
+				}
+				targetPort.setLabel(selected.getLabel());
+			}
+
+			// Collect node cache
+			if (edge.getSource() == null || edge.getTarget() == null) continue;
+			if (!nodeCache.containsKey(edge.getSource())) {
+				nodeCache.put(edge.getSource(), new ArrayList());
+			}
+			nodeCache.get(edge.getSource()).add(nodeMap.get(edge.getTarget()));
+		}
+	}
+
 	@Override
 	protected String getAssetPath() {
 		throw new UnsupportedOperationException("Workflows are not stored in S3");
+	}
+
+	public static JsonNode deepMergeWithOverwrite(JsonNode nodeA, JsonNode nodeB) {
+		if (nodeA.isObject() && nodeB.isObject()) {
+			ObjectNode objectA = (ObjectNode) nodeA;
+			nodeB
+				.fields()
+				.forEachRemaining(entry -> {
+					String fieldName = entry.getKey();
+					JsonNode valueB = entry.getValue();
+					if (objectA.has(fieldName)) {
+						JsonNode valueA = objectA.get(fieldName);
+						objectA.set(fieldName, deepMergeWithOverwrite(valueA, valueB));
+					} else {
+						objectA.set(fieldName, valueB);
+					}
+				});
+			return objectA;
+		}
+		// If there's a conflict or non-object nodes, `B` overwrites `A`
+		return nodeB;
+	}
+
+	public static List<String> splitAndTrim(String input) {
+		return Arrays.stream(input.split("\\|")).map(String::trim).collect(Collectors.toList());
+	}
+
+	public static List<String> findIntersection(List<String> list1, List<String> list2) {
+		List<String> intersection = new ArrayList<>(list1);
+		intersection.retainAll(list2); // Retain only elements that are in both lists
+		return intersection;
 	}
 }
