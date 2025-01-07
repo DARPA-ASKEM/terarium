@@ -90,16 +90,22 @@
 			<div ref="outputPanel">
 				<Accordion multiple :active-index="activeIndices">
 					<AccordionTab header="Summary"> </AccordionTab>
-					<AccordionTab header="Variables">
-						<template v-for="setting of selectedVariableSettings" :key="setting.id">
-							<vega-chart
-								:visualization-spec="variableCharts[setting.id]"
-								:are-embed-actions-visible="false"
-								expandable
-							/>
-						</template>
-					</AccordionTab>
-					<AccordionTab header="Comparison table"> </AccordionTab>
+					<template v-if="knobs.selectedCompareOption === CompareValue.IMPACT">
+						<AccordionTab header="Variables">
+							<template v-for="setting of selectedVariableSettings" :key="setting.id">
+								<vega-chart
+									:visualization-spec="variableCharts[setting.id]"
+									:are-embed-actions-visible="false"
+									expandable
+								/>
+							</template>
+						</AccordionTab>
+						<AccordionTab header="Comparison table"> </AccordionTab>
+					</template>
+					<template v-else>
+						<AccordionTab header="Ranking results"> </AccordionTab>
+						<AccordionTab header="Ranking criteria"> </AccordionTab>
+					</template>
 				</Accordion>
 			</div>
 		</tera-drilldown-section>
