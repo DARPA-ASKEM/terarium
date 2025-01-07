@@ -36,7 +36,7 @@
 						:options="combinedInterventionPolicies"
 						option-label="name"
 						option-value="id"
-						@update:model-value="scenario.setInterventionSpecs($event, i)"
+						@update:model-value="scenario.setInterventionSpec($event, i)"
 						:disabled="isFetchingModelInformation"
 						:loading="isFetchingModelInformation"
 						filter
@@ -97,11 +97,11 @@ import { isEmpty } from 'lodash';
 import Dropdown from 'primevue/dropdown';
 import MultiSelect from 'primevue/multiselect';
 import Button from 'primevue/button';
-import { v4 as uuidv4 } from 'uuid';
 import { ScenarioHeader } from '../base-scenario';
 import { DecisionMakingScenario } from './decision-making-scenario';
 import TeraScenarioTemplate from '../tera-scenario-template.vue';
 import TeraNewPolicyModal from '../tera-new-policy-modal.vue';
+import { usePolicyModel } from '../scenario-template-utils';
 
 const header: ScenarioHeader = Object.freeze({
 	title: 'Decision Making Template',
@@ -133,23 +133,14 @@ const props = defineProps<{
 	scenario: DecisionMakingScenario;
 }>();
 
-const onOpenPolicyModel = (index: number) => {
-	interventionDropdowns.value[index].hide();
-	policyModalContext.value = index;
-	isPolicyModalVisible.value = true;
-};
-
-const addNewPolicy = (newPolicyName: string) => {
-	if (newPolicyName && policyModalContext.value !== null) {
-		const id = uuidv4();
-		props.scenario.setNewInterventionSpec(id, newPolicyName);
-		props.scenario.setInterventionSpecs(id, policyModalContext.value);
-		isPolicyModalVisible.value = false;
-		policyModalContext.value = null;
-	}
-};
-
 const emit = defineEmits(['save-workflow']);
+
+const { onOpenPolicyModel, addNewPolicy } = usePolicyModel(
+	props,
+	interventionDropdowns,
+	policyModalContext,
+	isPolicyModalVisible
+);
 
 watch(
 	() => props.scenario.modelSpec.id,

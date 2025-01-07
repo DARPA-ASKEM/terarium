@@ -79,7 +79,7 @@ export class DecisionMakingScenario extends BaseScenario {
 		this.interventionSpecs.splice(index, 1);
 	}
 
-	setInterventionSpecs(id: string, index: number) {
+	setInterventionSpec(id: string, index: number) {
 		this.interventionSpecs[index].id = id;
 	}
 

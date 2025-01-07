@@ -145,10 +145,9 @@ import { getInterventionPoliciesForModel, getModel, getModelConfigurationsForMod
 import { AssetType, InterventionPolicy, ModelConfiguration, ParameterSemantic } from '@/types/Types';
 import { getModelConfigurationById, getParameter, getParameters } from '@/services/model-configurations';
 import TeraInputNumber from '@/components/widgets/tera-input-number.vue';
-import { v4 as uuidv4 } from 'uuid';
 import { ScenarioHeader } from '../base-scenario';
 import TeraScenarioTemplate from '../tera-scenario-template.vue';
-import { displayParameter } from '../scenario-template-utils';
+import { displayParameter, usePolicyModel } from '../scenario-template-utils';
 import teraNewPolicyModal from '../tera-new-policy-modal.vue';
 
 const header: ScenarioHeader = Object.freeze({
@@ -188,27 +187,18 @@ const props = defineProps<{
 
 const emit = defineEmits(['save-workflow']);
 
+const { onOpenPolicyModel, addNewPolicy } = usePolicyModel(
+	props,
+	interventionDropdowns,
+	policyModalContext,
+	isPolicyModalVisible
+);
+
 const onParameterSelect = (parameterId: string, index: number) => {
 	if (!selectedModelConfiguration.value) return;
 	const parameter = _.cloneDeep(getParameter(selectedModelConfiguration.value, parameterId));
 	if (!parameter) return;
 	props.scenario.setParameter(parameter, index);
-};
-
-const onOpenPolicyModel = (index: number) => {
-	interventionDropdowns.value[index].hide();
-	policyModalContext.value = index;
-	isPolicyModalVisible.value = true;
-};
-
-const addNewPolicy = (newPolicyName: string) => {
-	if (newPolicyName && policyModalContext.value !== null) {
-		const id = uuidv4();
-		props.scenario.setNewInterventionSpec(id, newPolicyName);
-		props.scenario.setInterventionSpec(id, policyModalContext.value);
-		isPolicyModalVisible.value = false;
-		policyModalContext.value = null;
-	}
 };
 
 watch(
