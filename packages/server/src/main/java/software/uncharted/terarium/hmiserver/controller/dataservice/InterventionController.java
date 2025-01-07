@@ -104,7 +104,7 @@ public class InterventionController {
 	)
 	public ResponseEntity<InterventionPolicy> createIntervention(
 		@RequestBody final InterventionPolicy item,
-		@RequestParam(name = "skip-check", required = false) final boolean skipCheck,
+		@RequestParam(name = "skip-check", required = false, defaultValue = "false") final boolean skipCheck,
 		@RequestParam(name = "project-id", required = false) final UUID projectId
 	) {
 		final Schema.Permission permission = projectService.checkPermissionCanWrite(
