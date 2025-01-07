@@ -345,6 +345,33 @@ public class WorkflowService extends TerariumAssetServiceWithoutSearch<Workflow,
 		}
 	}
 
+	@Observed(name = "function_profile")
+	public void appendOutput(final Workflow workflow, UUID nodeId, OutputPort port) throws Exception {
+		final WorkflowNode<?> operator = workflow
+			.getNodes()
+			.stream()
+			.filter(node -> {
+				return node.getIsDeleted() == false && node.getId().equals(nodeId);
+			})
+			.findFirst()
+			.orElse(null);
+
+		if (operator == null) {
+			throw new Exception("Cannot find node " + nodeId);
+		}
+
+		// We assume that if we can produce an output, the status is okay
+		operator.setStatus("success");
+		operator.getOutputs().add(port);
+		operator.setActive(port.getId());
+
+		// TODO: may need to check race conditions
+		operator.setOutputs(
+			operator.getOutputs().stream().filter(output -> output.getValue() != null).collect(Collectors.toList())
+		);
+		selectOutput(workflow, nodeId, port.getId());
+	}
+
 	@Override
 	protected String getAssetPath() {
 		throw new UnsupportedOperationException("Workflows are not stored in S3");

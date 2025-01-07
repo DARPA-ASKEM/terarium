@@ -28,6 +28,7 @@ import software.uncharted.terarium.hmiserver.models.ClientEvent;
 import software.uncharted.terarium.hmiserver.models.ClientEventType;
 import software.uncharted.terarium.hmiserver.models.dataservice.ResponseDeleted;
 import software.uncharted.terarium.hmiserver.models.dataservice.project.Contributor;
+import software.uncharted.terarium.hmiserver.models.dataservice.workflow.OutputPort;
 import software.uncharted.terarium.hmiserver.models.dataservice.workflow.Workflow;
 import software.uncharted.terarium.hmiserver.security.Roles;
 import software.uncharted.terarium.hmiserver.service.ClientEventService;
@@ -267,7 +268,7 @@ public class WorkflowController {
 
 	@PostMapping("/{id}/select-output/{nodeId}/{outputId}")
 	@Secured(Roles.USER)
-	@Operation(summary = "Update a workflow")
+	@Operation(summary = "Select an operator output to use")
 	@ApiResponses(
 		value = {
 			@ApiResponse(
@@ -298,6 +299,50 @@ public class WorkflowController {
 
 		try {
 			workflowService.selectOutput(workflow.get(), nodeId, outputId);
+			updated = workflowService.updateAsset(workflow.get(), projectId, permission);
+		} catch (final Exception e) {
+			log.error("Unable to update workflow", e);
+			throw new ResponseStatusException(
+				org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
+				messages.get("postgres.service-unavailable")
+			);
+		}
+		return updated.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
+	}
+
+	@PostMapping("/{id}/append-output/{nodeId}")
+	@Secured(Roles.USER)
+	@Operation(summary = "Append an output to an operator node")
+	@ApiResponses(
+		value = {
+			@ApiResponse(
+				responseCode = "200",
+				description = "Workflow updated.",
+				content = @Content(
+					mediaType = MediaType.APPLICATION_JSON_VALUE,
+					schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = Workflow.class)
+				)
+			),
+			@ApiResponse(responseCode = "404", description = "Workflow could not be found", content = @Content),
+			@ApiResponse(responseCode = "500", description = "There was an issue updating the workflow", content = @Content)
+		}
+	)
+	public ResponseEntity<Workflow> appendOutput(
+		@PathVariable("id") final UUID id,
+		@PathVariable("nodeId") final UUID nodeId,
+		@RequestBody final OutputPort port,
+		@RequestParam(name = "project-id", required = false) final UUID projectId
+	) {
+		final Schema.Permission permission = projectService.checkPermissionCanRead(
+			currentUserService.get().getId(),
+			projectId
+		);
+
+		final Optional<Workflow> workflow = workflowService.getAsset(id, permission);
+		final Optional<Workflow> updated;
+
+		try {
+			workflowService.appendOutput(workflow.get(), nodeId, port);
 			updated = workflowService.updateAsset(workflow.get(), projectId, permission);
 		} catch (final Exception e) {
 			log.error("Unable to update workflow", e);
