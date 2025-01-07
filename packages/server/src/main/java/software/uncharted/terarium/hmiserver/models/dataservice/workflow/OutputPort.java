@@ -3,6 +3,7 @@ package software.uncharted.terarium.hmiserver.models.dataservice.workflow;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import java.io.Serializable;
+import java.sql.Timestamp;
 import java.util.List;
 import java.util.UUID;
 import lombok.Data;
@@ -23,4 +24,5 @@ public class OutputPort implements Serializable {
 	private Boolean isSelected;
 	private String operatorStatus;
 	private JsonNode state;
+	private Timestamp timestamp;
 }

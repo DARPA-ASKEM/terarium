@@ -224,7 +224,20 @@ public class WorkflowService extends TerariumAssetServiceWithoutSearch<Workflow,
 	 *
 	 **/
 	@Observed(name = "function_profile")
-	public void selectOutput(final Workflow workflow, final WorkflowNode<?> operator, UUID selectedId) throws Exception {
+	public void selectOutput(final Workflow workflow, UUID nodeId, UUID selectedId) throws Exception {
+		final WorkflowNode<?> operator = workflow
+			.getNodes()
+			.stream()
+			.filter(node -> {
+				return node.getIsDeleted() == false && node.getId().equals(nodeId);
+			})
+			.findFirst()
+			.orElse(null);
+
+		if (operator == null) {
+			throw new Exception("Cannot find node " + nodeId);
+		}
+
 		for (final OutputPort port : operator.getOutputs()) {
 			port.setIsSelected(false);
 			port.setStatus("not connected");
@@ -234,7 +247,7 @@ public class WorkflowService extends TerariumAssetServiceWithoutSearch<Workflow,
 		final OutputPort selected = operator
 			.getOutputs()
 			.stream()
-			.filter(port -> port.getId() == selectedId)
+			.filter(port -> port.getId().equals(selectedId))
 			.findAny()
 			.orElse(null);
 
@@ -272,7 +285,7 @@ public class WorkflowService extends TerariumAssetServiceWithoutSearch<Workflow,
 				final WorkflowNode<?> targetNode = workflow
 					.getNodes()
 					.stream()
-					.filter(node -> node.getId() == edge.getTarget())
+					.filter(node -> node.getId().equals(edge.getTarget()))
 					.findAny()
 					.orElse(null);
 				if (targetNode == null) continue;
@@ -281,7 +294,7 @@ public class WorkflowService extends TerariumAssetServiceWithoutSearch<Workflow,
 				final InputPort targetPort = targetNode
 					.getInputs()
 					.stream()
-					.filter(port -> port.getId() == edge.getTargetPortId())
+					.filter(port -> port.getId().equals(edge.getTargetPortId()))
 					.findAny()
 					.orElse(null);
 				if (targetPort == null) continue;
