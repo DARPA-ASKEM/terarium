@@ -23,20 +23,26 @@
 				:loading="isFetchingModelInformation"
 				class="mb-3"
 			/>
-			<label>Select intervention policy (historical)</label>
+			<label>Planned intervention policy (optional)</label>
 			<div v-for="(intervention, i) in scenario.interventionSpecs" :key="i" class="flex">
 				<Dropdown
+					ref="interventionDropdowns"
 					class="flex-1 my-1"
 					:model-value="intervention.id"
-					:options="interventionPolicies"
+					:options="combinedInterventionPolicies"
 					option-label="name"
 					option-value="id"
 					placeholder="Select an intervention policy (optional)"
 					@update:model-value="scenario.setInterventionSpec($event, i)"
 					:key="i"
-					:disabled="isEmpty(interventionPolicies)"
+					:disabled="isFetchingModelInformation"
 					:loading="isFetchingModelInformation"
-				/>
+					filter
+				>
+					<template #filtericon>
+						<Button label="Create new policy" icon="pi pi-plus" size="small" text @click="onOpenPolicyModel(i)" />
+					</template>
+				</Dropdown>
 				<Button
 					v-if="scenario.interventionSpecs.length > 1"
 					size="small"
@@ -119,6 +125,11 @@
 			<img :src="horizon" alt="Horizon scanning chart" class="" />
 		</template>
 	</tera-scenario-template>
+	<tera-new-policy-modal
+		:is-visible="isPolicyModalVisible"
+		@close="isPolicyModalVisible = false"
+		@create="addNewPolicy"
+	/>
 </template>
 
 <script setup lang="ts">
@@ -136,7 +147,8 @@ import { getModelConfigurationById, getParameter, getParameters } from '@/servic
 import TeraInputNumber from '@/components/widgets/tera-input-number.vue';
 import { ScenarioHeader } from '../base-scenario';
 import TeraScenarioTemplate from '../tera-scenario-template.vue';
-import { displayParameter } from '../scenario-template-utils';
+import { displayParameter, usePolicyModel } from '../scenario-template-utils';
+import teraNewPolicyModal from '../tera-new-policy-modal.vue';
 
 const header: ScenarioHeader = Object.freeze({
 	title: 'Horizon scanning template',
@@ -160,11 +172,27 @@ const modelParameters = ref<ParameterSemantic[]>([]);
 
 const selectedModelConfiguration = ref<ModelConfiguration | null>(null);
 
+const interventionDropdowns = ref();
+const isPolicyModalVisible = ref(false);
+const policyModalContext = ref<number | null>(null);
+
+const combinedInterventionPolicies = computed(() => [
+	...interventionPolicies.value,
+	...props.scenario.newInterventionSpecs
+]);
+
 const props = defineProps<{
 	scenario: HorizonScanningScenario;
 }>();
 
 const emit = defineEmits(['save-workflow']);
+
+const { onOpenPolicyModel, addNewPolicy } = usePolicyModel(
+	props,
+	interventionDropdowns,
+	policyModalContext,
+	isPolicyModalVisible
+);
 
 const onParameterSelect = (parameterId: string, index: number) => {
 	if (!selectedModelConfiguration.value) return;
