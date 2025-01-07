@@ -25,7 +25,7 @@
 				class="mb-3"
 			/>
 
-			<label>Select intervention policy (historical)</label>
+			<label>Planned intervention policy (optional)</label>
 			<div v-for="(intervention, i) in scenario.interventionSpecs" :key="i" class="flex">
 				<Dropdown
 					class="flex-1 my-1"
