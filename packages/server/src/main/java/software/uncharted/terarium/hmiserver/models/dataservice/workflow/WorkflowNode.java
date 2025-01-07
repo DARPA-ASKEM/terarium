@@ -54,6 +54,8 @@ public class WorkflowNode extends SupportAdditionalProperties implements Seriali
 
 	private String status;
 
+	private Boolean uniqueInputs;
+
 	public WorkflowNode clone(final UUID workflowId) {
 		final WorkflowNode clone = (WorkflowNode) super.clone();
 		clone.setId(UUID.randomUUID());

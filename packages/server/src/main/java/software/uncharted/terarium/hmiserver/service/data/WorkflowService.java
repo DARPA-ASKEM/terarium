@@ -221,9 +221,176 @@ public class WorkflowService extends TerariumAssetServiceWithoutSearch<Workflow,
 		workflow.getNodes().add(node);
 	}
 
-	private void removeNode(final Workflow workflow, final UUID nodeId) {}
+	private void removeNode(final Workflow workflow, final UUID nodeId) {
+		final WorkflowNode nodeToRemove = workflow
+			.getNodes()
+			.stream()
+			.filter(node -> node.getId() == nodeId)
+			.findFirst()
+			.orElse(null);
+		if (nodeToRemove == null) return;
 
-	private void addEdge(final Workflow workflow, final WorkflowEdge edge) {}
+		// Remove all the connecting edges first
+		final List<WorkflowEdge> edgesToRemove = workflow
+			.getEdges()
+			.stream()
+			.filter(edge -> edge.getSource() == nodeToRemove.getId() || edge.getTarget() == nodeToRemove.getId())
+			.collect(Collectors.toList());
+		for (WorkflowEdge edge : edgesToRemove) {
+			this.removeEdge(workflow, edge.getId());
+		}
+		nodeToRemove.setIsDeleted(true);
+	}
+
+	/**
+	 * Create an edge between two nodes, and transfer the value from
+	 * source-node's output port to target-node's input port
+	 *
+	 * The terms are used as depicted in the following schematics
+	 *
+	 *
+	 *  ------------             ------------
+	 *  | Source    |            | Target    |
+	 *  |           |            |           |
+	 *  |  [output port] ---> [input port]   |
+	 *  |           |            |           |
+	 *  ------------             -------------
+	 *
+	 *
+	 * There are several special cases
+	 *
+	 * The target-input can accept multiple types, but this is more of an exception
+	 * rather than the norm. This is resolved by checking one of the accepted type
+	 * matches the provided type.
+	 *
+	 * The second case is when the source produce multiple types, a similar check, but
+	 * on the reverse side is performed.
+	 *
+	 *
+	 * Ambiguity arises when the source provide multiple types and the target accepts multiple
+	 * types and there is no resolution. For example
+	 * - source provides {A, B, C}
+	 * - target accepts A or C
+	 * We do not deal with this and throw an error/warning, and the edge creation will be cancelled.
+	 *
+	 * */
+	private void addEdge(final Workflow workflow, final WorkflowEdge edge) {
+		if (edge.getId() == null) {
+			edge.setId(UUID.randomUUID());
+		}
+
+		WorkflowEdge existingEdge = workflow
+			.getEdges()
+			.stream()
+			.filter(e -> {
+				return (
+					e.getSource() == edge.getSource() &&
+					e.getSourcePortId() == edge.getSourcePortId() &&
+					e.getTarget() == edge.getTarget() &&
+					e.getTargetPortId() == edge.getTargetPortId()
+				);
+			})
+			.findFirst()
+			.orElse(null);
+
+		if (existingEdge != null) return;
+
+		// Check if connection itself compatible
+		final WorkflowNode sourceNode = workflow
+			.getNodes()
+			.stream()
+			.filter(node -> node.getId() == edge.getSource())
+			.findFirst()
+			.orElse(null);
+		final WorkflowNode targetNode = workflow
+			.getNodes()
+			.stream()
+			.filter(node -> node.getId() == edge.getTarget())
+			.findFirst()
+			.orElse(null);
+
+		if (sourceNode == null || targetNode == null) return;
+
+		final OutputPort sourceOutputPort = sourceNode
+			.getOutputs()
+			.stream()
+			.filter(port -> port.getId() == edge.getSourcePortId())
+			.findFirst()
+			.orElse(null);
+		final InputPort targetInputPort = targetNode
+			.getInputs()
+			.stream()
+			.filter(port -> port.getId() == edge.getTargetPortId())
+			.findFirst()
+			.orElse(null);
+		if (sourceOutputPort == null || targetInputPort == null) return;
+
+		// Check if connection data type is compatible
+		final List<String> outputTypes = splitAndTrim(sourceOutputPort.getType());
+		final List<String> allowedInputTypes = splitAndTrim(targetInputPort.getType());
+		final List<String> intersectionTypes = findIntersection(outputTypes, allowedInputTypes);
+
+		// Not supported if there are more than one match
+		if (intersectionTypes.size() > 1) {
+			log.warn("Ambiguous matching types " + outputTypes + " " + allowedInputTypes);
+		}
+
+		// Not supported if there is a mismatch
+		if (intersectionTypes.size() == 0 || targetInputPort.getStatus().equals("connected")) {
+			return;
+		}
+
+		// Uniquness check, for example target-node accepts list of model-configs, but the
+		// model-configs must be unique, so if we connect config-1, we cannot connect connect-1
+		// again if if it from a different node
+		if (targetNode.getUniqueInputs() == true) {
+			final List<InputPort> existingPorts = targetNode
+				.getInputs()
+				.stream()
+				.filter(port -> {
+					final ArrayNode targetPortValue = port.getValue();
+					final ArrayNode sourcePortValue = sourceOutputPort.getValue();
+					if (targetPortValue != null && sourcePortValue != null) {
+						if (targetPortValue.get(0).equals(sourcePortValue.get(0))) {
+							return true;
+						}
+					}
+					return false;
+				})
+				.collect(Collectors.toList());
+			if (existingPorts.size() > 0) {
+				return;
+			}
+		}
+
+		// Transfer data value/reference
+		targetInputPort.setLabel(sourceOutputPort.getLabel());
+		if (outputTypes.size() > 1) {
+			String concreteType = intersectionTypes.get(0);
+			if (sourceOutputPort.getValue() != null) {
+				ArrayNode arrayNode = objectMapper.createArrayNode();
+				arrayNode.add(sourceOutputPort.getValue().get(0).get(concreteType));
+				targetInputPort.setValue(arrayNode);
+			}
+		} else {
+			targetInputPort.setValue(sourceOutputPort.getValue());
+		}
+
+		// Transfer concrete type to the input type to match the output type
+		// Saves the original type in case we want to revert when we unlink the edge
+		// FIXME: check if the logic is correct when both output/input are multi types
+		if (allowedInputTypes.size() > 1) {
+			targetInputPort.setOriginalType(targetInputPort.getType());
+			targetInputPort.setType(sourceOutputPort.getType());
+		}
+
+		// Set connection status
+		targetInputPort.setStatus("connected");
+		sourceOutputPort.setStatus("connected");
+
+		// Finall add to workflow
+		workflow.getEdges().add(edge);
+	}
 
 	private void removeEdge(final Workflow workflow, final UUID edgeId) {
 		final WorkflowEdge edgeToRemove = workflow
@@ -232,8 +399,61 @@ public class WorkflowService extends TerariumAssetServiceWithoutSearch<Workflow,
 			.filter(edge -> edge.getId() == edgeId)
 			.findFirst()
 			.orElse(null);
+
 		if (edgeToRemove == null || edgeToRemove.getIsDeleted() == true) return;
+
 		// Remove the data reference at the targetPort
+		final WorkflowNode targetNode = workflow
+			.getNodes()
+			.stream()
+			.filter(node -> node.getId() == edgeToRemove.getTarget())
+			.findFirst()
+			.orElse(null);
+		if (targetNode == null) return;
+
+		final InputPort targetPort = targetNode
+			.getInputs()
+			.stream()
+			.filter(port -> port.getId() == edgeToRemove.getTargetPortId())
+			.findFirst()
+			.orElse(null);
+		if (targetPort == null) return;
+
+		// Disconnect logic
+		targetPort.setValue(null);
+		targetPort.setStatus("not connected");
+		targetPort.setLabel(null);
+
+		if (targetPort.getOriginalType() != null) {
+			targetPort.setType(targetPort.getOriginalType());
+		}
+		edgeToRemove.setIsDeleted(true);
+
+		// If there are no more references reset the connected status of the source node
+		final List<WorkflowEdge> remainingEdges = workflow
+			.getEdges()
+			.stream()
+			.filter(edge -> edge.getSource() == edgeToRemove.getSource())
+			.collect(Collectors.toList());
+		if (remainingEdges.size() == 0) {
+			final WorkflowNode sourceNode = workflow
+				.getNodes()
+				.stream()
+				.filter(node -> node.getId() == edgeToRemove.getSource())
+				.findFirst()
+				.orElse(null);
+			if (sourceNode == null) return;
+
+			final OutputPort sourcePort = sourceNode
+				.getOutputs()
+				.stream()
+				.filter(port -> port.getId() == edgeToRemove.getSourcePortId())
+				.findFirst()
+				.orElse(null);
+			if (sourcePort == null) return;
+
+			sourcePort.setStatus("not connected");
+		}
 	}
 
 	/**
