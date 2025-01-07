@@ -176,7 +176,6 @@ Provide a summary in 100 words or less.
 		modelConfiguration.value?.id,
 		interventionPolicy.value?.id
 	);
-	console.log('datasetResult', datasetResult);
 	if (!datasetResult) {
 		logger.error('Error creating dataset from simulation result.');
 		return;
