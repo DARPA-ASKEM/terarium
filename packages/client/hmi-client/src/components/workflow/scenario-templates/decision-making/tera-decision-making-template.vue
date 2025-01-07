@@ -17,13 +17,20 @@
 				class="mb-3"
 				:model-value="scenario.modelConfigSpec.id"
 				placeholder="Select a configuration"
-				:options="modelConfigurations"
+				:options="sortedConfigurations"
 				option-label="name"
 				option-value="id"
 				@update:model-value="scenario.setModelConfigSpec($event)"
 				:disabled="isEmpty(modelConfigurations) || isFetchingModelInformation"
 				:loading="isFetchingModelInformation"
-			/>
+			>
+				<template #option="slotProps">
+					<span
+						>{{ slotProps.option.name }}
+						<p class="subtext">({{ formatTimestamp(slotProps.option.createdOn) }})</p></span
+					>
+				</template>
+			</Dropdown>
 
 			<template v-for="(intervention, i) in scenario.interventionSpecs" :key="intervention">
 				<label>Select intervention policy {{ i + 1 }}</label>
@@ -45,9 +52,9 @@
 							<Button label="Create new policy" icon="pi pi-plus" size="small" text @click="onOpenPolicyModel(i)" />
 						</template>
 						<template #option="slotProps">
-							<span class="policy-option"
+							<span
 								>{{ slotProps.option.name }}
-								<p>
+								<p class="subtext">
 									({{ slotProps.option.createdOn ? formatTimestamp(slotProps.option.createdOn) : 'Created by you' }})
 								</p></span
 							>
@@ -141,6 +148,10 @@ const combinedInterventionPolicies = computed(() =>
 	})
 );
 
+const sortedConfigurations = computed(() =>
+	[...modelConfigurations.value].sort((a, b) => sortDatesDesc(a.createdOn, b.createdOn))
+);
+
 const props = defineProps<{
 	scenario: DecisionMakingScenario;
 }>();
@@ -185,10 +196,3 @@ watch(
 	{ immediate: true }
 );
 </script>
-
-<style scoped>
-.policy-option p {
-	font-size: var(--font-caption);
-	color: var(--text-color-subdued);
-}
-</style>

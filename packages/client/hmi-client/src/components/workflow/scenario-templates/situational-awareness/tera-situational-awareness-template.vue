@@ -48,13 +48,20 @@
 			<Dropdown
 				:model-value="scenario.modelConfigSpec.id"
 				placeholder="Select a configuration"
-				:options="modelConfigurations"
+				:options="sortedConfigurations"
 				option-label="name"
 				option-value="id"
 				@update:model-value="scenario.setModelConfigSpec($event)"
-				:disabled="isEmpty(modelConfigurations) || isFetchingModelInformation"
+				:disabled="isEmpty(sortedConfigurations) || isFetchingModelInformation"
 				:loading="isFetchingModelInformation"
-			/>
+			>
+				<template #option="slotProps">
+					<span
+						>{{ slotProps.option.name }}
+						<p class="subtext">({{ formatTimestamp(slotProps.option.createdOn) }})</p></span
+					>
+				</template>
+			</Dropdown>
 		</template>
 
 		<template #outputs>
@@ -84,6 +91,7 @@ import { getModel, getModelConfigurationsForModel } from '@/services/model';
 import { isEmpty } from 'lodash';
 import MultiSelect from 'primevue/multiselect';
 import calibrate from '@/assets/svg/template-images/calibration-thumbnail.svg';
+import { sortDatesDesc, formatTimestamp } from '@/utils/date';
 import { SituationalAwarenessScenario } from './situational-awareness-scenario';
 import TeraScenarioTemplate from '../tera-scenario-template.vue';
 import { ScenarioHeader } from '../base-scenario';
@@ -111,6 +119,10 @@ const props = defineProps<{
 }>();
 
 const emit = defineEmits(['save-workflow']);
+
+const sortedConfigurations = computed(() =>
+	[...modelConfigurations.value].sort((a, b) => sortDatesDesc(a.createdOn, b.createdOn))
+);
 
 watch(
 	() => props.scenario.modelSpec.id,

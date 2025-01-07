@@ -19,10 +19,17 @@
 				option-label="name"
 				option-value="id"
 				@update:model-value="scenario.setModelConfigSpec($event)"
-				:disabled="isEmpty(modelConfigurations) || isFetchingModelInformation"
+				:disabled="isEmpty(filterModelConfigurations) || isFetchingModelInformation"
 				:loading="isFetchingModelInformation"
 				class="mb-3"
-			/>
+			>
+				<template #option="slotProps">
+					<span
+						>{{ slotProps.option.name }}
+						<p class="subtext">({{ formatTimestamp(slotProps.option.createdOn) }})</p></span
+					>
+				</template>
+			</Dropdown>
 			<label>Select intervention policy (historical)</label>
 			<div v-for="(intervention, i) in scenario.interventionSpecs" :key="i" class="flex">
 				<Dropdown
@@ -44,9 +51,9 @@
 					</template>
 
 					<template #option="slotProps">
-						<span class="policy-option"
+						<span
 							>{{ slotProps.option.name }}
-							<p>
+							<p class="subtext">
 								({{ slotProps.option.createdOn ? formatTimestamp(slotProps.option.createdOn) : 'Created by you' }})
 							</p></span
 						>
@@ -174,7 +181,9 @@ const models = computed(() => useProjects().getActiveProjectAssets(AssetType.Mod
 
 const modelConfigurations = ref<ModelConfiguration[]>([]);
 const filterModelConfigurations = computed<ModelConfiguration[]>(() =>
-	modelConfigurations.value.filter((mc) => isEmpty(mc.inferredParameterList))
+	modelConfigurations.value
+		.filter((mc) => isEmpty(mc.inferredParameterList))
+		.sort((a, b) => sortDatesDesc(a.createdOn, b.createdOn))
 );
 const interventionPolicies = ref<InterventionPolicy[]>([]);
 const modelStateOptions = ref<any[]>([]);
@@ -266,10 +275,5 @@ watch(
 	padding: var(--gap-2) var(--gap-1);
 	margin: var(--gap-0-5) 0;
 	background-color: var(--surface-100);
-}
-
-.policy-option p {
-	font-size: var(--font-caption);
-	color: var(--text-color-subdued);
 }
 </style>
