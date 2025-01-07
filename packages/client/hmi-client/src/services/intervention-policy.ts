@@ -21,12 +21,15 @@ export const getInterventionPolicyById = async (policyId: string): Promise<Inter
 	return response?.data ?? null;
 };
 
-export const createInterventionPolicy = async (policy: InterventionPolicy): Promise<InterventionPolicy | null> => {
+export const createInterventionPolicy = async (
+	policy: InterventionPolicy,
+	skipCheck: boolean = false
+): Promise<InterventionPolicy | null> => {
 	try {
 		delete policy.id;
 		delete policy.createdOn;
 		delete policy.updatedOn;
-		const response = await API.post<InterventionPolicy>(`/interventions`, policy);
+		const response = await API.post<InterventionPolicy>(`/interventions?skip-check=${skipCheck}`, policy);
 		if (response.status !== 201) {
 			return null;
 		}

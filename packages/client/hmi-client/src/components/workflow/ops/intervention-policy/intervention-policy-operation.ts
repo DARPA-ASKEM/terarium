@@ -1,4 +1,4 @@
-import { InterventionPolicy } from '@/types/Types';
+import { InterventionPolicy, InterventionSemanticType } from '@/types/Types';
 import type { BaseState, Operation } from '@/types/workflow';
 import { WorkflowOperationTypes } from '@/types/workflow';
 import { isEqual, omit } from 'lodash';
@@ -57,3 +57,16 @@ export const isInterventionPoliciesValuesEqual = (
 	});
 	return !notEqual;
 };
+
+export const isInterventionPolicyBlank = (policy: InterventionPolicy | null): boolean =>
+	policy?.interventions.length === 1 &&
+	isEqual(policy.interventions[0], {
+		name: 'New Intervention',
+		staticInterventions: [
+			{
+				type: InterventionSemanticType.Parameter,
+				appliedTo: ''
+			}
+		],
+		dynamicInterventions: []
+	});
