@@ -344,6 +344,8 @@ const initialize = async () => {
 	await Promise.all(interventionPolicyPromises).then((policies) => {
 		interventionPolicies.value = policies.filter((policy) => policy !== null);
 	});
+
+	console.log(modelConfigurationIds, interventionPolicyIds);
 };
 
 // Following two funcs are util like
