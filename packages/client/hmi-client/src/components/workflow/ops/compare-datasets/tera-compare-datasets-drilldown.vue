@@ -59,12 +59,14 @@
 						/>
 						<div class="mb-4" />
 						-->
-						<template v-if="knobs.selectedCompareOption === CompareValue.RANK">
+						<div class="flex flex-column gap-2" v-if="knobs.selectedCompareOption === CompareValue.RANK">
 							<label>Specify criteria of interest:</label>
 							<tera-criteria-of-interest-card
 								v-for="(card, i) in node.state.criteriaOfInterestCards"
 								:key="i"
 								:card="card"
+								:model-configurations="modelConfigurations"
+								:variables="commonHeaderNames"
 								@delete="deleteCriteria(i)"
 								@update="(e) => updateCriteria(e, i)"
 							/>
@@ -78,7 +80,7 @@
 									@click="addCriteria"
 								/>
 							</div>
-						</template>
+						</div>
 					</tera-drilldown-section>
 				</template>
 			</tera-slider-panel>
@@ -178,9 +180,10 @@ import Button from 'primevue/button';
 import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
 import Dropdown from 'primevue/dropdown';
-import { Dataset, InterventionPolicy } from '@/types/Types';
+import { Dataset, InterventionPolicy, ModelConfiguration } from '@/types/Types';
 import { getDataset, getRawContent } from '@/services/dataset';
 import { getInterventionPolicyById } from '@/services/intervention-policy';
+import { getModelConfigurationById } from '@/services/model-configurations';
 import TeraCheckbox from '@/components/widgets/tera-checkbox.vue';
 import RadioButton from 'primevue/radiobutton';
 import { isEmpty, cloneDeep } from 'lodash';
@@ -213,6 +216,7 @@ const compareOptions: { label: string; value: CompareValue }[] = [
 ];
 
 const datasets = ref<Dataset[]>([]);
+const modelConfigurations = ref<ModelConfiguration[]>([]);
 const interventionPolicies = ref<InterventionPolicy[]>([]);
 
 const commonHeaderNames = ref<string[]>([]);
@@ -223,7 +227,6 @@ const plotOptions = [
 	{ label: 'Percent change', value: PlotValue.PERCENTAGE },
 	{ label: 'Difference', value: PlotValue.DIFFERENCE }
 ];
-const interventionPolicyIds: string[] = [];
 
 const isInputSettingsOpen = ref(true);
 const isOutputSettingsOpen = ref(true);
@@ -298,6 +301,9 @@ const initialize = async () => {
 	const state = cloneDeep(props.node.state);
 	knobs.value = Object.assign(knobs.value, state);
 
+	const interventionPolicyIds: string[] = [];
+	const modelConfigurationIds: string[] = [];
+
 	const inputs = props.node.inputs;
 	const datasetInputs = inputs.filter(
 		(input) => input.type === 'datasetId' && input.status === WorkflowPortStatus.CONNECTED
@@ -308,17 +314,24 @@ const initialize = async () => {
 	await Promise.all(datasetPromises).then((ds) => {
 		ds.forEach((dataset) => {
 			if (!dataset) return;
+			datasets.value.push(dataset);
+			const modelConfigurationId = dataset.metadata?.simulationAttributes?.modelConfigurationId;
 			const interventionPolicyId = dataset.metadata?.simulationAttributes?.interventionPolicyId;
+			if (modelConfigurationId) modelConfigurationIds.push(modelConfigurationId);
 			if (interventionPolicyId) interventionPolicyIds.push(interventionPolicyId);
 		});
 	});
 	isFetchingDatasets.value = false;
 
-	console.log(datasets.value, interventionPolicyIds);
-
 	if (!knobs.value.selectedDataset) knobs.value.selectedDataset = datasets.value[0]?.id ?? null;
 
 	generateChartData();
+
+	if (isEmpty(modelConfigurationIds)) return;
+	const modelConfigurationPromises = modelConfigurationIds.map((id) => getModelConfigurationById(id));
+	await Promise.all(modelConfigurationPromises).then((configs) => {
+		modelConfigurations.value = configs.filter((config) => config !== null);
+	});
 
 	if (isEmpty(interventionPolicyIds)) return;
 	const interventionPolicyPromises = interventionPolicyIds.map((id) => getInterventionPolicyById(id));

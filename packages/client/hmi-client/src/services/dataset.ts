@@ -239,10 +239,12 @@ async function createDatasetFromSimulationResult(
 	simulationId: string,
 	datasetName: string | null,
 	addToProject: boolean = true,
+	modelConfigurationId?: string,
 	interventionPolicyId?: string
 ): Promise<Dataset | null> {
 	try {
 		let URL = `/simulations/${simulationId}/create-result-as-dataset/${projectId}?dataset-name=${datasetName}&add-to-project=${addToProject}`;
+		if (modelConfigurationId) URL += `&model-configuration-id=${modelConfigurationId}`;
 		if (interventionPolicyId) URL += `&intervention-policy-id=${interventionPolicyId}`;
 		const response: AxiosResponse<Dataset> = await API.post(URL);
 		return response.data as Dataset;

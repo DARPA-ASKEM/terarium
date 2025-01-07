@@ -93,6 +93,7 @@ public class SimulationService extends TerariumAssetServiceWithoutSearch<Simulat
 		final String datasetName,
 		final UUID projectId,
 		final boolean addToProject,
+		final Optional<UUID> modelConfigurationId,
 		final Optional<UUID> interventionPolicyId,
 		final Schema.Permission permission
 	) {
@@ -120,6 +121,7 @@ public class SimulationService extends TerariumAssetServiceWithoutSearch<Simulat
 			ObjectNode simulationAttributes = mapper.createObjectNode();
 
 			metadata.put("simulationId", simId.toString());
+			modelConfigurationId.ifPresent(id -> simulationAttributes.put("modelConfigurationId", id.toString()));
 			interventionPolicyId.ifPresent(id -> simulationAttributes.put("interventionPolicyId", id.toString()));
 			metadata.set("simulationAttributes", simulationAttributes);
 
