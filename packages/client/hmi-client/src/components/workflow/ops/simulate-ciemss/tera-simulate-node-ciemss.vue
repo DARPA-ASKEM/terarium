@@ -246,31 +246,37 @@ const pollResult = async (runId: string) => {
 	return pollerResults;
 };
 
-async function processPolling(id, propName, inProgressPropName) {
-	const response = await pollResult(id);
-	if (response.state === PollerState.Done) {
-		const state = _.cloneDeep(props.node.state);
-		state[propName] = id;
-		state[inProgressPropName] = '';
-		emit('update-state', state);
-	}
-}
-
 watch(
-	() => props.node.state.inProgressForecastId,
+	() => props.node.state.inProgressForecastId + props.node.state.inProgressBaseForecastId,
 	async (id) => {
 		if (!id || id === '') return;
-		await processPolling(id, 'forecastId', 'inProgressForecastId');
-		await processResult(id); // Only process and output result for main forecast
-	},
-	{ immediate: true }
-);
 
-watch(
-	() => props.node.state.inProgressBaseForecastId,
-	async (id) => {
-		if (!id || id === '') return;
-		await processPolling(id, 'baseForecastId', 'inProgressBaseForecastId');
+		let doneProcess = true;
+		let response;
+		if (props.node.state.inProgressBaseForecastId) {
+			const baseForecastId = props.node.state.inProgressBaseForecastId;
+			response = await pollResult(baseForecastId);
+		}
+		if (response?.state && response.state !== PollerState.Done) {
+			doneProcess = false;
+		}
+
+		if (props.node.state.inProgressForecastId) {
+			const forecastId = props.node.state.inProgressForecastId;
+			response = await pollResult(forecastId);
+		}
+		if (response?.state && response.state !== PollerState.Done) {
+			doneProcess = false;
+		}
+		if (doneProcess) {
+			const state = _.cloneDeep(props.node.state);
+			state.forecastId = state.inProgressForecastId;
+			state.baseForecastId = state.inProgressBaseForecastId;
+			state.inProgressForecastId = '';
+			state.inProgressBaseForecastId = '';
+			emit('update-state', state);
+			await processResult(state.forecastId); // Only process and output result for main forecast
+		}
 	},
 	{ immediate: true }
 );
