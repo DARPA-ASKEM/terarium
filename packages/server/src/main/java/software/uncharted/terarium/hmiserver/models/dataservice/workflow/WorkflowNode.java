@@ -15,7 +15,7 @@ import software.uncharted.terarium.hmiserver.models.SupportAdditionalProperties;
 @Data
 @EqualsAndHashCode(callSuper = true)
 @Accessors(chain = true)
-public class WorkflowNode<T> extends SupportAdditionalProperties implements Serializable {
+public class WorkflowNode extends SupportAdditionalProperties implements Serializable {
 
 	private UUID id;
 	private UUID workflowId;
@@ -54,8 +54,8 @@ public class WorkflowNode<T> extends SupportAdditionalProperties implements Seri
 
 	private String status;
 
-	public WorkflowNode<?> clone(final UUID workflowId) {
-		final WorkflowNode<?> clone = (WorkflowNode<?>) super.clone();
+	public WorkflowNode clone(final UUID workflowId) {
+		final WorkflowNode clone = (WorkflowNode) super.clone();
 		clone.setId(UUID.randomUUID());
 		clone.setWorkflowId(workflowId);
 		return clone;

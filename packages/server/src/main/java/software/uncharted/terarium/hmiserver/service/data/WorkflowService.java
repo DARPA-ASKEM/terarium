@@ -65,7 +65,7 @@ public class WorkflowService extends TerariumAssetServiceWithoutSearch<Workflow,
 		throws IOException, IllegalArgumentException {
 		// ensure the workflow id is set correctly
 		if (asset.getNodes() != null) {
-			for (final WorkflowNode<?> node : asset.getNodes()) {
+			for (final WorkflowNode node : asset.getNodes()) {
 				node.setWorkflowId(asset.getId());
 				if (node.getVersion() == null) {
 					node.setVersion(1L);
@@ -94,9 +94,9 @@ public class WorkflowService extends TerariumAssetServiceWithoutSearch<Workflow,
 		// Fetch database copy, we will update into it
 		final Workflow dbWorkflow = getAsset(asset.getId(), hasWritePermission).get();
 
-		List<WorkflowNode<?>> dbWorkflowNodes = dbWorkflow.getNodes();
+		List<WorkflowNode> dbWorkflowNodes = dbWorkflow.getNodes();
 		List<WorkflowEdge> dbWorkflowEdges = dbWorkflow.getEdges();
-		final Map<UUID, WorkflowNode<?>> nodeMap = new HashMap<>();
+		final Map<UUID, WorkflowNode> nodeMap = new HashMap<>();
 		final Map<UUID, WorkflowEdge> edgeMap = new HashMap<>();
 
 		dbWorkflow.setName(asset.getName());
@@ -105,7 +105,7 @@ public class WorkflowService extends TerariumAssetServiceWithoutSearch<Workflow,
 
 		// Prep: sane state, cache the nodes/edges to update for easy retrival
 		if (asset.getNodes() != null) {
-			for (final WorkflowNode<?> node : asset.getNodes()) {
+			for (final WorkflowNode node : asset.getNodes()) {
 				node.setWorkflowId(asset.getId());
 				if (node.getVersion() == null) {
 					node.setVersion(1L);
@@ -128,8 +128,8 @@ public class WorkflowService extends TerariumAssetServiceWithoutSearch<Workflow,
 		////////////////////////////////////////////////////////////////////////////////
 		if (dbWorkflowNodes != null && dbWorkflowNodes.size() > 0) {
 			for (int index = 0; index < dbWorkflowNodes.size(); index++) {
-				final WorkflowNode<?> dbNode = dbWorkflowNodes.get(index);
-				final WorkflowNode<?> node = nodeMap.get(dbNode.getId());
+				final WorkflowNode dbNode = dbWorkflowNodes.get(index);
+				final WorkflowNode node = nodeMap.get(dbNode.getId());
 
 				if (node == null) continue;
 
@@ -186,7 +186,7 @@ public class WorkflowService extends TerariumAssetServiceWithoutSearch<Workflow,
 		if (dbWorkflowNodes == null) {
 			dbWorkflowNodes = new ArrayList<>();
 		}
-		for (final Map.Entry<UUID, WorkflowNode<?>> pair : nodeMap.entrySet()) {
+		for (final Map.Entry<UUID, WorkflowNode> pair : nodeMap.entrySet()) {
 			dbWorkflowNodes.add(pair.getValue());
 		}
 
@@ -209,12 +209,31 @@ public class WorkflowService extends TerariumAssetServiceWithoutSearch<Workflow,
 	}
 
 	@Observed(name = "function_profile")
-	private void cascadeInvalidStatus(final WorkflowNode<?> sourceNode, final Map<UUID, List<WorkflowNode>> nodeCache) {
+	private void cascadeInvalidStatus(final WorkflowNode sourceNode, final Map<UUID, List<WorkflowNode>> nodeCache) {
 		List<WorkflowNode> downstreamNodes = nodeCache.get(sourceNode.getId());
 		for (final WorkflowNode node : downstreamNodes) {
 			node.setStatus("invalid");
 			cascadeInvalidStatus(node, nodeCache);
 		}
+	}
+
+	private void addNode(final Workflow workflow, final WorkflowNode node) {
+		workflow.getNodes().add(node);
+	}
+
+	private void removeNode(final Workflow workflow, final UUID nodeId) {}
+
+	private void addEdge(final Workflow workflow, final WorkflowEdge edge) {}
+
+	private void removeEdge(final Workflow workflow, final UUID edgeId) {
+		final WorkflowEdge edgeToRemove = workflow
+			.getEdges()
+			.stream()
+			.filter(edge -> edge.getId() == edgeId)
+			.findFirst()
+			.orElse(null);
+		if (edgeToRemove == null || edgeToRemove.getIsDeleted() == true) return;
+		// Remove the data reference at the targetPort
 	}
 
 	/**
@@ -225,7 +244,7 @@ public class WorkflowService extends TerariumAssetServiceWithoutSearch<Workflow,
 	 **/
 	@Observed(name = "function_profile")
 	public void selectOutput(final Workflow workflow, UUID nodeId, UUID selectedId) throws Exception {
-		final WorkflowNode<?> operator = workflow
+		final WorkflowNode operator = workflow
 			.getNodes()
 			.stream()
 			.filter(node -> {
@@ -269,9 +288,9 @@ public class WorkflowService extends TerariumAssetServiceWithoutSearch<Workflow,
 
 		selected.setStatus("connected");
 
-		final Map<UUID, WorkflowNode<?>> nodeMap = new HashMap<>();
-		final Map<UUID, List<WorkflowNode<?>>> nodeCache = new HashMap<>();
-		for (final WorkflowNode<?> node : workflow.getNodes()) {
+		final Map<UUID, WorkflowNode> nodeMap = new HashMap<>();
+		final Map<UUID, List<WorkflowNode>> nodeCache = new HashMap<>();
+		for (final WorkflowNode node : workflow.getNodes()) {
 			if (node.getIsDeleted() == false) {
 				nodeMap.put(node.getId(), node);
 			}
@@ -282,7 +301,7 @@ public class WorkflowService extends TerariumAssetServiceWithoutSearch<Workflow,
 			if (edge.getIsDeleted() == true) continue;
 
 			if (edge.getSource() == operator.getId()) {
-				final WorkflowNode<?> targetNode = workflow
+				final WorkflowNode targetNode = workflow
 					.getNodes()
 					.stream()
 					.filter(node -> node.getId().equals(edge.getTarget()))
@@ -347,7 +366,7 @@ public class WorkflowService extends TerariumAssetServiceWithoutSearch<Workflow,
 
 	@Observed(name = "function_profile")
 	public void appendOutput(final Workflow workflow, UUID nodeId, OutputPort port) throws Exception {
-		final WorkflowNode<?> operator = workflow
+		final WorkflowNode operator = workflow
 			.getNodes()
 			.stream()
 			.filter(node -> {
