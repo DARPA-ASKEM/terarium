@@ -42,6 +42,15 @@
 					<template #filtericon>
 						<Button label="Create new policy" icon="pi pi-plus" size="small" text @click="onOpenPolicyModel(i)" />
 					</template>
+
+					<template #option="slotProps">
+						<span class="policy-option"
+							>{{ slotProps.option.name }}
+							<p>
+								({{ slotProps.option.createdOn ? formatTimestamp(slotProps.option.createdOn) : 'Created by you' }})
+							</p></span
+						>
+					</template>
 				</Dropdown>
 				<Button
 					v-if="scenario.interventionSpecs.length > 1"
@@ -145,6 +154,7 @@ import { getInterventionPoliciesForModel, getModel, getModelConfigurationsForMod
 import { AssetType, InterventionPolicy, ModelConfiguration, ParameterSemantic } from '@/types/Types';
 import { getModelConfigurationById, getParameter, getParameters } from '@/services/model-configurations';
 import TeraInputNumber from '@/components/widgets/tera-input-number.vue';
+import { sortDatesDesc, formatTimestamp } from '@/utils/date';
 import { ScenarioHeader } from '../base-scenario';
 import TeraScenarioTemplate from '../tera-scenario-template.vue';
 import { displayParameter, usePolicyModel } from '../scenario-template-utils';
@@ -176,10 +186,13 @@ const interventionDropdowns = ref();
 const isPolicyModalVisible = ref(false);
 const policyModalContext = ref<number | null>(null);
 
-const combinedInterventionPolicies = computed(() => [
-	...interventionPolicies.value,
-	...props.scenario.newInterventionSpecs
-]);
+const combinedInterventionPolicies = computed(() =>
+	[...props.scenario.newInterventionSpecs, ...interventionPolicies.value].sort((a: any, b: any) => {
+		if (!a.createdOn) return -1;
+		if (!b.createdOn) return 1;
+		return sortDatesDesc(a.createdOn, b.createdOn);
+	})
+);
 
 const props = defineProps<{
 	scenario: HorizonScanningScenario;
@@ -253,5 +266,10 @@ watch(
 	padding: var(--gap-2) var(--gap-1);
 	margin: var(--gap-0-5) 0;
 	background-color: var(--surface-100);
+}
+
+.policy-option p {
+	font-size: var(--font-caption);
+	color: var(--text-color-subdued);
 }
 </style>
