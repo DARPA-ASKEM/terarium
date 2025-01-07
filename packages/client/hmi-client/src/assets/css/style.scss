@@ -242,3 +242,10 @@
 		max-width: 380px;
 	}
 }
+
+
+/* Submenu Override */
+.p-contextmenu .p-submenu-list {
+	width: max-content;
+	max-width: 25rem;
+}

@@ -9,6 +9,7 @@
 				option-value="assetId"
 				placeholder="Select a model"
 				@update:model-value="scenario.setModelSpec($event)"
+				class="mb-3"
 			/>
 
 			<label>Select a dataset</label>
@@ -19,6 +20,7 @@
 				option-value="assetId"
 				placeholder="Select a dataset"
 				@update:model-value="scenario.setDatasetSpec($event)"
+				class="mb-3"
 			/>
 
 			<!-- TODO: adding intervention policies -->
@@ -68,7 +70,7 @@
 				filter
 				:loading="isFetchingModelInformation"
 			/>
-			<img :src="calibrate" alt="Calibrate chart" />
+			<img :src="calibrate" alt="Calibrate chart" class="mt-3" />
 		</template>
 	</tera-scenario-template>
 </template>

@@ -135,6 +135,7 @@ section {
 		width: 100%;
 		color: var(--text-color-primary);
 		cursor: text;
+		padding-left: var(--gap-2);
 
 		img {
 			padding-right: var(--gap-2);
@@ -143,7 +144,7 @@ section {
 	}
 
 	& > .p-inputtext {
-		font-size: var(--font-caption);
+		font-size: var(--font-size);
 	}
 
 	padding-bottom: var(--gap-2);

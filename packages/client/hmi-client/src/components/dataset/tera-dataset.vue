@@ -207,6 +207,7 @@ const fetchDataset = async () => {
 			}))
 		});
 	}
+	prepareDescription();
 };
 
 onMounted(async () => {

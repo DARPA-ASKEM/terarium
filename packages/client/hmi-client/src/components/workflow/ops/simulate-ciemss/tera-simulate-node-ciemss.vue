@@ -35,7 +35,7 @@
 				/>
 			</section>
 		</template>
-		<Button v-if="areInputsFilled" label="Edit" @click="emit('open-drilldown')" severity="secondary" outlined />
+		<Button v-if="areInputsFilled" label="Open" @click="emit('open-drilldown')" severity="secondary" outlined />
 		<tera-operator-placeholder v-else :node="node"> Connect a model configuration </tera-operator-placeholder>
 	</main>
 </template>
@@ -47,7 +47,7 @@ import Button from 'primevue/button';
 
 import { logger } from '@/utils/logger';
 
-import { updateChartSettingsBySelectedVariables } from '@/services/chart-settings';
+import { updateChartSettingsBySelectedVariables, updateSensitivityChartSettingOption } from '@/services/chart-settings';
 import { createDatasetFromSimulationResult } from '@/services/dataset';
 import { flattenInterventionData, getInterventionPolicyById } from '@/services/intervention-policy';
 import { getModelByModelConfigurationId, getTypesFromModelParts, getUnitsFromModelParts } from '@/services/model';
@@ -67,7 +67,7 @@ import VegaChart from '@/components/widgets/VegaChart.vue';
 import { nodeOutputLabel } from '@/components/workflow/util';
 
 import { ModelConfiguration, type InterventionPolicy, type Model } from '@/types/Types';
-import { ChartSettingType } from '@/types/common';
+import { ChartSettingSensitivity, ChartSettingType } from '@/types/common';
 import type { WorkflowNode } from '@/types/workflow';
 
 import { useChartSettings } from '@/composables/useChartSettings';
@@ -123,6 +123,25 @@ const processResult = async (runId: string) => {
 	}
 
 	const summaryData = await getRunResultCSV(runId, 'result_summary.csv');
+
+	if (
+		(state.chartSettings as ChartSettingSensitivity[]).some((setting) => setting.type === ChartSettingType.SENSITIVITY)
+	) {
+		// If sensitivity chart settings are present, set the timepoint to the last timepoint
+		const selectedSensitivityVariables = state
+			.chartSettings!.filter((setting) => setting.type === ChartSettingType.SENSITIVITY)
+			.flatMap((setting) => setting.selectedVariables);
+		const lastTimepoint = _.last(result)?.timepoint_id;
+		const firstSensitiveSetting = (state.chartSettings as ChartSettingSensitivity[]).find(
+			(setting) => setting.type === ChartSettingType.SENSITIVITY
+		);
+		state.chartSettings = updateSensitivityChartSettingOption(state.chartSettings as ChartSettingSensitivity[], {
+			selectedVariables: selectedSensitivityVariables,
+			selectedInputVariables: firstSensitiveSetting!.selectedInputVariables,
+			timepoint: lastTimepoint
+		});
+		emit('update-state', state);
+	}
 	const start = _.first(summaryData);
 	const end = _.last(summaryData);
 
@@ -227,31 +246,37 @@ const pollResult = async (runId: string) => {
 	return pollerResults;
 };
 
-async function processPolling(id, propName, inProgressPropName) {
-	const response = await pollResult(id);
-	if (response.state === PollerState.Done) {
-		const state = _.cloneDeep(props.node.state);
-		state[propName] = id;
-		state[inProgressPropName] = '';
-		emit('update-state', state);
-	}
-	await processResult(id);
-}
-
 watch(
-	() => props.node.state.inProgressForecastId,
+	() => props.node.state.inProgressForecastId + props.node.state.inProgressBaseForecastId,
 	async (id) => {
 		if (!id || id === '') return;
-		await processPolling(id, 'forecastId', 'inProgressForecastId');
-	},
-	{ immediate: true }
-);
 
-watch(
-	() => props.node.state.inProgressBaseForecastId,
-	async (id) => {
-		if (!id || id === '') return;
-		await processPolling(id, 'baseForecastId', 'inProgressBaseForecastId');
+		let doneProcess = true;
+		let response;
+		if (props.node.state.inProgressBaseForecastId) {
+			const baseForecastId = props.node.state.inProgressBaseForecastId;
+			response = await pollResult(baseForecastId);
+		}
+		if (response?.state && response.state !== PollerState.Done) {
+			doneProcess = false;
+		}
+
+		if (props.node.state.inProgressForecastId) {
+			const forecastId = props.node.state.inProgressForecastId;
+			response = await pollResult(forecastId);
+		}
+		if (response?.state && response.state !== PollerState.Done) {
+			doneProcess = false;
+		}
+		if (doneProcess) {
+			const state = _.cloneDeep(props.node.state);
+			state.forecastId = state.inProgressForecastId;
+			state.baseForecastId = state.inProgressBaseForecastId;
+			state.inProgressForecastId = '';
+			state.inProgressBaseForecastId = '';
+			emit('update-state', state);
+			await processResult(state.forecastId); // Only process and output result for main forecast
+		}
 	},
 	{ immediate: true }
 );
