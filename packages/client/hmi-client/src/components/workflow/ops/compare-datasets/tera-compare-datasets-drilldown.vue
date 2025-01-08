@@ -189,7 +189,7 @@ import { useChartSettings } from '@/composables/useChartSettings';
 import { useDrilldownChartSize } from '@/composables/useDrilldownChartSize';
 import { useCharts, type ChartData } from '@/composables/useCharts';
 import { renameFnGenerator } from '@/components/workflow/ops/calibrate-ciemss/calibrate-utils';
-import { DataArray, parsePyCiemssMap } from '@/services/models/simulation-service';
+import { DataArray, parsePyCiemssMap, processAndSortSamplesByTimepoint } from '@/services/models/simulation-service';
 import TeraCriteriaOfInterestCard from './tera-criteria-of-interest-card.vue';
 import {
 	blankCriteriaOfInterest,
@@ -419,10 +419,12 @@ async function generateChartData2() {
 	const resultSummaryTransformed = summaryResult.map((row) =>
 		transformRowValuesRelativeToBaseline(row, baselineDatasetIndex, selectedPlotType.value)
 	);
+	const resultGroupByTimepoint = processAndSortSamplesByTimepoint(result);
 
 	chartData.value = {
 		result: resultTransformed,
 		resultSummary: resultSummaryTransformed,
+		resultGroupByTimepoint,
 		pyciemssMap,
 		translationMap: {}
 	};
@@ -431,7 +433,6 @@ async function generateChartData2() {
 async function generateChartData() {
 	generateChartData2();
 	if (datasets.value.length <= 1) return;
-	console.log(datasets);
 
 	const rawContents = await Promise.all(
 		datasets.value.map((dataset) => {
