@@ -17,7 +17,7 @@ Report any issues into GitHub: [open an issue](https://github.com/DARPA-ASKEM/te
 2. Upload `Ensemble Calibrate Test Dataset.csv` and `Giordano2020 - SIDARTHE model of COVID-19 spread in Italy.json` and `SIR.json` into your project
 3. Drag and drop the models into your workflow
 4. Link each model to their own _Configure Model_ operators
-6. Create a new configuration from the default one by simply giving what is already shown a name and clicking `Run`
+6. Use the `default configurations` for these models.
 7. Drag and drop the dataset into the workflow
 
 ### 3. Ensemble Calibrate Operator setup
