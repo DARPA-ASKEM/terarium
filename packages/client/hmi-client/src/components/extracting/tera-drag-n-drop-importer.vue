@@ -16,9 +16,9 @@
 				class="hidden-input"
 			/>
 			<label for="fileInput" class="file-label">
-				<div v-if="dragOver" class="flex row align-items-center gap-3">
-					<div><i class="pi pi-file" style="font-size: 2.5rem" /></div>
-					<div>Release mouse button to add files to import</div>
+				<div v-if="dragOver" class="drop-zone">
+					<div><i class="pi pi-upload" style="font-size: 2.5rem" /></div>
+					<div>Release mouse button to<br />add files to import</div>
 				</div>
 				<div v-else class="drop-zone">
 					<div><i class="pi pi-upload" style="font-size: 2.5rem" /></div>
@@ -264,6 +264,7 @@ label.file-label {
 	flex-direction: column;
 	gap: 1rem;
 	align-items: center;
+	text-align: center;
 }
 .drop-zone-text {
 	text-align: center;

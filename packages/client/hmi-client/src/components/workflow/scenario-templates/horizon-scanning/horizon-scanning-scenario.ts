@@ -10,11 +10,12 @@ import { OperatorNodeSize } from '@/services/workflow';
 import { createModelConfiguration, getModelConfigurationById, getParameter } from '@/services/model-configurations';
 import { ChartSetting, ChartSettingType } from '@/types/common';
 import { updateChartSettingsBySelectedVariables } from '@/services/chart-settings';
-import { AssetType, ParameterSemantic } from '@/types/Types';
+import { AssetType, InterventionPolicy, ParameterSemantic } from '@/types/Types';
 import { DistributionType } from '@/services/distribution';
 import { calculateUncertaintyRange } from '@/utils/math';
-import { getInterventionPolicyById } from '@/services/intervention-policy';
+import { blankIntervention, createInterventionPolicy, getInterventionPolicyById } from '@/services/intervention-policy';
 import { useProjects } from '@/composables/project';
+import { getMeanCompareDatasetVariables } from '../scenario-template-utils';
 
 export interface HorizonScanningParameter {
 	id: string;
@@ -65,6 +66,8 @@ export class HorizonScanningScenario extends BaseScenario {
 
 	interventionSpecs: { id: string }[];
 
+	newInterventionSpecs: { id: string; name: string }[];
+
 	simulateSpec: { ids: string[] };
 
 	parameters: (HorizonScanningParameter | null)[];
@@ -82,6 +85,7 @@ export class HorizonScanningScenario extends BaseScenario {
 			ids: []
 		};
 		this.interventionSpecs = [{ id: '' }];
+		this.newInterventionSpecs = [];
 		this.parameters = [null];
 	}
 
@@ -97,7 +101,7 @@ export class HorizonScanningScenario extends BaseScenario {
 		this.modelConfigSpec.id = id;
 	}
 
-	setCalibrateSpec(ids: string[]) {
+	setSimulateSpec(ids: string[]) {
 		this.simulateSpec.ids = ids;
 	}
 
@@ -121,9 +125,13 @@ export class HorizonScanningScenario extends BaseScenario {
 		this.parameters.splice(index, 1);
 	}
 
+	setNewInterventionSpec(id: string, name: string) {
+		this.newInterventionSpecs.push({ id, name });
+	}
+
 	setParameter(parameter: ParameterSemantic, index: number) {
 		let low = 0;
-		let high = 0;
+		let high = 1;
 		if (parameter.distribution.type === DistributionType.Constant) {
 			const { min, max } = calculateUncertaintyRange(parameter.distribution.parameters.value, 10);
 			low = min;
@@ -142,7 +150,8 @@ export class HorizonScanningScenario extends BaseScenario {
 			workflowName: this.workflowName,
 			modelSpec: this.modelSpec,
 			modelConfigSpec: this.modelConfigSpec,
-			simulateSpec: this.simulateSpec
+			simulateSpec: this.simulateSpec,
+			interventionSpecs: this.interventionSpecs
 		};
 	}
 
@@ -151,7 +160,6 @@ export class HorizonScanningScenario extends BaseScenario {
 			!!this.workflowName &&
 			!!this.modelSpec.id &&
 			!!this.modelConfigSpec.id &&
-			!this.interventionSpecs.some((interventionSpec) => !interventionSpec.id) &&
 			!this.parameters.some((parameter) => !parameter) &&
 			!_.isEmpty(this.simulateSpec.ids)
 		);
@@ -207,6 +215,19 @@ export class HorizonScanningScenario extends BaseScenario {
 			ChartSettingType.VARIABLE,
 			this.simulateSpec.ids
 		);
+
+		let compareDatasetChartSettings: ChartSetting[] = [];
+		compareDatasetChartSettings = updateChartSettingsBySelectedVariables(
+			compareDatasetChartSettings,
+			ChartSettingType.VARIABLE,
+			getMeanCompareDatasetVariables(this.simulateSpec.ids, modelConfig)
+		);
+
+		wf.updateNode(compareDatasetNode, {
+			state: {
+				chartSettings: compareDatasetChartSettings
+			}
+		});
 
 		// 2. create model config nodes for each paramter for both the low and high values and attach them to the model node
 		const modelConfigPromises = this.parameters.flatMap(async (parameter) => {
@@ -290,74 +311,146 @@ export class HorizonScanningScenario extends BaseScenario {
 		const modelConfigNodes = (await Promise.all(modelConfigPromises)).flat();
 
 		// 3. Add intervention nodes for each intervention and attach them to the model node
-		const interventionPromises = this.interventionSpecs.map(async (interventionSpec) => {
-			const interventionPolicy = await getInterventionPolicyById(interventionSpec.id);
+		// filter out any interventions that don't have an id
+		const interventionPromises = this.interventionSpecs
+			.filter((spec) => !!spec.id)
+			.map(async (interventionSpec) => {
+				let interventionPolicy: InterventionPolicy | null = await getInterventionPolicyById(interventionSpec.id);
 
-			const interventionNode = wf.addNode(
-				InterventionOp,
-				{ x: 0, y: 0 },
-				{
-					size: OperatorNodeSize.medium
+				if (!interventionPolicy) {
+					// create new intervention if in the new policy list
+					interventionPolicy = await createInterventionPolicy(
+						{
+							name:
+								this.newInterventionSpecs.find((newInterventionSpec) => newInterventionSpec.id === interventionSpec.id)
+									?.name ?? 'New policy',
+							modelId: this.modelSpec.id,
+							interventions: [blankIntervention]
+						},
+						true
+					);
 				}
-			);
 
-			wf.addEdge(modelNode.id, modelNode.outputs[0].id, interventionNode.id, interventionNode.inputs[0].id, [
-				{ x: 0, y: 0 },
-				{ x: 0, y: 0 }
-			]);
-
-			wf.updateNode(interventionNode, {
-				state: {
-					interventionPolicy
-				},
-				output: {
-					value: [interventionPolicy.id],
-					state: interventionNode.state
-				}
-			});
-
-			// each intervention node will be connected to a simulate node along with each model config node
-			modelConfigNodes.forEach((modelConfigNode) => {
-				const simulateNode = wf.addNode(
-					SimulateCiemssOp,
+				const interventionNode = wf.addNode(
+					InterventionOp,
 					{ x: 0, y: 0 },
 					{
 						size: OperatorNodeSize.medium
 					}
 				);
 
-				wf.updateNode(simulateNode, {
+				wf.addEdge(modelNode.id, modelNode.outputs[0].id, interventionNode.id, interventionNode.inputs[0].id, [
+					{ x: 0, y: 0 },
+					{ x: 0, y: 0 }
+				]);
+
+				wf.updateNode(interventionNode, {
 					state: {
-						chartSettings: simulateChartSettings
+						interventionPolicy
+					},
+					output: {
+						value: [interventionPolicy!.id],
+						state: interventionNode.state
 					}
 				});
 
-				wf.addEdge(modelConfigNode.id, modelConfigNode.outputs[0].id, simulateNode.id, simulateNode.inputs[0].id, [
-					{ x: 0, y: 0 },
-					{ x: 0, y: 0 }
-				]);
-
-				wf.addEdge(interventionNode.id, interventionNode.outputs[0].id, simulateNode.id, simulateNode.inputs[1].id, [
-					{ x: 0, y: 0 },
-					{ x: 0, y: 0 }
-				]);
-
-				wf.addEdge(
-					simulateNode.id,
-					simulateNode.outputs[0].id,
-					compareDatasetNode.id,
-					compareDatasetNode.inputs[compareDatasetIndex].id,
-					[
-						{ x: 0, y: 0 },
-						{ x: 0, y: 0 }
-					]
-				);
-				compareDatasetIndex++;
+				return interventionNode;
 			});
-		});
 
 		// Wait for all interventionPromises to resolve
-		await Promise.all(interventionPromises);
+		const interventionNodes = await Promise.all(interventionPromises);
+
+		// 4. Add simulate nodes for each model config and intervention and attach them to the model config and intervention nodes
+		// each intervention node will be connected to a simulate node along with each model config node
+		modelConfigNodes.forEach((modelConfigNode) => {
+			// For each model config node, we want to connect it to a simulate node, even if interventions aren't present
+			const simulateNode = wf.addNode(
+				SimulateCiemssOp,
+				{ x: 0, y: 0 },
+				{
+					size: OperatorNodeSize.medium
+				}
+			);
+
+			wf.updateNode(simulateNode, {
+				state: {
+					chartSettings: simulateChartSettings
+				}
+			});
+
+			wf.addEdge(modelConfigNode.id, modelConfigNode.outputs[0].id, simulateNode.id, simulateNode.inputs[0].id, [
+				{ x: 0, y: 0 },
+				{ x: 0, y: 0 }
+			]);
+
+			interventionNodes.forEach((interventionNode, index) => {
+				// If this is the first intervention node, connect it to the model config node and the already created simulate node
+				if (index === 0) {
+					wf.addEdge(interventionNode.id, interventionNode.outputs[0].id, simulateNode.id, simulateNode.inputs[1].id, [
+						{ x: 0, y: 0 },
+						{ x: 0, y: 0 }
+					]);
+				} else {
+					const additionalSimNode = wf.addNode(
+						SimulateCiemssOp,
+						{ x: 0, y: 0 },
+						{
+							size: OperatorNodeSize.medium
+						}
+					);
+
+					wf.updateNode(additionalSimNode, {
+						state: {
+							chartSettings: simulateChartSettings
+						}
+					});
+
+					wf.addEdge(
+						modelConfigNode.id,
+						modelConfigNode.outputs[0].id,
+						additionalSimNode.id,
+						additionalSimNode.inputs[0].id,
+						[
+							{ x: 0, y: 0 },
+							{ x: 0, y: 0 }
+						]
+					);
+					wf.addEdge(
+						interventionNode.id,
+						interventionNode.outputs[0].id,
+						additionalSimNode.id,
+						additionalSimNode.inputs[1].id,
+						[
+							{ x: 0, y: 0 },
+							{ x: 0, y: 0 }
+						]
+					);
+					wf.addEdge(
+						additionalSimNode.id,
+						additionalSimNode.outputs[0].id,
+						compareDatasetNode.id,
+						compareDatasetNode.inputs[compareDatasetIndex].id,
+						[
+							{ x: 0, y: 0 },
+							{ x: 0, y: 0 }
+						]
+					);
+					compareDatasetIndex++;
+				}
+			});
+
+			wf.addEdge(
+				simulateNode.id,
+				simulateNode.outputs[0].id,
+				compareDatasetNode.id,
+				compareDatasetNode.inputs[compareDatasetIndex].id,
+				[
+					{ x: 0, y: 0 },
+					{ x: 0, y: 0 }
+				]
+			);
+			compareDatasetIndex++;
+		});
 
 		// 4. Run layout
 		wf.runDagreLayout();

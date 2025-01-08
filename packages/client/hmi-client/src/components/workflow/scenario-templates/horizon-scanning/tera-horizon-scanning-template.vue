@@ -9,22 +9,55 @@
 				option-value="assetId"
 				placeholder="Select a model"
 				@update:model-value="scenario.setModelSpec($event)"
+				class="mb-3"
 			/>
-
-			<label>Select intervention policy (historical)</label>
+			<label>Select configuration representing best and generous estimates of the initial conditions</label>
+			<Dropdown
+				:model-value="scenario.modelConfigSpec.id"
+				placeholder="Select a configuration"
+				:options="filterModelConfigurations"
+				option-label="name"
+				option-value="id"
+				@update:model-value="scenario.setModelConfigSpec($event)"
+				:disabled="isEmpty(filterModelConfigurations) || isFetchingModelInformation"
+				:loading="isFetchingModelInformation"
+				class="mb-3"
+			>
+				<template #option="slotProps">
+					<p>
+						{{ slotProps.option.name }} <span class="subtext">({{ formatTimestamp(slotProps.option.createdOn) }})</span>
+					</p>
+				</template>
+			</Dropdown>
+			<label>Planned intervention policy (optional)</label>
 			<div v-for="(intervention, i) in scenario.interventionSpecs" :key="i" class="flex">
 				<Dropdown
+					ref="interventionDropdowns"
 					class="flex-1 my-1"
 					:model-value="intervention.id"
-					:options="interventionPolicies"
+					:options="combinedInterventionPolicies"
 					option-label="name"
 					option-value="id"
-					placeholder="Select an intervention policy"
+					placeholder="Select an intervention policy (optional)"
 					@update:model-value="scenario.setInterventionSpec($event, i)"
 					:key="i"
-					:disabled="isEmpty(interventionPolicies)"
+					:disabled="isFetchingModelInformation"
 					:loading="isFetchingModelInformation"
-				/>
+					filter
+				>
+					<template #filtericon>
+						<Button label="Create new policy" icon="pi pi-plus" size="small" text @click="onOpenPolicyModel(i)" />
+					</template>
+
+					<template #option="slotProps">
+						<p>
+							{{ slotProps.option.name }}
+							<span class="subtext">
+								({{ slotProps.option.createdOn ? formatTimestamp(slotProps.option.createdOn) : 'Created by you' }})
+							</span>
+						</p>
+					</template>
+				</Dropdown>
 				<Button
 					v-if="scenario.interventionSpecs.length > 1"
 					size="small"
@@ -35,7 +68,7 @@
 			</div>
 			<div>
 				<Button
-					class="py-2"
+					class="py-2 mb-3"
 					size="small"
 					text
 					icon="pi pi-plus"
@@ -43,17 +76,7 @@
 					@click="scenario.addInterventionSpec()"
 				/>
 			</div>
-			<label>Select configuration representing best and generous estimates of the initial conditions</label>
-			<Dropdown
-				:model-value="scenario.modelConfigSpec.id"
-				placeholder="Select a configuration"
-				:options="filterModelConfigurations"
-				option-label="name"
-				option-value="id"
-				@update:model-value="scenario.setModelConfigSpec($event)"
-				:disabled="isEmpty(modelConfigurations) || isFetchingModelInformation"
-				:loading="isFetchingModelInformation"
-			/>
+
 			<label>Select uncertain parameters of interest and adjust ranges to be explored if needed</label>
 			<template v-for="(parameter, i) in scenario.parameters" :key="i">
 				<div class="flex">
@@ -67,13 +90,16 @@
 						:disabled="!selectedModelConfiguration"
 						:loading="isFetchingModelConfiguration || isFetchingModelInformation"
 						@update:model-value="onParameterSelect($event, i)"
+						filter
 					>
 						<template #option="slotProps">
-							<span>{{ displayParameter(slotProps.option.referenceId) }}</span>
+							<span>{{ displayParameter(modelParameters, slotProps.option.referenceId) }}</span>
 						</template>
 
 						<template #value="slotProps">
-							<span v-if="displayParameter(slotProps.value)">{{ displayParameter(slotProps.value) }}</span>
+							<span v-if="displayParameter(modelParameters, slotProps.value)">{{
+								displayParameter(modelParameters, slotProps.value)
+							}}</span>
 							<span v-else>{{ slotProps.placeholder }}</span>
 						</template>
 					</Dropdown>
@@ -104,16 +130,21 @@
 				:disabled="isEmpty(modelStateOptions) || isFetchingModelInformation"
 				:model-value="scenario.simulateSpec.ids"
 				placeholder="Select output metrics"
-				option-label="name"
+				option-label="id"
 				option-value="id"
 				:options="modelStateOptions"
-				@update:model-value="scenario.setCalibrateSpec($event)"
+				@update:model-value="scenario.setSimulateSpec($event)"
 				:loading="isFetchingModelInformation"
 				filter
 			/>
-			<!-- <img :src="simulate" alt="Simulate chart" /> -->
+			<img :src="horizon" alt="Horizon scanning chart" class="" />
 		</template>
 	</tera-scenario-template>
+	<tera-new-policy-modal
+		:is-visible="isPolicyModalVisible"
+		@close="isPolicyModalVisible = false"
+		@create="addNewPolicy"
+	/>
 </template>
 
 <script setup lang="ts">
@@ -123,18 +154,21 @@ import Dropdown from 'primevue/dropdown';
 import MultiSelect from 'primevue/multiselect';
 import Button from 'primevue/button';
 import { useProjects } from '@/composables/project';
+import horizon from '@/assets/svg/template-images/horizon-thumbnail.svg';
 import { HorizonScanningScenario } from '@/components/workflow/scenario-templates/horizon-scanning/horizon-scanning-scenario';
 import { getInterventionPoliciesForModel, getModel, getModelConfigurationsForModel } from '@/services/model';
 import { AssetType, InterventionPolicy, ModelConfiguration, ParameterSemantic } from '@/types/Types';
 import { getModelConfigurationById, getParameter, getParameters } from '@/services/model-configurations';
-import { DistributionType } from '@/services/distribution';
 import TeraInputNumber from '@/components/widgets/tera-input-number.vue';
+import { sortDatesDesc, formatTimestamp } from '@/utils/date';
 import { ScenarioHeader } from '../base-scenario';
 import TeraScenarioTemplate from '../tera-scenario-template.vue';
+import { displayParameter, usePolicyModel } from '../scenario-template-utils';
+import teraNewPolicyModal from '../tera-new-policy-modal.vue';
 
 const header: ScenarioHeader = Object.freeze({
 	title: 'Horizon scanning template',
-	question: 'How does extreme scenarios impact the outcome of different interventions?',
+	question: 'How do extreme scenarios impact the outcome of different interventions?',
 	description:
 		'Configure the model to represent the extremes of uncertainty for some parameters, then simulate into the near future with different intervention policies and compare the outcomes.',
 	examples: ['Potential emergence of a new variant.', 'Rapidly waning immunity.']
@@ -146,7 +180,9 @@ const models = computed(() => useProjects().getActiveProjectAssets(AssetType.Mod
 
 const modelConfigurations = ref<ModelConfiguration[]>([]);
 const filterModelConfigurations = computed<ModelConfiguration[]>(() =>
-	modelConfigurations.value.filter((mc) => isEmpty(mc.inferredParameterList))
+	modelConfigurations.value
+		.filter((mc) => isEmpty(mc.inferredParameterList))
+		.sort((a, b) => sortDatesDesc(a.createdOn, b.createdOn))
 );
 const interventionPolicies = ref<InterventionPolicy[]>([]);
 const modelStateOptions = ref<any[]>([]);
@@ -154,34 +190,36 @@ const modelParameters = ref<ParameterSemantic[]>([]);
 
 const selectedModelConfiguration = ref<ModelConfiguration | null>(null);
 
+const interventionDropdowns = ref();
+const isPolicyModalVisible = ref(false);
+const policyModalContext = ref<number | null>(null);
+
+const combinedInterventionPolicies = computed(() =>
+	[...props.scenario.newInterventionSpecs, ...interventionPolicies.value].sort((a: any, b: any) => {
+		if (!a.createdOn) return -1;
+		if (!b.createdOn) return 1;
+		return sortDatesDesc(a.createdOn, b.createdOn);
+	})
+);
+
 const props = defineProps<{
 	scenario: HorizonScanningScenario;
 }>();
 
 const emit = defineEmits(['save-workflow']);
 
+const { onOpenPolicyModel, addNewPolicy } = usePolicyModel(
+	props,
+	interventionDropdowns,
+	policyModalContext,
+	isPolicyModalVisible
+);
+
 const onParameterSelect = (parameterId: string, index: number) => {
 	if (!selectedModelConfiguration.value) return;
 	const parameter = _.cloneDeep(getParameter(selectedModelConfiguration.value, parameterId));
 	if (!parameter) return;
 	props.scenario.setParameter(parameter, index);
-};
-
-const displayParameter = (parameterName: string) => {
-	let value = '';
-	const parameter = modelParameters.value.find((p) => p.referenceId === parameterName);
-	switch (parameter?.distribution.type) {
-		case DistributionType.Constant:
-			value = `${parameter.distribution.parameters.value}`;
-			break;
-		case DistributionType.Uniform:
-			value = `${parameter.distribution.parameters.minimum} - ${parameter.distribution.parameters.maximum}`;
-			break;
-		default:
-			return '';
-	}
-
-	return `${parameterName}  [${value}]`;
 };
 
 watch(
@@ -221,7 +259,9 @@ watch(
 		isFetchingModelConfiguration.value = true;
 		selectedModelConfiguration.value = await getModelConfigurationById(modelConfigId);
 		if (!selectedModelConfiguration.value) return;
-		modelParameters.value = getParameters(selectedModelConfiguration.value);
+		modelParameters.value = getParameters(selectedModelConfiguration.value).sort((a, b) =>
+			a.referenceId.localeCompare(b.referenceId)
+		);
 		isFetchingModelConfiguration.value = false;
 	}
 );

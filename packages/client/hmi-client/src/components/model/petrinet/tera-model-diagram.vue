@@ -243,7 +243,7 @@ watch(
 // Create an observer to re-render the graph when it resizes
 let graphResizeObserver: ResizeObserver;
 onMounted(() => {
-	if (graphElement.value) {
+	if (graphElement.value && props.featureConfig?.isPreview === false) {
 		// FIXME: This debounce prevents the graph from being rendered multiple times in a row.
 		// This happens in cases where there is a slight change in width when a scrollbar is shown or hidden. eg. opening/closing the transitions accordion in the model page
 		graphResizeObserver = observeElementSizeChange(graphElement.value, debounce(renderGraph, 2000));

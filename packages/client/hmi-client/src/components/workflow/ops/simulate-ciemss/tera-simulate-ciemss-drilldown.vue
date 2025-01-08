@@ -16,8 +16,8 @@
 				content-width="420px"
 			>
 				<template #content>
-					<div class="toolbar">
-						<p>Click Run to start the simulation.</p>
+					<div class="flex align-items-center justify-content-between px-3">
+						<p>{{ blankMessage }}.</p>
 						<span class="flex gap-2">
 							<tera-pyciemss-cancel-button :simulation-run-id="cancelRunIds" />
 							<Button label="Run" icon="pi pi-play" @click="run" :loading="inProgressForecastRun" />
@@ -44,6 +44,7 @@
 								:start-date="modelConfiguration.temporalContext"
 								:calendar-settings="getCalendarSettingsFromModel(model)"
 								v-model="timespan.start"
+								@update:model-value="updateState"
 							/>
 							<tera-timestep-calendar
 								v-if="model && modelConfiguration"
@@ -51,11 +52,12 @@
 								:start-date="modelConfiguration.temporalContext"
 								:calendar-settings="getCalendarSettingsFromModel(model)"
 								v-model="timespan.end"
+								@update:model-value="updateState"
 							/>
 						</div>
 
 						<!-- Number of Samples & Method -->
-						<div class="input-row">
+						<div class="input-row mt-3">
 							<div class="label-and-input">
 								<label for="num-samples">Number of samples</label>
 								<tera-input-number
@@ -72,6 +74,15 @@
 									id="solver-method"
 									v-model="method"
 									:options="[CiemssMethodOptions.dopri5, CiemssMethodOptions.euler]"
+									@update:model-value="updateState"
+								/>
+							</div>
+							<div class="label-and-input mt-2">
+								<label for="num-samples">Solver Step Size</label>
+								<tera-input-number
+									v-model="solverStepSize"
+									:disabled="method !== CiemssMethodOptions.euler"
+									:min="0"
 									@update:model-value="updateState"
 								/>
 							</div>
@@ -95,19 +106,17 @@
 
 		<!-- Notebook -->
 		<tera-drilldown-section :tabName="DrilldownTabs.Notebook" class="notebook-section">
-			<div class="toolbar">
-				<tera-notebook-jupyter-input
-					:kernel-manager="kernelManager"
-					:context-language="'python3'"
-					@llm-output="(data: any) => processLLMOutput(data)"
-					@llm-thought-output="(data: any) => llmThoughts.push(data)"
-					@question-asked="updateLlmQuery"
-				>
-					<template #toolbar-right-side>
-						<Button label="Run" size="small" icon="pi pi-play" @click="runCode" :disabled="isEmpty(codeText)" />
-					</template>
-				</tera-notebook-jupyter-input>
-			</div>
+			<tera-notebook-jupyter-input
+				:kernel-manager="kernelManager"
+				:context-language="'python3'"
+				@llm-output="(data: any) => processLLMOutput(data)"
+				@llm-thought-output="(data: any) => llmThoughts.push(data)"
+				@question-asked="updateLlmQuery"
+			>
+				<template #toolbar-right-side>
+					<Button label="Run" size="small" icon="pi pi-play" @click="runCode" :disabled="isEmpty(codeText)" />
+				</template>
+			</tera-notebook-jupyter-input>
 			<v-ace-editor
 				v-model:value="codeText"
 				@init="initializeAceEditor"
@@ -120,14 +129,21 @@
 
 		<!-- Preview -->
 		<template #preview>
-			<tera-drilldown-section v-if="selectedOutputId" :is-loading="inProgressForecastRun">
+			<tera-drilldown-section
+				:is-loading="inProgressForecastRun"
+				:is-blank="!selectedOutputId"
+				:blank-message="blankMessage"
+			>
+				<template #header-controls-left>
+					<h4 class="ml-4">Output {{ selectedOutputLabel }}</h4>
+				</template>
 				<template #header-controls-right>
 					<Button class="mr-3" label="Save for re-use" severity="secondary" outlined @click="showSaveDataset = true" />
 				</template>
 				<tera-operator-output-summary
 					v-if="node.state.summaryId && runResults[selectedRunId]"
 					:summary-id="node.state.summaryId"
-					class="p-3"
+					class="p-3 pt-0"
 				/>
 				<div class="pl-3 pr-3 flex flex-row align-items-center gap-2">
 					<SelectButton
@@ -147,7 +163,8 @@
 				<template v-if="runResults[selectedRunId]">
 					<div v-if="view === OutputView.Charts" ref="outputPanel">
 						<Accordion multiple :active-index="currentActiveIndicies" class="px-2">
-							<AccordionTab header="Interventions over time">
+							<!-- Section: Interventions over time -->
+							<AccordionTab v-if="selectedInterventionSettings.length > 0" header="Interventions over time">
 								<template v-for="setting in selectedInterventionSettings" :key="setting.id">
 									<vega-chart
 										expandable
@@ -156,7 +173,8 @@
 									/>
 								</template>
 							</AccordionTab>
-							<AccordionTab header="Variables over time">
+							<!-- Section: Variables over time -->
+							<AccordionTab v-if="selectedVariableSettings.length > 0" header="Variables over time">
 								<template v-for="setting of selectedVariableSettings" :key="setting.id">
 									<vega-chart
 										expandable
@@ -165,25 +183,68 @@
 									/>
 								</template>
 							</AccordionTab>
-							<AccordionTab header="Comparison charts">
+							<!-- Section: Comparison charts -->
+							<AccordionTab v-if="selectedComparisonChartSettings.length > 0" header="Comparison charts">
 								<template v-for="setting of selectedComparisonChartSettings" :key="setting.id">
+									<div v-if="setting.smallMultiples">
+										<div
+											v-for="selectedVariable of setting.selectedVariables"
+											:key="setting.id + selectedVariable"
+											class="comparison-chart-container"
+										>
+											<div class="comparison-chart">
+												<vega-chart
+													expandable
+													:are-embed-actions-visible="true"
+													:visualization-spec="comparisonCharts[setting.id + selectedVariable]"
+												/>
+											</div>
+										</div>
+									</div>
 									<vega-chart
+										v-else
 										expandable
 										:are-embed-actions-visible="true"
 										:visualization-spec="comparisonCharts[setting.id]"
 									/>
 								</template>
 							</AccordionTab>
-							<AccordionTab header="Sensitivity">
+							<!-- Section: Sensitivity -->
+							<AccordionTab v-if="selectedSensitivityChartSettings.length > 0" header="Sensitivity analysis">
 								<template v-for="setting of selectedSensitivityChartSettings" :key="setting.id">
 									<vega-chart
 										expandable
-										:are-embed-actions-visible="true"
-										:visualization-spec="testSensitivity[setting.id]"
+										are-embed-actions-visible
+										:visualization-spec="sensitivityCharts[setting.id].lineChart"
+									/>
+									<vega-chart
+										expandable
+										are-embed-actions-visible
+										:visualization-spec="sensitivityCharts[setting.id].scatterChart"
 									/>
 								</template>
 							</AccordionTab>
 						</Accordion>
+
+						<!-- Empty state if all sections are empty -->
+						<div
+							v-if="
+								isEmpty(selectedInterventionSettings) &&
+								isEmpty(selectedVariableSettings) &&
+								isEmpty(selectedComparisonChartSettings) &&
+								isEmpty(selectedSensitivityChartSettings)
+							"
+						>
+							<div class="empty-state-chart">
+								<img
+									src="@assets/svg/operator-images/simulate-deterministic.svg"
+									alt=""
+									draggable="false"
+									height="80px"
+								/>
+								<p class="text-center">Configure charts in the output settings.</p>
+							</div>
+						</div>
 
 						<!-- Spacer at bottom of page -->
 						<div style="height: 2rem"></div>
@@ -197,12 +258,6 @@
 					</div>
 				</template>
 			</tera-drilldown-section>
-
-			<!-- Empty state -->
-			<section v-else class="empty-state">
-				<Vue3Lottie :animationData="EmptySeed" :height="150" loop autoplay />
-				<p class="helpMessage">Click 'Run' to start the simulation</p>
-			</section>
 		</template>
 
 		<template #sidebar-right>
@@ -210,7 +265,7 @@
 				v-model:is-open="isOutputSettingsPanelOpen"
 				direction="right"
 				class="input-config"
-				header="Output Settings"
+				header="Output settings"
 				content-width="360px"
 			>
 				<template #overlay>
@@ -224,9 +279,10 @@
 						"
 						:active-settings="activeChartSettings"
 						:generate-annotation="generateAnnotation"
-						@update-settings-scale="updateChartSettingsScale(activeChartSettings?.id as string, $event)"
+						:comparison="activeChartSettings?.type === ChartSettingType.VARIABLE_COMPARISON"
+						@update-settings="updateActiveChartSettings"
 						@delete-annotation="deleteAnnotation"
-						@close="activeChartSettings = null"
+						@close="setActiveChartSettings(null)"
 					/>
 				</template>
 				<template #content>
@@ -237,7 +293,7 @@
 							:type="ChartSettingType.INTERVENTION"
 							:select-options="Object.keys(groupedInterventionOutputs)"
 							:selected-options="selectedInterventionSettings.map((s) => s.selectedVariables[0])"
-							@open="activeChartSettings = $event"
+							@open="setActiveChartSettings($event)"
 							@remove="removeChartSettings"
 							@selection-change="updateChartSettings"
 						/>
@@ -250,7 +306,7 @@
 								Object.keys(pyciemssMap).filter((c) => ['state', 'observable'].includes(modelPartTypesMap[c]))
 							"
 							:selected-options="selectedVariableSettings.map((s) => s.selectedVariables[0])"
-							@open="activeChartSettings = $event"
+							@open="setActiveChartSettings($event)"
 							@remove="removeChartSettings"
 							@selection-change="updateChartSettings"
 						/>
@@ -261,7 +317,7 @@
 							:type="ChartSettingType.VARIABLE_COMPARISON"
 							:select-options="Object.keys(pyciemssMap)"
 							:selected-options="comparisonChartsSettingsSelection"
-							@open="activeChartSettings = $event"
+							@open="setActiveChartSettings($event)"
 							@remove="removeChartSettings"
 							@selection-change="comparisonChartsSettingsSelection = $event"
 						/>
@@ -294,9 +350,28 @@
 								Object.keys(pyciemssMap).filter((c) => ['state', 'observable'].includes(modelPartTypesMap[c]))
 							"
 							:selected-options="selectedSensitivityChartSettings.map((s) => s.selectedVariables[0])"
-							@open="activeChartSettings = $event"
+							@open="setActiveChartSettings($event)"
 							@remove="removeChartSettings"
-							@selection-change="updateChartSettings"
+							:sensitivity-options="{
+								inputOptions: Object.keys(pyciemssMap).filter((c) => ['parameter'].includes(modelPartTypesMap[c])),
+								selectedInputOptions: selectedSensitivityChartSettings[0]?.selectedInputVariables ?? [],
+								timepoint: selectedSensitivityChartSettings[0]?.timepoint ?? lastTimepoint
+							}"
+							@selection-change="
+								(e) =>
+									updateSensitivityChartSettings({
+										selectedVariables: e,
+										selectedInputVariables: selectedSensitivityChartSettings[0]?.selectedInputVariables ?? [],
+										timepoint: selectedSensitivityChartSettings[0]?.timepoint ?? lastTimepoint
+									})
+							"
+							@sensitivity-selection-change="
+								(e) =>
+									updateSensitivityChartSettings({
+										selectedVariables: selectedSensitivityChartSettings.map((s) => s.selectedVariables[0]),
+										...e
+									})
+							"
 						/>
 					</div>
 				</template>
@@ -314,16 +389,14 @@
 <script setup lang="ts">
 import _, { isEmpty } from 'lodash';
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
+import { VAceEditor } from 'vue3-ace-editor';
+import { VAceEditorInstance } from 'vue3-ace-editor/types';
+import Accordion from 'primevue/accordion';
+import AccordionTab from 'primevue/accordiontab';
 import Button from 'primevue/button';
 import Dropdown from 'primevue/dropdown';
 import Divider from 'primevue/divider';
-import Accordion from 'primevue/accordion';
-import AccordionTab from 'primevue/accordiontab';
-import { Vue3Lottie } from 'vue3-lottie';
-import EmptySeed from '@/assets/images/lottie-empty-seed.json';
-import { useDrilldownChartSize } from '@/composables/useDrilldownChartSize';
-import TeraInputNumber from '@/components/widgets/tera-input-number.vue';
-import TeraSliderPanel from '@/components/widgets/tera-slider-panel.vue';
+import SelectButton from 'primevue/selectbutton';
 import type {
 	CsvAsset,
 	InterventionPolicy,
@@ -334,6 +407,15 @@ import type {
 } from '@/types/Types';
 import { AssetType } from '@/types/Types';
 import type { WorkflowNode } from '@/types/workflow';
+import { deleteAnnotation } from '@/services/chart-settings';
+import { flattenInterventionData, getInterventionPolicyById } from '@/services/intervention-policy';
+import {
+	getModelByModelConfigurationId,
+	getUnitsFromModelParts,
+	getCalendarSettingsFromModel,
+	getTypesFromModelParts
+} from '@/services/model';
+import { getModelConfigurationById } from '@/services/model-configurations';
 import {
 	getRunResultCSV,
 	parsePyCiemssMap,
@@ -342,39 +424,29 @@ import {
 	DataArray,
 	CiemssMethodOptions
 } from '@/services/models/simulation-service';
-import {
-	getModelByModelConfigurationId,
-	getUnitsFromModelParts,
-	getCalendarSettingsFromModel,
-	getTypesFromModelParts
-} from '@/services/model';
-import { nodeMetadata } from '@/components/workflow/util';
-
-import TeraDatasetDatatable from '@/components/dataset/tera-dataset-datatable.vue';
-import SelectButton from 'primevue/selectbutton';
-import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
-import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.vue';
-import TeraPyciemssCancelButton from '@/components/pyciemss/tera-pyciemss-cancel-button.vue';
-import TeraNotebookError from '@/components/drilldown/tera-notebook-error.vue';
-import TeraOperatorOutputSummary from '@/components/operator/tera-operator-output-summary.vue';
-import { useProjects } from '@/composables/project';
-import TeraNotebookJupyterInput from '@/components/llm/tera-notebook-jupyter-input.vue';
-import { KernelSessionManager } from '@/services/jupyter';
 import { logger } from '@/utils/logger';
-import { VAceEditor } from 'vue3-ace-editor';
-import { VAceEditorInstance } from 'vue3-ace-editor/types';
-import VegaChart from '@/components/widgets/VegaChart.vue';
 import { ChartSettingType, CiemssPresetTypes, DrilldownTabs } from '@/types/common';
-import { getModelConfigurationById } from '@/services/model-configurations';
-import { flattenInterventionData, getInterventionPolicyById } from '@/services/intervention-policy';
-import TeraInterventionSummaryCard from '@/components/intervention-policy/tera-intervention-summary-card.vue';
-import TeraSaveSimulationModal from '@/components/project/tera-save-simulation-modal.vue';
+import VegaChart from '@/components/widgets/VegaChart.vue';
+import { KernelSessionManager } from '@/services/jupyter';
 import TeraChartSettings from '@/components/widgets/tera-chart-settings.vue';
 import TeraChartSettingsPanel from '@/components/widgets/tera-chart-settings-panel.vue';
+import TeraDatasetDatatable from '@/components/dataset/tera-dataset-datatable.vue';
+import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
+import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.vue';
+import TeraInputNumber from '@/components/widgets/tera-input-number.vue';
+import TeraInterventionSummaryCard from '@/components/intervention-policy/tera-intervention-summary-card.vue';
+import TeraNotebookError from '@/components/drilldown/tera-notebook-error.vue';
+import TeraNotebookJupyterInput from '@/components/llm/tera-notebook-jupyter-input.vue';
+import TeraOperatorOutputSummary from '@/components/operator/tera-operator-output-summary.vue';
+import TeraPyciemssCancelButton from '@/components/pyciemss/tera-pyciemss-cancel-button.vue';
+import TeraSaveSimulationModal from '@/components/project/tera-save-simulation-modal.vue';
+import TeraSliderPanel from '@/components/widgets/tera-slider-panel.vue';
 import TeraTimestepCalendar from '@/components/widgets/tera-timestep-calendar.vue';
-import { deleteAnnotation } from '@/services/chart-settings';
+import { nodeMetadata } from '@/components/workflow/util';
 import { useCharts } from '@/composables/useCharts';
 import { useChartSettings } from '@/composables/useChartSettings';
+import { useProjects } from '@/composables/project';
+import { useDrilldownChartSize } from '@/composables/useDrilldownChartSize';
 import { SimulateCiemssOperationState } from './simulate-ciemss-operation';
 import { mergeResults, renameFnGenerator } from '../calibrate-ciemss/calibrate-utils';
 import { usePreparedChartInputs } from './simulate-utils';
@@ -386,8 +458,9 @@ const emit = defineEmits(['update-state', 'select-output', 'close']);
 
 const isSidebarOpen = ref(true);
 const isOutputSettingsPanelOpen = ref(false);
+const blankMessage = "Click 'Run' to start the simulation";
 
-const currentActiveIndicies = ref([0, 1, 2]);
+const currentActiveIndicies = ref([0, 1, 2, 3]);
 
 const modelVarUnits = ref<{ [key: string]: string }>({});
 let editor: VAceEditorInstance['_editor'] | null;
@@ -396,6 +469,11 @@ const codeText = ref('');
 const modelConfiguration = ref<ModelConfiguration | null>(null);
 const model = ref<Model | null>(null);
 
+const lastTimepoint = computed<number>(() => {
+	if (isEmpty(runResults.value) || !selectedRunId.value) return 0;
+	const lastResult = _.last(runResults.value[selectedRunId.value]);
+	return lastResult?.timepoint_id ?? 0;
+});
 const modelStateUnits = computed(() => {
 	const states = model.value?.model.states;
 	let units = {};
@@ -430,12 +508,18 @@ const datasetId = computed(() => {
 	return output?.value?.[0] ?? '';
 });
 
+const selectedOutputLabel = computed(() => {
+	const selectedOutput = props.node.outputs.find((output) => output.isSelected);
+	return selectedOutput ? selectedOutput.label : '';
+});
+
 const llmThoughts = ref<any[]>([]);
 const llmQuery = ref('');
 
 // input params
 const timespan = ref<TimeSpan>(props.node.state.currentTimespan);
 const numSamples = ref<number>(props.node.state.numSamples);
+const solverStepSize = ref<number>(props.node.state.solverStepSize);
 const method = ref(props.node.state.method);
 
 enum OutputView {
@@ -445,7 +529,8 @@ enum OutputView {
 
 const speedPreset = Object.freeze({
 	numSamples: 10,
-	method: CiemssMethodOptions.euler
+	method: CiemssMethodOptions.euler,
+	stepSize: 0.1
 });
 
 const qualityPreset = Object.freeze({
@@ -480,7 +565,11 @@ const pyciemssMap = ref<Record<string, string>>({});
 const kernelManager = new KernelSessionManager();
 
 const presetType = computed(() => {
-	if (numSamples.value === speedPreset.numSamples && method.value === speedPreset.method) {
+	if (
+		numSamples.value === speedPreset.numSamples &&
+		method.value === speedPreset.method &&
+		solverStepSize.value === speedPreset.stepSize
+	) {
 		return CiemssPresetTypes.Fast;
 	}
 	if (numSamples.value === qualityPreset.numSamples && method.value === qualityPreset.method) {
@@ -509,6 +598,7 @@ const setPresetValues = (data: CiemssPresetTypes) => {
 	if (data === CiemssPresetTypes.Fast) {
 		numSamples.value = speedPreset.numSamples;
 		method.value = speedPreset.method;
+		solverStepSize.value = speedPreset.stepSize;
 	}
 	updateState();
 };
@@ -528,8 +618,10 @@ const {
 	comparisonChartsSettingsSelection,
 	removeChartSettings,
 	updateChartSettings,
-	updateChartSettingsScale,
-	addComparisonChartSettings
+	addComparisonChartSettings,
+	updateSensitivityChartSettings,
+	updateActiveChartSettings,
+	setActiveChartSettings
 } = useChartSettings(props, emit);
 
 const {
@@ -551,13 +643,14 @@ const {
 const interventionCharts = useInterventionCharts(selectedInterventionSettings, true);
 const variableCharts = useVariableCharts(selectedVariableSettings, null);
 const comparisonCharts = useComparisonCharts(selectedComparisonChartSettings);
-const testSensitivity = useSimulateSensitivityCharts(selectedSensitivityChartSettings);
+const sensitivityCharts = useSimulateSensitivityCharts(selectedSensitivityChartSettings);
 
 const updateState = () => {
 	const state = _.cloneDeep(props.node.state);
 	state.currentTimespan = timespan.value;
 	state.numSamples = numSamples.value;
 	state.method = method.value;
+	state.solverStepSize = solverStepSize.value;
 	emit('update-state', state);
 };
 
@@ -584,7 +677,7 @@ const makeForecastRequest = async (applyInterventions = true) => {
 		},
 		extra: {
 			solver_method: method.value,
-			solver_step_size: 1,
+			solver_step_size: solverStepSize.value,
 			num_samples: numSamples.value
 		},
 		engine: 'ciemss'
@@ -722,6 +815,7 @@ watch(
 		// Update Wizard form fields with current selected output state
 		timespan.value = props.node.state.currentTimespan;
 		numSamples.value = props.node.state.numSamples;
+		solverStepSize.value = props.node.state.solverStepSize;
 		method.value = props.node.state.method;
 
 		lazyLoadSimulationData(selectedRunId.value);
@@ -750,14 +844,6 @@ onUnmounted(() => kernelManager.shutdown());
 </script>
 
 <style scoped>
-.wizard .toolbar {
-	display: flex;
-	align-items: center;
-	justify-content: space-between;
-	padding: var(--gap-1) var(--gap-4);
-	gap: var(--gap-2);
-}
-
 /* Make tera-inputs the same height as the dropdowns */
 .tera-input:deep(main) {
 	padding: 6px;
@@ -786,6 +872,7 @@ onUnmounted(() => kernelManager.shutdown());
 	color: var(--text-color-secondary);
 	background: var(--surface-50);
 }
+
 .empty-image {
 	width: 5rem;
 	height: 6rem;
@@ -829,18 +916,6 @@ onUnmounted(() => kernelManager.shutdown());
 	}
 }
 
-.empty-state {
-	width: 100%;
-	height: 100%;
-	display: flex;
-	flex-direction: column;
-	align-items: center;
-	justify-content: center;
-	gap: var(--gap-4);
-	text-align: center;
-	pointer-events: none;
-}
-
 .p-button-icon-left {
 	color: var(--text-color-primary);
 }
@@ -854,6 +929,30 @@ onUnmounted(() => kernelManager.shutdown());
 		border: 0;
 		border-top: 1px solid var(--surface-border-alt);
 		width: 100%;
+	}
+}
+.empty-state-chart {
+	display: flex;
+	flex-direction: column;
+	gap: var(--gap-4);
+	justify-content: center;
+	align-items: center;
+	height: 12rem;
+	margin: var(--gap-6);
+	padding: var(--gap-4);
+	background: var(--surface-100);
+	color: var(--text-color-secondary);
+}
+
+.comparison-chart-container {
+	display: flex;
+	flex-direction: column;
+	display: inline-block;
+
+	.comparison-chart {
+		float: left;
+		box-sizing: border-box;
+		width: 40%;
 	}
 }
 </style>

@@ -241,4 +241,16 @@
 	.p-tooltip {
 		max-width: 380px;
 	}
+
+	.subtext {
+		font-size: var(--font-caption);
+		color: var(--text-color-secondary);
+	}
+}
+
+
+/* Submenu Override */
+.p-contextmenu .p-submenu-list {
+	width: max-content;
+	max-width: 25rem;
 }

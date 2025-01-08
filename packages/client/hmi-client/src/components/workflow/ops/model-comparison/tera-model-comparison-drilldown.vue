@@ -8,28 +8,32 @@
 			<tera-drilldown-section>
 				<!-- LLM generated overview -->
 				<section class="comparison-overview">
-					<Accordion multiple :activeIndex="currentActiveIndicies">
+					<Accordion multiple :activeIndex="currentActiveIndices">
 						<AccordionTab header="Overview">
 							<template #header>
-								<tera-input-text
-									class="ml-auto w-4"
-									placeholder="What is your goal? (Optional)"
-									:model-value="goalQuery"
-									@blur="onUpdateGoalQuery"
-								/>
-								<Button
-									class="ml-4"
-									label="Compare"
-									@click.stop="processCompareModels"
-									size="small"
-									icon="pi pi-sparkles"
-									:loading="isProcessingComparison"
-								/>
+								<div class="flex align-items-start gap-2 ml-4 w-full">
+									<Textarea
+										v-model="goalQuery"
+										autoResize
+										rows="1"
+										placeholder="What is your goal? (Optional)"
+										class="w-full"
+										@keydown.stop
+										@click.stop
+									/>
+									<Button
+										class="flex-shrink-0"
+										label="Compare"
+										icon="pi pi-sparkles"
+										size="small"
+										:loading="isProcessingComparison"
+										@click.stop="onClickCompare"
+									/>
+								</div>
 							</template>
-							<p v-if="isProcessingComparison" class="subdued">
-								<i class="pi pi-spin pi-spinner mr-1" />
+							<tera-progress-spinner v-if="isProcessingComparison" is-centered :font-size="3">
 								Analyzing models metadata to generate a detailed comparison analysis...
-							</p>
+							</tera-progress-spinner>
 							<p v-html="overview" v-else class="markdown-text" />
 						</AccordionTab>
 					</Accordion>
@@ -81,27 +85,51 @@
 						</tbody>
 					</table>
 				</div>
+				<!-- Comparison context -->
+				<Accordion
+					v-if="!isConceptComparisonEmpty && !isConceptComparisonLoading"
+					:activeIndex="comparisonContextActiveIndexes"
+					class="comparison-context"
+					multiple
+				>
+					<AccordionTab header="Concept context comparison" v-if="!isContextComparisonEmpty">
+						<tera-csv-table :csv-text="conceptComparison.concept_context_comparison!" />
+					</AccordionTab>
+					<AccordionTab header="Tabular concept comparison" v-if="!isTabularComparisonEmpty">
+						<template v-for="(value, pair) in conceptComparison.tabular_comparison" :key="pair">
+							<h6>Tabular comparison {{ pair }}</h6>
+							<tera-csv-table :csv-text="value" />
+						</template>
+					</AccordionTab>
+					<AccordionTab header="Concept graph comparison" v-if="!isGraphComparisonEmpty">
+						<template v-for="(value, pair) in conceptComparison.concept_graph_comparison" :key="pair">
+							<h6>Concept comparison {{ pair }}</h6>
+							<img :src="`data:image/png;base64,${value}`" :alt="`Concept comparison ${pair}`" />
+						</template>
+					</AccordionTab>
+				</Accordion>
+				<tera-progress-spinner v-if="isConceptComparisonLoading" is-centered :font-size="3" class="max-w-25rem">
+					Creating a context, tabular, and graph concept comparison between the {{ modelIds.length }} models...
+				</tera-progress-spinner>
 			</tera-drilldown-section>
 		</div>
 		<tera-columnar-panel :tabName="Tabs.Notebook">
 			<!--TODO: The notebook input and buttons works well here, but it the html/css
 				organization should be refactored here (same for tera-model-edit)-->
 			<tera-drilldown-section class="notebook-section">
-				<div class="toolbar">
-					<tera-notebook-jupyter-input
-						:kernelManager="kernelManager"
-						:defaultOptions="sampleAgentQuestions"
-						@llm-output="appendCode"
-						@llm-thought-output="(data: any) => llmThoughts.push(data)"
-						@question-asked="llmThoughts = []"
-						:context-language="contextLanguage"
-					>
-						<template #toolbar-right-side>
-							<Button label="Reset" outlined severity="secondary" size="small" @click="resetNotebook" />
-							<Button icon="pi pi-play" label="Run" size="small" @click="runCode" :disabled="isEmpty(code)" />
-						</template>
-					</tera-notebook-jupyter-input>
-				</div>
+				<tera-notebook-jupyter-input
+					:kernelManager="kernelManager"
+					:defaultOptions="sampleAgentQuestions"
+					@llm-output="appendCode"
+					@llm-thought-output="(data: any) => llmThoughts.push(data)"
+					@question-asked="llmThoughts = []"
+					:context-language="contextLanguage"
+				>
+					<template #toolbar-right-side>
+						<Button label="Reset" outlined severity="secondary" size="small" @click="resetNotebook" />
+						<Button icon="pi pi-play" label="Run" size="small" @click="runCode" :disabled="isEmpty(code)" />
+					</template>
+				</tera-notebook-jupyter-input>
 				<v-ace-editor
 					v-model:value="code"
 					@init="initializeAceEditor"
@@ -112,12 +140,7 @@
 					:options="{ showPrintMargin: false }"
 				/>
 			</tera-drilldown-section>
-			<tera-drilldown-preview>
-				<tera-progress-spinner
-					v-if="isLoadingStructuralComparisons && isEmpty(structuralComparisons)"
-					is-centered
-					:font-size="3"
-				/>
+			<tera-drilldown-preview :is-loading="isLoadingStructuralComparisons && isEmpty(structuralComparisons)">
 				<ul>
 					<li v-for="(image, index) in structuralComparisons" :key="index">
 						<label>Comparison {{ index + 1 }}: {{ getTitle(index) }}</label>
@@ -152,7 +175,7 @@
 </template>
 
 <script setup lang="ts">
-import { cloneDeep, isEmpty } from 'lodash';
+import { cloneDeep, debounce, isEmpty } from 'lodash';
 import { v4 as uuidv4 } from 'uuid';
 import markdownit from 'markdown-it';
 import Accordion from 'primevue/accordion';
@@ -168,20 +191,20 @@ import { ClientEvent, ClientEventType, type Model, TaskResponse, TaskStatus } fr
 import { OperatorStatus, WorkflowNode, WorkflowPortStatus } from '@/types/workflow';
 import { logger } from '@/utils/logger';
 import Button from 'primevue/button';
-import { computed, onMounted, onUnmounted, ref } from 'vue';
+import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
 import { VAceEditor } from 'vue3-ace-editor';
 import { VAceEditorInstance } from 'vue3-ace-editor/types';
-
 import TeraNotebookJupyterInput from '@/components/llm/tera-notebook-jupyter-input.vue';
 import Image from 'primevue/image';
-import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue';
-
 import { saveCodeToState } from '@/services/notebook';
 import { addImage, deleteImages, getImages } from '@/services/image';
 import TeraColumnarPanel from '@/components/widgets/tera-columnar-panel.vue';
 import { b64DecodeUnicode } from '@/utils/binary';
 import { useClientEvent } from '@/composables/useClientEvent';
-import TeraInputText from '@/components/widgets/tera-input-text.vue';
+import Textarea from 'primevue/textarea';
+import { CompareModelsConceptsResponse, getCompareModelConcepts } from '@/services/concept';
+import TeraCsvTable from '@/components/widgets/tera-csv-table.vue';
+import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue';
 import { ModelComparisonOperationState } from './model-comparison-operation';
 
 const props = defineProps<{
@@ -211,7 +234,7 @@ const sampleAgentQuestions = [
 ];
 let compareModelsTaskId = '';
 
-const currentActiveIndicies = ref([0]);
+const currentActiveIndices = ref([0]);
 const modelsToCompare = ref<Model[]>([]);
 const modelCardsToCompare = ref<any[]>([]);
 const fields = ref<string[]>([]);
@@ -273,6 +296,7 @@ function resetNotebook() {
 	emptyImages();
 	updateCodeState();
 }
+
 function onUpdateGoalQuery(goal: string) {
 	const state = cloneDeep(props.node.state);
 	goalQuery.value = goal;
@@ -355,6 +379,7 @@ async function buildJupyterContext() {
 }
 
 function hasNonEmptyValue(obj) {
+	if (!obj) return false;
 	return Object.values(obj).some((value) => !isEmpty(value));
 }
 
@@ -490,19 +515,73 @@ function generateOverview(output: string) {
 	emit('update-status', OperatorStatus.DEFAULT); // This is a custom way of granting a default status to the operator, since it has no output
 }
 
+function updatePreviousRunId() {
+	const state = cloneDeep(props.node.state);
+	state.previousRunId = uuidv4();
+	emit('update-state', state);
+}
+
+function onClickCompare() {
+	// If there is no previous run ID, or the node has already run, update the previousRunId
+	if (!props.node.state.previousRunId || props.node.state.hasRun) {
+		updatePreviousRunId();
+	}
+	processCompareModels();
+}
+
 // Create a task to compare the models
 const processCompareModels = async () => {
 	isProcessingComparison.value = true;
-	const taskRes = await compareModels(modelIds.value, goalQuery.value, props.node.workflowId, props.node.id);
+
+	// Add a unique ID to the request to avoid caching
+	if (!props.node.state.previousRunId) updatePreviousRunId();
+	const request = `
+  		RequestID: ${props.node.state.previousRunId}
+  		${goalQuery.value}
+		`;
+
+	const taskRes = await compareModels(modelIds.value, request, props.node.workflowId, props.node.id);
 	compareModelsTaskId = taskRes.id;
+
 	if (taskRes.status === TaskStatus.Success) {
 		generateOverview(taskRes.output);
 	}
+
 	const state = cloneDeep(props.node.state);
 	state.hasRun = true;
 	emit('update-state', state);
 	isProcessingComparison.value = false;
 };
+
+/* Concept comparison */
+
+const conceptComparison = ref<CompareModelsConceptsResponse>({});
+const isConceptComparisonLoading = ref(false);
+const isContextComparisonEmpty = computed(() => isEmpty(conceptComparison.value.concept_context_comparison));
+const isTabularComparisonEmpty = computed(() => isEmpty(conceptComparison.value.tabular_comparison));
+const isGraphComparisonEmpty = computed(() => isEmpty(conceptComparison.value.concept_graph_comparison));
+const isConceptComparisonEmpty = computed(
+	() => isContextComparisonEmpty.value && isTabularComparisonEmpty.value && isGraphComparisonEmpty.value
+);
+const comparisonContextActiveIndexes = ref([0, 1, 2]);
+
+function processConceptComparison() {
+	if (isEmpty(modelIds.value)) return;
+	isConceptComparisonLoading.value = true;
+	conceptComparison.value = {};
+	getCompareModelConcepts(modelIds.value, props.node.workflowId, props.node.id)
+		.then((response) => {
+			if (response) conceptComparison.value = response;
+		})
+		.catch((error) => {
+			logger.error(`Error comparing concepts: ${error}`);
+		})
+		.finally(() => {
+			isConceptComparisonLoading.value = false;
+		});
+}
+
+/* End of concept comparison */
 
 // Listen for the task completion event
 useClientEvent(ClientEventType.TaskGollmCompareModel, (event: ClientEvent<TaskResponse>) => {
@@ -519,6 +598,13 @@ useClientEvent(ClientEventType.TaskGollmCompareModel, (event: ClientEvent<TaskRe
 });
 
 onMounted(async () => {
+	if (props.node.state.hasRun) {
+		processCompareModels();
+	}
+
+	// Run asynchronously the concept comparison of the models
+	processConceptComparison();
+
 	if (!isEmpty(props.node.state.comparisonImageIds)) {
 		isLoadingStructuralComparisons.value = true;
 		structuralComparisons.value = await getImages(props.node.state.comparisonImageIds);
@@ -531,15 +617,14 @@ onMounted(async () => {
 	modelCardsToCompare.value = modelsToCompare.value.map(({ metadata }) => metadata?.gollmCard);
 	fields.value = [...new Set(modelCardsToCompare.value.flatMap((card) => (card ? Object.keys(card) : [])))];
 
-	await buildJupyterContext();
-	if (props.node.state.hasRun) {
-		processCompareModels();
-	}
+	buildJupyterContext();
 });
 
 onUnmounted(() => {
 	kernelManager.shutdown();
 });
+
+watch(goalQuery, debounce(onUpdateGoalQuery, 1000));
 </script>
 
 <style scoped>
@@ -612,20 +697,26 @@ ul {
 	position: relative;
 }
 
-.toolbar-right-side {
-	position: absolute;
-	top: var(--gap-4);
-	right: 0;
-	gap: var(--gap-2);
-	display: flex;
-	align-items: center;
-}
-
-.comparison-overview {
+.comparison-overview,
+.comparison-context {
 	border: 1px solid var(--surface-border-light);
 	border-radius: var(--border-radius-medium);
 	padding: var(--gap-2);
-	margin: var(--gap-4);
+	margin: var(--gap-12) var(--gap-4);
+
+	& + & {
+		margin-top: var(--gap-4);
+	}
+}
+
+.comparison-context h6 {
+	&:not(:first-of-type) {
+		margin-top: var(--gap-8);
+	}
+
+	& + * {
+		margin-top: var(--gap-4);
+	}
 }
 
 .subdued {
@@ -643,47 +734,47 @@ ul {
 	margin-bottom: var(--gap-4);
 	overflow-x: auto;
 	padding: 0 var(--gap-4);
-}
 
-.legend-circle {
-	padding: var(--gap-2) var(--gap-4);
-	background-color: var(--surface-0);
-	border: 1px solid var(--surface-border);
-	border-radius: 50%;
-	font-family: 'Times New Roman', Times, serif;
-}
+	.legend-circle {
+		padding: var(--gap-2) var(--gap-4);
+		background-color: var(--surface-0);
+		border: 1px solid var(--surface-border);
+		border-radius: 50%;
+		font-family: 'Times New Roman', Times, serif;
+	}
 
-.legend-square {
-	padding: var(--gap-1) var(--gap-4);
-	background-color: var(--surface-0);
-	border: 1px solid var(--surface-border);
-	font-family: 'Times New Roman', Times, serif;
-}
+	.legend-square {
+		padding: var(--gap-1) var(--gap-4);
+		background-color: var(--surface-0);
+		border: 1px solid var(--surface-border);
+		font-family: 'Times New Roman', Times, serif;
+	}
 
-.legend-line {
-	position: relative;
-}
+	.legend-line {
+		position: relative;
+	}
 
-.legend-line::before {
-	content: '';
-	position: absolute;
-	top: 50%;
-	left: 0;
-	width: 2px;
-	height: 24px;
-	transform: translate(-10px, -10px);
-}
-.legend-line.red::before {
-	background-color: red;
-}
-.legend-line.orange::before {
-	background-color: orange;
-}
-.legend-line.blue::before {
-	background-color: blue;
-}
-.legend-line.green::before {
-	background-color: lightgreen;
+	.legend-line::before {
+		content: '';
+		position: absolute;
+		top: 50%;
+		left: 0;
+		width: 2px;
+		height: 24px;
+		transform: translate(-10px, -10px);
+	}
+	.legend-line.red::before {
+		background-color: red;
+	}
+	.legend-line.orange::before {
+		background-color: orange;
+	}
+	.legend-line.blue::before {
+		background-color: blue;
+	}
+	.legend-line.green::before {
+		background-color: lightgreen;
+	}
 }
 
 .label {

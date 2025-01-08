@@ -22,7 +22,7 @@
 				/>
 			</div>
 			<div class="flex gap-2">
-				<Button @click="emit('open-drilldown')" label="Edit" severity="secondary" outlined class="w-full" />
+				<Button @click="emit('open-drilldown')" label="Open" severity="secondary" outlined class="w-full" />
 			</div>
 		</template>
 	</main>
@@ -100,18 +100,18 @@ const showSpinner = computed<boolean>(
 const poller = new Poller();
 const pollResult = async (runId: string) => {
 	poller
-		.setInterval(5000)
-		.setThreshold(350)
 		.setPollAction(async () => pollAction(runId))
 		.setProgressAction((data: Simulation) => {
 			if (runId === props.node.state.inProgressOptimizeId && data.updates.length > 0) {
-				const checkpointData = _.first(data.updates)?.data as CiemssOptimizeStatusUpdate;
+				data.updates.sort((a, b) => a.data.progress - b.data.progress);
+				const checkpointData = _.last(data.updates)?.data as CiemssOptimizeStatusUpdate;
 				if (checkpointData) {
 					const state = _.cloneDeep(props.node.state);
-					state.currentProgress = +((100 * checkpointData.progress) / checkpointData.totalPossibleIterations).toFixed(
-						2
-					);
-					emit('update-state', state);
+					const newProgress = +((100 * checkpointData.progress) / checkpointData.totalPossibleIterations).toFixed(2);
+					if (newProgress !== state.currentProgress) {
+						state.currentProgress = newProgress;
+						emit('update-state', state);
+					}
 				}
 			}
 		});
@@ -136,7 +136,8 @@ const startForecast = async (optimizedInterventions?: InterventionPolicy) => {
 		},
 		extra: {
 			num_samples: props.node.state.numSamples,
-			method: props.node.state.solverMethod
+			method: props.node.state.solverMethod,
+			solver_step_size: props.node.state.solverStepSize
 		},
 		engine: 'ciemss'
 	};

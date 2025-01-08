@@ -9,6 +9,7 @@
 				option-value="assetId"
 				placeholder="Select a model"
 				@update:model-value="scenario.setModelSpec($event)"
+				class="mb-3"
 			/>
 
 			<label>Select a dataset</label>
@@ -19,6 +20,7 @@
 				option-value="assetId"
 				placeholder="Select a dataset"
 				@update:model-value="scenario.setDatasetSpec($event)"
+				class="mb-3"
 			/>
 
 			<!-- TODO: adding intervention policies -->
@@ -46,13 +48,19 @@
 			<Dropdown
 				:model-value="scenario.modelConfigSpec.id"
 				placeholder="Select a configuration"
-				:options="modelConfigurations"
+				:options="sortedConfigurations"
 				option-label="name"
 				option-value="id"
 				@update:model-value="scenario.setModelConfigSpec($event)"
-				:disabled="isEmpty(modelConfigurations) || isFetchingModelInformation"
+				:disabled="isEmpty(sortedConfigurations) || isFetchingModelInformation"
 				:loading="isFetchingModelInformation"
-			/>
+			>
+				<template #option="slotProps">
+					<p>
+						{{ slotProps.option.name }} <span class="subtext">({{ formatTimestamp(slotProps.option.createdOn) }})</span>
+					</p>
+				</template>
+			</Dropdown>
 		</template>
 
 		<template #outputs>
@@ -61,14 +69,14 @@
 				:disabled="isEmpty(modelStateOptions) || isFetchingModelInformation"
 				:model-value="scenario.calibrateSpec.ids"
 				placeholder="Select output metrics"
-				option-label="name"
+				option-label="id"
 				option-value="id"
 				:options="modelStateOptions"
 				@update:model-value="scenario.setCalibrateSpec($event)"
 				filter
 				:loading="isFetchingModelInformation"
 			/>
-			<img :src="calibrate" alt="Calibrate chart" />
+			<img :src="calibrate" alt="Calibrate chart" class="mt-3" />
 		</template>
 	</tera-scenario-template>
 </template>
@@ -82,6 +90,7 @@ import { getModel, getModelConfigurationsForModel } from '@/services/model';
 import { isEmpty } from 'lodash';
 import MultiSelect from 'primevue/multiselect';
 import calibrate from '@/assets/svg/template-images/calibration-thumbnail.svg';
+import { sortDatesDesc, formatTimestamp } from '@/utils/date';
 import { SituationalAwarenessScenario } from './situational-awareness-scenario';
 import TeraScenarioTemplate from '../tera-scenario-template.vue';
 import { ScenarioHeader } from '../base-scenario';
@@ -109,6 +118,10 @@ const props = defineProps<{
 }>();
 
 const emit = defineEmits(['save-workflow']);
+
+const sortedConfigurations = computed(() =>
+	[...modelConfigurations.value].sort((a, b) => sortDatesDesc(a.createdOn, b.createdOn))
+);
 
 watch(
 	() => props.scenario.modelSpec.id,

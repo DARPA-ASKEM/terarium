@@ -2,7 +2,7 @@
 	<ul v-bind="$attrs">
 		<li
 			v-for="({ base, children, isParent }, index) in filteredItems.slice(firstRow, firstRow + MAX_NUMBER_OF_ROWS)"
-			:key="base.id"
+			:key="index"
 			class="model-part"
 		>
 			<template v-if="isParent && !isEmpty(editingState)">
@@ -20,7 +20,7 @@
 					</span>
 					<!--N/A if it's a transition-->
 					<div class="right-side">
-						<template v-if="!featureConfig.isPreview && (!children[0]?.input || !children[0]?.output)">
+						<template v-if="!featureConfig.isPreview && partType !== PartType.TRANSITION">
 							<Button
 								:disabled="getEditingState(index).isEditingChildrenUnits"
 								@click="getEditingState(index).isEditingChildrenUnits = true"
@@ -119,6 +119,7 @@
 							:key="child.id"
 						>
 							<tera-model-part-entry
+								:part-type="partType"
 								:description="child.description"
 								:name="child.name"
 								:id="child.id"
@@ -127,6 +128,7 @@
 								:input="child.input"
 								:output="child.output"
 								:unitExpression="child.unitExpression"
+								:expression="child.expression"
 								:feature-config="featureConfig"
 								@update-item="$emit('update-item', { id: child.id, ...$event })"
 							/>
@@ -146,7 +148,7 @@
 			</template>
 			<tera-model-part-entry
 				v-else
-				:is-time-part="!!isTimePart"
+				:part-type="partType"
 				:description="base.description"
 				:name="base.name"
 				:id="base.id"
@@ -155,6 +157,7 @@
 				:input="base.input"
 				:output="base.output"
 				:unitExpression="base.unitExpression"
+				:expression="base.expression"
 				:feature-config="featureConfig"
 				@update-item="$emit('update-item', { id: base.id, ...$event })"
 			/>
@@ -184,13 +187,14 @@ import Button from 'primevue/button';
 import type { FeatureConfig } from '@/types/common';
 import TeraInputText from '@/components/widgets/tera-input-text.vue';
 import Paginator from 'primevue/paginator';
+import { PartType } from '@/model-representation/service';
 
 const props = defineProps<{
 	items: any[];
 	featureConfig: FeatureConfig;
 	collapsedItems?: Map<string, string[]>;
 	showMatrix?: boolean;
-	isTimePart?: boolean;
+	partType: PartType;
 	filter?: string;
 }>();
 

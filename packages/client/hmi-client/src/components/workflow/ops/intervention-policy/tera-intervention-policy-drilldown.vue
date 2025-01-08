@@ -143,8 +143,8 @@
 									:are-embed-actions-visible="false"
 									:visualization-spec="preparedCharts[appliedTo]"
 								/>
-								<span class="flex justify-content-end pr-7 pb-6">
-									<label class="pr-2">Display on node thumbnail</label>
+								<span class="flex pb-6">
+									<label class="pr-2 text-sm">Show this chart on node thumbnail</label>
 									<Checkbox
 										v-model="selectedCharts"
 										:input-id="appliedTo"
@@ -253,7 +253,8 @@ import {
 	InterventionPolicyOperation,
 	InterventionPolicyState,
 	isInterventionPoliciesEqual,
-	isInterventionPoliciesValuesEqual
+	isInterventionPoliciesValuesEqual,
+	isInterventionPolicyBlank
 } from './intervention-policy-operation';
 import TeraInterventionPolicyCard from './tera-intervention-policy-card.vue';
 
@@ -328,6 +329,9 @@ const isSaveDisabled = computed(() => {
 	// Check if the IDs of the transient and selected policies differ
 	const isPolicyIdDifferent = transientPolicyId !== selectedPolicy.value?.id;
 
+	// Check if the selected policy blank
+	const isPolicyBlank = isInterventionPolicyBlank(selectedPolicy.value);
+
 	// Check if the policies themselves are equal
 	const arePoliciesEqual = isInterventionPoliciesEqual(transientPolicy, selectedPolicy.value);
 
@@ -336,7 +340,7 @@ const isSaveDisabled = computed(() => {
 
 	// Disable save if either the policy ID is different, the policies are equal,
 	// or the policy values are not equal
-	return hasSelectedPolicy && (isPolicyIdDifferent || arePoliciesEqual || !arePolicyValuesEqual);
+	return hasSelectedPolicy && !isPolicyBlank && (isPolicyIdDifferent || arePoliciesEqual || !arePolicyValuesEqual);
 });
 
 const documentIds = computed(() =>

@@ -25,7 +25,7 @@
 			{{ node.state.currentProgress }}%
 		</tera-progress-spinner>
 
-		<Button v-if="areInputsFilled" label="Edit" @click="emit('open-drilldown')" severity="secondary" outlined />
+		<Button v-if="areInputsFilled" label="Open" @click="emit('open-drilldown')" severity="secondary" outlined />
 		<tera-operator-placeholder v-else :node="node">
 			Connect a model configuration and dataset
 		</tera-operator-placeholder>
@@ -171,8 +171,6 @@ const variableCharts = useVariableCharts(selectedVariableSettings, groundTruth);
 const poller = new Poller();
 const pollResult = async (runId: string) => {
 	poller
-		.setInterval(3000)
-		.setThreshold(350)
 		.setPollAction(async () => pollAction(runId))
 		.setProgressAction((data: Simulation) => {
 			if (data?.updates?.length) {
@@ -185,11 +183,14 @@ const pollResult = async (runId: string) => {
 				updateLossChartSpec(lossValues);
 			}
 			if (runId === props.node.state.inProgressCalibrationId && data.updates.length > 0) {
-				const checkpoint = _.first(data.updates);
+				const checkpoint = _.last(data.updates);
 				if (checkpoint) {
 					const state = _.cloneDeep(props.node.state);
-					state.currentProgress = +((100 * checkpoint.data.progress) / state.numIterations).toFixed(2);
-					emit('update-state', state);
+					const newProgress = +((100 * checkpoint.data.progress) / state.numIterations).toFixed(2);
+					if (newProgress !== state.currentProgress) {
+						state.currentProgress = newProgress;
+						emit('update-state', state);
+					}
 				}
 			}
 		});

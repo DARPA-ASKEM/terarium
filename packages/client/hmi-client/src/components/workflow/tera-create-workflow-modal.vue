@@ -1,13 +1,10 @@
 <template>
 	<tera-modal class="w-9">
-		<template #header>
-			<h4>Create a new workflow</h4>
-		</template>
 		<template #default>
-			<div class="grid">
+			<div class="grid" style="height: 70vh">
 				<aside class="flex flex-column col-3">
 					<label class="p-text-secondary pb-2">Select a template</label>
-					<div v-for="[id, { name }] in scenarioMap" :key="id" class="flex align-items-center py-1">
+					<div v-for="[id, { name }] in scenarioMap" :key="id" class="flex align-items-center py-1 template-option">
 						<RadioButton :inputId="id" :value="id" v-model="selectedTemplateId" />
 						<label class="pl-2" :for="id">{{ name }}</label>
 					</div>
@@ -53,11 +50,13 @@ import TeraSituationalAwarenessTemplate from '@/components/workflow/scenario-tem
 import TeraSensitivityAnalysisTemplate from '@/components/workflow/scenario-templates/sensitivity-analysis/tera-sensitivity-analysis-template.vue';
 import TeraDecisionMakingTemplate from '@/components/workflow/scenario-templates/decision-making/tera-decision-making-template.vue';
 import TeraHorizonScanningTemplate from '@/components/workflow/scenario-templates/horizon-scanning/tera-horizon-scanning-template.vue';
+import TeraValueOfInformationTemplate from '@/components/workflow/scenario-templates/value-of-information/tera-value-of-information-template.vue';
 import { BlankCanvasScenario } from '@/components/workflow/scenario-templates/blank-canvas/blank-canvas-scenario';
 import { SituationalAwarenessScenario } from '@/components/workflow/scenario-templates/situational-awareness/situational-awareness-scenario';
 import { SensitivityAnalysisScenario } from '@/components/workflow/scenario-templates/sensitivity-analysis/sensitivity-analysis-scenario';
 import { DecisionMakingScenario } from '@/components/workflow/scenario-templates/decision-making/decision-making-scenario';
 import { HorizonScanningScenario } from '@/components/workflow/scenario-templates/horizon-scanning/horizon-scanning-scenario';
+import { ValueOfInformationScenario } from '@/components/workflow/scenario-templates/value-of-information/value-of-information-scenario';
 
 interface ScenarioItem {
 	name: string;
@@ -106,6 +105,14 @@ const scenarioMap = ref(
 				instance: new HorizonScanningScenario(),
 				component: markRaw(TeraHorizonScanningTemplate)
 			}
+		],
+		[
+			ValueOfInformationScenario.templateId,
+			{
+				name: ValueOfInformationScenario.templateName,
+				instance: new ValueOfInformationScenario(),
+				component: markRaw(TeraValueOfInformationTemplate)
+			}
 		]
 	])
 );
@@ -152,3 +159,8 @@ onMounted(() => {
 });
 const getScenario = () => scenarioMap.value.get(selectedTemplateId.value) as ScenarioItem;
 </script>
+<style scoped>
+.template-option:first-of-type {
+	margin-bottom: var(--gap-5);
+}
+</style>

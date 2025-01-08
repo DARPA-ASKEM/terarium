@@ -152,6 +152,16 @@
 										placeholder="Select"
 									/>
 								</div>
+								<div class="label-and-input">
+									<label>Solver Step Size</label>
+									<div>
+										<tera-input-number
+											v-model="knobs.solverStepSize"
+											:disabled="knobs.solverMethod !== CiemssMethodOptions.euler"
+											:min="0"
+										/>
+									</div>
+								</div>
 							</div>
 							<div class="input-row">
 								<h3>Optimizer options</h3>
@@ -201,6 +211,11 @@
 		<!-- Preview tab -->
 		<template #preview>
 			<tera-drilldown-section
+				:is-loading="showSpinner"
+				:loading-progress="props.node.state.currentProgress"
+				:loading-message="'of maximum iterations complete'"
+				:is-blank="showSpinner && node.state.inProgressOptimizeId === ''"
+				:blank-message="'Optimize complete. Running simulations'"
 				class="ml-3 mr-3"
 				:class="{
 					'failed-run': optimizationResult.success === 'False',
@@ -219,12 +234,6 @@
 						@click="showSaveInterventionPolicy = true"
 					/>
 				</template>
-				<tera-progress-spinner v-if="showSpinner" :font-size="2" is-centered style="height: 100%">
-					<div v-if="node.state.inProgressOptimizeId !== ''">
-						{{ props.node.state.currentProgress }}% of maximum iterations complete
-					</div>
-					<div v-else>Optimize complete. Running simulations</div>
-				</tera-progress-spinner>
 				<tera-operator-output-summary v-if="node.state.summaryId && !showSpinner" :summary-id="node.state.summaryId" />
 				<!-- Optimize result.json display: -->
 				<div
@@ -320,7 +329,7 @@
 				v-model:is-open="isOutputSettingsPanelOpen"
 				direction="right"
 				class="input-config"
-				header="Output Settings"
+				header="Output settings"
 				content-width="360px"
 			>
 				<template #overlay>
@@ -334,8 +343,9 @@
 						"
 						:active-settings="activeChartSettings"
 						:generate-annotation="generateAnnotation"
+						@update-settings="updateActiveChartSettings"
 						@delete-annotation="deleteAnnotation"
-						@close="activeChartSettings = null"
+						@close="setActiveChartSettings(null)"
 					/>
 				</template>
 				<template #content>
@@ -366,7 +376,7 @@
 							:type="ChartSettingType.INTERVENTION"
 							:select-options="_.keys(preProcessedInterventionsData)"
 							:selected-options="selectedInterventionSettings.map((s) => s.selectedVariables[0])"
-							@open="activeChartSettings = $event"
+							@open="setActiveChartSettings($event)"
 							@remove="removeChartSettings"
 							@selection-change="updateChartSettings"
 						/>
@@ -377,7 +387,7 @@
 							:type="ChartSettingType.VARIABLE"
 							:select-options="modelStateAndObsOptions.map((ele) => ele.label)"
 							:selected-options="selectedVariableSettings.map((s) => s.selectedVariables[0])"
-							@open="activeChartSettings = $event"
+							@open="setActiveChartSettings($event)"
 							@remove="removeChartSettings"
 							@selection-change="updateChartSettings"
 						/>
@@ -388,7 +398,7 @@
 							:type="ChartSettingType.VARIABLE_COMPARISON"
 							:select-options="simulationChartOptions"
 							:selected-options="comparisonChartsSettingsSelection"
-							@open="activeChartSettings = $event"
+							@open="setActiveChartSettings($event)"
 							@remove="removeChartSettings"
 							@selection-change="comparisonChartsSettingsSelection = $event"
 						/>
@@ -436,7 +446,6 @@ import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.
 import TeraSaveDatasetFromSimulation from '@/components/dataset/tera-save-dataset-from-simulation.vue';
 import TeraPyciemssCancelButton from '@/components/pyciemss/tera-pyciemss-cancel-button.vue';
 import TeraOperatorOutputSummary from '@/components/operator/tera-operator-output-summary.vue';
-import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue';
 import { getModelByModelConfigurationId, getCalendarSettingsFromModel } from '@/services/model';
 import { getModelConfigurationById } from '@/services/model-configurations';
 import {
@@ -512,6 +521,7 @@ enum OutputView {
 interface BasicKnobs {
 	endTime: number;
 	numSamples: number;
+	solverStepSize: number;
 	solverMethod: string;
 	maxiter: number;
 	maxfeval: number;
@@ -525,6 +535,7 @@ interface BasicKnobs {
 const knobs = ref<BasicKnobs>({
 	endTime: props.node.state.endTime ?? 1,
 	numSamples: props.node.state.numSamples ?? 0,
+	solverStepSize: props.node.state.solverStepSize ?? 0.1,
 	solverMethod: props.node.state.solverMethod ?? CiemssMethodOptions.dopri5,
 	maxiter: props.node.state.maxiter ?? 5,
 	maxfeval: props.node.state.maxfeval ?? 25,
@@ -608,7 +619,8 @@ const presetType = computed(() => {
 		knobs.value.numSamples === speedValues.numSamplesToSimModel &&
 		knobs.value.solverMethod === speedValues.method &&
 		knobs.value.maxiter === speedValues.maxiter &&
-		knobs.value.maxfeval === speedValues.maxfeval
+		knobs.value.maxfeval === speedValues.maxfeval &&
+		knobs.value.solverStepSize === speedValues.solverStepSize
 	) {
 		return CiemssPresetTypes.Fast;
 	}
@@ -695,6 +707,7 @@ const setPresetValues = (data: CiemssPresetTypes) => {
 		knobs.value.solverMethod = speedValues.method;
 		knobs.value.maxiter = speedValues.maxiter;
 		knobs.value.maxfeval = speedValues.maxfeval;
+		knobs.value.solverStepSize = speedValues.solverStepSize;
 	}
 };
 
@@ -702,7 +715,8 @@ const speedValues = Object.freeze({
 	numSamplesToSimModel: 1,
 	method: CiemssMethodOptions.euler,
 	maxiter: 0,
-	maxfeval: 1
+	maxfeval: 1,
+	solverStepSize: 0.1
 });
 
 const qualityValues = Object.freeze({
@@ -863,7 +877,7 @@ const runOptimize = async () => {
 			maxfeval: knobs.value.maxfeval,
 			alpha: alphas,
 			solverMethod: knobs.value.solverMethod,
-			solverStepSize: 1
+			solverStepSize: knobs.value.solverStepSize
 		}
 	};
 
@@ -992,7 +1006,9 @@ const {
 	comparisonChartsSettingsSelection,
 	removeChartSettings,
 	updateChartSettings,
-	addComparisonChartSettings
+	addComparisonChartSettings,
+	updateActiveChartSettings,
+	setActiveChartSettings
 } = useChartSettings(props, emit);
 
 const {
@@ -1035,6 +1051,7 @@ watch(
 		const state = _.cloneDeep(props.node.state);
 		state.endTime = knobs.value.endTime;
 		state.numSamples = knobs.value.numSamples;
+		state.solverStepSize = knobs.value.solverStepSize;
 		state.solverMethod = knobs.value.solverMethod;
 		state.maxiter = knobs.value.maxiter;
 		state.maxfeval = knobs.value.maxfeval;

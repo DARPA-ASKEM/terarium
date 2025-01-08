@@ -8,9 +8,16 @@ import { operation as InterventionOp } from '@/components/workflow/ops/intervent
 import { operation as SimulateOp } from '@/components/workflow/ops/simulate-ciemss/mod';
 import { operation as CompareDatasetsOp } from '@/components/workflow/ops/compare-datasets/mod';
 import { OperatorNodeSize } from '@/services/workflow';
-import { flattenInterventionData, getInterventionPolicyById } from '@/services/intervention-policy';
+import {
+	blankIntervention,
+	createInterventionPolicy,
+	flattenInterventionData,
+	getInterventionPolicyById
+} from '@/services/intervention-policy';
 import { ChartSetting, ChartSettingType } from '@/types/common';
 import { updateChartSettingsBySelectedVariables } from '@/services/chart-settings';
+import { InterventionPolicy } from '@/types/Types';
+import { getMeanCompareDatasetVariables } from '../scenario-template-utils';
 
 export class DecisionMakingScenario extends BaseScenario {
 	public static templateId = 'decision-making';
@@ -22,6 +29,8 @@ export class DecisionMakingScenario extends BaseScenario {
 	modelConfigSpec: { id: string };
 
 	interventionSpecs: { id: string }[];
+
+	newInterventionSpecs: { id: string; name: string }[];
 
 	simulateSpec: { ids: string[] };
 
@@ -38,6 +47,8 @@ export class DecisionMakingScenario extends BaseScenario {
 			},
 			{ id: '' }
 		];
+
+		this.newInterventionSpecs = [];
 		this.modelConfigSpec = {
 			id: ''
 		};
@@ -68,8 +79,12 @@ export class DecisionMakingScenario extends BaseScenario {
 		this.interventionSpecs.splice(index, 1);
 	}
 
-	setInterventionSpecs(id: string, index: number) {
+	setInterventionSpec(id: string, index: number) {
 		this.interventionSpecs[index].id = id;
+	}
+
+	setNewInterventionSpec(id: string, name: string) {
+		this.newInterventionSpecs.push({ id, name });
 	}
 
 	setSimulateSpec(ids: string[]) {
@@ -159,6 +174,13 @@ export class DecisionMakingScenario extends BaseScenario {
 			this.simulateSpec.ids
 		);
 
+		let compareDatasetChartSettings: ChartSetting[] = [];
+		compareDatasetChartSettings = updateChartSettingsBySelectedVariables(
+			compareDatasetChartSettings,
+			ChartSettingType.VARIABLE,
+			getMeanCompareDatasetVariables(this.simulateSpec.ids, modelConfig)
+		);
+
 		// 2. Add base simulation (no interventions) and connect it to the compare datasets node
 		const baseSimulateNode = wf.addNode(
 			SimulateOp,
@@ -176,6 +198,12 @@ export class DecisionMakingScenario extends BaseScenario {
 		wf.updateNode(baseSimulateNode, {
 			state: {
 				chartSettings: simulateChartSettings
+			}
+		});
+
+		wf.updateNode(compareDatasetNode, {
+			state: {
+				chartSettings: compareDatasetChartSettings
 			}
 		});
 
@@ -203,12 +231,25 @@ export class DecisionMakingScenario extends BaseScenario {
 		}
 
 		const promises = this.interventionSpecs.map(async (interventionSpec, i) => {
-			const interventionPolicy = await getInterventionPolicyById(interventionSpec.id);
+			let interventionPolicy: InterventionPolicy | null = await getInterventionPolicyById(interventionSpec.id);
+			if (!interventionPolicy) {
+				// create new intervention if in the new policy list
+				interventionPolicy = await createInterventionPolicy(
+					{
+						name:
+							this.newInterventionSpecs.find((newInterventionSpec) => newInterventionSpec.id === interventionSpec.id)
+								?.name ?? 'New policy',
+						modelId: this.modelSpec.id,
+						interventions: [blankIntervention]
+					},
+					true
+				);
+			}
 
 			simulateChartSettings = updateChartSettingsBySelectedVariables(
 				simulateChartSettings,
 				ChartSettingType.INTERVENTION,
-				Object.keys(_.groupBy(flattenInterventionData(interventionPolicy.interventions ?? []), 'appliedTo'))
+				Object.keys(_.groupBy(flattenInterventionData(interventionPolicy?.interventions ?? []), 'appliedTo'))
 			);
 
 			const interventionNode = wf.addNode(
@@ -245,7 +286,7 @@ export class DecisionMakingScenario extends BaseScenario {
 					interventionPolicy
 				},
 				output: {
-					value: [interventionPolicy.id],
+					value: [interventionPolicy!.id],
 					state: interventionNode.state
 				}
 			});

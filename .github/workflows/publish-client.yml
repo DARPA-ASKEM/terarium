@@ -6,6 +6,7 @@ name: Build and Publish hmi-client
 
 # yamllint disable-line rule:truthy
 on:
+  workflow_dispatch:
   push:
     paths:
       - 'packages/client/**'

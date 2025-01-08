@@ -272,8 +272,14 @@ export function percentile(values: number[], q: number): number {
 
 export function calculateUncertaintyRange(value: number, percentage: number): { min: number; max: number } {
 	const delta = value * (percentage / 100);
+	const min = parseFloat((value - delta).toFixed(8));
+	let max = parseFloat((value + delta).toFixed(8));
+
+	// return a [0, 1] range if both min and max are 0
+	if (min === 0 && max === 0) max = 1;
+
 	return {
-		min: parseFloat((value - delta).toFixed(8)),
-		max: parseFloat((value + delta).toFixed(8))
+		min,
+		max
 	};
 }

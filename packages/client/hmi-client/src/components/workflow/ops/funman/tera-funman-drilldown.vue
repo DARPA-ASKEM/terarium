@@ -156,11 +156,12 @@
 			</template>
 		</tera-slider-panel>
 		<template #preview>
-			<tera-drilldown-preview>
-				<tera-progress-spinner v-if="showSpinner" :font-size="2" is-centered style="height: 100%">
-					{{ props.node.state.currentProgress }}%
-				</tera-progress-spinner>
-				<template v-else-if="!isEmpty(node.state.runId)">
+			<tera-drilldown-preview
+				:is-loading="showSpinner"
+				:loading-progress="props.node.state.currentProgress"
+				class="p-4"
+			>
+				<template v-if="!isEmpty(node.state.runId)">
 					<header class="flex align-items-start">
 						<div>
 							<h4>{{ validatedModelConfiguration?.name }}</h4>
@@ -227,6 +228,7 @@
 								<AccordionTab v-if="!isEmpty(calibratedConfigObservables)" header="Observables">
 									<tera-model-part
 										class="pl-4"
+										:part-type="PartType.OBSERVABLE"
 										:items="calibratedConfigObservables"
 										:feature-config="{ isPreview: true }"
 									/>
@@ -345,7 +347,6 @@ import { VAceEditor } from 'vue3-ace-editor';
 import { saveCodeToState } from '@/services/notebook';
 
 import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
-import TeraDrilldownPreview from '@/components/drilldown/tera-drilldown-preview.vue';
 import TeraOperatorPlaceholder from '@/components/operator/tera-operator-placeholder.vue';
 import TeraSliderPanel from '@/components/widgets/tera-slider-panel.vue';
 import TeraModelPart from '@/components/model/model-parts/tera-model-part.vue';
@@ -353,7 +354,6 @@ import TeraInitialTable from '@/components/model/petrinet/tera-initial-table.vue
 import TeraParameterTable from '@/components/model/petrinet/tera-parameter-table.vue';
 import TeraModelDiagram from '@/components/model/petrinet/tera-model-diagram.vue';
 
-import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue';
 import TeraToggleableInput from '@/components/widgets/tera-toggleable-input.vue';
 
 import TeraChartControl from '@/components/workflow/tera-chart-control.vue';
@@ -385,12 +385,14 @@ import { getAsConfiguredModel, getModelConfigurationById } from '@/services/mode
 import { useToastService } from '@/services/toast';
 import { pythonInstance } from '@/python/PyodideController';
 import TeraConstraintGroupForm from '@/components/workflow/ops/funman/tera-constraint-group-form.vue';
-import { DrilldownTabs, ChartSetting, ChartSettingType } from '@/types/common';
+import { DrilldownTabs, type ChartSetting, ChartSettingType } from '@/types/common';
 import { stringToLatexExpression, getModel, getMMT } from '@/services/model';
 import { toScientificNotation } from '@/utils/number';
 import { removeChartSettingById, updateChartSettingsBySelectedVariables } from '@/services/chart-settings';
 import { nodeOutputLabel } from '@/components/workflow/util';
 import { formatJSON } from '@/services/code';
+import TeraDrilldownPreview from '@/components/drilldown/tera-drilldown-preview.vue';
+import { PartType } from '@/model-representation/service';
 import { FunmanOperationState, Constraint, ConstraintType, CompartmentalConstraint } from './funman-operation';
 
 const props = defineProps<{
