@@ -7,6 +7,13 @@ import { operation as SimulateCiemssOp } from '@/components/workflow/ops/simulat
 import { operation as ModelCompareOp } from '@/components/workflow/ops/model-comparison/mod';
 import { OperatorNodeSize } from '@/services/workflow';
 
+/*
+The user can select n amount of documents and set a goal.
+The resulting workflow for 2 documents would be:
+Document --> Model from Equations --> Model config --> Simulate
+Document --> Model from Equations --> Model config --> Simulate
+AND every Model from equations node will be attached to a single Compare model node
+*/
 export class ModelFromLiteratureScenario extends BaseScenario {
 	public static templateId = 'model-from-literature';
 
@@ -46,6 +53,10 @@ export class ModelFromLiteratureScenario extends BaseScenario {
 			documentSpecs: this.documentSpecs,
 			modelSelectionCriteria: this.modelSelectionCriteria
 		};
+	}
+
+	isValid(): boolean {
+		return !!this.workflowName && !this.documentSpecs.some((document) => !document.id);
 	}
 
 	async createWorkflow() {
