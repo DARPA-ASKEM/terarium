@@ -14,8 +14,8 @@ import {
 } from '@/services/model-configurations';
 import { ChartSetting, ChartSettingType } from '@/types/common';
 import { updateChartSettingsBySelectedVariables } from '@/services/chart-settings';
-import { AssetType, ParameterSemantic } from '@/types/Types';
-import { getInterventionPolicyById } from '@/services/intervention-policy';
+import { AssetType, InterventionPolicy, ParameterSemantic } from '@/types/Types';
+import { blankIntervention, createInterventionPolicy, getInterventionPolicyById } from '@/services/intervention-policy';
 import { useProjects } from '@/composables/project';
 import { getMeanCompareDatasetVariables, switchToUniformDistribution } from '../scenario-template-utils';
 
@@ -61,6 +61,8 @@ export class ValueOfInformationScenario extends BaseScenario {
 
 	interventionSpecs: { id: string }[];
 
+	newInterventionSpecs: { id: string; name: string }[];
+
 	simulateSpec: { ids: string[] };
 
 	parameters: (ParameterSemantic | null)[];
@@ -78,6 +80,7 @@ export class ValueOfInformationScenario extends BaseScenario {
 			ids: []
 		};
 		this.interventionSpecs = [{ id: '' }];
+		this.newInterventionSpecs = [];
 		this.parameters = [null];
 	}
 
@@ -120,6 +123,10 @@ export class ValueOfInformationScenario extends BaseScenario {
 	setParameter(parameter: ParameterSemantic, index: number) {
 		switchToUniformDistribution(parameter);
 		this.parameters[index] = parameter;
+	}
+
+	setNewInterventionSpec(id: string, name: string) {
+		this.newInterventionSpecs.push({ id, name });
 	}
 
 	toJSON() {
@@ -254,7 +261,21 @@ export class ValueOfInformationScenario extends BaseScenario {
 
 		// 3. Add intervention nodes for each intervention and attach them to the model node
 		const interventionPromises = this.interventionSpecs.map(async (interventionSpec) => {
-			const interventionPolicy = await getInterventionPolicyById(interventionSpec.id);
+			let interventionPolicy: InterventionPolicy | null = await getInterventionPolicyById(interventionSpec.id);
+
+			if (!interventionPolicy) {
+				// create new intervention if in the new policy list
+				interventionPolicy = await createInterventionPolicy(
+					{
+						name:
+							this.newInterventionSpecs.find((newInterventionSpec) => newInterventionSpec.id === interventionSpec.id)
+								?.name ?? 'New policy',
+						modelId: this.modelSpec.id,
+						interventions: [blankIntervention]
+					},
+					true
+				);
+			}
 
 			const interventionNode = wf.addNode(
 				InterventionOp,
@@ -274,7 +295,7 @@ export class ValueOfInformationScenario extends BaseScenario {
 					interventionPolicy
 				},
 				output: {
-					value: [interventionPolicy.id],
+					value: [interventionPolicy!.id],
 					state: interventionNode.state
 				}
 			});

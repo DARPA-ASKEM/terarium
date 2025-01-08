@@ -16,14 +16,20 @@
 			<Dropdown
 				:model-value="scenario.modelConfigSpec.id"
 				placeholder="Select a configuration"
-				:options="modelConfigurations"
+				:options="filterModelConfigurations"
 				option-label="name"
 				option-value="id"
 				@update:model-value="scenario.setModelConfigSpec($event)"
-				:disabled="isEmpty(modelConfigurations) || isFetchingModelInformation"
+				:disabled="isEmpty(filterModelConfigurations) || isFetchingModelInformation"
 				:loading="isFetchingModelInformation"
 				class="mb-3"
-			/>
+			>
+				<template #option="slotProps">
+					<p>
+						{{ slotProps.option.name }} <span class="subtext">({{ formatTimestamp(slotProps.option.createdOn) }})</span>
+					</p>
+				</template>
+			</Dropdown>
 			<label>Select uncertain parameters of interest and adjust ranges to be explored if needed</label>
 			<template v-for="(parameter, i) in scenario.parameters" :key="i">
 				<div class="flex">
@@ -100,6 +106,7 @@ import MultiSelect from 'primevue/multiselect';
 import Button from 'primevue/button';
 import { getModelConfigurationById, getParameter, getParameters } from '@/services/model-configurations';
 import TeraInputNumber from '@/components/widgets/tera-input-number.vue';
+import { sortDatesDesc, formatTimestamp } from '@/utils/date';
 import { ScenarioHeader } from '../base-scenario';
 import TeraScenarioTemplate from '../tera-scenario-template.vue';
 import { displayParameter } from '../scenario-template-utils';
@@ -128,6 +135,12 @@ const props = defineProps<{
 }>();
 
 const emit = defineEmits(['save-workflow']);
+
+const filterModelConfigurations = computed<ModelConfiguration[]>(() =>
+	modelConfigurations.value
+		.filter((mc) => isEmpty(mc.inferredParameterList))
+		.sort((a, b) => sortDatesDesc(a.createdOn, b.createdOn))
+);
 
 const onParameterSelect = (parameterId: string, index: number) => {
 	if (!selectedModelConfiguration.value) return;
