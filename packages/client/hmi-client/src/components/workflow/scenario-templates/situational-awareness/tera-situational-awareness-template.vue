@@ -56,10 +56,9 @@
 				:loading="isFetchingModelInformation"
 			>
 				<template #option="slotProps">
-					<span
-						>{{ slotProps.option.name }}
-						<p class="subtext">({{ formatTimestamp(slotProps.option.createdOn) }})</p></span
-					>
+					<p>
+						{{ slotProps.option.name }} <span class="subtext">({{ formatTimestamp(slotProps.option.createdOn) }})</span>
+					</p>
 				</template>
 			</Dropdown>
 		</template>

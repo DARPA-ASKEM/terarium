@@ -25,10 +25,9 @@
 				class="mb-3"
 			>
 				<template #option="slotProps">
-					<span
-						>{{ slotProps.option.name }}
-						<p class="subtext">({{ formatTimestamp(slotProps.option.createdOn) }})</p></span
-					>
+					<p>
+						{{ slotProps.option.name }} <span class="subtext">({{ formatTimestamp(slotProps.option.createdOn) }})</span>
+					</p>
 				</template>
 			</Dropdown>
 
@@ -53,12 +52,12 @@
 					</template>
 
 					<template #option="slotProps">
-						<span
-							>{{ slotProps.option.name }}
-							<p class="subtext">
+						<p>
+							{{ slotProps.option.name }}
+							<span class="subtext">
 								({{ slotProps.option.createdOn ? formatTimestamp(slotProps.option.createdOn) : 'Created by you' }})
-							</p></span
-						>
+							</span>
+						</p>
 					</template>
 				</Dropdown>
 				<Button
