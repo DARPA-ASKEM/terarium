@@ -57,6 +57,8 @@ import { SensitivityAnalysisScenario } from '@/components/workflow/scenario-temp
 import { DecisionMakingScenario } from '@/components/workflow/scenario-templates/decision-making/decision-making-scenario';
 import { HorizonScanningScenario } from '@/components/workflow/scenario-templates/horizon-scanning/horizon-scanning-scenario';
 import { ValueOfInformationScenario } from '@/components/workflow/scenario-templates/value-of-information/value-of-information-scenario';
+import TeraModelFromLiteratureTemplate from './scenario-templates/model-from-literature/tera-model-from-literature-template.vue';
+import { ModelFromLiteratureScenario } from './scenario-templates/model-from-literature/model-from-literature-scenario';
 
 interface ScenarioItem {
 	name: string;
@@ -112,6 +114,14 @@ const scenarioMap = ref(
 				name: ValueOfInformationScenario.templateName,
 				instance: new ValueOfInformationScenario(),
 				component: markRaw(TeraValueOfInformationTemplate)
+			}
+		],
+		[
+			ModelFromLiteratureScenario.templateId,
+			{
+				name: ModelFromLiteratureScenario.templateName,
+				instance: new ModelFromLiteratureScenario(),
+				component: markRaw(TeraModelFromLiteratureTemplate)
 			}
 		]
 	])
