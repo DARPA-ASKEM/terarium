@@ -19,6 +19,8 @@
 				class="upload-resources-button"
 				size="small"
 				label="Upload"
+				severity="secondary"
+				outlined
 				@click="isUploadResourcesModalVisible = true"
 			/>
 			<tera-upload-resources-modal
