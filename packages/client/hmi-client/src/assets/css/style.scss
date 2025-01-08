@@ -241,6 +241,11 @@
 	.p-tooltip {
 		max-width: 380px;
 	}
+
+	.subtext {
+		font-size: var(--font-caption);
+		color: var(--text-color-secondary);
+	}
 }
 
 
