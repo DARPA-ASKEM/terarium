@@ -719,7 +719,7 @@ const isMappingfilled = computed(
 
 const areNodeInputsFilled = computed(() => datasetId.value && modelConfigId.value);
 
-const isRunDisabled = computed(() => !isMappingfilled.value || !areNodeInputsFilled.value);
+const isRunDisabled = computed(() => !isMappingfilled.value || !areNodeInputsFilled.value || isLoading.value);
 
 const mappingFilledTooltip = computed(() =>
 	!isMappingfilled.value ? 'Must contain a Timestamp column and at least one filled in mapping. \n' : ''
@@ -728,8 +728,10 @@ const nodeInputsFilledTooltip = computed(() =>
 	!areNodeInputsFilled.value ? 'Must a valid dataset and model configuration\n' : ''
 );
 
+const isLoadingTooltip = computed(() => (isLoading.value ? 'Must wait for the current run to finish\n' : ''));
+
 const runButtonMessage = computed(() =>
-	isRunDisabled.value ? `${mappingFilledTooltip.value} ${nodeInputsFilledTooltip.value}` : ''
+	isRunDisabled.value ? `${mappingFilledTooltip.value} ${nodeInputsFilledTooltip.value} ${isLoadingTooltip.value}` : ''
 );
 
 const selectedOutputId = ref<string>();
