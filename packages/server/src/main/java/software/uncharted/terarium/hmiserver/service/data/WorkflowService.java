@@ -217,11 +217,11 @@ public class WorkflowService extends TerariumAssetServiceWithoutSearch<Workflow,
 		}
 	}
 
-	private void addNode(final Workflow workflow, final WorkflowNode node) {
+	public void addNode(final Workflow workflow, final WorkflowNode node) {
 		workflow.getNodes().add(node);
 	}
 
-	private void removeNode(final Workflow workflow, final UUID nodeId) {
+	public void removeNode(final Workflow workflow, final UUID nodeId) {
 		final WorkflowNode nodeToRemove = workflow
 			.getNodes()
 			.stream()
@@ -274,7 +274,7 @@ public class WorkflowService extends TerariumAssetServiceWithoutSearch<Workflow,
 	 * We do not deal with this and throw an error/warning, and the edge creation will be cancelled.
 	 *
 	 * */
-	private void addEdge(final Workflow workflow, final WorkflowEdge edge) {
+	public void addEdge(final Workflow workflow, final WorkflowEdge edge) {
 		if (edge.getId() == null) {
 			edge.setId(UUID.randomUUID());
 		}
@@ -392,7 +392,7 @@ public class WorkflowService extends TerariumAssetServiceWithoutSearch<Workflow,
 		workflow.getEdges().add(edge);
 	}
 
-	private void removeEdge(final Workflow workflow, final UUID edgeId) {
+	public void removeEdge(final Workflow workflow, final UUID edgeId) {
 		final WorkflowEdge edgeToRemove = workflow
 			.getEdges()
 			.stream()
