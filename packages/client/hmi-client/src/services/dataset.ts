@@ -11,6 +11,7 @@ import { AxiosResponse } from 'axios';
 import { RunResults } from '@/types/SimulateConfig';
 import { FIFOCache } from '@/utils/FifoCache';
 import { parseCsvAsset } from '@/utils/csv';
+import { DataArray } from '@/services/models/simulation-service';
 
 /**
  * Get Dataset from the data service
@@ -396,8 +397,29 @@ async function getDatasetResultCSV(dataset: Dataset, filename: string, renameFn?
 		csvAsset.headers = csvAsset.headers.map(renameFn);
 	}
 	const output = parseCsvAsset(csvAsset);
-	return output;
+	return output as DataArray;
 }
+
+/**
+ * Merge multiple datasets into a single dataset
+ * For example, if you have two datasets with the following data:
+ * dataset1 = [{a: 1, b: 2}, {a: 3, b: 4}]
+ * dataset2 = [{c: 5, d: 6}, {c: 7, d: 8}]
+ * The merged dataset will be:
+ * [{a: 1, b: 2, c: 5, d: 6}, {a: 3, b: 4, c: 7, d: 8}]
+ * @param results The datasets to merge
+ * @returns The merged dataset
+ */
+const mergeResults = (...results: DataArray[]) => {
+	const maxLength = Math.max(...results.map((result) => result.length));
+	const result: DataArray = [];
+	for (let i = 0; i < maxLength; i++) {
+		const row: Record<string, number> = {};
+		results.forEach((dataset) => Object.assign(row, dataset[i]));
+		result.push(row);
+	}
+	return result;
+};
 
 export {
 	getDataset,
@@ -416,5 +438,6 @@ export {
 	createDataset,
 	getRawContent,
 	getCsvAsset,
-	getDatasetResultCSV
+	getDatasetResultCSV,
+	mergeResults
 };

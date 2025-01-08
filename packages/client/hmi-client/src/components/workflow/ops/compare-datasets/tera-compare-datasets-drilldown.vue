@@ -176,7 +176,7 @@ import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
 import Dropdown from 'primevue/dropdown';
 import { Dataset } from '@/types/Types';
-import { getDataset, getRawContent } from '@/services/dataset';
+import { getDataset, getDatasetResultCSV, getRawContent, mergeResults } from '@/services/dataset';
 import TeraCheckbox from '@/components/widgets/tera-checkbox.vue';
 import RadioButton from 'primevue/radiobutton';
 import { isEmpty, cloneDeep } from 'lodash';
@@ -188,6 +188,8 @@ import TeraChartSettingsPanel from '@/components/widgets/tera-chart-settings-pan
 import { useChartSettings } from '@/composables/useChartSettings';
 import { useDrilldownChartSize } from '@/composables/useDrilldownChartSize';
 import { useCharts, type ChartData } from '@/composables/useCharts';
+import { renameFnGenerator } from '@/components/workflow/ops/calibrate-ciemss/calibrate-utils';
+import { DataArray, parsePyCiemssMap } from '@/services/models/simulation-service';
 import TeraCriteriaOfInterestCard from './tera-criteria-of-interest-card.vue';
 import {
 	blankCriteriaOfInterest,
@@ -333,9 +335,97 @@ function findDuplicates(strings: string[]): string[] {
 	return duplicates;
 }
 
+function isSimulationData(datset: Dataset) {
+	// assume if the dataset has these two files, it's a simulation dataset
+	return (
+		datset.fileNames?.find((name) => name === 'result.csv') &&
+		datset.fileNames?.find((name) => name === 'result_summary.csv')
+	);
+}
+
+const transformRowValuesRelativeToBaseline = (
+	row: Record<string, number>,
+	baselineDatasetIndex: number,
+	plotType: PlotValue
+) => {
+	const transformed: Record<string, number> = {};
+	Object.entries(row).forEach(([key, value]) => {
+		const [dataKey, datasetIndex] = key.split(':');
+		if (datasetIndex === undefined) {
+			transformed[key] = value;
+			return;
+		}
+		const baselineValue = row[`${dataKey}:${baselineDatasetIndex}`];
+		if (plotType === PlotValue.DIFFERENCE) {
+			transformed[key] = value - baselineValue;
+		} else if (plotType === PlotValue.PERCENTAGE) {
+			transformed[key] = ((value - baselineValue) / baselineValue) * 100;
+		} else if (plotType === PlotValue.VALUE) {
+			transformed[key] = value;
+		}
+	});
+	return transformed;
+};
+
+async function fetchDatasetResults(datasetList: Dataset[]) {
+	// Fetch simulation results
+	const results: DataArray[] = (
+		await Promise.all(
+			datasetList.map((dataset, index) => {
+				if (!isSimulationData(dataset)) return Promise.resolve([]);
+				return getDatasetResultCSV(dataset, 'result.csv', renameFnGenerator(`${index}`));
+			})
+		)
+	).filter((result) => result.length > 0);
+	// Fetch simulation summary results
+	const summaryResults: DataArray[] = (
+		await Promise.all(
+			datasetList.map((dataset, index) => {
+				if (!isSimulationData(dataset)) return Promise.resolve([]);
+				return getDatasetResultCSV(dataset, 'result_summary.csv', renameFnGenerator(`${index}`));
+			})
+		)
+	).filter((result) => result.length > 0);
+	// Fetch non simulation dataset results
+	const datasetResults: DataArray[] = (
+		await Promise.all(
+			datasetList.map((dataset, index) => {
+				if (isSimulationData(dataset)) return Promise.resolve([]);
+				return getDatasetResultCSV(dataset, dataset.fileNames?.[0] ?? '', renameFnGenerator(`${index}`));
+			})
+		)
+	).filter((result) => result.length > 0);
+	return {
+		results,
+		summaryResults,
+		datasetResults
+	};
+}
+
 async function generateChartData2() {
 	if (datasets.value.length <= 1) return;
-	console.log('NYI');
+	const { results, summaryResults, datasetResults } = await fetchDatasetResults(datasets.value);
+	// Merge all datasets into single dataset
+	const result = mergeResults(...results);
+	const summaryResult = mergeResults(...summaryResults, ...datasetResults);
+
+	const pyciemssMap = parsePyCiemssMap(result[0]);
+
+	// Transform the values relative to the baseline dataset
+	const baselineDatasetIndex = datasets.value.findIndex((dataset) => dataset.id === knobs.value.selectedDataset);
+	const resultTransformed = result.map((row) =>
+		transformRowValuesRelativeToBaseline(row, baselineDatasetIndex, selectedPlotType.value)
+	);
+	const resultSummaryTransformed = summaryResult.map((row) =>
+		transformRowValuesRelativeToBaseline(row, baselineDatasetIndex, selectedPlotType.value)
+	);
+
+	chartData.value = {
+		result: resultTransformed,
+		resultSummary: resultSummaryTransformed,
+		pyciemssMap,
+		translationMap: {}
+	};
 }
 
 async function generateChartData() {
