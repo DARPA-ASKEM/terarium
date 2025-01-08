@@ -178,6 +178,12 @@ watch(
 		emit('imported-files-updated', importFiles.value);
 	}
 );
+
+// Make these methods available to parent components
+defineExpose({
+	addFiles,
+	importFiles
+});
 </script>
 
 <style scoped>

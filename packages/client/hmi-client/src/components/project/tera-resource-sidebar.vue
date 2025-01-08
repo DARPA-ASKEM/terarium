@@ -23,7 +23,8 @@
 			/>
 			<tera-upload-resources-modal
 				:visible="isUploadResourcesModalVisible"
-				@close="() => (isUploadResourcesModalVisible = false)"
+				:files="droppedFiles"
+				@close="isUploadResourcesModalVisible = false"
 			/>
 		</header>
 		<Button
@@ -174,7 +175,7 @@ defineProps<{
 	assetId: string;
 }>();
 
-const emit = defineEmits(['open-asset', 'remove-asset', 'open-new-workflow', 'dropped-files']);
+const emit = defineEmits(['open-asset', 'remove-asset', 'open-new-workflow']);
 
 const overview = { assetId: '', pageType: ProjectPages.OVERVIEW };
 
@@ -222,6 +223,7 @@ function endDrag() {
 
 // Drag and drop files over panel to upload
 const isDragging = ref(false);
+
 function handleDragOver() {
 	isDragging.value = true;
 }
@@ -230,12 +232,19 @@ function handleDragLeave() {
 	isDragging.value = false;
 }
 
-function handleDrop(event) {
+const droppedFiles = ref<File[]>([]); // For passing files dragged onto the resources panel into the uploader
+
+function handleDrop(event: DragEvent) {
 	isDragging.value = false;
-	const files = Array.from(event.dataTransfer.files);
-	emit('dropped-files', files); // Emit the dropped files
-	console.log('Files dropped:', files); // Debug log
-	isUploadResourcesModalVisible.value = true;
+	if (!event.dataTransfer) return;
+
+	const files = Array.from(event.dataTransfer.files) as File[];
+	if (files.length > 0) {
+		droppedFiles.value = files;
+		isUploadResourcesModalVisible.value = true;
+	}
+
+	// console.log('Files dropped:', droppedFiles.value);
 }
 </script>
 
