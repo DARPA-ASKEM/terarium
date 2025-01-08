@@ -333,13 +333,7 @@ function findDuplicates(strings: string[]): string[] {
 	return duplicates;
 }
 
-async function generateChartData2() {
-	if (datasets.value.length <= 1) return;
-	console.log('NYI');
-}
-
 async function generateChartData() {
-	generateChartData2();
 	if (datasets.value.length <= 1) return;
 	console.log(datasets);
 
