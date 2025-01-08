@@ -19,10 +19,16 @@
 				option-label="name"
 				option-value="id"
 				@update:model-value="scenario.setModelConfigSpec($event)"
-				:disabled="isEmpty(modelConfigurations) || isFetchingModelInformation"
+				:disabled="isEmpty(filterModelConfigurations) || isFetchingModelInformation"
 				:loading="isFetchingModelInformation"
 				class="mb-3"
-			/>
+			>
+				<template #option="slotProps">
+					<p>
+						{{ slotProps.option.name }} <span class="subtext">({{ formatTimestamp(slotProps.option.createdOn) }})</span>
+					</p>
+				</template>
+			</Dropdown>
 			<label>Planned intervention policy (optional)</label>
 			<div v-for="(intervention, i) in scenario.interventionSpecs" :key="i" class="flex">
 				<Dropdown
@@ -41,6 +47,15 @@
 				>
 					<template #filtericon>
 						<Button label="Create new policy" icon="pi pi-plus" size="small" text @click="onOpenPolicyModel(i)" />
+					</template>
+
+					<template #option="slotProps">
+						<p>
+							{{ slotProps.option.name }}
+							<span class="subtext">
+								({{ slotProps.option.createdOn ? formatTimestamp(slotProps.option.createdOn) : 'Created by you' }})
+							</span>
+						</p>
 					</template>
 				</Dropdown>
 				<Button
@@ -145,6 +160,7 @@ import { getInterventionPoliciesForModel, getModel, getModelConfigurationsForMod
 import { AssetType, InterventionPolicy, ModelConfiguration, ParameterSemantic } from '@/types/Types';
 import { getModelConfigurationById, getParameter, getParameters } from '@/services/model-configurations';
 import TeraInputNumber from '@/components/widgets/tera-input-number.vue';
+import { sortDatesDesc, formatTimestamp } from '@/utils/date';
 import { ScenarioHeader } from '../base-scenario';
 import TeraScenarioTemplate from '../tera-scenario-template.vue';
 import { displayParameter, usePolicyModel } from '../scenario-template-utils';
@@ -164,7 +180,9 @@ const models = computed(() => useProjects().getActiveProjectAssets(AssetType.Mod
 
 const modelConfigurations = ref<ModelConfiguration[]>([]);
 const filterModelConfigurations = computed<ModelConfiguration[]>(() =>
-	modelConfigurations.value.filter((mc) => isEmpty(mc.inferredParameterList))
+	modelConfigurations.value
+		.filter((mc) => isEmpty(mc.inferredParameterList))
+		.sort((a, b) => sortDatesDesc(a.createdOn, b.createdOn))
 );
 const interventionPolicies = ref<InterventionPolicy[]>([]);
 const modelStateOptions = ref<any[]>([]);
@@ -176,10 +194,13 @@ const interventionDropdowns = ref();
 const isPolicyModalVisible = ref(false);
 const policyModalContext = ref<number | null>(null);
 
-const combinedInterventionPolicies = computed(() => [
-	...interventionPolicies.value,
-	...props.scenario.newInterventionSpecs
-]);
+const combinedInterventionPolicies = computed(() =>
+	[...props.scenario.newInterventionSpecs, ...interventionPolicies.value].sort((a: any, b: any) => {
+		if (!a.createdOn) return -1;
+		if (!b.createdOn) return 1;
+		return sortDatesDesc(a.createdOn, b.createdOn);
+	})
+);
 
 const props = defineProps<{
 	scenario: HorizonScanningScenario;
