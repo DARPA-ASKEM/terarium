@@ -7,15 +7,15 @@
 	>
 		<template #inputs>
 			<label>Select a document</label>
-			<div v-for="(document, i) in scenario.documentSpecs" :key="document.id">
+			<div class="flex" v-for="(document, i) in scenario.documentSpecs" :key="document.id">
 				<Dropdown
+					class="flex-1 my-1"
 					:model-value="document.id"
 					:options="documents"
 					option-label="assetName"
 					option-value="assetId"
-					placeholder="Select a model"
+					placeholder="Select a document"
 					@update:model-value="scenario.setDocumentSpec($event, i)"
-					class="mb-3"
 				/>
 				<Button
 					v-if="scenario.documentSpecs.length > 1"
@@ -23,6 +23,16 @@
 					icon="pi pi-trash"
 					size="small"
 					@click="scenario.deleteDocumentSpec(i)"
+				/>
+			</div>
+			<div>
+				<Button
+					class="py-2 mb-3"
+					size="small"
+					text
+					icon="pi pi-plus"
+					label="Add more documents"
+					@click="scenario.addDocumentSpec()"
 				/>
 			</div>
 			<label>Model selection criteria (optional)</label>

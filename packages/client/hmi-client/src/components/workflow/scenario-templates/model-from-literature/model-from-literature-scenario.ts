@@ -146,10 +146,16 @@ export class ModelFromLiteratureScenario extends BaseScenario {
 				{ x: 0, y: 0 }
 			]);
 
-			wf.addEdge(simulateNode.id, simulateNode.outputs[0].id, compareModelsNode.id, compareModelsNode.inputs[i].id, [
-				{ x: 0, y: 0 },
-				{ x: 0, y: 0 }
-			]);
+			wf.addEdge(
+				modelFromEquationsNode.id,
+				modelFromEquationsNode.outputs[0].id,
+				compareModelsNode.id,
+				compareModelsNode.inputs[i].id,
+				[
+					{ x: 0, y: 0 },
+					{ x: 0, y: 0 }
+				]
+			);
 
 			// Update document node state
 			wf.updateNode(documentNode, {
@@ -159,12 +165,14 @@ export class ModelFromLiteratureScenario extends BaseScenario {
 			});
 		});
 
-		// Update compare models node state
-		wf.updateNode(compareModelsNode, {
-			state: {
-				goal: this.modelSelectionCriteria
-			}
-		});
+		// Update compare models node state if present
+		if (compareModelsNode) {
+			wf.updateNode(compareModelsNode, {
+				state: {
+					goal: this.modelSelectionCriteria
+				}
+			});
+		}
 
 		// Run layout
 		wf.runDagreLayout();
