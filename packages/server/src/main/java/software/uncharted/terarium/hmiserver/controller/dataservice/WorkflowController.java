@@ -350,7 +350,7 @@ public class WorkflowController {
 			log.error("Unable to update workflow", e);
 			throw new ResponseStatusException(
 				org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
-				messages.get("postgres.service-unavailable")
+				messages.get("workflow.update.create-output")
 			);
 		}
 		return updated.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
@@ -392,7 +392,7 @@ public class WorkflowController {
 			log.error("Unable to update workflow", e);
 			throw new ResponseStatusException(
 				org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
-				messages.get("postgres.service-unavailable")
+				messages.get("workflow.update.add-node")
 			);
 		}
 		return updated.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
@@ -434,7 +434,7 @@ public class WorkflowController {
 			log.error("Unable to update workflow", e);
 			throw new ResponseStatusException(
 				org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
-				messages.get("postgres.service-unavailable")
+				messages.get("workflow.update.remove-node")
 			);
 		}
 		return updated.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
@@ -476,7 +476,7 @@ public class WorkflowController {
 			log.error("Unable to update workflow", e);
 			throw new ResponseStatusException(
 				org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
-				messages.get("postgres.service-unavailable")
+				messages.get("workflow.update.add-edge")
 			);
 		}
 		return updated.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
@@ -518,7 +518,7 @@ public class WorkflowController {
 			log.error("Unable to update workflow", e);
 			throw new ResponseStatusException(
 				org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
-				messages.get("postgres.service-unavailable")
+				messages.get("workflow.update.remove-edge")
 			);
 		}
 		return updated.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
