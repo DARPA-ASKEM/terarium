@@ -1048,7 +1048,7 @@ onMounted(async () => {
 
 watch(
 	() => knobs.value,
-(newValue, oldValue) => {
+	(newValue, oldValue) => {
 		if (_.isEqual(newValue, oldValue)) return;
 		const state = _.cloneDeep(props.node.state);
 		state.numIterations = knobs.value.numIterations;
