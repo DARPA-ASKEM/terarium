@@ -472,6 +472,8 @@ async function onMenuSelection(operatorType: string, menuNode: WorkflowNode<any>
 		});
 
 		// Will not connect nodes if there is anything besides 1 match
+		// TOM TODO: Check can we just grab the first match instead?
+		// Why? Calibrate Ensemble from menu not going to work like this.
 		if (inputPorts.length !== 1) {
 			console.warn(`Ambiguous matching types [${newNode.inputs}] to [${port}]`);
 			return;
