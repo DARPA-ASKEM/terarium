@@ -44,6 +44,7 @@
 								:start-date="modelConfiguration.temporalContext"
 								:calendar-settings="getCalendarSettingsFromModel(model)"
 								v-model="timespan.start"
+								@update:model-value="updateState"
 							/>
 							<tera-timestep-calendar
 								v-if="model && modelConfiguration"
@@ -51,6 +52,7 @@
 								:start-date="modelConfiguration.temporalContext"
 								:calendar-settings="getCalendarSettingsFromModel(model)"
 								v-model="timespan.end"
+								@update:model-value="updateState"
 							/>
 						</div>
 
