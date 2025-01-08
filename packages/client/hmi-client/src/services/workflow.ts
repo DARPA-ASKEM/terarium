@@ -820,6 +820,38 @@ export const getWorkflow = async (id: string, projectId?: string) => {
 	return response?.data ?? null;
 };
 
+export const selectOutput = async (id: string, nodeId: string, outputId: string, projectId?: string) => {
+	const response = await API.post(`/workflows/${id}/select-output/${nodeId}/${outputId}`, {
+		params: { 'project-id': projectId }
+	});
+	return response?.data ?? null;
+};
+
+export const appendOutput = async (id: string, nodeId: string, output: any) => {
+	const response = await API.post(`/workflows/${id}/append-output/${nodeId}`, output);
+	return response?.data ?? null;
+};
+
+export const addNode = async (id: string, node: WorkflowNode<any>) => {
+	const response = await API.post(`/workflows/${id}/node`, node);
+	return response?.data ?? null;
+};
+
+export const addEdge = async (id: string, edge: WorkflowEdge) => {
+	const response = await API.post(`/workflows/${id}/edge`, edge);
+	return response?.data ?? null;
+};
+
+export const removeNode = async (id: string, nodeId: string) => {
+	const response = await API.delete(`/workflows/${id}/node/${nodeId}`);
+	return response?.data ?? null;
+};
+
+export const removeEdge = async (id: string, edgeId: string) => {
+	const response = await API.delete(`/workflows/${id}/edge/${edgeId}`);
+	return response?.data ?? null;
+};
+
 /// /////////////////////////////////////////////////////////////////////////////
 // Events bus for workflow
 /// /////////////////////////////////////////////////////////////////////////////
