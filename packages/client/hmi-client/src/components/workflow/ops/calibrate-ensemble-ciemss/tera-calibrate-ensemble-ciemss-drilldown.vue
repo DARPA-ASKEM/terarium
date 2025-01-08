@@ -1,6 +1,7 @@
 <template>
 	<tera-drilldown
 		:node="node"
+		v-bind="$attrs"
 		@update:selection="onSelection"
 		@on-close-clicked="emit('close')"
 		@update-state="(state: any) => emit('update-state', state)"
@@ -215,6 +216,7 @@
 							/>
 						</AccordionTab>
 						<template v-if="!isRunInProgress">
+							<!-- Ensemble Variables over Time -->
 							<AccordionTab v-if="selectedEnsembleVariableSettings.length > 0" header="Ensemble variables over time">
 								<div class="flex flex-row" v-for="setting of selectedEnsembleVariableSettings" :key="setting.id">
 									<vega-chart
@@ -701,6 +703,7 @@ const ensembleVariables = computed(() => getSelectedOutputEnsembleMapping(props.
 const ensembleVariableCharts = useEnsembleVariableCharts(selectedEnsembleVariableSettings, groundTruthData);
 const weightsDistributionCharts = useWeightsDistributionCharts();
 const { errorCharts, onExpandErrorChart } = useEnsembleErrorCharts(selectedErrorVariableSettings, errorData);
+
 // --------------------------------------------------------
 
 watch(
