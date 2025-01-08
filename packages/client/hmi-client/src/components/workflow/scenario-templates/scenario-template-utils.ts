@@ -2,6 +2,7 @@ import { DistributionType } from '@/services/distribution';
 import { getInitials, getObservables } from '@/services/model-configurations';
 import { ModelConfiguration, ParameterSemantic } from '@/types/Types';
 import { calculateUncertaintyRange } from '@/utils/math';
+import { v4 as uuidv4 } from 'uuid';
 
 export const displayParameter = (parameters: ParameterSemantic[], parameterName: string) => {
 	let value = '';
@@ -45,3 +46,26 @@ const getCompareDatasetVariablePrefixes = (selectedMetrics: string[], modelConfi
 
 export const getMeanCompareDatasetVariables = (selectedMetrics: string[], modelConfiguration: ModelConfiguration) =>
 	getCompareDatasetVariablePrefixes(selectedMetrics, modelConfiguration).map((metric) => `${metric}_mean`);
+
+export function usePolicyModel(props, interventionDropdowns, policyModalContext, isPolicyModalVisible) {
+	const onOpenPolicyModel = (index: number) => {
+		interventionDropdowns.value[index].hide();
+		policyModalContext.value = index;
+		isPolicyModalVisible.value = true;
+	};
+
+	const addNewPolicy = (newPolicyName: string) => {
+		if (newPolicyName && policyModalContext.value !== null) {
+			const id = uuidv4();
+			props.scenario.setNewInterventionSpec(id, newPolicyName);
+			props.scenario.setInterventionSpec(id, policyModalContext.value);
+			isPolicyModalVisible.value = false;
+			policyModalContext.value = null;
+		}
+	};
+
+	return {
+		onOpenPolicyModel,
+		addNewPolicy
+	};
+}
