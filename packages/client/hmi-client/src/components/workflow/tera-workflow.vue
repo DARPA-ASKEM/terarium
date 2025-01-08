@@ -306,7 +306,7 @@ const saveWorkflowHandler = () => {
  * output as selected, and revert the selection status of
  * existing outputs
  * */
-function appendOutput(
+async function appendOutput(
 	node: WorkflowNode<any> | null,
 	port: {
 		type: string;
@@ -317,6 +317,25 @@ function appendOutput(
 	}
 ) {
 	if (!node) return;
+
+	const uuid = uuidv4();
+	const outputPort: WorkflowOutput<any> = {
+		id: uuid,
+		type: port.type,
+		label: port.label,
+		value: isArray(port.value) ? port.value : [port.value],
+		isOptional: false,
+		status: WorkflowPortStatus.NOT_CONNECTED,
+		state: port.state,
+		isSelected: true,
+		timestamp: new Date(),
+		operatorStatus: node.status
+	};
+
+	const updatedWorkflow = await workflowService.appendOutput(wf.value.getId(), node.id, outputPort);
+	wf.value.update(updatedWorkflow, false);
+
+	/*
 
 	// We assume that if we can produce an output, the status is okay
 	node.status = OperatorStatus.SUCCESS;
@@ -344,6 +363,7 @@ function appendOutput(
 
 	selectOutput(node, uuid);
 	saveWorkflowHandler();
+	*/
 }
 
 function updateWorkflowNodeState(node: WorkflowNode<any> | null, state: any) {
@@ -358,10 +378,15 @@ function updateWorkflowNodeStatus(node: WorkflowNode<any> | null, status: Operat
 	saveWorkflowHandler();
 }
 
-function selectOutput(node: WorkflowNode<any> | null, selectedOutputId: string) {
+async function selectOutput(node: WorkflowNode<any> | null, selectedOutputId: string) {
+	/*
 	if (!node) return;
 	wf.value.selectOutput(node, selectedOutputId);
 	saveWorkflowHandler();
+	*/
+	console.log('debug');
+	const updatedWorkflow = await workflowService.selectOutput(wf.value.getId(), node!.id, selectedOutputId);
+	wf.value.update(updatedWorkflow, false);
 }
 
 function updateOutput(node: WorkflowNode<any> | null, workflowOutput: WorkflowOutput<any>) {
@@ -441,11 +466,13 @@ const cloneNoteBookSessions = async () => {
 
 const addOperatorToWorkflow: Function =
 	(operator: OperatorImport, nodeSize: OperatorNodeSize = OperatorNodeSize.medium) =>
-	() => {
-		const node = wf.value.addNode(operator.operation, newNodePosition, {
+	async () => {
+		const node = wf.value.addOperator(operator.operation, newNodePosition, {
 			size: nodeSize
 		});
-		saveWorkflowHandler();
+		const updatedWorkflow = await workflowService.addNode(wf.value.getId(), node);
+		wf.value.update(updatedWorkflow, false);
+
 		return node;
 	};
 
@@ -460,7 +487,7 @@ async function onMenuSelection(operatorType: string, menuNode: WorkflowNode<any>
 	newNodePosition.y = menuNode.y;
 
 	if (name && operation && node && drilldown) {
-		const newNode: WorkflowNode<any> = addOperatorToWorkflow({ name, operation, node, drilldown })();
+		const newNode: WorkflowNode<any> = await addOperatorToWorkflow({ name, operation, node, drilldown })();
 
 		// The split('|') is for complex types - [modelId|modelConfigId] or [datasetId|simulationId]
 		const portTypes = port.type.split('|');
@@ -591,7 +618,7 @@ const showAddComponentMenu = () => {
 
 const { getDragData } = useDragEvent();
 
-function onDrop(event: DragEvent) {
+async function onDrop(event: DragEvent) {
 	const { assetId, assetType } = getDragData('initAssetNode') as {
 		assetId: string;
 		assetType: AssetType;
@@ -619,7 +646,9 @@ function onDrop(event: DragEvent) {
 			default:
 				return;
 		}
-		wf.value.addNode(operation, newNodePosition, { state });
+		const operator = wf.value.addOperator(operation, newNodePosition, { state });
+		const updatedWorkflow = await workflowService.addNode(wf.value.getId(), operator);
+		wf.value.update(updatedWorkflow, false);
 	}
 }
 

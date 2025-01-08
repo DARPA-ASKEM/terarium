@@ -495,7 +495,9 @@ public class WorkflowService extends TerariumAssetServiceWithoutSearch<Workflow,
 		}
 
 		selected.setIsSelected(true);
-		operator.setState(deepMergeWithOverwrite(operator.getState(), selected.getState()));
+		if (selected.getState() != null) {
+			operator.setState(deepMergeWithOverwrite(operator.getState(), selected.getState()));
+		}
 		operator.setStatus(selected.getOperatorStatus());
 		operator.setActive(selected.getId());
 
@@ -617,6 +619,12 @@ public class WorkflowService extends TerariumAssetServiceWithoutSearch<Workflow,
 	}
 
 	public static JsonNode deepMergeWithOverwrite(JsonNode nodeA, JsonNode nodeB) {
+		if (nodeA == null && nodeB == null) {
+			return null;
+		} else if (nodeA == null && nodeB != null) {
+			return nodeB;
+		}
+
 		if (nodeA.isObject() && nodeB.isObject()) {
 			ObjectNode objectA = (ObjectNode) nodeA;
 			nodeB

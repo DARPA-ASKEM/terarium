@@ -211,6 +211,62 @@ export class WorkflowWrapper {
 		}
 	}
 
+	addOperator(op: Operation, pos: Position, options: { size?: OperatorNodeSize; state?: any }) {
+		let currentUserName: string | undefined = '';
+		try {
+			currentUserName = useAuthStore().user?.username;
+		} catch (err) {
+			// do nothing
+		}
+
+		const nodeSize: Size = getOperatorNodeSize(options.size ?? OperatorNodeSize.medium);
+
+		const node: WorkflowNode<any> = {
+			id: uuidv4(),
+			workflowId: this.wf.id,
+			operationType: op.name,
+			displayName: op.displayName,
+			documentationUrl: op.documentationUrl,
+			imageUrl: op.imageUrl,
+			x: pos.x,
+			y: pos.y,
+
+			createdBy: currentUserName,
+			createdAt: Date.now(),
+
+			active: null,
+			state: options.state ?? {},
+			uniqueInputs: op.uniqueInputs ?? false,
+
+			inputs: op.inputs.map((port) => ({
+				id: uuidv4(),
+				type: port.type,
+				label: port.label,
+				status: WorkflowPortStatus.NOT_CONNECTED,
+				value: null,
+				isOptional: port.isOptional ?? false
+			})),
+
+			outputs: op.outputs.map((port) => ({
+				id: uuidv4(),
+				type: port.type,
+				label: port.label,
+				status: WorkflowPortStatus.NOT_CONNECTED,
+				value: null,
+				isOptional: false,
+				state: {}
+			})),
+
+			status: OperatorStatus.INVALID,
+			width: nodeSize.width,
+			height: nodeSize.height
+		};
+		if (op.initState && _.isEmpty(node.state)) {
+			node.state = op.initState();
+		}
+		return node;
+	}
+
 	addNode(op: Operation, pos: Position, options: { size?: OperatorNodeSize; state?: any }) {
 		let currentUserName: string | undefined = '';
 		try {
