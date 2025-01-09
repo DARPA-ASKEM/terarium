@@ -30,7 +30,7 @@ export const expressionFunctions = {
 	// number formatting for sensitivity bins
 	sensitivityBinFormatter: (value) => {
 		if (value === undefined) return 'N/A';
-		return format('.6~g')(value); // 6 significant digits
+		return format('.5~g')(value); // 5 significant digits
 	}
 };
 

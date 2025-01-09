@@ -871,7 +871,8 @@ export function useCharts(
 	function createSensitivityBins(
 		records: Record<string, any>[],
 		selectedVariable: string,
-		numBins: number = 7
+		numBins: number = 7,
+		unit?: string
 	): Map<string, number[]> {
 		if (numBins < 1) {
 			throw new Error('Number of bins must be at least 1.');
@@ -916,13 +917,13 @@ export function useCharts(
 		let previousThreshold = minValue;
 		thresholds.forEach((threshold) => {
 			labels.push(
-				`[${expressionFunctions.sensitivityBinFormatter(previousThreshold)}, ${expressionFunctions.sensitivityBinFormatter(threshold)}]`
+				`[${expressionFunctions.sensitivityBinFormatter(previousThreshold)}, ${expressionFunctions.sensitivityBinFormatter(threshold)}] ${unit ? `${unit}` : ''}`
 			);
 			previousThreshold = threshold;
 		});
 
 		labels.push(
-			`[${expressionFunctions.sensitivityBinFormatter(previousThreshold)}, ${expressionFunctions.sensitivityBinFormatter(maxValue)}]`
+			`[${expressionFunctions.sensitivityBinFormatter(previousThreshold)}, ${expressionFunctions.sensitivityBinFormatter(maxValue)}] ${unit ? `${unit}` : ''}`
 		);
 
 		// Assign bins to records and create the result map
@@ -977,8 +978,9 @@ export function useCharts(
 			chartSettings.value.forEach((settings) => {
 				const selectedVariable =
 					chartData.value?.pyciemssMap[settings.selectedVariables[0]] || settings.selectedVariables[0];
+				const unit = getUnit(settings.selectedVariables[0]);
 				const { options } = createForecastChartOptions(settings);
-				const bins = createSensitivityBins(sliceData, selectedVariable);
+				const bins = createSensitivityBins(sliceData, selectedVariable, 7, unit);
 
 				options.bins = bins;
 				options.colorscheme = SENSITIVITY_COLOUR_SCHEME;
