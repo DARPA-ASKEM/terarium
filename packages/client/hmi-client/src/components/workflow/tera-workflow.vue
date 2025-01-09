@@ -335,34 +335,6 @@ async function appendOutput(
 
 	const updatedWorkflow = await workflowService.appendOutput(wf.value.getId(), node.id, outputPort);
 	wf.value.update(updatedWorkflow, false);
-
-	/*
-
-	node.status = OperatorStatus.SUCCESS;
-
-	const uuid = uuidv4();
-	const outputPort: WorkflowOutput<any> = {
-		id: uuid,
-		type: port.type,
-		label: port.label,
-		value: isArray(port.value) ? port.value : [port.value],
-		isOptional: false,
-		status: WorkflowPortStatus.NOT_CONNECTED,
-		state: port.state,
-		isSelected: true,
-		timestamp: new Date(),
-		operatorStatus: node.status
-	};
-
-	// Append and set active
-	node.outputs.push(outputPort);
-	node.active = uuid;
-
-	// Filter out temporary outputs where value is null
-	node.outputs = node.outputs.filter((d) => d.value);
-
-	selectOutput(node, uuid);
-	*/
 }
 
 function updateWorkflowNodeState(node: WorkflowNode<any> | null, state: any) {
@@ -702,20 +674,9 @@ async function createNewEdge(node: WorkflowNode<any>, port: WorkflowPort, direct
 			return;
 		}
 
-		// cancelNewEdge();
 		const updatedWorkflow = await workflowService.addEdge(wf.value.getId(), edgePayload);
 		wf.value.update(updatedWorkflow, false);
 		cancelNewEdge();
-		/*
-		wf.value.addEdge(
-			newEdge.value!.source ?? node.id,
-			newEdge.value!.sourcePortId ?? port.id,
-			newEdge.value!.target ?? node.id,
-			newEdge.value!.targetPortId ?? port.id,
-			newEdge.value!.points
-		);
-		saveWorkflowHandler();
-		*/
 	}
 }
 
@@ -903,7 +864,7 @@ const pathFn = d3
 const drawPath = (v: any) => pathFn(v) as string;
 
 const unloadCheck = () => {
-	saveWorkflowHandler();
+	workflowService.saveWorkflow(wf.value.dump());
 };
 
 const handleDrilldown = () => {
@@ -956,7 +917,7 @@ watch(
 	async (newId, oldId) => {
 		// Save previous workflow, if applicable
 		if (newId !== oldId && oldId) {
-			saveWorkflowHandler();
+			workflowService.saveWorkflow(wf.value.dump());
 			workflowService.setLocalStorageTransform(wf.value.getId(), canvasTransform);
 		}
 
@@ -1002,7 +963,7 @@ onMounted(() => {
 });
 
 onUnmounted(() => {
-	saveWorkflowHandler();
+	workflowService.saveWorkflow(wf.value.dump());
 	if (saveTimer) {
 		clearInterval(saveTimer);
 	}

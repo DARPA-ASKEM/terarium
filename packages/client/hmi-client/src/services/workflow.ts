@@ -909,6 +909,7 @@ export const addEdge = async (id: string, edge: WorkflowEdge) => {
 };
 
 export const removeNode = async (id: string, nodeId: string) => {
+	console.log('>> workflowService.removeNode', nodeId);
 	const response = await API.delete(`/workflows/${id}/node/${nodeId}`);
 	return response?.data ?? null;
 };
