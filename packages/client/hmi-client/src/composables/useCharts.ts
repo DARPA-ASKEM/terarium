@@ -287,47 +287,63 @@ export function useCharts(
 	const useCompareDatasetCharts = (
 		chartSettings: ComputedRef<ChartSetting[]>,
 		selectedPlotType: ComputedRef<PlotValue>,
-		baselineName: ComputedRef<string | null>
+		baselineIndex: ComputedRef<number>
 	) => {
 		const compareDatasetCharts = computed(() => {
 			const charts: Record<string, VisualizationSpec> = {};
 			if (!isChartReadyToBuild.value) return charts;
-			const { resultSummary } = chartData.value as ChartData;
+			const { resultSummary, pyciemssMap, translationMap } = chartData.value as ChartData;
 
-			const datasetNames = Object.keys(resultSummary[0]).filter(
-				(key) => key !== 'timepoint_id' && key !== 'headerName'
-			);
 			// Make baseline black
-			const baselineIndex = datasetNames.indexOf(baselineName.value ?? '');
 			const colorScheme = cloneDeep(CATEGORICAL_SCHEME);
-			colorScheme[baselineIndex] = 'black';
+			colorScheme[baselineIndex.value] = 'black';
 
 			chartSettings.value.forEach((settings) => {
-				const headerName = settings.selectedVariables[0];
+				const varName = settings.selectedVariables[0];
+				const sampleLayerVariables = [
+					`${pyciemssMap[varName]}:0`,
+					`${pyciemssMap[varName]}:1`,
+					`${pyciemssMap[varName]}:2`
+				];
+				const aggSuffix = varName.startsWith('data_') ? '' : '_mean';
+				const statLayerVariables = [
+					`${pyciemssMap[varName]}${aggSuffix}:0`,
+					`${pyciemssMap[varName]}${aggSuffix}:1`,
+					`${pyciemssMap[varName]}${aggSuffix}:2`
+				];
 				const annotations = getChartAnnotationsByChartId(settings.id);
-				const chart = applyForecastChartAnnotations(
-					createForecastChart(
-						null,
-						{
-							data: resultSummary.filter((d) => d.headerName === headerName),
-							variables: datasetNames,
-							timeField: 'timepoint_id'
-						},
-						null,
-						{
-							title: headerName,
-							legend: true,
-							width: chartSize.value.width,
-							height: chartSize.value.height,
-							xAxisTitle: getUnit('_time') || 'Time',
-							yAxisTitle: capitalize(selectedPlotType.value),
-							scale: settings.scale,
-							colorscheme: colorScheme,
-							legendProperties: { direction: 'vertical', columns: 3 }
-						}
-					),
-					annotations
-				);
+				const options = {
+					title: varName,
+					legend: true,
+					width: chartSize.value.width,
+					height: chartSize.value.height,
+					xAxisTitle: getUnit('_time') || 'Time',
+					yAxisTitle: capitalize(selectedPlotType.value),
+					scale: settings.scale,
+					colorscheme: colorScheme,
+					legendProperties: { direction: 'vertical', columns: 3 },
+					translationMap
+				};
+				const chart = !settings.showQuantiles
+					? applyForecastChartAnnotations(
+							createForecastChart(
+								null,
+								{
+									data: resultSummary,
+									variables: statLayerVariables,
+									timeField: 'timepoint_id'
+								},
+								null,
+								options
+							),
+							annotations
+						)
+					: createQuantilesForecastChart(
+							chartData.value?.resultGroupByTimepoint ?? [],
+							sampleLayerVariables,
+							settings.quantiles ?? [],
+							options
+						);
 				charts[settings.id] = chart;
 			});
 			return charts;
