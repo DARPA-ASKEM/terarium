@@ -211,6 +211,11 @@ const compareOptions: { label: string; value: CompareValue }[] = [
 ];
 
 const datasets = ref<Dataset[]>([]);
+const dataResults = ref<{
+	results: DataArray[];
+	summaryResults: DataArray[];
+	datasetResults: DataArray[];
+} | null>(null);
 
 const commonHeaderNames = ref<string[]>([]);
 const timepointHeaderName = ref<string | null>(null);
@@ -303,6 +308,10 @@ const initialize = async () => {
 		const filteredDatasets: Dataset[] = ds.filter((dataset) => dataset !== null);
 		datasets.value.push(...filteredDatasets);
 	});
+	// Fetch the results
+	// dataResults.value = await fetchDatasetResults(datasets.value);
+	console.log(fetchDatasetResults);
+	console.log(generateChartData2);
 	isFetchingDatasets.value = false;
 
 	if (!knobs.value.selectedDataset) knobs.value.selectedDataset = datasets.value[0]?.id ?? null;
@@ -408,8 +417,8 @@ const buildDatasetVarMapping = (dsets: DataArray[]) => {
 };
 
 async function generateChartData2() {
-	if (datasets.value.length <= 1) return;
-	const { results, summaryResults, datasetResults } = await fetchDatasetResults(datasets.value);
+	if (datasets.value.length <= 1 || !dataResults.value) return;
+	const { results, summaryResults, datasetResults } = dataResults.value;
 
 	// Merge all datasets into single dataset
 	const result = mergeResults(...results);
@@ -475,8 +484,6 @@ function findDuplicates(strings: string[]): string[] {
 }
 
 async function generateChartData() {
-	// generateChartData2();
-	console.log(generateChartData2);
 	if (datasets.value.length <= 1) return;
 
 	const rawContents = await Promise.all(
