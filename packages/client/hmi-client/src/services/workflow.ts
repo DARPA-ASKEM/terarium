@@ -515,6 +515,7 @@ export class WorkflowWrapper {
 		node.status = OperatorStatus.INVALID;
 		node.state = Object.assign(node.state, options.state);
 		const outputPort = node.outputs[0];
+		if (!outputPort) return;
 		outputPort.operatorStatus = node.status;
 
 		// if there is an output set the output port and set statuses to success

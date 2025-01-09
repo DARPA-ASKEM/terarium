@@ -10,10 +10,10 @@ import { OperatorNodeSize } from '@/services/workflow';
 import { createModelConfiguration, getModelConfigurationById, getParameter } from '@/services/model-configurations';
 import { ChartSetting, ChartSettingType } from '@/types/common';
 import { updateChartSettingsBySelectedVariables } from '@/services/chart-settings';
-import { AssetType, ParameterSemantic } from '@/types/Types';
+import { AssetType, InterventionPolicy, ParameterSemantic } from '@/types/Types';
 import { DistributionType } from '@/services/distribution';
 import { calculateUncertaintyRange } from '@/utils/math';
-import { getInterventionPolicyById } from '@/services/intervention-policy';
+import { blankIntervention, createInterventionPolicy, getInterventionPolicyById } from '@/services/intervention-policy';
 import { useProjects } from '@/composables/project';
 import { getMeanCompareDatasetVariables } from '../scenario-template-utils';
 
@@ -66,6 +66,8 @@ export class HorizonScanningScenario extends BaseScenario {
 
 	interventionSpecs: { id: string }[];
 
+	newInterventionSpecs: { id: string; name: string }[];
+
 	simulateSpec: { ids: string[] };
 
 	parameters: (HorizonScanningParameter | null)[];
@@ -83,6 +85,7 @@ export class HorizonScanningScenario extends BaseScenario {
 			ids: []
 		};
 		this.interventionSpecs = [{ id: '' }];
+		this.newInterventionSpecs = [];
 		this.parameters = [null];
 	}
 
@@ -120,6 +123,10 @@ export class HorizonScanningScenario extends BaseScenario {
 
 	removeParameter(index: number) {
 		this.parameters.splice(index, 1);
+	}
+
+	setNewInterventionSpec(id: string, name: string) {
+		this.newInterventionSpecs.push({ id, name });
 	}
 
 	setParameter(parameter: ParameterSemantic, index: number) {
@@ -308,7 +315,22 @@ export class HorizonScanningScenario extends BaseScenario {
 		const interventionPromises = this.interventionSpecs
 			.filter((spec) => !!spec.id)
 			.map(async (interventionSpec) => {
-				const interventionPolicy = await getInterventionPolicyById(interventionSpec.id);
+				let interventionPolicy: InterventionPolicy | null = await getInterventionPolicyById(interventionSpec.id);
+
+				if (!interventionPolicy) {
+					// create new intervention if in the new policy list
+					interventionPolicy = await createInterventionPolicy(
+						{
+							name:
+								this.newInterventionSpecs.find((newInterventionSpec) => newInterventionSpec.id === interventionSpec.id)
+									?.name ?? 'New policy',
+							modelId: this.modelSpec.id,
+							interventions: [blankIntervention]
+						},
+						true
+					);
+				}
+
 				const interventionNode = wf.addNode(
 					InterventionOp,
 					{ x: 0, y: 0 },
@@ -327,7 +349,7 @@ export class HorizonScanningScenario extends BaseScenario {
 						interventionPolicy
 					},
 					output: {
-						value: [interventionPolicy.id],
+						value: [interventionPolicy!.id],
 						state: interventionNode.state
 					}
 				});

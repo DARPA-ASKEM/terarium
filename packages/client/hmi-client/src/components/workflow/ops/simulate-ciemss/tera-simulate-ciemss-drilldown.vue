@@ -44,6 +44,7 @@
 								:start-date="modelConfiguration.temporalContext"
 								:calendar-settings="getCalendarSettingsFromModel(model)"
 								v-model="timespan.start"
+								@update:model-value="updateState"
 							/>
 							<tera-timestep-calendar
 								v-if="model && modelConfiguration"
@@ -51,6 +52,7 @@
 								:start-date="modelConfiguration.temporalContext"
 								:calendar-settings="getCalendarSettingsFromModel(model)"
 								v-model="timespan.end"
+								@update:model-value="updateState"
 							/>
 						</div>
 
@@ -387,16 +389,14 @@
 <script setup lang="ts">
 import _, { isEmpty } from 'lodash';
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
-
 import { VAceEditor } from 'vue3-ace-editor';
 import { VAceEditorInstance } from 'vue3-ace-editor/types';
-
 import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
 import Button from 'primevue/button';
 import Dropdown from 'primevue/dropdown';
 import Divider from 'primevue/divider';
-
+import SelectButton from 'primevue/selectbutton';
 import type {
 	CsvAsset,
 	InterventionPolicy,
@@ -407,7 +407,6 @@ import type {
 } from '@/types/Types';
 import { AssetType } from '@/types/Types';
 import type { WorkflowNode } from '@/types/workflow';
-
 import { deleteAnnotation } from '@/services/chart-settings';
 import { flattenInterventionData, getInterventionPolicyById } from '@/services/intervention-policy';
 import {
@@ -425,11 +424,8 @@ import {
 	DataArray,
 	CiemssMethodOptions
 } from '@/services/models/simulation-service';
-
 import { logger } from '@/utils/logger';
-
 import { ChartSettingType, CiemssPresetTypes, DrilldownTabs } from '@/types/common';
-
 import VegaChart from '@/components/widgets/VegaChart.vue';
 import { KernelSessionManager } from '@/services/jupyter';
 import TeraChartSettings from '@/components/widgets/tera-chart-settings.vue';
@@ -447,7 +443,6 @@ import TeraSaveSimulationModal from '@/components/project/tera-save-simulation-m
 import TeraSliderPanel from '@/components/widgets/tera-slider-panel.vue';
 import TeraTimestepCalendar from '@/components/widgets/tera-timestep-calendar.vue';
 import { nodeMetadata } from '@/components/workflow/util';
-
 import { useCharts } from '@/composables/useCharts';
 import { useChartSettings } from '@/composables/useChartSettings';
 import { useProjects } from '@/composables/project';

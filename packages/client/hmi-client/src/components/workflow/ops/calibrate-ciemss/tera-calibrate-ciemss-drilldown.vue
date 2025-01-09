@@ -490,13 +490,7 @@ import DataTable from 'primevue/datatable';
 import Dropdown from 'primevue/dropdown';
 import Column from 'primevue/column';
 import TeraInputNumber from '@/components/widgets/tera-input-number.vue';
-import {
-	CalibrateMap,
-	setupDatasetInput,
-	setupCsvAsset,
-	setupModelInput,
-	parseCsvAsset
-} from '@/services/calibrate-workflow';
+import { CalibrateMap, setupDatasetInput, setupCsvAsset, setupModelInput } from '@/services/calibrate-workflow';
 import { deleteAnnotation, updateChartSettingsBySelectedVariables } from '@/services/chart-settings';
 import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
 import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.vue';
@@ -548,6 +542,7 @@ import { getDataset } from '@/services/dataset';
 import { getCalendarSettingsFromModel } from '@/services/model';
 import { useCharts } from '@/composables/useCharts';
 import { useChartSettings } from '@/composables/useChartSettings';
+import { parseCsvAsset } from '@/utils/csv';
 import type { CalibrationOperationStateCiemss } from './calibrate-operation';
 import { renameFnGenerator, getErrorData, usePreparedChartInputs, getSelectedOutputMapping } from './calibrate-utils';
 
@@ -719,7 +714,7 @@ const isMappingfilled = computed(
 
 const areNodeInputsFilled = computed(() => datasetId.value && modelConfigId.value);
 
-const isRunDisabled = computed(() => !isMappingfilled.value || !areNodeInputsFilled.value);
+const isRunDisabled = computed(() => !isMappingfilled.value || !areNodeInputsFilled.value || isLoading.value);
 
 const mappingFilledTooltip = computed(() =>
 	!isMappingfilled.value ? 'Must contain a Timestamp column and at least one filled in mapping. \n' : ''
@@ -728,8 +723,10 @@ const nodeInputsFilledTooltip = computed(() =>
 	!areNodeInputsFilled.value ? 'Must a valid dataset and model configuration\n' : ''
 );
 
+const isLoadingTooltip = computed(() => (isLoading.value ? 'Must wait for the current run to finish\n' : ''));
+
 const runButtonMessage = computed(() =>
-	isRunDisabled.value ? `${mappingFilledTooltip.value} ${nodeInputsFilledTooltip.value}` : ''
+	isRunDisabled.value ? `${mappingFilledTooltip.value} ${nodeInputsFilledTooltip.value} ${isLoadingTooltip.value}` : ''
 );
 
 const selectedOutputId = ref<string>();
@@ -1048,7 +1045,8 @@ onMounted(async () => {
 
 watch(
 	() => knobs.value,
-	async () => {
+	(newValue, oldValue) => {
+		if (_.isEqual(newValue, oldValue)) return;
 		const state = _.cloneDeep(props.node.state);
 		state.numIterations = knobs.value.numIterations;
 		state.numSamples = knobs.value.numSamples;

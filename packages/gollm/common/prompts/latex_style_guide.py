@@ -12,6 +12,6 @@ LATEX_STYLE_GUIDE = """
 9) Avoid using homoglyphs
 10) Avoid words or multi-character names for variables and names. Use camel case to express multi-word or multi-character names
 11) Use " * " to denote multiplication between scalar quantities
-12) Replace "\\epsilon" with "\\varepsilon" when representing a parameter or variable
-13) If equations are separated by commas, do not include commas in the LaTeX code.
+12) Replace any variant form of Greek letters to their main form when representing a variable or parameter; "\\varepsilon" -> "\\epsilon", "\\vartheta" -> "\\theta", "\\varpi" -> "\\pi", "\\varrho" -> "\\rho",  "\\varsigma" -> "\\sigma", "\\varphi" -> "\\phi"
+13) If equations are separated by punctuation (like comma, period, semicolon), do not include the punctuation in the LaTeX code.
 """
