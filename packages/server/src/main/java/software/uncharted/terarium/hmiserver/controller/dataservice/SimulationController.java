@@ -346,8 +346,8 @@ public class SimulationController {
 		@PathVariable("project-id") final UUID projectId,
 		@RequestParam("dataset-name") final String datasetName,
 		@RequestParam("add-to-project") final Boolean addToProject,
-		@RequestParam("model-configuration-id") final Optional<UUID> modelConfigurationId,
-		@RequestParam("intervention-policy-id") final Optional<UUID> interventionPolicyId
+		@RequestParam(value = "model-configuration-id", required = false) final UUID modelConfigurationId,
+		@RequestParam(value = "intervention-policy-id", required = false) final UUID interventionPolicyId
 	) {
 		final Schema.Permission permission = projectService.checkPermissionCanWrite(
 			currentUserService.get().getId(),

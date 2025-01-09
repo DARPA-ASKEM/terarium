@@ -372,7 +372,6 @@ function findDuplicates(strings: string[]): string[] {
 
 async function generateChartData() {
 	if (datasets.value.length <= 1) return;
-	console.log(datasets);
 
 	const rawContents = await Promise.all(
 		datasets.value.map((dataset) => {

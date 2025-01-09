@@ -93,8 +93,8 @@ public class SimulationService extends TerariumAssetServiceWithoutSearch<Simulat
 		final String datasetName,
 		final UUID projectId,
 		final boolean addToProject,
-		final Optional<UUID> modelConfigurationId,
-		final Optional<UUID> interventionPolicyId,
+		final UUID modelConfigurationId,
+		final UUID interventionPolicyId,
 		final Schema.Permission permission
 	) {
 		try {
@@ -116,13 +116,16 @@ public class SimulationService extends TerariumAssetServiceWithoutSearch<Simulat
 			dataset.setColumns(new ArrayList<>());
 
 			// Set the metadata
-			ObjectMapper mapper = new ObjectMapper();
-			ObjectNode metadata = mapper.createObjectNode();
-			ObjectNode simulationAttributes = mapper.createObjectNode();
+			ObjectNode metadata = objectMapper.createObjectNode();
+			ObjectNode simulationAttributes = objectMapper.createObjectNode();
 
 			metadata.put("simulationId", simId.toString());
-			modelConfigurationId.ifPresent(id -> simulationAttributes.put("modelConfigurationId", id.toString()));
-			interventionPolicyId.ifPresent(id -> simulationAttributes.put("interventionPolicyId", id.toString()));
+			if (modelConfigurationId != null) {
+				simulationAttributes.put("modelConfigurationId", modelConfigurationId.toString());
+			}
+			if (interventionPolicyId != null) {
+				simulationAttributes.put("interventionPolicyId", interventionPolicyId.toString());
+			}
 			metadata.set("simulationAttributes", simulationAttributes);
 
 			dataset.setMetadata(metadata);
