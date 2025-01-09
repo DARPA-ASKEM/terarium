@@ -131,10 +131,8 @@ public class DatasetStatistics {
 					column.setDataType(mapDataType(responseNonNumericColumn.getDataType()));
 					column.getStats().setNonNumericStats(responseNonNumericColumn);
 				}
-
-				log.info("Updated statistics for column {} {}", column.getName(), column.getStats());
 			});
 
-		log.info("Updated statistics for dataset {}, {}", dataset.getName(), dataset.getId());
+		log.info("Updated statistics for dataset \"{}\" — {}", dataset.getName(), dataset.getId());
 	}
 }
