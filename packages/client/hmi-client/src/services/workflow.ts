@@ -883,6 +883,7 @@ export const newOperator = (
 };
 
 export const selectOutput = async (id: string, nodeId: string, outputId: string, projectId?: string) => {
+	console.log('>> workflowService.selectOutput');
 	const response = await API.post(`/workflows/${id}/select-output/${nodeId}/${outputId}`, {
 		params: { 'project-id': projectId }
 	});
@@ -890,16 +891,19 @@ export const selectOutput = async (id: string, nodeId: string, outputId: string,
 };
 
 export const appendOutput = async (id: string, nodeId: string, output: any) => {
+	console.log('>> workflowService.appendOutput');
 	const response = await API.post(`/workflows/${id}/append-output/${nodeId}`, output);
 	return response?.data ?? null;
 };
 
 export const addNode = async (id: string, node: WorkflowNode<any>) => {
+	console.log('>> workflowService.addNode');
 	const response = await API.post(`/workflows/${id}/node`, node);
 	return response?.data ?? null;
 };
 
 export const addEdge = async (id: string, edge: WorkflowEdge) => {
+	console.log('>> workflowService.addEdge', edge.source, edge.target);
 	const response = await API.post(`/workflows/${id}/edge`, edge);
 	return response?.data ?? null;
 };
@@ -910,6 +914,7 @@ export const removeNode = async (id: string, nodeId: string) => {
 };
 
 export const removeEdge = async (id: string, edgeId: string) => {
+	console.log('>> workflowService.removeEdge');
 	const response = await API.delete(`/workflows/${id}/edge/${edgeId}`);
 	return response?.data ?? null;
 };

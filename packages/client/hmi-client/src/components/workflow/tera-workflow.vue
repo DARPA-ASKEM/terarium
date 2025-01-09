@@ -329,7 +329,8 @@ async function appendOutput(
 		state: port.state,
 		isSelected: true,
 		timestamp: new Date(),
-		operatorStatus: node.status
+		// We assume that if we can produce an output, the status is okay
+		operatorStatus: OperatorStatus.SUCCESS
 	};
 
 	const updatedWorkflow = await workflowService.appendOutput(wf.value.getId(), node.id, outputPort);
@@ -337,7 +338,6 @@ async function appendOutput(
 
 	/*
 
-	// We assume that if we can produce an output, the status is okay
 	node.status = OperatorStatus.SUCCESS;
 
 	const uuid = uuidv4();
@@ -673,7 +673,7 @@ function saveTransform(newTransform: { k: number; x: number; y: number }) {
 
 const isCreatingNewEdge = computed(() => newEdge.value && newEdge.value.points && newEdge.value.points.length === 2);
 
-function createNewEdge(node: WorkflowNode<any>, port: WorkflowPort, direction: WorkflowDirection) {
+async function createNewEdge(node: WorkflowNode<any>, port: WorkflowPort, direction: WorkflowDirection) {
 	if (!isCreatingNewEdge.value) {
 		newEdge.value = {
 			id: 'new edge',
@@ -689,6 +689,24 @@ function createNewEdge(node: WorkflowNode<any>, port: WorkflowPort, direction: W
 			direction
 		};
 	} else {
+		const edgePayload: WorkflowEdge = {
+			id: uuidv4(),
+			workflowId: wf.value.getId(),
+			source: newEdge.value!.source ?? node.id,
+			sourcePortId: newEdge.value!.sourcePortId ?? port.id,
+			target: newEdge.value!.target ?? node.id,
+			targetPortId: newEdge.value!.targetPortId ?? port.id,
+			points: newEdge.value!.points
+		};
+		if (edgePayload.source === edgePayload.target) {
+			cancelNewEdge();
+			return;
+		}
+
+		// cancelNewEdge();
+		const updatedWorkflow = await workflowService.addEdge(wf.value.getId(), edgePayload);
+		wf.value.update(updatedWorkflow, false);
+		/*
 		wf.value.addEdge(
 			newEdge.value!.source ?? node.id,
 			newEdge.value!.sourcePortId ?? port.id,
@@ -696,8 +714,8 @@ function createNewEdge(node: WorkflowNode<any>, port: WorkflowPort, direction: W
 			newEdge.value!.targetPortId ?? port.id,
 			newEdge.value!.points
 		);
-		cancelNewEdge();
 		saveWorkflowHandler();
+		*/
 	}
 }
 
