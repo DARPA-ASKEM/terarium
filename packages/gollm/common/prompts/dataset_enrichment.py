@@ -15,9 +15,4 @@ Use the following user-provided text as the research paper to answer the query:
 ---START USER-PROVIDED TEXT---
 {research_paper}
 ---END USER-PROVIDED TEXT---
-
-
-Do not respond in full sentences; only create a JSON object that satisfies the JSON schema specified in the response format.
-
-Answer:
 """

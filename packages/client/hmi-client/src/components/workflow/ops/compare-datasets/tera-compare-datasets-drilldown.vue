@@ -242,21 +242,6 @@ const isFetchingDatasets = ref(false);
 const areSimulationsFromSameModel = ref(true);
 const isATESelected = ref(false);
 
-const {
-	activeChartSettings,
-	chartSettings,
-	selectedVariableSettings,
-	removeChartSettings,
-	updateChartSettings,
-	updateActiveChartSettings,
-	setActiveChartSettings
-} = useChartSettings(props, emit);
-
-const outputPanel = ref(null);
-const chartSize = useDrilldownChartSize(outputPanel);
-
-const chartData = ref<ChartData | null>(null);
-
 const onRun = () => {
 	console.log('run');
 };
@@ -275,11 +260,6 @@ const knobs = ref<BasicKnobs>({
 	selectedPlotType: PlotValue.PERCENTAGE
 });
 
-const selectedPlotType = computed(() => knobs.value.selectedPlotType);
-const baselineName = computed(
-	() => datasets.value.find((dataset) => dataset.id === knobs.value.selectedDataset)?.name ?? null
-);
-
 const addCriteria = () => {
 	knobs.value.criteriaOfInterestCards.push(blankCriteriaOfInterest);
 };
@@ -292,6 +272,21 @@ const updateCriteria = (card: Partial<CriteriaOfInterestCard>, index: number) =>
 	Object.assign(knobs.value.criteriaOfInterestCards[index], card);
 };
 
+const {
+	activeChartSettings,
+	chartSettings,
+	selectedVariableSettings,
+	removeChartSettings,
+	updateChartSettings,
+	updateActiveChartSettings,
+	setActiveChartSettings
+} = useChartSettings(props, emit);
+
+const outputPanel = ref(null);
+const chartSize = useDrilldownChartSize(outputPanel);
+
+const chartData = ref<ChartData | null>(null);
+
 const { generateAnnotation, getChartAnnotationsByChartId, useCompareDatasetCharts } = useCharts(
 	props.node.id,
 	null,
@@ -300,6 +295,10 @@ const { generateAnnotation, getChartAnnotationsByChartId, useCompareDatasetChart
 	chartSize,
 	null,
 	null
+);
+const selectedPlotType = computed(() => knobs.value.selectedPlotType);
+const baselineName = computed(
+	() => datasets.value.find((dataset) => dataset.id === knobs.value.selectedDataset)?.name ?? null
 );
 const variableCharts = useCompareDatasetCharts(selectedVariableSettings, selectedPlotType, baselineName);
 
@@ -373,6 +372,7 @@ function findDuplicates(strings: string[]): string[] {
 
 async function generateChartData() {
 	if (datasets.value.length <= 1) return;
+	console.log(datasets);
 
 	const rawContents = await Promise.all(
 		datasets.value.map((dataset) => {

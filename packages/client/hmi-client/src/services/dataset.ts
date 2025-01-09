@@ -9,6 +9,8 @@ import type { CsvAsset, CsvColumnStats, Dataset, PresignedURL } from '@/types/Ty
 import { Ref } from 'vue';
 import { AxiosResponse } from 'axios';
 import { RunResults } from '@/types/SimulateConfig';
+import { FIFOCache } from '@/utils/FifoCache';
+import { parseCsvAsset } from '@/utils/csv';
 
 /**
  * Get Dataset from the data service
@@ -98,16 +100,27 @@ async function getBulkDatasets(datasetIDs: string[]) {
 	return result;
 }
 
+const rawFileCache = new FIFOCache<Promise<CsvAsset | null>>(100);
 /**
  * Get the raw (CSV) file content for a given dataset
  * @return Array<string>|null - the dataset raw content, or null if none returned by API
  */
 async function downloadRawFile(datasetId: string, filename: string, limit: number = 100): Promise<CsvAsset | null> {
-	const URL = `/datasets/${datasetId}/download-csv?filename=${filename}&limit=${limit}`;
-	const response = await API.get(URL).catch((error) => {
-		logger.error(`Error: data-service was not able to retrieve the dataset's rawfile ${error}`);
-	});
-	return response?.data ?? null;
+	const cacheKey = `${datasetId}:${filename}:${limit}`;
+	let promise = rawFileCache.get(cacheKey);
+
+	if (!promise) {
+		const URL = `/datasets/${datasetId}/download-csv?filename=${filename}&limit=${limit}`;
+		promise = API.get(URL)
+			.then((response) => response?.data ?? null)
+			.catch((error) => {
+				logger.error(`Error: data-service was not able to retrieve the dataset's rawfile ${error}`);
+				return null;
+			});
+		rawFileCache.set(cacheKey, promise);
+	}
+
+	return promise;
 }
 
 /**
@@ -369,6 +382,24 @@ async function getRawContent(
 	return null;
 }
 
+async function getCsvAsset(dataset: Dataset, filename: string, limit: number = -1): Promise<CsvAsset | null> {
+	// If it's an ESGF dataset or a NetCDF file, we don't want to download the raw content
+	if (!dataset?.id || dataset.esgfId || dataset.metadata?.format === 'netcdf') return null;
+	const csv = (await downloadRawFile(dataset.id as string, filename, limit)) as CsvAsset;
+	csv.headers = csv.headers.map((header) => header.trim());
+	return csv;
+}
+
+async function getDatasetResultCSV(dataset: Dataset, filename: string, renameFn?: (s: string) => string) {
+	const csvAsset = await getCsvAsset(dataset, filename);
+	if (!csvAsset) return [];
+	if (renameFn) {
+		csvAsset.headers = csvAsset.headers.map(renameFn);
+	}
+	const output = parseCsvAsset(csvAsset);
+	return output;
+}
+
 export {
 	getDataset,
 	getClimateDataset,
@@ -384,5 +415,7 @@ export {
 	saveDataset,
 	createCsvAssetFromRunResults,
 	createDataset,
-	getRawContent
+	getRawContent,
+	getCsvAsset,
+	getDatasetResultCSV
 };
