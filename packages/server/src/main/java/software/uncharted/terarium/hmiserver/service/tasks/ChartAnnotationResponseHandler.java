@@ -1,6 +1,5 @@
 package software.uncharted.terarium.hmiserver.service.tasks;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -9,9 +8,9 @@ import org.springframework.stereotype.Component;
 @Component
 @RequiredArgsConstructor
 @Slf4j
-public class GenerateResponseHandler extends TaskResponseHandler {
+public class ChartAnnotationResponseHandler extends TaskResponseHandler {
 
-	public static final String NAME = "gollm:generate_response";
+	public static final String NAME = "gollm:chart_annotation";
 
 	@Override
 	public String getName() {
@@ -21,8 +20,8 @@ public class GenerateResponseHandler extends TaskResponseHandler {
 	@Data
 	public static class Input {
 
+		String preamble;
 		String instruction;
-		JsonNode responseFormat;
 	}
 
 	@Data
