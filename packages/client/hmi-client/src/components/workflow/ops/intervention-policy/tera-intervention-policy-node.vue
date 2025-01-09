@@ -10,7 +10,6 @@
 				/>
 			</li>
 		</ul>
-		<tera-operator-placeholder :node="node" v-else />
 		<tera-intervention-summary-card
 			class="intervention-title"
 			v-for="(intervention, index) in node.state.interventionPolicy.interventions"
@@ -33,7 +32,6 @@
 import { computed, ref, watch } from 'vue';
 import { WorkflowNode, WorkflowPortStatus } from '@/types/workflow';
 import Button from 'primevue/button';
-import TeraOperatorPlaceholder from '@/components/operator/tera-operator-placeholder.vue';
 import _, { cloneDeep, groupBy } from 'lodash';
 import { blankIntervention, flattenInterventionData } from '@/services/intervention-policy';
 import { createInterventionChart } from '@/services/charts';
