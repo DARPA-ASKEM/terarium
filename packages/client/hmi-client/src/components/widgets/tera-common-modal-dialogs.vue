@@ -33,7 +33,7 @@
 	>
 		<section class="flex flex-column gap-2">
 			<label>Name</label>
-			<InputText id="projectName" v-model="projectName"></InputText>
+			<InputText id="projectName" v-model="projectName" autofocus></InputText>
 		</section>
 		<template #footer>
 			<Button label="Cancel" outlined class="p-button-secondary" @click="isCopyDialogVisible = false" />
@@ -69,8 +69,6 @@ const { isCopyDialogVisible, isShareDialogVisible, isRemoveDialogVisible, isProj
 const projectName = ref<string>('');
 const project = ref();
 
-const emit = defineEmits(['copied-project']);
-
 const saveCopy = async () => {
 	console.log('saveCopy');
 	isCopyDialogVisible.value = false;
@@ -79,7 +77,7 @@ const saveCopy = async () => {
 	const copiedProject = await useProjects().clone(project.value.id);
 	if (!copiedProject) return;
 	copiedProject.name = projectName.value;
-	emit('copied-project', copiedProject);
+	useProjects().update(copiedProject);
 };
 
 const removeProject = async () => {
