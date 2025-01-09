@@ -94,10 +94,6 @@
 							<span class="column-summary-label">Unique Values:</span>
 							<span class="column-summary-value">{{ statistics.get(colName)?.uniqueValues }}</span>
 						</div>
-						<div class="column-summary-row" v-if="statistics.get(colName)?.missingValues">
-							<span class="column-summary-label">Missing Values:</span>
-							<span class="column-summary-value">{{ statistics.get(colName)?.missingValues }}</span>
-						</div>
 					</div>
 				</template>
 			</Column>
@@ -196,7 +192,6 @@ const CHART_OPTIONS = {
 
 const showSummaries = ref(true);
 const selectedColumns = ref<string[]>(props.rawContent.headers);
-// const headerStats = ref<ColumnStats[]>([]);
 const statistics = ref<Map<string, ColumnStats>>(new Map());
 
 // Given the bins for a column set up the object needed for the chart.
