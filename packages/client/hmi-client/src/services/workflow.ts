@@ -160,6 +160,7 @@ export class WorkflowWrapper {
 		return this.wf.edges.filter((d) => d.isDeleted !== true);
 	}
 
+	// @deprecated
 	removeNode(id: string) {
 		// Remove all the edges first
 		const edgesToRemove = this.getEdges().filter((d) => d.source === id || d.target === id);
@@ -175,6 +176,7 @@ export class WorkflowWrapper {
 		}
 	}
 
+	// @deprecated
 	removeEdge(id: string) {
 		const edgeToRemove = this.wf.edges.find((d) => d.id === id);
 		if (!edgeToRemove) return;
