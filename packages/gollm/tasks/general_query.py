@@ -1,5 +1,7 @@
 import sys
-from gollm_openai.tool_utils import generate_response
+
+from chains import general_query_chain
+from llms.openai.OpenAiTools import OpenAiTools
 
 from taskrunner import TaskRunnerInterface
 
@@ -14,12 +16,13 @@ def main():
         taskrunner = TaskRunnerInterface(description="Generate Response CLI")
         taskrunner.on_cancellation(cleanup)
 
-        input_dict = taskrunner.read_input_dict_with_timeout()
+        input_str = taskrunner.read_input_str_with_timeout()
 
         taskrunner.log("Generating a response from input")
 
         taskrunner.log("Sending request to OpenAI API")
-        response = generate_response(instruction=input_dict["instruction"], response_format=input_dict.get("responseFormat", None))
+        llm = OpenAiTools()
+        response = general_query_chain(llm, instruction=input_str)
         taskrunner.log("Received response from OpenAI API")
 
         taskrunner.write_output_dict_with_timeout({"response": response})
