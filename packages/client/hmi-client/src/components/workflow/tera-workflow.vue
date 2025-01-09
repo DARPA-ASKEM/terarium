@@ -467,7 +467,7 @@ const cloneNoteBookSessions = async () => {
 const addOperatorToWorkflow: Function =
 	(operator: OperatorImport, nodeSize: OperatorNodeSize = OperatorNodeSize.medium) =>
 	async () => {
-		const node = wf.value.addOperator(operator.operation, newNodePosition, {
+		const node = workflowService.newOperator(wf.value.getId(), operator.operation, newNodePosition, {
 			size: nodeSize
 		});
 		const updatedWorkflow = await workflowService.addNode(wf.value.getId(), node);
@@ -646,7 +646,7 @@ async function onDrop(event: DragEvent) {
 			default:
 				return;
 		}
-		const operator = wf.value.addOperator(operation, newNodePosition, { state });
+		const operator = workflowService.newOperator(wf.value.getId(), operation, newNodePosition, { state });
 		const updatedWorkflow = await workflowService.addNode(wf.value.getId(), operator);
 		wf.value.update(updatedWorkflow, false);
 	}
