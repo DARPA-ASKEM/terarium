@@ -194,7 +194,16 @@ export function useCharts(
 		return { statLayerVariables, sampleLayerVariables, options };
 	};
 
-	// Create options for forecast charts based on chart settings and model configuration
+	/**
+	 *
+	 * Create options for forecast charts based on chart settings and model configuration.
+	 *
+	 * **Note:** default `generateAnnotation` function in `useCharts` uses this function to generate chart variables and translations that needs to generate AI annotation.
+	 * If you need a custom way to create a chart option instead of using this, you need to provide a
+	 * custom `generateAnnotation` function to `tera-chart-settings-panel` component for the annotation to work.
+	 * @param setting ChartSetting
+	 * @returns ForecastChartOptions
+	 */
 	const createForecastChartOptions = (setting: ChartSetting) => {
 		if (isChartSettingEnsembleVariable(setting)) return createEnsembleVariableChartOptions(setting, '', true, true);
 		const variables = setting.selectedVariables;
