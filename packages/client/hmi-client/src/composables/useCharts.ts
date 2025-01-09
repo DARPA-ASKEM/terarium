@@ -302,8 +302,6 @@ export function useCharts(
 			const colorScheme = cloneDeep(CATEGORICAL_SCHEME);
 			colorScheme[baselineIndex] = 'black';
 
-			console.log(datasetNames);
-
 			chartSettings.value.forEach((settings) => {
 				const headerName = settings.selectedVariables[0];
 				const annotations = getChartAnnotationsByChartId(settings.id);
