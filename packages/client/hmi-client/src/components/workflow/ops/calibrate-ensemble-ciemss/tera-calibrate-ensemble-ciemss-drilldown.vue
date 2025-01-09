@@ -345,7 +345,7 @@ import TeraInputNumber from '@/components/widgets/tera-input-number.vue';
 import AccordionTab from 'primevue/accordiontab';
 import Accordion from 'primevue/accordion';
 import Dropdown from 'primevue/dropdown';
-import { setupDatasetInput, setupCsvAsset, parseCsvAsset } from '@/services/calibrate-workflow';
+import { setupDatasetInput, setupCsvAsset } from '@/services/calibrate-workflow';
 import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
 import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.vue';
 import TeraSaveDatasetFromSimulation from '@/components/dataset/tera-save-dataset-from-simulation.vue';
@@ -378,6 +378,7 @@ import { useChartSettings } from '@/composables/useChartSettings';
 import { deleteAnnotation, updateChartSettingsBySelectedVariables } from '@/services/chart-settings';
 import { DataArray } from '@/utils/stats';
 import { GroupedDataArray } from '@/services/charts';
+import { parseCsvAsset } from '@/utils/csv';
 import {
 	CalibrateEnsembleCiemssOperationState,
 	CalibrateEnsembleMappingRow,

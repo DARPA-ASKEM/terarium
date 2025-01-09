@@ -42,7 +42,7 @@ import {
 	getSimulation,
 	DataArray
 } from '@/services/models/simulation-service';
-import { parseCsvAsset, setupCsvAsset } from '@/services/calibrate-workflow';
+import { setupCsvAsset } from '@/services/calibrate-workflow';
 import { nodeMetadata, nodeOutputLabel } from '@/components/workflow/util';
 import { logger } from '@/utils/logger';
 import { Poller, PollerState } from '@/api/api';
@@ -55,6 +55,7 @@ import { useProjects } from '@/composables/project';
 import { useChartSettings } from '@/composables/useChartSettings';
 import { useCharts } from '@/composables/useCharts';
 import { GroupedDataArray } from '@/services/charts';
+import { parseCsvAsset } from '@/utils/csv';
 import {
 	CalibrateEnsembleCiemssOperation,
 	CalibrateEnsembleCiemssOperationState
