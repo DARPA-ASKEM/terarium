@@ -890,9 +890,9 @@ export const selectOutput = async (id: string, nodeId: string, outputId: string,
 	return response?.data ?? null;
 };
 
-export const appendOutput = async (id: string, nodeId: string, output: any) => {
+export const appendOutput = async (id: string, nodeId: string, output: WorkflowOutput<any>, nodeState: any) => {
 	console.log('>> workflowService.appendOutput');
-	const response = await API.post(`/workflows/${id}/append-output/${nodeId}`, output);
+	const response = await API.post(`/workflows/${id}/append-output/${nodeId}`, { output, nodeState });
 	return response?.data ?? null;
 };
 

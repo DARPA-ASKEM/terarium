@@ -1,5 +1,6 @@
 package software.uncharted.terarium.hmiserver.controller.dataservice;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -8,6 +9,7 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -312,6 +314,13 @@ public class WorkflowController {
 		return updated.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
 	}
 
+	@Data
+	static class AppendOutputPayload {
+
+		private OutputPort output;
+		private JsonNode nodeState;
+	}
+
 	@PostMapping("/{id}/append-output/{nodeId}")
 	@Secured(Roles.USER)
 	@Operation(summary = "Append an output to an operator node")
@@ -332,7 +341,7 @@ public class WorkflowController {
 	public ResponseEntity<Workflow> appendOutput(
 		@PathVariable("id") final UUID id,
 		@PathVariable("nodeId") final UUID nodeId,
-		@RequestBody final OutputPort port,
+		@RequestBody final AppendOutputPayload payload,
 		@RequestParam(name = "project-id", required = false) final UUID projectId
 	) {
 		final Schema.Permission permission = projectService.checkPermissionCanRead(
@@ -344,7 +353,7 @@ public class WorkflowController {
 		final Optional<Workflow> updated;
 
 		try {
-			workflowService.appendOutput(workflow.get(), nodeId, port);
+			workflowService.appendOutput(workflow.get(), nodeId, payload.getOutput(), payload.getNodeState());
 			updated = workflowService.updateAsset(workflow.get(), projectId, permission);
 		} catch (final Exception e) {
 			log.error("Unable to update workflow", e);

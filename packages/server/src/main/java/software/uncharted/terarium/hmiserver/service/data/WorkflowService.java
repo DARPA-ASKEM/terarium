@@ -590,7 +590,7 @@ public class WorkflowService extends TerariumAssetServiceWithoutSearch<Workflow,
 	}
 
 	@Observed(name = "function_profile")
-	public void appendOutput(final Workflow workflow, UUID nodeId, OutputPort port) throws Exception {
+	public void appendOutput(final Workflow workflow, UUID nodeId, OutputPort port, JsonNode nodeState) throws Exception {
 		final WorkflowNode operator = workflow
 			.getNodes()
 			.stream()
@@ -602,6 +602,11 @@ public class WorkflowService extends TerariumAssetServiceWithoutSearch<Workflow,
 
 		if (operator == null) {
 			throw new Exception("Cannot find node " + nodeId);
+		}
+
+		// If nodeState is provided, also set the state
+		if (nodeState != null) {
+			operator.setState(nodeState);
 		}
 
 		// We assume that if we can produce an output, the status is okay
