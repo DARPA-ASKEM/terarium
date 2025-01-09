@@ -1,29 +1,28 @@
 <template>
-	<div class="p-datatable-wrapper">
-		<div class="matrix-toolbar">
-			<Dropdown
-				v-if="matrixMap && Object.keys(matrixMap).length > 0"
-				:model-value="matrixType"
-				:options="matrixTypes"
-				placeholder="Select matrix type"
-				@update:model-value="(v) => changeMatrix(v)"
-			/>
+	<div class="matrix-toolbar">
+		<Dropdown
+			v-if="matrixMap && Object.keys(matrixMap).length > 0"
+			:model-value="matrixType"
+			:options="matrixTypes"
+			placeholder="Select matrix type"
+			@update:model-value="(v) => changeMatrix(v)"
+		/>
 
-			<Button
-				@click="clipboardBuffer(clipboardText)"
-				label="Paste"
-				severity="secondary"
-				size="small"
-				:disabled="clipboardText === ''"
-			/>
-		</div>
-
+		<Button
+			@click="clipboardBuffer(clipboardText)"
+			label="Paste"
+			severity="secondary"
+			size="small"
+			:disabled="clipboardText === ''"
+		/>
+	</div>
+	<div class="p-datatable-wrapper stratified-matrix">
 		<div
 			v-if="!isEmpty(matrix)"
 			class="p-datatable p-component p-datatable-scrollable p-datatable-responsive-scroll p-datatable-gridlines p-datatable-grouped-header stratified-value-matrix"
 		>
 			<table class="p-datatable-table p-datatable-scrollable-table editable-cells-table">
-				<thead v-if="matrix[0].length > 0" class="p-datatable-thead">
+				<thead v-if="matrix[0].length > 0" class="p-datatable-thead sticky-table-header">
 					<tr>
 						<th v-if="matrix.length > 0" class="choose-criteria">&nbsp;</th>
 						<th v-for="(row, rowIdx) in matrix[0]" :key="rowIdx">{{ row.colCriteria }}</th>
@@ -32,7 +31,7 @@
 				<tbody class="p-datatable-tbody">
 					<tr v-for="(row, rowIdx) in matrix" :key="rowIdx">
 						<!-- Row label -->
-						<td v-if="matrix.length > 0" class="p-frozen-column">
+						<td v-if="matrix.length > 0" class="p-frozen-column" style="position: sticky; left: 0; background: white">
 							{{ row[0].rowCriteria }}
 						</td>
 
@@ -88,6 +87,10 @@
 			</table>
 		</div>
 	</div>
+	<!-- these patches mask the parts of the datatable we want to hide while scrolling -->
+	<div class="patch-top"></div>
+	<div class="patch-top-right"></div>
+	<div class="patch-left-side"></div>
 </template>
 
 <script setup lang="ts">
@@ -343,14 +346,22 @@ watch(
 </script>
 
 <style scoped>
+.stratified-matrix {
+	position: relative;
+}
+
 .p-datatable {
 	max-width: 80vw;
 }
 
 .p-datatable .p-datatable-thead > tr > th.choose-criteria {
 	padding: 0;
-	background: var(--surface-ground);
-	border: none;
+	background: var(--surface-0);
+	border-top: none;
+	border-left: none;
+	position: sticky;
+	left: 0;
+	z-index: 2;
 }
 
 .p-datatable .p-datatable-thead > tr > th.choose-criteria {
@@ -433,8 +444,47 @@ section {
 .matrix-toolbar {
 	display: flex;
 	justify-content: space-between;
+	position: sticky;
+	z-index: 1;
+	background: var(--surface-0);
+	padding-bottom: var(--gap-1);
+	top: 0;
+	left: 0;
 }
 .matrix-toolbar Button {
 	margin-bottom: var(--gap-4);
+}
+.sticky-table-header {
+	position: sticky;
+	top: 3rem;
+	background: white;
+}
+/* Patches to mask the parts of the datatable we want to hide while scrolling */
+.patch-top {
+	position: absolute;
+	top: 62px;
+	left: 0;
+	width: 100%;
+	height: 2px;
+	background: var(--surface-0);
+	z-index: 1;
+}
+.patch-top-right {
+	position: absolute;
+	top: 4rem;
+	right: 0;
+	width: 100px;
+	height: 50px;
+	background: var(--surface-0);
+	z-index: 1;
+}
+.patch-left-side {
+	position: absolute;
+	top: 4rem;
+	left: 0;
+	width: 2rem;
+	height: calc(100% - 4rem);
+	background: var(--surface-0);
+	z-index: 1;
 }
 </style>
