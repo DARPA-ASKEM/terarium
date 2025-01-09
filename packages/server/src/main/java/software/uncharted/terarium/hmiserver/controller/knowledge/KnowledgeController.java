@@ -300,8 +300,8 @@ public class KnowledgeController {
 				final ObjectNode amrNode = taskResponseJSON.get("response").get("amr").deepCopy();
 				responseAMR = mapper.convertValue(amrNode, Model.class);
 			} catch (final Exception e) {
-				log.error("failed to convert LaTeX equations to AMR", e);
-				throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "failed to convert latex equations to AMR");
+				log.error(messages.get("task.mira.internal-error"), e);
+				throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("task.mira.internal-error"));
 			}
 		} else {
 			try {

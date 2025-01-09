@@ -1,5 +1,8 @@
 import sys
-from gollm_openai.tool_utils import generate_response
+
+from chains import chart_annotation_chain
+from entities import ChartAnnotationModel
+from llms.openai.OpenAiTools import OpenAiTools
 
 from taskrunner import TaskRunnerInterface
 
@@ -11,15 +14,17 @@ def cleanup():
 def main():
     exitCode = 0
     try:
-        taskrunner = TaskRunnerInterface(description="Generate Response CLI")
+        taskrunner = TaskRunnerInterface(description="Chart Annotation CLI")
         taskrunner.on_cancellation(cleanup)
 
-        input_str = taskrunner.read_input_str_with_timeout()
+        input_dict = taskrunner.read_input_dict_with_timeout()
 
-        taskrunner.log("Generating a response from input")
+        taskrunner.log("Creating ChartAnnotationModel from input")
+        input_model = ChartAnnotationModel(**input_dict)
 
         taskrunner.log("Sending request to OpenAI API")
-        response = generate_response(instruction=input_str)
+        llm = OpenAiTools()
+        response = chart_annotation_chain(llm, preamble=input_model.preamble, instruction=input_model.instruction)
         taskrunner.log("Received response from OpenAI API")
 
         taskrunner.write_output_dict_with_timeout({"response": response})
