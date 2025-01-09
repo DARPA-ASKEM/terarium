@@ -70,7 +70,6 @@ const projectName = ref<string>('');
 const project = ref();
 
 const saveCopy = async () => {
-	console.log('saveCopy');
 	isCopyDialogVisible.value = false;
 	router.push(RoutePath.Home);
 
