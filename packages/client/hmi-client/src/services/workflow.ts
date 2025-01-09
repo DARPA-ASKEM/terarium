@@ -908,15 +908,15 @@ export const addEdge = async (id: string, edge: WorkflowEdge) => {
 	return response?.data ?? null;
 };
 
-export const removeNode = async (id: string, nodeId: string) => {
-	console.log('>> workflowService.removeNode', nodeId);
-	const response = await API.delete(`/workflows/${id}/node/${nodeId}`);
+export const removeNodes = async (id: string, nodes: string[]) => {
+	console.log('>> workflowService.removeNode', nodes);
+	const response = await API.post(`/workflows/${id}/remove-nodes`, nodes);
 	return response?.data ?? null;
 };
 
-export const removeEdge = async (id: string, edgeId: string) => {
-	console.log('>> workflowService.removeEdge');
-	const response = await API.delete(`/workflows/${id}/edge/${edgeId}`);
+export const removeEdges = async (id: string, edges: string[]) => {
+	console.log('>> workflowService.removeEdge', edges);
+	const response = await API.post(`/workflows/${id}/remove-edges`, edges);
 	return response?.data ?? null;
 };
 

@@ -153,7 +153,7 @@
 </template>
 
 <script setup lang="ts">
-import { cloneDeep, isArray, isEmpty, intersection, debounce } from 'lodash';
+import { cloneDeep, isArray, intersection, debounce } from 'lodash';
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
 import TeraInfiniteCanvas from '@/components/widgets/tera-infinite-canvas.vue';
 import TeraCanvasItem from '@/components/widgets/tera-canvas-item.vue';
@@ -183,7 +183,6 @@ import { v4 as uuidv4 } from 'uuid';
 
 import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue';
 
-import { logger } from '@/utils/logger';
 import { useRouter, useRoute } from 'vue-router';
 import { MenuItem } from 'primevue/menuitem';
 import * as EventService from '@/services/event';
@@ -333,7 +332,7 @@ async function appendOutput(
 		operatorStatus: OperatorStatus.SUCCESS
 	};
 
-	const updatedWorkflow = await workflowService.appendOutput(wf.value.getId(), node.id, outputPort);
+	const updatedWorkflow = await workflowService.appendOutput(wf.value.getId(), node.id, outputPort, node.state);
 	wf.value.update(updatedWorkflow, false);
 }
 
@@ -393,7 +392,7 @@ const closeDrilldown = async () => {
 };
 
 const removeNode = async (nodeId: string) => {
-	const updatedWorkflow = await workflowService.removeNode(wf.value.getId(), nodeId);
+	const updatedWorkflow = await workflowService.removeNodes(wf.value.getId(), [nodeId]);
 	wf.value.update(updatedWorkflow, false);
 };
 
@@ -680,11 +679,18 @@ async function createNewEdge(node: WorkflowNode<any>, port: WorkflowPort, direct
 	}
 }
 
-function removeEdges(portId: string) {
+async function removeEdges(portId: string) {
 	const edges = wf.value
 		.getEdges()
 		.filter(({ targetPortId, sourcePortId }) => targetPortId === portId || sourcePortId === portId);
 
+	const updatedWorkflow = await workflowService.removeEdges(
+		wf.value.getId(),
+		edges.map((e) => e.id)
+	);
+	wf.value.update(updatedWorkflow, false);
+
+	/*
 	// Build a traversal map before we do actual removal
 	const nodeMap = new Map<WorkflowNode<any>['id'], WorkflowNode<any>>(
 		wf.value.getNodes().map((node) => [node.id, node])
@@ -712,6 +718,7 @@ function removeEdges(portId: string) {
 		workflowService.cascadeInvalidateDownstream(nodeMap.get(startingNodeId) as WorkflowNode<any>, nodeCache);
 	}
 	saveWorkflowHandler();
+	*/
 }
 
 function onCanvasClick() {

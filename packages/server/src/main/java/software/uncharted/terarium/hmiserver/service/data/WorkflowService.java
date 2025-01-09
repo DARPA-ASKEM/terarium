@@ -221,6 +221,12 @@ public class WorkflowService extends TerariumAssetServiceWithoutSearch<Workflow,
 		workflow.getNodes().add(node);
 	}
 
+	public void removeNodes(final Workflow workflow, final List<UUID> nodes) {
+		for (int i = 0; i < nodes.size(); i++) {
+			removeNode(workflow, nodes.get(i));
+		}
+	}
+
 	public void removeNode(final Workflow workflow, final UUID nodeId) {
 		final WorkflowNode nodeToRemove = workflow
 			.getNodes()
@@ -285,6 +291,7 @@ public class WorkflowService extends TerariumAssetServiceWithoutSearch<Workflow,
 			.stream()
 			.filter(e -> {
 				return (
+					e.getIsDeleted() == false &&
 					e.getSource().equals(edge.getSource()) &&
 					e.getSourcePortId().equals(edge.getSourcePortId()) &&
 					e.getTarget().equals(edge.getTarget()) &&
@@ -391,6 +398,12 @@ public class WorkflowService extends TerariumAssetServiceWithoutSearch<Workflow,
 
 		// Finall add to workflow
 		workflow.getEdges().add(edge);
+	}
+
+	public void removeEdges(final Workflow workflow, final List<UUID> edges) {
+		for (int i = 0; i < edges.size(); i++) {
+			removeEdge(workflow, edges.get(i));
+		}
 	}
 
 	public void removeEdge(final Workflow workflow, final UUID edgeId) {
