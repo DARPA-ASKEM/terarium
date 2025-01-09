@@ -17,13 +17,19 @@
 				class="mb-3"
 				:model-value="scenario.modelConfigSpec.id"
 				placeholder="Select a configuration"
-				:options="modelConfigurations"
+				:options="sortedConfigurations"
 				option-label="name"
 				option-value="id"
 				@update:model-value="scenario.setModelConfigSpec($event)"
 				:disabled="isEmpty(modelConfigurations) || isFetchingModelInformation"
 				:loading="isFetchingModelInformation"
-			/>
+			>
+				<template #option="slotProps">
+					<p>
+						{{ slotProps.option.name }} <span class="subtext">({{ formatTimestamp(slotProps.option.createdOn) }})</span>
+					</p>
+				</template>
+			</Dropdown>
 
 			<template v-for="(intervention, i) in scenario.interventionSpecs" :key="intervention">
 				<label>Select intervention policy {{ i + 1 }}</label>
@@ -43,6 +49,14 @@
 					>
 						<template #filtericon>
 							<Button label="Create new policy" icon="pi pi-plus" size="small" text @click="onOpenPolicyModel(i)" />
+						</template>
+						<template #option="slotProps">
+							<p>
+								{{ slotProps.option.name }}
+								<span class="subtext">
+									({{ slotProps.option.createdOn ? formatTimestamp(slotProps.option.createdOn) : 'Created by you' }})
+								</span>
+							</p>
 						</template>
 					</Dropdown>
 					<Button
@@ -97,6 +111,7 @@ import { isEmpty } from 'lodash';
 import Dropdown from 'primevue/dropdown';
 import MultiSelect from 'primevue/multiselect';
 import Button from 'primevue/button';
+import { sortDatesDesc, formatTimestamp } from '@/utils/date';
 import { ScenarioHeader } from '../base-scenario';
 import { DecisionMakingScenario } from './decision-making-scenario';
 import TeraScenarioTemplate from '../tera-scenario-template.vue';
@@ -124,10 +139,17 @@ const isPolicyModalVisible = ref(false);
 // which intervention index is being edited
 const policyModalContext = ref<number | null>(null);
 
-const combinedInterventionPolicies = computed(() => [
-	...interventionPolicies.value,
-	...props.scenario.newInterventionSpecs
-]);
+const combinedInterventionPolicies = computed(() =>
+	[...props.scenario.newInterventionSpecs, ...interventionPolicies.value].sort((a: any, b: any) => {
+		if (!a.createdOn) return -1;
+		if (!b.createdOn) return 1;
+		return sortDatesDesc(a.createdOn, b.createdOn);
+	})
+);
+
+const sortedConfigurations = computed(() =>
+	[...modelConfigurations.value].sort((a, b) => sortDatesDesc(a.createdOn, b.createdOn))
+);
 
 const props = defineProps<{
 	scenario: DecisionMakingScenario;
