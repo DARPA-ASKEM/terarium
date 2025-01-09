@@ -211,7 +211,10 @@ public class WorkflowService extends TerariumAssetServiceWithoutSearch<Workflow,
 	@Observed(name = "function_profile")
 	private void cascadeInvalidStatus(final WorkflowNode sourceNode, final Map<UUID, List<WorkflowNode>> nodeCache) {
 		List<WorkflowNode> downstreamNodes = nodeCache.get(sourceNode.getId());
+		if (downstreamNodes == null) return;
+
 		for (final WorkflowNode node : downstreamNodes) {
+			System.out.println(">> " + node.getId());
 			node.setStatus("invalid");
 			cascadeInvalidStatus(node, nodeCache);
 		}
@@ -433,6 +436,22 @@ public class WorkflowService extends TerariumAssetServiceWithoutSearch<Workflow,
 			.orElse(null);
 		if (targetPort == null) return;
 
+		final WorkflowNode sourceNode = workflow
+			.getNodes()
+			.stream()
+			.filter(node -> node.getId().equals(edgeToRemove.getSource()))
+			.findFirst()
+			.orElse(null);
+		if (sourceNode == null) return;
+
+		final OutputPort sourcePort = sourceNode
+			.getOutputs()
+			.stream()
+			.filter(port -> port.getId().equals(edgeToRemove.getSourcePortId()))
+			.findFirst()
+			.orElse(null);
+		if (sourcePort == null) return;
+
 		// Disconnect logic
 		targetPort.setValue(null);
 		targetPort.setStatus("not connected");
@@ -441,6 +460,28 @@ public class WorkflowService extends TerariumAssetServiceWithoutSearch<Workflow,
 		if (targetPort.getOriginalType() != null) {
 			targetPort.setType(targetPort.getOriginalType());
 		}
+
+		// Invalidate downstream
+		final Map<UUID, WorkflowNode> nodeMap = new HashMap<>();
+		final Map<UUID, List<WorkflowNode>> nodeCache = new HashMap<>();
+		for (final WorkflowNode node : workflow.getNodes()) {
+			if (node.getIsDeleted() == false) {
+				nodeMap.put(node.getId(), node);
+			}
+		}
+
+		for (final WorkflowEdge edge : workflow.getEdges()) {
+			if (edge.getIsDeleted() == true) {
+				continue;
+			}
+			if (!nodeCache.containsKey(edge.getSource())) {
+				nodeCache.put(edge.getSource(), new ArrayList());
+			}
+			nodeCache.get(edge.getSource()).add(nodeMap.get(edge.getTarget()));
+		}
+		cascadeInvalidStatus(sourceNode, nodeCache);
+
+		// Remove
 		edgeToRemove.setIsDeleted(true);
 
 		// If there are no more references reset the connected status of the source node
@@ -451,22 +492,6 @@ public class WorkflowService extends TerariumAssetServiceWithoutSearch<Workflow,
 			.collect(Collectors.toList());
 
 		if (remainingEdges.size() == 0) {
-			final WorkflowNode sourceNode = workflow
-				.getNodes()
-				.stream()
-				.filter(node -> node.getId().equals(edgeToRemove.getSource()))
-				.findFirst()
-				.orElse(null);
-			if (sourceNode == null) return;
-
-			final OutputPort sourcePort = sourceNode
-				.getOutputs()
-				.stream()
-				.filter(port -> port.getId().equals(edgeToRemove.getSourcePortId()))
-				.findFirst()
-				.orElse(null);
-			if (sourcePort == null) return;
-
 			sourcePort.setStatus("not connected");
 		}
 	}
@@ -600,6 +625,8 @@ public class WorkflowService extends TerariumAssetServiceWithoutSearch<Workflow,
 			}
 			nodeCache.get(edge.getSource()).add(nodeMap.get(edge.getTarget()));
 		}
+
+		cascadeInvalidStatus(operator, nodeCache);
 	}
 
 	@Observed(name = "function_profile")
