@@ -309,9 +309,10 @@ const { generateAnnotation, getChartAnnotationsByChartId, useCompareDatasetChart
 	null
 );
 const selectedPlotType = computed(() => knobs.value.selectedPlotType);
-const baselineName = computed(
-	() => datasets.value.find((dataset) => dataset.id === knobs.value.selectedDataset)?.name ?? null
-);
+const baselineName = computed(() => {
+	const name = datasets.value.find((dataset) => dataset.id === knobs.value.selectedDataset)?.name;
+	return name ? removeSuffixFromInputName(name) : null;
+});
 const variableCharts = useCompareDatasetCharts(selectedVariableSettings, selectedPlotType, baselineName);
 
 const initialize = async () => {
@@ -458,6 +459,10 @@ function generateRankingCharts() {
 	rankingResultsChart.value = createRankingInterventionsChart(rankingResultsValues, '');
 }
 
+function removeSuffixFromInputName(name: string): string {
+	return name.replace(/ - \d+$/, '');
+}
+
 async function generateImpactCharts() {
 	if (datasets.value.length <= 1) return;
 
@@ -513,7 +518,7 @@ async function generateImpactCharts() {
 			const columnToSubtract = csv[headerIndex];
 
 			// Removing the number suffix from the input name will help us match it with the intervention names in generateRankingCharts
-			const name = `${datasets.value[datasetIndex].name}`.replace(/ - \d+$/, '');
+			const name = removeSuffixFromInputName(`${datasets.value[datasetIndex].name}`);
 			variableNames.push(name);
 
 			referenceColumn.forEach((referencePoint: number, index: number) => {
