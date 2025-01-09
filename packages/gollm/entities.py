@@ -38,12 +38,18 @@ class ModelCompareModel(BaseModel):
     amrs: List[str]  # expects AMRs to be a stringified JSON object
     goal: str = None
 
-class EquationsCleanup(BaseModel):
+
+class EquationsModel(BaseModel):
     equations: List[str]
 
 
 class EquationsFromImage(BaseModel):
     image: str  # expects a base64 encoded image
+
+
+class ChartAnnotationModel(BaseModel):
+    preamble: str
+    instruction: str
 
 
 class EmbeddingModel(BaseModel):

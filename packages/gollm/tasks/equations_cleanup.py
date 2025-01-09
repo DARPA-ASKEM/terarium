@@ -1,6 +1,7 @@
 import sys
-from entities import EquationsCleanup
-from gollm_openai.tool_utils import equations_cleanup
+from chains import cleanup_equations_chain
+from entities import EquationsModel
+from llms.openai.OpenAiTools import OpenAiTools
 
 from taskrunner import TaskRunnerInterface
 
@@ -17,11 +18,12 @@ def main():
 
         input_dict = taskrunner.read_input_dict_with_timeout()
 
-        taskrunner.log("Creating EquationsCleanup from input")
-        input_model = EquationsCleanup(**input_dict)
+        taskrunner.log("Creating EquationsModel from input")
+        input_model = EquationsModel(**input_dict)
 
         taskrunner.log("Sending request to OpenAI API")
-        response = equations_cleanup(equations=input_model.equations)
+        llm = OpenAiTools()
+        response = cleanup_equations_chain(llm, equations=input_model.equations)
         taskrunner.log("Received response from OpenAI API")
 
         taskrunner.write_output_dict_with_timeout({"response": response})
