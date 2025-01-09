@@ -154,7 +154,7 @@
 
 <script setup lang="ts">
 import { cloneDeep, isArray, isEmpty, intersection, debounce } from 'lodash';
-import { computed, onMounted, onUnmounted, ref, watch, nextTick } from 'vue';
+import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
 import TeraInfiniteCanvas from '@/components/widgets/tera-infinite-canvas.vue';
 import TeraCanvasItem from '@/components/widgets/tera-canvas-item.vue';
 import type { Position } from '@/types/common';
@@ -362,7 +362,6 @@ async function appendOutput(
 	node.outputs = node.outputs.filter((d) => d.value);
 
 	selectOutput(node, uuid);
-	saveWorkflowHandler();
 	*/
 }
 
@@ -379,12 +378,6 @@ function updateWorkflowNodeStatus(node: WorkflowNode<any> | null, status: Operat
 }
 
 async function selectOutput(node: WorkflowNode<any> | null, selectedOutputId: string) {
-	/*
-	if (!node) return;
-	wf.value.selectOutput(node, selectedOutputId);
-	saveWorkflowHandler();
-	*/
-	console.log('debug');
 	const updatedWorkflow = await workflowService.selectOutput(wf.value.getId(), node!.id, selectedOutputId);
 	wf.value.update(updatedWorkflow, false);
 }
@@ -427,9 +420,9 @@ const closeDrilldown = async () => {
 	);
 };
 
-const removeNode = (nodeId: string) => {
-	wf.value.removeNode(nodeId);
-	saveWorkflowHandler();
+const removeNode = async (nodeId: string) => {
+	const updatedWorkflow = await workflowService.removeNode(wf.value.getId(), nodeId);
+	wf.value.update(updatedWorkflow, false);
 };
 
 const duplicateBranch = (nodeId: string) => {
@@ -504,15 +497,21 @@ async function onMenuSelection(operatorType: string, menuNode: WorkflowNode<any>
 			return;
 		}
 
-		// Wait for the DOM to load new node before adding edge
-		await nextTick();
+		const edgePayload: WorkflowEdge = {
+			id: uuidv4(),
+			workflowId: wf.value.getId(),
+			source: menuNode.id,
+			sourcePortId: port.id,
+			target: newNode.id,
+			targetPortId: inputPorts[0].id,
+			points: [
+				{ x: currentPortPosition.x, y: currentPortPosition.y },
+				{ x: currentPortPosition.x, y: currentPortPosition.y }
+			]
+		};
 
-		wf.value.addEdge(menuNode.id, port.id, newNode.id, inputPorts[0].id, [
-			{ x: currentPortPosition.x, y: currentPortPosition.y },
-			{ x: currentPortPosition.x, y: currentPortPosition.y }
-		]);
-
-		saveWorkflowHandler();
+		const updatedWorkflow = await workflowService.addEdge(wf.value.getId(), edgePayload);
+		wf.value.update(updatedWorkflow, false);
 	}
 }
 
@@ -706,6 +705,7 @@ async function createNewEdge(node: WorkflowNode<any>, port: WorkflowPort, direct
 		// cancelNewEdge();
 		const updatedWorkflow = await workflowService.addEdge(wf.value.getId(), edgePayload);
 		wf.value.update(updatedWorkflow, false);
+		cancelNewEdge();
 		/*
 		wf.value.addEdge(
 			newEdge.value!.source ?? node.id,
