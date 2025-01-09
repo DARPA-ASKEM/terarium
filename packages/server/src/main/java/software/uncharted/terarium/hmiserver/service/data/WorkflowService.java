@@ -236,6 +236,7 @@ public class WorkflowService extends TerariumAssetServiceWithoutSearch<Workflow,
 			.stream()
 			.filter(edge -> edge.getSource().equals(nodeToRemove.getId()) || edge.getTarget().equals(nodeToRemove.getId()))
 			.collect(Collectors.toList());
+
 		for (WorkflowEdge edge : edgesToRemove) {
 			this.removeEdge(workflow, edge.getId());
 		}
@@ -295,8 +296,6 @@ public class WorkflowService extends TerariumAssetServiceWithoutSearch<Workflow,
 
 		if (existingEdge != null) return;
 
-		System.out.println(">> debug 1");
-
 		// Check if connection itself compatible
 		final WorkflowNode sourceNode = workflow
 			.getNodes()
@@ -311,12 +310,7 @@ public class WorkflowService extends TerariumAssetServiceWithoutSearch<Workflow,
 			.findFirst()
 			.orElse(null);
 
-		System.out.println("\t " + sourceNode);
-		System.out.println("\t " + targetNode);
-
 		if (sourceNode == null || targetNode == null) return;
-
-		System.out.println(">> debug 2");
 
 		final OutputPort sourceOutputPort = sourceNode
 			.getOutputs()
@@ -332,8 +326,6 @@ public class WorkflowService extends TerariumAssetServiceWithoutSearch<Workflow,
 			.orElse(null);
 		if (sourceOutputPort == null || targetInputPort == null) return;
 
-		System.out.println(">> debug 3");
-
 		// Check if connection data type is compatible
 		final List<String> outputTypes = splitAndTrim(sourceOutputPort.getType());
 		final List<String> allowedInputTypes = splitAndTrim(targetInputPort.getType());
@@ -348,8 +340,6 @@ public class WorkflowService extends TerariumAssetServiceWithoutSearch<Workflow,
 		if (intersectionTypes.size() == 0 || targetInputPort.getStatus().equals("connected")) {
 			return;
 		}
-
-		System.out.println(">> debug 4");
 
 		// Uniquness check, for example target-node accepts list of model-configs, but the
 		// model-configs must be unique, so if we connect config-1, we cannot connect connect-1
@@ -374,8 +364,6 @@ public class WorkflowService extends TerariumAssetServiceWithoutSearch<Workflow,
 			}
 		}
 
-		System.out.println(">> debug 5");
-
 		// Transfer data value/reference
 		targetInputPort.setLabel(sourceOutputPort.getLabel());
 		if (outputTypes.size() > 1) {
@@ -396,8 +384,6 @@ public class WorkflowService extends TerariumAssetServiceWithoutSearch<Workflow,
 			targetInputPort.setOriginalType(targetInputPort.getType());
 			targetInputPort.setType(sourceOutputPort.getType());
 		}
-
-		System.out.println(">> debug 6");
 
 		// Set connection status
 		targetInputPort.setStatus("connected");
@@ -448,8 +434,9 @@ public class WorkflowService extends TerariumAssetServiceWithoutSearch<Workflow,
 		final List<WorkflowEdge> remainingEdges = workflow
 			.getEdges()
 			.stream()
-			.filter(edge -> edge.getSource().equals(edgeToRemove.getSource()))
+			.filter(edge -> edge.getIsDeleted() == false && edge.getSource().equals(edgeToRemove.getSource()))
 			.collect(Collectors.toList());
+
 		if (remainingEdges.size() == 0) {
 			final WorkflowNode sourceNode = workflow
 				.getNodes()
