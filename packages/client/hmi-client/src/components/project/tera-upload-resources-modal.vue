@@ -105,9 +105,7 @@ const pendingFiles = ref<File[] | null>(null);
 watch(
 	() => props.files,
 	async (newFiles) => {
-		console.log('Watch triggered with files:', newFiles);
 		if (newFiles?.length) {
-			console.log('Storing files in pendingFiles');
 			pendingFiles.value = newFiles;
 			await nextTick();
 			tryAddFiles();
@@ -117,15 +115,7 @@ watch(
 
 // Try to add files if we have both files and a mounted importer
 function tryAddFiles() {
-	console.log('tryAddFiles called with:', {
-		hasPendingFiles: !!pendingFiles.value?.length,
-		hasImporter: !!dragAndDropImporter.value,
-		importer: dragAndDropImporter.value,
-		pendingFiles: pendingFiles.value
-	});
-
 	if (pendingFiles.value?.length && dragAndDropImporter.value) {
-		console.log('Attempting to add files to importer');
 		dragAndDropImporter.value.addFiles(pendingFiles.value);
 		pendingFiles.value = null;
 	}
@@ -133,7 +123,6 @@ function tryAddFiles() {
 
 // Once mounted, try to process any pending files
 onMounted(() => {
-	console.log('Component mounted, dragAndDropImporter ref:', dragAndDropImporter.value);
 	tryAddFiles();
 });
 

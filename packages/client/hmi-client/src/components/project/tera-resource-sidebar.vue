@@ -245,8 +245,6 @@ function handleDrop(event: DragEvent) {
 		droppedFiles.value = files;
 		isUploadResourcesModalVisible.value = true;
 	}
-
-	// console.log('Files dropped:', droppedFiles.value);
 }
 </script>
 
