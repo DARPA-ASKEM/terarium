@@ -57,39 +57,46 @@
 				:header="colName"
 				:style="previousHeaders && !previousHeaders.includes(colName) ? 'border-color: green' : ''"
 				sortable
-				:frozen="index == 0"
-				:hidden="selectedColumns.includes(colName) ? false : true"
+				:hidden="!selectedColumns.includes(colName)"
 			>
-				<template #header v-if="!previewMode && !isEmpty(headerStats) && showSummaries">
+				<template #header v-if="!previewMode && showSummaries">
 					<!-- column summary charts below -->
 					<div class="column-summary">
-						<div class="column-summary-row">
+						<div class="column-summary-row" v-if="statistics.get(colName)?.maxValue">
 							<span class="column-summary-label">Max:</span>
-							<span class="column-summary-value">{{ headerStats?.[index].maxValue }}</span>
+							<span class="column-summary-value">{{ statistics.get(colName)?.maxValue }}</span>
 						</div>
 						<Chart
-							v-if="headerStats?.[index].chartData"
+							v-if="statistics.get(colName)?.chartData"
 							class="histogram"
 							type="bar"
 							:height="480"
-							:data="headerStats?.[index].chartData"
+							:data="statistics.get(colName)?.chartData"
 							:options="CHART_OPTIONS"
 						/>
-						<div class="column-summary-row max">
+						<div class="column-summary-row max" v-if="statistics.get(colName)?.minValue">
 							<span class="column-summary-label">Min:</span>
-							<span class="column-summary-value">{{ headerStats?.[index].minValue }}</span>
+							<span class="column-summary-value">{{ statistics.get(colName)?.minValue }}</span>
 						</div>
-						<div class="column-summary-row">
+						<div class="column-summary-row" v-if="statistics.get(colName)?.mean">
 							<span class="column-summary-label">Mean:</span>
-							<span class="column-summary-value">{{ headerStats?.[index].mean }}</span>
+							<span class="column-summary-value">{{ statistics.get(colName)?.mean }}</span>
 						</div>
-						<div class="column-summary-row">
+						<div class="column-summary-row" v-if="statistics.get(colName)?.median">
 							<span class="column-summary-label">Median:</span>
-							<span class="column-summary-value">{{ headerStats?.[index].median }}</span>
+							<span class="column-summary-value">{{ statistics.get(colName)?.median }}</span>
 						</div>
-						<div class="column-summary-row">
+						<div class="column-summary-row" v-if="statistics.get(colName)?.sd">
 							<span class="column-summary-label">SD:</span>
-							<span class="column-summary-value">{{ headerStats?.[index].sd }}</span>
+							<span class="column-summary-value">{{ statistics.get(colName)?.sd }}</span>
+						</div>
+						<div class="column-summary-row" v-if="statistics.get(colName)?.uniqueValues">
+							<span class="column-summary-label">Unique Values:</span>
+							<span class="column-summary-value">{{ statistics.get(colName)?.uniqueValues }}</span>
+						</div>
+						<div class="column-summary-row" v-if="statistics.get(colName)?.missingValues">
+							<span class="column-summary-label">Missing Values:</span>
+							<span class="column-summary-value">{{ statistics.get(colName)?.missingValues }}</span>
 						</div>
 					</div>
 				</template>
@@ -99,8 +106,7 @@
 </template>
 
 <script setup lang="ts">
-import { isEmpty } from 'lodash';
-import { ref, watch, nextTick } from 'vue';
+import { ref, watch } from 'vue';
 import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
 import type { CsvAsset, DatasetColumn } from '@/types/Types';
@@ -108,6 +114,7 @@ import MultiSelect from 'primevue/multiselect';
 import Button from 'primevue/button';
 import Chart from 'primevue/chart';
 import InputSwitch from 'primevue/inputswitch';
+import { displayNumber } from '@/utils/number';
 
 type ChartData = {
 	labels: string[];
@@ -120,6 +127,17 @@ type ChartData = {
 		barPercentage: number;
 		minBarLength: number;
 	}[];
+};
+
+type ColumnStats = {
+	minValue?: string;
+	maxValue?: string;
+	mean?: string;
+	median?: string;
+	sd?: string;
+	bins?: number[];
+	chartData?: ChartData;
+	uniqueValues?: string;
 };
 
 const props = defineProps<{
@@ -178,16 +196,8 @@ const CHART_OPTIONS = {
 
 const showSummaries = ref(true);
 const selectedColumns = ref<string[]>(props.rawContent.headers);
-const headerStats = ref<
-	{
-		minValue: number;
-		maxValue: number;
-		mean: number;
-		median: number;
-		sd: number;
-		chartData: ChartData;
-	}[]
->([]);
+// const headerStats = ref<ColumnStats[]>([]);
+const statistics = ref<Map<string, ColumnStats>>(new Map());
 
 // Given the bins for a column set up the object needed for the chart.
 const setBarChartData = (bins: number[]): ChartData => {
@@ -199,7 +209,7 @@ const setBarChartData = (bins: number[]): ChartData => {
 		dummyLabels.push(i.toString());
 	}
 	return {
-		labels: ['Bin 1', 'Bin 2', 'Bin 3', 'Bin 4', 'Bin 5', 'Bin 6', 'Bin 7', 'Bin 8', 'Bin 9', 'Bin 10'].reverse(),
+		labels: dummyLabels,
 		datasets: [
 			{
 				label: 'Count',
@@ -214,26 +224,28 @@ const setBarChartData = (bins: number[]): ChartData => {
 	};
 };
 
-// TODO: We should be using a formatter from number.ts, not sure why we are formatting it like this (ask Yohann when he's back)
-function roundStat(stat: number) {
-	return Math.round(stat * 1000) / 1000;
-}
-
 watch(
-	() => props.rawContent,
-	async () => {
-		await nextTick();
-		headerStats.value =
-			props.rawContent.stats?.map((stat) => ({
-				minValue: roundStat(stat.minValue),
-				maxValue: roundStat(stat.maxValue),
-				mean: roundStat(stat.mean),
-				median: roundStat(stat.median),
-				sd: roundStat(stat.sd),
-				chartData: setBarChartData(stat.bins)
-			})) ?? [];
-		// eslint-disable-next-line
-		props.rawContent.headers.sort();
+	props.columns,
+	(value, oldValue) => {
+		if (value === oldValue) return;
+		const stats = new Map<string, ColumnStats>();
+		value.forEach((column) => {
+			const columnStats: ColumnStats = {};
+			if (column.stats?.numericStats) {
+				columnStats.minValue = displayNumber(column.stats.numericStats.min);
+				columnStats.maxValue = displayNumber(column.stats.numericStats.max);
+				columnStats.mean = displayNumber(column.stats.numericStats.mean);
+				columnStats.median = displayNumber(column.stats.numericStats.median);
+				columnStats.sd = displayNumber(column.stats.numericStats.std_dev);
+				columnStats.bins = column.stats.numericStats.histogram_bins;
+				columnStats.chartData = setBarChartData(columnStats.bins);
+				columnStats.uniqueValues = displayNumber(column.stats.numericStats.unique_values);
+			} else if (column.stats?.nonNumericStats) {
+				columnStats.uniqueValues = displayNumber(column.stats.nonNumericStats.unique_values);
+			}
+			stats.set(column.name, columnStats);
+		});
+		statistics.value = stats;
 	},
 	{ immediate: true }
 );
