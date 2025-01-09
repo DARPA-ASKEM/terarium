@@ -474,7 +474,7 @@ section {
 	top: 4rem;
 	right: 0;
 	width: 100px;
-	height: 50px;
+	height: 49.6px; /* Oddly specific, I know, but this works */
 	background: var(--surface-0);
 	z-index: 1;
 }
