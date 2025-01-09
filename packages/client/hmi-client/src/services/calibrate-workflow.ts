@@ -1,7 +1,6 @@
-import { autoType, csvParse } from 'd3';
 import type { Dataset, CsvAsset } from '@/types/Types';
 import { getModelConfigurationById, getObservables } from '@/services/model-configurations';
-import { downloadRawFile } from '@/services/dataset';
+import { getCsvAsset } from '@/services/dataset';
 import { getUnitsFromModelParts, getModelByModelConfigurationId, getTypesFromModelParts } from '@/services/model';
 
 export interface CalibrateMap {
@@ -56,22 +55,8 @@ export const setupCsvAsset = async (dataset: Dataset): Promise<CsvAsset | undefi
 	// FIXME: We are setting the limit to -1 (i.e. no limit) on the number of rows returned.
 	// This is a temporary fix since the datasets could be very large.
 	const limit = -1;
-
-	// We are assuming here there is only a single csv file. This may change in the future as the API allows for it.
-	if (!(dataset.metadata?.format === 'netcdf') || !dataset.esgfId) {
-		const csv = (await downloadRawFile(dataset.id as string, filename, limit)) as CsvAsset;
-		csv.headers = csv.headers.map((header) => header.trim());
-		return csv;
-	}
-	return undefined;
-};
-
-export const parseCsvAsset = (csvAsset: CsvAsset) => {
-	if (!csvAsset) return [];
-	const csv = [csvAsset.headers, ...csvAsset.csv];
-	const csvRaw = csv.map((d) => d.join(',')).join('\n');
-	const parsedCsv = csvParse(csvRaw, autoType);
-	return parsedCsv;
+	const csv = await getCsvAsset(dataset, filename, limit);
+	return csv ?? undefined;
 };
 
 const getFileName = (dataset: Dataset) =>
