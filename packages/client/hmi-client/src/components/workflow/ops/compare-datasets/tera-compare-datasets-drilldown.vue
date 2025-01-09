@@ -445,7 +445,8 @@ async function generateChartData() {
 		resultSummary: resultSummaryTransformed,
 		resultGroupByTimepoint,
 		pyciemssMap,
-		translationMap
+		translationMap,
+		numComparableDatasets: datasets.value.length
 	};
 }
 

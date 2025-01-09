@@ -42,6 +42,7 @@ export interface ChartData {
 	pyciemssMap: Record<string, string>;
 	translationMap: Record<string, string>;
 	resultGroupByTimepoint?: GroupedDataArray;
+	numComparableDatasets?: number;
 }
 
 type EnsembleVariableMappings = CalibrateEnsembleMappingRow[] | SimulateEnsembleMappingRow[];
@@ -211,6 +212,7 @@ export function useCharts(
 			scale: setting.scale
 		};
 
+		// Default variable names for simulate or calibrate
 		let sampleLayerVariables = [
 			`${chartData.value?.pyciemssMap[variables[0]]}:pre`,
 			`${chartData.value?.pyciemssMap[variables[0]]}`
@@ -220,12 +222,27 @@ export function useCharts(
 			`${chartData.value?.pyciemssMap[variables[0]]}_mean`
 		];
 
+		// Variable names for variable comparison charts
 		if (setting.type === ChartSettingType.VARIABLE_COMPARISON) {
 			statLayerVariables = variables.map((d) => `${chartData.value?.pyciemssMap[d]}_mean`);
 			sampleLayerVariables = variables.map((d) => `${chartData.value?.pyciemssMap[d]}`);
 			delete options.colorscheme;
 		}
-
+		// Variable names for compare dataset charts
+		else if (chartData.value?.numComparableDatasets) {
+			const varName = variables[0];
+			sampleLayerVariables = [
+				`${chartData.value?.pyciemssMap[varName]}:0`,
+				`${chartData.value?.pyciemssMap[varName]}:1`,
+				`${chartData.value?.pyciemssMap[varName]}:2`
+			];
+			const aggSuffix = varName.startsWith('data_') ? '' : '_mean';
+			statLayerVariables = [
+				`${chartData.value?.pyciemssMap[varName]}${aggSuffix}:0`,
+				`${chartData.value?.pyciemssMap[varName]}${aggSuffix}:1`,
+				`${chartData.value?.pyciemssMap[varName]}${aggSuffix}:2`
+			];
+		}
 		return { statLayerVariables, sampleLayerVariables, options };
 	};
 
@@ -292,7 +309,6 @@ export function useCharts(
 		const compareDatasetCharts = computed(() => {
 			const charts: Record<string, VisualizationSpec> = {};
 			if (!isChartReadyToBuild.value) return charts;
-			const { resultSummary, pyciemssMap, translationMap } = chartData.value as ChartData;
 
 			// Make baseline black
 			const colorScheme = cloneDeep(CATEGORICAL_SCHEME);
@@ -300,36 +316,19 @@ export function useCharts(
 
 			chartSettings.value.forEach((settings) => {
 				const varName = settings.selectedVariables[0];
-				const sampleLayerVariables = [
-					`${pyciemssMap[varName]}:0`,
-					`${pyciemssMap[varName]}:1`,
-					`${pyciemssMap[varName]}:2`
-				];
-				const aggSuffix = varName.startsWith('data_') ? '' : '_mean';
-				const statLayerVariables = [
-					`${pyciemssMap[varName]}${aggSuffix}:0`,
-					`${pyciemssMap[varName]}${aggSuffix}:1`,
-					`${pyciemssMap[varName]}${aggSuffix}:2`
-				];
+				const { statLayerVariables, sampleLayerVariables, options } = createForecastChartOptions(settings);
+				options.title = varName;
+				options.yAxisTitle = capitalize(selectedPlotType.value);
+				options.colorscheme = colorScheme;
+				options.legendProperties = { direction: 'vertical', columns: 1, labelLimit: options.width };
+
 				const annotations = getChartAnnotationsByChartId(settings.id);
-				const options = {
-					title: varName,
-					legend: true,
-					width: chartSize.value.width,
-					height: chartSize.value.height,
-					xAxisTitle: getUnit('_time') || 'Time',
-					yAxisTitle: capitalize(selectedPlotType.value),
-					scale: settings.scale,
-					colorscheme: colorScheme,
-					legendProperties: { direction: 'vertical', columns: 3 },
-					translationMap
-				};
 				const chart = !settings.showQuantiles
 					? applyForecastChartAnnotations(
 							createForecastChart(
 								null,
 								{
-									data: resultSummary,
+									data: chartData.value?.resultSummary ?? [],
 									variables: statLayerVariables,
 									timeField: 'timepoint_id'
 								},
