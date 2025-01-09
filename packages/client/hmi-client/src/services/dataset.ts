@@ -112,7 +112,6 @@ async function downloadRawFile(datasetId: string, filename: string, limit: numbe
 
 	if (!promise) {
 		const URL = `/datasets/${datasetId}/download-csv?filename=${filename}&limit=${limit}`;
-		console.log('URL', URL);
 		promise = API.get(URL)
 			.then((response) => response?.data ?? null)
 			.catch((error) => {

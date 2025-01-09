@@ -310,31 +310,6 @@ const initialize = async () => {
 	generateChartData();
 };
 
-// Following two funcs are util like
-function transposeArrays(arrays) {
-	if (arrays.length === 0) return [];
-	return arrays[0].map((_, colIndex) => arrays.map((row) => row[colIndex]));
-}
-
-function findDuplicates(strings: string[]): string[] {
-	const duplicates: string[] = [];
-	const seen: Record<string, number> = {};
-
-	strings.forEach((str) => {
-		if (seen[str]) {
-			seen[str]++;
-		} else {
-			seen[str] = 1;
-		}
-	});
-	Object.keys(seen).forEach((key) => {
-		if (seen[key] > 1) {
-			duplicates.push(key);
-		}
-	});
-	return duplicates;
-}
-
 function isSimulationData(datset: Dataset) {
 	// assume if the dataset has these two files, it's a simulation dataset
 	return (
@@ -342,30 +317,6 @@ function isSimulationData(datset: Dataset) {
 		datset.fileNames?.find((name) => name === 'result_summary.csv')
 	);
 }
-
-const transformRowValuesRelativeToBaseline = (
-	row: Record<string, number>,
-	baselineDatasetIndex: number,
-	plotType: PlotValue
-) => {
-	const transformed: Record<string, number> = {};
-	Object.entries(row).forEach(([key, value]) => {
-		const [dataKey, datasetIndex] = key.split(':');
-		if (datasetIndex === undefined) {
-			transformed[key] = value;
-			return;
-		}
-		const baselineValue = row[`${dataKey}:${baselineDatasetIndex}`];
-		if (plotType === PlotValue.DIFFERENCE) {
-			transformed[key] = value - baselineValue;
-		} else if (plotType === PlotValue.PERCENTAGE) {
-			transformed[key] = ((value - baselineValue) / baselineValue) * 100;
-		} else if (plotType === PlotValue.VALUE) {
-			transformed[key] = value;
-		}
-	});
-	return transformed;
-};
 
 async function fetchDatasetResults(datasetList: Dataset[]) {
 	// Fetch simulation results
@@ -402,14 +353,67 @@ async function fetchDatasetResults(datasetList: Dataset[]) {
 	};
 }
 
+const transformRowValuesRelativeToBaseline = (
+	row: Record<string, number>,
+	baselineDatasetIndex: number,
+	plotType: PlotValue
+) => {
+	const transformed: Record<string, number> = {};
+	Object.entries(row).forEach(([key, value]) => {
+		const [dataKey, datasetIndex] = key.split(':');
+		if (datasetIndex === undefined) {
+			transformed[key] = value;
+			return;
+		}
+		const baselineValue = row[`${dataKey}:${baselineDatasetIndex}`];
+		if (plotType === PlotValue.DIFFERENCE) {
+			transformed[key] = value - baselineValue;
+		} else if (plotType === PlotValue.PERCENTAGE) {
+			transformed[key] = ((value - baselineValue) / baselineValue) * 100;
+		} else if (plotType === PlotValue.VALUE) {
+			transformed[key] = value;
+		}
+	});
+	return transformed;
+};
+
+/**
+ * Removes the dataset index suffix from the variable names and returns a new object with the unique variable names which can be used as an input to the parsePyCiemssMap function.
+ * E.g. { 'variableName:0': 1, 'variableName:1': 2 } -> { variableName: 'variableName' }
+ * @param obj
+ */
+const uniqueVarNames = (obj: Record<string, any>) => {
+	const newObj = {};
+	Object.keys(obj)
+		.map((key) => key.split(':')[0])
+		.forEach((key) => {
+			newObj[key] = key;
+		});
+	return newObj;
+};
+
+/**
+ * Build variable name mapping for the non simulation result dataset
+ * Prefix the variable name with 'data_' to distinguish it from the simulation result variables
+ */
+const buildDatasetVarMapping = (dsets: DataArray[]) => {
+	const map: Record<string, any> = {};
+	dsets.forEach((dataset) => {
+		Object.keys(dataset[0]).forEach((key) => {
+			const varName = key.split(':')[0];
+			map[`data_${varName}`] = varName;
+		});
+	});
+	return map;
+};
+
 async function generateChartData2() {
 	if (datasets.value.length <= 1) return;
 	const { results, summaryResults, datasetResults } = await fetchDatasetResults(datasets.value);
+
 	// Merge all datasets into single dataset
 	const result = mergeResults(...results);
 	const summaryResult = mergeResults(...summaryResults, ...datasetResults);
-
-	const pyciemssMap = parsePyCiemssMap(result[0]);
 
 	// Transform the values relative to the baseline dataset
 	const baselineDatasetIndex = datasets.value.findIndex((dataset) => dataset.id === knobs.value.selectedDataset);
@@ -419,19 +423,60 @@ async function generateChartData2() {
 	const resultSummaryTransformed = summaryResult.map((row) =>
 		transformRowValuesRelativeToBaseline(row, baselineDatasetIndex, selectedPlotType.value)
 	);
-	const resultGroupByTimepoint = processAndSortSamplesByTimepoint(result);
+
+	// Process data for uncertainty intervals chart mode
+	const resultGroupByTimepoint = processAndSortSamplesByTimepoint(resultTransformed);
+
+	// Build pyciemss map for display variable name map for the simulation result variables
+	const pyciemssMap = parsePyCiemssMap(uniqueVarNames(result[0] ?? {}));
+	// Augment the pyciemss map with the dataset variable mapping
+	Object.assign(pyciemssMap, buildDatasetVarMapping(datasetResults));
+
+	// Build translation map
+	const translationMap = {};
+	Object.keys(pyciemssMap).forEach((key) => {
+		datasets.value.forEach((dataset, index) => {
+			translationMap[`${pyciemssMap[key]}:${index}`] = `${dataset.name}`;
+		});
+	});
 
 	chartData.value = {
 		result: resultTransformed,
 		resultSummary: resultSummaryTransformed,
 		resultGroupByTimepoint,
 		pyciemssMap,
-		translationMap: {}
+		translationMap
 	};
 }
 
+// Following two funcs are util like
+function transposeArrays(arrays) {
+	if (arrays.length === 0) return [];
+	return arrays[0].map((_, colIndex) => arrays.map((row) => row[colIndex]));
+}
+
+function findDuplicates(strings: string[]): string[] {
+	const duplicates: string[] = [];
+	const seen: Record<string, number> = {};
+
+	strings.forEach((str) => {
+		if (seen[str]) {
+			seen[str]++;
+		} else {
+			seen[str] = 1;
+		}
+	});
+	Object.keys(seen).forEach((key) => {
+		if (seen[key] > 1) {
+			duplicates.push(key);
+		}
+	});
+	return duplicates;
+}
+
 async function generateChartData() {
-	generateChartData2();
+	// generateChartData2();
+	console.log(generateChartData2);
 	if (datasets.value.length <= 1) return;
 
 	const rawContents = await Promise.all(
