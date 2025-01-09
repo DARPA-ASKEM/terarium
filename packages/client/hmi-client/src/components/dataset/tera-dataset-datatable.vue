@@ -3,7 +3,7 @@
 		<!-- Toggle histograms & column summary charts -->
 		<div class="datatable-toolbar">
 			<span class="datatable-toolbar-item">
-				{{ columns.length || 'No' }} columns | {{ rowCount || 'No' }} rows
+				{{ columns?.length || 'No' }} columns | {{ rowCount || 'No' }} rows
 				{{ rowCount != rawContent.csv.length ? '(' + rawContent.csv.length + ' showing)' : '' }}
 			</span>
 			<span class="datatable-toolbar-item" style="margin-left: auto">
@@ -143,8 +143,8 @@ const props = defineProps<{
 	previousHeaders?: String[] | null;
 	paginatorPosition?: 'bottom' | 'both' | 'top' | undefined;
 	tableStyle?: String;
-	columns: DatasetColumn[];
-	rowCount: number;
+	columns?: DatasetColumn[];
+	rowCount?: number;
 }>();
 
 const CATEGORYPERCENTAGE = 1.0;
@@ -220,9 +220,9 @@ const setBarChartData = (bins: number[]): ChartData => {
 };
 
 watch(
-	props.columns,
+	() => props?.columns,
 	(value, oldValue) => {
-		if (value === oldValue) return;
+		if (!value || !oldValue || value === oldValue) return;
 		const stats = new Map<string, ColumnStats>();
 		value.forEach((column) => {
 			const columnStats: ColumnStats = {};
@@ -232,8 +232,7 @@ watch(
 				columnStats.mean = displayNumber(column.stats.numericStats.mean);
 				columnStats.median = displayNumber(column.stats.numericStats.median);
 				columnStats.sd = displayNumber(column.stats.numericStats.std_dev);
-				columnStats.bins = column.stats.numericStats.histogram_bins;
-				columnStats.chartData = setBarChartData(columnStats.bins);
+				columnStats.chartData = setBarChartData(column.stats.numericStats.histogram_bins);
 				columnStats.uniqueValues = displayNumber(column.stats.numericStats.unique_values);
 			} else if (column.stats?.nonNumericStats) {
 				columnStats.uniqueValues = displayNumber(column.stats.nonNumericStats.unique_values);
