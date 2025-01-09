@@ -26,6 +26,11 @@ export const expressionFunctions = {
 	tooltipFormatter: (value) => {
 		if (value === undefined) return 'N/A';
 		return fixPrecisionError(value);
+	},
+	// number formatting for sensitivity bins
+	sensitivityBinFormatter: (value) => {
+		if (value === undefined) return 'N/A';
+		return format('.6~g')(value); // 6 significant digits
 	}
 };
 

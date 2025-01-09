@@ -916,13 +916,13 @@ export function useCharts(
 		let previousThreshold = minValue;
 		thresholds.forEach((threshold) => {
 			labels.push(
-				`[${expressionFunctions.tooltipFormatter(previousThreshold)}, ${expressionFunctions.tooltipFormatter(threshold)}]`
+				`[${expressionFunctions.sensitivityBinFormatter(previousThreshold)}, ${expressionFunctions.sensitivityBinFormatter(threshold)}]`
 			);
 			previousThreshold = threshold;
 		});
 
 		labels.push(
-			`[${expressionFunctions.tooltipFormatter(previousThreshold)}, ${expressionFunctions.tooltipFormatter(maxValue)}]`
+			`[${expressionFunctions.sensitivityBinFormatter(previousThreshold)}, ${expressionFunctions.sensitivityBinFormatter(maxValue)}]`
 		);
 
 		// Assign bins to records and create the result map
