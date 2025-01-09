@@ -169,7 +169,7 @@ import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
 import Dropdown from 'primevue/dropdown';
 import { Dataset } from '@/types/Types';
-import { getDataset, getDatasetResultCSV, mergeResults } from '@/services/dataset';
+import { getDataset } from '@/services/dataset';
 import TeraCheckbox from '@/components/widgets/tera-checkbox.vue';
 import RadioButton from 'primevue/radiobutton';
 import { cloneDeep } from 'lodash';
@@ -180,8 +180,7 @@ import TeraChartSettingsPanel from '@/components/widgets/tera-chart-settings-pan
 import { useChartSettings } from '@/composables/useChartSettings';
 import { useDrilldownChartSize } from '@/composables/useDrilldownChartSize';
 import { useCharts, type ChartData } from '@/composables/useCharts';
-import { renameFnGenerator } from '@/components/workflow/ops/calibrate-ciemss/calibrate-utils';
-import { DataArray, parsePyCiemssMap, processAndSortSamplesByTimepoint } from '@/services/models/simulation-service';
+import { DataArray } from '@/services/models/simulation-service';
 import TeraCriteriaOfInterestCard from './tera-criteria-of-interest-card.vue';
 import {
 	blankCriteriaOfInterest,
@@ -190,6 +189,7 @@ import {
 	CriteriaOfInterestCard,
 	PlotValue
 } from './compare-datasets-operation';
+import { fetchDatasetResults, buildChartData } from './compare-datasets-utils';
 
 const props = defineProps<{
 	node: WorkflowNode<CompareDatasetsState>;
@@ -203,7 +203,7 @@ const compareOptions: { label: string; value: CompareValue }[] = [
 ];
 
 const datasets = ref<Dataset[]>([]);
-const dataResults = ref<{
+const datasetResults = ref<{
 	results: DataArray[];
 	summaryResults: DataArray[];
 	datasetResults: DataArray[];
@@ -303,7 +303,7 @@ const initialize = async () => {
 		datasets.value.push(...filteredDatasets);
 	});
 	// Fetch the results
-	dataResults.value = await fetchDatasetResults(datasets.value);
+	datasetResults.value = await fetchDatasetResults(datasets.value);
 	isFetchingDatasets.value = false;
 
 	if (!knobs.value.selectedDataset) knobs.value.selectedDataset = datasets.value[0]?.id ?? null;
@@ -311,143 +311,13 @@ const initialize = async () => {
 	generateChartData();
 };
 
-function isSimulationData(datset: Dataset) {
-	// assume if the dataset has these two files, it's a simulation dataset
-	return (
-		datset.fileNames?.find((name) => name === 'result.csv') &&
-		datset.fileNames?.find((name) => name === 'result_summary.csv')
-	);
-}
-
-async function fetchDatasetResults(datasetList: Dataset[]) {
-	// Fetch simulation results
-	const results: DataArray[] = (
-		await Promise.all(
-			datasetList.map((dataset, index) => {
-				if (!isSimulationData(dataset)) return Promise.resolve([]);
-				return getDatasetResultCSV(dataset, 'result.csv', renameFnGenerator(`${index}`));
-			})
-		)
-	).filter((result) => result.length > 0);
-	// Fetch simulation summary results
-	const summaryResults: DataArray[] = (
-		await Promise.all(
-			datasetList.map((dataset, index) => {
-				if (!isSimulationData(dataset)) return Promise.resolve([]);
-				return getDatasetResultCSV(dataset, 'result_summary.csv', renameFnGenerator(`${index}`));
-			})
-		)
-	).filter((result) => result.length > 0);
-	// Fetch non simulation dataset results
-	const datasetResults: DataArray[] = (
-		await Promise.all(
-			datasetList.map((dataset, index) => {
-				if (isSimulationData(dataset)) return Promise.resolve([]);
-				return getDatasetResultCSV(dataset, dataset.fileNames?.[0] ?? '', renameFnGenerator(`${index}`));
-			})
-		)
-	).filter((result) => result.length > 0);
-	return {
-		results,
-		summaryResults,
-		datasetResults
-	};
-}
-
-const transformRowValuesRelativeToBaseline = (
-	row: Record<string, number>,
-	baselineDataIndex: number,
-	plotType: PlotValue
-) => {
-	const transformed: Record<string, number> = {};
-	Object.entries(row).forEach(([key, value]) => {
-		const [dataKey, datasetIndex] = key.split(':');
-		if (datasetIndex === undefined) {
-			transformed[key] = value;
-			return;
-		}
-		const baselineValue = row[`${dataKey}:${baselineDataIndex}`];
-		if (plotType === PlotValue.DIFFERENCE) {
-			transformed[key] = value - baselineValue;
-		} else if (plotType === PlotValue.PERCENTAGE) {
-			transformed[key] = ((value - baselineValue) / baselineValue) * 100;
-		} else if (plotType === PlotValue.VALUE) {
-			transformed[key] = value;
-		}
-	});
-	return transformed;
-};
-
-/**
- * Removes the dataset index suffix from the variable names and returns a new object with the unique variable names which can be used as an input to the parsePyCiemssMap function.
- * E.g. { 'variableName:0': 1, 'variableName:1': 2 } -> { variableName: 'variableName' }
- * @param obj
- */
-const uniqueVarNames = (obj: Record<string, any>) => {
-	const newObj = {};
-	Object.keys(obj)
-		.map((key) => key.split(':')[0])
-		.forEach((key) => {
-			newObj[key] = key;
-		});
-	return newObj;
-};
-
-/**
- * Build variable name mapping for the non simulation result dataset
- * Prefix the variable name with 'data_' to distinguish it from the simulation result variables
- */
-const buildDatasetVarMapping = (dsets: DataArray[]) => {
-	const map: Record<string, any> = {};
-	dsets.forEach((dataset) => {
-		Object.keys(dataset[0]).forEach((key) => {
-			const varName = key.split(':')[0];
-			map[`data_${varName}`] = varName;
-		});
-	});
-	return map;
-};
-
 async function generateChartData() {
-	if (datasets.value.length <= 1 || !dataResults.value) return;
-	const { results, summaryResults, datasetResults } = dataResults.value;
-
-	// Merge all datasets into single dataset
-	const result = mergeResults(...results);
-	const summaryResult = mergeResults(...summaryResults, ...datasetResults);
-
-	// Transform the values relative to the baseline dataset
-	const resultTransformed = result.map((row) =>
-		transformRowValuesRelativeToBaseline(row, baselineDatasetIndex.value, selectedPlotType.value)
+	chartData.value = buildChartData(
+		datasets.value,
+		datasetResults.value,
+		baselineDatasetIndex.value,
+		selectedPlotType.value
 	);
-	const resultSummaryTransformed = summaryResult.map((row) =>
-		transformRowValuesRelativeToBaseline(row, baselineDatasetIndex.value, selectedPlotType.value)
-	);
-
-	// Process data for uncertainty intervals chart mode
-	const resultGroupByTimepoint = processAndSortSamplesByTimepoint(resultTransformed);
-
-	// Build pyciemss map for display variable name map for the simulation result variables
-	const pyciemssMap = parsePyCiemssMap(uniqueVarNames(result[0] ?? {}));
-	// Augment the pyciemss map with the dataset variable mapping
-	Object.assign(pyciemssMap, buildDatasetVarMapping(datasetResults));
-
-	// Build translation map
-	const translationMap = {};
-	Object.keys(pyciemssMap).forEach((key) => {
-		datasets.value.forEach((dataset, index) => {
-			translationMap[`${pyciemssMap[key]}:${index}`] = `${dataset.name}`;
-		});
-	});
-
-	chartData.value = {
-		result: resultTransformed,
-		resultSummary: resultSummaryTransformed,
-		resultGroupByTimepoint,
-		pyciemssMap,
-		translationMap,
-		numComparableDatasets: datasets.value.length
-	};
 }
 
 onMounted(() => {
