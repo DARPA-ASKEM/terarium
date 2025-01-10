@@ -222,7 +222,7 @@ const setBarChartData = (bins: number[]): ChartData => {
 watch(
 	() => props?.columns,
 	(value, oldValue) => {
-		if (!value || !oldValue || value === oldValue) return;
+		if (!value || value === oldValue) return;
 		const stats = new Map<string, ColumnStats>();
 		value.forEach((column) => {
 			const columnStats: ColumnStats = {};
