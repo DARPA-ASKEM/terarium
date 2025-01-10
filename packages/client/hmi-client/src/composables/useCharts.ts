@@ -238,19 +238,15 @@ export function useCharts(
 			delete options.colorscheme;
 		}
 		// Variable names for compare dataset charts
-		else if (chartData.value?.numComparableDatasets) {
+		else if (!_.isNil(chartData.value?.numComparableDatasets)) {
 			const varName = variables[0];
-			sampleLayerVariables = [
-				`${chartData.value?.pyciemssMap[varName]}:0`,
-				`${chartData.value?.pyciemssMap[varName]}:1`,
-				`${chartData.value?.pyciemssMap[varName]}:2`
-			];
 			const aggSuffix = varName.startsWith('data_') ? '' : '_mean';
-			statLayerVariables = [
-				`${chartData.value?.pyciemssMap[varName]}${aggSuffix}:0`,
-				`${chartData.value?.pyciemssMap[varName]}${aggSuffix}:1`,
-				`${chartData.value?.pyciemssMap[varName]}${aggSuffix}:2`
-			];
+			sampleLayerVariables = [];
+			statLayerVariables = [];
+			for (let i = 0; i < chartData.value.numComparableDatasets; i++) {
+				sampleLayerVariables.push(`${chartData.value?.pyciemssMap[varName]}:${i}`);
+				statLayerVariables.push(`${chartData.value?.pyciemssMap[varName]}${aggSuffix}:${i}`);
+			}
 		}
 		return { statLayerVariables, sampleLayerVariables, options };
 	};

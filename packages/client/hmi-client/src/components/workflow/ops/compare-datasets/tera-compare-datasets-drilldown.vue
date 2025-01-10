@@ -95,7 +95,7 @@
 							<template v-for="setting of selectedVariableSettings" :key="setting.id">
 								<vega-chart
 									:visualization-spec="variableCharts[setting.id]"
-									:are-embed-actions-visible="false"
+									:are-embed-actions-visible="true"
 									expandable
 								/>
 							</template>

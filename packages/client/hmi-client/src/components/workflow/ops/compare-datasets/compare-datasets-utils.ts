@@ -142,6 +142,7 @@ export function buildChartData(
 	Object.keys(pyciemssMap).forEach((key) => {
 		datasets.forEach((dataset, index) => {
 			translationMap[`${pyciemssMap[key]}:${index}`] = `${dataset.name}`;
+			translationMap[`${pyciemssMap[key]}_mean:${index}`] = `${dataset.name}`;
 		});
 	});
 
