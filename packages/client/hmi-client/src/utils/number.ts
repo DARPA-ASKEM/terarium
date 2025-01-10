@@ -75,7 +75,6 @@ export function nistToNumber(numStr: string): number {
  */
 export function displayNumber(num: string | number): string {
 	num = num.toString().replace(/\s/g, '');
-	if (Number.isNaN(Number(num))) return '';
 	const number = fixPrecisionError(parseFloat(num));
 	if (countDigits(number) > 6) return number.toExponential(3);
 	return numberToNist(number.toString());
