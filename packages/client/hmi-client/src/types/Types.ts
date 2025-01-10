@@ -118,7 +118,6 @@ export interface ChartAnnotation extends TerariumAsset {
 
 export interface CsvAsset {
     csv: string[][];
-    stats?: CsvColumnStats[];
     headers: string[];
     rowCount: number;
 }
