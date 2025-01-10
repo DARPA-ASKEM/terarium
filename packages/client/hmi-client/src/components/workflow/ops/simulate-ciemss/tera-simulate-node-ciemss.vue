@@ -166,16 +166,23 @@ Provide a summary in 100 words or less.
 
 	const summaryResponse = await createLLMSummary(prompt);
 
-	const datasetName = `Forecast run ${runId}`;
+	const datasetName = nodeOutputLabel(props.node, interventionPolicy.value?.name ?? 'no intervention');
 	const projectId = useProjects().activeProject.value?.id ?? '';
-	const datasetResult = await createDatasetFromSimulationResult(projectId, runId, datasetName, false);
+	const datasetResult = await createDatasetFromSimulationResult(
+		projectId,
+		runId,
+		datasetName,
+		false,
+		modelConfiguration.value?.id,
+		interventionPolicy.value?.id
+	);
 	if (!datasetResult) {
 		logger.error('Error creating dataset from simulation result.');
 		return;
 	}
 	emit('append-output', {
 		type: SimulateCiemssOperation.outputs[0].type,
-		label: nodeOutputLabel(props.node, 'Dataset'),
+		label: datasetName,
 		value: [datasetResult.id],
 		state: {
 			currentTimespan: state.currentTimespan,
