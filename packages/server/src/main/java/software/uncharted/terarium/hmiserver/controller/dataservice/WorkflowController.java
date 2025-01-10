@@ -185,17 +185,21 @@ public class WorkflowController {
 			.build();
 
 		try {
-			final RebacProject rebacProject = new RebacProject(projectId, reBACService);
-			if (rebacProject.isPublic()) {
-				clientEventService.sendToAllUsers(event);
-			} else {
-				final List<String> userIds = projectPermissionsService
-					.getReaders(rebacProject)
-					.stream()
-					.map(Contributor::getUserId)
-					.toList();
-				clientEventService.sendToUsers(event, userIds);
-			}
+			clientEventService.sendToAllUsers(event);
+			// https://github.com/DARPA-ASKEM/terarium/issues/6008
+			// final RebacProject rebacProject = new RebacProject(projectId, reBACService);
+
+			// if (rebacProject.isPublic()) {
+			// 	clientEventService.sendToAllUsers(event);
+			// }
+			// else {
+			// 	final List<String> userIds = projectPermissionsService
+			// 		.getReaders(rebacProject)
+			// 		.stream()
+			// 		.map(Contributor::getUserId)
+			// 		.toList();
+			// 	clientEventService.sendToUsers(event, userIds);
+			// }
 		} catch (final Exception e) {
 			log.error("Unable to notify users of update to workflow", e);
 			// No response status exception here because the workflow was updated successfully, and it's just the update that's failed.
