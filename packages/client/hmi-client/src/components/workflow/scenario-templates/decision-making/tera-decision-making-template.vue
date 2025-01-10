@@ -12,7 +12,9 @@
 				class="mb-3"
 			/>
 
-			<label>Select configuration representing best starting point pre-interventions</label>
+			<label :class="{ 'disabled-label': isEmpty(modelConfigurations) || isFetchingModelInformation }"
+				>Select configuration representing best starting point pre-interventions</label
+			>
 			<Dropdown
 				class="mb-3"
 				:model-value="scenario.modelConfigSpec.id"
@@ -65,6 +67,7 @@
 						icon="pi pi-trash"
 						size="small"
 						@click="scenario.removeInterventionSpec(i)"
+						class="mb-3"
 					/>
 				</div>
 			</template>
@@ -81,7 +84,9 @@
 		</template>
 
 		<template #outputs>
-			<label>Select an output metric</label>
+			<label :class="{ 'disabled-label': isEmpty(modelStateOptions) || isFetchingModelInformation }"
+				>Select an output metric</label
+			>
 			<MultiSelect
 				:disabled="isEmpty(modelStateOptions) || isFetchingModelInformation"
 				:model-value="scenario.simulateSpec.ids"
@@ -119,7 +124,7 @@ import TeraNewPolicyModal from '../tera-new-policy-modal.vue';
 import { usePolicyModel } from '../scenario-template-utils';
 
 const header: ScenarioHeader = Object.freeze({
-	title: 'Decision Making Template',
+	title: 'Decision making template',
 	question: 'What is the impact of different interventions?',
 	description:
 		'Runs a simulation for the baseline (no intervention) and each intervention policy and then shows the relative impact of each intervention policy relative to the baseline.',
@@ -195,3 +200,8 @@ watch(
 	{ immediate: true }
 );
 </script>
+<style scoped>
+.disabled-label {
+	color: var(--text-color-disabled);
+}
+</style>
