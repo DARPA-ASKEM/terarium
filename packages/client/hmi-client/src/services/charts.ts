@@ -424,10 +424,10 @@ export function createHistogramChart(dataset: Record<string, any>[], options: Hi
 /* This function estimates the legend width, because if it's too we will have to draw it with columns since there's no linewrap */
 function estimateLegendWidth(items: string[], fontSize: number): number {
 	// Approximate width of each character (assuming monospace-like proportions)
-	const charWidth = fontSize * 0.35;
+	const charWidth = fontSize * 0.3;
 
 	// Account for symbol width, padding, and spacing between items
-	const symbolWidth = fontSize * 3; // Symbol + padding
+	const symbolWidth = fontSize * 2; // Symbol + padding
 	const itemSpacing = fontSize * 2; // Space between items
 
 	// Calculate total width
@@ -436,11 +436,28 @@ function estimateLegendWidth(items: string[], fontSize: number): number {
 		return totalWidth + itemWidth + itemSpacing;
 	}, 0);
 }
-function calculateOptimalColumns(numItems: number): number {
-	// Prefer only 1-2 items per column as a rule of thumb
-	return Math.ceil(numItems / 1.5);
-}
+function calculateLegendColumns(
+	isCompact: boolean,
+	estimatedWidth: number,
+	chartWidth: number,
+	numItems: number | undefined
+): number | undefined {
+	if (isCompact || !numItems) {
+		return isCompact ? 1 : undefined;
+	}
 
+	if (estimatedWidth <= chartWidth) {
+		return undefined; // Everything fits in one row
+	}
+
+	const avgItemWidth = (estimatedWidth / numItems) * 0.85; // Reduce by 15% since our estimation seems high
+
+	// Calculate how many columns can fit without any extra buffer
+	const maxColumns = Math.floor(chartWidth / avgItemWidth);
+
+	// Use as many columns as we can fit, up to the number of items
+	return Math.max(1, Math.min(maxColumns, numItems));
+}
 export function createForecastChart(
 	samplingLayer: ForecastChartLayer | null,
 	statisticsLayer: ForecastChartLayer | null,
@@ -517,7 +534,7 @@ export function createForecastChart(
 		symbolType: 'stroke',
 		...options.legendProperties,
 		// Add columns if legend would overflow
-		columns: estimatedWidth > options.width ? 4 : undefined
+		columns: calculateLegendColumns(isCompact, estimatedWidth, options.width, legendItems.length)
 	};
 
 	// Start building
@@ -667,8 +684,12 @@ export function createForecastChart(
 			lineSubLayer.encoding.color.legend = {
 				...legendProperties,
 				// Only use columns if the legend would overflow
-				columns: estimatedWidth > options.width ? calculateOptimalColumns(legendItems.length) : undefined,
-				direction: estimatedWidth > options.width ? 'vertical' : 'horizontal'
+				columns:
+					estimatedWidth !== undefined &&
+					estimatedWidth > calculateLegendColumns(isCompact, estimatedWidth, options.width, legendItems.length)
+						? calculateLegendColumns(isCompact, estimatedWidth, options.width, legendItems.length)
+						: undefined,
+				direction: isCompact ? 'vertical' : 'horizontal'
 			};
 
 			if (labelExpr.length > 0) {
@@ -961,8 +982,8 @@ export function createForecastChart(
 			encoding.color.legend = {
 				...legendProperties,
 				// Only use columns if the legend would overflow
-				columns: estimatedWidth > options.width ? calculateOptimalColumns(legendItems.length) : undefined,
-				direction: estimatedWidth > options.width ? 'vertical' : 'horizontal'
+				columns: calculateLegendColumns(isCompact, estimatedWidth, options.width, legendItems.length),
+				direction: isCompact ? 'vertical' : 'horizontal'
 			};
 
 			if (labelExpr.length > 0) {
