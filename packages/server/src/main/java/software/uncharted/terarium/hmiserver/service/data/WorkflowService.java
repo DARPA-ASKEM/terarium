@@ -665,6 +665,21 @@ public class WorkflowService extends TerariumAssetServiceWithoutSearch<Workflow,
 		throw new UnsupportedOperationException("Workflows are not stored in S3");
 	}
 
+	////////////////////////////////////////////////////////////////////////////////
+	// Helpers
+	////////////////////////////////////////////////////////////////////////////////
+
+	// Build a lookup map for faster node retrival
+	private Map<UUID, WorkflowNode> buildNodeMap(final Workflow workflow) {
+		final Map<UUID, WorkflowNode> map = new HashMap<>();
+		for (final WorkflowNode node : workflow.getNodes()) {
+			if (node.getIsDeleted() == false) {
+				map.put(node.getId(), node);
+			}
+		}
+		return map;
+	}
+
 	public static JsonNode deepMergeWithOverwrite(JsonNode nodeA, JsonNode nodeB) {
 		if (nodeA == null && nodeB == null) {
 			return null;
