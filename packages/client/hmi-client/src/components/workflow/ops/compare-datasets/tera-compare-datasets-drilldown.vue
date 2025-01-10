@@ -229,8 +229,6 @@ const datasetResults = ref<{
 const modelConfigurations = ref<ModelConfiguration[]>([]);
 const interventionPolicies = ref<InterventionPolicy[]>([]);
 
-// const commonHeaderNames = ref<string[]>([]);
-
 const plotOptions = [
 	{ label: 'Raw values', value: PlotValue.VALUE },
 	{ label: 'Percent change', value: PlotValue.PERCENTAGE },
