@@ -627,7 +627,7 @@ public class ProjectController {
 			project = executor.submit(() -> {
 				log.info("Staring Cloning Process...");
 				final ProjectExport export = cloneService.exportProject(id);
-				export.getProject().setName("Copy of " + export.getProject().getName());
+				export.getProject().setName("Copying " + export.getProject().getName());
 				log.info("Cloning...");
 				final Project cloneProject = cloneService.importProject(userId, userName, export);
 				log.info("Cloned...");
