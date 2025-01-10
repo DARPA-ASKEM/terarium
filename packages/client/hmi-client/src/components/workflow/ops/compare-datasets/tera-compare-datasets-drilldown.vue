@@ -28,7 +28,12 @@
 							label="All simulations are from the same model"
 							disabled
 						/> -->
-						<div class="mb-4" />
+						<tera-checkbox
+							class="mt-2 mb-4"
+							v-model="areSimulationsFromSameModel"
+							label="All simulations are from the same model"
+							disabled
+						/>
 						<template v-if="knobs.selectedCompareOption === CompareValue.IMPACT">
 							<label> Select simulation to use as a baseline (optional) </label>
 							<Dropdown
@@ -40,11 +45,9 @@
 								placeholder="Optional"
 								@change="generateChartData"
 							/>
-							<div class="mb-4" />
 							<label>Comparison tables</label>
 							<tera-checkbox v-model="isATESelected" label="Average treatment effect (ATE)" />
 						</template>
-						<div class="mb-4" />
 						<!-- Pascale asked me to omit this timepoint selector, but I'm keeping it here until we are certain it's not needed -->
 						<!--
 						<label class="mt-2">Timepoint column</label>
@@ -56,12 +59,14 @@
 						/>
 						<div class="mb-4" />
 						-->
-						<template v-if="knobs.selectedCompareOption === CompareValue.RANK">
+						<div class="flex flex-column gap-2" v-if="knobs.selectedCompareOption === CompareValue.RANK">
 							<label>Specify criteria of interest:</label>
 							<tera-criteria-of-interest-card
 								v-for="(card, i) in node.state.criteriaOfInterestCards"
 								:key="i"
 								:card="card"
+								:model-configurations="modelConfigurations"
+								:variables="commonHeaderNames"
 								@delete="deleteCriteria(i)"
 								@update="(e) => updateCriteria(e, i)"
 							/>
@@ -75,7 +80,7 @@
 									@click="addCriteria"
 								/>
 							</div>
-						</template>
+						</div>
 					</tera-drilldown-section>
 				</template>
 			</tera-slider-panel>
@@ -85,16 +90,22 @@
 			<div ref="outputPanel">
 				<Accordion multiple :active-index="activeIndices">
 					<AccordionTab header="Summary"> </AccordionTab>
-					<AccordionTab header="Variables">
-						<template v-for="setting of selectedVariableSettings" :key="setting.id">
-							<vega-chart
-								:visualization-spec="variableCharts[setting.id]"
-								:are-embed-actions-visible="false"
-								expandable
-							/>
-						</template>
-					</AccordionTab>
-					<AccordionTab header="Comparison table"> </AccordionTab>
+					<template v-if="knobs.selectedCompareOption === CompareValue.IMPACT">
+						<AccordionTab header="Variables">
+							<template v-for="setting of selectedVariableSettings" :key="setting.id">
+								<vega-chart
+									:visualization-spec="variableCharts[setting.id]"
+									:are-embed-actions-visible="false"
+									expandable
+								/>
+							</template>
+						</AccordionTab>
+						<AccordionTab header="Comparison table"> </AccordionTab>
+					</template>
+					<template v-else>
+						<AccordionTab header="Ranking results"> </AccordionTab>
+						<AccordionTab header="Ranking criteria"> </AccordionTab>
+					</template>
 				</Accordion>
 			</div>
 		</tera-drilldown-section>
@@ -175,8 +186,10 @@ import Button from 'primevue/button';
 import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
 import Dropdown from 'primevue/dropdown';
-import { Dataset } from '@/types/Types';
+import { Dataset, InterventionPolicy, ModelConfiguration } from '@/types/Types';
 import { getDataset, getRawContent } from '@/services/dataset';
+import { getInterventionPolicyById } from '@/services/intervention-policy';
+import { getModelConfigurationById } from '@/services/model-configurations';
 import TeraCheckbox from '@/components/widgets/tera-checkbox.vue';
 import RadioButton from 'primevue/radiobutton';
 import { isEmpty, cloneDeep } from 'lodash';
@@ -205,10 +218,12 @@ const emit = defineEmits(['update-state', 'close']);
 
 const compareOptions: { label: string; value: CompareValue }[] = [
 	{ label: 'Compare the impact of interventions', value: CompareValue.IMPACT },
-	{ label: 'Rank interventions based on multiple charts', value: CompareValue.RANK }
+	{ label: 'Rank interventions based on multiple criteria', value: CompareValue.RANK }
 ];
 
 const datasets = ref<Dataset[]>([]);
+const modelConfigurations = ref<ModelConfiguration[]>([]);
+const interventionPolicies = ref<InterventionPolicy[]>([]);
 
 const commonHeaderNames = ref<string[]>([]);
 const timepointHeaderName = ref<string | null>(null);
@@ -224,6 +239,7 @@ const isOutputSettingsOpen = ref(true);
 const activeIndices = ref([0, 1, 2]);
 
 const isFetchingDatasets = ref(false);
+const areSimulationsFromSameModel = ref(true);
 const isATESelected = ref(false);
 
 const onRun = () => {
@@ -290,22 +306,43 @@ const initialize = async () => {
 	const state = cloneDeep(props.node.state);
 	knobs.value = Object.assign(knobs.value, state);
 
+	const interventionPolicyIds: string[] = [];
+	const modelConfigurationIds: string[] = [];
+
 	const inputs = props.node.inputs;
 	const datasetInputs = inputs.filter(
 		(input) => input.type === 'datasetId' && input.status === WorkflowPortStatus.CONNECTED
 	);
-	const promises = datasetInputs.map((input) => getDataset(input.value![0]));
+	const datasetPromises = datasetInputs.map((input) => getDataset(input.value![0]));
 
 	isFetchingDatasets.value = true;
-	await Promise.all(promises).then((ds) => {
-		const filteredDatasets: Dataset[] = ds.filter((dataset) => dataset !== null);
-		datasets.value.push(...filteredDatasets);
+	await Promise.all(datasetPromises).then((ds) => {
+		ds.forEach((dataset) => {
+			if (!dataset) return;
+			datasets.value.push(dataset);
+			const modelConfigurationId = dataset.metadata?.simulationAttributes?.modelConfigurationId;
+			const interventionPolicyId = dataset.metadata?.simulationAttributes?.interventionPolicyId;
+			if (modelConfigurationId) modelConfigurationIds.push(modelConfigurationId);
+			if (interventionPolicyId) interventionPolicyIds.push(interventionPolicyId);
+		});
 	});
 	isFetchingDatasets.value = false;
 
 	if (!knobs.value.selectedDataset) knobs.value.selectedDataset = datasets.value[0]?.id ?? null;
 
 	generateChartData();
+
+	if (isEmpty(modelConfigurationIds)) return;
+	const modelConfigurationPromises = modelConfigurationIds.map((id) => getModelConfigurationById(id));
+	await Promise.all(modelConfigurationPromises).then((configs) => {
+		modelConfigurations.value = configs.filter((config) => config !== null);
+	});
+
+	if (isEmpty(interventionPolicyIds)) return;
+	const interventionPolicyPromises = interventionPolicyIds.map((id) => getInterventionPolicyById(id));
+	await Promise.all(interventionPolicyPromises).then((policies) => {
+		interventionPolicies.value = policies.filter((policy) => policy !== null);
+	});
 };
 
 // Following two funcs are util like
@@ -335,7 +372,6 @@ function findDuplicates(strings: string[]): string[] {
 
 async function generateChartData() {
 	if (datasets.value.length <= 1) return;
-	console.log(datasets);
 
 	const rawContents = await Promise.all(
 		datasets.value.map((dataset) => {
