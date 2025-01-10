@@ -320,7 +320,7 @@ export async function generateForecastChartAnnotation(
 	);
 	const str = b64DecodeUnicode(data.output);
 	const result = JSON.parse(str);
-	const layerSpec = { layer: result.response?.layer ?? null };
+	const layerSpec = result.response ?? null;
 	return {
 		request,
 		layerSpec
