@@ -107,9 +107,13 @@
 							<vega-chart :visualization-spec="rankingResultsChart" :are-embed-actions-visible="false" expandable />
 						</AccordionTab>
 						<AccordionTab header="Ranking criteria">
-							<template v-for="(rankingCriteriaChart, index) in rankingCriteriaCharts" :key="index">
-								<vega-chart :visualization-spec="rankingCriteriaChart" :are-embed-actions-visible="false" expandable />
-							</template>
+							<vega-chart
+								v-for="(rankingCriteriaChart, index) in rankingCriteriaCharts"
+								:visualization-spec="rankingCriteriaChart"
+								:are-embed-actions-visible="false"
+								:key="index"
+								expandable
+							/>
 						</AccordionTab>
 					</template>
 				</Accordion>
