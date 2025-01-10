@@ -68,6 +68,32 @@ public class WorkflowController {
 
 	final Messages messages;
 
+	private void broadCastWorkflowChange(Workflow workflow, UUID projectId) {
+		final String userId = currentUserService.get().getId();
+		final ClientEvent<Workflow> event = ClientEvent.<Workflow>builder()
+			.type(ClientEventType.WORKFLOW_UPDATE)
+			.data(workflow)
+			.userId(userId)
+			.build();
+
+		try {
+			final RebacProject rebacProject = new RebacProject(projectId, reBACService);
+			if (rebacProject.isPublic()) {
+				clientEventService.sendToAllUsers(event);
+			} else {
+				final List<String> userIds = projectPermissionsService
+					.getReaders(rebacProject)
+					.stream()
+					.map(Contributor::getUserId)
+					.toList();
+				clientEventService.sendToUsers(event, userIds);
+			}
+		} catch (final Exception e) {
+			log.error("Unable to notify users of update to workflow", e);
+			// No response status exception here because the workflow was updated successfully, and it's just the update that's failed.
+		}
+	}
+
 	@GetMapping("/{id}")
 	@Secured(Roles.USER)
 	@Operation(summary = "Gets workflow by ID")
@@ -183,29 +209,7 @@ public class WorkflowController {
 			);
 		}
 
-		final ClientEvent<Workflow> event = ClientEvent.<Workflow>builder()
-			.type(ClientEventType.WORKFLOW_UPDATE)
-			.data(updated.get())
-			.userId(userId)
-			.build();
-
-		try {
-			final RebacProject rebacProject = new RebacProject(projectId, reBACService);
-			if (rebacProject.isPublic()) {
-				clientEventService.sendToAllUsers(event);
-			} else {
-				final List<String> userIds = projectPermissionsService
-					.getReaders(rebacProject)
-					.stream()
-					.map(Contributor::getUserId)
-					.toList();
-				clientEventService.sendToUsers(event, userIds);
-			}
-		} catch (final Exception e) {
-			log.error("Unable to notify users of update to workflow", e);
-			// No response status exception here because the workflow was updated successfully, and it's just the update that's failed.
-		}
-
+		broadCastWorkflowChange(updated.get(), projectId);
 		return updated.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
 	}
 
@@ -311,6 +315,8 @@ public class WorkflowController {
 				messages.get("postgres.service-unavailable")
 			);
 		}
+		broadCastWorkflowChange(updated.get(), projectId);
+
 		return updated.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
 	}
 
@@ -362,6 +368,8 @@ public class WorkflowController {
 				messages.get("workflow.update.create-output")
 			);
 		}
+
+		broadCastWorkflowChange(updated.get(), projectId);
 		return updated.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
 	}
 
@@ -404,6 +412,8 @@ public class WorkflowController {
 				messages.get("workflow.update.add-node")
 			);
 		}
+
+		broadCastWorkflowChange(updated.get(), projectId);
 		return updated.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
 	}
 
@@ -446,6 +456,8 @@ public class WorkflowController {
 				messages.get("workflow.update.remove-node")
 			);
 		}
+
+		broadCastWorkflowChange(updated.get(), projectId);
 		return updated.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
 	}
 
@@ -488,6 +500,8 @@ public class WorkflowController {
 				messages.get("workflow.update.add-edge")
 			);
 		}
+
+		broadCastWorkflowChange(updated.get(), projectId);
 		return updated.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
 	}
 
@@ -529,6 +543,8 @@ public class WorkflowController {
 				messages.get("workflow.update.remove-edge")
 			);
 		}
+
+		broadCastWorkflowChange(updated.get(), projectId);
 		return updated.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
 	}
 }
