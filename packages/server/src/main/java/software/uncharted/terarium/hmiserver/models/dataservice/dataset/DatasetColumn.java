@@ -16,6 +16,7 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToOne;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
@@ -52,6 +53,12 @@ public class DatasetColumn extends TerariumEntity {
 	@JsonAlias("data_type")
 	@Enumerated(EnumType.STRING)
 	private ColumnType dataType;
+
+	/** (Optional) Column statistics */
+	@TSOptional
+	@Column(columnDefinition = "json")
+	@Type(JsonType.class)
+	private DatasetColumnStats stats;
 
 	/** (Optional) String that describes the formatting of the value */
 	@TSOptional
@@ -105,6 +112,7 @@ public class DatasetColumn extends TerariumEntity {
 		}
 
 		if (this.grounding != null) clone.grounding = this.grounding.clone();
+		if (this.stats != null) clone.stats = this.stats;
 
 		clone.description = this.description;
 
@@ -136,5 +144,34 @@ public class DatasetColumn extends TerariumEntity {
 		DATE,
 		@JsonAlias("time")
 		TIME
+	}
+
+	// Map Python data types to ColumnType
+	public static ColumnType mapDataType(String pythonDataType) {
+		if (pythonDataType == null) {
+			return ColumnType.UNKNOWN;
+		}
+
+		// Convert to lowercase for case-insensitive matching
+		String normalizedType = pythonDataType.toLowerCase();
+
+		return switch (normalizedType) {
+			// Integer types
+			case "int64", "int32", "int16", "int8" -> ColumnType.INTEGER;
+			// Float types
+			case "float64", "float32", "float16" -> ColumnType.FLOAT;
+			// Double types (often same as float in Pandas)
+			case "float", "double" -> ColumnType.DOUBLE;
+			// Boolean
+			case "bool" -> ColumnType.BOOLEAN;
+			// String types
+			case "object", "string" -> ColumnType.STRING;
+			// Date and Time types
+			case "datetime64", "datetime" -> ColumnType.DATETIME;
+			case "timedelta", "time" -> ColumnType.TIME;
+			case "date" -> ColumnType.DATE;
+			// Default case
+			default -> ColumnType.UNKNOWN;
+		};
 	}
 }
