@@ -24,18 +24,14 @@ export enum CompareValue {
 
 export const blankCriteriaOfInterest = {
 	name: 'Criteria of interest',
-	configurations: [],
-	selectedConfiguration: null,
-	variables: [],
+	selectedConfigurationId: null,
 	selectedVariable: null,
 	rank: RankOption.MINIMUM,
 	timepoint: TimepointOption.LAST
 };
 export interface CriteriaOfInterestCard {
 	name: string;
-	configurations: string[];
-	selectedConfiguration: string | null;
-	variables: string[];
+	selectedConfigurationId: string | null;
 	selectedVariable: string | null;
 	rank: RankOption;
 	timepoint: TimepointOption;
