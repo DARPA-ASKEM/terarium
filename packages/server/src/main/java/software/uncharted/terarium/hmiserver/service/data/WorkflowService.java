@@ -214,7 +214,6 @@ public class WorkflowService extends TerariumAssetServiceWithoutSearch<Workflow,
 		if (downstreamNodes == null) return;
 
 		for (final WorkflowNode node : downstreamNodes) {
-			System.out.println(">> " + node.getId());
 			node.setStatus("invalid");
 			cascadeInvalidStatus(node, nodeCache);
 		}
