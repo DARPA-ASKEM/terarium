@@ -150,6 +150,9 @@
 								</div>
 							</div>
 						</tera-chart-settings>
+						<Divider />
+						<tera-chart-settings-quantiles :settings="chartSettings" @update-options="updateQauntilesOptions" />
+						<Divider />
 					</div>
 				</template>
 			</tera-slider-panel>
@@ -168,6 +171,7 @@ import Button from 'primevue/button';
 import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
 import Dropdown from 'primevue/dropdown';
+import Divider from 'primevue/divider';
 import { Dataset } from '@/types/Types';
 import { getDataset } from '@/services/dataset';
 import TeraCheckbox from '@/components/widgets/tera-checkbox.vue';
@@ -177,6 +181,7 @@ import VegaChart from '@/components/widgets/VegaChart.vue';
 import { deleteAnnotation } from '@/services/chart-settings';
 import TeraChartSettings from '@/components/widgets/tera-chart-settings.vue';
 import TeraChartSettingsPanel from '@/components/widgets/tera-chart-settings-panel.vue';
+import TeraChartSettingsQuantiles from '@/components/widgets/tera-chart-settings-quantiles.vue';
 import { useChartSettings } from '@/composables/useChartSettings';
 import { useDrilldownChartSize } from '@/composables/useDrilldownChartSize';
 import { useCharts, type ChartData } from '@/composables/useCharts';
@@ -259,7 +264,8 @@ const {
 	removeChartSettings,
 	updateChartSettings,
 	updateActiveChartSettings,
-	setActiveChartSettings
+	setActiveChartSettings,
+	updateQauntilesOptions
 } = useChartSettings(props, emit);
 
 const outputPanel = ref(null);
