@@ -291,11 +291,6 @@ public class DatasetController {
 			);
 		}
 
-		// We have a parser over our CSV file. Now for the front end we need to create a matrix of strings
-		// to represent the CSV file up to our limit. Then we need to calculate the column statistics.
-
-		// TODO - this should be done on csv post/push, and in task to handle large files.
-
 		int rowcount = 0;
 		final List<List<String>> csv = new ArrayList<>();
 
@@ -306,14 +301,7 @@ public class DatasetController {
 			rowcount++;
 		}
 
-		final List<CsvColumnStats> csvColumnStats = DatasetService.calculateColumnStatistics(csv);
-
-		final CsvAsset csvAsset = new CsvAsset(
-			csv,
-			csvColumnStats,
-			new ArrayList<>(csvParser.getHeaderMap().keySet()),
-			rowcount
-		);
+		final CsvAsset csvAsset = new CsvAsset(csv, new ArrayList<>(csvParser.getHeaderMap().keySet()), rowcount);
 
 		final CacheControl cacheControl = CacheControl.maxAge(
 			config.getCacheHeadersMaxAge(),
