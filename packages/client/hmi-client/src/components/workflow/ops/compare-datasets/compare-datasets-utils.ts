@@ -23,27 +23,27 @@ export async function fetchDatasetResults(datasetList: Dataset[]) {
 	// Fetch simulation results
 	const results: DataArray[] = (
 		await Promise.all(
-			datasetList.map((dataset, index) => {
+			datasetList.map((dataset, datasetIndex) => {
 				if (!isSimulationData(dataset)) return Promise.resolve([]);
-				return getDatasetResultCSV(dataset, 'result.csv', renameFnGenerator(`${index}`));
+				return getDatasetResultCSV(dataset, 'result.csv', renameFnGenerator(`${datasetIndex}`));
 			})
 		)
 	).filter((result) => result.length > 0);
 	// Fetch simulation summary results
 	const summaryResults: DataArray[] = (
 		await Promise.all(
-			datasetList.map((dataset, index) => {
+			datasetList.map((dataset, datasetIndex) => {
 				if (!isSimulationData(dataset)) return Promise.resolve([]);
-				return getDatasetResultCSV(dataset, 'result_summary.csv', renameFnGenerator(`${index}`));
+				return getDatasetResultCSV(dataset, 'result_summary.csv', renameFnGenerator(`${datasetIndex}`));
 			})
 		)
 	).filter((result) => result.length > 0);
 	// Fetch non simulation dataset results
 	const datasetResults: DataArray[] = (
 		await Promise.all(
-			datasetList.map((dataset, index) => {
+			datasetList.map((dataset, datasetIndex) => {
 				if (isSimulationData(dataset)) return Promise.resolve([]);
-				return getDatasetResultCSV(dataset, dataset.fileNames?.[0] ?? '', renameFnGenerator(`${index}`));
+				return getDatasetResultCSV(dataset, dataset.fileNames?.[0] ?? '', renameFnGenerator(`${datasetIndex}`));
 			})
 		)
 	).filter((result) => result.length > 0);
