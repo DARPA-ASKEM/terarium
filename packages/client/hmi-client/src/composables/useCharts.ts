@@ -34,6 +34,7 @@ import { SimulateEnsembleMappingRow } from '@/components/workflow/ops/simulate-e
 import { getModelConfigName } from '@/services/model-configurations';
 import { EnsembleErrorData } from '@/components/workflow/ops/calibrate-ensemble-ciemss/calibrate-ensemble-util';
 import { PlotValue } from '@/components/workflow/ops/compare-datasets/compare-datasets-operation';
+import { DATASET_VAR_NAME_PREFIX } from '@/services/dataset';
 import { useChartAnnotations } from './useChartAnnotations';
 
 export interface ChartData {
@@ -240,10 +241,11 @@ export function useCharts(
 		// Variable names for compare dataset charts
 		else if (!_.isNil(chartData.value?.numComparableDatasets)) {
 			const varName = variables[0];
-			const aggSuffix = varName.startsWith('data_') ? '' : '_mean';
 			sampleLayerVariables = [];
 			statLayerVariables = [];
 			for (let i = 0; i < chartData.value.numComparableDatasets; i++) {
+				const rawVarName = chartData.value?.pyciemssMap[varName];
+				const aggSuffix = rawVarName.startsWith(DATASET_VAR_NAME_PREFIX) ? '' : '_mean';
 				sampleLayerVariables.push(`${chartData.value?.pyciemssMap[varName]}:${i}`);
 				statLayerVariables.push(`${chartData.value?.pyciemssMap[varName]}${aggSuffix}:${i}`);
 			}

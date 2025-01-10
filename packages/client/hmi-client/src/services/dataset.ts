@@ -13,6 +13,9 @@ import { FIFOCache } from '@/utils/FifoCache';
 import { parseCsvAsset } from '@/utils/csv';
 import { DataArray } from '@/services/models/simulation-service';
 
+// Note: This is currently used in compare datasets operator
+export const DATASET_VAR_NAME_PREFIX = 'data/';
+
 /**
  * Get Dataset from the data service
  * @return Dataset|null - the dataset, or null if none returned by API

@@ -1,7 +1,7 @@
 import { Dataset } from '@/types/Types';
 import { renameFnGenerator } from '@/components/workflow/ops/calibrate-ciemss/calibrate-utils';
 import { DataArray, parsePyCiemssMap, processAndSortSamplesByTimepoint } from '@/services/models/simulation-service';
-import { getDatasetResultCSV, mergeResults } from '@/services/dataset';
+import { DATASET_VAR_NAME_PREFIX, getDatasetResultCSV, mergeResults } from '@/services/dataset';
 import { ChartData } from '@/composables/useCharts';
 import { PlotValue } from './compare-datasets-operation';
 
@@ -18,6 +18,16 @@ export function isSimulationData(dataset: Dataset) {
 		dataset.fileNames?.find((name) => name === 'result_summary.csv')
 	);
 }
+
+/**
+ * Similar to `renameFnGenerator` but it generates a rename function for the dataset results. Prefix dataset column names with 'data/' to distinguish them from the simulation results
+ * @param label
+ * @returns
+ */
+const datasetRenameFnGenerator = (label: string) => (col: string) => {
+	if (col === 'timepoint_id' || col === 'sample_id') return col;
+	return `${DATASET_VAR_NAME_PREFIX}${col}:${label}`;
+};
 
 export async function fetchDatasetResults(datasetList: Dataset[]) {
 	// Fetch simulation results
@@ -43,7 +53,7 @@ export async function fetchDatasetResults(datasetList: Dataset[]) {
 		await Promise.all(
 			datasetList.map((dataset, datasetIndex) => {
 				if (isSimulationData(dataset)) return Promise.resolve([]);
-				return getDatasetResultCSV(dataset, dataset.fileNames?.[0] ?? '', renameFnGenerator(`${datasetIndex}`));
+				return getDatasetResultCSV(dataset, dataset.fileNames?.[0] ?? '', datasetRenameFnGenerator(`${datasetIndex}`));
 			})
 		)
 	).filter((result) => result.length > 0);
@@ -94,15 +104,14 @@ export const uniqueVarNames = (obj: Record<string, any>) => {
 };
 
 /**
- * Build variable name mapping for the non simulation result dataset
- * Prefix the variable name with 'data_' to distinguish it from the simulation result variables
+ * Build variable display name mapping for the non simulation result dataset which can be added to the pyciemss map
  */
 export const buildDatasetVarMapping = (dsets: DataArray[]) => {
 	const map: Record<string, any> = {};
 	dsets.forEach((dataset) => {
 		Object.keys(dataset[0]).forEach((key) => {
 			const varName = key.split(':')[0];
-			map[`data_${varName}`] = varName;
+			map[varName.replace(DATASET_VAR_NAME_PREFIX, '')] = varName;
 		});
 	});
 	return map;
@@ -134,7 +143,7 @@ export function buildChartData(
 
 	// Build pyciemss map for display variable name map for the simulation result variables
 	const pyciemssMap = parsePyCiemssMap(uniqueVarNames(result[0] ?? {}));
-	// Augment the pyciemss map with the dataset variable mapping
+	// Augment the pyciemss map with the dataset variable mapping.
 	Object.assign(pyciemssMap, buildDatasetVarMapping(datasetResults));
 
 	// Build translation map
