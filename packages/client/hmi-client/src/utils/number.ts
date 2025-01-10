@@ -74,7 +74,9 @@ export function nistToNumber(numStr: string): number {
  * @returns {string} The number in either exponential form or NIST form.
  */
 export function displayNumber(num: string | number): string {
-	const number = fixPrecisionError(parseFloat(num.toString()));
+	num = num.toString().replace(/\s/g, '');
+	if (Number.isNaN(Number(num))) return '';
+	const number = fixPrecisionError(parseFloat(num));
 	if (countDigits(number) > 6) return number.toExponential(3);
 	return numberToNist(number.toString());
 }
