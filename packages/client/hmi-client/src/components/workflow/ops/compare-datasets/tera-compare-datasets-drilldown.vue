@@ -213,7 +213,7 @@ const props = defineProps<{
 	node: WorkflowNode<CompareDatasetsState>;
 }>();
 
-const emit = defineEmits(['update-state', 'update-status', 'close']);
+const emit = defineEmits(['update-state', 'close']);
 
 const compareOptions: { label: string; value: CompareValue }[] = [
 	{ label: 'Compare the impact of interventions', value: CompareValue.IMPACT },
