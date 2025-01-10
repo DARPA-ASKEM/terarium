@@ -917,13 +917,13 @@ export function useCharts(
 		let previousThreshold = minValue;
 		thresholds.forEach((threshold) => {
 			labels.push(
-				`[${expressionFunctions.sensitivityBinFormatter(previousThreshold)}, ${expressionFunctions.sensitivityBinFormatter(threshold)}] ${unit ? `${unit}` : ''}`
+				`[${expressionFunctions.chartNumberFormatter(previousThreshold)}, ${expressionFunctions.chartNumberFormatter(threshold)}] ${unit ? `${unit}` : ''}`
 			);
 			previousThreshold = threshold;
 		});
 
 		labels.push(
-			`[${expressionFunctions.sensitivityBinFormatter(previousThreshold)}, ${expressionFunctions.sensitivityBinFormatter(maxValue)}] ${unit ? `${unit}` : ''}`
+			`[${expressionFunctions.chartNumberFormatter(previousThreshold)}, ${expressionFunctions.chartNumberFormatter(maxValue)}] ${unit ? `${unit}` : ''}`
 		);
 
 		// Assign bins to records and create the result map
@@ -1000,7 +1000,7 @@ export function useCharts(
 					options
 				);
 				// Add sensitivity annotation
-				const annotation = createForecastChartAnnotation('x', timepoint, 'Sensitivity analysis');
+				const annotation = createForecastChartAnnotation('x', timepoint, 'Sensitivity analysis', true);
 				lineSpec.layer[0].layer.push(annotation.layerSpec);
 
 				const spec = createSimulateSensitivityScatter(

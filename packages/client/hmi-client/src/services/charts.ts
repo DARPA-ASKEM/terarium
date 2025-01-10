@@ -26,11 +26,6 @@ export const expressionFunctions = {
 	tooltipFormatter: (value) => {
 		if (value === undefined) return 'N/A';
 		return fixPrecisionError(value);
-	},
-	// number formatting for sensitivity bins
-	sensitivityBinFormatter: (value) => {
-		if (value === undefined) return 'N/A';
-		return format('.5~g')(value); // 5 significant digits
 	}
 };
 
@@ -1176,7 +1171,7 @@ export function applyForecastChartAnnotations(chartSpec: any, annotations: Chart
 	return chartSpec;
 }
 
-export function createForecastChartAnnotation(axis: 'x' | 'y', datum: number, label: string) {
+export function createForecastChartAnnotation(axis: 'x' | 'y', datum: number, label: string, isVertical?: boolean) {
 	const layerSpec = {
 		description: `At ${axis} ${datum}, add a label '${label}'.`,
 		encoding: {
@@ -1192,9 +1187,11 @@ export function createForecastChartAnnotation(axis: 'x' | 'y', datum: number, la
 			{
 				mark: {
 					type: 'text',
-					align: 'left',
-					dx: 5,
-					dy: -5
+					align: 'center',
+					dx: 16,
+					dy: -16,
+					angle: isVertical ? 90 : 0,
+					baseline: 'top'
 				},
 				encoding: {
 					text: { value: label }
@@ -1326,7 +1323,7 @@ export function createSuccessCriteriaChart(
 			{
 				mark: {
 					type: 'text',
-					align: 'left',
+					align: 'center',
 					text: `Threshold = ${+threshold}`,
 					baseline: 'line-bottom'
 				},
@@ -1345,7 +1342,7 @@ export function createSuccessCriteriaChart(
 			{
 				mark: {
 					type: 'text',
-					align: 'left',
+					align: 'center',
 					text: `Average of worst ${100 - alpha}% = ${risk.toFixed(4)}`,
 					baseline: 'line-bottom'
 				},
@@ -1373,7 +1370,7 @@ export function createInterventionChartMarkers(
 		data: { values: data },
 		mark: {
 			type: 'text',
-			align: 'left',
+			align: 'center',
 			angle: 90,
 			dx: options.labelXOffset || 0 - 45,
 			dy: -10,
