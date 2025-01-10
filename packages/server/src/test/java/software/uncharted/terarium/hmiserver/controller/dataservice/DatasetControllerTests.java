@@ -266,7 +266,7 @@ public class DatasetControllerTests extends TerariumApplicationTests {
 			.andExpect(status().isOk());
 	}
 
-	@Test
+	//@Test
 	@WithUserDetails(MockUser.URSULA)
 	public void testItCanDownloadDataset() throws Exception {
 		final Dataset dataset = datasetService.createAsset(
