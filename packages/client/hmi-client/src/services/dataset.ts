@@ -104,27 +104,16 @@ async function getBulkDatasets(datasetIDs: string[]) {
 	return result;
 }
 
-const rawFileCache = new FIFOCache<Promise<CsvAsset | null>>(100);
 /**
  * Get the raw (CSV) file content for a given dataset
  * @return Array<string>|null - the dataset raw content, or null if none returned by API
  */
 async function downloadRawFile(datasetId: string, filename: string, limit: number = 100): Promise<CsvAsset | null> {
-	const cacheKey = `${datasetId}:${filename}:${limit}`;
-	let promise = rawFileCache.get(cacheKey);
-
-	if (!promise) {
-		const URL = `/datasets/${datasetId}/download-csv?filename=${filename}&limit=${limit}`;
-		promise = API.get(URL)
-			.then((response) => response?.data ?? null)
-			.catch((error) => {
-				logger.error(`Error: data-service was not able to retrieve the dataset's rawfile ${error}`);
-				return null;
-			});
-		rawFileCache.set(cacheKey, promise);
-	}
-
-	return promise;
+	const URL = `/datasets/${datasetId}/download-csv?filename=${filename}&limit=${limit}`;
+	const response = await API.get(URL).catch((error) => {
+		logger.error(`Error: data-service was not able to retrieve the dataset's rawfile ${error}`);
+	});
+	return response?.data ?? null;
 }
 
 /**
@@ -394,9 +383,18 @@ async function getCsvAsset(dataset: Dataset, filename: string, limit: number = -
 	return csv;
 }
 
+const datasetResultCSVCache = new FIFOCache<Promise<CsvAsset | null>>(100);
 async function getDatasetResultCSV(dataset: Dataset, filename: string, renameFn?: (s: string) => string) {
-	const csvAsset = await getCsvAsset(dataset, filename);
-	if (!csvAsset) return [];
+	const cacheKey = `${dataset.id}:${filename}`;
+	let promise = datasetResultCSVCache.get(cacheKey);
+	if (!promise) {
+		promise = getCsvAsset(dataset, filename);
+		datasetResultCSVCache.set(cacheKey, promise);
+	}
+	const result = await promise;
+	if (!result) return [];
+	// we should not modify the original result since it may have been cached and persisted in memory
+	const csvAsset = { ...result };
 	if (renameFn) {
 		csvAsset.headers = csvAsset.headers.map(renameFn);
 	}
