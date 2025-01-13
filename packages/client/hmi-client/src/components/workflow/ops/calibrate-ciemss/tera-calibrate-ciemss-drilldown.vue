@@ -490,7 +490,7 @@ import DataTable from 'primevue/datatable';
 import Dropdown from 'primevue/dropdown';
 import Column from 'primevue/column';
 import TeraInputNumber from '@/components/widgets/tera-input-number.vue';
-import { CalibrateMap, setupDatasetInput, setupCsvAsset, setupModelInput } from '@/services/calibrate-workflow';
+import { CalibrateMap, getFileName, setupCsvAsset, setupModelInput } from '@/services/calibrate-workflow';
 import { deleteAnnotation, updateChartSettingsBySelectedVariables } from '@/services/chart-settings';
 import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
 import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.vue';
@@ -504,7 +504,6 @@ import {
 	ClientEvent,
 	ClientEventType,
 	CsvAsset,
-	DatasetColumn,
 	ModelConfiguration,
 	InterventionPolicy,
 	ModelParameter,
@@ -617,8 +616,8 @@ const modelParameters = ref<ModelParameter[]>([]);
 
 const isOutputSettingsPanelOpen = ref(false);
 
-const datasetColumns = ref<DatasetColumn[]>();
 const dataset = shallowRef<Dataset | null>(null);
+const datasetColumns = computed(() => dataset.value?.columns);
 const csvAsset = shallowRef<CsvAsset | undefined>(undefined);
 const groundTruthData = computed<DataArray>(() => parseCsvAsset(csvAsset.value as CsvAsset));
 
@@ -1011,9 +1010,7 @@ const initialize = async () => {
 		// Get dataset
 		dataset.value = await getDataset(datasetId.value);
 		if (dataset.value) {
-			const { filename, datasetOptions } = await setupDatasetInput(dataset.value);
-			currentDatasetFileName.value = filename;
-			datasetColumns.value = datasetOptions;
+			currentDatasetFileName.value = getFileName(dataset.value);
 
 			setupCsvAsset(dataset.value).then((csv) => {
 				csvAsset.value = csv;
