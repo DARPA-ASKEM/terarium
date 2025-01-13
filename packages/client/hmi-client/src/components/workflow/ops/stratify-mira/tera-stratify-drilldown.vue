@@ -80,7 +80,7 @@
 					:value="executeResponse.value"
 					:traceback="executeResponse.traceback"
 				/>
-				<tera-model v-else-if="outputAmr" is-workflow is-save-for-reuse :assetId="outputAmr.id" @on-save="updateNode" />
+				<tera-model v-else-if="outputAmr" is-workflow is-save-for-reuse :assetId="outputAmr.id" />
 				<template v-else>
 					<tera-progress-spinner v-if="isStratifyInProgress" is-centered :font-size="2">
 						Processing...
@@ -121,7 +121,7 @@ import { blankStratifyGroup, StratifyGroup, StratifyOperationStateMira } from '.
 const props = defineProps<{
 	node: WorkflowNode<StratifyOperationStateMira>;
 }>();
-const emit = defineEmits(['append-output', 'update-state', 'close', 'select-output', 'update-output']);
+const emit = defineEmits(['append-output', 'update-state', 'close', 'select-output']);
 
 enum StratifyTabs {
 	Wizard = 'Wizard',
@@ -429,15 +429,6 @@ const hasCodeChange = () => {
 	}
 };
 const checkForCodeChange = debounce(hasCodeChange, 100);
-
-function updateNode(model: Model) {
-	if (!model) return;
-	outputAmr.value = model;
-	const outputPort = cloneDeep(props.node.outputs?.find((port) => port.value?.[0] === model.id));
-	if (!outputPort) return;
-	outputPort.label = model.header.name;
-	emit('update-output', outputPort);
-}
 
 watch(
 	() => codeText.value,

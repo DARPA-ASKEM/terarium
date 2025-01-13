@@ -3,14 +3,17 @@
  */
 
 import API from '@/api/api';
-import { isEmpty, cloneDeep } from 'lodash';
+import { isEmpty } from 'lodash';
 import { logger } from '@/utils/logger';
-import type { CsvAsset, CsvColumnStats, Dataset, PresignedURL } from '@/types/Types';
+import type { CsvAsset, Dataset, PresignedURL } from '@/types/Types';
 import { Ref } from 'vue';
 import { AxiosResponse } from 'axios';
-import { RunResults } from '@/types/SimulateConfig';
 import { FIFOCache } from '@/utils/FifoCache';
 import { parseCsvAsset } from '@/utils/csv';
+import { DataArray } from '@/services/models/simulation-service';
+
+// Note: This is currently used in compare datasets operator
+export const DATASET_VAR_NAME_PREFIX = 'data/';
 
 /**
  * Get Dataset from the data service
@@ -100,28 +103,16 @@ async function getBulkDatasets(datasetIDs: string[]) {
 	return result;
 }
 
-const rawFileCache = new FIFOCache<Promise<CsvAsset | null>>(100);
 /**
  * Get the raw (CSV) file content for a given dataset
  * @return Array<string>|null - the dataset raw content, or null if none returned by API
  */
 async function downloadRawFile(datasetId: string, filename: string, limit: number = 100): Promise<CsvAsset | null> {
-	const cacheKey = `${datasetId}:${filename}:${limit}`;
-	let promise = rawFileCache.get(cacheKey);
-
-	if (!promise) {
-		const URL = `/datasets/${datasetId}/download-csv?filename=${filename}&limit=${limit}`;
-		console.log('URL', URL);
-		promise = API.get(URL)
-			.then((response) => response?.data ?? null)
-			.catch((error) => {
-				logger.error(`Error: data-service was not able to retrieve the dataset's rawfile ${error}`);
-				return null;
-			});
-		rawFileCache.set(cacheKey, promise);
-	}
-
-	return promise;
+	const URL = `/datasets/${datasetId}/download-csv?filename=${filename}&limit=${limit}`;
+	const response = await API.get(URL).catch((error) => {
+		logger.error(`Error: data-service was not able to retrieve the dataset's rawfile ${error}`);
+	});
+	return response?.data ?? null;
 }
 
 /**
@@ -157,8 +148,7 @@ async function createDataset(dataset: Dataset): Promise<Dataset | null> {
  * share the same name as the file and can optionally have a description
  * @param repoOwnerAndName
  * @param path
- * @param userName
- * @param projectId
+ * @param userId
  * @param url the source url of the file
  */
 async function createNewDatasetFromGithubFile(repoOwnerAndName: string, path: string, userId: string, url: string) {
@@ -201,7 +191,7 @@ async function createNewDatasetFromGithubFile(repoOwnerAndName: string, path: st
  * share the same name as the file and can optionally have a description
  * @param progress reference to display in ui
  * @param file an arbitrary or csv file
- * @param userName uploader of this dataset
+ * @param userId
  * @param description description of the file. Optional. If not given description will be just the csv name
  */
 async function createNewDatasetFromFile(
@@ -252,13 +242,15 @@ async function createDatasetFromSimulationResult(
 	projectId: string,
 	simulationId: string,
 	datasetName: string | null,
-	addToProject?: boolean
+	addToProject: boolean = true,
+	modelConfigurationId?: string,
+	interventionPolicyId?: string
 ): Promise<Dataset | null> {
-	if (addToProject === undefined) addToProject = true;
 	try {
-		const response: AxiosResponse<Dataset> = await API.post(
-			`/simulations/${simulationId}/create-result-as-dataset/${projectId}?dataset-name=${datasetName}&add-to-project=${addToProject}`
-		);
+		let URL = `/simulations/${simulationId}/create-result-as-dataset/${projectId}?dataset-name=${datasetName}&add-to-project=${addToProject}`;
+		if (modelConfigurationId) URL += `&model-configuration-id=${modelConfigurationId}`;
+		if (interventionPolicyId) URL += `&intervention-policy-id=${interventionPolicyId}`;
+		const response: AxiosResponse<Dataset> = await API.post(URL);
 		return response.data as Dataset;
 	} catch (error) {
 		logger.error(`/simulations/{id}/create-result-as-dataset/{projectId} not responding:  ${error}`, {
@@ -272,93 +264,6 @@ const saveDataset = async (projectId: string, simulationId: string | undefined, 
 	if (!simulationId) return false;
 	const response = await createDatasetFromSimulationResult(projectId, simulationId, datasetName);
 	return response !== null;
-};
-
-/**
- * This is a client side function to create a CsvAsset similar to the getCsv function from DatasetResource.java
- * The reason we reimplement this client side is because runResults already has all of the data we need, except
- * it's not in the correct format necessary to be used by the TeraDatasetDatatable component.
- * @param runResults
- * @param runId
- * @returns CsvAsset object with the data from the runResults
- */
-const createCsvAssetFromRunResults = (runResults: RunResults, runId?: string): CsvAsset | null => {
-	const runResult: RunResults = cloneDeep(runResults);
-	const runIdList = runId ? [runId] : Object.keys(runResult);
-	if (runIdList.length === 0) return null;
-
-	const csvColHeaders = Object.keys(runResult[runIdList[0]][0]);
-	let csvData: CsvAsset = {
-		headers: csvColHeaders,
-		csv: [csvColHeaders],
-		rowCount: 0,
-		stats: []
-	};
-
-	const csvColumns: { [key: string]: number[] } = {};
-
-	runIdList.forEach((id) => {
-		csvData = {
-			...csvData,
-			rowCount: csvData.rowCount + runResult[id].length
-		};
-		runResult[id].forEach((row) => {
-			const rowValues = Object.values(row);
-			csvData.csv.push(rowValues as any);
-
-			csvColHeaders.forEach((header, index) => {
-				if (!csvColumns[header]) {
-					csvColumns[header] = [];
-				}
-				csvColumns[header].push(+rowValues[index]);
-			});
-		});
-	});
-
-	csvColHeaders.forEach((header) => {
-		csvData.stats!.push(getCsvColumnStats(csvColumns[header]));
-	});
-
-	return csvData;
-};
-
-/**
- * This is a client side implementation of the getStats function from DatasetResource.java
- * NOTE: if performance ever becomes an issue, we can write a new endpoint to call getStats from the backend
- * @param csvColumn
- * @returns CsvColumnStats object
- */
-const getCsvColumnStats = (csvColumn: number[]): CsvColumnStats => {
-	const sortedCol = [...csvColumn].sort((a, b) => a - b);
-
-	const minValue = sortedCol[0];
-	const maxValue = sortedCol[sortedCol.length - 1];
-	const mean = sortedCol.reduce((a, b) => a + b, 0) / sortedCol.length;
-	const median = sortedCol[Math.floor(sortedCol.length / 2)];
-
-	// Calculate standard deviation
-	const squaredDifferences = sortedCol.map((value) => (value - mean) ** 2);
-	const variance = squaredDifferences.reduce((a, b) => a + b, 0) / squaredDifferences.length;
-	const sd = Math.sqrt(variance);
-
-	// Set up bins
-	const binCount = 10;
-	const stepSize = (maxValue - minValue) / (binCount - 1);
-	let bins: number[];
-
-	if (stepSize === 0) {
-		// Every value is the same, so just return a single bin
-		bins = [sortedCol.length];
-	} else {
-		bins = Array(binCount).fill(0);
-		// Fill bins
-		sortedCol.forEach((value) => {
-			const binIndex = Math.abs(Math.floor((value - minValue) / stepSize));
-			bins[binIndex]++;
-		});
-	}
-
-	return { bins, minValue, maxValue, mean, median, sd };
 };
 
 async function getRawContent(
@@ -385,19 +290,48 @@ async function getCsvAsset(dataset: Dataset, filename: string, limit: number = -
 	// If it's an ESGF dataset or a NetCDF file, we don't want to download the raw content
 	if (!dataset?.id || dataset.esgfId || dataset.metadata?.format === 'netcdf') return null;
 	const csv = (await downloadRawFile(dataset.id as string, filename, limit)) as CsvAsset;
-	csv.headers = csv.headers.map((header) => header.trim());
 	return csv;
 }
 
+const datasetResultCSVCache = new FIFOCache<Promise<CsvAsset | null>>(100);
 async function getDatasetResultCSV(dataset: Dataset, filename: string, renameFn?: (s: string) => string) {
-	const csvAsset = await getCsvAsset(dataset, filename);
-	if (!csvAsset) return [];
+	const cacheKey = `${dataset.id}:${filename}`;
+	let promise = datasetResultCSVCache.get(cacheKey);
+	if (!promise) {
+		promise = getCsvAsset(dataset, filename);
+		datasetResultCSVCache.set(cacheKey, promise);
+	}
+	const result = await promise;
+	if (!result) return [];
+	// we should not modify the original result since it may have been cached and persisted in memory
+	const csvAsset = { ...result };
 	if (renameFn) {
-		csvAsset.headers = csvAsset.headers.map(renameFn);
+		csvAsset.headers = csvAsset.headers.map((header) => header.trim()).map(renameFn);
 	}
 	const output = parseCsvAsset(csvAsset);
-	return output;
+	return output as DataArray;
 }
+
+/**
+ * Merge multiple datasets into a single dataset
+ * For example, if you have two datasets with the following data:
+ * dataset1 = [{a: 1, b: 2}, {a: 3, b: 4}]
+ * dataset2 = [{c: 5, d: 6}, {c: 7, d: 8}]
+ * The merged dataset will be:
+ * [{a: 1, b: 2, c: 5, d: 6}, {a: 3, b: 4, c: 7, d: 8}]
+ * @param results The datasets to merge
+ * @returns The merged dataset
+ */
+const mergeResults = (...results: DataArray[]) => {
+	const maxLength = Math.max(...results.map((result) => result.length));
+	const result: DataArray = [];
+	for (let i = 0; i < maxLength; i++) {
+		const row: Record<string, number> = {};
+		results.forEach((dataset) => Object.assign(row, dataset[i]));
+		result.push(row);
+	}
+	return result;
+};
 
 export {
 	getDataset,
@@ -412,9 +346,9 @@ export {
 	createNewDatasetFromGithubFile,
 	createDatasetFromSimulationResult,
 	saveDataset,
-	createCsvAssetFromRunResults,
 	createDataset,
 	getRawContent,
 	getCsvAsset,
-	getDatasetResultCSV
+	getDatasetResultCSV,
+	mergeResults
 };

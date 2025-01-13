@@ -14,14 +14,25 @@ class InterventionsFromDocument(BaseModel):
     amr: str  # expects AMR in a stringified JSON object
 
 
+class InterventionsFromDataset(BaseModel):
+    dataset: List[str]
+    amr: str  # expects AMR in a stringified JSON object
+
+
 class ConfigureModelDataset(BaseModel):
     dataset: List[str]
     amr: str  # expects AMR in a stringified JSON object
     matrix: str = None
 
+
+class DatasetStatistics(BaseModel):
+    datasetUrl: str  # expects a URL of a CSV file
+
+
 class DatasetCardModel(BaseModel):
     dataset: str  # expects a stringified JSON object
     research_paper: str = None
+
 
 class ModelCardModel(BaseModel):
     amr: str  # expects AMR in a stringified JSON object
@@ -32,12 +43,18 @@ class ModelCompareModel(BaseModel):
     amrs: List[str]  # expects AMRs to be a stringified JSON object
     goal: str = None
 
-class EquationsCleanup(BaseModel):
+
+class EquationsModel(BaseModel):
     equations: List[str]
 
 
 class EquationsFromImage(BaseModel):
     image: str  # expects a base64 encoded image
+
+
+class ChartAnnotationModel(BaseModel):
+    preamble: str
+    instruction: str
 
 
 class EmbeddingModel(BaseModel):

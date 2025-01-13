@@ -55,6 +55,7 @@ import software.uncharted.terarium.hmiserver.service.CurrentUserService;
 import software.uncharted.terarium.hmiserver.service.data.DatasetService;
 import software.uncharted.terarium.hmiserver.service.data.ProjectAssetService;
 import software.uncharted.terarium.hmiserver.service.data.ProjectService;
+import software.uncharted.terarium.hmiserver.service.gollm.DatasetStatistics;
 import software.uncharted.terarium.hmiserver.utils.Messages;
 import software.uncharted.terarium.hmiserver.utils.rebac.Schema;
 
@@ -69,6 +70,7 @@ public class DatasetController {
 	final Config config;
 
 	final DatasetService datasetService;
+	final DatasetStatistics datasetStatistics;
 	final ClimateDataProxy climateDataProxy;
 
 	final JsDelivrProxy githubProxy;
@@ -289,11 +291,6 @@ public class DatasetController {
 			);
 		}
 
-		// We have a parser over our CSV file. Now for the front end we need to create a matrix of strings
-		// to represent the CSV file up to our limit. Then we need to calculate the column statistics.
-
-		// TODO - this should be done on csv post/push, and in task to handle large files.
-
 		int rowcount = 0;
 		final List<List<String>> csv = new ArrayList<>();
 
@@ -304,14 +301,7 @@ public class DatasetController {
 			rowcount++;
 		}
 
-		final List<CsvColumnStats> csvColumnStats = DatasetService.calculateColumnStatistics(csv);
-
-		final CsvAsset csvAsset = new CsvAsset(
-			csv,
-			csvColumnStats,
-			new ArrayList<>(csvParser.getHeaderMap().keySet()),
-			rowcount
-		);
+		final CsvAsset csvAsset = new CsvAsset(csv, new ArrayList<>(csvParser.getHeaderMap().keySet()), rowcount);
 
 		final CacheControl cacheControl = CacheControl.maxAge(
 			config.getCacheHeadersMaxAge(),
@@ -715,6 +705,17 @@ public class DatasetController {
 				// add the filename to existing file names
 				if (!updatedDataset.get().getFileNames().contains(filename)) {
 					updatedDataset.get().getFileNames().add(filename);
+				}
+
+				// Calculate the statistics for the columns
+				try {
+					final PresignedURL datasetUrl = datasetService
+						.getDownloadUrl(updatedDataset.get().getId(), filename)
+						.orElseThrow(() -> new IllegalArgumentException(messages.get("dataset.download.url.not.found")));
+
+					datasetStatistics.add(updatedDataset.get(), datasetUrl);
+				} catch (final Exception e) {
+					log.error("Error calculating statistics for dataset {}", updatedDataset.get().getId(), e);
 				}
 
 				datasetService.updateAsset(updatedDataset.get(), projectId, hasWritePermission);

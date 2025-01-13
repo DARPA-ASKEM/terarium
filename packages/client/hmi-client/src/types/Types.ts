@@ -118,7 +118,6 @@ export interface ChartAnnotation extends TerariumAsset {
 
 export interface CsvAsset {
     csv: string[][];
-    stats?: CsvColumnStats[];
     headers: string[];
     rowCount: number;
 }
@@ -194,12 +193,18 @@ export interface DatasetColumn extends TerariumEntity {
     name: string;
     fileName: string;
     dataType: ColumnType;
+    stats?: DatasetColumnStats;
     formatStr?: string;
     annotations: string[];
     metadata?: any;
     grounding?: Grounding;
     description?: string;
     dataset?: Dataset;
+}
+
+export interface DatasetColumnStats {
+    numericStats: NumericColumnStats;
+    nonNumericStats: NonNumericColumnStats;
 }
 
 export interface DocumentAsset extends TerariumAsset {
@@ -756,6 +761,26 @@ export interface Links {
     self: string;
 }
 
+export interface NumericColumnStats {
+    mean: number;
+    median: number;
+    min: number;
+    max: number;
+    quartiles: number[];
+    data_type: string;
+    std_dev: number;
+    unique_values: number;
+    missing_values: number;
+    histogram_bins: HistogramBin[];
+}
+
+export interface NonNumericColumnStats {
+    data_type: string;
+    unique_values: number;
+    most_common: { [index: string]: number };
+    missing_values: number;
+}
+
 export interface DocumentExtraction {
     fileName: string;
     assetType: ExtractionAssetType;
@@ -868,6 +893,12 @@ export interface AuthorityInstance {
     id: number;
     mask: number;
     authority: Authority;
+}
+
+export interface HistogramBin {
+    start: number;
+    end: number;
+    count: number;
 }
 
 export interface OdeSemantics {
@@ -1112,6 +1143,7 @@ export enum ClientEventType {
     TaskGollmGenerateSummary = "TASK_GOLLM_GENERATE_SUMMARY",
     TaskGollmInterventionsFromDocument = "TASK_GOLLM_INTERVENTIONS_FROM_DOCUMENT",
     TaskGollmModelCard = "TASK_GOLLM_MODEL_CARD",
+    TaskGollmDatasetStatistics = "TASK_GOLLM_DATASET_STATISTICS",
     TaskMiraAmrToMmt = "TASK_MIRA_AMR_TO_MMT",
     TaskMiraGenerateModelLatex = "TASK_MIRA_GENERATE_MODEL_LATEX",
     TaskMiraCompareModelsConcepts = "TASK_MIRA_COMPARE_MODELS_CONCEPTS",

@@ -12,7 +12,9 @@
 				class="mb-3"
 			/>
 
-			<label>Select configuration representing best and generous estimates of the initial conditions</label>
+			<label :class="{ 'disabled-label': isEmpty(filterModelConfigurations) || isFetchingModelInformation }"
+				>Select configuration representing best and generous estimates of the initial conditions</label
+			>
 			<Dropdown
 				:model-value="scenario.modelConfigSpec.id"
 				placeholder="Select a configuration"
@@ -127,7 +129,9 @@
 			</div>
 		</template>
 		<template #outputs>
-			<label>Select an output metric</label>
+			<label :class="{ 'disabled-label': isEmpty(modelStateOptions) || isFetchingModelInformation }"
+				>Select an output metric</label
+			>
 			<MultiSelect
 				:disabled="isEmpty(modelStateOptions) || isFetchingModelInformation"
 				:model-value="scenario.simulateSpec.ids"
@@ -278,5 +282,8 @@ watch(
 	padding: var(--gap-2) var(--gap-1);
 	margin: var(--gap-0-5) 0;
 	background-color: var(--surface-100);
+}
+.disabled-label {
+	color: var(--text-color-disabled);
 }
 </style>

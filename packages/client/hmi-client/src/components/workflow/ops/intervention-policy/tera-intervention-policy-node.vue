@@ -10,7 +10,6 @@
 				/>
 			</li>
 		</ul>
-		<tera-operator-placeholder :node="node" v-else />
 		<tera-intervention-summary-card
 			class="intervention-title"
 			v-for="(intervention, index) in node.state.interventionPolicy.interventions"
@@ -33,7 +32,6 @@
 import { computed, ref, watch } from 'vue';
 import { WorkflowNode, WorkflowPortStatus } from '@/types/workflow';
 import Button from 'primevue/button';
-import TeraOperatorPlaceholder from '@/components/operator/tera-operator-placeholder.vue';
 import _, { cloneDeep, groupBy } from 'lodash';
 import { blankIntervention, flattenInterventionData } from '@/services/intervention-policy';
 import { createInterventionChart } from '@/services/charts';
@@ -61,9 +59,7 @@ const interventionEventHandler = async (event: ClientEvent<TaskResponse>) => {
 useClientEvent(ClientEventType.TaskGollmInterventionsFromDocument, interventionEventHandler);
 
 const isLoading = computed(() => taskIds.value.length > 0);
-
-const modelInput = props.node.inputs.find((input) => input.type === 'modelId');
-const isModelInputConnected = computed(() => modelInput?.status === WorkflowPortStatus.CONNECTED);
+const isModelInputConnected = ref(false);
 
 const groupedOutputParameters = computed(() =>
 	Object.fromEntries(
@@ -99,6 +95,11 @@ watch(
 		const modelId = inputs.find((input) => input.type === 'modelId')?.value?.[0];
 		const state = cloneDeep(props.node.state);
 
+		const modelInputs = inputs.filter((input) => input.type === 'modelId');
+		if (modelInputs[0].status === WorkflowPortStatus.CONNECTED) {
+			isModelInputConnected.value = true;
+		}
+
 		if (!modelId || modelId === state.interventionPolicy?.modelId) return;
 
 		// Reset previous model cache
@@ -108,7 +109,7 @@ watch(
 		};
 		emit('update-state', state);
 	},
-	{ deep: true }
+	{ immediate: true, deep: true }
 );
 
 watch(

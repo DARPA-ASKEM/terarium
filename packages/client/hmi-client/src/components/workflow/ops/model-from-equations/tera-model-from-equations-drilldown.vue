@@ -171,14 +171,10 @@
 				content-width="100%"
 			>
 				<template #content>
-					<tera-drilldown-preview :is-loading="isModelLoading">
-						<tera-model
-							v-if="selectedModel"
-							is-workflow
-							is-save-for-reuse
-							:assetId="selectedModel.id"
-							@on-save="onModelSaveEvent"
-						/>
+					<!--The isOutputOpen condition enables the model diagram within tera-model to render properly
+						since we need some sort of width available-->
+					<tera-drilldown-preview v-if="isOutputOpen" :is-loading="isModelLoading">
+						<tera-model v-if="selectedModel" is-workflow is-save-for-reuse :asset-id="selectedModel.id" />
 						<tera-operator-placeholder v-else :node="node" class="h-100">
 							<p v-if="isModelLoading">Model is being created...</p>
 							<p v-else>Select equations to create a model</p>
@@ -217,7 +213,7 @@ import { logger } from '@/utils/logger';
 import RadioButton from 'primevue/radiobutton';
 import { ModelFromEquationsState, EquationBlock } from './model-from-equations-operation';
 
-const emit = defineEmits(['close', 'update-state', 'append-output', 'update-output', 'select-output']);
+const emit = defineEmits(['close', 'update-state', 'append-output', 'select-output']);
 const props = defineProps<{
 	node: WorkflowNode<ModelFromEquationsState>;
 }>();
@@ -495,14 +491,6 @@ function getEquations() {
 
 function getEquationErrorLabel(equation) {
 	return equation.asset.extractionError ? "Couldn't extract equation" : '';
-}
-
-function onModelSaveEvent(model: Model) {
-	if (!model) return;
-	const outputPort = cloneDeep(props.node.outputs?.find((port) => port.value?.[0] === model.id));
-	if (!outputPort) return;
-	outputPort.label = model.header.name;
-	emit('update-output', outputPort);
 }
 
 watch(
