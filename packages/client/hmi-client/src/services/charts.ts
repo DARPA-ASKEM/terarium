@@ -473,7 +473,7 @@ export function createForecastChart(
 				text: options.title,
 				anchor: 'start',
 				subtitle: ' ',
-				subtitlePadding: 4
+				subtitlePadding: 0
 			}
 		: null;
 
@@ -530,8 +530,9 @@ export function createForecastChart(
 		symbolSize: 200,
 		labelFontSize: isCompact ? 8 : 12,
 		labelOffset: isCompact ? 2 : 4,
-		labelLimit: isCompact ? 50 : 150,
+		labelLimit: isCompact ? 100 : 150,
 		symbolType: 'stroke',
+		offset: isCompact ? 8 : 16,
 		...options.legendProperties,
 		// Add columns if legend would overflow
 		columns: calculateLegendColumns(isCompact, estimatedWidth, options.width, legendItems.length)
@@ -748,7 +749,9 @@ export function createForecastChart(
 				}
 			]
 		};
-		layerSpec.layer.push(verticalLineLayer);
+		if (!isCompact) {
+			layerSpec.layer.push(verticalLineLayer);
+		}
 		// Add a small rectangle behind the timeLabelLayer to make the time more readable
 		const timeLabelBackgroundLayer = {
 			mark: {
@@ -784,7 +787,9 @@ export function createForecastChart(
 				}
 			}
 		};
-		layerSpec.layer.push(timeLabelBackgroundLayer);
+		if (!isCompact) {
+			layerSpec.layer.push(timeLabelBackgroundLayer);
+		}
 
 		// Add a label with the current X value (time) for the vertical line
 		const timeLabelLayer = {
@@ -792,8 +797,7 @@ export function createForecastChart(
 				type: 'text',
 				align: 'center',
 				color: '#111111',
-				dx: 0,
-				dy: -options.height / 2
+				dx: 0
 			},
 			encoding: {
 				text: {
@@ -803,6 +807,9 @@ export function createForecastChart(
 				x: {
 					field: statisticsLayer.timeField,
 					type: 'quantitative'
+				},
+				y: {
+					value: 0
 				},
 				opacity: {
 					condition: [
@@ -821,7 +828,9 @@ export function createForecastChart(
 				}
 			}
 		};
-		layerSpec.layer.push(timeLabelLayer);
+		if (!isCompact) {
+			layerSpec.layer.push(timeLabelLayer);
+		}
 
 		// Add tooltip points for the vertical line
 		const pointLayer = {
@@ -863,7 +872,9 @@ export function createForecastChart(
 				}
 			}
 		};
-		layerSpec.layer.push(pointLayer);
+		if (!isCompact) {
+			layerSpec.layer.push(pointLayer);
+		}
 
 		// Add labels for each point for tooltip.
 		// This is the base layer with a white stroke around it to make the text readable
@@ -916,7 +927,9 @@ export function createForecastChart(
 				}
 			}
 		};
-		layerSpec.layer.push(labelLayerBase);
+		if (!isCompact) {
+			layerSpec.layer.push(labelLayerBase);
+		}
 		// This is the top layer no stroke
 		const labelLayer = {
 			mark: {
@@ -964,7 +977,9 @@ export function createForecastChart(
 				}
 			}
 		};
-		layerSpec.layer.push(labelLayer);
+		if (!isCompact) {
+			layerSpec.layer.push(labelLayer);
+		}
 
 		spec.layer.push(layerSpec);
 	}
