@@ -245,7 +245,7 @@ import { createInterventionChart } from '@/services/charts';
 import VegaChart from '@/components/widgets/VegaChart.vue';
 import TeraSaveAssetModal from '@/components/project/tera-save-asset-modal.vue';
 import { useProjects } from '@/composables/project';
-import { interventionPolicyFromDocument } from '@/services/goLLM';
+import { interventionPolicyFromDocument, interventionPolicyFromDataset } from '@/services/goLLM';
 import { downloadDocumentAsset, getDocumentAsset, getDocumentFileAsText } from '@/services/document-assets';
 import TeraPdfPanel from '@/components/widgets/tera-pdf-panel.vue';
 import TeraInterventionCard from './tera-intervention-card.vue';
@@ -348,6 +348,12 @@ const documentIds = computed(() =>
 		.filter((input) => input.type === 'documentId' && input.status === 'connected')
 		.map((input) => input.value?.[0]?.documentId)
 		.filter((id): id is string => id !== undefined)
+);
+
+const datasetIds = computed(() =>
+	props.node.inputs
+		.filter((input) => input.type === 'datasetId' && input.status === 'connected')
+		.map((input) => input.value?.[0])
 );
 
 const parameterOptions = computed(() => {
@@ -608,8 +614,33 @@ const extractInterventionPolicyFromInputs = async () => {
 			}
 		});
 	}
+
+	if (datasetIds.value) {
+		const promiseList = [] as Promise<TaskResponse | null>[];
+		datasetIds.value.forEach((datasetId) => {
+			promiseList.push(
+				interventionPolicyFromDataset(datasetId, model.value?.id as string, props.node.workflowId, props.node.id)
+			);
+		});
+		const responsesRaw = await Promise.all(promiseList);
+		// updateIntervention(responsesRaw)
+
+		responsesRaw.forEach((resp) => {
+			if (resp) {
+				state.taskIds.push(resp.id);
+			}
+		});
+	}
 	emit('update-state', state);
 };
+
+// const updateIntervention = (interventions) => {
+// 	const state = cloneDeep(props.node.state);
+// 	console.log('interventions', interventions)
+// 	console.log('state.interventionPolicy', state.interventionPolicy)
+// 	state.interventionPolicy.interventions.push(...interventions)
+// 	emit('update-state', state);
+// }
 
 const onSelectChartChange = () => {
 	const state = cloneDeep(props.node.state);

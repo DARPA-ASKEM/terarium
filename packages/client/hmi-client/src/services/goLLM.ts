@@ -55,6 +55,24 @@ export async function interventionPolicyFromDocument(
 	return data;
 }
 
+export async function interventionPolicyFromDataset(
+	datasetId: string,
+	modelId: string,
+	workflowId?: string,
+	nodeId?: string
+) {
+	const { data } = await API.get<TaskResponse>('/gollm/interventions-from-dataset', {
+		params: {
+			'model-id': modelId,
+			'dataset-id': datasetId,
+			'workflow-id': workflowId,
+			'node-id': nodeId
+		}
+	});
+	return data;
+	// return {"name":"New Intervention","staticInterventions":[{"type":"parameter","appliedTo":""}],"dynamicInterventions":[]};
+}
+
 export async function enrichModelMetadata(modelId: string, documentId: string, overwrite: boolean): Promise<void> {
 	try {
 		await API.get('/gollm/enrich-model-metadata', {
