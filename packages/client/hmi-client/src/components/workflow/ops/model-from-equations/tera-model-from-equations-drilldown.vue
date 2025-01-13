@@ -171,12 +171,14 @@
 				content-width="100%"
 			>
 				<template #content>
-					<tera-drilldown-preview :is-loading="isModelLoading">
+					<!--The isOutputOpen condition enables the model diagram within tera-model to render properly
+						since we need some sort of width available-->
+					<tera-drilldown-preview v-if="isOutputOpen" :is-loading="isModelLoading">
 						<tera-model
 							v-if="selectedModel"
 							is-workflow
 							is-save-for-reuse
-							:assetId="selectedModel.id"
+							:asset-id="selectedModel.id"
 							@on-save="onModelSaveEvent"
 						/>
 						<tera-operator-placeholder v-else :node="node" class="h-100">
