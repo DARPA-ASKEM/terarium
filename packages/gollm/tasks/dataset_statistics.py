@@ -1,7 +1,8 @@
+import numpy as np
+import pandas as pd
 import sys
 import traceback
-import pandas as pd
-import numpy as np
+
 from entities import DatasetStatistics
 from taskrunner import TaskRunnerInterface
 

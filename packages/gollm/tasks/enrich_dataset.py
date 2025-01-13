@@ -1,9 +1,9 @@
 import sys
+import traceback
 
 from chains import enrich_dataset_chain
 from entities import DatasetCardModel
 from llms.openai.OpenAiTools import OpenAiTools
-
 from taskrunner import TaskRunnerInterface
 
 
@@ -31,7 +31,7 @@ def main():
         taskrunner.write_output_dict_with_timeout({"response": response})
 
     except Exception as e:
-        sys.stderr.write(f"Error: {str(e)}\n")
+        sys.stderr.write(traceback.format_exc())
         sys.stderr.flush()
         exit_code = 1
 
