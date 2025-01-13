@@ -401,6 +401,7 @@ public class ReBACService {
 	}
 
 	@Observed(name = "function_profile")
+	// https://github.com/DARPA-ASKEM/terarium/issues/6008
 	public PermissionRole getAdminRole() {
 		final RolesResource rolesResource = keycloak.realm(REALM_NAME).roles();
 		for (final RoleRepresentation roleRepresentation : rolesResource.list()) {

@@ -53,8 +53,7 @@ useClientEvent(ClientEventType.TaskGollmConfigureModelFromDataset, configModelEv
 
 const isLoading = computed(() => modelConfigTaskIds.value.length > 0);
 
-const modelInput = props.node.inputs.find((input) => input.type === 'modelId');
-const isModelInputConnected = computed(() => modelInput?.status === WorkflowPortStatus.CONNECTED);
+const isModelInputConnected = ref(false);
 
 // Update the node with the new input ports
 watch(
@@ -66,7 +65,11 @@ watch(
 		const documentInputs = inputs.filter((input) => input.type === 'documentId');
 		const datasetInputs = inputs.filter((input) => input.type === 'datasetId');
 		const modelInputs = inputs.filter((input) => input.type === 'modelId');
-		const modelId = modelInputs?.[0]?.value?.[0];
+		const modelId = modelInputs[0]?.value?.[0];
+
+		if (modelInputs[0].status === WorkflowPortStatus.CONNECTED) {
+			isModelInputConnected.value = true;
+		}
 
 		// If all document inputs are connected, add a new document input port
 		if (documentInputs.every((input) => input.status === WorkflowPortStatus.CONNECTED)) {
@@ -106,7 +109,7 @@ watch(
 			}
 		}
 	},
-	{ deep: true }
+	{ immediate: true, deep: true }
 );
 
 watch(
