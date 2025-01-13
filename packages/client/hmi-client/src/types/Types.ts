@@ -771,7 +771,7 @@ export interface NumericColumnStats {
     std_dev: number;
     unique_values: number;
     missing_values: number;
-    histogram_bins: number[];
+    histogram_bins: HistogramBin[];
 }
 
 export interface NonNumericColumnStats {
@@ -893,6 +893,12 @@ export interface AuthorityInstance {
     id: number;
     mask: number;
     authority: Authority;
+}
+
+export interface HistogramBin {
+    start: number;
+    end: number;
+    count: number;
 }
 
 export interface OdeSemantics {

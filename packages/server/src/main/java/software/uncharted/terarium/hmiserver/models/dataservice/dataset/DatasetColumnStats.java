@@ -38,7 +38,7 @@ public class DatasetColumnStats {
 		private int missingValues;
 
 		@JsonProperty("histogram_bins")
-		private double[] histogramBins;
+		private HistogramBin[] histogramBins;
 	}
 
 	@Data
@@ -55,5 +55,13 @@ public class DatasetColumnStats {
 
 		@JsonProperty("missing_values")
 		private int missingValues;
+	}
+
+	@Data
+	public static class HistogramBin {
+
+		private double start;
+		private double end;
+		private int count;
 	}
 }

@@ -105,7 +105,7 @@
 import { ref, watch } from 'vue';
 import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
-import type { CsvAsset, DatasetColumn } from '@/types/Types';
+import type { CsvAsset, DatasetColumn, HistogramBin } from '@/types/Types';
 import MultiSelect from 'primevue/multiselect';
 import Button from 'primevue/button';
 import Chart from 'primevue/chart';
@@ -163,7 +163,6 @@ const CHART_OPTIONS = {
 			enabled: true,
 			position: 'nearest',
 			displayColors: false,
-			beforeTitle: 'Count:',
 			backgroundColor: '#666666dd'
 		}
 	},
@@ -195,14 +194,9 @@ const selectedColumns = ref<string[]>(props.rawContent.headers);
 const statistics = ref<Map<string, ColumnStats>>(new Map());
 
 // Given the bins for a column set up the object needed for the chart.
-const setBarChartData = (bins: number[]): ChartData => {
+const setBarChartData = (bins: HistogramBin[]): ChartData => {
 	const documentStyle = getComputedStyle(document.documentElement);
-	const dummyLabels: string[] = [];
-	// reverse the bins so that the chart is displayed in the correct order
-	bins.reverse();
-	for (let i = 0; i < bins.length; i++) {
-		dummyLabels.push(i.toString());
-	}
+	const dummyLabels = bins.map((bin) => `[${bin.start}—${bin.end}]`);
 	return {
 		labels: dummyLabels,
 		datasets: [
@@ -210,7 +204,7 @@ const setBarChartData = (bins: number[]): ChartData => {
 				label: 'Count',
 				backgroundColor: documentStyle.getPropertyValue('--primary-color'),
 				hoverBackgroundColor: documentStyle.getPropertyValue('--primary-color-light'),
-				data: bins,
+				data: bins.map((bin) => bin.count),
 				categoryPercentage: CATEGORYPERCENTAGE,
 				barPercentage: BARPERCENTAGE,
 				minBarLength: MINBARLENGTH
