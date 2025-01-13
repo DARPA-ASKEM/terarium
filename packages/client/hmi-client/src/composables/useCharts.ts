@@ -342,7 +342,8 @@ export function useCharts(
 								null,
 								options
 							),
-							annotations
+							annotations,
+							0 // Since first sample layer doesn't exist for this chart, statistic layer is the first layer with index 0 for the annotation
 						)
 					: createQuantilesForecastChart(
 							chartData.value?.resultGroupByTimepoint ?? [],
