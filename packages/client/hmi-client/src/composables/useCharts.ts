@@ -239,7 +239,7 @@ export function useCharts(
 				sampleLayerVariables.push(`${chartData.value?.pyciemssMap[varName]}:${i}`);
 				statLayerVariables.push(`${chartData.value?.pyciemssMap[varName]}${aggSuffix}:${i}`);
 			}
-			// Default variable names for simulate or calibrate
+			// Default variable names for simulate or calibrate operation
 		} else {
 			sampleLayerVariables = [
 				`${chartData.value?.pyciemssMap[variables[0]]}:pre`,
