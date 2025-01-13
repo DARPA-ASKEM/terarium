@@ -379,7 +379,6 @@ async function getCsvAsset(dataset: Dataset, filename: string, limit: number = -
 	// If it's an ESGF dataset or a NetCDF file, we don't want to download the raw content
 	if (!dataset?.id || dataset.esgfId || dataset.metadata?.format === 'netcdf') return null;
 	const csv = (await downloadRawFile(dataset.id as string, filename, limit)) as CsvAsset;
-	csv.headers = csv.headers.map((header) => header.trim());
 	return csv;
 }
 
@@ -396,7 +395,7 @@ async function getDatasetResultCSV(dataset: Dataset, filename: string, renameFn?
 	// we should not modify the original result since it may have been cached and persisted in memory
 	const csvAsset = { ...result };
 	if (renameFn) {
-		csvAsset.headers = csvAsset.headers.map(renameFn);
+		csvAsset.headers = csvAsset.headers.map((header) => header.trim()).map(renameFn);
 	}
 	const output = parseCsvAsset(csvAsset);
 	return output as DataArray;
