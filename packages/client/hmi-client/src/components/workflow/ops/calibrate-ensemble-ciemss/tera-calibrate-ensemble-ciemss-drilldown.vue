@@ -345,7 +345,7 @@ import TeraInputNumber from '@/components/widgets/tera-input-number.vue';
 import AccordionTab from 'primevue/accordiontab';
 import Accordion from 'primevue/accordion';
 import Dropdown from 'primevue/dropdown';
-import { setupDatasetInput, setupCsvAsset } from '@/services/calibrate-workflow';
+import { getFileName, setupCsvAsset } from '@/services/calibrate-workflow';
 import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
 import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.vue';
 import TeraSaveDatasetFromSimulation from '@/components/dataset/tera-save-dataset-from-simulation.vue';
@@ -456,7 +456,7 @@ const isRunInProgress = computed(() => Boolean(inProgressCalibrationId.value || 
 
 const datasetId = computed(() => props.node.inputs[0].value?.[0] as string | undefined);
 const currentDatasetFileName = ref<string>();
-const datasetColumnNames = ref<string[]>();
+const datasetColumnNames = computed(() => dataset.value?.columns?.map((col) => col.name) ?? ([] as string[]));
 // Loss Chart:
 const lossChartRef = ref<InstanceType<typeof VegaChart>>();
 const lossChartSpec = ref();
@@ -477,6 +477,7 @@ const tableHeaders = computed(() => {
 // List of each observible + state for each model.
 const allModelOptions = ref<any[][]>([]);
 
+const dataset = shallowRef<Dataset | null>(null);
 const csvAsset = shallowRef<CsvAsset | undefined>(undefined);
 
 const onSelection = (id: string) => {
@@ -584,10 +585,11 @@ const runEnsemble = async () => {
 
 	const calibratePayload: EnsembleCalibrationCiemssRequest = {
 		modelConfigs: formatCalibrateModelConfigurations(knobs.value.ensembleMapping, knobs.value.configurationWeights),
-		timespan: getTimespan({
-			dataset: csvAsset.value,
-			timestampColName: knobs.value.timestampColName
-		}),
+		timespan: getTimespan(
+			dataset.value as Dataset,
+			knobs.value.timestampColName,
+			knobs.value.extra.endTime // Default is simulation End Time
+		),
 		dataset: {
 			id: datasetId.value,
 			filename: currentDatasetFileName.value,
@@ -623,12 +625,11 @@ onMounted(async () => {
 	// dataset input
 	if (datasetId.value) {
 		// Get dataset
-		const dataset: Dataset | null = await getDataset(datasetId.value);
-		if (dataset) {
-			const { filename, datasetOptions } = await setupDatasetInput(dataset);
-			currentDatasetFileName.value = filename;
-			datasetColumnNames.value = datasetOptions?.map((ele) => ele.name);
-			setupCsvAsset(dataset).then((csv) => {
+		dataset.value = await getDataset(datasetId.value);
+		if (dataset.value) {
+			currentDatasetFileName.value = getFileName(dataset.value);
+
+			setupCsvAsset(dataset.value).then((csv) => {
 				csvAsset.value = csv;
 			});
 		}
