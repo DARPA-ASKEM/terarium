@@ -562,7 +562,7 @@ public class WorkflowService extends TerariumAssetServiceWithoutSearch<Workflow,
 		for (final WorkflowEdge edge : workflow.getEdges()) {
 			if (edge.getIsDeleted() == true) continue;
 
-			if (edge.getSource() == operator.getId()) {
+			if (edge.getSource().equals(operator.getId())) {
 				final WorkflowNode targetNode = workflow
 					.getNodes()
 					.stream()
