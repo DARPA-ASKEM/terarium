@@ -72,7 +72,10 @@
 				</template>
 				<ul class="flex flex-column gap-2">
 					<li
-						v-for="(intervention, index) in knobs.transientInterventionPolicy.interventions"
+						v-for="(intervention, index) in knobs.transientInterventionPolicy.interventions.slice(
+							firstRow,
+							firstRow + MAX_NUMBER_OF_ROWS
+						)"
 						:key="index"
 						@click="selectInterventionPolicy(intervention, index)"
 					>
@@ -89,6 +92,16 @@
 						/>
 					</li>
 				</ul>
+				<Paginator
+					v-if="knobs.transientInterventionPolicy.interventions.length > MAX_NUMBER_OF_ROWS"
+					:rows="MAX_NUMBER_OF_ROWS"
+					:first="firstRow"
+					:total-records="knobs.transientInterventionPolicy.interventions.length"
+					:template="{
+						default: 'FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink JumpToPageDropdown'
+					}"
+					@page="firstRow = $event.first"
+				/>
 				<Button
 					class="align-self-start mt-2"
 					text
@@ -210,6 +223,7 @@ import { WorkflowNode } from '@/types/workflow';
 import TeraSliderPanel from '@/components/widgets/tera-slider-panel.vue';
 import TeraColumnarPanel from '@/components/widgets/tera-columnar-panel.vue';
 import Button from 'primevue/button';
+import Paginator from 'primevue/paginator';
 import TeraInputText from '@/components/widgets/tera-input-text.vue';
 import { getInterventionPoliciesForModel, getModel } from '@/services/model';
 import {
@@ -289,6 +303,9 @@ interface SelectedIntervention {
 	staticInterventions: StaticIntervention[];
 	dynamicInterventions: DynamicIntervention[];
 }
+
+const MAX_NUMBER_OF_ROWS = 5;
+const firstRow = ref(0);
 
 const currentActiveIndicies = ref([0, 1]);
 const pdfPanelRef = ref();

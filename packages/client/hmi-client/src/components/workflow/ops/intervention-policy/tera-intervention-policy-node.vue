@@ -12,7 +12,7 @@
 		</ul>
 		<tera-intervention-summary-card
 			class="intervention-title"
-			v-for="(intervention, index) in node.state.interventionPolicy.interventions"
+			v-for="(intervention, index) in interventionSummary"
 			:intervention="intervention"
 			:key="index"
 		/>
@@ -66,6 +66,11 @@ const groupedOutputParameters = computed(() =>
 		Object.entries(groupBy(flattenInterventionData(props.node.state.interventionPolicy.interventions), 'appliedTo'))
 	)
 );
+
+const interventionSummary = computed(() => {
+	const interventions = cloneDeep(props.node.state.interventionPolicy.interventions);
+	return interventions.length > 4 ? interventions.splice(0, 4) : interventions;
+});
 
 const selectedOutputParameters = computed(() => {
 	const charts = {};

@@ -646,6 +646,15 @@ public class GoLLMController {
 			log.error("Unable to serialize input", e);
 		}
 
+		final InterventionsFromDatasetResponseHandler.Properties props =
+			new InterventionsFromDatasetResponseHandler.Properties();
+		props.setProjectId(projectId);
+		props.setDatasetId(datasetId);
+		props.setModelId(modelId);
+		props.setWorkflowId(workflowId);
+		props.setNodeId(nodeId);
+		req.setAdditionalProperties(props);
+
 		final TaskResponse resp;
 		try {
 			resp = taskService.runTask(mode, req);
