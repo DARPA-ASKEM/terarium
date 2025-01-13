@@ -222,16 +222,8 @@ export function useCharts(
 			scale: setting.scale
 		};
 
-		// Default variable names for simulate or calibrate
-		let sampleLayerVariables = [
-			`${chartData.value?.pyciemssMap[variables[0]]}:pre`,
-			`${chartData.value?.pyciemssMap[variables[0]]}`
-		];
-		let statLayerVariables = [
-			`${chartData.value?.pyciemssMap[variables[0]]}_mean:pre`,
-			`${chartData.value?.pyciemssMap[variables[0]]}_mean`
-		];
-
+		let sampleLayerVariables: string[] = [];
+		let statLayerVariables: string[] = [];
 		// Variable names for variable comparison charts
 		if (setting.type === ChartSettingType.VARIABLE_COMPARISON) {
 			statLayerVariables = variables.map((d) => `${chartData.value?.pyciemssMap[d]}_mean`);
@@ -241,14 +233,24 @@ export function useCharts(
 		// Variable names for compare dataset charts
 		else if (!_.isNil(chartData.value?.numComparableDatasets)) {
 			const varName = variables[0];
-			sampleLayerVariables = [];
-			statLayerVariables = [];
+			// sampleLayerVariables = [];
+			// statLayerVariables = [];
 			for (let i = 0; i < chartData.value.numComparableDatasets; i++) {
 				const rawVarName = chartData.value?.pyciemssMap[varName];
 				const aggSuffix = rawVarName.startsWith(DATASET_VAR_NAME_PREFIX) ? '' : '_mean';
 				sampleLayerVariables.push(`${chartData.value?.pyciemssMap[varName]}:${i}`);
 				statLayerVariables.push(`${chartData.value?.pyciemssMap[varName]}${aggSuffix}:${i}`);
 			}
+			// Default variable names for simulate or calibrate
+		} else {
+			sampleLayerVariables = [
+				`${chartData.value?.pyciemssMap[variables[0]]}:pre`,
+				`${chartData.value?.pyciemssMap[variables[0]]}`
+			];
+			statLayerVariables = [
+				`${chartData.value?.pyciemssMap[variables[0]]}_mean:pre`,
+				`${chartData.value?.pyciemssMap[variables[0]]}_mean`
+			];
 		}
 		return { statLayerVariables, sampleLayerVariables, options };
 	};
