@@ -12,11 +12,7 @@ interface DataResults {
 }
 
 export function isSimulationData(dataset: Dataset) {
-	// assume if the dataset has these two files, it's a simulation dataset
-	return (
-		dataset.fileNames?.find((name) => name === 'result.csv') &&
-		dataset.fileNames?.find((name) => name === 'result_summary.csv')
-	);
+	return Boolean(dataset.metadata.simulationId);
 }
 
 /**
