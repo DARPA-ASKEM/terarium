@@ -233,8 +233,6 @@ export function useCharts(
 		// Variable names for compare dataset charts
 		else if (!_.isNil(chartData.value?.numComparableDatasets)) {
 			const varName = variables[0];
-			// sampleLayerVariables = [];
-			// statLayerVariables = [];
 			for (let i = 0; i < chartData.value.numComparableDatasets; i++) {
 				const rawVarName = chartData.value?.pyciemssMap[varName];
 				const aggSuffix = rawVarName.startsWith(DATASET_VAR_NAME_PREFIX) ? '' : '_mean';
