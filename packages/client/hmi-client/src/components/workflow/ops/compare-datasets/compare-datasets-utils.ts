@@ -156,7 +156,7 @@ export function buildChartData(
 	});
 
 	return {
-		result: resultTransformed,
+		result: [], // Sample plot data are not used in the compare datasets chart
 		resultSummary: resultSummaryTransformed,
 		resultGroupByTimepoint,
 		pyciemssMap,
