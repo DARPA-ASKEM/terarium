@@ -159,7 +159,11 @@ public class TerariumAssetCloneServiceTests extends TerariumApplicationTests {
 
 		projectAssetService.createProjectAsset(project, AssetType.WORKFLOW, workflow, ASSUME_WRITE_PERMISSION);
 
-		final List<TerariumAsset> cloned = cloneService.cloneAndPersistAsset(project.getId(), workflow.getId());
+		final List<TerariumAsset> cloned = cloneService.cloneAndPersistAsset(
+			project.getId(),
+			workflow.getId(),
+			AssetType.WORKFLOW
+		);
 
 		Assertions.assertEquals(1 + NUM_DOCUMENTS, cloned.size());
 		Assertions.assertEquals(1, cloned.stream().filter(a -> a instanceof Workflow).count());

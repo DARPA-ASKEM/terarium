@@ -146,8 +146,8 @@ header:not(.tab) {
 		background: color-mix(in srgb, var(--surface-100) 80%, transparent 20%);
 	}
 
-	& :deep(.slider-content),
-	& :deep(.slider-tab) {
+	& :deep(.content),
+	& :deep(.tab) {
 		background-color: var(--surface-100);
 		border-right: 1px solid var(--surface-border-light);
 	}

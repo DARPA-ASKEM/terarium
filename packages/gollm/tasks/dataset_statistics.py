@@ -65,7 +65,20 @@ def main():
             # Add distribution binning
             # If there are fewer than 10 unique values, use that number of bins, otherwise use 10
             n_bins = min(10, df[column].nunique()) if df[column].nunique() > 1 else 2
-            column_stats['histogram_bins'] = np.histogram(df[column].dropna(), bins=n_bins)[1].tolist()
+            # Calculate histogram bins
+            values, bin_edges = np.histogram(df[column].dropna(), bins=n_bins)
+            column_stats['histogram_bins'] = [
+                {
+                    "start": f"{bin_edges[i]:.2f}",
+                    "end": f"{bin_edges[i+1]:.2f}",
+                    "count": int(values[i])
+                }
+                for i in range(len(values))
+            ]
+            taskrunner.log(column_stats['histogram_bins'])
+
+
+            # Add to summary
             stats_summary[column] = column_stats
 
         # Non-numeric column analysis

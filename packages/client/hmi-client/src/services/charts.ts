@@ -1162,9 +1162,17 @@ export function createSimulateSensitivityScatter(samplingLayer: SensitivityChart
 	return spec;
 }
 
-export function applyForecastChartAnnotations(chartSpec: any, annotations: ChartAnnotation[]) {
+/**
+ * Applies annotation layers to a forecast chart. Each annotation is represented as a layer specification object.
+ * By default, the annotation layers are added as sub-layers to the second layer (statistics layer) of the forecast chart specification.
+ *
+ * @param chartSpec - The forecast chart specification.
+ * @param annotations - A list of annotations to be applied.
+ * @param targetLayerIndex - The index of the target layer to which the annotations will be attached (default is 1).
+ * @returns The updated chart specification with the applied annotations.
+ */
+export function applyForecastChartAnnotations(chartSpec: any, annotations: ChartAnnotation[], targetLayerIndex = 1) {
 	if (isEmpty(annotations)) return chartSpec;
-	const targetLayerIndex = 1; // Assume the target layer is the second layer which is the statistic layer
 	const layerSpecs = annotations.map((a) => a.layerSpec);
 	if (!chartSpec.layer[targetLayerIndex]) return chartSpec;
 	chartSpec.layer[targetLayerIndex].layer.push(...layerSpecs);
