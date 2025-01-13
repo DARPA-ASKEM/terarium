@@ -1019,10 +1019,52 @@ export function useCharts(
 						timeField: 'timepoint_id',
 						groupField: 'sample_id'
 					},
-					null,
+					{
+						data: result,
+						variables: [selectedVariable],
+						timeField: 'timepoint_id'
+					},
 					null,
 					options
 				);
+
+				// Get the statistical layer
+				const statsLayer = lineSpec.layer[1];
+				if (statsLayer?.layer) {
+					// Remove any unwanted legends
+					statsLayer.layer.forEach((sublayer) => {
+						if (sublayer.encoding?.color?.legend) {
+							sublayer.encoding.color.legend = null;
+						}
+					});
+
+					// Find the text layers
+					const textLayers = statsLayer.layer.filter((l) => l.mark?.type === 'text');
+					const lastTwoLayers = textLayers.slice(-2);
+
+					// The white outline layer
+					const outlineLayer = lastTwoLayers[0];
+					// The colored text layer
+					const textLayer = lastTwoLayers[1];
+
+					// Keep outline layer stroke white but remove color encoding
+					if (outlineLayer) {
+						delete outlineLayer.encoding.color;
+					}
+
+					// Copy the exact color encoding from the line layer
+					if (textLayer) {
+						textLayer.encoding.color = {
+							field: 'group',
+							type: 'nominal',
+							scale: {
+								domain: Array.from(bins.keys()),
+								range: SENSITIVITY_COLOUR_SCHEME
+							}
+						};
+					}
+				}
+
 				// Add sensitivity annotation
 				const annotation = createForecastChartAnnotation('x', timepoint, 'Sensitivity analysis', true);
 				lineSpec.layer[0].layer.push(annotation.layerSpec);
