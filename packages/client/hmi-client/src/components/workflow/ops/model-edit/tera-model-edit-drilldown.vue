@@ -56,13 +56,7 @@
 					:value="executeErrorResponse.value"
 					:traceback="executeErrorResponse.traceback"
 				/>
-				<tera-model
-					v-else-if="outputModel"
-					is-workflow
-					is-save-for-reuse
-					:assetId="outputModel.id"
-					@on-save="updateNode"
-				/>
+				<tera-model v-else-if="outputModel" is-workflow is-save-for-reuse :assetId="outputModel.id" />
 				<tera-progress-spinner v-else-if="isUpdatingModel || !outputModel" is-centered :font-size="2">
 					Loading...
 				</tera-progress-spinner>
@@ -103,7 +97,7 @@ import { ModelEditOperationState, ModelEditOperation } from './model-edit-operat
 const props = defineProps<{
 	node: WorkflowNode<ModelEditOperationState>;
 }>();
-const emit = defineEmits(['append-output', 'update-state', 'close', 'select-output', 'update-output']);
+const emit = defineEmits(['append-output', 'update-state', 'close', 'select-output']);
 
 const outputs = computed(() => {
 	if (!isEmpty(props.node.outputs)) {
@@ -327,15 +321,6 @@ const hasCodeChange = () => {
 	}
 };
 const checkForCodeChange = debounce(hasCodeChange, 500);
-
-function updateNode(model: Model) {
-	if (!model) return;
-	outputModel.value = model;
-	const outputPort = cloneDeep(props.node.outputs?.find((port) => port.value?.[0] === model.id));
-	if (!outputPort) return;
-	outputPort.label = model.header.name;
-	emit('update-output', outputPort);
-}
 
 watch(
 	() => codeText.value,

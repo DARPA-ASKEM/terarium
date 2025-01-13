@@ -145,7 +145,6 @@
 			@close="addOperatorToRoute(null)"
 			@append-output="(event: any) => appendOutput(currentActiveNode, event)"
 			@select-output="(event: any) => selectOutput(currentActiveNode, event)"
-			@update-output="(event: any) => updateOutput(currentActiveNode, event)"
 			@update-state="(event: any) => updateWorkflowNodeState(currentActiveNode, event)"
 			@update-status="(status: OperatorStatus) => updateWorkflowNodeStatus(currentActiveNode, status)"
 		/>
@@ -293,8 +292,14 @@ const _updateWorkflow = (event: ClientEvent<any>) => {
 	wf.value.update(event.data as Workflow, delayUpdate);
 };
 
+const nodeStateMap: Map<string, any> = new Map();
 const saveWorkflowDebounced = debounce(_saveWorkflow, 400);
 const updateWorkflowHandler = debounce(_updateWorkflow, 250);
+const saveNodeStateHandler = debounce(async () => {
+	const updatedWorkflow = await workflowService.updateState(wf.value.getId(), nodeStateMap);
+	nodeStateMap.clear();
+	wf.value.update(updatedWorkflow, false);
+}, 300);
 
 const saveWorkflowHandler = () => {
 	saveWorkflowDebounced();
@@ -338,25 +343,22 @@ async function appendOutput(
 
 function updateWorkflowNodeState(node: WorkflowNode<any> | null, state: any) {
 	if (!node) return;
-	wf.value.updateNodeState(node.id, state);
-	saveWorkflowHandler();
+	nodeStateMap.set(node.id, state);
+	saveNodeStateHandler();
 }
 
-function updateWorkflowNodeStatus(node: WorkflowNode<any> | null, status: OperatorStatus) {
+async function updateWorkflowNodeStatus(node: WorkflowNode<any> | null, status: OperatorStatus) {
 	if (!node) return;
-	wf.value.updateNodeStatus(node.id, status);
-	saveWorkflowHandler();
+
+	const payload: Map<string, OperatorStatus> = new Map([[node.id, status]]);
+
+	const updatedWorkflow = await workflowService.updateStatus(wf.value.getId(), payload);
+	wf.value.update(updatedWorkflow, false);
 }
 
 async function selectOutput(node: WorkflowNode<any> | null, selectedOutputId: string) {
 	const updatedWorkflow = await workflowService.selectOutput(wf.value.getId(), node!.id, selectedOutputId);
 	wf.value.update(updatedWorkflow, false);
-}
-
-function updateOutput(node: WorkflowNode<any> | null, workflowOutput: WorkflowOutput<any>) {
-	if (!node) return;
-	workflowService.updateOutput(node, workflowOutput);
-	saveWorkflowHandler();
 }
 
 // Route is mutated then watcher is triggered to open or close the drilldown
@@ -689,36 +691,6 @@ async function removeEdges(portId: string) {
 		edges.map((e) => e.id)
 	);
 	wf.value.update(updatedWorkflow, false);
-
-	/*
-	// Build a traversal map before we do actual removal
-	const nodeMap = new Map<WorkflowNode<any>['id'], WorkflowNode<any>>(
-		wf.value.getNodes().map((node) => [node.id, node])
-	);
-	const nodeCache = new Map<WorkflowOutput<any>['id'], WorkflowNode<any>[]>();
-	wf.value.getEdges().forEach((edge) => {
-		if (!edge.source || !edge.target) return;
-		if (!nodeCache.has(edge.source)) nodeCache.set(edge.source, []);
-		nodeCache.get(edge.source)?.push(nodeMap.get(edge.target) as WorkflowNode<any>);
-	});
-	const startingNodeId = edges.length > 0 ? (edges[0].source as string) : '';
-
-	// Remove edge
-	if (!isEmpty(edges)) {
-		edges.forEach((edge) => {
-			wf.value.removeEdge(edge.id);
-		});
-	} else {
-		logger.error(`Edges with port id:${portId} not found.`);
-		return;
-	}
-
-	// cascade invalid status to downstream operators
-	if (startingNodeId !== '') {
-		workflowService.cascadeInvalidateDownstream(nodeMap.get(startingNodeId) as WorkflowNode<any>, nodeCache);
-	}
-	saveWorkflowHandler();
-	*/
 }
 
 function onCanvasClick() {
