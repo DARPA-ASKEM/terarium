@@ -618,6 +618,7 @@ const modelParameters = ref<ModelParameter[]>([]);
 const isOutputSettingsPanelOpen = ref(false);
 
 const datasetColumns = ref<DatasetColumn[]>();
+const dataset = shallowRef<Dataset | null>(null);
 const csvAsset = shallowRef<CsvAsset | undefined>(undefined);
 const groundTruthData = computed<DataArray>(() => parseCsvAsset(csvAsset.value as CsvAsset));
 
@@ -891,7 +892,11 @@ const runCalibrate = async () => {
 			lr: knobs.value.learningRate,
 			num_iterations: knobs.value.numIterations
 		},
-		timespan: getTimespan({ dataset: csvAsset.value, mapping: mapping.value }),
+		timespan: getTimespan(
+			dataset.value as Dataset,
+			knobs.value.timestampColName,
+			knobs.value.endTime // Default is simulation End Time
+		),
 		engine: 'ciemss'
 	};
 
@@ -1004,13 +1009,13 @@ const initialize = async () => {
 	// dataset input
 	if (datasetId.value) {
 		// Get dataset
-		const dataset: Dataset | null = await getDataset(datasetId.value);
-		if (dataset) {
-			const { filename, datasetOptions } = await setupDatasetInput(dataset);
+		dataset.value = await getDataset(datasetId.value);
+		if (dataset.value) {
+			const { filename, datasetOptions } = await setupDatasetInput(dataset.value);
 			currentDatasetFileName.value = filename;
 			datasetColumns.value = datasetOptions;
 
-			setupCsvAsset(dataset).then((csv) => {
+			setupCsvAsset(dataset.value).then((csv) => {
 				csvAsset.value = csv;
 			});
 		}

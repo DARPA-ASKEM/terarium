@@ -477,6 +477,7 @@ const tableHeaders = computed(() => {
 // List of each observible + state for each model.
 const allModelOptions = ref<any[][]>([]);
 
+const dataset = shallowRef<Dataset | null>(null);
 const csvAsset = shallowRef<CsvAsset | undefined>(undefined);
 
 const onSelection = (id: string) => {
@@ -584,10 +585,11 @@ const runEnsemble = async () => {
 
 	const calibratePayload: EnsembleCalibrationCiemssRequest = {
 		modelConfigs: formatCalibrateModelConfigurations(knobs.value.ensembleMapping, knobs.value.configurationWeights),
-		timespan: getTimespan({
-			dataset: csvAsset.value,
-			timestampColName: knobs.value.timestampColName
-		}),
+		timespan: getTimespan(
+			dataset.value as Dataset,
+			knobs.value.timestampColName,
+			knobs.value.extra.endTime // Default is simulation End Time
+		),
 		dataset: {
 			id: datasetId.value,
 			filename: currentDatasetFileName.value,
@@ -623,12 +625,12 @@ onMounted(async () => {
 	// dataset input
 	if (datasetId.value) {
 		// Get dataset
-		const dataset: Dataset | null = await getDataset(datasetId.value);
-		if (dataset) {
-			const { filename, datasetOptions } = await setupDatasetInput(dataset);
+		dataset.value = await getDataset(datasetId.value);
+		if (dataset.value) {
+			const { filename, datasetOptions } = await setupDatasetInput(dataset.value);
 			currentDatasetFileName.value = filename;
 			datasetColumnNames.value = datasetOptions?.map((ele) => ele.name);
-			setupCsvAsset(dataset).then((csv) => {
+			setupCsvAsset(dataset.value).then((csv) => {
 				csvAsset.value = csv;
 			});
 		}
