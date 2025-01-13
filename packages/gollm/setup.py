@@ -32,7 +32,8 @@ setup(
             "gollm:generate_summary=tasks.general_query:main",
             "gollm:interventions_from_document=tasks.interventions_from_document:main",
             "gollm:interventions_from_dataset=tasks.interventions_from_dataset:main",
-            "gollm:model_card=tasks.model_card:main"
+            "gollm:model_card=tasks.model_card:main",
+            gollm:dataset_statistics=tasks.dataset_statistics:main"
         ],
     },
     python_requires=">=3.11",
