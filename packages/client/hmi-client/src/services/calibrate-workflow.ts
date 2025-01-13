@@ -40,16 +40,6 @@ export const setupModelInput = async (modelConfigId: string | undefined) => {
 	return {};
 };
 
-// Used in the setup of calibration node and drill down
-// takes a datasetId and grabs relevant objects
-export const setupDatasetInput = async (dataset: Dataset) => {
-	const filename = getFileName(dataset);
-
-	const datasetOptions = dataset.columns?.filter((ele) => ele.fileName === filename);
-
-	return { filename, datasetOptions };
-};
-
 export const setupCsvAsset = async (dataset: Dataset): Promise<CsvAsset | undefined> => {
 	const filename = getFileName(dataset);
 	// FIXME: We are setting the limit to -1 (i.e. no limit) on the number of rows returned.
@@ -59,6 +49,6 @@ export const setupCsvAsset = async (dataset: Dataset): Promise<CsvAsset | undefi
 	return csv ?? undefined;
 };
 
-const getFileName = (dataset: Dataset) =>
+export const getFileName = (dataset: Dataset) =>
 	// If our dataset includes a result.csv we will ensure to pick it.
 	dataset.fileNames?.includes('result.csv') ? 'result.csv' : (dataset?.fileNames?.[0] ?? '');
