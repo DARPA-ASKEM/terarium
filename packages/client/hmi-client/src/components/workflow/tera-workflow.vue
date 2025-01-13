@@ -145,7 +145,6 @@
 			@close="addOperatorToRoute(null)"
 			@append-output="(event: any) => appendOutput(currentActiveNode, event)"
 			@select-output="(event: any) => selectOutput(currentActiveNode, event)"
-			@update-output="(event: any) => updateOutput(currentActiveNode, event)"
 			@update-state="(event: any) => updateWorkflowNodeState(currentActiveNode, event)"
 			@update-status="(status: OperatorStatus) => updateWorkflowNodeStatus(currentActiveNode, status)"
 		/>
@@ -360,12 +359,6 @@ async function updateWorkflowNodeStatus(node: WorkflowNode<any> | null, status: 
 async function selectOutput(node: WorkflowNode<any> | null, selectedOutputId: string) {
 	const updatedWorkflow = await workflowService.selectOutput(wf.value.getId(), node!.id, selectedOutputId);
 	wf.value.update(updatedWorkflow, false);
-}
-
-function updateOutput(node: WorkflowNode<any> | null, workflowOutput: WorkflowOutput<any>) {
-	if (!node) return;
-	workflowService.updateOutput(node, workflowOutput);
-	saveWorkflowHandler();
 }
 
 // Route is mutated then watcher is triggered to open or close the drilldown

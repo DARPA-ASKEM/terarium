@@ -924,13 +924,13 @@ export const removeEdges = async (id: string, edgeIds: string[]) => {
 
 export const updateState = async (id: string, stateMap: Map<string, any>) => {
 	console.log('>> workflowService.updateState');
-	const response = await API.post(`/workflows/${id}/update-state`, stateMap);
+	const response = await API.post(`/workflows/${id}/update-state`, Object.fromEntries(stateMap));
 	return response.data ?? null;
 };
 
 export const updateStatus = async (id: string, statusMap: Map<string, OperatorStatus>) => {
 	console.log('>> workflowService.updateStatus');
-	const response = await API.post(`/workflows/${id}/update-status`, statusMap);
+	const response = await API.post(`/workflows/${id}/update-status`, Object.fromEntries(statusMap));
 	return response.data ?? null;
 };
 
