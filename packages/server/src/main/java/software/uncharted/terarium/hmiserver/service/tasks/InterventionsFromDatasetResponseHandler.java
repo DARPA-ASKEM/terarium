@@ -42,9 +42,6 @@ public class InterventionsFromDatasetResponseHandler extends TaskResponseHandler
 
 		@JsonProperty("amr")
 		String amr;
-
-		@JsonProperty("matrix")
-		String matrix;
 	}
 
 	@Data
