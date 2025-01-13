@@ -668,6 +668,19 @@ public class WorkflowService extends TerariumAssetServiceWithoutSearch<Workflow,
 		}
 	}
 
+	public void updateNodeStatus(final Workflow workflow, final Map<UUID, String> statusMap) {
+		final Map<UUID, WorkflowNode> nodeMap = buildNodeMap(workflow);
+		for (final Map.Entry<UUID, String> entry : statusMap.entrySet()) {
+			final WorkflowNode node = nodeMap.get(entry.getKey());
+			if (node == null) {
+				log.warn("Node not found " + entry.getKey());
+			}
+			if (node == null || node.getIsDeleted() == true) continue;
+
+			node.setStatus(entry.getValue());
+		}
+	}
+
 	@Override
 	protected String getAssetPath() {
 		throw new UnsupportedOperationException("Workflows are not stored in S3");
