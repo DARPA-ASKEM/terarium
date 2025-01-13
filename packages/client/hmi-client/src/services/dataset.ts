@@ -9,6 +9,11 @@ import type { CsvAsset, Dataset, PresignedURL } from '@/types/Types';
 import { Ref } from 'vue';
 import { AxiosResponse } from 'axios';
 import { FIFOCache } from '@/utils/FifoCache';
+import { parseCsvAsset } from '@/utils/csv';
+import { DataArray } from '@/services/models/simulation-service';
+
+// Note: This is currently used in compare datasets operator
+export const DATASET_VAR_NAME_PREFIX = 'data/';
 
 /**
  * Get Dataset from the data service
@@ -98,27 +103,16 @@ async function getBulkDatasets(datasetIDs: string[]) {
 	return result;
 }
 
-const rawFileCache = new FIFOCache<Promise<CsvAsset | null>>(100);
 /**
  * Get the raw (CSV) file content for a given dataset
  * @return Array<string>|null - the dataset raw content, or null if none returned by API
  */
 async function downloadRawFile(datasetId: string, filename: string, limit: number = 100): Promise<CsvAsset | null> {
-	const cacheKey = `${datasetId}:${filename}:${limit}`;
-	let promise = rawFileCache.get(cacheKey);
-
-	if (!promise) {
-		const URL = `/datasets/${datasetId}/download-csv?filename=${filename}&limit=${limit}`;
-		promise = API.get(URL)
-			.then((response) => response?.data ?? null)
-			.catch((error) => {
-				logger.error(`Error: data-service was not able to retrieve the dataset's rawfile ${error}`);
-				return null;
-			});
-		rawFileCache.set(cacheKey, promise);
-	}
-
-	return promise;
+	const URL = `/datasets/${datasetId}/download-csv?filename=${filename}&limit=${limit}`;
+	const response = await API.get(URL).catch((error) => {
+		logger.error(`Error: data-service was not able to retrieve the dataset's rawfile ${error}`);
+	});
+	return response?.data ?? null;
 }
 
 /**
@@ -296,9 +290,48 @@ async function getCsvAsset(dataset: Dataset, filename: string, limit: number = -
 	// If it's an ESGF dataset or a NetCDF file, we don't want to download the raw content
 	if (!dataset?.id || dataset.esgfId || dataset.metadata?.format === 'netcdf') return null;
 	const csv = (await downloadRawFile(dataset.id as string, filename, limit)) as CsvAsset;
-	csv.headers = csv.headers.map((header) => header.trim());
 	return csv;
 }
+
+const datasetResultCSVCache = new FIFOCache<Promise<CsvAsset | null>>(100);
+async function getDatasetResultCSV(dataset: Dataset, filename: string, renameFn?: (s: string) => string) {
+	const cacheKey = `${dataset.id}:${filename}`;
+	let promise = datasetResultCSVCache.get(cacheKey);
+	if (!promise) {
+		promise = getCsvAsset(dataset, filename);
+		datasetResultCSVCache.set(cacheKey, promise);
+	}
+	const result = await promise;
+	if (!result) return [];
+	// we should not modify the original result since it may have been cached and persisted in memory
+	const csvAsset = { ...result };
+	if (renameFn) {
+		csvAsset.headers = csvAsset.headers.map((header) => header.trim()).map(renameFn);
+	}
+	const output = parseCsvAsset(csvAsset);
+	return output as DataArray;
+}
+
+/**
+ * Merge multiple datasets into a single dataset
+ * For example, if you have two datasets with the following data:
+ * dataset1 = [{a: 1, b: 2}, {a: 3, b: 4}]
+ * dataset2 = [{c: 5, d: 6}, {c: 7, d: 8}]
+ * The merged dataset will be:
+ * [{a: 1, b: 2, c: 5, d: 6}, {a: 3, b: 4, c: 7, d: 8}]
+ * @param results The datasets to merge
+ * @returns The merged dataset
+ */
+const mergeResults = (...results: DataArray[]) => {
+	const maxLength = Math.max(...results.map((result) => result.length));
+	const result: DataArray = [];
+	for (let i = 0; i < maxLength; i++) {
+		const row: Record<string, number> = {};
+		results.forEach((dataset) => Object.assign(row, dataset[i]));
+		result.push(row);
+	}
+	return result;
+};
 
 export {
 	getDataset,
@@ -315,5 +348,7 @@ export {
 	saveDataset,
 	createDataset,
 	getRawContent,
-	getCsvAsset
+	getCsvAsset,
+	getDatasetResultCSV,
+	mergeResults
 };
