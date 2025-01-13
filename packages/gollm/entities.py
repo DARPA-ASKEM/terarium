@@ -20,6 +20,10 @@ class ConfigureModelDataset(BaseModel):
     matrix: str = None
 
 
+class DatasetStatistics(BaseModel):
+    datasetUrl: str  # expects a URL of a CSV file
+
+
 class DatasetCardModel(BaseModel):
     dataset: str  # expects a stringified JSON object
     research_paper: str = None
