@@ -70,7 +70,6 @@ export async function interventionPolicyFromDataset(
 		}
 	});
 	return data;
-	// return {"name":"New Intervention","staticInterventions":[{"type":"parameter","appliedTo":""}],"dynamicInterventions":[]};
 }
 
 export async function enrichModelMetadata(modelId: string, documentId: string, overwrite: boolean): Promise<void> {
