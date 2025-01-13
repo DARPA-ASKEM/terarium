@@ -1045,7 +1045,6 @@ const getConfiguredModelConfig = async () => {
 
 onMounted(async () => {
 	initialize();
-	console.log(datasetColumns);
 });
 
 watch(
