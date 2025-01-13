@@ -484,7 +484,7 @@ async function onMenuSelection(operatorType: string, menuNode: WorkflowNode<any>
 		const updatedWorkflow = await workflowService.addEdge(wf.value.getId(), edgePayload);
 		wf.value.update(updatedWorkflow, false);
 
-		// Force edges to re-evaulate
+		// Force edges to re-evaluate
 		relinkEdges(null);
 	}
 }
