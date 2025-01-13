@@ -1779,7 +1779,7 @@ export function createFunmanParameterCharts(
 	};
 }
 
-export function createRankingInterventionsChart(values: any[], title: string) {
+export function createRankingInterventionsChart(values: { score: number; name: string }[], title: string) {
 	const globalFont = 'Figtree';
 
 	return {
