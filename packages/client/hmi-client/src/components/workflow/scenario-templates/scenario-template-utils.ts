@@ -1,6 +1,5 @@
 import { DistributionType } from '@/services/distribution';
-import { getInitials, getObservables } from '@/services/model-configurations';
-import { ModelConfiguration, ParameterSemantic } from '@/types/Types';
+import { ParameterSemantic } from '@/types/Types';
 import { calculateUncertaintyRange } from '@/utils/math';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -34,18 +33,6 @@ export const switchToUniformDistribution = (parameter: ParameterSemantic) => {
 		parameter.distribution.parameters = { minimum, maximum };
 	}
 };
-
-const getCompareDatasetVariablePrefixes = (selectedMetrics: string[], modelConfiguration: ModelConfiguration) =>
-	selectedMetrics.map((metric) => {
-		const state = getInitials(modelConfiguration).some((i) => i.target === metric);
-		if (state) return `${metric}_state`;
-		const observable = getObservables(modelConfiguration).some((o) => o.referenceId === metric);
-		if (observable) return `${metric}_observable_state`;
-		return metric;
-	});
-
-export const getMeanCompareDatasetVariables = (selectedMetrics: string[], modelConfiguration: ModelConfiguration) =>
-	getCompareDatasetVariablePrefixes(selectedMetrics, modelConfiguration).map((metric) => `${metric}_mean`);
 
 export function usePolicyModel(props, interventionDropdowns, policyModalContext, isPolicyModalVisible) {
 	const onOpenPolicyModel = (index: number) => {
