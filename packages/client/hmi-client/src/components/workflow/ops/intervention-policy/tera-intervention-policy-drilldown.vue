@@ -292,7 +292,6 @@ interface SelectedIntervention {
 
 const currentActiveIndicies = ref([0, 1]);
 const pdfPanelRef = ref();
-const pdfViewer = computed(() => pdfPanelRef.value?.pdfRef[0]);
 const selectedIntervention = ref<SelectedIntervention | null>(null);
 
 const isPdfSidebarOpen = ref(true);
@@ -451,11 +450,6 @@ const fetchInterventionPolicies = async (modelId: string) => {
 
 const selectInterventionPolicy = (intervention: Intervention, index: number) => {
 	selectedIntervention.value = { ...intervention, index };
-	if (!intervention?.extractionPage) return;
-
-	if (pdfViewer.value) {
-		pdfViewer.value.goToPage(selectedIntervention.value.extractionPage);
-	}
 };
 
 const onUpdateInterventionCard = (intervention: Intervention, index: number) => {
