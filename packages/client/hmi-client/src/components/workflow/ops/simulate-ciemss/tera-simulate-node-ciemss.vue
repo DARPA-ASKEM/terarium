@@ -178,7 +178,7 @@ Provide a summary in 100 words or less.
 		logger.error('Error creating dataset from simulation result.');
 		return;
 	}
-	console.log(_.omit({ ...props.node.state, summaryId: summaryResponse?.id }, ['chartSettings']));
+
 	emit('append-output', {
 		type: SimulateCiemssOperation.outputs[0].type,
 		label: datasetName,
