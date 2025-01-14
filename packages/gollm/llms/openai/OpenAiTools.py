@@ -13,6 +13,7 @@ from common.prompts.config_from_dataset import (
 )
 from common.prompts.config_from_document import CONFIGURE_FROM_DOCUMENT_PROMPT
 from common.prompts.dataset_enrichment import DATASET_ENRICH_PROMPT
+from common.prompts.dataset_enrichment_without_document import DATASET_ENRICH_PROMPT_WITHOUT_DOCUMENT
 from common.prompts.equations_cleanup import EQUATIONS_CLEANUP_PROMPT
 from common.prompts.equations_from_image import EQUATIONS_FROM_IMAGE_PROMPT
 from common.prompts.general_query import GENERAL_QUERY_PROMPT
@@ -33,7 +34,7 @@ from common.utils import (
     unescape_curly_braces
 )
 from openai import OpenAI
-from typing import List
+from typing import List, Optional
 
 GPT_MODEL = "gpt-4o-2024-08-06"
 
@@ -155,12 +156,16 @@ class OpenAiTools(LlmToolsInterface):
         )
 
 
-    def create_enrich_dataset_prompt(self, dataset: str, document: str, schema=None) -> str:
-        print("Building prompt to extract dataset enrichments from a research paper...")
-        return DATASET_ENRICH_PROMPT.format(
-            research_paper=escape_curly_braces(normalize_greek_alphabet(document)),
-            dataset=dataset
-        )
+    def create_enrich_dataset_prompt(self, dataset: str, document: Optional[str] = None, schema=None) -> str:
+        if (document is None) or (document == ''):  # If no document is provided
+            print("Building prompt to extract dataset enrichments")
+            return DATASET_ENRICH_PROMPT_WITHOUT_DOCUMENT.format(dataset=dataset)
+        else:
+            print("Building prompt to extract dataset enrichments from a research paper...")
+            return DATASET_ENRICH_PROMPT.format(
+                research_paper=escape_curly_braces(normalize_greek_alphabet(document)),
+                dataset=dataset
+            )
 
 
     def create_cleanup_equations_prompt(self, equations: List[str], schema=None) -> str:
