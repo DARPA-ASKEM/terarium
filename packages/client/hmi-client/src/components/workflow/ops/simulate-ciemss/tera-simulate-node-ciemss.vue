@@ -180,6 +180,7 @@ Provide a summary in 100 words or less.
 		logger.error('Error creating dataset from simulation result.');
 		return;
 	}
+
 	emit('append-output', {
 		type: SimulateCiemssOperation.outputs[0].type,
 		label: datasetName,
@@ -188,6 +189,7 @@ Provide a summary in 100 words or less.
 			currentTimespan: state.currentTimespan,
 			numSamples: state.numSamples,
 			method: state.method,
+			solverStepSize: state.solverStepSize,
 			summaryId: summaryResponse?.id,
 			forecastId: runId
 		},
