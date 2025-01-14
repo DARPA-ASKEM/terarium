@@ -7,5 +7,8 @@ import software.uncharted.terarium.hmiserver.models.simulationservice.interventi
 import software.uncharted.terarium.hmiserver.repository.PSCrudSoftDeleteRepository;
 
 public interface InterventionRepository extends PSCrudSoftDeleteRepository<InterventionPolicy, UUID> {
-	List<InterventionPolicy> findByModelIdAndDeletedOnIsNullAndTemporaryFalse(UUID modelId, Pageable pageable);
+	List<InterventionPolicy> findByModelIdAndDeletedOnIsNullAndTemporaryFalseOrderByCreatedOnAsc(
+		UUID modelId,
+		Pageable pageable
+	);
 }

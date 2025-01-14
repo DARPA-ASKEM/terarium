@@ -36,6 +36,7 @@ import software.uncharted.terarium.hmiserver.models.dataservice.AssetType;
 import software.uncharted.terarium.hmiserver.models.dataservice.ResponseDeleted;
 import software.uncharted.terarium.hmiserver.models.dataservice.document.DocumentAsset;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.Model;
+import software.uncharted.terarium.hmiserver.models.dataservice.model.ModelAssetResponse;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.ModelDescription;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.configurations.ModelConfiguration;
 import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.ModelMetadata;
@@ -613,7 +614,10 @@ public class ModelController {
 	) {
 		try {
 			final List<InterventionPolicy> interventionPolicies =
-				interventionRepository.findByModelIdAndDeletedOnIsNullAndTemporaryFalse(id, PageRequest.of(page, pageSize));
+				interventionRepository.findByModelIdAndDeletedOnIsNullAndTemporaryFalseOrderByCreatedOnAsc(
+					id,
+					PageRequest.of(page, pageSize)
+				);
 
 			return ResponseEntity.ok(interventionPolicies);
 		} catch (final Exception e) {
@@ -657,6 +661,66 @@ public class ModelController {
 			return ResponseEntity.ok(modelConfiguration);
 		} catch (final Exception e) {
 			final String error = "Unable to get model configurations";
+			log.error(error, e);
+			throw new ResponseStatusException(org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR, error);
+		}
+	}
+
+	@GetMapping("/{id}/related-assets")
+	@Secured(Roles.USER)
+	@Operation(summary = "Gets all related assets for a model (model configurations, interventions)")
+	@ApiResponses(
+		value = {
+			@ApiResponse(
+				responseCode = "200",
+				description = "Assets found.",
+				content = @Content(
+					schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = ModelAssetResponse.class)
+				)
+			),
+			@ApiResponse(
+				responseCode = "500",
+				description = "There was an issue retrieving policies from the data store",
+				content = @Content
+			)
+		}
+	)
+	ResponseEntity<ModelAssetResponse> getRelatedModelAssets(
+		@PathVariable("id") final UUID id,
+		@RequestParam(value = "page", required = false, defaultValue = "0") final int page,
+		@RequestParam(value = "page-size", required = false, defaultValue = "100") final int pageSize,
+		@RequestParam(name = "project-id", required = false) final UUID projectId
+	) {
+		try {
+			final Schema.Permission permission = projectService.checkPermissionCanReadOrNone(
+				currentUserService.get().getId(),
+				projectId
+			);
+
+			final Optional<Model> model = modelService.getAsset(id, permission);
+			if (model.isEmpty()) {
+				return ResponseEntity.noContent().build();
+			}
+
+			final List<ModelConfiguration> modelConfigurations =
+				modelConfigRepository.findByModelIdAndDeletedOnIsNullAndTemporaryFalseOrderByCreatedOnAsc(
+					id,
+					PageRequest.of(page, pageSize)
+				);
+			final List<InterventionPolicy> interventionPolicies =
+				interventionRepository.findByModelIdAndDeletedOnIsNullAndTemporaryFalseOrderByCreatedOnAsc(
+					id,
+					PageRequest.of(page, pageSize)
+				);
+
+			final ModelAssetResponse modelAssetResponse = new ModelAssetResponse();
+			modelAssetResponse.setModel(model.get());
+			modelAssetResponse.setModelConfigurations(modelConfigurations);
+			modelAssetResponse.setInterventionPolicies(interventionPolicies);
+
+			return ResponseEntity.ok(modelAssetResponse);
+		} catch (final Exception e) {
+			final String error = "Unable to get intervention policies";
 			log.error(error, e);
 			throw new ResponseStatusException(org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR, error);
 		}
