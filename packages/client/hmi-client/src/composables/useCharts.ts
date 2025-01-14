@@ -322,7 +322,7 @@ export function useCharts(
 
 			// Make baseline black
 			const colorScheme = cloneDeep(CATEGORICAL_SCHEME);
-			colorScheme[baselineIndex.value] = 'black';
+			colorScheme.splice(baselineIndex.value, 0, 'black');
 
 			chartSettings.value.forEach((settings) => {
 				const varName = settings.selectedVariables[0];
@@ -336,7 +336,12 @@ export function useCharts(
 				const chart = !settings.showQuantiles
 					? applyForecastChartAnnotations(
 							createForecastChart(
-								null,
+								{
+									data: chartData.value?.result ?? [],
+									variables: sampleLayerVariables,
+									timeField: 'timepoint_id',
+									groupField: 'sample_id'
+								},
 								{
 									data: chartData.value?.resultSummary ?? [],
 									variables: statLayerVariables,
@@ -345,8 +350,7 @@ export function useCharts(
 								null,
 								options
 							),
-							annotations,
-							0 // Since first sample layer doesn't exist for this chart, statistic layer is the first layer with index 0 for the annotation
+							annotations
 						)
 					: createQuantilesForecastChart(
 							chartData.value?.resultGroupByTimepoint ?? [],

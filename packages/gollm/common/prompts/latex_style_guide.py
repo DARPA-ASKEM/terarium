@@ -14,4 +14,5 @@ LATEX_STYLE_GUIDE = """
 11) Use " * " to denote multiplication between scalar quantities
 12) Replace any variant form of Greek letters to their main form when representing a variable or parameter; "\\varepsilon" -> "\\epsilon", "\\vartheta" -> "\\theta", "\\varpi" -> "\\pi", "\\varrho" -> "\\rho",  "\\varsigma" -> "\\sigma", "\\varphi" -> "\\phi"
 13) If equations are separated by punctuation (like comma, period, semicolon), do not include the punctuation in the LaTeX code.
+14) Expand all algebraic expressions with parentheses according to distributivity property of multiplication (for example, "S(t) * (a * I(t) + b * D(t) + c * A(t))" -> "a * S(t) * I(t) + b * S(t) * D(t) + c * A(t) * S(t)")
 """
