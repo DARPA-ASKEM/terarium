@@ -299,7 +299,7 @@ const saveNodeStateHandler = debounce(async () => {
 	const updatedWorkflow = await workflowService.updateState(wf.value.getId(), nodeStateMap);
 	nodeStateMap.clear();
 	wf.value.update(updatedWorkflow, false);
-}, 300);
+}, 250);
 
 const saveWorkflowHandler = () => {
 	saveWorkflowDebounced();
@@ -337,13 +337,17 @@ async function appendOutput(
 		operatorStatus: OperatorStatus.SUCCESS
 	};
 
-	const updatedWorkflow = await workflowService.appendOutput(wf.value.getId(), node.id, outputPort, node.state);
+	const updatedWorkflow = await workflowService.appendOutput(wf.value.getId(), node.id, outputPort, null);
 	wf.value.update(updatedWorkflow, false);
 }
 
 function updateWorkflowNodeState(node: WorkflowNode<any> | null, state: any) {
 	if (!node) return;
-	nodeStateMap.set(node.id, state);
+	if (nodeStateMap.has(node.id)) {
+		nodeStateMap.set(node.id, Object.assign(nodeStateMap.get(node.id), state));
+	} else {
+		nodeStateMap.set(node.id, state);
+	}
 	saveNodeStateHandler();
 }
 
