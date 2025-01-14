@@ -15,7 +15,6 @@ import { DistributionType } from '@/services/distribution';
 import { calculateUncertaintyRange } from '@/utils/math';
 import { blankIntervention, createInterventionPolicy, getInterventionPolicyById } from '@/services/intervention-policy';
 import { useProjects } from '@/composables/project';
-import { getMeanCompareDatasetVariables } from '../scenario-template-utils';
 
 export interface HorizonScanningParameter {
 	id: string;
@@ -220,7 +219,7 @@ export class HorizonScanningScenario extends BaseScenario {
 		compareDatasetChartSettings = updateChartSettingsBySelectedVariables(
 			compareDatasetChartSettings,
 			ChartSettingType.VARIABLE,
-			getMeanCompareDatasetVariables(this.simulateSpec.ids, modelConfig)
+			this.simulateSpec.ids
 		);
 
 		wf.updateNode(compareDatasetNode, {
