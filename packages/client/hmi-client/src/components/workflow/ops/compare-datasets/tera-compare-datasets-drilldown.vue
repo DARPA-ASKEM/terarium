@@ -392,7 +392,6 @@ function generateRankingCharts() {
 			return modelConfigIdToInterventionPolicyIdMap.value?.[selectedConfigurationId] ?? [];
 		})
 		.flat();
-
 	const allRankedCriteriaValues: { score: number; name: string }[][] = [];
 
 	props.node.state.criteriaOfInterestCards.forEach((card) => {
