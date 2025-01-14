@@ -889,37 +889,49 @@ export const selectOutput = async (id: string, nodeId: string, outputId: string,
 	const response = await API.post(`/workflows/${id}/select-output/${nodeId}/${outputId}`, {
 		params: { 'project-id': projectId }
 	});
-	return response?.data ?? null;
+	return response.data ?? null;
 };
 
 export const appendOutput = async (id: string, nodeId: string, output: WorkflowOutput<any>, nodeState: any) => {
 	console.log('>> workflowService.appendOutput');
 	const response = await API.post(`/workflows/${id}/append-output/${nodeId}`, { output, nodeState });
-	return response?.data ?? null;
+	return response.data ?? null;
 };
 
 export const addNode = async (id: string, node: WorkflowNode<any>) => {
 	console.log('>> workflowService.addNode');
 	const response = await API.post(`/workflows/${id}/node`, node);
-	return response?.data ?? null;
+	return response.data ?? null;
 };
 
 export const addEdge = async (id: string, edge: WorkflowEdge) => {
 	console.log('>> workflowService.addEdge', edge.source, edge.target);
 	const response = await API.post(`/workflows/${id}/edge`, edge);
-	return response?.data ?? null;
+	return response.data ?? null;
 };
 
 export const removeNodes = async (id: string, nodeIds: string[]) => {
 	console.log('>> workflowService.removeNode', nodeIds);
 	const response = await API.post(`/workflows/${id}/remove-nodes`, nodeIds);
-	return response?.data ?? null;
+	return response.data ?? null;
 };
 
 export const removeEdges = async (id: string, edgeIds: string[]) => {
 	console.log('>> workflowService.removeEdge', edgeIds);
 	const response = await API.post(`/workflows/${id}/remove-edges`, edgeIds);
-	return response?.data ?? null;
+	return response.data ?? null;
+};
+
+export const updateState = async (id: string, stateMap: Map<string, any>) => {
+	console.log('>> workflowService.updateState');
+	const response = await API.post(`/workflows/${id}/update-state`, Object.fromEntries(stateMap));
+	return response.data ?? null;
+};
+
+export const updateStatus = async (id: string, statusMap: Map<string, OperatorStatus>) => {
+	console.log('>> workflowService.updateStatus');
+	const response = await API.post(`/workflows/${id}/update-status`, Object.fromEntries(statusMap));
+	return response.data ?? null;
 };
 
 /// /////////////////////////////////////////////////////////////////////////////

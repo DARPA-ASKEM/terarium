@@ -90,7 +90,6 @@ public class WorkflowService extends TerariumAssetServiceWithoutSearch<Workflow,
 		final UUID projectId,
 		final Schema.Permission hasWritePermission
 	) throws IOException, IllegalArgumentException {
-		final long updateStart = System.currentTimeMillis();
 		// Fetch database copy, we will update into it
 		final Workflow dbWorkflow = getAsset(asset.getId(), hasWritePermission).get();
 
@@ -197,13 +196,7 @@ public class WorkflowService extends TerariumAssetServiceWithoutSearch<Workflow,
 			dbWorkflowEdges.add(pair.getValue());
 		}
 
-		final long resolveEnd = System.currentTimeMillis();
-		log.info("Resolve workflow " + dbWorkflow.getId() + " took " + (resolveEnd - updateStart));
-
 		final Optional<Workflow> result = super.updateAsset(dbWorkflow, projectId, hasWritePermission);
-
-		final long updateEnd = System.currentTimeMillis();
-		log.info("Update workflow to DB " + dbWorkflow.getId() + " took " + (updateEnd - resolveEnd));
 
 		return result;
 	}
@@ -461,13 +454,8 @@ public class WorkflowService extends TerariumAssetServiceWithoutSearch<Workflow,
 		}
 
 		// Invalidate downstream
-		final Map<UUID, WorkflowNode> nodeMap = new HashMap<>();
+		final Map<UUID, WorkflowNode> nodeMap = buildNodeMap(workflow);
 		final Map<UUID, List<WorkflowNode>> nodeCache = new HashMap<>();
-		for (final WorkflowNode node : workflow.getNodes()) {
-			if (node.getIsDeleted() == false) {
-				nodeMap.put(node.getId(), node);
-			}
-		}
 
 		for (final WorkflowEdge edge : workflow.getEdges()) {
 			if (edge.getIsDeleted() == true) {
@@ -562,7 +550,7 @@ public class WorkflowService extends TerariumAssetServiceWithoutSearch<Workflow,
 		for (final WorkflowEdge edge : workflow.getEdges()) {
 			if (edge.getIsDeleted() == true) continue;
 
-			if (edge.getSource() == operator.getId()) {
+			if (edge.getSource().equals(operator.getId())) {
 				final WorkflowNode targetNode = workflow
 					.getNodes()
 					.stream()
@@ -660,11 +648,53 @@ public class WorkflowService extends TerariumAssetServiceWithoutSearch<Workflow,
 		selectOutput(workflow, nodeId, port.getId());
 	}
 
+	public void updateNodeState(final Workflow workflow, final Map<UUID, JsonNode> stateMap) {
+		final Map<UUID, WorkflowNode> nodeMap = buildNodeMap(workflow);
+		for (final Map.Entry<UUID, JsonNode> entry : stateMap.entrySet()) {
+			final WorkflowNode node = nodeMap.get(entry.getKey());
+			if (node == null) {
+				log.warn("Node not found " + entry.getKey());
+			}
+			if (node == null || node.getIsDeleted() == true) continue;
+
+			node.setState(entry.getValue());
+		}
+	}
+
+	public void updateNodeStatus(final Workflow workflow, final Map<UUID, String> statusMap) {
+		final Map<UUID, WorkflowNode> nodeMap = buildNodeMap(workflow);
+		for (final Map.Entry<UUID, String> entry : statusMap.entrySet()) {
+			final WorkflowNode node = nodeMap.get(entry.getKey());
+			if (node == null) {
+				log.warn("Node not found " + entry.getKey());
+			}
+			if (node == null || node.getIsDeleted() == true) continue;
+
+			node.setStatus(entry.getValue());
+		}
+	}
+
 	@Override
 	protected String getAssetPath() {
 		throw new UnsupportedOperationException("Workflows are not stored in S3");
 	}
 
+	////////////////////////////////////////////////////////////////////////////////
+	// Helpers
+	////////////////////////////////////////////////////////////////////////////////
+
+	// Build a lookup map for faster node retrival
+	private Map<UUID, WorkflowNode> buildNodeMap(final Workflow workflow) {
+		final Map<UUID, WorkflowNode> map = new HashMap<>();
+		for (final WorkflowNode node : workflow.getNodes()) {
+			if (node.getIsDeleted() == false) {
+				map.put(node.getId(), node);
+			}
+		}
+		return map;
+	}
+
+	// Merge nodeB into nodeA
 	public static JsonNode deepMergeWithOverwrite(JsonNode nodeA, JsonNode nodeB) {
 		if (nodeA == null && nodeB == null) {
 			return null;
@@ -692,6 +722,7 @@ public class WorkflowService extends TerariumAssetServiceWithoutSearch<Workflow,
 		return nodeB;
 	}
 
+	// eg [ " datasetId | modelId "] => ["datasetId", "modelId"]
 	public static List<String> splitAndTrim(String input) {
 		return Arrays.stream(input.split("\\|")).map(String::trim).collect(Collectors.toList());
 	}

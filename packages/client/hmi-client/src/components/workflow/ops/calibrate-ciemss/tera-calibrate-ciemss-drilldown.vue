@@ -617,7 +617,9 @@ const modelParameters = ref<ModelParameter[]>([]);
 const isOutputSettingsPanelOpen = ref(false);
 
 const dataset = shallowRef<Dataset | null>(null);
-const datasetColumns = computed(() => dataset.value?.columns);
+const datasetColumns = computed(() =>
+	dataset.value?.columns?.filter((col) => col.fileName === currentDatasetFileName.value)
+);
 const csvAsset = shallowRef<CsvAsset | undefined>(undefined);
 const groundTruthData = computed<DataArray>(() => parseCsvAsset(csvAsset.value as CsvAsset));
 
