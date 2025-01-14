@@ -620,7 +620,6 @@ watch(
 	display: flex;
 	align-items: center;
 	justify-content: center;
-	font-size: 1.2em;
 	color: var(--primary-color);
 	z-index: 1;
 }
