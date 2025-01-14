@@ -15,8 +15,10 @@ from common.prompts.config_from_dataset import (
     CONFIGURE_FROM_DATASET_MATRIX_PROMPT
 )
 from common.prompts.config_from_document import CONFIGURE_FROM_DOCUMENT_PROMPT
-from common.prompts.dataset_enrichment import DATASET_ENRICH_PROMPT
-from common.prompts.dataset_enrichment_without_document import DATASET_ENRICH_PROMPT_WITHOUT_DOCUMENT
+from common.prompts.dataset_enrichment import (
+    DATASET_ENRICH_PROMPT
+    DATASET_ENRICH_PROMPT_WITHOUT_DOCUMENT
+)
 from common.prompts.equations_cleanup import EQUATIONS_CLEANUP_PROMPT
 from common.prompts.equations_from_image import EQUATIONS_FROM_IMAGE_PROMPT
 from common.prompts.general_query import GENERAL_QUERY_PROMPT
