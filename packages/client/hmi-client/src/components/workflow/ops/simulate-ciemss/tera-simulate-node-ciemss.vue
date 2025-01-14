@@ -44,9 +44,7 @@
 import _ from 'lodash';
 import { computed, ref, toRef, watch } from 'vue';
 import Button from 'primevue/button';
-
 import { logger } from '@/utils/logger';
-
 import { updateChartSettingsBySelectedVariables, updateSensitivityChartSettingOption } from '@/services/chart-settings';
 import { createDatasetFromSimulationResult } from '@/services/dataset';
 import { flattenInterventionData, getInterventionPolicyById } from '@/services/intervention-policy';
@@ -180,19 +178,12 @@ Provide a summary in 100 words or less.
 		logger.error('Error creating dataset from simulation result.');
 		return;
 	}
-
+	console.log(_.omit({ ...props.node.state, summaryId: summaryResponse?.id }, ['chartSettings']));
 	emit('append-output', {
 		type: SimulateCiemssOperation.outputs[0].type,
 		label: datasetName,
 		value: [datasetResult.id],
-		state: {
-			currentTimespan: state.currentTimespan,
-			numSamples: state.numSamples,
-			method: state.method,
-			solverStepSize: state.solverStepSize,
-			summaryId: summaryResponse?.id,
-			forecastId: runId
-		},
+		state: _.omit({ ...props.node.state, summaryId: summaryResponse?.id }, ['chartSettings']),
 		isSelected: false
 	});
 };
