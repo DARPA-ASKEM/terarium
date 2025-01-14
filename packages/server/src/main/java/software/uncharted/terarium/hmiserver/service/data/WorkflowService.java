@@ -223,12 +223,7 @@ public class WorkflowService extends TerariumAssetServiceWithoutSearch<Workflow,
 	}
 
 	public void removeNode(final Workflow workflow, final UUID nodeId) {
-		final WorkflowNode nodeToRemove = workflow
-			.getNodes()
-			.stream()
-			.filter(node -> node.getId().equals(nodeId))
-			.findFirst()
-			.orElse(null);
+		final WorkflowNode nodeToRemove = getOperator(workflow, nodeId);
 		if (nodeToRemove == null) return;
 
 		// Remove all the connecting edges first
@@ -491,15 +486,7 @@ public class WorkflowService extends TerariumAssetServiceWithoutSearch<Workflow,
 	 **/
 	@Observed(name = "function_profile")
 	public void selectOutput(final Workflow workflow, UUID nodeId, UUID selectedId) throws Exception {
-		final WorkflowNode operator = workflow
-			.getNodes()
-			.stream()
-			.filter(node -> {
-				return node.getIsDeleted() == false && node.getId().equals(nodeId);
-			})
-			.findFirst()
-			.orElse(null);
-
+		final WorkflowNode operator = getOperator(workflow, nodeId);
 		if (operator == null) {
 			throw new Exception("Cannot find node " + nodeId);
 		}
@@ -617,16 +604,17 @@ public class WorkflowService extends TerariumAssetServiceWithoutSearch<Workflow,
 	}
 
 	@Observed(name = "function_profile")
-	public void appendOutput(final Workflow workflow, UUID nodeId, OutputPort port, JsonNode nodeState) throws Exception {
-		final WorkflowNode operator = workflow
-			.getNodes()
-			.stream()
-			.filter(node -> {
-				return node.getIsDeleted() == false && node.getId().equals(nodeId);
-			})
-			.findFirst()
-			.orElse(null);
+	public void appendInput(final Workflow workflow, UUID nodeId, InputPort port) throws Exception {
+		final WorkflowNode operator = getOperator(workflow, nodeId);
+		if (operator == null) {
+			throw new Exception("Cannot find node " + nodeId);
+		}
+		operator.getInputs().add(port);
+	}
 
+	@Observed(name = "function_profile")
+	public void appendOutput(final Workflow workflow, UUID nodeId, OutputPort port, JsonNode nodeState) throws Exception {
+		final WorkflowNode operator = getOperator(workflow, nodeId);
 		if (operator == null) {
 			throw new Exception("Cannot find node " + nodeId);
 		}
@@ -683,6 +671,17 @@ public class WorkflowService extends TerariumAssetServiceWithoutSearch<Workflow,
 	////////////////////////////////////////////////////////////////////////////////
 	// Helpers
 	////////////////////////////////////////////////////////////////////////////////
+	private WorkflowNode getOperator(Workflow workflow, UUID nodeId) {
+		final WorkflowNode operator = workflow
+			.getNodes()
+			.stream()
+			.filter(node -> {
+				return node.getIsDeleted() == false && node.getId().equals(nodeId);
+			})
+			.findFirst()
+			.orElse(null);
+		return operator;
+	}
 
 	// Build a lookup map for faster node retrival
 	private Map<UUID, WorkflowNode> buildNodeMap(final Workflow workflow) {
