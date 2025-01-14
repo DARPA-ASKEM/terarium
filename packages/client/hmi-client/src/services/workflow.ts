@@ -898,6 +898,12 @@ export const appendOutput = async (id: string, nodeId: string, output: WorkflowO
 	return response.data ?? null;
 };
 
+export const appendInput = async (id: string, nodeId: string, input: WorkflowPort) => {
+	console.log('>> workflowService.appendInput');
+	const response = await API.post(`/workflows/${id}/append-input/${nodeId}`, input);
+	return response.data ?? null;
+};
+
 export const addNode = async (id: string, node: WorkflowNode<any>) => {
 	console.log('>> workflowService.addNode');
 	const response = await API.post(`/workflows/${id}/node`, node);
@@ -1160,6 +1166,7 @@ export function setLocalStorageTransform(id: string, canvasTransform: { x: numbe
 	localStorage.setItem('terariumWorkflowTransforms', JSON.stringify(workflowTransformations));
 }
 
+// FIXME: move this into WorkflowWrapper, confusing with appendInput which is an API call
 export function appendInputPort(node: WorkflowNode<any>, port: { type: string; label?: string }) {
 	node.inputs.push({
 		id: uuidv4(),
