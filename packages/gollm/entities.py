@@ -1,7 +1,7 @@
 import inspect
 from datetime import datetime
 from pydantic import BaseModel, root_validator
-from typing import List, Callable, Type
+from typing import List, Callable, Type, Optional
 
 
 class ConfigureModelDocument(BaseModel):
@@ -31,7 +31,7 @@ class DatasetStatistics(BaseModel):
 
 class DatasetCardModel(BaseModel):
     dataset: str  # expects a stringified JSON object
-    research_paper: str = None
+    document: Optional[str] = None
 
 
 class ModelCardModel(BaseModel):
