@@ -280,7 +280,7 @@ public class WorkflowController {
 		return ResponseEntity.ok(new ResponseDeleted("Workflow", id));
 	}
 
-	@PostMapping("/{id}/node/{nodeId}/select-output/{outputId}")
+	@PostMapping("/{id}/node/{nodeId}/selected-output/{outputId}")
 	@Secured(Roles.USER)
 	@Operation(summary = "Select an operator output to use")
 	@ApiResponses(
