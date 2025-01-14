@@ -280,7 +280,7 @@ watch(
 				type: CalibrateEnsembleCiemssOperation.outputs[0].type,
 				label: nodeOutputLabel(props.node, `Calibration Result`),
 				value: datasetResult.id,
-				state
+				state: _.omit(state, ['chartSettings'])
 			});
 		}
 	},

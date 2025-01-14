@@ -270,7 +270,7 @@ Provide a consis summary in 100 words or less.
 					}
 				],
 				isSelected: false,
-				state
+				state: _.omit(state, ['chartSettings'])
 			});
 		} else {
 			// Simulation Failed:
