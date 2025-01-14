@@ -17,7 +17,7 @@ import { updateChartSettingsBySelectedVariables } from '@/services/chart-setting
 import { AssetType, InterventionPolicy, ParameterSemantic } from '@/types/Types';
 import { blankIntervention, createInterventionPolicy, getInterventionPolicyById } from '@/services/intervention-policy';
 import { useProjects } from '@/composables/project';
-import { getMeanCompareDatasetVariables, switchToUniformDistribution } from '../scenario-template-utils';
+import { switchToUniformDistribution } from '../scenario-template-utils';
 
 /*
  * Value of information scenario
@@ -206,7 +206,7 @@ export class ValueOfInformationScenario extends BaseScenario {
 		compareDatasetChartSettings = updateChartSettingsBySelectedVariables(
 			compareDatasetChartSettings,
 			ChartSettingType.VARIABLE,
-			getMeanCompareDatasetVariables(this.simulateSpec.ids, modelConfig)
+			this.simulateSpec.ids
 		);
 
 		wf.updateNode(compareDatasetNode, {
