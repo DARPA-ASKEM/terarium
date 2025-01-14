@@ -19,6 +19,10 @@ export const displayParameter = (parameters: ParameterSemantic[], parameterName:
 	return `${parameterName}  [${value}]`;
 };
 
+export function cartesianProduct<T>(arrays: T[][]): T[][] {
+	return arrays.reduce((acc, curr) => acc.flatMap((a) => curr.map((b) => [...a, b])), [[]] as T[][]);
+}
+
 export const switchToUniformDistribution = (parameter: ParameterSemantic) => {
 	if (parameter.distribution.type !== DistributionType.Uniform) {
 		let minimum = 0;

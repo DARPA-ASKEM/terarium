@@ -10,7 +10,7 @@ import { OperatorNodeSize } from '@/services/workflow';
 import {
 	createModelConfiguration,
 	getModelConfigurationById,
-	setParameterDistribution
+	setParameterDistributions
 } from '@/services/model-configurations';
 import { ChartSetting, ChartSettingType } from '@/types/common';
 import { updateChartSettingsBySelectedVariables } from '@/services/chart-settings';
@@ -26,29 +26,19 @@ import { switchToUniformDistribution } from '../scenario-template-utils';
 	then simulate into the near future with different intervention policies.
 
   Users can input a model, a model configuration, a set of interventions,
-  and a set of parameters. For each parameter, a min and max value will be specified,
-  resulting in the creation of new model configurations for each parameter with that
-	parameter set to a uniform.
+  and a set of parameters. All parameters will be used to create a single model
+	configuration attached to a simulate node.  The simulate node will also have an
+	intervention node attached.
 
 	Example:
 	2 interventions, 2 parameters
   Model Node
   |
-  +-- Model Config Node (Uniform distrubiton for Param 1)
-  |     |
-  |     +-- Simulate Node (Intervention 1)
-  |
-  +-- Model Config Node (Uniform distrubiton for Param 2)
-  |     |
-  |     +-- Simulate Node (Intervention 1)
-  |
-  +-- Model Config Node (Uniform distrubiton for Param 1)
-  |     |
-  |     +-- Simulate Node (Intervention 2)
-  |
-  +-- Model Config Node (Uniform distrubiton for Param 2)
-        |
-        +-- Simulate Node (Intervention 2)
+  +-- Model Config Node (With all parameters)
+       |
+       +-- Simulate Node (Intervention 1)
+       |
+       +-- Simulate Node (Intervention 2)
  */
 export class ValueOfInformationScenario extends BaseScenario {
 	public static templateId = 'value-of-information-scenario';
@@ -215,49 +205,46 @@ export class ValueOfInformationScenario extends BaseScenario {
 			}
 		});
 
-		// 2. create model config nodes for each paramter and attach them to the model node
-		const modelConfigPromises = this.parameters.map(async (parameter) => {
-			if (!parameter) return null;
-			const clonedModelConfig = _.cloneDeep(modelConfig);
+		// 2. create a single model config node with all parameters
+		const clonedModelConfig = _.cloneDeep(modelConfig);
 
-			const modelConfigNode = wf.addNode(
-				ModelConfigOp,
-				{ x: 0, y: 0 },
-				{
-					size: OperatorNodeSize.medium
-				}
-			);
+		const modelConfigNode = wf.addNode(
+			ModelConfigOp,
+			{ x: 0, y: 0 },
+			{
+				size: OperatorNodeSize.medium
+			}
+		);
 
-			wf.addEdge(modelNode.id, modelNode.outputs[0].id, modelConfigNode.id, modelConfigNode.inputs[0].id, [
-				{ x: 0, y: 0 },
-				{ x: 0, y: 0 }
-			]);
+		wf.addEdge(modelNode.id, modelNode.outputs[0].id, modelConfigNode.id, modelConfigNode.inputs[0].id, [
+			{ x: 0, y: 0 },
+			{ x: 0, y: 0 }
+		]);
 
-			setParameterDistribution(clonedModelConfig, parameter.referenceId, parameter.distribution);
+		setParameterDistributions(
+			clonedModelConfig,
+			this.parameters.map((parameter) => ({ id: parameter!.referenceId, distribution: parameter!.distribution }))
+		);
 
-			clonedModelConfig.name = `${modelConfig.name}_${parameter.referenceId}`;
-			const newModelConfig = await createModelConfiguration(clonedModelConfig);
-			await useProjects().addAsset(
-				AssetType.ModelConfiguration,
-				newModelConfig.id,
-				useProjects().activeProject.value?.id
-			);
+		clonedModelConfig.name = `${modelConfig.name}_value_of_information`;
 
-			wf.updateNode(modelConfigNode, {
-				state: {
-					transientModelConfig: newModelConfig
-				},
-				output: {
-					value: [newModelConfig.id],
-					state: _.omit(modelConfigNode.state, ['transientModelConfig'])
-				}
-			});
+		const newModelConfig = await createModelConfiguration(clonedModelConfig);
+		await useProjects().addAsset(
+			AssetType.ModelConfiguration,
+			newModelConfig.id,
 
-			return modelConfigNode;
+			useProjects().activeProject.value?.id
+		);
+
+		wf.updateNode(modelConfigNode, {
+			state: {
+				transientModelConfig: newModelConfig
+			},
+			output: {
+				value: [newModelConfig.id],
+				state: _.omit(modelConfigNode.state, ['transientModelConfig'])
+			}
 		});
-
-		// Wait for all modelConfigPromises to resolve and filter non null responses
-		const modelConfigNodes = await Promise.all(modelConfigPromises);
 
 		// 3. Add intervention nodes for each intervention and attach them to the model node
 		const interventionPromises = this.interventionSpecs.map(async (interventionSpec) => {
@@ -300,45 +287,42 @@ export class ValueOfInformationScenario extends BaseScenario {
 				}
 			});
 
-			// each intervention node will be connected to a simulate node along with each model config node
-			modelConfigNodes.forEach((modelConfigNode) => {
-				if (!modelConfigNode) return;
-				const simulateNode = wf.addNode(
-					SimulateCiemssOp,
-					{ x: 0, y: 0 },
-					{
-						size: OperatorNodeSize.medium
-					}
-				);
+			// each intervention node will be connected to a simulate node along with the model config node
+			const simulateNode = wf.addNode(
+				SimulateCiemssOp,
+				{ x: 0, y: 0 },
+				{
+					size: OperatorNodeSize.medium
+				}
+			);
 
-				wf.updateNode(simulateNode, {
-					state: {
-						chartSettings: simulateChartSettings
-					}
-				});
-
-				wf.addEdge(modelConfigNode.id, modelConfigNode.outputs[0].id, simulateNode.id, simulateNode.inputs[0].id, [
-					{ x: 0, y: 0 },
-					{ x: 0, y: 0 }
-				]);
-
-				wf.addEdge(interventionNode.id, interventionNode.outputs[0].id, simulateNode.id, simulateNode.inputs[1].id, [
-					{ x: 0, y: 0 },
-					{ x: 0, y: 0 }
-				]);
-
-				wf.addEdge(
-					simulateNode.id,
-					simulateNode.outputs[0].id,
-					compareDatasetNode.id,
-					compareDatasetNode.inputs[compareDatasetIndex].id,
-					[
-						{ x: 0, y: 0 },
-						{ x: 0, y: 0 }
-					]
-				);
-				compareDatasetIndex++;
+			wf.updateNode(simulateNode, {
+				state: {
+					chartSettings: simulateChartSettings
+				}
 			});
+
+			wf.addEdge(modelConfigNode.id, modelConfigNode.outputs[0].id, simulateNode.id, simulateNode.inputs[0].id, [
+				{ x: 0, y: 0 },
+				{ x: 0, y: 0 }
+			]);
+
+			wf.addEdge(interventionNode.id, interventionNode.outputs[0].id, simulateNode.id, simulateNode.inputs[1].id, [
+				{ x: 0, y: 0 },
+				{ x: 0, y: 0 }
+			]);
+
+			wf.addEdge(
+				simulateNode.id,
+				simulateNode.outputs[0].id,
+				compareDatasetNode.id,
+				compareDatasetNode.inputs[compareDatasetIndex].id,
+				[
+					{ x: 0, y: 0 },
+					{ x: 0, y: 0 }
+				]
+			);
+			compareDatasetIndex++;
 		});
 
 		// Wait for all interventionPromises to resolve
