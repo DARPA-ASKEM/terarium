@@ -48,9 +48,3 @@ const emit = defineEmits(['close-modal', 'update-cell-values']);
 
 const matrixShouldEval = ref(false);
 </script>
-
-<style scoped>
-:deep(.content) {
-	overflow-y: none;
-}
-</style>
