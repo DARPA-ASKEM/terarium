@@ -57,6 +57,7 @@ const interventionEventHandler = async (event: ClientEvent<TaskResponse>) => {
 };
 
 useClientEvent(ClientEventType.TaskGollmInterventionsFromDocument, interventionEventHandler);
+useClientEvent(ClientEventType.TaskGollmInterventionsFromDataset, interventionEventHandler);
 
 const isLoading = computed(() => taskIds.value.length > 0);
 const isModelInputConnected = ref(false);

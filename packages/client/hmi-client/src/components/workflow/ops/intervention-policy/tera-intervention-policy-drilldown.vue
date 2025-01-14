@@ -92,16 +92,6 @@
 						/>
 					</li>
 				</ul>
-				<Paginator
-					v-if="knobs.transientInterventionPolicy.interventions.length > MAX_NUMBER_OF_ROWS"
-					:rows="MAX_NUMBER_OF_ROWS"
-					:first="firstRow"
-					:total-records="knobs.transientInterventionPolicy.interventions.length"
-					:template="{
-						default: 'FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink JumpToPageDropdown'
-					}"
-					@page="firstRow = $event.first"
-				/>
 				<Button
 					class="align-self-start mt-2"
 					text
@@ -110,6 +100,20 @@
 					icon="pi pi-plus"
 					size="small"
 				/>
+				<template #footer>
+					<section class="paginator w-full">
+						<Paginator
+							v-if="knobs.transientInterventionPolicy.interventions.length > MAX_NUMBER_OF_ROWS"
+							:rows="MAX_NUMBER_OF_ROWS"
+							:first="firstRow"
+							:total-records="knobs.transientInterventionPolicy.interventions.length"
+							:template="{
+								default: 'FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink JumpToPageDropdown'
+							}"
+							@page="firstRow = $event.first"
+						/>
+					</section>
+				</template>
 			</tera-drilldown-section>
 			<tera-drilldown-section>
 				<template #header-controls-left>
@@ -228,11 +232,14 @@ import TeraInputText from '@/components/widgets/tera-input-text.vue';
 import { getInterventionPoliciesForModel, getModel } from '@/services/model';
 import {
 	AssetType,
+	ClientEvent,
+	ClientEventType,
 	Intervention,
 	InterventionPolicy,
 	Model,
 	DynamicIntervention,
 	StaticIntervention,
+	TaskStatus,
 	type TaskResponse,
 	type DocumentAsset
 } from '@/types/Types';
@@ -262,6 +269,7 @@ import { useProjects } from '@/composables/project';
 import { interventionPolicyFromDocument, interventionPolicyFromDataset } from '@/services/goLLM';
 import { downloadDocumentAsset, getDocumentAsset, getDocumentFileAsText } from '@/services/document-assets';
 import TeraPdfPanel from '@/components/widgets/tera-pdf-panel.vue';
+import { useClientEvent } from '@/composables/useClientEvent';
 import TeraInterventionCard from './tera-intervention-card.vue';
 import {
 	InterventionPolicyOperation,
@@ -640,7 +648,6 @@ const extractInterventionPolicyFromInputs = async () => {
 			);
 		});
 		const responsesRaw = await Promise.all(promiseList);
-		// updateIntervention(responsesRaw)
 
 		responsesRaw.forEach((resp) => {
 			if (resp) {
@@ -651,13 +658,22 @@ const extractInterventionPolicyFromInputs = async () => {
 	emit('update-state', state);
 };
 
-// const updateIntervention = (interventions) => {
-// 	const state = cloneDeep(props.node.state);
-// 	console.log('interventions', interventions)
-// 	console.log('state.interventionPolicy', state.interventionPolicy)
-// 	state.interventionPolicy.interventions.push(...interventions)
-// 	emit('update-state', state);
-// }
+// Listen for the task completion event
+const interventionEventHandler = async (event: ClientEvent<TaskResponse>) => {
+	const state = cloneDeep(props.node.state);
+	if (!state.taskIds.includes(event.data?.id)) return;
+	isLoading.value = true;
+	if ([TaskStatus.Success, TaskStatus.Cancelled, TaskStatus.Failed].includes(event.data.status)) {
+		state.taskIds = state.taskIds.filter((id) => id !== event.data.id);
+		isLoading.value = false;
+		const modelId = props.node.inputs[0].value?.[0];
+		if (!modelId) return;
+		await fetchInterventionPolicies(modelId);
+	}
+};
+
+useClientEvent(ClientEventType.TaskGollmInterventionsFromDocument, interventionEventHandler);
+useClientEvent(ClientEventType.TaskGollmInterventionsFromDataset, interventionEventHandler);
 
 const onSelectChartChange = () => {
 	const state = cloneDeep(props.node.state);
@@ -680,20 +696,6 @@ watch(
 	() => {
 		if (props.node.active) {
 			initialize();
-		}
-	}
-);
-
-watch(
-	() => props.node.state.taskIds,
-	async (watchVal) => {
-		if (watchVal.length > 0) {
-			isLoading.value = true;
-		} else {
-			isLoading.value = false;
-			const modelId = props.node.inputs[0].value?.[0];
-			if (!modelId) return;
-			await fetchInterventionPolicies(modelId);
 		}
 	}
 );
@@ -806,5 +808,9 @@ button.start-edit {
 
 .description {
 	margin-bottom: var(--gap-3);
+}
+
+.paginator {
+	padding: unset;
 }
 </style>
