@@ -31,7 +31,7 @@ class DatasetStatistics(BaseModel):
 
 class DatasetCardModel(BaseModel):
     dataset: str  # expects a stringified JSON object
-    research_paper: str = None
+    research_paper: Optional[str] = None
 
 
 class ModelCardModel(BaseModel):
