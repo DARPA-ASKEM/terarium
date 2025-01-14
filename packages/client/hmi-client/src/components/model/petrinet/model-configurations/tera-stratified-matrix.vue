@@ -11,13 +11,18 @@
 		</div>
 		<div v-if="matrix.length > 1">
 			<label>Rows</label>
-			<MultiSelect v-model="filteredRowNames" :options="matrix.map((r) => r[0].rowCriteria)" :max-selected-labels="2" />
+			<MultiSelect
+				v-model="filteredRowNames"
+				:options="matrix.map((r) => r[0].rowCriteria)"
+				:max-selected-labels="2"
+				filter
+			/>
 		</div>
 		<div v-if="matrix[0].length > 1">
 			<label>Columns</label>
 			<MultiSelect
 				v-model="filteredColumnNames"
-				:options="matrix[0].map((m) => m.colCriteria)"
+				:options="matrix[0].map((c) => c.colCriteria)"
 				:max-selected-labels="2"
 				filter
 			/>
@@ -40,12 +45,10 @@
 					<tr>
 						<th v-if="matrix.length > 0" class="choose-criteria">&nbsp;</th>
 						<th
-							v-for="{ col, colCriteria } in matrix[0].filter(({ colCriteria }) =>
-								filteredColumnNames.includes(colCriteria)
-							)"
-							:key="col"
+							v-for="firstRow in matrix[0].filter(({ colCriteria }) => filteredColumnNames.includes(colCriteria))"
+							:key="firstRow.col"
 						>
-							{{ colCriteria }}
+							{{ firstRow.colCriteria }}
 						</th>
 					</tr>
 				</thead>
@@ -55,7 +58,6 @@
 						<td v-if="matrix.length > 0" class="p-frozen-column" style="position: sticky; left: 0; background: white">
 							{{ row[0].rowCriteria }}
 						</td>
-
 						<td
 							v-for="cell in row.filter(({ colCriteria }) => filteredColumnNames.includes(colCriteria))"
 							:key="`${cell.row}-${cell.col}`"
@@ -378,6 +380,8 @@ watch(
 
 <style scoped>
 .p-datatable-wrapper {
+	/* Make the height of the table the remainder of the .content section in the modal before it starts to overflow */
+	max-height: calc(70vh - 4.5rem);
 	overflow: auto;
 }
 
@@ -425,14 +429,17 @@ watch(
 	justify-content: space-between;
 	align-items: center;
 }
+
 .n-a-cell {
 	background-color: var(--surface-b);
 }
+
 .hide-content {
 	visibility: hidden;
 	height: 0px;
 	padding-left: 2rem;
 }
+
 .cell-input {
 	padding-left: var(--gap-2);
 	padding-right: var(--gap-4);
@@ -450,11 +457,13 @@ watch(
 	width: 100%;
 	text-align: right;
 }
+
 .mathml-container:deep(mn) {
 	font-family: var(--font-family);
 	font-feature-settings: 'tnum';
 	text-align: right !important;
 }
+
 .p-datatable-scrollable .p-frozen-column {
 	padding-right: 1rem;
 }
@@ -478,8 +487,6 @@ watch(
 	position: sticky;
 	gap: var(--gap-12);
 	height: 4.5rem;
-	top: 0;
-	left: 0;
 
 	& > div {
 		display: flex;
