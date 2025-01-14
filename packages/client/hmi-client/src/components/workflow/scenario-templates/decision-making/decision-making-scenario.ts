@@ -17,7 +17,6 @@ import {
 import { ChartSetting, ChartSettingType } from '@/types/common';
 import { updateChartSettingsBySelectedVariables } from '@/services/chart-settings';
 import { InterventionPolicy } from '@/types/Types';
-import { getMeanCompareDatasetVariables } from '../scenario-template-utils';
 
 export class DecisionMakingScenario extends BaseScenario {
 	public static templateId = 'decision-making';
@@ -178,7 +177,7 @@ export class DecisionMakingScenario extends BaseScenario {
 		compareDatasetChartSettings = updateChartSettingsBySelectedVariables(
 			compareDatasetChartSettings,
 			ChartSettingType.VARIABLE,
-			getMeanCompareDatasetVariables(this.simulateSpec.ids, modelConfig)
+			this.simulateSpec.ids
 		);
 
 		// 2. Add base simulation (no interventions) and connect it to the compare datasets node
