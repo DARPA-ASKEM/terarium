@@ -83,6 +83,7 @@ export interface HistogramChartOptions extends BaseChartOptions {
 	maxBins?: number;
 	variables: { field: string; label?: string; width: number; color: string }[];
 	legendProperties?: Record<string, any>;
+	extent?: [number, number];
 }
 
 export interface ErrorChartOptions extends Omit<BaseChartOptions, 'height' | 'yAxisTitle' | 'legend'> {
@@ -362,12 +363,14 @@ export function createHistogramChart(dataset: Record<string, any>[], options: Hi
 
 	spec.data = { values: data };
 
-	// Create an extent from the min max of the data across all variables, this is used to set the bin extent and let multiple histograms from different layers to share the same bin extent
-	const extent = [Infinity, -Infinity];
-	data.forEach((d) => {
-		extent[0] = Math.min(extent[0], Math.min(...Object.values(d)));
-		extent[1] = Math.max(extent[1], Math.max(...Object.values(d)));
-	});
+	const extent = options.extent ?? [Infinity, -Infinity];
+	if (!options.extent) {
+		// Create an extent from the min max of the data across all variables, this is used to set the bin extent and let multiple histograms from different layers to share the same bin extent
+		data.forEach((d) => {
+			extent[0] = Math.min(extent[0], Math.min(...Object.values(d)));
+			extent[1] = Math.max(extent[1], Math.max(...Object.values(d)));
+		});
+	}
 
 	const createLayers = (opts) => {
 		const colorScale = {
