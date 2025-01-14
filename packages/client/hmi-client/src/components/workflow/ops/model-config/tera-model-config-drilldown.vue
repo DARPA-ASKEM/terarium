@@ -315,7 +315,6 @@ const currentActiveIndexes = ref([0, 1, 2]);
 const observableActiveIndicies = ref([0]);
 const pdfData = ref<{ document: any; data: string; isPdf: boolean; name: string }[]>([]);
 const pdfPanelRef = ref();
-const pdfViewer = computed(() => pdfPanelRef.value?.pdfRef);
 
 const isSidebarOpen = ref(true);
 const isEditingDescription = ref(false);
@@ -692,16 +691,6 @@ const initialize = async (overwriteWithState: boolean = false) => {
 };
 
 const onSelectConfiguration = async (config: ModelConfiguration) => {
-	let tabIndex = 0;
-	if (pdfPanelRef.value && config.extractionDocumentId) {
-		tabIndex = await pdfPanelRef.value.selectPdf(config.extractionDocumentId);
-		await nextTick();
-	}
-
-	if (pdfViewer.value && config.extractionPage) {
-		pdfViewer.value[tabIndex].goToPage(config.extractionPage);
-	}
-
 	const { transientModelConfig } = knobs.value;
 	// If no changes were made switch right away
 	if (isModelConfigsEqual(originalConfig, transientModelConfig)) {
