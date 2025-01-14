@@ -25,7 +25,7 @@ def main():
 
         taskrunner.log("Sending request to OpenAI API")
         llm = OpenAiTools()
-        response = enrich_dataset_chain(llm, research_paper=inputs.research_paper, dataset=inputs.dataset)
+        response = enrich_dataset_chain(llm, dataset=inputs.dataset, document=inputs.document)
         taskrunner.log("Received response from OpenAI API")
 
         taskrunner.write_output_dict_with_timeout({"response": response})
