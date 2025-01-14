@@ -312,7 +312,7 @@ interface SelectedIntervention {
 	dynamicInterventions: DynamicIntervention[];
 }
 
-const MAX_NUMBER_OF_ROWS = 5;
+const MAX_NUMBER_OF_ROWS = 8;
 const firstRow = ref(0);
 
 const currentActiveIndicies = ref([0, 1]);
