@@ -71,7 +71,7 @@
 						<component
 							:is="registry.getNode(node.operationType)"
 							:node="node"
-							@append-output="(event: any) => appendOutput(node, event)"
+							@append-output="(port: any, newState: any) => appendOutput(node, port, newState)"
 							@append-input-port="(event: any) => workflowService.appendInputPort(node, event)"
 							@update-state="(event: any) => updateWorkflowNodeState(node, event)"
 							@open-drilldown="addOperatorToRoute(node.id)"
@@ -143,7 +143,7 @@
 			:spawn-animation="drilldownSpawnAnimation"
 			:upstream-operators-nav="upstreamOperatorsNav"
 			@close="addOperatorToRoute(null)"
-			@append-output="(event: any) => appendOutput(currentActiveNode, event)"
+			@append-output="(port: any, newState: any) => appendOutput(currentActiveNode, port, newState)"
 			@select-output="(event: any) => selectOutput(currentActiveNode, event)"
 			@update-state="(event: any) => updateWorkflowNodeState(currentActiveNode, event)"
 			@update-status="(status: OperatorStatus) => updateWorkflowNodeStatus(currentActiveNode, status)"
@@ -318,7 +318,8 @@ async function appendOutput(
 		value: any;
 		state?: any;
 		isSelected?: boolean;
-	}
+	},
+	newState: any = null
 ) {
 	if (!node) return;
 
@@ -337,7 +338,7 @@ async function appendOutput(
 		operatorStatus: OperatorStatus.SUCCESS
 	};
 
-	const updatedWorkflow = await workflowService.appendOutput(wf.value.getId(), node.id, outputPort, null);
+	const updatedWorkflow = await workflowService.appendOutput(wf.value.getId(), node.id, outputPort, newState);
 	wf.value.update(updatedWorkflow, false);
 }
 
@@ -348,6 +349,12 @@ function updateWorkflowNodeState(node: WorkflowNode<any> | null, state: any) {
 	} else {
 		nodeStateMap.set(node.id, state);
 	}
+
+	// FIXME: in some places we do consecutive update-state events programmatically, this cause
+	// an issue if we delay updates because they may not be independent. For now we will immediately
+	// update the client-copy.
+	wf.value.updateNodeState(node.id, nodeStateMap.get(node.id));
+
 	saveNodeStateHandler();
 }
 

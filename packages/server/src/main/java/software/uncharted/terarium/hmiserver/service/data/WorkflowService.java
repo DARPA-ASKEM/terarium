@@ -632,7 +632,8 @@ public class WorkflowService extends TerariumAssetServiceWithoutSearch<Workflow,
 		}
 
 		// If nodeState is provided, also set the state
-		if (nodeState != null) {
+		if (nodeState != null && nodeState.isNull() == false) {
+			System.out.println("setting state!!!");
 			operator.setState(nodeState);
 		}
 
@@ -645,6 +646,7 @@ public class WorkflowService extends TerariumAssetServiceWithoutSearch<Workflow,
 		operator.setOutputs(
 			operator.getOutputs().stream().filter(output -> output.getValue() != null).collect(Collectors.toList())
 		);
+
 		selectOutput(workflow, nodeId, port.getId());
 	}
 
