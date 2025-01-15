@@ -22,7 +22,7 @@ import { WorkflowNode } from '@/types/workflow';
  */
 export function useChartSettings(
 	props: { node: WorkflowNode<{ chartSettings: ChartSetting[] | null }> },
-	emit: (event: 'update-state', ...args: any[]) => void
+	emit: (...args: any[]) => void
 ) {
 	const chartSettings = computed(() => props.node.state.chartSettings ?? []);
 	const activeChartSettings = ref<ChartSetting | null>(null);
