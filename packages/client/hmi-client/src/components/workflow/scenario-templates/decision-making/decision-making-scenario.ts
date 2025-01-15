@@ -310,7 +310,7 @@ export class DecisionMakingScenario extends BaseScenario {
 		await Promise.all(promises);
 
 		// 4. Run layout
-		// The schematic for value-of-information is as follows
+		// The schematic for decision-making is as follows
 		//
 		//                           Interventions
 		//  Model -> ModelConfig ->                 -> CompareDataset
