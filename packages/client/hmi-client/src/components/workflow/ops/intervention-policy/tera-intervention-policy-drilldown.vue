@@ -50,6 +50,11 @@
 						<tera-input-text v-model="filterInterventionsText" placeholder="Filter" />
 						<ul v-if="!isFetchingPolicies">
 							<li v-for="policy in interventionPoliciesFiltered" :key="policy.id">
+								current: {{ policy.id }}
+								<br />
+								selected:{{ selectedPolicy?.id }}
+								<br />
+								computed:{{ selectedPolicyId }}
 								<tera-intervention-policy-card
 									:interventionPolicy="policy"
 									:selected="selectedPolicy?.id === policy.id"
@@ -161,10 +166,7 @@
 									>
 										<h6 class="pb-1">{{ intervention.name }}</h6>
 										<ul v-if="!isEmpty(intervention.staticInterventions)">
-											<li
-												v-for="staticIntervention in intervention.staticInterventions"
-												:key="staticIntervention.timestep"
-											>
+											<li v-for="(staticIntervention, index) in intervention.staticInterventions" :key="index">
 												<p>
 													Set {{ staticIntervention.type }} {{ appliedTo }} to {{ staticIntervention.value }} at time
 													step {{ staticIntervention.timestep }}.
@@ -230,7 +232,6 @@ import TeraToggleableInput from '@/components/widgets/tera-toggleable-input.vue'
 import {
 	blankIntervention,
 	flattenInterventionData,
-	getInterventionPolicyById,
 	updateInterventionPolicy,
 	deleteInterventionPolicy
 } from '@/services/intervention-policy';
@@ -307,9 +308,9 @@ const filterInterventionsText = ref('');
 const model = ref<Model | null>(null);
 const isFetchingPolicies = ref(false);
 const isLoading = ref(false);
-const interventionsPolicyList = ref<InterventionPolicy[]>([]);
+const interventionPoliciesList = ref<InterventionPolicy[]>([]);
 const interventionPoliciesFiltered = computed(() =>
-	interventionsPolicyList.value
+	interventionPoliciesList.value
 		.filter((policy) => policy.name?.toLowerCase().includes(filterInterventionsText.value.toLowerCase()))
 		.sort((a, b) => sortDatesDesc(a.createdOn, b.createdOn))
 );
@@ -401,19 +402,16 @@ const getInterventionsAppliedTo = (appliedTo: string) =>
 
 const initialize = async (overwriteWithState: boolean = false) => {
 	const state = props.node.state;
-	if (!modelId) return;
 
-	// fetch intervention policies
 	await fetchInterventionPolicies();
+	selectedPolicy.value = interventionPoliciesList.value.find(({ id }) => id === selectedPolicyId.value) ?? null;
 
-	model.value = await getModel(modelId);
-	if (selectedPolicyId.value) {
-		selectedPolicy.value = await getInterventionPolicyById(selectedPolicyId.value);
-		knobs.value.transientInterventionPolicy = cloneDeep(
-			!overwriteWithState ? selectedPolicy.value : state.interventionPolicy
-		);
-	} else {
+	if (overwriteWithState || !selectedPolicy.value) {
+		console.log(state.interventionPolicy);
 		knobs.value.transientInterventionPolicy = cloneDeep(state.interventionPolicy);
+	} else {
+		console.log(selectedPolicy.value);
+		knobs.value.transientInterventionPolicy = cloneDeep(selectedPolicy.value);
 	}
 	selectedCharts.value = state.selectedCharts ?? [];
 };
@@ -446,7 +444,7 @@ const applyInterventionPolicy = (interventionPolicy: InterventionPolicy) => {
 
 const fetchInterventionPolicies = async () => {
 	isFetchingPolicies.value = true;
-	interventionsPolicyList.value = await getInterventionPoliciesForModel(modelId);
+	interventionPoliciesList.value = await getInterventionPoliciesForModel(modelId);
 	isFetchingPolicies.value = false;
 };
 
@@ -650,7 +648,9 @@ watch(
 	}
 );
 
-onMounted(() => {
+onMounted(async () => {
+	if (modelId) model.value = await getModel(modelId);
+
 	if (props.node.active) {
 		// setting true will force overwrite the intervention policy with the current state on the node
 		initialize(true);
