@@ -173,7 +173,7 @@ export class ValueOfInformationScenario extends BaseScenario {
 		);
 
 		// add input ports for each simulation to the dataset transformer, this will be a matrix of intervention x parameter
-		for (let i = 0; i < this.interventionSpecs.length * this.parameters.length; i++) {
+		for (let i = 0; i < this.interventionSpecs.length - 1; i++) {
 			workflowService.appendInputPort(compareDatasetNode, {
 				type: 'datasetId|simulationId',
 				label: 'Dataset or Simulation'
