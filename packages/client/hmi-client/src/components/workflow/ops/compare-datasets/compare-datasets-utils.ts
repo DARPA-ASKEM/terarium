@@ -1,9 +1,16 @@
+import { isEmpty } from 'lodash';
 import { Dataset } from '@/types/Types';
+import { WorkflowPortStatus } from '@/types/workflow';
 import { renameFnGenerator } from '@/components/workflow/ops/calibrate-ciemss/calibrate-utils';
-import { DataArray, parsePyCiemssMap, processAndSortSamplesByTimepoint } from '@/services/models/simulation-service';
-import { DATASET_VAR_NAME_PREFIX, getDatasetResultCSV, mergeResults } from '@/services/dataset';
-import { ChartData } from '@/composables/useCharts';
+
 import { createRankingInterventionsChart } from '@/services/charts';
+import { DATASET_VAR_NAME_PREFIX, getDatasetResultCSV, mergeResults, getDataset } from '@/services/dataset';
+import { DataArray, parsePyCiemssMap, processAndSortSamplesByTimepoint } from '@/services/models/simulation-service';
+import { getInterventionPolicyById } from '@/services/intervention-policy';
+import { getModelConfigurationById } from '@/services/model-configurations';
+
+import { ChartData } from '@/composables/useCharts';
+
 import { PlotValue, TimepointOption, RankOption } from './compare-datasets-operation';
 
 interface DataResults {
@@ -252,57 +259,71 @@ export async function generateImpactCharts(
 	);
 }
 
-// export async function initialize(inputs) {
-// 	const { inputs } = props.node;
-// 	const datasetInputs = inputs.filter(
-// 		(input) => input.type === 'datasetId' && input.status === WorkflowPortStatus.CONNECTED
-// 	);
-// 	const datasetPromises = datasetInputs.map((input) => getDataset(input.value![0]));
-// 	isFetchingDatasets.value = true;
-// 	await Promise.all(datasetPromises).then((ds) => {
-// 		ds.forEach((dataset) => {
-// 			// Add dataset
-// 			if (!dataset) return;
-// 			datasets.value.push(dataset);
+// TODO: this should probably be split up into smaller functions but for now it's at least not duplicated in the node and drilldown
+export async function initialize(
+	props,
+	isFetchingDatasets,
+	datasets,
+	datasetResults,
+	modelConfigIdToInterventionPolicyIdMap,
+	chartData,
+	baselineDatasetIndex,
+	selectedPlotType,
+	modelConfigurations,
+	interventionPolicies,
+	rankingCriteriaCharts,
+	rankingResultsChart
+) {
+	const { inputs } = props.node;
+	const datasetInputs = inputs.filter(
+		(input) => input.type === 'datasetId' && input.status === WorkflowPortStatus.CONNECTED
+	);
+	const datasetPromises = datasetInputs.map((input) => getDataset(input.value![0]));
+	isFetchingDatasets.value = true;
+	await Promise.all(datasetPromises).then((ds) => {
+		ds.forEach((dataset) => {
+			// Add dataset
+			if (!dataset) return;
+			datasets.value.push(dataset);
 
-// 			// Collect model configuration id and intervention policy id
-// 			const modelConfigurationId: string | undefined = dataset.metadata?.simulationAttributes?.modelConfigurationId;
-// 			const interventionPolicyId: string | undefined = dataset.metadata?.simulationAttributes?.interventionPolicyId;
+			// Collect model configuration id and intervention policy id
+			const modelConfigurationId: string | undefined = dataset.metadata?.simulationAttributes?.modelConfigurationId;
+			const interventionPolicyId: string | undefined = dataset.metadata?.simulationAttributes?.interventionPolicyId;
 
-// 			if (!modelConfigurationId) return;
-// 			if (!modelConfigIdToInterventionPolicyIdMap.value[modelConfigurationId]) {
-// 				modelConfigIdToInterventionPolicyIdMap.value[modelConfigurationId] = [];
-// 			}
-// 			if (!interventionPolicyId) return;
-// 			modelConfigIdToInterventionPolicyIdMap.value[modelConfigurationId].push(interventionPolicyId);
-// 		});
-// 	});
-// 	// Fetch the results
-// 	datasetResults.value = await fetchDatasetResults(datasets.value);
-// 	isFetchingDatasets.value = false;
+			if (!modelConfigurationId) return;
+			if (!modelConfigIdToInterventionPolicyIdMap.value[modelConfigurationId]) {
+				modelConfigIdToInterventionPolicyIdMap.value[modelConfigurationId] = [];
+			}
+			if (!interventionPolicyId) return;
+			modelConfigIdToInterventionPolicyIdMap.value[modelConfigurationId].push(interventionPolicyId);
+		});
+	});
+	// Fetch the results
+	datasetResults.value = await fetchDatasetResults(datasets.value);
+	isFetchingDatasets.value = false;
 
-// 	await generateImpactCharts(chartData, datasets, datasetResults, baselineDatasetIndex, selectedPlotType);
-// 	console.log(chartData.value);
-// 	const modelConfigurationIds = Object.keys(modelConfigIdToInterventionPolicyIdMap.value);
-// 	if (isEmpty(modelConfigurationIds)) return;
-// 	const modelConfigurationPromises = modelConfigurationIds.map((id) => getModelConfigurationById(id));
-// 	await Promise.all(modelConfigurationPromises).then((configs) => {
-// 		modelConfigurations.value = configs.filter((config) => config !== null);
-// 	});
+	await generateImpactCharts(chartData, datasets, datasetResults, baselineDatasetIndex, selectedPlotType);
+	console.log(chartData.value);
+	const modelConfigurationIds = Object.keys(modelConfigIdToInterventionPolicyIdMap.value);
+	if (isEmpty(modelConfigurationIds)) return;
+	const modelConfigurationPromises = modelConfigurationIds.map((id) => getModelConfigurationById(id));
+	await Promise.all(modelConfigurationPromises).then((configs) => {
+		modelConfigurations.value = configs.filter((config) => config !== null);
+	});
 
-// 	const interventionPolicyIds = Object.values(modelConfigIdToInterventionPolicyIdMap.value).flat();
-// 	if (isEmpty(interventionPolicyIds)) return;
-// 	const interventionPolicyPromises = interventionPolicyIds.map((id) => getInterventionPolicyById(id));
-// 	await Promise.all(interventionPolicyPromises).then((policies) => {
-// 		interventionPolicies.value = policies.filter((policy) => policy !== null);
-// 	});
+	const interventionPolicyIds = Object.values(modelConfigIdToInterventionPolicyIdMap.value).flat();
+	if (isEmpty(interventionPolicyIds)) return;
+	const interventionPolicyPromises = interventionPolicyIds.map((id) => getInterventionPolicyById(`${id}`));
+	await Promise.all(interventionPolicyPromises).then((policies) => {
+		interventionPolicies.value = policies.filter((policy) => policy !== null);
+	});
 
-// 	generateRankingCharts(
-// 		rankingCriteriaCharts,
-// 		rankingResultsChart,
-// 		props,
-// 		modelConfigIdToInterventionPolicyIdMap,
-// 		chartData,
-// 		interventionPolicies
-// 	);
-// };
+	generateRankingCharts(
+		rankingCriteriaCharts,
+		rankingResultsChart,
+		props,
+		modelConfigIdToInterventionPolicyIdMap,
+		chartData,
+		interventionPolicies
+	);
+}
