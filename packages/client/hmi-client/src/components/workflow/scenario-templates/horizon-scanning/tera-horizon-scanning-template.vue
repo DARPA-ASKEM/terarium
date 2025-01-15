@@ -32,7 +32,7 @@
 				</template>
 			</Dropdown>
 
-			<label :class="{ 'disabled-label': !selectedModelConfiguration }"
+			<label :class="{ 'disabled-label': !scenario.modelSpec.id }"
 				>Select uncertain parameters of interest and adjust ranges to be explored if needed</label
 			>
 			<template v-for="(parameter, i) in scenario.parameters" :key="i">
@@ -44,7 +44,7 @@
 						option-label="referenceId"
 						option-value="referenceId"
 						placeholder="Select a parameter"
-						:disabled="!selectedModelConfiguration"
+						:disabled="!scenario.modelSpec.id"
 						:loading="isFetchingModelConfiguration || isFetchingModelInformation"
 						@update:model-value="onParameterSelect($event, i)"
 						filter
@@ -81,7 +81,7 @@
 				/>
 			</div>
 
-			<label :class="{ 'disabled-label': !selectedModelConfiguration }">Planned intervention policy (optional)</label>
+			<label :class="{ 'disabled-label': !scenario.modelSpec.id }">Planned intervention policy (optional)</label>
 			<div v-for="(intervention, i) in scenario.interventionSpecs" :key="i" class="flex">
 				<Dropdown
 					ref="interventionDropdowns"
@@ -93,7 +93,7 @@
 					placeholder="Select an intervention policy (optional)"
 					@update:model-value="scenario.setInterventionSpec($event, i)"
 					:key="i"
-					:disabled="!selectedModelConfiguration || isFetchingModelInformation"
+					:disabled="!scenario.modelSpec.id || isFetchingModelInformation"
 					:loading="isFetchingModelInformation"
 					filter
 				>
@@ -116,7 +116,7 @@
 					text
 					icon="pi pi-trash"
 					@click="scenario.deleteInterventionSpec(i)"
-					:disabled="!selectedModelConfiguration || isFetchingModelInformation"
+					:disabled="!scenario.modelSpec.id || isFetchingModelInformation"
 				/>
 			</div>
 			<div>
@@ -127,7 +127,7 @@
 					icon="pi pi-plus"
 					label="Add more interventions"
 					@click="scenario.addInterventionSpec()"
-					:disabled="!selectedModelConfiguration || isFetchingModelInformation"
+					:disabled="!scenario.modelSpec.id || isFetchingModelInformation"
 				/>
 			</div>
 		</template>
