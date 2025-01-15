@@ -4,11 +4,11 @@
 		<div v-else>Processing...</div>
 	</tera-progress-spinner>
 	<ul v-else-if="visibleChartSettings.length">
-		<li v-for="setting of visibleChartSettings" :key="setting.id">
+		<li v-for="setting of visibleChartSettings" :key="chartSettingKey || setting.id">
 			<vega-chart
 				:expandable="expandable"
 				:are-embed-actions-visible="areEmbedActionsVisible"
-				:visualization-spec="preparedCharts[setting.id]"
+				:visualization-spec="preparedCharts[chartSettingKey || setting.id]"
 				:interactive="interactive"
 			/>
 		</li>
@@ -31,6 +31,7 @@ const props = defineProps<{
 	node: WorkflowNode<any>;
 	preparedCharts: Ref<ChartData | null, ChartData | null> | Record<string, VisualizationSpec[]>;
 	chartSettings: any;
+	chartSettingKey?: string;
 	isLoading?: boolean;
 	placeholder?: string;
 	processing?: string;

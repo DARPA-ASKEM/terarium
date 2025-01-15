@@ -217,12 +217,11 @@
 						<template v-if="!isRunInProgress">
 							<AccordionTab v-if="selectedEnsembleVariableSettings.length > 0" header="Ensemble variables over time">
 								<div class="flex flex-row" v-for="setting of selectedEnsembleVariableSettings" :key="setting.id">
-									<vega-chart
-										v-for="(spec, index) of ensembleVariableCharts[setting.id]"
-										:key="index"
-										expandable
-										:are-embed-actions-visible="true"
-										:visualization-spec="spec"
+									<NodeCharts
+										:node="node"
+										:prepared-charts="ensembleVariableCharts"
+										:chart-settings="selectedEnsembleVariableSettings"
+										:expandable="true"
 									/>
 								</div>
 							</AccordionTab>
@@ -397,6 +396,7 @@ import {
 	EnsembleErrorData,
 	fetchModelConfigurations
 } from './calibrate-ensemble-util';
+import NodeCharts from '../node-charts.vue';
 
 const props = defineProps<{
 	node: WorkflowNode<CalibrateEnsembleCiemssOperationState>;
