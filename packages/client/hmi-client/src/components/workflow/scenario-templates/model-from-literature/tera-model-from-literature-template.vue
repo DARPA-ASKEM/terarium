@@ -35,12 +35,14 @@
 					@click="scenario.addDocumentSpec()"
 				/>
 			</div>
-			<label>Model selection criteria (optional)</label>
-			<Textarea
-				:model-value="scenario.modelSelectionCriteria"
-				placeholder="What is your goal (optional)"
-				@update:model-value="scenario.setModelSelectionCriteria($event)"
-			/>
+			<template v-if="scenario.documentSpecs.length > 1">
+				<label>Model selection criteria (optional)</label>
+				<Textarea
+					:model-value="scenario.modelSelectionCriteria"
+					placeholder="What is your goal (optional)"
+					@update:model-value="scenario.setModelSelectionCriteria($event)"
+				/>
+			</template>
 		</template>
 
 		<template #outputs>
