@@ -1,10 +1,11 @@
 <template>
 	<section>
 		<NodeCharts
+			:node="node"
 			:prepared-charts="comparisonCharts"
 			:is-loading="isFetchingDatasets"
-			:node="node"
-			:selectedVariableSettings="selectedVariableSettings"
+			:chart-settings="selectedVariableSettings"
+			:placeholder="placeholderText"
 		/>
 		<Button v-if="hasAtLeastTwoInputs" label="Open" @click="emit('open-drilldown')" severity="secondary" outlined />
 	</section>
@@ -48,6 +49,7 @@ const modelConfigIdToInterventionPolicyIdMap = ref<Record<string, string[]>>({})
 const chartData = ref<ChartData | null>(null);
 const rankingResultsChart = ref<any>(null);
 const rankingCriteriaCharts = ref<any>([]);
+const placeholderText = ref<string>('Attach datasets/simulation outputs to compare');
 
 const selectedPlotType = computed(() => props.node.state.selectedPlotType);
 const baselineDatasetIndex = computed(() =>

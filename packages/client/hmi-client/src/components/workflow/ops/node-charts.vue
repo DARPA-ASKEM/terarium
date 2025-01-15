@@ -2,19 +2,19 @@
 	<tera-progress-spinner v-if="isLoading" :font-size="2" is-centered style="height: 100%">
 		Processing...
 	</tera-progress-spinner>
-	<tera-operator-placeholder v-else-if="!visibleChartSettings.length" :node="node"
-		>Attach datasets/simulation outputs to compare</tera-operator-placeholder
-	>
-	<ul v-else>
+	<ul v-else-if="visibleChartSettings.length">
 		<li v-for="setting of visibleChartSettings" :key="setting.id">
 			<vega-chart
 				expandable
-				:are-embed-actions-visible="true"
+				:are-embed-actions-visible="areEmbedActionsVisible"
 				:visualization-spec="preparedCharts[setting.id]"
-				:interactive="true"
+				:interactive="interactive"
 			/>
 		</li>
 	</ul>
+	<tera-operator-placeholder v-else-if="placeholder" :node="node">
+		{{ placeholder }}
+	</tera-operator-placeholder>
 </template>
 
 <script setup lang="ts">
@@ -27,11 +27,14 @@ import TeraOperatorPlaceholder from '@/components/operator/tera-operator-placeho
 import { WorkflowNode } from '@/types/workflow';
 
 const props = defineProps<{
-	preparedCharts: Record<string, VisualizationSpec>;
-	isLoading: boolean;
 	node: WorkflowNode<any>;
-	selectedVariableSettings: any; // needs a rename
+	preparedCharts: Record<string, VisualizationSpec>;
+	chartSettings: any;
+	isLoading?: boolean;
+	placeholder?: string;
+	interactive?: boolean;
+	areEmbedActionsVisible?: boolean;
 }>();
 
-const visibleChartSettings = computed(() => props.selectedVariableSettings.filter((setting) => !setting?.hideInNode));
+const visibleChartSettings = computed(() => props.chartSettings.filter((setting) => !setting?.hideInNode));
 </script>
