@@ -33,6 +33,55 @@
 				</template>
 			</Dropdown>
 
+			<label :class="{ 'disabled-label': !selectedModelConfiguration }"
+				>Select uncertain parameters of interest and adjust ranges to be explored if needed</label
+			>
+			<template v-for="(parameter, i) in scenario.parameters" :key="i">
+				<div class="flex">
+					<Dropdown
+						class="flex-1"
+						:model-value="parameter?.referenceId"
+						:options="modelParameters"
+						option-label="referenceId"
+						option-value="referenceId"
+						placeholder="Select a parameter"
+						:disabled="!selectedModelConfiguration"
+						:loading="isFetchingModelConfiguration || isFetchingModelInformation"
+						@update:model-value="onParameterSelect($event, i)"
+						filter
+					>
+						<template #option="slotProps">
+							<span>{{ displayParameter(modelParameters, slotProps.option.referenceId) }}</span>
+						</template>
+
+						<template #value="slotProps">
+							<span v-if="displayParameter(modelParameters, slotProps.value)">{{
+								displayParameter(modelParameters, slotProps.value)
+							}}</span>
+							<span v-else>{{ slotProps.placeholder }}</span>
+						</template>
+					</Dropdown>
+					<Button v-if="scenario.parameters.length > 1" icon="pi pi-trash" text @click="scenario.removeParameter(i)" />
+				</div>
+				<div v-if="parameter" class="distribution-container">
+					<label class="p-0 white-space-nowrap">Min:</label>
+					<tera-input-number class="m-0" v-model="parameter.distribution.parameters.minimum" auto-width />
+					<label class="p-0 ml-2 white-space-nowrap">Max:</label>
+					<tera-input-number class="m-0" v-model="parameter.distribution.parameters.maximum" auto-width />
+				</div>
+			</template>
+			<div>
+				<Button
+					:disabled="!scenario.modelSpec.id"
+					class="mt-2"
+					label="Add parameter"
+					icon="pi pi-plus"
+					text
+					size="small"
+					@click="scenario.addParameter()"
+				/>
+			</div>
+
 			<label>Planned intervention policy (optional)</label>
 			<div v-for="(intervention, i) in scenario.interventionSpecs" :key="i" class="flex">
 				<Dropdown
@@ -78,53 +127,6 @@
 					icon="pi pi-plus"
 					label="Add more interventions"
 					@click="scenario.addInterventionSpec()"
-				/>
-			</div>
-
-			<label>Select uncertain parameters of interest and adjust ranges to be explored if needed</label>
-			<template v-for="(parameter, i) in scenario.parameters" :key="i">
-				<div class="flex">
-					<Dropdown
-						class="flex-1"
-						:model-value="parameter?.referenceId"
-						:options="modelParameters"
-						option-label="referenceId"
-						option-value="referenceId"
-						placeholder="Select a parameter"
-						:disabled="!selectedModelConfiguration"
-						:loading="isFetchingModelConfiguration || isFetchingModelInformation"
-						@update:model-value="onParameterSelect($event, i)"
-						filter
-					>
-						<template #option="slotProps">
-							<span>{{ displayParameter(modelParameters, slotProps.option.referenceId) }}</span>
-						</template>
-
-						<template #value="slotProps">
-							<span v-if="displayParameter(modelParameters, slotProps.value)">{{
-								displayParameter(modelParameters, slotProps.value)
-							}}</span>
-							<span v-else>{{ slotProps.placeholder }}</span>
-						</template>
-					</Dropdown>
-					<Button v-if="scenario.parameters.length > 1" icon="pi pi-trash" text @click="scenario.removeParameter(i)" />
-				</div>
-				<div v-if="parameter" class="distribution-container">
-					<label class="p-0 white-space-nowrap">Min:</label>
-					<tera-input-number class="m-0" v-model="parameter.distribution.parameters.minimum" auto-width />
-					<label class="p-0 ml-2 white-space-nowrap">Max:</label>
-					<tera-input-number class="m-0" v-model="parameter.distribution.parameters.maximum" auto-width />
-				</div>
-			</template>
-			<div>
-				<Button
-					:disabled="!scenario.modelSpec.id"
-					class="mt-2"
-					label="Add parameter"
-					icon="pi pi-plus"
-					text
-					size="small"
-					@click="scenario.addParameter()"
 				/>
 			</div>
 		</template>

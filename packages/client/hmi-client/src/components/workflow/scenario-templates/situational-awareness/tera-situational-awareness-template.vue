@@ -105,7 +105,7 @@ const header: ScenarioHeader = Object.freeze({
 	description:
 		'Calibrates the model to historical data to obtain the best estimate of parameters for the present, then forecasts into the near future.',
 	examples: [
-		'Anticipate the arrival of a new variants.',
+		'Anticipate the arrival of new variants.',
 		'Evaluate the potential impact of growing vaccine hesitancy and declining NPIs.'
 	]
 });

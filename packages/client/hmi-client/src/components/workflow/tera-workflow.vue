@@ -72,7 +72,7 @@
 							:is="registry.getNode(node.operationType)"
 							:node="node"
 							@append-output="(port: any, newState: any) => appendOutput(node, port, newState)"
-							@append-input-port="(event: any) => workflowService.appendInputPort(node, event)"
+							@append-input-port="(event: any) => appendInput(node, event)"
 							@update-state="(event: any) => updateWorkflowNodeState(node, event)"
 							@open-drilldown="addOperatorToRoute(node.id)"
 						/>
@@ -304,6 +304,27 @@ const saveNodeStateHandler = debounce(async () => {
 const saveWorkflowHandler = () => {
 	saveWorkflowDebounced();
 };
+
+async function appendInput(
+	node: WorkflowNode<any>,
+	port: {
+		label: string;
+		type: string;
+		isOptional?: boolean;
+	}
+) {
+	const inputPort: WorkflowPort = {
+		id: uuidv4(),
+		type: port.type,
+		label: port.label,
+		isOptional: port.isOptional || false,
+		value: null,
+		status: WorkflowPortStatus.NOT_CONNECTED
+	};
+
+	const updatedWorkflow = await workflowService.appendInput(wf.value.getId(), node.id, inputPort);
+	wf.value.update(updatedWorkflow, false);
+}
 
 /**
  * The operator creates a new output, this will mark the
