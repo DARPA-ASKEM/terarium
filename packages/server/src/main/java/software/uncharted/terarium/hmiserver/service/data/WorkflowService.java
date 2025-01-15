@@ -23,6 +23,7 @@ import software.uncharted.terarium.hmiserver.configuration.Config;
 import software.uncharted.terarium.hmiserver.models.dataservice.workflow.InputPort;
 import software.uncharted.terarium.hmiserver.models.dataservice.workflow.OutputPort;
 import software.uncharted.terarium.hmiserver.models.dataservice.workflow.Workflow;
+import software.uncharted.terarium.hmiserver.models.dataservice.workflow.WorkflowAnnotation;
 import software.uncharted.terarium.hmiserver.models.dataservice.workflow.WorkflowEdge;
 import software.uncharted.terarium.hmiserver.models.dataservice.workflow.WorkflowNode;
 import software.uncharted.terarium.hmiserver.repository.data.WorkflowRepository;
@@ -661,6 +662,21 @@ public class WorkflowService extends TerariumAssetServiceWithoutSearch<Workflow,
 
 			node.setStatus(entry.getValue());
 		}
+	}
+
+	public void addOrUpdateAnnotation(final Workflow workflow, final WorkflowAnnotation annotation) {
+		if (workflow.getAnnotations() == null) {
+			workflow.setAnnotations(new HashMap<UUID, WorkflowAnnotation>());
+		}
+		if (annotation.getId() == null) {
+			annotation.setId(UUID.randomUUID());
+		}
+		workflow.getAnnotations().put(annotation.getId(), annotation);
+	}
+
+	public void removeAnnotation(final Workflow workflow, final UUID annotationId) {
+		if (workflow.getAnnotations() == null) return;
+		workflow.getAnnotations().remove(annotationId);
 	}
 
 	@Override

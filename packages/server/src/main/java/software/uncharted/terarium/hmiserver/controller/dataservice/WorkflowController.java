@@ -34,6 +34,7 @@ import software.uncharted.terarium.hmiserver.models.dataservice.project.Contribu
 import software.uncharted.terarium.hmiserver.models.dataservice.workflow.InputPort;
 import software.uncharted.terarium.hmiserver.models.dataservice.workflow.OutputPort;
 import software.uncharted.terarium.hmiserver.models.dataservice.workflow.Workflow;
+import software.uncharted.terarium.hmiserver.models.dataservice.workflow.WorkflowAnnotation;
 import software.uncharted.terarium.hmiserver.models.dataservice.workflow.WorkflowEdge;
 import software.uncharted.terarium.hmiserver.models.dataservice.workflow.WorkflowNode;
 import software.uncharted.terarium.hmiserver.security.Roles;
@@ -686,6 +687,90 @@ public class WorkflowController {
 			);
 		}
 
+		broadCastWorkflowChange(updated.get(), projectId);
+		return updated.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
+	}
+
+	@PostMapping("/{id}/annotation")
+	@Secured(Roles.USER)
+	@Operation(summary = "Add or update a workflow annotation")
+	@ApiResponses(
+		value = {
+			@ApiResponse(
+				responseCode = "200",
+				description = "Workflow updated.",
+				content = @Content(
+					mediaType = MediaType.APPLICATION_JSON_VALUE,
+					schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = Workflow.class)
+				)
+			),
+			@ApiResponse(responseCode = "500", description = "There was an issue updating the workflow", content = @Content)
+		}
+	)
+	public ResponseEntity<Workflow> addOrUpdateAnnotation(
+		@PathVariable("id") final UUID id,
+		@RequestBody final WorkflowAnnotation annotation,
+		@RequestParam(name = "project-id", required = false) final UUID projectId
+	) {
+		final Schema.Permission permission = projectService.checkPermissionCanRead(
+			currentUserService.get().getId(),
+			projectId
+		);
+
+		final Optional<Workflow> workflow = workflowService.getAsset(id, permission);
+		final Optional<Workflow> updated;
+		try {
+			workflowService.addOrUpdateAnnotation(workflow.get(), annotation);
+			updated = workflowService.updateAsset(workflow.get(), projectId, permission);
+		} catch (final Exception e) {
+			log.error("Unable to update workflow", e);
+			throw new ResponseStatusException(
+				org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
+				messages.get("workflow.update.annotation")
+			);
+		}
+		broadCastWorkflowChange(updated.get(), projectId);
+		return updated.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
+	}
+
+	@DeleteMapping("/{id}/annotation/:annotationId")
+	@Secured(Roles.USER)
+	@Operation(summary = "Remove a workflow annotation")
+	@ApiResponses(
+		value = {
+			@ApiResponse(
+				responseCode = "200",
+				description = "Workflow updated.",
+				content = @Content(
+					mediaType = MediaType.APPLICATION_JSON_VALUE,
+					schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = Workflow.class)
+				)
+			),
+			@ApiResponse(responseCode = "500", description = "There was an issue updating the workflow", content = @Content)
+		}
+	)
+	public ResponseEntity<Workflow> addOrUpdateAnnotation(
+		@PathVariable("id") final UUID id,
+		@PathVariable("annotationId") final UUID annotationId,
+		@RequestParam(name = "project-id", required = false) final UUID projectId
+	) {
+		final Schema.Permission permission = projectService.checkPermissionCanRead(
+			currentUserService.get().getId(),
+			projectId
+		);
+
+		final Optional<Workflow> workflow = workflowService.getAsset(id, permission);
+		final Optional<Workflow> updated;
+		try {
+			workflowService.removeAnnotation(workflow.get(), annotationId);
+			updated = workflowService.updateAsset(workflow.get(), projectId, permission);
+		} catch (final Exception e) {
+			log.error("Unable to update workflow", e);
+			throw new ResponseStatusException(
+				org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
+				messages.get("workflow.update.annotation")
+			);
+		}
 		broadCastWorkflowChange(updated.get(), projectId);
 		return updated.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
 	}
