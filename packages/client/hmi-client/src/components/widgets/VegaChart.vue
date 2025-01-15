@@ -8,6 +8,14 @@
 		:closeOnEscape="true"
 		@show="onExpand"
 	>
+		<template #header>
+			<Button
+				icon="pi pi-times"
+				class="p-dialog-header-icon p-dialog-header-close"
+				style="margin-left: auto"
+				@click="isExpanded = false"
+			/>
+		</template>
 		<div>
 			<div ref="vegaContainerLg"></div>
 		</div>
