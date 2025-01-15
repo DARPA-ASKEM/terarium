@@ -21,7 +21,7 @@ import { InterventionPolicy } from '@/types/Types';
 export class DecisionMakingScenario extends BaseScenario {
 	public static templateId = 'decision-making';
 
-	public static templateName = 'Decision Making';
+	public static templateName = 'Decision making';
 
 	modelSpec: { id: string };
 

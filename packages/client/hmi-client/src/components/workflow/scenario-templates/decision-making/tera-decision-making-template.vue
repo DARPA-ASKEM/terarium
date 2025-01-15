@@ -34,7 +34,9 @@
 			</Dropdown>
 
 			<template v-for="(intervention, i) in scenario.interventionSpecs" :key="intervention">
-				<label>Select intervention policy {{ i + 1 }}</label>
+				<label :class="{ 'disabled-label': isEmpty(modelConfigurations) || isFetchingModelInformation }"
+					>Select intervention policy {{ i + 1 }}</label
+				>
 				<div class="flex">
 					<Dropdown
 						ref="interventionDropdowns"
@@ -45,7 +47,7 @@
 						option-label="name"
 						option-value="id"
 						@update:model-value="scenario.setInterventionSpec($event, i)"
-						:disabled="isFetchingModelInformation"
+						:disabled="isEmpty(modelConfigurations) || isFetchingModelInformation"
 						:loading="isFetchingModelInformation"
 						filter
 					>
@@ -68,6 +70,7 @@
 						size="small"
 						@click="scenario.removeInterventionSpec(i)"
 						class="mb-3"
+						:disabled="isEmpty(modelConfigurations) || isFetchingModelInformation"
 					/>
 				</div>
 			</template>
@@ -79,6 +82,7 @@
 					label="Add a new intervention"
 					size="small"
 					@click="scenario.addInterventionSpec()"
+					:disabled="isEmpty(modelConfigurations) || isFetchingModelInformation"
 				/>
 			</div>
 		</template>
