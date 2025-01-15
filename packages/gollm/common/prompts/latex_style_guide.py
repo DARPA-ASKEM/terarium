@@ -16,4 +16,5 @@ LATEX_STYLE_GUIDE = """
 13) Use " * " to denote multiplication; for example, "b S(t) I(t)" -> "b * S(t) * I(t)"
 14) Replace any variant form of Greek letters to their main form when representing a variable or parameter; "\\varepsilon" -> "\\epsilon", "\\vartheta" -> "\\theta", "\\varpi" -> "\\pi", "\\varrho" -> "\\rho",  "\\varsigma" -> "\\sigma", "\\varphi" -> "\\phi"
 15) If equations are separated by punctuation (like comma, period, semicolon), do not include the punctuation in the LaTeX code.
+16) Rewrite expressions with negative exponents as explicit fractions; for example, "N^{{-1}}" should be rewritten as "\\frac{{1}}{{N}}"
 """

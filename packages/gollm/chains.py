@@ -53,7 +53,7 @@ def model_config_from_document_chain(llm: LlmToolsInterface, research_paper: str
     return model_config_adapter(output)
 
 
-def enrich_dataset_chain(llm: LlmToolsInterface, dataset: str, document: Optional[str] = None) -> dict:
+def enrich_dataset_chain(llm: LlmToolsInterface, dataset: str, document: Optional[str]) -> dict:
     print("Uploading and validating dataset enrichment schema...")
     config_path = os.path.join(SCHEMAS_DIR, 'dataset_enrichment.json')
     with open(config_path, 'r') as config_file:

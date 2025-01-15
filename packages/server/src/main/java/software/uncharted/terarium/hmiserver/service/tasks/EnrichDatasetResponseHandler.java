@@ -7,6 +7,10 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
@@ -37,8 +41,8 @@ public class EnrichDatasetResponseHandler extends TaskResponseHandler {
 	@Data
 	public static class Input {
 
-		@JsonProperty("research_paper")
-		String researchPaper;
+		@JsonProperty("document")
+		String document;
 
 		@JsonProperty("dataset")
 		String dataset;
@@ -83,9 +87,29 @@ public class EnrichDatasetResponseHandler extends TaskResponseHandler {
 
 			// Update the dataset with the new card
 			((ObjectNode) dataset.getMetadata()).set("dataCard", response.response.card);
+
+			// Remove fields from the datacard that are null or empty
+			final ObjectNode dataCard = (ObjectNode) dataset.getMetadata().get("dataCard");
+			Iterator<Map.Entry<String, JsonNode>> fields = dataCard.fields();
+			List<String> keysToRemove = new ArrayList<>();
+
+			while (fields.hasNext()) {
+				Map.Entry<String, JsonNode> entry = fields.next();
+				if (
+					entry.getValue().isNull() ||
+					entry.getValue().asText().equalsIgnoreCase("none") ||
+					entry.getValue().asText().equalsIgnoreCase("null")
+				) {
+					keysToRemove.add(entry.getKey());
+				}
+			}
+			for (String key : keysToRemove) {
+				dataCard.remove(key);
+			}
+
 			((ObjectNode) dataset.getMetadata()).put(
 					"description",
-					renderJsonToHTML(response.response.card).getBytes(StandardCharsets.UTF_8)
+					renderJsonToHTML(dataCard).getBytes(StandardCharsets.UTF_8)
 				);
 
 			// Update the dataset columns with the new descriptions
