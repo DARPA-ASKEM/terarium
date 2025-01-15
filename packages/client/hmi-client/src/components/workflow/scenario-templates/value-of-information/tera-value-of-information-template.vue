@@ -82,7 +82,7 @@
 				/>
 			</div>
 
-			<label>Planned intervention policy (optional)</label>
+			<label :class="{ 'disabled-label': !selectedModelConfiguration }">Planned intervention policy (optional)</label>
 			<div v-for="(intervention, i) in scenario.interventionSpecs" :key="i" class="flex">
 				<Dropdown
 					ref="interventionDropdowns"
@@ -94,7 +94,7 @@
 					placeholder="Select an intervention policy"
 					@update:model-value="scenario.setInterventionSpec($event, i)"
 					:key="i"
-					:disabled="isFetchingModelInformation"
+					:disabled="!selectedModelConfiguration || isFetchingModelInformation"
 					:loading="isFetchingModelInformation"
 					filter
 				>
@@ -117,6 +117,7 @@
 					text
 					icon="pi pi-trash"
 					@click="scenario.deleteInterventionSpec(i)"
+					:disabled="!selectedModelConfiguration || isFetchingModelInformation"
 				/>
 			</div>
 			<div>
@@ -127,6 +128,7 @@
 					icon="pi pi-plus"
 					label="Add more interventions"
 					@click="scenario.addInterventionSpec()"
+					:disabled="!selectedModelConfiguration || isFetchingModelInformation"
 				/>
 			</div>
 		</template>
