@@ -28,8 +28,8 @@
 								<i class="pi pi-info-circle pl-2" v-tooltip="validateParametersToolTip" />
 							</template>
 							<p class="mb-3 secondary-text">
-								Implement sanity checks on the state space of the model to see how the parameter space of the model is
-								partitioned into satisfiable and unsatisfiable regions separated by decision boundaries.
+								Check the state space of the model to see how the parameter space is partitioned into satisfiable and
+								unsatisfiable regions separated by decision boundaries.
 							</p>
 							<ul>
 								<li>
@@ -41,9 +41,9 @@
 												<InputSwitch class="mr-3" v-model="knobs.compartmentalConstraint.isActive" />
 											</div>
 										</header>
-										<katex-element class="expression-constraint" :expression="expression" />
+										<katex-element class="expression-constraint inset" :expression="expression" />
 										<katex-element
-											class="expression-constraint"
+											class="expression-constraint inset"
 											:expression="stringToLatexExpression(`${stateIds.join('+')} = ${massScientificNotation}`)"
 										/>
 									</section>
@@ -1006,14 +1006,16 @@ watch(
 </script>
 
 <style scoped>
-.expression-constraint {
+:deep(.expression-constraint) {
 	max-height: 150px;
 	overflow: auto;
 	margin-top: var(--gap-4);
 	margin-bottom: var(--gap-4);
-	padding: var(--gap-1) 0 var(--gap-1) 0;
+	padding: var(--gap-2) var(--gap-3);
 	border: 1px solid var(--surface-border-light);
 	border-radius: var(--border-radius);
+	background: var(--surface-50);
+	box-shadow: inset 0px 0px 4px rgba(0, 0, 0, 0.05);
 }
 
 .top-toolbar {
@@ -1049,7 +1051,7 @@ code {
 	color: var(--text-color-subdued);
 	border-radius: var(--border-radius);
 	border: 1px solid var(--surface-border);
-	padding: var(--gap-2);
+	padding: var(--gap-2) var(--gap-3);
 	overflow-wrap: break-word;
 	font-size: var(--font-caption);
 	max-height: 10rem;
@@ -1057,7 +1059,7 @@ code {
 }
 
 .inset {
-	box-shadow: inset 0px 0px 4px var(--surface-border);
+	box-shadow: inset 0px 0px 4px rgba(0, 0, 0, 0.05);
 }
 
 .timespan {
@@ -1091,7 +1093,7 @@ ul {
 		display: flex;
 		padding: var(--gap-4);
 		flex-direction: column;
-		background: var(--gray-50);
+		background: var(--surface-0);
 		border: 1px solid var(--surface-border-light);
 		border-radius: var(--border-radius);
 	}
