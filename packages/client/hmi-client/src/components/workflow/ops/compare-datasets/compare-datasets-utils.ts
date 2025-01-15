@@ -3,7 +3,8 @@ import { renameFnGenerator } from '@/components/workflow/ops/calibrate-ciemss/ca
 import { DataArray, parsePyCiemssMap, processAndSortSamplesByTimepoint } from '@/services/models/simulation-service';
 import { DATASET_VAR_NAME_PREFIX, getDatasetResultCSV, mergeResults } from '@/services/dataset';
 import { ChartData } from '@/composables/useCharts';
-import { PlotValue } from './compare-datasets-operation';
+import { createRankingInterventionsChart } from '@/services/charts';
+import { PlotValue, TimepointOption, RankOption } from './compare-datasets-operation';
 
 interface DataResults {
 	results: DataArray[];
@@ -159,4 +160,94 @@ export function buildChartData(
 		translationMap,
 		numComparableDatasets: datasets.length
 	};
+}
+
+export function generateRankingCharts(
+	rankingCriteriaCharts,
+	rankingResultsChart,
+	props,
+	modelConfigIdToInterventionPolicyIdMap,
+	chartData,
+	interventionPolicies
+) {
+	// Reset charts
+	rankingCriteriaCharts.value = [];
+	rankingResultsChart.value = null;
+
+	// Might be uneccessary
+	const commonInterventionPolicyIds = props.node.state.criteriaOfInterestCards
+		.map(({ selectedConfigurationId }) => {
+			if (!selectedConfigurationId) return [];
+			return modelConfigIdToInterventionPolicyIdMap.value?.[selectedConfigurationId] ?? [];
+		})
+		.flat();
+	const allRankedCriteriaValues: { score: number; name: string }[][] = [];
+
+	props.node.state.criteriaOfInterestCards.forEach((card) => {
+		if (!card.selectedConfigurationId || !chartData.value) return;
+
+		const pointOfComparison =
+			card.timepoint === TimepointOption.FIRST
+				? chartData.value.resultSummary[0]
+				: chartData.value.resultSummary[chartData.value.resultSummary.length - 1];
+
+		const rankingCriteriaValues: { score: number; name: string }[] = [];
+		interventionPolicies.value.forEach((policy, index) => {
+			// Skip this intervention policy if a configuration is not using it
+			if (!policy.id || !policy.name || !commonInterventionPolicyIds.includes(policy.id) || !card.selectedVariable) {
+				return;
+			}
+
+			rankingCriteriaValues.push({
+				score: pointOfComparison[`${chartData.value?.pyciemssMap[card.selectedVariable]}_mean:${index}`] ?? 0,
+				name: policy.name ?? ''
+			});
+		});
+
+		const sortedRankingCriteriaValues =
+			card.rank === RankOption.MAXIMUM
+				? rankingCriteriaValues.sort((a, b) => b.score - a.score)
+				: rankingCriteriaValues.sort((a, b) => a.score - b.score);
+
+		sortedRankingCriteriaValues.forEach((value, index) => {
+			value.score = index + 1;
+		});
+
+		rankingCriteriaCharts.value.push(createRankingInterventionsChart(sortedRankingCriteriaValues, card.name));
+		allRankedCriteriaValues.push(sortedRankingCriteriaValues);
+	});
+
+	// Sum up the scores of the same intervention policy
+	const scoreMap: Record<string, number> = {};
+	allRankedCriteriaValues.flat().forEach(({ score, name }) => {
+		if (scoreMap[name]) {
+			scoreMap[name] += score;
+		} else {
+			scoreMap[name] = score;
+		}
+	});
+
+	const rankingResultsValues = Object.keys(scoreMap)
+		.map((name) => ({
+			name,
+			score: scoreMap[name]
+		}))
+		.sort((a, b) => a.score - b.score);
+
+	rankingResultsChart.value = createRankingInterventionsChart(rankingResultsValues, '');
+}
+
+export async function generateImpactCharts(
+	chartData,
+	datasets,
+	datasetResults,
+	baselineDatasetIndex,
+	selectedPlotType
+) {
+	chartData.value = buildChartData(
+		datasets.value,
+		datasetResults.value,
+		baselineDatasetIndex.value,
+		selectedPlotType.value
+	);
 }

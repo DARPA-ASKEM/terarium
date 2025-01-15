@@ -88,7 +88,7 @@ const preparedCharts = computed(() =>
 		})
 	)
 );
-
+console.log(preparedCharts.value);
 watch(
 	() => props.node.inputs,
 	(inputs) => {
