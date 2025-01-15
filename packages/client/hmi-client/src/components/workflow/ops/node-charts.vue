@@ -19,9 +19,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, Ref } from 'vue';
-import { VisualizationSpec } from 'vega-embed';
-import { ChartData } from '@/composables/useCharts';
+import { computed } from 'vue';
 import VegaChart from '@/components/widgets/VegaChart.vue';
 import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue';
 import TeraOperatorPlaceholder from '@/components/operator/tera-operator-placeholder.vue';
@@ -29,7 +27,7 @@ import { WorkflowNode } from '@/types/workflow';
 
 const props = defineProps<{
 	node: WorkflowNode<any>;
-	preparedCharts: Ref<ChartData | null, ChartData | null> | Record<string, VisualizationSpec[]>;
+	preparedCharts: any;
 	chartSettings: any;
 	chartSettingKey?: string;
 	isLoading?: boolean;

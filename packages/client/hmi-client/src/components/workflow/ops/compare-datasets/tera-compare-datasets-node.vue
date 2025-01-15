@@ -5,7 +5,7 @@
 			:prepared-charts="comparisonCharts"
 			:is-loading="isFetchingDatasets"
 			:chart-settings="selectedVariableSettings"
-			:placeholder="placeholderText"
+			:placeholder="'Attach datasets/simulation outputs to compare'"
 		/>
 		<Button v-if="hasAtLeastTwoInputs" label="Open" @click="emit('open-drilldown')" severity="secondary" outlined />
 	</section>
@@ -49,14 +49,10 @@ const modelConfigIdToInterventionPolicyIdMap = ref<Record<string, string[]>>({})
 const chartData = ref<ChartData | null>(null);
 const rankingResultsChart = ref<any>(null);
 const rankingCriteriaCharts = ref<any>([]);
-const placeholderText = ref<string>('Attach datasets/simulation outputs to compare');
 
 const selectedPlotType = computed(() => props.node.state.selectedPlotType);
 const baselineDatasetIndex = computed(() =>
 	datasets.value.findIndex((dataset) => dataset.id === props.node.state.selectedDataset)
-);
-const baselineName = computed(
-	() => datasets.value.find((dataset) => dataset.id === props.node.state.selectedDataset)?.name ?? null
 );
 
 const { useCompareDatasetCharts } = useCharts(
@@ -84,7 +80,7 @@ onMounted(() => {
 		rankingResultsChart
 	);
 });
-const comparisonCharts = useCompareDatasetCharts(selectedVariableSettings, selectedPlotType, baselineName);
+const comparisonCharts = useCompareDatasetCharts(selectedVariableSettings, selectedPlotType, baselineDatasetIndex);
 
 watch(
 	() => props.node.inputs,
