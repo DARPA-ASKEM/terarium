@@ -11,6 +11,7 @@ import { v4 as uuidv4 } from 'uuid';
 import _ from 'lodash';
 import { getModelConfigurationById } from '@/services/model-configurations';
 import { CalibrateEnsembleMappingRow } from '../../ops/calibrate-ensemble-ciemss/calibrate-ensemble-ciemss-operation';
+import { convertToCalibrateMap } from '../scenario-template-utils';
 
 export class CalibrateEnsembleScenario extends BaseScenario {
 	public static templateId = 'calibrate-ensemble';
@@ -23,7 +24,6 @@ export class CalibrateEnsembleScenario extends BaseScenario {
 		id: string;
 		modelSpec: { id: string };
 		modelConfigSpec: { id: string };
-		interventionSpecs: { id: string }[];
 	}[];
 
 	simulateSpec: { ids: string[] };
@@ -46,12 +46,7 @@ export class CalibrateEnsembleScenario extends BaseScenario {
 				},
 				modelConfigSpec: {
 					id: ''
-				},
-				interventionSpecs: [
-					{
-						id: ''
-					}
-				]
+				}
 			}
 		];
 
@@ -74,31 +69,12 @@ export class CalibrateEnsembleScenario extends BaseScenario {
 		if (!tabSpec) return;
 		tabSpec.modelSpec.id = modelId;
 		tabSpec.modelConfigSpec.id = '';
-		tabSpec.interventionSpecs = [{ id: '' }];
 	}
 
 	setModelConfigSpec(modelConfigId: string, tabId: string) {
 		const tabSpec = this.tabSpecs.find((tab) => tab.id === tabId);
 		if (!tabSpec) return;
 		tabSpec.modelConfigSpec.id = modelConfigId;
-	}
-
-	addInterventionSpec(tabId: string) {
-		const tabSpec = this.tabSpecs.find((tab) => tab.id === tabId);
-		if (!tabSpec) return;
-		tabSpec.interventionSpecs.push({ id: '' });
-	}
-
-	removeInterventionSpec(tabId: string, index: number) {
-		const tabSpec = this.tabSpecs.find((tab) => tab.id === tabId);
-		if (!tabSpec) return;
-		tabSpec.interventionSpecs.splice(index, 1);
-	}
-
-	setInterventionSpec(interventionId: string, tabId: string, index: number) {
-		const tabSpec = this.tabSpecs.find((tab) => tab.id === tabId);
-		if (!tabSpec) return;
-		tabSpec.interventionSpecs[index].id = interventionId;
 	}
 
 	setSimulateSpec(ids: string[]) {
@@ -117,13 +93,12 @@ export class CalibrateEnsembleScenario extends BaseScenario {
 			},
 			modelConfigSpec: {
 				id: ''
-			},
-			interventionSpecs: [
-				{
-					id: ''
-				}
-			]
+			}
 		});
+	}
+
+	removeTabSpec(index: number) {
+		this.tabSpecs.splice(index, 1);
 	}
 
 	addMappingRow() {
@@ -152,7 +127,12 @@ export class CalibrateEnsembleScenario extends BaseScenario {
 		return (
 			!!this.workflowName &&
 			!!this.datasetSpec.id &&
-			this.tabSpecs.every((tab) => !!tab.modelSpec.id && !!tab.modelConfigSpec.id)
+			this.tabSpecs.every((tab) => !!tab.modelSpec.id && !!tab.modelConfigSpec.id) &&
+			!!this.timestampColName &&
+			!_.isEmpty(this.calibrateMappings) &&
+			// every key in the calibrate mappings modelConfigurationMappings object should have a value
+			!this.calibrateMappings.some((row) => Object.values(row.modelConfigurationMappings).some((value) => !value)) &&
+			!this.calibrateMappings.some((row) => !row.datasetMapping)
 		);
 	}
 
@@ -199,10 +179,14 @@ export class CalibrateEnsembleScenario extends BaseScenario {
 			});
 		}
 
-		// every tab has a model, model config, intervention (optional).  Attach accordingly.
+		let calibrateEnsembleNodeIndex = 1;
 
+		//
+		const calibrateMap = convertToCalibrateMap(this.calibrateMappings);
+
+		// every tab has a model, model config, intervention (optional).  Attach accordingly.
 		await Promise.all(
-			this.tabSpecs.map(async (tab, index) => {
+			this.tabSpecs.map(async (tab) => {
 				const modelNode = wf.addNode(
 					ModelOp,
 					{ x: 0, y: 0 },
@@ -281,24 +265,26 @@ export class CalibrateEnsembleScenario extends BaseScenario {
 
 				// attach to calibrate ensemble node
 				wf.addEdge(
-					modelConfigNode.id,
-					modelConfigNode.outputs[0].id,
+					calibrateNode.id,
+					calibrateNode.outputs[0].id,
 					calibrateEnsembleNode.id,
-					calibrateEnsembleNode.inputs[index + 1].id,
+					calibrateEnsembleNode.inputs[calibrateEnsembleNodeIndex].id,
 					[
 						{ x: 0, y: 0 },
 						{ x: 0, y: 0 }
 					]
 				);
+
+				wf.updateNode(calibrateNode, {
+					state: {
+						timestampColName: this.timestampColName,
+						mapping: calibrateMap.get(tab.modelConfigSpec.id)
+					}
+				});
+
+				calibrateEnsembleNodeIndex++;
 			})
 		);
-
-		wf.updateNode(calibrateEnsembleNode, {
-			state: {
-				timestampColName: this.timestampColName,
-				ensembleMapping: this.calibrateMappings
-			}
-		});
 
 		wf.updateNode(datasetNode, {
 			state: {

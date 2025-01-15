@@ -240,12 +240,6 @@ export interface Model extends TerariumAssetThatSupportsAdditionalProperties {
     metadata?: ModelMetadata;
 }
 
-export interface ModelAssetResponse {
-    model: Model;
-    modelConfigurations: ModelConfiguration[];
-    interventionPolicies: InterventionPolicy[];
-}
-
 export interface ModelDescription {
     id: string;
     header: ModelHeader;

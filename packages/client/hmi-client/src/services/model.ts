@@ -2,14 +2,7 @@ import API from '@/api/api';
 import { useProjects } from '@/composables/project';
 import type { MMT } from '@/model-representation/mira/mira-common';
 import * as EventService from '@/services/event';
-import type {
-	Initial,
-	InterventionPolicy,
-	Model,
-	ModelAssetResponse,
-	ModelConfiguration,
-	ModelParameter
-} from '@/types/Types';
+import type { Initial, InterventionPolicy, Model, ModelConfiguration, ModelParameter } from '@/types/Types';
 import { Artifact, EventType } from '@/types/Types';
 import { AMRSchemaNames, CalendarDateType } from '@/types/common';
 import { fileToJson } from '@/utils/file';
@@ -196,11 +189,6 @@ export async function getModelEquation(model: Model): Promise<string> {
 
 	const response = await API.post(`/mira/model-to-latex`, model);
 	return response?.data?.response ?? '';
-}
-
-export async function getRelatedModelAssets(modelId: string): Promise<ModelAssetResponse> {
-	const response = await API.get<ModelAssetResponse>(`/models/${modelId}/related-assets`);
-	return response?.data ?? null;
 }
 
 export const getUnitsFromModelParts = (model: Model) => {

@@ -12,17 +12,21 @@
 				class="mb-3"
 			/>
 
-			<TabView scrollable :active-index="activeTab">
-				<TabPanel v-for="tab in scenario.tabSpecs" header="Model" :key="tab.id">
-					<Button
-						class="flex flex-end"
-						icon="pi pi-plus"
-						label="Add model"
-						size="small"
-						text
-						@click="scenario.addTabSpec()"
-					/>
-
+			<div class="flex justify-content-between">
+				<label>Select models</label>
+				<Button icon="pi pi-plus" label="Add model" size="small" text @click="scenario.addTabSpec()" />
+			</div>
+			<TabView scrollable v-model:activeIndex="activeTab">
+				<TabPanel v-for="(tab, index) in scenario.tabSpecs" :header="`Model ${index + 1}`" :key="tab.id">
+					<template #header
+						><Button
+							v-if="scenario.tabSpecs.length > 1"
+							icon="pi pi-times"
+							class="p-0"
+							text
+							size="small"
+							@click.stop="onRemoveTab(index)"
+					/></template>
 					<div class="flex flex-column">
 						<label>Select a model</label>
 						<Dropdown
@@ -32,12 +36,10 @@
 							option-value="assetId"
 							placeholder="Select a model"
 							@update:model-value="scenario.setModelSpec($event, tab.id)"
-							class="mb-3"
 						/>
 
 						<label>Select configuration representing best and generous estimates of the initial conditions</label>
 						<Dropdown
-							class="mb-3"
 							:model-value="tab.modelConfigSpec.id"
 							placeholder="Select a configuration"
 							:options="modelAssets.get(tab.modelSpec.id)?.modelConfigurations"
@@ -47,52 +49,6 @@
 							:disabled="isEmpty(modelAssets.get(tab.modelSpec.id)?.modelConfigurations) || isFetchingModelInformation"
 							:loading="isFetchingModelInformation"
 						/>
-
-						<template v-for="(intervention, i) in tab.interventionSpecs" :key="i">
-							<label>Select intervention policy {{ i + 1 }}</label>
-							<div class="flex">
-								<Dropdown
-									ref="interventionDropdowns"
-									class="flex-1 mb-3"
-									:model-value="intervention.id"
-									placeholder="Select an intervention policy"
-									:options="modelAssets.get(tab.modelSpec.id)?.interventionPolicies"
-									option-label="id"
-									option-value="id"
-									@update:model-value="scenario.setInterventionSpec($event, tab.id, i)"
-									:disabled="isFetchingModelInformation"
-									:loading="isFetchingModelInformation"
-									filter
-								>
-									<template #filtericon>
-										<Button
-											label="Create new policy"
-											icon="pi pi-plus"
-											size="small"
-											text
-											@click="onOpenPolicyModel(i)"
-										/>
-									</template>
-								</Dropdown>
-								<Button
-									v-if="tab.interventionSpecs.length > 1"
-									text
-									icon="pi pi-trash"
-									size="small"
-									@click="scenario.removeInterventionSpec(tab.id, i)"
-								/>
-							</div>
-						</template>
-						<div>
-							<Button
-								class="my-2"
-								text
-								icon="pi pi-plus"
-								label="Add a new intervention"
-								size="small"
-								@click="scenario.addInterventionSpec(tab.id)"
-							/>
-						</div>
 					</div>
 				</TabPanel>
 			</TabView>
@@ -132,9 +88,11 @@
 									v-if="configuration?.id"
 									v-model="config.modelConfigurationMappings[configuration.id]"
 									placeholder="Select"
-									option-label="name"
-									option-value="id"
-									:options="modelAssets.get(scenario.tabSpecs[index].modelSpec.id)?.modelStates"
+									:options="
+										modelAssets
+											.get(scenario.tabSpecs[index].modelSpec.id)
+											?.modelStates.map((ele) => ele.referenceId ?? ele.id)
+									"
 								/>
 							</td>
 							<td>
@@ -171,18 +129,13 @@
 			<img :src="CalibrateEnsembleImg" alt="Calibrate ensemble model" />
 		</template>
 	</tera-scenario-template>
-	<tera-new-policy-modal
-		:is-visible="isPolicyModalVisible"
-		@close="isPolicyModalVisible = false"
-		@create="addNewPolicy"
-	/>
 </template>
 
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue';
-import { AssetType, Dataset, InterventionPolicy, ModelConfiguration } from '@/types/Types';
+import { AssetType, Dataset, ModelConfiguration } from '@/types/Types';
 import { useProjects } from '@/composables/project';
-import { getRelatedModelAssets } from '@/services/model';
+import { getModel, getModelConfigurationsForModel } from '@/services/model';
 import { isEmpty } from 'lodash';
 import Dropdown from 'primevue/dropdown';
 import MultiSelect from 'primevue/multiselect';
@@ -196,8 +149,6 @@ import CalibrateEnsembleImg from '@/assets/svg/template-images/calibrate-ensembl
 import { ScenarioHeader } from '../base-scenario';
 import { CalibrateEnsembleScenario } from './calibrate-ensemble-scenario';
 import TeraScenarioTemplate from '../tera-scenario-template.vue';
-import TeraNewPolicyModal from '../tera-new-policy-modal.vue';
-import { usePolicyModel } from '../scenario-template-utils';
 
 const header: ScenarioHeader = Object.freeze({
 	title: 'Calibrate an ensemble model template',
@@ -210,18 +161,9 @@ const datasets = computed(() => useProjects().getActiveProjectAssets(AssetType.D
 const models = computed(() => useProjects().getActiveProjectAssets(AssetType.Model));
 const isFetchingModelInformation = ref(false);
 
-const modelAssets = ref<
-	Map<
-		string,
-		{ modelConfigurations: ModelConfiguration[]; interventionPolicies: InterventionPolicy[]; modelStates: any }
-	>
->(new Map());
+const modelAssets = ref<Map<string, { modelConfigurations: ModelConfiguration[]; modelStates: any }>>(new Map());
 
-const interventionDropdowns = ref();
 const modelStateOptions = ref<any[]>([]);
-const isPolicyModalVisible = ref(false);
-// which intervention index is being edited
-const policyModalContext = ref<number | null>(null);
 
 const selectedModelConfigurations = computed<ModelConfiguration[]>(() =>
 	// get the model configuration ids from the tab specs and return the already fetched model configurations from the model assets
@@ -258,12 +200,12 @@ const allModelsIds = computed(() => props.scenario.tabSpecs.map((tab) => tab.mod
 
 const emit = defineEmits(['save-workflow']);
 
-const { onOpenPolicyModel, addNewPolicy } = usePolicyModel(
-	props,
-	interventionDropdowns,
-	policyModalContext,
-	isPolicyModalVisible
-);
+const onRemoveTab = (index: number) => {
+	props.scenario.removeTabSpec(index);
+	if (activeTab.value > 0) {
+		activeTab.value--;
+	}
+};
 
 watch(
 	() => props.scenario.datasetSpec.id,
@@ -280,16 +222,25 @@ watch(
 		if (!newModelIds) return;
 		isFetchingModelInformation.value = true;
 		const validIds = newModelIds.filter((id) => !!id);
-		await Promise.all(validIds.map((modelId) => getRelatedModelAssets(modelId))).then((assets) => {
-			assets.forEach((asset) => {
-				if (asset.model?.id) {
-					const modelOptions: any[] = asset.model.model.states;
-					asset.model.semantics?.ode.observables?.forEach((o) => {
+		await Promise.all(
+			validIds.map(async (modelId) => {
+				const [model, modelConfigurations] = await Promise.all([
+					getModel(modelId),
+					getModelConfigurationsForModel(modelId)
+				]);
+
+				return { modelId, model, modelConfigurations };
+			})
+		).then((assets) => {
+			assets.forEach(({ modelId, model, modelConfigurations }) => {
+				if (model?.id) {
+					const modelOptions = model.model.states || [];
+					model.semantics?.ode.observables?.forEach((o) => {
 						modelOptions.push(o);
 					});
-					modelAssets.value.set(asset.model.id, {
-						modelConfigurations: asset.modelConfigurations,
-						interventionPolicies: asset.interventionPolicies,
+
+					modelAssets.value.set(modelId, {
+						modelConfigurations,
 						modelStates: modelOptions
 					});
 				}
