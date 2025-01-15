@@ -89,5 +89,6 @@ onMounted(() => {
 <style scoped>
 .p-datatable {
 	border: 1px solid var(--surface-border);
+	border-radius: var(--border-radius);
 }
 </style>

@@ -1,6 +1,5 @@
 import { DistributionType } from '@/services/distribution';
-import { getInitials, getObservables } from '@/services/model-configurations';
-import { ModelConfiguration, ParameterSemantic } from '@/types/Types';
+import { ParameterSemantic } from '@/types/Types';
 import { calculateUncertaintyRange } from '@/utils/math';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -20,6 +19,40 @@ export const displayParameter = (parameters: ParameterSemantic[], parameterName:
 	return `${parameterName}  [${value}]`;
 };
 
+/**
+ * Generates the Cartesian product of the provided arrays.
+ *
+ * The Cartesian product of multiple arrays is a set of all possible combinations
+ * where each combination contains one element from each array.
+ *
+ * @param arrays - An array of arrays, where each inner array contains elements to combine.
+ * @returns An array of arrays, where each inner array is a combination of elements from the input arrays.
+ *
+ * Example:
+ * const arrays = [
+ *   ['low', 'high'],
+ *   ['A', 'B'],
+ *   [1, 2]
+ * ];
+ *
+ * const result = cartesianProduct(arrays);
+ * console.log(result);
+ * // Output:
+ * // [
+ * //   ['low', 'A', 1],
+ * //   ['low', 'A', 2],
+ * //   ['low', 'B', 1],
+ * //   ['low', 'B', 2],
+ * //   ['high', 'A', 1],
+ * //   ['high', 'A', 2],
+ * //   ['high', 'B', 1],
+ * //   ['high', 'B', 2]
+ * // ]
+ */
+export function cartesianProduct<T>(arrays: T[][]): T[][] {
+	return arrays.reduce((acc, curr) => acc.flatMap((a) => curr.map((b) => [...a, b])), [[]] as T[][]);
+}
+
 export const switchToUniformDistribution = (parameter: ParameterSemantic) => {
 	if (parameter.distribution.type !== DistributionType.Uniform) {
 		let minimum = 0;
@@ -34,18 +67,6 @@ export const switchToUniformDistribution = (parameter: ParameterSemantic) => {
 		parameter.distribution.parameters = { minimum, maximum };
 	}
 };
-
-const getCompareDatasetVariablePrefixes = (selectedMetrics: string[], modelConfiguration: ModelConfiguration) =>
-	selectedMetrics.map((metric) => {
-		const state = getInitials(modelConfiguration).some((i) => i.target === metric);
-		if (state) return `${metric}_state`;
-		const observable = getObservables(modelConfiguration).some((o) => o.referenceId === metric);
-		if (observable) return `${metric}_observable_state`;
-		return metric;
-	});
-
-export const getMeanCompareDatasetVariables = (selectedMetrics: string[], modelConfiguration: ModelConfiguration) =>
-	getCompareDatasetVariablePrefixes(selectedMetrics, modelConfiguration).map((metric) => `${metric}_mean`);
 
 export function usePolicyModel(props, interventionDropdowns, policyModalContext, isPolicyModalVisible) {
 	const onOpenPolicyModel = (index: number) => {

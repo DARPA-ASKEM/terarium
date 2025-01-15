@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Optional
 
 
 class LlmToolsInterface:
@@ -31,7 +31,7 @@ class LlmToolsInterface:
         """Create a prompt to extract model configurations from a document"""
         pass
 
-    def create_enrich_dataset_prompt(self, dataset: str, document: str, schema: str) -> str:
+    def create_enrich_dataset_prompt(self, dataset: str, document: Optional[str], schema: str) -> str:
         """Create a prompt to enrich a dataset's metadata from a document"""
         pass
 

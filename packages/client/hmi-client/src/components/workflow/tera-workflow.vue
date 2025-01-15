@@ -71,8 +71,8 @@
 						<component
 							:is="registry.getNode(node.operationType)"
 							:node="node"
-							@append-output="(event: any) => appendOutput(node, event)"
-							@append-input-port="(event: any) => workflowService.appendInputPort(node, event)"
+							@append-output="(port: any, newState: any) => appendOutput(node, port, newState)"
+							@append-input-port="(event: any) => appendInput(node, event)"
 							@update-state="(event: any) => updateWorkflowNodeState(node, event)"
 							@open-drilldown="addOperatorToRoute(node.id)"
 						/>
@@ -143,7 +143,7 @@
 			:spawn-animation="drilldownSpawnAnimation"
 			:upstream-operators-nav="upstreamOperatorsNav"
 			@close="addOperatorToRoute(null)"
-			@append-output="(event: any) => appendOutput(currentActiveNode, event)"
+			@append-output="(port: any, newState: any) => appendOutput(currentActiveNode, port, newState)"
 			@select-output="(event: any) => selectOutput(currentActiveNode, event)"
 			@update-state="(event: any) => updateWorkflowNodeState(currentActiveNode, event)"
 			@update-status="(status: OperatorStatus) => updateWorkflowNodeStatus(currentActiveNode, status)"
@@ -299,11 +299,32 @@ const saveNodeStateHandler = debounce(async () => {
 	const updatedWorkflow = await workflowService.updateState(wf.value.getId(), nodeStateMap);
 	nodeStateMap.clear();
 	wf.value.update(updatedWorkflow, false);
-}, 300);
+}, 250);
 
 const saveWorkflowHandler = () => {
 	saveWorkflowDebounced();
 };
+
+async function appendInput(
+	node: WorkflowNode<any>,
+	port: {
+		label: string;
+		type: string;
+		isOptional?: boolean;
+	}
+) {
+	const inputPort: WorkflowPort = {
+		id: uuidv4(),
+		type: port.type,
+		label: port.label,
+		isOptional: port.isOptional || false,
+		value: null,
+		status: WorkflowPortStatus.NOT_CONNECTED
+	};
+
+	const updatedWorkflow = await workflowService.appendInput(wf.value.getId(), node.id, inputPort);
+	wf.value.update(updatedWorkflow, false);
+}
 
 /**
  * The operator creates a new output, this will mark the
@@ -318,7 +339,8 @@ async function appendOutput(
 		value: any;
 		state?: any;
 		isSelected?: boolean;
-	}
+	},
+	newState: any = null
 ) {
 	if (!node) return;
 
@@ -337,13 +359,23 @@ async function appendOutput(
 		operatorStatus: OperatorStatus.SUCCESS
 	};
 
-	const updatedWorkflow = await workflowService.appendOutput(wf.value.getId(), node.id, outputPort, node.state);
+	const updatedWorkflow = await workflowService.appendOutput(wf.value.getId(), node.id, outputPort, newState);
 	wf.value.update(updatedWorkflow, false);
 }
 
 function updateWorkflowNodeState(node: WorkflowNode<any> | null, state: any) {
 	if (!node) return;
-	nodeStateMap.set(node.id, state);
+	if (nodeStateMap.has(node.id)) {
+		nodeStateMap.set(node.id, Object.assign(nodeStateMap.get(node.id), state));
+	} else {
+		nodeStateMap.set(node.id, state);
+	}
+
+	// FIXME: in some places we do consecutive update-state events programmatically, this cause
+	// an issue if we delay updates because they may not be independent. For now we will immediately
+	// update the client-copy.
+	wf.value.updateNodeState(node.id, nodeStateMap.get(node.id));
+
 	saveNodeStateHandler();
 }
 

@@ -2,7 +2,7 @@ import base64
 import imghdr
 import json
 import os
-from typing import List
+from typing import List, Optional
 
 from common import LlmToolsInterface
 from common.utils import validate_schema, model_config_adapter, get_image_format_string, extract_json_object, \
@@ -53,14 +53,14 @@ def model_config_from_document_chain(llm: LlmToolsInterface, research_paper: str
     return model_config_adapter(output)
 
 
-def enrich_dataset_chain(llm: LlmToolsInterface, research_paper: str, dataset: str) -> dict:
+def enrich_dataset_chain(llm: LlmToolsInterface, dataset: str, document: Optional[str]) -> dict:
     print("Uploading and validating dataset enrichment schema...")
     config_path = os.path.join(SCHEMAS_DIR, 'dataset_enrichment.json')
     with open(config_path, 'r') as config_file:
         response_schema = json.load(config_file)
     validate_schema(response_schema)
 
-    prompt = llm.create_enrich_dataset_prompt(dataset, research_paper, response_schema)
+    prompt = llm.create_enrich_dataset_prompt(dataset, document, response_schema)
     return llm.send_to_llm_with_json_output(prompt, response_schema)
 
 

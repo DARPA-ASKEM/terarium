@@ -1,8 +1,6 @@
 package software.uncharted.terarium.hmiserver.service.tasks;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.MapperFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -77,29 +75,26 @@ public class TaskUtilities {
 		final EnrichDatasetResponseHandler.Input input = new EnrichDatasetResponseHandler.Input();
 		if (document != null) {
 			try {
-				input.setResearchPaper(objectMapper.writeValueAsString(document.getExtractions()));
+				input.setDocument(objectMapper.writeValueAsString(document.getExtractions()));
 			} catch (JsonProcessingException e) {
 				throw new IOException("Unable to serialize document text");
 			}
 		}
 
-		// Serialize the dataset columns
-		final List<DatasetColumn> columns = dataset.getColumns();
-		final ObjectMapper mapper = new ObjectMapper();
-		mapper.setConfig(mapper.getSerializationConfig().with(MapperFeature.SORT_PROPERTIES_ALPHABETICALLY));
-		final ArrayNode columnsNode = mapper.convertValue(columns, ArrayNode.class);
-
-		// Remove the fields that are not needed
-		for (JsonNode column : columnsNode) {
-			((ObjectNode) column).remove("id");
-			((ObjectNode) column).remove("createdOn");
-			((ObjectNode) column).remove("updatedOn");
-			((ObjectNode) column).remove("grounding");
-			((ObjectNode) column).remove("metadata");
-			((ObjectNode) column).remove("dataType");
-			((ObjectNode) column).remove("description");
+		// create a json object of the dataset that includes the name, description, and the columns. The columns should include the name and the DatasetColumnStats
+		final ObjectNode datasetNode = objectMapper.createObjectNode();
+		datasetNode.put("name", dataset.getName());
+		datasetNode.put("description", dataset.getDescription());
+		final ArrayNode columnsNode = objectMapper.createArrayNode();
+		for (DatasetColumn column : dataset.getColumns()) {
+			final ObjectNode columnNode = objectMapper.createObjectNode();
+			columnNode.put("name", column.getName());
+			columnNode.put("description", column.getDescription());
+			columnNode.set("stats", objectMapper.valueToTree(column.getStats()));
+			columnsNode.add(columnNode);
 		}
-		final String serializedColumns = mapper.writeValueAsString(columnsNode);
+		datasetNode.set("columns", columnsNode);
+		final String serializedColumns = objectMapper.writeValueAsString(columnsNode);
 
 		input.setDataset(serializedColumns);
 

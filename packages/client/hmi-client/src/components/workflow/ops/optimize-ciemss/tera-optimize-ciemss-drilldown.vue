@@ -153,7 +153,7 @@
 									/>
 								</div>
 								<div class="label-and-input">
-									<label>Solver Step Size</label>
+									<label><br />Solver step size</label>
 									<div>
 										<tera-input-number
 											v-model="knobs.solverStepSize"
@@ -1116,6 +1116,7 @@ watch(
 	background: var(--surface-200);
 	border: 1px solid var(--surface-border-light);
 	border-radius: var(--border-radius);
+	box-shadow: inset 0 0px 4px rgba(0, 0, 0, 0.05);
 }
 
 /* Override grid template so output expands when sidebar is closed */

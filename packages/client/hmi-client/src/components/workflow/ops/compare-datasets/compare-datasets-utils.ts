@@ -1,6 +1,11 @@
 import { Dataset } from '@/types/Types';
 import { renameFnGenerator } from '@/components/workflow/ops/calibrate-ciemss/calibrate-utils';
-import { DataArray, parsePyCiemssMap, processAndSortSamplesByTimepoint } from '@/services/models/simulation-service';
+import {
+	DataArray,
+	getRunResultCSV,
+	parsePyCiemssMap,
+	processAndSortSamplesByTimepoint
+} from '@/services/models/simulation-service';
 import { DATASET_VAR_NAME_PREFIX, getDatasetResultCSV, mergeResults } from '@/services/dataset';
 import { ChartData } from '@/composables/useCharts';
 import { PlotValue } from './compare-datasets-operation';
@@ -31,7 +36,7 @@ export async function fetchDatasetResults(datasetList: Dataset[]) {
 		await Promise.all(
 			datasetList.map((dataset, datasetIndex) => {
 				if (!isSimulationData(dataset)) return Promise.resolve([]);
-				return getDatasetResultCSV(dataset, 'result.csv', renameFnGenerator(`${datasetIndex}`));
+				return getRunResultCSV(dataset.metadata.simulationId, 'result.csv', renameFnGenerator(`${datasetIndex}`));
 			})
 		)
 	).filter((result) => result.length > 0);
@@ -40,7 +45,11 @@ export async function fetchDatasetResults(datasetList: Dataset[]) {
 		await Promise.all(
 			datasetList.map((dataset, datasetIndex) => {
 				if (!isSimulationData(dataset)) return Promise.resolve([]);
-				return getDatasetResultCSV(dataset, 'result_summary.csv', renameFnGenerator(`${datasetIndex}`));
+				return getRunResultCSV(
+					dataset.metadata.simulationId,
+					'result_summary.csv',
+					renameFnGenerator(`${datasetIndex}`)
+				);
 			})
 		)
 	).filter((result) => result.length > 0);
@@ -152,7 +161,7 @@ export function buildChartData(
 	});
 
 	return {
-		result: [], // Sample plot data are not used in the compare datasets chart
+		result: resultTransformed,
 		resultSummary: resultSummaryTransformed,
 		resultGroupByTimepoint,
 		pyciemssMap,
