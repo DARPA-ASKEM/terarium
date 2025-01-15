@@ -167,7 +167,9 @@
 										v-model="knobs.selectedPlotType"
 										:value="option.value"
 										name="plotValues"
-										@change="chartData, datasets, datasetResults, baselineDatasetIndex, selectedPlotType"
+										@change="
+											generateImpactCharts(chartData, datasets, datasetResults, baselineDatasetIndex, selectedPlotType)
+										"
 									/>
 									<label class="pl-2 py-1" :for="option.value">{{ option.label }}</label>
 								</div>
