@@ -112,7 +112,12 @@
 						<tr>
 							<td>Timestamp</td>
 							<td>
-								<Dropdown v-model="timestampColName" placeholder="Select" :options="datasetColumnNames" />
+								<Dropdown
+									:model-value="scenario.timestampColName"
+									@update:model-value="scenario.setTimeStepColName($event)"
+									placeholder="Select"
+									:options="datasetColumnNames"
+								/>
 							</td>
 						</tr>
 						<tr v-for="(config, i) in scenario.calibrateMappings" :key="i">
@@ -163,6 +168,7 @@
 				:loading="isFetchingModelInformation"
 				filter
 			/>
+			<img :src="CalibrateEnsembleImg" alt="Calibrate ensemble model" />
 		</template>
 	</tera-scenario-template>
 	<tera-new-policy-modal
@@ -186,6 +192,7 @@ import TabPanel from 'primevue/tabpanel';
 import TeraInputText from '@/components/widgets/tera-input-text.vue';
 import { getFileName } from '@/services/calibrate-workflow';
 import { getDataset } from '@/services/dataset';
+import CalibrateEnsembleImg from '@/assets/svg/template-images/calibrate-ensemble-model-thumbnail.svg';
 import { ScenarioHeader } from '../base-scenario';
 import { CalibrateEnsembleScenario } from './calibrate-ensemble-scenario';
 import TeraScenarioTemplate from '../tera-scenario-template.vue';
@@ -241,7 +248,6 @@ const tableHeaders = computed(() => {
 });
 
 const datasetColumnNames = computed(() => dataset.value?.columns?.map((col) => col.name) ?? ([] as string[]));
-const timestampColName = ref();
 
 const activeTab = ref(0);
 const props = defineProps<{

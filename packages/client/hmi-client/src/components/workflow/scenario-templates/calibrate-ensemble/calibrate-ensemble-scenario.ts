@@ -8,6 +8,8 @@ import { operation as CalibrateEnsembleOp } from '@/components/workflow/ops/cali
 import { operation as DatasetOp } from '@/components/workflow/ops/dataset/mod';
 import { OperatorNodeSize } from '@/services/workflow';
 import { v4 as uuidv4 } from 'uuid';
+import _ from 'lodash';
+import { getModelConfigurationById } from '@/services/model-configurations';
 import { CalibrateEnsembleMappingRow } from '../../ops/calibrate-ensemble-ciemss/calibrate-ensemble-ciemss-operation';
 
 export class CalibrateEnsembleScenario extends BaseScenario {
@@ -25,6 +27,8 @@ export class CalibrateEnsembleScenario extends BaseScenario {
 	}[];
 
 	simulateSpec: { ids: string[] };
+
+	timestampColName: string;
 
 	calibrateMappings: CalibrateEnsembleMappingRow[];
 
@@ -54,12 +58,15 @@ export class CalibrateEnsembleScenario extends BaseScenario {
 		this.simulateSpec = {
 			ids: []
 		};
+
+		this.timestampColName = '';
 		this.calibrateMappings = [];
 		this.workflowName = '';
 	}
 
 	setDatasetSpec(id: string) {
 		this.datasetSpec.id = id;
+		this.timestampColName = '';
 	}
 
 	setModelSpec(modelId: string, tabId: string) {
@@ -96,6 +103,10 @@ export class CalibrateEnsembleScenario extends BaseScenario {
 
 	setSimulateSpec(ids: string[]) {
 		this.simulateSpec.ids = ids;
+	}
+
+	setTimeStepColName(name: string) {
+		this.timestampColName = name;
 	}
 
 	addTabSpec() {
@@ -189,73 +200,110 @@ export class CalibrateEnsembleScenario extends BaseScenario {
 		}
 
 		// every tab has a model, model config, intervention (optional).  Attach accordingly.
-		this.tabSpecs.forEach((_tab, index) => {
-			const modelNode = wf.addNode(
-				ModelOp,
-				{ x: 0, y: 0 },
-				{
-					size: OperatorNodeSize.medium
-				}
-			);
 
-			const modelConfigNode = wf.addNode(
-				ModelConfigOp,
-				{ x: 0, y: 0 },
-				{
-					size: OperatorNodeSize.medium
-				}
-			);
+		await Promise.all(
+			this.tabSpecs.map(async (tab, index) => {
+				const modelNode = wf.addNode(
+					ModelOp,
+					{ x: 0, y: 0 },
+					{
+						size: OperatorNodeSize.medium
+					}
+				);
 
-			const simulateNode = wf.addNode(
-				SimulateOp,
-				{ x: 0, y: 0 },
-				{
-					size: OperatorNodeSize.medium
-				}
-			);
+				const modelConfig = await getModelConfigurationById(tab.modelConfigSpec.id);
 
-			const calibrateNode = wf.addNode(
-				CalibrateOp,
-				{ x: 0, y: 0 },
-				{
-					size: OperatorNodeSize.medium
-				}
-			);
+				const modelConfigNode = wf.addNode(
+					ModelConfigOp,
+					{ x: 0, y: 0 },
+					{
+						size: OperatorNodeSize.medium
+					}
+				);
 
-			// attach to model config node
-			wf.addEdge(modelNode.id, modelNode.outputs[0].id, modelConfigNode.id, modelConfigNode.inputs[0].id, [
-				{ x: 0, y: 0 },
-				{ x: 0, y: 0 }
-			]);
+				const simulateNode = wf.addNode(
+					SimulateOp,
+					{ x: 0, y: 0 },
+					{
+						size: OperatorNodeSize.medium
+					}
+				);
 
-			// attach to simulate node
-			wf.addEdge(modelConfigNode.id, modelConfigNode.outputs[0].id, simulateNode.id, simulateNode.inputs[0].id, [
-				{ x: 0, y: 0 },
-				{ x: 0, y: 0 }
-			]);
+				const calibrateNode = wf.addNode(
+					CalibrateOp,
+					{ x: 0, y: 0 },
+					{
+						size: OperatorNodeSize.medium
+					}
+				);
 
-			// attach to calibrate node
-			wf.addEdge(modelConfigNode.id, modelConfigNode.outputs[0].id, calibrateNode.id, calibrateNode.inputs[0].id, [
-				{ x: 0, y: 0 },
-				{ x: 0, y: 0 }
-			]);
-
-			wf.addEdge(datasetNode.id, datasetNode.outputs[0].id, calibrateNode.id, calibrateNode.inputs[1].id, [
-				{ x: 0, y: 0 },
-				{ x: 0, y: 0 }
-			]);
-
-			// attach to calibrate ensemble node
-			wf.addEdge(
-				modelConfigNode.id,
-				modelConfigNode.outputs[0].id,
-				calibrateEnsembleNode.id,
-				calibrateEnsembleNode.inputs[index + 1].id,
-				[
+				// attach to model config node
+				wf.addEdge(modelNode.id, modelNode.outputs[0].id, modelConfigNode.id, modelConfigNode.inputs[0].id, [
 					{ x: 0, y: 0 },
 					{ x: 0, y: 0 }
-				]
-			);
+				]);
+
+				// attach to simulate node
+				wf.addEdge(modelConfigNode.id, modelConfigNode.outputs[0].id, simulateNode.id, simulateNode.inputs[0].id, [
+					{ x: 0, y: 0 },
+					{ x: 0, y: 0 }
+				]);
+
+				// attach to calibrate node
+				wf.addEdge(modelConfigNode.id, modelConfigNode.outputs[0].id, calibrateNode.id, calibrateNode.inputs[0].id, [
+					{ x: 0, y: 0 },
+					{ x: 0, y: 0 }
+				]);
+
+				wf.addEdge(datasetNode.id, datasetNode.outputs[0].id, calibrateNode.id, calibrateNode.inputs[1].id, [
+					{ x: 0, y: 0 },
+					{ x: 0, y: 0 }
+				]);
+
+				wf.updateNode(modelNode, {
+					state: {
+						modelId: tab.modelSpec.id
+					},
+					output: {
+						value: [tab.modelSpec.id]
+					}
+				});
+
+				wf.updateNode(modelConfigNode, {
+					state: {
+						transientModelConfig: modelConfig
+					},
+					output: {
+						value: [modelConfig.id],
+						state: _.omit(modelConfigNode.state, ['transientModelConfig'])
+					}
+				});
+
+				// attach to calibrate ensemble node
+				wf.addEdge(
+					modelConfigNode.id,
+					modelConfigNode.outputs[0].id,
+					calibrateEnsembleNode.id,
+					calibrateEnsembleNode.inputs[index + 1].id,
+					[
+						{ x: 0, y: 0 },
+						{ x: 0, y: 0 }
+					]
+				);
+			})
+		);
+
+		wf.updateNode(calibrateEnsembleNode, {
+			state: {
+				timestampColName: this.timestampColName,
+				ensembleMapping: this.calibrateMappings
+			}
+		});
+
+		wf.updateNode(datasetNode, {
+			state: {
+				datasetId: this.datasetSpec.id
+			}
 		});
 
 		wf.runDagreLayout();

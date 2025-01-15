@@ -81,7 +81,10 @@ public class TerariumAssetCloneService {
 					PageRequest.of(0, 100)
 				);
 			final List<InterventionPolicy> interventionPolicies =
-				interventionRepository.findByModelIdAndDeletedOnIsNullAndTemporaryFalse(assetId, PageRequest.of(0, 100));
+				interventionRepository.findByModelIdAndDeletedOnIsNullAndTemporaryFalseOrderByCreatedOnAsc(
+					assetId,
+					PageRequest.of(0, 100)
+				);
 
 			assetsToClone.addAll(modelConfigurations.stream().map(ModelConfiguration::getId).toList());
 			assetsToClone.addAll(interventionPolicies.stream().map(InterventionPolicy::getId).toList());
