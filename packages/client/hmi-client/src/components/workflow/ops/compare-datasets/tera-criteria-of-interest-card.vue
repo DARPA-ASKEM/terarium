@@ -9,15 +9,15 @@
 			/>
 			<Button class="ml-auto" text icon="pi pi-trash" @click="emit('delete')" />
 		</header>
-
-		<div>
+		<p>
 			For configuration
 			<Dropdown
-				:options="card.configurations"
-				:model-value="card.selectedConfiguration"
-				@update:model-value="emit('update', { selectedConfiguration: $event })"
 				placeholder="Select..."
-				class="madlib-dropdown"
+				:options="modelConfigurations"
+				:model-value="card.selectedConfigurationId"
+				@update:model-value="emit('update', { selectedConfigurationId: $event })"
+				option-label="name"
+				option-value="id"
 			/>
 			rank interventions based on the
 			<Dropdown
@@ -26,15 +26,13 @@
 				option-label="label"
 				option-value="value"
 				@update:model-value="emit('update', { rank: $event })"
-				class="madlib-dropdown"
 			/>
 			value of
 			<Dropdown
-				:options="card.variables"
+				placeholder="Select..."
+				:options="variables"
 				:model-value="card.selectedVariable"
 				@update:model-value="emit('update', { selectedVariable: $event })"
-				placeholder="Select..."
-				class="madlib-dropdown"
 			/>
 			at
 			<Dropdown
@@ -42,11 +40,13 @@
 				:model-value="card.timepoint"
 				option-label="label"
 				option-value="value"
-				class="madlib-dropdown"
 				@update:model-value="emit('update', { timepoint: $event })"
 			/>
 			timepoint.
-		</div>
+		</p>
+		<footer v-if="!card.selectedConfigurationId || !card.selectedVariable">
+			Please select a configuration and a variable.
+		</footer>
 	</div>
 </template>
 
@@ -54,6 +54,7 @@
 import TeraToggleableInput from '@/components/widgets/tera-toggleable-input.vue';
 import Button from 'primevue/button';
 import Dropdown from 'primevue/dropdown';
+import { ModelConfiguration } from '@/types/Types';
 import { CriteriaOfInterestCard, RankOption, TimepointOption } from './compare-datasets-operation';
 
 const timepointOptions = [
@@ -69,6 +70,8 @@ const rankOptions = [
 const emit = defineEmits(['delete', 'update']);
 defineProps<{
 	card: CriteriaOfInterestCard;
+	modelConfigurations: ModelConfiguration[];
+	variables: string[];
 }>();
 </script>
 
@@ -81,10 +84,15 @@ defineProps<{
 	gap: var(--gap-2);
 	display: flex;
 	flex-direction: column;
-	margin-bottom: var(--gap-1);
 }
-.madlib-dropdown {
+
+.p-dropdown {
 	height: 2rem;
 	margin-bottom: var(--gap-1);
+}
+
+footer {
+	font-size: var(--font-caption);
+	color: var(--text-color-secondary);
 }
 </style>

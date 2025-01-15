@@ -71,8 +71,8 @@
 						<component
 							:is="registry.getNode(node.operationType)"
 							:node="node"
-							@append-output="(event: any) => appendOutput(node, event)"
-							@append-input-port="(event: any) => workflowService.appendInputPort(node, event)"
+							@append-output="(port: any, newState: any) => appendOutput(node, port, newState)"
+							@append-input-port="(event: any) => appendInput(node, event)"
 							@update-state="(event: any) => updateWorkflowNodeState(node, event)"
 							@open-drilldown="addOperatorToRoute(node.id)"
 						/>
@@ -143,9 +143,8 @@
 			:spawn-animation="drilldownSpawnAnimation"
 			:upstream-operators-nav="upstreamOperatorsNav"
 			@close="addOperatorToRoute(null)"
-			@append-output="(event: any) => appendOutput(currentActiveNode, event)"
+			@append-output="(port: any, newState: any) => appendOutput(currentActiveNode, port, newState)"
 			@select-output="(event: any) => selectOutput(currentActiveNode, event)"
-			@update-output="(event: any) => updateOutput(currentActiveNode, event)"
 			@update-state="(event: any) => updateWorkflowNodeState(currentActiveNode, event)"
 			@update-status="(status: OperatorStatus) => updateWorkflowNodeStatus(currentActiveNode, status)"
 		/>
@@ -153,8 +152,8 @@
 </template>
 
 <script setup lang="ts">
-import { cloneDeep, isArray, isEmpty, intersection, debounce } from 'lodash';
-import { computed, onMounted, onUnmounted, ref, watch, nextTick } from 'vue';
+import { cloneDeep, isArray, intersection, debounce } from 'lodash';
+import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
 import TeraInfiniteCanvas from '@/components/widgets/tera-infinite-canvas.vue';
 import TeraCanvasItem from '@/components/widgets/tera-canvas-item.vue';
 import type { Position } from '@/types/common';
@@ -183,7 +182,6 @@ import { v4 as uuidv4 } from 'uuid';
 
 import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue';
 
-import { logger } from '@/utils/logger';
 import { useRouter, useRoute } from 'vue-router';
 import { MenuItem } from 'primevue/menuitem';
 import * as EventService from '@/services/event';
@@ -294,19 +292,46 @@ const _updateWorkflow = (event: ClientEvent<any>) => {
 	wf.value.update(event.data as Workflow, delayUpdate);
 };
 
+const nodeStateMap: Map<string, any> = new Map();
 const saveWorkflowDebounced = debounce(_saveWorkflow, 400);
 const updateWorkflowHandler = debounce(_updateWorkflow, 250);
+const saveNodeStateHandler = debounce(async () => {
+	const updatedWorkflow = await workflowService.updateState(wf.value.getId(), nodeStateMap);
+	nodeStateMap.clear();
+	wf.value.update(updatedWorkflow, false);
+}, 250);
 
 const saveWorkflowHandler = () => {
 	saveWorkflowDebounced();
 };
+
+async function appendInput(
+	node: WorkflowNode<any>,
+	port: {
+		label: string;
+		type: string;
+		isOptional?: boolean;
+	}
+) {
+	const inputPort: WorkflowPort = {
+		id: uuidv4(),
+		type: port.type,
+		label: port.label,
+		isOptional: port.isOptional || false,
+		value: null,
+		status: WorkflowPortStatus.NOT_CONNECTED
+	};
+
+	const updatedWorkflow = await workflowService.appendInput(wf.value.getId(), node.id, inputPort);
+	wf.value.update(updatedWorkflow, false);
+}
 
 /**
  * The operator creates a new output, this will mark the
  * output as selected, and revert the selection status of
  * existing outputs
  * */
-function appendOutput(
+async function appendOutput(
 	node: WorkflowNode<any> | null,
 	port: {
 		type: string;
@@ -314,12 +339,10 @@ function appendOutput(
 		value: any;
 		state?: any;
 		isSelected?: boolean;
-	}
+	},
+	newState: any = null
 ) {
 	if (!node) return;
-
-	// We assume that if we can produce an output, the status is okay
-	node.status = OperatorStatus.SUCCESS;
 
 	const uuid = uuidv4();
 	const outputPort: WorkflowOutput<any> = {
@@ -332,42 +355,42 @@ function appendOutput(
 		state: port.state,
 		isSelected: true,
 		timestamp: new Date(),
-		operatorStatus: node.status
+		// We assume that if we can produce an output, the status is okay
+		operatorStatus: OperatorStatus.SUCCESS
 	};
 
-	// Append and set active
-	node.outputs.push(outputPort);
-	node.active = uuid;
-
-	// Filter out temporary outputs where value is null
-	node.outputs = node.outputs.filter((d) => d.value);
-
-	selectOutput(node, uuid);
-	saveWorkflowHandler();
+	const updatedWorkflow = await workflowService.appendOutput(wf.value.getId(), node.id, outputPort, newState);
+	wf.value.update(updatedWorkflow, false);
 }
 
 function updateWorkflowNodeState(node: WorkflowNode<any> | null, state: any) {
 	if (!node) return;
-	wf.value.updateNodeState(node.id, state);
-	saveWorkflowHandler();
+	if (nodeStateMap.has(node.id)) {
+		nodeStateMap.set(node.id, Object.assign(nodeStateMap.get(node.id), state));
+	} else {
+		nodeStateMap.set(node.id, state);
+	}
+
+	// FIXME: in some places we do consecutive update-state events programmatically, this cause
+	// an issue if we delay updates because they may not be independent. For now we will immediately
+	// update the client-copy.
+	wf.value.updateNodeState(node.id, nodeStateMap.get(node.id));
+
+	saveNodeStateHandler();
 }
 
-function updateWorkflowNodeStatus(node: WorkflowNode<any> | null, status: OperatorStatus) {
+async function updateWorkflowNodeStatus(node: WorkflowNode<any> | null, status: OperatorStatus) {
 	if (!node) return;
-	wf.value.updateNodeStatus(node.id, status);
-	saveWorkflowHandler();
+
+	const payload: Map<string, OperatorStatus> = new Map([[node.id, status]]);
+
+	const updatedWorkflow = await workflowService.updateStatus(wf.value.getId(), payload);
+	wf.value.update(updatedWorkflow, false);
 }
 
-function selectOutput(node: WorkflowNode<any> | null, selectedOutputId: string) {
-	if (!node) return;
-	wf.value.selectOutput(node, selectedOutputId);
-	saveWorkflowHandler();
-}
-
-function updateOutput(node: WorkflowNode<any> | null, workflowOutput: WorkflowOutput<any>) {
-	if (!node) return;
-	workflowService.updateOutput(node, workflowOutput);
-	saveWorkflowHandler();
+async function selectOutput(node: WorkflowNode<any> | null, selectedOutputId: string) {
+	const updatedWorkflow = await workflowService.selectOutput(wf.value.getId(), node!.id, selectedOutputId);
+	wf.value.update(updatedWorkflow, false);
 }
 
 // Route is mutated then watcher is triggered to open or close the drilldown
@@ -402,9 +425,9 @@ const closeDrilldown = async () => {
 	);
 };
 
-const removeNode = (nodeId: string) => {
-	wf.value.removeNode(nodeId);
-	saveWorkflowHandler();
+const removeNode = async (nodeId: string) => {
+	const updatedWorkflow = await workflowService.removeNodes(wf.value.getId(), [nodeId]);
+	wf.value.update(updatedWorkflow, false);
 };
 
 const duplicateBranch = (nodeId: string) => {
@@ -441,11 +464,13 @@ const cloneNoteBookSessions = async () => {
 
 const addOperatorToWorkflow: Function =
 	(operator: OperatorImport, nodeSize: OperatorNodeSize = OperatorNodeSize.medium) =>
-	() => {
-		const node = wf.value.addNode(operator.operation, newNodePosition, {
+	async () => {
+		const node = workflowService.newOperator(wf.value.getId(), operator.operation, newNodePosition, {
 			size: nodeSize
 		});
-		saveWorkflowHandler();
+		const updatedWorkflow = await workflowService.addNode(wf.value.getId(), node);
+		wf.value.update(updatedWorkflow, false);
+
 		return node;
 	};
 
@@ -460,7 +485,7 @@ async function onMenuSelection(operatorType: string, menuNode: WorkflowNode<any>
 	newNodePosition.y = menuNode.y;
 
 	if (name && operation && node && drilldown) {
-		const newNode: WorkflowNode<any> = addOperatorToWorkflow({ name, operation, node, drilldown })();
+		const newNode: WorkflowNode<any> = await addOperatorToWorkflow({ name, operation, node, drilldown })();
 
 		// The split('|') is for complex types - [modelId|modelConfigId] or [datasetId|simulationId]
 		const portTypes = port.type.split('|');
@@ -479,15 +504,24 @@ async function onMenuSelection(operatorType: string, menuNode: WorkflowNode<any>
 			return;
 		}
 
-		// Wait for the DOM to load new node before adding edge
-		await nextTick();
+		const edgePayload: WorkflowEdge = {
+			id: uuidv4(),
+			workflowId: wf.value.getId(),
+			source: menuNode.id,
+			sourcePortId: port.id,
+			target: newNode.id,
+			targetPortId: inputPorts[0].id,
+			points: [
+				{ x: currentPortPosition.x, y: currentPortPosition.y },
+				{ x: currentPortPosition.x, y: currentPortPosition.y }
+			]
+		};
 
-		wf.value.addEdge(menuNode.id, port.id, newNode.id, inputPorts[0].id, [
-			{ x: currentPortPosition.x, y: currentPortPosition.y },
-			{ x: currentPortPosition.x, y: currentPortPosition.y }
-		]);
+		const updatedWorkflow = await workflowService.addEdge(wf.value.getId(), edgePayload);
+		wf.value.update(updatedWorkflow, false);
 
-		saveWorkflowHandler();
+		// Force edges to re-evaluate
+		relinkEdges(null);
 	}
 }
 
@@ -593,7 +627,7 @@ const showAddComponentMenu = () => {
 
 const { getDragData } = useDragEvent();
 
-function onDrop(event: DragEvent) {
+async function onDrop(event: DragEvent) {
 	const { assetId, assetType } = getDragData('initAssetNode') as {
 		assetId: string;
 		assetType: AssetType;
@@ -621,7 +655,9 @@ function onDrop(event: DragEvent) {
 			default:
 				return;
 		}
-		wf.value.addNode(operation, newNodePosition, { state });
+		const operator = workflowService.newOperator(wf.value.getId(), operation, newNodePosition, { state });
+		const updatedWorkflow = await workflowService.addNode(wf.value.getId(), operator);
+		wf.value.update(updatedWorkflow, false);
 	}
 }
 
@@ -646,7 +682,7 @@ function saveTransform(newTransform: { k: number; x: number; y: number }) {
 
 const isCreatingNewEdge = computed(() => newEdge.value && newEdge.value.points && newEdge.value.points.length === 2);
 
-function createNewEdge(node: WorkflowNode<any>, port: WorkflowPort, direction: WorkflowDirection) {
+async function createNewEdge(node: WorkflowNode<any>, port: WorkflowPort, direction: WorkflowDirection) {
 	if (!isCreatingNewEdge.value) {
 		newEdge.value = {
 			id: 'new edge',
@@ -662,50 +698,36 @@ function createNewEdge(node: WorkflowNode<any>, port: WorkflowPort, direction: W
 			direction
 		};
 	} else {
-		wf.value.addEdge(
-			newEdge.value!.source ?? node.id,
-			newEdge.value!.sourcePortId ?? port.id,
-			newEdge.value!.target ?? node.id,
-			newEdge.value!.targetPortId ?? port.id,
-			newEdge.value!.points
-		);
+		const edgePayload: WorkflowEdge = {
+			id: uuidv4(),
+			workflowId: wf.value.getId(),
+			source: newEdge.value!.source ?? node.id,
+			sourcePortId: newEdge.value!.sourcePortId ?? port.id,
+			target: newEdge.value!.target ?? node.id,
+			targetPortId: newEdge.value!.targetPortId ?? port.id,
+			points: newEdge.value!.points
+		};
+		if (edgePayload.source === edgePayload.target) {
+			cancelNewEdge();
+			return;
+		}
+
+		const updatedWorkflow = await workflowService.addEdge(wf.value.getId(), edgePayload);
+		wf.value.update(updatedWorkflow, false);
 		cancelNewEdge();
-		saveWorkflowHandler();
 	}
 }
 
-function removeEdges(portId: string) {
+async function removeEdges(portId: string) {
 	const edges = wf.value
 		.getEdges()
 		.filter(({ targetPortId, sourcePortId }) => targetPortId === portId || sourcePortId === portId);
 
-	// Build a traversal map before we do actual removal
-	const nodeMap = new Map<WorkflowNode<any>['id'], WorkflowNode<any>>(
-		wf.value.getNodes().map((node) => [node.id, node])
+	const updatedWorkflow = await workflowService.removeEdges(
+		wf.value.getId(),
+		edges.map((e) => e.id)
 	);
-	const nodeCache = new Map<WorkflowOutput<any>['id'], WorkflowNode<any>[]>();
-	wf.value.getEdges().forEach((edge) => {
-		if (!edge.source || !edge.target) return;
-		if (!nodeCache.has(edge.source)) nodeCache.set(edge.source, []);
-		nodeCache.get(edge.source)?.push(nodeMap.get(edge.target) as WorkflowNode<any>);
-	});
-	const startingNodeId = edges.length > 0 ? (edges[0].source as string) : '';
-
-	// Remove edge
-	if (!isEmpty(edges)) {
-		edges.forEach((edge) => {
-			wf.value.removeEdge(edge.id);
-		});
-	} else {
-		logger.error(`Edges with port id:${portId} not found.`);
-		return;
-	}
-
-	// cascade invalid status to downstream operators
-	if (startingNodeId !== '') {
-		workflowService.cascadeInvalidateDownstream(nodeMap.get(startingNodeId) as WorkflowNode<any>, nodeCache);
-	}
-	saveWorkflowHandler();
+	wf.value.update(updatedWorkflow, false);
 }
 
 function onCanvasClick() {
@@ -858,7 +880,7 @@ const pathFn = d3
 const drawPath = (v: any) => pathFn(v) as string;
 
 const unloadCheck = () => {
-	saveWorkflowHandler();
+	workflowService.saveWorkflow(wf.value.dump());
 };
 
 const handleDrilldown = () => {
@@ -911,7 +933,7 @@ watch(
 	async (newId, oldId) => {
 		// Save previous workflow, if applicable
 		if (newId !== oldId && oldId) {
-			saveWorkflowHandler();
+			workflowService.saveWorkflow(wf.value.dump());
 			workflowService.setLocalStorageTransform(wf.value.getId(), canvasTransform);
 		}
 
@@ -957,7 +979,7 @@ onMounted(() => {
 });
 
 onUnmounted(() => {
-	saveWorkflowHandler();
+	workflowService.saveWorkflow(wf.value.dump());
 	if (saveTimer) {
 		clearInterval(saveTimer);
 	}

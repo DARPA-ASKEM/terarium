@@ -627,7 +627,7 @@ public class ProjectController {
 			project = executor.submit(() -> {
 				log.info("Staring Cloning Process...");
 				final ProjectExport export = cloneService.exportProject(id);
-				export.getProject().setName("Copy of " + export.getProject().getName());
+				export.getProject().setName("Copying " + export.getProject().getName());
 				log.info("Cloning...");
 				final Project cloneProject = cloneService.importProject(userId, userName, export);
 				log.info("Cloned...");
@@ -866,7 +866,7 @@ public class ProjectController {
 			if (owningProjectId != null) {
 				// if the asset is already under another project, we need to clone it and its
 				// dependencies
-				assets = cloneService.cloneAndPersistAsset(owningProjectId, assetId);
+				assets = cloneService.cloneAndPersistAsset(owningProjectId, assetId, assetType);
 			} else {
 				// TODO: we should probably check asset dependencies and make sure they are part
 				// of the project, and if not clone them
@@ -885,7 +885,7 @@ public class ProjectController {
 		for (final TerariumAsset asset : assets) {
 			final Optional<ProjectAsset> projectAsset = projectAssetService.createProjectAsset(
 				project.get(),
-				assetType,
+				TerariumAssetServices.getAssetType(asset),
 				asset,
 				permission
 			);

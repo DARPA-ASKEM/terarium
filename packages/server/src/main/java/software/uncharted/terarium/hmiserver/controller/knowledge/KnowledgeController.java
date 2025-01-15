@@ -79,8 +79,6 @@ import software.uncharted.terarium.hmiserver.service.data.ProvenanceService;
 import software.uncharted.terarium.hmiserver.service.notification.NotificationGroupInstance;
 import software.uncharted.terarium.hmiserver.service.notification.NotificationService;
 import software.uncharted.terarium.hmiserver.service.tasks.EquationsCleanupResponseHandler;
-import software.uncharted.terarium.hmiserver.service.tasks.LatexToAMRResponseHandler;
-// latex to model chain
 import software.uncharted.terarium.hmiserver.service.tasks.LatexToSympyResponseHandler;
 import software.uncharted.terarium.hmiserver.service.tasks.SympyToAMRResponseHandler;
 import software.uncharted.terarium.hmiserver.service.tasks.TaskService;
@@ -270,30 +268,21 @@ public class KnowledgeController {
 		}
 
 		if (extractionService.equals("mira")) {
-			final TaskRequest latexToSympyRequest = new TaskRequest();
+			final TaskRequest latexToSympyRequest;
 			final TaskResponse latexToSympyResponse;
-			final TaskRequest sympyToAMRRequest = new TaskRequest();
+			final TaskRequest sympyToAMRRequest;
 			final TaskResponse sympyToAMRResponse;
 
 			try {
 				// 1. LaTeX to sympy code
-				final String latex = req.get("equations").toString();
-				latexToSympyRequest.setType(TaskType.GOLLM);
-				latexToSympyRequest.setInput(latex.getBytes());
-				latexToSympyRequest.setScript(LatexToSympyResponseHandler.NAME);
-				latexToSympyRequest.setUserId(currentUserService.get().getId());
-				latexToSympyRequest.setUseCache(false); // Don't cache because LLM can give incorrect result
+				latexToSympyRequest = createLatexToSympyTask(equationsReq);
 				latexToSympyResponse = taskService.runTaskSync(latexToSympyRequest);
 
 				// 2. hand off
-				final JsonNode node = mapper.readValue(latexToSympyResponse.getOutput(), JsonNode.class);
-				final String code = node.get("response").asText();
+				final String code = extractCodeFromLatexToSympy(latexToSympyResponse);
 
 				// 3. sympy code string to amr json
-				sympyToAMRRequest.setType(TaskType.MIRA);
-				sympyToAMRRequest.setInput(code.getBytes());
-				sympyToAMRRequest.setScript(SympyToAMRResponseHandler.NAME);
-				sympyToAMRRequest.setUserId(currentUserService.get().getId());
+				sympyToAMRRequest = createSympyToAMRTask(code);
 				sympyToAMRResponse = taskService.runTaskSync(sympyToAMRRequest);
 
 				final JsonNode taskResponseJSON = mapper.readValue(sympyToAMRResponse.getOutput(), JsonNode.class);
@@ -909,25 +898,21 @@ public class KnowledgeController {
 	 * directly creating a model asset it returns artifact at different intersections
 	 * and handoff for debugging
 	 **/
-	public ResponseEntity<JsonNode> latexToAMR(@RequestBody final String latex) {
+	public ResponseEntity<JsonNode> latexToAMRDebug(@RequestBody final String latex) {
 		////////////////////////////////////////////////////////////////////////////////
 		// 1. Convert latex string to python sympy code string
 		//
 		// Note this is a gollm string => string task
 		////////////////////////////////////////////////////////////////////////////////
-		final TaskRequest latexToSympyRequest = new TaskRequest();
+		final TaskRequest latexToSympyRequest;
 		final TaskResponse latexToSympyResponse;
 		String code = null;
 
 		try {
-			latexToSympyRequest.setType(TaskType.GOLLM);
-			latexToSympyRequest.setInput(latex.getBytes());
-			latexToSympyRequest.setScript(LatexToSympyResponseHandler.NAME);
-			latexToSympyRequest.setUserId(currentUserService.get().getId());
+			JsonNode temp = mapper.readValue(latex, JsonNode.class);
+			latexToSympyRequest = createLatexToSympyTask(temp);
 			latexToSympyResponse = taskService.runTaskSync(latexToSympyRequest);
-
-			final JsonNode node = mapper.readValue(latexToSympyResponse.getOutput(), JsonNode.class);
-			code = node.get("response").asText();
+			code = extractCodeFromLatexToSympy(latexToSympyResponse);
 		} catch (final TimeoutException e) {
 			log.warn("Timeout while waiting for task response", e);
 			throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, messages.get("task.gollm.timeout"));
@@ -950,15 +935,12 @@ public class KnowledgeController {
 		//
 		// This returns the AMR json, and intermediate data representations for debugging
 		////////////////////////////////////////////////////////////////////////////////
-		final TaskRequest sympyToAMRRequest = new TaskRequest();
+		final TaskRequest sympyToAMRRequest;
 		final TaskResponse sympyToAMRResponse;
 		final JsonNode response;
 
 		try {
-			sympyToAMRRequest.setType(TaskType.MIRA);
-			sympyToAMRRequest.setInput(code.getBytes());
-			sympyToAMRRequest.setScript(SympyToAMRResponseHandler.NAME);
-			sympyToAMRRequest.setUserId(currentUserService.get().getId());
+			sympyToAMRRequest = createSympyToAMRTask(code);
 			sympyToAMRResponse = taskService.runTaskSync(sympyToAMRRequest);
 			response = mapper.readValue(sympyToAMRResponse.getOutput(), JsonNode.class);
 			return ResponseEntity.ok().body(response);
@@ -1023,6 +1005,49 @@ public class KnowledgeController {
 		req.setAdditionalProperties(props);
 
 		return req;
+	}
+
+	// Helper to create sympy => AMR task
+	private TaskRequest createSympyToAMRTask(final String sympyCode) throws Exception {
+		final TaskRequest sympyToAMRRequest = new TaskRequest();
+		sympyToAMRRequest.setType(TaskType.MIRA);
+		sympyToAMRRequest.setInput(sympyCode.getBytes());
+		sympyToAMRRequest.setScript(SympyToAMRResponseHandler.NAME);
+		sympyToAMRRequest.setUserId(currentUserService.get().getId());
+		return sympyToAMRRequest;
+	}
+
+	// Helper to create latex => sympy task
+	private TaskRequest createLatexToSympyTask(JsonNode equationsNode) throws Exception {
+		final TaskRequest latexToSympyRequest = new TaskRequest();
+
+		final LatexToSympyResponseHandler.Input input = new LatexToSympyResponseHandler.Input();
+		final List<String> equationList = new ArrayList<>();
+		for (final JsonNode equation : equationsNode) {
+			equationList.add(equation.asText());
+		}
+		input.setEquations(equationList);
+		latexToSympyRequest.setType(TaskType.GOLLM);
+		latexToSympyRequest.setInput(mapper.writeValueAsBytes(input));
+		latexToSympyRequest.setScript(LatexToSympyResponseHandler.NAME);
+		latexToSympyRequest.setUserId(currentUserService.get().getId());
+		latexToSympyRequest.setUseCache(false); // Don't cache because LLM can give incorrect result
+		return latexToSympyRequest;
+	}
+
+	private String extractCodeFromLatexToSympy(final TaskResponse taskResponse) throws Exception {
+		final LatexToSympyResponseHandler.Response response = mapper.readValue(
+			taskResponse.getOutput(),
+			LatexToSympyResponseHandler.Response.class
+		);
+		StringBuilder codeBuilder = new StringBuilder();
+		if (response.getResponse().get("equations").isArray()) {
+			for (JsonNode codeNode : response.getResponse().get("equations")) {
+				codeBuilder.append(codeNode.asText()).append("\n");
+			}
+		}
+		final String code = codeBuilder.toString().trim();
+		return code;
 	}
 
 	private static class EquationCleanupResponse {

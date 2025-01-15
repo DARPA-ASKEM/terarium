@@ -28,7 +28,12 @@
 							label="All simulations are from the same model"
 							disabled
 						/> -->
-						<div class="mb-4" />
+						<tera-checkbox
+							class="mt-2 mb-4"
+							v-model="areSimulationsFromSameModel"
+							label="All simulations are from the same model"
+							disabled
+						/>
 						<template v-if="knobs.selectedCompareOption === CompareValue.IMPACT">
 							<label> Select simulation to use as a baseline (optional) </label>
 							<Dropdown
@@ -38,13 +43,11 @@
 								option-value="id"
 								:loading="isFetchingDatasets"
 								placeholder="Optional"
-								@change="generateChartData"
+								@change="generateImpactCharts"
 							/>
-							<div class="mb-4" />
 							<label>Comparison tables</label>
 							<tera-checkbox v-model="isATESelected" label="Average treatment effect (ATE)" />
 						</template>
-						<div class="mb-4" />
 						<!-- Pascale asked me to omit this timepoint selector, but I'm keeping it here until we are certain it's not needed -->
 						<!--
 						<label class="mt-2">Timepoint column</label>
@@ -56,12 +59,14 @@
 						/>
 						<div class="mb-4" />
 						-->
-						<template v-if="knobs.selectedCompareOption === CompareValue.RANK">
+						<div class="flex flex-column gap-2" v-if="knobs.selectedCompareOption === CompareValue.RANK">
 							<label>Specify criteria of interest:</label>
 							<tera-criteria-of-interest-card
 								v-for="(card, i) in node.state.criteriaOfInterestCards"
 								:key="i"
 								:card="card"
+								:model-configurations="modelConfigurations"
+								:variables="variableNames"
 								@delete="deleteCriteria(i)"
 								@update="(e) => updateCriteria(e, i)"
 							/>
@@ -75,7 +80,7 @@
 									@click="addCriteria"
 								/>
 							</div>
-						</template>
+						</div>
 					</tera-drilldown-section>
 				</template>
 			</tera-slider-panel>
@@ -85,16 +90,32 @@
 			<div ref="outputPanel">
 				<Accordion multiple :active-index="activeIndices">
 					<AccordionTab header="Summary"> </AccordionTab>
-					<AccordionTab header="Variables">
-						<template v-for="setting of selectedVariableSettings" :key="setting.id">
+					<template v-if="knobs.selectedCompareOption === CompareValue.IMPACT">
+						<AccordionTab header="Variables">
+							<template v-for="setting of selectedVariableSettings" :key="setting.id">
+								<vega-chart
+									:visualization-spec="variableCharts[setting.id]"
+									:are-embed-actions-visible="true"
+									expandable
+								/>
+							</template>
+						</AccordionTab>
+						<AccordionTab header="Comparison table"> </AccordionTab>
+					</template>
+					<template v-else>
+						<AccordionTab header="Ranking results">
+							<vega-chart :visualization-spec="rankingResultsChart" :are-embed-actions-visible="false" expandable />
+						</AccordionTab>
+						<AccordionTab header="Ranking criteria">
 							<vega-chart
-								:visualization-spec="variableCharts[setting.id]"
+								v-for="(rankingCriteriaChart, index) in rankingCriteriaCharts"
+								:visualization-spec="rankingCriteriaChart"
 								:are-embed-actions-visible="false"
+								:key="index"
 								expandable
 							/>
-						</template>
-					</AccordionTab>
-					<AccordionTab header="Comparison table"> </AccordionTab>
+						</AccordionTab>
+					</template>
 				</Accordion>
 			</div>
 		</tera-drilldown-section>
@@ -108,7 +129,7 @@
 				header="Output settings"
 				content-width="360px"
 			>
-				<template #overlay>
+				<template #overlay v-if="knobs.selectedCompareOption === CompareValue.IMPACT">
 					<tera-chart-settings-panel
 						:annotations="
 							[ChartSettingType.VARIABLE, ChartSettingType.VARIABLE_COMPARISON].includes(
@@ -124,39 +145,35 @@
 						@close="setActiveChartSettings(null)"
 					/>
 				</template>
-				<template #content>
+				<template #content v-if="knobs.selectedCompareOption === CompareValue.IMPACT">
 					<div class="output-settings-panel">
-						<tera-chart-control
-							class="w-full"
-							:chart-config="{
-								selectedRun: 'fixme',
-								selectedVariable: selectedVariableSettings.map((s) => s.selectedVariables[0])
-							}"
-							multi-select
-							:show-remove-button="false"
-							:variables="commonHeaderNames"
-							@configuration-change="updateChartSettings($event.selectedVariable, ChartSettingType.VARIABLE)"
-						/>
-						<!-- plot options -->
-						<div class="plot-options">
-							<p class="mb-2">How do you want to plot the values?</p>
-							<div v-for="option in plotOptions" class="flex align-items-center" :key="option.value">
-								<RadioButton
-									v-model="knobs.selectedPlotType"
-									:value="option.value"
-									name="plotValues"
-									@change="generateChartData"
-								/>
-								<label class="pl-2 py-1" :for="option.value">{{ option.label }}</label>
-							</div>
-						</div>
-						<tera-chart-settings-item
-							v-for="settings of chartSettings.filter((setting) => setting.type === ChartSettingType.VARIABLE)"
-							:key="settings.id"
-							:settings="settings"
-							@open="setActiveChartSettings(settings)"
+						<tera-chart-settings
+							:title="'Variables over time'"
+							:settings="chartSettings"
+							:type="ChartSettingType.VARIABLE"
+							:select-options="variableNames"
+							:selected-options="selectedVariableSettings.map((s) => s.selectedVariables[0])"
+							@open="setActiveChartSettings($event)"
 							@remove="removeChartSettings"
-						/>
+							@selection-change="updateChartSettings"
+						>
+							<!-- plot options -->
+							<div class="plot-options">
+								<p class="mb-2">How do you want to plot the values?</p>
+								<div v-for="option in plotOptions" class="flex align-items-center" :key="option.value">
+									<RadioButton
+										v-model="knobs.selectedPlotType"
+										:value="option.value"
+										name="plotValues"
+										@change="generateImpactCharts"
+									/>
+									<label class="pl-2 py-1" :for="option.value">{{ option.label }}</label>
+								</div>
+							</div>
+						</tera-chart-settings>
+						<Divider />
+						<tera-chart-settings-quantiles :settings="chartSettings" @update-options="updateQauntilesOptions" />
+						<Divider />
 					</div>
 				</template>
 			</tera-slider-panel>
@@ -175,43 +192,56 @@ import Button from 'primevue/button';
 import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
 import Dropdown from 'primevue/dropdown';
-import { Dataset } from '@/types/Types';
-import { getDataset, getRawContent } from '@/services/dataset';
+import Divider from 'primevue/divider';
+import { Dataset, InterventionPolicy, ModelConfiguration } from '@/types/Types';
+import { getDataset } from '@/services/dataset';
+import { getInterventionPolicyById } from '@/services/intervention-policy';
+import { getModelConfigurationById } from '@/services/model-configurations';
 import TeraCheckbox from '@/components/widgets/tera-checkbox.vue';
 import RadioButton from 'primevue/radiobutton';
 import { isEmpty, cloneDeep } from 'lodash';
 import VegaChart from '@/components/widgets/VegaChart.vue';
 import { deleteAnnotation } from '@/services/chart-settings';
-import TeraChartSettingsItem from '@/components/widgets/tera-chart-settings-item.vue';
-import TeraChartControl from '@/components/workflow/tera-chart-control.vue';
+import TeraChartSettings from '@/components/widgets/tera-chart-settings.vue';
 import TeraChartSettingsPanel from '@/components/widgets/tera-chart-settings-panel.vue';
+import TeraChartSettingsQuantiles from '@/components/widgets/tera-chart-settings-quantiles.vue';
 import { useChartSettings } from '@/composables/useChartSettings';
 import { useDrilldownChartSize } from '@/composables/useDrilldownChartSize';
 import { useCharts, type ChartData } from '@/composables/useCharts';
+import { DataArray } from '@/services/models/simulation-service';
+import { createRankingInterventionsChart } from '@/services/charts';
 import TeraCriteriaOfInterestCard from './tera-criteria-of-interest-card.vue';
 import {
 	blankCriteriaOfInterest,
 	CompareDatasetsState,
 	CompareValue,
 	CriteriaOfInterestCard,
-	PlotValue
+	PlotValue,
+	RankOption,
+	TimepointOption
 } from './compare-datasets-operation';
+import { fetchDatasetResults, buildChartData } from './compare-datasets-utils';
 
 const props = defineProps<{
 	node: WorkflowNode<CompareDatasetsState>;
 }>();
 
-const emit = defineEmits(['update-state', 'update-status', 'close']);
+const emit = defineEmits(['update-state', 'close']);
 
 const compareOptions: { label: string; value: CompareValue }[] = [
 	{ label: 'Compare the impact of interventions', value: CompareValue.IMPACT },
-	{ label: 'Rank interventions based on multiple charts', value: CompareValue.RANK }
+	{ label: 'Rank interventions based on multiple criteria', value: CompareValue.RANK }
 ];
 
 const datasets = ref<Dataset[]>([]);
-
-const commonHeaderNames = ref<string[]>([]);
-const timepointHeaderName = ref<string | null>(null);
+const datasetResults = ref<{
+	results: DataArray[];
+	summaryResults: DataArray[];
+	datasetResults: DataArray[];
+} | null>(null);
+const modelConfigurations = ref<ModelConfiguration[]>([]);
+const interventionPolicies = ref<InterventionPolicy[]>([]);
+const modelConfigIdToInterventionPolicyIdMap = ref<Record<string, string[]>>({});
 
 const plotOptions = [
 	{ label: 'Raw values', value: PlotValue.VALUE },
@@ -224,25 +254,11 @@ const isOutputSettingsOpen = ref(true);
 const activeIndices = ref([0, 1, 2]);
 
 const isFetchingDatasets = ref(false);
+const areSimulationsFromSameModel = ref(true);
 const isATESelected = ref(false);
 
-const {
-	activeChartSettings,
-	chartSettings,
-	selectedVariableSettings,
-	removeChartSettings,
-	updateChartSettings,
-	updateActiveChartSettings,
-	setActiveChartSettings
-} = useChartSettings(props, emit);
-
-const outputPanel = ref(null);
-const chartSize = useDrilldownChartSize(outputPanel);
-
-const chartData = ref<ChartData | null>(null);
-
 const onRun = () => {
-	console.log('run');
+	generateRankingCharts();
 };
 
 interface BasicKnobs {
@@ -259,11 +275,6 @@ const knobs = ref<BasicKnobs>({
 	selectedPlotType: PlotValue.PERCENTAGE
 });
 
-const selectedPlotType = computed(() => knobs.value.selectedPlotType);
-const baselineName = computed(
-	() => datasets.value.find((dataset) => dataset.id === knobs.value.selectedDataset)?.name ?? null
-);
-
 const addCriteria = () => {
 	knobs.value.criteriaOfInterestCards.push(blankCriteriaOfInterest);
 };
@@ -276,6 +287,30 @@ const updateCriteria = (card: Partial<CriteriaOfInterestCard>, index: number) =>
 	Object.assign(knobs.value.criteriaOfInterestCards[index], card);
 };
 
+const {
+	activeChartSettings,
+	chartSettings,
+	selectedVariableSettings,
+	removeChartSettings,
+	updateChartSettings,
+	updateActiveChartSettings,
+	setActiveChartSettings,
+	updateQauntilesOptions
+} = useChartSettings(props, emit);
+
+const outputPanel = ref(null);
+const chartSize = useDrilldownChartSize(outputPanel);
+
+const chartData = ref<ChartData | null>(null);
+const rankingResultsChart = ref<any>(null);
+const rankingCriteriaCharts = ref<any>([]);
+
+const variableNames = computed(() => {
+	if (chartData.value === null) return [];
+	const excludes = ['timepoint_id', 'sample_id', 'timepoint_unknown'];
+	return Object.keys(chartData.value.pyciemssMap).filter((key) => !excludes.includes(key));
+});
+
 const { generateAnnotation, getChartAnnotationsByChartId, useCompareDatasetCharts } = useCharts(
 	props.node.id,
 	null,
@@ -285,7 +320,11 @@ const { generateAnnotation, getChartAnnotationsByChartId, useCompareDatasetChart
 	null,
 	null
 );
-const variableCharts = useCompareDatasetCharts(selectedVariableSettings, selectedPlotType, baselineName);
+const selectedPlotType = computed(() => knobs.value.selectedPlotType);
+const baselineDatasetIndex = computed(() =>
+	datasets.value.findIndex((dataset) => dataset.id === knobs.value.selectedDataset)
+);
+const variableCharts = useCompareDatasetCharts(selectedVariableSettings, selectedPlotType, baselineDatasetIndex);
 
 const initialize = async () => {
 	const state = cloneDeep(props.node.state);
@@ -295,125 +334,127 @@ const initialize = async () => {
 	const datasetInputs = inputs.filter(
 		(input) => input.type === 'datasetId' && input.status === WorkflowPortStatus.CONNECTED
 	);
-	const promises = datasetInputs.map((input) => getDataset(input.value![0]));
+	const datasetPromises = datasetInputs.map((input) => getDataset(input.value![0]));
 
 	isFetchingDatasets.value = true;
-	await Promise.all(promises).then((ds) => {
-		const filteredDatasets: Dataset[] = ds.filter((dataset) => dataset !== null);
-		datasets.value.push(...filteredDatasets);
+	await Promise.all(datasetPromises).then((ds) => {
+		ds.forEach((dataset) => {
+			// Add dataset
+			if (!dataset) return;
+			datasets.value.push(dataset);
+
+			// Collect model configuration id and intervention policy id
+			const modelConfigurationId: string | undefined = dataset.metadata?.simulationAttributes?.modelConfigurationId;
+			const interventionPolicyId: string | undefined = dataset.metadata?.simulationAttributes?.interventionPolicyId;
+
+			if (!modelConfigurationId) return;
+			if (!modelConfigIdToInterventionPolicyIdMap.value[modelConfigurationId]) {
+				modelConfigIdToInterventionPolicyIdMap.value[modelConfigurationId] = [];
+			}
+			if (!interventionPolicyId) return;
+			modelConfigIdToInterventionPolicyIdMap.value[modelConfigurationId].push(interventionPolicyId);
+		});
 	});
+	// Fetch the results
+	datasetResults.value = await fetchDatasetResults(datasets.value);
 	isFetchingDatasets.value = false;
 
 	if (!knobs.value.selectedDataset) knobs.value.selectedDataset = datasets.value[0]?.id ?? null;
 
-	generateChartData();
+	await generateImpactCharts();
+
+	const modelConfigurationIds = Object.keys(modelConfigIdToInterventionPolicyIdMap.value);
+	if (isEmpty(modelConfigurationIds)) return;
+	const modelConfigurationPromises = modelConfigurationIds.map((id) => getModelConfigurationById(id));
+	await Promise.all(modelConfigurationPromises).then((configs) => {
+		modelConfigurations.value = configs.filter((config) => config !== null);
+	});
+
+	const interventionPolicyIds = Object.values(modelConfigIdToInterventionPolicyIdMap.value).flat();
+	if (isEmpty(interventionPolicyIds)) return;
+	const interventionPolicyPromises = interventionPolicyIds.map((id) => getInterventionPolicyById(id));
+	await Promise.all(interventionPolicyPromises).then((policies) => {
+		interventionPolicies.value = policies.filter((policy) => policy !== null);
+	});
+
+	generateRankingCharts();
 };
 
-// Following two funcs are util like
-function transposeArrays(arrays) {
-	if (arrays.length === 0) return [];
-	return arrays[0].map((_, colIndex) => arrays.map((row) => row[colIndex]));
-}
+function generateRankingCharts() {
+	// Reset charts
+	rankingCriteriaCharts.value = [];
+	rankingResultsChart.value = null;
 
-function findDuplicates(strings: string[]): string[] {
-	const duplicates: string[] = [];
-	const seen: Record<string, number> = {};
-
-	strings.forEach((str) => {
-		if (seen[str]) {
-			seen[str]++;
-		} else {
-			seen[str] = 1;
-		}
-	});
-	Object.keys(seen).forEach((key) => {
-		if (seen[key] > 1) {
-			duplicates.push(key);
-		}
-	});
-	return duplicates;
-}
-
-async function generateChartData() {
-	if (datasets.value.length <= 1) return;
-
-	const rawContents = await Promise.all(
-		datasets.value.map((dataset) => {
-			// Compare the summaries so find its csv file like this
-			let summaryIndex = dataset?.fileNames?.findIndex((name) => name === 'result_summary.csv');
-			// If the summary isn't found, use the first file (it could be the first one if you downloaded the summary csv)
-			if (!summaryIndex || summaryIndex === -1) summaryIndex = 0;
-			return getRawContent(dataset, -1, summaryIndex); // Setting the csv row limit to -1 to get all rows
+	// Might be uneccessary
+	const commonInterventionPolicyIds = props.node.state.criteriaOfInterestCards
+		.map(({ selectedConfigurationId }) => {
+			if (!selectedConfigurationId) return [];
+			return modelConfigIdToInterventionPolicyIdMap.value?.[selectedConfigurationId] ?? [];
 		})
-	);
+		.flat();
+	const allRankedCriteriaValues: { score: number; name: string }[][] = [];
 
-	const transposedRawContents = rawContents.map((content) => ({ ...content, csv: transposeArrays(content?.csv) }));
+	props.node.state.criteriaOfInterestCards.forEach((card) => {
+		if (!card.selectedConfigurationId || !chartData.value) return;
 
-	// Collect common header names if not done yet
-	if (isEmpty(commonHeaderNames.value)) {
-		const allColumnNames: string[] = [];
-		transposedRawContents.forEach(({ headers }) => {
-			if (headers) allColumnNames.push(...headers);
-		});
-		commonHeaderNames.value = findDuplicates(allColumnNames);
+		const pointOfComparison =
+			card.timepoint === TimepointOption.FIRST
+				? chartData.value.resultSummary[0]
+				: chartData.value.resultSummary[chartData.value.resultSummary.length - 1];
 
-		// Convenient assumption that the timepoint header name starts with 't'
-		timepointHeaderName.value =
-			commonHeaderNames.value?.find((name) => name.toLowerCase().slice(0, 1) === 't') ?? commonHeaderNames.value[0];
-	}
-	if (!timepointHeaderName.value) return;
+		const rankingCriteriaValues: { score: number; name: string }[] = [];
+		interventionPolicies.value.forEach((policy, index) => {
+			// Skip this intervention policy if a configuration is not using it
+			if (!policy.id || !policy.name || !commonInterventionPolicyIds.includes(policy.id) || !card.selectedVariable) {
+				return;
+			}
 
-	// Find index of timepoint column
-	const timepointIndex = transposedRawContents[0]?.headers?.indexOf(timepointHeaderName.value);
-	if (timepointIndex === undefined || timepointIndex === -1) return;
-
-	// Find dataset index of the selected dataset
-	const selectedIndex = datasets.value.findIndex((dataset) => dataset.id === knobs.value.selectedDataset);
-	if (selectedIndex === -1) return;
-
-	const allData: any[] = [];
-
-	// Go through every common header (column loop)
-	commonHeaderNames.value?.forEach((headerName) => {
-		if (headerName === timepointHeaderName.value) return;
-
-		const headerIndex = transposedRawContents[0]?.headers?.indexOf(headerName);
-		if (!headerIndex) return;
-
-		const data: any = [];
-		const variableNames: string[] = [];
-		const referenceColumn = transposedRawContents[selectedIndex].csv[headerIndex]; // aka the column of baseline dataset we are subtracting from
-
-		transposedRawContents.forEach(({ csv }, datasetIndex) => {
-			const timepoints = csv[timepointIndex];
-			const columnToSubtract = csv[headerIndex];
-
-			const name = `${datasets.value[datasetIndex].name}`;
-			variableNames.push(name);
-
-			referenceColumn.forEach((referencePoint: number, index: number) => {
-				let value = 0;
-				if (selectedPlotType.value === PlotValue.DIFFERENCE) {
-					value = columnToSubtract[index] - referencePoint; // difference
-				} else if (selectedPlotType.value === PlotValue.PERCENTAGE) {
-					value = ((columnToSubtract[index] - referencePoint) / referencePoint) * 100; // percentage
-				} else if (selectedPlotType.value === PlotValue.VALUE) {
-					value = parseFloat(columnToSubtract[index]); // trajectory
-				}
-				if (data[index] === undefined) {
-					data.push({
-						headerName,
-						[name]: value,
-						timepoint_id: parseFloat(timepoints[index])
-					});
-				} else {
-					data[index][name] = value;
-				}
+			rankingCriteriaValues.push({
+				score: pointOfComparison[`${chartData.value?.pyciemssMap[card.selectedVariable]}_mean:${index}`] ?? 0,
+				name: policy.name ?? ''
 			});
 		});
-		allData.push(...data);
+
+		const sortedRankingCriteriaValues =
+			card.rank === RankOption.MAXIMUM
+				? rankingCriteriaValues.sort((a, b) => b.score - a.score)
+				: rankingCriteriaValues.sort((a, b) => a.score - b.score);
+
+		sortedRankingCriteriaValues.forEach((value, index) => {
+			value.score = index + 1;
+		});
+
+		rankingCriteriaCharts.value.push(createRankingInterventionsChart(sortedRankingCriteriaValues, card.name));
+		allRankedCriteriaValues.push(sortedRankingCriteriaValues);
 	});
-	chartData.value = { result: [], resultSummary: allData, pyciemssMap: {}, translationMap: {} };
+
+	// Sum up the scores of the same intervention policy
+	const scoreMap: Record<string, number> = {};
+	allRankedCriteriaValues.flat().forEach(({ score, name }) => {
+		if (scoreMap[name]) {
+			scoreMap[name] += score;
+		} else {
+			scoreMap[name] = score;
+		}
+	});
+
+	const rankingResultsValues = Object.keys(scoreMap)
+		.map((name) => ({
+			name,
+			score: scoreMap[name]
+		}))
+		.sort((a, b) => a.score - b.score);
+
+	rankingResultsChart.value = createRankingInterventionsChart(rankingResultsValues, '');
+}
+
+async function generateImpactCharts() {
+	chartData.value = buildChartData(
+		datasets.value,
+		datasetResults.value,
+		baselineDatasetIndex.value,
+		selectedPlotType.value
+	);
 }
 
 onMounted(() => {

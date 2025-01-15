@@ -44,7 +44,9 @@
 			@update:model-value="scenario.setFutureInterventionSpec($event)"
 			:disabled="isEmpty(interventionPolicies) || isFetchingModelInformation" /> -->
 
-			<label>Select configuration representing best and generous estimates of the initial conditions</label>
+			<label :class="{ 'disabled-label': isEmpty(sortedConfigurations) || isFetchingModelInformation }"
+				>Select configuration representing best and generous estimates of the initial conditions</label
+			>
 			<Dropdown
 				:model-value="scenario.modelConfigSpec.id"
 				placeholder="Select a configuration"
@@ -64,7 +66,9 @@
 		</template>
 
 		<template #outputs>
-			<label>Select an output metric</label>
+			<label :class="{ 'disabled-label': isEmpty(modelStateOptions) || isFetchingModelInformation }"
+				>Select an output metric</label
+			>
 			<MultiSelect
 				:disabled="isEmpty(modelStateOptions) || isFetchingModelInformation"
 				:model-value="scenario.calibrateSpec.ids"
@@ -101,7 +105,7 @@ const header: ScenarioHeader = Object.freeze({
 	description:
 		'Calibrates the model to historical data to obtain the best estimate of parameters for the present, then forecasts into the near future.',
 	examples: [
-		'Anticipate the arrival of a new variants.',
+		'Anticipate the arrival of new variants.',
 		'Evaluate the potential impact of growing vaccine hesitancy and declining NPIs.'
 	]
 });
@@ -150,3 +154,8 @@ watch(
 	{ immediate: true }
 );
 </script>
+<style scoped>
+.disabled-label {
+	color: var(--text-color-disabled);
+}
+</style>

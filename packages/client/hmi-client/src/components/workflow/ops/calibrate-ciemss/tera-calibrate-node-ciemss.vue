@@ -47,7 +47,7 @@ import {
 	DataArray
 } from '@/services/models/simulation-service';
 import { getModelConfigurationById, createModelConfiguration } from '@/services/model-configurations';
-import { parseCsvAsset, setupCsvAsset } from '@/services/calibrate-workflow';
+import { setupCsvAsset } from '@/services/calibrate-workflow';
 import { getModelByModelConfigurationId, getUnitsFromModelParts } from '@/services/model';
 import { nodeMetadata, nodeOutputLabel } from '@/components/workflow/util';
 import { logger } from '@/utils/logger';
@@ -75,6 +75,7 @@ import { useChartSettings } from '@/composables/useChartSettings';
 import { useCharts } from '@/composables/useCharts';
 import { filterChartSettingsByVariables } from '@/services/chart-settings';
 import { ChartSettingType } from '@/types/common';
+import { parseCsvAsset } from '@/utils/csv';
 import type { CalibrationOperationStateCiemss } from './calibrate-operation';
 import { CalibrationOperationCiemss } from './calibrate-operation';
 import { renameFnGenerator, usePreparedChartInputs, getSelectedOutputMapping } from './calibrate-utils';
@@ -416,7 +417,7 @@ watch(
 						datasetId: datasetResult.id
 					}
 				],
-				state
+				state: _.omit(state, ['chartSettings'])
 			});
 		}
 	},
