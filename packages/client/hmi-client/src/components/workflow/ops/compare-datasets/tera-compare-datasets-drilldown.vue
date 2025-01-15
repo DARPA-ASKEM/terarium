@@ -185,7 +185,7 @@
 
 <script setup lang="ts">
 import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
-import { WorkflowNode, WorkflowPortStatus } from '@/types/workflow';
+import { WorkflowNode } from '@/types/workflow';
 import TeraSliderPanel from '@/components/widgets/tera-slider-panel.vue';
 import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.vue';
 import { DrilldownTabs, ChartSettingType } from '@/types/common';
@@ -196,12 +196,9 @@ import AccordionTab from 'primevue/accordiontab';
 import Dropdown from 'primevue/dropdown';
 import Divider from 'primevue/divider';
 import { Dataset, InterventionPolicy, ModelConfiguration } from '@/types/Types';
-import { getDataset } from '@/services/dataset';
-import { getInterventionPolicyById } from '@/services/intervention-policy';
-import { getModelConfigurationById } from '@/services/model-configurations';
 import TeraCheckbox from '@/components/widgets/tera-checkbox.vue';
 import RadioButton from 'primevue/radiobutton';
-import { isEmpty, cloneDeep } from 'lodash';
+import { cloneDeep } from 'lodash';
 import VegaChart from '@/components/widgets/VegaChart.vue';
 import { deleteAnnotation } from '@/services/chart-settings';
 import TeraChartSettings from '@/components/widgets/tera-chart-settings.vue';
@@ -219,7 +216,7 @@ import {
 	CriteriaOfInterestCard,
 	PlotValue
 } from './compare-datasets-operation';
-import { fetchDatasetResults, generateRankingCharts, generateImpactCharts } from './compare-datasets-utils';
+import { generateRankingCharts, generateImpactCharts, initialize } from './compare-datasets-utils';
 
 const props = defineProps<{
 	node: WorkflowNode<CompareDatasetsState>;
@@ -332,69 +329,25 @@ const baselineDatasetIndex = computed(() =>
 );
 const variableCharts = useCompareDatasetCharts(selectedVariableSettings, selectedPlotType, baselineDatasetIndex);
 
-const initialize = async () => {
+onMounted(() => {
 	const state = cloneDeep(props.node.state);
 	knobs.value = Object.assign(knobs.value, state);
-
-	const inputs = props.node.inputs;
-	const datasetInputs = inputs.filter(
-		(input) => input.type === 'datasetId' && input.status === WorkflowPortStatus.CONNECTED
-	);
-	const datasetPromises = datasetInputs.map((input) => getDataset(input.value![0]));
-
-	isFetchingDatasets.value = true;
-	await Promise.all(datasetPromises).then((ds) => {
-		ds.forEach((dataset) => {
-			// Add dataset
-			if (!dataset) return;
-			datasets.value.push(dataset);
-
-			// Collect model configuration id and intervention policy id
-			const modelConfigurationId: string | undefined = dataset.metadata?.simulationAttributes?.modelConfigurationId;
-			const interventionPolicyId: string | undefined = dataset.metadata?.simulationAttributes?.interventionPolicyId;
-
-			if (!modelConfigurationId) return;
-			if (!modelConfigIdToInterventionPolicyIdMap.value[modelConfigurationId]) {
-				modelConfigIdToInterventionPolicyIdMap.value[modelConfigurationId] = [];
-			}
-			if (!interventionPolicyId) return;
-			modelConfigIdToInterventionPolicyIdMap.value[modelConfigurationId].push(interventionPolicyId);
-		});
-	});
-	// Fetch the results
-	datasetResults.value = await fetchDatasetResults(datasets.value);
-	isFetchingDatasets.value = false;
-
 	if (!knobs.value.selectedDataset) knobs.value.selectedDataset = datasets.value[0]?.id ?? null;
 
-	await generateImpactCharts(chartData, datasets, datasetResults, baselineDatasetIndex, selectedPlotType);
-
-	const modelConfigurationIds = Object.keys(modelConfigIdToInterventionPolicyIdMap.value);
-	if (isEmpty(modelConfigurationIds)) return;
-	const modelConfigurationPromises = modelConfigurationIds.map((id) => getModelConfigurationById(id));
-	await Promise.all(modelConfigurationPromises).then((configs) => {
-		modelConfigurations.value = configs.filter((config) => config !== null);
-	});
-
-	const interventionPolicyIds = Object.values(modelConfigIdToInterventionPolicyIdMap.value).flat();
-	if (isEmpty(interventionPolicyIds)) return;
-	const interventionPolicyPromises = interventionPolicyIds.map((id) => getInterventionPolicyById(id));
-	await Promise.all(interventionPolicyPromises).then((policies) => {
-		interventionPolicies.value = policies.filter((policy) => policy !== null);
-	});
-
-	generateRankingCharts(
-		rankingCriteriaCharts,
-		rankingResultsChart,
+	initialize(
 		props,
+		isFetchingDatasets,
+		datasets,
+		datasetResults,
 		modelConfigIdToInterventionPolicyIdMap,
 		chartData,
-		interventionPolicies
+		baselineDatasetIndex,
+		selectedPlotType,
+		modelConfigurations,
+		interventionPolicies,
+		rankingCriteriaCharts,
+		rankingResultsChart
 	);
-};
-
-onMounted(() => {
-	initialize();
 });
 
 watch(
