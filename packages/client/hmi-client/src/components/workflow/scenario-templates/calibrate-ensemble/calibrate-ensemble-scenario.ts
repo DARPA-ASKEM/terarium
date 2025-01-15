@@ -13,6 +13,16 @@ import { getModelConfigurationById } from '@/services/model-configurations';
 import { CalibrateEnsembleMappingRow } from '../../ops/calibrate-ensemble-ciemss/calibrate-ensemble-ciemss-operation';
 import { convertToCalibrateMap } from '../scenario-template-utils';
 
+/**
+ * Creates a CalibrateEnsembleScenario based on a dataset, a number of models, and their respective mappings.
+ * The mappings are translated into their respective calibrate nodes.
+ *
+ * The chart layout is structured as follows:
+ * 1. For each model, a model configuration node is created.
+ * 2. Each model configuration node is attached to its own simulate and calibrate nodes.
+ * 3. A dataset node is connected to each calibrate node.
+ * 4. Finally, all calibrate nodes are connected to the calibrate ensemble node.
+ */
 export class CalibrateEnsembleScenario extends BaseScenario {
 	public static templateId = 'calibrate-ensemble';
 
@@ -289,6 +299,9 @@ export class CalibrateEnsembleScenario extends BaseScenario {
 		wf.updateNode(datasetNode, {
 			state: {
 				datasetId: this.datasetSpec.id
+			},
+			output: {
+				value: [this.datasetSpec.id]
 			}
 		});
 
