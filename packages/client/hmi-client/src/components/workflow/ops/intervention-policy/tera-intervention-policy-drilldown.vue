@@ -290,6 +290,8 @@ interface SelectedIntervention {
 	dynamicInterventions: DynamicIntervention[];
 }
 
+const modelId: string | undefined = props.node.inputs[0].value?.[0];
+
 const currentActiveIndicies = ref([0, 1]);
 const pdfPanelRef = ref();
 const pdfViewer = computed(() => pdfPanelRef.value?.pdfRef[0]);
@@ -399,11 +401,10 @@ const getInterventionsAppliedTo = (appliedTo: string) =>
 
 const initialize = async (overwriteWithState: boolean = false) => {
 	const state = props.node.state;
-	const modelId = props.node.inputs[0].value?.[0];
 	if (!modelId) return;
 
 	// fetch intervention policies
-	await fetchInterventionPolicies(modelId);
+	await fetchInterventionPolicies();
 
 	model.value = await getModel(modelId);
 	if (selectedPolicyId.value) {
@@ -443,7 +444,7 @@ const applyInterventionPolicy = (interventionPolicy: InterventionPolicy) => {
 	logger.success(`Policy applied ${interventionPolicy.name}`);
 };
 
-const fetchInterventionPolicies = async (modelId: string) => {
+const fetchInterventionPolicies = async () => {
 	isFetchingPolicies.value = true;
 	interventionsPolicyList.value = await getInterventionPoliciesForModel(modelId);
 	isFetchingPolicies.value = false;
@@ -495,8 +496,7 @@ const onDeleteInterventionPolicy = (policy: InterventionPolicy) => {
 		accept: async () => {
 			if (policy.id) {
 				await deleteInterventionPolicy(policy.id);
-				const modelId = props.node.inputs[0].value?.[0];
-				fetchInterventionPolicies(modelId);
+				fetchInterventionPolicies();
 			}
 		}
 	});
@@ -574,7 +574,6 @@ const onSaveInterventionPolicy = async () => {
 };
 
 const resetToBlankIntervention = () => {
-	const modelId = props.node.inputs[0].value?.[0];
 	if (!modelId) return;
 	knobs.value.transientInterventionPolicy = {
 		modelId,
@@ -643,9 +642,8 @@ watch(
 			isLoading.value = true;
 		} else {
 			isLoading.value = false;
-			const modelId = props.node.inputs[0].value?.[0];
 			if (!modelId) return;
-			await fetchInterventionPolicies(modelId);
+			await fetchInterventionPolicies();
 		}
 	}
 );
