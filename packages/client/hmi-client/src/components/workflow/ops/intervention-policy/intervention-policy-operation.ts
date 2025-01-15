@@ -16,7 +16,8 @@ export const InterventionPolicyOperation: Operation = {
 	isRunnable: true,
 	inputs: [
 		{ type: 'modelId', label: 'Model' },
-		{ type: 'documentId', label: 'Document', isOptional: true }
+		{ type: 'documentId', label: 'Document', isOptional: true },
+		{ type: 'datasetId', label: 'Dataset', isOptional: true }
 	],
 	outputs: [{ type: 'policyInterventionId', label: 'Intervention Policy' }],
 	action: () => {},

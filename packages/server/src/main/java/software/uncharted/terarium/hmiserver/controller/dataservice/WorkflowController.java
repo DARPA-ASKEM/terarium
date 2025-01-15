@@ -280,7 +280,7 @@ public class WorkflowController {
 		return ResponseEntity.ok(new ResponseDeleted("Workflow", id));
 	}
 
-	@PostMapping("/{id}/select-output/{nodeId}/{outputId}")
+	@PostMapping("/{id}/node/{nodeId}/selected-output/{outputId}")
 	@Secured(Roles.USER)
 	@Operation(summary = "Select an operator output to use")
 	@ApiResponses(
@@ -423,7 +423,7 @@ public class WorkflowController {
 		private JsonNode nodeState;
 	}
 
-	@PostMapping("/{id}/append-input/{nodeId}")
+	@PostMapping("/{id}/node/{nodeId}/input")
 	@Secured(Roles.USER)
 	@Operation(summary = "Append an input port to an operator node")
 	@ApiResponses(
@@ -469,7 +469,7 @@ public class WorkflowController {
 		return updated.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
 	}
 
-	@PostMapping("/{id}/append-output/{nodeId}")
+	@PostMapping("/{id}/node/{nodeId}/output")
 	@Secured(Roles.USER)
 	@Operation(summary = "Append an output to an operator node")
 	@ApiResponses(
