@@ -585,6 +585,8 @@ const resetToBlankIntervention = () => {
 		label: InterventionPolicyOperation.outputs[0].label,
 		value: null
 	});
+
+	console.log(props.node.outputs);
 };
 
 const extractInterventionPolicyFromInputs = async () => {
