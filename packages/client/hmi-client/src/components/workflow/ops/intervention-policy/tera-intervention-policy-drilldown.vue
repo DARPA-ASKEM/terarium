@@ -72,7 +72,10 @@
 				</template>
 				<ul class="flex flex-column gap-2">
 					<li
-						v-for="(intervention, index) in knobs.transientInterventionPolicy.interventions"
+						v-for="(intervention, index) in knobs.transientInterventionPolicy.interventions.slice(
+							firstRow,
+							firstRow + MAX_NUMBER_OF_ROWS
+						)"
 						:key="index"
 						@click="selectInterventionPolicy(intervention, index)"
 					>
@@ -97,6 +100,20 @@
 					icon="pi pi-plus"
 					size="small"
 				/>
+				<template #footer>
+					<section class="paginator w-full">
+						<Paginator
+							v-if="knobs.transientInterventionPolicy.interventions.length > MAX_NUMBER_OF_ROWS"
+							:rows="MAX_NUMBER_OF_ROWS"
+							:first="firstRow"
+							:total-records="knobs.transientInterventionPolicy.interventions.length"
+							:template="{
+								default: 'FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink JumpToPageDropdown'
+							}"
+							@page="firstRow = $event.first"
+						/>
+					</section>
+				</template>
 			</tera-drilldown-section>
 			<tera-drilldown-section>
 				<template #header-controls-left>
@@ -210,15 +227,19 @@ import { WorkflowNode } from '@/types/workflow';
 import TeraSliderPanel from '@/components/widgets/tera-slider-panel.vue';
 import TeraColumnarPanel from '@/components/widgets/tera-columnar-panel.vue';
 import Button from 'primevue/button';
+import Paginator from 'primevue/paginator';
 import TeraInputText from '@/components/widgets/tera-input-text.vue';
 import { getInterventionPoliciesForModel, getModel } from '@/services/model';
 import {
 	AssetType,
+	ClientEvent,
+	ClientEventType,
 	Intervention,
 	InterventionPolicy,
 	Model,
 	DynamicIntervention,
 	StaticIntervention,
+	TaskStatus,
 	type TaskResponse,
 	type DocumentAsset
 } from '@/types/Types';
@@ -245,9 +266,10 @@ import { createInterventionChart } from '@/services/charts';
 import VegaChart from '@/components/widgets/VegaChart.vue';
 import TeraSaveAssetModal from '@/components/project/tera-save-asset-modal.vue';
 import { useProjects } from '@/composables/project';
-import { interventionPolicyFromDocument } from '@/services/goLLM';
+import { interventionPolicyFromDocument, interventionPolicyFromDataset } from '@/services/goLLM';
 import { downloadDocumentAsset, getDocumentAsset, getDocumentFileAsText } from '@/services/document-assets';
 import TeraPdfPanel from '@/components/widgets/tera-pdf-panel.vue';
+import { useClientEvent } from '@/composables/useClientEvent';
 import TeraInterventionCard from './tera-intervention-card.vue';
 import {
 	InterventionPolicyOperation,
@@ -289,6 +311,9 @@ interface SelectedIntervention {
 	staticInterventions: StaticIntervention[];
 	dynamicInterventions: DynamicIntervention[];
 }
+
+const MAX_NUMBER_OF_ROWS = 8;
+const firstRow = ref(0);
 
 const currentActiveIndicies = ref([0, 1]);
 const pdfPanelRef = ref();
@@ -347,6 +372,12 @@ const documentIds = computed(() =>
 		.filter((input) => input.type === 'documentId' && input.status === 'connected')
 		.map((input) => input.value?.[0]?.documentId)
 		.filter((id): id is string => id !== undefined)
+);
+
+const datasetIds = computed(() =>
+	props.node.inputs
+		.filter((input) => input.type === 'datasetId' && input.status === 'connected')
+		.map((input) => input.value?.[0])
 );
 
 const parameterOptions = computed(() => {
@@ -482,8 +513,7 @@ const onReplacePolicy = (policy: InterventionPolicy) => {
 const onDeleteInterventionPolicy = (policy: InterventionPolicy) => {
 	confirm.require({
 		message: `Are you sure you want to delete the configuration ${policy.name}?`,
-		header: 'Delete Confirmation',
-		icon: 'pi pi-exclamation-triangle',
+		header: 'Delete confirmation',
 		acceptLabel: 'Confirm',
 		rejectLabel: 'Cancel',
 		accept: async () => {
@@ -602,8 +632,41 @@ const extractInterventionPolicyFromInputs = async () => {
 			}
 		});
 	}
+
+	if (datasetIds.value) {
+		const promiseList = [] as Promise<TaskResponse | null>[];
+		datasetIds.value.forEach((datasetId) => {
+			promiseList.push(
+				interventionPolicyFromDataset(datasetId, model.value?.id as string, props.node.workflowId, props.node.id)
+			);
+		});
+		const responsesRaw = await Promise.all(promiseList);
+
+		responsesRaw.forEach((resp) => {
+			if (resp) {
+				state.taskIds.push(resp.id);
+			}
+		});
+	}
 	emit('update-state', state);
 };
+
+// Listen for the task completion event
+const interventionEventHandler = async (event: ClientEvent<TaskResponse>) => {
+	const state = cloneDeep(props.node.state);
+	if (!state.taskIds.includes(event.data?.id)) return;
+	isLoading.value = true;
+	if ([TaskStatus.Success, TaskStatus.Cancelled, TaskStatus.Failed].includes(event.data.status)) {
+		state.taskIds = state.taskIds.filter((id) => id !== event.data.id);
+		isLoading.value = false;
+		const modelId = props.node.inputs[0].value?.[0];
+		if (!modelId) return;
+		await fetchInterventionPolicies(modelId);
+	}
+};
+
+useClientEvent(ClientEventType.TaskGollmInterventionsFromDocument, interventionEventHandler);
+useClientEvent(ClientEventType.TaskGollmInterventionsFromDataset, interventionEventHandler);
 
 const onSelectChartChange = () => {
 	const state = cloneDeep(props.node.state);
@@ -626,20 +689,6 @@ watch(
 	() => {
 		if (props.node.active) {
 			initialize();
-		}
-	}
-);
-
-watch(
-	() => props.node.state.taskIds,
-	async (watchVal) => {
-		if (watchVal.length > 0) {
-			isLoading.value = true;
-		} else {
-			isLoading.value = false;
-			const modelId = props.node.inputs[0].value?.[0];
-			if (!modelId) return;
-			await fetchInterventionPolicies(modelId);
 		}
 	}
 );
@@ -752,5 +801,9 @@ button.start-edit {
 
 .description {
 	margin-bottom: var(--gap-3);
+}
+
+.paginator {
+	padding: unset;
 }
 </style>

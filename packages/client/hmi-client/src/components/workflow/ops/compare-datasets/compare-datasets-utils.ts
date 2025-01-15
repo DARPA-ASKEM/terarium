@@ -5,7 +5,12 @@ import { renameFnGenerator } from '@/components/workflow/ops/calibrate-ciemss/ca
 
 import { createRankingInterventionsChart } from '@/services/charts';
 import { DATASET_VAR_NAME_PREFIX, getDatasetResultCSV, mergeResults, getDataset } from '@/services/dataset';
-import { DataArray, parsePyCiemssMap, processAndSortSamplesByTimepoint } from '@/services/models/simulation-service';
+import {
+	DataArray,
+	parsePyCiemssMap,
+	processAndSortSamplesByTimepoint,
+	getRunResultCSV
+} from '@/services/models/simulation-service';
 import { getInterventionPolicyById } from '@/services/intervention-policy';
 import { getModelConfigurationById } from '@/services/model-configurations';
 
@@ -39,7 +44,7 @@ export async function fetchDatasetResults(datasetList: Dataset[]) {
 		await Promise.all(
 			datasetList.map((dataset, datasetIndex) => {
 				if (!isSimulationData(dataset)) return Promise.resolve([]);
-				return getDatasetResultCSV(dataset, 'result.csv', renameFnGenerator(`${datasetIndex}`));
+				return getRunResultCSV(dataset.metadata.simulationId, 'result.csv', renameFnGenerator(`${datasetIndex}`));
 			})
 		)
 	).filter((result) => result.length > 0);
@@ -48,7 +53,11 @@ export async function fetchDatasetResults(datasetList: Dataset[]) {
 		await Promise.all(
 			datasetList.map((dataset, datasetIndex) => {
 				if (!isSimulationData(dataset)) return Promise.resolve([]);
-				return getDatasetResultCSV(dataset, 'result_summary.csv', renameFnGenerator(`${datasetIndex}`));
+				return getRunResultCSV(
+					dataset.metadata.simulationId,
+					'result_summary.csv',
+					renameFnGenerator(`${datasetIndex}`)
+				);
 			})
 		)
 	).filter((result) => result.length > 0);

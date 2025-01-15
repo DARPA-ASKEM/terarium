@@ -1,62 +1,91 @@
 <template>
-	<div class="matrix-toolbar">
-		<Dropdown
-			v-if="matrixMap && Object.keys(matrixMap).length > 0"
-			:model-value="matrixType"
-			:options="matrixTypes"
-			placeholder="Select matrix type"
-			@update:model-value="(v) => changeMatrix(v)"
-		/>
-
+	<div class="toolbar">
+		<div v-if="matrixMap && Object.keys(matrixMap).length > 0">
+			<label>Measure</label>
+			<Dropdown
+				:model-value="matrixType"
+				:options="matrixTypes"
+				placeholder="Select matrix type"
+				@update:model-value="(v) => changeMatrix(v)"
+			/>
+		</div>
+		<div v-if="matrix.length > 1">
+			<label>Rows</label>
+			<MultiSelect
+				v-model="filteredRowNames"
+				:options="matrix.map((r) => r[0].rowCriteria)"
+				:max-selected-labels="2"
+				filter
+			/>
+		</div>
+		<div v-if="matrix[0].length > 1">
+			<label>Columns</label>
+			<MultiSelect
+				v-model="filteredColumnNames"
+				:options="matrix[0].map((c) => c.colCriteria)"
+				:max-selected-labels="2"
+				filter
+			/>
+		</div>
 		<Button
 			@click="clipboardBuffer(clipboardText)"
 			label="Paste"
+			class="ml-auto"
 			severity="secondary"
-			size="small"
+			v-tooltip.left="{
+				value:
+					filteredRowNames.length !== matrix.length || filteredColumnNames.length !== matrix[0].length
+						? `Hidden rows/columns won't be ignored.`
+						: ''
+			}"
 			:disabled="clipboardText === ''"
 		/>
 	</div>
-	<div class="p-datatable-wrapper stratified-matrix">
+	<div class="p-datatable-wrapper">
 		<div
 			v-if="!isEmpty(matrix)"
 			class="p-datatable p-component p-datatable-scrollable p-datatable-responsive-scroll p-datatable-gridlines p-datatable-grouped-header stratified-value-matrix"
 		>
 			<table class="p-datatable-table p-datatable-scrollable-table editable-cells-table">
-				<thead v-if="matrix[0].length > 0" class="p-datatable-thead sticky-table-header">
+				<thead v-if="matrix[0].length > 0" class="p-datatable-thead">
 					<tr>
 						<th v-if="matrix.length > 0" class="choose-criteria">&nbsp;</th>
-						<th v-for="(row, rowIdx) in matrix[0]" :key="rowIdx">{{ row.colCriteria }}</th>
+						<th
+							v-for="firstRow in matrix[0].filter(({ colCriteria }) => filteredColumnNames.includes(colCriteria))"
+							:key="firstRow.col"
+						>
+							{{ firstRow.colCriteria }}
+						</th>
 					</tr>
 				</thead>
 				<tbody class="p-datatable-tbody">
-					<tr v-for="(row, rowIdx) in matrix" :key="rowIdx">
+					<tr v-for="row in matrix.filter((r) => filteredRowNames.includes(r[0].rowCriteria))" :key="row[0].row">
 						<!-- Row label -->
 						<td v-if="matrix.length > 0" class="p-frozen-column" style="position: sticky; left: 0; background: white">
 							{{ row[0].rowCriteria }}
 						</td>
-
 						<td
-							v-for="(cell, colIdx) in row"
-							:key="colIdx"
+							v-for="cell in row.filter(({ colCriteria }) => filteredColumnNames.includes(colCriteria))"
+							:key="`${cell.row}-${cell.col}`"
 							tabindex="0"
 							:class="{
-								'is-editing': editableCellStates[rowIdx][colIdx],
+								'is-editing': editableCellStates[cell.row][cell.col],
 								'n-a-cell': !cell.content.id
 							}"
-							@keyup.enter="onEnterValueCell(cell.content.id, rowIdx, colIdx)"
-							@click="onEnterValueCell(cell.content.id, rowIdx, colIdx)"
+							@keyup.enter="onEnterValueCell(cell.content.id, cell.row, cell.col)"
+							@click="onEnterValueCell(cell.content.id, cell.row, cell.col)"
 						>
 							<section v-if="cell.content.id" class="flex flex-column">
 								<InputText
-									v-if="editableCellStates[rowIdx][colIdx]"
+									v-if="editableCellStates[cell.row][cell.col]"
 									class="cell-input"
 									:class="stratifiedMatrixType !== StratifiedMatrix.Initials && 'big-cell-input'"
 									v-model.lazy="valueToEdit"
 									v-focus
-									@focusout="updateCellValue(cell.content.id, rowIdx, colIdx)"
-									@keyup.stop.enter="updateCellValue(cell.content.id, rowIdx, colIdx)"
+									@focusout="updateCellValue(cell.content.id, cell.row, cell.col)"
+									@keyup.stop.enter="updateCellValue(cell.content.id, cell.row, cell.col)"
 								/>
-								<div class="w-full" :class="{ 'hide-content': editableCellStates[rowIdx][colIdx] }">
+								<div class="w-full" :class="{ 'hide-content': editableCellStates[cell.row][cell.col] }">
 									<div
 										class="subdue mb-1 flex align-items-center gap-1 w-full justify-content-between"
 										v-if="stratifiedMatrixType !== StratifiedMatrix.Initials"
@@ -76,7 +105,7 @@
 									<div
 										v-if="!isReadOnly"
 										class="mathml-container"
-										v-html="expressionMap[rowIdx + ':' + colIdx] ?? '...'"
+										v-html="expressionMap[cell.row + ':' + cell.col] ?? '...'"
 									/>
 								</div>
 							</section>
@@ -87,10 +116,6 @@
 			</table>
 		</div>
 	</div>
-	<!-- these patches mask the parts of the datatable we want to hide while scrolling -->
-	<div class="patch-top"></div>
-	<div class="patch-top-right"></div>
-	<div class="patch-left-side"></div>
 </template>
 
 <script setup lang="ts">
@@ -100,6 +125,7 @@ import { pythonInstance } from '@/python/PyodideController';
 import InputText from 'primevue/inputtext';
 import Dropdown from 'primevue/dropdown';
 import Button from 'primevue/button';
+import MultiSelect from 'primevue/multiselect';
 import { StratifiedMatrix } from '@/types/Model';
 import type { MiraMatrix, MiraModel, MiraTemplateParams } from '@/model-representation/mira/mira-common';
 import { createParameterMatrix, createInitialMatrix, collapseTemplates } from '@/model-representation/mira/mira';
@@ -125,6 +151,9 @@ const matrixTypes = ['subjectOutcome', 'subjectControllers', 'outcomeControllers
 const matrixType = ref(props.matrixType || 'subjectOutcome');
 const matrixMap = ref<{ [key: string]: MiraMatrix }>({});
 const matrix = ref<MiraMatrix>([]);
+
+const filteredRowNames = ref<string[]>([]);
+const filteredColumnNames = ref<string[]>([]);
 
 const currentMatrixtype = ref(props.matrixType || '');
 
@@ -301,6 +330,16 @@ onUnmounted(() => {
 	window.clearInterval(timerId);
 });
 
+// This just prepares the filters when the matrix is assigned for the first time
+watch(
+	() => matrix.value,
+	() => {
+		filteredRowNames.value = matrix.value.map((r) => r[0].rowCriteria);
+		filteredColumnNames.value = matrix.value[0].map((c) => c.colCriteria);
+	},
+	{ once: true }
+);
+
 watch(
 	() => [matrix.value, props.shouldEval],
 	async () => {
@@ -346,8 +385,10 @@ watch(
 </script>
 
 <style scoped>
-.stratified-matrix {
-	position: relative;
+.p-datatable-wrapper {
+	/* Make the height of the table the remainder of the .content section in the modal before it starts to overflow */
+	max-height: calc(70vh - 4.5rem);
+	overflow: auto;
 }
 
 .p-datatable {
@@ -372,6 +413,10 @@ watch(
 	padding-right: 1rem;
 }
 
+.p-multiselect {
+	max-width: 15rem;
+}
+
 .p-datatable-scrollable .p-frozen-column {
 	font-weight: bold;
 }
@@ -390,14 +435,17 @@ watch(
 	justify-content: space-between;
 	align-items: center;
 }
+
 .n-a-cell {
 	background-color: var(--surface-b);
 }
+
 .hide-content {
 	visibility: hidden;
 	height: 0px;
 	padding-left: 2rem;
 }
+
 .cell-input {
 	padding-left: var(--gap-2);
 	padding-right: var(--gap-4);
@@ -415,11 +463,13 @@ watch(
 	width: 100%;
 	text-align: right;
 }
+
 .mathml-container:deep(mn) {
 	font-family: var(--font-family);
 	font-feature-settings: 'tnum';
 	text-align: right !important;
 }
+
 .p-datatable-scrollable .p-frozen-column {
 	padding-right: 1rem;
 }
@@ -436,55 +486,27 @@ watch(
 .controllers {
 	font-size: var(--font-caption);
 }
-section {
+
+.toolbar {
 	display: flex;
 	justify-content: space-between;
+	position: sticky;
+	gap: var(--gap-12);
+	height: 4.5rem;
+
+	& > div {
+		display: flex;
+		flex-direction: column;
+		gap: var(--gap-1);
+	}
+
+	& > .p-button {
+		align-self: center;
+	}
 }
 
-.matrix-toolbar {
-	display: flex;
-	justify-content: space-between;
+.p-datatable-thead {
 	position: sticky;
-	z-index: 1;
-	background: var(--surface-0);
-	padding-bottom: var(--gap-1);
-	top: 0;
-	left: 0;
-}
-.matrix-toolbar Button {
-	margin-bottom: var(--gap-4);
-}
-.sticky-table-header {
-	position: sticky;
-	top: 3rem;
 	background: white;
-}
-/* Patches to mask the parts of the datatable we want to hide while scrolling */
-.patch-top {
-	position: absolute;
-	top: 62px;
-	left: 0;
-	width: 100%;
-	height: 2px;
-	background: var(--surface-0);
-	z-index: 1;
-}
-.patch-top-right {
-	position: absolute;
-	top: 4rem;
-	right: 0;
-	width: 100px;
-	height: 49.6px; /* Oddly specific, I know, but this works */
-	background: var(--surface-0);
-	z-index: 1;
-}
-.patch-left-side {
-	position: absolute;
-	top: 4rem;
-	left: 0;
-	width: 2rem;
-	height: calc(100% - 4rem);
-	background: var(--surface-0);
-	z-index: 1;
 }
 </style>
