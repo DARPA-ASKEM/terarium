@@ -73,15 +73,21 @@
 									@update:model-value="scenario.setTimeStepColName($event)"
 									placeholder="Select"
 									:options="datasetColumnNames"
+									:disabled="!scenario.datasetSpec.id"
 								/>
 							</td>
 						</tr>
 						<tr v-for="(config, i) in scenario.calibrateMappings" :key="i">
 							<td>
-								<tera-input-text v-model="config.newName" placeholder="Variable name" />
+								<tera-input-text class="mb-0" v-model="config.newName" placeholder="Variable name" />
 							</td>
 							<td>
-								<Dropdown v-model="config.datasetMapping" placeholder="Select" :options="datasetColumnNames" />
+								<Dropdown
+									v-model="config.datasetMapping"
+									placeholder="Select"
+									:options="datasetColumnNames"
+									:disabled="!scenario.datasetSpec.id"
+								/>
 							</td>
 							<td v-for="(configuration, index) in selectedModelConfigurations" :key="configuration.id">
 								<Dropdown
