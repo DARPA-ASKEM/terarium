@@ -66,7 +66,7 @@ export class ModelFromLiteratureScenario extends BaseScenario {
 
 		let compareModelsNode;
 
-		// Add compare dataset node if there is more than 1 document spec
+		// Add compare model node if there is more than 1 document spec
 		if (this.documentSpecs.length > 1) {
 			compareModelsNode = wf.addNode(
 				ModelCompareOp,
@@ -75,7 +75,7 @@ export class ModelFromLiteratureScenario extends BaseScenario {
 					size: OperatorNodeSize.medium
 				}
 			);
-			// Add input ports to compare dataset node
+			// Add input ports to compare model node
 			for (let i = 0; i < this.documentSpecs.length - 1; i++) {
 				workflowService.appendInputPort(compareModelsNode, {
 					type: 'modelId',
@@ -146,21 +146,26 @@ export class ModelFromLiteratureScenario extends BaseScenario {
 				{ x: 0, y: 0 }
 			]);
 
-			wf.addEdge(
-				modelFromEquationsNode.id,
-				modelFromEquationsNode.outputs[0].id,
-				compareModelsNode.id,
-				compareModelsNode.inputs[i].id,
-				[
-					{ x: 0, y: 0 },
-					{ x: 0, y: 0 }
-				]
-			);
+			if (compareModelsNode) {
+				wf.addEdge(
+					modelFromEquationsNode.id,
+					modelFromEquationsNode.outputs[0].id,
+					compareModelsNode.id,
+					compareModelsNode.inputs[i].id,
+					[
+						{ x: 0, y: 0 },
+						{ x: 0, y: 0 }
+					]
+				);
+			}
 
 			// Update document node state
 			wf.updateNode(documentNode, {
 				state: {
 					documentId: docSpec.id
+				},
+				output: {
+					value: [{ documentId: docSpec.id }]
 				}
 			});
 		});
