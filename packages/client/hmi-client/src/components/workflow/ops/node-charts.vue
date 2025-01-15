@@ -3,16 +3,16 @@
 		<div v-if="processing">{{ processing }}</div>
 		<div v-else>Processing...</div>
 	</tera-progress-spinner>
-	<ul v-else-if="visibleChartSettings.length">
-		<li v-for="setting of visibleChartSettings" :key="chartSettingKey || setting.id">
+	<div v-else-if="visibleChartSettings.length">
+		<div v-for="setting of visibleChartSettings" :key="chartSettingKey || setting.id">
 			<vega-chart
 				:expandable="expandable"
 				:are-embed-actions-visible="areEmbedActionsVisible"
 				:visualization-spec="preparedCharts[chartSettingKey || setting.id]"
 				:interactive="interactive"
 			/>
-		</li>
-	</ul>
+		</div>
+	</div>
 	<tera-operator-placeholder v-else-if="placeholder" :node="node">
 		{{ placeholder }}
 	</tera-operator-placeholder>
