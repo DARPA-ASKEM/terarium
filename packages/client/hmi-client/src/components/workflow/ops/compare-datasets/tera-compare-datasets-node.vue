@@ -87,6 +87,20 @@ watch(
 	() => {
 		if (props.node.inputs.every((input) => input.status === WorkflowPortStatus.CONNECTED)) {
 			emit('append-input-port', { type: 'datasetId', label: 'Dataset or Simulation result' });
+			initialize(
+				props,
+				isFetchingDatasets,
+				datasets,
+				datasetResults,
+				modelConfigIdToInterventionPolicyIdMap,
+				chartData,
+				baselineDatasetIndex,
+				selectedPlotType,
+				modelConfigurations,
+				interventionPolicies,
+				rankingCriteriaCharts,
+				rankingResultsChart
+			);
 		}
 	},
 	{ deep: true }
