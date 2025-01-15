@@ -70,7 +70,7 @@ const groupedOutputParameters = computed(() =>
 
 const interventionSummary = computed(() => {
 	const interventions = cloneDeep(props.node.state.interventionPolicy.interventions);
-	return interventions.length > 4 ? interventions.slice(0, 4) : interventions;
+	return interventions.slice(0, 4);
 });
 
 const selectedOutputParameters = computed(() => {
