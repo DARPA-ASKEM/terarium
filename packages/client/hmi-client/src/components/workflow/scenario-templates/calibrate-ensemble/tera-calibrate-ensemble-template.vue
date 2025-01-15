@@ -114,18 +114,6 @@
 		</template>
 
 		<template #outputs>
-			<label>Select an output metric</label>
-			<MultiSelect
-				:disabled="isEmpty(modelStateOptions) || isFetchingModelInformation"
-				:model-value="scenario.simulateSpec.ids"
-				placeholder="Select output metrics"
-				option-label="id"
-				option-value="id"
-				:options="modelStateOptions"
-				@update:model-value="scenario.setSimulateSpec($event)"
-				:loading="isFetchingModelInformation"
-				filter
-			/>
 			<img :src="CalibrateEnsembleImg" alt="Calibrate ensemble model" />
 		</template>
 	</tera-scenario-template>
@@ -138,7 +126,6 @@ import { useProjects } from '@/composables/project';
 import { getModel, getModelConfigurationsForModel } from '@/services/model';
 import { isEmpty } from 'lodash';
 import Dropdown from 'primevue/dropdown';
-import MultiSelect from 'primevue/multiselect';
 import Button from 'primevue/button';
 import TabView from 'primevue/tabview';
 import TabPanel from 'primevue/tabpanel';
@@ -162,8 +149,6 @@ const models = computed(() => useProjects().getActiveProjectAssets(AssetType.Mod
 const isFetchingModelInformation = ref(false);
 
 const modelAssets = ref<Map<string, { modelConfigurations: ModelConfiguration[]; modelStates: any }>>(new Map());
-
-const modelStateOptions = ref<any[]>([]);
 
 const selectedModelConfigurations = computed<ModelConfiguration[]>(() =>
 	// get the model configuration ids from the tab specs and return the already fetched model configurations from the model assets
