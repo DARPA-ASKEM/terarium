@@ -251,3 +251,58 @@ export async function generateImpactCharts(
 		selectedPlotType.value
 	);
 }
+
+// export async function initialize(inputs) {
+// 	const { inputs } = props.node;
+// 	const datasetInputs = inputs.filter(
+// 		(input) => input.type === 'datasetId' && input.status === WorkflowPortStatus.CONNECTED
+// 	);
+// 	const datasetPromises = datasetInputs.map((input) => getDataset(input.value![0]));
+// 	isFetchingDatasets.value = true;
+// 	await Promise.all(datasetPromises).then((ds) => {
+// 		ds.forEach((dataset) => {
+// 			// Add dataset
+// 			if (!dataset) return;
+// 			datasets.value.push(dataset);
+
+// 			// Collect model configuration id and intervention policy id
+// 			const modelConfigurationId: string | undefined = dataset.metadata?.simulationAttributes?.modelConfigurationId;
+// 			const interventionPolicyId: string | undefined = dataset.metadata?.simulationAttributes?.interventionPolicyId;
+
+// 			if (!modelConfigurationId) return;
+// 			if (!modelConfigIdToInterventionPolicyIdMap.value[modelConfigurationId]) {
+// 				modelConfigIdToInterventionPolicyIdMap.value[modelConfigurationId] = [];
+// 			}
+// 			if (!interventionPolicyId) return;
+// 			modelConfigIdToInterventionPolicyIdMap.value[modelConfigurationId].push(interventionPolicyId);
+// 		});
+// 	});
+// 	// Fetch the results
+// 	datasetResults.value = await fetchDatasetResults(datasets.value);
+// 	isFetchingDatasets.value = false;
+
+// 	await generateImpactCharts(chartData, datasets, datasetResults, baselineDatasetIndex, selectedPlotType);
+// 	console.log(chartData.value);
+// 	const modelConfigurationIds = Object.keys(modelConfigIdToInterventionPolicyIdMap.value);
+// 	if (isEmpty(modelConfigurationIds)) return;
+// 	const modelConfigurationPromises = modelConfigurationIds.map((id) => getModelConfigurationById(id));
+// 	await Promise.all(modelConfigurationPromises).then((configs) => {
+// 		modelConfigurations.value = configs.filter((config) => config !== null);
+// 	});
+
+// 	const interventionPolicyIds = Object.values(modelConfigIdToInterventionPolicyIdMap.value).flat();
+// 	if (isEmpty(interventionPolicyIds)) return;
+// 	const interventionPolicyPromises = interventionPolicyIds.map((id) => getInterventionPolicyById(id));
+// 	await Promise.all(interventionPolicyPromises).then((policies) => {
+// 		interventionPolicies.value = policies.filter((policy) => policy !== null);
+// 	});
+
+// 	generateRankingCharts(
+// 		rankingCriteriaCharts,
+// 		rankingResultsChart,
+// 		props,
+// 		modelConfigIdToInterventionPolicyIdMap,
+// 		chartData,
+// 		interventionPolicies
+// 	);
+// };
