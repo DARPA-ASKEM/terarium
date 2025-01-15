@@ -91,15 +91,9 @@ export function useChartSettings(
 			smallMultiples: false
 		};
 
-		const newSettings = [...chartSettings.value, newSetting];
-
-		console.log('Before:', chartSettings.value);
-		console.log('New setting:', newSetting);
-		console.log('After:', newSettings);
-
 		emit('update-state', {
 			...props.node.state,
-			chartSettings: newSettings
+			chartSettings: [...chartSettings.value, newSetting]
 		});
 	};
 
