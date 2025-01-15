@@ -339,13 +339,51 @@
 									:visualization-spec="errorChart"
 								/>
 							</AccordionTab>
-							<AccordionTab header="Comparison charts">
+							<!-- Section: Comparison charts -->
+							<AccordionTab v-if="selectedComparisonChartSettings.length > 0" header="Comparison charts">
 								<template v-for="setting of selectedComparisonChartSettings" :key="setting.id">
-									<vega-chart
-										expandable
-										:are-embed-actions-visible="true"
-										:visualization-spec="comparisonCharts[setting.id]"
-									/>
+									<div v-if="setting.smallMultiples">
+										<div
+											v-for="selectedVariable of setting.selectedVariables"
+											:key="setting.id + selectedVariable"
+											class="comparison-chart-container"
+										>
+											<div class="comparison-chart">
+												<vega-chart
+													v-if="selectedVariable"
+													expandable
+													:are-embed-actions-visible="true"
+													:visualization-spec="comparisonCharts[setting.id + selectedVariable]"
+												/>
+												<div v-else class="empty-state-chart">
+													<img
+														src="@assets/svg/operator-images/simulate-deterministic.svg"
+														alt="Select a variable"
+														draggable="false"
+														height="80px"
+													/>
+													<p class="text-center">Select a variable for comparison</p>
+												</div>
+											</div>
+										</div>
+									</div>
+									<template v-else>
+										<vega-chart
+											v-if="setting.selectedVariables && setting.selectedVariables.length"
+											expandable
+											:are-embed-actions-visible="true"
+											:visualization-spec="comparisonCharts[setting.id]"
+										/>
+										<div v-else class="empty-state-chart">
+											<img
+												src="@assets/svg/operator-images/simulate-deterministic.svg"
+												alt="Select variables to generate comparison chart"
+												draggable="false"
+												height="80px"
+											/>
+											<p class="text-center">Select variables to generate comparison chart</p>
+										</div>
+									</template>
 								</template>
 							</AccordionTab>
 						</Accordion>
@@ -384,6 +422,7 @@
 				</template>
 				<template #content>
 					<div class="output-settings-panel">
+						<!-- Parameter distributions -->
 						<tera-chart-settings
 							:title="'Parameter distributions'"
 							:settings="chartSettings"
@@ -395,6 +434,7 @@
 							@selection-change="updateChartSettings"
 						/>
 						<Divider />
+						<!-- Interventions over time -->
 						<tera-chart-settings
 							:title="'Interventions over time'"
 							:settings="chartSettings"
@@ -406,6 +446,7 @@
 							@selection-change="updateChartSettings"
 						/>
 						<Divider />
+						<!-- Variables over time -->
 						<tera-chart-settings
 							:title="'Variables over time'"
 							:settings="chartSettings"
@@ -419,6 +460,7 @@
 							@selection-change="updateChartSettings"
 						/>
 						<Divider />
+						<!-- Errors -->
 						<tera-chart-settings
 							:title="'Error'"
 							:settings="chartSettings"
@@ -434,28 +476,29 @@
 							@selection-change="updateChartSettings"
 						/>
 						<Divider />
-						<tera-chart-settings
-							:title="'Comparison charts'"
-							:settings="chartSettings"
-							:type="ChartSettingType.VARIABLE_COMPARISON"
-							:select-options="
-								Object.keys(pyciemssMap).filter((c) =>
-									['state', 'observable', 'parameter'].includes(modelPartTypesMap[c])
-								)
-							"
-							:selected-options="comparisonChartsSettingsSelection"
-							@open="setActiveChartSettings($event)"
-							@remove="removeChartSettings"
-							@selection-change="comparisonChartsSettingsSelection = $event"
-						/>
+						<!-- Comparison charts -->
 						<div>
+							<h5 class="pb-1">Comparison charts</h5>
+							<template v-for="setting in selectedComparisonChartSettings" :key="setting.id">
+								<tera-chart-settings
+									:settings="chartSettings"
+									:type="ChartSettingType.VARIABLE_COMPARISON"
+									:select-options="Object.keys(pyciemssMap)"
+									:selected-options="setting.selectedVariables"
+									:is-initial-selector="true"
+									@open="setActiveChartSettings($event)"
+									@remove="removeChartSettings"
+									@selection-change="(variables) => updateComparisonChartSetting(setting.id, variables)"
+								/>
+							</template>
+
 							<Button
-								:disabled="!comparisonChartsSettingsSelection.length"
 								size="small"
 								text
-								@click="addComparisonChartSettings"
+								@click="addEmptyComparisonChart"
 								label="Add comparison chart"
 								icon="pi pi-plus"
+								class="mt-2"
 							/>
 						</div>
 						<Divider />
@@ -770,12 +813,12 @@ const {
 	selectedInterventionSettings,
 	selectedErrorVariableSettings,
 	selectedComparisonChartSettings,
-	comparisonChartsSettingsSelection,
 	removeChartSettings,
 	updateChartSettings,
-	addComparisonChartSettings,
 	updateActiveChartSettings,
-	setActiveChartSettings
+	setActiveChartSettings,
+	addEmptyComparisonChart,
+	updateComparisonChartSetting
 } = useChartSettings(props, emit);
 
 const {
@@ -1284,5 +1327,18 @@ img {
 
 input {
 	text-align: left;
+}
+
+.empty-state-chart {
+	display: flex;
+	flex-direction: column;
+	gap: var(--gap-4);
+	justify-content: center;
+	align-items: center;
+	height: 12rem;
+	margin: var(--gap-6);
+	padding: var(--gap-4);
+	background: var(--surface-100);
+	color: var(--text-color-secondary);
 }
 </style>
