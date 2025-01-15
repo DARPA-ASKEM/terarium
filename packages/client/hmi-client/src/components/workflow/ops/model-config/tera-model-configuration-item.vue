@@ -75,8 +75,7 @@ const hideContextMenu = () => {
 const onDeleteConfiguration = () => {
 	confirm.require({
 		message: `Are you sure you want to delete the configuration ${props.configuration.name}?`,
-		header: 'Delete Confirmation',
-		icon: 'pi pi-exclamation-triangle',
+		header: 'Delete confirmation',
 		acceptLabel: 'Confirm',
 		rejectLabel: 'Cancel',
 		accept: async () => {

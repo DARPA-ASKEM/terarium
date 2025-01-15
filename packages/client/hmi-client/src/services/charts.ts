@@ -83,6 +83,7 @@ export interface HistogramChartOptions extends BaseChartOptions {
 	maxBins?: number;
 	variables: { field: string; label?: string; width: number; color: string }[];
 	legendProperties?: Record<string, any>;
+	extent?: [number, number];
 }
 
 export interface ErrorChartOptions extends Omit<BaseChartOptions, 'height' | 'yAxisTitle' | 'legend'> {
@@ -362,12 +363,14 @@ export function createHistogramChart(dataset: Record<string, any>[], options: Hi
 
 	spec.data = { values: data };
 
-	// Create an extent from the min max of the data across all variables, this is used to set the bin extent and let multiple histograms from different layers to share the same bin extent
-	const extent = [Infinity, -Infinity];
-	data.forEach((d) => {
-		extent[0] = Math.min(extent[0], Math.min(...Object.values(d)));
-		extent[1] = Math.max(extent[1], Math.max(...Object.values(d)));
-	});
+	const extent = options.extent ?? [Infinity, -Infinity];
+	if (!options.extent) {
+		// Create an extent from the min max of the data across all variables, this is used to set the bin extent and let multiple histograms from different layers to share the same bin extent
+		data.forEach((d) => {
+			extent[0] = Math.min(extent[0], Math.min(...Object.values(d)));
+			extent[1] = Math.max(extent[1], Math.max(...Object.values(d)));
+		});
+	}
 
 	const createLayers = (opts) => {
 		const colorScale = {
@@ -1784,5 +1787,71 @@ export function createFunmanParameterCharts(
 				}
 			]
 		}
+	};
+}
+
+export function createRankingInterventionsChart(values: { score: number; name: string }[], title: string) {
+	const globalFont = 'Figtree';
+
+	return {
+		$schema: VEGALITE_SCHEMA,
+		config: {
+			font: globalFont,
+			bar: {
+				discreteBandSize: 20 // Fixed bar width
+			},
+			view: {
+				continuousWidth: 600 // Total chart width stays fixed
+			},
+			axis: {
+				labelAngle: 0
+			}
+		},
+		title: {
+			text: title,
+			anchor: 'start',
+			frame: 'group',
+			offset: 10,
+			fontSize: 14
+		},
+		width: 600,
+		data: {
+			values
+		},
+		encoding: {
+			x: {
+				field: 'index',
+				type: 'nominal',
+				sort: null,
+				title: 'Rank'
+			},
+			y: {
+				field: 'score',
+				type: 'quantitative',
+				title: 'Score'
+			}
+		},
+		transform: [{ window: [{ op: 'row_number', as: 'index' }] }],
+		spacing: 20, // Adds space between bars
+		layer: [
+			{
+				mark: 'bar'
+			},
+			{
+				mark: {
+					type: 'text',
+					align: 'right',
+					baseline: 'bottom',
+					dy: -15,
+					angle: 270
+					// FIXME:
+					// I don't know how to fix the text to the bottom of the bar, its origin seems to be around the top
+					// and giving it the proper dx shift varies depending on the bar size
+				},
+				encoding: {
+					text: { field: 'name', type: 'nominal' }
+				}
+			}
+		]
 	};
 }

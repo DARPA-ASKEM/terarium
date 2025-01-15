@@ -78,7 +78,7 @@
 								/>
 							</div>
 							<div class="label-and-input mt-2">
-								<label for="num-samples">Solver Step Size</label>
+								<label for="num-samples">Solver step size</label>
 								<tera-input-number
 									v-model="solverStepSize"
 									:disabled="method !== CiemssMethodOptions.euler"

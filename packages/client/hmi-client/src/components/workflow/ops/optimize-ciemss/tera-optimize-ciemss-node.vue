@@ -107,7 +107,7 @@ const pollResult = async (runId: string) => {
 				const checkpointData = _.last(data.updates)?.data as CiemssOptimizeStatusUpdate;
 				if (checkpointData) {
 					const state = _.cloneDeep(props.node.state);
-					const newProgress = +((100 * checkpointData.progress) / checkpointData.totalPossibleIterations).toFixed(2);
+					const newProgress = Math.floor((100 * checkpointData.progress) / checkpointData.totalPossibleIterations);
 					if (newProgress !== state.currentProgress) {
 						state.currentProgress = newProgress;
 						emit('update-state', state);
@@ -270,7 +270,7 @@ Provide a consis summary in 100 words or less.
 					}
 				],
 				isSelected: false,
-				state
+				state: _.omit(state, ['chartSettings'])
 			});
 		} else {
 			// Simulation Failed:

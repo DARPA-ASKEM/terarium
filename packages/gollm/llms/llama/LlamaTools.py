@@ -1,7 +1,7 @@
 import boto3
 import json
 import os
-from typing import List
+from typing import List, Optional
 
 from common.LlmToolsInterface import LlmToolsInterface
 from common.prompts.amr_enrichment import ENRICH_PROMPT
@@ -15,7 +15,10 @@ from common.prompts.config_from_dataset import (
     CONFIGURE_FROM_DATASET_MATRIX_PROMPT
 )
 from common.prompts.config_from_document import CONFIGURE_FROM_DOCUMENT_PROMPT
-from common.prompts.dataset_enrichment import DATASET_ENRICH_PROMPT
+from common.prompts.dataset_enrichment import (
+    DATASET_ENRICH_PROMPT
+    DATASET_ENRICH_PROMPT_WITHOUT_DOCUMENT
+)
 from common.prompts.equations_cleanup import EQUATIONS_CLEANUP_PROMPT
 from common.prompts.equations_from_image import EQUATIONS_FROM_IMAGE_PROMPT
 from common.prompts.general_query import GENERAL_QUERY_PROMPT
@@ -184,13 +187,19 @@ class LlamaTools(LlmToolsInterface):
         return prompt
 
 
-    def create_enrich_dataset_prompt(self, dataset: str, document: str, schema: str) -> str:
-        print("Building prompt to extract dataset enrichments from a research paper...")
+    def create_enrich_dataset_prompt(self, dataset: str, schema: str, document: Optional[str] = None) -> str:
         prompt = LLAMA_START_PROMPT
-        prompt += DATASET_ENRICH_PROMPT.format(
-            research_paper=escape_curly_braces(normalize_greek_alphabet(document)),
-            dataset=dataset
-        )
+
+        if (document is None) or (document == ''):  # If no document is provided
+            print("Building prompt to extract dataset enrichments")
+            prompt += DATASET_ENRICH_PROMPT_WITHOUT_DOCUMENT.format(dataset=dataset)
+        else:
+            print("Building prompt to extract dataset enrichments from a research paper...")
+            prompt += DATASET_ENRICH_PROMPT.format(
+                research_paper=escape_curly_braces(normalize_greek_alphabet(document)),
+                dataset=dataset
+            )
+
         prompt += LLAMA_RETURN_INSTRUCTIONS.format(
             schema=schema
         )
