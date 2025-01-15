@@ -193,7 +193,7 @@ const emit = defineEmits(['save-workflow']);
 
 const onRemoveTab = (index: number) => {
 	props.scenario.removeTabSpec(index);
-	if (activeTab.value > 0) {
+	if (activeTab.value > 0 && index === activeTab.value) {
 		activeTab.value--;
 	}
 };
