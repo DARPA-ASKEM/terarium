@@ -16,7 +16,7 @@ from common.prompts.config_from_dataset import (
 )
 from common.prompts.config_from_document import CONFIGURE_FROM_DOCUMENT_PROMPT
 from common.prompts.dataset_enrichment import (
-    DATASET_ENRICH_PROMPT
+    DATASET_ENRICH_PROMPT,
     DATASET_ENRICH_PROMPT_WITHOUT_DOCUMENT
 )
 from common.prompts.equations_cleanup import EQUATIONS_CLEANUP_PROMPT
@@ -187,7 +187,7 @@ class LlamaTools(LlmToolsInterface):
         return prompt
 
 
-    def create_enrich_dataset_prompt(self, dataset: str, schema: str, document: Optional[str] = None) -> str:
+    def create_enrich_dataset_prompt(self, dataset: str, document: Optional[str], schema: str) -> str:
         prompt = LLAMA_START_PROMPT
 
         if (document is None) or (document == ''):  # If no document is provided
