@@ -1,5 +1,8 @@
 import json
 import os
+from openai import OpenAI
+from typing import List, Optional
+
 from common.LlmToolsInterface import LlmToolsInterface
 from common.prompts.amr_enrichment import ENRICH_PROMPT
 from common.prompts.chart_annotation import CHART_ANNOTATION_PROMPT
@@ -12,7 +15,10 @@ from common.prompts.config_from_dataset import (
     CONFIGURE_FROM_DATASET_MATRIX_PROMPT
 )
 from common.prompts.config_from_document import CONFIGURE_FROM_DOCUMENT_PROMPT
-from common.prompts.dataset_enrichment import DATASET_ENRICH_PROMPT
+from common.prompts.dataset_enrichment import (
+    DATASET_ENRICH_PROMPT,
+    DATASET_ENRICH_PROMPT_WITHOUT_DOCUMENT
+)
 from common.prompts.equations_cleanup import EQUATIONS_CLEANUP_PROMPT
 from common.prompts.equations_from_image import EQUATIONS_FROM_IMAGE_PROMPT
 from common.prompts.general_query import GENERAL_QUERY_PROMPT
@@ -32,8 +38,6 @@ from common.utils import (
     escape_curly_braces,
     unescape_curly_braces
 )
-from openai import OpenAI
-from typing import List
 
 GPT_MODEL = "gpt-4o-2024-08-06"
 
@@ -70,7 +74,6 @@ class OpenAiTools(LlmToolsInterface):
         output_json = json.loads(output.choices[0].message.content)
         return unescape_curly_braces(output_json)
 
-
     def send_to_llm_with_string_output(self, prompt: str, max_tokens=16384) -> str:
         print("Sending request to OpenAI API...")
         client = OpenAI() if self.api_key is None else OpenAI(api_key=self.api_key)
@@ -88,7 +91,6 @@ class OpenAiTools(LlmToolsInterface):
         )
         print("Received response from OpenAI API...")
         return output.choices[0].message.content
-
 
     def send_image_to_llm_with_json_output(self, prompt: str, schema: str, image_url: str, max_tokens=16384) -> dict:
         print("Sending request to OpenAI API...")
@@ -122,14 +124,12 @@ class OpenAiTools(LlmToolsInterface):
         output_json = json.loads(output.choices[0].message.content)
         return output_json
 
-
     def create_enrich_model_prompt(self, amr: str, document: str, schema=None) -> str:
         print("Building prompt to extract model enrichments from a document...")
         return ENRICH_PROMPT.format(
             amr=escape_curly_braces(amr),
             research_paper=escape_curly_braces(normalize_greek_alphabet(document))
         )
-
 
     def create_config_from_dataset_prompt(self, amr: str, dataset: List[str], matrix: str, schema=None) -> str:
         print("Building prompt to extract model configurations from a dataset...")
@@ -146,7 +146,6 @@ class OpenAiTools(LlmToolsInterface):
         prompt += "Answer:"
         return prompt
 
-
     def create_config_from_document_prompt(self, amr: str, document: str, schema=None) -> str:
         print("Building prompt to extract model configurations from a reasearch paper...")
         return CONFIGURE_FROM_DOCUMENT_PROMPT.format(
@@ -154,14 +153,16 @@ class OpenAiTools(LlmToolsInterface):
             research_paper=escape_curly_braces(normalize_greek_alphabet(document))
         )
 
-
-    def create_enrich_dataset_prompt(self, dataset: str, document: str, schema=None) -> str:
-        print("Building prompt to extract dataset enrichments from a research paper...")
-        return DATASET_ENRICH_PROMPT.format(
-            research_paper=escape_curly_braces(normalize_greek_alphabet(document)),
-            dataset=dataset
-        )
-
+    def create_enrich_dataset_prompt(self, dataset: str, document: Optional[str], schema=None) -> str:
+        if (document is None) or (document == ''):  # If no document is provided
+            print("Building prompt to extract dataset enrichments")
+            return DATASET_ENRICH_PROMPT_WITHOUT_DOCUMENT.format(dataset=dataset)
+        else:
+            print("Building prompt to extract dataset enrichments from a research paper...")
+            return DATASET_ENRICH_PROMPT.format(
+                research_paper=escape_curly_braces(normalize_greek_alphabet(document)),
+                dataset=dataset
+            )
 
     def create_cleanup_equations_prompt(self, equations: List[str], schema=None) -> str:
         print("Building prompt to reformat equations...")
@@ -170,13 +171,11 @@ class OpenAiTools(LlmToolsInterface):
             equations="\n".join(equations)
         )
 
-
     def create_equations_from_image_prompt(self, image_url: str, schema=None) -> str:
         print("Building prompt to extract equations an image...")
         return EQUATIONS_FROM_IMAGE_PROMPT.format(
             style_guide=LATEX_STYLE_GUIDE
         )
-
 
     def create_interventions_from_document_prompt(self, amr: str, document: str, schema=None) -> str:
         print("Building prompt to extract interventions from a research paper...")
@@ -185,7 +184,6 @@ class OpenAiTools(LlmToolsInterface):
             research_paper=escape_curly_braces(normalize_greek_alphabet(document))
         )
 
-
     def create_interventions_from_dataset_prompt(self, amr: str, dataset: List[str], schema=None) -> str:
         print("Building prompt to extract interventions from a dataset...")
         dataset_text = os.linesep.join(dataset)
@@ -193,7 +191,6 @@ class OpenAiTools(LlmToolsInterface):
             amr=escape_curly_braces(amr),
             dataset=escape_curly_braces(normalize_greek_alphabet(dataset_text))
         )
-
 
     def create_model_card_prompt(self, amr: str, document: str, schema=None) -> str:
         print("Building prompt to produce a model card...")
@@ -204,7 +201,6 @@ class OpenAiTools(LlmToolsInterface):
             research_paper=escape_curly_braces(normalize_greek_alphabet(document)),
             amr=escape_curly_braces(amr)
         )
-
 
     def create_compare_models_prompt(self, amrs: List[str], dataset: str, goal: str, schema=None) -> str:
         print("Building prompt to compare models...")
@@ -222,13 +218,11 @@ class OpenAiTools(LlmToolsInterface):
         prompt += "Answer:"
         return prompt
 
-
     def create_general_query_prompt(self, instruction: str) -> str:
         print("Building general query prompt...")
         return GENERAL_QUERY_PROMPT.format(
             instruction=instruction
         )
-
 
     def create_chart_annotation_prompt(self, preamble: str, instruction: str, schema=None) -> str:
         print("Building chart annotation prompt...")
@@ -236,7 +230,6 @@ class OpenAiTools(LlmToolsInterface):
             preamble=preamble,
             instruction=instruction
         )
-
 
     def create_latex_to_sympy_prompt(self, equations: List[str], schema=None) -> str:
         print("Building prompt to transform latex equations to sympy...")
