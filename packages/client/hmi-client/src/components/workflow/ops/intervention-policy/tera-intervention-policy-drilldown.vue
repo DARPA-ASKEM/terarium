@@ -482,8 +482,7 @@ const onReplacePolicy = (policy: InterventionPolicy) => {
 const onDeleteInterventionPolicy = (policy: InterventionPolicy) => {
 	confirm.require({
 		message: `Are you sure you want to delete the configuration ${policy.name}?`,
-		header: 'Delete Confirmation',
-		icon: 'pi pi-exclamation-triangle',
+		header: 'Delete confirmation',
 		acceptLabel: 'Confirm',
 		rejectLabel: 'Cancel',
 		accept: async () => {
