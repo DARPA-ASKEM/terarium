@@ -2,7 +2,6 @@ import { cloneDeep } from 'lodash';
 import { ref, computed, watch } from 'vue';
 import { ChartSetting, ChartSettingEnsembleVariable, ChartSettingSensitivity, ChartSettingType } from '@/types/common';
 import {
-	addMultiVariableChartSetting,
 	EnsembleVariableChartSettingOption,
 	removeChartSettingById,
 	updateChartSettingsBySelectedVariables,
@@ -26,7 +25,6 @@ export function useChartSettings(
 ) {
 	const chartSettings = computed(() => props.node.state.chartSettings ?? []);
 	const activeChartSettings = ref<ChartSetting | null>(null);
-	const comparisonChartsSettingsSelection = ref<string[]>([]);
 
 	// Computed properties to filter chart settings by type
 	const selectedParameterSettings = computed(() =>
@@ -85,16 +83,35 @@ export function useChartSettings(
 		});
 	};
 
-	const addComparisonChartSettings = () => {
+	const addEmptyComparisonChart = () => {
+		const newSetting = {
+			id: crypto.randomUUID(), // or however you generate IDs
+			type: ChartSettingType.VARIABLE_COMPARISON,
+			selectedVariables: [],
+			smallMultiples: false
+		};
+
+		const newSettings = [...chartSettings.value, newSetting];
+
+		console.log('Before:', chartSettings.value);
+		console.log('New setting:', newSetting);
+		console.log('After:', newSettings);
+
 		emit('update-state', {
 			...props.node.state,
-			chartSettings: addMultiVariableChartSetting(
-				chartSettings.value,
-				ChartSettingType.VARIABLE_COMPARISON,
-				comparisonChartsSettingsSelection.value
-			)
+			chartSettings: newSettings
 		});
-		comparisonChartsSettingsSelection.value = [];
+	};
+
+	const updateComparisonChartSetting = (chartId: string, selectedVariables: string[]) => {
+		const state = cloneDeep(props.node.state);
+		if (state.chartSettings) {
+			const setting = state.chartSettings.find((s) => s.id === chartId);
+			if (setting) {
+				setting.selectedVariables = selectedVariables;
+				emit('update-state', state);
+			}
+		}
 	};
 
 	const updateEnsembleVariableSettingOption = (option: EnsembleVariableChartSettingOption, value: boolean) => {
@@ -151,7 +168,6 @@ export function useChartSettings(
 	return {
 		chartSettings,
 		activeChartSettings: computed(() => activeChartSettings.value),
-		comparisonChartsSettingsSelection,
 		selectedVariableSettings,
 		selectedEnsembleVariableSettings,
 		selectedErrorVariableSettings,
@@ -163,10 +179,11 @@ export function useChartSettings(
 		updateActiveChartSettings,
 		removeChartSettings,
 		updateChartSettings,
-		addComparisonChartSettings,
 		updateEnsembleVariableSettingOption,
 		updateQauntilesOptions,
 		updateSensitivityChartSettings,
-		findAndUpdateChartSettingsById
+		findAndUpdateChartSettingsById,
+		addEmptyComparisonChart,
+		updateComparisonChartSetting
 	};
 }
