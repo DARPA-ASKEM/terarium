@@ -794,6 +794,7 @@ export function useCharts(
 					xAxisTitle: `Weights`,
 					yAxisTitle: 'Count',
 					maxBins,
+					extent: [0, 1], // Weights are between 0 and 1
 					variables: [
 						{ field: beforeFieldName, label: labelBefore, width: barWidth, color: BASE_GREY },
 						{ field: fieldName, label: labelAfter, width: barWidth / 2, color: colors[index % colors.length] }
