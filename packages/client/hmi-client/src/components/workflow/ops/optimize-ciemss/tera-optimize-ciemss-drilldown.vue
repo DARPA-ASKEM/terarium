@@ -433,21 +433,17 @@
 						/>
 						<Divider />
 						<!-- Comparison charts -->
+						<tera-chart-settings
+							:title="'Comparison charts'"
+							:settings="chartSettings"
+							:type="ChartSettingType.VARIABLE_COMPARISON"
+							:select-options="simulationChartOptions"
+							:comparison-selected-options="comparisonChartsSettingsSelection"
+							@open="setActiveChartSettings($event)"
+							@remove="removeChartSettings"
+							@comparison-selection-change="updateComparisonChartSetting"
+						/>
 						<div>
-							<h5 class="pb-1">Comparison charts</h5>
-							<template v-for="setting in selectedComparisonChartSettings" :key="setting.id">
-								<tera-chart-settings
-									:settings="chartSettings"
-									:type="ChartSettingType.VARIABLE_COMPARISON"
-									:select-options="Object.keys(pyciemssMap)"
-									:selected-options="setting.selectedVariables"
-									:is-initial-selector="true"
-									@open="setActiveChartSettings($event)"
-									@remove="removeChartSettings"
-									@selection-change="(variables) => updateComparisonChartSetting(setting.id, variables)"
-								/>
-							</template>
-
 							<Button
 								size="small"
 								text
@@ -696,8 +692,15 @@ const optimizeRequestPayload = ref<any>('');
 const optimizedInterventionPolicy = ref<InterventionPolicy | null>(null);
 
 const model = ref<Model | null>(null);
+const modelParameterOptions = computed<string[]>(() =>
+	(model.value?.semantics?.ode?.parameters ?? []).map((p) => p.id)
+);
 const modelStateAndObsOptions = ref<{ label: string; value: string }[]>([]);
 
+const simulationChartOptions = computed(() => [
+	...modelParameterOptions.value,
+	...modelStateAndObsOptions.value.map((ele) => ele.label)
+]);
 const modelConfiguration = ref<ModelConfiguration | null>(null);
 
 const showAdditionalOptions = ref(true);
@@ -1041,6 +1044,7 @@ const {
 	selectedVariableSettings,
 	selectedInterventionSettings,
 	selectedComparisonChartSettings,
+	comparisonChartsSettingsSelection,
 	removeChartSettings,
 	updateChartSettings,
 	updateActiveChartSettings,
