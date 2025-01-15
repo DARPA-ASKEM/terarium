@@ -32,6 +32,12 @@
 			label="Paste"
 			class="ml-auto"
 			severity="secondary"
+			v-tooltip.left="{
+				value:
+					filteredRowNames.length !== matrix.length || filteredColumnNames.length !== matrix[0].length
+						? `Hidden rows/columns won't be ignored.`
+						: ''
+			}"
 			:disabled="clipboardText === ''"
 		/>
 	</div>
