@@ -1027,7 +1027,7 @@ public class GoLLMController {
 		@RequestParam(name = "document-id", required = false) final UUID documentId,
 		@RequestParam(name = "mode", required = false, defaultValue = "SYNC") final TaskMode mode,
 		@RequestParam(name = "project-id", required = false) final UUID projectId,
-		@RequestParam(name = "overwrite", required = false, defaultValue = "false") final boolean overwrite
+		@RequestParam(name = "overwrite", required = false, defaultValue = "true") final boolean overwrite
 	) {
 		final Schema.Permission permission = projectService.checkPermissionCanRead(
 			currentUserService.get().getId(),
