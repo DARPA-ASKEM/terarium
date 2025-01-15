@@ -219,6 +219,7 @@ export interface ChartSettingBase {
 	primaryColor?: string;
 	scale?: string;
 	smallMultiples?: boolean;
+	hideInNode?: boolean;
 	shareYAxis?: boolean;
 	showQuantiles?: boolean;
 	quantiles?: number[];

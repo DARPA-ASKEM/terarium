@@ -14,6 +14,11 @@
 						@update:model-value="toggleLogScale($event)"
 					/>
 					<tera-checkbox
+						label="Hide in node"
+						:model-value="Boolean(isHiddenInNode)"
+						@update:model-value="toggleHideInNode($event)"
+					/>
+					<tera-checkbox
 						v-if="comparison"
 						label="Small multiples"
 						:model-value="Boolean(isSmallMultiples)"
@@ -93,6 +98,7 @@ const emit = defineEmits(['close', 'update-settings', 'delete-annotation', 'crea
 
 // Log scale
 const useLog = computed(() => props.activeSettings?.scale === 'log');
+const isHiddenInNode = computed(() => !!props.activeSettings?.hideInNode);
 const isSmallMultiples = computed(() => {
 	const { smallMultiples, selectedVariables } = <ChartSetting>props.activeSettings;
 	return smallMultiples || selectedVariables?.length > 5;
@@ -101,6 +107,10 @@ const isSmallMultiples = computed(() => {
 
 const toggleLogScale = (useLogScale: boolean) => {
 	emit('update-settings', { scale: useLogScale ? 'log' : '' });
+};
+
+const toggleHideInNode = (hideInNode: boolean) => {
+	emit('update-settings', { hideInNode: !!hideInNode });
 };
 
 const toggleSmallMultiples = (smallMultiples: boolean) => {
