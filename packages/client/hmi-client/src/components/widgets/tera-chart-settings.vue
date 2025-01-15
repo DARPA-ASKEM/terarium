@@ -4,7 +4,7 @@
 		<!-- Ensemble chart options -->
 		<template v-if="type === ChartSettingType.VARIABLE_ENSEMBLE">
 			<tera-checkbox
-				:disabled="selectedOptions.length === 0"
+				:disabled="_.isEmpty(selectedOptions)"
 				label="Show individual models"
 				:model-value="Boolean(ensembleChartOptions?.showIndividualModels)"
 				@update:model-value="toggleEnsembleChartOption('showIndividualModels', $event)"
@@ -25,51 +25,19 @@
 				@update:model-value="toggleEnsembleChartOption('showIndividualModelsWithWeight', $event)"
 			/> -->
 		</template>
-		<!-- Different layout for comparison charts -->
-		<template v-if="type === ChartSettingType.VARIABLE_COMPARISON">
-			<div class="settings-item">
-				<div class="content">
-					<tera-chart-control
-						:chart-config="{
-							selectedRun: 'fixme',
-							selectedVariable: selectedOptions
-						}"
-						:multi-select="true"
-						:show-remove-button="false"
-						:variables="selectOptions"
-						@configuration-change="$emit('selection-change', $event.selectedVariable, type)"
-					/>
-				</div>
-				<div class="actions">
-					<Button
-						icon="pi pi-cog"
-						text
-						rounded
-						@click="
-							$emit('open', {
-								...currentSetting,
-								name: `${currentSetting?.selectedVariables?.join(', ')}`
-							})
-						"
-					/>
-					<Button icon="pi pi-times" text rounded @click="currentSetting && $emit('remove', currentSetting.id)" />
-				</div>
-			</div>
-		</template>
 
 		<!-- Original chart control for non-comparison charts -->
-		<template v-else>
-			<tera-chart-control
-				:chart-config="{
-					selectedRun: 'fixme',
-					selectedVariable: selectedOptions
-				}"
-				:multi-select="true"
-				:show-remove-button="false"
-				:variables="selectOptions"
-				@configuration-change="$emit('selection-change', $event.selectedVariable, type)"
-			/>
-		</template>
+		<tera-chart-control
+			v-if="type !== ChartSettingType.VARIABLE_COMPARISON"
+			:chart-config="{
+				selectedRun: 'fixme',
+				selectedVariable: selectedOptions ?? []
+			}"
+			:multi-select="true"
+			:show-remove-button="false"
+			:variables="selectOptions"
+			@configuration-change="$emit('selection-change', $event.selectedVariable, type)"
+		/>
 
 		<slot></slot>
 
@@ -112,8 +80,29 @@
 			/>
 			<div class="mb-1"></div>
 		</template>
-		<!-- Only show settings items for non-comparison charts -->
-		<template v-if="type !== ChartSettingType.VARIABLE_COMPARISON">
+		{{ targetSettings }}
+		<template v-if="type === ChartSettingType.VARIABLE_COMPARISON">
+			<!-- TODO: Move this part to it's own component, tera-chart-settings-item-comparison or inside tera-char-settings-item -->
+			<div v-for="s of targetSettings" :key="s.id" class="settings-item">
+				<div class="content">
+					<tera-chart-control
+						:chart-config="{
+							selectedRun: 'fixme',
+							selectedVariable: (comparisonSelectedOptions ?? {})[s.id] ?? []
+						}"
+						:multi-select="true"
+						:show-remove-button="false"
+						:variables="selectOptions"
+						@configuration-change="$emit('comparison-selection-change', s.id, $event.selectedVariable)"
+					/>
+				</div>
+				<div class="actions">
+					<Button icon="pi pi-cog" text rounded @click="$emit('open', s)" />
+					<Button icon="pi pi-times" text rounded @click="$emit('remove', s.id)" />
+				</div>
+			</div>
+		</template>
+		<template v-else>
 			<tera-chart-settings-item
 				v-for="s of targetSettings"
 				:key="s.id"
@@ -141,44 +130,36 @@ const props = defineProps<{
 	title?: string; // Optional title for the settings panel
 	settings: ChartSetting[];
 	type: ChartSettingType;
-	// Dropdown select options
+	/**
+	 * Available dropdown select options.
+	 */
 	selectOptions: string[];
-	// Selected dropdown options
-	selectedOptions: string[];
+	/**
+	 * Selected dropdown options.
+	 */
+	selectedOptions?: string[];
+	/**
+	 * Selected dropdown options for comparison charts
+	 */
+	comparisonSelectedOptions?: { [settingId: string]: string[] };
 	isSimulateEnsembleSettings?: boolean;
 	sensitivityOptions?: {
 		inputOptions: string[];
 		selectedInputOptions: string[];
 		timepoint: number;
 	};
-	isInitialSelector?: boolean; // For comparison charts
 }>();
 const emits = defineEmits([
 	'open',
 	'remove',
 	'selection-change',
 	'toggle-ensemble-variable-setting-option',
-	'sensitivity-selection-change'
+	'sensitivity-selection-change',
+	'comparison-selection-change'
 ]);
 
 // Settings of the same type that we want to interact with.
-const targetSettings = computed(() => {
-	if (props.type === ChartSettingType.VARIABLE_COMPARISON) {
-		// For comparison charts, we only want to show the settings items for the current setting
-		return props.settings.filter((s) => s.id === props.selectedOptions[0]);
-	}
-	// For other chart types, keep existing behavior
-	return props.settings.filter((s) => s.type === props.type);
-});
-
-// For deleting the correct comparison chart
-const currentSetting = computed(() => {
-	if (props.type === ChartSettingType.VARIABLE_COMPARISON) {
-		// Find the setting that matches our selectedOptions
-		return props.settings.find((s) => s.selectedVariables.toString() === props.selectedOptions.toString());
-	}
-	return null;
-});
+const targetSettings = computed(() => props.settings.filter((s) => s.type === props.type));
 
 // ------------------- Ensemble chart options -------------------
 const ensembleChartOptions = computed(() => getEnsembleChartSettingOptions(targetSettings.value));

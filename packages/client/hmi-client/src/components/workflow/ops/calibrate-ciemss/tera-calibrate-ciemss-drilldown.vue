@@ -477,21 +477,21 @@
 						/>
 						<Divider />
 						<!-- Comparison charts -->
+						<tera-chart-settings
+							:title="'Comparison charts'"
+							:settings="chartSettings"
+							:type="ChartSettingType.VARIABLE_COMPARISON"
+							:select-options="
+								Object.keys(pyciemssMap).filter((c) =>
+									['state', 'observable', 'parameter'].includes(modelPartTypesMap[c])
+								)
+							"
+							:comparison-selected-options="comparisonChartsSettingsSelection"
+							@open="setActiveChartSettings($event)"
+							@remove="removeChartSettings"
+							@comparison-selection-change="updateComparisonChartSetting"
+						/>
 						<div>
-							<h5 class="pb-1">Comparison charts</h5>
-							<template v-for="setting in selectedComparisonChartSettings" :key="setting.id">
-								<tera-chart-settings
-									:settings="chartSettings"
-									:type="ChartSettingType.VARIABLE_COMPARISON"
-									:select-options="Object.keys(pyciemssMap)"
-									:selected-options="setting.selectedVariables"
-									:is-initial-selector="true"
-									@open="setActiveChartSettings($event)"
-									@remove="removeChartSettings"
-									@selection-change="(variables) => updateComparisonChartSetting(setting.id, variables)"
-								/>
-							</template>
-
 							<Button
 								size="small"
 								text
@@ -813,6 +813,7 @@ const {
 	selectedInterventionSettings,
 	selectedErrorVariableSettings,
 	selectedComparisonChartSettings,
+	comparisonChartsSettingsSelection,
 	removeChartSettings,
 	updateChartSettings,
 	updateActiveChartSettings,
