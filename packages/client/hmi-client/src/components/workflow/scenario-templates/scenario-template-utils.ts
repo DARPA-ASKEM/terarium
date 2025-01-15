@@ -19,6 +19,36 @@ export const displayParameter = (parameters: ParameterSemantic[], parameterName:
 	return `${parameterName}  [${value}]`;
 };
 
+/**
+ * Generates the Cartesian product of the provided arrays.
+ *
+ * The Cartesian product of multiple arrays is a set of all possible combinations
+ * where each combination contains one element from each array.
+ *
+ * @param arrays - An array of arrays, where each inner array contains elements to combine.
+ * @returns An array of arrays, where each inner array is a combination of elements from the input arrays.
+ *
+ * Example:
+ * const arrays = [
+ *   ['low', 'high'],
+ *   ['A', 'B'],
+ *   [1, 2]
+ * ];
+ *
+ * const result = cartesianProduct(arrays);
+ * console.log(result);
+ * // Output:
+ * // [
+ * //   ['low', 'A', 1],
+ * //   ['low', 'A', 2],
+ * //   ['low', 'B', 1],
+ * //   ['low', 'B', 2],
+ * //   ['high', 'A', 1],
+ * //   ['high', 'A', 2],
+ * //   ['high', 'B', 1],
+ * //   ['high', 'B', 2]
+ * // ]
+ */
 export function cartesianProduct<T>(arrays: T[][]): T[][] {
 	return arrays.reduce((acc, curr) => acc.flatMap((a) => curr.map((b) => [...a, b])), [[]] as T[][]);
 }
