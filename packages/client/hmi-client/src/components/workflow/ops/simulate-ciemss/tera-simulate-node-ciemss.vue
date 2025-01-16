@@ -1,26 +1,23 @@
 <template>
 	<main>
 		<section v-if="!isChartsEmpty && selectedRunId && runResults[selectedRunId]">
-			<NodeCharts
+			<tera-node-charts
 				:node="node"
 				:is-loading="!!inProgressForecastRun"
 				:prepared-charts="interventionCharts"
 				:chart-settings="selectedInterventionSettings"
-				:interactive="false"
 				:are-embed-actions-visible="true"
 			/>
-			<NodeCharts
+			<tera-node-charts
 				:node="node"
 				:prepared-charts="variableCharts"
 				:chart-settings="selectedVariableSettings"
-				:interactive="false"
 				:are-embed-actions-visible="true"
 			/>
-			<NodeCharts
+			<tera-node-charts
 				:node="node"
 				:prepared-charts="comparisonCharts"
 				:chart-settings="selectedComparisonChartSettings"
-				:interactive="false"
 				:are-embed-actions-visible="true"
 			/>
 		</section>
@@ -64,7 +61,7 @@ import { useCharts } from '@/composables/useCharts';
 import { useProjects } from '@/composables/project';
 
 import { Poller, PollerState } from '@/api/api';
-import NodeCharts from '../tera-node-charts.vue';
+import TeraNodeCharts from '../tera-node-charts.vue';
 import { SimulateCiemssOperationState, SimulateCiemssOperation } from './simulate-ciemss-operation';
 import { mergeResults, renameFnGenerator } from '../calibrate-ciemss/calibrate-utils';
 import { usePreparedChartInputs } from './simulate-utils';

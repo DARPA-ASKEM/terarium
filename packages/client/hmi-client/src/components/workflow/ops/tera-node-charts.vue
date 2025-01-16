@@ -9,7 +9,6 @@
 				:expandable="expandable"
 				:are-embed-actions-visible="areEmbedActionsVisible"
 				:visualization-spec="preparedCharts[chartSettingKey || setting.id]"
-				:interactive="interactive"
 			/>
 		</div>
 	</div>
@@ -33,7 +32,6 @@ const props = defineProps<{
 	isLoading?: boolean;
 	placeholder?: string;
 	processing?: string;
-	interactive?: boolean;
 	expandable?: boolean;
 	areEmbedActionsVisible?: boolean;
 }>();

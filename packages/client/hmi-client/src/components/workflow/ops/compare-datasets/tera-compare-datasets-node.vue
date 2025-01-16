@@ -1,6 +1,6 @@
 <template>
 	<section>
-		<NodeCharts
+		<tera-node-charts
 			:node="node"
 			:prepared-charts="comparisonCharts"
 			:is-loading="isFetchingDatasets"
@@ -21,7 +21,7 @@ import { type WorkflowNode, WorkflowPortStatus } from '@/types/workflow';
 
 import { useCharts, type ChartData } from '@/composables/useCharts';
 import { useChartSettings } from '@/composables/useChartSettings';
-import NodeCharts from '../tera-node-charts.vue';
+import TeraNodeCharts from '../tera-node-charts.vue';
 
 import { CompareDatasetsState } from './compare-datasets-operation';
 

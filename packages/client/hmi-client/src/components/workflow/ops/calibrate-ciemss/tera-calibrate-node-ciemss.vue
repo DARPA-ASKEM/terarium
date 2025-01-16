@@ -3,14 +3,14 @@
 		<template
 			v-if="!inProgressCalibrationId && runResult && csvAsset && runResultPre && selectedVariableSettings.length"
 		>
-			<NodeCharts
+			<tera-node-charts
 				:node="node"
 				:is-loading="!!inProgressCalibrationId"
 				:prepared-charts="variableCharts"
 				:chart-settings="selectedVariableSettings"
 				:progress="node.state.currentProgress + '%'"
 			/>
-			<NodeCharts
+			<tera-node-charts
 				:node="node"
 				:prepared-charts="interventionCharts"
 				:chart-settings="selectedInterventionSettings"
@@ -70,7 +70,7 @@ import { useCharts } from '@/composables/useCharts';
 import { filterChartSettingsByVariables } from '@/services/chart-settings';
 import { ChartSettingType } from '@/types/common';
 import { parseCsvAsset } from '@/utils/csv';
-import NodeCharts from '../tera-node-charts.vue';
+import TeraNodeCharts from '../tera-node-charts.vue';
 import type { CalibrationOperationStateCiemss } from './calibrate-operation';
 import { CalibrationOperationCiemss } from './calibrate-operation';
 import { renameFnGenerator, usePreparedChartInputs, getSelectedOutputMapping } from './calibrate-utils';
