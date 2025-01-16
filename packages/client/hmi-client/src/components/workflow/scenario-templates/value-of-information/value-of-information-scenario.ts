@@ -329,7 +329,7 @@ export class ValueOfInformationScenario extends BaseScenario {
 		await Promise.all(interventionPromises);
 
 		// 4. Run layout
-		// The schematic for decision-making is as follows
+		// The schematic for value-of-information is as follows
 		//
 		//                           Interventions
 		//  Model -> ModelConfig ->                 -> CompareDataset
