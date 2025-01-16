@@ -9,6 +9,7 @@
 				:expandable="expandable"
 				:are-embed-actions-visible="areEmbedActionsVisible"
 				:visualization-spec="preparedCharts[chartSettingKey || setting.id]"
+				:interactive="false"
 			/>
 		</div>
 	</div>
