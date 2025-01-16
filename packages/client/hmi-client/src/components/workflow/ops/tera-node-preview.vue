@@ -3,6 +3,18 @@
 		<div v-if="processing">{{ processing }}</div>
 		<div v-else>Processing...</div>
 	</tera-progress-spinner>
+	<div v-else-if="_.isArray(visibleChartSettings[0])">
+		<div v-for="(settingsArray, index) of visibleChartSettings" :key="index">
+			<vega-chart
+				v-for="setting of settingsArray"
+				:key="chartSettingKey || setting.id"
+				:expandable="expandable"
+				:are-embed-actions-visible="areEmbedActionsVisible"
+				:visualization-spec="preparedCharts[index][chartSettingKey || setting.id]"
+				:interactive="false"
+			/>
+		</div>
+	</div>
 	<div v-else-if="visibleChartSettings.length">
 		<div v-for="setting of visibleChartSettings" :key="chartSettingKey || setting.id">
 			<vega-chart
@@ -20,6 +32,7 @@
 
 <script setup lang="ts">
 import { computed } from 'vue';
+import _ from 'lodash';
 import VegaChart from '@/components/widgets/VegaChart.vue';
 import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue';
 import TeraOperatorPlaceholder from '@/components/operator/tera-operator-placeholder.vue';
@@ -37,5 +50,10 @@ const props = defineProps<{
 	areEmbedActionsVisible?: boolean;
 }>();
 
-const visibleChartSettings = computed(() => props.chartSettings.filter((setting) => !setting?.hideInNode));
+const visibleChartSettings = computed(() => {
+	if (_.isArray(props.chartSettings[0])) {
+		return props.chartSettings.map((settingsArray) => settingsArray.filter((setting) => !setting?.hideInNode));
+	}
+	return props.chartSettings.filter((setting) => !setting?.hideInNode);
+});
 </script>

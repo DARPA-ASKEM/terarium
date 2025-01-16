@@ -217,7 +217,7 @@
 						<template v-if="!isRunInProgress">
 							<AccordionTab v-if="selectedEnsembleVariableSettings.length > 0" header="Ensemble variables over time">
 								<div class="flex flex-row" v-for="setting of selectedEnsembleVariableSettings" :key="setting.id">
-									<tera-node-charts
+									<tera-node-preview
 										:node="node"
 										:prepared-charts="ensembleVariableCharts"
 										:chart-settings="selectedEnsembleVariableSettings"
@@ -396,7 +396,7 @@ import {
 	EnsembleErrorData,
 	fetchModelConfigurations
 } from './calibrate-ensemble-util';
-import TeraNodeCharts from '../tera-node-charts.vue';
+import TeraNodePreview from '../tera-node-preview.vue';
 
 const props = defineProps<{
 	node: WorkflowNode<CalibrateEnsembleCiemssOperationState>;
