@@ -219,7 +219,7 @@
 </template>
 
 <script setup lang="ts">
-import _, { cloneDeep, groupBy, isEmpty, omit } from 'lodash';
+import _, { cloneDeep, groupBy, isEmpty, isEqual, omit } from 'lodash';
 import { ComponentPublicInstance, computed, nextTick, onMounted, ref, watch } from 'vue';
 import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
 import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.vue';
@@ -428,24 +428,20 @@ const getInterventionsAppliedTo = (appliedTo: string) =>
 
 const initialize = async (overwriteWithState: boolean = false) => {
 	const state = props.node.state;
-	const selectedOutput = props.node.outputs.find((o) => o.id === props.node.active);
+	const selectedOutput = cloneDeep(props.node.outputs.find((o) => o.id === props.node.active));
 	const selectedPolicyId: string | null = selectedOutput?.value?.[0];
 
 	await fetchInterventionPolicies();
-	// Choose the one being edited too
+
 	selectedPolicy.value =
 		interventionPoliciesList.value.find(({ id }) => id === selectedPolicyId) ??
-		selectedOutput?.state?.interventionPolicy ??
+		(selectedOutput?.state as InterventionPolicy) ??
 		null;
-
-	console.log(selectedOutput);
 
 	if (overwriteWithState || !selectedPolicy.value) {
 		knobs.value.transientInterventionPolicy = cloneDeep(state.interventionPolicy);
-		console.log('null', state.interventionPolicy);
 	} else {
 		knobs.value.transientInterventionPolicy = cloneDeep(selectedPolicy.value);
-		console.log('not null', selectedPolicy.value);
 	}
 	selectedCharts.value = state.selectedCharts ?? [];
 };
@@ -601,11 +597,6 @@ const onSaveInterventionPolicy = async () => {
 
 const resetToBlankIntervention = () => {
 	if (!modelId) return;
-	// knobs.value.transientInterventionPolicy = {
-	// 	modelId,
-	// 	interventions: [_.cloneDeep(blankIntervention)]
-	// };
-
 	emit('append-output', {
 		type: InterventionPolicyOperation.outputs[0].type,
 		label: InterventionPolicyOperation.outputs[0].label,
@@ -615,8 +606,6 @@ const resetToBlankIntervention = () => {
 			interventions: [_.cloneDeep(blankIntervention)]
 		}
 	});
-
-	console.log(props.node.outputs);
 };
 
 const extractInterventionPolicyFromInputs = async () => {
@@ -683,7 +672,6 @@ const onSelectChartChange = () => {
 watch(
 	() => knobs.value,
 	async () => {
-		console.log(2);
 		const state = cloneDeep(props.node.state);
 		state.interventionPolicy = knobs.value.transientInterventionPolicy;
 		emit('update-state', state);
@@ -694,7 +682,6 @@ watch(
 watch(
 	() => props.node.active,
 	() => {
-		console.log('active changed', props.node.active);
 		if (props.node.active) {
 			initialize();
 		}
@@ -703,13 +690,17 @@ watch(
 
 watch(
 	() => props.node.state.taskIds,
-	async (watchVal) => {
-		if (watchVal.length > 0) {
+	async (newTaskIds, oldTaskIds) => {
+		// This gets triggered on state change for some reason this helps prevent fetching the policies multiple times
+		if (isEqual(newTaskIds, oldTaskIds)) {
+			return;
+		}
+		if (props.node.state.taskIds.length > 0) {
 			isLoading.value = true;
 		} else {
 			isLoading.value = false;
 			if (!modelId) return;
-			await fetchInterventionPolicies();
+			fetchInterventionPolicies();
 		}
 	}
 );
