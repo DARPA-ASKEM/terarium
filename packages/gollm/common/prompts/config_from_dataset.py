@@ -78,7 +78,7 @@ If the user-supplied dataset is a time-series dataset, you must create a model c
         c.	`type` should be set to "initial”.
         d.	Find the value for `expression` in the user-supplied dataset that aligns with timepoint 0 or the earliest available timepoint.
         e.	`expression_mathml` should be the value of `expression` written in MathML format.
-    5.	Create a parameter semantic object for each parameter specified in the AMR model ODE semantics. Use the default values found in the AMR model. Do not try to create new values. If the default value is a constant type, set the parameter `value` to the constant value and set `type` to "Constant". If the default value is a distribution with a maximum and minimum value, set `type` to only "Uniform" and populate the `minimum` and `maximum` fields.
+    5.	Create a parameter semantic object for each parameter specified in the AMR model ODE semantics. Use the default values found in the AMR model. Do not try to create new values. If the default value is a constant type, set the parameter `value` to the constant value and set `type` to "Constant". If the default value is a distribution with a maximum and minimum value, set `type` to only "StandardUniform1" and populate the `minimum` and `maximum` fields.
     6. `observableSemanticList` should be an empty list.
     7. `inferredParameterList` should be an empty list.
 
