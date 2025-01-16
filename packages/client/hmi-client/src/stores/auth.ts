@@ -12,12 +12,14 @@ const useAuthStore = defineStore('auth', () => {
 	const oidc = ref<Oidc | null>(null);
 
 	const login = async (redirectUri: string) => {
-		oidc.value!.login({
-			doesCurrentHrefRequiresAuth: false,
-			extraQueryParams: {
-				redirectUri
-			}
-		});
+		if (!oidc.value?.isUserLoggedIn || oidc.value?.isUserLoggedIn) {
+			oidc.value?.login({
+				doesCurrentHrefRequiresAuth: false,
+				extraQueryParams: {
+					redirectUri
+				}
+			});
+		}
 	};
 	const logout = async () => {
 		if (oidc.value?.isUserLoggedIn) {
