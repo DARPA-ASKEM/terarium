@@ -107,7 +107,7 @@ function setZoom(tx: number, ty: number, k: number) {
 	const svg = d3.select(backgroundLayerRef.value as SVGGElement); // Parent SVG
 	svg
 		.transition()
-		.duration(2500)
+		.duration(1500)
 		.call(zoom.transform as any, d3.zoomIdentity.translate(tx, ty).scale(k));
 }
 

@@ -20,6 +20,15 @@
 				<div class="button-group">
 					<Button
 						id="add-component-btn"
+						icon="pi pi-expand"
+						label="Reset Zoom"
+						@click="resetZoom"
+						size="small"
+						class="white-space-nowrap"
+					/>
+
+					<Button
+						id="add-component-btn"
 						icon="pi pi-plus"
 						label="Add component"
 						@click="showAddComponentMenu"
