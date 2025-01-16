@@ -829,7 +829,6 @@ function relinkEdges(node: WorkflowNode<any> | null) {
 }
 
 function resetZoom() {
-	console.log('resetting zoom!!!');
 	let scaleFactor = 1;
 	let translateX = 1;
 	let translateY = 1;
@@ -843,15 +842,12 @@ function resetZoom() {
 	const yMin = yExtent[0] - 20;
 	const yMax = yExtent[1] + 300;
 
-	console.log('extends', xMin, yMin, xMax, yMax);
-
+	// Find fitted scale
 	const workflowCenterX = 0.5 * (xMax - xMin);
 	const workflowCenterY = 0.5 * (yMax - yMin);
 
 	const canvasW = (canvasRef.value.$el as HTMLElement).clientWidth;
 	const canvasH = (canvasRef.value.$el as HTMLElement).clientHeight;
-
-	console.log('canvas', canvasW, canvasH);
 
 	scaleFactor = Math.min(canvasW / (xMax - xMin), canvasH / (yMax - yMin));
 
@@ -859,22 +855,9 @@ function resetZoom() {
 	translateX = canvasW / 2 - scaleFactor * workflowCenterX;
 	translateY = canvasH / 2 - scaleFactor * workflowCenterY;
 
-	// const transform = {
-	// 	x: translateX,
-	// 	y: translateY,
-	// 	k: scaleFactor
-	// };
-
-	const transform = d3.zoomIdentity.translate(translateX, translateY).scale(scaleFactor);
-
-	console.log('transform is', transform);
-	// return;
-
 	// Call exposed function to set zoom
 	canvasRef.value.setZoom(translateX, translateY, scaleFactor);
 }
-
-window.resetZoom = resetZoom;
 
 let prevX = 0;
 let prevY = 0;

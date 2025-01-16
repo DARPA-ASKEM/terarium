@@ -94,16 +94,6 @@ function handleZoomEnd() {
 }
 
 function setZoom(tx: number, ty: number, k: number) {
-	// const svgContainer = d3.select(svgRef.value as SVGGElement); // Pan/zoom area
-	// const svg = d3.select(backgroundLayerRef.value as SVGGElement); // Parent SVG
-	// const transform = d3.zoomIdentity.translate(e.x, e.y).scale(e.k);
-	// svg.call(zoom.transform as any, transform);
-
-	// const svgContainer = d3.select(svgRef.value as SVGGElement); // Pan/zoom area
-	// handleZoom(e, svgContainer);
-	// handleZoomEnd();
-	// zoom.transform(svgContainer as any, e);
-
 	const svg = d3.select(backgroundLayerRef.value as SVGGElement); // Parent SVG
 	svg
 		.transition()
