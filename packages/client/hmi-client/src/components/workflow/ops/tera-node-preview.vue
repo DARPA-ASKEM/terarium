@@ -34,6 +34,7 @@
 import { computed } from 'vue';
 import _ from 'lodash';
 import VegaChart from '@/components/widgets/VegaChart.vue';
+import { ChartSetting } from '@/types/common';
 import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue';
 import TeraOperatorPlaceholder from '@/components/operator/tera-operator-placeholder.vue';
 import { WorkflowNode } from '@/types/workflow';
@@ -41,7 +42,7 @@ import { WorkflowNode } from '@/types/workflow';
 const props = defineProps<{
 	node: WorkflowNode<any>;
 	preparedCharts: any;
-	chartSettings: any;
+	chartSettings: ChartSetting[] | null;
 	chartSettingKey?: string;
 	isLoading?: boolean;
 	placeholder?: string;
