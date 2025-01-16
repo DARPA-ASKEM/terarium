@@ -70,6 +70,31 @@ public class EnrichDatasetResponseHandler extends TaskResponseHandler {
 		Boolean overwrite;
 	}
 
+	private void removeNullNodes(ObjectNode objectNode) {
+		Iterator<Map.Entry<String, JsonNode>> fields = objectNode.fields();
+		List<String> keysToRemove = new ArrayList<>();
+
+		while (fields.hasNext()) {
+			Map.Entry<String, JsonNode> entry = fields.next();
+			JsonNode value = entry.getValue();
+			if (value.isNull()) {
+				keysToRemove.add(entry.getKey());
+			} else if (value.isObject()) {
+				removeNullNodes((ObjectNode) value);
+			} else if (value.isArray()) {
+				for (JsonNode arrayItem : value) {
+					if (arrayItem.isObject()) {
+						removeNullNodes((ObjectNode) arrayItem);
+					}
+				}
+			}
+		}
+
+		for (String key : keysToRemove) {
+			objectNode.remove(key);
+		}
+	}
+
 	@Override
 	public TaskResponse onSuccess(final TaskResponse resp) {
 		try {
@@ -88,24 +113,9 @@ public class EnrichDatasetResponseHandler extends TaskResponseHandler {
 			// Update the dataset with the new card
 			((ObjectNode) dataset.getMetadata()).set("dataCard", response.response.card);
 
-			// Remove fields from the datacard that are null or empty
+			// Remove fields from the datacard that are null
 			final ObjectNode dataCard = (ObjectNode) dataset.getMetadata().get("dataCard");
-			Iterator<Map.Entry<String, JsonNode>> fields = dataCard.fields();
-			List<String> keysToRemove = new ArrayList<>();
-
-			while (fields.hasNext()) {
-				Map.Entry<String, JsonNode> entry = fields.next();
-				if (
-					entry.getValue().isNull() ||
-					entry.getValue().asText().equalsIgnoreCase("none") ||
-					entry.getValue().asText().equalsIgnoreCase("null")
-				) {
-					keysToRemove.add(entry.getKey());
-				}
-			}
-			for (String key : keysToRemove) {
-				dataCard.remove(key);
-			}
+			removeNullNodes(dataCard);
 
 			((ObjectNode) dataset.getMetadata()).put(
 					"description",
@@ -124,10 +134,6 @@ public class EnrichDatasetResponseHandler extends TaskResponseHandler {
 				metadata.put("name", name);
 				metadata.put("description", description);
 				metadata.put("unit", unit);
-
-				// Based on the name, description, fetch the best grounding available and add it to the metadata
-				// final DKG grounding = dkgService.knnSearchEpiDKG(0, 1, 1, name + " " + description, null)
-				// metadata.put("grounding", grounding);
 
 				dataset
 					.getColumns()
