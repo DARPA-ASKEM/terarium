@@ -506,12 +506,6 @@ async function onMenuSelection(operatorType: string, menuNode: WorkflowNode<any>
 			}
 		});
 
-		// Will not connect nodes if there is anything besides 1 match
-		if (inputPorts.length !== 1) {
-			console.warn(`Ambiguous matching types [${newNode.inputs}] to [${port}]`);
-			return;
-		}
-
 		const edgePayload: WorkflowEdge = {
 			id: uuidv4(),
 			workflowId: wf.value.getId(),
