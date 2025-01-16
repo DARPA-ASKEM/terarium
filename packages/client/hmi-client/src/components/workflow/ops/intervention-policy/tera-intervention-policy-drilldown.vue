@@ -50,9 +50,6 @@
 						<tera-input-text v-model="filterInterventionsText" placeholder="Filter" />
 						<ul v-if="!isFetchingPolicies">
 							<li v-for="policy in interventionPoliciesFiltered" :key="policy.id">
-								current: {{ policy.id }}
-								<br />
-								selected:{{ selectedPolicy?.id }}
 								<tera-intervention-policy-card
 									:interventionPolicy="policy"
 									:selected="selectedPolicy?.id === policy.id"
