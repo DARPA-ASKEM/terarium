@@ -21,7 +21,7 @@ import { InterventionPolicy } from '@/types/Types';
 export class DecisionMakingScenario extends BaseScenario {
 	public static templateId = 'decision-making';
 
-	public static templateName = 'Decision Making';
+	public static templateName = 'Decision making';
 
 	modelSpec: { id: string };
 
@@ -309,8 +309,40 @@ export class DecisionMakingScenario extends BaseScenario {
 		});
 		await Promise.all(promises);
 
-		wf.runDagreLayout();
+		// 4. Run layout
+		// The schematic for decision-making is as follows
+		//
+		//                           Interventions
+		//  Model -> ModelConfig ->                 -> CompareDataset
+		//                           Forecasts
+		//
+		// wf.runDagreLayout();
+		const nodeGapHorizontal = 325;
 
+		modelNode.x = 100;
+		modelNode.y = 500;
+
+		modelConfigNode.x = modelNode.x + nodeGapHorizontal;
+		modelConfigNode.y = 800;
+
+		const neighbors = wf.getNeighborNodes(modelConfigNode.id);
+		neighbors.downstreamNodes.forEach((forecastNode, forecastIdx) => {
+			forecastNode.x = modelConfigNode.x + nodeGapHorizontal * (forecastIdx + 1);
+			forecastNode.y = modelConfigNode.y + 150;
+
+			// align the intervention node for each forecast
+			const forecastNeighbours = wf.getNeighborNodes(forecastNode.id);
+			const interventionNode = forecastNeighbours.upstreamNodes.filter(
+				(op) => op.operationType === InterventionOp.name
+			)[0];
+			if (interventionNode) {
+				interventionNode.x = forecastNode.x;
+				interventionNode.y = forecastNode.y - 400;
+			}
+		});
+
+		compareDatasetNode.x = modelConfigNode.x + nodeGapHorizontal * (neighbors.downstreamNodes.length + 1);
+		compareDatasetNode.y = 500;
 		return wf.dump();
 	}
 }

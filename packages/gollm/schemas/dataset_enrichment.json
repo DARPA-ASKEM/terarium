@@ -25,15 +25,15 @@
           "type": ["object", "null"],
           "properties": {
             "personalAndSensitiveInformation": {
-              "type": "string",
+              "type": ["string", "null"],
               "description": "Statement of whether the dataset contains other data that might be considered sensitive (e.g., data that reveals racial or ethnic origins, financial or health data, etc.)."
             },
             "discussionOfBiases": {
-              "type": "string",
+              "type": ["string", "null"],
               "description": "Discussion of any biases present in the data (e.g., missing data, imbalanced classes, label noise, etc.)."
             },
             "otherKnownLimitations": {
-              "type": "string",
+              "type": ["string", "null"],
               "description": "Any other limitations in the data."
             }
           },
@@ -48,26 +48,26 @@
           "type": ["object", "null"],
           "properties": {
             "datasetCurators": {
-              "type": "array",
+              "type": ["array", "null"],
               "description": "The people involved in collecting the dataset and their affiliation(s).",
               "items": {
                 "type": "string"
               }
             },
             "licensingInformation": {
-              "type": "string",
+              "type": ["string", "null"],
               "description": "The license and link to the license webpage if available."
             },
             "citationInformation": {
-              "type": "string",
+              "type": ["string", "null"],
               "description": "The BibTex-formatted reference for the dataset."
             },
             "datasetHomepage": {
-              "type": "string",
+              "type": ["string", "null"],
               "description": "The homepage of the dataset."
             },
             "additionalLinks": {
-              "type": "array",
+              "type": ["array", "null"],
               "description": "Additional links related to the dataset.",
               "items": {
                 "type": "string"
