@@ -315,7 +315,6 @@ const interventionPoliciesFiltered = computed(() =>
 		.sort((a, b) => sortDatesDesc(a.createdOn, b.createdOn))
 );
 
-const selectedPolicyId = computed(() => props.node.outputs.find((o) => o.id === props.node.active)?.value?.[0]);
 const selectedPolicy = ref<InterventionPolicy | null>(null);
 
 const newDescription = ref('');
@@ -402,16 +401,24 @@ const getInterventionsAppliedTo = (appliedTo: string) =>
 
 const initialize = async (overwriteWithState: boolean = false) => {
 	const state = props.node.state;
+	const selectedOutput = props.node.outputs.find((o) => o.id === props.node.active);
+	const selectedPolicyId: string | null = selectedOutput?.value?.[0];
 
 	await fetchInterventionPolicies();
-	selectedPolicy.value = interventionPoliciesList.value.find(({ id }) => id === selectedPolicyId.value) ?? null;
+	// Choose the one being edited too
+	selectedPolicy.value =
+		interventionPoliciesList.value.find(({ id }) => id === selectedPolicyId) ??
+		selectedOutput?.state?.interventionPolicy ??
+		null;
+
+	console.log(selectedOutput);
 
 	if (overwriteWithState || !selectedPolicy.value) {
-		console.log(state.interventionPolicy);
 		knobs.value.transientInterventionPolicy = cloneDeep(state.interventionPolicy);
+		console.log('null', state.interventionPolicy);
 	} else {
-		console.log(selectedPolicy.value);
 		knobs.value.transientInterventionPolicy = cloneDeep(selectedPolicy.value);
+		console.log('not null', selectedPolicy.value);
 	}
 	selectedCharts.value = state.selectedCharts ?? [];
 };
@@ -573,15 +580,19 @@ const onSaveInterventionPolicy = async () => {
 
 const resetToBlankIntervention = () => {
 	if (!modelId) return;
-	knobs.value.transientInterventionPolicy = {
-		modelId,
-		interventions: [_.cloneDeep(blankIntervention)]
-	};
+	// knobs.value.transientInterventionPolicy = {
+	// 	modelId,
+	// 	interventions: [_.cloneDeep(blankIntervention)]
+	// };
 
 	emit('append-output', {
 		type: InterventionPolicyOperation.outputs[0].type,
 		label: InterventionPolicyOperation.outputs[0].label,
-		value: null
+		value: null,
+		state: {
+			modelId,
+			interventions: [_.cloneDeep(blankIntervention)]
+		}
 	});
 
 	console.log(props.node.outputs);
@@ -619,6 +630,7 @@ const onSelectChartChange = () => {
 watch(
 	() => knobs.value,
 	async () => {
+		console.log(2);
 		const state = cloneDeep(props.node.state);
 		state.interventionPolicy = knobs.value.transientInterventionPolicy;
 		emit('update-state', state);
@@ -629,6 +641,7 @@ watch(
 watch(
 	() => props.node.active,
 	() => {
+		console.log('active changed', props.node.active);
 		if (props.node.active) {
 			initialize();
 		}
