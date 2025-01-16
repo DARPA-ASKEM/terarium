@@ -28,7 +28,7 @@ import { WorkflowNode } from '@/types/workflow';
 const props = defineProps<{
 	node: WorkflowNode<any>;
 	preparedCharts: any;
-	chartSettings:  ChartSetting[];
+	chartSettings: any;
 	chartSettingKey?: string;
 	isLoading?: boolean;
 	placeholder?: string;

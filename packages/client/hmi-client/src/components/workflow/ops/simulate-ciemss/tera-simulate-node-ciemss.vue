@@ -64,7 +64,7 @@ import { useCharts } from '@/composables/useCharts';
 import { useProjects } from '@/composables/project';
 
 import { Poller, PollerState } from '@/api/api';
-import NodeCharts from '../node-charts.vue';
+import NodeCharts from '../tera-node-charts.vue';
 import { SimulateCiemssOperationState, SimulateCiemssOperation } from './simulate-ciemss-operation';
 import { mergeResults, renameFnGenerator } from '../calibrate-ciemss/calibrate-utils';
 import { usePreparedChartInputs } from './simulate-utils';

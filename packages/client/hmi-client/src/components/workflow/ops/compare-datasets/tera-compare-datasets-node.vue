@@ -21,7 +21,7 @@ import { type WorkflowNode, WorkflowPortStatus } from '@/types/workflow';
 
 import { useCharts, type ChartData } from '@/composables/useCharts';
 import { useChartSettings } from '@/composables/useChartSettings';
-import NodeCharts from '../node-charts.vue';
+import NodeCharts from '../tera-node-charts.vue';
 
 import { CompareDatasetsState } from './compare-datasets-operation';
 

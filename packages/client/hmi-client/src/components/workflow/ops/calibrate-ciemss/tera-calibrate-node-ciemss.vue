@@ -70,7 +70,7 @@ import { useCharts } from '@/composables/useCharts';
 import { filterChartSettingsByVariables } from '@/services/chart-settings';
 import { ChartSettingType } from '@/types/common';
 import { parseCsvAsset } from '@/utils/csv';
-import NodeCharts from '../node-charts.vue';
+import NodeCharts from '../tera-node-charts.vue';
 import type { CalibrationOperationStateCiemss } from './calibrate-operation';
 import { CalibrationOperationCiemss } from './calibrate-operation';
 import { renameFnGenerator, usePreparedChartInputs, getSelectedOutputMapping } from './calibrate-utils';

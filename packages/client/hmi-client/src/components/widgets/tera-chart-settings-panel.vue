@@ -8,20 +8,16 @@
 			<div class="content">
 				<div class="annotation-items">
 					<h5>Options</h5>
-					<tera-checkbox
-						label="Use log scale"
-						:model-value="Boolean(useLog)"
-						@update:model-value="toggleLogScale($event)"
-					/>
+					<tera-checkbox label="Use log scale" :model-value="useLog" @update:model-value="toggleLogScale($event)" />
 					<tera-checkbox
 						label="Hide in node"
-						:model-value="Boolean(isHiddenInNode)"
+						:model-value="isHiddenInNode"
 						@update:model-value="toggleHideInNode($event)"
 					/>
 					<tera-checkbox
 						v-if="comparison"
 						label="Small multiples"
-						:model-value="Boolean(isSmallMultiples)"
+						:model-value="isSmallMultiples"
 						@update:model-value="toggleSmallMultiples($event)"
 					/>
 					<!-- TODO: we want this but it is under research for how to get it to work in vega-lite -->
@@ -97,9 +93,9 @@ const props = defineProps<{
 const emit = defineEmits(['close', 'update-settings', 'delete-annotation', 'create-annotation']);
 
 // Log scale
-const useLog = computed(() => props.activeSettings?.scale === 'log');
-const isHiddenInNode = computed(() => !!props.activeSettings?.hideInNode);
-const isSmallMultiples = computed(() => {
+const useLog = computed<boolean>(() => props.activeSettings?.scale === 'log');
+const isHiddenInNode = computed<boolean>(() => !!props.activeSettings?.hideInNode);
+const isSmallMultiples = computed<boolean>(() => {
 	const { smallMultiples, selectedVariables } = <ChartSetting>props.activeSettings;
 	return smallMultiples || selectedVariables?.length > 5;
 });

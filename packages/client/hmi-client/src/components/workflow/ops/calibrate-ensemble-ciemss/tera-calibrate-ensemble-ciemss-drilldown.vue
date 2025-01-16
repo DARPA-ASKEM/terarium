@@ -396,7 +396,7 @@ import {
 	EnsembleErrorData,
 	fetchModelConfigurations
 } from './calibrate-ensemble-util';
-import NodeCharts from '../node-charts.vue';
+import NodeCharts from '../tera-node-charts.vue';
 
 const props = defineProps<{
 	node: WorkflowNode<CalibrateEnsembleCiemssOperationState>;
