@@ -430,7 +430,57 @@ export class HorizonScanningScenario extends BaseScenario {
 		});
 
 		// 4. Run layout
-		wf.runDagreLayout();
+		// The schematic for horizon-scanning is as follows
+		//
+		//  Model ->                 Intervention1, Intervention2, Intervention3
+		//           ModelConfig 1
+		//           ModelConfig 2                Forecasts-Grid                  CompareDataset
+		//           ModelConfig 3
+		//
+		//
+		const nodeGapHorizontal = 400;
+		const nodeGapVertical = 400;
+		modelNode.x = 100;
+		modelNode.y = 500;
+
+		// Build the XY axis
+		interventionNodes.forEach((interventionNode, idx) => {
+			interventionNode.x = modelNode.x + nodeGapHorizontal * (idx + 2);
+			interventionNode.y = modelNode.y - 50;
+		});
+
+		modelConfigNodes.forEach((modelConfigNode, idx) => {
+			modelConfigNode.x = modelNode.x + nodeGapHorizontal;
+			modelConfigNode.y = modelNode.y + nodeGapVertical * (idx + 1);
+		});
+
+		// Layout forecast
+		const forecastNodes = wf.getNodes().filter((node) => node.operationType === SimulateCiemssOp.name);
+		forecastNodes.forEach((node) => {
+			const neighbors = wf.getNeighborNodes(node.id);
+			const upstreamNodes = neighbors.upstreamNodes;
+
+			node.x = modelNode.x + nodeGapHorizontal * 2; // Default
+			upstreamNodes.forEach((upstreamNode) => {
+				// Y
+				if (upstreamNode.operationType === ModelConfigOp.name) {
+					node.y = upstreamNode.y;
+				}
+
+				// X
+				if (upstreamNode.operationType === InterventionOp.name) {
+					node.x = upstreamNode.x;
+				}
+			});
+		});
+
+		// Data comparison
+		if (interventionNodes.length > 0) {
+			compareDatasetNode.x = modelNode.x + (2 + interventionNodes.length) * nodeGapHorizontal;
+		} else {
+			compareDatasetNode.x = modelNode.x + 3 * nodeGapHorizontal;
+		}
+		compareDatasetNode.y = 500;
 
 		return wf.dump();
 	}

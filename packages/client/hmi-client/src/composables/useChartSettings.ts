@@ -2,13 +2,13 @@ import { cloneDeep } from 'lodash';
 import { ref, computed, watch } from 'vue';
 import { ChartSetting, ChartSettingEnsembleVariable, ChartSettingSensitivity, ChartSettingType } from '@/types/common';
 import {
-	addMultiVariableChartSetting,
 	EnsembleVariableChartSettingOption,
 	removeChartSettingById,
 	updateChartSettingsBySelectedVariables,
 	updateAllChartSettings,
 	updateSensitivityChartSettingOption,
-	CHART_SETTING_WITH_QUANTILES_OPTIONS
+	CHART_SETTING_WITH_QUANTILES_OPTIONS,
+	createNewChartSetting
 } from '@/services/chart-settings';
 import { WorkflowNode } from '@/types/workflow';
 
@@ -26,7 +26,12 @@ export function useChartSettings(
 ) {
 	const chartSettings = computed(() => props.node.state.chartSettings ?? []);
 	const activeChartSettings = ref<ChartSetting | null>(null);
-	const comparisonChartsSettingsSelection = ref<string[]>([]);
+	const comparisonChartsSettingsSelection = computed<{ [settingId: string]: string[] }>(() =>
+		selectedComparisonChartSettings.value.reduce((acc, setting) => {
+			acc[setting.id] = setting.selectedVariables;
+			return acc;
+		}, {})
+	);
 
 	// Computed properties to filter chart settings by type
 	const selectedParameterSettings = computed(() =>
@@ -85,16 +90,18 @@ export function useChartSettings(
 		});
 	};
 
-	const addComparisonChartSettings = () => {
+	const addEmptyComparisonChart = () => {
 		emit('update-state', {
 			...props.node.state,
-			chartSettings: addMultiVariableChartSetting(
-				chartSettings.value,
-				ChartSettingType.VARIABLE_COMPARISON,
-				comparisonChartsSettingsSelection.value
-			)
+			chartSettings: [...chartSettings.value, createNewChartSetting('', ChartSettingType.VARIABLE_COMPARISON, [])]
 		});
-		comparisonChartsSettingsSelection.value = [];
+	};
+
+	const updateComparisonChartSetting = (chartId: string, selectedVariables: string[]) => {
+		findAndUpdateChartSettingsById(chartId, {
+			name: selectedVariables.join(', '),
+			selectedVariables
+		});
 	};
 
 	const updateEnsembleVariableSettingOption = (option: EnsembleVariableChartSettingOption, value: boolean) => {
@@ -163,10 +170,11 @@ export function useChartSettings(
 		updateActiveChartSettings,
 		removeChartSettings,
 		updateChartSettings,
-		addComparisonChartSettings,
 		updateEnsembleVariableSettingOption,
 		updateQauntilesOptions,
 		updateSensitivityChartSettings,
-		findAndUpdateChartSettingsById
+		findAndUpdateChartSettingsById,
+		addEmptyComparisonChart,
+		updateComparisonChartSetting
 	};
 }
