@@ -1,6 +1,12 @@
 import { cloneDeep } from 'lodash';
 import { ref, computed, watch } from 'vue';
-import { ChartSetting, ChartSettingEnsembleVariable, ChartSettingSensitivity, ChartSettingType } from '@/types/common';
+import {
+	ChartSetting,
+	ChartSettingComparison,
+	ChartSettingEnsembleVariable,
+	ChartSettingSensitivity,
+	ChartSettingType
+} from '@/types/common';
 import {
 	EnsembleVariableChartSettingOption,
 	removeChartSettingById,
@@ -98,10 +104,18 @@ export function useChartSettings(
 	};
 
 	const updateComparisonChartSetting = (chartId: string, selectedVariables: string[]) => {
-		findAndUpdateChartSettingsById(chartId, {
-			name: selectedVariables.join(', '),
-			selectedVariables
-		});
+		const state = cloneDeep(props.node.state);
+		if (!state.chartSettings) return;
+		const setting = state.chartSettings.find(
+			(settings) => settings.id === chartId && settings.type === ChartSettingType.VARIABLE_COMPARISON
+		) as ChartSettingComparison | undefined;
+		if (!setting) return;
+		Object.assign(setting, { selectedVariables });
+		if (setting.smallMultiples === undefined && selectedVariables.length > 5) {
+			// If there are more than 5 variables and the option isn't set yet, enable small multiples by default
+			setting.smallMultiples = true;
+		}
+		emit('update-state', state);
 	};
 
 	const updateEnsembleVariableSettingOption = (option: EnsembleVariableChartSettingOption, value: boolean) => {
