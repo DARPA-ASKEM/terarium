@@ -193,7 +193,11 @@ const emit = defineEmits(['save-workflow']);
 
 const onRemoveTab = (index: number) => {
 	props.scenario.removeTabSpec(index);
-	if (activeTab.value > 0 && index === activeTab.value) {
+	if (activeTab.value === index) {
+		// If the removed tab is the currently active tab, switch to the previous tab
+		activeTab.value = Math.max(0, activeTab.value - 1);
+	} else if (activeTab.value > index) {
+		// If the removed tab is before the currently active tab, adjust the active tab index
 		activeTab.value--;
 	}
 };
