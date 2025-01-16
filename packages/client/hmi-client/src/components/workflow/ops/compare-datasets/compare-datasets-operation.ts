@@ -2,6 +2,8 @@ import { WorkflowOperationTypes } from '@/types/workflow';
 import type { Operation, BaseState } from '@/types/workflow';
 import { ChartSetting } from '@/types/common';
 
+const DOCUMENTATION_URL = 'https://documentation.terarium.ai/datasets/compare-datasets/';
+
 export enum TimepointOption {
 	LAST = 'last',
 	FIRST = 'first'

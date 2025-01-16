@@ -3,6 +3,8 @@ import type { BaseState, Operation } from '@/types/workflow';
 import { WorkflowOperationTypes } from '@/types/workflow';
 import { isEqual, omit } from 'lodash';
 
+const DOCUMENTATION_URL = 'https://documentation.terarium.ai/config-and-intervention/create-intervention-policy/';
+
 export interface InterventionPolicyState extends BaseState {
 	interventionPolicy: InterventionPolicy;
 	taskIds: string[];

@@ -1,6 +1,8 @@
 import { Operation, WorkflowOperationTypes, BaseState } from '@/types/workflow';
 import model from '@assets/svg/operator-images/model.svg';
 
+const DOCUMENTATION_URL = 'https://documentation.terarium.ai/modeling/review-and-enrich-model/';
+
 export interface ModelOperationState extends BaseState {
 	modelId: string | null;
 }

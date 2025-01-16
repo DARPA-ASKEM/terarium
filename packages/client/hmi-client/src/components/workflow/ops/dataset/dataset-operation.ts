@@ -1,6 +1,8 @@
 import { Operation, WorkflowOperationTypes, BaseState } from '@/types/workflow';
 import dataset from '@assets/svg/operator-images/dataset.svg';
 
+const DOCUMENTATION_URL = 'https://documentation.terarium.ai/datasets/review-and-enrich-dataset/';
+
 export interface DatasetOperationState extends BaseState {
 	datasetId: string | null;
 }

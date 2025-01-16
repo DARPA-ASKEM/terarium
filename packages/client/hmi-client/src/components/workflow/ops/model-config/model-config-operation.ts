@@ -7,6 +7,8 @@ import { cloneDeep, differenceWith, isEqual, omit } from 'lodash';
 
 export const name = 'ModelConfigOperation';
 
+const DOCUMENTATION_URL = 'https://documentation.terarium.ai/config-and-intervention/configure-model/';
+
 export interface ModelConfigOperationState extends BaseState {
 	transientModelConfig: ModelConfiguration;
 	notebookHistory: NotebookHistory[];
