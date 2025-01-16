@@ -221,7 +221,7 @@
 										:node="node"
 										:prepared-charts="ensembleVariableCharts"
 										:chart-settings="selectedEnsembleVariableSettings"
-										:expandable="true"
+										expandable
 									/>
 								</div>
 							</AccordionTab>
