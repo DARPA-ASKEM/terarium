@@ -13,7 +13,8 @@ import type {
 	WorkflowEdge,
 	WorkflowNode,
 	WorkflowPort,
-	WorkflowOutput
+	WorkflowOutput,
+	WorkflowAnnotation
 } from '@/types/workflow';
 import {
 	WorkflowPortStatus,
@@ -913,6 +914,18 @@ export const addNode = async (id: string, node: WorkflowNode<any>) => {
 export const addEdge = async (id: string, edge: WorkflowEdge) => {
 	console.log('>> workflowService.addEdge', edge.source, edge.target);
 	const response = await API.post(`/workflows/${id}/edge`, edge);
+	return response.data ?? null;
+};
+
+export const addOrUpdateAnnotation = async (id: string, annotation: WorkflowAnnotation) => {
+	console.log('>> workflowService.addOrUpdateAnnotation');
+	const response = await API.post(`/workflows/${id}/annotation`, annotation);
+	return response.data ?? null;
+};
+
+export const removeAnnotation = async (id: string, annotationId: string) => {
+	console.log('>> workflowService.removeAnnotation');
+	const response = await API.delete(`/workflows/${id}/annotation/${annotationId}`);
 	return response.data ?? null;
 };
 
