@@ -1,7 +1,6 @@
 import json
-import re
-
 import jsonschema
+import re
 import tiktoken
 
 
@@ -67,8 +66,8 @@ def model_config_adapter(model_config: dict) -> dict:
                 param["distribution"]["type"] = "Constant"
                 param["distribution"]["parameters"].pop("minimum", None)
                 param["distribution"]["parameters"].pop("maximum", None)
-            elif param["distribution"]["type"].casefold() == "uniform":
-                param["distribution"]["type"] = "Uniform"
+            elif param["distribution"]["type"].casefold() == "uniform" or param["distribution"]["type"].casefold() == "standarduniform1":
+                param["distribution"]["type"] = "StandardUniform1"
                 param["distribution"]["parameters"].pop("value", None)
             else:
                 if "value" in param["distribution"]["parameters"]:
@@ -76,7 +75,7 @@ def model_config_adapter(model_config: dict) -> dict:
                     param["distribution"]["parameters"].pop("minimum", None)
                     param["distribution"]["parameters"].pop("maximum", None)
                 elif "minimum" in param["distribution"]["parameters"] and "maximum" in param["distribution"]["parameters"]:
-                    param["distribution"]["type"] = "Uniform"
+                    param["distribution"]["type"] = "StandardUniform1"
                     param["distribution"]["parameters"].pop("value", None)
                 else:
                     raise ValueError("Invalid distribution type")
