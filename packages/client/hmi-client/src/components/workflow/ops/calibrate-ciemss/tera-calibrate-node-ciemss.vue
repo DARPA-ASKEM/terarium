@@ -417,7 +417,7 @@ watch(
 						datasetId: datasetResult.id
 					}
 				],
-				state
+				state: _.omit(state, ['chartSettings'])
 			});
 		}
 	},

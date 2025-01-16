@@ -9,31 +9,31 @@
           "type": "string",
           "description": "A brief summary of the dataset, including its intended use, supported tasks, an overview of how and why the dataset was created, etc."
         },
-        "datasetStructure": {
+        "insights": {
           "type": "array",
-          "description": "List and describe the fields present in the dataset.",
+          "description": "List any columns that contain temporal or spatial data.",
           "items": {
             "type": "string",
-            "description": "A short paragraph describing and summarizing the dataset field. The paragraph should start with the name, then a colon, then a description of the field including units and datatypes."
+            "description": "A short paragraph describing and summarizing the dataset field. The paragraph should start with the name, then a colon, then a description of the column statistics."
           }
         },
         "sourceData": {
-          "type": "string",
+          "type": ["string", "null"],
           "description": "The source data (e.g. news text and headlines, social media posts, translated sentences, etc.), including the data collection process, and data producer."
         },
         "considerationsForUsingTheData": {
-          "type": "object",
+          "type": ["object", "null"],
           "properties": {
             "personalAndSensitiveInformation": {
-              "type": "string",
+              "type": ["string", "null"],
               "description": "Statement of whether the dataset contains other data that might be considered sensitive (e.g., data that reveals racial or ethnic origins, financial or health data, etc.)."
             },
             "discussionOfBiases": {
-              "type": "string",
+              "type": ["string", "null"],
               "description": "Discussion of any biases present in the data (e.g., missing data, imbalanced classes, label noise, etc.)."
             },
             "otherKnownLimitations": {
-              "type": "string",
+              "type": ["string", "null"],
               "description": "Any other limitations in the data."
             }
           },
@@ -45,29 +45,29 @@
           "additionalProperties": false
         },
         "additionalInformation": {
-          "type": "object",
+          "type": ["object", "null"],
           "properties": {
             "datasetCurators": {
-              "type": "array",
+              "type": ["array", "null"],
               "description": "The people involved in collecting the dataset and their affiliation(s).",
               "items": {
                 "type": "string"
               }
             },
             "licensingInformation": {
-              "type": "string",
+              "type": ["string", "null"],
               "description": "The license and link to the license webpage if available."
             },
             "citationInformation": {
-              "type": "string",
+              "type": ["string", "null"],
               "description": "The BibTex-formatted reference for the dataset."
             },
             "datasetHomepage": {
-              "type": "string",
+              "type": ["string", "null"],
               "description": "The homepage of the dataset."
             },
             "additionalLinks": {
-              "type": "array",
+              "type": ["array", "null"],
               "description": "Additional links related to the dataset.",
               "items": {
                 "type": "string"
@@ -86,7 +86,7 @@
       },
       "required": [
         "datasetDescription",
-        "datasetStructure",
+        "insights",
         "sourceData",
         "considerationsForUsingTheData",
         "additionalInformation"
