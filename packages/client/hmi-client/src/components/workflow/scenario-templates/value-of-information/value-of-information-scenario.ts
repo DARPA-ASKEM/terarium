@@ -227,6 +227,7 @@ export class ValueOfInformationScenario extends BaseScenario {
 		);
 
 		clonedModelConfig.name = `${modelConfig.name}_value_of_information`;
+		clonedModelConfig.description = `This is a configuration created from "${modelConfig.name}" using the value of information scenario template.`;
 
 		const newModelConfig = await createModelConfiguration(clonedModelConfig);
 		await useProjects().addAsset(
@@ -257,6 +258,7 @@ export class ValueOfInformationScenario extends BaseScenario {
 						name:
 							this.newInterventionSpecs.find((newInterventionSpec) => newInterventionSpec.id === interventionSpec.id)
 								?.name ?? 'New policy',
+						description: 'This intervention policy was created through the value of information scenario template.',
 						modelId: this.modelSpec.id,
 						interventions: [blankIntervention]
 					},
