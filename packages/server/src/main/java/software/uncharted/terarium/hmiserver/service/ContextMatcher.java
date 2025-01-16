@@ -3,6 +3,7 @@ package software.uncharted.terarium.hmiserver.service;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -14,7 +15,7 @@ import lombok.Value;
 
 public class ContextMatcher {
 
-	private static final String CONFIG_FILE = "curated_contexts.json";
+	private static final String CONFIG_FILE = "curated-context.json";
 	private static final JsonNode configData;
 
 	@Value
@@ -27,10 +28,12 @@ public class ContextMatcher {
 
 	/* Load the configuration file */
 	static {
-		try {
+		try (InputStream inputStream = ContextMatcher.class.getClassLoader().getResourceAsStream(CONFIG_FILE)) {
+			if (inputStream == null) {
+				throw new RuntimeException("Configuration file not found: " + CONFIG_FILE);
+			}
 			ObjectMapper mapper = new ObjectMapper();
-			Path configPath = Paths.get("src", "main", "resources", CONFIG_FILE);
-			configData = mapper.readTree(configPath.toFile());
+			configData = mapper.readTree(inputStream);
 		} catch (IOException e) {
 			throw new RuntimeException("Failed to load configuration file", e);
 		}
@@ -122,5 +125,12 @@ public class ContextMatcher {
 	 */
 	public static List<SearchMatch> multiSearch(List<String> searchTerms) {
 		return multiSearch(searchTerms, 0.3);
+	}
+
+	/**
+	 * Search for the given term in the configuration file
+	 */
+	public static List<SearchMatch> search(String searchTerm) {
+		return multiSearch(List.of(searchTerm));
 	}
 }
