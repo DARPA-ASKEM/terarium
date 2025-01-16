@@ -19,7 +19,7 @@ import { switchToUniformDistribution } from '../scenario-template-utils';
 export class SensitivityAnalysisScenario extends BaseScenario {
 	public static templateId = 'sensitivity-analysis';
 
-	public static templateName = 'Sensitivity Analysis';
+	public static templateName = 'Sensitivity analysis';
 
 	modelSpec: { id: string };
 
