@@ -205,6 +205,7 @@ const cancelGenerateAnnotation = () => {
 	}
 	.content {
 		padding: var(--gap-4);
+		background: var(--surface-0);
 	}
 
 	.annotation-input:deep(main) {
