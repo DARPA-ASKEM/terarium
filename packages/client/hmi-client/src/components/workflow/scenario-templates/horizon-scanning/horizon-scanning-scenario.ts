@@ -250,6 +250,7 @@ export class HorizonScanningScenario extends BaseScenario {
 
 			const configName = config.map((param) => `${param.id}_${param.value}`).join('_');
 			clonedModelConfig.name = `${modelConfig.name}_${configName}`;
+			clonedModelConfig.description = `This is a configuration created from "${modelConfig.name}" with extreme values for the parameters: ${config.map((param) => `${param.id}: ${param.value}`).join(', ')} using the horizon scanning scenario template.`;
 
 			const newModelConfig = await createModelConfiguration(clonedModelConfig);
 			await useProjects().addAsset(
@@ -301,6 +302,7 @@ export class HorizonScanningScenario extends BaseScenario {
 							name:
 								this.newInterventionSpecs.find((newInterventionSpec) => newInterventionSpec.id === interventionSpec.id)
 									?.name ?? 'New policy',
+							description: 'This intervention policy was created using the horizon scanning scenario template.',
 							modelId: this.modelSpec.id,
 							interventions: [blankIntervention]
 						},
