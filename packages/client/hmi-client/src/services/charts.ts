@@ -605,11 +605,20 @@ export function createForecastChart(
 	// Build sample layer
 	if (samplingLayer && !isEmpty(samplingLayer.variables) && !isEmpty(samplingLayer.data)) {
 		const layerSpec = newLayer(samplingLayer, 'line');
-		const encoding = layerSpec.layer[0].encoding;
-		Object.assign(encoding, {
+		const lineSubLayer = layerSpec.layer[0];
+
+		Object.assign(lineSubLayer.encoding, {
 			detail: { field: samplingLayer.groupField, type: 'nominal' },
 			strokeWidth: { value: 1 },
-			opacity: { value: options.bins ? 1.0 : 0.1 }
+			opacity: options.bins
+				? { value: 1.0 } // If bins enabled, use full opacity
+				: {
+						condition: {
+							selection: 'series_stats', // Use original parameter name
+							value: 0.15
+						},
+						value: 0.05
+					}
 		});
 
 		spec.layer.push(layerSpec);
@@ -620,23 +629,21 @@ export function createForecastChart(
 		const layerSpec = newLayer(statisticsLayer, 'line');
 		const lineSubLayer = layerSpec.layer[0];
 
-		// Add interactive legend params
+		// Add interactive legend params, keeping original name
 		lineSubLayer.params = [
 			{
-				name: 'series',
+				name: 'series_stats',
 				select: { type: 'point', fields: ['variableField'] },
 				bind: 'legend'
 			}
 		];
 
-		// Add opacity encoding for legend interaction
-		lineSubLayer.encoding.opacity = {
-			condition: { param: 'series', value: 1 },
-			value: 0.05
-		};
-
 		Object.assign(lineSubLayer.encoding, {
-			strokeWidth: { value: 2 }
+			strokeWidth: { value: 2 },
+			opacity: {
+				condition: { param: 'series_stats', value: 1 },
+				value: 0.05
+			}
 		});
 
 		if (options.legend === true) {
