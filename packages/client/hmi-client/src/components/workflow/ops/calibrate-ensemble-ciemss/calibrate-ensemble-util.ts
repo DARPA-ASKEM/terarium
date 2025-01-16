@@ -9,10 +9,11 @@ import {
 	parseEnsemblePyciemssMap,
 	processAndSortSamplesByTimepoint
 } from '@/services/models/simulation-service';
-import { EnsembleModelConfigs, ModelConfiguration } from '@/types/Types';
+import { EnsembleModelConfigs, Model, ModelConfiguration } from '@/types/Types';
 import { WorkflowNode } from '@/types/workflow';
 import { getActiveOutput } from '@/components/workflow/util';
 import { CalibrateMap, setupModelInput } from '@/services/calibrate-workflow';
+import { getAsConfiguredModel } from '@/services/model-configurations';
 import {
 	CalibrateEnsembleCiemssOperationState,
 	CalibrateEnsembleMappingRow,
@@ -173,6 +174,52 @@ export function buildChartData(
 	});
 	return { ...outputData, translationMap };
 }
+
+// This will grab all of the variables in each model configuration and place them into a dictionary.
+// The key will be the variable, the value will be a list of uuids that this variable is found in.
+// An example output with two model config ids uuid-1 and uuid-2 may look like where model 1 is SIRD, and model 2 is SIR
+// {
+// 		S: ["uuid-1","uuid-2"]
+// 		I: ["uuid-1","uuid-2"]
+// 		R: ["uuid-1","uuid-2"]
+// 		D: ["uuid-1"]
+// }
+export async function setVariableChartOptionsObject(modelConfigurationIds: string[]) {
+	const variableChartOptionsObject = {};
+	const models: Model[] = [];
+	// Model configuration input
+	await Promise.all(
+		modelConfigurationIds.map(async (id) => {
+			const model = await getAsConfiguredModel(id);
+			models.push(model);
+		})
+	);
+
+	models.forEach((model) => {
+		const modelConfigId = model.id as string;
+		model.model.states.forEach((state) => {
+			const key = state.id;
+			if (!variableChartOptionsObject[key]) {
+				variableChartOptionsObject[key] = [];
+			}
+			variableChartOptionsObject[key].push(modelConfigId);
+		});
+	});
+	return variableChartOptionsObject;
+}
+
+// const setSelectedChartSettings = computed(() => {
+// 	const allSelectedVariable : string[] = []
+// 	selectedVariableSettings.value.forEach((selectedVar) => {
+// 		const selectedVarName = selectedVar.selectedVariables[0];
+// 		console.log(selectedVarName);
+// 		const modelConfigIds : string[] = tomToRename.value[selectedVarName] ?? [];
+// 		console.log(modelConfigIds);
+// 		modelConfigIds.forEach((modelConfigId) => allSelectedVariable.push(modelConfigId + "/" + selectedVarName));
+// 	});
+// 	console.log(allSelectedVariable);
+// 	return allSelectedVariable
+// });
 
 export interface EnsembleErrorData {
 	ensemble: DataArray;

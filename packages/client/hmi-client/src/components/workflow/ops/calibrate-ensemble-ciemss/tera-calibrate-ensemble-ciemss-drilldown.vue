@@ -228,6 +228,18 @@
 									/>
 								</div>
 							</AccordionTab>
+							<!-- Variables over Time -->
+							<AccordionTab v-if="selectedVariableSettings.length > 0" header="Variables over time">
+								<div class="flex flex-row" v-for="setting of selectedVariableSettings" :key="setting.id">
+									<template v-for="setting of selectedVariableSettings" :key="setting.id">
+										<vega-chart
+											expandable
+											:are-embed-actions-visible="true"
+											:visualization-spec="variableCharts[setting.id]"
+										/>
+									</template>
+								</div>
+							</AccordionTab>
 							<AccordionTab v-if="selectedErrorVariableSettings.length > 0" header="Error">
 								<div class="flex flex-row">
 									<vega-chart
@@ -298,6 +310,18 @@
 							@selection-change="updateChartSettings"
 							@toggle-ensemble-variable-setting-option="updateEnsembleVariableSettingOption"
 						/>
+						<Divider />
+						<tera-chart-settings
+							:title="'Variables over time'"
+							:settings="chartSettings"
+							:type="ChartSettingType.VARIABLE"
+							:select-options="variableChartOptions"
+							:selected-options="selectedVariableSettings.map((s) => s.selectedVariables[0])"
+							@open="setActiveChartSettings($event)"
+							@remove="removeChartSettings"
+							@selection-change="updateChartSettings"
+						/>
+						<Divider />
 						<Divider />
 						<tera-chart-settings
 							:title="'Error'"
@@ -397,7 +421,8 @@ import {
 	buildChartData,
 	getEnsembleErrorData,
 	EnsembleErrorData,
-	fetchModelConfigurations
+	fetchModelConfigurations,
+	setVariableChartOptionsObject
 } from './calibrate-ensemble-util';
 
 const props = defineProps<{
@@ -457,6 +482,9 @@ const inProgressForecastId = computed(() => props.node.state.inProgressForecastI
 const isRunInProgress = computed(() => Boolean(inProgressCalibrationId.value || inProgressForecastId.value));
 
 const datasetId = computed(() => props.node.inputs[0].value?.[0] as string | undefined);
+const modelConfigIds = computed(() =>
+	props.node.inputs.filter((input) => input.type === 'modelConfigId' && input.value).map((input) => input.value?.[0])
+);
 const currentDatasetFileName = ref<string>();
 const datasetColumnNames = computed(() => dataset.value?.columns?.map((col) => col.name) ?? ([] as string[]));
 // Loss Chart:
@@ -619,6 +647,7 @@ const runEnsemble = async () => {
 };
 
 onMounted(async () => {
+	variableChartOptionsObject.value = await setVariableChartOptionsObject(modelConfigIds.value as string[]);
 	const configs = await fetchModelConfigurations(props.node.inputs);
 	if (!configs) return;
 	allModelConfigurations.value = configs.allModelConfigurations;
@@ -669,6 +698,7 @@ const {
 	chartSettings,
 	removeChartSettings,
 	updateChartSettings,
+	selectedVariableSettings,
 	selectedEnsembleVariableSettings,
 	selectedErrorVariableSettings,
 	updateEnsembleVariableSettingOption,
@@ -681,6 +711,7 @@ const {
 	generateAnnotation,
 	getChartAnnotationsByChartId,
 	useEnsembleVariableCharts,
+	useVariableCharts,
 	useWeightsDistributionCharts,
 	useEnsembleErrorCharts
 } = useCharts(
@@ -702,9 +733,26 @@ const errorData = computed<EnsembleErrorData>(() =>
 );
 
 const ensembleVariables = computed(() => getSelectedOutputEnsembleMapping(props.node, false).map((d) => d.newName));
+const variableChartOptionsObject = ref({});
+const variableChartOptions = computed(() => Object.keys(variableChartOptionsObject.value));
 const ensembleVariableCharts = useEnsembleVariableCharts(selectedEnsembleVariableSettings, groundTruthData);
+const variableCharts = useVariableCharts(selectedVariableSettings, groundTruthData);
 const weightsDistributionCharts = useWeightsDistributionCharts();
 const { errorCharts, onExpandErrorChart } = useEnsembleErrorCharts(selectedErrorVariableSettings, errorData);
+
+// For each selected variable ensure to map in the form model config id/"selectedVariables" for each relevant model config.
+// const setSelectedChartSettings = computed(() => {
+// 	const allSelectedVariable : string[] = []
+// 	selectedVariableSettings.value.forEach((selectedVar) => {
+// 		const selectedVarName = selectedVar.selectedVariables[0];
+// 		console.log(selectedVarName);
+// 		const modelConfigIds : string[] = variableChartOptionsObject.value[selectedVarName] ?? [];
+// 		console.log(modelConfigIds);
+// 		modelConfigIds.forEach((modelConfigId) => allSelectedVariable.push(modelConfigId + "/" + selectedVarName));
+// 	});
+// 	console.log(allSelectedVariable);
+// 	return allSelectedVariable
+// });
 
 // --------------------------------------------------------
 
