@@ -620,8 +620,22 @@ export function createForecastChart(
 		const layerSpec = newLayer(statisticsLayer, 'line');
 		const lineSubLayer = layerSpec.layer[0];
 
+		// Add interactive legend params
+		lineSubLayer.params = [
+			{
+				name: 'series',
+				select: { type: 'point', fields: ['variableField'] },
+				bind: 'legend'
+			}
+		];
+
+		// Add opacity encoding for legend interaction
+		lineSubLayer.encoding.opacity = {
+			condition: { param: 'series', value: 1 },
+			value: 0.05
+		};
+
 		Object.assign(lineSubLayer.encoding, {
-			opacity: { value: 1.0 },
 			strokeWidth: { value: 2 }
 		});
 
