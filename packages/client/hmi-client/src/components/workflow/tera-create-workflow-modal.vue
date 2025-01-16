@@ -63,8 +63,10 @@ import { SensitivityAnalysisScenario } from '@/components/workflow/scenario-temp
 import { DecisionMakingScenario } from '@/components/workflow/scenario-templates/decision-making/decision-making-scenario';
 import { HorizonScanningScenario } from '@/components/workflow/scenario-templates/horizon-scanning/horizon-scanning-scenario';
 import { ValueOfInformationScenario } from '@/components/workflow/scenario-templates/value-of-information/value-of-information-scenario';
-import TeraModelFromLiteratureTemplate from './scenario-templates/model-from-literature/tera-model-from-literature-template.vue';
-import { ModelFromLiteratureScenario } from './scenario-templates/model-from-literature/model-from-literature-scenario';
+import TeraModelFromLiteratureTemplate from '@/components/workflow/scenario-templates/model-from-literature/tera-model-from-literature-template.vue';
+import { ModelFromLiteratureScenario } from '@/components/workflow/scenario-templates/model-from-literature/model-from-literature-scenario';
+import { CalibrateEnsembleScenario } from '@/components/workflow/scenario-templates/calibrate-ensemble/calibrate-ensemble-scenario';
+import TeraCalibrateEnsembleTemplate from '@/components/workflow/scenario-templates/calibrate-ensemble/tera-calibrate-ensemble-template.vue';
 
 interface ScenarioItem {
 	name: string;
@@ -128,6 +130,14 @@ const scenarioMap = ref(
 				name: ModelFromLiteratureScenario.templateName,
 				instance: new ModelFromLiteratureScenario(),
 				component: markRaw(TeraModelFromLiteratureTemplate)
+			}
+		],
+		[
+			CalibrateEnsembleScenario.templateId,
+			{
+				name: CalibrateEnsembleScenario.templateName,
+				instance: new CalibrateEnsembleScenario(),
+				component: markRaw(TeraCalibrateEnsembleTemplate)
 			}
 		]
 	])
