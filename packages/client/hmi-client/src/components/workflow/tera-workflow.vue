@@ -25,6 +25,7 @@
 						@click="resetZoom"
 						size="small"
 						class="white-space-nowrap"
+						severity="secondary"
 					/>
 
 					<Button
