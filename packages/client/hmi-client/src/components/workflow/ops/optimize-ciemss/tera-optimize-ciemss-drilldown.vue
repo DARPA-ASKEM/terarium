@@ -780,7 +780,9 @@ const initialize = async () => {
 	const policyId = props.node.inputs[1]?.value?.[0];
 	if (policyId) {
 		// FIXME: This should be done in the node this should not be done in the drill down.
-		getInterventionPolicyById(policyId).then((interventionPolicy) => setInterventionPolicyGroups(interventionPolicy));
+		getInterventionPolicyById(policyId).then((interventionPolicy) => {
+			if (interventionPolicy) setInterventionPolicyGroups(interventionPolicy);
+		});
 	}
 
 	const optimizedPolicyId = props.node.state.optimizedInterventionPolicyId;
