@@ -12,17 +12,6 @@
 				class="mb-3"
 			/>
 
-			<label>Select a dataset</label>
-			<Dropdown
-				:model-value="scenario.datasetSpec.id"
-				:options="datasets"
-				option-label="assetName"
-				option-value="assetId"
-				placeholder="Select a dataset"
-				@update:model-value="scenario.setDatasetSpec($event)"
-				class="mb-3"
-			/>
-
 			<!-- TODO: adding intervention policies -->
 			<!-- <label>Select an intervention policy (historical)</label>
 			<Dropdown
@@ -56,6 +45,7 @@
 				@update:model-value="scenario.setModelConfigSpec($event)"
 				:disabled="isEmpty(sortedConfigurations) || isFetchingModelInformation"
 				:loading="isFetchingModelInformation"
+				class="mb-3"
 			>
 				<template #option="slotProps">
 					<p>
@@ -63,6 +53,16 @@
 					</p>
 				</template>
 			</Dropdown>
+
+			<label>Select a dataset</label>
+			<Dropdown
+				:model-value="scenario.datasetSpec.id"
+				:options="datasets"
+				option-label="assetName"
+				option-value="assetId"
+				placeholder="Select a dataset"
+				@update:model-value="scenario.setDatasetSpec($event)"
+			/>
 		</template>
 
 		<template #outputs>
