@@ -20,6 +20,16 @@
 				<div class="button-group">
 					<Button
 						id="add-component-btn"
+						icon="pi pi-expand"
+						label="Reset Zoom"
+						@click="resetZoom"
+						size="small"
+						class="white-space-nowrap"
+						severity="secondary"
+					/>
+
+					<Button
+						id="add-component-btn"
 						icon="pi pi-plus"
 						label="Add component"
 						@click="showAddComponentMenu"
@@ -811,6 +821,37 @@ function relinkEdges(node: WorkflowNode<any> | null) {
 			});
 		});
 	}
+}
+
+function resetZoom() {
+	let scaleFactor = 1;
+	let translateX = 1;
+	let translateY = 1;
+
+	// Approximate the bounding box of the workflow
+	const xExtent = d3.extent(wf.value.getNodes().map((n) => n.x)) as [number, number];
+	const yExtent = d3.extent(wf.value.getNodes().map((n) => n.y)) as [number, number];
+
+	const xMin = xExtent[0] - 20;
+	const xMax = xExtent[1] + 200;
+	const yMin = yExtent[0] - 20;
+	const yMax = yExtent[1] + 300;
+
+	// Find fitted scale
+	const workflowCenterX = 0.5 * (xMax - xMin);
+	const workflowCenterY = 0.5 * (yMax - yMin);
+
+	const canvasW = (canvasRef.value.$el as HTMLElement).clientWidth;
+	const canvasH = (canvasRef.value.$el as HTMLElement).clientHeight;
+
+	scaleFactor = Math.min(canvasW / (xMax - xMin), canvasH / (yMax - yMin));
+
+	// Calculate the translation to center the graph
+	translateX = canvasW / 2 - scaleFactor * workflowCenterX;
+	translateY = canvasH / 2 - scaleFactor * workflowCenterY;
+
+	// Call exposed function to set zoom
+	canvasRef.value.setZoom(translateX, translateY, scaleFactor);
 }
 
 let prevX = 0;
