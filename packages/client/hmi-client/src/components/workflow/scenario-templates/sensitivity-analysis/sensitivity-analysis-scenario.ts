@@ -109,7 +109,9 @@ export class SensitivityAnalysisScenario extends BaseScenario {
 				distribution: parameter.distribution
 			}));
 
-		modelConfig.name = `${modelConfig.name}_sensitivity`;
+		const name = modelConfig.name;
+		modelConfig.name = `${name}_sensitivity`;
+		modelConfig.description = `This is a configuration created from "${name}" using the sensitivity analysis scenario template.`;
 		setParameterDistributions(modelConfig, distributionParameterMappings);
 
 		const newModelConfig = await createModelConfiguration(modelConfig);
