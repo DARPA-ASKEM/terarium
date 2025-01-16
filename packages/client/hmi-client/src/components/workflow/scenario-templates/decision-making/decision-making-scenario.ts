@@ -238,6 +238,7 @@ export class DecisionMakingScenario extends BaseScenario {
 						name:
 							this.newInterventionSpecs.find((newInterventionSpec) => newInterventionSpec.id === interventionSpec.id)
 								?.name ?? 'New policy',
+						description: 'This intervention policy was created using the decision making scenario template.',
 						modelId: this.modelSpec.id,
 						interventions: [blankIntervention]
 					},
