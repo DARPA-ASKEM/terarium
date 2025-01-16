@@ -20,7 +20,13 @@ import {
 } from '@/services/charts';
 import { flattenInterventionData } from '@/services/intervention-policy';
 import { DataArray, extractModelConfigIdsInOrder, extractModelConfigIds } from '@/services/models/simulation-service';
-import { ChartSetting, ChartSettingEnsembleVariable, ChartSettingSensitivity, ChartSettingType } from '@/types/common';
+import {
+	ChartSetting,
+	ChartSettingComparison,
+	ChartSettingEnsembleVariable,
+	ChartSettingSensitivity,
+	ChartSettingType
+} from '@/types/common';
 import { Intervention, Model, ModelConfiguration } from '@/types/Types';
 import { displayNumber } from '@/utils/number';
 import { getUnitsFromModelParts, getVegaDateOptions } from '@/services/model';
@@ -451,7 +457,7 @@ export function useCharts(
 	}
 
 	// Create comparison charts based on chart settings
-	const useComparisonCharts = (chartSettings: ComputedRef<ChartSetting[]>) => {
+	const useComparisonCharts = (chartSettings: ComputedRef<ChartSettingComparison[]>) => {
 		const comparisonCharts = computed(() => {
 			const charts: Record<string, VisualizationSpec> = {};
 			if (!isChartReadyToBuild.value) return charts;
