@@ -32,6 +32,7 @@ export const ModelConfigOperation: Operation = {
 	name: WorkflowOperationTypes.MODEL_CONFIG,
 	displayName: 'Configure model',
 	description: 'Create model configurations.',
+	documentationUrl: DOCUMENTATION_URL,
 	imageUrl: configureModel,
 	isRunnable: true,
 	inputs: [

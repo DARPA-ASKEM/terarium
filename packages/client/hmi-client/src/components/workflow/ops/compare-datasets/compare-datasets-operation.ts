@@ -50,7 +50,7 @@ export const CompareDatasetsOperation: Operation = {
 	name: WorkflowOperationTypes.COMPARE_DATASETS,
 	displayName: 'Compare datasets',
 	description: 'Compare datasets, or simulation results',
-	documentationUrl: '',
+	documentationUrl: DOCUMENTATION_URL,
 	inputs: [
 		{ type: 'datasetId', label: 'Dataset or Simulation result' },
 		{ type: 'datasetId', label: 'Dataset or Simulation result' }

@@ -10,6 +10,7 @@ export interface DatasetOperationState extends BaseState {
 export const DatasetOperation: Operation = {
 	name: WorkflowOperationTypes.DATASET,
 	description: 'Select a dataset',
+	documentationUrl: DOCUMENTATION_URL,
 	imageUrl: dataset,
 	displayName: 'Dataset',
 	isRunnable: true,

@@ -14,6 +14,7 @@ export interface InterventionPolicyState extends BaseState {
 export const InterventionPolicyOperation: Operation = {
 	name: WorkflowOperationTypes.INTERVENTION_POLICY,
 	description: 'Create intervention policy',
+	documentationUrl: DOCUMENTATION_URL,
 	displayName: 'Create intervention policy',
 	isRunnable: true,
 	inputs: [
