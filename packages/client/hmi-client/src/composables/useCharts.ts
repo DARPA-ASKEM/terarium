@@ -517,13 +517,13 @@ export function useCharts(
 			),
 			annotations
 		);
-		return chart;
+		return chart as VisualizationSpec;
 	}
 
 	// Create comparison charts based on chart settings
 	const useComparisonCharts = (chartSettings: ComputedRef<ChartSettingComparison[]>) => {
 		const comparisonCharts = computed(() => {
-			const charts: Record<string, VisualizationSpec> = {};
+			const charts: Record<string, VisualizationSpec[]> = {};
 			if (!isChartReadyToBuild.value) return charts;
 			const { result, resultSummary } = chartData.value as ChartData;
 
@@ -538,13 +538,20 @@ export function useCharts(
 								Boolean(setting.showBeforeAfter)
 							)
 						: undefined;
+
 					// create multiples
-					selectedVars.forEach((selectedVar, index) => {
+					let width = chartSize.value.width;
+					if (selectedVars.length > 1) width = Math.floor(chartSize.value.width / 2);
+					if (selectedVars.length > 4) width = Math.floor(chartSize.value.width / 3);
+					console.log('full width', chartSize.value.width);
+					console.log('individual width', width);
+					const height = selectedVars.length <= 1 ? chartSize.value.height : chartSize.value.height / 2;
+					charts[setting.id] = selectedVars.map((_selectedVar, index) => {
 						const { options, sampleLayerVariables, statLayerVariables } = createComparisonChartOptions(setting, index);
-						options.width /= 2.1;
-						options.height /= 2.1;
+						options.width = width;
+						options.height = height;
 						options.yExtent = sharedYExtent;
-						charts[setting.id + selectedVar] = createComparisonChart(
+						return createComparisonChart(
 							result,
 							resultSummary,
 							statLayerVariables,
@@ -563,7 +570,7 @@ export function useCharts(
 						options,
 						annotations
 					);
-					charts[setting.id] = chart;
+					charts[setting.id] = [chart];
 				}
 			});
 			return charts;
