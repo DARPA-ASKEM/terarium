@@ -1837,7 +1837,7 @@ export function createRankingInterventionsChart(
 				field: 'score',
 				type: 'quantitative',
 				// If a specific variable is selected the score should hold its actual value
-				title: variableName ? `Value (${variableName})` : 'Score'
+				title: variableName || 'Score'
 			},
 			color: {
 				field: 'name',
@@ -1847,7 +1847,7 @@ export function createRankingInterventionsChart(
 					range: Object.values(interventionNameColorMap)
 				},
 				legend: {
-					title: 'Name',
+					title: null,
 					orient: 'top'
 				}
 			}
