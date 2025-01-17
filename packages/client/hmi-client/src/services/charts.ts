@@ -51,7 +51,6 @@ interface BaseChartOptions {
 	autosize?: AUTOSIZE;
 	dateOptions?: DateOptions;
 	scale?: string;
-	yMinExtent?: number;
 }
 
 export interface DateOptions {
@@ -64,6 +63,7 @@ export interface ForecastChartOptions extends BaseChartOptions {
 	fitYDomain?: boolean;
 	legendProperties?: Record<string, any>;
 	bins?: Map<string, number[]>;
+	yExtent?: [number, number];
 }
 
 export interface ForecastChartLayer {
@@ -557,11 +557,12 @@ export function createForecastChart(
 		const encodingY: ChartEncoding = {
 			field: 'valueField',
 			type: 'quantitative',
-			axis: yaxis
+			axis: yaxis,
+			scale: {}
 		};
 
 		if (options.scale === 'log') {
-			encodingY.scale = { type: 'symlog' };
+			encodingY.scale.type = 'symlog';
 		}
 
 		if (options.fitYDomain && layer.data[0]) {
@@ -571,10 +572,12 @@ export function createForecastChart(
 				const yValues = [...layer.data].map((datum) => datum[yField]);
 				const domainMin = Math.min(...yValues);
 				const domainMax = Math.max(...yValues);
-				encodingY.scale = {
-					domain: [domainMin, domainMax]
-				};
+				encodingY.scale.domain = [domainMin, domainMax];
 			}
+		}
+
+		if (options.yExtent) {
+			encodingY.scale.domain = options.yExtent;
 		}
 
 		const encoding = {
@@ -1140,7 +1143,7 @@ export function createSimulateSensitivityScatter(samplingLayer: SensitivityChart
 					type: 'quantitative',
 					axis: {
 						gridColor: '#EEE',
-						domain: options.yMinExtent ? [0, options.yMinExtent] : undefined
+						domain: options.yExtent
 					},
 					scale: {
 						zero: false,

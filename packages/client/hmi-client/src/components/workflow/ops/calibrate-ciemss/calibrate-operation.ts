@@ -3,7 +3,7 @@ import { ChartSetting } from '@/types/common';
 import { CalibrateMap } from '@/services/calibrate-workflow';
 import calibrateSimulateCiemss from '@assets/svg/operator-images/calibrate-simulate-probabilistic.svg';
 
-const DOCUMENTATION_URL = 'https://github.com/ciemss/pyciemss/blob/main/pyciemss/interfaces.py#L529';
+const DOCUMENTATION_URL = 'https://documentation.terarium.ai/simulation/calibrate-model/';
 
 export interface CalibrationOperationStateCiemss extends BaseState {
 	method: string;
