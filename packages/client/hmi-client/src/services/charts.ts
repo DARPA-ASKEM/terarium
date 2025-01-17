@@ -291,6 +291,9 @@ export function createErrorChart(dataset: Record<string, any>[], options: ErrorC
 	} as any;
 }
 
+/* -------------------------------------------------------------------------- */
+/*                                 Histogram                                */
+/* -------------------------------------------------------------------------- */
 export function createHistogramChart(dataset: Record<string, any>[], options: HistogramChartOptions) {
 	const maxBins = options.maxBins ?? 10;
 	const axisColor = '#EEE';
@@ -951,7 +954,10 @@ export function createForecastChart(
 	return spec;
 }
 
-/**
+/* -------------------------------------------------------------------------- */
+/*                                 Quantile chart                             */
+/* -------------------------------------------------------------------------- */
+/*
  * e.g. [{variable1: [1, 2, 3], variable2: [4, 5, 6]}, ...] where each item in the variable array is a sample value. Sample values must be sorted in ascending order.
  */
 export type GroupedDataArray = Record<string, number[]>[];
@@ -1114,6 +1120,9 @@ export function createQuantilesForecastChart(
 	};
 	return spec;
 }
+/* -------------------------------------------------------------------------- */
+/*                                 Sensitivity Scatterplot                                */
+/* -------------------------------------------------------------------------- */
 
 /**
  * FIXME: The design calls for combinations of different types of charts
