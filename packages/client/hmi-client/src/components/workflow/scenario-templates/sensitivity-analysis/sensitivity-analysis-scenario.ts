@@ -175,7 +175,7 @@ export class SensitivityAnalysisScenario extends BaseScenario {
 		simulateChartSettings = updateSensitivityChartSettingOption(simulateChartSettings as ChartSettingSensitivity[], {
 			selectedVariables: this.simulateSpec.ids,
 			selectedInputVariables: this.parameters.map((parameter) => parameter!.referenceId),
-			timepoint: 100
+			timepoint: 0
 		});
 
 		wf.updateNode(simulateNode, {
