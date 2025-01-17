@@ -239,7 +239,7 @@ const datasetResults = ref<{
 	datasetResults: DataArray[];
 } | null>(null);
 const modelConfigurations = ref<ModelConfiguration[]>([]);
-const interventionPolicies = ref<InterventionPolicy[]>([]);
+const interventionPolicies: InterventionPolicy[] = [];
 const modelConfigIdToInterventionPolicyIdMap = ref<Record<string, string[]>>({});
 
 const plotOptions = [
@@ -263,6 +263,7 @@ const onRun = () => {
 		props,
 		modelConfigIdToInterventionPolicyIdMap,
 		chartData,
+		datasets,
 		interventionPolicies
 	);
 };

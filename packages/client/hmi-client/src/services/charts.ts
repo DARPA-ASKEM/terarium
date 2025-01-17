@@ -1801,8 +1801,6 @@ export function createRankingInterventionsChart(
 ) {
 	const globalFont = 'Figtree';
 
-	console.log(interventionNameColorMap);
-
 	return {
 		$schema: VEGALITE_SCHEMA,
 		config: {

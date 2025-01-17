@@ -184,6 +184,7 @@ export function generateRankingCharts(
 	props,
 	modelConfigIdToInterventionPolicyIdMap,
 	chartData,
+	datasets,
 	interventionPolicies
 ) {
 	// Reset charts
@@ -210,17 +211,24 @@ export function generateRankingCharts(
 
 		const rankingCriteriaValues: { score: number; name: string }[] = [];
 
-		// let properIndex = 0;
-		interventionPolicies.value.forEach((policy, index: number) => {
+		let colorIndex = 0;
+		datasets.value.forEach(({ metadata }, index: number) => {
+			const policy = interventionPolicies.find(({ id }) => id === metadata.simulationAttributes?.interventionPolicyId);
+
 			// Skip this intervention policy if a configuration is not using it
-			if (!policy.id || !policy.name || !commonInterventionPolicyIds.includes(policy.id) || !card.selectedVariable) {
+			if (
+				!policy ||
+				!policy.id ||
+				!policy.name ||
+				!commonInterventionPolicyIds.includes(policy.id) ||
+				!card.selectedVariable
+			) {
 				return;
 			}
 
-			// index === properIndex++;
-
 			if (!interventionNameColorMap[policy.name]) {
-				interventionNameColorMap[policy.name] = CATEGORICAL_SCHEME[index];
+				interventionNameColorMap[policy.name] = CATEGORICAL_SCHEME[colorIndex];
+				colorIndex++;
 			}
 
 			rankingCriteriaValues.push({
@@ -337,7 +345,7 @@ export async function initialize(
 	if (isEmpty(interventionPolicyIds)) return;
 	const interventionPolicyPromises = interventionPolicyIds.map((id) => getInterventionPolicyById(`${id}`));
 	await Promise.all(interventionPolicyPromises).then((policies) => {
-		interventionPolicies.value = policies.filter((policy) => policy !== null);
+		interventionPolicies = policies.filter((policy) => policy !== null);
 	});
 
 	generateRankingCharts(
@@ -346,6 +354,7 @@ export async function initialize(
 		props,
 		modelConfigIdToInterventionPolicyIdMap,
 		chartData,
+		datasets,
 		interventionPolicies
 	);
 }
