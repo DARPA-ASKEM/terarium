@@ -27,11 +27,6 @@
 				</section>
 				<section class="items-wrapper">
 					<h5>Options</h5>
-					<tera-checkbox
-						label="Use log scale"
-						:model-value="Boolean(useLog)"
-						@update:model-value="toggleLogScale($event)"
-					/>
 					<tera-checkbox label="Use log scale" :model-value="useLog" @update:model-value="toggleLogScale($event)" />
 					<tera-checkbox
 						label="Hide in node"
