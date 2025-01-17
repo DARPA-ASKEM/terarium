@@ -300,6 +300,7 @@ export async function initialize(
 	datasetResults,
 	modelConfigIdToInterventionPolicyIdMap,
 	chartData,
+	rankingChartData,
 	baselineDatasetIndex,
 	selectedPlotType,
 	modelConfigurations,
@@ -350,12 +351,21 @@ export async function initialize(
 		interventionPolicies.value = policies.filter((policy) => policy !== null);
 	});
 
+	if (!rankingChartData) return;
+
+	rankingChartData.value = buildChartData(
+		datasets.value,
+		datasetResults.value,
+		baselineDatasetIndex.value,
+		PlotValue.VALUE
+	);
+
 	generateRankingCharts(
 		rankingCriteriaCharts,
 		rankingResultsChart,
 		props,
 		modelConfigIdToInterventionPolicyIdMap,
-		chartData,
+		rankingChartData,
 		datasets,
 		interventionPolicies
 	);

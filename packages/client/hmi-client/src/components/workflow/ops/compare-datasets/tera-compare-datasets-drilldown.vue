@@ -309,6 +309,7 @@ const outputPanel = ref(null);
 const chartSize = useDrilldownChartSize(outputPanel);
 
 const chartData = ref<ChartData | null>(null);
+const rankingChartData = ref<ChartData | null>(null);
 const rankingResultsChart = ref<any>(null);
 const rankingCriteriaCharts = ref<any>([]);
 
@@ -355,6 +356,7 @@ onMounted(() => {
 		datasetResults,
 		modelConfigIdToInterventionPolicyIdMap,
 		chartData,
+		rankingChartData,
 		baselineDatasetIndex,
 		selectedPlotType,
 		modelConfigurations,
