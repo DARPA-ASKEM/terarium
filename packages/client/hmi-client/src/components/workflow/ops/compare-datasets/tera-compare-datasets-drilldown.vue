@@ -265,7 +265,7 @@ const onRun = () => {
 };
 
 function onChangeImpactComparison() {
-	generateImpactCharts(chartData, datasets, datasetResults, baselineDatasetIndex, selectedPlotType);
+	generateImpactCharts(rankingChartData, datasets, datasetResults, baselineDatasetIndex, selectedPlotType);
 }
 
 interface BasicKnobs {
