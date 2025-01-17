@@ -2,12 +2,7 @@
 	<section>
 		<ul v-if="node.state.interventionPolicy.id">
 			<li v-for="(_interventions, appliedTo) in selectedOutputParameters" :key="appliedTo">
-				<vega-chart
-					expandable
-					:are-embed-actions-visible="false"
-					:visualization-spec="preparedCharts[appliedTo]"
-					:interactive="false"
-				/>
+				<vega-chart expandable :are-embed-actions-visible="false" :visualization-spec="preparedCharts[appliedTo]" />
 			</li>
 		</ul>
 		<tera-intervention-summary-card
