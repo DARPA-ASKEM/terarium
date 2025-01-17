@@ -31,7 +31,7 @@ import { Intervention, Model, ModelConfiguration } from '@/types/Types';
 import { displayNumber } from '@/utils/number';
 import { getUnitsFromModelParts, getVegaDateOptions } from '@/services/model';
 import { CalibrateMap, isCalibrateMap } from '@/services/calibrate-workflow';
-import { isChartSettingEnsembleVariable } from '@/services/chart-settings';
+import { isChartSettingComparisonVariable, isChartSettingEnsembleVariable } from '@/services/chart-settings';
 import {
 	CalibrateEnsembleMappingRow,
 	isCalibrateEnsembleMappingRow
@@ -105,6 +105,29 @@ const addModelConfigNameToTranslationMap = (
 	return newMap;
 };
 
+/**
+ * Calculate the extent of the y-axis based on the provided result summary and variables.
+ * @param resultSummary The result summary data array.
+ * @param variables The list of variables to calculate the extent for.
+ * @returns The extent of the y-axis as a tuple of [min, max].
+ */
+const calculateYExtent = (resultSummary: DataArray, variables: string[], includeBeforeValues = false) => {
+	const extent: [number, number] = [Infinity, -Infinity];
+	resultSummary.forEach((row) => {
+		variables.forEach((variable) => {
+			const minVarName = `${variable}_min`;
+			const maxVarName = `${variable}_max`;
+			extent[0] = Math.min(extent[0], row[minVarName]);
+			extent[1] = Math.max(extent[1], row[maxVarName]);
+			if (includeBeforeValues) {
+				extent[0] = Math.min(extent[0], row[`${minVarName}:pre`]);
+				extent[1] = Math.max(extent[1], row[`${maxVarName}:pre`]);
+			}
+		});
+	});
+	return extent;
+};
+
 // Consider provided reference object is ready if it is set to null explicitly or if it's value is available
 const isRefReady = (ref: Ref | null) => ref === null || Boolean(ref.value);
 
@@ -139,6 +162,29 @@ export function useCharts(
 	const getUnit = (paramId: string) => {
 		if (!model?.value) return '';
 		return getUnitsFromModelParts(model.value)[paramId] || '';
+	};
+
+	/**
+	 * Create a base forecast chart options that's common for different types of forecast charts.
+	 * @param setting ChartSetting
+	 * @returns ForecastChartOptions
+	 */
+	const createBaseForecastChartOptions = (setting: ChartSetting) => {
+		const variables = setting.selectedVariables;
+		const dateOptions = getVegaDateOptions(model?.value ?? null, <ModelConfiguration>modelConfig?.value || null);
+		const options: ForecastChartOptions = {
+			title: '',
+			legend: true,
+			width: chartSize.value.width,
+			height: chartSize.value.height,
+			translationMap: chartData.value?.translationMap || {},
+			xAxisTitle: getUnit('_time') || 'Time',
+			yAxisTitle: _.uniq(variables.map(getUnit).filter((v) => !!v)).join(',') || '',
+			dateOptions,
+			colorscheme: [BASE_GREY, setting.primaryColor ?? PRIMARY_COLOR],
+			scale: setting.scale
+		};
+		return options;
 	};
 
 	const createEnsembleVariableChartOptions = (
@@ -201,6 +247,48 @@ export function useCharts(
 		return { statLayerVariables, sampleLayerVariables, options };
 	};
 
+	const createComparisonChartOptions = (
+		setting: ChartSettingComparison,
+		variableIndex = -1,
+		includeAllVars = false
+	) => {
+		const variables = setting.selectedVariables;
+		const options = createBaseForecastChartOptions(setting);
+
+		const sampleLayerVariables: string[] = [];
+		const statLayerVariables: string[] = [];
+
+		const colorScheme: string[] = [];
+
+		const varName = variables[variableIndex];
+		// If varName is provided (single chart from small multiples), include that specific variable in the chart
+		if (varName) {
+			if (setting.showBeforeAfter) {
+				sampleLayerVariables.push(`${chartData.value?.pyciemssMap[varName]}:pre`);
+				statLayerVariables.push(`${chartData.value?.pyciemssMap[varName]}_mean:pre`);
+				colorScheme.push(BASE_GREY);
+			}
+			sampleLayerVariables.push(`${chartData.value?.pyciemssMap[varName]}`);
+			statLayerVariables.push(`${chartData.value?.pyciemssMap[varName]}_mean`);
+			colorScheme.push(CATEGORICAL_SCHEME[variableIndex % CATEGORICAL_SCHEME.length]);
+		}
+		// Otherwise include all selected variables
+		else {
+			variables.forEach((v) => {
+				sampleLayerVariables.push(`${chartData.value?.pyciemssMap[v]}`);
+				statLayerVariables.push(`${chartData.value?.pyciemssMap[v]}_mean`);
+				if (includeAllVars) {
+					// For the options that's provided to the annotation generation, we need to include pre values as well
+					sampleLayerVariables.push(`${chartData.value?.pyciemssMap[v]}:pre`);
+					statLayerVariables.push(`${chartData.value?.pyciemssMap[v]}_mean:pre`);
+				}
+			});
+			colorScheme.push(...CATEGORICAL_SCHEME);
+		}
+		options.colorscheme = colorScheme;
+		return { statLayerVariables, sampleLayerVariables, options };
+	};
+
 	/**
 	 *
 	 * Create options for forecast charts based on chart settings and model configuration.
@@ -213,31 +301,15 @@ export function useCharts(
 	 */
 	const createForecastChartOptions = (setting: ChartSetting) => {
 		if (isChartSettingEnsembleVariable(setting)) return createEnsembleVariableChartOptions(setting, '', true, true);
+		if (isChartSettingComparisonVariable(setting)) return createComparisonChartOptions(setting, -1, true);
+
+		const options = createBaseForecastChartOptions(setting);
 		const variables = setting.selectedVariables;
-		const dateOptions = getVegaDateOptions(model?.value ?? null, <ModelConfiguration>modelConfig?.value || null);
-		const options: ForecastChartOptions = {
-			title: '',
-			legend: true,
-			width: chartSize.value.width,
-			height: chartSize.value.height,
-			translationMap: chartData.value?.translationMap || {},
-			xAxisTitle: getUnit('_time') || 'Time',
-			yAxisTitle: _.uniq(variables.map(getUnit).filter((v) => !!v)).join(',') || '',
-			dateOptions,
-			colorscheme: [BASE_GREY, setting.primaryColor ?? PRIMARY_COLOR],
-			scale: setting.scale
-		};
 
 		let sampleLayerVariables: string[] = [];
 		let statLayerVariables: string[] = [];
-		// Variable names for variable comparison charts
-		if (setting.type === ChartSettingType.VARIABLE_COMPARISON) {
-			statLayerVariables = variables.map((d) => `${chartData.value?.pyciemssMap[d]}_mean`);
-			sampleLayerVariables = variables.map((d) => `${chartData.value?.pyciemssMap[d]}`);
-			delete options.colorscheme;
-		}
 		// Variable names for compare dataset charts
-		else if (!_.isNil(chartData.value?.numComparableDatasets)) {
+		if (!_.isNil(chartData.value?.numComparableDatasets)) {
 			const varName = variables[0];
 			for (let i = 0; i < chartData.value.numComparableDatasets; i++) {
 				const rawVarName = chartData.value?.pyciemssMap[varName];
@@ -420,7 +492,6 @@ export function useCharts(
 	};
 
 	function createComparisonChart(
-		selectedVars,
 		result,
 		resultSummary,
 		statLayerVariables,
@@ -446,13 +517,6 @@ export function useCharts(
 			),
 			annotations
 		);
-		if (interventions?.value) {
-			_.keys(groupedInterventionOutputs.value).forEach((key) => {
-				if (selectedVars.includes(key)) {
-					chart.layer.push(...createInterventionChartMarkers(groupedInterventionOutputs.value[key]));
-				}
-			});
-		}
 		return chart;
 	}
 
@@ -462,45 +526,34 @@ export function useCharts(
 			const charts: Record<string, VisualizationSpec> = {};
 			if (!isChartReadyToBuild.value) return charts;
 			const { result, resultSummary } = chartData.value as ChartData;
-			const yMinExtent = 0;
 
 			chartSettings.value.forEach((setting) => {
 				const selectedVars = setting.selectedVariables;
-
-				const { statLayerVariables, sampleLayerVariables, options } = createForecastChartOptions(setting);
 				const annotations = getChartAnnotationsByChartId(setting.id);
-				if (setting.shareYAxis && setting.selectedVariables.length > 1) {
-					// find max y for each variable
-					let maxY = 0;
-					result.forEach((row) => {
-						setting.selectedVariables.forEach((selectedVar) => {
-							if (row[selectedVar] > maxY) {
-								maxY = row[selectedVar];
-							}
-						});
-					});
-					if (maxY && yMinExtent < maxY) {
-						options.yMinExtent = maxY;
-					}
-				}
 				if (setting.smallMultiples && setting.selectedVariables.length > 1) {
+					const sharedYExtent = calculateYExtent(
+						resultSummary,
+						selectedVars.map((v) => chartData.value?.pyciemssMap[v] ?? ''),
+						Boolean(setting.showBeforeAfter)
+					);
 					// create multiples
-					options.width /= 2.1;
-					options.height /= 2.1;
 					selectedVars.forEach((selectedVar, index) => {
+						const { options, sampleLayerVariables, statLayerVariables } = createComparisonChartOptions(setting, index);
+						options.width /= 2.1;
+						options.height /= 2.1;
+						options.yExtent = sharedYExtent;
 						charts[setting.id + selectedVar] = createComparisonChart(
-							[selectedVar],
 							result,
 							resultSummary,
-							[statLayerVariables[index]],
-							[sampleLayerVariables[index]],
+							statLayerVariables,
+							sampleLayerVariables,
 							options,
 							annotations
 						);
 					});
 				} else {
+					const { options, sampleLayerVariables, statLayerVariables } = createComparisonChartOptions(setting);
 					const chart = createComparisonChart(
-						selectedVars,
 						result,
 						resultSummary,
 						statLayerVariables,

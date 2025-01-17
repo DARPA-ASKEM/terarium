@@ -110,7 +110,7 @@ export function useChartSettings(
 			(settings) => settings.id === chartId && settings.type === ChartSettingType.VARIABLE_COMPARISON
 		) as ChartSettingComparison | undefined;
 		if (!setting) return;
-		Object.assign(setting, { selectedVariables });
+		Object.assign(setting, { selectedVariables, name: selectedVariables.join(', ') });
 		if (setting.smallMultiples === undefined && selectedVariables.length > 5) {
 			// If there are more than 5 variables and the option isn't set yet, enable small multiples by default
 			setting.smallMultiples = true;

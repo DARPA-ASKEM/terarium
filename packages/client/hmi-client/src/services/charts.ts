@@ -64,6 +64,7 @@ export interface ForecastChartOptions extends BaseChartOptions {
 	fitYDomain?: boolean;
 	legendProperties?: Record<string, any>;
 	bins?: Map<string, number[]>;
+	yExtent?: [number, number];
 }
 
 export interface ForecastChartLayer {
