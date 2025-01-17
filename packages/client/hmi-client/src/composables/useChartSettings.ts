@@ -14,7 +14,8 @@ import {
 	updateAllChartSettings,
 	updateSensitivityChartSettingOption,
 	CHART_SETTING_WITH_QUANTILES_OPTIONS,
-	createNewChartSetting
+	createNewChartSetting,
+	isChartSettingComparisonVariable
 } from '@/services/chart-settings';
 import { WorkflowNode } from '@/types/workflow';
 
@@ -58,9 +59,7 @@ export function useChartSettings(
 	const selectedErrorVariableSettings = computed(() =>
 		chartSettings.value.filter((setting) => setting.type === ChartSettingType.ERROR_DISTRIBUTION)
 	);
-	const selectedComparisonChartSettings = computed(() =>
-		chartSettings.value.filter((setting) => setting.type === ChartSettingType.VARIABLE_COMPARISON)
-	);
+	const selectedComparisonChartSettings = computed(() => chartSettings.value.filter(isChartSettingComparisonVariable));
 
 	const selectedSensitivityChartSettings = computed(
 		() =>

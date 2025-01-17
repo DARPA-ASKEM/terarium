@@ -531,11 +531,13 @@ export function useCharts(
 				const selectedVars = setting.selectedVariables;
 				const annotations = getChartAnnotationsByChartId(setting.id);
 				if (setting.smallMultiples && setting.selectedVariables.length > 1) {
-					const sharedYExtent = calculateYExtent(
-						resultSummary,
-						selectedVars.map((v) => chartData.value?.pyciemssMap[v] ?? ''),
-						Boolean(setting.showBeforeAfter)
-					);
+					const sharedYExtent = setting.shareYAxis
+						? calculateYExtent(
+								resultSummary,
+								selectedVars.map((v) => chartData.value?.pyciemssMap[v] ?? ''),
+								Boolean(setting.showBeforeAfter)
+							)
+						: undefined;
 					// create multiples
 					selectedVars.forEach((selectedVar, index) => {
 						const { options, sampleLayerVariables, statLayerVariables } = createComparisonChartOptions(setting, index);
