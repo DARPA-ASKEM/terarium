@@ -3,8 +3,6 @@ import type { TimeSpan } from '@/types/Types';
 import { Operation, WorkflowOperationTypes, BaseState } from '@/types/workflow';
 import simulateProbabilistic from '@assets/svg/operator-images/simulate-probabilistic.svg';
 
-const DOCUMENTATION_URL = 'https://documentation.terarium.ai/simulation/simulate-model/';
-
 export interface SimulateCiemssOperationState extends BaseState {
 	// state shared across all runs
 	chartSettings: ChartSetting[] | null; // null indicates that the chart settings have not been set yet
@@ -28,7 +26,6 @@ export const SimulateCiemssOperation: Operation = {
 	name: WorkflowOperationTypes.SIMULATE_CIEMSS,
 	displayName: 'Simulate',
 	description: 'given a model id, and configuration id, run a simulation',
-	documentationUrl: DOCUMENTATION_URL,
 	imageUrl: simulateProbabilistic,
 	inputs: [
 		{ type: 'modelConfigId', label: 'Model configuration' },

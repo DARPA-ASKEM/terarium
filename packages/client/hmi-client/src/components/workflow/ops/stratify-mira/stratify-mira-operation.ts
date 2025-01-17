@@ -2,8 +2,6 @@ import type { Operation, BaseState } from '@/types/workflow';
 import { WorkflowOperationTypes } from '@/types/workflow';
 import stratifyModel from '@assets/svg/operator-images/stratify-model.svg';
 
-const DOCUMENTATION_URL = 'https://documentation.terarium.ai/modeling/stratify-model/';
-
 export interface StratifyGroup {
 	borderColour: string;
 	name: string;
@@ -58,7 +56,6 @@ export const StratifyMiraOperation: Operation = {
 	name: WorkflowOperationTypes.STRATIFY_MIRA,
 	displayName: 'Stratify model',
 	description: 'Stratify a model',
-	documentationUrl: DOCUMENTATION_URL,
 	imageUrl: stratifyModel,
 	inputs: [{ type: 'modelId|modelConfigId', label: 'Model or Model configuration' }],
 	outputs: [{ type: 'modelId', label: 'Model' }],

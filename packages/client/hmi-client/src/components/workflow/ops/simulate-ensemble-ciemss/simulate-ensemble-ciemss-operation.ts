@@ -2,8 +2,6 @@ import { Operation, WorkflowOperationTypes, BaseState } from '@/types/workflow';
 import simulateEnsembleCiemss from '@assets/svg/operator-images/simulate-ensemble-probabilistic.svg';
 import { CiemssMethodOptions } from '@/services/models/simulation-service';
 
-const DOCUMENTATION_URL = 'https://documentation.terarium.ai/simulation/simulate-ensemble/';
-
 export interface SimulateEnsembleMappingRow {
 	id: string; // uuid that can be used as a row key
 	newName: string; // This is the new name provided by the user.
@@ -44,7 +42,6 @@ export const SimulateEnsembleCiemssOperation: Operation = {
 	name: WorkflowOperationTypes.SIMULATE_ENSEMBLE_CIEMSS,
 	displayName: 'Simulate ensemble',
 	description: '',
-	documentationUrl: DOCUMENTATION_URL,
 	imageUrl: simulateEnsembleCiemss,
 	inputs: [{ type: 'modelConfigId', label: 'Model configuration' }],
 	outputs: [{ type: 'datasetId' }],

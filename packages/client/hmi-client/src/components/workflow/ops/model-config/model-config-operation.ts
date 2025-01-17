@@ -7,8 +7,6 @@ import { cloneDeep, differenceWith, isEqual, omit } from 'lodash';
 
 export const name = 'ModelConfigOperation';
 
-const DOCUMENTATION_URL = 'https://documentation.terarium.ai/config-and-intervention/configure-model/';
-
 export interface ModelConfigOperationState extends BaseState {
 	transientModelConfig: ModelConfiguration;
 	notebookHistory: NotebookHistory[];
@@ -32,7 +30,6 @@ export const ModelConfigOperation: Operation = {
 	name: WorkflowOperationTypes.MODEL_CONFIG,
 	displayName: 'Configure model',
 	description: 'Create model configurations.',
-	documentationUrl: DOCUMENTATION_URL,
 	imageUrl: configureModel,
 	isRunnable: true,
 	inputs: [
