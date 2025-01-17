@@ -1,7 +1,7 @@
 import { Operation, WorkflowOperationTypes, BaseState } from '@/types/workflow';
 import { NotebookHistory } from '@/services/notebook';
 
-const DOCUMENTATION_URL ='https://documentation.terarium.ai/modeling/compare-models/';
+const DOCUMENTATION_URL = 'https://documentation.terarium.ai/modeling/compare-models/';
 
 export interface ModelComparisonOperationState extends BaseState {
 	notebookHistory: NotebookHistory[];
