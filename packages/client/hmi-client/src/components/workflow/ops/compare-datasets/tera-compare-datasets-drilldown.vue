@@ -20,6 +20,7 @@
 							:options="compareOptions"
 							option-label="label"
 							option-value="value"
+							@change="outputPanelBehavior"
 						/>
 						<!-- Pascale asked me to hide this until the feature is implemented -->
 						<!-- <tera-checkbox
@@ -43,9 +44,7 @@
 								option-value="id"
 								:loading="isFetchingDatasets"
 								placeholder="Optional"
-								@change="
-									generateImpactCharts(chartData, datasets, datasetResults, baselineDatasetIndex, selectedPlotType)
-								"
+								@change="onChangeImpactComparison"
 							/>
 							<label>Comparison tables</label>
 							<tera-checkbox v-model="isATESelected" label="Average treatment effect (ATE)" />
@@ -167,9 +166,7 @@
 										v-model="knobs.selectedPlotType"
 										:value="option.value"
 										name="plotValues"
-										@change="
-											generateImpactCharts(chartData, datasets, datasetResults, baselineDatasetIndex, selectedPlotType)
-										"
+										@change="onChangeImpactComparison"
 									/>
 									<label class="pl-2 py-1" :for="option.value">{{ option.label }}</label>
 								</div>
@@ -261,10 +258,15 @@ const onRun = () => {
 		rankingResultsChart,
 		props,
 		modelConfigIdToInterventionPolicyIdMap,
-		chartData,
+		rankingChartData,
+		datasets,
 		interventionPolicies
 	);
 };
+
+function onChangeImpactComparison() {
+	generateImpactCharts(impactChartData, datasets, datasetResults, baselineDatasetIndex, selectedPlotType);
+}
 
 interface BasicKnobs {
 	criteriaOfInterestCards: CriteriaOfInterestCard[];
@@ -281,7 +283,7 @@ const knobs = ref<BasicKnobs>({
 });
 
 const addCriteria = () => {
-	knobs.value.criteriaOfInterestCards.push(blankCriteriaOfInterest);
+	knobs.value.criteriaOfInterestCards.push(cloneDeep(blankCriteriaOfInterest));
 };
 
 const deleteCriteria = (index: number) => {
@@ -306,21 +308,22 @@ const {
 const outputPanel = ref(null);
 const chartSize = useDrilldownChartSize(outputPanel);
 
-const chartData = ref<ChartData | null>(null);
+const impactChartData = ref<ChartData | null>(null);
+const rankingChartData = ref<ChartData | null>(null);
 const rankingResultsChart = ref<any>(null);
 const rankingCriteriaCharts = ref<any>([]);
 
 const variableNames = computed(() => {
-	if (chartData.value === null) return [];
+	if (impactChartData.value === null) return [];
 	const excludes = ['timepoint_id', 'sample_id', 'timepoint_unknown'];
-	return Object.keys(chartData.value.pyciemssMap).filter((key) => !excludes.includes(key));
+	return Object.keys(impactChartData.value.pyciemssMap).filter((key) => !excludes.includes(key));
 });
 
 const { generateAnnotation, getChartAnnotationsByChartId, useCompareDatasetCharts } = useCharts(
 	props.node.id,
 	null,
 	null,
-	chartData,
+	impactChartData,
 	chartSize,
 	null,
 	null
@@ -331,10 +334,20 @@ const baselineDatasetIndex = computed(() =>
 );
 const variableCharts = useCompareDatasetCharts(selectedVariableSettings, selectedPlotType, baselineDatasetIndex);
 
+function outputPanelBehavior() {
+	if (knobs.value.selectedCompareOption === CompareValue.RANK) {
+		isOutputSettingsOpen.value = false;
+	} else if (knobs.value.selectedCompareOption === CompareValue.IMPACT) {
+		isOutputSettingsOpen.value = true;
+	}
+}
+
 onMounted(() => {
 	const state = cloneDeep(props.node.state);
 	knobs.value = Object.assign(knobs.value, state);
 	if (!knobs.value.selectedDataset) knobs.value.selectedDataset = datasets.value[0]?.id ?? null;
+
+	outputPanelBehavior();
 
 	initialize(
 		props,
@@ -342,7 +355,8 @@ onMounted(() => {
 		datasets,
 		datasetResults,
 		modelConfigIdToInterventionPolicyIdMap,
-		chartData,
+		impactChartData,
+		rankingChartData,
 		baselineDatasetIndex,
 		selectedPlotType,
 		modelConfigurations,
