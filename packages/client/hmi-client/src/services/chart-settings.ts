@@ -4,6 +4,7 @@ import {
 	ChartSetting,
 	ChartSettingEnsembleVariable,
 	ChartSettingEnsembleVariableOptions,
+	ChartSettingComparison,
 	ChartSettingSensitivity,
 	ChartSettingType
 } from '@/types/common';
@@ -24,6 +25,10 @@ export type EnsembleVariableChartSettingOption =
 
 export function isChartSettingEnsembleVariable(setting: ChartSetting): setting is ChartSettingEnsembleVariable {
 	return (<ChartSettingEnsembleVariable>setting).type === ChartSettingType.VARIABLE_ENSEMBLE;
+}
+
+export function isChartSettingComparisonVariable(setting: ChartSetting): setting is ChartSettingComparison {
+	return (<ChartSettingComparison>setting).type === ChartSettingType.VARIABLE_COMPARISON;
 }
 
 export const CHART_SETTING_WITH_QUANTILES_OPTIONS = [
