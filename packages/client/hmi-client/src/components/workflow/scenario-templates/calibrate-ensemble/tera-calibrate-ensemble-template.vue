@@ -1,23 +1,16 @@
 <template>
 	<tera-scenario-template :header="header" :scenario-instance="scenario" @save-workflow="emit('save-workflow')">
 		<template #inputs>
-			<label>Select a dataset (historical)</label>
-			<Dropdown
-				:model-value="scenario.datasetSpec.id"
-				:options="datasets"
-				option-label="assetName"
-				option-value="assetId"
-				placeholder="Select a dataset"
-				@update:model-value="scenario.setDatasetSpec($event)"
-				class="mb-3"
-			/>
-
 			<div class="flex justify-content-between">
 				<label>Select models</label>
-				<Button icon="pi pi-plus" label="Add model" size="small" text @click="scenario.addTabSpec()" />
 			</div>
 			<TabView scrollable v-model:activeIndex="activeTab">
-				<TabPanel v-for="(tab, index) in scenario.tabSpecs" :header="`Model ${index + 1}`" :key="tab.id">
+				<TabPanel
+					v-for="(tab, index) in scenario.tabSpecs"
+					:header="`Model ${index + 1}`"
+					:key="tab.id"
+					class="tabview-panel"
+				>
 					<template #header
 						><Button
 							v-if="scenario.tabSpecs.length > 1"
@@ -28,7 +21,7 @@
 							@click.stop="onRemoveTab(index)"
 					/></template>
 					<div class="flex flex-column">
-						<label>Select a model</label>
+						<label class="pt-0">Select a model</label>
 						<Dropdown
 							:model-value="tab.modelSpec.id"
 							:options="models"
@@ -36,6 +29,7 @@
 							option-value="assetId"
 							placeholder="Select a model"
 							@update:model-value="scenario.setModelSpec($event, tab.id)"
+							class="mb-3"
 						/>
 
 						<label>Select configuration representing best and generous estimates of the initial conditions</label>
@@ -53,12 +47,25 @@
 				</TabPanel>
 			</TabView>
 
-			<label>Map dataset to models</label>
-			<div class="overflow-x-scroll">
+			<Button icon="pi pi-plus" label="Add model" size="small" text @click="addTabAndFocus" class="w-4 mb-2" />
+
+			<label>Select a dataset (historical)</label>
+			<Dropdown
+				:model-value="scenario.datasetSpec.id"
+				:options="datasets"
+				option-label="assetName"
+				option-value="assetId"
+				placeholder="Select a dataset"
+				@update:model-value="scenario.setDatasetSpec($event)"
+				class="mb-3"
+			/>
+
+			<div v-if="scenario.datasetSpec.id">
+				<label>Map dataset to models</label>
 				<table>
 					<thead>
 						<tr>
-							<th v-for="(header, i) in tableHeaders" :key="i">
+							<th v-for="(header, i) in tableHeaders" :key="i" class="text-left">
 								{{ header }}
 							</th>
 						</tr>
@@ -112,10 +119,14 @@
 						</tr>
 					</tbody>
 				</table>
-			</div>
-
-			<div>
-				<Button size="small" text icon="pi pi-plus" label="Add mapping" @click="scenario.addMappingRow()" />
+				<Button
+					size="small"
+					text
+					icon="pi pi-plus"
+					label="Add mapping"
+					@click="scenario.addMappingRow()"
+					class="mt-2"
+				/>
 			</div>
 		</template>
 
@@ -246,4 +257,15 @@ watch(
 	},
 	{ immediate: true }
 );
+
+const addTabAndFocus = () => {
+	props.scenario.addTabSpec();
+	activeTab.value = props.scenario.tabSpecs.length - 1;
+};
 </script>
+<style scoped>
+:deep(.p-tabview-panels) {
+	background: var(--surface-100);
+	border: 1px solid var(--surface-border-light);
+}
+</style>

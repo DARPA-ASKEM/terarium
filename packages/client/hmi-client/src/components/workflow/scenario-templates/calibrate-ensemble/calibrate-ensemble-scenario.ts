@@ -57,6 +57,15 @@ export class CalibrateEnsembleScenario extends BaseScenario {
 				modelConfigSpec: {
 					id: ''
 				}
+			},
+			{
+				id: uuidv4(),
+				modelSpec: {
+					id: ''
+				},
+				modelConfigSpec: {
+					id: ''
+				}
 			}
 		];
 
