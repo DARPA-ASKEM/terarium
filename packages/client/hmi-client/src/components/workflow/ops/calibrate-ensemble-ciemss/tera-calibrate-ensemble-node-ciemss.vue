@@ -6,12 +6,7 @@
 			:visualization-spec="lossChartSpec"
 		/>
 		<div v-if="outputData">
-			<vega-chart
-				v-for="(chart, index) of ensembleVariableCharts"
-				:key="index"
-				:interactive="false"
-				:visualization-spec="chart"
-			/>
+			<vega-chart v-for="(chart, index) of ensembleVariableCharts" :key="index" :visualization-spec="chart" />
 		</div>
 		<tera-progress-spinner
 			v-if="inProgressCalibrationId || inProgressForecastId"

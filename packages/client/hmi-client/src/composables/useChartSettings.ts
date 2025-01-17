@@ -1,6 +1,12 @@
 import { cloneDeep } from 'lodash';
 import { ref, computed, watch } from 'vue';
-import { ChartSetting, ChartSettingEnsembleVariable, ChartSettingSensitivity, ChartSettingType } from '@/types/common';
+import {
+	ChartSetting,
+	ChartSettingComparison,
+	ChartSettingEnsembleVariable,
+	ChartSettingSensitivity,
+	ChartSettingType
+} from '@/types/common';
 import {
 	EnsembleVariableChartSettingOption,
 	removeChartSettingById,
@@ -8,7 +14,8 @@ import {
 	updateAllChartSettings,
 	updateSensitivityChartSettingOption,
 	CHART_SETTING_WITH_QUANTILES_OPTIONS,
-	createNewChartSetting
+	createNewChartSetting,
+	isChartSettingComparisonVariable
 } from '@/services/chart-settings';
 import { WorkflowNode } from '@/types/workflow';
 
@@ -22,7 +29,7 @@ import { WorkflowNode } from '@/types/workflow';
  */
 export function useChartSettings(
 	props: { node: WorkflowNode<{ chartSettings: ChartSetting[] | null }> },
-	emit: (event: 'update-state', ...args: any[]) => void
+	emit: (...args: any[]) => void
 ) {
 	const chartSettings = computed(() => props.node.state.chartSettings ?? []);
 	const activeChartSettings = ref<ChartSetting | null>(null);
@@ -52,9 +59,7 @@ export function useChartSettings(
 	const selectedErrorVariableSettings = computed(() =>
 		chartSettings.value.filter((setting) => setting.type === ChartSettingType.ERROR_DISTRIBUTION)
 	);
-	const selectedComparisonChartSettings = computed(() =>
-		chartSettings.value.filter((setting) => setting.type === ChartSettingType.VARIABLE_COMPARISON)
-	);
+	const selectedComparisonChartSettings = computed(() => chartSettings.value.filter(isChartSettingComparisonVariable));
 
 	const selectedSensitivityChartSettings = computed(
 		() =>
@@ -98,10 +103,18 @@ export function useChartSettings(
 	};
 
 	const updateComparisonChartSetting = (chartId: string, selectedVariables: string[]) => {
-		findAndUpdateChartSettingsById(chartId, {
-			name: selectedVariables.join(', '),
-			selectedVariables
-		});
+		const state = cloneDeep(props.node.state);
+		if (!state.chartSettings) return;
+		const setting = state.chartSettings.find(
+			(settings) => settings.id === chartId && settings.type === ChartSettingType.VARIABLE_COMPARISON
+		) as ChartSettingComparison | undefined;
+		if (!setting) return;
+		Object.assign(setting, { selectedVariables, name: selectedVariables.join(', ') });
+		if (setting.smallMultiples === undefined && selectedVariables.length > 5) {
+			// If there are more than 5 variables and the option isn't set yet, enable small multiples by default
+			setting.smallMultiples = true;
+		}
+		emit('update-state', state);
 	};
 
 	const updateEnsembleVariableSettingOption = (option: EnsembleVariableChartSettingOption, value: boolean) => {
