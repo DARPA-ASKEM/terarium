@@ -10,6 +10,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.stream.Collectors;
 import lombok.Value;
+import software.uncharted.terarium.hmiserver.models.dataservice.Grounding;
 
 public class ContextMatcher {
 
@@ -17,7 +18,7 @@ public class ContextMatcher {
 	private static final JsonNode configData;
 
 	@Value
-	public static class SearchMatch {
+	static class SearchMatch {
 
 		String key;
 		double score;
@@ -100,7 +101,7 @@ public class ContextMatcher {
 	/**
 	 * Search for the given terms in the configuration file, with a minimum score
 	 */
-	public static List<SearchMatch> multiSearch(List<String> searchTerms, double minScore) {
+	public static List<Grounding> multiSearch(List<String> searchTerms, double minScore) {
 		List<String> validTerms = searchTerms.stream().filter(term -> !term.isEmpty()).collect(Collectors.toList());
 
 		List<SearchMatch> matches = new ArrayList<>();
@@ -121,14 +122,14 @@ public class ContextMatcher {
 	/**
 	 * Quick search for the given terms in the configuration file
 	 */
-	public static List<SearchMatch> multiSearch(List<String> searchTerms) {
+	public static List<Grounding> multiSearch(List<String> searchTerms) {
 		return multiSearch(searchTerms, 0.3);
 	}
 
 	/**
 	 * Search for the given term in the configuration file
 	 */
-	public static List<SearchMatch> search(String searchTerm) {
+	public static List<Grounding> search(String searchTerm) {
 		return multiSearch(List.of(searchTerm));
 	}
 }
