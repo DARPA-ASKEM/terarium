@@ -305,7 +305,48 @@ export class CalibrateEnsembleScenario extends BaseScenario {
 			}
 		});
 
-		wf.runDagreLayout();
+		// Run layout
+		// The schematic for calibrate ensemble s as follows
+		//
+		// Dataset
+		//
+		// Model   Config   Simulate Calibrate
+		// Model   Config   Simulate Calibrate   EnsmbleCalibrate
+		// Model   Config   Simulate Calibrate
+		datasetNode.x = 100;
+		datasetNode.y = 200;
+
+		const nodeGapHorizontal = 400;
+		const nodeGapVertical = 400;
+		const modelNodes = wf.getNodes().filter((d) => d.operationType === ModelOp.name);
+
+		modelNodes.forEach((modelNode, modelNodeIdx) => {
+			modelNode.x = datasetNode.x + nodeGapHorizontal;
+			modelNode.y = datasetNode.y + (modelNodeIdx + 1) * nodeGapVertical;
+
+			const modelNeighbours = wf.getNeighborNodes(modelNode.id);
+			const modelConfigNode = modelNeighbours.downstreamNodes[0];
+			modelConfigNode.x = modelNode.x + nodeGapHorizontal;
+			modelConfigNode.y = modelNode.y;
+
+			const modelConfigNeighbors = wf.getNeighborNodes(modelConfigNode.id);
+			const simulateNode = modelConfigNeighbors.downstreamNodes.find((n) => n.operationType === SimulateOp.name);
+			const calibrateNode = modelConfigNeighbors.downstreamNodes.find((n) => n.operationType === CalibrateOp.name);
+
+			if (simulateNode) {
+				simulateNode.x = modelConfigNode.x + nodeGapHorizontal;
+				simulateNode.y = modelConfigNode.y;
+			}
+			if (calibrateNode) {
+				calibrateNode.x = modelConfigNode.x + 2 * nodeGapHorizontal;
+				calibrateNode.y = modelConfigNode.y;
+			}
+		});
+
+		calibrateEnsembleNode.x = datasetNode.x + 5 * nodeGapHorizontal;
+		calibrateEnsembleNode.y = 200;
+
+		// wf.runDagreLayout();
 
 		return wf.dump();
 	}

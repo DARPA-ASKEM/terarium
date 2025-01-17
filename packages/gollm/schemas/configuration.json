@@ -251,7 +251,7 @@
                     "description": "The type of value for the parameter. can be a constant value or a distribution",
                     "enum": [
                       "Constant",
-                      "Uniform"
+                      "StandardUniform1"
                     ]
                   }
                 },
