@@ -300,7 +300,7 @@ export async function initialize(
 	datasets,
 	datasetResults,
 	modelConfigIdToInterventionPolicyIdMap,
-	chartData,
+	impactChartData,
 	rankingChartData,
 	baselineDatasetIndex,
 	selectedPlotType,
@@ -337,7 +337,7 @@ export async function initialize(
 	datasetResults.value = await fetchDatasetResults(datasets.value);
 	isFetchingDatasets.value = false;
 
-	await generateImpactCharts(chartData, datasets, datasetResults, baselineDatasetIndex, selectedPlotType);
+	await generateImpactCharts(impactChartData, datasets, datasetResults, baselineDatasetIndex, selectedPlotType);
 	const modelConfigurationIds = Object.keys(modelConfigIdToInterventionPolicyIdMap.value);
 	if (isEmpty(modelConfigurationIds)) return;
 	const modelConfigurationPromises = modelConfigurationIds.map((id) => getModelConfigurationById(id));

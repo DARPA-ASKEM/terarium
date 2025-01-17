@@ -265,7 +265,7 @@ const onRun = () => {
 };
 
 function onChangeImpactComparison() {
-	generateImpactCharts(chartData, datasets, datasetResults, baselineDatasetIndex, selectedPlotType);
+	generateImpactCharts(impactChartData, datasets, datasetResults, baselineDatasetIndex, selectedPlotType);
 }
 
 interface BasicKnobs {
@@ -308,22 +308,22 @@ const {
 const outputPanel = ref(null);
 const chartSize = useDrilldownChartSize(outputPanel);
 
-const chartData = ref<ChartData | null>(null);
+const impactChartData = ref<ChartData | null>(null);
 const rankingChartData = ref<ChartData | null>(null);
 const rankingResultsChart = ref<any>(null);
 const rankingCriteriaCharts = ref<any>([]);
 
 const variableNames = computed(() => {
-	if (chartData.value === null) return [];
+	if (impactChartData.value === null) return [];
 	const excludes = ['timepoint_id', 'sample_id', 'timepoint_unknown'];
-	return Object.keys(chartData.value.pyciemssMap).filter((key) => !excludes.includes(key));
+	return Object.keys(impactChartData.value.pyciemssMap).filter((key) => !excludes.includes(key));
 });
 
 const { generateAnnotation, getChartAnnotationsByChartId, useCompareDatasetCharts } = useCharts(
 	props.node.id,
 	null,
 	null,
-	chartData,
+	impactChartData,
 	chartSize,
 	null,
 	null
@@ -355,7 +355,7 @@ onMounted(() => {
 		datasets,
 		datasetResults,
 		modelConfigIdToInterventionPolicyIdMap,
-		chartData,
+		impactChartData,
 		rankingChartData,
 		baselineDatasetIndex,
 		selectedPlotType,
