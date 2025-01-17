@@ -3,28 +3,36 @@
 		<div v-if="processing">{{ processing }}</div>
 		<div v-else>Processing...</div>
 	</tera-progress-spinner>
-	<div v-else-if="_.isArray(visibleChartSettings[0])">
-		<div v-for="(settingsArray, index) of visibleChartSettings" :key="index">
-			<vega-chart
-				v-for="setting of settingsArray"
-				:key="chartSettingKey || setting.id"
-				:expandable="expandable"
-				:are-embed-actions-visible="areEmbedActionsVisible"
-				:visualization-spec="preparedCharts[index][chartSettingKey || setting.id]"
-				:interactive="false"
-			/>
-		</div>
+	<div
+		v-else-if="visibleChartSettings && _.isArray(visibleChartSettings[0])"
+		v-for="(settingsArray, index) of visibleChartSettings"
+		:key="index"
+	>
+		<vega-chart
+			v-for="setting of settingsArray"
+			:key="chartSettingKey || setting"
+			:expandable="expandable"
+			:are-embed-actions-visible="areEmbedActionsVisible"
+			:visualization-spec="preparedCharts[index][chartSettingKey || setting['id']]"
+			:interactive="false"
+		/>
 	</div>
-	<div v-else-if="visibleChartSettings.length">
-		<div v-for="setting of visibleChartSettings" :key="chartSettingKey || setting.id">
-			<vega-chart
-				:expandable="expandable"
-				:are-embed-actions-visible="areEmbedActionsVisible"
-				:visualization-spec="preparedCharts[chartSettingKey || setting.id]"
-				:interactive="false"
-			/>
-		</div>
-	</div>
+	<vega-chart
+		v-else-if="visibleChartSettings?.length"
+		v-for="(setting, index) of visibleChartSettings"
+		:key="'c' + index"
+		:expandable="expandable"
+		:are-embed-actions-visible="areEmbedActionsVisible"
+		:visualization-spec="preparedCharts[chartSettingKey || setting['id']]"
+		:interactive="false"
+	/>
+	<vega-chart
+		v-else-if="!visibleChartSettings"
+		v-for="(chartSpec, index) of preparedCharts"
+		:key="chartSpec.id + index"
+		:visualization-spec="chartSpec"
+		:interactive="false"
+	/>
 	<tera-operator-placeholder v-else-if="placeholder" :node="node">
 		{{ placeholder }}
 	</tera-operator-placeholder>
@@ -34,6 +42,7 @@
 import { computed } from 'vue';
 import _ from 'lodash';
 import VegaChart from '@/components/widgets/VegaChart.vue';
+import { ChartSetting } from '@/types/common';
 import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue';
 import TeraOperatorPlaceholder from '@/components/operator/tera-operator-placeholder.vue';
 import { WorkflowNode } from '@/types/workflow';
@@ -41,7 +50,7 @@ import { WorkflowNode } from '@/types/workflow';
 const props = defineProps<{
 	node: WorkflowNode<any>;
 	preparedCharts: any;
-	chartSettings: any;
+	chartSettings: ChartSetting[][] | ChartSetting[];
 	chartSettingKey?: string;
 	isLoading?: boolean;
 	placeholder?: string;
@@ -51,9 +60,18 @@ const props = defineProps<{
 }>();
 
 const visibleChartSettings = computed(() => {
-	if (_.isArray(props.chartSettings[0])) {
-		return props.chartSettings.map((settingsArray) => settingsArray.filter((setting) => !setting?.hideInNode));
+	if (props.chartSettings) {
+		// null check
+		if (_.isArray(props.chartSettings[0])) {
+			// ChartSetting[][] check
+			return (props.chartSettings as ChartSetting[][]).map((settingsArray) =>
+				settingsArray.filter((setting) => !setting?.hideInNode)
+			);
+		}
+		// ChartSetting[]
+		return (props.chartSettings as ChartSetting[]).filter((setting) => !setting?.hideInNode);
 	}
-	return props.chartSettings.filter((setting) => !setting?.hideInNode);
+	return null;
 });
 </script>
+s
