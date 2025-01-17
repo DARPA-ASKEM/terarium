@@ -44,9 +44,7 @@
 								option-value="id"
 								:loading="isFetchingDatasets"
 								placeholder="Optional"
-								@change="
-									generateImpactCharts(chartData, datasets, datasetResults, baselineDatasetIndex, selectedPlotType)
-								"
+								@change="onChangeImpactComparison"
 							/>
 							<label>Comparison tables</label>
 							<tera-checkbox v-model="isATESelected" label="Average treatment effect (ATE)" />
@@ -168,9 +166,7 @@
 										v-model="knobs.selectedPlotType"
 										:value="option.value"
 										name="plotValues"
-										@change="
-											generateImpactCharts(chartData, datasets, datasetResults, baselineDatasetIndex, selectedPlotType)
-										"
+										@change="onChangeImpactComparison"
 									/>
 									<label class="pl-2 py-1" :for="option.value">{{ option.label }}</label>
 								</div>
@@ -267,6 +263,10 @@ const onRun = () => {
 		interventionPolicies
 	);
 };
+
+function onChangeImpactComparison() {
+	generateImpactCharts(chartData, datasets, datasetResults, baselineDatasetIndex, selectedPlotType);
+}
 
 interface BasicKnobs {
 	criteriaOfInterestCards: CriteriaOfInterestCard[];
