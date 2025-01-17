@@ -3,7 +3,7 @@ import { Dataset } from '@/types/Types';
 import { WorkflowPortStatus } from '@/types/workflow';
 import { renameFnGenerator } from '@/components/workflow/ops/calibrate-ciemss/calibrate-utils';
 
-import { createRankingInterventionsChart } from '@/services/charts';
+import { createRankingInterventionsChart, CATEGORICAL_SCHEME } from '@/services/charts';
 import { DATASET_VAR_NAME_PREFIX, getDatasetResultCSV, mergeResults, getDataset } from '@/services/dataset';
 import {
 	DataArray,
@@ -198,6 +198,7 @@ export function generateRankingCharts(
 		})
 		.flat();
 	const allRankedCriteriaValues: { score: number; name: string }[][] = [];
+	const interventionNameColorMap: Record<string, string> = {};
 
 	props.node.state.criteriaOfInterestCards.forEach((card) => {
 		if (!card.selectedConfigurationId || !chartData.value) return;
@@ -208,10 +209,18 @@ export function generateRankingCharts(
 				: chartData.value.resultSummary[chartData.value.resultSummary.length - 1];
 
 		const rankingCriteriaValues: { score: number; name: string }[] = [];
-		interventionPolicies.value.forEach((policy, index) => {
+
+		// let properIndex = 0;
+		interventionPolicies.value.forEach((policy, index: number) => {
 			// Skip this intervention policy if a configuration is not using it
 			if (!policy.id || !policy.name || !commonInterventionPolicyIds.includes(policy.id) || !card.selectedVariable) {
 				return;
+			}
+
+			// index === properIndex++;
+
+			if (!interventionNameColorMap[policy.name]) {
+				interventionNameColorMap[policy.name] = CATEGORICAL_SCHEME[index];
 			}
 
 			rankingCriteriaValues.push({
@@ -225,32 +234,37 @@ export function generateRankingCharts(
 				? rankingCriteriaValues.sort((a, b) => b.score - a.score)
 				: rankingCriteriaValues.sort((a, b) => a.score - b.score);
 
-		sortedRankingCriteriaValues.forEach((value, index) => {
-			value.score = index + 1;
-		});
-
-		rankingCriteriaCharts.value.push(createRankingInterventionsChart(sortedRankingCriteriaValues, card.name));
+		rankingCriteriaCharts.value.push(
+			createRankingInterventionsChart(
+				sortedRankingCriteriaValues,
+				interventionNameColorMap,
+				card.name,
+				card.selectedVariable
+			)
+		);
 		allRankedCriteriaValues.push(sortedRankingCriteriaValues);
 	});
 
-	// Sum up the scores of the same intervention policy
-	const scoreMap: Record<string, number> = {};
+	// Sum up the values of the same intervention policy
+	const valueMap: Record<string, number> = {};
 	allRankedCriteriaValues.flat().forEach(({ score, name }) => {
-		if (scoreMap[name]) {
-			scoreMap[name] += score;
+		if (valueMap[name]) {
+			valueMap[name] += score;
 		} else {
-			scoreMap[name] = score;
+			valueMap[name] = score;
 		}
 	});
 
-	const rankingResultsValues = Object.keys(scoreMap)
+	const rankingResultsScores: { score: number; name: string }[] = Object.keys(valueMap)
 		.map((name) => ({
 			name,
-			score: scoreMap[name]
+			score: valueMap[name]
 		}))
-		.sort((a, b) => a.score - b.score);
+		.sort((a, b) => a.score - b.score)
+		// Instead of the values, we want to rank by score
+		.map((value, index) => ({ ...value, score: index + 1 }));
 
-	rankingResultsChart.value = createRankingInterventionsChart(rankingResultsValues, '');
+	rankingResultsChart.value = createRankingInterventionsChart(rankingResultsScores, interventionNameColorMap);
 }
 
 export async function generateImpactCharts(

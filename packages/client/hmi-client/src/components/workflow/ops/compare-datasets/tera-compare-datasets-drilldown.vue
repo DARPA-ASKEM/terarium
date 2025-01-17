@@ -20,6 +20,7 @@
 							:options="compareOptions"
 							option-label="label"
 							option-value="value"
+							@change="outputPanelBehavior"
 						/>
 						<!-- Pascale asked me to hide this until the feature is implemented -->
 						<!-- <tera-checkbox
@@ -281,7 +282,7 @@ const knobs = ref<BasicKnobs>({
 });
 
 const addCriteria = () => {
-	knobs.value.criteriaOfInterestCards.push(blankCriteriaOfInterest);
+	knobs.value.criteriaOfInterestCards.push(cloneDeep(blankCriteriaOfInterest));
 };
 
 const deleteCriteria = (index: number) => {
@@ -331,10 +332,20 @@ const baselineDatasetIndex = computed(() =>
 );
 const variableCharts = useCompareDatasetCharts(selectedVariableSettings, selectedPlotType, baselineDatasetIndex);
 
+function outputPanelBehavior() {
+	if (knobs.value.selectedCompareOption === CompareValue.RANK) {
+		isOutputSettingsOpen.value = false;
+	} else if (knobs.value.selectedCompareOption === CompareValue.IMPACT) {
+		isOutputSettingsOpen.value = true;
+	}
+}
+
 onMounted(() => {
 	const state = cloneDeep(props.node.state);
 	knobs.value = Object.assign(knobs.value, state);
 	if (!knobs.value.selectedDataset) knobs.value.selectedDataset = datasets.value[0]?.id ?? null;
+
+	outputPanelBehavior();
 
 	initialize(
 		props,
