@@ -32,7 +32,14 @@
 							class="mb-3"
 						/>
 
-						<label>Select configuration representing best and generous estimates of the initial conditions</label>
+						<label
+							label
+							:class="{
+								'disabled-label':
+									isEmpty(modelAssets.get(tab.modelSpec.id)?.modelConfigurations) || isFetchingModelInformation
+							}"
+							>Select configuration representing best and generous estimates of the initial conditions</label
+						>
 						<Dropdown
 							:model-value="tab.modelConfigSpec.id"
 							placeholder="Select a configuration"
@@ -267,5 +274,8 @@ const addTabAndFocus = () => {
 :deep(.p-tabview-panels) {
 	background: var(--surface-100);
 	border: 1px solid var(--surface-border-light);
+}
+.disabled-label {
+	color: var(--text-color-disabled);
 }
 </style>
