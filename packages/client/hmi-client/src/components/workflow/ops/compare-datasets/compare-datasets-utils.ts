@@ -213,7 +213,9 @@ export function generateRankingCharts(
 
 		let colorIndex = 0;
 		datasets.value.forEach(({ metadata }, index: number) => {
-			const policy = interventionPolicies.find(({ id }) => id === metadata.simulationAttributes?.interventionPolicyId);
+			const policy = interventionPolicies.value.find(
+				({ id }) => id === metadata.simulationAttributes?.interventionPolicyId
+			);
 
 			// Skip this intervention policy if a configuration is not using it
 			if (
@@ -345,7 +347,7 @@ export async function initialize(
 	if (isEmpty(interventionPolicyIds)) return;
 	const interventionPolicyPromises = interventionPolicyIds.map((id) => getInterventionPolicyById(`${id}`));
 	await Promise.all(interventionPolicyPromises).then((policies) => {
-		interventionPolicies = policies.filter((policy) => policy !== null);
+		interventionPolicies.value = policies.filter((policy) => policy !== null);
 	});
 
 	generateRankingCharts(
