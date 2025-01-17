@@ -20,7 +20,7 @@ For example, one might have an `SEIRD` mode-configuration, where the infection r
 3. Drag and drop the model from the Resources panel onto the workflow.
 4. Attach the model to a _Configure model_ operator.
 5. Open the _Configure Model_ operator to verify that the model is reasonably configured by inspecting the value of the initial conditions and parameters:
-     - `S = 2000.0, I = 1.0, R = 0.0, beta = [0.03, 0.05], gamma = [0.01, 0.03]`
+     - `S = 2000.0, I = 1.0, R = 0.0, beta = [0.01, 0.1], gamma = [0.01, 0.1]`
 6. Attach the _Configure Model_ operator to a _Validate configuration_ operator.
 
 ### 3. Setup and run
