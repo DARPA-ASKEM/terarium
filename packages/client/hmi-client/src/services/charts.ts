@@ -617,7 +617,7 @@ export function createForecastChart(
 				? { value: 1.0 } // If bins enabled, use full opacity
 				: {
 						condition: {
-							selection: 'series_stats', // Use original parameter name
+							selection: 'legend_selection', // Use selection to highlight the selected line
 							value: 0.15
 						},
 						value: 0.05
@@ -635,7 +635,7 @@ export function createForecastChart(
 		// Add interactive legend params, keeping original name
 		lineSubLayer.params = [
 			{
-				name: 'series_stats',
+				name: 'legend_selection',
 				select: { type: 'point', fields: ['variableField'] },
 				bind: 'legend'
 			}
@@ -644,7 +644,7 @@ export function createForecastChart(
 		Object.assign(lineSubLayer.encoding, {
 			strokeWidth: { value: 2 },
 			opacity: {
-				condition: { param: 'series_stats', value: 1 },
+				condition: { param: 'legend_selection', value: 1 },
 				value: 0.05
 			}
 		});
