@@ -178,10 +178,7 @@
 									>
 										<h6 class="pb-1">{{ intervention.name }}</h6>
 										<ul v-if="!isEmpty(intervention.staticInterventions)">
-											<li
-												v-for="staticIntervention in intervention.staticInterventions"
-												:key="staticIntervention.timestep"
-											>
+											<li v-for="(staticIntervention, index) in intervention.staticInterventions" :key="index">
 												<p>
 													Set {{ staticIntervention.type }} {{ appliedTo }} to {{ staticIntervention.value }} at time
 													step {{ staticIntervention.timestep }}.
@@ -219,7 +216,7 @@
 </template>
 
 <script setup lang="ts">
-import _, { cloneDeep, groupBy, isEmpty, omit } from 'lodash';
+import _, { cloneDeep, groupBy, isEmpty, isEqual, omit } from 'lodash';
 import { ComponentPublicInstance, computed, nextTick, onMounted, ref, watch } from 'vue';
 import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
 import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.vue';
@@ -251,7 +248,6 @@ import TeraToggleableInput from '@/components/widgets/tera-toggleable-input.vue'
 import {
 	blankIntervention,
 	flattenInterventionData,
-	getInterventionPolicyById,
 	updateInterventionPolicy,
 	deleteInterventionPolicy
 } from '@/services/intervention-policy';
@@ -312,6 +308,7 @@ interface SelectedIntervention {
 	dynamicInterventions: DynamicIntervention[];
 }
 
+const modelId: string | undefined = props.node.inputs[0].value?.[0];
 const MAX_NUMBER_OF_ROWS = 8;
 const firstRow = ref(0);
 
@@ -329,14 +326,13 @@ const filterInterventionsText = ref('');
 const model = ref<Model | null>(null);
 const isFetchingPolicies = ref(false);
 const isLoading = ref(false);
-const interventionsPolicyList = ref<InterventionPolicy[]>([]);
+const interventionPoliciesList = ref<InterventionPolicy[]>([]);
 const interventionPoliciesFiltered = computed(() =>
-	interventionsPolicyList.value
+	interventionPoliciesList.value
 		.filter((policy) => policy.name?.toLowerCase().includes(filterInterventionsText.value.toLowerCase()))
 		.sort((a, b) => sortDatesDesc(a.createdOn, b.createdOn))
 );
 
-const selectedPolicyId = computed(() => props.node.outputs.find((o) => o.id === props.node.active)?.value?.[0]);
 const selectedPolicy = ref<InterventionPolicy | null>(null);
 
 const newDescription = ref('');
@@ -429,20 +425,20 @@ const getInterventionsAppliedTo = (appliedTo: string) =>
 
 const initialize = async (overwriteWithState: boolean = false) => {
 	const state = props.node.state;
-	const modelId = props.node.inputs[0].value?.[0];
-	if (!modelId) return;
+	const selectedOutput = cloneDeep(props.node.outputs.find((o) => o.id === props.node.active));
+	const selectedPolicyId: string | null = selectedOutput?.value?.[0];
 
-	// fetch intervention policies
-	await fetchInterventionPolicies(modelId);
+	await fetchInterventionPolicies();
 
-	model.value = await getModel(modelId);
-	if (selectedPolicyId.value) {
-		selectedPolicy.value = await getInterventionPolicyById(selectedPolicyId.value);
-		knobs.value.transientInterventionPolicy = cloneDeep(
-			!overwriteWithState ? selectedPolicy.value : state.interventionPolicy
-		);
-	} else {
+	selectedPolicy.value =
+		interventionPoliciesList.value.find(({ id }) => id === selectedPolicyId) ??
+		(selectedOutput?.state as InterventionPolicy) ??
+		null;
+
+	if (overwriteWithState || !selectedPolicy.value) {
 		knobs.value.transientInterventionPolicy = cloneDeep(state.interventionPolicy);
+	} else {
+		knobs.value.transientInterventionPolicy = cloneDeep(selectedPolicy.value);
 	}
 	selectedCharts.value = state.selectedCharts ?? [];
 };
@@ -473,9 +469,9 @@ const applyInterventionPolicy = (interventionPolicy: InterventionPolicy) => {
 	logger.success(`Policy applied ${interventionPolicy.name}`);
 };
 
-const fetchInterventionPolicies = async (modelId: string) => {
+const fetchInterventionPolicies = async () => {
 	isFetchingPolicies.value = true;
-	interventionsPolicyList.value = await getInterventionPoliciesForModel(modelId);
+	interventionPoliciesList.value = await getInterventionPoliciesForModel(modelId);
 	isFetchingPolicies.value = false;
 };
 
@@ -519,8 +515,7 @@ const onDeleteInterventionPolicy = (policy: InterventionPolicy) => {
 		accept: async () => {
 			if (policy.id) {
 				await deleteInterventionPolicy(policy.id);
-				const modelId = props.node.inputs[0].value?.[0];
-				fetchInterventionPolicies(modelId);
+				fetchInterventionPolicies();
 			}
 		}
 	});
@@ -598,17 +593,15 @@ const onSaveInterventionPolicy = async () => {
 };
 
 const resetToBlankIntervention = () => {
-	const modelId = props.node.inputs[0].value?.[0];
 	if (!modelId) return;
-	knobs.value.transientInterventionPolicy = {
-		modelId,
-		interventions: [_.cloneDeep(blankIntervention)]
-	};
-
 	emit('append-output', {
 		type: InterventionPolicyOperation.outputs[0].type,
 		label: InterventionPolicyOperation.outputs[0].label,
-		value: null
+		value: null,
+		state: {
+			modelId,
+			interventions: [_.cloneDeep(blankIntervention)]
+		}
 	});
 };
 
@@ -659,9 +652,8 @@ const interventionEventHandler = async (event: ClientEvent<TaskResponse>) => {
 	if ([TaskStatus.Success, TaskStatus.Cancelled, TaskStatus.Failed].includes(event.data.status)) {
 		state.taskIds = state.taskIds.filter((id) => id !== event.data.id);
 		isLoading.value = false;
-		const modelId = props.node.inputs[0].value?.[0];
 		if (!modelId) return;
-		await fetchInterventionPolicies(modelId);
+		await fetchInterventionPolicies();
 	}
 };
 
@@ -693,7 +685,26 @@ watch(
 	}
 );
 
-onMounted(() => {
+watch(
+	() => props.node.state.taskIds,
+	async (newTaskIds, oldTaskIds) => {
+		// This gets triggered on state change for some reason this helps prevent fetching the policies multiple times
+		if (isEqual(newTaskIds, oldTaskIds)) {
+			return;
+		}
+		if (props.node.state.taskIds.length > 0) {
+			isLoading.value = true;
+		} else {
+			isLoading.value = false;
+			if (!modelId) return;
+			fetchInterventionPolicies();
+		}
+	}
+);
+
+onMounted(async () => {
+	if (modelId) model.value = await getModel(modelId);
+
 	if (props.node.active) {
 		// setting true will force overwrite the intervention policy with the current state on the node
 		initialize(true);
