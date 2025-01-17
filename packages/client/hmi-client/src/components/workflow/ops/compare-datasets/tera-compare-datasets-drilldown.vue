@@ -258,14 +258,14 @@ const onRun = () => {
 		rankingResultsChart,
 		props,
 		modelConfigIdToInterventionPolicyIdMap,
-		chartData,
+		rankingChartData,
 		datasets,
 		interventionPolicies
 	);
 };
 
 function onChangeImpactComparison() {
-	generateImpactCharts(rankingChartData, datasets, datasetResults, baselineDatasetIndex, selectedPlotType);
+	generateImpactCharts(chartData, datasets, datasetResults, baselineDatasetIndex, selectedPlotType);
 }
 
 interface BasicKnobs {
