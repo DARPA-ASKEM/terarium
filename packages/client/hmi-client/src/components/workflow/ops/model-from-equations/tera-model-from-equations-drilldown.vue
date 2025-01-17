@@ -363,7 +363,7 @@ function handlePasteEvent(e) {
 					const base64 = arrayBufferToBase64(target.result);
 					pastedImage.value = base64;
 					// send base64 to gollm
-					equationsFromImage(document.value?.id ?? '', base64).then((response) => {
+					equationsFromImage(base64, document.value?.id).then((response) => {
 						const responseJson = JSON.parse(window.atob(response.output)).response;
 						multipleEquations.value = responseJson.equations.join('\n');
 					});
@@ -389,7 +389,7 @@ function handleDrop(e: DragEvent) {
 		if (target?.result) {
 			const base64 = arrayBufferToBase64(target.result);
 			pastedImage.value = base64;
-			equationsFromImage(document.value?.id ?? '', base64).then((response) => {
+			equationsFromImage(base64, document.value?.id).then((response) => {
 				const responseJson = JSON.parse(window.atob(response.output)).response;
 				multipleEquations.value = responseJson.equations.join('\n');
 			});
