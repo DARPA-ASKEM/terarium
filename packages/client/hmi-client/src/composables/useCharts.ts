@@ -521,7 +521,7 @@ export function useCharts(
 	}
 
 	// Create comparison charts based on chart settings
-	const useComparisonCharts = (chartSettings: ComputedRef<ChartSettingComparison[]>) => {
+	const useComparisonCharts = (chartSettings: ComputedRef<ChartSettingComparison[]>, isNodeChart = false) => {
 		const comparisonCharts = computed(() => {
 			const charts: Record<string, VisualizationSpec[]> = {};
 			if (!isChartReadyToBuild.value) return charts;
@@ -530,7 +530,7 @@ export function useCharts(
 			chartSettings.value.forEach((setting) => {
 				const selectedVars = setting.selectedVariables;
 				const annotations = getChartAnnotationsByChartId(setting.id);
-				if (setting.smallMultiples && setting.selectedVariables.length > 1) {
+				if (setting.smallMultiples && setting.selectedVariables.length > 1 && !isNodeChart) {
 					const sharedYExtent = setting.shareYAxis
 						? calculateYExtent(
 								resultSummary,
@@ -543,8 +543,6 @@ export function useCharts(
 					let width = chartSize.value.width;
 					if (selectedVars.length > 1) width = chartSize.value.width / 2;
 					if (selectedVars.length > 4) width = chartSize.value.width / 3;
-					console.log('full width', chartSize.value.width);
-					console.log('individual width', width);
 					const height = selectedVars.length <= 1 ? chartSize.value.height : chartSize.value.height / 2;
 					charts[setting.id] = selectedVars.map((_selectedVar, index) => {
 						const { options, sampleLayerVariables, statLayerVariables } = createComparisonChartOptions(setting, index);
