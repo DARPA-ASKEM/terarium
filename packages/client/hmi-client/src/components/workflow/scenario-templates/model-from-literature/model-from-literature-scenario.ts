@@ -146,6 +146,11 @@ export class ModelFromLiteratureScenario extends BaseScenario {
 				{ x: 0, y: 0 }
 			]);
 
+			wf.addEdge(documentNode.id, documentNode.outputs[0].id, modelConfigNode.id, modelConfigNode.inputs[1].id, [
+				{ x: 0, y: 0 },
+				{ x: 0, y: 0 }
+			]);
+
 			if (compareModelsNode) {
 				wf.addEdge(
 					modelFromEquationsNode.id,
