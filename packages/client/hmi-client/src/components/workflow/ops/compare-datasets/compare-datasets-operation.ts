@@ -2,6 +2,8 @@ import { WorkflowOperationTypes } from '@/types/workflow';
 import type { Operation, BaseState } from '@/types/workflow';
 import { ChartSetting } from '@/types/common';
 
+const DOCUMENTATION_URL = 'https://documentation.terarium.ai/datasets/compare-datasets/';
+
 export enum TimepointOption {
 	LAST = 'last',
 	FIRST = 'first'
@@ -48,7 +50,7 @@ export const CompareDatasetsOperation: Operation = {
 	name: WorkflowOperationTypes.COMPARE_DATASETS,
 	displayName: 'Compare datasets',
 	description: 'Compare datasets, or simulation results',
-	documentationUrl: '',
+	documentationUrl: DOCUMENTATION_URL,
 	inputs: [
 		{ type: 'datasetId', label: 'Dataset or Simulation result' },
 		{ type: 'datasetId', label: 'Dataset or Simulation result' }
