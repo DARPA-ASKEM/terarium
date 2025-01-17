@@ -71,6 +71,7 @@
 							class="histogram"
 							type="bar"
 							:height="480"
+							:width="480"
 							:data="statistics.get(colName)?.chartData"
 							:options="CHART_OPTIONS"
 						/>
@@ -151,6 +152,14 @@ const CATEGORYPERCENTAGE = 1.0;
 const BARPERCENTAGE = 1.0;
 const MINBARLENGTH = 1;
 const CHART_OPTIONS = {
+	responsive: true,
+	elements: {
+		bar: {
+			borderWidth: 1,
+			borderColor: '#FFFFFF'
+		}
+	},
+	width: 10,
 	indexAxis: 'y',
 	plugins: {
 		legend: {
@@ -163,7 +172,7 @@ const CHART_OPTIONS = {
 			enabled: true,
 			position: 'nearest',
 			displayColors: false,
-			backgroundColor: '#666666dd'
+			backgroundColor: '#333333dd'
 		}
 	},
 	scales: {
