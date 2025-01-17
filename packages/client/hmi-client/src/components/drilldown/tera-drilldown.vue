@@ -33,7 +33,7 @@
 				:active-index="selectedViewIndex"
 				:views="views"
 				:tooltip="tooltip"
-				:documentation-url="node.documentationUrl"
+				:documentation-url="getDocumentationUrl(node)"
 				@tab-change="handleTabChange"
 				@close="emit('on-close-clicked')"
 			>
@@ -41,7 +41,7 @@
 				<template #top-header-actions>
 					<aside class="flex gap-1 ml-3 mr-auto">
 						<Chip
-							v-for="(input, index) in node.inputs.filter((input) => input.value)"
+							v-for="(input, index) in node.inputs.filter((i) => i.value)"
 							:key="index"
 							:label="useProjects().getAssetName(input.value?.[0]) || input.label"
 						>
@@ -136,13 +136,14 @@ import TeraOperatorPortIcon from '@/components/operator/tera-operator-port-icon.
 import TeraOutputDropdown from '@/components/drilldown/tera-output-dropdown.vue';
 import TeraTooltip from '@/components/widgets/tera-tooltip.vue';
 import { useProjects } from '@/composables/project';
+import { getDocumentationUrl } from '@/components/workflow/util';
 
 const props = defineProps<{
 	node: WorkflowNode<any>;
 	title?: string;
 	tooltip?: string;
 	isDraft?: boolean;
-	// Applied in dynamic compoenent in tera-workflow.vue
+	// Applied in dynamic component in tera-workflow.vue
 	upstreamOperatorsNav?: MenuItem[];
 	downstreamOperatorsNav?: MenuItem[];
 	spawnAnimation?: 'left' | 'right' | 'scale';
@@ -159,7 +160,7 @@ const slots = useSlots();
 const tabs = computed(() => {
 	if (slots.default?.()) {
 		if (slots.default().length === 1) {
-			// if there is only 1 component we don't need to know the tab name and we can render it.
+			// if there is only 1 component we don't need to know the tab name, and we can render it.
 			return slots.default();
 		}
 		return slots.default().filter((vnode) => vnode.props?.tabName);
