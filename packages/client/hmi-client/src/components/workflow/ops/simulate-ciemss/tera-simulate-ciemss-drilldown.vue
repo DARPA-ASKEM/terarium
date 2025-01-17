@@ -162,8 +162,8 @@
 				<tera-notebook-error v-bind="node.state.errorMessage" />
 				<template v-if="runResults[selectedRunId]">
 					<div v-if="view === OutputView.Charts">
-						<div class="mx-3" ref="chartWidthDiv"></div>
-						<Accordion multiple :active-index="currentActiveIndicies">
+						<div class="mx-4" ref="chartWidthDiv"></div>
+						<Accordion multiple :active-index="currentActiveIndicies" class="px-2">
 							<!-- Section: Interventions over time -->
 							<AccordionTab v-if="selectedInterventionSettings.length > 0" header="Interventions over time">
 								<template v-for="setting in selectedInterventionSettings" :key="setting.id">

@@ -541,8 +541,8 @@ export function useCharts(
 
 					// create multiples
 					let width = chartSize.value.width;
-					if (selectedVars.length > 1) width = Math.floor(chartSize.value.width / 2);
-					if (selectedVars.length > 4) width = Math.floor(chartSize.value.width / 3);
+					if (selectedVars.length > 1) width = chartSize.value.width / 2;
+					if (selectedVars.length > 4) width = chartSize.value.width / 3;
 					console.log('full width', chartSize.value.width);
 					console.log('individual width', width);
 					const height = selectedVars.length <= 1 ? chartSize.value.height : chartSize.value.height / 2;
