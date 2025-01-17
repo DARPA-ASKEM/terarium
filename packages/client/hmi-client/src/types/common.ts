@@ -209,7 +209,7 @@ export interface ChartSettingComparison extends ChartSettingBase {
 	type: ChartSettingType.VARIABLE_COMPARISON;
 	smallMultiples?: boolean;
 	shareYAxis?: boolean;
-	/** If true, also plot pre-calibration or base simulation without the intervention data */
+	/** If true, also plot the pre-calibration or base simulation (without the intervention) data */
 	showBeforeAfter?: boolean;
 }
 
