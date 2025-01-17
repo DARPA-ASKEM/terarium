@@ -212,10 +212,11 @@ export class ModelFromLiteratureScenario extends BaseScenario {
 			simulateNode.x = modelConfigNode.x + nodeGapHorizontal;
 			simulateNode.y = modelConfigNode.y;
 		});
-		compareModelsNode.x = anchorX + 4 * nodeGapHorizontal;
-		compareModelsNode.y = anchorY + Math.floor(0.5 * documentNodes.length) * nodeGapVertical;
 
-		// wf.runDagreLayout();
+		if (compareModelsNode) {
+			compareModelsNode.x = anchorX + 4 * nodeGapHorizontal;
+			compareModelsNode.y = anchorY + Math.floor(0.5 * documentNodes.length) * nodeGapVertical;
+		}
 
 		return wf.dump();
 	}
