@@ -273,9 +273,15 @@ ul {
 		padding: var(--gap-2) 0 var(--gap-2) var(--gap-1);
 	}
 }
+/* First set the hover state for the model-part itself */
 .model-part:hover {
 	border-left: 4px solid var(--primary-color);
 	background: var(--surface-highlight);
+}
+/* But set a lighter hover state when hovering over child elements */
+.model-part:hover:has(.stratified > ul > li:hover) {
+	border-left: 4px solid var(--primary-color-light);
+	background: color-mix(in srgb, var(--surface-highlight) 30%, var(--surface-0) 70%);
 }
 
 li {
@@ -303,7 +309,7 @@ li {
 			padding-bottom: var(--gap-2);
 			padding-top: var(--gap-2);
 			&:hover {
-				background: color-mix(in srgb, var(--surface-highlight) 30%, var(--surface-0) 70%);
+				background: var(--surface-highlight);
 				border-left-color: var(--primary-color);
 			}
 		}

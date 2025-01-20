@@ -1,5 +1,5 @@
 <template>
-	<section class="flex flex-column gap-2">
+	<section class="flex flex-column">
 		<span class="flex align-items-center gap-3">
 			<h6>{{ id }}</h6>
 			<span v-if="!isTimePart" class="name">
