@@ -371,6 +371,7 @@ const debounceUpdateState = debounce((intervention) => {
 	display: flex;
 	flex-direction: column;
 	cursor: pointer;
+	box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
 }
 .intervention-card:hover {
 	background-color: var(--surface-50);
