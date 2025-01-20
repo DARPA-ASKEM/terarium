@@ -3,6 +3,9 @@
 		<div v-if="processing">{{ processing }}</div>
 		<div v-else>Processing...</div>
 	</tera-progress-spinner>
+	<tera-operator-placeholder v-else-if="placeholder" :node="node">
+		{{ placeholder }}
+	</tera-operator-placeholder>
 	<div
 		v-else-if="visibleChartSettings && _.isArray(visibleChartSettings[0])"
 		v-for="(settingsArray, index) of visibleChartSettings"
@@ -33,9 +36,6 @@
 		:visualization-spec="chartSpec"
 		:interactive="false"
 	/>
-	<tera-operator-placeholder v-else-if="placeholder" :node="node">
-		{{ placeholder }}
-	</tera-operator-placeholder>
 </template>
 
 <script setup lang="ts">
