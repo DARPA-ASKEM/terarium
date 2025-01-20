@@ -20,4 +20,7 @@ public class InputPort implements Serializable {
 	private String label;
 	private ArrayNode value;
 	private Boolean isOptional;
+
+	// FIXME: backwards compatibility, to be removed
+	private Boolean acceptMultiple;
 }
