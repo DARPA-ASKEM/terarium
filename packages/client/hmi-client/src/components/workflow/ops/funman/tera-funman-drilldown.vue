@@ -203,6 +203,21 @@
 								/>
 								<span class="ml-4" v-else> To view parameter charts select some in the Output settings. </span>
 							</AccordionTab>
+							<AccordionTab v-if="!isEmpty(calibratedConfigObservables)" header="Observables">
+								<tera-model-part
+									class="pl-4"
+									:part-type="PartType.OBSERVABLE"
+									:items="calibratedConfigObservables"
+									:feature-config="{ isPreview: true }"
+								/>
+								<vega-chart
+									v-for="(observableChart, index) in observableCharts"
+									:key="index"
+									:visualization-spec="observableChart"
+									:are-embed-actions-visible="false"
+									expandable
+								/>
+							</AccordionTab>
 							<AccordionTab header="Diagram">
 								<tera-model-diagram v-if="model" :model="model" />
 							</AccordionTab>
@@ -829,7 +844,7 @@ onMounted(async () => {
 let constraintsResponse: FunmanConstraintsResponse[] = [];
 let mmt: MiraModel = emptyMiraModel();
 let funmanResult: any = {};
-const processedFunmanResult = ref<ProcessedFunmanResult>({ boxes: [], trajectories: [] });
+const processedFunmanResult = ref<ProcessedFunmanResult>({ boxes: [], trajectories: [], observableTrajectories: [] });
 
 // Model configuration stuff
 const validatedModelConfiguration = ref<ModelConfiguration | null>(null);
@@ -844,6 +859,8 @@ const selectedStateCharts = computed(() => {
 	return stateCharts.value.filter((chart) => selectedStateIds.includes(chart.id));
 });
 const parameterCharts = ref<any>({});
+
+const observableCharts = ref<any>([{}]);
 
 const stateOptions = ref<string[]>([]);
 const parameterOptions = ref<string[]>([]);
@@ -897,6 +914,16 @@ function updateParameterCharts() {
 	parameterCharts.value = createFunmanParameterCharts(distributionParameters, boxes);
 }
 
+function updateObservableCharts() {
+	if (isEmpty(processedFunmanResult.value.observableTrajectories)) return;
+	const observableTrajectories = onlyShowLatestResults.value
+		? processedFunmanResult.value.observableTrajectories.filter(({ isAtLatestTimestep }) => isAtLatestTimestep)
+		: processedFunmanResult.value.observableTrajectories;
+	observableCharts.value = funmanResult.model.petrinet.semantics.ode.observables.map(({ id }) =>
+		createFunmanStateChart(observableTrajectories, constraintsResponse, id, focusOnModelChecks.value, selectedBoxId)
+	);
+}
+
 function updateSelectedStates(event) {
 	emit('update-state', {
 		...props.node.state,
@@ -934,6 +961,7 @@ function removeChartSetting(chartId: string) {
 function renderCharts() {
 	updateStateCharts();
 	updateParameterCharts();
+	updateObservableCharts();
 }
 
 async function prepareOutput() {
