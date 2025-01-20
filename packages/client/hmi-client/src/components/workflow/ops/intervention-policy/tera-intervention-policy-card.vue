@@ -64,7 +64,7 @@ div {
 	}
 
 	&:not(.card-selected):hover {
-		background-color: var(--gray-50);
+		background-color: var(--surface-highlight);
 		cursor: pointer;
 	}
 }

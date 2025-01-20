@@ -63,7 +63,7 @@ function getUnit(dynamicIntervention: DynamicIntervention) {
 	padding-right: var(--gap-2);
 	padding-bottom: var(--gap-3);
 	padding-left: var(--gap-2-5);
-	border-left: 4px solid var(--surface-400);
+	border-left: 4px solid var(--primary-color);
 	background: var(--surface-0);
 }
 
