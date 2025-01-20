@@ -89,7 +89,6 @@ const processResult = async (runId: string) => {
 				.filter((c) => ['state', 'observable'].includes(modelPartTypesMap.value[c]))
 				.slice(0, 5) // Limit the number of initial variables to first 5 to prevent too many charts
 		);
-		emit('update-state', state);
 	}
 
 	const summaryData = await getRunResultCSV(runId, 'result_summary.csv');
@@ -110,8 +109,9 @@ const processResult = async (runId: string) => {
 			selectedInputVariables: firstSensitiveSetting!.selectedInputVariables,
 			timepoint: lastTimepoint
 		});
-		emit('update-state', state);
 	}
+
+	emit('update-state', state);
 	const start = _.first(summaryData);
 	const end = _.last(summaryData);
 
