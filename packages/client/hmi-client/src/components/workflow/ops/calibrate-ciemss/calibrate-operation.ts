@@ -3,6 +3,8 @@ import { ChartSetting } from '@/types/common';
 import { CalibrateMap } from '@/services/calibrate-workflow';
 import calibrateSimulateCiemss from '@assets/svg/operator-images/calibrate-simulate-probabilistic.svg';
 
+const DOCUMENTATION_URL = 'https://documentation.terarium.ai/simulation/calibrate-model/';
+
 export interface CalibrationOperationStateCiemss extends BaseState {
 	method: string;
 	timestampColName: string;
@@ -31,6 +33,7 @@ export const CalibrationOperationCiemss: Operation = {
 	displayName: 'Calibrate',
 	description:
 		'given a model id, a dataset id, and optionally a configuration. calibrate the models initial values and rates',
+	documentationUrl: DOCUMENTATION_URL,
 	imageUrl: calibrateSimulateCiemss,
 	inputs: [
 		{ type: 'modelConfigId', label: 'Model configuration' },

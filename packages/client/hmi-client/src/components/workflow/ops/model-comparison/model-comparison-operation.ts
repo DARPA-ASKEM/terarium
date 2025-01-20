@@ -1,6 +1,8 @@
 import { Operation, WorkflowOperationTypes, BaseState } from '@/types/workflow';
 import { NotebookHistory } from '@/services/notebook';
 
+const DOCUMENTATION_URL = 'https://documentation.terarium.ai/modeling/compare-models/';
+
 export interface ModelComparisonOperationState extends BaseState {
 	notebookHistory: NotebookHistory[];
 	hasCodeRun: boolean;
@@ -15,6 +17,7 @@ export const ModelComparisonOperation: Operation = {
 	name: WorkflowOperationTypes.MODEL_COMPARISON,
 	displayName: 'Compare models',
 	description: '',
+	documentationUrl: DOCUMENTATION_URL,
 	inputs: [
 		{ type: 'modelId', label: 'Model' },
 		{ type: 'modelId', label: 'Model' }

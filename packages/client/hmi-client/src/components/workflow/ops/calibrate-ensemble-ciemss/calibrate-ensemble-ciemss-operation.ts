@@ -3,6 +3,8 @@ import { ChartSetting } from '@/types/common';
 import { Operation, WorkflowOperationTypes, BaseState } from '@/types/workflow';
 import calibrateEnsembleCiemss from '@assets/svg/operator-images/calibrate-ensemble-probabilistic.svg';
 
+const DOCUMENTATION_URL = 'https://documentation.terarium.ai/simulation/calibrate-ensemble/';
+
 export const speedPreset = Object.freeze({
 	numSamples: 1,
 	method: CiemssMethodOptions.euler,
@@ -65,6 +67,7 @@ export const CalibrateEnsembleCiemssOperation: Operation = {
 	name: WorkflowOperationTypes.CALIBRATE_ENSEMBLE_CIEMSS,
 	displayName: 'Calibrate ensemble',
 	description: '',
+	documentationUrl: DOCUMENTATION_URL,
 	imageUrl: calibrateEnsembleCiemss,
 	inputs: [
 		{ type: 'datasetId', label: 'Dataset' },

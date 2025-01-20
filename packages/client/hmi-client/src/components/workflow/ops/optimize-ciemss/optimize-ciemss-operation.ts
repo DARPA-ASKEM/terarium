@@ -6,6 +6,8 @@ import { createInterventionPolicy, blankIntervention } from '@/services/interven
 import optimizeModel from '@assets/svg/operator-images/optimize-model.svg';
 import { ChartSetting } from '@/types/common';
 
+const DOCUMENTATION_URL = 'https://documentation.terarium.ai/config-and-intervention/optimize-intervention-policy/';
+
 export enum OptimizationInterventionObjective {
 	startTime = 'start_time', // provide a parameter value to get a better start time.
 	paramValue = 'param_value', // provide a start time to get a better parameter value.
@@ -119,6 +121,7 @@ export const OptimizeCiemssOperation: Operation = {
 	name: WorkflowOperationTypes.OPTIMIZE_CIEMSS,
 	displayName: 'Optimize intervention policy',
 	description: 'Optimize intervention policy',
+	documentationUrl: DOCUMENTATION_URL,
 	imageUrl: optimizeModel,
 	inputs: [
 		{ type: 'modelConfigId', label: 'Model configuration' },

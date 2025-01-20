@@ -3,6 +3,8 @@ import type { FunmanInterval, TimeSpan } from '@/types/Types';
 import { ChartSetting } from '@/types/common';
 import { NotebookHistory } from '@/services/notebook';
 
+const DOCUMENTATION_URL = 'https://documentation.terarium.ai/config-and-intervention/validate-model-configuration/';
+
 export enum Constraint {
 	State = 'state variable(s)',
 	Parameter = 'parameter(s)',
@@ -61,6 +63,7 @@ export const FunmanOperation: Operation = {
 	name: WorkflowOperationTypes.FUNMAN,
 	displayName: 'Validate configuration',
 	description: 'Validate configuration',
+	documentationUrl: DOCUMENTATION_URL,
 	inputs: [
 		{ type: 'modelConfigId', label: 'Model configuration' },
 		{ type: 'datasetId', label: 'Dataset', isOptional: true }
