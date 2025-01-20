@@ -9,7 +9,7 @@ import {
 	parseEnsemblePyciemssMap,
 	processAndSortSamplesByTimepoint
 } from '@/services/models/simulation-service';
-import { EnsembleModelConfigs, Model, ModelConfiguration } from '@/types/Types';
+import { EnsembleModelConfigs, ModelConfiguration } from '@/types/Types';
 import { WorkflowNode } from '@/types/workflow';
 import { getActiveOutput } from '@/components/workflow/util';
 import { CalibrateMap, setupModelInput } from '@/services/calibrate-workflow';
@@ -184,19 +184,21 @@ export function buildChartData(
 // 		R: ["uuid-1","uuid-2"]
 // 		D: ["uuid-1"]
 // }
+
 export async function setVariableChartOptionsObject(modelConfigurationIds: string[]) {
 	const variableChartOptionsObject = {};
-	const models: Model[] = [];
+	const models: any[] = [];
 	// Model configuration input
 	await Promise.all(
 		modelConfigurationIds.map(async (id) => {
 			const model = await getAsConfiguredModel(id);
-			models.push(model);
+			console.log({ ...model, configId: id });
+			models.push({ ...model, configId: id });
 		})
 	);
 
 	models.forEach((model) => {
-		const modelConfigId = model.id as string;
+		const modelConfigId = model.configId as string;
 		model.model.states.forEach((state) => {
 			const key = state.id;
 			if (!variableChartOptionsObject[key]) {

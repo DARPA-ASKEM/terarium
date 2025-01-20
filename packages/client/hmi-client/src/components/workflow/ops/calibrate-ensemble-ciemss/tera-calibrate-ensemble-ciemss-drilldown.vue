@@ -319,7 +319,7 @@
 							:selected-options="selectedVariableSettings.map((s) => s.selectedVariables[0])"
 							@open="setActiveChartSettings($event)"
 							@remove="removeChartSettings"
-							@selection-change="updateChartSettings"
+							@selection-change="updateVariableChartSettings($event)"
 						/>
 						<Divider />
 						<Divider />
@@ -741,19 +741,47 @@ const weightsDistributionCharts = useWeightsDistributionCharts();
 const { errorCharts, onExpandErrorChart } = useEnsembleErrorCharts(selectedErrorVariableSettings, errorData);
 
 // For each selected variable ensure to map in the form model config id/"selectedVariables" for each relevant model config.
-// const setSelectedChartSettings = computed(() => {
-// 	const allSelectedVariable : string[] = []
-// 	selectedVariableSettings.value.forEach((selectedVar) => {
-// 		const selectedVarName = selectedVar.selectedVariables[0];
-// 		console.log(selectedVarName);
-// 		const modelConfigIds : string[] = variableChartOptionsObject.value[selectedVarName] ?? [];
-// 		console.log(modelConfigIds);
-// 		modelConfigIds.forEach((modelConfigId) => allSelectedVariable.push(modelConfigId + "/" + selectedVarName));
-// 	});
-// 	console.log(allSelectedVariable);
-// 	return allSelectedVariable
-// });
+const getAllSelectedVariables = (selectedVarSettings: string[]) => {
+	console.log('getAllSelectedVariables');
+	console.log(selectedVarSettings);
+	const allSelectedVariable: string[] = [];
+	// Map from selectedVar to id/selectedVar for each id that contains this variable.
+	selectedVarSettings.forEach((selectedVar) => {
+		const selectedVarName = selectedVar; // .selectedVariables[0];
+		const relevantModelConfigIds: string[] = variableChartOptionsObject.value[selectedVarName] ?? [];
+		console.log(relevantModelConfigIds);
+		relevantModelConfigIds.forEach((modelConfigId) => allSelectedVariable.push(`${modelConfigId}/${selectedVarName}`));
+	});
+	return allSelectedVariable;
+};
 
+// For each selected variable 'id/state name' only show 'state name'
+// const getVariableSelectedDisplayOptions = () => {
+// 	console.log(selectedVariableSettings.value);
+// 	return selectedVariableSettings.value.map((s) => s.selectedVariables[0]);
+// }
+
+// For each selected variable 'state name' delete all that follow the form 'id/state name'
+// This allows the user to hit X on "S" rather than "id1/S" and "id2/S"
+// const removeVariableSelectedOptionsByDisplayName = () => {
+// get chartIds based off of state name:
+
+// emit('update-state', {
+// 	...props.node.state,
+// 	chartSettings: removeChartSettingById(chartSettings.value, chartId)
+// });
+// }
+
+// For each selected variable "S" utilize getAllSelectedVariables and update the chart settings
+const updateVariableChartSettings = (selectedVariables: string[]) => {
+	const type: ChartSettingType = ChartSettingType.VARIABLE;
+	const allVars = getAllSelectedVariables(selectedVariables);
+	console.log(allVars);
+	emit('update-state', {
+		...props.node.state,
+		chartSettings: updateChartSettingsBySelectedVariables(chartSettings.value, type, allVars)
+	});
+};
 // --------------------------------------------------------
 
 watch(
