@@ -227,6 +227,7 @@ export class ValueOfInformationScenario extends BaseScenario {
 		);
 
 		clonedModelConfig.name = `${modelConfig.name}_value_of_information`;
+		clonedModelConfig.description = `This is a configuration created from "${modelConfig.name}" using the value of information scenario template.`;
 
 		const newModelConfig = await createModelConfiguration(clonedModelConfig);
 		await useProjects().addAsset(
@@ -257,6 +258,7 @@ export class ValueOfInformationScenario extends BaseScenario {
 						name:
 							this.newInterventionSpecs.find((newInterventionSpec) => newInterventionSpec.id === interventionSpec.id)
 								?.name ?? 'New policy',
+						description: 'This intervention policy was created through the value of information scenario template.',
 						modelId: this.modelSpec.id,
 						interventions: [blankIntervention]
 					},
@@ -329,7 +331,37 @@ export class ValueOfInformationScenario extends BaseScenario {
 		await Promise.all(interventionPromises);
 
 		// 4. Run layout
-		wf.runDagreLayout();
+		// The schematic for value-of-information is as follows
+		//
+		//                           Interventions
+		//  Model -> ModelConfig ->                 -> CompareDataset
+		//                           Forecasts
+		//
+		const nodeGapHorizontal = 325;
+		modelNode.x = 100;
+		modelNode.y = 500;
+
+		modelConfigNode.x = modelNode.x + nodeGapHorizontal;
+		modelConfigNode.y = 800;
+
+		const neighbors = wf.getNeighborNodes(modelConfigNode.id);
+		neighbors.downstreamNodes.forEach((forecastNode, forecastIdx) => {
+			forecastNode.x = modelConfigNode.x + nodeGapHorizontal * (forecastIdx + 1);
+			forecastNode.y = modelConfigNode.y + 150;
+
+			// align the intervention node for each forecast
+			const forecastNeighbours = wf.getNeighborNodes(forecastNode.id);
+			const interventionNode = forecastNeighbours.upstreamNodes.filter(
+				(op) => op.operationType === InterventionOp.name
+			)[0];
+			if (interventionNode) {
+				interventionNode.x = forecastNode.x;
+				interventionNode.y = forecastNode.y - 400;
+			}
+		});
+
+		compareDatasetNode.x = modelConfigNode.x + nodeGapHorizontal * (neighbors.downstreamNodes.length + 1);
+		compareDatasetNode.y = 500;
 
 		return wf.dump();
 	}

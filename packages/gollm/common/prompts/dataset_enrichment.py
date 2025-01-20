@@ -5,6 +5,8 @@ You may have access to a document that relates to the given dataset. Use this do
 Focus on providing detailed and informative descriptions of the dataset and its columns. Do not make up information, only use the information provided in the document and dataset stats.
 Focus on trying to determine which columns represent spatial or temporal data, and provide a detailed description of the data in these columns.
 
+Try to extract information for sourceData, considerationsForUsingTheData, and additionalInformation from the document. Do not make up information. If you cannot find the information, leave a field empty.
+
 Use the following dataset statistics as a reference:
 
 ---START DATASET---
