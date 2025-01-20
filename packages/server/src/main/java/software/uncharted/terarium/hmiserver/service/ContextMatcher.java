@@ -127,15 +127,17 @@ public class ContextMatcher {
 		List<Grounding> groundings = new ArrayList<>();
 		for (SearchMatch match : matches) {
 			CuratedGrounding curatedGrounding = configData.get(match.getKey());
-			Grounding grounding = new Grounding();
-			grounding.setIdentifiers(new ArrayList<>());
-			curatedGrounding
+			ArrayList<DKG> identifiers = curatedGrounding
 				.getIdentifiers()
 				.entrySet()
 				.stream()
-				.map(e -> e.getKey() + ":" + e.getValue())
-				.forEach(curie -> grounding.getIdentifiers().add(new DKG(curie)));
-			grounding.setContext(new ObjectMapper().valueToTree(curatedGrounding.getContext()));
+				.map(e -> new DKG(e.getKey() + ":" + e.getValue()))
+				.collect(Collectors.toCollection(ArrayList::new));
+			JsonNode context = new ObjectMapper().valueToTree(curatedGrounding.getContext());
+
+			Grounding grounding = new Grounding();
+			grounding.setIdentifiers(identifiers);
+			grounding.setContext(context);
 			groundings.add(grounding);
 		}
 		return groundings;
