@@ -17,6 +17,7 @@
 						style="min-height: 33px"
 						@keydown.stop
 						@click.stop
+						@keyup.enter="onClickCompare"
 					/>
 					<Button
 						class="flex-shrink-0"
@@ -30,9 +31,11 @@
 				<section class="comparison-overview">
 					<Accordion multiple :activeIndex="currentActiveIndices">
 						<AccordionTab header="Overview">
-							<tera-progress-spinner v-if="isProcessingComparison" is-centered :font-size="3" class="secondary-text">
-								Analyzing models metadata to generate a detailed comparison analysis...
-							</tera-progress-spinner>
+							<div v-if="isProcessingComparison" class="loading-spinner">
+								<tera-progress-spinner is-centered :font-size="3" class="secondary-text">
+									Analyzing models metadata to generate a detailed comparison analysis...
+								</tera-progress-spinner>
+							</div>
 							<p v-html="overview" v-else class="markdown-text ml-4 mr-4" />
 						</AccordionTab>
 					</Accordion>
@@ -777,5 +780,15 @@ ul {
 
 .secondary-text {
 	color: var(--text-color-secondary);
+}
+.loading-spinner {
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	height: 100%;
+	background: var(--surface-50);
+	border-radius: var(--border-radius);
+	border: 1px solid var(--surface-border-light);
+	padding: var(--gap-4);
 }
 </style>
