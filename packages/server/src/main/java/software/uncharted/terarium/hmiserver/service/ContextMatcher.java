@@ -133,11 +133,10 @@ public class ContextMatcher {
 				.stream()
 				.map(e -> new DKG(e.getKey() + ":" + e.getValue()))
 				.collect(Collectors.toCollection(ArrayList::new));
-			JsonNode context = new ObjectMapper().valueToTree(curatedGrounding.getContext());
 
 			Grounding grounding = new Grounding();
 			grounding.setIdentifiers(identifiers);
-			grounding.setContext(context);
+			grounding.setContext(curatedGrounding.getContext());
 			groundings.add(grounding);
 		}
 		return groundings;

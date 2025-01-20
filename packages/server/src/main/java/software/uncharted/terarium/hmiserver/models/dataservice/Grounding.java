@@ -6,7 +6,9 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import java.io.Serial;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
@@ -36,17 +38,19 @@ public class Grounding extends TerariumEntity {
 	@TSOptional
 	@Type(JsonType.class)
 	@Column(columnDefinition = "json")
-	private JsonNode context;
+	private Map<String, String> context;
 
 	@Override
 	public Grounding clone() {
 		final Grounding clone = new Grounding();
+
 		if (this.identifiers != null) {
 			clone.identifiers = new ArrayList<>();
 			clone.identifiers.addAll(this.identifiers);
 		}
 		if (this.context != null) {
-			clone.context = this.context.deepCopy();
+			clone.context = new HashMap<>();
+			clone.context.putAll(this.context);
 		}
 
 		return clone;
