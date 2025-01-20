@@ -316,7 +316,7 @@
 							:settings="chartSettings"
 							:type="ChartSettingType.VARIABLE"
 							:select-options="variableChartOptions"
-							:selected-options="selectedVariableSettings.map((s) => s.selectedVariables[0])"
+							:selected-options="getVariableSelectedDisplayOptions()"
 							@open="setActiveChartSettings($event)"
 							@remove="removeChartSettings"
 							@selection-change="updateVariableChartSettings($event)"
@@ -756,21 +756,13 @@ const getAllSelectedVariables = (selectedVarSettings: string[]) => {
 };
 
 // For each selected variable 'id/state name' only show 'state name'
-// const getVariableSelectedDisplayOptions = () => {
-// 	console.log(selectedVariableSettings.value);
-// 	return selectedVariableSettings.value.map((s) => s.selectedVariables[0]);
-// }
-
-// For each selected variable 'state name' delete all that follow the form 'id/state name'
-// This allows the user to hit X on "S" rather than "id1/S" and "id2/S"
-// const removeVariableSelectedOptionsByDisplayName = () => {
-// get chartIds based off of state name:
-
-// emit('update-state', {
-// 	...props.node.state,
-// 	chartSettings: removeChartSettingById(chartSettings.value, chartId)
-// });
-// }
+const getVariableSelectedDisplayOptions = () => {
+	const allStatesSelected: string[] = selectedVariableSettings.value.map(
+		(s) => s.selectedVariables[0].split('/').pop() ?? ''
+	);
+	const uniqueValues: string[] = [...new Set(allStatesSelected)];
+	return uniqueValues;
+};
 
 // For each selected variable "S" utilize getAllSelectedVariables and update the chart settings
 const updateVariableChartSettings = (selectedVariables: string[]) => {
