@@ -221,9 +221,15 @@ const clipboardBuffer = (text: string) => {
 	updateByMatrixBulk(matrix.value, text);
 };
 
+function prepareFilters() {
+	filteredRowNames.value = matrix.value.map((r) => r[0].rowCriteria);
+	filteredColumnNames.value = matrix.value[0].map((c) => c.colCriteria);
+}
+
 const changeMatrix = (v: string) => {
 	matrixType.value = v;
 	matrix.value = matrixMap.value[v];
+	prepareFilters();
 };
 
 // Makes cell inputs focus once they appear
@@ -330,20 +336,14 @@ onUnmounted(() => {
 	window.clearInterval(timerId);
 });
 
-// This just prepares the filters when the matrix is assigned for the first time
-watch(
-	() => matrix.value,
-	() => {
-		filteredRowNames.value = matrix.value.map((r) => r[0].rowCriteria);
-		filteredColumnNames.value = matrix.value[0].map((c) => c.colCriteria);
-	},
-	{ once: true }
-);
+// Prepares filtered rows/cols when the matrix is assigned for the first time
+watch(matrix, () => prepareFilters(), { once: true });
 
 watch(
 	() => [matrix.value, props.shouldEval],
 	async () => {
 		if (!matrix.value) return;
+
 		resetEditState();
 		expressionMap.value = {};
 
