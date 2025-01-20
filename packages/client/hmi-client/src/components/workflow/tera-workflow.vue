@@ -19,11 +19,12 @@
 				<tera-toggleable-input :model-value="wf.getName()" @update:model-value="updateWorkflowName" tag="h4" />
 				<div class="button-group">
 					<Button
-						id="add-component-btn"
+						id="reset-zoom-btn"
 						icon="pi pi-expand"
-						label="Reset Zoom"
+						label="Reset zoom"
 						@click="resetZoom"
 						size="small"
+						outlined
 						class="white-space-nowrap"
 						severity="secondary"
 					/>
@@ -1034,7 +1035,7 @@ onUnmounted(() => {
 	display: flex;
 	flex-direction: row;
 	justify-content: space-between;
-	padding: var(--gap-2) var(--gap-4);
+	padding: var(--gap-1) var(--gap-4);
 	z-index: 900;
 }
 
@@ -1046,7 +1047,7 @@ onUnmounted(() => {
 	align-items: center;
 	display: flex;
 	flex-direction: row;
-	gap: var(--gap-2);
+	gap: var(--gap-3);
 }
 
 .rename-workflow {
