@@ -171,34 +171,27 @@ let timerId = -1;
 const clipboardText = ref('');
 const updateByMatrixBulk = (matrixToUpdate: MiraMatrix, text: string) => {
 	const parseResult = dsvParse(text);
-	const updateList: { id: string; value: number }[] = [];
+	const updateList: { id: string; value: string }[] = [];
 
 	matrixToUpdate.forEach((row) => {
 		row.forEach(async (matrixEntry) => {
-			// If we have label information, use them as they may be more accurate, otherwise use indices
-			if (parseResult.hasColLabels && parseResult.hasRowLabels) {
-				const match = parseResult.entries.find(
-					(entry) => entry.rowLabel === matrixEntry.rowCriteria && entry.colLabel === matrixEntry.colCriteria
-				);
-				if (match) {
-					updateList.push({
-						id: matrixEntry.content.id,
-						value: match.value
-					});
-				}
-			} else {
-				const match = parseResult.entries.find(
-					(entry) => entry.rowIdx === matrixEntry.row && entry.colIdx === matrixEntry.col
-				);
-				if (match) {
-					updateList.push({
-						id: matrixEntry.content.id,
-						value: match.value
-					});
-				}
+			const match = // If we have label information, use them as they may be more accurate, otherwise use indices
+				parseResult.hasColLabels && parseResult.hasRowLabels
+					? parseResult.entries.find(
+							(entry) => entry.rowLabel === matrixEntry.rowCriteria && entry.colLabel === matrixEntry.colCriteria
+						)
+					: parseResult.entries.find((entry) => entry.rowIdx === matrixEntry.row && entry.colIdx === matrixEntry.col);
+
+			if (match) {
+				updateList.push({
+					id: matrixEntry.content.id,
+					value: match.value.toString()
+				});
 			}
 		});
 	});
+
+	console.log(updateList);
 
 	emit('update-cell-values', updateList);
 };
