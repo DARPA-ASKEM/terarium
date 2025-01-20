@@ -44,7 +44,7 @@
 
 				<!-- Add unit to all children toolbar -->
 				<div v-if="getEditingState(index).isEditingChildrenUnits" class="add-to-all-children-toolbar">
-					<tera-input-text label="Unit" placeholder="Add a unit" v-model="getEditingState(index).childrenUnits" />
+					<tera-input-text placeholder="Add a unit" v-model="getEditingState(index).childrenUnits" />
 					<Button
 						icon="pi pi-check"
 						text
@@ -69,7 +69,6 @@
 				<!-- Add concept to all children toolbar -->
 				<div v-if="getEditingState(index).isEditingChildrenConcepts" class="add-to-all-children-toolbar">
 					<span class="concept">
-						<label>Concept</label>
 						<AutoComplete
 							label="Concept"
 							size="small"
@@ -270,13 +269,13 @@ ul {
 	background: var(--surface-0);
 	box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
 	transition: all 0.15s;
-	&:hover {
-		background: var(--surface-highlight);
-		border-left-color: var(--primary-color);
-	}
 	&:has(.parent) {
 		padding: var(--gap-2) 0 var(--gap-2) var(--gap-1);
 	}
+}
+.model-part:hover {
+	border-left: 4px solid var(--primary-color);
+	background: var(--surface-highlight);
 }
 
 li {
@@ -292,17 +291,20 @@ li {
 }
 
 .stratified {
-	margin: var(--gap-2) 0 0 var(--gap-3);
+	margin: var(--gap-2) var(--gap-3) 0 var(--gap-3);
 	& > ul {
-		background: var(--surface-0);
 		& > li {
+			background: var(--surface-0);
+			border: 1px solid var(--surface-border-light);
+			border-radius: var(--border-radius);
 			border-left: 4px solid var(--surface-border);
 			padding-left: var(--gap-4);
+			padding-right: var(--gap-2);
 			padding-bottom: var(--gap-2);
 			padding-top: var(--gap-2);
-			border-bottom: none;
 			&:hover {
-				background: var(--surface-50);
+				background: color-mix(in srgb, var(--surface-highlight) 30%, var(--surface-0) 70%);
+				border-left-color: var(--primary-color);
 			}
 		}
 	}
@@ -324,7 +326,11 @@ li {
 	display: flex;
 	align-items: center;
 	gap: var(--gap-1);
-	padding: var(--gap-1) var(--gap-9);
+	padding: var(--gap-1) var(--gap-4);
 	background-color: var(--surface-highlight);
+	border-radius: var(--border-radius);
+	margin-left: var(--gap-3);
+	margin-right: var(--gap-3);
+	margin-bottom: var(--gap-1);
 }
 </style>
