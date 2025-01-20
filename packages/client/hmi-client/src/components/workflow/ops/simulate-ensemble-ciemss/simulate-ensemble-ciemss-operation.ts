@@ -2,7 +2,7 @@ import { Operation, WorkflowOperationTypes, BaseState } from '@/types/workflow';
 import simulateEnsembleCiemss from '@assets/svg/operator-images/simulate-ensemble-probabilistic.svg';
 import { CiemssMethodOptions } from '@/services/models/simulation-service';
 
-const DOCUMENTATION_URL = 'https://github.com/ciemss/pyciemss/blob/main/pyciemss/interfaces.py#L35';
+const DOCUMENTATION_URL = 'https://documentation.terarium.ai/simulation/simulate-ensemble/';
 
 export interface SimulateEnsembleMappingRow {
 	id: string; // uuid that can be used as a row key

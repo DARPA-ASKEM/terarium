@@ -33,55 +33,9 @@
 				</template>
 			</Dropdown>
 
-			<label>Planned intervention policy (optional)</label>
-			<div v-for="(intervention, i) in scenario.interventionSpecs" :key="i" class="flex">
-				<Dropdown
-					ref="interventionDropdowns"
-					class="flex-1 my-1"
-					:model-value="intervention.id"
-					:options="combinedInterventionPolicies"
-					option-label="name"
-					option-value="id"
-					placeholder="Select an intervention policy"
-					@update:model-value="scenario.setInterventionSpec($event, i)"
-					:key="i"
-					:disabled="isFetchingModelInformation"
-					:loading="isFetchingModelInformation"
-					filter
-				>
-					<template #filtericon>
-						<Button label="Create new policy" icon="pi pi-plus" size="small" text @click="onOpenPolicyModel(i)" />
-					</template>
-
-					<template #option="slotProps">
-						<p>
-							{{ slotProps.option.name }}
-							<span class="subtext">
-								({{ slotProps.option.createdOn ? formatTimestamp(slotProps.option.createdOn) : 'Created by you' }})
-							</span>
-						</p>
-					</template>
-				</Dropdown>
-				<Button
-					v-if="scenario.interventionSpecs.length > 1"
-					size="small"
-					text
-					icon="pi pi-trash"
-					@click="scenario.deleteInterventionSpec(i)"
-				/>
-			</div>
-			<div>
-				<Button
-					class="py-2 mb-3"
-					size="small"
-					text
-					icon="pi pi-plus"
-					label="Add more interventions"
-					@click="scenario.addInterventionSpec()"
-				/>
-			</div>
-
-			<label>Select uncertain parameters of interest and adjust ranges to be explored if needed</label>
+			<label :class="{ 'disabled-label': !scenario.modelSpec.id }"
+				>Select uncertain parameters of interest and adjust ranges to be explored if needed</label
+			>
 			<template v-for="(parameter, i) in scenario.parameters" :key="i">
 				<div class="flex">
 					<Dropdown
@@ -91,7 +45,7 @@
 						option-label="referenceId"
 						option-value="referenceId"
 						placeholder="Select a parameter"
-						:disabled="!selectedModelConfiguration"
+						:disabled="!scenario.modelSpec.id"
 						:loading="isFetchingModelConfiguration || isFetchingModelInformation"
 						@update:model-value="onParameterSelect($event, i)"
 						filter
@@ -125,6 +79,56 @@
 					text
 					size="small"
 					@click="scenario.addParameter()"
+				/>
+			</div>
+
+			<label :class="{ 'disabled-label': !scenario.modelSpec.id }">Planned intervention policy (optional)</label>
+			<div v-for="(intervention, i) in scenario.interventionSpecs" :key="i" class="flex">
+				<Dropdown
+					ref="interventionDropdowns"
+					class="flex-1 my-1"
+					:model-value="intervention.id"
+					:options="combinedInterventionPolicies"
+					option-label="name"
+					option-value="id"
+					placeholder="Select an intervention policy"
+					@update:model-value="scenario.setInterventionSpec($event, i)"
+					:key="i"
+					:disabled="!scenario.modelSpec.id || isFetchingModelInformation"
+					:loading="isFetchingModelInformation"
+					filter
+				>
+					<template #filtericon>
+						<Button label="Create new policy" icon="pi pi-plus" size="small" text @click="onOpenPolicyModel(i)" />
+					</template>
+
+					<template #option="slotProps">
+						<p>
+							{{ slotProps.option.name }}
+							<span class="subtext">
+								({{ slotProps.option.createdOn ? formatTimestamp(slotProps.option.createdOn) : 'Created by you' }})
+							</span>
+						</p>
+					</template>
+				</Dropdown>
+				<Button
+					v-if="scenario.interventionSpecs.length > 1"
+					size="small"
+					text
+					icon="pi pi-trash"
+					@click="scenario.deleteInterventionSpec(i)"
+					:disabled="!scenario.modelSpec.id || isFetchingModelInformation"
+				/>
+			</div>
+			<div>
+				<Button
+					class="py-2 mb-3"
+					size="small"
+					text
+					icon="pi pi-plus"
+					label="Add more interventions"
+					@click="scenario.addInterventionSpec()"
+					:disabled="!scenario.modelSpec.id || isFetchingModelInformation"
 				/>
 			</div>
 		</template>

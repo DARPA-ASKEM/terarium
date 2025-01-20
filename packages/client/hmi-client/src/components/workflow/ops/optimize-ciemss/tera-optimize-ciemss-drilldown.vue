@@ -153,7 +153,7 @@
 									/>
 								</div>
 								<div class="label-and-input">
-									<label>Solver Step Size</label>
+									<label><br />Solver step size</label>
 									<div>
 										<tera-input-number
 											v-model="knobs.solverStepSize"
@@ -303,13 +303,51 @@
 									</li>
 								</ul>
 							</AccordionTab>
-							<AccordionTab header="Comparison charts">
+							<!-- Section: Comparison charts -->
+							<AccordionTab v-if="selectedComparisonChartSettings.length > 0" header="Comparison charts">
 								<template v-for="setting of selectedComparisonChartSettings" :key="setting.id">
-									<vega-chart
-										expandable
-										:are-embed-actions-visible="true"
-										:visualization-spec="comparisonCharts[setting.id]"
-									/>
+									<div v-if="setting.smallMultiples">
+										<div
+											v-for="selectedVariable of setting.selectedVariables"
+											:key="setting.id + selectedVariable"
+											class="comparison-chart-container"
+										>
+											<div class="comparison-chart">
+												<vega-chart
+													v-if="selectedVariable"
+													expandable
+													:are-embed-actions-visible="true"
+													:visualization-spec="comparisonCharts[setting.id + selectedVariable]"
+												/>
+												<div v-else class="empty-state-chart">
+													<img
+														src="@assets/svg/operator-images/simulate-deterministic.svg"
+														alt="Select a variable"
+														draggable="false"
+														height="80px"
+													/>
+													<p class="text-center">Select a variable for comparison</p>
+												</div>
+											</div>
+										</div>
+									</div>
+									<template v-else>
+										<vega-chart
+											v-if="setting.selectedVariables && setting.selectedVariables.length"
+											expandable
+											:are-embed-actions-visible="true"
+											:visualization-spec="comparisonCharts[setting.id]"
+										/>
+										<div v-else class="empty-state-chart">
+											<img
+												src="@assets/svg/operator-images/simulate-deterministic.svg"
+												alt="Select variables to generate comparison chart"
+												draggable="false"
+												height="80px"
+											/>
+											<p class="text-center">Select variables to generate comparison chart</p>
+										</div>
+									</template>
 								</template>
 							</AccordionTab>
 						</Accordion>
@@ -370,6 +408,7 @@
 							disabled
 						/>
 						<Divider />
+						<!-- Interventions charts -->
 						<tera-chart-settings
 							:title="'Interventions over time'"
 							:settings="chartSettings"
@@ -381,6 +420,7 @@
 							@selection-change="updateChartSettings"
 						/>
 						<Divider />
+						<!-- Variables charts -->
 						<tera-chart-settings
 							:title="'Variables over time'"
 							:settings="chartSettings"
@@ -392,24 +432,25 @@
 							@selection-change="updateChartSettings"
 						/>
 						<Divider />
+						<!-- Comparison charts -->
 						<tera-chart-settings
 							:title="'Comparison charts'"
 							:settings="chartSettings"
 							:type="ChartSettingType.VARIABLE_COMPARISON"
 							:select-options="simulationChartOptions"
-							:selected-options="comparisonChartsSettingsSelection"
+							:comparison-selected-options="comparisonChartsSettingsSelection"
 							@open="setActiveChartSettings($event)"
 							@remove="removeChartSettings"
-							@selection-change="comparisonChartsSettingsSelection = $event"
+							@comparison-selection-change="updateComparisonChartSetting"
 						/>
 						<div>
 							<Button
-								:disabled="!comparisonChartsSettingsSelection.length"
 								size="small"
 								text
-								@click="addComparisonChartSettings"
+								@click="addEmptyComparisonChart"
 								label="Add comparison chart"
 								icon="pi pi-plus"
+								class="mt-2"
 							/>
 						</div>
 						<Divider />
@@ -739,7 +780,9 @@ const initialize = async () => {
 	const policyId = props.node.inputs[1]?.value?.[0];
 	if (policyId) {
 		// FIXME: This should be done in the node this should not be done in the drill down.
-		getInterventionPolicyById(policyId).then((interventionPolicy) => setInterventionPolicyGroups(interventionPolicy));
+		getInterventionPolicyById(policyId).then((interventionPolicy) => {
+			if (interventionPolicy) setInterventionPolicyGroups(interventionPolicy);
+		});
 	}
 
 	const optimizedPolicyId = props.node.state.optimizedInterventionPolicyId;
@@ -1006,9 +1049,10 @@ const {
 	comparisonChartsSettingsSelection,
 	removeChartSettings,
 	updateChartSettings,
-	addComparisonChartSettings,
 	updateActiveChartSettings,
-	setActiveChartSettings
+	setActiveChartSettings,
+	addEmptyComparisonChart,
+	updateComparisonChartSetting
 } = useChartSettings(props, emit);
 
 const {
@@ -1116,6 +1160,7 @@ watch(
 	background: var(--surface-200);
 	border: 1px solid var(--surface-border-light);
 	border-radius: var(--border-radius);
+	box-shadow: inset 0 0px 4px rgba(0, 0, 0, 0.05);
 }
 
 /* Override grid template so output expands when sidebar is closed */
@@ -1231,5 +1276,18 @@ watch(
 	display: flex;
 	flex-direction: column;
 	gap: var(--gap-2);
+}
+
+.empty-state-chart {
+	display: flex;
+	flex-direction: column;
+	gap: var(--gap-4);
+	justify-content: center;
+	align-items: center;
+	height: 12rem;
+	margin: var(--gap-6);
+	padding: var(--gap-4);
+	background: var(--surface-100);
+	color: var(--text-color-secondary);
 }
 </style>

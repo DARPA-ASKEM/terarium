@@ -1,9 +1,22 @@
+import { isEmpty } from 'lodash';
 import { Dataset } from '@/types/Types';
+import { WorkflowPortStatus } from '@/types/workflow';
 import { renameFnGenerator } from '@/components/workflow/ops/calibrate-ciemss/calibrate-utils';
-import { DataArray, parsePyCiemssMap, processAndSortSamplesByTimepoint } from '@/services/models/simulation-service';
-import { DATASET_VAR_NAME_PREFIX, getDatasetResultCSV, mergeResults } from '@/services/dataset';
+
+import { createRankingInterventionsChart, CATEGORICAL_SCHEME } from '@/services/charts';
+import { DATASET_VAR_NAME_PREFIX, getDatasetResultCSV, mergeResults, getDataset } from '@/services/dataset';
+import {
+	DataArray,
+	parsePyCiemssMap,
+	processAndSortSamplesByTimepoint,
+	getRunResultCSV
+} from '@/services/models/simulation-service';
+import { getInterventionPolicyById } from '@/services/intervention-policy';
+import { getModelConfigurationById } from '@/services/model-configurations';
+
 import { ChartData } from '@/composables/useCharts';
-import { PlotValue } from './compare-datasets-operation';
+
+import { PlotValue, TimepointOption, RankOption } from './compare-datasets-operation';
 
 interface DataResults {
 	results: DataArray[];
@@ -31,7 +44,7 @@ export async function fetchDatasetResults(datasetList: Dataset[]) {
 		await Promise.all(
 			datasetList.map((dataset, datasetIndex) => {
 				if (!isSimulationData(dataset)) return Promise.resolve([]);
-				return getDatasetResultCSV(dataset, 'result.csv', renameFnGenerator(`${datasetIndex}`));
+				return getRunResultCSV(dataset.metadata.simulationId, 'result.csv', renameFnGenerator(`${datasetIndex}`));
 			})
 		)
 	).filter((result) => result.length > 0);
@@ -40,7 +53,11 @@ export async function fetchDatasetResults(datasetList: Dataset[]) {
 		await Promise.all(
 			datasetList.map((dataset, datasetIndex) => {
 				if (!isSimulationData(dataset)) return Promise.resolve([]);
-				return getDatasetResultCSV(dataset, 'result_summary.csv', renameFnGenerator(`${datasetIndex}`));
+				return getRunResultCSV(
+					dataset.metadata.simulationId,
+					'result_summary.csv',
+					renameFnGenerator(`${datasetIndex}`)
+				);
 			})
 		)
 	).filter((result) => result.length > 0);
@@ -159,4 +176,198 @@ export function buildChartData(
 		translationMap,
 		numComparableDatasets: datasets.length
 	};
+}
+
+export function generateRankingCharts(
+	rankingCriteriaCharts,
+	rankingResultsChart,
+	props,
+	modelConfigIdToInterventionPolicyIdMap,
+	chartData,
+	datasets,
+	interventionPolicies
+) {
+	// Reset charts
+	rankingCriteriaCharts.value = [];
+	rankingResultsChart.value = null;
+
+	// Might be uneccessary
+	const commonInterventionPolicyIds = props.node.state.criteriaOfInterestCards
+		.map(({ selectedConfigurationId }) => {
+			if (!selectedConfigurationId) return [];
+			return modelConfigIdToInterventionPolicyIdMap.value?.[selectedConfigurationId] ?? [];
+		})
+		.flat();
+	const allRankedCriteriaValues: { score: number; name: string }[][] = [];
+	const interventionNameColorMap: Record<string, string> = {};
+
+	props.node.state.criteriaOfInterestCards.forEach((card) => {
+		if (!card.selectedConfigurationId || !chartData.value) return;
+
+		const pointOfComparison =
+			card.timepoint === TimepointOption.FIRST
+				? chartData.value.resultSummary[0]
+				: chartData.value.resultSummary[chartData.value.resultSummary.length - 1];
+
+		const rankingCriteriaValues: { score: number; name: string }[] = [];
+
+		let colorIndex = 0;
+		datasets.value.forEach(({ metadata }, index: number) => {
+			const policy = interventionPolicies.value.find(
+				({ id }) => id === metadata.simulationAttributes?.interventionPolicyId
+			);
+
+			// Skip this intervention policy if a configuration is not using it
+			if (
+				!policy ||
+				!policy.id ||
+				!policy.name ||
+				!commonInterventionPolicyIds.includes(policy.id) ||
+				!card.selectedVariable
+			) {
+				return;
+			}
+
+			if (!interventionNameColorMap[policy.name]) {
+				interventionNameColorMap[policy.name] = CATEGORICAL_SCHEME[colorIndex];
+				colorIndex++;
+			}
+
+			rankingCriteriaValues.push({
+				score: pointOfComparison[`${chartData.value?.pyciemssMap[card.selectedVariable]}_mean:${index}`] ?? 0,
+				name: policy.name ?? ''
+			});
+		});
+
+		const sortedRankingCriteriaValues =
+			card.rank === RankOption.MAXIMUM
+				? rankingCriteriaValues.sort((a, b) => b.score - a.score)
+				: rankingCriteriaValues.sort((a, b) => a.score - b.score);
+
+		rankingCriteriaCharts.value.push(
+			createRankingInterventionsChart(
+				sortedRankingCriteriaValues,
+				interventionNameColorMap,
+				card.name,
+				card.selectedVariable
+			)
+		);
+		allRankedCriteriaValues.push(sortedRankingCriteriaValues);
+	});
+
+	// Sum up the values of the same intervention policy
+	const valueMap: Record<string, number> = {};
+	allRankedCriteriaValues.flat().forEach(({ score, name }) => {
+		if (valueMap[name]) {
+			valueMap[name] += score;
+		} else {
+			valueMap[name] = score;
+		}
+	});
+
+	const rankingResultsScores: { score: number; name: string }[] = Object.keys(valueMap)
+		.map((name) => ({
+			name,
+			score: valueMap[name]
+		}))
+		.sort((a, b) => a.score - b.score)
+		// Instead of the values, we want to rank by score
+		.map((value, index) => ({ ...value, score: index + 1 }));
+
+	rankingResultsChart.value = createRankingInterventionsChart(rankingResultsScores, interventionNameColorMap);
+}
+
+export async function generateImpactCharts(
+	chartData,
+	datasets,
+	datasetResults,
+	baselineDatasetIndex,
+	selectedPlotType
+) {
+	chartData.value = buildChartData(
+		datasets.value,
+		datasetResults.value,
+		baselineDatasetIndex.value,
+		selectedPlotType.value
+	);
+}
+
+// TODO: this should probably be split up into smaller functions but for now it's at least not duplicated in the node and drilldown
+// TODO: Please type the function params in this file for a later pass
+export async function initialize(
+	props,
+	isFetchingDatasets,
+	datasets,
+	datasetResults,
+	modelConfigIdToInterventionPolicyIdMap,
+	impactChartData,
+	rankingChartData,
+	baselineDatasetIndex,
+	selectedPlotType,
+	modelConfigurations,
+	interventionPolicies,
+	rankingCriteriaCharts,
+	rankingResultsChart
+) {
+	const { inputs } = props.node;
+	const datasetInputs = inputs.filter(
+		(input) => input.type === 'datasetId' && input.status === WorkflowPortStatus.CONNECTED
+	);
+	const datasetPromises = datasetInputs.map((input) => getDataset(input.value![0]));
+	isFetchingDatasets.value = true;
+	await Promise.all(datasetPromises).then((ds) => {
+		ds.forEach((dataset) => {
+			// Add dataset
+			if (!dataset) return;
+			datasets.value.push(dataset);
+
+			// Collect model configuration id and intervention policy id
+			const modelConfigurationId: string | undefined = dataset.metadata?.simulationAttributes?.modelConfigurationId;
+			const interventionPolicyId: string | undefined = dataset.metadata?.simulationAttributes?.interventionPolicyId;
+
+			if (!modelConfigurationId) return;
+			if (!modelConfigIdToInterventionPolicyIdMap.value[modelConfigurationId]) {
+				modelConfigIdToInterventionPolicyIdMap.value[modelConfigurationId] = [];
+			}
+			if (!interventionPolicyId) return;
+			modelConfigIdToInterventionPolicyIdMap.value[modelConfigurationId].push(interventionPolicyId);
+		});
+	});
+	// Fetch the results
+	datasetResults.value = await fetchDatasetResults(datasets.value);
+	isFetchingDatasets.value = false;
+
+	await generateImpactCharts(impactChartData, datasets, datasetResults, baselineDatasetIndex, selectedPlotType);
+	const modelConfigurationIds = Object.keys(modelConfigIdToInterventionPolicyIdMap.value);
+	if (isEmpty(modelConfigurationIds)) return;
+	const modelConfigurationPromises = modelConfigurationIds.map((id) => getModelConfigurationById(id));
+	await Promise.all(modelConfigurationPromises).then((configs) => {
+		modelConfigurations.value = configs.filter((config) => config !== null);
+	});
+
+	const interventionPolicyIds = Object.values(modelConfigIdToInterventionPolicyIdMap.value).flat();
+	if (isEmpty(interventionPolicyIds)) return;
+	const interventionPolicyPromises = interventionPolicyIds.map((id) => getInterventionPolicyById(`${id}`));
+	await Promise.all(interventionPolicyPromises).then((policies) => {
+		interventionPolicies.value = policies.filter((policy) => policy !== null);
+	});
+
+	if (!rankingChartData) return;
+
+	rankingChartData.value = buildChartData(
+		datasets.value,
+		datasetResults.value,
+		baselineDatasetIndex.value,
+		PlotValue.VALUE
+	);
+
+	generateRankingCharts(
+		rankingCriteriaCharts,
+		rankingResultsChart,
+		props,
+		modelConfigIdToInterventionPolicyIdMap,
+		rankingChartData,
+		datasets,
+		interventionPolicies
+	);
 }

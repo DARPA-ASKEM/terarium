@@ -7,43 +7,41 @@
 		<div :tabName="Tabs.Wizard">
 			<tera-drilldown-section>
 				<!-- LLM generated overview -->
+				<div class="flex px-4 pt-3 pb-0 gap-2">
+					<Textarea
+						v-model="goalQuery"
+						autoResize
+						rows="1"
+						placeholder="What is your goal? (Optional)"
+						class="w-full"
+						style="min-height: 33px"
+						@keydown.stop
+						@click.stop
+					/>
+					<Button
+						class="flex-shrink-0"
+						label="Compare"
+						icon="pi pi-sparkles"
+						size="small"
+						:loading="isProcessingComparison"
+						@click.stop="onClickCompare"
+					/>
+				</div>
 				<section class="comparison-overview">
 					<Accordion multiple :activeIndex="currentActiveIndices">
 						<AccordionTab header="Overview">
-							<template #header>
-								<div class="flex align-items-start gap-2 ml-4 w-full">
-									<Textarea
-										v-model="goalQuery"
-										autoResize
-										rows="1"
-										placeholder="What is your goal? (Optional)"
-										class="w-full"
-										@keydown.stop
-										@click.stop
-									/>
-									<Button
-										class="flex-shrink-0"
-										label="Compare"
-										icon="pi pi-sparkles"
-										size="small"
-										:loading="isProcessingComparison"
-										@click.stop="onClickCompare"
-									/>
-								</div>
-							</template>
-							<tera-progress-spinner v-if="isProcessingComparison" is-centered :font-size="3">
+							<tera-progress-spinner v-if="isProcessingComparison" is-centered :font-size="3" class="secondary-text">
 								Analyzing models metadata to generate a detailed comparison analysis...
 							</tera-progress-spinner>
-							<p v-html="overview" v-else class="markdown-text" />
+							<p v-html="overview" v-else class="markdown-text ml-4 mr-4" />
 						</AccordionTab>
 					</Accordion>
 				</section>
 				<!-- Model comparison table -->
-				<div class="p-datatable-wrapper">
+				<div class="p-datatable-wrapper mb-2">
 					<table class="p-datatable-table p-datatable-scrollable-table">
 						<thead class="p-datatable-thead">
 							<tr>
-								<th></th>
 								<th v-for="model in modelsToCompare" :key="model.id" class="text-lg">
 									{{ model.header.name }}
 								</th>
@@ -51,7 +49,6 @@
 						</thead>
 						<tbody v-if="fields" class="p-datatable-tbody">
 							<tr>
-								<td class="field">Diagram</td>
 								<td v-for="(model, index) in modelsToCompare" :key="index">
 									<tera-model-diagram :model="model" class="diagram" />
 								</td>
@@ -93,18 +90,18 @@
 					multiple
 				>
 					<AccordionTab header="Concept context comparison" v-if="!isContextComparisonEmpty">
-						<tera-csv-table :csv-text="conceptComparison.concept_context_comparison!" />
+						<tera-csv-table :csv-text="conceptComparison.concept_context_comparison!" class="ml-4 mb-4" />
 					</AccordionTab>
 					<AccordionTab header="Tabular concept comparison" v-if="!isTabularComparisonEmpty">
 						<template v-for="(value, pair) in conceptComparison.tabular_comparison" :key="pair">
-							<h6>Tabular comparison {{ pair }}</h6>
-							<tera-csv-table :csv-text="value" />
+							<h6 class="ml-4">Tabular comparison {{ pair }}</h6>
+							<tera-csv-table :csv-text="value" class="ml-4 mb-4" />
 						</template>
 					</AccordionTab>
 					<AccordionTab header="Concept graph comparison" v-if="!isGraphComparisonEmpty">
 						<template v-for="(value, pair) in conceptComparison.concept_graph_comparison" :key="pair">
-							<h6>Concept comparison {{ pair }}</h6>
-							<img :src="`data:image/png;base64,${value}`" :alt="`Concept comparison ${pair}`" />
+							<h6 class="ml-4">Concept comparison {{ pair }}</h6>
+							<img :src="`data:image/png;base64,${value}`" :alt="`Concept comparison ${pair}`" class="ml-4" />
 						</template>
 					</AccordionTab>
 				</Accordion>
@@ -629,7 +626,7 @@ watch(goalQuery, debounce(onUpdateGoalQuery, 1000));
 
 <style scoped>
 .p-datatable-wrapper {
-	margin: 0 var(--gap-4);
+	margin: 0 var(--gap-6);
 }
 
 table {
@@ -647,17 +644,6 @@ table {
 
 	& td {
 		border-top: 1px solid var(--surface-border-light);
-	}
-
-	& th:first-child,
-	td:first-child {
-		width: 8%;
-		padding: var(--gap-2) 0;
-		font-weight: 600;
-	}
-
-	& td:not(:first-child) {
-		padding: var(--gap-2);
 	}
 
 	& .value {
@@ -699,10 +685,8 @@ ul {
 
 .comparison-overview,
 .comparison-context {
-	border: 1px solid var(--surface-border-light);
-	border-radius: var(--border-radius-medium);
 	padding: var(--gap-2);
-	margin: var(--gap-12) var(--gap-4);
+	margin: var(--gap-2) var(--gap-4);
 
 	& + & {
 		margin-top: var(--gap-4);
@@ -789,5 +773,9 @@ ul {
 }
 .bullet-list-item {
 	display: list-item !important;
+}
+
+.secondary-text {
+	color: var(--text-color-secondary);
 }
 </style>

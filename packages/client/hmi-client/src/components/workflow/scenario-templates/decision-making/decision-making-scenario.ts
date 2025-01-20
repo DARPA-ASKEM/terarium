@@ -17,12 +17,11 @@ import {
 import { ChartSetting, ChartSettingType } from '@/types/common';
 import { updateChartSettingsBySelectedVariables } from '@/services/chart-settings';
 import { InterventionPolicy } from '@/types/Types';
-import { getMeanCompareDatasetVariables } from '../scenario-template-utils';
 
 export class DecisionMakingScenario extends BaseScenario {
 	public static templateId = 'decision-making';
 
-	public static templateName = 'Decision Making';
+	public static templateName = 'Decision making';
 
 	modelSpec: { id: string };
 
@@ -178,7 +177,7 @@ export class DecisionMakingScenario extends BaseScenario {
 		compareDatasetChartSettings = updateChartSettingsBySelectedVariables(
 			compareDatasetChartSettings,
 			ChartSettingType.VARIABLE,
-			getMeanCompareDatasetVariables(this.simulateSpec.ids, modelConfig)
+			this.simulateSpec.ids
 		);
 
 		// 2. Add base simulation (no interventions) and connect it to the compare datasets node
@@ -239,6 +238,7 @@ export class DecisionMakingScenario extends BaseScenario {
 						name:
 							this.newInterventionSpecs.find((newInterventionSpec) => newInterventionSpec.id === interventionSpec.id)
 								?.name ?? 'New policy',
+						description: 'This intervention policy was created using the decision making scenario template.',
 						modelId: this.modelSpec.id,
 						interventions: [blankIntervention]
 					},
@@ -310,8 +310,40 @@ export class DecisionMakingScenario extends BaseScenario {
 		});
 		await Promise.all(promises);
 
-		wf.runDagreLayout();
+		// 4. Run layout
+		// The schematic for decision-making is as follows
+		//
+		//                           Interventions
+		//  Model -> ModelConfig ->                 -> CompareDataset
+		//                           Forecasts
+		//
+		// wf.runDagreLayout();
+		const nodeGapHorizontal = 325;
 
+		modelNode.x = 100;
+		modelNode.y = 500;
+
+		modelConfigNode.x = modelNode.x + nodeGapHorizontal;
+		modelConfigNode.y = 800;
+
+		const neighbors = wf.getNeighborNodes(modelConfigNode.id);
+		neighbors.downstreamNodes.forEach((forecastNode, forecastIdx) => {
+			forecastNode.x = modelConfigNode.x + nodeGapHorizontal * (forecastIdx + 1);
+			forecastNode.y = modelConfigNode.y + 150;
+
+			// align the intervention node for each forecast
+			const forecastNeighbours = wf.getNeighborNodes(forecastNode.id);
+			const interventionNode = forecastNeighbours.upstreamNodes.filter(
+				(op) => op.operationType === InterventionOp.name
+			)[0];
+			if (interventionNode) {
+				interventionNode.x = forecastNode.x;
+				interventionNode.y = forecastNode.y - 400;
+			}
+		});
+
+		compareDatasetNode.x = modelConfigNode.x + nodeGapHorizontal * (neighbors.downstreamNodes.length + 1);
+		compareDatasetNode.y = 500;
 		return wf.dump();
 	}
 }

@@ -20,6 +20,16 @@
 				<div class="button-group">
 					<Button
 						id="add-component-btn"
+						icon="pi pi-expand"
+						label="Reset Zoom"
+						@click="resetZoom"
+						size="small"
+						class="white-space-nowrap"
+						severity="secondary"
+					/>
+
+					<Button
+						id="add-component-btn"
 						icon="pi pi-plus"
 						label="Add component"
 						@click="showAddComponentMenu"
@@ -71,8 +81,8 @@
 						<component
 							:is="registry.getNode(node.operationType)"
 							:node="node"
-							@append-output="(event: any) => appendOutput(node, event)"
-							@append-input-port="(event: any) => workflowService.appendInputPort(node, event)"
+							@append-output="(port: any, newState: any) => appendOutput(node, port, newState)"
+							@append-input-port="(event: any) => appendInput(node, event)"
 							@update-state="(event: any) => updateWorkflowNodeState(node, event)"
 							@open-drilldown="addOperatorToRoute(node.id)"
 						/>
@@ -143,7 +153,7 @@
 			:spawn-animation="drilldownSpawnAnimation"
 			:upstream-operators-nav="upstreamOperatorsNav"
 			@close="addOperatorToRoute(null)"
-			@append-output="(event: any) => appendOutput(currentActiveNode, event)"
+			@append-output="(port: any, newState: any) => appendOutput(currentActiveNode, port, newState)"
 			@select-output="(event: any) => selectOutput(currentActiveNode, event)"
 			@update-state="(event: any) => updateWorkflowNodeState(currentActiveNode, event)"
 			@update-status="(status: OperatorStatus) => updateWorkflowNodeStatus(currentActiveNode, status)"
@@ -299,11 +309,32 @@ const saveNodeStateHandler = debounce(async () => {
 	const updatedWorkflow = await workflowService.updateState(wf.value.getId(), nodeStateMap);
 	nodeStateMap.clear();
 	wf.value.update(updatedWorkflow, false);
-}, 300);
+}, 250);
 
 const saveWorkflowHandler = () => {
 	saveWorkflowDebounced();
 };
+
+async function appendInput(
+	node: WorkflowNode<any>,
+	port: {
+		label: string;
+		type: string;
+		isOptional?: boolean;
+	}
+) {
+	const inputPort: WorkflowPort = {
+		id: uuidv4(),
+		type: port.type,
+		label: port.label,
+		isOptional: port.isOptional || false,
+		value: null,
+		status: WorkflowPortStatus.NOT_CONNECTED
+	};
+
+	const updatedWorkflow = await workflowService.appendInput(wf.value.getId(), node.id, inputPort);
+	wf.value.update(updatedWorkflow, false);
+}
 
 /**
  * The operator creates a new output, this will mark the
@@ -318,7 +349,8 @@ async function appendOutput(
 		value: any;
 		state?: any;
 		isSelected?: boolean;
-	}
+	},
+	newState: any = null
 ) {
 	if (!node) return;
 
@@ -337,13 +369,23 @@ async function appendOutput(
 		operatorStatus: OperatorStatus.SUCCESS
 	};
 
-	const updatedWorkflow = await workflowService.appendOutput(wf.value.getId(), node.id, outputPort, node.state);
+	const updatedWorkflow = await workflowService.appendOutput(wf.value.getId(), node.id, outputPort, newState);
 	wf.value.update(updatedWorkflow, false);
 }
 
 function updateWorkflowNodeState(node: WorkflowNode<any> | null, state: any) {
 	if (!node) return;
-	nodeStateMap.set(node.id, state);
+	if (nodeStateMap.has(node.id)) {
+		nodeStateMap.set(node.id, Object.assign(nodeStateMap.get(node.id), state));
+	} else {
+		nodeStateMap.set(node.id, state);
+	}
+
+	// FIXME: in some places we do consecutive update-state events programmatically, this cause
+	// an issue if we delay updates because they may not be independent. For now we will immediately
+	// update the client-copy.
+	wf.value.updateNodeState(node.id, nodeStateMap.get(node.id));
+
 	saveNodeStateHandler();
 }
 
@@ -463,12 +505,6 @@ async function onMenuSelection(operatorType: string, menuNode: WorkflowNode<any>
 				inputPorts.push(input);
 			}
 		});
-
-		// Will not connect nodes if there is anything besides 1 match
-		if (inputPorts.length !== 1) {
-			console.warn(`Ambiguous matching types [${newNode.inputs}] to [${port}]`);
-			return;
-		}
 
 		const edgePayload: WorkflowEdge = {
 			id: uuidv4(),
@@ -785,6 +821,37 @@ function relinkEdges(node: WorkflowNode<any> | null) {
 			});
 		});
 	}
+}
+
+function resetZoom() {
+	let scaleFactor = 1;
+	let translateX = 1;
+	let translateY = 1;
+
+	// Approximate the bounding box of the workflow
+	const xExtent = d3.extent(wf.value.getNodes().map((n) => n.x)) as [number, number];
+	const yExtent = d3.extent(wf.value.getNodes().map((n) => n.y)) as [number, number];
+
+	const xMin = xExtent[0] - 20;
+	const xMax = xExtent[1] + 200;
+	const yMin = yExtent[0] - 20;
+	const yMax = yExtent[1] + 300;
+
+	// Find fitted scale
+	const workflowCenterX = 0.5 * (xMax - xMin);
+	const workflowCenterY = 0.5 * (yMax - yMin);
+
+	const canvasW = (canvasRef.value.$el as HTMLElement).clientWidth;
+	const canvasH = (canvasRef.value.$el as HTMLElement).clientHeight;
+
+	scaleFactor = Math.min(canvasW / (xMax - xMin), canvasH / (yMax - yMin));
+
+	// Calculate the translation to center the graph
+	translateX = canvasW / 2 - scaleFactor * workflowCenterX;
+	translateY = canvasH / 2 - scaleFactor * workflowCenterY;
+
+	// Call exposed function to set zoom
+	canvasRef.value.setZoom(translateX, translateY, scaleFactor);
 }
 
 let prevX = 0;

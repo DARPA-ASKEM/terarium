@@ -78,7 +78,7 @@
 								/>
 							</div>
 							<div class="label-and-input mt-2">
-								<label for="num-samples">Solver Step Size</label>
+								<label for="num-samples">Solver step size</label>
 								<tera-input-number
 									v-model="solverStepSize"
 									:disabled="method !== CiemssMethodOptions.euler"
@@ -145,7 +145,7 @@
 					:summary-id="node.state.summaryId"
 					class="p-3 pt-0"
 				/>
-				<div class="pl-3 pr-3 flex flex-row align-items-center gap-2">
+				<div class="pl-3 pr-3 pb-2 flex flex-row align-items-center gap-2">
 					<SelectButton
 						class=""
 						:model-value="view"
@@ -194,19 +194,40 @@
 										>
 											<div class="comparison-chart">
 												<vega-chart
+													v-if="selectedVariable"
 													expandable
 													:are-embed-actions-visible="true"
 													:visualization-spec="comparisonCharts[setting.id + selectedVariable]"
 												/>
+												<div v-else class="empty-state-chart">
+													<img
+														src="@assets/svg/operator-images/simulate-deterministic.svg"
+														alt="Select a variable"
+														draggable="false"
+														height="80px"
+													/>
+													<p class="text-center">Select a variable for comparison</p>
+												</div>
 											</div>
 										</div>
 									</div>
-									<vega-chart
-										v-else
-										expandable
-										:are-embed-actions-visible="true"
-										:visualization-spec="comparisonCharts[setting.id]"
-									/>
+									<template v-else>
+										<vega-chart
+											v-if="setting.selectedVariables && setting.selectedVariables.length"
+											expandable
+											:are-embed-actions-visible="true"
+											:visualization-spec="comparisonCharts[setting.id]"
+										/>
+										<div v-else class="empty-state-chart">
+											<img
+												src="@assets/svg/operator-images/simulate-deterministic.svg"
+												alt="Select variables to generate comparison chart"
+												draggable="false"
+												height="80px"
+											/>
+											<p class="text-center">Select variables to generate comparison chart</p>
+										</div>
+									</template>
 								</template>
 							</AccordionTab>
 							<!-- Section: Sensitivity -->
@@ -287,6 +308,7 @@
 				</template>
 				<template #content>
 					<div class="output-settings-panel">
+						<!-- Intervention charts -->
 						<tera-chart-settings
 							:title="'Interventions over time'"
 							:settings="chartSettings"
@@ -298,6 +320,7 @@
 							@selection-change="updateChartSettings"
 						/>
 						<Divider />
+						<!-- Variable charts -->
 						<tera-chart-settings
 							:title="'Variables over time'"
 							:settings="chartSettings"
@@ -311,25 +334,25 @@
 							@selection-change="updateChartSettings"
 						/>
 						<Divider />
+						<!-- Comparison charts -->
 						<tera-chart-settings
 							:title="'Comparison charts'"
 							:settings="chartSettings"
 							:type="ChartSettingType.VARIABLE_COMPARISON"
 							:select-options="Object.keys(pyciemssMap)"
-							:selected-options="comparisonChartsSettingsSelection"
+							:comparison-selected-options="comparisonChartsSettingsSelection"
 							@open="setActiveChartSettings($event)"
 							@remove="removeChartSettings"
-							@selection-change="comparisonChartsSettingsSelection = $event"
+							@comparison-selection-change="updateComparisonChartSetting"
 						/>
-
 						<div>
 							<Button
-								:disabled="!comparisonChartsSettingsSelection.length"
 								size="small"
 								text
-								@click="addComparisonChartSettings"
+								@click="addEmptyComparisonChart"
 								label="Add comparison chart"
 								icon="pi pi-plus"
+								class="mt-2"
 							/>
 						</div>
 						<Divider />
@@ -618,10 +641,11 @@ const {
 	comparisonChartsSettingsSelection,
 	removeChartSettings,
 	updateChartSettings,
-	addComparisonChartSettings,
 	updateSensitivityChartSettings,
 	updateActiveChartSettings,
-	setActiveChartSettings
+	setActiveChartSettings,
+	addEmptyComparisonChart,
+	updateComparisonChartSetting
 } = useChartSettings(props, emit);
 
 const {

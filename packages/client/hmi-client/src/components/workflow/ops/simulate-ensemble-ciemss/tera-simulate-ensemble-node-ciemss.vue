@@ -104,7 +104,7 @@ const processResult = async (simulationId: string) => {
 		type: SimulateEnsembleCiemssOperation.outputs[0].type,
 		label: nodeOutputLabel(props.node, `${portLabel} Result`),
 		value: [datasetResult.id],
-		state,
+		state: _.omit(state, ['chartSettings']),
 		isSelected: false
 	});
 };

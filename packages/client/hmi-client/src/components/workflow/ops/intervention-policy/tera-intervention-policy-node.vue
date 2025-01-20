@@ -2,17 +2,12 @@
 	<section>
 		<ul v-if="node.state.interventionPolicy.id">
 			<li v-for="(_interventions, appliedTo) in selectedOutputParameters" :key="appliedTo">
-				<vega-chart
-					expandable
-					:are-embed-actions-visible="false"
-					:visualization-spec="preparedCharts[appliedTo]"
-					:interactive="false"
-				/>
+				<vega-chart expandable :are-embed-actions-visible="false" :visualization-spec="preparedCharts[appliedTo]" />
 			</li>
 		</ul>
 		<tera-intervention-summary-card
 			class="intervention-title"
-			v-for="(intervention, index) in node.state.interventionPolicy.interventions"
+			v-for="(intervention, index) in interventionSummary"
 			:intervention="intervention"
 			:key="index"
 		/>
@@ -57,6 +52,7 @@ const interventionEventHandler = async (event: ClientEvent<TaskResponse>) => {
 };
 
 useClientEvent(ClientEventType.TaskGollmInterventionsFromDocument, interventionEventHandler);
+useClientEvent(ClientEventType.TaskGollmInterventionsFromDataset, interventionEventHandler);
 
 const isLoading = computed(() => taskIds.value.length > 0);
 const isModelInputConnected = ref(false);
@@ -66,6 +62,11 @@ const groupedOutputParameters = computed(() =>
 		Object.entries(groupBy(flattenInterventionData(props.node.state.interventionPolicy.interventions), 'appliedTo'))
 	)
 );
+
+const interventionSummary = computed(() => {
+	const interventions = cloneDeep(props.node.state.interventionPolicy.interventions);
+	return interventions.slice(0, 4);
+});
 
 const selectedOutputParameters = computed(() => {
 	const charts = {};

@@ -66,7 +66,7 @@ export class ModelFromLiteratureScenario extends BaseScenario {
 
 		let compareModelsNode;
 
-		// Add compare dataset node if there is more than 1 document spec
+		// Add compare model node if there is more than 1 document spec
 		if (this.documentSpecs.length > 1) {
 			compareModelsNode = wf.addNode(
 				ModelCompareOp,
@@ -75,7 +75,7 @@ export class ModelFromLiteratureScenario extends BaseScenario {
 					size: OperatorNodeSize.medium
 				}
 			);
-			// Add input ports to compare dataset node
+			// Add input ports to compare model node
 			for (let i = 0; i < this.documentSpecs.length - 1; i++) {
 				workflowService.appendInputPort(compareModelsNode, {
 					type: 'modelId',
@@ -146,21 +146,31 @@ export class ModelFromLiteratureScenario extends BaseScenario {
 				{ x: 0, y: 0 }
 			]);
 
-			wf.addEdge(
-				modelFromEquationsNode.id,
-				modelFromEquationsNode.outputs[0].id,
-				compareModelsNode.id,
-				compareModelsNode.inputs[i].id,
-				[
-					{ x: 0, y: 0 },
-					{ x: 0, y: 0 }
-				]
-			);
+			wf.addEdge(documentNode.id, documentNode.outputs[0].id, modelConfigNode.id, modelConfigNode.inputs[1].id, [
+				{ x: 0, y: 0 },
+				{ x: 0, y: 0 }
+			]);
+
+			if (compareModelsNode) {
+				wf.addEdge(
+					modelFromEquationsNode.id,
+					modelFromEquationsNode.outputs[0].id,
+					compareModelsNode.id,
+					compareModelsNode.inputs[i].id,
+					[
+						{ x: 0, y: 0 },
+						{ x: 0, y: 0 }
+					]
+				);
+			}
 
 			// Update document node state
 			wf.updateNode(documentNode, {
 				state: {
 					documentId: docSpec.id
+				},
+				output: {
+					value: [{ documentId: docSpec.id }]
 				}
 			});
 		});
@@ -175,7 +185,38 @@ export class ModelFromLiteratureScenario extends BaseScenario {
 		}
 
 		// Run layout
-		wf.runDagreLayout();
+		// The schematics for model-from-literature
+		//
+		//  Document -> Model -> ModelConfig -> Simulate
+		//  Document -> Model -> ModelConfig -> Simulate     ModelComparison
+		//  Document -> Model -> ModelConfig -> Simulate
+		const anchorX = 100;
+		const anchorY = 100;
+		const nodeGapHorizontal = 400;
+		const nodeGapVertical = 400;
+
+		const documentNodes = wf.getNodes().filter((d) => d.operationType === DocumentOp.name);
+		documentNodes.forEach((documentNode, documentIdx) => {
+			documentNode.x = anchorX;
+			documentNode.y = anchorY + documentIdx * nodeGapVertical;
+
+			const modelNode = wf.getNeighborNodes(documentNode.id).downstreamNodes[0];
+			modelNode.x = documentNode.x + nodeGapHorizontal;
+			modelNode.y = documentNode.y;
+
+			const modelConfigNode = wf.getNeighborNodes(modelNode.id).downstreamNodes[0];
+			modelConfigNode.x = modelNode.x + nodeGapHorizontal;
+			modelConfigNode.y = modelNode.y;
+
+			const simulateNode = wf.getNeighborNodes(modelConfigNode.id).downstreamNodes[0];
+			simulateNode.x = modelConfigNode.x + nodeGapHorizontal;
+			simulateNode.y = modelConfigNode.y;
+		});
+
+		if (compareModelsNode) {
+			compareModelsNode.x = anchorX + 4 * nodeGapHorizontal;
+			compareModelsNode.y = anchorY + Math.floor(0.5 * documentNodes.length) * nodeGapVertical;
+		}
 
 		return wf.dump();
 	}

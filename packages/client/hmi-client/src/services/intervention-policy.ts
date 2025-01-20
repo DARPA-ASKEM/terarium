@@ -16,7 +16,7 @@ export const blankIntervention: Intervention = {
 	dynamicInterventions: []
 };
 
-export const getInterventionPolicyById = async (policyId: string): Promise<InterventionPolicy> => {
+export const getInterventionPolicyById = async (policyId: string): Promise<InterventionPolicy | null> => {
 	const response = await API.get<InterventionPolicy>(`/interventions/${policyId}`);
 	return response?.data ?? null;
 };

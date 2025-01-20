@@ -6,7 +6,7 @@ import { createInterventionPolicy, blankIntervention } from '@/services/interven
 import optimizeModel from '@assets/svg/operator-images/optimize-model.svg';
 import { ChartSetting } from '@/types/common';
 
-const DOCUMENTATION_URL = 'https://github.com/ciemss/pyciemss/blob/main/pyciemss/interfaces.py#L747';
+const DOCUMENTATION_URL = 'https://documentation.terarium.ai/config-and-intervention/optimize-intervention-policy/';
 
 export enum OptimizationInterventionObjective {
 	startTime = 'start_time', // provide a parameter value to get a better start time.

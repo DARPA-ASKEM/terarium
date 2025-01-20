@@ -3,27 +3,15 @@
 		<template
 			v-if="!inProgressCalibrationId && runResult && csvAsset && runResultPre && selectedVariableSettings.length"
 		>
-			<vega-chart
-				v-for="setting of selectedVariableSettings"
-				:key="setting.id"
-				:are-embed-actions-visible="false"
-				:visualization-spec="variableCharts[setting.id]"
-				:interactive="false"
-			/>
-			<vega-chart
-				v-for="setting of selectedInterventionSettings"
-				:key="setting.id"
-				expandable
-				:are-embed-actions-visible="true"
-				:visualization-spec="interventionCharts[setting.id]"
-				:interactive="false"
+			<tera-node-preview
+				:node="node"
+				:is-loading="!!inProgressCalibrationId"
+				:prepared-charts="[variableCharts, interventionCharts]"
+				:chart-settings="[selectedVariableSettings, selectedInterventionSettings]"
+				:progress="node.state.currentProgress + '%'"
 			/>
 		</template>
 		<vega-chart v-else-if="lossChartSpec" :are-embed-actions-visible="false" :visualization-spec="lossChartSpec" />
-
-		<tera-progress-spinner v-if="inProgressCalibrationId" :font-size="2" is-centered style="height: 100%">
-			{{ node.state.currentProgress }}%
-		</tera-progress-spinner>
 
 		<Button v-if="areInputsFilled" label="Open" @click="emit('open-drilldown')" severity="secondary" outlined />
 		<tera-operator-placeholder v-else :node="node">
@@ -36,8 +24,8 @@
 import _ from 'lodash';
 import { computed, watch, ref, shallowRef, onMounted, toRef } from 'vue';
 import Button from 'primevue/button';
+
 import TeraOperatorPlaceholder from '@/components/operator/tera-operator-placeholder.vue';
-import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue';
 import {
 	getRunResultCSV,
 	pollAction,
@@ -76,6 +64,7 @@ import { useCharts } from '@/composables/useCharts';
 import { filterChartSettingsByVariables } from '@/services/chart-settings';
 import { ChartSettingType } from '@/types/common';
 import { parseCsvAsset } from '@/utils/csv';
+import TeraNodePreview from '../tera-node-preview.vue';
 import type { CalibrationOperationStateCiemss } from './calibrate-operation';
 import { CalibrationOperationCiemss } from './calibrate-operation';
 import { renameFnGenerator, usePreparedChartInputs, getSelectedOutputMapping } from './calibrate-utils';
@@ -417,7 +406,7 @@ watch(
 						datasetId: datasetResult.id
 					}
 				],
-				state
+				state: _.omit(state, ['chartSettings'])
 			});
 		}
 	},
