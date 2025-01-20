@@ -94,8 +94,6 @@ class OpenAiTools(LlmToolsInterface):
 
     def send_image_to_llm_with_json_output(self, prompt: str, schema: str, image_url: str, max_tokens=16384) -> dict:
         print("Sending request to OpenAI API...")
-        print("Schema: ", schema)
-        print("Image URL: ", image_url)
         client = OpenAI() if self.api_key is None else OpenAI(api_key=self.api_key)
         output = client.chat.completions.create(
             model=GPT_MODEL,

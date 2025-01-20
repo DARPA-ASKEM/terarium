@@ -366,6 +366,7 @@ function handlePasteEvent(e) {
 					equationsFromImage(base64, document.value?.id).then((response) => {
 						const responseJson = JSON.parse(window.atob(response.output)).response;
 						multipleEquations.value = responseJson.equations.join('\n');
+						multipleEquationsDisabled.value = false;
 					});
 				}
 			};
@@ -382,8 +383,7 @@ const dragEnterCount = ref(0);
 function handleDrop(e: DragEvent) {
 	dragEnterCount.value = 0; // Reset counter on drop
 	const file = e.dataTransfer?.files[0];
-	if (!file || !file.type.startsWith('image/')) return;
-
+	if (!file) return;
 	const reader = new FileReader();
 	reader.onload = ({ target }) => {
 		if (target?.result) {
@@ -392,6 +392,7 @@ function handleDrop(e: DragEvent) {
 			equationsFromImage(base64, document.value?.id).then((response) => {
 				const responseJson = JSON.parse(window.atob(response.output)).response;
 				multipleEquations.value = responseJson.equations.join('\n');
+				multipleEquationsDisabled.value = false;
 			});
 		}
 	};

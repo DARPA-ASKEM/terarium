@@ -68,50 +68,54 @@ public class EquationsFromImageResponseHandler extends TaskResponseHandler {
 				EquationsFromImageResponseHandler.Response.class
 			);
 
-			final Optional<DocumentAsset> documentAsset = documentService.getAsset(
-				props.documentId,
-				ASSUME_WRITE_PERMISSION_ON_BEHALF_OF_USER
-			);
+			// We can get with or without a document id, if there is one, attach the new equations to the document
+			if (props.documentId != null) {
+				final Optional<DocumentAsset> documentAsset = documentService.getAsset(
+					props.documentId,
+					ASSUME_WRITE_PERMISSION_ON_BEHALF_OF_USER
+				);
 
-			if (documentAsset.isEmpty()) {
-				throw new IllegalArgumentException("Document not found: " + props.documentId);
+				if (documentAsset.isEmpty()) {
+					throw new IllegalArgumentException("Document not found: " + props.documentId);
+				}
+
+				final DocumentAsset document = documentAsset.get();
+				if (document.getMetadata() == null) {
+					document.setMetadata(new HashMap<>());
+				}
+
+				if (!document.getMetadata().containsKey("equations")) {
+					document.getMetadata().put("equations", objectMapper.valueToTree(new ArrayList<JsonNode>()));
+				}
+
+				// get the existing equations and add the new ones
+				final ArrayNode existingEquations = (ArrayNode) document.getMetadata().get("equations");
+				existingEquations.add(equations.response.get("equations"));
+				document.getMetadata().put("equations", existingEquations);
+
+				// add to the extractions field
+				final List<JsonNode> newEquations = new ArrayList<>();
+				for (final JsonNode node : equations.response.get("equations")) {
+					newEquations.add(node);
+				}
+				final ExtractedDocumentPage newPage = new ExtractedDocumentPage()
+					.setPageNumber(document.getExtractions().size() + 1)
+					.setEquations(newEquations);
+				document.getExtractions().add(newPage);
+
+				System.out.println("Document: " + document);
+				//documentService.updateAsset(document, props.projectId, ASSUME_WRITE_PERMISSION_ON_BEHALF_OF_USER).orElseThrow();
+
+				// add provenance
+				provenanceService.createProvenance(
+					new Provenance()
+						.setLeft(props.getDocumentId())
+						.setLeftType(ProvenanceType.EQUATION)
+						.setRight(props.getDocumentId())
+						.setRightType(ProvenanceType.DOCUMENT)
+						.setRelationType(ProvenanceRelationType.EXTRACTED_FROM)
+				);
 			}
-
-			final DocumentAsset document = documentAsset.get();
-			if (document.getMetadata() == null) {
-				document.setMetadata(new HashMap<>());
-			}
-
-			if (!document.getMetadata().containsKey("equations")) {
-				document.getMetadata().put("equations", objectMapper.valueToTree(new ArrayList<JsonNode>()));
-			}
-
-			// get the existing equations and add the new ones
-			final ArrayNode existingEquations = (ArrayNode) document.getMetadata().get("equations");
-			existingEquations.add(equations.response.get("equations"));
-			document.getMetadata().put("equations", existingEquations);
-
-			// add to the extractions field
-			final List<JsonNode> newEquations = new ArrayList<>();
-			for (final JsonNode node : equations.response.get("equations")) {
-				newEquations.add(node);
-			}
-			final ExtractedDocumentPage newPage = new ExtractedDocumentPage()
-				.setPageNumber(document.getExtractions().size() + 1)
-				.setEquations(newEquations);
-			document.getExtractions().add(newPage);
-
-			documentService.updateAsset(document, props.projectId, ASSUME_WRITE_PERMISSION_ON_BEHALF_OF_USER).orElseThrow();
-
-			// add provenance
-			provenanceService.createProvenance(
-				new Provenance()
-					.setLeft(props.getDocumentId())
-					.setLeftType(ProvenanceType.EQUATION)
-					.setRight(props.getDocumentId())
-					.setRightType(ProvenanceType.DOCUMENT)
-					.setRelationType(ProvenanceRelationType.EXTRACTED_FROM)
-			);
 		} catch (final Exception e) {
 			log.error("Failed to configure model", e);
 			throw new RuntimeException(e);
