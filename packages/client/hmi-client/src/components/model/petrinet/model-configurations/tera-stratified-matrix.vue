@@ -102,11 +102,7 @@
 											/>
 											-->
 									</div>
-									<div
-										v-if="!isReadOnly"
-										class="mathml-container"
-										v-html="expressionMap[cell.row + ':' + cell.col] ?? '...'"
-									/>
+									<div class="mathml-container" v-html="expressionMap[cell.row + ':' + cell.col] ?? '...'" />
 								</div>
 							</section>
 							<span v-else class="subdue">n/a</span>
