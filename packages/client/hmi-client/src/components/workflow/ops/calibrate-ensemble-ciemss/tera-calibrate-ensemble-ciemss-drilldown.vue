@@ -742,14 +742,11 @@ const { errorCharts, onExpandErrorChart } = useEnsembleErrorCharts(selectedError
 
 // For each selected variable ensure to map in the form model config id/"selectedVariables" for each relevant model config.
 const getAllSelectedVariables = (selectedVarSettings: string[]) => {
-	console.log('getAllSelectedVariables');
-	console.log(selectedVarSettings);
 	const allSelectedVariable: string[] = [];
 	// Map from selectedVar to id/selectedVar for each id that contains this variable.
 	selectedVarSettings.forEach((selectedVar) => {
 		const selectedVarName = selectedVar; // .selectedVariables[0];
 		const relevantModelConfigIds: string[] = variableChartOptionsObject.value[selectedVarName] ?? [];
-		console.log(relevantModelConfigIds);
 		relevantModelConfigIds.forEach((modelConfigId) => allSelectedVariable.push(`${modelConfigId}/${selectedVarName}`));
 	});
 	return allSelectedVariable;
@@ -768,7 +765,6 @@ const getVariableSelectedDisplayOptions = () => {
 const updateVariableChartSettings = (selectedVariables: string[]) => {
 	const type: ChartSettingType = ChartSettingType.VARIABLE;
 	const allVars = getAllSelectedVariables(selectedVariables);
-	console.log(allVars);
 	emit('update-state', {
 		...props.node.state,
 		chartSettings: updateChartSettingsBySelectedVariables(chartSettings.value, type, allVars)
