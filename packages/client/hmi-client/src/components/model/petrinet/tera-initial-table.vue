@@ -156,7 +156,6 @@ ul {
 
 :deep(.p-accordion-content) {
 	padding-top: 0;
-	margin-bottom: var(--gap-2);
 	background: none;
 }
 :deep(.p-accordion .p-accordion-header .p-accordion-header-link) {

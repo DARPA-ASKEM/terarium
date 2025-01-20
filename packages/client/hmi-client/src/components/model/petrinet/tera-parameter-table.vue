@@ -262,7 +262,7 @@ ul {
 	}
 
 	li:last-child {
-		margin-bottom: var(--gap-4);
+		margin-bottom: var(--gap-1);
 	}
 }
 
