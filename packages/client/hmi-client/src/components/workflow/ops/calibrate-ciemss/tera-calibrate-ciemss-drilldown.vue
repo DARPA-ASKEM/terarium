@@ -258,7 +258,13 @@
 					class="p-3"
 					:summary-id="node.state.summaryId"
 				/>
-				<Accordion :active-index="lossActiveIndex" @update:active-index="updateLossTab" class="px-2">
+				<!-- Loss section -->
+				<Accordion
+					v-if="lossValues.length > 0 || isLoading"
+					:active-index="lossActiveIndex"
+					@update:active-index="updateLossTab"
+					class="px-2"
+				>
 					<AccordionTab header="Loss">
 						<!-- Loss chart -->
 						<div ref="lossChartContainer">
@@ -275,7 +281,8 @@
 				<div v-if="!isLoading">
 					<section class="pb-3" ref="outputPanel" v-if="modelConfig && csvAsset">
 						<Accordion multiple :active-index="currentActiveIndicies" class="px-2">
-							<AccordionTab header="Parameter distributions">
+							<!-- Paramater distributions sectin -->
+							<AccordionTab v-if="selectedParameterSettings.length > 0" header="Parameter distributions">
 								<template v-for="setting of selectedParameterSettings" :key="setting.id">
 									<vega-chart
 										v-if="parameterDistributionCharts[setting.id]"
@@ -313,7 +320,8 @@
 									</vega-chart>
 								</template>
 							</AccordionTab>
-							<AccordionTab header="Interventions over time">
+							<!-- Section: Interventions over time -->
+							<AccordionTab v-if="selectedInterventionSettings.length > 0" header="Interventions over time">
 								<template v-for="setting of selectedInterventionSettings" :key="setting.id">
 									<vega-chart
 										expandable
@@ -322,7 +330,8 @@
 									/>
 								</template>
 							</AccordionTab>
-							<AccordionTab header="Variables over time">
+							<!-- Section: Variables over time -->
+							<AccordionTab v-if="selectedVariableSettings.length > 0" header="Variables over time">
 								<template v-for="setting of selectedVariableSettings" :key="setting.id">
 									<vega-chart
 										expandable
