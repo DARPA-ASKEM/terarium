@@ -71,6 +71,7 @@
 							class="histogram"
 							type="bar"
 							:height="480"
+							:width="480"
 							:data="statistics.get(colName)?.chartData"
 							:options="CHART_OPTIONS"
 						/>
@@ -90,9 +91,25 @@
 							<span class="column-summary-label">SD:</span>
 							<span class="column-summary-value">{{ statistics.get(colName)?.sd }}</span>
 						</div>
-						<div class="column-summary-row" v-if="statistics.get(colName)?.uniqueValues">
-							<span class="column-summary-label">Unique Values:</span>
+						<div class="column-summary-row mt-2" v-if="statistics.get(colName)?.uniqueValues">
+							<span class="column-summary-label">Unique values:</span>
 							<span class="column-summary-value">{{ statistics.get(colName)?.uniqueValues }}</span>
+						</div>
+						<div class="column-summary-row" v-if="statistics.get(colName)?.missingValues">
+							<span class="column-summary-label">Missing values:</span>
+							<span class="column-summary-value">{{ statistics.get(colName)?.missingValues }}</span>
+						</div>
+						<div class="most-common-values-row" v-if="statistics.get(colName)?.most_common">
+							<div class="most-common-values-list">
+								<div
+									v-for="(value, key) in statistics.get(colName)?.most_common || {}"
+									:key="key"
+									class="most-common-value"
+								>
+									<span>{{ key }}</span>
+									<span style="margin-left: auto; text-align: right">{{ value }}</span>
+								</div>
+							</div>
 						</div>
 					</div>
 				</template>
@@ -134,6 +151,8 @@ type ColumnStats = {
 	bins?: number[];
 	chartData?: ChartData;
 	uniqueValues?: string;
+	missingValues?: number;
+	most_common?: { [index: string]: number };
 };
 
 const props = defineProps<{
@@ -151,6 +170,14 @@ const CATEGORYPERCENTAGE = 1.0;
 const BARPERCENTAGE = 1.0;
 const MINBARLENGTH = 1;
 const CHART_OPTIONS = {
+	responsive: true,
+	elements: {
+		bar: {
+			borderWidth: 1,
+			borderColor: '#FFFFFF'
+		}
+	},
+	width: 10,
 	indexAxis: 'y',
 	plugins: {
 		legend: {
@@ -163,7 +190,7 @@ const CHART_OPTIONS = {
 			enabled: true,
 			position: 'nearest',
 			displayColors: false,
-			backgroundColor: '#666666dd'
+			backgroundColor: '#333333dd'
 		}
 	},
 	scales: {
@@ -230,6 +257,8 @@ watch(
 				columnStats.uniqueValues = displayNumber(column.stats.numericStats.unique_values);
 			} else if (column.stats?.nonNumericStats) {
 				columnStats.uniqueValues = displayNumber(column.stats.nonNumericStats.unique_values);
+				columnStats.missingValues = column.stats.nonNumericStats.missing_values;
+				columnStats.most_common = column.stats.nonNumericStats.most_common;
 			}
 			stats.set(column.name, columnStats);
 		});
@@ -289,6 +318,7 @@ watch(
 	width: 100%;
 	margin-top: 0.5rem;
 	grid-area: columnSummary;
+	height: 14rem;
 }
 .column-summary-row {
 	display: flex;
@@ -305,6 +335,25 @@ watch(
 	top: -0.5rem;
 }
 
+.most-common-values-row {
+	font-size: var(--font-caption);
+	font-weight: lighter;
+	color: var(--text-color-subdued);
+	padding-left: 0.5rem;
+	padding-right: 0.5rem;
+	padding-top: 0.5rem;
+}
+.most-common-values-list {
+	display: flex;
+	flex-direction: column;
+	gap: var(--gap-1);
+	width: 100%;
+}
+.most-common-value {
+	display: flex;
+	flex-direction: row;
+	justify-content: space-between;
+}
 .histogram {
 	height: 100px;
 }
