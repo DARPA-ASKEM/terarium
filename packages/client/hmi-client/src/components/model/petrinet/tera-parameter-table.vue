@@ -85,7 +85,6 @@
 													@update-source="emit('update-source', $event)"
 												/>
 											</div>
-											<Divider type="solid" />
 										</li>
 									</ul>
 								</div>
@@ -156,7 +155,6 @@ import InputNumber from 'primevue/inputnumber';
 import Dropdown from 'primevue/dropdown';
 import Checkbox from 'primevue/checkbox';
 import TeraInputText from '@/components/widgets/tera-input-text.vue';
-import Divider from 'primevue/divider';
 import type { FeatureConfig } from '@/types/common';
 import { calculateUncertaintyRange } from '@/utils/math';
 import TeraParameterEntry from './tera-parameter-entry.vue';
@@ -269,16 +267,21 @@ ul {
 }
 
 .parameter-entry-stratified {
+	border: 1px solid var(--surface-border-light);
+	border-radius: var(--border-radius);
+	background: var(--surface-0);
+	box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
 	border-left: 4px solid var(--surface-300);
 	padding-left: var(--gap-1);
 }
-
-:deep(.p-divider) {
-	&.p-divider-horizontal {
-		margin-top: var(--gap-2);
-		margin-bottom: var(--gap-2);
-		color: var(--gray-300);
-	}
+.parameter-entry-stratified:hover {
+	border-left-color: var(--primary-color);
+	background: var(--surface-highlight);
+}
+/* But set a lighter hover state when hovering over child elements */
+.parameter-entry-stratified:hover:has(.parameter-entry:hover) {
+	border-left: 4px solid var(--primary-color-light);
+	background: color-mix(in srgb, var(--surface-highlight) 30%, var(--surface-0) 70%);
 }
 
 .stratified {
