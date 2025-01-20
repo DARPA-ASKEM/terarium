@@ -45,6 +45,7 @@
 								:calendar-settings="getCalendarSettingsFromModel(model)"
 								v-model="timespan.start"
 								@update:model-value="updateState"
+								class="common-input-height"
 							/>
 							<tera-timestep-calendar
 								v-if="model && modelConfiguration"
@@ -53,6 +54,7 @@
 								:calendar-settings="getCalendarSettingsFromModel(model)"
 								v-model="timespan.end"
 								@update:model-value="updateState"
+								class="common-input-height"
 							/>
 						</div>
 
@@ -978,5 +980,8 @@ onUnmounted(() => kernelManager.shutdown());
 		box-sizing: border-box;
 		width: 40%;
 	}
+}
+.common-input-height:deep(main) {
+	height: 2.35rem;
 }
 </style>
