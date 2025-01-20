@@ -95,12 +95,12 @@
 					multiple
 				>
 					<AccordionTab header="Concept context comparison" v-if="!isContextComparisonEmpty">
-						<tera-csv-table :csv-text="conceptComparison.concept_context_comparison!" class="ml-4 mb-4" />
+						<tera-csv-table :csv-text="conceptComparison.concept_context_comparison!" class="mb-4" />
 					</AccordionTab>
 					<AccordionTab header="Tabular concept comparison" v-if="!isTabularComparisonEmpty">
 						<template v-for="(value, pair) in conceptComparison.tabular_comparison" :key="pair">
 							<h6 class="ml-4">Tabular comparison {{ pair }}</h6>
-							<tera-csv-table :csv-text="value" class="ml-4 mb-4" />
+							<tera-csv-table :csv-text="value" class="mb-4" />
 						</template>
 					</AccordionTab>
 					<AccordionTab header="Concept graph comparison" v-if="!isGraphComparisonEmpty">
