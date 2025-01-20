@@ -147,7 +147,6 @@
 	<Teleport to="body">
 		<component
 			v-if="dialogIsOpened && currentActiveNode"
-			:documentation-url="registry.getDocumentationUrl(currentActiveNode.operationType)"
 			:downstream-operators-nav="downstreamOperatorsNav"
 			:is="registry.getDrilldown(currentActiveNode.operationType)"
 			:node="currentActiveNode"
@@ -190,9 +189,7 @@ import * as d3 from 'd3';
 import { AssetType, ClientEventType, EventType, ClientEvent } from '@/types/Types';
 import { useDragEvent } from '@/services/drag-drop';
 import { v4 as uuidv4 } from 'uuid';
-
 import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue';
-
 import { useRouter, useRoute } from 'vue-router';
 import { MenuItem } from 'primevue/menuitem';
 import * as EventService from '@/services/event';

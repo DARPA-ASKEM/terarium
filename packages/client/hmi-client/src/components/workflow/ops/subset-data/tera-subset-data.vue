@@ -153,29 +153,6 @@
 			</tera-drilldown-preview>
 		</template>
 	</tera-drilldown>
-	<!--FIXME: Consider moving this to the modal composable for other dataset drilldowns to use-->
-	<!--This modal also causes warnings to popup since the entire component isn't wrapped by something, something to do with emit passing-->
-	<!--FIXME: Worry about naming subset later-->
-	<!--<tera-modal
-			v-if="showSaveDatasetModal"
-			@modal-mask-clicked="showSaveDatasetModal = false"
-			@modal-enter-press="showSaveDatasetModal = false"
-		>
-			<template #header>
-				<h4>Save dataset as</h4>
-			</template>
-			<label>Name</label>
-			<InputText v-model="newDatasetName" size="large" />
-			<template #footer>
-				<Button label="Save" @click="addSubsetToProject" :disabled="isEmpty(newDatasetName)" />
-				<Button
-					label="Cancel"
-					severity="secondary"
-					outlined
-					@click="showSaveDatasetModal = false"
-				/>
-			</template>
-		</tera-modal>-->
 </template>
 
 <script setup lang="ts">
@@ -186,21 +163,17 @@ import TeraDrilldownPreview from '@/components/drilldown/tera-drilldown-preview.
 import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.vue';
 import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue';
 import TeraCarousel from '@/components/widgets/tera-carousel.vue';
-// import TeraModal from '@/components/widgets/tera-modal.vue';
 import { WorkflowNode } from '@/types/workflow';
 import { getDataset, getClimateDatasetPreview, getClimateSubsetId } from '@/services/dataset';
 import type { Dataset } from '@/types/Types';
-// import { AssetType } from '@/types/Types';
 import TabView from 'primevue/tabview';
 import TabPanel from 'primevue/tabpanel';
-// import InputText from 'primevue/inputtext';
 import InputNumber from 'primevue/inputnumber';
 import Button from 'primevue/button';
 import Calender from 'primevue/calendar';
 import Checkbox from 'primevue/checkbox';
 import Slider from 'primevue/slider';
 import { logger } from '@/utils/logger';
-// import { useProjects } from '@/composables/project';
 import { SubsetDataOperationState } from './subset-data-operation';
 
 const props = defineProps<{
