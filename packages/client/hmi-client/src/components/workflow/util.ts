@@ -1,7 +1,7 @@
 import _ from 'lodash';
 import { DataseriesConfig, ChartConfig } from '@/types/SimulateConfig';
 import type { CsvAsset, Dataset, TimeSpan } from '@/types/Types';
-import { WorkflowNode, WorkflowOperationTypes } from '@/types/workflow';
+import { WorkflowNode } from '@/types/workflow';
 import { useProjects } from '@/composables/project';
 
 export const drilldownChartSize = (element: HTMLElement | null) => {
@@ -119,54 +119,4 @@ export const getGraphDataFromDatasetCSV = (
 
 export function getActiveOutput<S>(node: WorkflowNode<S>) {
 	return node.outputs.find((output) => output.id === node.active);
-}
-
-/**
- * Get the documentation URL for a given node operation
- * @param node - The node to get the documentation URL for
- */
-export function getDocumentationUrl(node: WorkflowNode<any>): string {
-	switch (node.operationType) {
-		case WorkflowOperationTypes.CALIBRATION_CIEMSS:
-			return 'https://documentation.terarium.ai/simulation/calibrate-model/';
-		case WorkflowOperationTypes.CALIBRATE_ENSEMBLE_CIEMSS:
-			return 'https://documentation.terarium.ai/simulation/calibrate-ensemble/';
-		case WorkflowOperationTypes.COMPARE_DATASETS:
-			return 'https://documentation.terarium.ai/datasets/compare-datasets/';
-		case WorkflowOperationTypes.DATASET:
-			return 'https://documentation.terarium.ai/datasets/review-and-enrich-dataset/';
-		case WorkflowOperationTypes.DATASET_TRANSFORMER:
-			return 'https://documentation.terarium.ai/datasets/transform-dataset/';
-		case WorkflowOperationTypes.FUNMAN:
-			return 'https://documentation.terarium.ai/config-and-intervention/validate-model-configuration/';
-		case WorkflowOperationTypes.INTERVENTION_POLICY:
-			return 'https://documentation.terarium.ai/config-and-intervention/create-intervention-policy/';
-		case WorkflowOperationTypes.MODEL:
-			return 'https://documentation.terarium.ai/modeling/review-and-enrich-model/';
-		case WorkflowOperationTypes.MODEL_COMPARISON:
-			return 'https://documentation.terarium.ai/modeling/compare-models/';
-		case WorkflowOperationTypes.MODEL_CONFIG:
-			return 'https://documentation.terarium.ai/config-and-intervention/configure-model/';
-		case WorkflowOperationTypes.MODEL_EDIT:
-			return 'https://documentation.terarium.ai/modeling/edit-model/';
-		case WorkflowOperationTypes.MODEL_FROM_EQUATIONS:
-			return 'https://documentation.terarium.ai/modeling/create-model-from-equations/';
-		case WorkflowOperationTypes.OPTIMIZE_CIEMSS:
-			return 'https://documentation.terarium.ai/config-and-intervention/optimize-intervention-policy/';
-		case WorkflowOperationTypes.REGRIDDING:
-			return 'https://darpa-askem.github.io/askem-beaker/contexts_climate_data_utility.html';
-		case WorkflowOperationTypes.SIMULATE_CIEMSS:
-			return 'https://documentation.terarium.ai/simulation/simulate-model/';
-		case WorkflowOperationTypes.SIMULATE_ENSEMBLE_CIEMSS:
-			return 'https://documentation.terarium.ai/simulation/simulate-ensemble/';
-		case WorkflowOperationTypes.STRATIFY_MIRA:
-			return 'https://documentation.terarium.ai/modeling/stratify-model/';
-		case WorkflowOperationTypes.SUBSET_DATA:
-			return 'https://github.com/DARPA-ASKEM/climate-data/blob/main/api/processing/filters.py#L48';
-
-		case WorkflowOperationTypes.CODE:
-		case WorkflowOperationTypes.DOCUMENT:
-		default:
-			return node.documentationUrl ?? '';
-	}
 }
