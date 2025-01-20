@@ -16,7 +16,7 @@
 			:key="chartSettingKey || setting"
 			:expandable="expandable"
 			:are-embed-actions-visible="areEmbedActionsVisible"
-			:visualization-spec="preparedCharts[index][chartSettingKey || setting['id']]"
+			:visualization-spec="getChartSpec(preparedCharts[index][chartSettingKey || setting['id']])"
 			:interactive="false"
 		/>
 	</div>
@@ -26,14 +26,14 @@
 		:key="'c' + index"
 		:expandable="expandable"
 		:are-embed-actions-visible="areEmbedActionsVisible"
-		:visualization-spec="preparedCharts[chartSettingKey || setting['id']]"
+		:visualization-spec="getChartSpec(preparedCharts[chartSettingKey || setting['id']])"
 		:interactive="false"
 	/>
 	<vega-chart
 		v-else-if="!visibleChartSettings"
 		v-for="(chartSpec, index) of preparedCharts"
 		:key="chartSpec.id + index"
-		:visualization-spec="chartSpec"
+		:visualization-spec="getChartSpec(chartSpec)"
 		:interactive="false"
 	/>
 </template>
@@ -58,6 +58,8 @@ const props = defineProps<{
 	expandable?: boolean;
 	areEmbedActionsVisible?: boolean;
 }>();
+
+const getChartSpec = (spec: any[] | any) => (_.isArray(spec) ? spec[0] : spec);
 
 const visibleChartSettings = computed(() => {
 	if (props.chartSettings) {
