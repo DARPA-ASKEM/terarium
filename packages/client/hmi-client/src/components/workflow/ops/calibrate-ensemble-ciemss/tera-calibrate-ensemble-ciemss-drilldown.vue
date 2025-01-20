@@ -752,10 +752,10 @@ const getAllSelectedVariables = (selectedVarSettings: string[]) => {
 	return allSelectedVariable;
 };
 
-// For each selected variable 'id/state name' only show 'state name'
+// For each selected variable 'id/state name' only show each distinct 'state name'
 const getVariableSelectedDisplayOptions = () => {
 	const allStatesSelected: string[] = selectedVariableSettings.value.map(
-		(s) => s.selectedVariables[0].split('/').pop() ?? ''
+		(s) => s.selectedVariables[0].split('/').pop() ?? '' // Remove everything before the uui-id/
 	);
 	const uniqueValues: string[] = [...new Set(allStatesSelected)];
 	return uniqueValues;
