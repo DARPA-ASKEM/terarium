@@ -1114,7 +1114,6 @@ public class GoLLMController {
 	)
 	public ResponseEntity<TaskResponse> equationsFromImageTask(
 		@RequestParam(name = "project-id", required = false) final UUID projectId,
-		@RequestParam(name = "document-id", required = false) final UUID documentId,
 		@RequestParam(name = "mode", required = false, defaultValue = "ASYNC") final TaskMode mode,
 		@RequestBody final EquationsFromImageBody image
 	) {
@@ -1166,9 +1165,6 @@ public class GoLLMController {
 
 		final EquationsFromImageResponseHandler.Properties props = new EquationsFromImageResponseHandler.Properties();
 		props.setProjectId(projectId);
-		if (documentId != null) {
-			props.setDocumentId(documentId);
-		}
 		req.setAdditionalProperties(props);
 
 		final TaskResponse resp;
