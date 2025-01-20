@@ -2,7 +2,7 @@
 	<tera-modal class="w-9">
 		<template #default>
 			<div class="grid" style="height: 70vh">
-				<aside class="flex flex-column col-3">
+				<aside class="fixed-sidebar">
 					<label class="p-text-secondary pb-3">Select a template</label>
 					<div class="template-list">
 						<div
@@ -16,7 +16,7 @@
 						</div>
 					</div>
 				</aside>
-				<main class="col-9 flex flex-column">
+				<main class="scrollable-content">
 					<component
 						v-if="getScenario()"
 						ref="scenarioComponent"
@@ -186,6 +186,24 @@ onMounted(() => {
 const getScenario = () => scenarioMap.value.get(selectedTemplateId.value) as ScenarioItem;
 </script>
 <style scoped>
+.fixed-sidebar {
+	position: fixed;
+	top: 2.75rem;
+	width: 25%; /* equivalent to col-3 */
+	height: 100%;
+	display: flex;
+	flex-direction: column;
+	overflow-y: auto; /* allows sidebar to scroll if content is too long */
+	padding-right: 1rem;
+}
+.scrollable-content {
+	margin-left: 25%; /* Match the sidebar width */
+	width: 75%; /* equivalent to col-9 */
+	overflow-y: auto;
+	padding-left: 1rem;
+	padding-top: var(--gap-1);
+}
+
 .template-list {
 	display: flex;
 	flex-direction: column;

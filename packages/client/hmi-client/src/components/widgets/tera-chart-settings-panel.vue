@@ -27,10 +27,11 @@
 				</section>
 				<section class="items-wrapper">
 					<h5>Options</h5>
+					<tera-checkbox label="Use log scale" :model-value="useLog" @update:model-value="toggleLogScale($event)" />
 					<tera-checkbox
-						label="Use log scale"
-						:model-value="Boolean(useLog)"
-						@update:model-value="toggleLogScale($event)"
+						label="Hide in node"
+						:model-value="isHiddenInNode"
+						@update:model-value="toggleHideInNode($event)"
 					/>
 					<Divider />
 				</section>
@@ -106,9 +107,15 @@ const props = defineProps<{
 const emit = defineEmits(['close', 'update-settings', 'delete-annotation', 'create-annotation']);
 
 // Log scale
-const useLog = computed(() => props.activeSettings?.scale === 'log');
+const useLog = computed<boolean>(() => props.activeSettings?.scale === 'log');
+const isHiddenInNode = computed<boolean>(() => !!props.activeSettings?.hideInNode);
+
 const toggleLogScale = (useLogScale: boolean) => {
 	emit('update-settings', { scale: useLogScale ? 'log' : '' });
+};
+
+const toggleHideInNode = (hideInNode: boolean) => {
+	emit('update-settings', { hideInNode: !!hideInNode });
 };
 
 // Settings for comparison method

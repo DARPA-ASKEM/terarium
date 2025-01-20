@@ -258,7 +258,13 @@
 					class="p-3"
 					:summary-id="node.state.summaryId"
 				/>
-				<Accordion :active-index="lossActiveIndex" @update:active-index="updateLossTab" class="px-2">
+				<!-- Loss section -->
+				<Accordion
+					v-if="lossValues.length > 0 || isLoading"
+					:active-index="lossActiveIndex"
+					@update:active-index="updateLossTab"
+					class="px-2"
+				>
 					<AccordionTab header="Loss">
 						<!-- Loss chart -->
 						<div ref="lossChartContainer">
@@ -273,9 +279,11 @@
 					</AccordionTab>
 				</Accordion>
 				<div v-if="!isLoading">
-					<section class="pb-3" ref="outputPanel" v-if="modelConfig && csvAsset">
+					<section class="pb-3" v-if="modelConfig && csvAsset">
+						<div class="mx-4" ref="chartWidthDiv"></div>
 						<Accordion multiple :active-index="currentActiveIndicies" class="px-2">
-							<AccordionTab header="Parameter distributions">
+							<!-- Paramater distributions sectin -->
+							<AccordionTab v-if="selectedParameterSettings.length > 0" header="Parameter distributions">
 								<template v-for="setting of selectedParameterSettings" :key="setting.id">
 									<vega-chart
 										v-if="parameterDistributionCharts[setting.id]"
@@ -313,7 +321,8 @@
 									</vega-chart>
 								</template>
 							</AccordionTab>
-							<AccordionTab header="Interventions over time">
+							<!-- Section: Interventions over time -->
+							<AccordionTab v-if="selectedInterventionSettings.length > 0" header="Interventions over time">
 								<template v-for="setting of selectedInterventionSettings" :key="setting.id">
 									<vega-chart
 										expandable
@@ -322,7 +331,8 @@
 									/>
 								</template>
 							</AccordionTab>
-							<AccordionTab header="Variables over time">
+							<!-- Section: Variables over time -->
+							<AccordionTab v-if="selectedVariableSettings.length > 0" header="Variables over time">
 								<template v-for="setting of selectedVariableSettings" :key="setting.id">
 									<vega-chart
 										expandable
@@ -341,50 +351,30 @@
 							</AccordionTab>
 							<!-- Section: Comparison charts -->
 							<AccordionTab v-if="selectedComparisonChartSettings.length > 0" header="Comparison charts">
-								<template v-for="setting of selectedComparisonChartSettings" :key="setting.id">
-									<div v-if="setting.smallMultiples">
-										<div
-											v-for="selectedVariable of setting.selectedVariables"
-											:key="setting.id + selectedVariable"
-											class="comparison-chart-container"
-										>
-											<div class="comparison-chart">
-												<vega-chart
-													v-if="selectedVariable"
-													expandable
-													:are-embed-actions-visible="true"
-													:visualization-spec="comparisonCharts[setting.id + selectedVariable]"
-												/>
-												<div v-else class="empty-state-chart">
-													<img
-														src="@assets/svg/operator-images/simulate-deterministic.svg"
-														alt="Select a variable"
-														draggable="false"
-														height="80px"
-													/>
-													<p class="text-center">Select a variable for comparison</p>
-												</div>
-											</div>
-										</div>
-									</div>
-									<template v-else>
+								<div
+									class="flex justify-content-center"
+									v-for="setting of selectedComparisonChartSettings"
+									:key="setting.id"
+								>
+									<div class="flex flex-row flex-wrap" v-if="setting.selectedVariables.length > 0">
 										<vega-chart
-											v-if="setting.selectedVariables && setting.selectedVariables.length"
+											v-for="(spec, index) of comparisonCharts[setting.id]"
+											:key="index"
 											expandable
 											:are-embed-actions-visible="true"
-											:visualization-spec="comparisonCharts[setting.id]"
+											:visualization-spec="spec"
 										/>
-										<div v-else class="empty-state-chart">
-											<img
-												src="@assets/svg/operator-images/simulate-deterministic.svg"
-												alt="Select variables to generate comparison chart"
-												draggable="false"
-												height="80px"
-											/>
-											<p class="text-center">Select variables to generate comparison chart</p>
-										</div>
-									</template>
-								</template>
+									</div>
+									<div v-else class="empty-state-chart">
+										<img
+											src="@assets/svg/operator-images/simulate-deterministic.svg"
+											alt="Select a variable"
+											draggable="false"
+											height="80px"
+										/>
+										<p class="text-center">Select a variable for comparison</p>
+									</div>
+								</div>
 							</AccordionTab>
 						</Accordion>
 					</section>
@@ -777,8 +767,8 @@ const runButtonMessage = computed(() =>
 const selectedOutputId = ref<string>();
 const lossChartContainer = ref(null);
 const lossChartSize = useDrilldownChartSize(lossChartContainer);
-const outputPanel = ref(null);
-const chartSize = useDrilldownChartSize(outputPanel);
+const chartWidthDiv = ref(null);
+const chartSize = useDrilldownChartSize(chartWidthDiv);
 
 const groupedInterventionOutputs = computed(() =>
 	_.groupBy(flattenInterventionData(interventionPolicy.value?.interventions ?? []), 'appliedTo')
