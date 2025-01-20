@@ -263,13 +263,16 @@ ul {
 }
 
 .model-part {
-	margin-left: var(--gap-1);
-	padding: var(--gap-3) 0 var(--gap-3) var(--gap-3);
+	border: 1px solid var(--surface-border-light);
+	border-radius: var(--border-radius);
+	padding: var(--gap-3);
 	border-left: 4px solid var(--surface-border);
 	background: var(--surface-0);
-	transition: background-color 0.15s;
+	box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+	transition: all 0.15s;
 	&:hover {
-		background: var(--surface-50);
+		background: var(--surface-highlight);
+		border-left-color: var(--primary-color);
 	}
 	&:has(.parent) {
 		padding: var(--gap-2) 0 var(--gap-2) var(--gap-1);

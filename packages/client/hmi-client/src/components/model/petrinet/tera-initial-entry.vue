@@ -128,6 +128,7 @@ onMounted(async () => {
 	border: 1px solid var(--surface-border-light);
 	border-left: 4px solid var(--surface-300);
 	background-color: var(--surface-0);
+	transition: all 0.15s;
 	box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
 }
 .initial-entry:hover {

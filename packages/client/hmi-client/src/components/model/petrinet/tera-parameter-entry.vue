@@ -159,6 +159,7 @@ onMounted(async () => {
 	border-left: 4px solid var(--surface-300);
 	padding-left: var(--gap-4);
 	padding-right: var(--gap-4);
+	transition: all 0.15s;
 	box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
 }
 .parameter-entry:hover {

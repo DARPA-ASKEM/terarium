@@ -84,7 +84,7 @@
 			:expression="stringToLatexExpression(expression)"
 			:throw-on-error="false"
 		/>
-		<span v-if="!isTimePart" class="description">
+		<span v-if="!isTimePart" class="description" :class="{ 'mt-1': showDescription }">
 			<template v-if="featureConfig.isPreview">{{ descriptionText }}</template>
 			<tera-input-text
 				v-if="showDescription"
