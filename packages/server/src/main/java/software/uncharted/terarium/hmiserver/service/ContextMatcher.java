@@ -11,6 +11,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 import lombok.Value;
 import software.uncharted.terarium.hmiserver.models.dataservice.Grounding;
+import software.uncharted.terarium.hmiserver.models.mira.DKG;
 
 public class ContextMatcher {
 
@@ -40,8 +41,8 @@ public class ContextMatcher {
 
 	/**
 	 * Calculate the Levenshtein distance between two strings
-	 * https://en.wikipedia.org/wiki/Levenshtein_distance
-	 * https://en.wikipedia.org/wiki/Approximate_string_matching
+	 * <a href="https://en.wikipedia.org/wiki/Levenshtein_distance">...</a>
+	 * <a href="https://en.wikipedia.org/wiki/Approximate_string_matching">...</a>
 	 */
 	private static int levenshteinDistance(String a, String b) {
 		int[][] matrix = new int[b.length() + 1][a.length() + 1];
@@ -116,7 +117,14 @@ public class ContextMatcher {
 		}
 
 		matches.sort(Comparator.comparing(SearchMatch::getScore).reversed());
-		return matches;
+
+		List<Grounding> groundings = new ArrayList<>();
+		for (SearchMatch match : matches) {
+			Grounding grounding = new Grounding();
+			grounding.setIdentifiers(List.of(new DKG(match.getKey())));
+			groundings.add(grounding);
+		}
+		return groundings;
 	}
 
 	/**
