@@ -46,9 +46,10 @@
 					label="Apply"
 					size="small"
 					@click="onUpdateDistributions"
+					class="ml-auto"
 					style="min-width: 5.5rem"
 				/>
-				<Button text rounded small icon="pi pi-times" @click="isAddingUncertainty = false" class="ml-auto" />
+				<Button text rounded small icon="pi pi-times" @click="isAddingUncertainty = false" class="ml-4" />
 			</span>
 
 			<ul class="pl-1">
@@ -308,6 +309,7 @@ ul {
 	padding-left: 0;
 	margin-bottom: var(--gap-2);
 	font-size: var(--font-caption);
+	border-radius: var(--border-radius);
 }
 
 :deep(.uncertainty-percentage) > input {
