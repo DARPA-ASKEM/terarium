@@ -1,7 +1,7 @@
 import _ from 'lodash';
 import { DataseriesConfig, ChartConfig } from '@/types/SimulateConfig';
 import type { CsvAsset, Dataset, TimeSpan } from '@/types/Types';
-import { WorkflowNode } from '@/types/workflow';
+import type { WorkflowNode } from '@/types/workflow';
 import { useProjects } from '@/composables/project';
 
 export const drilldownChartSize = (element: HTMLElement | null) => {
