@@ -52,14 +52,14 @@ public class DKGController {
 	) {
 		try {
 			// First pass, search for exact matches using the curated contexts
-			List<Grounding> groundings = ContextMatcher.search(term);
+			Grounding grounding = ContextMatcher.search(term);
 
 			// If grounding is empty do the dkgService search
-			if (groundings.isEmpty()) {
+			if (grounding != null) {
 				return ResponseEntity.ok(dkgService.searchEpiDKG(page, pageSize, term, null));
 			} else {
 				// If grounding is not empty, return the grounding
-				return ResponseEntity.ok(groundings.get(0).getIdentifiers());
+				return ResponseEntity.ok(grounding.getIdentifiers());
 			}
 		} catch (Exception e) {
 			log.error("Error searching assets", e);

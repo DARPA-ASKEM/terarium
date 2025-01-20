@@ -136,8 +136,12 @@ public class ContextMatcher {
 
 	/**
 	 * Search for the given term in the configuration file
+	 * @param searchTerm the term to search for
+	 * @return the first result, or null if no results were found
 	 */
-	public static List<Grounding> search(String searchTerm) {
-		return multiSearch(List.of(searchTerm));
+	public static Grounding search(String searchTerm) {
+		final List<Grounding> results = multiSearch(List.of(searchTerm));
+		if (results.isEmpty()) return null;
+		return results.get(0);
 	}
 }
