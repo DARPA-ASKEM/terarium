@@ -25,21 +25,20 @@ def main():
         
         odeterms = {var: 0 for var in model.get_concepts_name_map().keys()}
     
-        for t in model.templates:
-            if hasattr(t, "subject"):
+        for template in model.templates:
+            if hasattr(template, "subject"):
                 var = t.subject.name
-                odeterms[var] -= t.rate_law.args[0]
+                odeterms[var] -= template.rate_law.args[0]
     
-            if hasattr(t, "outcome"):
-                var = t.outcome.name
-                odeterms[var] += t.rate_law.args[0]
+            if hasattr(template, "outcome"):
+                var = template.outcome.name
+                odeterms[var] += template.rate_law.args[0]
     
         # Time
         if model.time and model.time.name:
             time = model.time.name
         else:
             time = "t"
-    
         t = sympy.Symbol(time)
     
         # Construct Sympy equations
@@ -49,12 +48,13 @@ def main():
       
             # Write (time-dependent) symbols with "(t)"
             rhs = terms
-            for atom in terms.atoms(sympy.Symbol):
-                if str(atom) in odeterms.keys():
-                    rhs = rhs.subs(atom, sympy.Function(str(atom))(t))
+            if hasattr(terms, 'atoms'):
+                for atom in terms.atoms(sympy.Symbol):
+                    if str(atom) in odeterms.keys():
+                        rhs = rhs.subs(atom, sympy.Function(str(atom))(t))
     
             odesys.append(sympy.latex(sympy.Eq(lhs, rhs)))
-    
+            
         # Observables
         if len(model.observables) > 0:
     
@@ -64,9 +64,10 @@ def main():
                 lhs = sympy.Function(obs.name)(t)
                 terms = obs.expression.args[0]
                 rhs = terms
-                for atom in terms.atoms(sympy.Symbol):
-                    if str(atom) in odeterms.keys():
-                        rhs = rhs.subs(atom, sympy.Function(str(atom))(t))
+                if hasattr(terms, 'atoms'):
+                    for atom in terms.atoms(sympy.Symbol):
+                        if str(atom) in odeterms.keys():
+                            rhs = rhs.subs(atom, sympy.Function(str(atom))(t))
                 obs_eqs.append(sympy.latex(sympy.Eq(lhs, rhs)))
     
             # Add observables
