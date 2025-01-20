@@ -52,10 +52,10 @@ public class DKGController {
 	) {
 		try {
 			// First pass, search for exact matches using the curated contexts
-			Grounding grounding = ContextMatcher.search(term);
+			Grounding grounding = ContextMatcher.searchBest(term);
 
 			// If grounding is empty do the dkgService search
-			if (grounding != null) {
+			if (grounding == null) {
 				return ResponseEntity.ok(dkgService.searchEpiDKG(page, pageSize, term, null));
 			} else {
 				// If grounding is not empty, return the grounding

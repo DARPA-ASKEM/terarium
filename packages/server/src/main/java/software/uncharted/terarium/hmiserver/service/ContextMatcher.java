@@ -1,5 +1,6 @@
 package software.uncharted.terarium.hmiserver.service;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.IOException;
@@ -8,6 +9,7 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 import lombok.Value;
 import software.uncharted.terarium.hmiserver.models.dataservice.Grounding;
@@ -15,8 +17,27 @@ import software.uncharted.terarium.hmiserver.models.mira.DKG;
 
 public class ContextMatcher {
 
+	@Value
+	static class CuratedGrounding {
+
+		Map<String, String> identifiers;
+		Map<String, String> context;
+	}
+
 	private static final String CONFIG_FILE = "curated-context.json";
-	private static final JsonNode configData;
+	private static final Map<String, CuratedGrounding> configData = loadConfig();
+
+	private static Map<String, CuratedGrounding> loadConfig() {
+		try (InputStream inputStream = ContextMatcher.class.getClassLoader().getResourceAsStream(CONFIG_FILE)) {
+			if (inputStream == null) {
+				throw new RuntimeException("Configuration file not found: " + CONFIG_FILE);
+			}
+			ObjectMapper mapper = new ObjectMapper();
+			return mapper.readValue(inputStream, new TypeReference<>() {});
+		} catch (IOException e) {
+			throw new RuntimeException("Failed to load configuration file", e);
+		}
+	}
 
 	@Value
 	static class SearchMatch {
@@ -24,19 +45,6 @@ public class ContextMatcher {
 		String key;
 		double score;
 		List<String> matches;
-	}
-
-	/* Load the configuration file */
-	static {
-		try (InputStream inputStream = ContextMatcher.class.getClassLoader().getResourceAsStream(CONFIG_FILE)) {
-			if (inputStream == null) {
-				throw new RuntimeException("Configuration file not found: " + CONFIG_FILE);
-			}
-			ObjectMapper mapper = new ObjectMapper();
-			configData = mapper.readTree(inputStream);
-		} catch (IOException e) {
-			throw new RuntimeException("Failed to load configuration file", e);
-		}
 	}
 
 	/**
@@ -68,50 +76,48 @@ public class ContextMatcher {
 	}
 
 	/**
-	 * Calculate the score of a key based on the search terms
+	 * Calculate the score of a key based on a single search term.
+	 * @param key The key to compare against.
+	 * @param term The search term.
+	 * @return A SearchMatch object with the key, score, and matched terms.
 	 */
-	private static SearchMatch calculateScore(String key, List<String> searchTerms) {
+	private static SearchMatch calculateScore(String key, String term) {
 		String[] keyTerms = key.toLowerCase().split("_");
 		double totalScore = 0;
 		List<String> matches = new ArrayList<>();
 
-		for (String term : searchTerms) {
-			int bestDistance = Integer.MAX_VALUE;
-			boolean matched = false;
-			String termLower = term.toLowerCase();
+		int bestDistance = Integer.MAX_VALUE;
+		boolean matched = false;
+		String termLower = term.toLowerCase();
 
-			for (String keyTerm : keyTerms) {
-				int distance = levenshteinDistance(termLower, keyTerm);
-				if (distance < bestDistance) {
-					bestDistance = distance;
-					if (distance <= Math.min(3, keyTerm.length() / 2)) {
-						matched = true;
-					}
+		for (String keyTerm : keyTerms) {
+			int distance = levenshteinDistance(termLower, keyTerm);
+			if (distance < bestDistance) {
+				bestDistance = distance;
+				if (distance <= Math.min(3, keyTerm.length() / 2)) {
+					matched = true;
 				}
-			}
-
-			if (matched) {
-				matches.add(term);
-				totalScore += 1.0 / (1.0 + bestDistance);
 			}
 		}
 
-		return new SearchMatch(key, totalScore / searchTerms.size(), matches);
+		if (matched) {
+			matches.add(term);
+			totalScore = 1.0 / (1.0 + bestDistance);
+		}
+
+		return new SearchMatch(key, totalScore, matches);
 	}
 
 	/**
-	 * Search for the given terms in the configuration file, with a minimum score
+	 * Search for the given terms in the configuration file, with a minimum score of 0.5
+	 * @param term the term to search for
+	 * @return the first result, or null if no results were found
 	 */
-	public static List<Grounding> multiSearch(List<String> searchTerms, double minScore) {
-		List<String> validTerms = searchTerms.stream().filter(term -> !term.isEmpty()).collect(Collectors.toList());
-
+	public static List<Grounding> search(String term) {
 		List<SearchMatch> matches = new ArrayList<>();
-		Iterator<String> fieldNames = configData.fieldNames();
-
-		while (fieldNames.hasNext()) {
-			String key = fieldNames.next();
-			SearchMatch match = calculateScore(key, validTerms);
-			if (match.getScore() >= minScore) {
+		for (String key : configData.keySet()) {
+			SearchMatch match = calculateScore(key, term);
+			if (match.getScore() >= 0.5) {
 				matches.add(match);
 			}
 		}
@@ -120,28 +126,26 @@ public class ContextMatcher {
 
 		List<Grounding> groundings = new ArrayList<>();
 		for (SearchMatch match : matches) {
+			CuratedGrounding curatedGrounding = configData.get(match.getKey());
 			Grounding grounding = new Grounding();
-			grounding.setIdentifiers(List.of(new DKG(match.getKey())));
+			grounding.setIdentifiers(new ArrayList<>());
+			curatedGrounding
+				.getIdentifiers()
+				.entrySet()
+				.stream()
+				.map(e -> e.getKey() + ":" + e.getValue())
+				.forEach(curie -> grounding.getIdentifiers().add(new DKG(curie)));
+			grounding.setContext(new ObjectMapper().valueToTree(curatedGrounding.getContext()));
 			groundings.add(grounding);
 		}
 		return groundings;
 	}
 
-	/**
-	 * Quick search for the given terms in the configuration file
-	 */
-	public static List<Grounding> multiSearch(List<String> searchTerms) {
-		return multiSearch(searchTerms, 0.3);
-	}
-
-	/**
-	 * Search for the given term in the configuration file
-	 * @param searchTerm the term to search for
-	 * @return the first result, or null if no results were found
-	 */
-	public static Grounding search(String searchTerm) {
-		final List<Grounding> results = multiSearch(List.of(searchTerm));
-		if (results.isEmpty()) return null;
-		return results.get(0);
+	public static Grounding searchBest(String term) {
+		List<Grounding> groundings = search(term);
+		if (groundings.isEmpty()) {
+			return null;
+		}
+		return groundings.get(0);
 	}
 }
