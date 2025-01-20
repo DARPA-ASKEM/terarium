@@ -175,13 +175,12 @@ const updateByMatrixBulk = (matrixToUpdate: MiraMatrix, text: string) => {
 
 	matrixToUpdate.forEach((row) => {
 		row.forEach(async (matrixEntry) => {
-			const match = // If we have label information, use them as they may be more accurate, otherwise use indices
+			const match = parseResult.entries.find((entry) =>
+				// If we have label information, use them as they may be more accurate, otherwise use indices
 				parseResult.hasColLabels && parseResult.hasRowLabels
-					? parseResult.entries.find(
-							(entry) => entry.rowLabel === matrixEntry.rowCriteria && entry.colLabel === matrixEntry.colCriteria
-						)
-					: parseResult.entries.find((entry) => entry.rowIdx === matrixEntry.row && entry.colIdx === matrixEntry.col);
-
+					? entry.rowLabel === matrixEntry.rowCriteria && entry.colLabel === matrixEntry.colCriteria
+					: entry.rowIdx === matrixEntry.row && entry.colIdx === matrixEntry.col
+			);
 			if (match) {
 				updateList.push({
 					id: matrixEntry.content.id,
@@ -190,8 +189,6 @@ const updateByMatrixBulk = (matrixToUpdate: MiraMatrix, text: string) => {
 			}
 		});
 	});
-
-	console.log(updateList);
 
 	emit('update-cell-values', updateList);
 };
