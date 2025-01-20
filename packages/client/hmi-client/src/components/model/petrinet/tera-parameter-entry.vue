@@ -6,7 +6,7 @@
 				<span v-if="name" class="ml-1">{{ '| ' + name }}</span>
 				<template v-if="units">
 					<label class="ml-auto">Unit:</label>
-					<span class="ml-1">{{ units }}</span>
+					<span class="ml-1 mr-3">{{ units }}</span>
 				</template>
 
 				<template v-if="concept">
@@ -153,8 +153,17 @@ onMounted(async () => {
 
 <style scoped>
 .parameter-entry {
+	background: var(--surface-0);
+	border: 1px solid var(--surface-border-light);
+	border-radius: var(--border-radius);
 	border-left: 4px solid var(--surface-300);
 	padding-left: var(--gap-4);
+	padding-right: var(--gap-4);
+	box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+}
+.parameter-entry:hover {
+	border-left: 4px solid var(--primary-color);
+	background: var(--surface-highlight);
 }
 .empty {
 	border-left: 4px solid var(--error-color);

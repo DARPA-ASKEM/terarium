@@ -52,11 +52,7 @@
 			</span>
 
 			<ul class="pl-1">
-				<li
-					v-for="{ baseParameter, childParameters, isVirtual } in parameterList"
-					:key="baseParameter"
-					class="element-card"
-				>
+				<li v-for="{ baseParameter, childParameters, isVirtual } in parameterList" :key="baseParameter">
 					<!-- Stratified -->
 					<section v-if="isVirtual" class="parameter-entry-stratified">
 						<Accordion multiple>
@@ -263,21 +259,12 @@ ul {
 	}
 
 	li + li {
-		border-top: 1px solid var(--surface-border-light);
 		margin-top: var(--gap-1-5);
-		padding-top: var(--gap-4);
 	}
 
 	li:last-child {
 		margin-bottom: var(--gap-4);
 	}
-}
-
-.element-card {
-	background-color: var(--surface-0);
-}
-.element-card:hover {
-	background-color: var(--surface-50);
 }
 
 .parameter-entry-stratified {
@@ -325,5 +312,8 @@ ul {
 
 :deep(.uncertainty-percentage) > input {
 	width: 4rem;
+}
+:deep(.p-accordion-content) {
+	padding-top: 0;
 }
 </style>
