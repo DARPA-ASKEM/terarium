@@ -168,7 +168,7 @@
 		:first="firstRow"
 		:total-records="filteredItems.length"
 		:template="{
-			default: 'FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink JumpToPageDropdown'
+			default: 'FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink'
 		}"
 		@page="firstRow = $event.first"
 	/>
