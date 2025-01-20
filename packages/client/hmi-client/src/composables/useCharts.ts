@@ -517,20 +517,20 @@ export function useCharts(
 			),
 			annotations
 		);
-		return chart;
+		return chart as VisualizationSpec;
 	}
 
 	// Create comparison charts based on chart settings
-	const useComparisonCharts = (chartSettings: ComputedRef<ChartSettingComparison[]>) => {
+	const useComparisonCharts = (chartSettings: ComputedRef<ChartSettingComparison[]>, isNodeChart = false) => {
 		const comparisonCharts = computed(() => {
-			const charts: Record<string, VisualizationSpec> = {};
+			const charts: Record<string, VisualizationSpec[]> = {};
 			if (!isChartReadyToBuild.value) return charts;
 			const { result, resultSummary } = chartData.value as ChartData;
 
 			chartSettings.value.forEach((setting) => {
 				const selectedVars = setting.selectedVariables;
 				const annotations = getChartAnnotationsByChartId(setting.id);
-				if (setting.smallMultiples && setting.selectedVariables.length > 1) {
+				if (setting.smallMultiples && setting.selectedVariables.length > 1 && !isNodeChart) {
 					const sharedYExtent = setting.shareYAxis
 						? calculateYExtent(
 								resultSummary,
@@ -538,13 +538,18 @@ export function useCharts(
 								Boolean(setting.showBeforeAfter)
 							)
 						: undefined;
+
 					// create multiples
-					selectedVars.forEach((selectedVar, index) => {
+					let width = chartSize.value.width;
+					if (selectedVars.length > 1) width = chartSize.value.width / 2;
+					if (selectedVars.length > 4) width = chartSize.value.width / 3;
+					const height = selectedVars.length <= 1 ? chartSize.value.height : chartSize.value.height / 2;
+					charts[setting.id] = selectedVars.map((_selectedVar, index) => {
 						const { options, sampleLayerVariables, statLayerVariables } = createComparisonChartOptions(setting, index);
-						options.width /= 2.1;
-						options.height /= 2.1;
+						options.width = width;
+						options.height = height;
 						options.yExtent = sharedYExtent;
-						charts[setting.id + selectedVar] = createComparisonChart(
+						return createComparisonChart(
 							result,
 							resultSummary,
 							statLayerVariables,
@@ -563,7 +568,7 @@ export function useCharts(
 						options,
 						annotations
 					);
-					charts[setting.id] = chart;
+					charts[setting.id] = [chart];
 				}
 			});
 			return charts;
