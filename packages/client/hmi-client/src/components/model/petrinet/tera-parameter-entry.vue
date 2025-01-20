@@ -202,7 +202,7 @@ label {
 	}
 }
 
-.parameter-input {
-	height: 2rem;
+:deep(.parameter-input) {
+	max-height: 2.5rem;
 }
 </style>
