@@ -45,6 +45,7 @@
 					<table class="p-datatable-table p-datatable-scrollable-table">
 						<thead class="p-datatable-thead">
 							<tr>
+								<th class="first-field">&nbsp;</th>
 								<th v-for="model in modelsToCompare" :key="model.id" class="text-lg">
 									{{ model.header.name }}
 								</th>
@@ -52,12 +53,13 @@
 						</thead>
 						<tbody v-if="fields" class="p-datatable-tbody">
 							<tr>
+								<td class="first-field">Diagram</td>
 								<td v-for="(model, index) in modelsToCompare" :key="index">
 									<tera-model-diagram :model="model" class="diagram" />
 								</td>
 							</tr>
 							<tr v-for="field in fields" :key="field">
-								<td class="field">{{ formatField(field) }}</td>
+								<td class="first-field">{{ formatField(field) }}</td>
 								<td v-for="(card, index) in modelCardsToCompare" :key="index">
 									<template v-if="!card?.[field]"> N/A </template>
 									<template v-else-if="Array.isArray(card[field])">
@@ -108,9 +110,12 @@
 						</template>
 					</AccordionTab>
 				</Accordion>
-				<tera-progress-spinner v-if="isConceptComparisonLoading" is-centered :font-size="3" class="max-w-25rem">
-					Creating a context, tabular, and graph concept comparison between the {{ modelIds.length }} models...
-				</tera-progress-spinner>
+				<div v-if="isConceptComparisonLoading" class="loading-spinner my-3 mx-4">
+					<tera-progress-spinner is-centered :font-size="3" class="max-w-25rem">
+						Creating a context, tabular, and graph concept comparison between the {{ modelIds.length }} models...
+					</tera-progress-spinner>
+				</div>
+				<div class="mb-6" />
 			</tera-drilldown-section>
 		</div>
 		<tera-columnar-panel :tabName="Tabs.Notebook">
@@ -790,5 +795,9 @@ ul {
 	border-radius: var(--border-radius);
 	border: 1px solid var(--surface-border-light);
 	padding: var(--gap-4);
+}
+.first-field {
+	width: 16rem;
+	font-weight: 600;
 }
 </style>
