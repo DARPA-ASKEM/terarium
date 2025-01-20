@@ -147,6 +147,7 @@
 	<Teleport to="body">
 		<component
 			v-if="dialogIsOpened && currentActiveNode"
+			:documentation-url="registry.getDocumentationUrl(currentActiveNode.operationType)"
 			:downstream-operators-nav="downstreamOperatorsNav"
 			:is="registry.getDrilldown(currentActiveNode.operationType)"
 			:node="currentActiveNode"

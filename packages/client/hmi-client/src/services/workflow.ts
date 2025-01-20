@@ -1004,6 +1004,10 @@ export class WorkflowRegistry {
 		return this.drilldownMap.get(name);
 	}
 
+	getDocumentationUrl(name: string) {
+		return this.operationMap.get(name)?.documentationUrl;
+	}
+
 	remove(name: string) {
 		this.nodeMap.delete(name);
 		this.drilldownMap.delete(name);
