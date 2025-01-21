@@ -225,6 +225,7 @@ export interface ChartSettingSensitivityOptions {
 
 export interface ChartSettingBase {
 	id: string;
+	title?: string;
 	name: string;
 	selectedVariables: string[];
 	type: ChartSettingType;

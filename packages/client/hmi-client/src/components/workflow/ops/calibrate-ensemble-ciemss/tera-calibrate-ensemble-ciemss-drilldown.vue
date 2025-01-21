@@ -745,13 +745,13 @@ const getAllSelectedVariables = (selectedVarSettings: string[]) => {
 	const allSelectedVariable: string[] = [];
 	// Map from selectedVar to id/selectedVar for each id that contains this variable.
 	selectedVarSettings.forEach((selectedVar) => {
-		const selectedVarName = selectedVar; // .selectedVariables[0];
-		const relevantModelConfigIds: string[] = variableChartOptionsObject.value[selectedVarName] ?? [];
-		relevantModelConfigIds.forEach((modelConfigId) => allSelectedVariable.push(`${modelConfigId}/${selectedVarName}`));
+		const relevantModelConfigIds: string[] = variableChartOptionsObject.value[selectedVar] ?? [];
+		relevantModelConfigIds.forEach((modelConfigId) => allSelectedVariable.push(`${modelConfigId}/${selectedVar}`));
 	});
 	return allSelectedVariable;
 };
 
+// This is used to keep the dropdown options more simplified for the user
 // For each selected variable 'id/state name' only show each distinct 'state name'
 const getVariableSelectedDisplayOptions = () => {
 	const allStatesSelected: string[] = selectedVariableSettings.value.map(
@@ -761,13 +761,29 @@ const getVariableSelectedDisplayOptions = () => {
 	return uniqueValues;
 };
 
-// For each selected variable "S" utilize getAllSelectedVariables and update the chart settings
+// When user updates settings we will want to grab all versions of the state they selected prior to updating.
+// This way if they hit S we will show them S for each model config
 const updateVariableChartSettings = (selectedVariables: string[]) => {
 	const type: ChartSettingType = ChartSettingType.VARIABLE;
 	const allVars = getAllSelectedVariables(selectedVariables);
+	setVariableChartTitle(); // Would need to assign chartSettings.value first. Or emit twice ect
 	emit('update-state', {
 		...props.node.state,
 		chartSettings: updateChartSettingsBySelectedVariables(chartSettings.value, type, allVars)
+	});
+};
+
+// This is to add the model configuration's name as the title to each variable chart for visual clarity.
+const setVariableChartTitle = () => {
+	chartSettings.value.forEach((chartSetting) => {
+		if (chartSetting.type === ChartSettingType.VARIABLE && !chartSetting.title) {
+			const modelConfigId = chartSetting.name.split('/')[0] ?? '';
+			console.log(modelConfigId);
+			if (modelConfigId) {
+				const modelConfigName = allModelConfigurations.value.find((config) => config.id === modelConfigId)?.name ?? '';
+				chartSetting.title = modelConfigName;
+			}
+		}
 	});
 };
 // --------------------------------------------------------

@@ -192,7 +192,6 @@ export async function setVariableChartOptionsObject(modelConfigurationIds: strin
 	await Promise.all(
 		modelConfigurationIds.map(async (id) => {
 			const model = await getAsConfiguredModel(id);
-			console.log({ ...model, configId: id });
 			models.push({ ...model, configId: id });
 		})
 	);

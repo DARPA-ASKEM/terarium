@@ -173,7 +173,7 @@ export function useCharts(
 		const variables = setting.selectedVariables;
 		const dateOptions = getVegaDateOptions(model?.value ?? null, <ModelConfiguration>modelConfig?.value || null);
 		const options: ForecastChartOptions = {
-			title: '',
+			title: setting?.title ?? '',
 			legend: true,
 			width: chartSize.value.width,
 			height: chartSize.value.height,
