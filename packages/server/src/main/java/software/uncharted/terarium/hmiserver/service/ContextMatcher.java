@@ -41,10 +41,9 @@ public class ContextMatcher {
 
 	@Value
 	static class SearchMatch {
-
+		
 		String key;
 		double score;
-		List<String> matches;
 	}
 
 	/**
@@ -82,31 +81,17 @@ public class ContextMatcher {
 	 * @return A SearchMatch object with the key, score, and matched terms.
 	 */
 	private static SearchMatch calculateScore(String key, String term) {
-		String[] keyTerms = key.toLowerCase().split("_");
-		double totalScore = 0;
-		List<String> matches = new ArrayList<>();
+    double score = 0; 
 
-		int bestDistance = Integer.MAX_VALUE;
-		boolean matched = false;
-		String termLower = term.toLowerCase();
+    int distance = levenshteinDistance(term.toLowerCase(), key.toLowerCase());
+    boolean matched = distance <= Math.min(3, key.length() / 2); 
 
-		for (String keyTerm : keyTerms) {
-			int distance = levenshteinDistance(termLower, keyTerm);
-			if (distance < bestDistance) {
-				bestDistance = distance;
-				if (distance <= Math.min(3, keyTerm.length() / 2)) {
-					matched = true;
-				}
-			}
-		}
+    if (matched) {
+        score = 1.0 / (1.0 + distance); 
+    }
 
-		if (matched) {
-			matches.add(term);
-			totalScore = 1.0 / (1.0 + bestDistance);
-		}
-
-		return new SearchMatch(key, totalScore, matches);
-	}
+    return new SearchMatch(key, score);
+}
 
 	/**
 	 * Search for the given terms in the configuration file, with a minimum score of 0.5
