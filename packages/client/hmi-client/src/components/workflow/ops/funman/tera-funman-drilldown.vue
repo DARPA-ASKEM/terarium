@@ -203,20 +203,26 @@
 								/>
 								<span class="ml-4" v-else> To view parameter charts select some in the Output settings. </span>
 							</AccordionTab>
-							<AccordionTab v-if="!isEmpty(calibratedConfigObservables)" header="Observables">
+							<AccordionTab
+								v-if="!isEmpty(calibratedConfigObservables) || !isEmpty(observableCharts)"
+								header="Observables"
+							>
 								<tera-model-part
+									v-if="!isEmpty(calibratedConfigObservables)"
 									class="pl-4"
 									:part-type="PartType.OBSERVABLE"
 									:items="calibratedConfigObservables"
 									:feature-config="{ isPreview: true }"
 								/>
-								<vega-chart
-									v-for="(observableChart, index) in observableCharts"
-									:key="index"
-									:visualization-spec="observableChart"
-									:are-embed-actions-visible="false"
-									expandable
-								/>
+								<template v-if="!isEmpty(observableCharts)">
+									<vega-chart
+										v-for="(observableChart, index) in selectedObservableCharts"
+										:key="index"
+										:visualization-spec="observableChart"
+										:are-embed-actions-visible="false"
+										expandable
+									/>
+								</template>
 							</AccordionTab>
 							<AccordionTab header="Diagram">
 								<tera-model-diagram v-if="model" :model="model" />
@@ -239,16 +245,6 @@
 								:mmt-params="mmtParams"
 								:feature-config="{ isPreview: true }"
 							/>
-							<Accordion :active-index="observableActiveIndex" v-if="!isEmpty(calibratedConfigObservables)">
-								<AccordionTab v-if="!isEmpty(calibratedConfigObservables)" header="Observables">
-									<tera-model-part
-										class="pl-4"
-										:part-type="PartType.OBSERVABLE"
-										:items="calibratedConfigObservables"
-										:feature-config="{ isPreview: true }"
-									/>
-								</AccordionTab>
-							</Accordion>
 						</template>
 					</template>
 					<v-ace-editor
@@ -316,6 +312,27 @@
 							@remove="removeChartSetting"
 						/>
 						<hr />
+						<h5>Observable</h5>
+						<tera-chart-control
+							class="w-full"
+							:chart-config="{
+								selectedRun: 'fixme',
+								selectedVariable: selectedObservableSettings.map((s) => s.selectedVariables[0])
+							}"
+							multi-select
+							:show-remove-button="false"
+							:variables="observableOptions"
+							@configuration-change="updateSelectedObservables"
+						/>
+						<tera-chart-settings-item
+							v-for="settings of chartSettings.filter(
+								(setting) => setting.type === ChartSettingType.VARIABLE_OBSERVABLE
+							)"
+							:key="settings.id"
+							:settings="settings"
+							@open="activeChartSettings = settings"
+							@remove="removeChartSetting"
+						/>
 					</div>
 					<div class="flex align-items-center gap-2 ml-4 mb-3">
 						<Checkbox v-model="onlyShowLatestResults" binary @change="renderCharts" />
@@ -474,7 +491,6 @@ let configuredInputModel: Model | null = null;
 
 const toolbarActiveIndicies = ref([0, 1]);
 const parameterAndStateActiveIndicies = ref([0, 1, 2, 3]);
-const observableActiveIndex = ref([0]);
 
 const stateIds = ref<string[]>([]);
 const parameterIds = ref<string[]>([]);
@@ -861,9 +877,14 @@ const selectedStateCharts = computed(() => {
 const parameterCharts = ref<any>({});
 
 const observableCharts = ref<any>([{}]);
+const selectedObservableCharts = computed(() => {
+	const selectedObservableIds = selectedObservableSettings.value.map((setting) => setting.selectedVariables[0]);
+	return observableCharts.value.filter((chart) => selectedObservableIds.includes(chart.id));
+});
 
 const stateOptions = ref<string[]>([]);
 const parameterOptions = ref<string[]>([]);
+const observableOptions = ref<string[]>([]);
 const onlyShowLatestResults = ref(false);
 const focusOnModelChecks = ref(false);
 
@@ -875,6 +896,9 @@ const selectedStateSettings = computed(() =>
 );
 const selectedParameterSettings = computed(() =>
 	chartSettings.value.filter((setting) => setting.type === ChartSettingType.DISTRIBUTION_COMPARISON)
+);
+const selectedObservableSettings = computed(() =>
+	chartSettings.value.filter((setting) => setting.type === ChartSettingType.VARIABLE_OBSERVABLE)
 );
 
 let selectedBoxId: number = -1;
@@ -947,6 +971,17 @@ function updateSelectedParameters(event) {
 	updateParameterCharts(); // Rerender when we remove/add charts since they are all contained in the same visualization
 }
 
+function updateSelectedObservables(event) {
+	emit('update-state', {
+		...props.node.state,
+		chartSettings: updateChartSettingsBySelectedVariables(
+			chartSettings.value,
+			ChartSettingType.VARIABLE_OBSERVABLE,
+			event.selectedVariable
+		)
+	});
+}
+
 function removeChartSetting(chartId: string) {
 	const chartType = chartSettings.value.find((setting) => setting.id === chartId)?.type;
 	emit('update-state', {
@@ -999,6 +1034,7 @@ async function prepareOutput() {
 	parameterOptions.value = funmanResult.request.parameters
 		.filter((d: any) => d.interval.lb !== d.interval.ub)
 		.map(({ name }) => name);
+	observableOptions.value = funmanResult.model?.petrinet?.semantics?.ode?.observables.map(({ id }) => id);
 
 	// Initialize default output settings
 	const state = cloneDeep(props.node.state);
@@ -1007,6 +1043,11 @@ async function prepareOutput() {
 		state.chartSettings,
 		ChartSettingType.DISTRIBUTION_COMPARISON,
 		parameterOptions.value
+	);
+	state.chartSettings = updateChartSettingsBySelectedVariables(
+		state.chartSettings,
+		ChartSettingType.VARIABLE_OBSERVABLE,
+		observableOptions.value
 	);
 	emit('update-state', state);
 
