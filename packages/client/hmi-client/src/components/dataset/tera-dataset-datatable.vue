@@ -24,6 +24,7 @@
 					@update:model-value="selectedColumns = rawContent.headers.filter((col) => $event.includes(col))"
 					:maxSelectedLabels="1"
 					placeholder="Select columns"
+					filter
 				>
 					<template #value>
 						<span class="columns-dropdown datatable-toolbar-item">
