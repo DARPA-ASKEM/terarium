@@ -486,7 +486,11 @@ const modelConfigIds = computed(() =>
 	props.node.inputs.filter((input) => input.type === 'modelConfigId' && input.value).map((input) => input.value?.[0])
 );
 const currentDatasetFileName = ref<string>();
-const datasetColumnNames = computed(() => dataset.value?.columns?.map((col) => col.name) ?? ([] as string[]));
+const datasetColumnNames = computed(
+	() =>
+		dataset.value?.columns?.filter((col) => col.fileName === currentDatasetFileName.value).map((col) => col.name) ??
+		([] as string[])
+);
 // Loss Chart:
 const lossChartRef = ref<InstanceType<typeof VegaChart>>();
 const lossChartSpec = ref();
@@ -647,6 +651,7 @@ const runEnsemble = async () => {
 };
 
 onMounted(async () => {
+	console.log(props.node.state.chartSettings);
 	variableChartOptionsObject.value = await setVariableChartOptionsObject(modelConfigIds.value as string[]);
 	const configs = await fetchModelConfigurations(props.node.inputs);
 	if (!configs) return;
@@ -776,11 +781,13 @@ const updateVariableChartSettings = (selectedVariables: string[]) => {
 // This is to add the model configuration's name as the title to each variable chart for visual clarity.
 const setVariableChartTitle = () => {
 	chartSettings.value.forEach((chartSetting) => {
+		console.log(chartSetting);
 		if (chartSetting.type === ChartSettingType.VARIABLE && !chartSetting.title) {
 			const modelConfigId = chartSetting.name.split('/')[0] ?? '';
 			console.log(modelConfigId);
 			if (modelConfigId) {
 				const modelConfigName = allModelConfigurations.value.find((config) => config.id === modelConfigId)?.name ?? '';
+				console.log(modelConfigName);
 				chartSetting.title = modelConfigName;
 			}
 		}
