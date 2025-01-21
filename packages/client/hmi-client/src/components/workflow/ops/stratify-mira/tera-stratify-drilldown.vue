@@ -6,7 +6,6 @@
 		@update-state="(state: any) => emit('update-state', state)"
 		@update:selection="onSelection"
 		v-bind="$attrs"
-		style="grid-template-columns: auto"
 	>
 		<div :tabName="StratifyTabs.Wizard" class="input-section">
 			<tera-drilldown-section class="px-3 wizard-section">
@@ -487,6 +486,11 @@ onUnmounted(() => {
 </script>
 
 <style scoped>
+/* set width of input section */
+:deep(main):has(.input-section) {
+	grid-template-columns: auto;
+}
+
 .notebook-section:deep(main) {
 	gap: var(--gap-2);
 	position: relative;
