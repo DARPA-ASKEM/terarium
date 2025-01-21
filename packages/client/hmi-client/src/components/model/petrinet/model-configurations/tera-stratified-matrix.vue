@@ -1,5 +1,5 @@
 <template>
-	<div class="toolbar">
+	<div class="toolbar mb-2">
 		<div v-if="matrixMap && Object.keys(matrixMap).length > 0">
 			<label>Measure</label>
 			<Dropdown
