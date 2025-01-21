@@ -170,7 +170,7 @@ and the following JSON formatted research paper:
 [
   {{
     "pageNumber": 0,
-    "text": "Initial Condition\nS = N - I - R\nI = 2\nR = 0\nβ = 0.12\nγ = 0.21\nTotal population(N) = 1000",
+    "text": "Initial Condition\nS0 = N-I0-R0, with I0 = 2 and R0 = 0\nβ = 0.12\nγ = 0.21\nTotal population(N) = 1000",
     "tables": [],
     "equations": []
   }}
@@ -189,22 +189,22 @@ The correctly extracted model configuration would be:
       "inferredParameterList": None,
       "initialSemanticList": [
         {{
-          "expression": "N-I-R",
-          "expressionMathml": "<math><apply><minus/><apply><minus/><ci>N</ci><ci>I</ci></apply><ci>R</ci></apply></math>",
+          "expression": "N-I0-R0",
+          "expressionMathml": "<math><apply><minus/><apply><minus/><ci>N</ci><ci>I0</ci></apply><ci>R0</ci></apply></math>",
           "source": "Page 0",
           "target": "S",
           "type": "initial"
         }},
         {{
-          "expression": "2",
-          "expressionMathml": "<math><cn>2</cn></math>",
+          "expression": "I0",
+          "expressionMathml": "<math><ci>I0</ci></math>",
           "source": "Page 0",
           "target": "I",
           "type": "initial"
         }},
         {{
-          "expression": "0",
-          "expressionMathml": "<math><cn>0</cn></math>",
+          "expression": "R0",
+          "expressionMathml": "<math><ci>R0</ci></math>",
           "source": "Page 0",
           "target": "R",
           "type": "initial"
@@ -212,6 +212,17 @@ The correctly extracted model configuration would be:
       ],
       "observableSemanticList": [],
       "parameterSemanticList": [
+        {{
+          "distribution": {{
+            "parameters": {{
+              "value": 1000
+            }},
+            "type": "Constant"
+          }},
+          "referenceId": "N",
+          "source": "Page 0",
+          "type": "parameter"
+        }},
         {{
           "distribution": {{
             "parameters": {{
