@@ -86,7 +86,7 @@ export function formatCalibrateModelConfigurations(
 	return [...Object.values(ensembleModelConfigMap)];
 }
 
-export function getSelectedOutputEnsembleMapping(
+export function getChartEnsembleMapping(
 	node: WorkflowNode<CalibrateEnsembleCiemssOperationState>,
 	variableChartOptionsObject: any,
 	hasTimestampCol = true
