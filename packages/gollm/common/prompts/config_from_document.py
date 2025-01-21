@@ -38,11 +38,12 @@ For each condition, create a model configuration JSON object that satisfies the 
 7. `inferredParameterList` should be an empty list.
 8. Determine what page the information was extracted from and set the `extractionPage` value to that page number. If the page number cannot be determined, set it to 0. Only pick one page number. Do not provide a range.
 
-For context, use the following as an example of a correctly extracted model configuration from a JSON formatted model using a paper:
+For context, use the following as examples of correctly extracted model configurations from a JSON formatted model and a research paper:
+
+--- START EXAMPLE 1 ---
 
 With the following JSON formatted model:
 
---- SAMPLE MODEL ---
 {{
   "name": "Sample model",
   "header": {{
@@ -162,11 +163,9 @@ With the following JSON formatted model:
     }}
   }}
 }}
---- END SAMPLE MODEL ---
 
 and the following JSON formatted research paper:
 
---- SAMPLE PAPER ---
 [
   {{
     "pageNumber": 0,
@@ -175,7 +174,6 @@ and the following JSON formatted research paper:
     "equations": []
   }}
 ]
---- END SAMPLE PAPER ---
 
 The correctly extracted model configuration would be:
 
@@ -282,4 +280,237 @@ The correctly extracted model configuration would be:
     }}
   ]
 }}
+--- END EXAMPLE 1 ---
+
+--- START EXAMPLE 2 ---
+With the following JSON formatted model:
+
+{{
+  "name": "Sample model",
+  "header": {{
+    "name": "Sample model",
+    "description": "A sample model.",
+    "schema": "https://github.com/DARPA-ASKEM/Model-Representations/blob/main/petrinet/petrinet_schema.json",
+    "schema_name": "petrinet",
+    "model_version": "0.1"
+  }},
+  "model": {{
+    "states": [
+        {{
+        "id": "S",
+        "name": "S",
+        "description": "Susceptible population"
+      }},
+      {{
+        "id": "I",
+        "name": "I",
+        "description": "Infected population"
+      }},
+      {{
+        "id": "R",
+        "name": "R",
+        "description": "Recovered population",
+      }}
+    ],
+    "transitions": [
+      {{
+        "id": "t0",
+        "input": [
+          "S",
+          "I"
+        ],
+        "output": [
+          "I",
+          "I"
+        ]
+      }},
+      {{
+        "id": "t1",
+        "input": [
+          "I"
+        ],
+        "output": [
+          "R"
+        ]
+      }}
+    ]
+  }},
+  "semantics": {{
+    "ode": {{
+      "rates": [
+        {{
+          "target": "t0",
+          "expression": "I*β*S",
+          "expression_mathml": "<math><apply><times/><ci>I</ci><ci>β</ci><ci>S</ci></apply></math>"
+        }},
+        {{
+          "target": "t1",
+          "expression": "γ*I",
+          "expression_mathml": "<math><apply><times/><ci>γ</ci><ci>I</ci></apply></math>"
+        }}
+      ],
+      "initials": [
+        {{
+          "target": "S",
+          "expression": "1",
+          "expression_mathml": "<math><cn>1</cn></math>"
+        }},
+        {{
+          "target": "I",
+          "expression": "0",
+          "expression_mathml": "<math><cn>0</cn></math>"
+        }},
+        {{
+          "target": "R",
+          "expression": "0",
+          "expression_mathml": "<math><cn>0</cn></math>"
+        }}
+      ],
+      "parameters": [
+        {{
+          "id": "β",
+          "name": "β",
+          "value": 0.6
+        }},
+        {{
+          "id": "γ",
+          "name": "γ",
+          "value": 0.2
+        }}
+      ],
+      "time": {{
+        "id": "t"
+      }}
+    }}
+  }}
+}}
+
+and the following JSON formatted research paper:
+
+[
+  {{
+    "pageNumber": 0,
+    "text": "Use the following table to configure the model",
+    "tables": [{{"table_text":["<table border='1'><thead><tr><th>Parameters</th><th>minor interventions</th><th>major interventions</th></tr></thead><tbody><tr><td>N (million)</td><td>1000</td><td>1000</td></tr><tr><td>β</td><td>0.45</td><td>0.54</td></tr><tr><td>γ</td><td>0.78</td><td>0.87</td></tr><tr><td>S0</td><td>N-I0-R0</td><td>N-I0-R0</td></tr><tr><td>I0</td><td>2</td><td>2</td></tr><tr><td>R0</td><td>0</td><td>0</td></tr></tbody></table>"],"score":10}}],
+    "equations": []
+  }}
+]
+
+The correctly extracted model configuration would be:
+
+{{
+  "conditions": [
+    {{
+      "modelId": "00000000-0000-0000-0000-000000000000",
+      "name": "Minor interventions",
+      "description": "This configuration models minor interventions using the SIR compartmental model",
+      "extractionPage": 0,
+      "inferredParameterList": None,
+      "initialSemanticList": [
+        {{
+          "expression": "998",
+          "expressionMathml": "<math><cn>998</cn></math>",
+          "source": "Page 0",
+          "target": "S",
+          "type": "initial"
+        }},
+        {{
+          "expression": "2",
+          "expressionMathml": "<math><cn>2</cn></math>",
+          "source": "Page 0",
+          "target": "I",
+          "type": "initial"
+        }},
+        {{
+          "expression": "0",
+          "expressionMathml": "<math><cn>0</cn></math>",
+          "source": "Page 0",
+          "target": "R",
+          "type": "initial"
+        }}
+      ],
+      "observableSemanticList": [],
+      "parameterSemanticList": [
+        {{
+          "distribution": {{
+            "parameters": {{
+              "value": 0.45
+            }},
+            "type": "Constant"
+          }},
+          "referenceId": "β",
+          "source": "Page 0",
+          "type": "parameter"
+        }},
+        {{
+          "distribution": {{
+            "parameters": {{
+              "value": 0.78
+            }},
+            "type": "Constant"
+          }},
+          "referenceId": "γ",
+          "source": "Page 0",
+          "type": "parameter"
+        }}
+      ]
+    }},
+    {{
+      "modelId": "00000000-0000-0000-0000-000000000000",
+      "name": "Major interventions",
+      "description": "This configuration models major interventions using the SIR compartmental model",
+      "extractionPage": 0,
+      "inferredParameterList": None,
+      "initialSemanticList": [
+        {{
+          "expression": "998",
+          "expressionMathml": "<math><cn>998</cn></math>",
+          "source": "Page 0",
+          "target": "S",
+          "type": "initial"
+        }},
+        {{
+          "expression": "2",
+          "expressionMathml": "<math><cn>2</cn></math>",
+          "source": "Page 0",
+          "target": "I",
+          "type": "initial"
+        }},
+        {{
+          "expression": "0",
+          "expressionMathml": "<math><cn>0</cn></math>",
+          "source": "Page 0",
+          "target": "R",
+          "type": "initial"
+        }}
+      ],
+      "observableSemanticList": [],
+      "parameterSemanticList": [
+        {{
+          "distribution": {{
+            "parameters": {{
+              "value": 0.54
+            }},
+            "type": "Constant"
+          }},
+          "referenceId": "β",
+          "source": "Page 0",
+          "type": "parameter"
+        }},
+        {{
+          "distribution": {{
+            "parameters": {{
+              "value": 0.87
+            }},
+            "type": "Constant"
+          }},
+          "referenceId": "γ",
+          "source": "Page 0",
+          "type": "parameter"
+        }}
+      ]
+    }}
+  ]
+}}
+--- END EXAMPLE 2 ---
 """
