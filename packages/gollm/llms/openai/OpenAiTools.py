@@ -106,7 +106,8 @@ class OpenAiTools(LlmToolsInterface):
             response_format={
                 "type": "json_schema",
                 "json_schema": {
-                    "strict": "true",
+                    "name": "equation_schema",
+                    "strict": True,
                     "schema": schema
                 }
             },

@@ -77,9 +77,11 @@ def cleanup_equations_chain(llm: LlmToolsInterface, equations: List[str]) -> dic
 
 def equations_from_image_chain(llm: LlmToolsInterface, image: str) -> dict:
     print("Validating and encoding image...")
-    base64_image_str = get_image_format_string(
+    image_format = get_image_format_string(
         imghdr.what(None, h=base64.b64decode(image))
     )
+
+    base64_image_str = image_format + image
 
     print("Uploading and validating equations schema...")
     config_path = os.path.join(SCHEMAS_DIR, 'equations.json')
@@ -87,8 +89,8 @@ def equations_from_image_chain(llm: LlmToolsInterface, image: str) -> dict:
         response_schema = json.load(config_file)
     validate_schema(response_schema)
 
-    prompt = llm.create_equations_from_image_prompt(base64_image_str, response_schema)
-    output = llm.send_image_to_llm(prompt, response_schema, base64_image_str)
+    prompt = llm.create_equations_from_image_prompt(image_format, response_schema)
+    output = llm.send_image_to_llm_with_json_output(prompt, response_schema, base64_image_str)
 
     print("There are", len(output['equations']), "equations identified from the image.")
 
