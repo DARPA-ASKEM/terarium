@@ -56,6 +56,7 @@
 									@click="onReplacePolicy(policy)"
 									@use-intervention="onReplacePolicy(policy)"
 									@delete-intervention-policy="onDeleteInterventionPolicy(policy)"
+									class="mb-2"
 								/>
 							</li>
 						</ul>
