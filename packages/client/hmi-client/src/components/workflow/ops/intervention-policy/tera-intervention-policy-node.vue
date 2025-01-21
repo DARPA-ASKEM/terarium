@@ -6,7 +6,7 @@
 			</li>
 		</ul>
 		<div class="intervention-summary">
-			<div v-for="(intervention, index) in interventionSummary" :key="index">
+			<div v-for="(intervention, index) in displayedInterventions" :key="index">
 				<p class="name">{{ intervention.name }}</p>
 				<div class="body" v-if="intervention.staticInterventions.length > 0">
 					<p
@@ -30,6 +30,9 @@
 					</p>
 				</div>
 			</div>
+			<p v-if="remainingInterventionsCount > 0" class="text-gray-600 mt-2">
+				+ {{ remainingInterventionsCount }} more interventions...
+			</p>
 		</div>
 		<tera-progress-spinner is-centered :font-size="2" v-if="isLoading" />
 		<Button
@@ -148,6 +151,15 @@ watch(
 			emit('update-state', state);
 		}
 	}
+);
+
+/* only show the first 10 interventions */
+const MAX_DISPLAYED_INTERVENTIONS = 5;
+
+const displayedInterventions = computed(() => interventionSummary.value.slice(0, MAX_DISPLAYED_INTERVENTIONS));
+
+const remainingInterventionsCount = computed(() =>
+	Math.max(0, interventionSummary.value.length - MAX_DISPLAYED_INTERVENTIONS)
 );
 </script>
 
