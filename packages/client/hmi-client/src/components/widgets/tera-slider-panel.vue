@@ -125,7 +125,6 @@ aside {
 	display: flex;
 	flex-direction: column;
 	height: 100%;
-	overflow-y: auto;
 }
 
 header {
@@ -185,7 +184,7 @@ header.document-viewer-header {
 }
 
 /* Don't nest this rule, it makes it easier for the parent to mutate when needed. */
-.input-config .content-wrapper {
+.input-config {
 	padding-bottom: 4rem;
 }
 

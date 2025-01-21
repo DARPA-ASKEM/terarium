@@ -128,6 +128,8 @@ const emit = defineEmits(['update-item']);
 const nameText = ref(props.name);
 const unitExpression = ref(props.unitExpression);
 const descriptionText = ref(props.description);
+const showDescription = ref(!!descriptionText.value);
+
 const query = ref('');
 const results = ref<DKG[]>([]);
 
@@ -163,14 +165,26 @@ watch(
 );
 
 watch(
+	() => props.unitExpression,
+	(newUnitExpression) => {
+		unitExpression.value = newUnitExpression;
+	}
+);
+
+watch(
+	() => props.name,
+	(newName) => {
+		nameText.value = newName;
+	}
+);
+
+watch(
 	() => props.description,
 	(newDescription) => {
 		showDescription.value = !!newDescription;
 		descriptionText.value = newDescription;
-	},
-	{ deep: true }
+	}
 );
-const showDescription = ref(!!descriptionText.value);
 </script>
 
 <style scoped>

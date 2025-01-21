@@ -15,7 +15,8 @@ import {
 	updateSensitivityChartSettingOption,
 	CHART_SETTING_WITH_QUANTILES_OPTIONS,
 	createNewChartSetting,
-	isChartSettingComparisonVariable
+	isChartSettingComparisonVariable,
+	getQauntileChartSettingOptions
 } from '@/services/chart-settings';
 import { WorkflowNode } from '@/types/workflow';
 
@@ -98,7 +99,12 @@ export function useChartSettings(
 	const addEmptyComparisonChart = () => {
 		emit('update-state', {
 			...props.node.state,
-			chartSettings: [...chartSettings.value, createNewChartSetting('', ChartSettingType.VARIABLE_COMPARISON, [])]
+			chartSettings: [
+				...chartSettings.value,
+				createNewChartSetting('', ChartSettingType.VARIABLE_COMPARISON, [], {
+					...getQauntileChartSettingOptions(chartSettings.value)
+				})
+			]
 		});
 	};
 
