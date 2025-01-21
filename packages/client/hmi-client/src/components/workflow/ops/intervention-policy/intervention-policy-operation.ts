@@ -65,7 +65,7 @@ export const isInterventionPoliciesValuesEqual = (
 export const isInterventionPolicyBlank = (policy: InterventionPolicy | null): boolean =>
 	policy?.interventions.length === 1 &&
 	isEqual(policy.interventions[0], {
-		name: 'New Intervention',
+		name: 'New intervention',
 		staticInterventions: [
 			{
 				type: InterventionSemanticType.Parameter,
