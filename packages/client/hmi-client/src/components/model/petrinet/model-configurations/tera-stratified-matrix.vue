@@ -171,7 +171,7 @@ let timerId = -1;
 const clipboardText = ref('');
 const updateByMatrixBulk = (matrixToUpdate: MiraMatrix, text: string) => {
 	const parseResult = dsvParse(text);
-	const updateList: { id: string; value: string }[] = [];
+	const updateList: { id: string; value: string | number }[] = [];
 
 	matrixToUpdate.forEach((row) => {
 		row.forEach(async (matrixEntry) => {
@@ -184,7 +184,8 @@ const updateByMatrixBulk = (matrixToUpdate: MiraMatrix, text: string) => {
 			if (match) {
 				updateList.push({
 					id: matrixEntry.content.id,
-					value: match.value.toString()
+					// Number types should be passed if its a parameter matrix otherwise they should be strings
+					value: props.stratifiedMatrixType === StratifiedMatrix.Parameters ? match.value : match.value.toString()
 				});
 			}
 		});
