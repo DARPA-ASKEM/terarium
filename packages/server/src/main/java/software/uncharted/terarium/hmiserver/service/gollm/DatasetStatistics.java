@@ -74,7 +74,8 @@ public class DatasetStatistics {
 		// Check that the Statistics have already been calculated, as Dataset are immutable
 		final boolean isStatisticsExist = dataset.getColumns().stream().anyMatch(column -> column.getStats() != null);
 		if (isStatisticsExist) {
-			throw new IllegalArgumentException(messages.get("dataset.statistics.exist"));
+			log.info(messages.get("dataset.statistics.exist"));
+			return;
 		}
 
 		// Create the request to the Gollm service
