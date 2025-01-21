@@ -206,7 +206,12 @@ h6::after {
 	overflow: auto;
 }
 
+:deep(.unit .tera-input > main > input) {
+	height: 1.25rem;
+	font-size: var(--font-caption);
+}
 :deep(.p-autocomplete-input) {
-	padding: var(--gap-1) var(--gap-2);
+	height: 2rem;
+	font-size: var(--font-caption);
 }
 </style>
