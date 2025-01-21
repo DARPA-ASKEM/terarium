@@ -997,10 +997,7 @@ export function createForecastChart(
 
 		if (options.legend === true) {
 			encoding.color.legend = {
-				...legendProperties,
-				// Only use columns if the legend would overflow
-				columns: calculateLegendColumns(isCompact, estimatedWidth, options.width, legendItems.length),
-				direction: isCompact ? 'vertical' : 'horizontal'
+				...legendProperties
 			};
 
 			if (labelExpr.length > 0) {
