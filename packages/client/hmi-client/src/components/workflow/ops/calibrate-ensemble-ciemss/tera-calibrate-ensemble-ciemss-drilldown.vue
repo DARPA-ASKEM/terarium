@@ -473,7 +473,7 @@ const modelConfigIds = computed(() =>
 );
 const listModelLabels = ref<string[]>([]);
 const allModelConfigurations = ref<ModelConfiguration[]>([]);
-const variableChartOptionsObject = ref({});
+const variableChartOptionsObject = ref<{ [key: string]: string[] }>({});
 
 const tableHeaders = computed(() => {
 	const headers = ['Ensemble model'];

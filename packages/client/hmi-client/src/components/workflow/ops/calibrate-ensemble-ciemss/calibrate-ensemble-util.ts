@@ -88,7 +88,7 @@ export function formatCalibrateModelConfigurations(
 
 export function getChartEnsembleMapping(
 	node: WorkflowNode<CalibrateEnsembleCiemssOperationState>,
-	variableChartOptionsObject: any,
+	variableChartOptionsObject: { [key: string]: string[] },
 	hasTimestampCol = true
 ) {
 	const wfOutputState = getActiveOutput(node)?.state;
@@ -104,17 +104,15 @@ export function getChartEnsembleMapping(
 	// We will fill in here so the user can still see these if they want
 	const allStates = Object.keys(variableChartOptionsObject);
 	allStates.forEach((state) => {
-		if (!mapping.find((map) => map.newName === state)) {
-			const modelConfigurationsMap = {};
-			variableChartOptionsObject[state].forEach((id) => {
-				modelConfigurationsMap[id] = state;
-			});
-			mapping.push({
-				newName: state,
-				datasetMapping: '',
-				modelConfigurationMappings: modelConfigurationsMap
-			});
-		}
+		const modelConfigurationsMap = {};
+		variableChartOptionsObject[state].forEach((id) => {
+			modelConfigurationsMap[id] = state;
+		});
+		mapping.push({
+			newName: state,
+			datasetMapping: '',
+			modelConfigurationMappings: modelConfigurationsMap
+		});
 	});
 	return mapping;
 }
@@ -244,7 +242,7 @@ export function getEnsembleErrorData(
 // }
 
 export async function setVariableChartOptionsObject(modelConfigurationIds: string[]) {
-	const variableChartOptionsObject = {};
+	const variableChartOptionsObject: { [key: string]: string[] } = {};
 	const models: any[] = [];
 	// Model configuration input
 	await Promise.all(
