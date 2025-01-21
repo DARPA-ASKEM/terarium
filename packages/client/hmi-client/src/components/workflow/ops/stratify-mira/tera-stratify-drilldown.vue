@@ -12,14 +12,13 @@
 				<template #header-controls-left>
 					<section>
 						<h5>Stratification settings</h5>
-						<p>The model will be stratified with the following settings.</p>
 						<p v-if="node.state.hasCodeBeenRun" class="code-executed-warning">
 							Note: Code has been executed which may not be reflected here.
 						</p>
 					</section>
 				</template>
 				<template #header-controls-right>
-					<Button size="small" severity="secondary" outlined label="Reset" @click="resetModel" />
+					<Button size="small" severity="secondary" outlined label="Reset" @click="resetModel" class="mr-1" />
 					<Button
 						:loading="isStratifyInProgress"
 						:label="isStratifyInProgress ? 'Loading...' : 'Stratify'"
@@ -290,6 +289,9 @@ const getStatesAndParameters = (amrModel: Model) => {
 	const model = amrModel.model;
 	const semantics = amrModel.semantics;
 
+	const rates = semantics!.ode.rates || [];
+	const rateExpressions = rates.map((r) => r.expression);
+
 	if ((modelFramework === AMRSchemaNames.PETRINET || modelFramework === AMRSchemaNames.STOCKFLOW) && semantics?.ode) {
 		const { initials, parameters, observables } = semantics.ode;
 
@@ -297,7 +299,15 @@ const getStatesAndParameters = (amrModel: Model) => {
 			modelStates.push(i.target);
 		});
 		parameters?.forEach((p) => {
-			modelParameters.push(p.id);
+			// Parameters should be used within transition expressions for them to be "stratifiable"
+			// FIXME: This would be more accurate if we parse and check rate expressions' free variables
+			// instead of just the rate expression string
+			for (let i = 0; i < rateExpressions.length; i++) {
+				if (rateExpressions[i]?.includes(p.id)) {
+					modelParameters.push(p.id);
+					break;
+				}
+			}
 		});
 		observables?.forEach((o) => {
 			modelStates.push(o.id);
@@ -496,6 +506,6 @@ onUnmounted(() => {
 
 .wizard-section {
 	background-color: var(--surface-disabled);
-	border-right: 1px solid var(--surface-border-dark);
+	border-right: 1px solid var(--surface-border-light);
 }
 </style>

@@ -1130,7 +1130,7 @@ export function createSimulateSensitivityScatter(samplingLayer: SensitivityChart
 			mark: { type: 'point', filled: true },
 			encoding: {
 				x: {
-					field: { repeat: 'row' },
+					field: { repeat: 'column' },
 					type: 'quantitative',
 					axis: {
 						gridColor: '#EEE'
@@ -1141,7 +1141,7 @@ export function createSimulateSensitivityScatter(samplingLayer: SensitivityChart
 					}
 				},
 				y: {
-					field: { repeat: 'column' },
+					field: { repeat: 'row' },
 					type: 'quantitative',
 					axis: {
 						gridColor: '#EEE',

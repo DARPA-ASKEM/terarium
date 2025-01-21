@@ -45,6 +45,7 @@
 								:calendar-settings="getCalendarSettingsFromModel(model)"
 								v-model="timespan.start"
 								@update:model-value="updateState"
+								class="common-input-height"
 							/>
 							<tera-timestep-calendar
 								v-if="model && modelConfiguration"
@@ -53,6 +54,7 @@
 								:calendar-settings="getCalendarSettingsFromModel(model)"
 								v-model="timespan.end"
 								@update:model-value="updateState"
+								class="common-input-height"
 							/>
 						</div>
 
@@ -145,7 +147,10 @@
 					:summary-id="node.state.summaryId"
 					class="p-3 pt-0"
 				/>
-				<div class="pl-3 pr-3 pb-2 flex flex-row align-items-center gap-2">
+				<div
+					v-if="node.state.summaryId && runResults[selectedRunId]"
+					class="pl-3 pr-3 pb-2 flex flex-row align-items-center gap-2"
+				>
 					<SelectButton
 						class=""
 						:model-value="view"
@@ -960,5 +965,8 @@ onUnmounted(() => kernelManager.shutdown());
 		box-sizing: border-box;
 		width: 40%;
 	}
+}
+.common-input-height:deep(main) {
+	height: 2.35rem;
 }
 </style>
