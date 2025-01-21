@@ -456,7 +456,11 @@ const isRunInProgress = computed(() => Boolean(inProgressCalibrationId.value || 
 
 const datasetId = computed(() => props.node.inputs[0].value?.[0] as string | undefined);
 const currentDatasetFileName = ref<string>();
-const datasetColumnNames = computed(() => dataset.value?.columns?.map((col) => col.name) ?? ([] as string[]));
+const datasetColumnNames = computed(
+	() =>
+		dataset.value?.columns?.filter((col) => col.fileName === currentDatasetFileName.value).map((col) => col.name) ??
+		([] as string[])
+);
 // Loss Chart:
 const lossChartRef = ref<InstanceType<typeof VegaChart>>();
 const lossChartSpec = ref();
