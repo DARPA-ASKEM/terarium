@@ -10,7 +10,7 @@
 			<tera-slider-panel
 				v-if="pdfData.length"
 				v-model:is-open="isPdfSidebarOpen"
-				content-width="700px"
+				:content-width="isSidebarOpen ? 'calc(50vw - 320px)' : '50vw'"
 				header="Document viewer"
 			>
 				<template #content>
