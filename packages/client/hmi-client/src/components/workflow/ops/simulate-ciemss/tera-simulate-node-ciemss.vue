@@ -89,7 +89,6 @@ const processResult = async (runId: string) => {
 				.filter((c) => ['state', 'observable'].includes(modelPartTypesMap.value[c]))
 				.slice(0, 5) // Limit the number of initial variables to first 5 to prevent too many charts
 		);
-		emit('update-state', state);
 	}
 
 	const summaryData = await getRunResultCSV(runId, 'result_summary.csv');
@@ -110,8 +109,9 @@ const processResult = async (runId: string) => {
 			selectedInputVariables: firstSensitiveSetting!.selectedInputVariables,
 			timepoint: lastTimepoint
 		});
-		emit('update-state', state);
 	}
+
+	emit('update-state', state);
 	const start = _.first(summaryData);
 	const end = _.last(summaryData);
 
@@ -181,7 +181,7 @@ const { useInterventionCharts, useVariableCharts, useComparisonCharts } = useCha
 );
 const interventionCharts = useInterventionCharts(selectedInterventionSettings, true);
 const variableCharts = useVariableCharts(selectedVariableSettings, null);
-const comparisonCharts = useComparisonCharts(selectedComparisonChartSettings);
+const comparisonCharts = useComparisonCharts(selectedComparisonChartSettings, true);
 const isChartsEmpty = computed(
 	() => _.isEmpty(interventionCharts.value) && _.isEmpty(variableCharts.value) && _.isEmpty(comparisonCharts.value)
 );

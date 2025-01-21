@@ -6,6 +6,7 @@
 				v-model="strataName"
 				placeholder="e.g., Age group"
 				@focusout="emit('update-self', updatedConfig)"
+				class="common-input-height"
 			/>
 		</div>
 		<div class="input-row">
@@ -16,11 +17,17 @@
 				placeholder="Click to select"
 				display="chip"
 				@update:model-value="emit('update-self', updatedConfig)"
+				class="common-input-height"
 			/>
 		</div>
 		<div class="input-row">
 			<label>Enter a comma separated list of labels for each group.</label>
-			<tera-input-text v-model="labels" placeholder="e.g., Young, Old" @focusout="emit('update-self', updatedConfig)" />
+			<tera-input-text
+				v-model="labels"
+				placeholder="e.g., Young, Old"
+				@focusout="emit('update-self', updatedConfig)"
+				class="common-input-height"
+			/>
 		</div>
 		<div class="input-row">
 			<div class="flex align-items-center gap-2">
@@ -108,7 +115,7 @@ watch(
 	display: flex;
 	flex-direction: column;
 	gap: var(--gap-2);
-	margin-bottom: var(--gap-2);
+	margin-bottom: var(--gap-4);
 
 	& > * {
 		flex: 1;
@@ -120,5 +127,10 @@ watch(
 	flex-direction: column;
 	gap: var(--gap-2);
 	width: 0; /* CSS is weird but for some reason this prevents the Multiselect from going nuts */
+}
+
+/* make all the inputs on this page the same height */
+.common-input-height:deep(main) {
+	height: 2.35rem;
 }
 </style>
