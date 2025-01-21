@@ -12,14 +12,13 @@
 				<template #header-controls-left>
 					<section>
 						<h5>Stratification settings</h5>
-						<p>The model will be stratified with the following settings.</p>
 						<p v-if="node.state.hasCodeBeenRun" class="code-executed-warning">
 							Note: Code has been executed which may not be reflected here.
 						</p>
 					</section>
 				</template>
 				<template #header-controls-right>
-					<Button size="small" severity="secondary" outlined label="Reset" @click="resetModel" />
+					<Button size="small" severity="secondary" outlined label="Reset" @click="resetModel" class="mr-1" />
 					<Button
 						:loading="isStratifyInProgress"
 						:label="isStratifyInProgress ? 'Loading...' : 'Stratify'"
@@ -496,6 +495,6 @@ onUnmounted(() => {
 
 .wizard-section {
 	background-color: var(--surface-disabled);
-	border-right: 1px solid var(--surface-border-dark);
+	border-right: 1px solid var(--surface-border-light);
 }
 </style>
