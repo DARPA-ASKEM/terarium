@@ -6,8 +6,9 @@
 		@update-state="(state: any) => emit('update-state', state)"
 		@update:selection="onSelection"
 		v-bind="$attrs"
+		style="grid-template-columns: auto"
 	>
-		<div :tabName="StratifyTabs.Wizard">
+		<div :tabName="StratifyTabs.Wizard" class="input-section">
 			<tera-drilldown-section class="px-3 wizard-section">
 				<template #header-controls-left>
 					<section>
