@@ -157,8 +157,7 @@ watch(
 	() => props.model.semantics?.ode?.parameters,
 	() => {
 		parameterList = createPartsList(collapsedParameters, props.model, PartType.PARAMETER);
-	},
-	{ deep: true }
+	}
 );
 
 const transitions = computed<Transition[]>(() =>
