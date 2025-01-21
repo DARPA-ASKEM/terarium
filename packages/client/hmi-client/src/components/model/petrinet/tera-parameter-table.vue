@@ -46,17 +46,14 @@
 					label="Apply"
 					size="small"
 					@click="onUpdateDistributions"
+					class="ml-auto"
 					style="min-width: 5.5rem"
 				/>
-				<Button text rounded small icon="pi pi-times" @click="isAddingUncertainty = false" class="ml-auto" />
+				<Button text rounded small icon="pi pi-times" @click="isAddingUncertainty = false" class="ml-4" />
 			</span>
 
 			<ul class="pl-1">
-				<li
-					v-for="{ baseParameter, childParameters, isVirtual } in parameterList"
-					:key="baseParameter"
-					class="element-card"
-				>
+				<li v-for="{ baseParameter, childParameters, isVirtual } in parameterList" :key="baseParameter">
 					<!-- Stratified -->
 					<section v-if="isVirtual" class="parameter-entry-stratified">
 						<Accordion multiple>
@@ -88,7 +85,6 @@
 													@update-source="emit('update-source', $event)"
 												/>
 											</div>
-											<Divider type="solid" />
 										</li>
 									</ul>
 								</div>
@@ -159,7 +155,6 @@ import InputNumber from 'primevue/inputnumber';
 import Dropdown from 'primevue/dropdown';
 import Checkbox from 'primevue/checkbox';
 import TeraInputText from '@/components/widgets/tera-input-text.vue';
-import Divider from 'primevue/divider';
 import type { FeatureConfig } from '@/types/common';
 import { calculateUncertaintyRange } from '@/utils/math';
 import TeraParameterEntry from './tera-parameter-entry.vue';
@@ -263,34 +258,30 @@ ul {
 	}
 
 	li + li {
-		border-top: 1px solid var(--surface-border-light);
 		margin-top: var(--gap-1-5);
-		padding-top: var(--gap-4);
 	}
 
 	li:last-child {
-		margin-bottom: var(--gap-4);
+		margin-bottom: var(--gap-1);
 	}
-}
-
-.element-card {
-	background-color: var(--surface-0);
-}
-.element-card:hover {
-	background-color: var(--surface-50);
 }
 
 .parameter-entry-stratified {
+	border: 1px solid var(--surface-border-light);
+	border-radius: var(--border-radius);
+	background: var(--surface-0);
+	box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
 	border-left: 4px solid var(--surface-300);
 	padding-left: var(--gap-1);
 }
-
-:deep(.p-divider) {
-	&.p-divider-horizontal {
-		margin-top: var(--gap-2);
-		margin-bottom: var(--gap-2);
-		color: var(--gray-300);
-	}
+.parameter-entry-stratified:hover {
+	border-left-color: var(--primary-color);
+	background: var(--surface-highlight);
+}
+/* But set a lighter hover state when hovering over child elements */
+.parameter-entry-stratified:hover:has(.parameter-entry:hover) {
+	border-left: 4px solid var(--primary-color-light);
+	background: color-mix(in srgb, var(--surface-highlight) 30%, var(--surface-0) 70%);
 }
 
 .stratified {
@@ -321,9 +312,13 @@ ul {
 	padding-left: 0;
 	margin-bottom: var(--gap-2);
 	font-size: var(--font-caption);
+	border-radius: var(--border-radius);
 }
 
 :deep(.uncertainty-percentage) > input {
 	width: 4rem;
+}
+:deep(.p-accordion-content) {
+	padding-top: 0;
 }
 </style>

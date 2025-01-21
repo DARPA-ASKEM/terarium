@@ -454,13 +454,15 @@ export function createForecastChart(
 	};
 	const yaxis = structuredClone(xaxis);
 	yaxis.title = options.yAxisTitle;
-
 	const translationMap = options.translationMap;
 	let labelExpr = '';
 	if (translationMap) {
-		Object.keys(translationMap).forEach((key) => {
-			labelExpr += `datum.value === '${key}' ? '${translationMap[key]}' : `;
-		});
+		const allVariables = [...(samplingLayer?.variables ?? []), ...(statisticsLayer?.variables ?? [])];
+		Object.keys(translationMap)
+			.filter((key) => allVariables.includes(key))
+			.forEach((key) => {
+				labelExpr += `datum.value === '${key}' ? '${translationMap[key]}' : `;
+			});
 		labelExpr += " 'other'";
 	}
 
@@ -1128,7 +1130,7 @@ export function createSimulateSensitivityScatter(samplingLayer: SensitivityChart
 			mark: { type: 'point', filled: true },
 			encoding: {
 				x: {
-					field: { repeat: 'row' },
+					field: { repeat: 'column' },
 					type: 'quantitative',
 					axis: {
 						gridColor: '#EEE'
@@ -1139,7 +1141,7 @@ export function createSimulateSensitivityScatter(samplingLayer: SensitivityChart
 					}
 				},
 				y: {
-					field: { repeat: 'column' },
+					field: { repeat: 'row' },
 					type: 'quantitative',
 					axis: {
 						gridColor: '#EEE',
