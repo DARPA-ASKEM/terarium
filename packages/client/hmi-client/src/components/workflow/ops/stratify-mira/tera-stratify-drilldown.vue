@@ -486,9 +486,13 @@ onUnmounted(() => {
 </script>
 
 <style scoped>
-/* set width of input section */
+/* set width of wizard section */
 :deep(main):has(.input-section) {
 	grid-template-columns: auto;
+}
+/* set width of notebook section */
+:deep(main):has(.notebook-section) {
+	grid-template-columns: 40% 60%;
 }
 
 .notebook-section:deep(main) {
