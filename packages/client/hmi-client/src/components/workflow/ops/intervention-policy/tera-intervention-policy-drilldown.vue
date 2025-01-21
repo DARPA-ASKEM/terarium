@@ -12,6 +12,7 @@
 				v-model:is-open="isPdfSidebarOpen"
 				:content-width="isSidebarOpen ? 'calc(50vw - 320px)' : '50vw'"
 				header="Document viewer"
+				:documentViewer="true"
 			>
 				<template #content>
 					<tera-drilldown-section :is-loading="isFetchingPDF">
