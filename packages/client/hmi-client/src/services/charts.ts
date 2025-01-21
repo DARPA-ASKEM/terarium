@@ -495,7 +495,11 @@ export function createForecastChart(
 	const translationMap = options.translationMap;
 	let labelExpr = '';
 	if (translationMap) {
-		const allVariables = [...(samplingLayer?.variables ?? []), ...(statisticsLayer?.variables ?? [])];
+		const allVariables = [
+			...(samplingLayer?.variables ?? []),
+			...(statisticsLayer?.variables ?? []),
+			...(groundTruthLayer?.variables ?? [])
+		];
 		Object.keys(translationMap)
 			.filter((key) => allVariables.includes(key))
 			.forEach((key) => {
