@@ -2,6 +2,8 @@ import { DistributionType } from '@/services/distribution';
 import { ParameterSemantic } from '@/types/Types';
 import { calculateUncertaintyRange } from '@/utils/math';
 import { v4 as uuidv4 } from 'uuid';
+import { CalibrateMap } from '@/services/calibrate-workflow';
+import { CalibrateEnsembleMappingRow } from '../ops/calibrate-ensemble-ciemss/calibrate-ensemble-ciemss-operation';
 
 export const displayParameter = (parameters: ParameterSemantic[], parameterName: string) => {
 	let value = '';
@@ -66,6 +68,72 @@ export const switchToUniformDistribution = (parameter: ParameterSemantic) => {
 		parameter.distribution.type = DistributionType.Uniform;
 		parameter.distribution.parameters = { minimum, maximum };
 	}
+};
+
+/**
+ * Converts an array of CalibrateEnsembleMappingRow objects to a Map of CalibrateMap arrays.
+ *
+ * The resulting Map has model configuration IDs as keys and arrays of CalibrateMap objects as values.
+ * Each CalibrateMap object contains a modelVariable and a datasetVariable.
+ *
+ * @param rows - An array of CalibrateEnsembleMappingRow objects.
+ * @returns A Map where the key is a model configuration ID and the value is an array of CalibrateMap objects.
+ *
+ * Example:
+ * const input: CalibrateEnsembleMappingRow[] = [
+ *   {
+ *     newName: "Sus",
+ *     datasetMapping: "s",
+ *     modelConfigurationMappings: {
+ *       "82d2dbf0-587a-4b97-b927-6de5e6b41f09": "Susceptible",
+ *       "c6b24192-0fdc-46f5-b4ff-0d01737d1fac": "S",
+ *     },
+ *   },
+ *   {
+ *     newName: "Inf",
+ *     datasetMapping: "i",
+ *     modelConfigurationMappings: {
+ *       "82d2dbf0-587a-4b97-b927-6de5e6b41f09": "Infected",
+ *       "c6b24192-0fdc-46f5-b4ff-0d01737d1fac": "I",
+ *     },
+ *   },
+ * ];
+ *
+ * const result = convertToCalibrateMap(input);
+ * console.log(result);
+ * // Output:
+ * // Map {
+ * //   "82d2dbf0-587a-4b97-b927-6de5e6b41f09" => [
+ * //     { modelVariable: "Susceptible", datasetVariable: "s" },
+ * //     { modelVariable: "Infected", datasetVariable: "i" }
+ * //   ],
+ * //   "c6b24192-0fdc-46f5-b4ff-0d01737d1fac" => [
+ * //     { modelVariable: "S", datasetVariable: "s" },
+ * //     { modelVariable: "I", datasetVariable: "i" }
+ * //   ]
+ * // }
+ */
+export const convertToCalibrateMap = (rows: CalibrateEnsembleMappingRow[]): Map<string, CalibrateMap[]> => {
+	const result = new Map<string, CalibrateMap[]>();
+
+	rows.forEach((row) => {
+		const { datasetMapping, modelConfigurationMappings } = row;
+
+		Object.entries(modelConfigurationMappings).forEach(([modelConfigId, modelVariable]) => {
+			if (!result.has(modelConfigId)) {
+				result.set(modelConfigId, []);
+			}
+
+			const calibrateMap: CalibrateMap = {
+				modelVariable,
+				datasetVariable: datasetMapping
+			};
+
+			result.get(modelConfigId)?.push(calibrateMap);
+		});
+	});
+
+	return result;
 };
 
 export function usePolicyModel(props, interventionDropdowns, policyModalContext, isPolicyModalVisible) {

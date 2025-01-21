@@ -20,6 +20,7 @@
 							:options="compareOptions"
 							option-label="label"
 							option-value="value"
+							@change="outputPanelBehavior"
 						/>
 						<!-- Pascale asked me to hide this until the feature is implemented -->
 						<!-- <tera-checkbox
@@ -43,7 +44,7 @@
 								option-value="id"
 								:loading="isFetchingDatasets"
 								placeholder="Optional"
-								@change="generateImpactCharts"
+								@change="onChangeImpactComparison"
 							/>
 							<label>Comparison tables</label>
 							<tera-checkbox v-model="isATESelected" label="Average treatment effect (ATE)" />
@@ -165,7 +166,7 @@
 										v-model="knobs.selectedPlotType"
 										:value="option.value"
 										name="plotValues"
-										@change="generateImpactCharts"
+										@change="onChangeImpactComparison"
 									/>
 									<label class="pl-2 py-1" :for="option.value">{{ option.label }}</label>
 								</div>
@@ -183,7 +184,7 @@
 
 <script setup lang="ts">
 import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
-import { WorkflowNode, WorkflowPortStatus } from '@/types/workflow';
+import { WorkflowNode } from '@/types/workflow';
 import TeraSliderPanel from '@/components/widgets/tera-slider-panel.vue';
 import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.vue';
 import { DrilldownTabs, ChartSettingType } from '@/types/common';
@@ -194,12 +195,9 @@ import AccordionTab from 'primevue/accordiontab';
 import Dropdown from 'primevue/dropdown';
 import Divider from 'primevue/divider';
 import { Dataset, InterventionPolicy, ModelConfiguration } from '@/types/Types';
-import { getDataset } from '@/services/dataset';
-import { getInterventionPolicyById } from '@/services/intervention-policy';
-import { getModelConfigurationById } from '@/services/model-configurations';
 import TeraCheckbox from '@/components/widgets/tera-checkbox.vue';
 import RadioButton from 'primevue/radiobutton';
-import { isEmpty, cloneDeep } from 'lodash';
+import { cloneDeep } from 'lodash';
 import VegaChart from '@/components/widgets/VegaChart.vue';
 import { deleteAnnotation } from '@/services/chart-settings';
 import TeraChartSettings from '@/components/widgets/tera-chart-settings.vue';
@@ -209,18 +207,15 @@ import { useChartSettings } from '@/composables/useChartSettings';
 import { useDrilldownChartSize } from '@/composables/useDrilldownChartSize';
 import { useCharts, type ChartData } from '@/composables/useCharts';
 import { DataArray } from '@/services/models/simulation-service';
-import { createRankingInterventionsChart } from '@/services/charts';
 import TeraCriteriaOfInterestCard from './tera-criteria-of-interest-card.vue';
 import {
 	blankCriteriaOfInterest,
 	CompareDatasetsState,
 	CompareValue,
 	CriteriaOfInterestCard,
-	PlotValue,
-	RankOption,
-	TimepointOption
+	PlotValue
 } from './compare-datasets-operation';
-import { fetchDatasetResults, buildChartData } from './compare-datasets-utils';
+import { generateRankingCharts, generateImpactCharts, initialize } from './compare-datasets-utils';
 
 const props = defineProps<{
 	node: WorkflowNode<CompareDatasetsState>;
@@ -258,8 +253,20 @@ const areSimulationsFromSameModel = ref(true);
 const isATESelected = ref(false);
 
 const onRun = () => {
-	generateRankingCharts();
+	generateRankingCharts(
+		rankingCriteriaCharts,
+		rankingResultsChart,
+		props,
+		modelConfigIdToInterventionPolicyIdMap,
+		rankingChartData,
+		datasets,
+		interventionPolicies
+	);
 };
+
+function onChangeImpactComparison() {
+	generateImpactCharts(impactChartData, datasets, datasetResults, baselineDatasetIndex, selectedPlotType);
+}
 
 interface BasicKnobs {
 	criteriaOfInterestCards: CriteriaOfInterestCard[];
@@ -276,7 +283,7 @@ const knobs = ref<BasicKnobs>({
 });
 
 const addCriteria = () => {
-	knobs.value.criteriaOfInterestCards.push(blankCriteriaOfInterest);
+	knobs.value.criteriaOfInterestCards.push(cloneDeep(blankCriteriaOfInterest));
 };
 
 const deleteCriteria = (index: number) => {
@@ -301,21 +308,22 @@ const {
 const outputPanel = ref(null);
 const chartSize = useDrilldownChartSize(outputPanel);
 
-const chartData = ref<ChartData | null>(null);
+const impactChartData = ref<ChartData | null>(null);
+const rankingChartData = ref<ChartData | null>(null);
 const rankingResultsChart = ref<any>(null);
 const rankingCriteriaCharts = ref<any>([]);
 
 const variableNames = computed(() => {
-	if (chartData.value === null) return [];
+	if (impactChartData.value === null) return [];
 	const excludes = ['timepoint_id', 'sample_id', 'timepoint_unknown'];
-	return Object.keys(chartData.value.pyciemssMap).filter((key) => !excludes.includes(key));
+	return Object.keys(impactChartData.value.pyciemssMap).filter((key) => !excludes.includes(key));
 });
 
 const { generateAnnotation, getChartAnnotationsByChartId, useCompareDatasetCharts } = useCharts(
 	props.node.id,
 	null,
 	null,
-	chartData,
+	impactChartData,
 	chartSize,
 	null,
 	null
@@ -326,139 +334,36 @@ const baselineDatasetIndex = computed(() =>
 );
 const variableCharts = useCompareDatasetCharts(selectedVariableSettings, selectedPlotType, baselineDatasetIndex);
 
-const initialize = async () => {
-	const state = cloneDeep(props.node.state);
-	knobs.value = Object.assign(knobs.value, state);
-
-	const inputs = props.node.inputs;
-	const datasetInputs = inputs.filter(
-		(input) => input.type === 'datasetId' && input.status === WorkflowPortStatus.CONNECTED
-	);
-	const datasetPromises = datasetInputs.map((input) => getDataset(input.value![0]));
-
-	isFetchingDatasets.value = true;
-	await Promise.all(datasetPromises).then((ds) => {
-		ds.forEach((dataset) => {
-			// Add dataset
-			if (!dataset) return;
-			datasets.value.push(dataset);
-
-			// Collect model configuration id and intervention policy id
-			const modelConfigurationId: string | undefined = dataset.metadata?.simulationAttributes?.modelConfigurationId;
-			const interventionPolicyId: string | undefined = dataset.metadata?.simulationAttributes?.interventionPolicyId;
-
-			if (!modelConfigurationId) return;
-			if (!modelConfigIdToInterventionPolicyIdMap.value[modelConfigurationId]) {
-				modelConfigIdToInterventionPolicyIdMap.value[modelConfigurationId] = [];
-			}
-			if (!interventionPolicyId) return;
-			modelConfigIdToInterventionPolicyIdMap.value[modelConfigurationId].push(interventionPolicyId);
-		});
-	});
-	// Fetch the results
-	datasetResults.value = await fetchDatasetResults(datasets.value);
-	isFetchingDatasets.value = false;
-
-	if (!knobs.value.selectedDataset) knobs.value.selectedDataset = datasets.value[0]?.id ?? null;
-
-	await generateImpactCharts();
-
-	const modelConfigurationIds = Object.keys(modelConfigIdToInterventionPolicyIdMap.value);
-	if (isEmpty(modelConfigurationIds)) return;
-	const modelConfigurationPromises = modelConfigurationIds.map((id) => getModelConfigurationById(id));
-	await Promise.all(modelConfigurationPromises).then((configs) => {
-		modelConfigurations.value = configs.filter((config) => config !== null);
-	});
-
-	const interventionPolicyIds = Object.values(modelConfigIdToInterventionPolicyIdMap.value).flat();
-	if (isEmpty(interventionPolicyIds)) return;
-	const interventionPolicyPromises = interventionPolicyIds.map((id) => getInterventionPolicyById(id));
-	await Promise.all(interventionPolicyPromises).then((policies) => {
-		interventionPolicies.value = policies.filter((policy) => policy !== null);
-	});
-
-	generateRankingCharts();
-};
-
-function generateRankingCharts() {
-	// Reset charts
-	rankingCriteriaCharts.value = [];
-	rankingResultsChart.value = null;
-
-	// Might be uneccessary
-	const commonInterventionPolicyIds = props.node.state.criteriaOfInterestCards
-		.map(({ selectedConfigurationId }) => {
-			if (!selectedConfigurationId) return [];
-			return modelConfigIdToInterventionPolicyIdMap.value?.[selectedConfigurationId] ?? [];
-		})
-		.flat();
-	const allRankedCriteriaValues: { score: number; name: string }[][] = [];
-
-	props.node.state.criteriaOfInterestCards.forEach((card) => {
-		if (!card.selectedConfigurationId || !chartData.value) return;
-
-		const pointOfComparison =
-			card.timepoint === TimepointOption.FIRST
-				? chartData.value.resultSummary[0]
-				: chartData.value.resultSummary[chartData.value.resultSummary.length - 1];
-
-		const rankingCriteriaValues: { score: number; name: string }[] = [];
-		interventionPolicies.value.forEach((policy, index) => {
-			// Skip this intervention policy if a configuration is not using it
-			if (!policy.id || !policy.name || !commonInterventionPolicyIds.includes(policy.id) || !card.selectedVariable) {
-				return;
-			}
-
-			rankingCriteriaValues.push({
-				score: pointOfComparison[`${chartData.value?.pyciemssMap[card.selectedVariable]}_mean:${index}`] ?? 0,
-				name: policy.name ?? ''
-			});
-		});
-
-		const sortedRankingCriteriaValues =
-			card.rank === RankOption.MAXIMUM
-				? rankingCriteriaValues.sort((a, b) => b.score - a.score)
-				: rankingCriteriaValues.sort((a, b) => a.score - b.score);
-
-		sortedRankingCriteriaValues.forEach((value, index) => {
-			value.score = index + 1;
-		});
-
-		rankingCriteriaCharts.value.push(createRankingInterventionsChart(sortedRankingCriteriaValues, card.name));
-		allRankedCriteriaValues.push(sortedRankingCriteriaValues);
-	});
-
-	// Sum up the scores of the same intervention policy
-	const scoreMap: Record<string, number> = {};
-	allRankedCriteriaValues.flat().forEach(({ score, name }) => {
-		if (scoreMap[name]) {
-			scoreMap[name] += score;
-		} else {
-			scoreMap[name] = score;
-		}
-	});
-
-	const rankingResultsValues = Object.keys(scoreMap)
-		.map((name) => ({
-			name,
-			score: scoreMap[name]
-		}))
-		.sort((a, b) => a.score - b.score);
-
-	rankingResultsChart.value = createRankingInterventionsChart(rankingResultsValues, '');
-}
-
-async function generateImpactCharts() {
-	chartData.value = buildChartData(
-		datasets.value,
-		datasetResults.value,
-		baselineDatasetIndex.value,
-		selectedPlotType.value
-	);
+function outputPanelBehavior() {
+	if (knobs.value.selectedCompareOption === CompareValue.RANK) {
+		isOutputSettingsOpen.value = false;
+	} else if (knobs.value.selectedCompareOption === CompareValue.IMPACT) {
+		isOutputSettingsOpen.value = true;
+	}
 }
 
 onMounted(() => {
-	initialize();
+	const state = cloneDeep(props.node.state);
+	knobs.value = Object.assign(knobs.value, state);
+	if (!knobs.value.selectedDataset) knobs.value.selectedDataset = datasets.value[0]?.id ?? null;
+
+	outputPanelBehavior();
+
+	initialize(
+		props,
+		isFetchingDatasets,
+		datasets,
+		datasetResults,
+		modelConfigIdToInterventionPolicyIdMap,
+		impactChartData,
+		rankingChartData,
+		baselineDatasetIndex,
+		selectedPlotType,
+		modelConfigurations,
+		interventionPolicies,
+		rankingCriteriaCharts,
+		rankingResultsChart
+	);
 });
 
 watch(

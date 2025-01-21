@@ -3,7 +3,7 @@ import type { FunmanInterval, TimeSpan } from '@/types/Types';
 import { ChartSetting } from '@/types/common';
 import { NotebookHistory } from '@/services/notebook';
 
-const DOCUMENTATION_URL = 'https://github.com/siftech/funman';
+const DOCUMENTATION_URL = 'https://documentation.terarium.ai/config-and-intervention/validate-model-configuration/';
 
 export enum Constraint {
 	State = 'state variable(s)',

@@ -19,6 +19,17 @@
 				<tera-toggleable-input :model-value="wf.getName()" @update:model-value="updateWorkflowName" tag="h4" />
 				<div class="button-group">
 					<Button
+						id="reset-zoom-btn"
+						icon="pi pi-expand"
+						label="Reset zoom"
+						@click="resetZoom"
+						size="small"
+						outlined
+						class="white-space-nowrap"
+						severity="secondary"
+					/>
+
+					<Button
 						id="add-component-btn"
 						icon="pi pi-plus"
 						label="Add component"
@@ -496,12 +507,6 @@ async function onMenuSelection(operatorType: string, menuNode: WorkflowNode<any>
 			}
 		});
 
-		// Will not connect nodes if there is anything besides 1 match
-		if (inputPorts.length !== 1) {
-			console.warn(`Ambiguous matching types [${newNode.inputs}] to [${port}]`);
-			return;
-		}
-
 		const edgePayload: WorkflowEdge = {
 			id: uuidv4(),
 			workflowId: wf.value.getId(),
@@ -819,6 +824,37 @@ function relinkEdges(node: WorkflowNode<any> | null) {
 	}
 }
 
+function resetZoom() {
+	let scaleFactor = 1;
+	let translateX = 1;
+	let translateY = 1;
+
+	// Approximate the bounding box of the workflow
+	const xExtent = d3.extent(wf.value.getNodes().map((n) => n.x)) as [number, number];
+	const yExtent = d3.extent(wf.value.getNodes().map((n) => n.y)) as [number, number];
+
+	const xMin = xExtent[0] - 20;
+	const xMax = xExtent[1] + 200;
+	const yMin = yExtent[0] - 20;
+	const yMax = yExtent[1] + 300;
+
+	// Find fitted scale
+	const workflowCenterX = 0.5 * (xMax - xMin);
+	const workflowCenterY = 0.5 * (yMax - yMin);
+
+	const canvasW = (canvasRef.value.$el as HTMLElement).clientWidth;
+	const canvasH = (canvasRef.value.$el as HTMLElement).clientHeight;
+
+	scaleFactor = Math.min(canvasW / (xMax - xMin), canvasH / (yMax - yMin));
+
+	// Calculate the translation to center the graph
+	translateX = canvasW / 2 - scaleFactor * workflowCenterX;
+	translateY = canvasH / 2 - scaleFactor * workflowCenterY;
+
+	// Call exposed function to set zoom
+	canvasRef.value.setZoom(translateX, translateY, scaleFactor);
+}
+
 let prevX = 0;
 let prevY = 0;
 
@@ -999,7 +1035,7 @@ onUnmounted(() => {
 	display: flex;
 	flex-direction: row;
 	justify-content: space-between;
-	padding: var(--gap-2) var(--gap-4);
+	padding: var(--gap-1) var(--gap-4);
 	z-index: 900;
 }
 
@@ -1011,7 +1047,7 @@ onUnmounted(() => {
 	align-items: center;
 	display: flex;
 	flex-direction: row;
-	gap: var(--gap-2);
+	gap: var(--gap-3);
 }
 
 .rename-workflow {

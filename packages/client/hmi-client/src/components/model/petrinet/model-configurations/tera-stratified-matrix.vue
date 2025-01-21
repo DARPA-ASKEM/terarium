@@ -1,5 +1,5 @@
 <template>
-	<div class="toolbar">
+	<div class="toolbar mb-2">
 		<div v-if="matrixMap && Object.keys(matrixMap).length > 0">
 			<label>Measure</label>
 			<Dropdown
@@ -102,11 +102,7 @@
 											/>
 											-->
 									</div>
-									<div
-										v-if="!isReadOnly"
-										class="mathml-container"
-										v-html="expressionMap[cell.row + ':' + cell.col] ?? '...'"
-									/>
+									<div class="mathml-container" v-html="expressionMap[cell.row + ':' + cell.col] ?? '...'" />
 								</div>
 							</section>
 							<span v-else class="subdue">n/a</span>
@@ -175,31 +171,22 @@ let timerId = -1;
 const clipboardText = ref('');
 const updateByMatrixBulk = (matrixToUpdate: MiraMatrix, text: string) => {
 	const parseResult = dsvParse(text);
-	const updateList: { id: string; value: number }[] = [];
+	const updateList: { id: string; value: string | number }[] = [];
 
 	matrixToUpdate.forEach((row) => {
 		row.forEach(async (matrixEntry) => {
-			// If we have label information, use them as they may be more accurate, otherwise use indices
-			if (parseResult.hasColLabels && parseResult.hasRowLabels) {
-				const match = parseResult.entries.find(
-					(entry) => entry.rowLabel === matrixEntry.rowCriteria && entry.colLabel === matrixEntry.colCriteria
-				);
-				if (match) {
-					updateList.push({
-						id: matrixEntry.content.id,
-						value: match.value
-					});
-				}
-			} else {
-				const match = parseResult.entries.find(
-					(entry) => entry.rowIdx === matrixEntry.row && entry.colIdx === matrixEntry.col
-				);
-				if (match) {
-					updateList.push({
-						id: matrixEntry.content.id,
-						value: match.value
-					});
-				}
+			const match = parseResult.entries.find((entry) =>
+				// If we have label information, use them as they may be more accurate, otherwise use indices
+				parseResult.hasColLabels && parseResult.hasRowLabels
+					? entry.rowLabel === matrixEntry.rowCriteria && entry.colLabel === matrixEntry.colCriteria
+					: entry.rowIdx === matrixEntry.row && entry.colIdx === matrixEntry.col
+			);
+			if (match) {
+				updateList.push({
+					id: matrixEntry.content.id,
+					// Number types should be passed if its a parameter matrix otherwise they should be strings
+					value: props.stratifiedMatrixType === StratifiedMatrix.Parameters ? match.value : match.value.toString()
+				});
 			}
 		});
 	});
@@ -221,9 +208,15 @@ const clipboardBuffer = (text: string) => {
 	updateByMatrixBulk(matrix.value, text);
 };
 
+function prepareFilters() {
+	filteredRowNames.value = matrix.value.map((r) => r[0].rowCriteria);
+	filteredColumnNames.value = matrix.value[0].map((c) => c.colCriteria);
+}
+
 const changeMatrix = (v: string) => {
 	matrixType.value = v;
 	matrix.value = matrixMap.value[v];
+	prepareFilters();
 };
 
 // Makes cell inputs focus once they appear
@@ -330,20 +323,14 @@ onUnmounted(() => {
 	window.clearInterval(timerId);
 });
 
-// This just prepares the filters when the matrix is assigned for the first time
-watch(
-	() => matrix.value,
-	() => {
-		filteredRowNames.value = matrix.value.map((r) => r[0].rowCriteria);
-		filteredColumnNames.value = matrix.value[0].map((c) => c.colCriteria);
-	},
-	{ once: true }
-);
+// Prepares filtered rows/cols when the matrix is assigned for the first time
+watch(matrix, () => prepareFilters(), { once: true });
 
 watch(
 	() => [matrix.value, props.shouldEval],
 	async () => {
 		if (!matrix.value) return;
+
 		resetEditState();
 		expressionMap.value = {};
 

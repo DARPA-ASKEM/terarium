@@ -258,7 +258,13 @@
 					class="p-3"
 					:summary-id="node.state.summaryId"
 				/>
-				<Accordion :active-index="lossActiveIndex" @update:active-index="updateLossTab" class="px-2">
+				<!-- Loss section -->
+				<Accordion
+					v-if="lossValues.length > 0 || isLoading"
+					:active-index="lossActiveIndex"
+					@update:active-index="updateLossTab"
+					class="px-2"
+				>
 					<AccordionTab header="Loss">
 						<!-- Loss chart -->
 						<div ref="lossChartContainer">
@@ -273,9 +279,11 @@
 					</AccordionTab>
 				</Accordion>
 				<div v-if="!isLoading">
-					<section class="pb-3" ref="outputPanel" v-if="modelConfig && csvAsset">
+					<section class="pb-3" v-if="modelConfig && csvAsset">
+						<div class="mx-4" ref="chartWidthDiv"></div>
 						<Accordion multiple :active-index="currentActiveIndicies" class="px-2">
-							<AccordionTab header="Parameter distributions">
+							<!-- Paramater distributions sectin -->
+							<AccordionTab v-if="selectedParameterSettings.length > 0" header="Parameter distributions">
 								<template v-for="setting of selectedParameterSettings" :key="setting.id">
 									<vega-chart
 										v-if="parameterDistributionCharts[setting.id]"
@@ -313,7 +321,8 @@
 									</vega-chart>
 								</template>
 							</AccordionTab>
-							<AccordionTab header="Interventions over time">
+							<!-- Section: Interventions over time -->
+							<AccordionTab v-if="selectedInterventionSettings.length > 0" header="Interventions over time">
 								<template v-for="setting of selectedInterventionSettings" :key="setting.id">
 									<vega-chart
 										expandable
@@ -322,7 +331,8 @@
 									/>
 								</template>
 							</AccordionTab>
-							<AccordionTab header="Variables over time">
+							<!-- Section: Variables over time -->
+							<AccordionTab v-if="selectedVariableSettings.length > 0" header="Variables over time">
 								<template v-for="setting of selectedVariableSettings" :key="setting.id">
 									<vega-chart
 										expandable
@@ -339,14 +349,32 @@
 									:visualization-spec="errorChart"
 								/>
 							</AccordionTab>
-							<AccordionTab header="Comparison charts">
-								<template v-for="setting of selectedComparisonChartSettings" :key="setting.id">
-									<vega-chart
-										expandable
-										:are-embed-actions-visible="true"
-										:visualization-spec="comparisonCharts[setting.id]"
-									/>
-								</template>
+							<!-- Section: Comparison charts -->
+							<AccordionTab v-if="selectedComparisonChartSettings.length > 0" header="Comparison charts">
+								<div
+									class="flex justify-content-center"
+									v-for="setting of selectedComparisonChartSettings"
+									:key="setting.id"
+								>
+									<div class="flex flex-row flex-wrap" v-if="setting.selectedVariables.length > 0">
+										<vega-chart
+											v-for="(spec, index) of comparisonCharts[setting.id]"
+											:key="index"
+											expandable
+											:are-embed-actions-visible="true"
+											:visualization-spec="spec"
+										/>
+									</div>
+									<div v-else class="empty-state-chart">
+										<img
+											src="@assets/svg/operator-images/simulate-deterministic.svg"
+											alt="Select a variable"
+											draggable="false"
+											height="80px"
+										/>
+										<p class="text-center">Select a variable for comparison</p>
+									</div>
+								</div>
 							</AccordionTab>
 						</Accordion>
 					</section>
@@ -384,6 +412,7 @@
 				</template>
 				<template #content>
 					<div class="output-settings-panel">
+						<!-- Parameter distributions -->
 						<tera-chart-settings
 							:title="'Parameter distributions'"
 							:settings="chartSettings"
@@ -395,6 +424,7 @@
 							@selection-change="updateChartSettings"
 						/>
 						<Divider />
+						<!-- Interventions over time -->
 						<tera-chart-settings
 							:title="'Interventions over time'"
 							:settings="chartSettings"
@@ -406,6 +436,7 @@
 							@selection-change="updateChartSettings"
 						/>
 						<Divider />
+						<!-- Variables over time -->
 						<tera-chart-settings
 							:title="'Variables over time'"
 							:settings="chartSettings"
@@ -419,6 +450,7 @@
 							@selection-change="updateChartSettings"
 						/>
 						<Divider />
+						<!-- Errors -->
 						<tera-chart-settings
 							:title="'Error'"
 							:settings="chartSettings"
@@ -434,6 +466,7 @@
 							@selection-change="updateChartSettings"
 						/>
 						<Divider />
+						<!-- Comparison charts -->
 						<tera-chart-settings
 							:title="'Comparison charts'"
 							:settings="chartSettings"
@@ -443,19 +476,19 @@
 									['state', 'observable', 'parameter'].includes(modelPartTypesMap[c])
 								)
 							"
-							:selected-options="comparisonChartsSettingsSelection"
+							:comparison-selected-options="comparisonChartsSettingsSelection"
 							@open="setActiveChartSettings($event)"
 							@remove="removeChartSettings"
-							@selection-change="comparisonChartsSettingsSelection = $event"
+							@comparison-selection-change="updateComparisonChartSetting"
 						/>
 						<div>
 							<Button
-								:disabled="!comparisonChartsSettingsSelection.length"
 								size="small"
 								text
-								@click="addComparisonChartSettings"
+								@click="addEmptyComparisonChart"
 								label="Add comparison chart"
 								icon="pi pi-plus"
+								class="mt-2"
 							/>
 						</div>
 						<Divider />
@@ -734,8 +767,8 @@ const runButtonMessage = computed(() =>
 const selectedOutputId = ref<string>();
 const lossChartContainer = ref(null);
 const lossChartSize = useDrilldownChartSize(lossChartContainer);
-const outputPanel = ref(null);
-const chartSize = useDrilldownChartSize(outputPanel);
+const chartWidthDiv = ref(null);
+const chartSize = useDrilldownChartSize(chartWidthDiv);
 
 const groupedInterventionOutputs = computed(() =>
 	_.groupBy(flattenInterventionData(interventionPolicy.value?.interventions ?? []), 'appliedTo')
@@ -773,9 +806,10 @@ const {
 	comparisonChartsSettingsSelection,
 	removeChartSettings,
 	updateChartSettings,
-	addComparisonChartSettings,
 	updateActiveChartSettings,
-	setActiveChartSettings
+	setActiveChartSettings,
+	addEmptyComparisonChart,
+	updateComparisonChartSetting
 } = useChartSettings(props, emit);
 
 const {
@@ -1284,5 +1318,18 @@ img {
 
 input {
 	text-align: left;
+}
+
+.empty-state-chart {
+	display: flex;
+	flex-direction: column;
+	gap: var(--gap-4);
+	justify-content: center;
+	align-items: center;
+	height: 12rem;
+	margin: var(--gap-6);
+	padding: var(--gap-4);
+	background: var(--surface-100);
+	color: var(--text-color-secondary);
 }
 </style>
