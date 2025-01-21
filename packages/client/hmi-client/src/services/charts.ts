@@ -454,13 +454,15 @@ export function createForecastChart(
 	};
 	const yaxis = structuredClone(xaxis);
 	yaxis.title = options.yAxisTitle;
-
 	const translationMap = options.translationMap;
 	let labelExpr = '';
 	if (translationMap) {
-		Object.keys(translationMap).forEach((key) => {
-			labelExpr += `datum.value === '${key}' ? '${translationMap[key]}' : `;
-		});
+		const allVariables = [...(samplingLayer?.variables ?? []), ...(statisticsLayer?.variables ?? [])];
+		Object.keys(translationMap)
+			.filter((key) => allVariables.includes(key))
+			.forEach((key) => {
+				labelExpr += `datum.value === '${key}' ? '${translationMap[key]}' : `;
+			});
 		labelExpr += " 'other'";
 	}
 
