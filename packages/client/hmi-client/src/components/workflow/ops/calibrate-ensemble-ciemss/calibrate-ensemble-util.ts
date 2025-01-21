@@ -88,7 +88,7 @@ export function formatCalibrateModelConfigurations(
 
 export function getChartEnsembleMapping(
 	node: WorkflowNode<CalibrateEnsembleCiemssOperationState>,
-	variableChartOptionsObject: { [key: string]: string[] },
+	stateToModelConfigMap: { [key: string]: string[] },
 	hasTimestampCol = true
 ) {
 	const wfOutputState = getActiveOutput(node)?.state;
@@ -102,10 +102,10 @@ export function getChartEnsembleMapping(
 
 	// For every State Variable that has not been mapped in the ensembleMapping
 	// We will fill in here so the user can still see these if they want
-	const allStates = Object.keys(variableChartOptionsObject);
+	const allStates = Object.keys(stateToModelConfigMap);
 	allStates.forEach((state) => {
 		const modelConfigurationsMap = {};
-		variableChartOptionsObject[state].forEach((id) => {
+		stateToModelConfigMap[state].forEach((id) => {
 			modelConfigurationsMap[id] = state;
 		});
 		mapping.push({
@@ -241,8 +241,8 @@ export function getEnsembleErrorData(
 // 		D: ["uuid-1"]
 // }
 
-export async function setVariableChartOptionsObject(modelConfigurationIds: string[]) {
-	const variableChartOptionsObject: { [key: string]: string[] } = {};
+export async function setStateToModelConfigMap(modelConfigurationIds: string[]) {
+	const stateToModelConfigMap: { [key: string]: string[] } = {};
 	const models: any[] = [];
 	// Model configuration input
 	await Promise.all(
@@ -256,11 +256,11 @@ export async function setVariableChartOptionsObject(modelConfigurationIds: strin
 		const modelConfigId = model.configId as string;
 		model.model.states.forEach((state) => {
 			const key = state.id;
-			if (!variableChartOptionsObject[key]) {
-				variableChartOptionsObject[key] = [];
+			if (!stateToModelConfigMap[key]) {
+				stateToModelConfigMap[key] = [];
 			}
-			variableChartOptionsObject[key].push(modelConfigId);
+			stateToModelConfigMap[key].push(modelConfigId);
 		});
 	});
-	return variableChartOptionsObject;
+	return stateToModelConfigMap;
 }

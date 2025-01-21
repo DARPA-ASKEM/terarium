@@ -396,7 +396,7 @@ import {
 	getEnsembleErrorData,
 	EnsembleErrorData,
 	fetchModelConfigurations,
-	setVariableChartOptionsObject
+	setStateToModelConfigMap
 } from './calibrate-ensemble-util';
 
 const props = defineProps<{
@@ -473,7 +473,7 @@ const modelConfigIds = computed(() =>
 );
 const listModelLabels = ref<string[]>([]);
 const allModelConfigurations = ref<ModelConfiguration[]>([]);
-const variableChartOptionsObject = ref<{ [key: string]: string[] }>({});
+const stateToModelConfigMap = ref<{ [key: string]: string[] }>({});
 
 const tableHeaders = computed(() => {
 	const headers = ['Ensemble model'];
@@ -626,7 +626,7 @@ const runEnsemble = async () => {
 };
 
 onMounted(async () => {
-	variableChartOptionsObject.value = await setVariableChartOptionsObject(modelConfigIds.value as string[]);
+	stateToModelConfigMap.value = await setStateToModelConfigMap(modelConfigIds.value as string[]);
 	const configs = await fetchModelConfigurations(props.node.inputs);
 	if (!configs) return;
 	allModelConfigurations.value = configs.allModelConfigurations;
@@ -671,7 +671,7 @@ const outputData = ref<{
 } | null>(null);
 const groundTruthData = computed<DataArray>(() => parseCsvAsset(csvAsset.value as CsvAsset));
 const chartSize = useDrilldownChartSize(chartWidthDiv);
-const selectedOutputMapping = computed(() => getChartEnsembleMapping(props.node, variableChartOptionsObject.value));
+const selectedOutputMapping = computed(() => getChartEnsembleMapping(props.node, stateToModelConfigMap.value));
 const {
 	activeChartSettings,
 	chartSettings,
@@ -710,7 +710,7 @@ const errorData = computed<EnsembleErrorData>(() =>
 );
 
 const ensembleVariables = computed(() =>
-	getChartEnsembleMapping(props.node, variableChartOptionsObject.value, false).map((d) => d.newName)
+	getChartEnsembleMapping(props.node, stateToModelConfigMap.value, false).map((d) => d.newName)
 );
 // console.log(ensembleVariables);
 // console.log(selectedOutputMapping);
