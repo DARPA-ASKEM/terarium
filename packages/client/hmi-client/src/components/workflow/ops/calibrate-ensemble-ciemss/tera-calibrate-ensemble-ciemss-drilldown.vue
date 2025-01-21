@@ -712,9 +712,6 @@ const errorData = computed<EnsembleErrorData>(() =>
 const ensembleVariables = computed(() =>
 	getChartEnsembleMapping(props.node, stateToModelConfigMap.value, false).map((d) => d.newName)
 );
-// console.log(ensembleVariables);
-// console.log(selectedOutputMapping);
-// console.log(selectedEnsembleVariableSettings);
 const ensembleVariableCharts = useEnsembleVariableCharts(selectedEnsembleVariableSettings, groundTruthData);
 const weightsDistributionCharts = useWeightsDistributionCharts();
 const { errorCharts, onExpandErrorChart } = useEnsembleErrorCharts(selectedErrorVariableSettings, errorData);
