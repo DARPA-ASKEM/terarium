@@ -395,7 +395,8 @@ import {
 	buildChartData,
 	getEnsembleErrorData,
 	EnsembleErrorData,
-	fetchModelConfigurations
+	fetchModelConfigurations,
+	setVariableChartOptionsObject
 } from './calibrate-ensemble-util';
 
 const props = defineProps<{
@@ -467,8 +468,12 @@ const lossChartSpec = ref();
 const lossValues = ref<{ [key: string]: number }[]>([]);
 const LOSS_CHART_DATA_SOURCE = 'lossData';
 // Model:
+const modelConfigIds = computed(() =>
+	props.node.inputs.filter((input) => input.type === 'modelConfigId' && input.value).map((input) => input.value?.[0])
+);
 const listModelLabels = ref<string[]>([]);
 const allModelConfigurations = ref<ModelConfiguration[]>([]);
+const variableChartOptionsObject = ref({});
 
 const tableHeaders = computed(() => {
 	const headers = ['Ensemble model'];
@@ -621,6 +626,7 @@ const runEnsemble = async () => {
 };
 
 onMounted(async () => {
+	variableChartOptionsObject.value = await setVariableChartOptionsObject(modelConfigIds.value as string[]);
 	const configs = await fetchModelConfigurations(props.node.inputs);
 	if (!configs) return;
 	allModelConfigurations.value = configs.allModelConfigurations;
@@ -665,7 +671,9 @@ const outputData = ref<{
 } | null>(null);
 const groundTruthData = computed<DataArray>(() => parseCsvAsset(csvAsset.value as CsvAsset));
 const chartSize = useDrilldownChartSize(chartWidthDiv);
-const selectedOutputMapping = computed(() => getSelectedOutputEnsembleMapping(props.node));
+const selectedOutputMapping = computed(() =>
+	getSelectedOutputEnsembleMapping(props.node, variableChartOptionsObject.value)
+);
 const {
 	activeChartSettings,
 	chartSettings,
@@ -703,7 +711,12 @@ const errorData = computed<EnsembleErrorData>(() =>
 	)
 );
 
-const ensembleVariables = computed(() => getSelectedOutputEnsembleMapping(props.node, false).map((d) => d.newName));
+const ensembleVariables = computed(() =>
+	getSelectedOutputEnsembleMapping(props.node, variableChartOptionsObject.value, false).map((d) => d.newName)
+);
+// console.log(ensembleVariables);
+// console.log(selectedOutputMapping);
+// console.log(selectedEnsembleVariableSettings);
 const ensembleVariableCharts = useEnsembleVariableCharts(selectedEnsembleVariableSettings, groundTruthData);
 const weightsDistributionCharts = useWeightsDistributionCharts();
 const { errorCharts, onExpandErrorChart } = useEnsembleErrorCharts(selectedErrorVariableSettings, errorData);

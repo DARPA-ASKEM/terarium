@@ -13,6 +13,7 @@ import { EnsembleModelConfigs, ModelConfiguration } from '@/types/Types';
 import { WorkflowNode } from '@/types/workflow';
 import { getActiveOutput } from '@/components/workflow/util';
 import { CalibrateMap, setupModelInput } from '@/services/calibrate-workflow';
+import { getAsConfiguredModel } from '@/services/model-configurations';
 import {
 	CalibrateEnsembleCiemssOperationState,
 	CalibrateEnsembleMappingRow,
@@ -87,6 +88,7 @@ export function formatCalibrateModelConfigurations(
 
 export function getSelectedOutputEnsembleMapping(
 	node: WorkflowNode<CalibrateEnsembleCiemssOperationState>,
+	variableChartOptionsObject: any,
 	hasTimestampCol = true
 ) {
 	const wfOutputState = getActiveOutput(node)?.state;
@@ -97,6 +99,23 @@ export function getSelectedOutputEnsembleMapping(
 			datasetMapping: wfOutputState?.timestampColName ?? '',
 			modelConfigurationMappings: {}
 		});
+
+	// For every State Variable that has not been mapped in the ensembleMapping
+	// We will fill in here so the user can still see these if they want
+	const allStates = Object.keys(variableChartOptionsObject);
+	allStates.forEach((state) => {
+		if (!mapping.find((map) => map.newName === state)) {
+			const modelConfigurationsMap = {};
+			variableChartOptionsObject[state].forEach((id) => {
+				modelConfigurationsMap[id] = state;
+			});
+			mapping.push({
+				newName: state,
+				datasetMapping: '',
+				modelConfigurationMappings: modelConfigurationsMap
+			});
+		}
+	});
 	return mapping;
 }
 
@@ -212,4 +231,38 @@ export function getEnsembleErrorData(
 		errorData[configId] = getErrorData(groundTruth, simulationData, cMapping, timestampColName, pyciemssMap);
 	});
 	return errorData;
+}
+
+// This will grab all of the variables in each model configuration and place them into a dictionary.
+// The key will be the variable, the value will be a list of uuids that this variable is found in.
+// An example output with two model config ids uuid-1 and uuid-2 may look like where model 1 is SIRD, and model 2 is SIR
+// {
+// 		S: ["uuid-1","uuid-2"]
+// 		I: ["uuid-1","uuid-2"]
+// 		R: ["uuid-1","uuid-2"]
+// 		D: ["uuid-1"]
+// }
+
+export async function setVariableChartOptionsObject(modelConfigurationIds: string[]) {
+	const variableChartOptionsObject = {};
+	const models: any[] = [];
+	// Model configuration input
+	await Promise.all(
+		modelConfigurationIds.map(async (id) => {
+			const model = await getAsConfiguredModel(id);
+			models.push({ ...model, configId: id });
+		})
+	);
+
+	models.forEach((model) => {
+		const modelConfigId = model.configId as string;
+		model.model.states.forEach((state) => {
+			const key = state.id;
+			if (!variableChartOptionsObject[key]) {
+				variableChartOptionsObject[key] = [];
+			}
+			variableChartOptionsObject[key].push(modelConfigId);
+		});
+	});
+	return variableChartOptionsObject;
 }
