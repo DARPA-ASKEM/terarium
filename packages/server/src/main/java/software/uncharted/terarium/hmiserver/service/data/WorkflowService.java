@@ -102,6 +102,7 @@ public class WorkflowService extends TerariumAssetServiceWithoutSearch<Workflow,
 		dbWorkflow.setName(asset.getName());
 		dbWorkflow.setDescription(asset.getDescription());
 		dbWorkflow.setScenario(asset.getScenario());
+		dbWorkflow.setAnnotations(asset.getAnnotations());
 
 		// Prep: sane state, cache the nodes/edges to update for easy retrival
 		if (asset.getNodes() != null) {
@@ -198,7 +199,6 @@ public class WorkflowService extends TerariumAssetServiceWithoutSearch<Workflow,
 		}
 
 		final Optional<Workflow> result = super.updateAsset(dbWorkflow, projectId, hasWritePermission);
-
 		return result;
 	}
 
@@ -665,7 +665,7 @@ public class WorkflowService extends TerariumAssetServiceWithoutSearch<Workflow,
 	}
 
 	public void addOrUpdateAnnotation(final Workflow workflow, final WorkflowAnnotation annotation) {
-		if (workflow.getAnnotations() == null) {
+		if (workflow.getAnnotations() == null || workflow.getAnnotations().isEmpty()) {
 			workflow.setAnnotations(new HashMap<UUID, WorkflowAnnotation>());
 		}
 		if (annotation.getId() == null) {

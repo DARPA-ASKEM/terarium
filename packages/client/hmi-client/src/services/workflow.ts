@@ -161,6 +161,13 @@ export class WorkflowWrapper {
 		return this.wf.edges.filter((d) => d.isDeleted !== true);
 	}
 
+	getAnnotations() {
+		if (this.wf.annotations) {
+			return Object.values(this.wf.annotations);
+		}
+		return [];
+	}
+
 	// @deprecated
 	removeNode(id: string) {
 		// Remove all the edges first

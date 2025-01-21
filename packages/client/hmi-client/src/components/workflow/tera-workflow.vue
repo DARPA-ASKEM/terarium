@@ -50,6 +50,25 @@
 		<!-- data -->
 		<template #data>
 			<ContextMenu ref="contextMenu" :model="contextMenuItems" style="white-space: nowrap; width: auto" />
+
+			<!-- Annotation test -->
+			<tera-canvas-item
+				v-for="annotation in wf.getAnnotations()"
+				:key="annotation.id"
+				:style="{ width: `300px`, top: `${annotation.y}px`, left: `${annotation.x}px` }"
+				@dragging="(event) => updateAnnotationPosition(annotation, event)"
+				@dragend="(event) => updateAnnotation(annotation, event)"
+			>
+				<Inplace :closable="true" close-icon="pi pi-check" class="inplace">
+					<template #display>
+						{{ annotation.content || 'Click to edit' }}
+					</template>
+					<template #content>
+						<InputText v-model="annotation.content" autofocus class="annotation-input" />
+					</template>
+				</Inplace>
+			</tera-canvas-item>
+
 			<tera-canvas-item
 				v-for="node in wf.getNodes()"
 				:key="node.id"
@@ -177,7 +196,8 @@ import {
 	WorkflowPort,
 	WorkflowDirection,
 	WorkflowPortStatus,
-	OperatorStatus
+	OperatorStatus,
+	WorkflowAnnotation
 } from '@/types/workflow';
 // Operation imports
 import TeraOperator from '@/components/operator/tera-operator.vue';
@@ -195,6 +215,7 @@ import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue'
 
 import { useRouter, useRoute } from 'vue-router';
 import { MenuItem } from 'primevue/menuitem';
+import Inplace from 'primevue/inplace';
 import * as EventService from '@/services/event';
 import { useProjects } from '@/composables/project';
 import useAuthStore from '@/stores/auth';
@@ -605,6 +626,12 @@ const contextMenuItems: MenuItem[] = [
 				command: addOperatorToWorkflow(CompareDatasetsOp)
 			}
 		]
+	},
+	{
+		label: 'Add annotation',
+		command: () => {
+			addAnnotationToWorkflow();
+		}
 	}
 ];
 const addComponentMenu = ref();
@@ -897,6 +924,27 @@ const updatePosition = (node: WorkflowNode<any>, { x, y }) => {
 	node.x += x / canvasTransform.k;
 	node.y += y / canvasTransform.k;
 	updateEdgePositions(node, { x, y });
+};
+
+const addAnnotationToWorkflow = async () => {
+	const updatedWorkflow = await workflowService.addOrUpdateAnnotation(wf.value.getId(), {
+		id: uuidv4(),
+		x: newNodePosition.x,
+		y: newNodePosition.y,
+		content: 'annotation text',
+		type: '',
+		textSize: 12
+	});
+	wf.value.update(updatedWorkflow, false);
+};
+
+const updateAnnotationPosition = (annotation: WorkflowAnnotation, { x, y }) => {
+	annotation.x = x as number;
+	annotation.y = y as number;
+};
+
+const updateAnnotation = (annotation: WorkflowAnnotation, { x, y }) => {
+	console.log(annotation, x, y);
 };
 
 function interpolatePointsForCurve(a: Position, b: Position): Position[] {
