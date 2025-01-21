@@ -390,7 +390,7 @@ import {
 	updateLossChartSpec,
 	getLossValuesFromSimulation,
 	formatCalibrateModelConfigurations,
-	getSelectedOutputEnsembleMapping,
+	getChartEnsembleMapping,
 	fetchOutputData,
 	buildChartData,
 	getEnsembleErrorData,
@@ -671,9 +671,7 @@ const outputData = ref<{
 } | null>(null);
 const groundTruthData = computed<DataArray>(() => parseCsvAsset(csvAsset.value as CsvAsset));
 const chartSize = useDrilldownChartSize(chartWidthDiv);
-const selectedOutputMapping = computed(() =>
-	getSelectedOutputEnsembleMapping(props.node, variableChartOptionsObject.value)
-);
+const selectedOutputMapping = computed(() => getChartEnsembleMapping(props.node, variableChartOptionsObject.value));
 const {
 	activeChartSettings,
 	chartSettings,
@@ -712,7 +710,7 @@ const errorData = computed<EnsembleErrorData>(() =>
 );
 
 const ensembleVariables = computed(() =>
-	getSelectedOutputEnsembleMapping(props.node, variableChartOptionsObject.value, false).map((d) => d.newName)
+	getChartEnsembleMapping(props.node, variableChartOptionsObject.value, false).map((d) => d.newName)
 );
 // console.log(ensembleVariables);
 // console.log(selectedOutputMapping);
