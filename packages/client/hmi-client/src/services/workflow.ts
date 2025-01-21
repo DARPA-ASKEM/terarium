@@ -69,6 +69,7 @@ export class WorkflowWrapper {
 		}
 		this.wf.name = updatedWF.name;
 		this.wf.description = updatedWF.description;
+		this.wf.annotations = updatedWF.annotations;
 
 		const nodes = this.wf.nodes;
 		const edges = this.wf.edges;

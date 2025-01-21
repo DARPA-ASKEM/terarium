@@ -733,7 +733,7 @@ public class WorkflowController {
 		return updated.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
 	}
 
-	@DeleteMapping("/{id}/annotation/:annotationId")
+	@DeleteMapping("/{id}/annotation/{annotationId}")
 	@Secured(Roles.USER)
 	@Operation(summary = "Remove a workflow annotation")
 	@ApiResponses(
@@ -749,7 +749,7 @@ public class WorkflowController {
 			@ApiResponse(responseCode = "500", description = "There was an issue updating the workflow", content = @Content)
 		}
 	)
-	public ResponseEntity<Workflow> addOrUpdateAnnotation(
+	public ResponseEntity<Workflow> removeAnnotation(
 		@PathVariable("id") final UUID id,
 		@PathVariable("annotationId") final UUID annotationId,
 		@RequestParam(name = "project-id", required = false) final UUID projectId
