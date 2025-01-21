@@ -387,8 +387,7 @@ export function useCharts(
 		return interventionCharts;
 	};
 
-	// Craete compare dataset charts based on chart settings
-	/*
+	// Create compare dataset charts based on chart settings
 	const useCompareDatasetCharts = (
 		chartSettings: ComputedRef<ChartSetting[]>,
 		selectedPlotType: ComputedRef<PlotValue>,
@@ -408,7 +407,6 @@ export function useCharts(
 				options.title = varName;
 				options.yAxisTitle = capitalize(selectedPlotType.value);
 				options.colorscheme = colorScheme;
-				options.legendProperties = { direction: 'vertical', columns: 1, labelLimit: options.width };
 
 				const annotations = getChartAnnotationsByChartId(settings.id);
 				const chart = !settings.showQuantiles
@@ -436,93 +434,6 @@ export function useCharts(
 							settings.quantiles ?? [],
 							options
 						);
-				charts[settings.id] = chart;
-			});
-			return charts;
-		});
-		return compareDatasetCharts;
-	};
-	*/
-	// Create compare dataset charts based on chart settings
-	const useCompareDatasetCharts = (
-		chartSettings: ComputedRef<ChartSetting[]>,
-		selectedPlotType: ComputedRef<PlotValue>,
-		baselineName: ComputedRef<string | null>
-	) => {
-		const compareDatasetCharts = computed(() => {
-			const charts: Record<string, VisualizationSpec> = {};
-			if (!isChartReadyToBuild.value) return charts;
-			const { resultSummary } = chartData.value as ChartData;
-
-			const datasetNames = Object.keys(resultSummary[0]).filter(
-				(key) => key !== 'timepoint_id' && key !== 'headerName'
-			);
-			// Make baseline black
-			const baselineIndex = datasetNames.indexOf(baselineName.value ?? '');
-			const colorScheme = cloneDeep(CATEGORICAL_SCHEME);
-			colorScheme[baselineIndex] = 'black';
-
-			chartSettings.value.forEach((settings) => {
-				const headerName = settings.selectedVariables[0];
-				const annotations = getChartAnnotationsByChartId(settings.id);
-
-				// Create base chart spec
-				const baseChart = createForecastChart(
-					null,
-					{
-						data: resultSummary.filter((d) => d.headerName === headerName),
-						variables: datasetNames,
-						timeField: 'timepoint_id'
-					},
-					null,
-					{
-						title: headerName,
-						legend: true,
-						width: chartSize.value.width,
-						height: chartSize.value.height,
-						xAxisTitle: getUnit('_time') || 'Time',
-						yAxisTitle: capitalize(selectedPlotType.value),
-						scale: settings.scale,
-						colorscheme: colorScheme,
-						legendProperties: {
-							direction: 'vertical',
-							columns: 3
-						}
-					}
-				);
-
-				if (baseChart.layer?.[0]?.layer?.[0]) {
-					// Add strokeDash to the encoding
-					baseChart.layer[0].layer[0].encoding = {
-						...baseChart.layer[0].layer[0].encoding,
-						strokeDash: {
-							field: 'variableField',
-							type: 'nominal',
-							scale: {
-								domain: datasetNames,
-								range: datasetNames.map((name) => (name === baselineName.value ? [6, 4] : [0]))
-							},
-							legend: null // Hide strokeDash legend
-						}
-					};
-
-					// Combine legend configurations in color encoding
-					if (baseChart.layer[0].layer[0].encoding.color) {
-						baseChart.layer[0].layer[0].encoding.color = {
-							...baseChart.layer[0].layer[0].encoding.color,
-							legend: {
-								...baseChart.layer[0].layer[0].encoding.color.legend,
-								symbolStrokeWidth: 2,
-								symbolDash: datasetNames.map((name) => ({
-									test: `datum.value === '${name}'`,
-									value: name === baselineName.value ? [6, 4] : [0]
-								}))
-							}
-						};
-					}
-				}
-
-				const chart = applyForecastChartAnnotations(baseChart, annotations);
 				charts[settings.id] = chart;
 			});
 			return charts;

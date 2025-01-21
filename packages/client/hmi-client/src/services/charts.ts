@@ -404,26 +404,6 @@ export function createHistogramChart(dataset: Record<string, any>[], options: Hi
 	return spec;
 }
 
-/**
- * Generate Vegalite specs for simulation/forecast charts. The chart can contain:
- *  - sampling layer: multiple forecast runsk
- *  - statistics layer: statistical aggregate of the sampling layer
- *  - ground truth layer: any grounding data
- *
- * Data comes in as a list of multi-variate objects:
- *   [ { time: 1, var1: 0.2, var2: 0.5, var3: 0.1 }, ... ]
- *
- * This then transformed by the fold-transform to be something like:
- *   [
- *     { time: 1, var1: 0.2, var2: 0.5, var3: 0.1, var: 'var1', value: 0.2 },
- *     { time: 1, var1: 0.2, var2: 0.5, var3: 0.1, var: 'var2', value: 0.5 },
- *     { time: 1, var1: 0.2, var2: 0.5, var3: 0.1, var: 'var3', value: 0.1 },
- *     ...
- *   ]
- *
- * Then we use the new 'var' and 'value' columns to render timeseries
- * */
-
 /* This function estimates the legend width, because if it's too we will have to draw it with columns since there's no linewrap */
 function estimateLegendWidth(items: string[], fontSize: number): number {
 	// Approximate width of each character (assuming monospace-like proportions)
@@ -439,6 +419,7 @@ function estimateLegendWidth(items: string[], fontSize: number): number {
 		return totalWidth + itemWidth + itemSpacing;
 	}, 0);
 }
+
 function calculateLegendColumns(
 	isCompact: boolean,
 	estimatedWidth: number,
@@ -461,6 +442,26 @@ function calculateLegendColumns(
 	// Use as many columns as we can fit, up to the number of items
 	return Math.max(1, Math.min(maxColumns, numItems));
 }
+
+/**
+ * Generate Vegalite specs for simulation/forecast charts. The chart can contain:
+ *  - sampling layer: multiple forecast runsk
+ *  - statistics layer: statistical aggregate of the sampling layer
+ *  - ground truth layer: any grounding data
+ *
+ * Data comes in as a list of multi-variate objects:
+ *   [ { time: 1, var1: 0.2, var2: 0.5, var3: 0.1 }, ... ]
+ *
+ * This then transformed by the fold-transform to be something like:
+ *   [
+ *     { time: 1, var1: 0.2, var2: 0.5, var3: 0.1, var: 'var1', value: 0.2 },
+ *     { time: 1, var1: 0.2, var2: 0.5, var3: 0.1, var: 'var2', value: 0.5 },
+ *     { time: 1, var1: 0.2, var2: 0.5, var3: 0.1, var: 'var3', value: 0.1 },
+ *     ...
+ *   ]
+ *
+ * Then we use the new 'var' and 'value' columns to render timeseries
+ * */
 export function createForecastChart(
 	samplingLayer: ForecastChartLayer | null,
 	statisticsLayer: ForecastChartLayer | null,
@@ -507,10 +508,10 @@ export function createForecastChart(
 	const getAllLegendItems = () => {
 		const items = new Set<string>();
 		if (statisticsLayer?.variables) {
-			statisticsLayer.variables.forEach((v) => items.add(v));
+			statisticsLayer.variables.forEach((v) => items.add(translationMap?.[v] ?? v));
 		}
 		if (groundTruthLayer?.variables) {
-			groundTruthLayer.variables.forEach((v) => items.add(v));
+			groundTruthLayer.variables.forEach((v) => items.add(translationMap?.[v] ?? v));
 		}
 		if (options.bins) {
 			Array.from(options.bins.keys()).forEach((v) => items.add(v.toString()));
@@ -538,9 +539,9 @@ export function createForecastChart(
 		labelLimit: isCompact ? 100 : 150,
 		symbolType: 'stroke',
 		offset: isCompact ? 8 : 16,
-		...options.legendProperties,
 		// Add columns if legend would overflow
-		columns: calculateLegendColumns(isCompact, estimatedWidth, options.width, legendItems.length)
+		columns: calculateLegendColumns(isCompact, estimatedWidth, options.width, legendItems.length),
+		...options.legendProperties
 	};
 
 	// Start building
@@ -691,14 +692,7 @@ export function createForecastChart(
 
 		if (options.legend === true) {
 			lineSubLayer.encoding.color.legend = {
-				...legendProperties,
-				// Only use columns if the legend would overflow
-				columns:
-					estimatedWidth !== undefined &&
-					estimatedWidth > calculateLegendColumns(isCompact, estimatedWidth, options.width, legendItems.length)
-						? calculateLegendColumns(isCompact, estimatedWidth, options.width, legendItems.length)
-						: undefined,
-				direction: isCompact ? 'vertical' : 'horizontal'
+				...legendProperties
 			};
 
 			if (labelExpr.length > 0) {
