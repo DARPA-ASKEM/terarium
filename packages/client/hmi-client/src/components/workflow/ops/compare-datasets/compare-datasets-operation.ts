@@ -21,7 +21,8 @@ export enum PlotValue {
 
 export enum CompareValue {
 	IMPACT = 'impact',
-	RANK = 'rank'
+	RANK = 'rank',
+	ERROR = 'error'
 }
 
 export const blankCriteriaOfInterest = {

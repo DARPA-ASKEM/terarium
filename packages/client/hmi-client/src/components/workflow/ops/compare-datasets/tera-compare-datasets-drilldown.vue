@@ -60,7 +60,7 @@
 						/>
 						<div class="mb-4" />
 						-->
-						<div class="flex flex-column gap-2" v-if="knobs.selectedCompareOption === CompareValue.RANK">
+						<div class="flex flex-column gap-2" v-else-if="knobs.selectedCompareOption === CompareValue.RANK">
 							<label>Specify criteria of interest:</label>
 							<tera-criteria-of-interest-card
 								v-for="(card, i) in node.state.criteriaOfInterestCards"
@@ -82,6 +82,7 @@
 								/>
 							</div>
 						</div>
+						<template v-else-if="knobs.selectedCompareOption === CompareValue.ERROR"></template>
 					</tera-drilldown-section>
 				</template>
 			</tera-slider-panel>
@@ -225,7 +226,8 @@ const emit = defineEmits(['update-state', 'close']);
 
 const compareOptions: { label: string; value: CompareValue }[] = [
 	{ label: 'Compare the impact of interventions', value: CompareValue.IMPACT },
-	{ label: 'Rank interventions based on multiple criteria', value: CompareValue.RANK }
+	{ label: 'Rank interventions based on multiple criteria', value: CompareValue.RANK },
+	{ label: 'Compare model errors', value: CompareValue.ERROR }
 ];
 
 const datasets = ref<Dataset[]>([]);
