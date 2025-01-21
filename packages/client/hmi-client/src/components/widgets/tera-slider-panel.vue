@@ -112,7 +112,6 @@ aside {
 	display: flex;
 	flex-direction: column;
 	height: 100%;
-	overflow-y: auto;
 }
 
 header {
@@ -134,10 +133,6 @@ header {
 header:not(.tab) {
 	background-color: rgba(255, 255, 255, 0.8);
 	backdrop-filter: blur(3px);
-}
-
-.content-wrapper {
-	flex: 1;
 }
 
 /* Makes the slider light grey - apply this class to this component when needed */
@@ -163,7 +158,7 @@ header:not(.tab) {
 }
 
 /* Don't nest this rule, it makes it easier for the parent to mutate when needed. */
-.input-config .content-wrapper {
+.input-config {
 	padding-bottom: 4rem;
 }
 

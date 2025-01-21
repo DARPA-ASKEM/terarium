@@ -195,9 +195,11 @@ const fetchDataset = async () => {
 		image.value = await getClimateDatasetPreview(dataset.value.esgfId);
 	}
 
+	// Remove download options from previous dataset
+	optionsMenuItems.value = optionsMenuItems.value.filter((item) => item.label !== 'Download');
 	// Add download options to the ellipsis menu
 	if (dataset.value?.fileNames) {
-		optionsMenuItems.value.push({
+		optionsMenuItems.value.unshift({
 			label: 'Download',
 			icon: 'pi pi-download',
 			items: dataset.value.fileNames.map((fileName) => ({

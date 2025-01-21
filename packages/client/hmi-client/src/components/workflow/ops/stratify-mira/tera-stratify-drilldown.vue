@@ -289,6 +289,9 @@ const getStatesAndParameters = (amrModel: Model) => {
 	const model = amrModel.model;
 	const semantics = amrModel.semantics;
 
+	const rates = semantics!.ode.rates || [];
+	const rateExpressions = rates.map((r) => r.expression);
+
 	if ((modelFramework === AMRSchemaNames.PETRINET || modelFramework === AMRSchemaNames.STOCKFLOW) && semantics?.ode) {
 		const { initials, parameters, observables } = semantics.ode;
 
@@ -296,7 +299,15 @@ const getStatesAndParameters = (amrModel: Model) => {
 			modelStates.push(i.target);
 		});
 		parameters?.forEach((p) => {
-			modelParameters.push(p.id);
+			// Parameters should be used within transition expressions for them to be "stratifiable"
+			// FIXME: This would be more accurate if we parse and check rate expressions' free variables
+			// instead of just the rate expression string
+			for (let i = 0; i < rateExpressions.length; i++) {
+				if (rateExpressions[i]?.includes(p.id)) {
+					modelParameters.push(p.id);
+					break;
+				}
+			}
 		});
 		observables?.forEach((o) => {
 			modelStates.push(o.id);
