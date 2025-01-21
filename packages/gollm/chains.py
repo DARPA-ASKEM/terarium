@@ -77,7 +77,6 @@ def cleanup_equations_chain(llm: LlmToolsInterface, equations: List[str]) -> dic
 
 def equations_from_image_chain(llm: LlmToolsInterface, image: str) -> dict:
     print("Validating and encoding image...")
-    print("Image: ", image)
     image_format = get_image_format_string(
         imghdr.what(None, h=base64.b64decode(image))
     )
