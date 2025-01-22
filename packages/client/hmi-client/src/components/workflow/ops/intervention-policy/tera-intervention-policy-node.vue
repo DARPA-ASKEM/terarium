@@ -1,16 +1,39 @@
 <template>
-	<section>
+	<section class="gap-0">
 		<ul v-if="node.state.interventionPolicy.id">
 			<li v-for="(_interventions, appliedTo) in selectedOutputParameters" :key="appliedTo">
 				<vega-chart expandable :are-embed-actions-visible="false" :visualization-spec="preparedCharts[appliedTo]" />
 			</li>
 		</ul>
-		<tera-intervention-summary-card
-			class="intervention-title"
-			v-for="(intervention, index) in interventionSummary"
-			:intervention="intervention"
-			:key="index"
-		/>
+		<div class="intervention-summary">
+			<div v-for="(intervention, index) in displayedInterventions" :key="index">
+				<p class="name">{{ intervention.name }}</p>
+				<div class="body" v-if="intervention.staticInterventions.length > 0">
+					<p
+						v-for="staticIntervention in intervention.staticInterventions"
+						:key="staticIntervention.type + staticIntervention.appliedTo"
+					>
+						Set {{ staticIntervention.type }} <span class="semi-bold">{{ staticIntervention.appliedTo }}</span> to
+						<span class="semi-bold">{{ staticIntervention.value }}</span> at time step
+						<span class="semi-bold">{{ staticIntervention.timestep }}</span>
+					</p>
+				</div>
+				<div class="body" v-if="intervention.dynamicInterventions.length > 0">
+					<p
+						v-for="dynamicIntervention in intervention.dynamicInterventions"
+						:key="dynamicIntervention.type + dynamicIntervention.appliedTo"
+					>
+						Set {{ dynamicIntervention.type }} <span class="semi-bold">{{ dynamicIntervention.appliedTo }}</span> to
+						<span class="semi-bold">{{ dynamicIntervention.value }}</span> when
+						<span class="semi-bold">{{ dynamicIntervention.parameter }}</span> crosses threshold
+						<span class="semi-bold">{{ dynamicIntervention.threshold }}</span>
+					</p>
+				</div>
+			</div>
+			<p v-if="remainingInterventionsCount > 0" class="text-gray-600 mt-2">
+				+ {{ remainingInterventionsCount }} more interventions...
+			</p>
+		</div>
 		<tera-progress-spinner is-centered :font-size="2" v-if="isLoading" />
 		<Button
 			:label="isModelInputConnected ? 'Open' : 'Attach a model'"
@@ -34,7 +57,6 @@ import VegaChart from '@/components/widgets/VegaChart.vue';
 import { useClientEvent } from '@/composables/useClientEvent';
 import { type ClientEvent, ClientEventType, type TaskResponse, TaskStatus } from '@/types/Types';
 import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue';
-import TeraInterventionSummaryCard from '@/components/intervention-policy/tera-intervention-summary-card.vue';
 import { InterventionPolicyState } from './intervention-policy-operation';
 
 const emit = defineEmits(['open-drilldown', 'update-state']);
@@ -65,7 +87,7 @@ const groupedOutputParameters = computed(() =>
 
 const interventionSummary = computed(() => {
 	const interventions = cloneDeep(props.node.state.interventionPolicy.interventions);
-	return interventions.slice(0, 4);
+	return interventions;
 });
 
 const selectedOutputParameters = computed(() => {
@@ -130,9 +152,33 @@ watch(
 		}
 	}
 );
+
+/* only show the first 10 interventions */
+const MAX_DISPLAYED_INTERVENTIONS = 5;
+
+const displayedInterventions = computed(() => interventionSummary.value.slice(0, MAX_DISPLAYED_INTERVENTIONS));
+
+const remainingInterventionsCount = computed(() =>
+	Math.max(0, interventionSummary.value.length - MAX_DISPLAYED_INTERVENTIONS)
+);
 </script>
 
 <style scoped>
+.intervention-summary {
+	font-size: var(--font-caption);
+	border: 1px solid var(--surface-border-light);
+	border-left: 4px solid var(--primary-color);
+	border-radius: var(--border-radius);
+	padding: var(--gap-3);
+	margin-bottom: var(--gap-1);
+	box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+	& .name {
+		font-weight: 600;
+	}
+	& .body {
+		padding-bottom: var(--gap-1);
+	}
+}
 ul {
 	list-style-type: none;
 }
@@ -140,5 +186,8 @@ ul {
 	& > :deep(h5) {
 		padding-top: 15px;
 	}
+}
+.semi-bold {
+	font-weight: 600;
 }
 </style>

@@ -4,7 +4,7 @@ import { InterventionSemanticType } from '@/types/Types';
 import { logger } from '@/utils/logger';
 
 export const blankIntervention: Intervention = {
-	name: 'New Intervention',
+	name: 'New intervention',
 	staticInterventions: [
 		{
 			timestep: Number.NaN,

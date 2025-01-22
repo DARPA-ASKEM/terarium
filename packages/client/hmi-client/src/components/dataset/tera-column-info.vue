@@ -198,8 +198,20 @@ h6 {
 	gap: var(--gap-1);
 }
 
-:deep(.p-dropdown > span),
+:deep(.p-dropdown > span) {
+	height: 1.75rem;
+	font-size: var(--font-caption);
+}
+:deep(.p-autocomplete-input.p-inputtext) {
+	border-radius: var(--border-radius);
+}
+
+:deep(.unit .tera-input > main > input) {
+	height: 1.25rem;
+	font-size: var(--font-caption);
+}
 :deep(.p-autocomplete-input) {
-	padding: var(--gap-1) var(--gap-2);
+	height: 2rem;
+	font-size: var(--font-caption);
 }
 </style>
