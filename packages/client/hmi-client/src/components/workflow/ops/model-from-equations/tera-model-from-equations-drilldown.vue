@@ -50,7 +50,15 @@
 									<Button class="h-3rem mr-1" label="Run" @click="onRun(runType)" />
 								</section>
 							</nav>
-							<section class="header-group">
+							<section
+								class="header-group"
+								@dragenter.prevent="dragEnterCount++"
+								@dragleave.prevent="dragEnterCount--"
+								@dragover.prevent
+								@drop.prevent.stop="handleDrop"
+							>
+								<!-- Add visual feedback for drag state -->
+								<div v-if="dragEnterCount > 0" class="drag-overlay">Drop image here</div>
 								<Textarea
 									v-model="multipleEquations"
 									autoResize
@@ -72,6 +80,9 @@
 						</header>
 						<h6 class="py-3">Use {{ includedEquations.length > 1 ? 'these equations' : 'this equation' }}</h6>
 						<ul class="blocks-container">
+							<div v-if="pastedImage" class="pasted-image">
+								<img :src="'data:image/png;base64,' + pastedImage" alt="Pasted image" height="160" />
+							</div>
 							<li v-for="(equation, i) in includedEquations" :key="i" @click.capture="selectItem(equation, $event)">
 								<tera-asset-block
 									:is-toggleable="false"
@@ -114,7 +125,7 @@
 									/>
 								</tera-asset-block>
 							</li>
-							<p v-if="isEmpty(includedEquations)" class="secondary-text">No equations selected</p>
+							<p v-if="isEmpty(includedEquations) && !pastedImage" class="secondary-text">No equations selected</p>
 						</ul>
 						<div class="spacer mb-5" />
 						<h6 class="pb-3">Other equations extracted from document</h6>
@@ -340,7 +351,7 @@ onMounted(async () => {
 		emit('update-state', state);
 	}
 });
-
+const pastedImage = ref<string | null>(null);
 function handlePasteEvent(e) {
 	// checks if the user pasted a file or collection of files
 	if (e.clipboardData?.files.length) {
@@ -348,12 +359,14 @@ function handlePasteEvent(e) {
 		Array.from(e.clipboardData.files).forEach((item) => {
 			const reader = new FileReader();
 			reader.onload = function ({ target }) {
-				if (target && document.value?.id) {
+				if (target) {
 					const base64 = arrayBufferToBase64(target.result);
+					pastedImage.value = base64;
 					// send base64 to gollm
-					equationsFromImage(document.value.id, base64).then((response) => {
+					equationsFromImage(base64).then((response) => {
 						const responseJson = JSON.parse(window.atob(response.output)).response;
 						multipleEquations.value = responseJson.equations.join('\n');
+						multipleEquationsDisabled.value = false;
 					});
 				}
 			};
@@ -362,6 +375,29 @@ function handlePasteEvent(e) {
 			}
 		});
 	}
+}
+
+// drag n drop image to get equations
+const dragEnterCount = ref(0);
+
+function handleDrop(e: DragEvent) {
+	dragEnterCount.value = 0; // Reset counter on drop
+	const file = e.dataTransfer?.files[0];
+	if (!file) return;
+	multipleEquationsDisabled.value = true;
+	const reader = new FileReader();
+	reader.onload = ({ target }) => {
+		if (target?.result) {
+			const base64 = arrayBufferToBase64(target.result);
+			pastedImage.value = base64;
+			equationsFromImage(base64).then((response) => {
+				const responseJson = JSON.parse(window.atob(response.output)).response;
+				multipleEquations.value = responseJson.equations.join('\n');
+				multipleEquationsDisabled.value = false;
+			});
+		}
+	};
+	reader.readAsArrayBuffer(file);
 }
 
 function arrayBufferToBase64(buffer) {
@@ -564,6 +600,7 @@ watch(
 */
 
 .header-group {
+	position: relative;
 	display: flex;
 	flex-direction: row;
 	align-items: center;
@@ -573,7 +610,21 @@ watch(
 	border: 1px solid var(--surface-border-light);
 	padding: var(--gap-3);
 }
-
+.drag-overlay {
+	position: absolute;
+	top: 0;
+	left: 0;
+	right: 0;
+	bottom: 0;
+	background: var(--surface-highlight);
+	border: 2px dashed var(--primary-color);
+	border-radius: var(--border-radius-medium);
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	color: var(--primary-color);
+	z-index: 1;
+}
 .equation-view {
 	display: flex;
 	gap: var(--gap-2);

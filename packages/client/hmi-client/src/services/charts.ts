@@ -454,13 +454,15 @@ export function createForecastChart(
 	};
 	const yaxis = structuredClone(xaxis);
 	yaxis.title = options.yAxisTitle;
-
 	const translationMap = options.translationMap;
 	let labelExpr = '';
 	if (translationMap) {
-		Object.keys(translationMap).forEach((key) => {
-			labelExpr += `datum.value === '${key}' ? '${translationMap[key]}' : `;
-		});
+		const allVariables = [...(samplingLayer?.variables ?? []), ...(statisticsLayer?.variables ?? [])];
+		Object.keys(translationMap)
+			.filter((key) => allVariables.includes(key))
+			.forEach((key) => {
+				labelExpr += `datum.value === '${key}' ? '${translationMap[key]}' : `;
+			});
 		labelExpr += " 'other'";
 	}
 
@@ -1128,7 +1130,7 @@ export function createSimulateSensitivityScatter(samplingLayer: SensitivityChart
 			mark: { type: 'point', filled: true },
 			encoding: {
 				x: {
-					field: { repeat: 'row' },
+					field: { repeat: 'column' },
 					type: 'quantitative',
 					axis: {
 						gridColor: '#EEE'
@@ -1139,7 +1141,7 @@ export function createSimulateSensitivityScatter(samplingLayer: SensitivityChart
 					}
 				},
 				y: {
-					field: { repeat: 'column' },
+					field: { repeat: 'row' },
 					type: 'quantitative',
 					axis: {
 						gridColor: '#EEE',
@@ -1793,7 +1795,12 @@ export function createFunmanParameterCharts(
 	};
 }
 
-export function createRankingInterventionsChart(values: { score: number; name: string }[], title: string) {
+export function createRankingInterventionsChart(
+	values: { score: number; name: string }[],
+	interventionNameColorMap: Record<string, string>,
+	title: string | null = null,
+	variableName: string | null = null
+) {
 	const globalFont = 'Figtree';
 
 	return {
@@ -1831,7 +1838,20 @@ export function createRankingInterventionsChart(values: { score: number; name: s
 			y: {
 				field: 'score',
 				type: 'quantitative',
-				title: 'Score'
+				// If a specific variable is selected the score should hold its actual value
+				title: variableName || 'Score'
+			},
+			color: {
+				field: 'name',
+				type: 'nominal',
+				scale: {
+					domain: Object.keys(interventionNameColorMap),
+					range: Object.values(interventionNameColorMap)
+				},
+				legend: {
+					title: null,
+					orient: 'top'
+				}
 			}
 		},
 		transform: [{ window: [{ op: 'row_number', as: 'index' }] }],
@@ -1846,13 +1866,14 @@ export function createRankingInterventionsChart(values: { score: number; name: s
 					align: 'right',
 					baseline: 'bottom',
 					dy: -15,
-					angle: 270
+					angle: 270,
+					fill: 'black'
 					// FIXME:
 					// I don't know how to fix the text to the bottom of the bar, its origin seems to be around the top
 					// and giving it the proper dx shift varies depending on the bar size
 				},
 				encoding: {
-					text: { field: 'name', type: 'nominal' }
+					text: { field: 'name', type: 'nominal', color: 'black' }
 				}
 			}
 		]

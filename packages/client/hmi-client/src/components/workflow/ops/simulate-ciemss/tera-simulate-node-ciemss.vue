@@ -1,20 +1,16 @@
 <template>
 	<main>
-		<section v-if="!isChartsEmpty && selectedRunId && runResults[selectedRunId]">
+		<section>
 			<tera-node-preview
 				:node="node"
 				:is-loading="!!inProgressForecastRun"
 				:prepared-charts="[interventionCharts, variableCharts, comparisonCharts]"
 				:chart-settings="[selectedInterventionSettings, selectedVariableSettings, selectedComparisonChartSettings]"
 				:are-embed-actions-visible="true"
+				:placeholder="placeholderText"
 			/>
 		</section>
-
-		<div v-else-if="isChartsEmpty" class="empty-chart">
-			<tera-operator-placeholder :node="node">No variables selected</tera-operator-placeholder>
-		</div>
 		<Button v-if="areInputsFilled" label="Open" @click="emit('open-drilldown')" severity="secondary" outlined />
-		<tera-operator-placeholder v-else :node="node"> Connect a model configuration </tera-operator-placeholder>
 	</main>
 </template>
 
@@ -37,7 +33,6 @@ import {
 } from '@/services/models/simulation-service';
 import { createLLMSummary } from '@/services/summary-service';
 
-import TeraOperatorPlaceholder from '@/components/operator/tera-operator-placeholder.vue';
 import { nodeOutputLabel } from '@/components/workflow/util';
 
 import { ModelConfiguration, type InterventionPolicy, type Model } from '@/types/Types';
@@ -94,7 +89,6 @@ const processResult = async (runId: string) => {
 				.filter((c) => ['state', 'observable'].includes(modelPartTypesMap.value[c]))
 				.slice(0, 5) // Limit the number of initial variables to first 5 to prevent too many charts
 		);
-		emit('update-state', state);
 	}
 
 	const summaryData = await getRunResultCSV(runId, 'result_summary.csv');
@@ -115,8 +109,9 @@ const processResult = async (runId: string) => {
 			selectedInputVariables: firstSensitiveSetting!.selectedInputVariables,
 			timepoint: lastTimepoint
 		});
-		emit('update-state', state);
 	}
+
+	emit('update-state', state);
 	const start = _.first(summaryData);
 	const end = _.last(summaryData);
 
@@ -186,10 +181,19 @@ const { useInterventionCharts, useVariableCharts, useComparisonCharts } = useCha
 );
 const interventionCharts = useInterventionCharts(selectedInterventionSettings, true);
 const variableCharts = useVariableCharts(selectedVariableSettings, null);
-const comparisonCharts = useComparisonCharts(selectedComparisonChartSettings);
+const comparisonCharts = useComparisonCharts(selectedComparisonChartSettings, true);
 const isChartsEmpty = computed(
 	() => _.isEmpty(interventionCharts.value) && _.isEmpty(variableCharts.value) && _.isEmpty(comparisonCharts.value)
 );
+const placeholderText = computed(() => {
+	if (!areInputsFilled.value) {
+		return 'Connect a model configuration';
+	}
+	if (isChartsEmpty.value) {
+		return 'No variables selected';
+	}
+	return undefined;
+});
 
 const poller = new Poller();
 const pollResult = async (runId: string) => {

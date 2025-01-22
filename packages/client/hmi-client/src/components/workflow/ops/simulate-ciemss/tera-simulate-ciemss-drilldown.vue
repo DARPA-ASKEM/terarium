@@ -45,6 +45,7 @@
 								:calendar-settings="getCalendarSettingsFromModel(model)"
 								v-model="timespan.start"
 								@update:model-value="updateState"
+								class="common-input-height"
 							/>
 							<tera-timestep-calendar
 								v-if="model && modelConfiguration"
@@ -53,6 +54,7 @@
 								:calendar-settings="getCalendarSettingsFromModel(model)"
 								v-model="timespan.end"
 								@update:model-value="updateState"
+								class="common-input-height"
 							/>
 						</div>
 
@@ -145,7 +147,10 @@
 					:summary-id="node.state.summaryId"
 					class="p-3 pt-0"
 				/>
-				<div class="pl-3 pr-3 pb-2 flex flex-row align-items-center gap-2">
+				<div
+					v-if="node.state.summaryId && runResults[selectedRunId]"
+					class="pl-3 pr-3 pb-2 flex flex-row align-items-center gap-2"
+				>
 					<SelectButton
 						class=""
 						:model-value="view"
@@ -161,7 +166,8 @@
 				</div>
 				<tera-notebook-error v-bind="node.state.errorMessage" />
 				<template v-if="runResults[selectedRunId]">
-					<div v-if="view === OutputView.Charts" ref="outputPanel">
+					<div v-if="view === OutputView.Charts">
+						<div class="mx-4" ref="chartWidthDiv"></div>
 						<Accordion multiple :active-index="currentActiveIndicies" class="px-2">
 							<!-- Section: Interventions over time -->
 							<AccordionTab v-if="selectedInterventionSettings.length > 0" header="Interventions over time">
@@ -185,50 +191,30 @@
 							</AccordionTab>
 							<!-- Section: Comparison charts -->
 							<AccordionTab v-if="selectedComparisonChartSettings.length > 0" header="Comparison charts">
-								<template v-for="setting of selectedComparisonChartSettings" :key="setting.id">
-									<div v-if="setting.smallMultiples">
-										<div
-											v-for="selectedVariable of setting.selectedVariables"
-											:key="setting.id + selectedVariable"
-											class="comparison-chart-container"
-										>
-											<div class="comparison-chart">
-												<vega-chart
-													v-if="selectedVariable"
-													expandable
-													:are-embed-actions-visible="true"
-													:visualization-spec="comparisonCharts[setting.id + selectedVariable]"
-												/>
-												<div v-else class="empty-state-chart">
-													<img
-														src="@assets/svg/operator-images/simulate-deterministic.svg"
-														alt="Select a variable"
-														draggable="false"
-														height="80px"
-													/>
-													<p class="text-center">Select a variable for comparison</p>
-												</div>
-											</div>
-										</div>
-									</div>
-									<template v-else>
+								<div
+									class="flex justify-content-center"
+									v-for="setting of selectedComparisonChartSettings"
+									:key="setting.id"
+								>
+									<div class="flex flex-row flex-wrap" v-if="setting.selectedVariables.length > 0">
 										<vega-chart
-											v-if="setting.selectedVariables && setting.selectedVariables.length"
+											v-for="(spec, index) of comparisonCharts[setting.id]"
+											:key="index"
 											expandable
 											:are-embed-actions-visible="true"
-											:visualization-spec="comparisonCharts[setting.id]"
+											:visualization-spec="spec"
 										/>
-										<div v-else class="empty-state-chart">
-											<img
-												src="@assets/svg/operator-images/simulate-deterministic.svg"
-												alt="Select variables to generate comparison chart"
-												draggable="false"
-												height="80px"
-											/>
-											<p class="text-center">Select variables to generate comparison chart</p>
-										</div>
-									</template>
-								</template>
+									</div>
+									<div v-else class="empty-state-chart">
+										<img
+											src="@assets/svg/operator-images/simulate-deterministic.svg"
+											alt="Select a variable"
+											draggable="false"
+											height="80px"
+										/>
+										<p class="text-center">Select a variable for comparison</p>
+									</div>
+								</div>
 							</AccordionTab>
 							<!-- Section: Sensitivity -->
 							<AccordionTab v-if="selectedSensitivityChartSettings.length > 0" header="Sensitivity analysis">
@@ -396,6 +382,9 @@
 									})
 							"
 						/>
+						<Divider />
+						<tera-chart-settings-quantiles :settings="chartSettings" @update-options="updateQauntilesOptions" />
+						<Divider />
 					</div>
 				</template>
 			</tera-slider-panel>
@@ -453,6 +442,7 @@ import VegaChart from '@/components/widgets/VegaChart.vue';
 import { KernelSessionManager } from '@/services/jupyter';
 import TeraChartSettings from '@/components/widgets/tera-chart-settings.vue';
 import TeraChartSettingsPanel from '@/components/widgets/tera-chart-settings-panel.vue';
+import TeraChartSettingsQuantiles from '@/components/widgets/tera-chart-settings-quantiles.vue';
 import TeraDatasetDatatable from '@/components/dataset/tera-dataset-datatable.vue';
 import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
 import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.vue';
@@ -608,8 +598,8 @@ const selectedRunId = computed(() => props.node.outputs.find((o) => o.id === sel
 const cancelRunIds = computed(() =>
 	[props.node.state.inProgressForecastId, props.node.state.inProgressBaseForecastId].filter((id) => Boolean(id))
 );
-const outputPanel = ref(null);
-const chartSize = useDrilldownChartSize(outputPanel);
+const chartWidthDiv = ref(null);
+const chartSize = useDrilldownChartSize(chartWidthDiv);
 
 const showSaveDataset = ref(false);
 
@@ -645,7 +635,8 @@ const {
 	updateActiveChartSettings,
 	setActiveChartSettings,
 	addEmptyComparisonChart,
-	updateComparisonChartSetting
+	updateComparisonChartSetting,
+	updateQauntilesOptions
 } = useChartSettings(props, emit);
 
 const {
@@ -958,6 +949,7 @@ onUnmounted(() => kernelManager.shutdown());
 .empty-state-chart {
 	display: flex;
 	flex-direction: column;
+	flex-grow: 1;
 	gap: var(--gap-4);
 	justify-content: center;
 	align-items: center;
@@ -978,5 +970,8 @@ onUnmounted(() => kernelManager.shutdown());
 		box-sizing: border-box;
 		width: 40%;
 	}
+}
+.common-input-height:deep(main) {
+	height: 2.35rem;
 }
 </style>

@@ -57,6 +57,15 @@ export class CalibrateEnsembleScenario extends BaseScenario {
 				modelConfigSpec: {
 					id: ''
 				}
+			},
+			{
+				id: uuidv4(),
+				modelSpec: {
+					id: ''
+				},
+				modelConfigSpec: {
+					id: ''
+				}
 			}
 		];
 
@@ -313,16 +322,15 @@ export class CalibrateEnsembleScenario extends BaseScenario {
 		// Model   Config   Simulate Calibrate
 		// Model   Config   Simulate Calibrate   EnsmbleCalibrate
 		// Model   Config   Simulate Calibrate
-		datasetNode.x = 100;
-		datasetNode.y = 200;
-
+		const anchorX = 100;
+		const anchorY = 100;
 		const nodeGapHorizontal = 400;
 		const nodeGapVertical = 400;
-		const modelNodes = wf.getNodes().filter((d) => d.operationType === ModelOp.name);
 
+		const modelNodes = wf.getNodes().filter((d) => d.operationType === ModelOp.name);
 		modelNodes.forEach((modelNode, modelNodeIdx) => {
-			modelNode.x = datasetNode.x + nodeGapHorizontal;
-			modelNode.y = datasetNode.y + (modelNodeIdx + 1) * nodeGapVertical;
+			modelNode.x = anchorX + nodeGapHorizontal;
+			modelNode.y = anchorY + (modelNodeIdx + 1) * nodeGapVertical;
 
 			const modelNeighbours = wf.getNeighborNodes(modelNode.id);
 			const modelConfigNode = modelNeighbours.downstreamNodes[0];
@@ -343,10 +351,11 @@ export class CalibrateEnsembleScenario extends BaseScenario {
 			}
 		});
 
-		calibrateEnsembleNode.x = datasetNode.x + 5 * nodeGapHorizontal;
-		calibrateEnsembleNode.y = 200;
+		datasetNode.x = anchorX + 3 * nodeGapHorizontal;
+		datasetNode.y = anchorY;
 
-		// wf.runDagreLayout();
+		calibrateEnsembleNode.x = anchorX + 5 * nodeGapHorizontal;
+		calibrateEnsembleNode.y = anchorY;
 
 		return wf.dump();
 	}

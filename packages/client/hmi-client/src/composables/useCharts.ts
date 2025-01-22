@@ -27,7 +27,7 @@ import {
 	ChartSettingSensitivity,
 	ChartSettingType
 } from '@/types/common';
-import { Intervention, Model, ModelConfiguration } from '@/types/Types';
+import { ChartAnnotation, Intervention, Model, ModelConfiguration } from '@/types/Types';
 import { displayNumber } from '@/utils/number';
 import { getUnitsFromModelParts, getVegaDateOptions } from '@/services/model';
 import { CalibrateMap, isCalibrateMap } from '@/services/calibrate-workflow';
@@ -457,28 +457,35 @@ export function useCharts(
 				const datasetVar = modelVarToDatasetVar(mapping?.value || [], variable);
 				const { sampleLayerVariables, statLayerVariables, options } = createForecastChartOptions(settings);
 
-				const chart = applyForecastChartAnnotations(
-					createForecastChart(
-						{
-							data: result,
-							variables: sampleLayerVariables,
-							timeField: 'timepoint_id',
-							groupField: 'sample_id'
-						},
-						{
-							data: resultSummary,
-							variables: statLayerVariables,
-							timeField: 'timepoint_id'
-						},
-						groundTruthData && {
-							data: groundTruthData.value,
-							variables: datasetVar ? [datasetVar] : [],
-							timeField: modelVarToDatasetVar(mapping?.value || [], 'timepoint_id')
-						},
-						options
-					),
-					annotations
-				);
+				const chart = !settings.showQuantiles
+					? applyForecastChartAnnotations(
+							createForecastChart(
+								{
+									data: result,
+									variables: sampleLayerVariables,
+									timeField: 'timepoint_id',
+									groupField: 'sample_id'
+								},
+								{
+									data: resultSummary,
+									variables: statLayerVariables,
+									timeField: 'timepoint_id'
+								},
+								groundTruthData && {
+									data: groundTruthData.value,
+									variables: datasetVar ? [datasetVar] : [],
+									timeField: modelVarToDatasetVar(mapping?.value || [], 'timepoint_id')
+								},
+								options
+							),
+							annotations
+						)
+					: createQuantilesForecastChart(
+							chartData.value?.resultGroupByTimepoint ?? [],
+							sampleLayerVariables,
+							settings.quantiles ?? [],
+							options
+						);
 				_.keys(groupedInterventionOutputs.value).forEach((key) => {
 					if (settings.selectedVariables.includes(key)) {
 						chart.layer.push(...createInterventionChartMarkers(groupedInterventionOutputs.value[key]));
@@ -492,45 +499,53 @@ export function useCharts(
 	};
 
 	function createComparisonChart(
-		result,
-		resultSummary,
-		statLayerVariables,
-		sampleLayerVariables,
-		options,
-		annotations
+		setting: ChartSettingComparison,
+		result: DataArray,
+		resultSummary: DataArray,
+		statLayerVariables: string[],
+		sampleLayerVariables: string[],
+		options: ForecastChartOptions,
+		annotations: ChartAnnotation[]
 	) {
-		const chart = applyForecastChartAnnotations(
-			createForecastChart(
-				{
-					data: result,
-					variables: sampleLayerVariables,
-					timeField: 'timepoint_id',
-					groupField: 'sample_id'
-				},
-				{
-					data: resultSummary,
-					variables: statLayerVariables,
-					timeField: 'timepoint_id'
-				},
-				null,
-				options
-			),
-			annotations
-		);
-		return chart;
+		const chart = !setting.showQuantiles
+			? applyForecastChartAnnotations(
+					createForecastChart(
+						{
+							data: result,
+							variables: sampleLayerVariables,
+							timeField: 'timepoint_id',
+							groupField: 'sample_id'
+						},
+						{
+							data: resultSummary,
+							variables: statLayerVariables,
+							timeField: 'timepoint_id'
+						},
+						null,
+						options
+					),
+					annotations
+				)
+			: createQuantilesForecastChart(
+					chartData.value?.resultGroupByTimepoint ?? [],
+					sampleLayerVariables,
+					setting.quantiles ?? [],
+					options
+				);
+		return chart as VisualizationSpec;
 	}
 
 	// Create comparison charts based on chart settings
-	const useComparisonCharts = (chartSettings: ComputedRef<ChartSettingComparison[]>) => {
+	const useComparisonCharts = (chartSettings: ComputedRef<ChartSettingComparison[]>, isNodeChart = false) => {
 		const comparisonCharts = computed(() => {
-			const charts: Record<string, VisualizationSpec> = {};
+			const charts: Record<string, VisualizationSpec[]> = {};
 			if (!isChartReadyToBuild.value) return charts;
 			const { result, resultSummary } = chartData.value as ChartData;
 
 			chartSettings.value.forEach((setting) => {
 				const selectedVars = setting.selectedVariables;
 				const annotations = getChartAnnotationsByChartId(setting.id);
-				if (setting.smallMultiples && setting.selectedVariables.length > 1) {
+				if (setting.smallMultiples && setting.selectedVariables.length > 1 && !isNodeChart) {
 					const sharedYExtent = setting.shareYAxis
 						? calculateYExtent(
 								resultSummary,
@@ -538,13 +553,19 @@ export function useCharts(
 								Boolean(setting.showBeforeAfter)
 							)
 						: undefined;
+
 					// create multiples
-					selectedVars.forEach((selectedVar, index) => {
+					let width = chartSize.value.width;
+					if (selectedVars.length > 1) width = chartSize.value.width / 2;
+					if (selectedVars.length > 4) width = chartSize.value.width / 3;
+					const height = selectedVars.length <= 1 ? chartSize.value.height : chartSize.value.height / 2;
+					charts[setting.id] = selectedVars.map((_selectedVar, index) => {
 						const { options, sampleLayerVariables, statLayerVariables } = createComparisonChartOptions(setting, index);
-						options.width /= 2.1;
-						options.height /= 2.1;
+						options.width = width;
+						options.height = height;
 						options.yExtent = sharedYExtent;
-						charts[setting.id + selectedVar] = createComparisonChart(
+						return createComparisonChart(
+							setting,
 							result,
 							resultSummary,
 							statLayerVariables,
@@ -556,6 +577,7 @@ export function useCharts(
 				} else {
 					const { options, sampleLayerVariables, statLayerVariables } = createComparisonChartOptions(setting);
 					const chart = createComparisonChart(
+						setting,
 						result,
 						resultSummary,
 						statLayerVariables,
@@ -563,7 +585,7 @@ export function useCharts(
 						options,
 						annotations
 					);
-					charts[setting.id] = chart;
+					charts[setting.id] = [chart];
 				}
 			});
 			return charts;
