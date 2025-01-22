@@ -144,7 +144,6 @@ header:not(.tab) {
 	& :deep(.content),
 	& :deep(.tab) {
 		background-color: var(--surface-100);
-		border-right: 1px solid var(--surface-border-light);
 	}
 
 	/** Override default accordion styles */
@@ -158,7 +157,7 @@ header:not(.tab) {
 }
 
 /* Don't nest this rule, it makes it easier for the parent to mutate when needed. */
-.input-config {
+.input-config.open {
 	padding-bottom: 4rem;
 }
 

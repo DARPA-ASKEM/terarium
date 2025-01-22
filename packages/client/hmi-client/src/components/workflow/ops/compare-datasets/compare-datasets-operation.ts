@@ -8,6 +8,7 @@ export enum TimepointOption {
 	LAST = 'last',
 	FIRST = 'first'
 }
+
 export enum RankOption {
 	MINIMUM = 'minimum',
 	MAXIMUM = 'maximum'
@@ -32,6 +33,12 @@ export const blankCriteriaOfInterest = {
 	rank: RankOption.MINIMUM,
 	timepoint: TimepointOption.LAST
 };
+
+// Map datasetId to dataset name
+export interface CompareDatasetsMap {
+	[key: string]: string;
+}
+
 export interface CriteriaOfInterestCard {
 	name: string;
 	selectedConfigurationId: string | null;
@@ -43,8 +50,10 @@ export interface CompareDatasetsState extends BaseState {
 	criteriaOfInterestCards: CriteriaOfInterestCard[];
 	selectedPlotType: PlotValue;
 	selectedCompareOption: CompareValue;
-	selectedDataset: string | null;
+	selectedBaselineDatasetId: string | null;
+	selectedGroundTruthDatasetId: string | null;
 	chartSettings: ChartSetting[] | null;
+	mapping: CompareDatasetsMap[];
 }
 
 export const CompareDatasetsOperation: Operation = {
@@ -64,8 +73,10 @@ export const CompareDatasetsOperation: Operation = {
 			criteriaOfInterestCards: [blankCriteriaOfInterest],
 			selectedPlotType: PlotValue.PERCENTAGE,
 			selectedCompareOption: CompareValue.IMPACT,
-			selectedDataset: null,
-			chartSettings: null
+			selectedBaselineDatasetId: null,
+			selectedGroundTruthDatasetId: null,
+			chartSettings: null,
+			mapping: []
 		};
 		return init;
 	}

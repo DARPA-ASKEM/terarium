@@ -36,9 +36,9 @@
 							disabled
 						/>
 						<template v-if="knobs.selectedCompareOption === CompareValue.IMPACT">
-							<label> Select simulation to use as a baseline (optional) </label>
+							<label> Select dataset to use as a baseline (optional) </label>
 							<Dropdown
-								v-model="knobs.selectedDataset"
+								v-model="knobs.selectedBaselineDatasetId"
 								:options="datasets"
 								option-label="name"
 								option-value="id"
@@ -82,7 +82,54 @@
 								/>
 							</div>
 						</div>
-						<template v-else-if="knobs.selectedCompareOption === CompareValue.ERROR"></template>
+						<template v-else-if="knobs.selectedCompareOption === CompareValue.ERROR">
+							<label> Select dataset representing the ground truth </label>
+							<Dropdown
+								v-model="knobs.selectedGroundTruthDatasetId"
+								:options="datasets"
+								option-label="name"
+								option-value="id"
+								:loading="isFetchingDatasets"
+								placeholder="Dataset"
+								@change="onChangeImpactComparison"
+							/>
+							<DataTable class="mapping-table" :value="knobs.mapping">
+								<Column field="datasetVariable">
+									<template #header>
+										<span class="column-header">Dataset: Other variables</span>
+									</template>
+									<!-- <template #body="{ data, field }">
+										<Dropdown
+											class="w-full"
+											:placeholder="mappingDropdownPlaceholder"
+											v-model="data[field]"
+											:options="datasetColumns?.map((ele) => ele.name)"
+											@change="updateMapping()"
+										/>
+									</template> -->
+								</Column>
+								<Column field="deleteRow">
+									<template #header>
+										<span class="column-header"></span>
+									</template>
+									<!-- 	<template #body="{ index }">
+										<Button class="p-button-sm p-button-text" icon="pi pi-trash" @click="deleteMapRow(index)" />
+									</template>-->
+								</Column>
+							</DataTable>
+							<label> Map column names for each input </label>
+							<div class="flex justify-content-between">
+								<div>
+									<!-- <Button class="p-button-sm p-button-text" icon="pi pi-plus" label="Add mapping" @click="addMapping" />
+									<Button
+										class="p-button-sm p-button-text"
+										icon="pi pi-sparkles"
+										label="Auto map"
+										@click="getAutoMapping"
+									/> -->
+								</div>
+							</div>
+						</template>
 					</tera-drilldown-section>
 				</template>
 			</tera-slider-panel>
@@ -104,7 +151,7 @@
 						</AccordionTab>
 						<AccordionTab header="Comparison table"> </AccordionTab>
 					</template>
-					<template v-else>
+					<template v-else-if="knobs.selectedCompareOption === CompareValue.RANK">
 						<AccordionTab header="Ranking results">
 							<vega-chart :visualization-spec="rankingResultsChart" :are-embed-actions-visible="false" expandable />
 						</AccordionTab>
@@ -195,6 +242,8 @@ import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
 import Dropdown from 'primevue/dropdown';
 import Divider from 'primevue/divider';
+import DataTable from 'primevue/datatable';
+import Column from 'primevue/column';
 import { Dataset, InterventionPolicy, ModelConfiguration } from '@/types/Types';
 import TeraCheckbox from '@/components/widgets/tera-checkbox.vue';
 import RadioButton from 'primevue/radiobutton';
@@ -214,7 +263,8 @@ import {
 	CompareDatasetsState,
 	CompareValue,
 	CriteriaOfInterestCard,
-	PlotValue
+	PlotValue,
+	type CompareDatasetsMap
 } from './compare-datasets-operation';
 import { generateRankingCharts, generateImpactCharts, initialize } from './compare-datasets-utils';
 
@@ -271,17 +321,24 @@ function onChangeImpactComparison() {
 }
 
 interface BasicKnobs {
-	criteriaOfInterestCards: CriteriaOfInterestCard[];
 	selectedCompareOption: CompareValue;
-	selectedDataset: string | null;
+	criteriaOfInterestCards: CriteriaOfInterestCard[];
+	selectedBaselineDatasetId: string | null;
+	selectedGroundTruthDatasetId: string | null;
 	selectedPlotType: PlotValue;
+	mapping: CompareDatasetsMap[];
 }
 
 const knobs = ref<BasicKnobs>({
-	criteriaOfInterestCards: [],
 	selectedCompareOption: CompareValue.IMPACT,
-	selectedDataset: null,
-	selectedPlotType: PlotValue.PERCENTAGE
+	// Impact
+	selectedBaselineDatasetId: null,
+	selectedPlotType: PlotValue.PERCENTAGE,
+	// Ranking interventions
+	criteriaOfInterestCards: [],
+	// Compare model errors
+	selectedGroundTruthDatasetId: null,
+	mapping: []
 });
 
 const addCriteria = () => {
@@ -332,7 +389,7 @@ const { generateAnnotation, getChartAnnotationsByChartId, useCompareDatasetChart
 );
 const selectedPlotType = computed(() => knobs.value.selectedPlotType);
 const baselineDatasetIndex = computed(() =>
-	datasets.value.findIndex((dataset) => dataset.id === knobs.value.selectedDataset)
+	datasets.value.findIndex((dataset) => dataset.id === knobs.value.selectedBaselineDatasetId)
 );
 const variableCharts = useCompareDatasetCharts(selectedVariableSettings, selectedPlotType, baselineDatasetIndex);
 
@@ -347,7 +404,7 @@ function outputPanelBehavior() {
 onMounted(() => {
 	const state = cloneDeep(props.node.state);
 	knobs.value = Object.assign(knobs.value, state);
-	if (!knobs.value.selectedDataset) knobs.value.selectedDataset = datasets.value[0]?.id ?? null;
+	if (!knobs.value.selectedBaselineDatasetId) knobs.value.selectedBaselineDatasetId = datasets.value[0]?.id ?? null;
 
 	outputPanelBehavior();
 
@@ -374,7 +431,8 @@ watch(
 		const state = cloneDeep(props.node.state);
 		state.criteriaOfInterestCards = knobs.value.criteriaOfInterestCards;
 		state.selectedCompareOption = knobs.value.selectedCompareOption;
-		state.selectedDataset = knobs.value.selectedDataset;
+		state.selectedBaselineDatasetId = knobs.value.selectedBaselineDatasetId;
+		state.selectedGroundTruthDatasetId = knobs.value.selectedGroundTruthDatasetId;
 		state.selectedPlotType = knobs.value.selectedPlotType;
 		emit('update-state', state);
 	},
