@@ -188,6 +188,34 @@ export class HorizonScanningScenario extends BaseScenario {
 			}
 		});
 
+		const modelConfig = await getModelConfigurationById(this.modelConfigSpec.id);
+
+		const baseModelConfigNode = wf.addNode(
+			ModelConfigOp,
+			{ x: 0, y: 0 },
+			{
+				size: OperatorNodeSize.medium
+			}
+		);
+
+		const baseSimulateNode = wf.addNode(
+			SimulateCiemssOp,
+			{ x: 0, y: 0 },
+			{
+				size: OperatorNodeSize.medium
+			}
+		);
+
+		wf.updateNode(baseModelConfigNode, {
+			state: {
+				transientModelConfig: modelConfig
+			},
+			output: {
+				value: [modelConfig.id],
+				state: _.omit(baseModelConfigNode.state, ['transientModelConfig'])
+			}
+		});
+
 		const compareDatasetNode = wf.addNode(
 			CompareDatasetOp,
 			{ x: 0, y: 0 },
@@ -196,17 +224,42 @@ export class HorizonScanningScenario extends BaseScenario {
 			}
 		);
 
+		wf.addEdge(modelNode.id, modelNode.outputs[0].id, baseModelConfigNode.id, baseModelConfigNode.inputs[0].id, [
+			{ x: 0, y: 0 },
+			{ x: 0, y: 0 }
+		]);
+
+		wf.addEdge(
+			baseModelConfigNode.id,
+			baseModelConfigNode.outputs[0].id,
+			baseSimulateNode.id,
+			baseSimulateNode.inputs[0].id,
+			[
+				{ x: 0, y: 0 },
+				{ x: 0, y: 0 }
+			]
+		);
+
+		wf.addEdge(
+			baseSimulateNode.id,
+			baseSimulateNode.outputs[0].id,
+			compareDatasetNode.id,
+			compareDatasetNode.inputs[0].id,
+			[
+				{ x: 0, y: 0 },
+				{ x: 0, y: 0 }
+			]
+		);
+
 		// add input ports for each simulation to the dataset transformer, this will be a matrix of intervention x parameter low and high
-		for (let i = 0; i < this.interventionSpecs.length * 2 ** this.parameters.length - 1; i++) {
+		for (let i = 0; i < this.interventionSpecs.length * 2 ** this.parameters.length; i++) {
 			workflowService.appendInputPort(compareDatasetNode, {
 				type: 'datasetId|simulationId',
 				label: 'Dataset or Simulation'
 			});
 		}
 
-		let compareDatasetIndex = 0;
-
-		const modelConfig = await getModelConfigurationById(this.modelConfigSpec.id);
+		let compareDatasetIndex = 1;
 
 		// chart settings for simulate node
 		let simulateChartSettings: ChartSetting[] = [];
@@ -215,6 +268,12 @@ export class HorizonScanningScenario extends BaseScenario {
 			ChartSettingType.VARIABLE,
 			this.simulateSpec.ids
 		);
+
+		wf.updateNode(baseSimulateNode, {
+			state: {
+				chartSettings: simulateChartSettings
+			}
+		});
 
 		let compareDatasetChartSettings: ChartSetting[] = [];
 		compareDatasetChartSettings = updateChartSettingsBySelectedVariables(
@@ -231,8 +290,8 @@ export class HorizonScanningScenario extends BaseScenario {
 
 		// Generate Cartesian product of parameter extrema
 		const parameterExtrema = this.parameters.map((parameter) => [
-			{ id: parameter!.id, value: parameter!.low },
-			{ id: parameter!.id, value: parameter!.high }
+			{ id: parameter!.id, type: 'Low', value: parameter!.low },
+			{ id: parameter!.id, type: 'High', value: parameter!.high }
 		]);
 
 		const cartesianConfigs = cartesianProduct(parameterExtrema);
@@ -248,8 +307,7 @@ export class HorizonScanningScenario extends BaseScenario {
 				}
 			});
 
-			const configName = config.map((param) => `${param.id}_${param.value}`).join('_');
-			clonedModelConfig.name = `${modelConfig.name}_${configName}`;
+			clonedModelConfig.name = config.map((param) => `${param.id}${param.type}`).join('_');
 			clonedModelConfig.description = `This is a configuration created from "${modelConfig.name}" with extreme values for the parameters: ${config.map((param) => `${param.id}: ${param.value}`).join(', ')} using the horizon scanning scenario template.`;
 
 			const newModelConfig = await createModelConfiguration(clonedModelConfig);
@@ -451,7 +509,8 @@ export class HorizonScanningScenario extends BaseScenario {
 			interventionNode.y = modelNode.y - 50;
 		});
 
-		modelConfigNodes.forEach((modelConfigNode, idx) => {
+		const configNodes = wf.getNodes().filter((node) => node.operationType === ModelConfigOp.name);
+		configNodes.forEach((modelConfigNode, idx) => {
 			modelConfigNode.x = modelNode.x + nodeGapHorizontal;
 			modelConfigNode.y = modelNode.y + nodeGapVertical * (idx + 1);
 		});
