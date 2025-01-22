@@ -12,6 +12,7 @@
 				v-model:is-open="isDocViewerOpen"
 				header="Document viewer"
 				content-width="100%"
+				:document-viewer="true"
 			>
 				<template #content>
 					<tera-drilldown-section :is-loading="isFetchingPDF">
