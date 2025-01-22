@@ -82,7 +82,7 @@
 				/>
 			</div>
 
-			<label :class="{ 'disabled-label': !scenario.modelSpec.id }">Planned intervention policy (optional)</label>
+			<label :class="{ 'disabled-label': !scenario.modelSpec.id }">Planned intervention policy</label>
 			<div v-for="(intervention, i) in scenario.interventionSpecs" :key="i" class="flex">
 				<Dropdown
 					ref="interventionDropdowns"
