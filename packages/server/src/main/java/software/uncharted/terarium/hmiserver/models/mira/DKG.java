@@ -10,6 +10,7 @@ import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.Accessors;
 import software.uncharted.terarium.hmiserver.annotations.TSModel;
+import software.uncharted.terarium.hmiserver.models.dataservice.Grounding;
 
 @Data
 @Accessors(chain = true)
@@ -19,7 +20,6 @@ import software.uncharted.terarium.hmiserver.annotations.TSModel;
 @RequiredArgsConstructor
 public class DKG {
 
-	public static final String ID = "id:ID";
 	public static final String NAME = "name:string";
 	public static final String DESCRIPTION = "description:string";
 	public static final String EMBEDDINGS = "description:dense_vector";
@@ -29,7 +29,7 @@ public class DKG {
 		this.curie = curie;
 	}
 
-	@JsonAlias(ID)
+	@JsonAlias(Grounding.ID)
 	private String curie;
 
 	@JsonAlias(NAME)

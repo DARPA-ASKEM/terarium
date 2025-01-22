@@ -22,6 +22,7 @@ import org.springframework.stereotype.Service;
 import software.uncharted.terarium.hmiserver.configuration.ElasticsearchConfiguration;
 import software.uncharted.terarium.hmiserver.models.TerariumAssetEmbeddings;
 import software.uncharted.terarium.hmiserver.models.TerariumAssetEmbeddings.Embedding;
+import software.uncharted.terarium.hmiserver.models.dataservice.Grounding;
 import software.uncharted.terarium.hmiserver.models.mira.DKG;
 import software.uncharted.terarium.hmiserver.service.elasticsearch.ElasticsearchService;
 import software.uncharted.terarium.hmiserver.service.gollm.EmbeddingService;
@@ -227,7 +228,7 @@ public class DKGService {
 	}
 
 	private List<DKG> getEntity(final String index, final String curie) throws IOException {
-		Query query = QueryBuilders.matchPhrase().field(DKG.ID).query(curie).build()._toQuery();
+		Query query = QueryBuilders.matchPhrase().field(Grounding.ID).query(curie).build()._toQuery();
 
 		final SearchRequest req = new SearchRequest.Builder().index(index).from(0).size(10).query(query).build();
 		return elasticService.search(req, DKG.class);

@@ -26,6 +26,8 @@ import software.uncharted.terarium.hmiserver.models.mira.DKG;
 @Entity
 public class Grounding extends TerariumEntity {
 
+	public static final String ID = "id:ID";
+
 	@Serial
 	private static final long serialVersionUID = 302308407252037615L;
 
