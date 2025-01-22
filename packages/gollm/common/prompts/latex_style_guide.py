@@ -14,12 +14,12 @@ LATEX_STYLE_GUIDE = """
 9) Avoid using homoglyphs
 10) Avoid words or multi-character names for variables and names. Use camel case to express multi-word or multi-character names
 11) Replace any variant form of Greek letters to their main form when representing a variable or parameter 
-    a) "\\varepsilon" to "\\epsilon"
-    b) "\\vartheta" to "\\theta"
-    c) "\\varpi" to "\\pi"
-    d) "\\varrho" to "\\rho"
-    e) "\\varsigma" to "\\sigma"
-    f) "\\varphi" to "\\phi"
+    a) for example, replace "\\varepsilon" with "\\epsilon"
+    b) for example, replace "\\vartheta" with "\\theta"
+    c) for example, replace "\\varpi" with "\\pi"
+    d) for example, replace "\\varrho" with "\\rho"
+    e) for example, replace "\\varsigma" with "\\sigma"
+    f) for example, replace "\\varphi" with "\\phi"
 12) If equations are separated by punctuation (like comma, period, semicolon), do not include the punctuation in the LaTeX code.
 13) Rewrite expressions with negative exponents as explicit fractions
     a) for example, replace "N^{{-1}}" with "\\frac{{1}}{{N}}"
