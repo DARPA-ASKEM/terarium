@@ -20,7 +20,6 @@ import software.uncharted.terarium.hmiserver.models.dataservice.Grounding;
 @RequiredArgsConstructor
 public class DKG {
 
-	public static final String DESCRIPTION = "description:string";
 	public static final String EMBEDDINGS = "description:dense_vector";
 	public static final String GEONAMES = "geonames";
 
@@ -34,7 +33,7 @@ public class DKG {
 	@JsonAlias(Grounding.NAME)
 	private String name;
 
-	@JsonAlias(DESCRIPTION)
+	@JsonAlias(Grounding.DESCRIPTION)
 	@JsonSetter(nulls = Nulls.AS_EMPTY)
 	private String description = "";
 }

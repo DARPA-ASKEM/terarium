@@ -28,6 +28,7 @@ public class Grounding extends TerariumEntity {
 
 	public static final String ID = "id:ID";
 	public static final String NAME = "name:string";
+	public static final String DESCRIPTION = "description:string";
 
 	@Serial
 	private static final long serialVersionUID = 302308407252037615L;
