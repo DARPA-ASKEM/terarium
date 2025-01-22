@@ -567,29 +567,14 @@ watch(
 }
 
 .asset-panel {
-	border-width: 1px 1px 0 1px;
-	border-color: var(--surface-border-light);
-	border-style: solid;
-	border-radius: unset;
 	overflow: auto;
 
 	&.selected {
-		border-left: var(--gap-1) solid var(--primary-color);
+		border-left: 4px solid var(--primary-color);
 	}
 }
 .asset-panel:deep(.p-panel-header) {
 	padding-bottom: var(--gap-1);
-}
-
-.blocks-container li:first-of-type .asset-panel {
-	border-top-left-radius: var(--border-radius-medium);
-	border-top-right-radius: var(--border-radius-medium);
-}
-
-.blocks-container li:last-of-type .asset-panel {
-	border-bottom-width: 1px;
-	border-bottom-left-radius: var(--border-radius-medium);
-	border-bottom-right-radius: var(--border-radius-medium);
 }
 
 /* TODO: to be implemented when displaying the extracted equations.

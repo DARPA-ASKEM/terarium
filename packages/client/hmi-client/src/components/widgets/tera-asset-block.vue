@@ -62,10 +62,15 @@ defineProps({
 <style scoped>
 .asset-panel {
 	border: 1px solid var(--surface-border-light);
-	border-radius: var(--border-radius-medium);
-	border-left: 0.5rem solid var(--primary-color);
+	border-radius: var(--border-radius);
+	border-left: 4px solid var(--surface-400);
+	background: var(--surface-0);
+	cursor: pointer;
 }
 
+.asset-panel:hover {
+	background: var(--surface-highlight);
+}
 .p-panel:deep(section) {
 	display: flex;
 	align-items: center;
@@ -92,5 +97,11 @@ header > section {
 .panel-content {
 	display: flex;
 	flex-direction: column;
+}
+:deep(.p-panel-header) {
+	background: transparent;
+}
+:deep(.p-panel-content) {
+	background: transparent;
 }
 </style>
