@@ -133,7 +133,7 @@ export interface CsvColumnStats {
 
 export interface Grounding extends TerariumEntity {
     identifiers: DKG[];
-    context?: any;
+    context?: { [index: string]: string };
 }
 
 export interface PresignedURL {
