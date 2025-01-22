@@ -102,8 +102,7 @@ export function getChartEnsembleMapping(
 
 	// For every State Variable that has not been mapped in the ensembleMapping
 	// We will fill in here so the user can still see these if they want
-	const allStates = Object.keys(stateToModelConfigMap);
-	allStates.forEach((state) => {
+	Object.keys(stateToModelConfigMap).forEach((state) => {
 		const modelConfigurationsMap = {};
 		stateToModelConfigMap[state].forEach((id) => {
 			modelConfigurationsMap[id] = state;
