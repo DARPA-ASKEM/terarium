@@ -10,7 +10,7 @@
 			<Button class="ml-auto" text icon="pi pi-trash" @click="emit('delete')" />
 		</header>
 		<p>
-			Rank interventions based on the
+			Rank the intervention policies that optimizes the
 			<Dropdown
 				:options="Object.values(RankOption)"
 				:model-value="card.rank"
@@ -23,13 +23,11 @@
 				:model-value="card.selectedVariable"
 				@update:model-value="emit('update', { selectedVariable: $event })"
 			/>
-			at
 			<Dropdown
 				:options="Object.values(TimepointOption)"
 				:model-value="card.timepoint"
 				@update:model-value="emit('update', { timepoint: $event })"
 			/>
-			timepoint.
 		</p>
 		<footer v-if="!card.selectedVariable">Please select a variable.</footer>
 	</div>

@@ -198,10 +198,17 @@ export function generateRankingCharts(
 	node.state.criteriaOfInterestCards.forEach((card) => {
 		if (!chartData.value) return;
 
-		const pointOfComparison =
-			card.timepoint === TimepointOption.FIRST
-				? chartData.value.resultSummary[0]
-				: chartData.value.resultSummary[chartData.value.resultSummary.length - 1];
+		let pointOfComparison: Record<string, number>;
+
+		if (card.timepoint === TimepointOption.OVERALL) {
+			chartData.value.resultSummary.forEach((summary) => {
+				console.log(summary);
+			});
+		} else if (card.timepoint === TimepointOption.FIRST) {
+			pointOfComparison = chartData.value.resultSummary[0];
+		} else if (card.timepoint === TimepointOption.LAST) {
+			pointOfComparison = chartData.value.resultSummary[chartData.value.resultSummary.length - 1];
+		}
 
 		const rankingCriteriaValues: { score: number; name: string }[] = [];
 
@@ -231,7 +238,6 @@ export function generateRankingCharts(
 				score: pointOfComparison[`${chartData.value?.pyciemssMap[card.selectedVariable]}_mean:${index}`] ?? 0,
 				name: barLabel
 			});
-			console.log(rankingCriteriaValues);
 		});
 
 		const sortedRankingCriteriaValues =

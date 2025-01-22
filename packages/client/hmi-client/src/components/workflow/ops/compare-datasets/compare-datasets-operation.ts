@@ -5,9 +5,9 @@ import { ChartSetting } from '@/types/common';
 const DOCUMENTATION_URL = 'https://documentation.terarium.ai/datasets/compare-datasets/';
 
 export enum TimepointOption {
-	LAST = 'the last',
-	FIRST = 'the first',
-	OVERALL = 'the overall'
+	LAST = 'at the last timepoint',
+	FIRST = 'at the first timepoint',
+	OVERALL = 'for all timepoints'
 }
 export enum RankOption {
 	MINIMUM = 'minimum',
