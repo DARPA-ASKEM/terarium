@@ -38,7 +38,7 @@
 						<template v-if="knobs.selectedCompareOption === CompareValue.IMPACT">
 							<label> Select simulation to use as a baseline (optional) </label>
 							<Dropdown
-								v-model="knobs.selectedDataset"
+								v-model="knobs.selectedBaselineDatasetId"
 								:options="datasets"
 								option-label="name"
 								option-value="id"
@@ -271,14 +271,14 @@ function onChangeImpactComparison() {
 interface BasicKnobs {
 	criteriaOfInterestCards: CriteriaOfInterestCard[];
 	selectedCompareOption: CompareValue;
-	selectedDataset: string | null;
+	selectedBaselineDatasetId: string | null;
 	selectedPlotType: PlotValue;
 }
 
 const knobs = ref<BasicKnobs>({
 	criteriaOfInterestCards: [],
 	selectedCompareOption: CompareValue.IMPACT,
-	selectedDataset: null,
+	selectedBaselineDatasetId: null,
 	selectedPlotType: PlotValue.PERCENTAGE
 });
 
@@ -330,7 +330,7 @@ const { generateAnnotation, getChartAnnotationsByChartId, useCompareDatasetChart
 );
 const selectedPlotType = computed(() => knobs.value.selectedPlotType);
 const baselineDatasetIndex = computed(() =>
-	datasets.value.findIndex((dataset) => dataset.id === knobs.value.selectedDataset)
+	datasets.value.findIndex((dataset) => dataset.id === knobs.value.selectedBaselineDatasetId)
 );
 const variableCharts = useCompareDatasetCharts(selectedVariableSettings, selectedPlotType, baselineDatasetIndex);
 
@@ -345,7 +345,6 @@ function outputPanelBehavior() {
 onMounted(async () => {
 	const state = cloneDeep(props.node.state);
 	knobs.value = Object.assign(knobs.value, state);
-	if (!knobs.value.selectedDataset) knobs.value.selectedDataset = datasets.value[0]?.id ?? null;
 
 	outputPanelBehavior();
 
@@ -375,7 +374,7 @@ watch(
 		const state = cloneDeep(props.node.state);
 		state.criteriaOfInterestCards = knobs.value.criteriaOfInterestCards;
 		state.selectedCompareOption = knobs.value.selectedCompareOption;
-		state.selectedDataset = knobs.value.selectedDataset;
+		state.selectedBaselineDatasetId = knobs.value.selectedBaselineDatasetId;
 		state.selectedPlotType = knobs.value.selectedPlotType;
 		emit('update-state', state);
 	},

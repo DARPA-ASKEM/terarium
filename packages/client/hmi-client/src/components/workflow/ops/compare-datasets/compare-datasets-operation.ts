@@ -42,7 +42,7 @@ export interface CompareDatasetsState extends BaseState {
 	criteriaOfInterestCards: CriteriaOfInterestCard[];
 	selectedPlotType: PlotValue;
 	selectedCompareOption: CompareValue;
-	selectedDataset: string | null;
+	selectedBaselineDatasetId: string | null;
 	chartSettings: ChartSetting[] | null;
 }
 
@@ -63,7 +63,7 @@ export const CompareDatasetsOperation: Operation = {
 			criteriaOfInterestCards: [blankCriteriaOfInterest],
 			selectedPlotType: PlotValue.PERCENTAGE,
 			selectedCompareOption: CompareValue.IMPACT,
-			selectedDataset: null,
+			selectedBaselineDatasetId: null,
 			chartSettings: null
 		};
 		return init;

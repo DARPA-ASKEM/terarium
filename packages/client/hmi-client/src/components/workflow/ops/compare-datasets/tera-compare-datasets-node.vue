@@ -52,7 +52,7 @@ const rankingCriteriaCharts = ref<any>([]);
 
 const selectedPlotType = computed(() => props.node.state.selectedPlotType);
 const baselineDatasetIndex = computed(() =>
-	datasets.value.findIndex((dataset) => dataset.id === props.node.state.selectedDataset)
+	datasets.value.findIndex((dataset) => dataset.id === props.node.state.selectedBaselineDatasetId)
 );
 
 const { useCompareDatasetCharts } = useCharts(
@@ -91,6 +91,7 @@ watch(
 			emit('append-input-port', { type: 'datasetId', label: 'Dataset or Simulation result' });
 			initialize(
 				props,
+				null,
 				isFetchingDatasets,
 				datasets,
 				datasetResults,
