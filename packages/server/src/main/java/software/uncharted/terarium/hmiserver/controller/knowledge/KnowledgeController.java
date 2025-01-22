@@ -731,28 +731,6 @@ public class KnowledgeController {
 				continue;
 			}
 
-			final JsonNode dkgGroundings = annotation.get("dkg_groundings");
-			if (dkgGroundings == null) {
-				log.warn("No dkg_groundings for column: {}", col.getName());
-				continue;
-			}
-
-			final Grounding groundings = new Grounding();
-			for (final JsonNode g : annotation.get("dkg_groundings")) {
-				if (g.size() < 2) {
-					log.warn("Invalid dkg_grounding: {}", g);
-					continue;
-				}
-				if (groundings.getIdentifiers() == null) {
-					groundings.setIdentifiers(new ArrayList<>());
-				}
-				groundings.getIdentifiers().add(new DKG(g.get(0).asText(), g.get(1).asText(), "", null, null));
-			}
-
-			// remove groundings from an annotation object
-			((ObjectNode) annotation).remove("dkg_groundings");
-
-			col.setGrounding(groundings);
 			col.setDescription(annotation.get("description").asText());
 			col.updateMetadata(annotation);
 		}
