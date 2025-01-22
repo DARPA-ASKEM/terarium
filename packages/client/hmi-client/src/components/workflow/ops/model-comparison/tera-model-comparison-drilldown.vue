@@ -196,7 +196,7 @@ import { ClientEvent, ClientEventType, type Model, TaskResponse, TaskStatus } fr
 import { OperatorStatus, WorkflowNode, WorkflowPortStatus } from '@/types/workflow';
 import { logger } from '@/utils/logger';
 import Button from 'primevue/button';
-import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
+import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue';
 import { VAceEditor } from 'vue3-ace-editor';
 import { VAceEditorInstance } from 'vue3-ace-editor/types';
 import TeraNotebookJupyterInput from '@/components/llm/tera-notebook-jupyter-input.vue';
@@ -604,10 +604,11 @@ useClientEvent(ClientEventType.TaskGollmCompareModel, (event: ClientEvent<TaskRe
 
 onMounted(async () => {
 	if (props.node.state.hasRun) {
-		processCompareModels();
+		await processCompareModels();
 	}
 
 	// Run asynchronously the concept comparison of the models
+	await nextTick();
 	processConceptComparison();
 
 	if (!isEmpty(props.node.state.comparisonImageIds)) {
