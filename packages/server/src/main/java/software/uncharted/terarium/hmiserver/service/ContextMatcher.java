@@ -112,17 +112,9 @@ public class ContextMatcher {
 		List<Grounding> groundings = new ArrayList<>();
 		for (SearchMatch match : matches) {
 			CuratedGrounding curatedGrounding = configData.get(match.getKey());
-			ArrayList<DKG> identifiers = curatedGrounding
-				.getIdentifiers()
-				.entrySet()
-				.stream()
-				.map(e -> new DKG(e.getKey() + ":" + e.getValue()))
-				.collect(Collectors.toCollection(ArrayList::new));
-
-			Grounding grounding = new Grounding();
-			grounding.setIdentifiers(identifiers);
-			grounding.setContext(curatedGrounding.getContext());
-			groundings.add(grounding);
+			groundings.add(
+				new Grounding().setIdentifiers(curatedGrounding.getIdentifiers()).setContext(curatedGrounding.getContext())
+			);
 		}
 		return groundings;
 	}
