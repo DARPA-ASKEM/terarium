@@ -274,9 +274,10 @@ defineExpose({
 </style>
 <style scoped>
 .vega-chart-container {
+	display: flex;
+	justify-content: center;
 	background: var(--surface-0);
 	margin-bottom: var(--gap-4);
-	padding-top: var(--gap-2);
 	footer {
 		padding: var(--gap-3);
 	}

@@ -4,7 +4,7 @@ import { InterventionSemanticType } from '@/types/Types';
 import { logger } from '@/utils/logger';
 
 export const blankIntervention: Intervention = {
-	name: 'New Intervention',
+	name: 'New intervention',
 	staticInterventions: [
 		{
 			timestep: Number.NaN,
@@ -16,7 +16,7 @@ export const blankIntervention: Intervention = {
 	dynamicInterventions: []
 };
 
-export const getInterventionPolicyById = async (policyId: string): Promise<InterventionPolicy> => {
+export const getInterventionPolicyById = async (policyId: string): Promise<InterventionPolicy | null> => {
 	const response = await API.get<InterventionPolicy>(`/interventions/${policyId}`);
 	return response?.data ?? null;
 };

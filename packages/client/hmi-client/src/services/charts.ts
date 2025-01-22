@@ -51,7 +51,6 @@ interface BaseChartOptions {
 	autosize?: AUTOSIZE;
 	dateOptions?: DateOptions;
 	scale?: string;
-	yMinExtent?: number;
 }
 
 export interface DateOptions {
@@ -64,6 +63,7 @@ export interface ForecastChartOptions extends BaseChartOptions {
 	fitYDomain?: boolean;
 	legendProperties?: Record<string, any>;
 	bins?: Map<string, number[]>;
+	yExtent?: [number, number];
 }
 
 export interface ForecastChartLayer {
@@ -407,6 +407,45 @@ export function createHistogramChart(dataset: Record<string, any>[], options: Hi
 	return spec;
 }
 
+/* This function estimates the legend width, because if it's too we will have to draw it with columns since there's no linewrap */
+function estimateLegendWidth(items: string[], fontSize: number): number {
+	// Approximate width of each character (assuming monospace-like proportions)
+	const charWidth = fontSize * 0.3;
+
+	// Account for symbol width, padding, and spacing between items
+	const symbolWidth = fontSize * 2; // Symbol + padding
+	const itemSpacing = fontSize * 2; // Space between items
+
+	// Calculate total width
+	return items.reduce((totalWidth, item) => {
+		const itemWidth = item.length * charWidth + symbolWidth;
+		return totalWidth + itemWidth + itemSpacing;
+	}, 0);
+}
+
+function calculateLegendColumns(
+	isCompact: boolean,
+	estimatedWidth: number,
+	chartWidth: number,
+	numItems: number | undefined
+): number | undefined {
+	if (isCompact || !numItems) {
+		return isCompact ? 1 : undefined;
+	}
+
+	if (estimatedWidth <= chartWidth) {
+		return undefined; // Everything fits in one row
+	}
+
+	const avgItemWidth = (estimatedWidth / numItems) * 0.85; // Reduce by 15% since our estimation seems high
+
+	// Calculate how many columns can fit without any extra buffer
+	const maxColumns = Math.floor(chartWidth / avgItemWidth);
+
+	// Use as many columns as we can fit, up to the number of items
+	return Math.max(1, Math.min(maxColumns, numItems));
+}
+
 /**
  * Generate Vegalite specs for simulation/forecast charts. The chart can contain:
  *  - sampling layer: multiple forecast runsk
@@ -426,7 +465,6 @@ export function createHistogramChart(dataset: Record<string, any>[], options: Hi
  *
  * Then we use the new 'var' and 'value' columns to render timeseries
  * */
-
 export function createForecastChart(
 	samplingLayer: ForecastChartLayer | null,
 	statisticsLayer: ForecastChartLayer | null,
@@ -442,7 +480,7 @@ export function createForecastChart(
 				text: options.title,
 				anchor: 'start',
 				subtitle: ' ',
-				subtitlePadding: 4
+				subtitlePadding: 0
 			}
 		: null;
 
@@ -457,17 +495,43 @@ export function createForecastChart(
 	};
 	const yaxis = structuredClone(xaxis);
 	yaxis.title = options.yAxisTitle;
-
 	const translationMap = options.translationMap;
 	let labelExpr = '';
 	if (translationMap) {
-		Object.keys(translationMap).forEach((key) => {
-			labelExpr += `datum.value === '${key}' ? '${translationMap[key]}' : `;
-		});
+		const allVariables = [
+			...(samplingLayer?.variables ?? []),
+			...(statisticsLayer?.variables ?? []),
+			...(groundTruthLayer?.variables ?? [])
+		];
+		Object.keys(translationMap)
+			.filter((key) => allVariables.includes(key))
+			.forEach((key) => {
+				labelExpr += `datum.value === '${key}' ? '${translationMap[key]}' : `;
+			});
 		labelExpr += " 'other'";
 	}
 
+	// Get all unique legend items
+	const getAllLegendItems = () => {
+		const items = new Set<string>();
+		if (statisticsLayer?.variables) {
+			statisticsLayer.variables.forEach((v) => items.add(translationMap?.[v] ?? v));
+		}
+		if (groundTruthLayer?.variables) {
+			groundTruthLayer.variables.forEach((v) => items.add(translationMap?.[v] ?? v));
+		}
+		if (options.bins) {
+			Array.from(options.bins.keys()).forEach((v) => items.add(v.toString()));
+		}
+		return Array.from(items);
+	};
+
 	const isCompact = options.width < 200;
+	const legendFontSize = isCompact ? 8 : 12;
+
+	// Estimate total legend width
+	const legendItems = getAllLegendItems();
+	const estimatedWidth = estimateLegendWidth(legendItems, legendFontSize);
 
 	const legendProperties = {
 		title: null,
@@ -479,8 +543,11 @@ export function createForecastChart(
 		symbolSize: 200,
 		labelFontSize: isCompact ? 8 : 12,
 		labelOffset: isCompact ? 2 : 4,
-		labelLimit: isCompact ? 50 : 150,
+		labelLimit: isCompact ? 100 : 150,
 		symbolType: 'stroke',
+		offset: isCompact ? 8 : 16,
+		// Add columns if legend would overflow
+		columns: calculateLegendColumns(isCompact, estimatedWidth, options.width, legendItems.length),
 		...options.legendProperties
 	};
 
@@ -498,7 +565,6 @@ export function createForecastChart(
 			font: globalFont,
 			legend: {
 				layout: {
-					direction: legendProperties.direction,
 					anchor: 'start'
 				}
 			}
@@ -560,11 +626,12 @@ export function createForecastChart(
 		const encodingY: ChartEncoding = {
 			field: 'valueField',
 			type: 'quantitative',
-			axis: yaxis
+			axis: yaxis,
+			scale: {}
 		};
 
 		if (options.scale === 'log') {
-			encodingY.scale = { type: 'symlog' };
+			encodingY.scale.type = 'symlog';
 		}
 
 		if (options.fitYDomain && layer.data[0]) {
@@ -574,10 +641,12 @@ export function createForecastChart(
 				const yValues = [...layer.data].map((datum) => datum[yField]);
 				const domainMin = Math.min(...yValues);
 				const domainMax = Math.max(...yValues);
-				encodingY.scale = {
-					domain: [domainMin, domainMax]
-				};
+				encodingY.scale.domain = [domainMin, domainMax];
 			}
+		}
+
+		if (options.yExtent) {
+			encodingY.scale.domain = options.yExtent;
 		}
 
 		const encoding = {
@@ -710,7 +779,9 @@ export function createForecastChart(
 				}
 			]
 		};
-		layerSpec.layer.push(verticalLineLayer);
+		if (!isCompact) {
+			layerSpec.layer.push(verticalLineLayer);
+		}
 		// Add a small rectangle behind the timeLabelLayer to make the time more readable
 		const timeLabelBackgroundLayer = {
 			mark: {
@@ -746,7 +817,9 @@ export function createForecastChart(
 				}
 			}
 		};
-		layerSpec.layer.push(timeLabelBackgroundLayer);
+		if (!isCompact) {
+			layerSpec.layer.push(timeLabelBackgroundLayer);
+		}
 
 		// Add a label with the current X value (time) for the vertical line
 		const timeLabelLayer = {
@@ -754,8 +827,7 @@ export function createForecastChart(
 				type: 'text',
 				align: 'center',
 				color: '#111111',
-				dx: 0,
-				dy: -options.height / 2
+				dx: 0
 			},
 			encoding: {
 				text: {
@@ -765,6 +837,9 @@ export function createForecastChart(
 				x: {
 					field: statisticsLayer.timeField,
 					type: 'quantitative'
+				},
+				y: {
+					value: 0
 				},
 				opacity: {
 					condition: [
@@ -783,7 +858,9 @@ export function createForecastChart(
 				}
 			}
 		};
-		layerSpec.layer.push(timeLabelLayer);
+		if (!isCompact) {
+			layerSpec.layer.push(timeLabelLayer);
+		}
 
 		// Add tooltip points for the vertical line
 		const pointLayer = {
@@ -825,7 +902,9 @@ export function createForecastChart(
 				}
 			}
 		};
-		layerSpec.layer.push(pointLayer);
+		if (!isCompact) {
+			layerSpec.layer.push(pointLayer);
+		}
 
 		// Add labels for each point for tooltip.
 		// This is the base layer with a white stroke around it to make the text readable
@@ -878,7 +957,9 @@ export function createForecastChart(
 				}
 			}
 		};
-		layerSpec.layer.push(labelLayerBase);
+		if (!isCompact) {
+			layerSpec.layer.push(labelLayerBase);
+		}
 		// This is the top layer no stroke
 		const labelLayer = {
 			mark: {
@@ -926,7 +1007,9 @@ export function createForecastChart(
 				}
 			}
 		};
-		layerSpec.layer.push(labelLayer);
+		if (!isCompact) {
+			layerSpec.layer.push(labelLayer);
+		}
 
 		spec.layer.push(layerSpec);
 	}
@@ -1155,7 +1238,7 @@ export function createSimulateSensitivityScatter(samplingLayer: SensitivityChart
 			mark: { type: 'point', filled: true },
 			encoding: {
 				x: {
-					field: { repeat: 'row' },
+					field: { repeat: 'column' },
 					type: 'quantitative',
 					axis: {
 						gridColor: '#EEE'
@@ -1166,11 +1249,11 @@ export function createSimulateSensitivityScatter(samplingLayer: SensitivityChart
 					}
 				},
 				y: {
-					field: { repeat: 'column' },
+					field: { repeat: 'row' },
 					type: 'quantitative',
 					axis: {
 						gridColor: '#EEE',
-						domain: options.yMinExtent ? [0, options.yMinExtent] : undefined
+						domain: options.yExtent
 					},
 					scale: {
 						zero: false,
@@ -1212,7 +1295,7 @@ export function applyForecastChartAnnotations(chartSpec: any, annotations: Chart
 	return chartSpec;
 }
 
-export function createForecastChartAnnotation(axis: 'x' | 'y', datum: number, label: string) {
+export function createForecastChartAnnotation(axis: 'x' | 'y', datum: number, label: string, isVertical?: boolean) {
 	const layerSpec = {
 		description: `At ${axis} ${datum}, add a label '${label}'.`,
 		encoding: {
@@ -1228,9 +1311,11 @@ export function createForecastChartAnnotation(axis: 'x' | 'y', datum: number, la
 			{
 				mark: {
 					type: 'text',
-					align: 'left',
-					dx: 5,
-					dy: -5
+					align: 'center',
+					dx: 16,
+					dy: -16,
+					angle: isVertical ? 90 : 0,
+					baseline: 'top'
 				},
 				encoding: {
 					text: { value: label }
@@ -1362,7 +1447,7 @@ export function createSuccessCriteriaChart(
 			{
 				mark: {
 					type: 'text',
-					align: 'left',
+					align: 'center',
 					text: `Threshold = ${+threshold}`,
 					baseline: 'line-bottom'
 				},
@@ -1381,7 +1466,7 @@ export function createSuccessCriteriaChart(
 			{
 				mark: {
 					type: 'text',
-					align: 'left',
+					align: 'center',
 					text: `Average of worst ${100 - alpha}% = ${risk.toFixed(4)}`,
 					baseline: 'line-bottom'
 				},
@@ -1409,7 +1494,7 @@ export function createInterventionChartMarkers(
 		data: { values: data },
 		mark: {
 			type: 'text',
-			align: 'left',
+			align: 'center',
 			angle: 90,
 			dx: options.labelXOffset || 0 - 45,
 			dy: -10,
@@ -1820,7 +1905,12 @@ export function createFunmanParameterCharts(
 	};
 }
 
-export function createRankingInterventionsChart(values: { score: number; name: string }[], title: string) {
+export function createRankingInterventionsChart(
+	values: { score: number; name: string }[],
+	interventionNameColorMap: Record<string, string>,
+	title: string | null = null,
+	variableName: string | null = null
+) {
 	const globalFont = 'Figtree';
 
 	return {
@@ -1858,7 +1948,20 @@ export function createRankingInterventionsChart(values: { score: number; name: s
 			y: {
 				field: 'score',
 				type: 'quantitative',
-				title: 'Score'
+				// If a specific variable is selected the score should hold its actual value
+				title: variableName || 'Score'
+			},
+			color: {
+				field: 'name',
+				type: 'nominal',
+				scale: {
+					domain: Object.keys(interventionNameColorMap),
+					range: Object.values(interventionNameColorMap)
+				},
+				legend: {
+					title: null,
+					orient: 'top'
+				}
 			}
 		},
 		transform: [{ window: [{ op: 'row_number', as: 'index' }] }],
@@ -1873,13 +1976,14 @@ export function createRankingInterventionsChart(values: { score: number; name: s
 					align: 'right',
 					baseline: 'bottom',
 					dy: -15,
-					angle: 270
+					angle: 270,
+					fill: 'black'
 					// FIXME:
 					// I don't know how to fix the text to the bottom of the bar, its origin seems to be around the top
 					// and giving it the proper dx shift varies depending on the bar size
 				},
 				encoding: {
-					text: { field: 'name', type: 'nominal' }
+					text: { field: 'name', type: 'nominal', color: 'black' }
 				}
 			}
 		]
