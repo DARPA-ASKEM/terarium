@@ -342,15 +342,16 @@ function outputPanelBehavior() {
 	}
 }
 
-onMounted(() => {
+onMounted(async () => {
 	const state = cloneDeep(props.node.state);
 	knobs.value = Object.assign(knobs.value, state);
 	if (!knobs.value.selectedDataset) knobs.value.selectedDataset = datasets.value[0]?.id ?? null;
 
 	outputPanelBehavior();
 
-	initialize(
+	await initialize(
 		props,
+		knobs,
 		isFetchingDatasets,
 		datasets,
 		datasetResults,
@@ -364,6 +365,8 @@ onMounted(() => {
 		rankingCriteriaCharts,
 		rankingResultsChart
 	);
+
+	console.log(interventionPolicies.value);
 });
 
 watch(

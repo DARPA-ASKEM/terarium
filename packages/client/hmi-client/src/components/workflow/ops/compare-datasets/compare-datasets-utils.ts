@@ -296,6 +296,7 @@ export async function generateImpactCharts(
 // TODO: Please type the function params in this file for a later pass
 export async function initialize(
 	props,
+	knobs,
 	isFetchingDatasets,
 	datasets,
 	datasetResults,
@@ -329,7 +330,11 @@ export async function initialize(
 			if (!modelConfigIdToInterventionPolicyIdMap.value[modelConfigurationId]) {
 				modelConfigIdToInterventionPolicyIdMap.value[modelConfigurationId] = [];
 			}
-			if (!interventionPolicyId) return;
+			if (!interventionPolicyId) {
+				// Select a default baseline by choosing the first dataset that lacks an intervention policy
+				if (!knobs.value.selectedDataset) knobs.value.selectedDataset = dataset.id;
+				return;
+			}
 			modelConfigIdToInterventionPolicyIdMap.value[modelConfigurationId].push(interventionPolicyId);
 		});
 	});

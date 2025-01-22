@@ -67,6 +67,7 @@ const { useCompareDatasetCharts } = useCharts(
 onMounted(() => {
 	initialize(
 		props,
+		null,
 		isFetchingDatasets,
 		datasets,
 		datasetResults,
