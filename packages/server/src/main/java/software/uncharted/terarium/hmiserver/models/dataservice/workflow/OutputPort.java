@@ -25,4 +25,7 @@ public class OutputPort implements Serializable {
 	private String operatorStatus;
 	private JsonNode state;
 	private Timestamp timestamp;
+
+	// FIXME: backwards compatibility, to be removed
+	private Boolean acceptMultiple;
 }
