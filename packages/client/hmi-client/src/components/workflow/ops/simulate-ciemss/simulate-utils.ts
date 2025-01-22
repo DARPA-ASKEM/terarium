@@ -1,7 +1,8 @@
 import _ from 'lodash';
 import { computed, Ref } from 'vue';
 import { WorkflowNode } from '@/types/workflow';
-import { DataArray } from '@/services/models/simulation-service';
+import { DataArray, processAndSortSamplesByTimepoint } from '@/services/models/simulation-service';
+import { ChartData } from '@/composables/useCharts';
 import { SimulateCiemssOperationState } from './simulate-ciemss-operation';
 
 export function usePreparedChartInputs(
@@ -20,12 +21,22 @@ export function usePreparedChartInputs(
 
 		const result = runResult.value[selectedRunId];
 		const resultSummary = runResultSummary.value[selectedRunId];
+
+		// Process data for uncertainty intervals chart mode
+		const resultGroupByTimepoint = processAndSortSamplesByTimepoint(result);
+
 		const reverseMap: Record<string, string> = {};
 		Object.keys(pyciemssMap.value).forEach((key) => {
 			reverseMap[pyciemssMap.value[key]] = key;
 			reverseMap[`${pyciemssMap.value[key]}_mean`] = key;
 			reverseMap[`${pyciemssMap.value[key]}_mean:pre`] = `${key} (baseline)`;
 		});
-		return { result, resultSummary, translationMap: reverseMap, pyciemssMap: pyciemssMap.value };
+		return {
+			result,
+			resultSummary,
+			translationMap: reverseMap,
+			pyciemssMap: pyciemssMap.value,
+			resultGroupByTimepoint
+		} as ChartData;
 	});
 }

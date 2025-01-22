@@ -11,7 +11,8 @@
 				v-if="pdfData.length"
 				v-model:is-open="isDocViewerOpen"
 				header="Document viewer"
-				content-width="700px"
+				:content-width="isSidebarOpen ? 'calc(60vw - 320px)' : '60vw'"
+				:documentViewer="true"
 			>
 				<template #content>
 					<tera-drilldown-section :is-loading="isFetchingPDF">
@@ -107,12 +108,11 @@
 						v-model="newDescription"
 					/>
 				</AccordionTab>
-				<AccordionTab v-if="model?.semantics?.ode?.time" header="Context">
-					<div class="flex flex-column gap-2">
-						<h5>Temporal Context</h5>
+				<AccordionTab v-if="model?.semantics?.ode?.time" header="Temporal context">
+					<div class="flex flex-column gap-2 mb-3">
 						<span>Assign a date to timestep 0 (optional)</span>
 						<Calendar
-							class="max-w-30rem"
+							class="max-w-20rem"
 							:model-value="
 								knobs.transientModelConfig.temporalContext ? new Date(knobs.transientModelConfig.temporalContext) : null
 							"
@@ -131,7 +131,7 @@
 				</AccordionTab>
 			</Accordion>
 			<template v-if="model">
-				<Message v-if="isModelMissingMetadata(model)" class="m-2">
+				<Message v-if="isModelMissingMetadata(model)" class="m-2 info-message">
 					Some metadata is missing from these values. This information can be added manually to the attached model.
 				</Message>
 				<template v-if="!isEmpty(knobs.transientModelConfig)">
@@ -984,5 +984,8 @@ button.start-edit {
 			overflow: hidden;
 		}
 	}
+}
+.info-message {
+	border-color: var(--surface-border);
 }
 </style>

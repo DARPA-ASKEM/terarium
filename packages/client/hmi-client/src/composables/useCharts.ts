@@ -27,7 +27,7 @@ import {
 	ChartSettingSensitivity,
 	ChartSettingType
 } from '@/types/common';
-import { Intervention, Model, ModelConfiguration } from '@/types/Types';
+import { ChartAnnotation, Intervention, Model, ModelConfiguration } from '@/types/Types';
 import { displayNumber } from '@/utils/number';
 import { getUnitsFromModelParts, getVegaDateOptions } from '@/services/model';
 import { CalibrateMap, isCalibrateMap } from '@/services/calibrate-workflow';
@@ -387,6 +387,7 @@ export function useCharts(
 		return interventionCharts;
 	};
 
+	// Create compare dataset charts based on chart settings
 	const useCompareDatasetCharts = (
 		chartSettings: ComputedRef<ChartSetting[]>,
 		selectedPlotType: ComputedRef<PlotValue>,
@@ -406,7 +407,6 @@ export function useCharts(
 				options.title = varName;
 				options.yAxisTitle = capitalize(selectedPlotType.value);
 				options.colorscheme = colorScheme;
-				options.legendProperties = { direction: 'vertical', columns: 1, labelLimit: options.width };
 
 				const annotations = getChartAnnotationsByChartId(settings.id);
 				const chart = !settings.showQuantiles
@@ -457,28 +457,35 @@ export function useCharts(
 				const datasetVar = modelVarToDatasetVar(mapping?.value || [], variable);
 				const { sampleLayerVariables, statLayerVariables, options } = createForecastChartOptions(settings);
 
-				const chart = applyForecastChartAnnotations(
-					createForecastChart(
-						{
-							data: result,
-							variables: sampleLayerVariables,
-							timeField: 'timepoint_id',
-							groupField: 'sample_id'
-						},
-						{
-							data: resultSummary,
-							variables: statLayerVariables,
-							timeField: 'timepoint_id'
-						},
-						groundTruthData && {
-							data: groundTruthData.value,
-							variables: datasetVar ? [datasetVar] : [],
-							timeField: modelVarToDatasetVar(mapping?.value || [], 'timepoint_id')
-						},
-						options
-					),
-					annotations
-				);
+				const chart = !settings.showQuantiles
+					? applyForecastChartAnnotations(
+							createForecastChart(
+								{
+									data: result,
+									variables: sampleLayerVariables,
+									timeField: 'timepoint_id',
+									groupField: 'sample_id'
+								},
+								{
+									data: resultSummary,
+									variables: statLayerVariables,
+									timeField: 'timepoint_id'
+								},
+								groundTruthData && {
+									data: groundTruthData.value,
+									variables: datasetVar ? [datasetVar] : [],
+									timeField: modelVarToDatasetVar(mapping?.value || [], 'timepoint_id')
+								},
+								options
+							),
+							annotations
+						)
+					: createQuantilesForecastChart(
+							chartData.value?.resultGroupByTimepoint ?? [],
+							sampleLayerVariables,
+							settings.quantiles ?? [],
+							options
+						);
 				_.keys(groupedInterventionOutputs.value).forEach((key) => {
 					if (settings.selectedVariables.includes(key)) {
 						chart.layer.push(...createInterventionChartMarkers(groupedInterventionOutputs.value[key]));
@@ -492,31 +499,39 @@ export function useCharts(
 	};
 
 	function createComparisonChart(
-		result,
-		resultSummary,
-		statLayerVariables,
-		sampleLayerVariables,
-		options,
-		annotations
+		setting: ChartSettingComparison,
+		result: DataArray,
+		resultSummary: DataArray,
+		statLayerVariables: string[],
+		sampleLayerVariables: string[],
+		options: ForecastChartOptions,
+		annotations: ChartAnnotation[]
 	) {
-		const chart = applyForecastChartAnnotations(
-			createForecastChart(
-				{
-					data: result,
-					variables: sampleLayerVariables,
-					timeField: 'timepoint_id',
-					groupField: 'sample_id'
-				},
-				{
-					data: resultSummary,
-					variables: statLayerVariables,
-					timeField: 'timepoint_id'
-				},
-				null,
-				options
-			),
-			annotations
-		);
+		const chart = !setting.showQuantiles
+			? applyForecastChartAnnotations(
+					createForecastChart(
+						{
+							data: result,
+							variables: sampleLayerVariables,
+							timeField: 'timepoint_id',
+							groupField: 'sample_id'
+						},
+						{
+							data: resultSummary,
+							variables: statLayerVariables,
+							timeField: 'timepoint_id'
+						},
+						null,
+						options
+					),
+					annotations
+				)
+			: createQuantilesForecastChart(
+					chartData.value?.resultGroupByTimepoint ?? [],
+					sampleLayerVariables,
+					setting.quantiles ?? [],
+					options
+				);
 		return chart as VisualizationSpec;
 	}
 
@@ -550,6 +565,7 @@ export function useCharts(
 						options.height = height;
 						options.yExtent = sharedYExtent;
 						return createComparisonChart(
+							setting,
 							result,
 							resultSummary,
 							statLayerVariables,
@@ -561,6 +577,7 @@ export function useCharts(
 				} else {
 					const { options, sampleLayerVariables, statLayerVariables } = createComparisonChartOptions(setting);
 					const chart = createComparisonChart(
+						setting,
 						result,
 						resultSummary,
 						statLayerVariables,
@@ -877,7 +894,8 @@ export function useCharts(
 	function createSensitivityBins(
 		records: Record<string, any>[],
 		selectedVariable: string,
-		numBins: number = 7
+		numBins: number = 7,
+		unit?: string
 	): Map<string, number[]> {
 		if (numBins < 1) {
 			throw new Error('Number of bins must be at least 1.');
@@ -922,13 +940,13 @@ export function useCharts(
 		let previousThreshold = minValue;
 		thresholds.forEach((threshold) => {
 			labels.push(
-				`[${expressionFunctions.tooltipFormatter(previousThreshold)}, ${expressionFunctions.tooltipFormatter(threshold)}]`
+				`[${expressionFunctions.chartNumberFormatter(previousThreshold)}, ${expressionFunctions.chartNumberFormatter(threshold)}] ${unit ? `${unit}` : ''}`
 			);
 			previousThreshold = threshold;
 		});
 
 		labels.push(
-			`[${expressionFunctions.tooltipFormatter(previousThreshold)}, ${expressionFunctions.tooltipFormatter(maxValue)}]`
+			`[${expressionFunctions.chartNumberFormatter(previousThreshold)}, ${expressionFunctions.chartNumberFormatter(maxValue)}] ${unit ? `${unit}` : ''}`
 		);
 
 		// Assign bins to records and create the result map
@@ -983,8 +1001,9 @@ export function useCharts(
 			chartSettings.value.forEach((settings) => {
 				const selectedVariable =
 					chartData.value?.pyciemssMap[settings.selectedVariables[0]] || settings.selectedVariables[0];
+				const unit = getUnit(settings.selectedVariables[0]);
 				const { options } = createForecastChartOptions(settings);
-				const bins = createSensitivityBins(sliceData, selectedVariable);
+				const bins = createSensitivityBins(sliceData, selectedVariable, 7, unit);
 
 				options.bins = bins;
 				options.colorscheme = SENSITIVITY_COLOUR_SCHEME;
@@ -999,12 +1018,54 @@ export function useCharts(
 						timeField: 'timepoint_id',
 						groupField: 'sample_id'
 					},
-					null,
+					{
+						data: result,
+						variables: [selectedVariable],
+						timeField: 'timepoint_id'
+					},
 					null,
 					options
 				);
+
+				// Get the statistical layer
+				const statsLayer = lineSpec.layer[1];
+				if (statsLayer?.layer) {
+					// Remove any unwanted legends
+					statsLayer.layer.forEach((sublayer) => {
+						if (sublayer.encoding?.color?.legend) {
+							sublayer.encoding.color.legend = null;
+						}
+					});
+
+					// Find the text layers
+					const textLayers = statsLayer.layer.filter((l) => l.mark?.type === 'text');
+					const lastTwoLayers = textLayers.slice(-2);
+
+					// The white outline layer
+					const outlineLayer = lastTwoLayers[0];
+					// The colored text layer
+					const textLayer = lastTwoLayers[1];
+
+					// Keep outline layer stroke white but remove color encoding
+					if (outlineLayer) {
+						delete outlineLayer.encoding.color;
+					}
+
+					// Copy the exact color encoding from the line layer
+					if (textLayer) {
+						textLayer.encoding.color = {
+							field: 'group',
+							type: 'nominal',
+							scale: {
+								domain: Array.from(bins.keys()),
+								range: SENSITIVITY_COLOUR_SCHEME
+							}
+						};
+					}
+				}
+
 				// Add sensitivity annotation
-				const annotation = createForecastChartAnnotation('x', timepoint, 'Sensitivity analysis');
+				const annotation = createForecastChartAnnotation('x', timepoint, 'Sensitivity analysis', true);
 				lineSpec.layer[0].layer.push(annotation.layerSpec);
 
 				const spec = createSimulateSensitivityScatter(

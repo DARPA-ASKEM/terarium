@@ -44,7 +44,6 @@ public class ContextMatcher {
 
 		String key;
 		double score;
-		List<String> matches;
 	}
 
 	/**
@@ -82,30 +81,16 @@ public class ContextMatcher {
 	 * @return A SearchMatch object with the key, score, and matched terms.
 	 */
 	private static SearchMatch calculateScore(String key, String term) {
-		String[] keyTerms = key.toLowerCase().split("_");
-		double totalScore = 0;
-		List<String> matches = new ArrayList<>();
+		double score = 0;
 
-		int bestDistance = Integer.MAX_VALUE;
-		boolean matched = false;
-		String termLower = term.toLowerCase();
-
-		for (String keyTerm : keyTerms) {
-			int distance = levenshteinDistance(termLower, keyTerm);
-			if (distance < bestDistance) {
-				bestDistance = distance;
-				if (distance <= Math.min(3, keyTerm.length() / 2)) {
-					matched = true;
-				}
-			}
-		}
+		int distance = levenshteinDistance(term.toLowerCase(), key.toLowerCase());
+		boolean matched = distance <= Math.min(3, key.length() / 2);
 
 		if (matched) {
-			matches.add(term);
-			totalScore = 1.0 / (1.0 + bestDistance);
+			score = 1.0 / (1.0 + distance);
 		}
 
-		return new SearchMatch(key, totalScore, matches);
+		return new SearchMatch(key, score);
 	}
 
 	/**

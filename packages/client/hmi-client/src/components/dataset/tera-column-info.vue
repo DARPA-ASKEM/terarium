@@ -53,9 +53,6 @@
 		</section>
 		<tera-boxplot class="flex-1" v-if="column.stats" :stats="column.stats" />
 	</div>
-	<div class="thin-divider">
-		<div class="line"></div>
-	</div>
 </template>
 
 <script setup lang="ts">
@@ -115,12 +112,18 @@ watch(
 
 <style scoped>
 .column-info-card {
+	border: 1px solid var(--surface-border-light);
+	border-radius: var(--border-radius);
+	background: var(--surface-0);
 	padding: var(--gap-3) var(--gap-4);
 	border-left: 4px solid var(--surface-300);
 	margin-bottom: var(--gap-2);
+	box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+	transition: all 0.15s;
 }
 .column-info-card:hover {
-	background-color: var(--surface-50);
+	background-color: var(--surface-highlight);
+	border-left-color: var(--primary-color);
 }
 section.entries {
 	display: grid;
@@ -195,14 +198,20 @@ h6 {
 	gap: var(--gap-1);
 }
 
-:deep(.p-dropdown > span),
-:deep(.p-autocomplete-input) {
-	padding: var(--gap-1) var(--gap-2);
+:deep(.p-dropdown > span) {
+	height: 1.75rem;
+	font-size: var(--font-caption);
 }
-.thin-divider {
-	margin: var(--gap-2) 0;
-	& > .line {
-		border-top: 1px solid var(--surface-border-light);
-	}
+:deep(.p-autocomplete-input.p-inputtext) {
+	border-radius: var(--border-radius);
+}
+
+:deep(.unit .tera-input > main > input) {
+	height: 1.25rem;
+	font-size: var(--font-caption);
+}
+:deep(.p-autocomplete-input) {
+	height: 2rem;
+	font-size: var(--font-caption);
 }
 </style>

@@ -254,3 +254,8 @@
 	width: max-content;
 	max-width: 25rem;
 }
+
+/* Correct font color for multiselect token labels */
+.p-multiselect-token-label {
+	color: var(--text-color);
+}

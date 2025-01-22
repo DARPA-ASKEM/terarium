@@ -186,6 +186,9 @@ public class ProjectController {
 			return ResponseEntity.noContent().build();
 		}
 
+		// Empty all the non-necessary information to speed up getting all the projects
+		projects.forEach(project -> project.setOverviewContent(null));
+
 		projects.forEach(project -> {
 			final RebacProject rebacProject = new RebacProject(project.getId(), reBACService);
 

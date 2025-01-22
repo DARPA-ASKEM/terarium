@@ -45,6 +45,7 @@
 								:calendar-settings="getCalendarSettingsFromModel(model)"
 								v-model="timespan.start"
 								@update:model-value="updateState"
+								class="common-input-height"
 							/>
 							<tera-timestep-calendar
 								v-if="model && modelConfiguration"
@@ -53,6 +54,7 @@
 								:calendar-settings="getCalendarSettingsFromModel(model)"
 								v-model="timespan.end"
 								@update:model-value="updateState"
+								class="common-input-height"
 							/>
 						</div>
 
@@ -145,7 +147,10 @@
 					:summary-id="node.state.summaryId"
 					class="p-3 pt-0"
 				/>
-				<div class="pl-3 pr-3 pb-2 flex flex-row align-items-center gap-2">
+				<div
+					v-if="node.state.summaryId && runResults[selectedRunId]"
+					class="pl-3 pr-3 pb-2 flex flex-row align-items-center gap-2"
+				>
 					<SelectButton
 						class=""
 						:model-value="view"
@@ -377,6 +382,9 @@
 									})
 							"
 						/>
+						<Divider />
+						<tera-chart-settings-quantiles :settings="chartSettings" @update-options="updateQauntilesOptions" />
+						<Divider />
 					</div>
 				</template>
 			</tera-slider-panel>
@@ -434,6 +442,7 @@ import VegaChart from '@/components/widgets/VegaChart.vue';
 import { KernelSessionManager } from '@/services/jupyter';
 import TeraChartSettings from '@/components/widgets/tera-chart-settings.vue';
 import TeraChartSettingsPanel from '@/components/widgets/tera-chart-settings-panel.vue';
+import TeraChartSettingsQuantiles from '@/components/widgets/tera-chart-settings-quantiles.vue';
 import TeraDatasetDatatable from '@/components/dataset/tera-dataset-datatable.vue';
 import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
 import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.vue';
@@ -626,7 +635,8 @@ const {
 	updateActiveChartSettings,
 	setActiveChartSettings,
 	addEmptyComparisonChart,
-	updateComparisonChartSetting
+	updateComparisonChartSetting,
+	updateQauntilesOptions
 } = useChartSettings(props, emit);
 
 const {
@@ -960,5 +970,8 @@ onUnmounted(() => kernelManager.shutdown());
 		box-sizing: border-box;
 		width: 40%;
 	}
+}
+.common-input-height:deep(main) {
+	height: 2.35rem;
 }
 </style>

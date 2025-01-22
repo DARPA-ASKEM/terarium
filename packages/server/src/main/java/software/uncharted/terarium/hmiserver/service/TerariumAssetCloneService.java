@@ -83,8 +83,12 @@ public class TerariumAssetCloneService {
 			final List<InterventionPolicy> interventionPolicies =
 				interventionRepository.findByModelIdAndDeletedOnIsNullAndTemporaryFalse(assetId, PageRequest.of(0, 100));
 
-			assetsToClone.addAll(modelConfigurations.stream().map(ModelConfiguration::getId).toList());
-			assetsToClone.addAll(interventionPolicies.stream().map(InterventionPolicy::getId).toList());
+			assetsToClone.addAll(
+				modelConfigurations.stream().map(ModelConfiguration::getId).filter(projectAssetsById::containsKey).toList()
+			);
+			assetsToClone.addAll(
+				interventionPolicies.stream().map(InterventionPolicy::getId).filter(projectAssetsById::containsKey).toList()
+			);
 		}
 
 		final Map<UUID, AssetDependencyMap> assetDependencies = new HashMap<>();
