@@ -196,14 +196,21 @@ export function generateRankingCharts(
 	const interventionNameColorMap: Record<string, string> = {};
 
 	node.state.criteriaOfInterestCards.forEach((card) => {
-		if (!chartData.value) return;
+		if (!chartData.value || !card.selectedVariable) return;
 
-		let pointOfComparison: Record<string, number>;
+		const variableKey = `${chartData.value.pyciemssMap[card.selectedVariable]}_mean`;
+		let pointOfComparison: Record<string, number> = {};
 
 		if (card.timepoint === TimepointOption.OVERALL) {
-			chartData.value.resultSummary.forEach((summary) => {
-				console.log(summary);
-			});
+			const comparisonFunction = card.rank === RankOption.MAXIMUM ? Math.max : Math.min;
+			pointOfComparison = chartData.value.resultSummary.reduce((acc, val) =>
+				Object.keys(val).reduce((acc2, key) => {
+					if (key.includes(variableKey)) {
+						acc2[key] = comparisonFunction(acc[key], val[key]);
+					}
+					return acc2;
+				}, acc)
+			);
 		} else if (card.timepoint === TimepointOption.FIRST) {
 			pointOfComparison = chartData.value.resultSummary[0];
 		} else if (card.timepoint === TimepointOption.LAST) {
@@ -223,7 +230,7 @@ export function generateRankingCharts(
 			);
 
 			// Skip this intervention policy if a configuration is not using it
-			if (!policy?.name || !modelConfiguration?.name || !card.selectedVariable) {
+			if (!policy?.name || !modelConfiguration?.name) {
 				return;
 			}
 
@@ -235,7 +242,7 @@ export function generateRankingCharts(
 			}
 
 			rankingCriteriaValues.push({
-				score: pointOfComparison[`${chartData.value?.pyciemssMap[card.selectedVariable]}_mean:${index}`] ?? 0,
+				score: pointOfComparison[`${variableKey}:${index}`] ?? 0,
 				name: barLabel
 			});
 		});

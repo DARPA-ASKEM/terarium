@@ -57,6 +57,13 @@ defineProps<{
 	flex-direction: column;
 }
 
+p {
+	display: flex;
+	flex-wrap: wrap;
+	gap: var(--gap-1);
+	align-items: center;
+}
+
 .p-dropdown {
 	height: 2rem;
 	margin-bottom: var(--gap-1);
