@@ -26,5 +26,6 @@ LATEX_STYLE_GUIDE = """
 14) Do not use square brackets "[ ]", curly braces "{ }", and angle brackets "< >" when grouping expressions
 15) Always expand expressions surrounded by parentheses using the order of mathematical operations
     a) for example, replace "x(t) (\\alpha y(t) + \\beta z(t))" with "\\alpha * x(t) * y(t) + \\beta * x(t) * z(t)"
-    b) for example, replace "(\\alpha + \\beta + \\gamma) x(t)" with "\\alpha * x(t) + \\beta * x(t) + \\gamma * x(t)"
+    b) for example, replace "-(\\alpha + \\beta + \\gamma) x(t)" with "- \\alpha * x(t) - \\beta * x(t) - \\gamma * x(t)"
+    c) for example, replace "(x(t) + y(t)) (z(t) + w(t))" with "x(t) * z(t) + x(t) * w(t) + y(t) * z(t) + y(t) * w(t)"
 """
