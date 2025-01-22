@@ -529,11 +529,8 @@ export class ValueOfInformationScenario extends BaseScenario {
 		});
 
 		// Data comparison
-		if (interventionNodes.length > 0) {
-			compareDatasetNode.x = modelNode.x + (2 + interventionNodes.length) * nodeGapHorizontal;
-		} else {
-			compareDatasetNode.x = modelNode.x + 3 * nodeGapHorizontal;
-		}
+		compareDatasetNode.x = modelNode.x + (2 + interventionNodes.length) * nodeGapHorizontal;
+
 		compareDatasetNode.y = 500;
 
 		return wf.dump();
