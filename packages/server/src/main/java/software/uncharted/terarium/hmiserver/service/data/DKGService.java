@@ -192,7 +192,7 @@ public class DKGService {
 					.collect(Collectors.toList());
 
 				queries.add(
-					new KnnQuery.Builder().field(DKG.EMBEDDINGS).queryVector(vectors).k(k).numCandidates(pageSize).build()
+					new KnnQuery.Builder().field(Grounding.EMBEDDINGS).queryVector(vectors).k(k).numCandidates(pageSize).build()
 				);
 			}
 		}

@@ -20,7 +20,6 @@ import software.uncharted.terarium.hmiserver.models.dataservice.Grounding;
 @RequiredArgsConstructor
 public class DKG {
 
-	public static final String EMBEDDINGS = "description:dense_vector";
 	public static final String GEONAMES = "geonames";
 
 	public DKG(String curie) {
