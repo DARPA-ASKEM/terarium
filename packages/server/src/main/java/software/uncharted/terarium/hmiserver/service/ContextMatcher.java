@@ -17,17 +17,10 @@ import software.uncharted.terarium.hmiserver.models.mira.DKG;
 
 public class ContextMatcher {
 
-	@Value
-	static class CuratedGrounding {
-
-		Map<String, String> identifiers;
-		Map<String, String> context;
-	}
-
 	private static final String CONFIG_FILE = "curated-context.json";
-	private static final Map<String, CuratedGrounding> configData = loadConfig();
+	private static final Map<String, Grounding> configData = loadConfig();
 
-	private static Map<String, CuratedGrounding> loadConfig() {
+	private static Map<String, Grounding> loadConfig() {
 		try (InputStream inputStream = ContextMatcher.class.getClassLoader().getResourceAsStream(CONFIG_FILE)) {
 			if (inputStream == null) {
 				throw new RuntimeException("Configuration file not found: " + CONFIG_FILE);
@@ -111,10 +104,7 @@ public class ContextMatcher {
 
 		List<Grounding> groundings = new ArrayList<>();
 		for (SearchMatch match : matches) {
-			CuratedGrounding curatedGrounding = configData.get(match.getKey());
-			groundings.add(
-				new Grounding().setIdentifiers(curatedGrounding.getIdentifiers()).setContext(curatedGrounding.getContext())
-			);
+			groundings.add(configData.get(match.getKey()));
 		}
 		return groundings;
 	}
