@@ -12,6 +12,7 @@
 				v-model:is-open="isDocViewerOpen"
 				header="Document viewer"
 				content-width="100%"
+				:documentViewer="true"
 			>
 				<template #content>
 					<tera-drilldown-section :is-loading="isFetchingPDF">
@@ -672,5 +673,10 @@ watch(
 
 :deep(.p-panel section) {
 	align-items: start;
+}
+
+/* Fix patch under documment viewer collapse button */
+:deep(header.document-viewer-header) {
+	width: 3rem;
 }
 </style>
