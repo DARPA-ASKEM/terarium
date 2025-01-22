@@ -47,6 +47,8 @@ const props = defineProps<{
 
 const emit = defineEmits(['model-updated']);
 
+const MAX_EQUATION_THRESHOLD = 100;
+
 const equationsRef = ref<any[]>([]);
 const equations = ref<string[]>([]);
 const originalEquations = ref<string[]>([]);
@@ -102,7 +104,7 @@ watch(
 		if (props.model.semantics?.ode.observables) {
 			eqLength += props.model.semantics.ode.observables.length;
 		}
-		if (eqLength > 250) {
+		if (eqLength > MAX_EQUATION_THRESHOLD) {
 			exceedEquationsThreshold.value = true;
 			return;
 		}
