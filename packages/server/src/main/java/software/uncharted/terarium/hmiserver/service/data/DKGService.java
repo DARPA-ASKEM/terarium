@@ -191,7 +191,7 @@ public class DKGService {
 					.collect(Collectors.toList());
 
 				queries.add(
-					new KnnQuery.Builder().field(Grounding.EMBEDDINGS).queryVector(vectors).k(k).numCandidates(pageSize).build()
+					new KnnQuery.Builder().field(DKG.EMBEDDINGS).queryVector(vectors).k(k).numCandidates(pageSize).build()
 				);
 			}
 		}
@@ -211,7 +211,7 @@ public class DKGService {
 
 		if (q != null && !q.isEmpty()) {
 			Query query = QueryBuilders.multiMatch()
-				.fields(ElasticsearchService.emphasis(Grounding.NAME, EMPHASIS), Grounding.DESCRIPTION)
+				.fields(ElasticsearchService.emphasis(DKG.NAME, EMPHASIS), DKG.DESCRIPTION)
 				.query(q)
 				.build()
 				._toQuery();

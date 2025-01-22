@@ -227,7 +227,7 @@ public class MiraController {
 				if (
 					response.getBody() == null &&
 					!response.getBody().isEmpty() &&
-					response.getBody().get(0).getLabels().contains(Grounding.GEONAMES)
+					response.getBody().get(0).getLabels().contains(DKG.GEONAMES)
 				) {
 					finalResponse.getLocations().add(response.getBody().get(0).getCurie());
 				}
