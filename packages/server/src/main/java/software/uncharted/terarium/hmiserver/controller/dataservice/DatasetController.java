@@ -147,19 +147,39 @@ public class DatasetController {
 		);
 
 		try {
-			final Optional<Dataset> dataset = datasetService.getAsset(id, permission);
+			Dataset dataset = datasetService
+				.getAsset(id, permission)
+				.orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, messages.get("dataset.not-found")));
 
-			if (dataset.isEmpty()) {
-				return ResponseEntity.noContent().build();
-			}
 			// GETs not associated to a projectId cannot read private or temporary assets
-			if (
-				permission.equals(Schema.Permission.NONE) && (!dataset.get().getPublicAsset() || dataset.get().getTemporary())
-			) {
+			if (permission.equals(Schema.Permission.NONE) && (!dataset.getPublicAsset() || dataset.getTemporary())) {
 				throw new ResponseStatusException(HttpStatus.FORBIDDEN, messages.get("rebac.unauthorized-read"));
 			}
 
-			return dataset.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
+			// If the user as write permission, and the stats are not present, calculate them
+			if (
+				permission.equals(Schema.Permission.WRITE) &&
+				dataset.getColumns().stream().anyMatch(column -> column.getStats() == null)
+			) {
+				// Calculate the statistics for the columns
+				try {
+					final PresignedURL datasetUrl = datasetService
+						.getDownloadUrl(dataset.getId(), dataset.getFileNames().get(0))
+						.orElseThrow(() -> new IllegalArgumentException(messages.get("dataset.download.url.not.found")));
+
+					datasetStatistics.add(dataset, datasetUrl);
+				} catch (final Exception e) {
+					log.error("Error calculating statistics for dataset {}", dataset.getId(), e);
+				}
+
+				// Update and fetch updated dataset
+				datasetService.updateAsset(dataset, projectId, Schema.Permission.WRITE);
+				dataset = datasetService
+					.getAsset(id, permission)
+					.orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, messages.get("dataset.not-found")));
+			}
+
+			return ResponseEntity.ok(dataset);
 		} catch (final Exception e) {
 			log.error("Unable to get dataset", e);
 			throw new ResponseStatusException(
