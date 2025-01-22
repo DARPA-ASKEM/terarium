@@ -834,7 +834,7 @@ onMounted(async () => {
 	const modelConfigurationId = props.node.inputs[0].value?.[0];
 	if (!modelConfigurationId) return;
 	const modelConfiguration = await getModelConfigurationById(modelConfigurationId);
-	configuredInputModel = await getAsConfiguredModel(modelConfiguration);
+	configuredInputModel = await getAsConfiguredModel(modelConfigurationId);
 
 	setModelOptions();
 
