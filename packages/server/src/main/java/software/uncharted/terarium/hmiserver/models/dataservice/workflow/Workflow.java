@@ -41,6 +41,10 @@ public class Workflow extends TerariumAsset {
 	@Column(columnDefinition = "json")
 	private JsonNode scenario;
 
+	@Type(JsonType.class)
+	@Column(columnDefinition = "json")
+	private Map<UUID, WorkflowAnnotation> annotations;
+
 	@Override
 	public Workflow clone() {
 		final Workflow clone = new Workflow();
@@ -72,6 +76,7 @@ public class Workflow extends TerariumAsset {
 		}
 
 		clone.setScenario(this.getScenario());
+		clone.setAnnotations(this.getAnnotations());
 		return clone;
 	}
 }
