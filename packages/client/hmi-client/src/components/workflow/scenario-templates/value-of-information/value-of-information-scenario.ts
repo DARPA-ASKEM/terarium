@@ -284,8 +284,8 @@ export class ValueOfInformationScenario extends BaseScenario {
 		// 2. create a single model config node with all parameters
 		// Generate Cartesian product of parameter extrema
 		const parameterExtrema = this.parameters.map((parameter) => [
-			{ id: parameter!.referenceId, type: 'Low', value: parameter!.distribution.parameters.minimum },
-			{ id: parameter!.referenceId, type: 'High', value: parameter!.distribution.parameters.maximum }
+			{ id: parameter!.referenceId, label: 'Low', value: parameter!.distribution.parameters.minimum },
+			{ id: parameter!.referenceId, label: 'High', value: parameter!.distribution.parameters.maximum }
 		]);
 
 		const cartesianConfigs = cartesianProduct(parameterExtrema);
@@ -301,7 +301,7 @@ export class ValueOfInformationScenario extends BaseScenario {
 				}
 			});
 
-			clonedModelConfig.name = config.map((param) => `${param.id}${param.type}`).join('_');
+			clonedModelConfig.name = config.map((param) => `${param.id}${param.label}`).join('_');
 			clonedModelConfig.description = `This is a configuration created from "${modelConfig.name}" with extreme values for the parameters: ${config.map((param) => `${param.id}: ${param.value}`).join(', ')} using the value of information scenario template.`;
 
 			const newModelConfig = await createModelConfiguration(clonedModelConfig);
