@@ -35,7 +35,7 @@
 							label="All simulations are from the same model"
 							disabled
 						/>
-						<template v-if="knobs.selectedCompareOption === CompareValue.IMPACT">
+						<template v-if="knobs.selectedCompareOption === CompareValue.SCENARIO">
 							<label> Select simulation to use as a baseline </label>
 							<Dropdown
 								v-model="knobs.selectedBaselineDatasetId"
@@ -64,7 +64,6 @@
 								v-for="(card, i) in node.state.criteriaOfInterestCards"
 								:key="i"
 								:card="card"
-								:model-configurations="modelConfigurations"
 								:variables="variableNames"
 								@delete="deleteCriteria(i)"
 								@update="(e) => updateCriteria(e, i)"
@@ -89,7 +88,7 @@
 			<div ref="outputPanel">
 				<Accordion multiple :active-index="activeIndices">
 					<AccordionTab header="Summary"> </AccordionTab>
-					<template v-if="knobs.selectedCompareOption === CompareValue.IMPACT">
+					<template v-if="knobs.selectedCompareOption === CompareValue.SCENARIO">
 						<AccordionTab header="Variables">
 							<template v-for="setting of selectedVariableSettings" :key="setting.id">
 								<vega-chart
@@ -128,7 +127,7 @@
 				header="Output settings"
 				content-width="360px"
 			>
-				<template #overlay v-if="knobs.selectedCompareOption === CompareValue.IMPACT">
+				<template #overlay v-if="knobs.selectedCompareOption === CompareValue.SCENARIO">
 					<tera-chart-settings-panel
 						:annotations="
 							[ChartSettingType.VARIABLE, ChartSettingType.VARIABLE_COMPARISON].includes(
@@ -144,7 +143,7 @@
 						@close="setActiveChartSettings(null)"
 					/>
 				</template>
-				<template #content v-if="knobs.selectedCompareOption === CompareValue.IMPACT">
+				<template #content v-if="knobs.selectedCompareOption === CompareValue.SCENARIO">
 					<div class="output-settings-panel">
 						<tera-chart-settings
 							:title="'Variables over time'"
@@ -222,7 +221,7 @@ const props = defineProps<{
 const emit = defineEmits(['update-state', 'close']);
 
 const compareOptions: { label: string; value: CompareValue }[] = [
-	{ label: 'Compare scenarios', value: CompareValue.IMPACT },
+	{ label: 'Compare scenarios', value: CompareValue.SCENARIO },
 	{ label: 'Rank interventions based on multiple criteria', value: CompareValue.RANK }
 ];
 
@@ -254,9 +253,9 @@ const onRun = () => {
 		rankingCriteriaCharts,
 		rankingResultsChart,
 		props.node,
-		modelConfigIdToInterventionPolicyIdMap,
 		rankingChartData,
 		datasets,
+		modelConfigurations,
 		interventionPolicies
 	);
 };
@@ -274,7 +273,7 @@ interface BasicKnobs {
 
 const knobs = ref<BasicKnobs>({
 	criteriaOfInterestCards: [],
-	selectedCompareOption: CompareValue.IMPACT,
+	selectedCompareOption: CompareValue.SCENARIO,
 	selectedBaselineDatasetId: null,
 	selectedPlotType: PlotValue.PERCENTAGE
 });
@@ -334,18 +333,18 @@ const variableCharts = useCompareDatasetCharts(selectedVariableSettings, selecte
 function outputPanelBehavior() {
 	if (knobs.value.selectedCompareOption === CompareValue.RANK) {
 		isOutputSettingsOpen.value = false;
-	} else if (knobs.value.selectedCompareOption === CompareValue.IMPACT) {
+	} else if (knobs.value.selectedCompareOption === CompareValue.SCENARIO) {
 		isOutputSettingsOpen.value = true;
 	}
 }
 
-onMounted(async () => {
+onMounted(() => {
 	const state = cloneDeep(props.node.state);
 	knobs.value = Object.assign(knobs.value, state);
 
 	outputPanelBehavior();
 
-	await initialize(
+	initialize(
 		props.node,
 		knobs,
 		isFetchingDatasets,
@@ -361,8 +360,6 @@ onMounted(async () => {
 		rankingCriteriaCharts,
 		rankingResultsChart
 	);
-
-	console.log(interventionPolicies.value);
 });
 
 watch(

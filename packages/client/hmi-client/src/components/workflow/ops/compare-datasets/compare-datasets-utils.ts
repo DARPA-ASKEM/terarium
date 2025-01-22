@@ -1,5 +1,5 @@
 import { isEmpty } from 'lodash';
-import { Dataset } from '@/types/Types';
+import { Dataset, InterventionPolicy, ModelConfiguration } from '@/types/Types';
 import { WorkflowNode, WorkflowPortStatus } from '@/types/workflow';
 import { renameFnGenerator } from '@/components/workflow/ops/calibrate-ciemss/calibrate-utils';
 import { Ref } from 'vue';
@@ -183,27 +183,20 @@ export function generateRankingCharts(
 	rankingCriteriaCharts,
 	rankingResultsChart,
 	node: WorkflowNode<CompareDatasetsState>,
-	modelConfigIdToInterventionPolicyIdMap,
 	chartData,
-	datasets,
+	datasets: Ref<Dataset[]>,
+	modelConfigurations,
 	interventionPolicies
 ) {
 	// Reset charts
 	rankingCriteriaCharts.value = [];
 	rankingResultsChart.value = null;
 
-	// Might be uneccessary
-	const commonInterventionPolicyIds = node.state.criteriaOfInterestCards
-		.map(({ selectedConfigurationId }) => {
-			if (!selectedConfigurationId) return [];
-			return modelConfigIdToInterventionPolicyIdMap.value?.[selectedConfigurationId] ?? [];
-		})
-		.flat();
 	const allRankedCriteriaValues: { score: number; name: string }[][] = [];
 	const interventionNameColorMap: Record<string, string> = {};
 
 	node.state.criteriaOfInterestCards.forEach((card) => {
-		if (!card.selectedConfigurationId || !chartData.value) return;
+		if (!chartData.value) return;
 
 		const pointOfComparison =
 			card.timepoint === TimepointOption.FIRST
@@ -213,19 +206,17 @@ export function generateRankingCharts(
 		const rankingCriteriaValues: { score: number; name: string }[] = [];
 
 		let colorIndex = 0;
-		datasets.value.forEach(({ metadata }, index: number) => {
-			const policy = interventionPolicies.value.find(
+		datasets.value.forEach((dataset, index: number) => {
+			const { metadata } = dataset;
+			const modelConfiguration: ModelConfiguration = modelConfigurations.value.find(
+				({ id }) => id === metadata.simulationAttributes?.modelConfigurationId
+			);
+			const policy: InterventionPolicy = interventionPolicies.value.find(
 				({ id }) => id === metadata.simulationAttributes?.interventionPolicyId
 			);
 
 			// Skip this intervention policy if a configuration is not using it
-			if (
-				!policy ||
-				!policy.id ||
-				!policy.name ||
-				!commonInterventionPolicyIds.includes(policy.id) ||
-				!card.selectedVariable
-			) {
+			if (!policy?.name || !modelConfiguration?.name || !card.selectedVariable) {
 				return;
 			}
 
@@ -236,7 +227,7 @@ export function generateRankingCharts(
 
 			rankingCriteriaValues.push({
 				score: pointOfComparison[`${chartData.value?.pyciemssMap[card.selectedVariable]}_mean:${index}`] ?? 0,
-				name: policy.name ?? ''
+				name: `${policy.name} - ${modelConfiguration.name}`
 			});
 		});
 
@@ -374,9 +365,9 @@ export async function initialize(
 		rankingCriteriaCharts,
 		rankingResultsChart,
 		node,
-		modelConfigIdToInterventionPolicyIdMap,
 		rankingChartData,
 		datasets,
+		modelConfigurations,
 		interventionPolicies
 	);
 }
