@@ -212,7 +212,7 @@ public class DKGService {
 
 		if (q != null && !q.isEmpty()) {
 			Query query = QueryBuilders.multiMatch()
-				.fields(ElasticsearchService.emphasis(DKG.NAME, EMPHASIS), DKG.DESCRIPTION)
+				.fields(ElasticsearchService.emphasis(Grounding.NAME, EMPHASIS), DKG.DESCRIPTION)
 				.query(q)
 				.build()
 				._toQuery();
