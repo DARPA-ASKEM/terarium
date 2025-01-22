@@ -5,8 +5,6 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonSetter;
 import com.fasterxml.jackson.annotation.Nulls;
 import java.util.ArrayList;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -14,6 +12,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.experimental.Accessors;
 import software.uncharted.terarium.hmiserver.annotations.TSIgnore;
 import software.uncharted.terarium.hmiserver.annotations.TSModel;
+import software.uncharted.terarium.hmiserver.annotations.TSOptional;
 
 @Data
 @Accessors(chain = true)
@@ -49,13 +48,4 @@ public class DKG {
 
 	@TSOptional
 	private List<String> locations;
-
-	public void addLocations(DKG locationInformation) {
-		if (locationInformation.getLocations() != null) {
-			if (this.locations == null) {
-				this.locations = new ArrayList<>();
-			}
-			this.locations.addAll(locationInformation.getLocations());
-		}
-	}
 }
