@@ -296,6 +296,7 @@ export async function generateImpactCharts(
 // TODO: Please type the function params in this file for a later pass
 export async function initialize(
 	props,
+	knobs,
 	isFetchingDatasets,
 	datasets,
 	datasetResults,
@@ -336,6 +337,8 @@ export async function initialize(
 	// Fetch the results
 	datasetResults.value = await fetchDatasetResults(datasets.value);
 	isFetchingDatasets.value = false;
+
+	if (!knobs.value.selectedDataset) knobs.value.selectedDataset = datasets.value[0]?.id ?? null;
 
 	await generateImpactCharts(impactChartData, datasets, datasetResults, baselineDatasetIndex, selectedPlotType);
 	const modelConfigurationIds = Object.keys(modelConfigIdToInterventionPolicyIdMap.value);
