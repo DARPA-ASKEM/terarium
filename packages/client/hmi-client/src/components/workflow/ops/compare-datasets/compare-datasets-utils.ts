@@ -220,15 +220,18 @@ export function generateRankingCharts(
 				return;
 			}
 
-			if (!interventionNameColorMap[policy.name]) {
-				interventionNameColorMap[policy.name] = CATEGORICAL_SCHEME[colorIndex];
+			const barLabel = `${policy.name} - ${modelConfiguration.name}`;
+
+			if (!interventionNameColorMap[barLabel]) {
+				interventionNameColorMap[barLabel] = CATEGORICAL_SCHEME[colorIndex];
 				colorIndex++;
 			}
 
 			rankingCriteriaValues.push({
 				score: pointOfComparison[`${chartData.value?.pyciemssMap[card.selectedVariable]}_mean:${index}`] ?? 0,
-				name: `${policy.name} - ${modelConfiguration.name}`
+				name: barLabel
 			});
+			console.log(rankingCriteriaValues);
 		});
 
 		const sortedRankingCriteriaValues =
