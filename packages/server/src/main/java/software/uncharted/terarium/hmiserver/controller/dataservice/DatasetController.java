@@ -174,9 +174,12 @@ public class DatasetController {
 
 				// Update and fetch updated dataset
 				datasetService.updateAsset(dataset, projectId, Schema.Permission.WRITE);
-				dataset = datasetService
-					.getAsset(id, permission)
-					.orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, messages.get("dataset.not-found")));
+				Optional<Dataset> updatedDataset = datasetService.getAsset(id, permission);
+				if (updatedDataset.isEmpty()) {
+					log.warn("Failed to get dataset after update");
+				} else {
+					dataset = updatedDataset.get();
+				}
 			}
 
 			return ResponseEntity.ok(dataset);
