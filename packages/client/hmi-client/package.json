@@ -81,7 +81,7 @@
 	"devDependencies": {
 		"@playwright/experimental-ct-vue": "1.31.2",
 		"@playwright/test": "1.31.2",
-		"@rushstack/eslint-patch": "1.10.4",
+		"@rushstack/eslint-patch": "1.10.5",
 		"@types/d3": "7.4.3",
 		"@types/lodash": "4.17.14",
 		"@types/markdown-it": "14.1.2",
