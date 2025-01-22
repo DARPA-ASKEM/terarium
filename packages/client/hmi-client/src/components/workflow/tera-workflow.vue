@@ -50,6 +50,22 @@
 		<!-- data -->
 		<template #data>
 			<ContextMenu ref="contextMenu" :model="contextMenuItems" style="white-space: nowrap; width: auto" />
+
+			<!-- Annotation test -->
+			<tera-canvas-item
+				v-for="annotation in wf.getAnnotations()"
+				:key="annotation.id"
+				:style="{ width: `300px`, top: `${annotation.y}px`, left: `${annotation.x}px` }"
+				@dragging="(event) => updateAnnotationPosition(annotation, event)"
+				@dragend="() => updateAnnotation(annotation)"
+			>
+				<tera-workflow-annotation
+					:annotation="annotation"
+					@remove-annotation="(event) => removeAnnotation(event)"
+					@update-annotation="(event) => updateAnnotation(event)"
+				/>
+			</tera-canvas-item>
+
 			<tera-canvas-item
 				v-for="node in wf.getNodes()"
 				:key="node.id"
@@ -177,10 +193,12 @@ import {
 	WorkflowPort,
 	WorkflowDirection,
 	WorkflowPortStatus,
-	OperatorStatus
+	OperatorStatus,
+	WorkflowAnnotation
 } from '@/types/workflow';
 // Operation imports
 import TeraOperator from '@/components/operator/tera-operator.vue';
+import TeraWorkflowAnnotation from '@/components/workflow/tera-workflow-annotation.vue';
 import Button from 'primevue/button';
 import TeraToggleableInput from '@/components/widgets/tera-toggleable-input.vue';
 import ContextMenu from 'primevue/contextmenu';
@@ -605,6 +623,12 @@ const contextMenuItems: MenuItem[] = [
 				command: addOperatorToWorkflow(CompareDatasetsOp)
 			}
 		]
+	},
+	{
+		label: 'Add annotation',
+		command: () => {
+			addAnnotationToWorkflow();
+		}
 	}
 ];
 const addComponentMenu = ref();
@@ -897,6 +921,33 @@ const updatePosition = (node: WorkflowNode<any>, { x, y }) => {
 	node.x += x / canvasTransform.k;
 	node.y += y / canvasTransform.k;
 	updateEdgePositions(node, { x, y });
+};
+
+const addAnnotationToWorkflow = async () => {
+	const updatedWorkflow = await workflowService.addOrUpdateAnnotation(wf.value.getId(), {
+		id: uuidv4(),
+		x: newNodePosition.x,
+		y: newNodePosition.y,
+		content: 'annotation text',
+		type: '',
+		textSize: 12
+	});
+	wf.value.update(updatedWorkflow, false);
+};
+
+const updateAnnotationPosition = (annotation: WorkflowAnnotation, event: any) => {
+	annotation.x += event.x / canvasTransform.k;
+	annotation.y += event.y / canvasTransform.k;
+};
+
+const updateAnnotation = async (annotation: WorkflowAnnotation) => {
+	const updatedWorkflow = await workflowService.addOrUpdateAnnotation(wf.value.getId(), annotation);
+	wf.value.update(updatedWorkflow, false);
+};
+
+const removeAnnotation = async (annotationId: string) => {
+	const updatedWorkflow = await workflowService.removeAnnotation(wf.value.getId(), annotationId);
+	wf.value.update(updatedWorkflow, false);
 };
 
 function interpolatePointsForCurve(a: Position, b: Position): Position[] {

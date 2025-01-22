@@ -59,7 +59,7 @@ import {
 	updateLossChartSpec,
 	getLossValuesFromSimulation,
 	formatCalibrateModelConfigurations,
-	getSelectedOutputEnsembleMapping,
+	getChartEnsembleMapping,
 	buildChartData,
 	fetchModelConfigurations,
 	fetchOutputData
@@ -93,7 +93,7 @@ const outputData = ref<{
 	resultGroupByTimepoint: GroupedDataArray;
 } | null>(null);
 const groundTruthData = computed<DataArray>(() => parseCsvAsset(csvAsset.value as CsvAsset));
-const selectedOutputMapping = computed(() => getSelectedOutputEnsembleMapping(props.node));
+const selectedOutputMapping = computed(() => getChartEnsembleMapping(props.node, {}));
 const { selectedEnsembleVariableSettings } = useChartSettings(props, emit);
 const { useEnsembleVariableCharts } = useCharts(
 	props.node.id,
