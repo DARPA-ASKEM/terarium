@@ -60,7 +60,6 @@ import software.uncharted.terarium.hmiserver.models.dataservice.provenance.Prove
 import software.uncharted.terarium.hmiserver.models.dataservice.provenance.ProvenanceRelationType;
 import software.uncharted.terarium.hmiserver.models.dataservice.provenance.ProvenanceType;
 import software.uncharted.terarium.hmiserver.models.extractionservice.ExtractionResponse;
-import software.uncharted.terarium.hmiserver.models.mira.DKG;
 import software.uncharted.terarium.hmiserver.models.task.TaskRequest;
 import software.uncharted.terarium.hmiserver.models.task.TaskRequest.TaskType;
 import software.uncharted.terarium.hmiserver.models.task.TaskResponse;
@@ -872,7 +871,7 @@ public class KnowledgeController {
 		}
 	)
 	/**
-	 * This is similiar to /equations-to-model endpoint, but rather than
+	 * This is similar to /equations-to-model endpoint, but rather than
 	 * directly creating a model asset it returns artifact at different intersections
 	 * and handoff for debugging
 	 **/
