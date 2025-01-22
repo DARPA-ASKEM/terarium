@@ -290,8 +290,8 @@ export class HorizonScanningScenario extends BaseScenario {
 
 		// Generate Cartesian product of parameter extrema
 		const parameterExtrema = this.parameters.map((parameter) => [
-			{ id: parameter!.id, type: 'Low', value: parameter!.low },
-			{ id: parameter!.id, type: 'High', value: parameter!.high }
+			{ id: parameter!.id, label: 'Low', value: parameter!.low },
+			{ id: parameter!.id, label: 'High', value: parameter!.high }
 		]);
 
 		const cartesianConfigs = cartesianProduct(parameterExtrema);
@@ -307,7 +307,7 @@ export class HorizonScanningScenario extends BaseScenario {
 				}
 			});
 
-			clonedModelConfig.name = config.map((param) => `${param.id}${param.type}`).join('_');
+			clonedModelConfig.name = config.map((param) => `${param.id}${param.label}`).join('_');
 			clonedModelConfig.description = `This is a configuration created from "${modelConfig.name}" with extreme values for the parameters: ${config.map((param) => `${param.id}: ${param.value}`).join(', ')} using the horizon scanning scenario template.`;
 
 			const newModelConfig = await createModelConfiguration(clonedModelConfig);
