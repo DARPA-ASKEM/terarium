@@ -988,7 +988,6 @@ export interface Variable {
     column: DataColumn[];
     paper: Paper;
     equations: EquationVariable[];
-    dkg_groundings: DKGConcept[];
 }
 
 export interface StatementValue {
