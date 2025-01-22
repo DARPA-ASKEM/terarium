@@ -66,7 +66,7 @@ const { useCompareDatasetCharts } = useCharts(
 );
 onMounted(() => {
 	initialize(
-		props,
+		props.node,
 		null,
 		isFetchingDatasets,
 		datasets,
@@ -90,7 +90,7 @@ watch(
 		if (props.node.inputs.every((input) => input.status === WorkflowPortStatus.CONNECTED)) {
 			emit('append-input-port', { type: 'datasetId', label: 'Dataset or Simulation result' });
 			initialize(
-				props,
+				props.node,
 				null,
 				isFetchingDatasets,
 				datasets,

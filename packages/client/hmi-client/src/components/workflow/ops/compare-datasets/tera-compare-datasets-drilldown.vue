@@ -36,7 +36,7 @@
 							disabled
 						/>
 						<template v-if="knobs.selectedCompareOption === CompareValue.IMPACT">
-							<label> Select simulation to use as a baseline (optional) </label>
+							<label> Select simulation to use as a baseline </label>
 							<Dropdown
 								v-model="knobs.selectedBaselineDatasetId"
 								:options="datasets"
@@ -46,8 +46,6 @@
 								placeholder="Optional"
 								@change="onChangeImpactComparison"
 							/>
-							<label>Comparison tables</label>
-							<tera-checkbox v-model="isATESelected" label="Average treatment effect (ATE)" />
 						</template>
 						<!-- Pascale asked me to omit this timepoint selector, but I'm keeping it here until we are certain it's not needed -->
 						<!--
@@ -224,7 +222,7 @@ const props = defineProps<{
 const emit = defineEmits(['update-state', 'close']);
 
 const compareOptions: { label: string; value: CompareValue }[] = [
-	{ label: 'Compare the impact of interventions', value: CompareValue.IMPACT },
+	{ label: 'Compare scenarios', value: CompareValue.IMPACT },
 	{ label: 'Rank interventions based on multiple criteria', value: CompareValue.RANK }
 ];
 
@@ -250,13 +248,12 @@ const activeIndices = ref([0, 1, 2]);
 
 const isFetchingDatasets = ref(false);
 const areSimulationsFromSameModel = ref(true);
-const isATESelected = ref(false);
 
 const onRun = () => {
 	generateRankingCharts(
 		rankingCriteriaCharts,
 		rankingResultsChart,
-		props,
+		props.node,
 		modelConfigIdToInterventionPolicyIdMap,
 		rankingChartData,
 		datasets,
@@ -349,7 +346,7 @@ onMounted(async () => {
 	outputPanelBehavior();
 
 	await initialize(
-		props,
+		props.node,
 		knobs,
 		isFetchingDatasets,
 		datasets,

@@ -1,7 +1,8 @@
 import { isEmpty } from 'lodash';
 import { Dataset } from '@/types/Types';
-import { WorkflowPortStatus } from '@/types/workflow';
+import { WorkflowNode, WorkflowPortStatus } from '@/types/workflow';
 import { renameFnGenerator } from '@/components/workflow/ops/calibrate-ciemss/calibrate-utils';
+import { Ref } from 'vue';
 
 import { createRankingInterventionsChart, CATEGORICAL_SCHEME } from '@/services/charts';
 import { DATASET_VAR_NAME_PREFIX, getDatasetResultCSV, mergeResults, getDataset } from '@/services/dataset';
@@ -16,7 +17,7 @@ import { getModelConfigurationById } from '@/services/model-configurations';
 
 import { ChartData } from '@/composables/useCharts';
 
-import { PlotValue, TimepointOption, RankOption } from './compare-datasets-operation';
+import { PlotValue, TimepointOption, RankOption, CompareDatasetsState } from './compare-datasets-operation';
 
 interface DataResults {
 	results: DataArray[];
@@ -181,7 +182,7 @@ export function buildChartData(
 export function generateRankingCharts(
 	rankingCriteriaCharts,
 	rankingResultsChart,
-	props,
+	node: WorkflowNode<CompareDatasetsState>,
 	modelConfigIdToInterventionPolicyIdMap,
 	chartData,
 	datasets,
@@ -192,7 +193,7 @@ export function generateRankingCharts(
 	rankingResultsChart.value = null;
 
 	// Might be uneccessary
-	const commonInterventionPolicyIds = props.node.state.criteriaOfInterestCards
+	const commonInterventionPolicyIds = node.state.criteriaOfInterestCards
 		.map(({ selectedConfigurationId }) => {
 			if (!selectedConfigurationId) return [];
 			return modelConfigIdToInterventionPolicyIdMap.value?.[selectedConfigurationId] ?? [];
@@ -201,7 +202,7 @@ export function generateRankingCharts(
 	const allRankedCriteriaValues: { score: number; name: string }[][] = [];
 	const interventionNameColorMap: Record<string, string> = {};
 
-	props.node.state.criteriaOfInterestCards.forEach((card) => {
+	node.state.criteriaOfInterestCards.forEach((card) => {
 		if (!card.selectedConfigurationId || !chartData.value) return;
 
 		const pointOfComparison =
@@ -279,7 +280,7 @@ export function generateRankingCharts(
 
 export async function generateImpactCharts(
 	chartData,
-	datasets,
+	datasets: Ref<Dataset[]>,
 	datasetResults,
 	baselineDatasetIndex,
 	selectedPlotType
@@ -295,10 +296,10 @@ export async function generateImpactCharts(
 // TODO: this should probably be split up into smaller functions but for now it's at least not duplicated in the node and drilldown
 // TODO: Please type the function params in this file for a later pass
 export async function initialize(
-	props,
-	knobs,
-	isFetchingDatasets,
-	datasets,
+	node: WorkflowNode<CompareDatasetsState>,
+	knobs: Ref<any> | null,
+	isFetchingDatasets: Ref<boolean>,
+	datasets: Ref<Dataset[]>,
 	datasetResults,
 	modelConfigIdToInterventionPolicyIdMap,
 	impactChartData,
@@ -310,7 +311,7 @@ export async function initialize(
 	rankingCriteriaCharts,
 	rankingResultsChart
 ) {
-	const { inputs } = props.node;
+	const { inputs } = node;
 	const datasetInputs = inputs.filter(
 		(input) => input.type === 'datasetId' && input.status === WorkflowPortStatus.CONNECTED
 	);
@@ -332,12 +333,15 @@ export async function initialize(
 			}
 			if (!interventionPolicyId) {
 				// Select a default baseline by choosing the first dataset that lacks an intervention policy
-				if (!knobs.value.selectedDataset) knobs.value.selectedDataset = dataset.id;
+				if (knobs && !knobs.value.selectedBaselineDatasetId) knobs.value.selectedBaselineDatasetId = dataset.id;
 				return;
 			}
 			modelConfigIdToInterventionPolicyIdMap.value[modelConfigurationId].push(interventionPolicyId);
 		});
 	});
+	// Fallback to the first dataset if no dataset ends up being selected
+	if (knobs && !knobs.value.selectedBaselineDatasetId) knobs.value.selectedBaselineDatasetId = datasets.value[0].id;
+
 	// Fetch the results
 	datasetResults.value = await fetchDatasetResults(datasets.value);
 	isFetchingDatasets.value = false;
@@ -369,7 +373,7 @@ export async function initialize(
 	generateRankingCharts(
 		rankingCriteriaCharts,
 		rankingResultsChart,
-		props,
+		node,
 		modelConfigIdToInterventionPolicyIdMap,
 		rankingChartData,
 		datasets,
