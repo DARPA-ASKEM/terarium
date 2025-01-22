@@ -18,6 +18,7 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import software.amazon.awssdk.core.ResponseInputStream;
 import software.amazon.awssdk.services.s3.model.GetObjectResponse;
+import software.uncharted.terarium.hmiserver.models.dataservice.Grounding;
 import software.uncharted.terarium.hmiserver.models.mira.DKG;
 import software.uncharted.terarium.hmiserver.service.elasticsearch.ElasticsearchService;
 import software.uncharted.terarium.hmiserver.utils.JSONLInputStreamReader;
@@ -108,7 +109,7 @@ public class DownloadStaticESIndexService {
 			final JSONLInputStreamReader jsonlInputStreamReader = new JSONLInputStreamReader(10 * 1024 * 1024);
 			jsonlInputStreamReader.read(esIndexStream, jsonNodes -> {
 				final List<JsonNode> sources = jsonNodes.stream().map(node -> node.at("/_source")).toList();
-				final List<String> ids = sources.stream().map(node -> node.at("/" + DKG.ID).asText()).toList();
+				final List<String> ids = sources.stream().map(node -> node.at("/" + Grounding.ID).asText()).toList();
 				try {
 					final BulkResponse response = elasticsearchService.bulkInsert(index.getIndexName(), sources, ids);
 					if (response.errors()) {
