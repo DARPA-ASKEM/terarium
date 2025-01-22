@@ -345,12 +345,12 @@ function outputPanelBehavior() {
 onMounted(() => {
 	const state = cloneDeep(props.node.state);
 	knobs.value = Object.assign(knobs.value, state);
-	if (!knobs.value.selectedDataset) knobs.value.selectedDataset = datasets.value[0]?.id ?? null;
 
 	outputPanelBehavior();
 
 	initialize(
 		props,
+		knobs,
 		isFetchingDatasets,
 		datasets,
 		datasetResults,
