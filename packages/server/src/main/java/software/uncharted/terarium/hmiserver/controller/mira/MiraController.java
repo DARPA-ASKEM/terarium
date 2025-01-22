@@ -32,6 +32,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 import software.uncharted.terarium.hmiserver.models.dataservice.Artifact;
+import software.uncharted.terarium.hmiserver.models.dataservice.Grounding;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.Model;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.configurations.ModelConfiguration;
 import software.uncharted.terarium.hmiserver.models.mira.Curies;
@@ -226,7 +227,7 @@ public class MiraController {
 				if (
 					response.getBody() == null &&
 					!response.getBody().isEmpty() &&
-					response.getBody().get(0).getLabels().contains(DKG.GEONAMES)
+					response.getBody().get(0).getLabels().contains(Grounding.GEONAMES)
 				) {
 					finalResponse.getLocations().add(response.getBody().get(0).getCurie());
 				}
