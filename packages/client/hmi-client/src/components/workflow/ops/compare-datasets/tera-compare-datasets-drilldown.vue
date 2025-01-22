@@ -88,7 +88,7 @@
 		</template>
 
 		<tera-drilldown-section :tabName="DrilldownTabs.Wizard">
-			<div ref="outputPanel">
+			<div ref="outputPanel" class="p-2">
 				<Accordion multiple :active-index="activeIndices">
 					<AccordionTab header="Summary"> </AccordionTab>
 					<template v-if="knobs.selectedCompareOption === CompareValue.IMPACT">
@@ -100,6 +100,15 @@
 									expandable
 								/>
 							</template>
+							<div v-if="selectedVariableSettings.length === 0" class="empty-state-chart">
+								<img
+									src="@assets/svg/operator-images/simulate-deterministic.svg"
+									alt="Select a variable"
+									draggable="false"
+									height="80px"
+								/>
+								<p class="text-center">Select variables of interest in the output panel</p>
+							</div>
 						</AccordionTab>
 						<AccordionTab header="Comparison table"> </AccordionTab>
 					</template>
@@ -403,5 +412,19 @@ label {
 	border-radius: var(--border-radius);
 	box-shadow: inset 0 0 6px rgba(0, 0, 0, 0.1);
 	margin-bottom: var(--gap-1);
+}
+.empty-state-chart {
+	display: flex;
+	flex-direction: column;
+	flex-grow: 1;
+	gap: var(--gap-4);
+	justify-content: center;
+	align-items: center;
+	height: 12rem;
+	margin: var(--gap-6);
+	padding: var(--gap-4);
+	background: var(--surface-100);
+	color: var(--text-color-secondary);
+	border-radius: var(--border-radius);
 }
 </style>
