@@ -84,6 +84,7 @@ export const transformRowValuesRelativeToBaseline = (
 	plotType: PlotValue
 ) => {
 	const transformed: Record<string, number> = {};
+	// FIXME: When refreshing the drilldown Chrome auto-pauses here sometimes to avoid a potential memory crash
 	Object.entries(row).forEach(([key, value]) => {
 		const [dataKey, datasetIndex] = key.split(':');
 		if (datasetIndex === undefined) {
