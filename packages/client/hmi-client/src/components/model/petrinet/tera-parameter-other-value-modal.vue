@@ -310,6 +310,7 @@ function applySelectedValue() {
 	background: var(--surface-0);
 	height: 4rem;
 	cursor: pointer;
+	border-bottom: 1px solid var(--surface-border-light);
 }
 
 .custom-input-section:hover {
