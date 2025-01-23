@@ -185,7 +185,7 @@ header.document-viewer-header {
 
 /* Don't nest this rule, it makes it easier for the parent to mutate when needed. */
 .input-config {
-	padding-bottom: 4rem;
+	margin-bottom: 4rem;
 }
 
 .tab {
