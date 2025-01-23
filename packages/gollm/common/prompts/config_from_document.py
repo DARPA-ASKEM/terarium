@@ -22,38 +22,36 @@ Assume that the paper describes multiple conditions to which the model can be ap
 Be sure to extract state and parameter values from the paper, and do not use the default values from the model.
 Be sure to use consistent naming conventions for the conditions. Instead of "condition_1" and "condition_2", use descriptive names.
 State and parameter values are often found in tables. Look at the tables in the paper first and pay attention to the table structure when determining which values correspond to which state or parameter.
+If state and parameter values are not found in tables, look for them in the text of the paper.
+
+For Context, here are some examples of how state and parameters can be described in the text of the paper:
+
+--- START EXAMPLES ---
+    - "alpha = [0.1, 0.2, 0.3, 0.4]." (this would result in a distributed parameter alpha or α with a range of 0.1 to 0.4)
+    - "Transmission rate β was 0.6." (this would result in a constant parameter beta or β with a value of 0.6)
+    - "We have: S(t)+I(t)+R(t)=1, where 1 denotes the total population, with S + I = 1." (this would result in initial states of S=0.5, I=0.5, and R=0)
+    - "The initial number of infected individuals was 10." (this would result in an initial state of I=10)
+--- END EXAMPLES ---
+
 
 For each condition, create a model configuration JSON object that satisfies the JSON schema specified in the response format. To do this, follow the instructions below:
 1.	Create a value for `name` and `description` from the paper.
 2.	For the description, provide a long-form description of the condition. If the description cannot be created from the text, set it to an empty string.
 3.	`model_id` id a UUID. If the model has an id, you can use it. Otherwise, you can set as the nil UUID "00000000-0000-0000-0000-000000000000".
-4.  Determine if the model contains parameters that are initial values linked to states in the model. These will have an ID of the state they are associated with, with a 0 appended to the end (E.g. If the model has a state with an ID of "S" the initial value parameter will have an ID of "S0") and there should be a corresponding initial parameter for each state in the model.
-
-If the model DOES contain parameters that are initial values linked to states in the model, use the following rules to populate configurations:
-    a.  For each state specified in the model, extract information from the text and create an initial semantic object. Do not create new initial semantic objects for states that are not included in the original model. Use the following rules to determine the value of a state:
-        i.  A state can be a mathematical expression of the initial condition parameter of other states in the system (e.g. the initial condition for the susceptible population equals the total population minus the population of all the other disease states).
-        ii. A state can be a constant value.
-        iii. If a value or expression for the initial state is not found in the text, set it to the ID of the parameter that is the initial value for the state (E.g. for state "X" the initial condition parameter will be "X0").
-    b. For each parameter specified in the model, extract information from the text and create a parameter semantic object. Do not create new parameter semantic objects for parameters that are not included in the original model. If you cannot find a value for the parameter, do not create a parameter semantic object. Parameters can be an initial value for a state, a constant value for a transition, or a range or distribution for a transition. Use the following rules to determine the value of a parameter:
-        i.	Determine if the parameter is an initial value for a state in the model. These will have an ID of the state they are associated with, with a 0 appended to the end (E.g. If the model has a state with an ID of "S" the initial value parameter will have an ID of "S0"). If this is the case, search the document for an initial value for the state and create a constant value by setting the distribution type to "Constant" and add the value to the `value` field. Sometimes the state will be a mathematical expression. In these cases, evaluate the expression for timepoint 0 and provide the resulting value.
-        ii.  Constant parameters will have a single value. To create a constant parameter, set the distribution type to "Constant" and add the value to the `value` field. Sometimes constants will be in the form of a ratio (E.g. 1/n), in these cases, evaluate the ratio and provide the resulting value.
-        iii.  Distributed parameters will usually appear as a range (E.g. 0.01 - 0.2) or a list of values (E.g. [0.01 0.02 0.03 0.04 0.05] or 0.01, 0.02, 0.03, 0.04, 0.05 ). To create a distribution parameter, set the distribution type to "StandardUniform1" and add the smallest value in the range or list to the `minimum` field and the largest value to the `maximum` field.
-
-If the model DOES NOT contain parameters that are initial values linked to states in the model, use the following rules to populate configurations:
+4.  Use the following rules to populate configurations:
     a.	For each state specified in the model, extract information from the text and create an initial semantic object. Do not create new initial semantic objects for states that are not included in the original model. If you cannot find a value or expression for the initial state, do not create an initial semantic object. Use the following rules to determine the value of a state:
         ii.  A state can be a mathematical expression of the initial condition parameter of other states in the system (e.g. the initial condition for the susceptible population equals the total population minus the population of all the other disease states).
         iii.  A state can be a constant value.
     b.	For each parameter specified in the model, extract information from the text and create a parameter semantic object. Do not create new parameter semantic objects for parameters that are not included in the original model. If you cannot find a value for the parameter, do not create a parameter semantic object. Parameters can be an initial value for a state, a constant value for a transition, or a range or distribution for a transition. Use the following rules to determine the value of a parameter:
         b.  Constant parameters will have a single value. To create a constant parameter, set the distribution type to "Constant" and add the value to the `value` field. Sometimes constants will be in the form of a ratio (E.g. 1/n), in these cases, evaluate the ratio and provide the resulting value.
         c.  Distributed parameters will usually appear as a range (E.g. 0.01 - 0.2) or a list of values (E.g. [0.01 0.02 0.03 0.04 0.05] or 0.01, 0.02, 0.03, 0.04, 0.05 ). To create a distribution parameter, set the distribution type to "StandardUniform1" and add the smallest value in the range or list to the `minimum` field and the largest value to the `maximum` field.
-
 5. `observableSemanticList` should be an empty list.
 6. `inferredParameterList` should be an empty list.
 7. Determine what page the information was extracted from and set the `extractionPage` value to that page number. If the page number cannot be determined, set it to 0. Only pick one page number. Do not provide a range.
 
 For context, use the following as examples of correctly extracted model configurations from a JSON formatted model and a research paper:
 
---- START EXAMPLE 1 ---
+--- START CONFIGURATION EXAMPLE ---
 
 This is an example of a correctly extracted model configuration from a JSON formatted model and a research paper when the model DOES contain parameters that are initial values linked to states in the model.
 
@@ -155,21 +153,6 @@ With the following JSON formatted model:
           "id": "γ",
           "name": "γ",
           "value": 0.2
-        }},
-        {{
-          "id": "S0",
-          "name": "S0",
-          "value": 1
-        }}
-        {{
-          "id": "I0",
-          "name": "I0",
-          "value": 0
-        }}
-        {{
-          "id": "R0",
-          "name": "R0",
-          "value": 0
         }}
       ],
       "time": {{
@@ -202,22 +185,22 @@ The correctly extracted model configuration would be:
       "inferredParameterList": None,
       "initialSemanticList": [
         {{
-          "expression": "N-I0-R0",
-          "expressionMathml": "<math><apply><minus/><apply><minus/><ci>N</ci><ci>I0</ci></apply><ci>R0</ci></apply></math>",
+          "expression": "998",
+          "expressionMathml": "<math><cn>998</cn></math>",
           "source": "Page 0",
           "target": "S",
           "type": "initial"
         }},
         {{
-          "expression": "I0",
-          "expressionMathml": "<math><ci>I0</ci></math>",
+          "expression": "2",
+          "expressionMathml": "<math><cn>2</cn></math>",
           "source": "Page 0",
           "target": "I",
           "type": "initial"
         }},
         {{
-          "expression": "R0",
-          "expressionMathml": "<math><ci>R0</ci></math>",
+          "expression": "0",
+          "expressionMathml": "<math><cn>0</cn></math>",
           "source": "Page 0",
           "target": "R",
           "type": "initial"
@@ -257,39 +240,6 @@ The correctly extracted model configuration would be:
           "referenceId": "γ",
           "source": "Page 0",
           "type": "parameter"
-        }},
-        {{
-          "distribution": {{
-            "parameters": {{
-              "value": 998
-            }},
-            "type": "Constant"
-          }},
-          "referenceId": "S0",
-          "source": "Page 0",
-          "type": "parameter"
-        }},
-        {{
-          "distribution": {{
-            "parameters": {{
-              "value": 2
-            }},
-            "type": "Constant"
-          }},
-          "referenceId": "I0",
-          "source": "Page 0",
-          "type": "parameter"
-        }},
-        {{
-          "distribution": {{
-            "parameters": {{
-              "value": 0
-            }},
-            "type": "Constant"
-          }},
-          "referenceId": "R0",
-          "source": "Page 0",
-          "type": "parameter"
         }}
       ]
     }},
@@ -301,22 +251,22 @@ The correctly extracted model configuration would be:
       "inferredParameterList": None,
       "initialSemanticList": [
         {{
-          "expression": "N-I0-R0",
-          "expressionMathml": "<math><apply><minus/><apply><minus/><ci>N</ci><ci>I0</ci></apply><ci>R0</ci></apply></math>",
+          "expression": "998",
+          "expressionMathml": "<math><cn>998</cn></math>",
           "source": "Page 0",
           "target": "S",
           "type": "initial"
         }},
         {{
           "expression": "I0",
-          "expressionMathml": "<math><ci>I0</ci></math>",
+          "expressionMathml": "<math><cn>2</cn></math>",
           "source": "Page 0",
           "target": "I",
           "type": "initial"
         }},
         {{
           "expression": "R0",
-          "expressionMathml": "<math><ci>R0</ci></math>",
+          "expressionMathml": "<math><cn>0</cn></math>",
           "source": "Page 0",
           "target": "R",
           "type": "initial"
@@ -356,43 +306,10 @@ The correctly extracted model configuration would be:
           "referenceId": "γ",
           "source": "Page 0",
           "type": "parameter"
-        }},
-        {{
-          "distribution": {{
-            "parameters": {{
-              "value": 998
-            }},
-            "type": "Constant"
-          }},
-          "referenceId": "S0",
-          "source": "Page 0",
-          "type": "parameter"
-        }},
-        {{
-          "distribution": {{
-            "parameters": {{
-              "value": 2
-            }},
-            "type": "Constant"
-          }},
-          "referenceId": "I0",
-          "source": "Page 0",
-          "type": "parameter"
-        }},
-        {{
-          "distribution": {{
-            "parameters": {{
-              "value": 0
-            }},
-            "type": "Constant"
-          }},
-          "referenceId": "R0",
-          "source": "Page 0",
-          "type": "parameter"
         }}
       ]
     }}
   ]
 }}
---- END EXAMPLE 1 ---
+--- END CONFIGURATION EXAMPLE ---
 """
