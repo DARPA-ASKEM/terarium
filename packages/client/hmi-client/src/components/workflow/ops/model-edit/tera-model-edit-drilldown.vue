@@ -138,7 +138,10 @@ const sampleAgentQuestions = [
 	'Rename the transition infection to inf.',
 	'Change rate law of inf to S * I * z.',
 	'Add a new parameter with id θ and value 0.5.',
-	'Specify the time unit of the model to be "day"'
+	'Specify the time unit of the model to be "day"',
+	'Add a new transition that represents the states "Infected", "Hospitalized" controlling the production of the state "WastewaterViralLoad" with rate law "shed_rate * (Infected + Hospitalized)"',
+	'Add a new transition that represents the states "Susceptible", "Infected", "Recovered" controlling the degradation of the state "Hospitalized" with rate law "rec_rate * Hospitalized / (Susceptible + Infected + Recovered)"',
+	'Add a new transition that represents the states "Infected", "Recovered" controlling the conversion from the state "Susceptible" to the state "Vaccinated" with rate law "vac_rate / (Infected + Recovered)"'
 ];
 
 const contextLanguage = ref<string>('python3');
