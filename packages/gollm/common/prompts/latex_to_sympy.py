@@ -13,7 +13,7 @@ t = sympy.symbols("t")
 S, I = sympy.symbols("S I", cls = sympy.Function)
 # Define constant parameters
 beta, b, m = sympy.symbols("beta b m")
-equation_output = [sympy.Eq(S(t).diff(t), -beta * S(t) * I(t) + b - m * S(t))]
+equation_output = [sympy.Eq(S(t).diff(t), (-beta * S(t) * I(t) + b - m * S(t)).expand())]
 ```
 
 Now, do the same for this LaTeX input:
