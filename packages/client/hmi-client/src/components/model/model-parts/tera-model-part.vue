@@ -178,7 +178,7 @@
 import { isEmpty } from 'lodash';
 import { ref, computed } from 'vue';
 import type { ModelPartItem } from '@/types/Model';
-import type { DKG } from '@/types/Types';
+import type { Grounding } from '@/types/Types';
 import { searchCuriesEntities } from '@/services/concept';
 import TeraModelPartEntry from '@/components/model/model-parts/tera-model-part-entry.vue';
 import AutoComplete from 'primevue/autocomplete';
@@ -211,7 +211,7 @@ const editingState = ref(
 		firstRow: 0
 	}))
 );
-const results = ref<DKG[]>([]);
+const results = ref<Grounding[]>([]);
 const firstRow = ref(0);
 
 const filteredItems = computed(() => {
@@ -304,10 +304,7 @@ li {
 			border: 1px solid var(--surface-border-light);
 			border-radius: var(--border-radius);
 			border-left: 4px solid var(--surface-border);
-			padding-left: var(--gap-4);
-			padding-right: var(--gap-2);
-			padding-bottom: var(--gap-2);
-			padding-top: var(--gap-2);
+			padding: var(--gap-2) var(--gap-2) var(--gap-2) var(--gap-4);
 			&:hover {
 				background: var(--surface-highlight);
 				border-left-color: var(--primary-color);
