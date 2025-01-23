@@ -13,6 +13,7 @@ import lombok.EqualsAndHashCode;
 import org.hibernate.annotations.Type;
 import software.uncharted.terarium.hmiserver.annotations.TSIgnore;
 import software.uncharted.terarium.hmiserver.annotations.TSModel;
+import software.uncharted.terarium.hmiserver.annotations.TSOptional;
 import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.ModelDistribution;
 
 @EqualsAndHashCode(callSuper = true)
@@ -38,6 +39,11 @@ public class ParameterSemantic extends Semantic {
 	@TSIgnore
 	@NotNull
 	private ModelConfiguration modelConfiguration;
+
+	@TSOptional
+	@Schema(defaultValue = "Default Description")
+	@Column(columnDefinition = "text")
+	private String description;
 
 	@Override
 	public ParameterSemantic clone() {
