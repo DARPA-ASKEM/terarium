@@ -936,6 +936,7 @@ onUnmounted(() => kernelManager.shutdown());
 }
 
 .output-settings-panel {
+	position: relative;
 	padding: var(--gap-4);
 	display: flex;
 	flex-direction: column;
