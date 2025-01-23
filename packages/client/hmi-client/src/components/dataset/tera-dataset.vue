@@ -52,14 +52,7 @@
 <script setup lang="ts">
 import { computed, PropType, ref, watch, onMounted } from 'vue';
 import { cloneDeep, isEmpty, isEqual } from 'lodash';
-import {
-	getRawContent,
-	getClimateDataset,
-	getClimateDatasetPreview,
-	getDataset,
-	getDownloadURL,
-	updateDataset
-} from '@/services/dataset';
+import { getRawContent, getDataset, getDownloadURL, updateDataset } from '@/services/dataset';
 import { AssetType, type CsvAsset, type Dataset } from '@/types/Types';
 import TeraAsset from '@/components/asset/tera-asset.vue';
 import Editor from 'primevue/editor';
@@ -117,8 +110,6 @@ const columnInformation = computed(
 			stats: column.metadata?.column_stats // Uneditable
 		})) ?? []
 );
-
-const image = ref<string | undefined>(undefined);
 
 function updateColumn(index: number, key: string, value: any) {
 	if (!transientDataset.value?.columns?.[index]) return;
@@ -184,16 +175,8 @@ function reset() {
 }
 
 const fetchDataset = async () => {
-	if (props.source === DatasetSource.TERARIUM) {
-		dataset.value = await getDataset(props.assetId);
-	} else if (props.source === DatasetSource.ESGF) {
-		dataset.value = await getClimateDataset(props.assetId);
-	}
+	dataset.value = await getDataset(props.assetId);
 	reset(); // Prepare transientDataset for editing
-
-	if (dataset.value?.esgfId && !image.value) {
-		image.value = await getClimateDatasetPreview(dataset.value.esgfId);
-	}
 
 	// Remove download options from previous dataset
 	optionsMenuItems.value = optionsMenuItems.value.filter((item) => item.label !== 'Download');
