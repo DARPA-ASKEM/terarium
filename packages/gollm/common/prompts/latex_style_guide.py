@@ -6,14 +6,26 @@ LATEX_STYLE_GUIDE = """
 3) All variables that have time "t" dependence should be written with an explicit "(t)" (for example, "X" should be written as "X(t)")
 4) Rewrite superscripts and LaTeX superscripts "^" that denote indices to subscripts using LaTeX "_"
 5) Replace any unicode subscripts with LaTeX subscripts using "_". Ensure that all characters used in the subscript are surrounded by a pair of curly brackets "{{...}}"
-6) Do not use square brackets "[ ]", curly braces "{ }", and angle brackets "< >" when grouping algebraic expressions; use parentheses "( )" when necessary
-7) Expand algebraic expressions grouped by parentheses according to distributivity property of multiplication; example 1: "S(t) * (a * I(t) + b * D(t) + c * A(t))" -> "a * S(t) * I(t) + b * S(t) * D(t) + c * A(t) * S(t)"; example 2: "(a + b) * R(t)" -> "a * R(t) + b * R(t)"
-8) Avoid capital sigma and pi notations for summation and product
-9) Avoid non-ASCII characters when possible
-10) Avoid using homoglyphs
-11) Avoid words or multi-character names for variables and names. Use camel case to express multi-word or multi-character names
-12) Use " * " to denote multiplication; for example, "b S(t) I(t)" -> "b * S(t) * I(t)"
-13) Replace any variant form of Greek letters to their main form when representing a variable or parameter; "\\varepsilon" -> "\\epsilon", "\\vartheta" -> "\\theta", "\\varpi" -> "\\pi", "\\varrho" -> "\\rho",  "\\varsigma" -> "\\sigma", "\\varphi" -> "\\phi"
-14) If equations are separated by punctuation (like comma, period, semicolon), do not include the punctuation in the LaTeX code.
-15) Rewrite expressions with negative exponents as explicit fractions; for example, "N^{{-1}}" should be rewritten as "\\frac{{1}}{{N}}"
+6) Use " * " to denote multiplication
+    a) for example, replace "b S(t) I(t)" with "b * S(t) * I(t)"
+    b) for example, replace "(a b)I(t) with "a * b * I(t)"
+7) Avoid capital sigma and pi notations for summation and product
+8) Avoid non-ASCII characters when possible
+9) Avoid using homoglyphs
+10) Avoid words or multi-character names for variables and names. Use camel case to express multi-word or multi-character names
+11) Replace any variant form of Greek letters to their main form when representing a variable or parameter 
+    a) for example, replace "\\varepsilon" with "\\epsilon"
+    b) for example, replace "\\vartheta" with "\\theta"
+    c) for example, replace "\\varpi" with "\\pi"
+    d) for example, replace "\\varrho" with "\\rho"
+    e) for example, replace "\\varsigma" with "\\sigma"
+    f) for example, replace "\\varphi" with "\\phi"
+12) If equations are separated by punctuation (like comma, period, semicolon), do not include the punctuation in the LaTeX code.
+13) Rewrite expressions with negative exponents as explicit fractions
+    a) for example, replace "N^{{-1}}" with "\\frac{{1}}{{N}}"
+14) Do not use square brackets "[ ]", curly braces "{ }", and angle brackets "< >" when grouping expressions
+15) Always expand expressions surrounded by parentheses using the order of mathematical operations
+    a) for example, replace "x(t) (\\alpha y(t) + \\beta z(t))" with "\\alpha * x(t) * y(t) + \\beta * x(t) * z(t)"
+    b) for example, replace "-(\\alpha + \\beta + \\gamma) x(t)" with "- \\alpha * x(t) - \\beta * x(t) - \\gamma * x(t)"
+    c) for example, replace "(x(t) + y(t)) (z(t) + w(t))" with "x(t) * z(t) + x(t) * w(t) + y(t) * z(t) + y(t) * w(t)"
 """
