@@ -27,7 +27,7 @@
 			</span>
 		</div>
 		<template v-else-if="!featureConfig?.isPreview">
-			<main>
+			<main class="flex flex-wrap gap-2">
 				<tera-distribution-input
 					:model="model"
 					:modelConfiguration="modelConfiguration"
