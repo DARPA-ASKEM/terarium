@@ -64,7 +64,7 @@
 
 			<div class="custom-input-section" :class="{ 'custom-selected': !selectedRow }" @click="onCustomSectionClick">
 				<div class="grid">
-					<div class="col-3">
+					<div class="col-5">
 						<tera-input-text
 							placeholder="Add a source"
 							v-model="customSource"
@@ -73,12 +73,12 @@
 							@click.stop
 						/>
 					</div>
-					<div class="col-2">
+					<div class="col-3">
 						<Dropdown v-model="numberType" :options="numberOptions" class="w-full" @click.stop />
 					</div>
-					<div class="col-7">
+					<div class="col-4">
 						<div v-if="numberType === numberOptions[0]" class="grid">
-							<div class="col-5">
+							<div class="col-12">
 								<tera-input-number
 									placeholder="Constant"
 									v-model="customConstant"
@@ -88,8 +88,7 @@
 							</div>
 						</div>
 						<div v-else class="grid">
-							<div class="col-6" />
-							<div class="col-3">
+							<div class="col-6">
 								<tera-input-number
 									placeholder="Min"
 									v-model="customMin"
@@ -97,7 +96,7 @@
 									class="w-full"
 								/>
 							</div>
-							<div class="col-3">
+							<div class="col-6">
 								<tera-input-number
 									placeholder="Max"
 									v-model="customMax"
@@ -157,8 +156,8 @@ const emit = defineEmits(['update-parameter', 'update-source', 'close-modal']);
 const customSource = ref('default');
 const numberType = ref(DistributionType.Constant);
 const customConstant = ref(0);
-const customMin = ref(0);
-const customMax = ref(1);
+const customMin = ref(null);
+const customMax = ref(null);
 
 const numberOptions = [DistributionType.Constant, DistributionType.Uniform];
 
