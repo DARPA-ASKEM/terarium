@@ -163,7 +163,6 @@ const props = defineProps<{
 }>();
 
 const otherValueList = ref(props.otherValueList);
-console.log(otherValueList);
 
 const minValue: number = extent(otherValueList.value, (element) => element?.distribution?.parameters?.minimum)[0];
 const maxValue: number = extent(otherValueList.value, (element) => element?.distribution?.parameters?.maximum)[1];
