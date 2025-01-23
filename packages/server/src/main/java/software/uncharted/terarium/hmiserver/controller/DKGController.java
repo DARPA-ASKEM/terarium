@@ -4,7 +4,9 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
@@ -45,26 +47,38 @@ public class DKGController {
 			@ApiResponse(responseCode = "500", description = "There was an issue with the search", content = @Content)
 		}
 	)
-	public ResponseEntity<List<DKG>> searchAssets(
+	public ResponseEntity<Grounding> searchAssets(
 		@RequestParam(required = false, defaultValue = "0") final Integer page,
 		@RequestParam(required = false, defaultValue = "10") final Integer pageSize,
 		@RequestParam final String term
 	) {
-		try {
-			// First pass, search for exact matches using the curated contexts
-			Grounding grounding = ContextMatcher.searchBest(term);
+		// First pass, search for exact matches using the curated contexts
+		Grounding grounding = ContextMatcher.searchBest(term);
 
-			// If grounding is empty do the dkgService search
-			if (grounding == null) {
-				return ResponseEntity.ok(dkgService.searchEpiDKG(page, pageSize, term, null));
-			} else {
-				// If grounding is not empty, return the grounding
-				return ResponseEntity.ok(grounding.getIdentifiers());
+		// If grounding is not found, search the EpiDKG index
+		if (grounding == null) {
+			grounding = new Grounding();
+			List<DKG> dkgResults;
+
+			try {
+				dkgResults = dkgService.searchEpiDKG(page, pageSize, term, null);
+			} catch (Exception e) {
+				log.error("Error searching assets", e);
+				return ResponseEntity.internalServerError().build();
 			}
-		} catch (Exception e) {
-			log.error("Error searching assets", e);
-			return ResponseEntity.internalServerError().build();
+
+			// Transform the DKG results into a Grounding.identifiers
+			final Map<String, String> identifiers = new HashMap<>();
+			dkgResults.forEach(dkg -> {
+				String[] parts = dkg.getCurie().split(":");
+				if (parts.length == 2) {
+					identifiers.put(parts[0], parts[1]);
+				}
+			});
+			grounding.setIdentifiers(identifiers);
 		}
+
+		return ResponseEntity.ok(grounding);
 	}
 
 	@GetMapping("/search/embeddings")
