@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import org.apache.http.entity.ContentType;
 import org.junit.jupiter.api.AfterEach;
@@ -72,9 +73,13 @@ public class TerariumAssetCloneServiceTests extends TerariumApplicationTests {
 
 	static Grounding createGrounding(final String key) {
 		final Grounding grounding = new Grounding();
-		grounding.setContext(objectMapper.createObjectNode().put("hello", "world-" + key).put("foo", "bar-" + key));
-		grounding.setIdentifiers(new ArrayList<>());
-		grounding.getIdentifiers().add(new DKG("curie", "maria", "", null, null));
+		final Map<String, String> identifiers = new HashMap<>();
+		identifiers.put("curie", "maria-" + key);
+		grounding.setIdentifiers(identifiers);
+		final Map<String, String> context = new HashMap<>();
+		context.put("hello", "world-" + key);
+		context.put("foo", "bar-" + key);
+		grounding.setContext(context);
 		return grounding;
 	}
 
