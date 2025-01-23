@@ -33,7 +33,7 @@
 
 			<div class="custom-input-section" :class="{ 'custom-selected': !selectedRow }" @click="onCustomSectionClick">
 				<div class="grid">
-					<div class="col-5">
+					<div class="col-6">
 						<tera-input-text
 							placeholder="Add a source"
 							v-model="customSource"
@@ -42,21 +42,15 @@
 							@click.stop
 						/>
 					</div>
-					<div class="col-7">
-						<div class="grid">
-							<div class="col-5">
-								<section class="inline-flex gap-1">
-									<span class="custom-input-label">Constant</span>
-									<tera-input-number
-										placeholder="Constant"
-										v-model="customConstant"
-										@update:modelValue="onCustomSelectionChange"
-										class="w-full"
-										@click.stop
-									/>
-								</section>
-							</div>
-						</div>
+					<div class="col-6 flex">
+						<span class="ml-4 custom-input-label">Constant</span>
+						<tera-input-number
+							placeholder="Constant"
+							v-model="customConstant"
+							@update:modelValue="onCustomSelectionChange"
+							class="w-full"
+							@click.stop
+						/>
 					</div>
 				</div>
 			</div>
@@ -121,11 +115,12 @@ function applySelectedValue() {
 
 <style scoped>
 .value-label {
-	color: var(--surface-600);
+	color: var(--text-color-subdued);
 	padding-right: var(--gap-4);
 }
 .value {
-	color: var(--surface-900);
+	color: var(--text-color);
+	white-space: nowrap;
 }
 
 :deep(th) {
@@ -176,6 +171,6 @@ function applySelectedValue() {
 	align-items: center;
 	display: flex;
 	justify-content: left;
-	padding-right: var(--gap-4);
+	padding-right: var(--gap-2);
 }
 </style>
