@@ -120,6 +120,7 @@
 							</section>
 						</AccordionTab>
 					</Accordion>
+					<div class="spacer mb-6"></div>
 				</main>
 			</template>
 		</tera-slider-panel>
