@@ -85,7 +85,7 @@
 			:throw-on-error="false"
 		/>
 		<span v-if="!isTimePart" class="description" :class="{ 'mt-1': showDescription }">
-			<template v-if="featureConfig.isPreview">{{ descriptionText }}</template>
+			<template v-if="!featureConfig.isPreview">{{ descriptionText }}</template>
 			<tera-input-text
 				v-if="showDescription"
 				placeholder="Add a description"
@@ -215,6 +215,8 @@ h6::after {
 }
 
 .expression {
+	padding-top: var(--gap-1);
+	align-content: center;
 	min-height: 2rem;
 	max-height: 12rem;
 	overflow: auto;
