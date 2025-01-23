@@ -158,7 +158,6 @@
 					<Accordion :active-index="observableActiveIndicies" v-if="!isEmpty(observablesList)">
 						<AccordionTab header="Observables">
 							<tera-model-part
-								class="pl-4"
 								:part-type="PartType.OBSERVABLE"
 								:items="observablesList"
 								:feature-config="{ isPreview: true }"
