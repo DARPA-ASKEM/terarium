@@ -1945,7 +1945,7 @@ export function createFunmanParameterCharts(
 }
 
 export function createRankingInterventionsChart(
-	values: { score: number; name: string }[],
+	values: { score: number; policyName: string; configName: string }[],
 	interventionNameColorMap: Record<string, string>,
 	title: string | null = null,
 	variableName: string | null = null
@@ -1991,7 +1991,7 @@ export function createRankingInterventionsChart(
 				title: variableName || 'Score'
 			},
 			color: {
-				field: 'name',
+				field: 'policyName',
 				type: 'nominal',
 				scale: {
 					domain: Object.keys(interventionNameColorMap),
@@ -2003,7 +2003,14 @@ export function createRankingInterventionsChart(
 				}
 			}
 		},
-		transform: [{ window: [{ op: 'row_number', as: 'index' }] }],
+		transform: [
+			{ window: [{ op: 'row_number', as: 'index' }] },
+			{
+				calculate: "datum.configName ? datum.policyName + ' - ' + datum.configName : datum.policyName",
+				as: 'name'
+			}
+		],
+
 		spacing: 20, // Adds space between bars
 		layer: [
 			{

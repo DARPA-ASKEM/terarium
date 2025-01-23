@@ -34,7 +34,6 @@ from common.prompts.model_meta_compare import (
     MODEL_METADATA_COMPARE_GOAL_AND_DATA_PROMPT
 )
 from common.utils import (
-    normalize_greek_alphabet,
     escape_curly_braces,
     unescape_curly_braces
 )
@@ -143,7 +142,7 @@ class LlamaTools(LlmToolsInterface):
         prompt = LLAMA_START_PROMPT
         prompt += ENRICH_PROMPT.format(
             amr=escape_curly_braces(amr),
-            research_paper=escape_curly_braces(normalize_greek_alphabet(document))
+            research_paper=escape_curly_braces(document)
         )
         prompt += LLAMA_RETURN_INSTRUCTIONS.format(
             schema=schema
@@ -178,7 +177,7 @@ class LlamaTools(LlmToolsInterface):
         prompt = LLAMA_START_PROMPT
         prompt += CONFIGURE_FROM_DOCUMENT_PROMPT.format(
             amr=escape_curly_braces(amr),
-            research_paper=escape_curly_braces(normalize_greek_alphabet(document))
+            research_paper=escape_curly_braces(document)
         )
         prompt += LLAMA_RETURN_INSTRUCTIONS.format(
             schema=schema
@@ -196,7 +195,7 @@ class LlamaTools(LlmToolsInterface):
         else:
             print("Building prompt to extract dataset enrichments from a research paper...")
             prompt += DATASET_ENRICH_PROMPT.format(
-                research_paper=escape_curly_braces(normalize_greek_alphabet(document)),
+                research_paper=escape_curly_braces(document),
                 dataset=dataset
             )
 
@@ -239,7 +238,7 @@ class LlamaTools(LlmToolsInterface):
         prompt = LLAMA_START_PROMPT
         prompt += INTERVENTIONS_FROM_DOCUMENT_PROMPT.format(
             amr=escape_curly_braces(amr),
-            research_paper=escape_curly_braces(normalize_greek_alphabet(document))
+            research_paper=escape_curly_braces(document)
         )
         prompt += LLAMA_RETURN_INSTRUCTIONS.format(
             schema=schema
@@ -254,7 +253,7 @@ class LlamaTools(LlmToolsInterface):
         prompt = LLAMA_START_PROMPT
         prompt += INTERVENTIONS_FROM_DATASET_PROMPT.format(
             amr=escape_curly_braces(amr),
-            dataset=escape_curly_braces(normalize_greek_alphabet(dataset_text))
+            dataset=escape_curly_braces(dataset_text)
         )
         prompt += LLAMA_RETURN_INSTRUCTIONS.format(
             schema=schema
@@ -270,7 +269,7 @@ class LlamaTools(LlmToolsInterface):
 
         prompt = LLAMA_START_PROMPT
         prompt += MODEL_CARD_PROMPT.format(
-            research_paper=escape_curly_braces(normalize_greek_alphabet(document)),
+            research_paper=escape_curly_braces(document),
             amr=escape_curly_braces(amr)
         )
         prompt += LLAMA_RETURN_INSTRUCTIONS.format(
