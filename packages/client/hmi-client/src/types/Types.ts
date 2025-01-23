@@ -281,7 +281,6 @@ export interface ObservableSemantic extends Semantic {
 export interface ParameterSemantic extends Semantic {
     referenceId: string;
     distribution: ModelDistribution;
-    description?: string;
     default: boolean;
 }
 
