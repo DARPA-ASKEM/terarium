@@ -193,7 +193,7 @@ export function generateRankingCharts(
 	rankingCriteriaCharts.value = [];
 	rankingResultsChart.value = null;
 
-	const allRankedCriteriaValues: { score: number; name: string }[][] = [];
+	const allRankedCriteriaValues: { score: number; policyName: string; configName: string }[][] = [];
 	const interventionNameColorMap: Record<string, string> = {};
 
 	node.state.criteriaOfInterestCards.forEach((card) => {
@@ -224,7 +224,7 @@ export function generateRankingCharts(
 			pointOfComparison = chartData.value.resultSummary[chartData.value.resultSummary.length - 1];
 		}
 
-		const rankingCriteriaValues: { score: number; name: string }[] = [];
+		const rankingCriteriaValues: { score: number; policyName: string; configName: string }[] = [];
 
 		let colorIndex = 0;
 		datasets.value.forEach((dataset, index: number) => {
@@ -241,16 +241,15 @@ export function generateRankingCharts(
 				return;
 			}
 
-			const barLabel = `${policy.name} - ${modelConfiguration.name}`;
-
-			if (!interventionNameColorMap[barLabel]) {
-				interventionNameColorMap[barLabel] = CATEGORICAL_SCHEME[colorIndex];
+			if (!interventionNameColorMap[policy.name]) {
+				interventionNameColorMap[policy.name] = CATEGORICAL_SCHEME[colorIndex];
 				colorIndex++;
 			}
 
 			rankingCriteriaValues.push({
 				score: pointOfComparison[`${variableKey}:${index}`] ?? 0,
-				name: barLabel
+				policyName: policy.name,
+				configName: modelConfiguration.name
 			});
 		});
 
@@ -272,19 +271,21 @@ export function generateRankingCharts(
 
 	// Sum up the values of the same intervention policy
 	const valueMap: Record<string, number> = {};
-	allRankedCriteriaValues.flat().forEach(({ score, name }) => {
-		if (valueMap[name]) {
-			valueMap[name] += score;
+	allRankedCriteriaValues.flat().forEach(({ score, policyName }) => {
+		if (valueMap[policyName]) {
+			valueMap[policyName] += score;
 		} else {
-			valueMap[name] = score;
+			valueMap[policyName] = score;
 		}
 	});
 
-	const rankingResultsScores: { score: number; name: string }[] = Object.keys(valueMap)
-		.map((name) => ({
-			name,
-			score: valueMap[name]
+	const rankingResultsScores: { score: number; policyName: string; configName: string }[] = Object.keys(valueMap)
+		.map((policyName) => ({
+			policyName,
+			configName: '', // Don't show config name in the ranking results
+			score: valueMap[policyName]
 		}))
+		// Sort from lowest to highest value
 		.sort((a, b) => a.score - b.score)
 		// Instead of the values, we want to rank by score
 		.map((value, index) => ({ ...value, score: index + 1 }));
