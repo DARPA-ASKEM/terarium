@@ -1,7 +1,7 @@
 <template>
 	<div :class="{ selected: selected }">
 		<header>
-			<h6>{{ configuration.name }}</h6>
+			<h6 class="constrain-width">{{ configuration.name }}</h6>
 			<Button text icon="pi pi-ellipsis-v" @click.stop="toggleContextMenu" />
 		</header>
 		<ContextMenu
@@ -12,7 +12,7 @@
 			@mouseenter="contextMenuInFocus = true"
 			@mouseleave="contextMenuInFocus = false"
 		/>
-		<p>{{ configuration.description }}</p>
+		<p class="constrain-width">{{ configuration.description }}</p>
 		<p>{{ formatTimestamp(configuration.createdOn) }}</p>
 		<span v-if="emptyInputCount" :class="{ 'input-count': emptyInputCount }">{{ emptyInputCount }}</span>
 	</div>
@@ -133,5 +133,12 @@ span {
 
 p + p {
 	margin-top: var(--gap-2);
+}
+
+.constrain-width {
+	word-wrap: break-word; /* Legacy property */
+	overflow-wrap: break-word; /* Modern property */
+	word-break: break-word; /* For compatibility */
+	max-width: 100%; /* Ensures the text stays within container */
 }
 </style>
