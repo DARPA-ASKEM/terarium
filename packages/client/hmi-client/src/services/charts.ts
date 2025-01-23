@@ -1937,7 +1937,7 @@ export function createRankingInterventionsChart(
 		transform: [
 			{ window: [{ op: 'row_number', as: 'index' }] },
 			{
-				calculate: "datum.policyName + ' - ' + datum.configName",
+				calculate: "datum.configName ? datum.policyName + ' - ' + datum.configName : datum.policyName",
 				as: 'name'
 			}
 		],
