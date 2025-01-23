@@ -156,8 +156,8 @@ const emit = defineEmits(['update-parameter', 'update-source', 'close-modal']);
 const customSource = ref('default');
 const numberType = ref(DistributionType.Constant);
 const customConstant = ref(0);
-const customMin = ref(null);
-const customMax = ref(null);
+const customMin = ref(undefined);
+const customMax = ref(undefined);
 
 const numberOptions = [DistributionType.Constant, DistributionType.Uniform];
 
@@ -278,7 +278,7 @@ function applySelectedValue() {
 	color: var(--surface-900);
 }
 
-/* Change style for Primevue componment */
+/* Change style for Primevue component */
 :deep(td[role='cell'] > div.p-dropdown) {
 	height: 2.5rem;
 	width: 100%;
