@@ -1,84 +1,86 @@
 <template>
-	<transition>
-		<div class="chart-settings-panel" v-if="activeSettings !== null">
-			<header :class="{ shadow: false }">
-				<Button :icon="`pi pi-times`" @click="$emit('close')" text rounded size="large" />
-				<h4 class="line-wrap">{{ activeSettings.name }}</h4>
-			</header>
-			<div class="content items-wrapper">
-				<section v-if="chartAnnotations !== undefined" class="annotation-items">
-					<h5>Annotations</h5>
-					<tera-input-text
-						v-model="generateAnnotationQuery"
-						:icon="'pi pi-sparkles'"
-						:placeholder="'What do you want to annotate?'"
-						:disabled="!!isGeneratingAnnotation"
-						@keyup.enter="createAnnotationDebounced"
-						@keyup.esc="cancelGenerateAnnotation"
-						class="annotation-input"
-					/>
-					<div v-for="annotation in chartAnnotations" :key="annotation.id" class="annotation-item">
-						{{ annotation.description }}
-						<span class="btn-wrapper">
-							<Button icon="pi pi-trash" rounded text @click="$emit('delete-annotation', annotation.id)" />
-						</span>
-					</div>
-					<Divider />
-				</section>
-				<section class="items-wrapper">
-					<h5>Options</h5>
-					<tera-checkbox label="Use log scale" :model-value="useLog" @update:model-value="toggleLogScale($event)" />
-					<tera-checkbox
-						label="Hide in node"
-						:model-value="isHiddenInNode"
-						@update:model-value="toggleHideInNode($event)"
-					/>
-					<Divider />
-				</section>
-				<section v-if="isColorPickerEnabled">
-					<h5 class="mb-3">Color picker</h5>
-					<input type="color" :value="activeSettings?.primaryColor ?? ''" @change="onColorChange($event)" />
-					<Divider />
-				</section>
-				<section v-if="activeSettings?.type === ChartSettingType.VARIABLE_COMPARISON" class="items-wrapper">
-					<h5>Comparison method</h5>
-					<div>
-						<RadioButton
-							:model-value="smallMultiplesRadioValue"
-							@update:model-value="onSmallMultiplesRadioButtonChange"
-							inputId="all-charts"
-							value="all-charts"
+	<div class="chart-settings-panel-anchor">
+		<transition>
+			<div class="chart-settings-panel" v-if="activeSettings !== null">
+				<header :class="{ shadow: false }">
+					<Button :icon="`pi pi-times`" @click="$emit('close')" text rounded size="large" />
+					<h4 class="line-wrap">{{ activeSettings.name }}</h4>
+				</header>
+				<div class="content items-wrapper">
+					<section v-if="chartAnnotations !== undefined" class="annotation-items">
+						<h5>Annotations</h5>
+						<tera-input-text
+							v-model="generateAnnotationQuery"
+							:icon="'pi pi-sparkles'"
+							:placeholder="'What do you want to annotate?'"
+							:disabled="!!isGeneratingAnnotation"
+							@keyup.enter="createAnnotationDebounced"
+							@keyup.esc="cancelGenerateAnnotation"
+							class="annotation-input"
 						/>
-						<label for="all-charts" class="ml-2">All in one chart</label>
-					</div>
-					<div>
-						<RadioButton
-							:model-value="smallMultiplesRadioValue"
-							@update:model-value="onSmallMultiplesRadioButtonChange"
-							inputId="small-multiples"
-							value="small-multiples"
-						/>
-						<label for="small-multiples" class="ml-2">Small multiples</label>
-					</div>
-					<div class="pl-5 items-wrapper">
+						<div v-for="annotation in chartAnnotations" :key="annotation.id" class="annotation-item">
+							{{ annotation.description }}
+							<span class="btn-wrapper">
+								<Button icon="pi pi-trash" rounded text @click="$emit('delete-annotation', annotation.id)" />
+							</span>
+						</div>
+						<Divider />
+					</section>
+					<section class="items-wrapper">
+						<h5>Options</h5>
+						<tera-checkbox label="Use log scale" :model-value="useLog" @update:model-value="toggleLogScale($event)" />
 						<tera-checkbox
-							label="Same Y axis for all"
-							:disabled="!comparisonSettings?.smallMultiples"
-							:model-value="isShareYAxis"
-							@update:model-value="toggleShareYAxis($event)"
+							label="Hide in node"
+							:model-value="isHiddenInNode"
+							@update:model-value="toggleHideInNode($event)"
 						/>
-						<tera-checkbox
-							label="Show before and after"
-							:disabled="!comparisonSettings?.smallMultiples"
-							:model-value="showBeforeAfter"
-							@update:model-value="toggleShowBeforeAfter($event)"
-						/>
-					</div>
-					<Divider />
-				</section>
+						<Divider />
+					</section>
+					<section v-if="isColorPickerEnabled">
+						<h5 class="mb-3">Color picker</h5>
+						<input type="color" :value="activeSettings?.primaryColor ?? ''" @change="onColorChange($event)" />
+						<Divider />
+					</section>
+					<section v-if="activeSettings?.type === ChartSettingType.VARIABLE_COMPARISON" class="items-wrapper">
+						<h5>Comparison method</h5>
+						<div>
+							<RadioButton
+								:model-value="smallMultiplesRadioValue"
+								@update:model-value="onSmallMultiplesRadioButtonChange"
+								inputId="all-charts"
+								value="all-charts"
+							/>
+							<label for="all-charts" class="ml-2">All in one chart</label>
+						</div>
+						<div>
+							<RadioButton
+								:model-value="smallMultiplesRadioValue"
+								@update:model-value="onSmallMultiplesRadioButtonChange"
+								inputId="small-multiples"
+								value="small-multiples"
+							/>
+							<label for="small-multiples" class="ml-2">Small multiples</label>
+						</div>
+						<div class="pl-5 items-wrapper">
+							<tera-checkbox
+								label="Same Y axis for all"
+								:disabled="!comparisonSettings?.smallMultiples"
+								:model-value="isShareYAxis"
+								@update:model-value="toggleShareYAxis($event)"
+							/>
+							<tera-checkbox
+								label="Show before and after"
+								:disabled="!comparisonSettings?.smallMultiples"
+								:model-value="showBeforeAfter"
+								@update:model-value="toggleShowBeforeAfter($event)"
+							/>
+						</div>
+						<Divider />
+					</section>
+				</div>
 			</div>
-		</div>
-	</transition>
+		</transition>
+	</div>
 </template>
 
 <script setup lang="ts">
@@ -174,6 +176,15 @@ const cancelGenerateAnnotation = () => {
 </script>
 
 <style scoped>
+.chart-settings-panel-anchor {
+	position: fixed;
+	top: 7.5rem;
+	right: var(--gap-8);
+	width: 360px;
+	height: 100vh;
+	pointer-events: none;
+	overflow-x: hidden;
+}
 .chart-settings-panel {
 	position: absolute;
 	top: 0;
@@ -182,9 +193,10 @@ const cancelGenerateAnnotation = () => {
 	height: calc(100% - 50px);
 	width: 100%;
 	background: #fff;
+	border-top-left-radius: var(--border-radius-bigger);
 	left: 2px;
 	border: solid 1px var(--surface-border-light);
-
+	pointer-events: all;
 	&.v-enter-active,
 	&.v-leave-active {
 		transition: left 0.15s ease-out;
@@ -208,6 +220,7 @@ const cancelGenerateAnnotation = () => {
 		gap: var(--gap-4);
 		background-color: rgba(255, 255, 255, 0.8);
 		backdrop-filter: blur(3px);
+		border-top-left-radius: var(--border-radius-bigger);
 		&.shadow {
 			box-shadow: 0 1px 4px 0 rgba(0, 0, 0, 0.1);
 		}
