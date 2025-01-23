@@ -1,5 +1,6 @@
 package software.uncharted.terarium.hmiserver.models.dataservice;
 
+import com.google.api.client.util.Value;
 import io.hypersistence.utils.hibernate.type.json.JsonType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -28,13 +29,13 @@ public class Grounding extends TerariumEntity {
 	/** Ontological identifier per DKG */
 	@Type(JsonType.class)
 	@Column(columnDefinition = "json")
-	private Map<String, String> identifiers;
+	private Map<String, String> identifiers; // Map<curie, name>
 
 	/** (Optional) Additional context that informs the grounding */
 	@TSOptional
 	@Type(JsonType.class)
 	@Column(columnDefinition = "json")
-	private Map<String, String> context;
+	private Map<String, String> context; // Map<key, value>
 
 	@Override
 	public Grounding clone() {
