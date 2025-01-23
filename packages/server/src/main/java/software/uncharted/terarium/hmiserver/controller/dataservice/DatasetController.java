@@ -141,10 +141,8 @@ public class DatasetController {
 		@PathVariable("id") final UUID id,
 		@RequestParam(name = "project-id", required = false) final UUID projectId
 	) {
-		final Schema.Permission permission = projectService.checkPermissionCanReadOrNone(
-			currentUserService.get().getId(),
-			projectId
-		);
+		final String userId = currentUserService.get().getId();
+		final Schema.Permission permission = projectService.checkPermissionCanReadOrNone(userId, projectId);
 
 		try {
 			Dataset dataset = datasetService
@@ -157,8 +155,9 @@ public class DatasetController {
 			}
 
 			// If the user as write permission, and the stats are not present, calculate them
+			final Schema.Permission permissionCanWrite = projectService.checkPermissionCanWrite(userId, projectId);
 			if (
-				permission.equals(Schema.Permission.WRITE) &&
+				permissionCanWrite.equals(Schema.Permission.WRITE) &&
 				dataset.getColumns().stream().anyMatch(column -> column.getStats() == null)
 			) {
 				// Calculate the statistics for the columns
