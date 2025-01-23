@@ -116,6 +116,7 @@ const remove = () => {
 const adjustFontSize = (delta: number) => {
 	const newSize = Math.max(8, Math.min(32, (annotationRef.value.textSize || 14) + delta));
 	annotationRef.value.textSize = newSize;
+	autoResize();
 };
 
 const textarea = ref<HTMLTextAreaElement | null>(null);
