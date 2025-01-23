@@ -52,6 +52,7 @@
 									:placeholder="mappingDropdownPlaceholder"
 									v-model="knobs.timestampColName"
 									:options="datasetColumns?.map((ele) => ele.name)"
+									@change="updateTimeline()"
 								/>
 							</div>
 						</div>
@@ -978,6 +979,12 @@ function addMapping() {
 const updateMapping = () => {
 	const state = _.cloneDeep(props.node.state);
 	state.mapping = mapping.value;
+	emit('update-state', state);
+};
+
+const updateTimeline = () => {
+	const state = _.cloneDeep(props.node.state);
+	state.timestampColName = knobs.value.timestampColName;
 	emit('update-state', state);
 };
 

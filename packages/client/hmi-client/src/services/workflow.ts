@@ -13,7 +13,8 @@ import type {
 	WorkflowEdge,
 	WorkflowNode,
 	WorkflowPort,
-	WorkflowOutput
+	WorkflowOutput,
+	WorkflowAnnotation
 } from '@/types/workflow';
 import {
 	WorkflowPortStatus,
@@ -68,6 +69,7 @@ export class WorkflowWrapper {
 		}
 		this.wf.name = updatedWF.name;
 		this.wf.description = updatedWF.description;
+		this.wf.annotations = updatedWF.annotations;
 
 		const nodes = this.wf.nodes;
 		const edges = this.wf.edges;
@@ -158,6 +160,13 @@ export class WorkflowWrapper {
 
 	getEdges() {
 		return this.wf.edges.filter((d) => d.isDeleted !== true);
+	}
+
+	getAnnotations() {
+		if (this.wf.annotations) {
+			return Object.values(this.wf.annotations);
+		}
+		return [];
 	}
 
 	// @deprecated
@@ -913,6 +922,18 @@ export const addNode = async (id: string, node: WorkflowNode<any>) => {
 export const addEdge = async (id: string, edge: WorkflowEdge) => {
 	console.log('>> workflowService.addEdge', edge.source, edge.target);
 	const response = await API.post(`/workflows/${id}/edge`, edge);
+	return response.data ?? null;
+};
+
+export const addOrUpdateAnnotation = async (id: string, annotation: WorkflowAnnotation) => {
+	console.log('>> workflowService.addOrUpdateAnnotation');
+	const response = await API.post(`/workflows/${id}/annotation`, annotation);
+	return response.data ?? null;
+};
+
+export const removeAnnotation = async (id: string, annotationId: string) => {
+	console.log('>> workflowService.removeAnnotation');
+	const response = await API.delete(`/workflows/${id}/annotation/${annotationId}`);
 	return response.data ?? null;
 };
 

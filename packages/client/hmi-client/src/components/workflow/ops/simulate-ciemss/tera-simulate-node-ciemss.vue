@@ -136,7 +136,14 @@ Provide a summary in 100 words or less.
 
 	const summaryResponse = await createLLMSummary(prompt);
 
-	const datasetName = nodeOutputLabel(props.node, interventionPolicy.value?.name ?? 'no intervention');
+	// generate label like "Configuration (intervention)"
+	const nodeLabel = (): string => {
+		const configName = modelConfiguration.value?.name;
+		const interventionName = interventionPolicy.value?.name ?? 'no intervention';
+		return configName ? `${configName} (${interventionName})` : '';
+	};
+
+	const datasetName = nodeOutputLabel(props.node, nodeLabel());
 	const projectId = useProjects().activeProject.value?.id ?? '';
 	const datasetResult = await createDatasetFromSimulationResult(
 		projectId,

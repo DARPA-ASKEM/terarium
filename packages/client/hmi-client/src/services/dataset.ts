@@ -26,55 +26,6 @@ async function getDataset(datasetId: string): Promise<Dataset | null> {
 	return response?.data ?? null;
 }
 
-async function getClimateDataset(datasetId: string): Promise<Dataset | null> {
-	const response = await API.get(`/climatedata/queries/fetch-esgf/${datasetId}`).catch((error) => {
-		logger.error(`Error: climate data service was not able to retrieve the dataset ${datasetId} ${error}`);
-	});
-	return response?.data ?? null;
-}
-
-async function getClimateSubsetId(
-	esgfId: string,
-	parentDatasetId: string,
-	envelope: string,
-	options: {
-		timestamps?: string;
-		thinFactor?: string;
-	}
-): Promise<string | null> {
-	const { timestamps, thinFactor } = options;
-	const url = `/climatedata/queries/subset-esgf/${esgfId}?parent-dataset-id=${parentDatasetId}&envelope=${envelope}`;
-	if (timestamps) url.concat(`&timestamps=${timestamps}`);
-	if (thinFactor) url.concat(`&thin-factor=${thinFactor}`);
-
-	let response = await API.get(url);
-
-	// FIXME: Temporary polling solution
-	if (response.status === 202) {
-		return new Promise((resolve) => {
-			const poller = setInterval(async () => {
-				response = await API.get(url);
-				if (response.status === 200) {
-					clearInterval(poller);
-					resolve(response?.data ?? null);
-				}
-			}, 30000);
-		});
-	}
-	if (response.status === 200) {
-		return response.data;
-	}
-	logger.error(`Climate-data service was not able to retrieve the subset of the dataset ${esgfId}`);
-	return null;
-}
-
-async function getClimateDatasetPreview(esgfId: string): Promise<string | undefined> {
-	const response = await API.get(`/climatedata/queries/preview-esgf/${esgfId}`).catch((error) => {
-		logger.error(`Error: climate data service was not able to preview the dataset ${esgfId} ${error}`);
-	});
-	return response?.data ?? undefined;
-}
-
 /**
  * Update dataset from the dataservice
  * @return Dataset|null - the dataset, or null if none returned by API
@@ -87,7 +38,7 @@ async function updateDataset(dataset: Dataset) {
 //
 // Retrieve multiple datasets by their IDs
 // FIXME: the backend does not support bulk fetch
-//        so for now we are fetching by issueing multiple API calls
+//        so for now we are fetching by issuing multiple API calls
 async function getBulkDatasets(datasetIDs: string[]) {
 	const result: Dataset[] = [];
 	const promiseList = [] as Promise<Dataset | null>[];
@@ -110,7 +61,7 @@ async function getBulkDatasets(datasetIDs: string[]) {
 async function downloadRawFile(datasetId: string, filename: string, limit: number = 100): Promise<CsvAsset | null> {
 	const URL = `/datasets/${datasetId}/download-csv?filename=${filename}&limit=${limit}`;
 	const response = await API.get(URL).catch((error) => {
-		logger.error(`Error: data-service was not able to retrieve the dataset's rawfile ${error}`);
+		logger.error(`Error: data-service was not able to retrieve the dataset's raw file ${error}`);
 	});
 	return response?.data ?? null;
 }
@@ -280,8 +231,7 @@ async function getRawContent(
 		!isEmpty(dataset.fileNames[fileNameIndex]) &&
 		dataset.fileNames[fileNameIndex].endsWith('.csv')
 	) {
-		const response = await downloadRawFile(dataset.id, dataset.fileNames[fileNameIndex], limit);
-		return response;
+		return downloadRawFile(dataset.id, dataset.fileNames[fileNameIndex], limit);
 	}
 	return null;
 }
@@ -289,8 +239,7 @@ async function getRawContent(
 async function getCsvAsset(dataset: Dataset, filename: string, limit: number = -1): Promise<CsvAsset | null> {
 	// If it's an ESGF dataset or a NetCDF file, we don't want to download the raw content
 	if (!dataset?.id || dataset.esgfId || dataset.metadata?.format === 'netcdf') return null;
-	const csv = (await downloadRawFile(dataset.id as string, filename, limit)) as CsvAsset;
-	return csv;
+	return (await downloadRawFile(dataset.id as string, filename, limit)) as CsvAsset;
 }
 
 const datasetResultCSVCache = new FIFOCache<Promise<CsvAsset | null>>(100);
@@ -335,9 +284,6 @@ const mergeResults = (...results: DataArray[]) => {
 
 export {
 	getDataset,
-	getClimateDataset,
-	getClimateSubsetId,
-	getClimateDatasetPreview,
 	updateDataset,
 	getBulkDatasets,
 	downloadRawFile,
