@@ -8,7 +8,7 @@
 	>
 		<template v-slot:content>
 			<aside @scroll="onScroll">
-				<header :class="{ shadow: isScrolled }">
+				<header v-if="!documentViewer" :class="{ shadow: isScrolled }">
 					<Button
 						:icon="`pi ${directionMap[arrowDirection].iconOpen}`"
 						@click="emit('update:isOpen', false)"
@@ -18,6 +18,15 @@
 					/>
 					<slot name="header" />
 					<h4>{{ header }}</h4>
+				</header>
+				<header class="document-viewer-header" v-else>
+					<Button
+						:icon="`pi ${directionMap[arrowDirection].iconOpen}`"
+						@click="emit('update:isOpen', false)"
+						text
+						rounded
+						size="large"
+					/>
 				</header>
 				<div class="content-wrapper">
 					<slot name="content" />
@@ -81,6 +90,10 @@ const props = defineProps({
 	indicatorValue: {
 		type: Number,
 		default: 0
+	},
+	documentViewer: {
+		type: Boolean,
+		default: false
 	}
 });
 
@@ -133,6 +146,19 @@ header {
 header:not(.tab) {
 	background-color: rgba(255, 255, 255, 0.8);
 	backdrop-filter: blur(3px);
+}
+
+/* This is a minimalist header with just the collapse button */
+header.document-viewer-header {
+	position: absolute;
+	right: var(--gap-2);
+	width: 4rem;
+	height: 3.25rem;
+	background: var(--surface-0);
+}
+
+.content-wrapper {
+	flex: 1;
 }
 
 /* Makes the slider light grey - apply this class to this component when needed */
