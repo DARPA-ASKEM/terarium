@@ -127,7 +127,7 @@ export const OptimizeCiemssOperation: Operation = {
 		{ type: 'modelConfigId', label: 'Model configuration' },
 		{
 			type: 'policyInterventionId',
-			label: 'Intervention Policy'
+			label: 'Intervention policy'
 		}
 	],
 	outputs: [{ type: 'policyInterventionId|datasetId' }],

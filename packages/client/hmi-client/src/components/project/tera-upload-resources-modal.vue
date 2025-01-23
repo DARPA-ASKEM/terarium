@@ -60,7 +60,7 @@
 		</template>
 		<template #footer>
 			<Button label="Upload" class="p-button-primary" @click="upload" />
-			<Button label="Cancel" class="p-button-secondary" @click="() => emit('close')" />
+			<Button label="Cancel" class="p-button-secondary" outlined @click="() => emit('close')" />
 		</template>
 	</tera-modal>
 </template>

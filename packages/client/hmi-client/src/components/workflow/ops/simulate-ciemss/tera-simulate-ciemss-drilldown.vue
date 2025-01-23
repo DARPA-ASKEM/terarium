@@ -958,6 +958,7 @@ onUnmounted(() => kernelManager.shutdown());
 	padding: var(--gap-4);
 	background: var(--surface-100);
 	color: var(--text-color-secondary);
+	border-radius: var(--border-radius);
 }
 
 .comparison-chart-container {
