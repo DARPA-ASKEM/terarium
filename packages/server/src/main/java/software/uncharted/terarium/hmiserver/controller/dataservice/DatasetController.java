@@ -43,17 +43,14 @@ import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
 import software.uncharted.terarium.hmiserver.configuration.Config;
 import software.uncharted.terarium.hmiserver.models.dataservice.CsvAsset;
-import software.uncharted.terarium.hmiserver.models.dataservice.CsvColumnStats;
 import software.uncharted.terarium.hmiserver.models.dataservice.PresignedURL;
 import software.uncharted.terarium.hmiserver.models.dataservice.ResponseDeleted;
 import software.uncharted.terarium.hmiserver.models.dataservice.ResponseStatus;
 import software.uncharted.terarium.hmiserver.models.dataservice.dataset.Dataset;
-import software.uncharted.terarium.hmiserver.proxies.climatedata.ClimateDataProxy;
 import software.uncharted.terarium.hmiserver.proxies.jsdelivr.JsDelivrProxy;
 import software.uncharted.terarium.hmiserver.security.Roles;
 import software.uncharted.terarium.hmiserver.service.CurrentUserService;
 import software.uncharted.terarium.hmiserver.service.data.DatasetService;
-import software.uncharted.terarium.hmiserver.service.data.ProjectAssetService;
 import software.uncharted.terarium.hmiserver.service.data.ProjectService;
 import software.uncharted.terarium.hmiserver.service.gollm.DatasetStatistics;
 import software.uncharted.terarium.hmiserver.utils.Messages;
@@ -71,12 +68,10 @@ public class DatasetController {
 
 	final DatasetService datasetService;
 	final DatasetStatistics datasetStatistics;
-	final ClimateDataProxy climateDataProxy;
 
 	final JsDelivrProxy githubProxy;
 
 	final ProjectService projectService;
-	final ProjectAssetService projectAssetService;
 	final CurrentUserService currentUserService;
 	final Messages messages;
 
@@ -167,7 +162,7 @@ public class DatasetController {
 				);
 
 				if (datasetUrl.isEmpty()) {
-					log.warn("Error calculating statistics for dataset {}", dataset.getId(), e);
+					log.warn("Error calculating statistics for dataset {}", dataset.getId());
 				} else {
 					datasetStatistics.add(dataset, datasetUrl.get());
 
@@ -455,7 +450,7 @@ public class DatasetController {
 	}
 
 	/**
-	 * Uploads a CSV file from github given the path and owner name, then uploads
+	 * Uploads a CSV file from GitHub given the path and owner name, then uploads
 	 * it to the dataset.
 	 */
 	@PutMapping("/{id}/upload-csv-from-github")
@@ -488,7 +483,7 @@ public class DatasetController {
 
 		log.debug("Uploading CSV file from github to dataset {}", datasetId);
 
-		// download CSV from github
+		// download CSV from GitHub
 		final String csvString = githubProxy.getGithubCode(repoOwnerAndName, path).getBody();
 
 		if (csvString == null) {
@@ -500,7 +495,7 @@ public class DatasetController {
 			);
 		}
 
-		CSVParser csvParser = null;
+		CSVParser csvParser;
 		try {
 			csvParser = new CSVParser(
 				new StringReader(csvString),
