@@ -1,9 +1,17 @@
 import { DistributionType } from '@/services/distribution';
-import { ParameterSemantic } from '@/types/Types';
+import { InterventionPolicy, ParameterSemantic, SimulationRequest } from '@/types/Types';
 import { calculateUncertaintyRange } from '@/utils/math';
 import { v4 as uuidv4 } from 'uuid';
 import { CalibrateMap } from '@/services/calibrate-workflow';
+import { makeForecastJobCiemss } from '@/services/models/simulation-service';
+import { WorkflowNode } from '@/types/workflow';
+import * as workflowService from '@/services/workflow';
+import { operation as SimulateCiemssOp } from '@/components/workflow/ops/simulate-ciemss/mod';
+import { CiemssPresetTypes } from '@/types/common';
+import { nodeMetadata } from '../util';
 import { CalibrateEnsembleMappingRow } from '../ops/calibrate-ensemble-ciemss/calibrate-ensemble-ciemss-operation';
+import { qualityPreset, speedPreset } from '../ops/simulate-ciemss/simulate-utils';
+import { isInterventionPolicyBlank } from '../ops/intervention-policy/intervention-policy-operation';
 
 export const displayParameter = (parameters: ParameterSemantic[], parameterName: string) => {
 	let value = '';
@@ -136,6 +144,84 @@ export const convertToCalibrateMap = (rows: CalibrateEnsembleMappingRow[]): Map<
 	return result;
 };
 
+export const createDefaultForecastSettings = (endTime: number, preset: CiemssPresetTypes) => ({
+	currentTimespan: {
+		start: 0,
+		end: endTime
+	},
+	numSamples: preset === CiemssPresetTypes.Fast ? speedPreset.numSamples : qualityPreset.numSamples,
+	solverStepSize: 0.1,
+	method: preset === CiemssPresetTypes.Fast ? speedPreset.method : qualityPreset.method
+});
+
+export const makeForecastRequest = async (
+	node: WorkflowNode<any>,
+	modelConfigurationId: string,
+	options: ReturnType<typeof createDefaultForecastSettings>,
+	interventionPolicyId?: string
+) => {
+	const { solverStepSize, method, numSamples, currentTimespan } = options;
+	const payload: SimulationRequest = {
+		modelConfigId: modelConfigurationId,
+		timespan: {
+			start: currentTimespan.start,
+			end: currentTimespan.end
+		},
+		extra: {
+			solver_method: method,
+			solver_step_size: solverStepSize,
+			num_samples: numSamples
+		},
+		engine: 'ciemss'
+	};
+
+	if (interventionPolicyId) {
+		payload.policyInterventionId = interventionPolicyId;
+	}
+
+	const response = await makeForecastJobCiemss(payload, {
+		...nodeMetadata(node),
+		isBaseForecast: !interventionPolicyId
+	});
+	return response.id;
+};
+
+// find all forecast nodes and run simulations + update state
+export const runSimulations = async (
+	wf: workflowService.WorkflowWrapper,
+	options: ReturnType<typeof createDefaultForecastSettings>,
+	interventionPolicies: InterventionPolicy[] = []
+) => {
+	const forecastNodes = wf.getNodes().filter((node) => node.operationType === SimulateCiemssOp.name);
+	await Promise.all(
+		forecastNodes.map(async (node) => {
+			const modelConfigId = node.inputs[0].value?.[0];
+			const policy = interventionPolicies.find((intervention) => intervention.id === node.inputs[1].value?.[0]);
+
+			if (policy && isInterventionPolicyBlank(policy)) {
+				// If policy exists but has no interventions, skip the simulation
+				return;
+			}
+
+			const baseSimulationPromise = policy
+				? makeForecastRequest(node, modelConfigId, options, policy.id)
+				: Promise.resolve('');
+
+			const simulationPromise = makeForecastRequest(node, modelConfigId, options);
+
+			const [baseSimulationId, simulationId] = await Promise.all([baseSimulationPromise, simulationPromise]);
+
+			wf.updateNode(node, {
+				state: {
+					...node.state,
+					...options,
+					inProgressBaseForecastId: baseSimulationId,
+					inProgressForecastId: simulationId
+				}
+			});
+		})
+	);
+};
 export function usePolicyModel(props, interventionDropdowns, policyModalContext, isPolicyModalVisible) {
 	const onOpenPolicyModel = (index: number) => {
 		interventionDropdowns.value[index].hide();
