@@ -122,15 +122,6 @@ export interface CsvAsset {
     rowCount: number;
 }
 
-export interface CsvColumnStats {
-    bins: number[];
-    minValue: number;
-    maxValue: number;
-    mean: number;
-    median: number;
-    sd: number;
-}
-
 export interface Grounding extends TerariumEntity {
     identifiers: DKG[];
     context?: any;
