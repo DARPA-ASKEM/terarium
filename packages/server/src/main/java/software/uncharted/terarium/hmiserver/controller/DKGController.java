@@ -69,12 +69,7 @@ public class DKGController {
 
 			// Transform the DKG results into a Grounding.identifiers
 			final Map<String, String> identifiers = new HashMap<>();
-			dkgResults.forEach(dkg -> {
-				String[] parts = dkg.getCurie().split(":");
-				if (parts.length == 2) {
-					identifiers.put(parts[0], parts[1]);
-				}
-			});
+			dkgResults.forEach(dkg -> identifiers.put(dkg.getCurie(), dkg.getName()));
 			grounding.setIdentifiers(identifiers);
 		}
 
