@@ -209,7 +209,7 @@ export function generateRankingCharts(
 			// Note that the reduce function here only compares the variable of interest
 			// so only those key/value pairs will be relevant in the pointOfComparison object.
 			// Other keys like timepoint_id (that we aren't using) will be in pointOfComparison
-			// but they won't be correctly coinciding with the valu of the variable of interest.
+			// but they won't coincide with the value of the variable of interest.
 			pointOfComparison = resultSummary.reduce((acc, val) =>
 				Object.keys(val).reduce((acc2, key) => {
 					if (key.includes(variableKey)) {
