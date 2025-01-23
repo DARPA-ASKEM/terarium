@@ -5,7 +5,7 @@
 				<vega-chart expandable :are-embed-actions-visible="false" :visualization-spec="preparedCharts[appliedTo]" />
 			</li>
 		</ul>
-		<div class="intervention-summary">
+		<div v-if="displayedInterventions.length > 0" class="intervention-summary">
 			<div v-for="(intervention, index) in displayedInterventions" :key="index">
 				<p class="name">{{ intervention.name }}</p>
 				<div class="body" v-if="intervention.staticInterventions.length > 0">
@@ -34,6 +34,9 @@
 				+ {{ remainingInterventionsCount }} more interventions...
 			</p>
 		</div>
+		<tera-operator-placeholder v-else :node="node">
+			<template v-if="!node.inputs[0].value"> Attach a model</template>
+		</tera-operator-placeholder>
 		<tera-progress-spinner is-centered :font-size="2" v-if="isLoading" />
 		<Button
 			:label="isModelInputConnected ? 'Open' : 'Attach a model'"
@@ -55,6 +58,7 @@ import { blankIntervention, flattenInterventionData } from '@/services/intervent
 import { createInterventionChart } from '@/services/charts';
 import VegaChart from '@/components/widgets/VegaChart.vue';
 import { useClientEvent } from '@/composables/useClientEvent';
+import TeraOperatorPlaceholder from '@/components/operator/tera-operator-placeholder.vue';
 import { type ClientEvent, ClientEventType, type TaskResponse, TaskStatus } from '@/types/Types';
 import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue';
 import { InterventionPolicyState } from './intervention-policy-operation';

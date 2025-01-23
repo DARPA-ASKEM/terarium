@@ -22,7 +22,7 @@ export const InterventionPolicyOperation: Operation = {
 		{ type: 'documentId', label: 'Document', isOptional: true },
 		{ type: 'datasetId', label: 'Dataset', isOptional: true }
 	],
-	outputs: [{ type: 'policyInterventionId', label: 'Intervention Policy' }],
+	outputs: [{ type: 'policyInterventionId', label: 'Intervention policy' }],
 	action: () => {},
 
 	initState: () => {

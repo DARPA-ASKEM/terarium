@@ -52,7 +52,7 @@ const rankingCriteriaCharts = ref<any>([]);
 
 const selectedPlotType = computed(() => props.node.state.selectedPlotType);
 const baselineDatasetIndex = computed(() =>
-	datasets.value.findIndex((dataset) => dataset.id === props.node.state.selectedDataset)
+	datasets.value.findIndex((dataset) => dataset.id === props.node.state.selectedBaselineDatasetId)
 );
 
 const { useCompareDatasetCharts } = useCharts(
@@ -66,7 +66,8 @@ const { useCompareDatasetCharts } = useCharts(
 );
 onMounted(() => {
 	initialize(
-		props,
+		props.node,
+		null,
 		isFetchingDatasets,
 		datasets,
 		datasetResults,
@@ -89,7 +90,8 @@ watch(
 		if (props.node.inputs.every((input) => input.status === WorkflowPortStatus.CONNECTED)) {
 			emit('append-input-port', { type: 'datasetId', label: 'Dataset or Simulation result' });
 			initialize(
-				props,
+				props.node,
+				null,
 				isFetchingDatasets,
 				datasets,
 				datasetResults,
