@@ -674,6 +674,16 @@ export function createForecastChart(
 		} as any;
 	};
 
+	// Build expression to check if the legend item is selected for each layer.
+	const LEGEND_SELECT_PARAM = 'legend_selection';
+	const sampleToStatVar = {};
+	// We assume that the sampling layer and the statistics layer have the same number of corresponding variables in the same order
+	(samplingLayer?.variables ?? []).forEach((sampleVar, index) => {
+		sampleToStatVar[sampleVar] = (statisticsLayer?.variables ?? [])[index];
+	});
+	const sampleLayerlegendSelctionTestExpr = `!${LEGEND_SELECT_PARAM}.variableField || indexof(${LEGEND_SELECT_PARAM}.variableField || [], (${JSON.stringify(sampleToStatVar)})[datum.variableField]) >= 0`;
+	const statLayerlegendSelectionTestExpr = `!${LEGEND_SELECT_PARAM}.variableField || indexof(${LEGEND_SELECT_PARAM}.variableField || [], datum.variableField) >= 0`;
+
 	// Build sample layer
 	if (samplingLayer && !isEmpty(samplingLayer.variables) && !isEmpty(samplingLayer.data)) {
 		const layerSpec = newLayer(samplingLayer, 'line');
@@ -686,10 +696,10 @@ export function createForecastChart(
 				? { value: 1.0 } // If bins enabled, use full opacity
 				: {
 						condition: {
-							selection: 'legend_selection', // Use selection to highlight the selected line
-							value: 0.15
+							test: sampleLayerlegendSelctionTestExpr, // Use selection to highlight the selected line
+							value: 0.13
 						},
-						value: 0.05
+						value: 0.02
 					}
 		});
 
@@ -704,7 +714,7 @@ export function createForecastChart(
 		// Add interactive legend params, keeping original name
 		lineSubLayer.params = [
 			{
-				name: 'legend_selection',
+				name: LEGEND_SELECT_PARAM,
 				select: { type: 'point', fields: ['variableField'] },
 				bind: 'legend'
 			}
@@ -713,8 +723,11 @@ export function createForecastChart(
 		Object.assign(lineSubLayer.encoding, {
 			strokeWidth: { value: 2 },
 			opacity: {
-				condition: { param: 'legend_selection', value: 1 },
-				value: 0.05
+				condition: {
+					test: statLayerlegendSelectionTestExpr,
+					value: 1
+				},
+				value: 0.02
 			}
 		});
 
