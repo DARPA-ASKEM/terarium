@@ -35,6 +35,9 @@
 						<template v-if="col.field === 'name'">
 							{{ data.name }}
 						</template>
+						<template v-if="col.field === 'description'">
+							{{ data.description }}
+						</template>
 						<template v-if="col.field === 'source'">
 							{{ data.source }}
 						</template>
@@ -160,12 +163,14 @@ const props = defineProps<{
 }>();
 
 const otherValueList = ref(props.otherValueList);
+console.log(otherValueList);
 
 const minValue: number = extent(otherValueList.value, (element) => element?.distribution?.parameters?.minimum)[0];
 const maxValue: number = extent(otherValueList.value, (element) => element?.distribution?.parameters?.maximum)[1];
 
 const columns = ref([
 	{ field: 'name', header: 'Configuration name' },
+	{ field: 'description', header: 'Description' },
 	{ field: 'source', header: 'Source' },
 	{ field: 'range', header: 'Range' },
 	{ field: 'value', header: 'Value' },

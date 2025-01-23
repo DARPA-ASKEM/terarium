@@ -14,6 +14,7 @@ import { DistributionType } from './distribution';
 
 export interface SemanticOtherValues {
 	name: string;
+	description?: string;
 	target?: string;
 	expression?: string;
 	expressionMathml?: string;
@@ -207,7 +208,13 @@ export function getObservables(config: ModelConfiguration): ObservableSemantic[]
 	return config.observableSemanticList ?? [];
 }
 
-export function getOtherValues(configs: ModelConfiguration[], id: string, key: string, otherValueList: string) {
+export function getOtherValues(
+	configs: ModelConfiguration[],
+	id: string,
+	key: string,
+	otherValueList: string,
+	description?: string
+) {
 	let otherValues: SemanticOtherValues[] = [];
 
 	const modelConfigTableData = configs.map((modelConfig) => ({
@@ -219,6 +226,9 @@ export function getOtherValues(configs: ModelConfiguration[], id: string, key: s
 		const config: ParameterSemantic[] | InitialSemantic[] = modelConfig.list.filter((item) => item[key] === id)[0];
 		if (config && modelConfig.name) {
 			const data: SemanticOtherValues = { name: modelConfig.name, ...config };
+			if (description) {
+				data.description = description;
+			}
 			otherValues = [...otherValues, data];
 		}
 	});

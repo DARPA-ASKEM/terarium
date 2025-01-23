@@ -26,6 +26,10 @@
 				<template #header>Configuration name</template>
 				<template #body="{ data }">{{ data.name }}</template>
 			</Column>
+			<Column>
+				<template #header>Description</template>
+				<template #body="{ data }">{{ data.description }}</template>
+			</Column>
 			<Column sortable>
 				<template #header>Source</template>
 				<template #body="{ data }">{{ data.source }}</template>
