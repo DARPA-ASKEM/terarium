@@ -677,7 +677,7 @@ export function createForecastChart(
 	// Build expression to check if the legend item is selected for each layer.
 	const LEGEND_SELECT_PARAM = 'legend_selection';
 	const sampleToStatVar = {};
-	// We assume that the sampling layer and the statistics layer have the same number of corresponding variables in the same order
+	// Assume that the sampling layer and the statistics layer have the same number of corresponding variables in the same order
 	(samplingLayer?.variables ?? []).forEach((sampleVar, index) => {
 		sampleToStatVar[sampleVar] = (statisticsLayer?.variables ?? [])[index];
 	});
@@ -1148,6 +1148,23 @@ export function createQuantilesForecastChart(
 
 	const yScale = { type: options.scale === 'log' ? 'symlog' : 'linear' };
 
+	const LEGEND_SELECT_PARAM = 'legend_selection';
+	const encodingColor = (legend = false) => ({
+		field: 'variable',
+		type: 'nominal',
+		scale: {
+			domain: variables,
+			range: options.colorscheme || CATEGORICAL_SCHEME
+		},
+		legend:
+			legend && options.legend
+				? {
+						...legendProperties,
+						labelExpr: labelExpr.length && labelExpr
+					}
+				: false
+	});
+
 	const spec: any = {
 		$schema: VEGALITE_SCHEMA,
 		title: titleObj,
@@ -1175,42 +1192,51 @@ export function createQuantilesForecastChart(
 		],
 		layer: [
 			{
-				mark: {
-					type: 'errorband',
-					extent: 'ci',
-					borders: true
-				},
-				encoding: {
-					x: { field: 'x', type: 'quantitative', axis: { ...xaxis } },
-					y: { field: 'lower', type: 'quantitative', axis: { ...yaxis }, scale: yScale },
-					y2: { field: 'upper', type: 'quantitative' },
-					color: {
-						field: 'variable',
-						type: 'nominal',
-						scale: {
-							domain: variables,
-							range: options.colorscheme || CATEGORICAL_SCHEME
+				// Area layer with upper and lower bounds
+				layer: [
+					{
+						// Dummy line to create a legend
+						mark: 'line',
+						encoding: { color: encodingColor(true) },
+						params: [
+							{
+								name: LEGEND_SELECT_PARAM,
+								select: { type: 'point', fields: ['variable'] },
+								bind: 'legend'
+							}
+						]
+					},
+					{
+						mark: {
+							type: 'errorband',
+							extent: 'ci',
+							borders: true
 						},
-						legend: options.legend
-							? {
-									...legendProperties,
-									labelExpr: labelExpr.length && labelExpr
-								}
-							: false
-					},
-					opacity: {
-						field: 'quantile',
-						type: 'quantitative',
-						scale: { domain: [0.5, 1], range: [1, 0.1] },
-						legend: false
-					},
-					tooltip: [
-						{ field: 'varDisplayName', title: ' ' },
-						{ field: 'quantile', title: 'Quantile', format: '.0%' },
-						{ field: 'lower', title: 'Lower Bound' },
-						{ field: 'upper', title: 'Upper Bound' }
-					]
-				}
+						encoding: {
+							x: { field: 'x', type: 'quantitative', axis: { ...xaxis } },
+							y: { field: 'lower', type: 'quantitative', axis: { ...yaxis }, scale: yScale },
+							y2: { field: 'upper', type: 'quantitative' },
+							color: encodingColor(),
+							opacity: {
+								legend: false,
+								condition: {
+									param: LEGEND_SELECT_PARAM,
+									field: 'quantile',
+									type: 'quantitative',
+									scale: { domain: [0.5, 1], range: [1, 0.1] },
+									legend: false
+								},
+								value: 0.03 // Default opacity for non-selected variables
+							},
+							tooltip: [
+								{ field: 'varDisplayName', title: ' ' },
+								{ field: 'quantile', title: 'Quantile', format: '.0%' },
+								{ field: 'lower', title: 'Lower Bound' },
+								{ field: 'upper', title: 'Upper Bound' }
+							]
+						}
+					}
+				]
 			}
 		]
 	};
