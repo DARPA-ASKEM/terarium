@@ -204,11 +204,11 @@ public class WorkflowService extends TerariumAssetServiceWithoutSearch<Workflow,
 
 	@Observed(name = "function_profile")
 	private void cascadeInvalidStatus(final WorkflowNode sourceNode, final Map<UUID, List<WorkflowNode>> nodeCache) {
+		sourceNode.setStatus("invalid");
 		List<WorkflowNode> downstreamNodes = nodeCache.get(sourceNode.getId());
 		if (downstreamNodes == null) return;
 
 		for (final WorkflowNode node : downstreamNodes) {
-			node.setStatus("invalid");
 			cascadeInvalidStatus(node, nodeCache);
 		}
 	}
@@ -462,7 +462,7 @@ public class WorkflowService extends TerariumAssetServiceWithoutSearch<Workflow,
 			}
 			nodeCache.get(edge.getSource()).add(nodeMap.get(edge.getTarget()));
 		}
-		cascadeInvalidStatus(sourceNode, nodeCache);
+		cascadeInvalidStatus(targetNode, nodeCache);
 
 		// Remove
 		edgeToRemove.setIsDeleted(true);
@@ -601,7 +601,10 @@ public class WorkflowService extends TerariumAssetServiceWithoutSearch<Workflow,
 			nodeCache.get(edge.getSource()).add(nodeMap.get(edge.getTarget()));
 		}
 
-		cascadeInvalidStatus(operator, nodeCache);
+		final List<WorkflowNode> downstreamNodes = nodeCache.get(operator.getId());
+		for (final WorkflowNode downstreamNode : downstreamNodes) {
+			cascadeInvalidStatus(downstreamNode, nodeCache);
+		}
 	}
 
 	@Observed(name = "function_profile")
