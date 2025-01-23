@@ -161,23 +161,25 @@ public class DatasetController {
 				dataset.getColumns().stream().anyMatch(column -> column.getStats() == null)
 			) {
 				// Calculate the statistics for the columns
-				try {
-					final PresignedURL datasetUrl = datasetService
-						.getDownloadUrl(dataset.getId(), dataset.getFileNames().get(0))
-						.orElseThrow(() -> new IllegalArgumentException(messages.get("dataset.download.url.not.found")));
+				final Optional<PresignedURL> datasetUrl = datasetService.getDownloadUrl(
+					dataset.getId(),
+					dataset.getFileNames().get(0)
+				);
 
-					datasetStatistics.add(dataset, datasetUrl);
-				} catch (final Exception e) {
-					log.error("Error calculating statistics for dataset {}", dataset.getId(), e);
-				}
-
-				// Update and fetch updated dataset
-				datasetService.updateAsset(dataset, projectId, Schema.Permission.WRITE);
-				Optional<Dataset> updatedDataset = datasetService.getAsset(id, permission);
-				if (updatedDataset.isEmpty()) {
-					log.warn("Failed to get dataset after update");
+				if (datasetUrl.isEmpty()) {
+					log.warn("Error calculating statistics for dataset {}", dataset.getId(), e);
 				} else {
-					dataset = updatedDataset.get();
+					datasetStatistics.add(dataset, datasetUrl.get());
+
+					// Update and fetch updated dataset
+					datasetService.updateAsset(dataset, projectId, Schema.Permission.WRITE);
+					Optional<Dataset> updatedDataset = datasetService.getAsset(id, permission);
+
+					if (updatedDataset.isEmpty()) {
+						log.warn("Failed to get dataset after update");
+					} else {
+						dataset = updatedDataset.get();
+					}
 				}
 			}
 
