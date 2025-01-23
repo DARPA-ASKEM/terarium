@@ -1,4 +1,4 @@
-import { isEmpty } from 'lodash';
+import { isEmpty, cloneDeep } from 'lodash';
 import { Dataset, InterventionPolicy, ModelConfiguration } from '@/types/Types';
 import { WorkflowNode, WorkflowPortStatus } from '@/types/workflow';
 import { renameFnGenerator } from '@/components/workflow/ops/calibrate-ciemss/calibrate-utils';
@@ -204,7 +204,13 @@ export function generateRankingCharts(
 
 		if (card.timepoint === TimepointOption.OVERALL) {
 			const comparisonFunction = card.rank === RankOption.MAXIMUM ? Math.max : Math.min;
-			pointOfComparison = chartData.value.resultSummary.reduce((acc, val) =>
+			const resultSummary = cloneDeep(chartData.value.resultSummary); // Must clone to avoid modifying the original data
+
+			// Note that the reduce function here only compares the variable of interest
+			// so only those key/value pairs will be relevant in the pointOfComparison object.
+			// Other keys like timepoint_id (that we aren't using) will be in pointOfComparison
+			// but they won't be correctly coinciding with the valu of the variable of interest.
+			pointOfComparison = resultSummary.reduce((acc, val) =>
 				Object.keys(val).reduce((acc2, key) => {
 					if (key.includes(variableKey)) {
 						acc2[key] = comparisonFunction(acc[key], val[key]);
