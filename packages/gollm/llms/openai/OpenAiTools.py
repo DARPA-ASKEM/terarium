@@ -34,7 +34,6 @@ from common.prompts.model_meta_compare import (
     MODEL_METADATA_COMPARE_GOAL_AND_DATA_PROMPT
 )
 from common.utils import (
-    normalize_greek_alphabet,
     escape_curly_braces,
     unescape_curly_braces
 )
@@ -129,7 +128,7 @@ class OpenAiTools(LlmToolsInterface):
         print("Building prompt to extract model enrichments from a document...")
         return ENRICH_PROMPT.format(
             amr=escape_curly_braces(amr),
-            research_paper=escape_curly_braces(normalize_greek_alphabet(document))
+            research_paper=escape_curly_braces(document)
         )
 
     def create_config_from_dataset_prompt(self, amr: str, dataset: List[str], matrix: str, schema=None) -> str:
@@ -151,7 +150,7 @@ class OpenAiTools(LlmToolsInterface):
         print("Building prompt to extract model configurations from a reasearch paper...")
         return CONFIGURE_FROM_DOCUMENT_PROMPT.format(
             amr=escape_curly_braces(amr),
-            research_paper=escape_curly_braces(normalize_greek_alphabet(document))
+            research_paper=escape_curly_braces(document)
         )
 
     def create_enrich_dataset_prompt(self, dataset: str, document: Optional[str], schema=None) -> str:
@@ -161,7 +160,7 @@ class OpenAiTools(LlmToolsInterface):
         else:
             print("Building prompt to extract dataset enrichments from a research paper...")
             return DATASET_ENRICH_PROMPT.format(
-                research_paper=escape_curly_braces(normalize_greek_alphabet(document)),
+                research_paper=escape_curly_braces(document),
                 dataset=dataset
             )
 
@@ -182,7 +181,7 @@ class OpenAiTools(LlmToolsInterface):
         print("Building prompt to extract interventions from a research paper...")
         return INTERVENTIONS_FROM_DOCUMENT_PROMPT.format(
             amr=escape_curly_braces(amr),
-            research_paper=escape_curly_braces(normalize_greek_alphabet(document))
+            research_paper=escape_curly_braces(document)
         )
 
     def create_interventions_from_dataset_prompt(self, amr: str, dataset: List[str], schema=None) -> str:
@@ -190,7 +189,7 @@ class OpenAiTools(LlmToolsInterface):
         dataset_text = os.linesep.join(dataset)
         return INTERVENTIONS_FROM_DATASET_PROMPT.format(
             amr=escape_curly_braces(amr),
-            dataset=escape_curly_braces(normalize_greek_alphabet(dataset_text))
+            dataset=escape_curly_braces(dataset_text)
         )
 
     def create_model_card_prompt(self, amr: str, document: str, schema=None) -> str:
@@ -199,7 +198,7 @@ class OpenAiTools(LlmToolsInterface):
             document = "NO RESEARCH PAPER PROVIDED"
 
         return MODEL_CARD_PROMPT.format(
-            research_paper=escape_curly_braces(normalize_greek_alphabet(document)),
+            research_paper=escape_curly_braces(document),
             amr=escape_curly_braces(amr)
         )
 
