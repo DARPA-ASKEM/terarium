@@ -73,8 +73,8 @@ public class TerariumAssetCloneServiceTests extends TerariumApplicationTests {
 
 	static Grounding createGrounding(final String key) {
 		final Grounding grounding = new Grounding();
-		final Map<String, String> identifiers = new HashMap<>();
-		identifiers.put("curie", "maria-" + key);
+		final List<DKG> identifiers = new ArrayList<>();
+		identifiers.add(new DKG("curie", "maria", "", null, null));
 		grounding.setIdentifiers(identifiers);
 		final Map<String, String> context = new HashMap<>();
 		context.put("hello", "world-" + key);
