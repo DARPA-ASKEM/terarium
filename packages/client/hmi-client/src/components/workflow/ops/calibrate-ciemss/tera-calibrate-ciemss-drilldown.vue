@@ -286,40 +286,39 @@
 							<!-- Paramater distributions sectin -->
 							<AccordionTab v-if="selectedParameterSettings.length > 0" header="Parameter distributions">
 								<template v-for="setting of selectedParameterSettings" :key="setting.id">
-									<vega-chart
-										v-if="parameterDistributionCharts[setting.id]"
-										expandable
-										:are-embed-actions-visible="true"
-										:visualization-spec="parameterDistributionCharts[setting.id].histogram"
-									>
-										<template v-slot:footer>
-											<table class="distribution-table">
-												<thead>
-													<tr>
-														<th scope="col"></th>
-														<th scope="col">
-															{{ parameterDistributionCharts[setting.id].header[0] }}
-														</th>
-														<th scope="col">
-															{{ parameterDistributionCharts[setting.id].header[1] }}
-														</th>
-													</tr>
-												</thead>
-												<tbody>
-													<tr>
-														<th scope="row">Mean</th>
-														<td>{{ parameterDistributionCharts[setting.id].mean[0] }}</td>
-														<td>{{ parameterDistributionCharts[setting.id].mean[1] }}</td>
-													</tr>
-													<tr>
-														<th scope="row">Variance</th>
-														<td>{{ parameterDistributionCharts[setting.id].variance[0] }}</td>
-														<td>{{ parameterDistributionCharts[setting.id].variance[1] }}</td>
-													</tr>
-												</tbody>
-											</table>
-										</template>
-									</vega-chart>
+									<div class="flex flex-column">
+										<vega-chart
+											v-if="parameterDistributionCharts[setting.id]"
+											expandable
+											:are-embed-actions-visible="true"
+											:visualization-spec="parameterDistributionCharts[setting.id].histogram"
+										/>
+										<table class="distribution-table">
+											<thead>
+												<tr>
+													<th scope="col"></th>
+													<th scope="col">
+														{{ parameterDistributionCharts[setting.id].header[0] }}
+													</th>
+													<th scope="col">
+														{{ parameterDistributionCharts[setting.id].header[1] }}
+													</th>
+												</tr>
+											</thead>
+											<tbody>
+												<tr>
+													<th scope="row">Mean</th>
+													<td>{{ parameterDistributionCharts[setting.id].mean[0] }}</td>
+													<td>{{ parameterDistributionCharts[setting.id].mean[1] }}</td>
+												</tr>
+												<tr>
+													<th scope="row">Variance</th>
+													<td>{{ parameterDistributionCharts[setting.id].variance[0] }}</td>
+													<td>{{ parameterDistributionCharts[setting.id].variance[1] }}</td>
+												</tr>
+											</tbody>
+										</table>
+									</div>
 								</template>
 							</AccordionTab>
 							<!-- Section: Interventions over time -->
@@ -1282,10 +1281,15 @@ img {
 }
 
 .distribution-table {
+	position: relative;
+	top: -1rem;
+	margin-left: auto;
+	margin-right: auto;
+	margin-bottom: var(--gap-6);
 	width: 100%;
 	border-collapse: collapse;
 	thead {
-		background-color: var(--surface-200);
+		background-color: var(--surface-100);
 	}
 	tr {
 		height: 1.75rem;
