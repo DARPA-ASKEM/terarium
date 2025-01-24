@@ -8,6 +8,7 @@ from util import CustomRequests
 
 PROJECT_ID=os.getenv("PROJECT_ID")
 SERVER_URL=os.getenv("SERVER_URL")
+ITERATION=int(os.getenv("ITERATION"))
 
 
 # This profile runs random forecast simulations from a given projects' model-configurations
@@ -20,7 +21,7 @@ if __name__ == "__main__":
     model_config_assets = list(filter(lambda x: x["assetType"] == "model-configuration", project_assets))
 
     n = 0
-    while n < 100:
+    while n < ITERATION:
         n = n + 1
         item = random.choice(model_config_assets)
         item_id = item["assetId"]

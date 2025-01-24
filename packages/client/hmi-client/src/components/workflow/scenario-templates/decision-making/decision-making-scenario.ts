@@ -14,9 +14,11 @@ import {
 	flattenInterventionData,
 	getInterventionPolicyById
 } from '@/services/intervention-policy';
-import { ChartSetting, ChartSettingType } from '@/types/common';
+import { ChartSetting, ChartSettingType, CiemssPresetTypes } from '@/types/common';
 import { updateChartSettingsBySelectedVariables } from '@/services/chart-settings';
-import { InterventionPolicy } from '@/types/Types';
+import { AssetType, InterventionPolicy } from '@/types/Types';
+import { useProjects } from '@/composables/project';
+import { createDefaultForecastSettings, runSimulations } from '../scenario-template-utils';
 
 export class DecisionMakingScenario extends BaseScenario {
 	public static templateId = 'decision-making';
@@ -31,7 +33,7 @@ export class DecisionMakingScenario extends BaseScenario {
 
 	newInterventionSpecs: { id: string; name: string }[];
 
-	simulateSpec: { ids: string[] };
+	simulateSpec: { ids: string[]; endTime: number; preset: CiemssPresetTypes; runSimulationsAutomatically: boolean };
 
 	constructor() {
 		super();
@@ -52,7 +54,10 @@ export class DecisionMakingScenario extends BaseScenario {
 			id: ''
 		};
 		this.simulateSpec = {
-			ids: []
+			ids: [],
+			preset: CiemssPresetTypes.Fast,
+			endTime: 100,
+			runSimulationsAutomatically: false
 		};
 		this.workflowName = '';
 	}
@@ -90,6 +95,22 @@ export class DecisionMakingScenario extends BaseScenario {
 		this.simulateSpec.ids = ids;
 	}
 
+	setPreset(preset: CiemssPresetTypes) {
+		this.simulateSpec.preset = preset;
+	}
+
+	setEndTime(endTime: number) {
+		this.simulateSpec.endTime = endTime;
+	}
+
+	setRunSimulationsAutomatically(runSimulationsAutomatically: boolean) {
+		this.simulateSpec.runSimulationsAutomatically = runSimulationsAutomatically;
+	}
+
+	getDefaultForecastSettings() {
+		return createDefaultForecastSettings(this.simulateSpec.endTime, this.simulateSpec.preset);
+	}
+
 	toJSON() {
 		return {
 			templateId: DecisionMakingScenario.templateId,
@@ -115,6 +136,8 @@ export class DecisionMakingScenario extends BaseScenario {
 		const wf = new workflowService.WorkflowWrapper();
 		wf.setWorkflowName(this.workflowName);
 		wf.setWorkflowScenario(this.toJSON());
+
+		const fetchedInterventionPolicies: InterventionPolicy[] = [];
 
 		// 1. Add model and model config nodes and connect them
 		const modelNode = wf.addNode(
@@ -196,7 +219,8 @@ export class DecisionMakingScenario extends BaseScenario {
 
 		wf.updateNode(baseSimulateNode, {
 			state: {
-				chartSettings: simulateChartSettings
+				chartSettings: simulateChartSettings,
+				...this.getDefaultForecastSettings()
 			}
 		});
 
@@ -244,7 +268,15 @@ export class DecisionMakingScenario extends BaseScenario {
 					},
 					true
 				);
+
+				await useProjects().addAsset(
+					AssetType.InterventionPolicy,
+					interventionPolicy!.id,
+					useProjects().activeProject.value?.id
+				);
 			}
+
+			fetchedInterventionPolicies.push(interventionPolicy!);
 
 			simulateChartSettings = updateChartSettingsBySelectedVariables(
 				simulateChartSettings,
@@ -293,7 +325,8 @@ export class DecisionMakingScenario extends BaseScenario {
 
 			wf.updateNode(simulateNode, {
 				state: {
-					chartSettings: simulateChartSettings
+					chartSettings: simulateChartSettings,
+					...this.getDefaultForecastSettings()
 				}
 			});
 
@@ -309,6 +342,10 @@ export class DecisionMakingScenario extends BaseScenario {
 			);
 		});
 		await Promise.all(promises);
+
+		if (this.simulateSpec.runSimulationsAutomatically) {
+			await runSimulations(wf, this.getDefaultForecastSettings(), fetchedInterventionPolicies);
+		}
 
 		// 4. Run layout
 		// The schematic for decision-making is as follows

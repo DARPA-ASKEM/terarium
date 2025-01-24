@@ -102,6 +102,7 @@
 				:loading="isFetchingModelInformation"
 				filter
 			/>
+			<tera-simulation-settings :scenario-instance="scenario" />
 		</template>
 	</tera-scenario-template>
 	<tera-new-policy-modal
@@ -126,6 +127,7 @@ import { DecisionMakingScenario } from './decision-making-scenario';
 import TeraScenarioTemplate from '../tera-scenario-template.vue';
 import TeraNewPolicyModal from '../tera-new-policy-modal.vue';
 import { usePolicyModel } from '../scenario-template-utils';
+import teraSimulationSettings from '../tera-simulation-settings.vue';
 
 const header: ScenarioHeader = Object.freeze({
 	title: 'Decision making template',

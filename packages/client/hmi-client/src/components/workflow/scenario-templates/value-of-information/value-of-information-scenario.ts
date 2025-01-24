@@ -8,13 +8,18 @@ import { operation as CompareDatasetOp } from '@/components/workflow/ops/compare
 import { operation as InterventionOp } from '@/components/workflow/ops/intervention-policy/mod';
 import { OperatorNodeSize } from '@/services/workflow';
 import { createModelConfiguration, getModelConfigurationById, getParameter } from '@/services/model-configurations';
-import { ChartSetting, ChartSettingType } from '@/types/common';
+import { ChartSetting, ChartSettingType, CiemssPresetTypes } from '@/types/common';
 import { updateChartSettingsBySelectedVariables } from '@/services/chart-settings';
 import { AssetType, InterventionPolicy, ParameterSemantic } from '@/types/Types';
 import { blankIntervention, createInterventionPolicy, getInterventionPolicyById } from '@/services/intervention-policy';
 import { useProjects } from '@/composables/project';
 import { DistributionType } from '@/services/distribution';
-import { cartesianProduct, switchToUniformDistribution } from '../scenario-template-utils';
+import {
+	cartesianProduct,
+	createDefaultForecastSettings,
+	runSimulations,
+	switchToUniformDistribution
+} from '../scenario-template-utils';
 import { CompareValue } from '../../ops/compare-datasets/compare-datasets-operation';
 
 /*
@@ -61,7 +66,7 @@ export class ValueOfInformationScenario extends BaseScenario {
 
 	newInterventionSpecs: { id: string; name: string }[];
 
-	simulateSpec: { ids: string[] };
+	simulateSpec: { ids: string[]; endTime: number; preset: CiemssPresetTypes; runSimulationsAutomatically: boolean };
 
 	parameters: (ParameterSemantic | null)[];
 
@@ -75,7 +80,10 @@ export class ValueOfInformationScenario extends BaseScenario {
 			id: ''
 		};
 		this.simulateSpec = {
-			ids: []
+			ids: [],
+			preset: CiemssPresetTypes.Fast,
+			endTime: 100,
+			runSimulationsAutomatically: false
 		};
 		this.interventionSpecs = [{ id: '' }];
 		this.newInterventionSpecs = [];
@@ -127,6 +135,22 @@ export class ValueOfInformationScenario extends BaseScenario {
 		this.newInterventionSpecs.push({ id, name });
 	}
 
+	setPreset(preset: CiemssPresetTypes) {
+		this.simulateSpec.preset = preset;
+	}
+
+	setEndTime(endTime: number) {
+		this.simulateSpec.endTime = endTime;
+	}
+
+	setRunSimulationsAutomatically(runSimulationsAutomatically: boolean) {
+		this.simulateSpec.runSimulationsAutomatically = runSimulationsAutomatically;
+	}
+
+	getDefaultForecastSettings() {
+		return createDefaultForecastSettings(this.simulateSpec.endTime, this.simulateSpec.preset);
+	}
+
 	toJSON() {
 		return {
 			templateId: ValueOfInformationScenario.templateId,
@@ -153,6 +177,8 @@ export class ValueOfInformationScenario extends BaseScenario {
 		const wf = new workflowService.WorkflowWrapper();
 		wf.setWorkflowName(this.workflowName);
 		wf.setWorkflowScenario(this.toJSON());
+
+		const fetchedInterventionPolicies: InterventionPolicy[] = [];
 
 		// 1. Add model and compare dataset nodes
 		const modelNode = wf.addNode(
@@ -263,7 +289,8 @@ export class ValueOfInformationScenario extends BaseScenario {
 
 		wf.updateNode(baseSimulateNode, {
 			state: {
-				chartSettings: simulateChartSettings
+				chartSettings: simulateChartSettings,
+				...this.getDefaultForecastSettings()
 			}
 		});
 
@@ -359,7 +386,15 @@ export class ValueOfInformationScenario extends BaseScenario {
 						},
 						true
 					);
+
+					await useProjects().addAsset(
+						AssetType.InterventionPolicy,
+						interventionPolicy!.id,
+						useProjects().activeProject.value?.id
+					);
 				}
+
+				fetchedInterventionPolicies.push(interventionPolicy!);
 
 				const interventionNode = wf.addNode(
 					InterventionOp,
@@ -404,7 +439,8 @@ export class ValueOfInformationScenario extends BaseScenario {
 
 			wf.updateNode(simulateNode, {
 				state: {
-					chartSettings: simulateChartSettings
+					chartSettings: simulateChartSettings,
+					...this.getDefaultForecastSettings()
 				}
 			});
 
@@ -431,7 +467,8 @@ export class ValueOfInformationScenario extends BaseScenario {
 
 					wf.updateNode(additionalSimNode, {
 						state: {
-							chartSettings: simulateChartSettings
+							chartSettings: simulateChartSettings,
+							...this.getDefaultForecastSettings()
 						}
 					});
 
@@ -481,6 +518,11 @@ export class ValueOfInformationScenario extends BaseScenario {
 			);
 			compareDatasetIndex++;
 		});
+
+		// Run simulations automatically if indicated
+		if (this.simulateSpec.runSimulationsAutomatically) {
+			await runSimulations(wf, this.getDefaultForecastSettings(), fetchedInterventionPolicies);
+		}
 
 		// 5. Run layout
 		// The schematic for value-of-information is as follows

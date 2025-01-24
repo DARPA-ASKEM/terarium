@@ -1,4 +1,5 @@
 import { isEmpty, cloneDeep } from 'lodash';
+import { mean, stddev } from '@/utils/stats';
 import { Dataset, InterventionPolicy, ModelConfiguration } from '@/types/Types';
 import { WorkflowNode, WorkflowPortStatus } from '@/types/workflow';
 import { renameFnGenerator } from '@/components/workflow/ops/calibrate-ciemss/calibrate-utils';
@@ -195,6 +196,7 @@ export function generateRankingCharts(
 
 	const allRankedCriteriaValues: { score: number; policyName: string; configName: string }[][] = [];
 	const interventionNameColorMap: Record<string, string> = {};
+	const interventionNameScoresMap: Record<string, number[]> = {};
 
 	node.state.criteriaOfInterestCards.forEach((card) => {
 		if (!chartData.value || !card.selectedVariable) return;
@@ -236,13 +238,13 @@ export function generateRankingCharts(
 				({ id }) => id === metadata.simulationAttributes?.interventionPolicyId
 			);
 
-			// Skip this intervention policy if a configuration is not using it
 			if (!policy?.name || !modelConfiguration?.name) {
 				return;
 			}
 
 			if (!interventionNameColorMap[policy.name]) {
 				interventionNameColorMap[policy.name] = CATEGORICAL_SCHEME[colorIndex];
+				interventionNameScoresMap[policy.name] = [];
 				colorIndex++;
 			}
 
@@ -269,28 +271,36 @@ export function generateRankingCharts(
 		allRankedCriteriaValues.push(sortedRankingCriteriaValues);
 	});
 
-	// Sum up the values of the same intervention policy
-	const valueMap: Record<string, number> = {};
-	allRankedCriteriaValues.flat().forEach(({ score, policyName }) => {
-		if (valueMap[policyName]) {
-			valueMap[policyName] += score;
-		} else {
-			valueMap[policyName] = score;
-		}
+	// For each criteria
+	allRankedCriteriaValues.forEach((criteriaValues, index) => {
+		const rankMutliplier = node.state.criteriaOfInterestCards[index].rank === RankOption.MINIMUM ? -1 : 1;
+
+		// Calculate mean and stdev for this criteria
+		const values = criteriaValues.map((val) => val.score);
+		const meanValue = mean(values);
+		let stdevValue = stddev(values);
+		if (stdevValue === 0) stdevValue = 1;
+
+		// For each policy
+		Object.keys(interventionNameScoresMap).forEach((policyName) => {
+			// For each value of the criteria
+			criteriaValues.forEach((criteriaValue) => {
+				if (criteriaValue.policyName !== policyName) return; // Skip criteria values that don't belong to this policy
+				const scoredPolicyCriteria = rankMutliplier * ((criteriaValue.score - meanValue) / stdevValue);
+				interventionNameScoresMap[policyName].push(scoredPolicyCriteria);
+			});
+		});
 	});
 
-	const rankingResultsScores: { score: number; policyName: string; configName: string }[] = Object.keys(valueMap)
+	const scoredPolicies = Object.keys(interventionNameScoresMap)
 		.map((policyName) => ({
+			score: mean(interventionNameScoresMap[policyName]),
 			policyName,
-			configName: '', // Don't show config name in the ranking results
-			score: valueMap[policyName]
-		}))
-		// Sort from lowest to highest value
-		.sort((a, b) => a.score - b.score)
-		// Instead of the values, we want to rank by score
-		.map((value, index) => ({ ...value, score: index + 1 }));
+			configName: ''
+		})) // Sort from highest to lowest value
+		.sort((a, b) => b.score - a.score);
 
-	rankingResultsChart.value = createRankingInterventionsChart(rankingResultsScores, interventionNameColorMap);
+	rankingResultsChart.value = createRankingInterventionsChart(scoredPolicies, interventionNameColorMap);
 }
 
 export async function generateImpactCharts(
