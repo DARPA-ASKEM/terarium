@@ -1,4 +1,5 @@
 import { isEmpty, cloneDeep } from 'lodash';
+import { mean, stddev } from '@/utils/stats';
 import { Dataset, InterventionPolicy, ModelConfiguration } from '@/types/Types';
 import { WorkflowNode, WorkflowPortStatus } from '@/types/workflow';
 import { renameFnGenerator } from '@/components/workflow/ops/calibrate-ciemss/calibrate-utils';
@@ -275,10 +276,9 @@ export function generateRankingCharts(
 		const rankMutliplier = node.state.criteriaOfInterestCards[index].rank === RankOption.MINIMUM ? -1 : 1;
 
 		// Calculate mean and stdev for this criteria
-		const meanValue = criteriaValues.reduce((acc, val) => acc + val.score, 0) / criteriaValues.length;
-		let stdevValue = Math.sqrt(
-			criteriaValues.reduce((acc, val) => acc + (val.score - meanValue) ** 2, 0) / (criteriaValues.length - 1)
-		);
+		const values = criteriaValues.map((val) => val.score);
+		const meanValue = mean(values);
+		let stdevValue = stddev(values);
 		if (stdevValue === 0) stdevValue = 1;
 
 		// For each policy
@@ -293,16 +293,11 @@ export function generateRankingCharts(
 	});
 
 	const scoredPolicies = Object.keys(interventionNameScoresMap)
-		.map((policyName) => {
-			const values = interventionNameScoresMap[policyName];
-			const meanValue = values.reduce((acc, val) => acc + val, 0) / values.length;
-
-			return {
-				score: meanValue,
-				policyName,
-				configName: ''
-			};
-		}) // Sort from highest to lowest value
+		.map((policyName) => ({
+			score: mean(interventionNameScoresMap[policyName]),
+			policyName,
+			configName: ''
+		})) // Sort from highest to lowest value
 		.sort((a, b) => a.score + b.score);
 
 	rankingResultsChart.value = createRankingInterventionsChart(scoredPolicies, interventionNameColorMap);
