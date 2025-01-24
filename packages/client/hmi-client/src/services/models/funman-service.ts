@@ -60,6 +60,16 @@ export async function makeQueries(body: FunmanPostQueriesRequest, modelId: strin
 	}
 }
 
+export async function cancelQueries(taskId: string) {
+	try {
+		const { data } = await API.delete(`/funman/queries/${taskId}`);
+		return data;
+	} catch (err) {
+		logger.error(err);
+		return null;
+	}
+}
+
 export function generateConstraintExpression(config: ConstraintGroup) {
 	const { constraintType, interval, variables, timepoints } = config;
 	let expression = '';
