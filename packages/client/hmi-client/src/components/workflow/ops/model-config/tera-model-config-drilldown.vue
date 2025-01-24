@@ -11,7 +11,8 @@
 				v-if="pdfData.length"
 				v-model:is-open="isDocViewerOpen"
 				header="Document viewer"
-				content-width="700px"
+				:content-width="isSidebarOpen ? 'calc(60vw - 320px)' : '60vw'"
+				:documentViewer="true"
 			>
 				<template #content>
 					<tera-drilldown-section :is-loading="isFetchingPDF">
@@ -157,7 +158,6 @@
 					<Accordion :active-index="observableActiveIndicies" v-if="!isEmpty(observablesList)">
 						<AccordionTab header="Observables">
 							<tera-model-part
-								class="pl-4"
 								:part-type="PartType.OBSERVABLE"
 								:items="observablesList"
 								:feature-config="{ isPreview: true }"

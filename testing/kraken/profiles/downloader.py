@@ -8,7 +8,7 @@ from util import CustomRequests
 
 PROJECT_ID=os.getenv("PROJECT_ID")
 SERVER_URL=os.getenv("SERVER_URL")
-
+ITERATION=int(os.getenv("ITERATION"))
 
 # This profile downloads datasets
 if __name__ == "__main__":
@@ -23,7 +23,7 @@ if __name__ == "__main__":
         sys.exit(0)
 
     n = 0
-    while n < 2:
+    while n < ITERATION:
         n = n + 1
 
         # Get dataset information

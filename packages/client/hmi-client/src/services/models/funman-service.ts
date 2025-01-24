@@ -37,6 +37,7 @@ export interface FunmanConstraintsResponse {
 export interface ProcessedFunmanResult {
 	boxes: FunmanBox[];
 	trajectories: any[];
+	observableTrajectories: any[];
 }
 
 export interface RenderOptions {
@@ -98,6 +99,7 @@ export function generateConstraintExpression(config: ConstraintGroup) {
 export const processFunman = (result: any) => {
 	const stateIds: string[] = result.model.petrinet.model.states.map(({ id }) => id);
 	const parameterIds: string[] = result.model.petrinet.semantics.ode.parameters.map(({ id }) => id);
+	const observableIds: string[] = result.model.petrinet.semantics.ode.observables.map(({ id }) => id);
 	const timepoints: number[] = result.request.structure_parameters[0].schedules[0].timepoints;
 
 	function markBoxesEndingAtLatestTimestep(boxes: any[]) {
@@ -129,6 +131,7 @@ export const processFunman = (result: any) => {
 	// "dataframes"
 	const boxes: FunmanBox[] = [];
 	const trajectories: any[] = [];
+	const observableTrajectories: any[] = [];
 
 	[...trueBoxes, ...falseBoxes, ...ambiguousBoxes].forEach((box, index) => {
 		const points = box?.points?.[0]?.values;
@@ -164,7 +167,24 @@ export const processFunman = (result: any) => {
 				});
 				trajectories.push(trajectory);
 			});
-	});
 
-	return { boxes, trajectories } as ProcessedFunmanResult;
+		timepoints.slice(0, points.timestep + 1).forEach((timepoint) => {
+			const trajectory: any = {
+				boxId: index,
+				legendItem: getBoundType(box.label),
+				isAtLatestTimestep: box.isAtLatestTimestep,
+				values: {},
+				timepoint
+			};
+			observableIds.forEach((observableId) => {
+				// Only push states that have a timestep key pair
+				const key = `${observableId}_${timepoint}`;
+				if (Object.prototype.hasOwnProperty.call(points, key)) {
+					trajectory.values[observableId] = points[key];
+				}
+			});
+			observableTrajectories.push(trajectory);
+		});
+	});
+	return { boxes, trajectories, observableTrajectories } as ProcessedFunmanResult;
 };

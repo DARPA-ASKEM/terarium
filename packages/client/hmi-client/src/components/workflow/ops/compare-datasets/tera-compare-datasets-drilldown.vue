@@ -35,10 +35,10 @@
 							label="All simulations are from the same model"
 							disabled
 						/>
-						<template v-if="knobs.selectedCompareOption === CompareValue.IMPACT">
-							<label> Select simulation to use as a baseline (optional) </label>
+						<template v-if="knobs.selectedCompareOption === CompareValue.SCENARIO">
+							<label> Select simulation to use as a baseline </label>
 							<Dropdown
-								v-model="knobs.selectedDataset"
+								v-model="knobs.selectedBaselineDatasetId"
 								:options="datasets"
 								option-label="name"
 								option-value="id"
@@ -46,8 +46,6 @@
 								placeholder="Optional"
 								@change="onChangeImpactComparison"
 							/>
-							<label>Comparison tables</label>
-							<tera-checkbox v-model="isATESelected" label="Average treatment effect (ATE)" />
 						</template>
 						<!-- Pascale asked me to omit this timepoint selector, but I'm keeping it here until we are certain it's not needed -->
 						<!--
@@ -66,7 +64,6 @@
 								v-for="(card, i) in node.state.criteriaOfInterestCards"
 								:key="i"
 								:card="card"
-								:model-configurations="modelConfigurations"
 								:variables="variableNames"
 								@delete="deleteCriteria(i)"
 								@update="(e) => updateCriteria(e, i)"
@@ -88,10 +85,10 @@
 		</template>
 
 		<tera-drilldown-section :tabName="DrilldownTabs.Wizard">
-			<div ref="outputPanel">
+			<div ref="outputPanel" class="p-2">
 				<Accordion multiple :active-index="activeIndices">
 					<AccordionTab header="Summary"> </AccordionTab>
-					<template v-if="knobs.selectedCompareOption === CompareValue.IMPACT">
+					<template v-if="knobs.selectedCompareOption === CompareValue.SCENARIO">
 						<AccordionTab header="Variables">
 							<template v-for="setting of selectedVariableSettings" :key="setting.id">
 								<vega-chart
@@ -100,6 +97,15 @@
 									expandable
 								/>
 							</template>
+							<div v-if="selectedVariableSettings.length === 0" class="empty-state-chart">
+								<img
+									src="@assets/svg/operator-images/simulate-deterministic.svg"
+									alt="Select a variable"
+									draggable="false"
+									height="80px"
+								/>
+								<p class="text-center">Select variables of interest in the output panel</p>
+							</div>
 						</AccordionTab>
 						<AccordionTab header="Comparison table"> </AccordionTab>
 					</template>
@@ -130,7 +136,7 @@
 				header="Output settings"
 				content-width="360px"
 			>
-				<template #overlay v-if="knobs.selectedCompareOption === CompareValue.IMPACT">
+				<template #overlay v-if="knobs.selectedCompareOption === CompareValue.SCENARIO">
 					<tera-chart-settings-panel
 						:annotations="
 							[ChartSettingType.VARIABLE, ChartSettingType.VARIABLE_COMPARISON].includes(
@@ -146,7 +152,7 @@
 						@close="setActiveChartSettings(null)"
 					/>
 				</template>
-				<template #content v-if="knobs.selectedCompareOption === CompareValue.IMPACT">
+				<template #content v-if="knobs.selectedCompareOption === CompareValue.SCENARIO">
 					<div class="output-settings-panel">
 						<tera-chart-settings
 							:title="'Variables over time'"
@@ -224,7 +230,7 @@ const props = defineProps<{
 const emit = defineEmits(['update-state', 'close']);
 
 const compareOptions: { label: string; value: CompareValue }[] = [
-	{ label: 'Compare the impact of interventions', value: CompareValue.IMPACT },
+	{ label: 'Compare scenarios', value: CompareValue.SCENARIO },
 	{ label: 'Rank interventions based on multiple criteria', value: CompareValue.RANK }
 ];
 
@@ -250,16 +256,15 @@ const activeIndices = ref([0, 1, 2]);
 
 const isFetchingDatasets = ref(false);
 const areSimulationsFromSameModel = ref(true);
-const isATESelected = ref(false);
 
 const onRun = () => {
 	generateRankingCharts(
 		rankingCriteriaCharts,
 		rankingResultsChart,
-		props,
-		modelConfigIdToInterventionPolicyIdMap,
+		props.node,
 		rankingChartData,
 		datasets,
+		modelConfigurations,
 		interventionPolicies
 	);
 };
@@ -271,14 +276,14 @@ function onChangeImpactComparison() {
 interface BasicKnobs {
 	criteriaOfInterestCards: CriteriaOfInterestCard[];
 	selectedCompareOption: CompareValue;
-	selectedDataset: string | null;
+	selectedBaselineDatasetId: string | null;
 	selectedPlotType: PlotValue;
 }
 
 const knobs = ref<BasicKnobs>({
 	criteriaOfInterestCards: [],
-	selectedCompareOption: CompareValue.IMPACT,
-	selectedDataset: null,
+	selectedCompareOption: CompareValue.SCENARIO,
+	selectedBaselineDatasetId: null,
 	selectedPlotType: PlotValue.PERCENTAGE
 });
 
@@ -330,14 +335,14 @@ const { generateAnnotation, getChartAnnotationsByChartId, useCompareDatasetChart
 );
 const selectedPlotType = computed(() => knobs.value.selectedPlotType);
 const baselineDatasetIndex = computed(() =>
-	datasets.value.findIndex((dataset) => dataset.id === knobs.value.selectedDataset)
+	datasets.value.findIndex((dataset) => dataset.id === knobs.value.selectedBaselineDatasetId)
 );
 const variableCharts = useCompareDatasetCharts(selectedVariableSettings, selectedPlotType, baselineDatasetIndex);
 
 function outputPanelBehavior() {
 	if (knobs.value.selectedCompareOption === CompareValue.RANK) {
 		isOutputSettingsOpen.value = false;
-	} else if (knobs.value.selectedCompareOption === CompareValue.IMPACT) {
+	} else if (knobs.value.selectedCompareOption === CompareValue.SCENARIO) {
 		isOutputSettingsOpen.value = true;
 	}
 }
@@ -345,12 +350,12 @@ function outputPanelBehavior() {
 onMounted(() => {
 	const state = cloneDeep(props.node.state);
 	knobs.value = Object.assign(knobs.value, state);
-	if (!knobs.value.selectedDataset) knobs.value.selectedDataset = datasets.value[0]?.id ?? null;
 
 	outputPanelBehavior();
 
 	initialize(
-		props,
+		props.node,
+		knobs,
 		isFetchingDatasets,
 		datasets,
 		datasetResults,
@@ -372,7 +377,7 @@ watch(
 		const state = cloneDeep(props.node.state);
 		state.criteriaOfInterestCards = knobs.value.criteriaOfInterestCards;
 		state.selectedCompareOption = knobs.value.selectedCompareOption;
-		state.selectedDataset = knobs.value.selectedDataset;
+		state.selectedBaselineDatasetId = knobs.value.selectedBaselineDatasetId;
 		state.selectedPlotType = knobs.value.selectedPlotType;
 		emit('update-state', state);
 	},
@@ -403,5 +408,19 @@ label {
 	border-radius: var(--border-radius);
 	box-shadow: inset 0 0 6px rgba(0, 0, 0, 0.1);
 	margin-bottom: var(--gap-1);
+}
+.empty-state-chart {
+	display: flex;
+	flex-direction: column;
+	flex-grow: 1;
+	gap: var(--gap-4);
+	justify-content: center;
+	align-items: center;
+	height: 12rem;
+	margin: var(--gap-6);
+	padding: var(--gap-4);
+	background: var(--surface-100);
+	color: var(--text-color-secondary);
+	border-radius: var(--border-radius);
 }
 </style>

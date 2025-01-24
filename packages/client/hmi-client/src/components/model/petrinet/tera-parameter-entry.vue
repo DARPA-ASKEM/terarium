@@ -27,7 +27,7 @@
 			</span>
 		</div>
 		<template v-else-if="!featureConfig?.isPreview">
-			<main>
+			<main class="flex flex-wrap gap-2">
 				<tera-distribution-input
 					:model="model"
 					:modelConfiguration="modelConfiguration"
@@ -125,7 +125,7 @@ const showOtherConfigValueModal = ref(false);
 const isParameterEmpty = ref(false);
 
 const otherValueList = computed(() =>
-	getOtherValues(props.modelConfigurations, props.parameterId, 'referenceId', 'parameterSemanticList')
+	getOtherValues(props.modelConfigurations, props.parameterId, 'referenceId', 'parameterSemanticList', description)
 );
 
 function getSourceLabel(initialId) {
