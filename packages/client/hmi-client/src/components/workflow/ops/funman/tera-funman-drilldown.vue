@@ -653,10 +653,7 @@ async function run() {
 
 async function stop() {
 	const state = cloneDeep(props.node.state);
-	const response = await cancelQueries(state.inProgressId);
-	if (response) {
-		console.log(response);
-	}
+	await cancelQueries(state.inProgressId);
 	showSpinner.value = false;
 	// Clean up the in-progress id
 	state.inProgressId = '';
