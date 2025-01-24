@@ -388,6 +388,12 @@ export class HorizonScanningScenario extends BaseScenario {
 						},
 						true
 					);
+
+					await useProjects().addAsset(
+						AssetType.InterventionPolicy,
+						interventionPolicy!.id,
+						useProjects().activeProject.value?.id
+					);
 				}
 
 				// Add to list of intervention policies
