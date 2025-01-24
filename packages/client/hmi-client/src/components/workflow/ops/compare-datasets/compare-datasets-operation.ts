@@ -7,11 +7,11 @@ const DOCUMENTATION_URL = 'https://documentation.terarium.ai/datasets/compare-da
 export enum TimepointOption {
 	LAST = 'at the last timepoint',
 	FIRST = 'at the first timepoint',
-	OVERALL = 'for all timepoints'
+	OVERALL = 'at its peak'
 }
 export enum RankOption {
-	MINIMUM = 'minimum',
-	MAXIMUM = 'maximum'
+	MINIMUM = 'minimize',
+	MAXIMUM = 'maximize'
 }
 
 export enum PlotValue {
