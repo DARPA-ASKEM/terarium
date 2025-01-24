@@ -79,7 +79,7 @@ const props = defineProps<{
 }>();
 
 const otherValueList = computed(() =>
-	getOtherValues(props.modelConfigurations, props.initialId, 'target', 'initialSemanticList')
+	getOtherValues(props.modelConfigurations, props.initialId, 'target', 'initialSemanticList', description)
 );
 
 const emit = defineEmits(['update-expression', 'update-source']);
