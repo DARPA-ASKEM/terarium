@@ -464,7 +464,7 @@ const extractConfigurationsFromInputs = async () => {
 		.filter((id) => id);
 
 	const newDocumentIds = difference(documentIds.value, configExtractionDocumentIds);
-	if (newDocumentIds) {
+	if (newDocumentIds.length) {
 		const promiseList = [] as Promise<TaskResponse | null>[];
 		newDocumentIds.forEach((documentId) => {
 			promiseList.push(
@@ -480,7 +480,7 @@ const extractConfigurationsFromInputs = async () => {
 	}
 
 	const newDatasetIds = difference(datasetIds.value, configExtractionDocumentIds);
-	if (newDatasetIds) {
+	if (newDatasetIds.length) {
 		const matrixStr = generateModelDatasetConfigurationContext(mmt.value, mmtParams.value);
 		const promiseList = [] as Promise<TaskResponse | null>[];
 		newDatasetIds.forEach((datasetId) => {
