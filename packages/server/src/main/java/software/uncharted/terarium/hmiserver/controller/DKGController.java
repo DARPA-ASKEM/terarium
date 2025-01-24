@@ -4,9 +4,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
@@ -58,19 +56,14 @@ public class DKGController {
 		// If grounding is not found, search the EpiDKG index
 		if (grounding == null) {
 			grounding = new Grounding();
-			List<DKG> dkgResults;
 
 			try {
-				dkgResults = dkgService.searchEpiDKG(page, pageSize, term, null);
+				final List<DKG> dkgResults = dkgService.searchEpiDKG(page, pageSize, term, null);
+				grounding.setIdentifiers(dkgResults);
 			} catch (Exception e) {
 				log.error("Error searching assets", e);
 				return ResponseEntity.internalServerError().build();
 			}
-
-			// Transform the DKG results into a Grounding.identifiers
-			final Map<String, String> identifiers = new HashMap<>();
-			dkgResults.forEach(dkg -> identifiers.put(dkg.getCurie(), dkg.getName()));
-			grounding.setIdentifiers(identifiers);
 		}
 
 		return ResponseEntity.ok(grounding);
