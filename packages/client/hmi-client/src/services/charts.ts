@@ -291,6 +291,9 @@ export function createErrorChart(dataset: Record<string, any>[], options: ErrorC
 	} as any;
 }
 
+/* -------------------------------------------------------------------------- */
+/*                                 Histogram                                  */
+/* -------------------------------------------------------------------------- */
 export function createHistogramChart(dataset: Record<string, any>[], options: HistogramChartOptions) {
 	const maxBins = options.maxBins ?? 10;
 	const axisColor = '#EEE';
@@ -671,14 +674,33 @@ export function createForecastChart(
 		} as any;
 	};
 
+	// Build expression to check if the legend item is selected for each layer.
+	const LEGEND_SELECT_PARAM = 'legend_selection';
+	const sampleToStatVar = {};
+	// Assume that the sampling layer and the statistics layer have the same number of corresponding variables in the same order
+	(samplingLayer?.variables ?? []).forEach((sampleVar, index) => {
+		sampleToStatVar[sampleVar] = (statisticsLayer?.variables ?? [])[index];
+	});
+	const sampleLayerlegendSelctionTestExpr = `!${LEGEND_SELECT_PARAM}.variableField || indexof(${LEGEND_SELECT_PARAM}.variableField || [], (${JSON.stringify(sampleToStatVar)})[datum.variableField]) >= 0`;
+	const statLayerlegendSelectionTestExpr = `!${LEGEND_SELECT_PARAM}.variableField || indexof(${LEGEND_SELECT_PARAM}.variableField || [], datum.variableField) >= 0`;
+
 	// Build sample layer
 	if (samplingLayer && !isEmpty(samplingLayer.variables) && !isEmpty(samplingLayer.data)) {
 		const layerSpec = newLayer(samplingLayer, 'line');
-		const encoding = layerSpec.layer[0].encoding;
-		Object.assign(encoding, {
+		const lineSubLayer = layerSpec.layer[0];
+
+		Object.assign(lineSubLayer.encoding, {
 			detail: { field: samplingLayer.groupField, type: 'nominal' },
 			strokeWidth: { value: 1 },
-			opacity: { value: options.bins ? 1.0 : 0.1 }
+			opacity: options.bins
+				? { value: 1.0 } // If bins enabled, use full opacity
+				: {
+						condition: {
+							test: sampleLayerlegendSelctionTestExpr, // Use selection to highlight the selected line
+							value: 0.13
+						},
+						value: 0.02
+					}
 		});
 
 		spec.layer.push(layerSpec);
@@ -689,9 +711,24 @@ export function createForecastChart(
 		const layerSpec = newLayer(statisticsLayer, 'line');
 		const lineSubLayer = layerSpec.layer[0];
 
+		// Add interactive legend params, keeping original name
+		lineSubLayer.params = [
+			{
+				name: LEGEND_SELECT_PARAM,
+				select: { type: 'point', fields: ['variableField'] },
+				bind: 'legend'
+			}
+		];
+
 		Object.assign(lineSubLayer.encoding, {
-			opacity: { value: 1.0 },
-			strokeWidth: { value: 2 }
+			strokeWidth: { value: 2 },
+			opacity: {
+				condition: {
+					test: statLayerlegendSelectionTestExpr,
+					value: 1
+				},
+				value: 0.02
+			}
 		});
 
 		if (options.legend === true) {
@@ -837,7 +874,9 @@ export function createForecastChart(
 		if (!isCompact) {
 			layerSpec.layer.push(timeLabelLayer);
 		}
-
+		// Expression to test if the legend item is selected and the point is hovered or clicked
+		const hoverAndSelectLegend = `((hover.${statisticsLayer.timeField} || [])[0] === datum.${statisticsLayer.timeField}) && (!legend_selection.variableField || indexof(legend_selection.variableField || [], datum.variableField) >= 0)`;
+		const clickAndSelectLegend = `((click.${statisticsLayer.timeField} || [])[0] === datum.${statisticsLayer.timeField}) && (!legend_selection.variableField || indexof(legend_selection.variableField || [], datum.variableField) >= 0)`;
 		// Add tooltip points for the vertical line
 		const pointLayer = {
 			mark: {
@@ -864,14 +903,12 @@ export function createForecastChart(
 				opacity: {
 					condition: [
 						{
-							param: 'hover',
-							value: 1,
-							empty: false
+							test: hoverAndSelectLegend,
+							value: 1
 						},
 						{
-							param: 'click',
-							value: 1,
-							empty: false
+							test: clickAndSelectLegend,
+							value: 1
 						}
 					],
 					value: 0
@@ -919,14 +956,12 @@ export function createForecastChart(
 				opacity: {
 					condition: [
 						{
-							param: 'hover',
-							value: 1,
-							empty: false
+							test: hoverAndSelectLegend,
+							value: 1
 						},
 						{
-							param: 'click',
-							value: 1,
-							empty: false
+							test: clickAndSelectLegend,
+							value: 1
 						}
 					],
 					value: 0
@@ -969,14 +1004,12 @@ export function createForecastChart(
 				opacity: {
 					condition: [
 						{
-							param: 'hover',
-							value: 1,
-							empty: false
+							test: hoverAndSelectLegend,
+							value: 1
 						},
 						{
-							param: 'click',
-							value: 1,
-							empty: false
+							test: clickAndSelectLegend,
+							value: 1
 						}
 					],
 					value: 0
@@ -1013,7 +1046,10 @@ export function createForecastChart(
 	return spec;
 }
 
-/**
+/* -------------------------------------------------------------------------- */
+/*                                 Quantile chart                             */
+/* -------------------------------------------------------------------------- */
+/*
  * e.g. [{variable1: [1, 2, 3], variable2: [4, 5, 6]}, ...] where each item in the variable array is a sample value. Sample values must be sorted in ascending order.
  */
 export type GroupedDataArray = Record<string, number[]>[];
@@ -1108,6 +1144,23 @@ export function createQuantilesForecastChart(
 
 	const yScale = { type: options.scale === 'log' ? 'symlog' : 'linear' };
 
+	const LEGEND_SELECT_PARAM = 'legend_selection';
+	const encodingColor = (legend = false) => ({
+		field: 'variable',
+		type: 'nominal',
+		scale: {
+			domain: variables,
+			range: options.colorscheme || CATEGORICAL_SCHEME
+		},
+		legend:
+			legend && options.legend
+				? {
+						...legendProperties,
+						labelExpr: labelExpr.length && labelExpr
+					}
+				: false
+	});
+
 	const spec: any = {
 		$schema: VEGALITE_SCHEMA,
 		title: titleObj,
@@ -1135,47 +1188,58 @@ export function createQuantilesForecastChart(
 		],
 		layer: [
 			{
-				mark: {
-					type: 'errorband',
-					extent: 'ci',
-					borders: true
-				},
-				encoding: {
-					x: { field: 'x', type: 'quantitative', axis: { ...xaxis } },
-					y: { field: 'lower', type: 'quantitative', axis: { ...yaxis }, scale: yScale },
-					y2: { field: 'upper', type: 'quantitative' },
-					color: {
-						field: 'variable',
-						type: 'nominal',
-						scale: {
-							domain: variables,
-							range: options.colorscheme || CATEGORICAL_SCHEME
+				layer: [
+					{
+						// Dummy line to create a legend
+						mark: 'line',
+						encoding: { color: encodingColor(true) },
+						params: [
+							{
+								name: LEGEND_SELECT_PARAM,
+								select: { type: 'point', fields: ['variable'] },
+								bind: 'legend'
+							}
+						]
+					},
+					{
+						mark: {
+							type: 'errorband',
+							extent: 'ci',
+							borders: true
 						},
-						legend: options.legend
-							? {
-									...legendProperties,
-									labelExpr: labelExpr.length && labelExpr
-								}
-							: false
-					},
-					opacity: {
-						field: 'quantile',
-						type: 'quantitative',
-						scale: { domain: [0.5, 1], range: [1, 0.1] },
-						legend: false
-					},
-					tooltip: [
-						{ field: 'varDisplayName', title: ' ' },
-						{ field: 'quantile', title: 'Quantile', format: '.0%' },
-						{ field: 'lower', title: 'Lower Bound' },
-						{ field: 'upper', title: 'Upper Bound' }
-					]
-				}
+						encoding: {
+							x: { field: 'x', type: 'quantitative', axis: { ...xaxis } },
+							y: { field: 'lower', type: 'quantitative', axis: { ...yaxis }, scale: yScale },
+							y2: { field: 'upper', type: 'quantitative' },
+							color: encodingColor(),
+							opacity: {
+								legend: false,
+								condition: {
+									param: LEGEND_SELECT_PARAM,
+									field: 'quantile',
+									type: 'quantitative',
+									scale: { domain: [0.5, 1], range: [1, 0.1] },
+									legend: false
+								},
+								value: 0.03 // Default opacity for non-selected variables
+							},
+							tooltip: [
+								{ field: 'varDisplayName', title: ' ' },
+								{ field: 'quantile', title: 'Quantile', format: '.0%' },
+								{ field: 'lower', title: 'Lower Bound' },
+								{ field: 'upper', title: 'Upper Bound' }
+							]
+						}
+					}
+				]
 			}
 		]
 	};
 	return spec;
 }
+/* -------------------------------------------------------------------------- */
+/*                                 Sensitivity Scatterplot                    */
+/* -------------------------------------------------------------------------- */
 
 /**
  * FIXME: The design calls for combinations of different types of charts
