@@ -148,6 +148,7 @@
 				filter
 			/>
 			<!-- <img :src="simulate" alt="Simulate chart" /> -->
+			<tera-simulation-settings :scenario-instance="scenario" />
 		</template>
 	</tera-scenario-template>
 	<tera-new-policy-modal
@@ -174,6 +175,7 @@ import { ScenarioHeader } from '../base-scenario';
 import TeraScenarioTemplate from '../tera-scenario-template.vue';
 import { displayParameter, usePolicyModel } from '../scenario-template-utils';
 import teraNewPolicyModal from '../tera-new-policy-modal.vue';
+import teraSimulationSettings from '../tera-simulation-settings.vue';
 
 const header: ScenarioHeader = Object.freeze({
 	title: 'Value of information template',
