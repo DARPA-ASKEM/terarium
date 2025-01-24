@@ -57,7 +57,11 @@ export async function saveAs(
 		logger.error(`Asset can't be saved since target project doesn't exist.`);
 		return;
 	}
-	await useProjects().addAsset(assetType, response.id, projectId);
+
+	// this is already done in the backend for intervention policies
+	if (assetType !== AssetType.InterventionPolicy) {
+		await useProjects().addAsset(assetType, response.id, projectId);
+	}
 
 	// After saving notify the user and do any necessary actions
 	logger.info(`${response.name} saved successfully in project ${useProjects().activeProject.value?.name}.`);
