@@ -193,34 +193,36 @@ export const runSimulations = async (
 	interventionPolicies: InterventionPolicy[] = []
 ) => {
 	const forecastNodes = wf.getNodes().filter((node) => node.operationType === SimulateCiemssOp.name);
-	await Promise.all(
-		forecastNodes.map(async (node) => {
-			const modelConfigId = node.inputs[0].value?.[0];
-			const policy = interventionPolicies.find((intervention) => intervention.id === node.inputs[1].value?.[0]);
 
-			if (policy && isInterventionPolicyBlank(policy)) {
-				// If policy exists but has no interventions, skip the simulation
-				return;
+	for (let i = 0; i < forecastNodes.length; i++) {
+		const node = forecastNodes[i];
+		const modelConfigId = node.inputs[0].value?.[0];
+		const policy = interventionPolicies.find((intervention) => intervention.id === node.inputs[1].value?.[0]);
+
+		if (policy && isInterventionPolicyBlank(policy)) {
+			// If policy exists but has no interventions, skip the simulation
+			return;
+		}
+
+		const baseSimulationPromise = policy
+			? makeForecastRequest(node, modelConfigId, options, policy.id)
+			: Promise.resolve('');
+
+		const simulationPromise = makeForecastRequest(node, modelConfigId, options);
+
+		/* eslint-disable no-await-in-loop */
+		const [baseSimulationId, simulationId] = await Promise.all([baseSimulationPromise, simulationPromise]);
+		/* eslint-enable no-await-in-loop */
+
+		wf.updateNode(node, {
+			state: {
+				...node.state,
+				...options,
+				inProgressBaseForecastId: baseSimulationId,
+				inProgressForecastId: simulationId
 			}
-
-			const baseSimulationPromise = policy
-				? makeForecastRequest(node, modelConfigId, options, policy.id)
-				: Promise.resolve('');
-
-			const simulationPromise = makeForecastRequest(node, modelConfigId, options);
-
-			const [baseSimulationId, simulationId] = await Promise.all([baseSimulationPromise, simulationPromise]);
-
-			wf.updateNode(node, {
-				state: {
-					...node.state,
-					...options,
-					inProgressBaseForecastId: baseSimulationId,
-					inProgressForecastId: simulationId
-				}
-			});
-		})
-	);
+		});
+	}
 };
 export function usePolicyModel(props, interventionDropdowns, policyModalContext, isPolicyModalVisible) {
 	const onOpenPolicyModel = (index: number) => {
