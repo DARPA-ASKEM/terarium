@@ -16,7 +16,8 @@ import {
 } from '@/services/intervention-policy';
 import { ChartSetting, ChartSettingType, CiemssPresetTypes } from '@/types/common';
 import { updateChartSettingsBySelectedVariables } from '@/services/chart-settings';
-import { InterventionPolicy } from '@/types/Types';
+import { AssetType, InterventionPolicy } from '@/types/Types';
+import { useProjects } from '@/composables/project';
 import { createDefaultForecastSettings, runSimulations } from '../scenario-template-utils';
 
 export class DecisionMakingScenario extends BaseScenario {
@@ -266,6 +267,12 @@ export class DecisionMakingScenario extends BaseScenario {
 						interventions: [blankIntervention]
 					},
 					true
+				);
+
+				await useProjects().addAsset(
+					AssetType.InterventionPolicy,
+					interventionPolicy!.id,
+					useProjects().activeProject.value?.id
 				);
 			}
 

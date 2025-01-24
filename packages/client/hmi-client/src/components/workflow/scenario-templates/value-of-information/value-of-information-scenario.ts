@@ -386,6 +386,12 @@ export class ValueOfInformationScenario extends BaseScenario {
 						},
 						true
 					);
+
+					await useProjects().addAsset(
+						AssetType.InterventionPolicy,
+						interventionPolicy!.id,
+						useProjects().activeProject.value?.id
+					);
 				}
 
 				fetchedInterventionPolicies.push(interventionPolicy!);
