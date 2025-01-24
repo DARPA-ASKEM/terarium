@@ -462,7 +462,7 @@ import { useProjects } from '@/composables/project';
 import { useDrilldownChartSize } from '@/composables/useDrilldownChartSize';
 import { SimulateCiemssOperationState } from './simulate-ciemss-operation';
 import { mergeResults, renameFnGenerator } from '../calibrate-ciemss/calibrate-utils';
-import { usePreparedChartInputs } from './simulate-utils';
+import { qualityPreset, speedPreset, usePreparedChartInputs } from './simulate-utils';
 
 const props = defineProps<{
 	node: WorkflowNode<SimulateCiemssOperationState>;
@@ -539,17 +539,6 @@ enum OutputView {
 	Charts = 'Charts',
 	Data = 'Data'
 }
-
-const speedPreset = Object.freeze({
-	numSamples: 10,
-	method: CiemssMethodOptions.euler,
-	stepSize: 0.1
-});
-
-const qualityPreset = Object.freeze({
-	numSamples: 100,
-	method: CiemssMethodOptions.dopri5
-});
 
 const updateLlmQuery = (query: string) => {
 	llmThoughts.value = [];
