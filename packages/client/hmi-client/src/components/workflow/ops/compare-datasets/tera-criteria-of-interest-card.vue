@@ -10,7 +10,7 @@
 			<Button class="ml-auto" text icon="pi pi-trash" @click="emit('delete')" />
 		</header>
 		<p>
-			Rank the intervention policies that optimizes the
+			Rank the intervention policies that can
 			<Dropdown
 				:options="Object.values(RankOption)"
 				:model-value="card.rank"
