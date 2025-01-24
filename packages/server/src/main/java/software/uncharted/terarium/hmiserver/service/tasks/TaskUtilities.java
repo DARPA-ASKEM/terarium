@@ -170,7 +170,7 @@ public class TaskUtilities {
 			.map(TaskUtilities::getSearchTerm)
 			.collect(Collectors.toList());
 
-		List<DKG> curies = new ArrayList<>();
+		List<DKG> curies;
 		try {
 			curies = dkgService.knnSearchEpiDKG(0, 100, 1, searchTerms, null);
 		} catch (Exception e) {
