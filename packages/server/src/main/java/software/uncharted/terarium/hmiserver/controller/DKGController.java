@@ -45,28 +45,18 @@ public class DKGController {
 			@ApiResponse(responseCode = "500", description = "There was an issue with the search", content = @Content)
 		}
 	)
-	public ResponseEntity<Grounding> searchAssets(
+	public ResponseEntity<List<DKG>> searchAssets(
 		@RequestParam(required = false, defaultValue = "0") final Integer page,
 		@RequestParam(required = false, defaultValue = "10") final Integer pageSize,
 		@RequestParam final String term
 	) {
-		// First pass, search for exact matches using the curated contexts
-		Grounding grounding = ContextMatcher.searchBest(term);
-
-		// If grounding is not found, search the EpiDKG index
-		if (grounding == null) {
-			grounding = new Grounding();
-
-			try {
-				final List<DKG> dkgResults = dkgService.searchEpiDKG(page, pageSize, term, null);
-				grounding.setIdentifiers(dkgResults);
-			} catch (Exception e) {
-				log.error("Error searching assets", e);
-				return ResponseEntity.internalServerError().build();
-			}
+		try {
+			final List<DKG> result = dkgService.searchEpiDKG(page, pageSize, term, null);
+			return ResponseEntity.ok(result);
+		} catch (Exception e) {
+			log.error("Error searching assets", e);
+			return ResponseEntity.internalServerError().build();
 		}
-
-		return ResponseEntity.ok(grounding);
 	}
 
 	@GetMapping("/search/embeddings")
