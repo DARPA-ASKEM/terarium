@@ -874,7 +874,9 @@ export function createForecastChart(
 		if (!isCompact) {
 			layerSpec.layer.push(timeLabelLayer);
 		}
-
+		// Expression to test if the legend item is selected and the point is hovered or clicked
+		const hoverAndSelectLegend = `((hover.${statisticsLayer.timeField} || [])[0] === datum.${statisticsLayer.timeField}) && (!legend_selection.variableField || indexof(legend_selection.variableField || [], datum.variableField) >= 0)`;
+		const clickAndSelectLegend = `((click.${statisticsLayer.timeField} || [])[0] === datum.${statisticsLayer.timeField}) && (!legend_selection.variableField || indexof(legend_selection.variableField || [], datum.variableField) >= 0)`;
 		// Add tooltip points for the vertical line
 		const pointLayer = {
 			mark: {
@@ -901,14 +903,12 @@ export function createForecastChart(
 				opacity: {
 					condition: [
 						{
-							param: 'hover',
-							value: 1,
-							empty: false
+							test: hoverAndSelectLegend,
+							value: 1
 						},
 						{
-							param: 'click',
-							value: 1,
-							empty: false
+							test: clickAndSelectLegend,
+							value: 1
 						}
 					],
 					value: 0
@@ -956,14 +956,12 @@ export function createForecastChart(
 				opacity: {
 					condition: [
 						{
-							param: 'hover',
-							value: 1,
-							empty: false
+							test: hoverAndSelectLegend,
+							value: 1
 						},
 						{
-							param: 'click',
-							value: 1,
-							empty: false
+							test: clickAndSelectLegend,
+							value: 1
 						}
 					],
 					value: 0
@@ -1006,14 +1004,12 @@ export function createForecastChart(
 				opacity: {
 					condition: [
 						{
-							param: 'hover',
-							value: 1,
-							empty: false
+							test: hoverAndSelectLegend,
+							value: 1
 						},
 						{
-							param: 'click',
-							value: 1,
-							empty: false
+							test: clickAndSelectLegend,
+							value: 1
 						}
 					],
 					value: 0
