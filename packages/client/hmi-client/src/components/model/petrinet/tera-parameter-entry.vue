@@ -125,7 +125,7 @@ const showOtherConfigValueModal = ref(false);
 const isParameterEmpty = ref(false);
 
 const otherValueList = computed(() =>
-	getOtherValues(props.modelConfigurations, props.parameterId, 'referenceId', 'parameterSemanticList')
+	getOtherValues(props.modelConfigurations, props.parameterId, 'referenceId', 'parameterSemanticList', description)
 );
 
 function getSourceLabel(initialId) {
