@@ -358,7 +358,7 @@ export interface ProvenanceSearchResult {
 
 export interface RegNetBaseProperties {
     name: string;
-    grounding: ModelGrounding;
+    grounding: Grounding;
     rate_constant: any;
 }
 
@@ -380,7 +380,7 @@ export interface RegNetParameter {
     id: string;
     description?: string;
     value?: number;
-    grounding?: ModelGrounding;
+    grounding?: Grounding;
     distribution?: ModelDistribution;
 }
 
@@ -836,12 +836,6 @@ export interface ModelDistribution {
     parameters: { [index: string]: any };
 }
 
-export interface ModelGrounding {
-    identifiers: { [index: string]: any };
-    context?: { [index: string]: any };
-    modifiers?: any;
-}
-
 export interface ModelUnit {
     expression: string;
     expression_mathml: string;
@@ -851,12 +845,12 @@ export interface GroundedSemantic {
     id: string;
     name?: string;
     description?: string;
-    grounding?: ModelGrounding;
+    grounding?: Grounding;
 }
 
 export interface Properties {
     name: string;
-    grounding?: ModelGrounding;
+    grounding?: Grounding;
     description?: string;
 }
 

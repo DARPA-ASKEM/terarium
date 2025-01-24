@@ -12,11 +12,11 @@ import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
+import software.uncharted.terarium.hmiserver.models.dataservice.Grounding;
 import software.uncharted.terarium.hmiserver.models.dataservice.dataset.Dataset;
 import software.uncharted.terarium.hmiserver.models.dataservice.dataset.DatasetColumn;
 import software.uncharted.terarium.hmiserver.models.dataservice.document.DocumentAsset;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.Model;
-import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.ModelGrounding;
 import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.semantics.GroundedSemantic;
 import software.uncharted.terarium.hmiserver.models.mira.DKG;
 import software.uncharted.terarium.hmiserver.models.task.TaskRequest;
@@ -181,10 +181,9 @@ public class TaskUtilities {
 		for (int i = 0; i < curies.size(); i++) {
 			DKG dkg = curies.get(i);
 			GroundedSemantic part = parts.get(i);
-			if (part.getGrounding() == null) part.setGrounding(new ModelGrounding());
-			if (part.getGrounding().getIdentifiers() == null) part.getGrounding().setIdentifiers(new HashMap<>());
-			String[] currieId = dkg.getCurie().split(":");
-			part.getGrounding().getIdentifiers().put(currieId[0], currieId[1]);
+			if (part.getGrounding() == null) part.setGrounding(new Grounding());
+			if (part.getGrounding().getIdentifiers() == null) part.getGrounding().setIdentifiers(new ArrayList<>());
+			part.getGrounding().getIdentifiers().add(dkg);
 		}
 	}
 

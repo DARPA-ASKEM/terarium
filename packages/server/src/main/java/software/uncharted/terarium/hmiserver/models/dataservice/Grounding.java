@@ -1,5 +1,6 @@
 package software.uncharted.terarium.hmiserver.models.dataservice;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import io.hypersistence.utils.hibernate.type.json.JsonType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -17,12 +18,12 @@ import software.uncharted.terarium.hmiserver.annotations.TSOptional;
 import software.uncharted.terarium.hmiserver.models.TerariumEntity;
 import software.uncharted.terarium.hmiserver.models.mira.DKG;
 
-/** Represents a grounding document from TDS */
 @Data
 @EqualsAndHashCode(callSuper = true)
 @Accessors(chain = true)
 @TSModel
 @Entity
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class Grounding extends TerariumEntity {
 
 	@Serial
