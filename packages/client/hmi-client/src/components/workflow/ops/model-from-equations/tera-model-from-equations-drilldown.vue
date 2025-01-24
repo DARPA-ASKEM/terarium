@@ -122,7 +122,6 @@
 										rows="1"
 										placeholder="Add an expression with LaTeX"
 										class="w-full"
-										@update:model-value="emit('update-state', clonedState)"
 									/>
 								</tera-asset-block>
 							</li>
@@ -168,7 +167,6 @@
 										rows="1"
 										placeholder="Add an expression with LaTeX"
 										class="w-full"
-										@update:model-value="emit('update-state', clonedState)"
 									/>
 								</tera-asset-block>
 							</li>
@@ -411,6 +409,9 @@ function arrayBufferToBase64(buffer) {
 }
 
 onBeforeUnmount(async () => {
+	// flush changes
+	emit('update-state', clonedState.value);
+
 	window.removeEventListener('paste', handlePasteEvent);
 });
 
