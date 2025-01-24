@@ -274,21 +274,19 @@ export function generateRankingCharts(
 	allRankedCriteriaValues.forEach((criteriaValues, index) => {
 		const rankMutliplier = node.state.criteriaOfInterestCards[index].rank === RankOption.MINIMUM ? -1 : 1;
 
+		// Calculate mean and stdev for this criteria
+		const meanValue = criteriaValues.reduce((acc, val) => acc + val.score, 0) / criteriaValues.length;
+		let stdevValue = Math.sqrt(
+			criteriaValues.reduce((acc, val) => acc + (val.score - meanValue) ** 2, 0) / (criteriaValues.length - 1)
+		);
+		if (stdevValue === 0) stdevValue = 1;
+
 		// For each policy
 		Object.keys(interventionNameScoresMap).forEach((policyName) => {
-			// Get criteria values for this policy
-			const policyCriteriaValues = criteriaValues.filter((criteriaValue) => criteriaValue.policyName === policyName);
-
-			// Calculate mean and stdev for this policy criteria combo
-			const meanValue = criteriaValues.reduce((acc, val) => acc + val.score, 0) / criteriaValues.length;
-			let stdevValue = Math.sqrt(
-				criteriaValues.reduce((acc, val) => acc + (val.score - meanValue) ** 2, 0) / (criteriaValues.length - 1)
-			);
-			if (stdevValue === 0) stdevValue = 1;
-
 			// For each value of the criteria
-			policyCriteriaValues.forEach(({ score }) => {
-				const scoredPolicyCriteria = rankMutliplier * ((score - meanValue) / stdevValue);
+			criteriaValues.forEach((criteriaValue) => {
+				if (criteriaValue.policyName !== policyName) return; // Skip criteria values that don't belong to this policy
+				const scoredPolicyCriteria = rankMutliplier * ((criteriaValue.score - meanValue) / stdevValue);
 				interventionNameScoresMap[policyName].push(scoredPolicyCriteria);
 			});
 		});

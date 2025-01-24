@@ -1876,7 +1876,7 @@ export function createFunmanParameterCharts(
 }
 
 export function createRankingInterventionsChart(
-	values: { score: number; error?: number; policyName: string; configName: string }[],
+	values: { score: number; policyName: string; configName: string }[],
 	interventionNameColorMap: Record<string, string>,
 	title: string | null = null,
 	variableName: string | null = null
