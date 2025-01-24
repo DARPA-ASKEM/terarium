@@ -10,11 +10,11 @@ import {
 	setParameterDistributions
 } from '@/services/model-configurations';
 import _ from 'lodash';
-import { ChartSetting, ChartSettingSensitivity, ChartSettingType } from '@/types/common';
+import { ChartSetting, ChartSettingSensitivity, ChartSettingType, CiemssPresetTypes } from '@/types/common';
 import { updateChartSettingsBySelectedVariables, updateSensitivityChartSettingOption } from '@/services/chart-settings';
 import { AssetType, ParameterSemantic } from '@/types/Types';
 import { useProjects } from '@/composables/project';
-import { switchToUniformDistribution } from '../scenario-template-utils';
+import { createDefaultForecastSettings, runSimulations, switchToUniformDistribution } from '../scenario-template-utils';
 
 export class SensitivityAnalysisScenario extends BaseScenario {
 	public static templateId = 'sensitivity-analysis';
@@ -27,7 +27,7 @@ export class SensitivityAnalysisScenario extends BaseScenario {
 
 	parameters: (ParameterSemantic | null)[];
 
-	simulateSpec: { ids: string[] };
+	simulateSpec: { ids: string[]; endTime: number; preset: CiemssPresetTypes; runSimulationsAutomatically: boolean };
 
 	constructor() {
 		super();
@@ -39,7 +39,10 @@ export class SensitivityAnalysisScenario extends BaseScenario {
 			id: ''
 		};
 		this.simulateSpec = {
-			ids: []
+			ids: [],
+			preset: CiemssPresetTypes.Fast,
+			endTime: 100,
+			runSimulationsAutomatically: false
 		};
 		this.parameters = [null];
 	}
@@ -70,6 +73,22 @@ export class SensitivityAnalysisScenario extends BaseScenario {
 
 	setSimulateSpec(ids: string[]) {
 		this.simulateSpec.ids = ids;
+	}
+
+	setPreset(preset: CiemssPresetTypes) {
+		this.simulateSpec.preset = preset;
+	}
+
+	setEndTime(endTime: number) {
+		this.simulateSpec.endTime = endTime;
+	}
+
+	setRunSimulationsAutomatically(runSimulationsAutomatically: boolean) {
+		this.simulateSpec.runSimulationsAutomatically = runSimulationsAutomatically;
+	}
+
+	getDefaultForecastSettings() {
+		return createDefaultForecastSettings(this.simulateSpec.endTime, this.simulateSpec.preset);
 	}
 
 	toJSON() {
@@ -180,10 +199,14 @@ export class SensitivityAnalysisScenario extends BaseScenario {
 
 		wf.updateNode(simulateNode, {
 			state: {
-				chartSettings: simulateChartSettings
+				chartSettings: simulateChartSettings,
+				...this.getDefaultForecastSettings()
 			}
 		});
 
+		if (this.simulateSpec.runSimulationsAutomatically) {
+			await runSimulations(wf, this.getDefaultForecastSettings());
+		}
 		// 4. Run layout
 		wf.runDagreLayout();
 
