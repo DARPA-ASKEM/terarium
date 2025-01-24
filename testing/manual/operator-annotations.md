@@ -1,4 +1,4 @@
-## Operator Annotations
+## Operator/Workflow Annotations
 Please go through __every__ step of the test scenario.\
 Report any issues into GitHub: [open an issue](https://github.com/DARPA-ASKEM/terarium/issues/new?assignees=&labels=bug%2C+Q%26A&template=qa-issue.md&title=%5BBUG%5D%3A+).
 
