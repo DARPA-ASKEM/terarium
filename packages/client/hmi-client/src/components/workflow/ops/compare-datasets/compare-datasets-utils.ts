@@ -298,7 +298,7 @@ export function generateRankingCharts(
 			policyName,
 			configName: ''
 		})) // Sort from highest to lowest value
-		.sort((a, b) => a.score + b.score);
+		.sort((a, b) => b.score - a.score);
 
 	rankingResultsChart.value = createRankingInterventionsChart(scoredPolicies, interventionNameColorMap);
 }
