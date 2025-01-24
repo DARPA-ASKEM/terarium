@@ -1,5 +1,6 @@
 import multiprocessing
 import subprocess
+import os
 import sys
 import time
 import signal
@@ -11,8 +12,10 @@ def parse_arguments2(arguments):
         parsed_args.append(arg.split(":"))
     return parsed_args
 
-def run_subscript(script_name):
-    process = subprocess.Popen(['python', f"profiles/{script_name}.py"])
+def run_subscript(script_name, iter):
+    sub_env = os.environ.copy()
+    sub_env["ITERATION"] = iter
+    process = subprocess.Popen(['python', f"profiles/{script_name}.py"], env=sub_env)
     return process
 
 
@@ -27,9 +30,12 @@ def run():
     for config in parsed_args:
         script = config[0]
         instances = int(config[1])
+        iter = 1
+        if len(config) == 3:
+            iter = config[2]
 
         for _ in range(instances):
-            sub_process = run_subscript(script)
+            sub_process = run_subscript(script, iter)
             process_list.append(sub_process)
 
     for p in process_list:

@@ -225,7 +225,7 @@
 <script setup lang="ts">
 import '@/ace-config';
 import { ComponentPublicInstance, computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue';
-import { cloneDeep, debounce, isEmpty, orderBy, omit } from 'lodash';
+import { cloneDeep, debounce, difference, isEmpty, orderBy, omit } from 'lodash';
 import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
 import Button from 'primevue/button';
@@ -459,11 +459,17 @@ const extractConfigurationsFromInputs = async () => {
 		return;
 	}
 
-	if (documentIds.value) {
+	// We only want to run extractions on documents and datasets that have not previously been run
+	const configExtractionDocumentIds = modelConfigurations.value
+		.map((config) => config.extractionDocumentId)
+		.filter(Boolean);
+
+	const newDocumentIds = difference(documentIds.value, configExtractionDocumentIds);
+	if (!isEmpty(newDocumentIds)) {
 		const promiseList = [] as Promise<TaskResponse | null>[];
-		documentIds.value.forEach((documentId) => {
+		newDocumentIds.forEach((documentId) => {
 			promiseList.push(
-				configureModelFromDocument(documentId, model.value?.id as string, props.node.workflowId, props.node.id)
+				configureModelFromDocument(`${documentId}`, model.value?.id as string, props.node.workflowId, props.node.id)
 			);
 		});
 		const responsesRaw = await Promise.all(promiseList);
@@ -474,12 +480,19 @@ const extractConfigurationsFromInputs = async () => {
 		});
 	}
 
-	if (datasetIds.value) {
+	const newDatasetIds = difference(datasetIds.value, configExtractionDocumentIds);
+	if (!isEmpty(newDatasetIds)) {
 		const matrixStr = generateModelDatasetConfigurationContext(mmt.value, mmtParams.value);
 		const promiseList = [] as Promise<TaskResponse | null>[];
-		datasetIds.value.forEach((datasetId) => {
+		newDatasetIds.forEach((datasetId) => {
 			promiseList.push(
-				configureModelFromDataset(model.value?.id as string, datasetId, matrixStr, props.node.workflowId, props.node.id)
+				configureModelFromDataset(
+					model.value?.id as string,
+					`${datasetId}`,
+					matrixStr,
+					props.node.workflowId,
+					props.node.id
+				)
 			);
 		});
 		const responsesRaw = await Promise.all(promiseList);

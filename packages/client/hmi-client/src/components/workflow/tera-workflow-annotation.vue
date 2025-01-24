@@ -1,23 +1,79 @@
 <template>
-	<div class="wf-annotation" v-if="!isEditing" @dblclick.stop="edit">
-		{{ annotation.content }}
+	<!-- Standard view -->
+	<div
+		v-if="!isEditing"
+		class="wf-annotation"
+		:style="{ fontSize: annotationRef.textSize + 'px' }"
+		@dblclick.stop="edit"
+	>
+		{{ annotationRef.content }}
 	</div>
-	<div style="display: flex; flex-direction: column" v-else>
-		<textarea v-model="annotationRef.content" rows="4" />
-		<div style="display: flex; justify-content: space-between">
-			<div>
-				<Button label="Ok" @click="update()" size="small" outlined class="white-space-nowrap" severity="secondary" />
-				<Button label="Cancel" @click="reset()" size="small" outlined class="white-space-nowrap" severity="secondary" />
-			</div>
+	<!-- Editing view -->
+	<div v-else class="wf-annotation-editing">
+		<textarea
+			v-model="annotationRef.content"
+			:rows="calculateRows()"
+			class="text-area"
+			:style="{ fontSize: annotationRef.textSize + 'px' }"
+			@input="autoResize"
+			ref="textarea"
+			@focus="autoResize"
+			@mousedown.stop
+			@mousemove.stop
+		/>
+		<div class="floating-toolbar" @mousedown.stop @mousemove.stop>
+			<!-- Trash -->
 			<Button
 				style="right: 0"
-				label="Delete"
+				icon="pi pi-trash"
 				@click="remove()"
-				size="small"
 				outlined
 				class="white-space-nowrap"
-				severity="danger"
+				severity="secondary"
+				rounded
 			/>
+			<!-- Font size -->
+			<div class="flex gap-2 align-items-center">
+				<span class="text-sm">{{ annotationRef.textSize }}px</span>
+				<Button
+					icon="pi pi-minus"
+					@click="adjustFontSize(-1)"
+					size="small"
+					outlined
+					class="white-space-nowrap"
+					severity="secondary"
+					rounded
+				/>
+				<Button
+					icon="pi pi-plus"
+					@click="adjustFontSize(1)"
+					size="small"
+					outlined
+					class="white-space-nowrap"
+					severity="secondary"
+					rounded
+				/>
+			</div>
+			<!-- Save and cancel -->
+			<div class="flex gap-2">
+				<Button
+					icon="pi pi-times"
+					@click="reset()"
+					size="small"
+					outlined
+					class="white-space-nowrap"
+					severity="secondary"
+					rounded
+				/>
+				<Button
+					icon="pi pi-check"
+					@click="update()"
+					size="small"
+					class="white-space-nowrap text-white"
+					severity="primary"
+					rounded
+				/>
+			</div>
 		</div>
 	</div>
 </template>
@@ -44,6 +100,7 @@ const reset = () => {
 
 const edit = () => {
 	isEditing.value = !isEditing.value;
+	autoResize();
 };
 
 const update = () => {
@@ -55,14 +112,67 @@ const remove = () => {
 	emit('remove-annotation', annotationRef.value.id);
 	isEditing.value = false;
 };
+
+const adjustFontSize = (delta: number) => {
+	const newSize = Math.max(8, Math.min(32, (annotationRef.value.textSize || 14) + delta));
+	annotationRef.value.textSize = newSize;
+	autoResize();
+};
+
+const textarea = ref<HTMLTextAreaElement | null>(null);
+
+const calculateRows = () => {
+	const charsPerRow = Math.floor(35 * (12 / (annotationRef.value.textSize || 12)));
+	return Math.max(1, Math.ceil(annotationRef.value.content.length / charsPerRow));
+};
+
+const autoResize = () => {
+	const element = textarea.value;
+	if (element) {
+		element.style.height = 'auto';
+		element.style.height = `${element.scrollHeight}px`;
+	}
+};
 </script>
 
-<style>
-.workflow-annotation {
-	max-width: 150px;
-	padding: 4px;
+<style scoped>
+/* Default styles */
+.wf-annotation {
+	cursor: pointer;
+	padding: var(--gap-3) var(--gap-4);
+	border: 2px dashed transparent;
+	border-radius: var(--border-radius);
+	position: relative;
+	font-family: var(--font-family);
+	background: transparent;
 }
-.workflowannotation:hover {
-	background: var(--surface-warning);
+
+.wf-annotation:hover {
+	border-color: var(--primary-color);
+	background: color-mix(in srgb, var(--surface-0) 50%, var(--surface-highlight) 50%);
+}
+
+/* Editing styles */
+.wf-annotation-editing {
+	position: relative;
+}
+.wf-annotation-editing .text-area {
+	width: 100%;
+	padding: var(--gap-4);
+	border: 1px solid var(--primary-color);
+	border-radius: var(--border-radius);
+	font-family: var(--font-family);
+}
+.wf-annotation-editing .floating-toolbar {
+	position: absolute;
+	background: var(--surface-highlight);
+	padding: var(--gap-2) var(--gap-4);
+	border-radius: 4rem;
+	border: 1px solid var(--surface-border-light);
+	top: -4rem;
+	width: 100%;
+	display: flex;
+	gap: var(--gap-2);
+	justify-content: space-between;
 }
 </style>
