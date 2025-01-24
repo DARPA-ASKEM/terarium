@@ -625,7 +625,7 @@ const contextMenuItems: MenuItem[] = [
 		]
 	},
 	{
-		label: 'Add annotation',
+		label: 'Text block',
 		command: () => {
 			addAnnotationToWorkflow();
 		}
@@ -928,7 +928,7 @@ const addAnnotationToWorkflow = async () => {
 		id: uuidv4(),
 		x: newNodePosition.x,
 		y: newNodePosition.y,
-		content: 'annotation text',
+		content: 'Double click to edit...',
 		type: '',
 		textSize: 12
 	});
