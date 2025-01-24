@@ -459,12 +459,13 @@ const extractConfigurationsFromInputs = async () => {
 		return;
 	}
 
+	// We only want to run extractions on documents and datasets that have not previously been run
 	const configExtractionDocumentIds = modelConfigurations.value
 		.map((config) => config.extractionDocumentId)
-		.filter((id) => id);
+		.filter(Boolean);
 
 	const newDocumentIds = difference(documentIds.value, configExtractionDocumentIds);
-	if (newDocumentIds.length) {
+	if (!isEmpty(newDocumentIds)) {
 		const promiseList = [] as Promise<TaskResponse | null>[];
 		newDocumentIds.forEach((documentId) => {
 			promiseList.push(
@@ -480,7 +481,7 @@ const extractConfigurationsFromInputs = async () => {
 	}
 
 	const newDatasetIds = difference(datasetIds.value, configExtractionDocumentIds);
-	if (newDatasetIds.length) {
+	if (!isEmpty(newDatasetIds)) {
 		const matrixStr = generateModelDatasetConfigurationContext(mmt.value, mmtParams.value);
 		const promiseList = [] as Promise<TaskResponse | null>[];
 		newDatasetIds.forEach((datasetId) => {
