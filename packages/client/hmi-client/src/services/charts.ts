@@ -292,7 +292,7 @@ export function createErrorChart(dataset: Record<string, any>[], options: ErrorC
 }
 
 /* -------------------------------------------------------------------------- */
-/*                                 Histogram                                */
+/*                                 Histogram                                  */
 /* -------------------------------------------------------------------------- */
 export function createHistogramChart(dataset: Record<string, any>[], options: HistogramChartOptions) {
 	const maxBins = options.maxBins ?? 10;
@@ -1239,7 +1239,7 @@ export function createQuantilesForecastChart(
 	return spec;
 }
 /* -------------------------------------------------------------------------- */
-/*                                 Sensitivity Scatterplot                                */
+/*                                 Sensitivity Scatterplot                    */
 /* -------------------------------------------------------------------------- */
 
 /**
