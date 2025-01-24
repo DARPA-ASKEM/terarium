@@ -1949,22 +1949,6 @@ export function createRankingInterventionsChart(
 			},
 			{
 				mark: {
-					type: 'errorbar',
-					extent: 'ci' // Confidence interval
-				},
-				encoding: {
-					y: {
-						field: 'score',
-						type: 'quantitative'
-					},
-					yError: {
-						field: 'error',
-						type: 'quantitative'
-					}
-				}
-			},
-			{
-				mark: {
 					type: 'text',
 					align: 'right',
 					baseline: 'bottom',

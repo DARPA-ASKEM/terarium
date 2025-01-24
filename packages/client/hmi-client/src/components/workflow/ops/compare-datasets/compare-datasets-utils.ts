@@ -298,21 +298,14 @@ export function generateRankingCharts(
 		.map((policyName) => {
 			const values = interventionNameScoresMap[policyName];
 			const meanValue = values.reduce((acc, val) => acc + val, 0) / values.length;
-			let stdevValue = Math.sqrt(values.reduce((acc, val) => acc + (val - meanValue) ** 2, 0) / (values.length - 1));
-			if (stdevValue === 0) stdevValue = 1;
 
 			return {
 				score: meanValue,
-				error: stdevValue / Math.sqrt(values.length),
 				policyName,
 				configName: ''
 			};
 		}) // Sort from highest to lowest value
 		.sort((a, b) => a.score + b.score);
-
-	console.log(allRankedCriteriaValues);
-	console.log(interventionNameScoresMap);
-	console.log(scoredPolicies);
 
 	rankingResultsChart.value = createRankingInterventionsChart(scoredPolicies, interventionNameColorMap);
 }
