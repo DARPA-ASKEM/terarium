@@ -123,10 +123,6 @@ public class InterventionController {
 		}
 		try {
 			final InterventionPolicy policy = interventionService.createAsset(item, projectId, permission);
-			final Optional<Project> project = projectService.getProject(projectId);
-			if (project.isPresent()) {
-				projectAssetService.createProjectAsset(project.get(), AssetType.INTERVENTION_POLICY, policy, permission);
-			}
 			return ResponseEntity.status(HttpStatus.CREATED).body(policy);
 		} catch (final IOException e) {
 			final String error = "Unable to create intervention";
