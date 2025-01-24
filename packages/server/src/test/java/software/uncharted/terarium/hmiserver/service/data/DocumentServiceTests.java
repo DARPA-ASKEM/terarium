@@ -1,11 +1,11 @@
 package software.uncharted.terarium.hmiserver.service.data;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import lombok.extern.slf4j.Slf4j;
@@ -26,9 +26,6 @@ import software.uncharted.terarium.hmiserver.models.mira.DKG;
 
 @Slf4j
 public class DocumentServiceTests extends TerariumApplicationTests {
-
-	@Autowired
-	private ObjectMapper mapper;
 
 	@Autowired
 	private DocumentAssetService documentAssetService;
@@ -58,10 +55,11 @@ public class DocumentServiceTests extends TerariumApplicationTests {
 	}
 
 	static Grounding createGrounding(final String key) {
-		final ObjectMapper mapper = new ObjectMapper();
-
 		final Grounding grounding = new Grounding();
-		grounding.setContext(mapper.createObjectNode().put("hello", "world-" + key).put("foo", "bar-" + key));
+		final Map<String, String> context = new HashMap<>();
+		context.put("hello", "world-" + key);
+		context.put("foo", "bar-" + key);
+		grounding.setContext(context);
 		grounding.setIdentifiers(new ArrayList<>());
 		grounding.getIdentifiers().add(new DKG("curie", "maria", "", null, null));
 		return grounding;
