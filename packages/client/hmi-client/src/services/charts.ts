@@ -1188,7 +1188,6 @@ export function createQuantilesForecastChart(
 		],
 		layer: [
 			{
-				// Area layer with upper and lower bounds
 				layer: [
 					{
 						// Dummy line to create a legend
