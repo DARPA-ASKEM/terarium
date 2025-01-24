@@ -17,6 +17,7 @@
 			<template #content>
 				<div class="top-toolbar">
 					<div class="btn-group">
+						<Button v-if="showSpinner" label="Stop" icon="pi pi-stop" @click="stop" />
 						<Button :loading="showSpinner" label="Run" icon="pi pi-play" @click="run" />
 					</div>
 				</div>
@@ -407,6 +408,7 @@ import {
 	type ProcessedFunmanResult,
 	type FunmanConstraintsResponse,
 	processFunman,
+	cancelQueries,
 	makeQueries
 } from '@/services/models/funman-service';
 import { createFunmanStateChart, createFunmanParameterCharts } from '@/services/charts';
@@ -646,6 +648,15 @@ async function run() {
 	// Setup the in-progress id
 	const state = cloneDeep(props.node.state);
 	state.inProgressId = response.id;
+	emit('update-state', state);
+}
+
+async function stop() {
+	const state = cloneDeep(props.node.state);
+	await cancelQueries(state.inProgressId);
+	showSpinner.value = false;
+	// Clean up the in-progress id
+	state.inProgressId = '';
 	emit('update-state', state);
 }
 
