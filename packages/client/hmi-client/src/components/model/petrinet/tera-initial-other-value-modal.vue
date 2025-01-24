@@ -6,7 +6,8 @@
 		<section>
 			<DataTable
 				dataKey="id"
-				tableStyle="min-width: 55rem"
+				class="value-border"
+				tableStyle="min-width: 90rem"
 				:rowsPerPageOptions="[10, 20, 50]"
 				:value="otherValueList"
 				v-model:selection="selectedRow"
@@ -17,6 +18,10 @@
 				<Column sortable>
 					<template #header>Configuration name</template>
 					<template #body="{ data }">{{ data.name }}</template>
+				</Column>
+				<Column>
+					<template #header>Description</template>
+					<template #body="{ data }">{{ data.description }}</template>
 				</Column>
 				<Column sortable>
 					<template #header>Source</template>
