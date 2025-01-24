@@ -3,7 +3,7 @@
  */
 
 import API from '@/api/api';
-import type { Curies, DatasetColumn, DKG, EntitySimilarityResult, State, Model, Grounding } from '@/types/Types';
+import type { Curies, DatasetColumn, DKG, EntitySimilarityResult, State, Model } from '@/types/Types';
 import { logger } from '@/utils/logger';
 import { isEmpty } from 'lodash';
 import { CalibrateMap } from '@/services/calibrate-workflow';
@@ -47,7 +47,7 @@ async function getCuriesEntities(curies: Array<string>): Promise<Array<DKG> | nu
 	}
 }
 
-async function searchCuriesEntities(query: string): Promise<Array<Grounding>> {
+async function searchCuriesEntities(query: string): Promise<Array<DKG>> {
 	try {
 		const response = await API.get('/dkg/search', {
 			params: {
