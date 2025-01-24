@@ -4,6 +4,7 @@ import io.hypersistence.utils.hibernate.type.json.JsonType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import java.io.Serial;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -43,7 +44,8 @@ public class Grounding extends TerariumEntity {
 		final Grounding clone = new Grounding();
 
 		if (this.identifiers != null && !this.identifiers.isEmpty()) {
-			clone.identifiers = this.identifiers;
+			clone.identifiers = new ArrayList<>();
+			clone.identifiers.addAll(this.identifiers);
 		}
 		if (this.context != null && !this.context.isEmpty()) {
 			clone.context = new HashMap<>();
