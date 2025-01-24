@@ -27,6 +27,9 @@
 						<template v-if="col.field === 'name'">
 							{{ data.name }}
 						</template>
+						<template v-if="col.field === 'description'">
+							{{ data.description }}
+						</template>
 						<template v-if="col.field === 'source'">
 							{{ data.source }}
 						</template>
@@ -144,6 +147,7 @@ const maxValue: number = extent(otherValueList.value, (element) => element?.dist
 
 const columns = ref([
 	{ field: 'name', header: 'Configuration name' },
+	{ field: 'description', header: 'Description' },
 	{ field: 'source', header: 'Source' },
 	{ field: 'range', header: 'Range' },
 	{ field: 'value', header: 'Value' },
