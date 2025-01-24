@@ -13,8 +13,8 @@ RUN apt-get update && apt-get install --assume-yes --no-install-recommends \
 	openjdk-17-jdk-headless && \
 	rm -rf /var/lib/apt/lists/*
 
-# Install PyPDF2
-RUN pip install --no-cache-dir PyPDF2
+# Install PyMuPDF
+RUN pip install --no-cache-dir PyMuPDF
 
 #^^^^^^^^^^^^^^^^^^^^
 ######################
@@ -39,8 +39,8 @@ RUN apt-get update && apt-get install --assume-yes --no-install-recommends \
 	openjdk-17-jre-headless && \
 	rm -rf /var/lib/apt/lists/*
 
-# Install PyPDF2
-RUN pip install --no-cache-dir PyPDF2
+# Install PyMuPDF
+RUN pip install --no-cache-dir PyMuPDF
 
 # Copy the Spring Boot fat JAR from the builder image
 COPY --from=text_extraction_taskrunner_builder /taskrunner/build/libs/*.jar /taskrunner.jar

@@ -207,9 +207,7 @@ const pollResult = async (runId: string) => {
 				value: simulation.status,
 				traceback: simulation.statusMessage
 			};
-			emit('update-state', state);
 		}
-		throw Error('Failed Runs');
 	}
 	emit('update-state', state);
 	return pollerResults;

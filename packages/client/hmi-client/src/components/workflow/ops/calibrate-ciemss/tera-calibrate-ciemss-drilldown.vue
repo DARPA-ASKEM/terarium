@@ -947,6 +947,8 @@ const runCalibrate = async () => {
 		state.currentProgress = 0;
 		state.inProgressForecastId = '';
 		state.inProgressPreForecastId = '';
+		state.timestampColName = knobs.value.timestampColName;
+
 		initDefaultChartSettings(state);
 		emit('update-state', state);
 	}
