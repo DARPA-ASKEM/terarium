@@ -6,7 +6,8 @@
 		<section>
 			<DataTable
 				dataKey="id"
-				tableStyle="min-width: 55rem"
+				class="value-border"
+				tableStyle="min-width: 90rem"
 				:rowsPerPageOptions="[10, 20, 50]"
 				:value="otherValueList"
 				v-model:selection="selectedRow"
