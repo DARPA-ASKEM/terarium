@@ -8,14 +8,14 @@ import { operation as CompareDatasetOp } from '@/components/workflow/ops/compare
 import { operation as InterventionOp } from '@/components/workflow/ops/intervention-policy/mod';
 import { OperatorNodeSize } from '@/services/workflow';
 import { createModelConfiguration, getModelConfigurationById, getParameter } from '@/services/model-configurations';
-import { ChartSetting, ChartSettingType } from '@/types/common';
+import { ChartSetting, ChartSettingType, CiemssPresetTypes } from '@/types/common';
 import { updateChartSettingsBySelectedVariables } from '@/services/chart-settings';
 import { AssetType, InterventionPolicy, ParameterSemantic } from '@/types/Types';
 import { DistributionType } from '@/services/distribution';
 import { calculateUncertaintyRange } from '@/utils/math';
 import { blankIntervention, createInterventionPolicy, getInterventionPolicyById } from '@/services/intervention-policy';
 import { useProjects } from '@/composables/project';
-import { cartesianProduct } from '../scenario-template-utils';
+import { cartesianProduct, createDefaultForecastSettings, runSimulations } from '../scenario-template-utils';
 
 export interface HorizonScanningParameter {
 	id: string;
@@ -68,7 +68,7 @@ export class HorizonScanningScenario extends BaseScenario {
 
 	newInterventionSpecs: { id: string; name: string }[];
 
-	simulateSpec: { ids: string[] };
+	simulateSpec: { ids: string[]; endTime: number; preset: CiemssPresetTypes; runSimulationsAutomatically: boolean };
 
 	parameters: (HorizonScanningParameter | null)[];
 
@@ -82,7 +82,10 @@ export class HorizonScanningScenario extends BaseScenario {
 			id: ''
 		};
 		this.simulateSpec = {
-			ids: []
+			ids: [],
+			preset: CiemssPresetTypes.Fast,
+			endTime: 100,
+			runSimulationsAutomatically: false
 		};
 		this.interventionSpecs = [{ id: '' }];
 		this.newInterventionSpecs = [];
@@ -144,6 +147,22 @@ export class HorizonScanningScenario extends BaseScenario {
 		this.parameters[index] = { id: parameter.referenceId, low, high };
 	}
 
+	setPreset(preset: CiemssPresetTypes) {
+		this.simulateSpec.preset = preset;
+	}
+
+	setEndTime(endTime: number) {
+		this.simulateSpec.endTime = endTime;
+	}
+
+	setRunSimulationsAutomatically(runSimulationsAutomatically: boolean) {
+		this.simulateSpec.runSimulationsAutomatically = runSimulationsAutomatically;
+	}
+
+	getDefaultForecastSettings() {
+		return createDefaultForecastSettings(this.simulateSpec.endTime, this.simulateSpec.preset);
+	}
+
 	toJSON() {
 		return {
 			templateId: HorizonScanningScenario.templateId,
@@ -169,6 +188,8 @@ export class HorizonScanningScenario extends BaseScenario {
 		const wf = new workflowService.WorkflowWrapper();
 		wf.setWorkflowName(this.workflowName);
 		wf.setWorkflowScenario(this.toJSON());
+
+		const fetchedInterventionPolicies: InterventionPolicy[] = [];
 
 		// 1. Add model and compare dataset nodes
 		const modelNode = wf.addNode(
@@ -271,7 +292,8 @@ export class HorizonScanningScenario extends BaseScenario {
 
 		wf.updateNode(baseSimulateNode, {
 			state: {
-				chartSettings: simulateChartSettings
+				chartSettings: simulateChartSettings,
+				...this.getDefaultForecastSettings()
 			}
 		});
 
@@ -368,6 +390,9 @@ export class HorizonScanningScenario extends BaseScenario {
 					);
 				}
 
+				// Add to list of intervention policies
+				fetchedInterventionPolicies.push(interventionPolicy!);
+
 				const interventionNode = wf.addNode(
 					InterventionOp,
 					{ x: 0, y: 0 },
@@ -411,7 +436,8 @@ export class HorizonScanningScenario extends BaseScenario {
 
 			wf.updateNode(simulateNode, {
 				state: {
-					chartSettings: simulateChartSettings
+					chartSettings: simulateChartSettings,
+					...this.getDefaultForecastSettings()
 				}
 			});
 
@@ -438,7 +464,8 @@ export class HorizonScanningScenario extends BaseScenario {
 
 					wf.updateNode(additionalSimNode, {
 						state: {
-							chartSettings: simulateChartSettings
+							chartSettings: simulateChartSettings,
+							...this.getDefaultForecastSettings()
 						}
 					});
 
@@ -488,6 +515,11 @@ export class HorizonScanningScenario extends BaseScenario {
 			);
 			compareDatasetIndex++;
 		});
+
+		// Run simulations automatically if indicated
+		if (this.simulateSpec.runSimulationsAutomatically) {
+			await runSimulations(wf, this.getDefaultForecastSettings(), fetchedInterventionPolicies);
+		}
 
 		// 4. Run layout
 		// The schematic for horizon-scanning is as follows
