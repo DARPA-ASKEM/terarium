@@ -164,11 +164,14 @@ public class TaskUtilities {
 
 	@Observed(name = "function_profile")
 	public static void performDKGSearchAndSetGrounding(DKGService dkgService, List<? extends GroundedSemantic> parts) {
-		List<String> searchTerms = parts
+		final List<String> searchTerms = parts
 			.stream()
 			.filter(part -> part != null && part.getId() != null && !part.getId().isEmpty())
 			.map(TaskUtilities::getSearchTerm)
 			.collect(Collectors.toList());
+
+		// First check if we have a curated grounding match
+		searchTerms.forEach();
 
 		List<DKG> curies;
 		try {
@@ -188,6 +191,6 @@ public class TaskUtilities {
 	}
 
 	private static String getSearchTerm(GroundedSemantic part) {
-		return (part.getDescription() == null || part.getDescription().isEmpty()) ? part.getId() : part.getDescription();
+		return (part.getDescription() == null || part.getDescription().isBlank()) ? part.getName() : part.getDescription();
 	}
 }
