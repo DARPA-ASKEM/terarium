@@ -1876,7 +1876,7 @@ export function createFunmanParameterCharts(
 }
 
 export function createRankingInterventionsChart(
-	values: { score: number; policyName: string; configName: string }[],
+	values: { score: number; error?: number; policyName: string; configName: string }[],
 	interventionNameColorMap: Record<string, string>,
 	title: string | null = null,
 	variableName: string | null = null
@@ -1946,6 +1946,22 @@ export function createRankingInterventionsChart(
 		layer: [
 			{
 				mark: 'bar'
+			},
+			{
+				mark: {
+					type: 'errorbar',
+					extent: 'ci' // Confidence interval
+				},
+				encoding: {
+					y: {
+						field: 'score',
+						type: 'quantitative'
+					},
+					yError: {
+						field: 'error',
+						type: 'quantitative'
+					}
+				}
 			},
 			{
 				mark: {
