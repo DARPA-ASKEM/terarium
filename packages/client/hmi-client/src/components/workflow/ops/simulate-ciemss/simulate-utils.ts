@@ -1,9 +1,20 @@
 import _ from 'lodash';
 import { computed, Ref } from 'vue';
 import { WorkflowNode } from '@/types/workflow';
-import { DataArray, processAndSortSamplesByTimepoint } from '@/services/models/simulation-service';
+import { CiemssMethodOptions, DataArray, processAndSortSamplesByTimepoint } from '@/services/models/simulation-service';
 import { ChartData } from '@/composables/useCharts';
 import { SimulateCiemssOperationState } from './simulate-ciemss-operation';
+
+export const speedPreset = Object.freeze({
+	numSamples: 10,
+	method: CiemssMethodOptions.euler,
+	stepSize: 0.1
+});
+
+export const qualityPreset = Object.freeze({
+	numSamples: 100,
+	method: CiemssMethodOptions.dopri5
+});
 
 export function usePreparedChartInputs(
 	props: {
