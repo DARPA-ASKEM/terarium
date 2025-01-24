@@ -144,7 +144,7 @@ public class FunmanController {
 		return ResponseEntity.ok(newSimulation);
 	}
 
-	@PutMapping("/funman/queries/{task-id}")
+	@PutMapping("/{task-id}")
 	@Secured(Roles.USER)
 	@Operation(summary = "Cancel a model configuration validation task")
 	@ApiResponses(
@@ -164,7 +164,10 @@ public class FunmanController {
 			)
 		}
 	)
-	public ResponseEntity<Void> cancelTask(@PathVariable("task-id") final UUID taskId) {
+	public ResponseEntity<Void> cancelTask(
+		@PathVariable("task-id") final UUID taskId,
+		@RequestParam(name = "project-id", required = false) final UUID projectId
+	) {
 		taskService.cancelTask(TaskType.FUNMAN, taskId);
 		return ResponseEntity.ok().build();
 	}
