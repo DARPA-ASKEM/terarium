@@ -194,14 +194,15 @@ export const runSimulations = async (
 ) => {
 	const forecastNodes = wf.getNodes().filter((node) => node.operationType === SimulateCiemssOp.name);
 
-	for (let i = 0; i < forecastNodes.length; i++) {
-		const node = forecastNodes[i];
+	/* eslint-disable no-restricted-syntax */
+	for (const node of forecastNodes) {
+		/* eslint-enable no-restricted-syntax */
 		const modelConfigId = node.inputs[0].value?.[0];
 		const policy = interventionPolicies.find((intervention) => intervention.id === node.inputs[1].value?.[0]);
 
 		if (policy && isInterventionPolicyBlank(policy)) {
 			// If policy exists but has no interventions, skip the simulation
-			return;
+			continue;
 		}
 
 		const baseSimulationPromise = policy
