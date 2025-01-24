@@ -238,19 +238,25 @@ export function generateRankingCharts(
 				({ id }) => id === metadata.simulationAttributes?.interventionPolicyId
 			);
 
-			if (!policy?.name || !modelConfiguration?.name) {
+			const policyName = policy?.name ?? 'no policy';
+
+			if (!modelConfiguration?.name) {
 				return;
 			}
 
-			if (!interventionNameColorMap[policy.name]) {
-				interventionNameColorMap[policy.name] = CATEGORICAL_SCHEME[colorIndex];
-				interventionNameScoresMap[policy.name] = [];
-				colorIndex++;
+			if (!interventionNameColorMap[policyName]) {
+				interventionNameScoresMap[policyName] = [];
+				if (!policy?.name) {
+					interventionNameColorMap[policyName] = 'black';
+				} else {
+					interventionNameColorMap[policyName] = CATEGORICAL_SCHEME[colorIndex];
+					colorIndex++;
+				}
 			}
 
 			rankingCriteriaValues.push({
 				score: pointOfComparison[`${variableKey}:${index}`] ?? 0,
-				policyName: policy.name,
+				policyName,
 				configName: modelConfiguration.name
 			});
 		});
