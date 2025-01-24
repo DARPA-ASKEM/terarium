@@ -62,7 +62,7 @@ export async function makeQueries(body: FunmanPostQueriesRequest, modelId: strin
 
 export async function cancelQueries(taskId: string) {
 	try {
-		const resp = await API.put(`/funman/queries/${taskId}`);
+		const resp = await API.delete(`/funman/queries/${taskId}`);
 		const output = resp.data;
 		return output;
 	} catch (err) {
