@@ -205,7 +205,6 @@ export function generateRankingCharts(
 		let pointOfComparison: Record<string, number> = {};
 
 		if (card.timepoint === TimepointOption.OVERALL) {
-			const comparisonFunction = card.rank === RankOption.MAXIMUM ? Math.max : Math.min;
 			const resultSummary = cloneDeep(chartData.value.resultSummary); // Must clone to avoid modifying the original data
 
 			// Note that the reduce function here only compares the variable of interest
@@ -215,7 +214,7 @@ export function generateRankingCharts(
 			pointOfComparison = resultSummary.reduce((acc, val) =>
 				Object.keys(val).reduce((acc2, key) => {
 					if (key.includes(variableKey)) {
-						acc2[key] = comparisonFunction(acc[key], val[key]);
+						acc2[key] = Math.max(acc[key], val[key]);
 					}
 					return acc2;
 				}, acc)
