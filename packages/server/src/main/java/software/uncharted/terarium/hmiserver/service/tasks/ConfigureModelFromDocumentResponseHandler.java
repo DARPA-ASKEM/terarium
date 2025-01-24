@@ -73,8 +73,12 @@ public class ConfigureModelFromDocumentResponseHandler extends TaskResponseHandl
 			for (final JsonNode condition : configurations.response.get("conditions")) {
 				final ModelConfiguration configuration = objectMapper.treeToValue(condition, ModelConfiguration.class);
 
-				if (configuration.getModelId() != props.modelId) {
-					configuration.setModelId(props.modelId);
+				if (configuration.getModelId() != props.documentId) {
+					configuration.setModelId(props.documentId);
+				}
+
+				if (configuration.getExtractionDocumentId() != props.documentId) {
+					configuration.setExtractionDocumentId(props.documentId);
 				}
 
 				// Fetch the document name
