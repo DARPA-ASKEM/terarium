@@ -7,7 +7,6 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import io.micrometer.observation.annotation.Observed;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -20,6 +19,7 @@ import software.uncharted.terarium.hmiserver.models.dataservice.model.Model;
 import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.semantics.GroundedSemantic;
 import software.uncharted.terarium.hmiserver.models.mira.DKG;
 import software.uncharted.terarium.hmiserver.models.task.TaskRequest;
+import software.uncharted.terarium.hmiserver.service.ContextMatcher;
 import software.uncharted.terarium.hmiserver.service.data.DKGService;
 
 @Slf4j
@@ -164,33 +164,44 @@ public class TaskUtilities {
 
 	@Observed(name = "function_profile")
 	public static void performDKGSearchAndSetGrounding(DKGService dkgService, List<? extends GroundedSemantic> parts) {
+		// First check if we have a curated grounding match for the parts
+		for (GroundedSemantic part : parts) {
+			if (part == null || part.getGrounding() != null) continue;
+			final Grounding curatedGrounding = ContextMatcher.searchBest(getSearchTerm(part));
+			if (curatedGrounding != null) {
+				/* TODO:
+				 * For now we replace existing grounding with curated grounding.
+				 * We may want to merge the two in the future.
+				 * part.mergeGrounding(curatedGrounding);
+				 */
+				part.setGrounding(curatedGrounding);
+			}
+		}
+
+		// Then do a DKD search for the parts that don't have a grounding
 		final List<String> searchTerms = parts
 			.stream()
-			.filter(part -> part != null && part.getId() != null && !part.getId().isEmpty())
+			.filter(part -> part != null && part.getId() != null && !part.getId().isBlank() && part.getGrounding() == null)
 			.map(TaskUtilities::getSearchTerm)
 			.collect(Collectors.toList());
 
-		// TODO
-		// First check if we have a curated grounding match
-		// searchTerms.forEach();
-
-		List<DKG> curies;
+		List<DKG> listDKG = new ArrayList<>();
 		try {
-			curies = dkgService.knnSearchEpiDKG(0, 100, 1, searchTerms, null);
+			listDKG = dkgService.knnSearchEpiDKG(0, 100, 1, searchTerms, null);
 		} catch (Exception e) {
 			log.warn("Unable to find DKG for semantics: {}", searchTerms, e);
-			return;
 		}
 
-		for (int i = 0; i < curies.size(); i++) {
-			DKG dkg = curies.get(i);
-			GroundedSemantic part = parts.get(i);
-			if (part.getGrounding() == null) part.setGrounding(new Grounding());
-			if (part.getGrounding().getIdentifiers() == null) part.getGrounding().setIdentifiers(new ArrayList<>());
-			part.getGrounding().getIdentifiers().add(dkg);
+		// I'm not sure that parts.get(i) fetch the appropriate part?
+		for (int i = 0; i < listDKG.size(); i++) {
+			DKG dkg = listDKG.get(i);
+			parts.get(i).setGrounding(new Grounding(dkg));
 		}
 	}
 
+	/**
+	 * Get the search term for a grounded semantic part. This is the description if it exists, otherwise the name.
+	 */
 	private static String getSearchTerm(GroundedSemantic part) {
 		return (part.getDescription() == null || part.getDescription().isBlank()) ? part.getName() : part.getDescription();
 	}
