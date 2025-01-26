@@ -170,8 +170,9 @@ public class TaskUtilities {
 			.map(TaskUtilities::getSearchTerm)
 			.collect(Collectors.toList());
 
+		// TODO
 		// First check if we have a curated grounding match
-		searchTerms.forEach();
+		// searchTerms.forEach();
 
 		List<DKG> curies;
 		try {

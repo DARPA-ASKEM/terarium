@@ -40,6 +40,19 @@ public class Grounding extends TerariumEntity {
 	@Column(columnDefinition = "json")
 	private Map<String, String> context;
 
+	/** Default constructor */
+	public Grounding() {
+		this.identifiers = new ArrayList<>();
+		this.context = new HashMap<>();
+	}
+
+	/** Constructor from a DKG */
+	public Grounding(DKG dkg) {
+		this.identifiers = new ArrayList<>();
+		this.identifiers.add(dkg);
+		this.context = new HashMap<>();
+	}
+
 	@Override
 	public Grounding clone() {
 		final Grounding clone = new Grounding();
