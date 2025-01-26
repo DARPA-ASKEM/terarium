@@ -169,11 +169,6 @@ public class TaskUtilities {
 			if (part == null || part.getGrounding() != null) continue;
 			final Grounding curatedGrounding = ContextMatcher.searchBest(getSearchTerm(part));
 			if (curatedGrounding != null) {
-				/* TODO:
-				 * For now we replace existing grounding with curated grounding.
-				 * We may want to merge the two in the future.
-				 * part.mergeGrounding(curatedGrounding);
-				 */
 				part.setGrounding(curatedGrounding);
 			}
 		}
