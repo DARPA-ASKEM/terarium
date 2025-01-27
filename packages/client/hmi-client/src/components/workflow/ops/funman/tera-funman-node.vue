@@ -8,6 +8,10 @@
 			{{ node.state.currentProgress }}%
 		</tera-progress-spinner>
 
+		<section v-if="message">
+			<p>{{ message }}</p>
+		</section>
+
 		<template v-if="node.inputs[0].value">
 			<Button @click="emit('open-drilldown')" label="Open" severity="secondary" outlined />
 		</template>
@@ -16,7 +20,7 @@
 
 <script setup lang="ts">
 import _ from 'lodash';
-import { watch, computed, onUnmounted } from 'vue';
+import { watch, computed, onUnmounted, ref } from 'vue';
 import TeraOperatorPlaceholder from '@/components/operator/tera-operator-placeholder.vue';
 import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue';
 import { WorkflowNode } from '@/types/workflow';
@@ -35,7 +39,9 @@ const props = defineProps<{
 	node: WorkflowNode<FunmanOperationState>;
 }>();
 const inProgressId = computed(() => props.node.state.inProgressId);
-
+const currentProgress = computed(() => props.node.state.currentProgress);
+const message = computed(() => props.node.state.message ?? '');
+const timer = ref();
 const poller = new Poller();
 
 const addOutputPorts = async (runId: string) => {
@@ -87,6 +93,19 @@ const getStatus = async (runId: string) => {
 	return pollerResults;
 };
 
+function startTimer() {
+	clearTimeout(timer.value);
+	timer.value = setTimeout(
+		() => {
+			const state = _.cloneDeep(props.node.state);
+			state.message = "Process is stuck in Funman, click 'Stop' to cancel";
+			emit('update-state', state);
+			clearTimeout(timer.value);
+		},
+		5 * 60 * 1000
+	);
+}
+
 onUnmounted(() => {
 	poller.stop();
 });
@@ -94,8 +113,10 @@ onUnmounted(() => {
 watch(
 	() => props.node.state.inProgressId,
 	async (id) => {
-		if (!id || id === '') return;
-
+		if (!id || id === '') {
+			clearTimeout(timer.value);
+			return;
+		}
 		const response = await getStatus(id);
 		if (response.state === PollerState.Done) {
 			addOutputPorts(id);
@@ -106,5 +127,20 @@ watch(
 		}
 	},
 	{ immediate: true }
+);
+
+watch(
+	() => [inProgressId.value, currentProgress.value],
+	() => {
+		if (inProgressId.value) {
+			startTimer();
+		} else {
+			const state = _.cloneDeep(props.node.state);
+			state.message = '';
+			emit('update-state', state);
+			clearTimeout(timer.value);
+		}
+	},
+	{ immediate: true, deep: true }
 );
 </script>

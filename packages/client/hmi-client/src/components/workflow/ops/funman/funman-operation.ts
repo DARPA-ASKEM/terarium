@@ -57,6 +57,7 @@ export interface FunmanOperationState extends BaseState {
 	currentProgress: number;
 	notebookHistory: NotebookHistory[];
 	hasCodeRun: boolean;
+	message?: string;
 }
 
 export const FunmanOperation: Operation = {

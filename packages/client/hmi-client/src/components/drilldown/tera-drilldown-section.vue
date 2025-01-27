@@ -14,6 +14,7 @@
 				<span v-if="!loadingMessage">Processing... </span>
 				<span v-if="loadingProgress">{{ loadingProgress }}% </span>
 				<span v-if="loadingProgress && loadingMessage">{{ loadingMessage }}</span>
+				<span v-if="loadingProgress === 0 && loadingMessage">{{ loadingMessage }}</span>
 			</tera-progress-spinner>
 			<div v-else-if="isBlank" class="empty-state">
 				<Vue3Lottie :animationData="EmptySeed" :height="150" :width="150" loop autoplay />
