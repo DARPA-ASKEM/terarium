@@ -19,6 +19,7 @@ import { updateChartSettingsBySelectedVariables } from '@/services/chart-setting
 import { AssetType, InterventionPolicy } from '@/types/Types';
 import { useProjects } from '@/composables/project';
 import { createDefaultForecastSettings, runSimulations } from '../scenario-template-utils';
+import { isInterventionPolicyBlank } from '../../ops/intervention-policy/intervention-policy-operation';
 
 export class DecisionMakingScenario extends BaseScenario {
 	public static templateId = 'decision-making';
@@ -278,11 +279,15 @@ export class DecisionMakingScenario extends BaseScenario {
 
 			fetchedInterventionPolicies.push(interventionPolicy!);
 
-			simulateChartSettings = updateChartSettingsBySelectedVariables(
-				simulateChartSettings,
-				ChartSettingType.INTERVENTION,
-				Object.keys(_.groupBy(flattenInterventionData(interventionPolicy?.interventions ?? []), 'appliedTo'))
-			);
+			let chartSettingsClone = _.cloneDeep(simulateChartSettings);
+			// apply intervention chart settings if the intervention policy is not blank
+			if (!isInterventionPolicyBlank(interventionPolicy)) {
+				chartSettingsClone = updateChartSettingsBySelectedVariables(
+					chartSettingsClone,
+					ChartSettingType.INTERVENTION,
+					Object.keys(_.groupBy(flattenInterventionData(interventionPolicy?.interventions ?? []), 'appliedTo'))
+				);
+			}
 
 			const interventionNode = wf.addNode(
 				InterventionOp,
@@ -325,7 +330,7 @@ export class DecisionMakingScenario extends BaseScenario {
 
 			wf.updateNode(simulateNode, {
 				state: {
-					chartSettings: simulateChartSettings,
+					chartSettings: chartSettingsClone,
 					...this.getDefaultForecastSettings()
 				}
 			});
