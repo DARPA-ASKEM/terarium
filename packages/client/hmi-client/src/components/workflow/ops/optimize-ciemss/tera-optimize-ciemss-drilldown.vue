@@ -523,6 +523,7 @@ import {
 	OptimizationInterventionObjective
 } from './optimize-ciemss-operation';
 import { setQoIData, usePreparedChartInputs } from './optimize-utils';
+import { isInterventionPolicyBlank } from '../intervention-policy/intervention-policy-operation';
 
 const confirm = useConfirm();
 
@@ -607,7 +608,13 @@ const isCriteriaReady = computed(() => {
 	return activeConstraintGroups.length !== 0 && activeConstraintGroups.every((ele) => ele.targetVariable);
 });
 
-const isInterventionReady = computed(() => activePolicyGroups.value.length > 0);
+const selectedInterventionPolicy = ref<InterventionPolicy | null>(null);
+const isInterventionReady = computed(
+	() =>
+		activePolicyGroups.value.length > 0 &&
+		!!selectedInterventionPolicy.value &&
+		!isInterventionPolicyBlank(selectedInterventionPolicy.value)
+);
 
 const isEndTimeValid = computed(() =>
 	activePolicyGroups.value.every((ele) => {
@@ -762,6 +769,7 @@ const initialize = async () => {
 	if (policyId) {
 		// FIXME: This should be done in the node this should not be done in the drill down.
 		getInterventionPolicyById(policyId).then((interventionPolicy) => {
+			selectedInterventionPolicy.value = interventionPolicy;
 			if (interventionPolicy) setInterventionPolicyGroups(interventionPolicy);
 		});
 	}
