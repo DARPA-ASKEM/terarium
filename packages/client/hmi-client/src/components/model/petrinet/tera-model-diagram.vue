@@ -1,5 +1,10 @@
 <template>
-	<tera-tooltip :custom-position="hoveredTransitionPosition" :show-tooltip="!isEmpty(hoveredTransitionId)">
+	<tera-tooltip
+		:custom-position="hoveredTransitionPosition"
+		:show-tooltip="!isEmpty(hoveredTransitionId)"
+		:has-arrow="false"
+		title=""
+	>
 		<tera-resizable-panel v-if="!featureConfig?.isPreview" class="diagram-container">
 			<Toolbar>
 				<template #start>
@@ -200,12 +205,11 @@ function makeGraphInteractive(renderer: PetrinetRenderer | NestedPetrinetRendere
 			if (diagramBounds && transitionMatrixBounds && tooltipHeight && tooltipWidth) {
 				const transitionMatrixX = transitionMatrixBounds.left - diagramBounds.left;
 				const transitionMatrixY = transitionMatrixBounds.top - diagramBounds.top;
-				const transitionMatrixHeight = selection.datum().height;
 				const transitionMatrixWidth = selection.datum().width;
 
 				// Shift tooltip to the top center of the transition matrix
 				const x = transitionMatrixX - (tooltipWidth + transitionMatrixWidth / 2) / 2 + transitionMatrixBounds.width / 2;
-				const y = transitionMatrixY - tooltipHeight - transitionMatrixHeight / 2;
+				const y = transitionMatrixY - tooltipHeight / 2;
 
 				hoveredTransitionPosition.value = { x, y };
 			}
