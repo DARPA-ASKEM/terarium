@@ -1122,7 +1122,7 @@ export function createQuantilesForecastChart(
 				labelExpr += `datum.value === '${key}' ? '${translationMap[key]}' : `;
 				varDisplayNameExpr += `datum.variable === '${key}' ? '${translationMap[key]}' : `;
 			});
-		labelExpr += " 'other'";
+		labelExpr += " '(baseline)'";
 		varDisplayNameExpr += " 'other'";
 	}
 
