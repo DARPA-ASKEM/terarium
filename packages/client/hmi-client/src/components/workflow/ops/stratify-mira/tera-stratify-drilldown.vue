@@ -223,10 +223,10 @@ const stratifyModel = () => {
 			.sendMessage('stratify_request', messageContent)
 			.register('stratify_response', (data: any) => {
 				executedCode = data.content.executed_code;
+				saveCodeToState(executedCode, false);
 			})
 			.register('model_preview', async (data: any) => {
 				await handleModelPreview(data);
-				saveCodeToState(executedCode, false);
 			});
 	});
 };
