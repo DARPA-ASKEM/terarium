@@ -25,7 +25,7 @@
   },
   "E_h": {
     "identifiers": {
-      "apollosv:00000154": "exposed population"
+      "apollosv:00000154": ""
     },
     "context": {
       "species": "ncbitaxon:9606"
@@ -97,7 +97,7 @@
   },
   "E_r": {
     "identifiers": {
-      "apollosv:00000154": "exposed population"
+      "apollosv:00000154": ""
     },
     "context": {
       "species": "ncbitaxon:9989"
@@ -270,13 +270,13 @@
   },
   "exposed": {
     "identifiers": {
-      "apollosv:00000154": "exposed population"
+      "apollosv:00000154": ""
     },
     "context": {}
   },
   "exposed_quarantined": {
     "identifiers": {
-      "apollosv:00000154": "exposed population"
+      "apollosv:00000154": ""
     },
     "context": {
       "quarantined": "ncit:C71902"
