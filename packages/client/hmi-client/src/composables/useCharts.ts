@@ -536,14 +536,65 @@ export function useCharts(
 		return chart as VisualizationSpec;
 	}
 
+	const normalizeComparisonChartData = (setting: ChartSettingComparison, data: ChartData) => {
+		// Normalize data by total strata population. Only supported for stratified models.
+		if (!setting.normalize) return data;
+
+		const selectedVarRawNames = setting.selectedVariables.map((v) => data.pyciemssMap[v]);
+		// Group by the last two parts of the variable name where the last part is the strata and variable type. e.g. 'I_young_state where {varname}_{strata}_{type}' is grouped by 'young_state'
+		// Note: We assume strata label does not contain '_' character other wise it will break the grouping
+		const selectedVarGroup = _.groupBy(selectedVarRawNames, (v) => v.split('_').slice(-2).join('_')); // assume all variables are state variable. FIXME: Generalize this
+		const denominatorVariables = {};
+		Object.keys(selectedVarGroup).forEach((group) => {
+			denominatorVariables[group] = Object.values(data.pyciemssMap).filter((v) => v.endsWith(`_${group}`));
+		});
+
+		if (setting.showQuantiles) {
+			// Normalize group by timepoint data
+			const resultGroupByTimepoint = [];
+			// Implement
+			return { ...data, resultGroupByTimepoint };
+		}
+		// Else, normalize result and resultSummary data
+
+		// Normalize stat data
+		const resultSummary: DataArray = [];
+		data.resultSummary.forEach((row) => {
+			const newEntry = { timepoint_id: row.timepoint_id };
+			Object.entries(selectedVarGroup).forEach(([group, variables]) => {
+				const denominator = denominatorVariables[group].reduce((acc, v) => acc + row[v], 0);
+				variables.forEach((variable) => {
+					const key = `${variable}_mean`;
+					newEntry[key] = row[key] / denominator;
+				});
+			});
+			resultSummary.push(newEntry);
+		});
+
+		// Normalize sample data
+		const result: DataArray = [];
+		data.result.forEach((row) => {
+			const newEntry = { timepoint_id: row.timepoint_id, sample_id: row.sample_id };
+			Object.entries(selectedVarGroup).forEach(([group, variables]) => {
+				const denominator = denominatorVariables[group].reduce((acc, v) => acc + row[v], 0);
+				variables.forEach((variable) => {
+					newEntry[variable] = row[variable] / denominator;
+				});
+			});
+			result.push(newEntry);
+		});
+		return { ...data, result, resultSummary };
+	};
+
 	// Create comparison charts based on chart settings
 	const useComparisonCharts = (chartSettings: ComputedRef<ChartSettingComparison[]>, isNodeChart = false) => {
 		const comparisonCharts = computed(() => {
 			const charts: Record<string, VisualizationSpec[]> = {};
 			if (!isChartReadyToBuild.value) return charts;
-			const { result, resultSummary } = chartData.value as ChartData;
 
 			chartSettings.value.forEach((setting) => {
+				const { result, resultSummary } = normalizeComparisonChartData(setting, chartData.value as ChartData);
+
 				const selectedVars = setting.selectedVariables;
 				const annotations = getChartAnnotationsByChartId(setting.id);
 				if (setting.smallMultiples && setting.selectedVariables.length > 1 && !isNodeChart) {

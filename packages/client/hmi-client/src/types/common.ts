@@ -212,6 +212,8 @@ export interface ChartSettingComparison extends ChartSettingBase {
 	shareYAxis?: boolean;
 	/** If true, also plot the pre-calibration or base simulation (without the intervention) data */
 	showBeforeAfter?: boolean;
+	/** Normalize data by total strata population. Only supported for stratified models */
+	normalize?: boolean;
 }
 
 export interface ChartSettingEnsembleVariableOptions {
