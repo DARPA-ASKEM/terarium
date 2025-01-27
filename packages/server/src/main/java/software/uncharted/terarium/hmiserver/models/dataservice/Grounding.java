@@ -11,6 +11,7 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
 import org.hibernate.annotations.Type;
+import software.uncharted.terarium.hmiserver.annotations.TSIgnore;
 import software.uncharted.terarium.hmiserver.annotations.TSModel;
 import software.uncharted.terarium.hmiserver.annotations.TSOptional;
 import software.uncharted.terarium.hmiserver.models.TerariumEntity;
@@ -68,6 +69,7 @@ public class Grounding extends TerariumEntity {
 		return clone;
 	}
 
+	@TSIgnore
 	public Boolean isEmpty() {
 		return this.identifiers.isEmpty() && this.context.isEmpty();
 	}
