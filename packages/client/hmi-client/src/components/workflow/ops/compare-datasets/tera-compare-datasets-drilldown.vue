@@ -112,15 +112,19 @@
 							<DataTable :value="ateTable">
 								<Column field="policyName" header="Intervention policy" />
 								<Column
-									v-for="variableName in variableNames"
+									v-for="variableName in [...variableNames, 'overall']"
 									:field="variableName"
-									:header="variableName"
+									:header="variableName === 'overall' ? 'Overall' : variableName"
 									sortable
 									:key="variableName"
 								>
-									<template #body="{ data, field }"> {{ data[field] }} ± {{ data[`${field}_error`] }} </template>
+									<template #body="{ data, field }">
+										<div class="flex gap-2">
+											<div>{{ data[field] }}</div>
+											<div class="error ml-auto">± {{ data[`${field}_error`] }}</div>
+										</div>
+									</template>
 								</Column>
-								<Column field="overall" header="Overall" sortable />
 							</DataTable>
 						</AccordionTab>
 					</template>
@@ -432,6 +436,7 @@ onMounted(async () => {
 			});
 		});
 		ateRow.overall = mean(ateValues);
+		ateRow.overall_error = stddev(ateValues) / Math.sqrt(ateValues.length);
 
 		ateTable.value.push({ policyName: dataset.name, ...ateRow });
 	});
@@ -488,5 +493,18 @@ label {
 	background: var(--surface-100);
 	color: var(--text-color-secondary);
 	border-radius: var(--border-radius);
+}
+
+/* See if this rule should be applied to all tables, it makes a lot of sense */
+:deep(th) {
+	padding: var(--gap-4);
+}
+
+:deep(td) {
+	white-space: nowrap;
+}
+
+.error {
+	color: var(--text-color-secondary);
 }
 </style>
