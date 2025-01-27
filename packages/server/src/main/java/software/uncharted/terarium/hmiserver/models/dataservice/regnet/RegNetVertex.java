@@ -5,7 +5,6 @@ import java.io.Serial;
 import java.io.Serializable;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
-import lombok.experimental.Accessors;
 import software.uncharted.terarium.hmiserver.annotations.TSIgnore;
 import software.uncharted.terarium.hmiserver.annotations.TSModel;
 import software.uncharted.terarium.hmiserver.annotations.TSOptional;
@@ -15,7 +14,6 @@ import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.seman
 
 @Data
 @EqualsAndHashCode(callSuper = true)
-@Accessors
 @TSModel
 public class RegNetVertex extends SupportAdditionalProperties implements Serializable, GroundedSemantic {
 

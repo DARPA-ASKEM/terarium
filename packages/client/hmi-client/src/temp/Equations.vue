@@ -64,7 +64,7 @@ const latex2amr = async () => {
 		resultAmr.value.innerHTML = 'processing...';
 	}
 
-	const resp = await API.post('/mira/latex-to-amr', equations);
+	const resp = await API.post('/knowledge/equations-to-model-debug', equations);
 	const respData = resp.data;
 
 	if (resultCode.value) {

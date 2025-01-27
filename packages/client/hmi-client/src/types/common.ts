@@ -183,6 +183,7 @@ export interface NotificationItemStatus {
 
 export enum ChartSettingType {
 	VARIABLE = 'variable',
+	VARIABLE_OBSERVABLE = 'variable-observable',
 	VARIABLE_COMPARISON = 'variable-comparison',
 	VARIABLE_ENSEMBLE = 'variable-ensemble',
 	DISTRIBUTION_COMPARISON = 'distribution-comparison',
@@ -191,16 +192,36 @@ export enum ChartSettingType {
 	SENSITIVITY = 'sensitivity'
 }
 
-export type ChartSetting = ChartSettingBase | ChartSettingEnsembleVariable;
+export type ChartSetting =
+	| ChartSettingBase
+	| ChartSettingEnsembleVariable
+	| ChartSettingSensitivity
+	| ChartSettingComparison;
 
 export interface ChartSettingEnsembleVariable extends ChartSettingBase, ChartSettingEnsembleVariableOptions {
 	type: ChartSettingType.VARIABLE_ENSEMBLE;
+}
+
+export interface ChartSettingSensitivity extends ChartSettingBase, ChartSettingSensitivityOptions {
+	type: ChartSettingType.SENSITIVITY;
+}
+
+export interface ChartSettingComparison extends ChartSettingBase {
+	type: ChartSettingType.VARIABLE_COMPARISON;
+	smallMultiples?: boolean;
+	shareYAxis?: boolean;
+	/** If true, also plot the pre-calibration or base simulation (without the intervention) data */
+	showBeforeAfter?: boolean;
 }
 
 export interface ChartSettingEnsembleVariableOptions {
 	showIndividualModels: boolean;
 	relativeToEnsemble: boolean;
 	showIndividualModelsWithWeight?: boolean;
+}
+export interface ChartSettingSensitivityOptions {
+	selectedInputVariables: string[];
+	timepoint: number;
 }
 
 export interface ChartSettingBase {
@@ -210,6 +231,11 @@ export interface ChartSettingBase {
 	type: ChartSettingType;
 	primaryColor?: string;
 	scale?: string;
+	smallMultiples?: boolean;
+	hideInNode?: boolean;
+	shareYAxis?: boolean;
+	showQuantiles?: boolean;
+	quantiles?: number[];
 }
 
 export const ProgrammingLanguageVersion: { [key in ProgrammingLanguage]: string } = {

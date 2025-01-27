@@ -7,7 +7,7 @@
 		:pt="{ wrapper: { style: { overflow: 'none' } } }"
 		:key="projectTableKey"
 		data-key="id"
-		paginator
+		:paginator="projects.length > numberOfRows"
 		v-model:expandedRows="dataExpandedRows"
 	>
 		<Column
@@ -37,8 +37,6 @@
 							<i class="pi pi-user" />
 							{{ data.metadata?.['contributor-count'] ?? 1 }}
 						</span>
-					</div>
-					<div class="stats mt-3">
 						<span
 							v-for="metadataField in Object.keys(metadataCountToAssetNameMap)"
 							:key="metadataField"
@@ -63,11 +61,12 @@
 			</template>
 		</Column>
 		<template #expansion="{ data }">
-			<div v-for="asset in data.assets" :key="asset.assetId" class="flex align-items-center gap-4">
+			<div v-for="asset in data.assets" :key="asset.assetId" class="flex align-items-center gap-1">
 				<tera-asset-button
 					v-if="asset.assetType != AssetType.Project"
 					:asset="asset"
 					@click="emit('open-asset', data.id, asset.assetId, asset.assetType)"
+					class="ml-1"
 				/>
 				<tera-show-more-text :text="asset.assetShortDescription" :lines="3" />
 				<template v-if="visibleEmbeddingResult(asset.embeddingType)">
@@ -170,7 +169,7 @@ watch(
 
 :deep(.p-datatable-tbody > tr > td),
 :deep(.p-datatable-thead > tr > th) {
-	vertical-align: top;
+	vertical-align: center;
 	padding: var(--gap-3) var(--gap-5);
 }
 
@@ -180,6 +179,12 @@ watch(
 
 :deep(.p-datatable-tbody > tr > td) {
 	color: var(--text-color-secondary);
+}
+
+/* No bottom border and reduced bottom padding for cells that have an expansion cell beneath them */
+:deep(.p-datatable-tbody > tr:not(.p-datatable-row-expansion) > td) {
+	border-bottom: 1px solid transparent;
+	padding-bottom: var(--gap-0);
 }
 
 :deep(.p-datatable-tbody > tr:not(.p-highlight):focus) {
@@ -195,17 +200,19 @@ watch(
 .p-datatable:deep(.p-datatable-tbody > tr > td a:hover) {
 	color: var(--primary-color);
 	text-decoration: underline;
+	background: var(--surface-highlight);
 }
 
 /* Adjust padding for non-empty expansion rows */
 :deep(.p-datatable-tbody > tr.p-datatable-row-expansion > :not(td:empty)) {
-	padding: var(--gap-2) var(--gap-1);
+	padding-top: 0;
+	padding-bottom: var(--gap-3);
+	background: var(--surface-0);
 }
 
 /* Remove padding for empty expansion rows */
 :deep(.p-datatable-tbody > tr.p-datatable-row-expansion > td:empty) {
-	border: none;
-	padding: 0;
+	padding: var(--gap-1-5);
 }
 
 /* Truncate long text for asset list, project name and highlighted description*/
@@ -253,5 +260,11 @@ watch(
 :deep(.p-paginator) {
 	border-radius: 0;
 	padding: var(--gap-2) var(--gap-4);
+	background: var(--surface-glass);
+	backdrop-filter: blur(4px);
+}
+
+.secondary-text {
+	color: var(--text-color-secondary);
 }
 </style>

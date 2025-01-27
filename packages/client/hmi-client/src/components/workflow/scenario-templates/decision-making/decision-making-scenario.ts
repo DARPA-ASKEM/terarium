@@ -8,14 +8,22 @@ import { operation as InterventionOp } from '@/components/workflow/ops/intervent
 import { operation as SimulateOp } from '@/components/workflow/ops/simulate-ciemss/mod';
 import { operation as CompareDatasetsOp } from '@/components/workflow/ops/compare-datasets/mod';
 import { OperatorNodeSize } from '@/services/workflow';
-import { flattenInterventionData, getInterventionPolicyById } from '@/services/intervention-policy';
-import { ChartSetting, ChartSettingType } from '@/types/common';
+import {
+	blankIntervention,
+	createInterventionPolicy,
+	flattenInterventionData,
+	getInterventionPolicyById
+} from '@/services/intervention-policy';
+import { ChartSetting, ChartSettingType, CiemssPresetTypes } from '@/types/common';
 import { updateChartSettingsBySelectedVariables } from '@/services/chart-settings';
+import { AssetType, InterventionPolicy } from '@/types/Types';
+import { useProjects } from '@/composables/project';
+import { createDefaultForecastSettings, runSimulations } from '../scenario-template-utils';
 
 export class DecisionMakingScenario extends BaseScenario {
 	public static templateId = 'decision-making';
 
-	public static templateName = 'Decision Making';
+	public static templateName = 'Decision making';
 
 	modelSpec: { id: string };
 
@@ -23,7 +31,9 @@ export class DecisionMakingScenario extends BaseScenario {
 
 	interventionSpecs: { id: string }[];
 
-	simulateSpec: { ids: string[] };
+	newInterventionSpecs: { id: string; name: string }[];
+
+	simulateSpec: { ids: string[]; endTime: number; preset: CiemssPresetTypes; runSimulationsAutomatically: boolean };
 
 	constructor() {
 		super();
@@ -38,11 +48,16 @@ export class DecisionMakingScenario extends BaseScenario {
 			},
 			{ id: '' }
 		];
+
+		this.newInterventionSpecs = [];
 		this.modelConfigSpec = {
 			id: ''
 		};
 		this.simulateSpec = {
-			ids: []
+			ids: [],
+			preset: CiemssPresetTypes.Fast,
+			endTime: 100,
+			runSimulationsAutomatically: false
 		};
 		this.workflowName = '';
 	}
@@ -68,12 +83,32 @@ export class DecisionMakingScenario extends BaseScenario {
 		this.interventionSpecs.splice(index, 1);
 	}
 
-	setInterventionSpecs(id: string, index: number) {
+	setInterventionSpec(id: string, index: number) {
 		this.interventionSpecs[index].id = id;
+	}
+
+	setNewInterventionSpec(id: string, name: string) {
+		this.newInterventionSpecs.push({ id, name });
 	}
 
 	setSimulateSpec(ids: string[]) {
 		this.simulateSpec.ids = ids;
+	}
+
+	setPreset(preset: CiemssPresetTypes) {
+		this.simulateSpec.preset = preset;
+	}
+
+	setEndTime(endTime: number) {
+		this.simulateSpec.endTime = endTime;
+	}
+
+	setRunSimulationsAutomatically(runSimulationsAutomatically: boolean) {
+		this.simulateSpec.runSimulationsAutomatically = runSimulationsAutomatically;
+	}
+
+	getDefaultForecastSettings() {
+		return createDefaultForecastSettings(this.simulateSpec.endTime, this.simulateSpec.preset);
 	}
 
 	toJSON() {
@@ -101,6 +136,8 @@ export class DecisionMakingScenario extends BaseScenario {
 		const wf = new workflowService.WorkflowWrapper();
 		wf.setWorkflowName(this.workflowName);
 		wf.setWorkflowScenario(this.toJSON());
+
+		const fetchedInterventionPolicies: InterventionPolicy[] = [];
 
 		// 1. Add model and model config nodes and connect them
 		const modelNode = wf.addNode(
@@ -159,6 +196,13 @@ export class DecisionMakingScenario extends BaseScenario {
 			this.simulateSpec.ids
 		);
 
+		let compareDatasetChartSettings: ChartSetting[] = [];
+		compareDatasetChartSettings = updateChartSettingsBySelectedVariables(
+			compareDatasetChartSettings,
+			ChartSettingType.VARIABLE,
+			this.simulateSpec.ids
+		);
+
 		// 2. Add base simulation (no interventions) and connect it to the compare datasets node
 		const baseSimulateNode = wf.addNode(
 			SimulateOp,
@@ -175,7 +219,14 @@ export class DecisionMakingScenario extends BaseScenario {
 
 		wf.updateNode(baseSimulateNode, {
 			state: {
-				chartSettings: simulateChartSettings
+				chartSettings: simulateChartSettings,
+				...this.getDefaultForecastSettings()
+			}
+		});
+
+		wf.updateNode(compareDatasetNode, {
+			state: {
+				chartSettings: compareDatasetChartSettings
 			}
 		});
 
@@ -203,12 +254,34 @@ export class DecisionMakingScenario extends BaseScenario {
 		}
 
 		const promises = this.interventionSpecs.map(async (interventionSpec, i) => {
-			const interventionPolicy = await getInterventionPolicyById(interventionSpec.id);
+			let interventionPolicy: InterventionPolicy | null = await getInterventionPolicyById(interventionSpec.id);
+			if (!interventionPolicy) {
+				// create new intervention if in the new policy list
+				interventionPolicy = await createInterventionPolicy(
+					{
+						name:
+							this.newInterventionSpecs.find((newInterventionSpec) => newInterventionSpec.id === interventionSpec.id)
+								?.name ?? 'New policy',
+						description: 'This intervention policy was created using the decision making scenario template.',
+						modelId: this.modelSpec.id,
+						interventions: [blankIntervention]
+					},
+					true
+				);
+
+				await useProjects().addAsset(
+					AssetType.InterventionPolicy,
+					interventionPolicy!.id,
+					useProjects().activeProject.value?.id
+				);
+			}
+
+			fetchedInterventionPolicies.push(interventionPolicy!);
 
 			simulateChartSettings = updateChartSettingsBySelectedVariables(
 				simulateChartSettings,
 				ChartSettingType.INTERVENTION,
-				Object.keys(_.groupBy(flattenInterventionData(interventionPolicy.interventions ?? []), 'appliedTo'))
+				Object.keys(_.groupBy(flattenInterventionData(interventionPolicy?.interventions ?? []), 'appliedTo'))
 			);
 
 			const interventionNode = wf.addNode(
@@ -245,14 +318,15 @@ export class DecisionMakingScenario extends BaseScenario {
 					interventionPolicy
 				},
 				output: {
-					value: [interventionPolicy.id],
+					value: [interventionPolicy!.id],
 					state: interventionNode.state
 				}
 			});
 
 			wf.updateNode(simulateNode, {
 				state: {
-					chartSettings: simulateChartSettings
+					chartSettings: simulateChartSettings,
+					...this.getDefaultForecastSettings()
 				}
 			});
 
@@ -269,8 +343,44 @@ export class DecisionMakingScenario extends BaseScenario {
 		});
 		await Promise.all(promises);
 
-		wf.runDagreLayout();
+		if (this.simulateSpec.runSimulationsAutomatically) {
+			await runSimulations(wf, this.getDefaultForecastSettings(), fetchedInterventionPolicies);
+		}
 
+		// 4. Run layout
+		// The schematic for decision-making is as follows
+		//
+		//                           Interventions
+		//  Model -> ModelConfig ->                 -> CompareDataset
+		//                           Forecasts
+		//
+		// wf.runDagreLayout();
+		const nodeGapHorizontal = 325;
+
+		modelNode.x = 100;
+		modelNode.y = 500;
+
+		modelConfigNode.x = modelNode.x + nodeGapHorizontal;
+		modelConfigNode.y = 800;
+
+		const neighbors = wf.getNeighborNodes(modelConfigNode.id);
+		neighbors.downstreamNodes.forEach((forecastNode, forecastIdx) => {
+			forecastNode.x = modelConfigNode.x + nodeGapHorizontal * (forecastIdx + 1);
+			forecastNode.y = modelConfigNode.y + 150;
+
+			// align the intervention node for each forecast
+			const forecastNeighbours = wf.getNeighborNodes(forecastNode.id);
+			const interventionNode = forecastNeighbours.upstreamNodes.filter(
+				(op) => op.operationType === InterventionOp.name
+			)[0];
+			if (interventionNode) {
+				interventionNode.x = forecastNode.x;
+				interventionNode.y = forecastNode.y - 400;
+			}
+		});
+
+		compareDatasetNode.x = modelConfigNode.x + nodeGapHorizontal * (neighbors.downstreamNodes.length + 1);
+		compareDatasetNode.y = 500;
 		return wf.dump();
 	}
 }

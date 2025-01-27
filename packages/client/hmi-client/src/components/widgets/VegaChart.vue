@@ -8,6 +8,14 @@
 		:closeOnEscape="true"
 		@show="onExpand"
 	>
+		<template #header>
+			<Button
+				icon="pi pi-times"
+				class="p-dialog-header-icon p-dialog-header-close"
+				style="margin-left: auto"
+				@click="isExpanded = false"
+			/>
+		</template>
 		<div>
 			<div ref="vegaContainerLg"></div>
 		</div>
@@ -26,31 +34,11 @@
 
 <script setup lang="ts">
 import _ from 'lodash';
-import { format } from 'd3';
 import embed, { Config, Result, VisualizationSpec } from 'vega-embed';
 import Button from 'primevue/button';
 import Dialog from 'primevue/dialog';
-import { countDigits, fixPrecisionError } from '@/utils/number';
 import { ref, watch, toRaw, isRef, isReactive, isProxy, computed, h, render, onUnmounted } from 'vue';
-
-const NUMBER_FORMAT = '.3~s';
-
-// Define the custom expression functions that can be registered and used in the Vega charts
-const expressionFunctions = {
-	// chartNumberFormatter is a custom number format that will display numbers in a more readable format
-	chartNumberFormatter: (value: number) => {
-		const correctedValue = fixPrecisionError(value);
-		if (value > -1 && value < 1) {
-			return countDigits(correctedValue) > 6 ? correctedValue.toExponential(3) : correctedValue.toString();
-		}
-		return format(NUMBER_FORMAT)(correctedValue);
-	},
-	// Just show full value in tooltip
-	tooltipFormatter: (value) => {
-		if (value === undefined) return 'N/A';
-		return fixPrecisionError(value);
-	}
-};
+import { expressionFunctions } from '@/services/charts';
 
 // This config is default for all charts, but can be overridden by individual chart spec
 const defaultChartConfig: Partial<Config> = {
@@ -226,7 +214,7 @@ watch(
 		const spec = deepToRaw(props.visualizationSpec);
 
 		if (interactive.value === false) {
-			// console.log('render png');
+			// render png
 			const shadowContainer = document.createElement('div');
 			const viz = await embed(
 				shadowContainer,
@@ -237,7 +225,10 @@ watch(
 					expressionFunctions // Register expression functions
 				}
 			);
-			const dataURL = await viz.view.toImageURL('png');
+
+			// svg or png, svg seems to yield crisper renderings at a cost of a
+			// much higher size
+			const dataURL = await viz.view.toImageURL('svg');
 			imageDataURL.value = dataURL;
 
 			// dispose
@@ -245,7 +236,7 @@ watch(
 
 			emit('done-render');
 		} else {
-			// console.log('render interactive');
+			// render interactive
 			if (!vegaContainer.value) return;
 			vegaVisualization.value?.finalize(); // dispose previous visualization before creating a new one
 			vegaVisualization.value = await createVegaVisualization(vegaContainer.value, spec, props.config, {
@@ -283,9 +274,10 @@ defineExpose({
 </style>
 <style scoped>
 .vega-chart-container {
+	display: flex;
+	justify-content: center;
 	background: var(--surface-0);
 	margin-bottom: var(--gap-4);
-	padding-top: var(--gap-2);
 	footer {
 		padding: var(--gap-3);
 	}

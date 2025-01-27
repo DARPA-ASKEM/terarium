@@ -5,6 +5,9 @@
 			:are-embed-actions-visible="false"
 			:visualization-spec="lossChartSpec"
 		/>
+		<div v-if="outputData">
+			<vega-chart v-for="(chart, index) of ensembleVariableCharts" :key="index" :visualization-spec="chart" />
+		</div>
 		<tera-progress-spinner
 			v-if="inProgressCalibrationId || inProgressForecastId"
 			:font-size="2"
@@ -14,25 +17,25 @@
 			{{ node.state.currentProgress }}%
 		</tera-progress-spinner>
 
-		<Button v-if="areInputsFilled" label="Edit" @click="emit('open-drilldown')" severity="secondary" outlined />
+		<Button v-if="areInputsFilled" label="Open" @click="emit('open-drilldown')" severity="secondary" outlined />
 		<tera-operator-placeholder v-else :node="node">
-			Connect a model configuration and dataset
+			Connect at least two model configurations and dataset
 		</tera-operator-placeholder>
 	</main>
 </template>
 
 <script setup lang="ts">
-import { computed, ref, shallowRef, watch, onMounted } from 'vue';
+import { computed, ref, shallowRef, watch, onMounted, toRef } from 'vue';
 import _ from 'lodash';
 import Button from 'primevue/button';
 import TeraOperatorPlaceholder from '@/components/operator/tera-operator-placeholder.vue';
 import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue';
 import {
-	getRunResultCiemss,
 	pollAction,
 	getCalibrateBlobURL,
 	makeEnsembleCiemssSimulation,
-	getSimulation
+	getSimulation,
+	DataArray
 } from '@/services/models/simulation-service';
 import { setupCsvAsset } from '@/services/calibrate-workflow';
 import { nodeMetadata, nodeOutputLabel } from '@/components/workflow/util';
@@ -40,11 +43,14 @@ import { logger } from '@/utils/logger';
 import { Poller, PollerState } from '@/api/api';
 import type { WorkflowNode } from '@/types/workflow';
 import { WorkflowPortStatus } from '@/types/workflow';
-import type { CsvAsset, EnsembleSimulationCiemssRequest, Dataset, Simulation } from '@/types/Types';
-import type { RunResults } from '@/types/SimulateConfig';
+import type { CsvAsset, EnsembleSimulationCiemssRequest, Dataset, Simulation, ModelConfiguration } from '@/types/Types';
 import { createDatasetFromSimulationResult, getDataset } from '@/services/dataset';
 import VegaChart from '@/components/widgets/VegaChart.vue';
 import { useProjects } from '@/composables/project';
+import { useChartSettings } from '@/composables/useChartSettings';
+import { useCharts } from '@/composables/useCharts';
+import { GroupedDataArray } from '@/services/charts';
+import { parseCsvAsset } from '@/utils/csv';
 import {
 	CalibrateEnsembleCiemssOperation,
 	CalibrateEnsembleCiemssOperationState
@@ -52,7 +58,11 @@ import {
 import {
 	updateLossChartSpec,
 	getLossValuesFromSimulation,
-	formatCalibrateModelConfigurations
+	formatCalibrateModelConfigurations,
+	getChartEnsembleMapping,
+	buildChartData,
+	fetchModelConfigurations,
+	fetchOutputData
 } from './calibrate-ensemble-util';
 
 const props = defineProps<{
@@ -60,15 +70,53 @@ const props = defineProps<{
 }>();
 const emit = defineEmits(['open-drilldown', 'update-state', 'append-output', 'append-input-port']);
 
-const runResults = ref<RunResults>({});
 const csvAsset = shallowRef<CsvAsset | undefined>(undefined);
 
-const areInputsFilled = computed(() => props.node.inputs[0].value && props.node.inputs[1].value);
+const allModelConfigurations = ref<ModelConfiguration[]>([]);
+
+const areInputsFilled = computed(
+	() =>
+		props.node.inputs[0].value &&
+		props.node.inputs.filter((ele) => ele.type === 'modelConfigId' && ele.value).length >= 2
+);
 const inProgressCalibrationId = computed(() => props.node.state.inProgressCalibrationId);
 const inProgressForecastId = computed(() => props.node.state.inProgressForecastId);
 const lossValues = ref<{ [key: string]: number }[]>([]);
 const lossChartSpec = ref();
-const lossChartSize = { width: 180, height: 120 };
+const chartSize = { width: 180, height: 120 };
+
+// Charts setup
+const outputData = ref<{
+	result: DataArray;
+	resultSummary: DataArray;
+	pyciemssMap: Record<string, string>;
+	resultGroupByTimepoint: GroupedDataArray;
+} | null>(null);
+const groundTruthData = computed<DataArray>(() => parseCsvAsset(csvAsset.value as CsvAsset));
+const selectedOutputMapping = computed(() => getChartEnsembleMapping(props.node, {}));
+const { selectedEnsembleVariableSettings } = useChartSettings(props, emit);
+const { useEnsembleVariableCharts } = useCharts(
+	props.node.id,
+	null,
+	allModelConfigurations,
+	computed(() => buildChartData(outputData.value, selectedOutputMapping.value)),
+	toRef(chartSize),
+	null,
+	selectedOutputMapping
+);
+const ensembleVariableCharts = computed(() => {
+	const charts = useEnsembleVariableCharts(selectedEnsembleVariableSettings, groundTruthData);
+	const ensembleCharts = selectedEnsembleVariableSettings.value.map((setting) => {
+		// Grab the first chart only since the rest of the charts are for model configurations charts
+		const spec = charts.value[setting.id][0];
+		// Make sure the chart since width of the chart can be too small if charts were small multiple charts.
+		spec.width = chartSize.width;
+		spec.height = chartSize.height + 100;
+		return spec;
+	});
+	return ensembleCharts;
+});
+// ----------------------------
 
 const poller = new Poller();
 const pollResult = async (runId: string) => {
@@ -82,14 +130,17 @@ const pollResult = async (runId: string) => {
 						iter: i,
 						loss: d.data.loss
 					}));
-				lossChartSpec.value = updateLossChartSpec(lossValues.value, lossChartSize);
+				lossChartSpec.value = updateLossChartSpec(lossValues.value, chartSize);
 			}
 			if (runId === props.node.state.inProgressCalibrationId && data.updates.length > 0) {
 				const checkpoint = _.last(data.updates);
 				if (checkpoint) {
 					const state = _.cloneDeep(props.node.state);
-					state.currentProgress = +((100 * checkpoint.data.progress) / state.extra.numIterations).toFixed(2);
-					emit('update-state', state);
+					const newProgress = +((100 * checkpoint.data.progress) / state.extra.numIterations).toFixed(2);
+					if (newProgress !== state.currentProgress) {
+						state.currentProgress = newProgress;
+						emit('update-state', state);
+					}
 				}
 			}
 		});
@@ -129,7 +180,14 @@ const pollResult = async (runId: string) => {
 // Init loss chart
 onMounted(async () => {
 	lossValues.value = await getLossValuesFromSimulation(props.node.state.calibrationId);
-	lossChartSpec.value = await updateLossChartSpec(lossValues.value, lossChartSize);
+	lossChartSpec.value = await updateLossChartSpec(lossValues.value, chartSize);
+});
+
+// Fetch model configurations
+onMounted(async () => {
+	const configs = await fetchModelConfigurations(props.node.inputs);
+	if (!configs) return;
+	allModelConfigurations.value = configs.allModelConfigurations;
 });
 
 watch(
@@ -217,7 +275,7 @@ watch(
 				type: CalibrateEnsembleCiemssOperation.outputs[0].type,
 				label: nodeOutputLabel(props.node, `Calibration Result`),
 				value: datasetResult.id,
-				state
+				state: _.omit(state, ['chartSettings'])
 			});
 		}
 	},
@@ -231,12 +289,8 @@ watch(
 		const state = props.node.state;
 		if (!active) return;
 		if (!state.postForecastId) return;
-
-		const forecastId = state.postForecastId;
-
-		// Simulate
-		const result = await getRunResultCiemss(forecastId, 'result.csv');
-		runResults.value = result.runResults;
+		// Fetch output data and prepare chart data
+		outputData.value = await fetchOutputData(state.preForecastId, state.postForecastId);
 
 		// Dataset used to calibrate
 		const datasetId = props.node.inputs[0]?.value?.[0];

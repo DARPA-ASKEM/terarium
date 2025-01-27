@@ -4,11 +4,12 @@
 			<template v-if="!node.inputs[0].value">Attach a model</template>
 		</tera-operator-placeholder>
 		<tera-model-diagram v-if="outputPreview" :model="outputPreview" :feature-config="{ isPreview: true }" />
-		<Button v-if="node.inputs[0].value" @click="emit('open-drilldown')" label="Edit" severity="secondary" outlined />
+		<Button v-if="node.inputs[0].value" @click="emit('open-drilldown')" label="Open" severity="secondary" outlined />
 	</section>
 </template>
 
 <script setup lang="ts">
+import { cloneDeep } from 'lodash';
 import { ref, watch } from 'vue';
 import { WorkflowNode } from '@/types/workflow';
 import TeraOperatorPlaceholder from '@/components/operator/tera-operator-placeholder.vue';
@@ -45,7 +46,11 @@ watch(
 			emit('append-output', {
 				type: StratifyMiraOperation.outputs[0].type,
 				label: modelName ?? 'Default Model',
-				value: modelId
+				value: modelId,
+				state: {
+					strataGroup: cloneDeep(props.node.state.strataGroup),
+					strataCodeHistory: cloneDeep(props.node.state.strataCodeHistory)
+				}
 			});
 		}
 	},

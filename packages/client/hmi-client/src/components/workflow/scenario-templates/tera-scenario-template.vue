@@ -2,8 +2,8 @@
 	<h4 class="pb-2">{{ header.title }}</h4>
 
 	<template v-if="header.question && header.description">
-		<h5>{{ header.question }}</h5>
-		<p class="pt-2 pb-3">
+		<p class="header-question">{{ header.question }}</p>
+		<p class="col-11 px-0 pt-2 pb-4">
 			{{ header.description }}
 		</p>
 	</template>
@@ -14,23 +14,25 @@
 			<li v-for="example in header.examples" :key="example">{{ example }}</li>
 		</ul>
 	</template>
-
-	<label class="pb-2">What would you like to call this workflow?</label>
-	<tera-input-text
-		ref="nameInput"
-		:model-value="scenarioInstance.workflowName"
-		@update:model-value="scenarioInstance.setWorkflowName($event)"
-		auto-focus
-		@keydown.enter.stop.prevent="emit('save-workflow')"
-	/>
-
-	<section class="grid" v-if="slots.inputs || slots.outputs">
-		<article v-if="slots.inputs" class="col-6 flex flex-column">
+	<div class="my-3 pr-6">
+		<p class="pb-2 label-text">What would you like to call this workflow?</p>
+		<tera-input-text
+			ref="nameInput"
+			:model-value="scenarioInstance.workflowName"
+			@update:model-value="scenarioInstance.setWorkflowName($event)"
+			auto-focus
+			@keydown.enter.stop.prevent="emit('save-workflow')"
+			placeholder="Enter a name"
+			style="height: 1.65rem"
+		/>
+	</div>
+	<section class="flex" v-if="slots.inputs || slots.outputs">
+		<article v-if="slots.inputs" class="col-5 flex flex-column pl-0">
 			<h6>Inputs</h6>
 			<slot name="inputs" />
 		</article>
-
-		<article v-if="slots.outputs" class="col-6 flex flex-column">
+		<article class="col-1"></article>
+		<article v-if="slots.outputs" class="col-5 flex flex-column">
 			<h6>Outputs</h6>
 			<slot name="outputs" />
 		</article>
@@ -66,8 +68,10 @@ ul {
 	}
 }
 
-h5 {
+.header-question {
 	color: var(--primary-color);
+	font-style: italic;
+	font-size: 1.5rem;
 }
 
 :deep(article) {
@@ -81,5 +85,9 @@ h5 {
 	img {
 		padding-top: var(--gap-3);
 	}
+}
+.label-text {
+	color: var(--text-color-subdued);
+	font-size: var(--font-caption);
 }
 </style>

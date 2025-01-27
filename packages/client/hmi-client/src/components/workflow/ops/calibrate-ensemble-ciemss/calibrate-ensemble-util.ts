@@ -1,17 +1,19 @@
 import _ from 'lodash';
-import { createForecastChart, AUTOSIZE } from '@/services/charts';
+import { createForecastChart, AUTOSIZE, GroupedDataArray } from '@/services/charts';
 import {
 	DataArray,
 	extractModelConfigIdsInOrder,
 	getEnsembleResultModelConfigMap,
 	getRunResultCSV,
 	getSimulation,
-	parseEnsemblePyciemssMap
+	parseEnsemblePyciemssMap,
+	processAndSortSamplesByTimepoint
 } from '@/services/models/simulation-service';
-import { EnsembleModelConfigs } from '@/types/Types';
+import { EnsembleModelConfigs, ModelConfiguration } from '@/types/Types';
 import { WorkflowNode } from '@/types/workflow';
 import { getActiveOutput } from '@/components/workflow/util';
-import { CalibrateMap } from '@/services/calibrate-workflow';
+import { CalibrateMap, setupModelInput } from '@/services/calibrate-workflow';
+import { getAsConfiguredModel } from '@/services/model-configurations';
 import {
 	CalibrateEnsembleCiemssOperationState,
 	CalibrateEnsembleMappingRow,
@@ -84,8 +86,9 @@ export function formatCalibrateModelConfigurations(
 	return [...Object.values(ensembleModelConfigMap)];
 }
 
-export function getSelectedOutputEnsembleMapping(
+export function getChartEnsembleMapping(
 	node: WorkflowNode<CalibrateEnsembleCiemssOperationState>,
+	stateToModelConfigMap: { [key: string]: string[] },
 	hasTimestampCol = true
 ) {
 	const wfOutputState = getActiveOutput(node)?.state;
@@ -96,6 +99,22 @@ export function getSelectedOutputEnsembleMapping(
 			datasetMapping: wfOutputState?.timestampColName ?? '',
 			modelConfigurationMappings: {}
 		});
+
+	// For every State Variable that has not been mapped in the ensembleMapping
+	// We will fill in here so the user can still see these if they want
+	Object.keys(stateToModelConfigMap).forEach((state) => {
+		if (!mapping.find((map) => map.newName === state)) {
+			const modelConfigurationsMap = {};
+			stateToModelConfigMap[state].forEach((id) => {
+				modelConfigurationsMap[id] = state;
+			});
+			mapping.push({
+				newName: state,
+				datasetMapping: '',
+				modelConfigurationMappings: modelConfigurationsMap
+			});
+		}
+	});
 	return mapping;
 }
 
@@ -113,11 +132,35 @@ export async function fetchOutputData(preForecastId: string, postForecastId: str
 	// Merge before/after for chart
 	const { result, resultSummary } = mergeResults(runResultPre, runResult, runResultSummaryPre, runResultSummary);
 
+	const resultGroupByTimepoint = processAndSortSamplesByTimepoint(result);
 	return {
 		result,
 		resultSummary,
+		resultGroupByTimepoint,
 		pyciemssMap
 	};
+}
+
+export async function fetchModelConfigurations(
+	nodeInputs: WorkflowNode<CalibrateEnsembleCiemssOperationState>['inputs']
+) {
+	const allModelOptions: any[][] = [];
+	const allModelConfigurations: ModelConfiguration[] = [];
+	const modelConfigurationIds: string[] = [];
+	nodeInputs.forEach((ele) => {
+		if (ele.value && ele.type === 'modelConfigId') modelConfigurationIds.push(ele.value[0]);
+	});
+	if (!modelConfigurationIds) return null;
+
+	// Model configuration input
+	await Promise.all(
+		modelConfigurationIds.map(async (id) => {
+			const { modelConfiguration, modelOptions } = await setupModelInput(id);
+			if (modelConfiguration) allModelConfigurations.push(modelConfiguration);
+			if (modelOptions) allModelOptions.push(modelOptions);
+		})
+	);
+	return { allModelConfigurations, allModelOptions };
 }
 
 // Build chart data by adding variable translation map to the given output data
@@ -125,6 +168,7 @@ export function buildChartData(
 	outputData: {
 		result: DataArray;
 		resultSummary: DataArray;
+		resultGroupByTimepoint: GroupedDataArray;
 		pyciemssMap: Record<string, string>;
 	} | null,
 	mappings: CalibrateEnsembleMappingRow[]
@@ -136,6 +180,8 @@ export function buildChartData(
 		// pyciemssMap keys are formatted as either '{modelConfigId}/{displayVariableName}' for model variables or '{displayVariableName}' for ensemble variables
 		const tokens = key.split('/');
 		const varName = tokens.length > 1 ? tokens[1] : 'Ensemble';
+		translationMap[`${pyciemssMap[key]}`] = `${varName} after calibration`;
+		translationMap[`${pyciemssMap[key]}:pre`] = `${varName} before calibration`;
 		translationMap[`${pyciemssMap[key]}_mean`] = `${varName} after calibration`;
 		translationMap[`${pyciemssMap[key]}_mean:pre`] = `${varName} before calibration`;
 	});
@@ -184,4 +230,38 @@ export function getEnsembleErrorData(
 		errorData[configId] = getErrorData(groundTruth, simulationData, cMapping, timestampColName, pyciemssMap);
 	});
 	return errorData;
+}
+
+// This will grab all of the variables in each model configuration and place them into a dictionary.
+// The key will be the variable, the value will be a list of uuids that this variable is found in.
+// An example output with two model config ids uuid-1 and uuid-2 may look like where model 1 is SIRD, and model 2 is SIR
+// {
+// 		S: ["uuid-1","uuid-2"]
+// 		I: ["uuid-1","uuid-2"]
+// 		R: ["uuid-1","uuid-2"]
+// 		D: ["uuid-1"]
+// }
+
+export async function setStateToModelConfigMap(modelConfigurationIds: string[]) {
+	const stateToModelConfigMap: { [key: string]: string[] } = {};
+	const models: any[] = [];
+	// Model configuration input
+	await Promise.all(
+		modelConfigurationIds.map(async (id) => {
+			const model = await getAsConfiguredModel(id);
+			models.push({ ...model, configId: id });
+		})
+	);
+
+	models.forEach((model) => {
+		const modelConfigId = model.configId as string;
+		model.model.states.forEach((state) => {
+			const key = state.id;
+			if (!stateToModelConfigMap[key]) {
+				stateToModelConfigMap[key] = [];
+			}
+			stateToModelConfigMap[key].push(modelConfigId);
+		});
+	});
+	return stateToModelConfigMap;
 }

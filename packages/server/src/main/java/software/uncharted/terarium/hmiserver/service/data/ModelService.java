@@ -3,7 +3,9 @@ package software.uncharted.terarium.hmiserver.service.data;
 import co.elastic.clients.elasticsearch.core.SearchRequest;
 import co.elastic.clients.elasticsearch.core.search.SourceConfig;
 import co.elastic.clients.elasticsearch.core.search.SourceFilter;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import io.micrometer.observation.annotation.Observed;
 import java.io.IOException;
 import java.util.List;
@@ -170,6 +172,23 @@ public class ModelService extends TerariumAssetServiceWithSearch<Model, ModelRep
 
 		if (asset.getHeader() != null && asset.getHeader().getName() != null) {
 			asset.setName(asset.getHeader().getName());
+		}
+
+		JsonNode time = asset.getSemantics().getOde().getTime();
+		// set a time parameter and default to day for the model if it doesn't exist
+		if (time == null || time.get("id") == null) {
+			asset.getSemantics().getOde().setTime(objectMapper.createObjectNode().put("id", "t"));
+		}
+
+		// if there is a time parameter, set the default to date if it is "day"
+		if (time != null && time.get("units") != null && time.get("units").get("expression").asText().equals("day")) {
+			final String id = asset.getSemantics().getOde().getTime().get("id").asText();
+			ObjectNode unitsNode = objectMapper
+				.createObjectNode()
+				.put("expression", "date")
+				.put("expression_mathml", "<ci>date</ci>");
+			ObjectNode timeNode = objectMapper.createObjectNode().put("id", id).set("units", unitsNode);
+			asset.getSemantics().getOde().setTime(timeNode);
 		}
 		final Model created = super.createAsset(asset, projectId, hasWritePermission);
 

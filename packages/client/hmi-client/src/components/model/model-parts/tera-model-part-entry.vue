@@ -1,8 +1,8 @@
 <template>
-	<section class="flex flex-column gap-2">
+	<section class="flex flex-column">
 		<span class="flex align-items-center gap-3">
-			<h6>{{ symbol }}</h6>
-			<span class="name">
+			<h6>{{ id }}</h6>
+			<span v-if="!isTimePart" class="name">
 				<template v-if="featureConfig.isPreview">{{ nameText }}</template>
 				<tera-input-text
 					v-else
@@ -11,10 +11,10 @@
 					@change="$emit('update-item', { key: 'name', value: nameText })"
 				/>
 			</span>
-			<span class="unit">
-				<template v-if="input && output">
+			<span class="unit" :class="{ time: isTimePart }">
+				<template v-if="input || output">
 					<span><label>Input:</label> {{ input }}</span>
-					<span class="ml-"><label>Output:</label> {{ output }}</span>
+					<span><label>Output:</label> {{ output }}</span>
 				</template>
 				<!--amr_to_mmt doesn't like unit expressions with spaces, removing them here before they are saved to the amr-->
 				<template v-else-if="showUnit">
@@ -44,7 +44,7 @@
 				</template>
 			</span>
 
-			<span v-if="!featureConfig.isPreview" class="flex ml-auto gap-3">
+			<span v-if="!featureConfig.isPreview && !isTimePart" class="flex ml-auto gap-3">
 				<!-- Three states of description buttons: Hide / Show / Add description -->
 				<Button
 					v-if="(descriptionText && showDescription) || (!descriptionText && showDescription)"
@@ -84,8 +84,8 @@
 			:expression="stringToLatexExpression(expression)"
 			:throw-on-error="false"
 		/>
-		<span class="description">
-			<template v-if="featureConfig.isPreview">{{ descriptionText }}</template>
+		<span v-if="!isTimePart" class="description" :class="{ 'mt-1': showDescription }">
+			<template v-if="!featureConfig.isPreview">{{ descriptionText }}</template>
 			<tera-input-text
 				v-if="showDescription"
 				placeholder="Add a description"
@@ -107,6 +107,7 @@ import { getCurieFromGroundingIdentifier, getNameOfCurieCached, searchCuriesEnti
 import type { FeatureConfig } from '@/types/common';
 import Dropdown from 'primevue/dropdown';
 import { CalendarDateType } from '@/types/common';
+import { PartType } from '@/model-representation/service';
 
 const props = defineProps<{
 	description?: string;
@@ -119,7 +120,7 @@ const props = defineProps<{
 	input?: any;
 	output?: any;
 	featureConfig: FeatureConfig;
-	isTimePart?: boolean;
+	partType: PartType;
 }>();
 
 const emit = defineEmits(['update-item']);
@@ -127,14 +128,18 @@ const emit = defineEmits(['update-item']);
 const nameText = ref(props.name);
 const unitExpression = ref(props.unitExpression);
 const descriptionText = ref(props.description);
+const showDescription = ref(!!descriptionText.value);
+
 const query = ref('');
 const results = ref<DKG[]>([]);
 
-const symbol = computed(() => (props.templateId ? `${props.templateId}, ${props.id}` : props.id));
-
 // If we are in preview mode and there is no content, show nothing
-const showUnit = computed(() => !(props.featureConfig.isPreview && !unitExpression.value));
+const showUnit = computed(
+	() => !(props.featureConfig.isPreview && !unitExpression.value) && props.partType !== PartType.TRANSITION
+);
 const showConcept = computed(() => !(props.featureConfig.isPreview && !query.value));
+
+const isTimePart = props.partType === PartType.TIME;
 
 // Used if an option isn't selected from the Autocomplete suggestions but is typed in regularly
 function applyValidConcept() {
@@ -160,14 +165,26 @@ watch(
 );
 
 watch(
+	() => props.unitExpression,
+	(newUnitExpression) => {
+		unitExpression.value = newUnitExpression;
+	}
+);
+
+watch(
+	() => props.name,
+	(newName) => {
+		nameText.value = newName;
+	}
+);
+
+watch(
 	() => props.description,
 	(newDescription) => {
 		showDescription.value = !!newDescription;
 		descriptionText.value = newDescription;
-	},
-	{ deep: true }
+	}
 );
-const showDescription = ref(!!descriptionText.value);
 </script>
 
 <style scoped>
@@ -193,17 +210,24 @@ h6::after {
 	gap: var(--gap-1);
 }
 
-.unit {
+.unit:not(.time) {
 	overflow: auto;
 }
 
 .expression {
+	padding-top: var(--gap-1);
+	align-content: center;
 	min-height: 2rem;
 	max-height: 12rem;
 	overflow: auto;
 }
 
+:deep(.unit .tera-input > main > input) {
+	height: 1.25rem;
+	font-size: var(--font-caption);
+}
 :deep(.p-autocomplete-input) {
-	padding: var(--gap-1) var(--gap-2);
+	height: 2rem;
+	font-size: var(--font-caption);
 }
 </style>

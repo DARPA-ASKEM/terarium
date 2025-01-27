@@ -9,30 +9,28 @@
 		@update-state="(state: any) => emit('update-state', state)"
 	>
 		<tera-drilldown-section :tabName="DrilldownTabs.Notebook" class="notebook-section">
-			<div class="toolbar">
-				<Suspense>
-					<tera-notebook-jupyter-input
-						:kernel-manager="kernelManager"
-						:default-options="sampleAgentQuestions"
-						:context-language="contextLanguage"
-						@llm-output="(data: any) => appendCode(data, 'code')"
-						@llm-thought-output="(data: any) => llmThoughts.push(data)"
-						@question-asked="updateLlmQuery"
-					>
-						<template #toolbar-right-side>
-							<Button label="Reset" outlined severity="secondary" size="small" @click="resetModel" />
-							<Button
-								icon="pi pi-play"
-								:label="isUpdatingModel ? 'Loading...' : 'Run'"
-								size="small"
-								:loading="isUpdatingModel"
-								@click="runCode"
-								:disabled="isEmpty(codeText)"
-							/>
-						</template>
-					</tera-notebook-jupyter-input>
-				</Suspense>
-			</div>
+			<Suspense>
+				<tera-notebook-jupyter-input
+					:kernel-manager="kernelManager"
+					:default-options="sampleAgentQuestions"
+					:context-language="contextLanguage"
+					@llm-output="(data: any) => appendCode(data, 'code')"
+					@llm-thought-output="(data: any) => llmThoughts.push(data)"
+					@question-asked="updateLlmQuery"
+				>
+					<template #toolbar-right-side>
+						<Button label="Reset" outlined severity="secondary" size="small" @click="resetModel" />
+						<Button
+							icon="pi pi-play"
+							:label="isUpdatingModel ? 'Loading...' : 'Run'"
+							size="small"
+							:loading="isUpdatingModel"
+							@click="runCode"
+							:disabled="isEmpty(codeText)"
+						/>
+					</template>
+				</tera-notebook-jupyter-input>
+			</Suspense>
 			<v-ace-editor
 				v-model:value="codeText"
 				@init="initializeAceEditor"
@@ -58,13 +56,7 @@
 					:value="executeErrorResponse.value"
 					:traceback="executeErrorResponse.traceback"
 				/>
-				<tera-model
-					v-else-if="outputModel"
-					is-workflow
-					is-save-for-reuse
-					:assetId="outputModel.id"
-					@on-save="updateNode"
-				/>
+				<tera-model v-else-if="outputModel" is-workflow is-save-for-reuse :assetId="outputModel.id" />
 				<tera-progress-spinner v-else-if="isUpdatingModel || !outputModel" is-centered :font-size="2">
 					Loading...
 				</tera-progress-spinner>
@@ -105,7 +97,7 @@ import { ModelEditOperationState, ModelEditOperation } from './model-edit-operat
 const props = defineProps<{
 	node: WorkflowNode<ModelEditOperationState>;
 }>();
-const emit = defineEmits(['append-output', 'update-state', 'close', 'select-output', 'update-output']);
+const emit = defineEmits(['append-output', 'update-state', 'close', 'select-output']);
 
 const outputs = computed(() => {
 	if (!isEmpty(props.node.outputs)) {
@@ -146,7 +138,10 @@ const sampleAgentQuestions = [
 	'Rename the transition infection to inf.',
 	'Change rate law of inf to S * I * z.',
 	'Add a new parameter with id θ and value 0.5.',
-	'Specify the time unit of the model to be "day"'
+	'Specify the time unit of the model to be "day"',
+	'Add a new transition that represents the states "Infected", "Hospitalized" controlling the production of the state "WastewaterViralLoad" with rate law "shed_rate * (Infected + Hospitalized)"',
+	'Add a new transition that represents the states "Susceptible", "Infected", "Recovered" controlling the degradation of the state "Hospitalized" with rate law "rec_rate * Hospitalized / (Susceptible + Infected + Recovered)"',
+	'Add a new transition that represents the states "Infected", "Recovered" controlling the conversion from the state "Susceptible" to the state "Vaccinated" with rate law "vac_rate / (Infected + Recovered)"'
 ];
 
 const contextLanguage = ref<string>('python3');
@@ -329,15 +324,6 @@ const hasCodeChange = () => {
 	}
 };
 const checkForCodeChange = debounce(hasCodeChange, 500);
-
-function updateNode(model: Model) {
-	if (!model) return;
-	outputModel.value = model;
-	const outputPort = cloneDeep(props.node.outputs?.find((port) => port.value?.[0] === model.id));
-	if (!outputPort) return;
-	outputPort.label = model.header.name;
-	emit('update-output', outputPort);
-}
 
 watch(
 	() => codeText.value,

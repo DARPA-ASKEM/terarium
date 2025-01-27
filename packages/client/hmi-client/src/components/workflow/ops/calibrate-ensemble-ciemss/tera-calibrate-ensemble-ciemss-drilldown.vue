@@ -15,13 +15,15 @@
 				<template #header>
 					<div class="flex gap-2 ml-auto">
 						<tera-pyciemss-cancel-button :simulation-run-id="cancelRunId" />
-						<Button
-							:disabled="isRunDisabled"
-							label="Run"
-							icon="pi pi-play"
-							@click="runEnsemble"
-							:loading="!!inProgressCalibrationId || !!inProgressForecastId"
-						/>
+						<div v-tooltip="runButtonMessage">
+							<Button
+								:disabled="isRunDisabled"
+								label="Run"
+								icon="pi pi-play"
+								@click="runEnsemble"
+								:loading="!!inProgressCalibrationId || !!inProgressForecastId"
+							/>
+						</div>
 					</div>
 				</template>
 				<template #content>
@@ -122,7 +124,7 @@
 								<label> Preset </label>
 								<Dropdown
 									class="flex-1"
-									v-model="knobs.extra.presetType"
+									v-model="presetType"
 									placeholder="Select an option"
 									:options="[CiemssPresetTypes.Fast, CiemssPresetTypes.Normal]"
 									@update:model-value="setPresetValues"
@@ -152,7 +154,11 @@
 									</div>
 									<div class="label-and-input">
 										<label for="num-steps">Solver step size</label>
-										<tera-input-number v-model="knobs.extra.stepSize" />
+										<tera-input-number
+											:disabled="knobs.extra.solverMethod !== CiemssMethodOptions.euler"
+											:min="0"
+											v-model="knobs.extra.stepSize"
+										/>
 									</div>
 								</div>
 								<div class="spacer m-3" />
@@ -309,6 +315,8 @@
 							@update:model-value="emit('update-state', { ...node.state, showModelWeightsCharts: $event })"
 						/>
 						<Divider />
+						<tera-chart-settings-quantiles :settings="chartSettings" @update-options="updateQauntilesOptions" />
+						<Divider />
 					</div>
 				</template>
 			</tera-slider-panel>
@@ -337,7 +345,7 @@ import TeraInputNumber from '@/components/widgets/tera-input-number.vue';
 import AccordionTab from 'primevue/accordiontab';
 import Accordion from 'primevue/accordion';
 import Dropdown from 'primevue/dropdown';
-import { setupDatasetInput, setupCsvAsset, setupModelInput, parseCsvAsset } from '@/services/calibrate-workflow';
+import { getFileName, setupCsvAsset } from '@/services/calibrate-workflow';
 import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
 import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.vue';
 import TeraSaveDatasetFromSimulation from '@/components/dataset/tera-save-dataset-from-simulation.vue';
@@ -345,6 +353,7 @@ import TeraPyciemssCancelButton from '@/components/pyciemss/tera-pyciemss-cancel
 import TeraSliderPanel from '@/components/widgets/tera-slider-panel.vue';
 import TeraChartSettings from '@/components/widgets/tera-chart-settings.vue';
 import TeraChartSettingsPanel from '@/components/widgets/tera-chart-settings-panel.vue';
+import TeraChartSettingsQuantiles from '@/components/widgets/tera-chart-settings-quantiles.vue';
 import TeraCheckbox from '@/components/widgets/tera-checkbox.vue';
 import TeraInputText from '@/components/widgets/tera-input-text.vue';
 import TeraSignalBars from '@/components/widgets/tera-signal-bars.vue';
@@ -366,8 +375,10 @@ import VegaChart from '@/components/widgets/VegaChart.vue';
 import { ChartSettingType, CiemssPresetTypes, DrilldownTabs } from '@/types/common';
 import { useCharts } from '@/composables/useCharts';
 import { useChartSettings } from '@/composables/useChartSettings';
-import { deleteAnnotation } from '@/services/chart-settings';
+import { deleteAnnotation, updateChartSettingsBySelectedVariables } from '@/services/chart-settings';
 import { DataArray } from '@/utils/stats';
+import { GroupedDataArray } from '@/services/charts';
+import { parseCsvAsset } from '@/utils/csv';
 import {
 	CalibrateEnsembleCiemssOperationState,
 	CalibrateEnsembleMappingRow,
@@ -379,11 +390,13 @@ import {
 	updateLossChartSpec,
 	getLossValuesFromSimulation,
 	formatCalibrateModelConfigurations,
-	getSelectedOutputEnsembleMapping,
+	getChartEnsembleMapping,
 	fetchOutputData,
 	buildChartData,
 	getEnsembleErrorData,
-	EnsembleErrorData
+	EnsembleErrorData,
+	fetchModelConfigurations,
+	setStateToModelConfigMap
 } from './calibrate-ensemble-util';
 
 const props = defineProps<{
@@ -410,9 +423,28 @@ const currentActiveIndicies = ref([0, 1, 2]);
 
 const isSidebarOpen = ref(true);
 const selectedOutputId = ref<string>();
-const isRunDisabled = computed(
-	() => !knobs.value.ensembleMapping[0] || !datasetId.value || allModelConfigurations.value.length < 2
+
+// Checks for disabling run button:
+const isMappingfilled = computed(
+	() =>
+		knobs.value.ensembleMapping.length !== 0 && knobs.value.ensembleMapping[0].newName && knobs.value.timestampColName
 );
+
+const areNodeInputsFilled = computed(() => datasetId.value && allModelConfigurations.value.length >= 2);
+
+const isRunDisabled = computed(() => !isMappingfilled.value || !areNodeInputsFilled.value);
+
+const mappingFilledTooltip = computed(() =>
+	!isMappingfilled.value ? 'Must contain a Timestamp column and at least one mapping. \n' : ''
+);
+const nodeInputsFilledTooltip = computed(() =>
+	!areNodeInputsFilled.value ? 'Must contain one dataset and at least two model configurations.\n' : ''
+);
+
+const runButtonMessage = computed(() =>
+	isRunDisabled.value ? `${mappingFilledTooltip.value} ${nodeInputsFilledTooltip.value}` : ''
+);
+
 const cancelRunId = computed(
 	() =>
 		props.node.state.inProgressForecastId ||
@@ -425,15 +457,23 @@ const isRunInProgress = computed(() => Boolean(inProgressCalibrationId.value || 
 
 const datasetId = computed(() => props.node.inputs[0].value?.[0] as string | undefined);
 const currentDatasetFileName = ref<string>();
-const datasetColumnNames = ref<string[]>();
+const datasetColumnNames = computed(
+	() =>
+		dataset.value?.columns?.filter((col) => col.fileName === currentDatasetFileName.value).map((col) => col.name) ??
+		([] as string[])
+);
 // Loss Chart:
 const lossChartRef = ref<InstanceType<typeof VegaChart>>();
 const lossChartSpec = ref();
 const lossValues = ref<{ [key: string]: number }[]>([]);
 const LOSS_CHART_DATA_SOURCE = 'lossData';
 // Model:
+const modelConfigIds = computed(() =>
+	props.node.inputs.filter((input) => input.type === 'modelConfigId' && input.value).map((input) => input.value?.[0])
+);
 const listModelLabels = ref<string[]>([]);
 const allModelConfigurations = ref<ModelConfiguration[]>([]);
+const stateToModelConfigMap = ref<{ [key: string]: string[] }>({});
 
 const tableHeaders = computed(() => {
 	const headers = ['Ensemble model'];
@@ -446,6 +486,7 @@ const tableHeaders = computed(() => {
 // List of each observible + state for each model.
 const allModelOptions = ref<any[][]>([]);
 
+const dataset = shallowRef<Dataset | null>(null);
 const csvAsset = shallowRef<CsvAsset | undefined>(undefined);
 
 const onSelection = (id: string) => {
@@ -484,6 +525,27 @@ const messageHandler = (event: ClientEvent<any>) => {
 	lossChartRef.value.view.change(LOSS_CHART_DATA_SOURCE, vega.changeset().insert(data)).resize().run();
 };
 
+const presetType = computed(() => {
+	if (
+		knobs.value.extra.numParticles === speedPreset.numSamples &&
+		knobs.value.extra.solverMethod === speedPreset.method &&
+		knobs.value.extra.numIterations === speedPreset.numIterations &&
+		knobs.value.extra.learningRate === speedPreset.learningRate &&
+		knobs.value.extra.stepSize === speedPreset.stepSize
+	) {
+		return CiemssPresetTypes.Fast;
+	}
+	if (
+		knobs.value.extra.numParticles === qualityPreset.numSamples &&
+		knobs.value.extra.solverMethod === qualityPreset.method &&
+		knobs.value.extra.numIterations === qualityPreset.numIterations &&
+		knobs.value.extra.learningRate === qualityPreset.learningRate
+	) {
+		return CiemssPresetTypes.Normal;
+	}
+	return '';
+});
+
 const setPresetValues = (data: CiemssPresetTypes) => {
 	if (data === CiemssPresetTypes.Normal) {
 		knobs.value.extra.numParticles = qualityPreset.numSamples;
@@ -496,6 +558,23 @@ const setPresetValues = (data: CiemssPresetTypes) => {
 		knobs.value.extra.solverMethod = speedPreset.method;
 		knobs.value.extra.numIterations = speedPreset.numIterations;
 		knobs.value.extra.learningRate = speedPreset.learningRate;
+		knobs.value.extra.stepSize = speedPreset.stepSize;
+	}
+};
+
+const initDefaultChartSettings = (state: CalibrateEnsembleCiemssOperationState) => {
+	const mappedEnsembleVariables = knobs.value.ensembleMapping.map((c) => c.newName);
+	if (_.isEmpty(state.chartSettings)) {
+		state.chartSettings = updateChartSettingsBySelectedVariables(
+			state.chartSettings ?? [],
+			ChartSettingType.VARIABLE_ENSEMBLE,
+			mappedEnsembleVariables
+		);
+		state.chartSettings = updateChartSettingsBySelectedVariables(
+			state.chartSettings,
+			ChartSettingType.ERROR_DISTRIBUTION,
+			mappedEnsembleVariables
+		);
 	}
 };
 
@@ -515,10 +594,11 @@ const runEnsemble = async () => {
 
 	const calibratePayload: EnsembleCalibrationCiemssRequest = {
 		modelConfigs: formatCalibrateModelConfigurations(knobs.value.ensembleMapping, knobs.value.configurationWeights),
-		timespan: getTimespan({
-			dataset: csvAsset.value,
-			timestampColName: knobs.value.timestampColName
-		}),
+		timespan: getTimespan(
+			dataset.value as Dataset,
+			knobs.value.timestampColName,
+			knobs.value.extra.endTime // Default is simulation End Time
+		),
 		dataset: {
 			id: datasetId.value,
 			filename: currentDatasetFileName.value,
@@ -539,36 +619,27 @@ const runEnsemble = async () => {
 		state.currentProgress = 0;
 		state.inProgressCalibrationId = response?.simulationId;
 		state.inProgressForecastId = '';
+		// Add default chart settings based on the ensemble mapping on the first run
+		initDefaultChartSettings(state);
 		emit('update-state', state);
 	}
 };
 
 onMounted(async () => {
-	allModelConfigurations.value = [];
-	const modelConfigurationIds: string[] = [];
-	props.node.inputs.forEach((ele) => {
-		if (ele.value && ele.type === 'modelConfigId') modelConfigurationIds.push(ele.value[0]);
-	});
-	if (!modelConfigurationIds) return;
-
-	// Model configuration input
-	await Promise.all(
-		modelConfigurationIds.map(async (id) => {
-			const { modelConfiguration, modelOptions } = await setupModelInput(id);
-			if (modelConfiguration) allModelConfigurations.value.push(modelConfiguration);
-			if (modelOptions) allModelOptions.value.push(modelOptions);
-		})
-	);
+	stateToModelConfigMap.value = await setStateToModelConfigMap(modelConfigIds.value as string[]);
+	const configs = await fetchModelConfigurations(props.node.inputs);
+	if (!configs) return;
+	allModelConfigurations.value = configs.allModelConfigurations;
+	allModelOptions.value = configs.allModelOptions;
 
 	// dataset input
 	if (datasetId.value) {
 		// Get dataset
-		const dataset: Dataset | null = await getDataset(datasetId.value);
-		if (dataset) {
-			const { filename, datasetOptions } = await setupDatasetInput(dataset);
-			currentDatasetFileName.value = filename;
-			datasetColumnNames.value = datasetOptions?.map((ele) => ele.name);
-			setupCsvAsset(dataset).then((csv) => {
+		dataset.value = await getDataset(datasetId.value);
+		if (dataset.value) {
+			currentDatasetFileName.value = getFileName(dataset.value);
+
+			setupCsvAsset(dataset.value).then((csv) => {
 				csvAsset.value = csv;
 			});
 		}
@@ -592,12 +663,15 @@ onMounted(async () => {
 // -------------- Charts && chart settings ----------------
 const chartWidthDiv = ref(null);
 const isOutputSettingsPanelOpen = ref(false);
-const outputData = ref<{ result: DataArray; resultSummary: DataArray; pyciemssMap: Record<string, string> } | null>(
-	null
-);
+const outputData = ref<{
+	result: DataArray;
+	resultSummary: DataArray;
+	pyciemssMap: Record<string, string>;
+	resultGroupByTimepoint: GroupedDataArray;
+} | null>(null);
 const groundTruthData = computed<DataArray>(() => parseCsvAsset(csvAsset.value as CsvAsset));
 const chartSize = useDrilldownChartSize(chartWidthDiv);
-const selectedOutputMapping = computed(() => getSelectedOutputEnsembleMapping(props.node));
+const selectedOutputMapping = computed(() => getChartEnsembleMapping(props.node, stateToModelConfigMap.value));
 const {
 	activeChartSettings,
 	chartSettings,
@@ -606,6 +680,7 @@ const {
 	selectedEnsembleVariableSettings,
 	selectedErrorVariableSettings,
 	updateEnsembleVariableSettingOption,
+	updateQauntilesOptions,
 	updateActiveChartSettings,
 	setActiveChartSettings
 } = useChartSettings(props, emit);
@@ -634,7 +709,9 @@ const errorData = computed<EnsembleErrorData>(() =>
 	)
 );
 
-const ensembleVariables = computed(() => getSelectedOutputEnsembleMapping(props.node, false).map((d) => d.newName));
+const ensembleVariables = computed(() =>
+	getChartEnsembleMapping(props.node, stateToModelConfigMap.value, false).map((d) => d.newName)
+);
 const ensembleVariableCharts = useEnsembleVariableCharts(selectedEnsembleVariableSettings, groundTruthData);
 const weightsDistributionCharts = useWeightsDistributionCharts();
 const { errorCharts, onExpandErrorChart } = useEnsembleErrorCharts(selectedErrorVariableSettings, errorData);

@@ -95,6 +95,7 @@ public class TaskService {
 			timeoutMinutes = req.getTimeoutMinutes();
 			additionalProperties = req.getAdditionalProperties();
 			routingKey = rk;
+			useCache = req.isUseCache();
 		}
 
 		public TaskResponse createResponse(final TaskStatus status, final String stdout, final String stderr) {
@@ -108,6 +109,7 @@ public class TaskService {
 				.setStdout(stdout)
 				.setStderr(stderr)
 				.setRoutingKey(getRoutingKey())
+				.setUseCache(useCache)
 				.setRequestSHA256(getSHA256());
 		}
 	}
@@ -447,7 +449,7 @@ public class TaskService {
 				});
 				container.start();
 
-				log.info("Consumer on queue {} started for rabbit admin: {}", queueName, rabbitAddress.toString());
+				log.info("Consumer on queue {} started for rabbit admin: {}", queueName, rabbitAddress);
 				taskResponseConsumers.put(rabbitAddress.toString(), container);
 			}
 		}
@@ -476,7 +478,7 @@ public class TaskService {
 				resp.setOutput(e.getMessage().getBytes());
 			}
 
-			if (resp.getStatus() == TaskStatus.SUCCESS) {
+			if (resp.getStatus() == TaskStatus.SUCCESS && resp.isUseCache()) {
 				try {
 					// add to the response cache
 					log.info(
@@ -641,17 +643,11 @@ public class TaskService {
 			return mapper.readValue(message.getBody(), clazz);
 		} catch (final Exception e) {
 			try {
-				final JsonNode jsonMessage = mapper.readValue(message.getBody(), JsonNode.class);
-				log.error("Unable to parse message as {}. Message: {}", clazz.getName(), jsonMessage.toPrettyString());
+				mapper.readValue(message.getBody(), JsonNode.class);
+				log.error("Unable to parse message as {}.", clazz.getName(), e);
 				return null;
 			} catch (final Exception e1) {
-				log.error(
-					"Error decoding message as either {} or {}. Raw message is: {}",
-					clazz.getName(),
-					JsonNode.class.getName(),
-					message.getBody()
-				);
-				log.error("", e1);
+				log.error("Error decoding message as either {} or {}", clazz.getName(), JsonNode.class.getName(), e1);
 				return null;
 			}
 		}
@@ -670,33 +666,40 @@ public class TaskService {
 		// create sha256 hash of the request
 		final String hash = req.getSHA256();
 
-		try {
-			log.info("Checking for cached response under SHA: {} for {} for script: {}", hash, req.getId(), req.getScript());
-			// check if there is an existing response for the hash
-			final TaskResponse resp = responseCache.get(hash);
+		if (req.isUseCache()) {
+			try {
+				log.info(
+					"Checking for cached response under SHA: {} for {} for script: {}",
+					hash,
+					req.getId(),
+					req.getScript()
+				);
+				// check if there is an existing response for the hash
+				final TaskResponse resp = responseCache.get(hash);
 
-			if (resp != null) {
-				// a task id already exits for the SHA256, this means the request has already
-				// been dispatched.
-				log.info("Task response found in cache for SHA: {}", hash);
+				if (resp != null) {
+					// a task id already exits for the SHA256, this means the request has already
+					// been dispatched.
+					log.info("Task response found in cache for SHA: {}", hash);
 
-				// create and return a completed task future
-				final CompletableTaskFuture future = new CompletableTaskFuture(req, resp);
+					// create and return a completed task future
+					final CompletableTaskFuture future = new CompletableTaskFuture(req, resp);
 
-				// process the cached response as if it were a new response
-				processCachedTaskResponse(req, future.getLatest());
+					// process the cached response as if it were a new response
+					processCachedTaskResponse(req, future.getLatest());
 
-				return future;
+					return future;
+				}
+			} catch (final Exception e) {
+				log.warn(
+					"Failed to check for cached response under SHA: {} for {} for script: {}, re-sending request",
+					hash,
+					req.getId(),
+					req.getScript()
+				);
+				// remove the bad entry
+				responseCache.remove(hash);
 			}
-		} catch (final Exception e) {
-			log.warn(
-				"Failed to check for cached response under SHA: {} for {} for script: {}, re-sending request",
-				hash,
-				req.getId(),
-				req.getScript()
-			);
-			// remove the bad entry
-			responseCache.remove(hash);
 		}
 
 		// no cache entry for task, send a new one
@@ -713,7 +716,7 @@ public class TaskService {
 
 			notificationService.createNotificationGroup(group);
 		} catch (final Exception e) {
-			log.error("Failed to create notificaiton group for id: {}", req.getId(), e);
+			log.error("Failed to create notification group for id: {}", req.getId(), e);
 		}
 
 		// now send request

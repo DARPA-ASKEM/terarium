@@ -1,6 +1,6 @@
 <template>
 	<header
-		v-if="showHeader"
+		v-if="showHeader && !isDocument"
 		:class="{
 			'overview-banner': pageType === ProjectPages.OVERVIEW,
 			'with-tabs': tabs.length > 1,
@@ -36,8 +36,11 @@
 			<TabPanel v-for="(tab, index) in tabs" :key="index" :header="tab.props?.tabName" />
 		</TabView>
 	</header>
-	<main v-if="!isLoading" ref="assetElementRef" @scroll="onScroll">
-		<section :class="{ 'overflow-hidden': overflowHidden }">
+	<main v-if="!isLoading" ref="assetElementRef" @scroll="onScroll" :class="{ 'document-asset': isDocument }">
+		<template v-if="isDocument">
+			<slot name="default" />
+		</template>
+		<section v-else :class="{ 'overflow-hidden': overflowHidden }">
 			<template v-for="(tab, index) in tabs" :key="index">
 				<component :is="tab" v-show="selectedTabIndex === index" />
 			</template>
@@ -99,6 +102,7 @@ const props = defineProps({
 	hideIntro: Boolean,
 	isLoading: Boolean,
 	overflowHidden: Boolean,
+	isDocument: Boolean,
 	selectedTabIndex: {
 		type: Number,
 		default: 0
@@ -210,6 +214,10 @@ main {
 	background-color: var(--surface-section);
 	overflow-y: auto;
 	overflow-x: hidden;
+}
+
+.document-asset {
+	overflow: hidden;
 }
 
 main > section {

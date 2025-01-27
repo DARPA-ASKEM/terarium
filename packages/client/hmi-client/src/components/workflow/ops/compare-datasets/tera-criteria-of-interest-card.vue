@@ -1,43 +1,35 @@
 <template>
 	<div class="critera-of-interest-card">
 		<header class="flex">
-			<tera-toggleable-input :model-value="card.name" tag="h4" @update:model-value="emit('update', { name: $event })" />
+			<tera-toggleable-input
+				:model-value="card.name"
+				tag="h6"
+				@update:model-value="emit('update', { name: $event })"
+				style="left: -0.5rem"
+			/>
 			<Button class="ml-auto" text icon="pi pi-trash" @click="emit('delete')" />
 		</header>
-
-		<div>
-			For configuration
+		<p>
+			Rank the intervention policies that can
 			<Dropdown
-				:options="card.configurations"
-				:model-value="card.selectedConfiguration"
-				@update:model-value="emit('update', { selectedConfiguration: $event })"
-				placeholder="Select..."
-			/>
-			rank interventions based on the
-			<Dropdown
-				:options="rankOptions"
+				:options="Object.values(RankOption)"
 				:model-value="card.rank"
-				option-label="label"
-				option-value="value"
 				@update:model-value="emit('update', { rank: $event })"
 			/>
 			value of
 			<Dropdown
-				:options="card.variables"
+				placeholder="Select..."
+				:options="variables"
 				:model-value="card.selectedVariable"
 				@update:model-value="emit('update', { selectedVariable: $event })"
-				placeholder="Select..."
 			/>
-			at
 			<Dropdown
-				:options="timepointOptions"
+				:options="Object.values(TimepointOption)"
 				:model-value="card.timepoint"
-				option-label="label"
-				option-value="value"
 				@update:model-value="emit('update', { timepoint: $event })"
 			/>
-			timepoint.
-		</div>
+		</p>
+		<footer v-if="!card.selectedVariable">Please select a variable.</footer>
 	</div>
 </template>
 
@@ -47,19 +39,10 @@ import Button from 'primevue/button';
 import Dropdown from 'primevue/dropdown';
 import { CriteriaOfInterestCard, RankOption, TimepointOption } from './compare-datasets-operation';
 
-const timepointOptions = [
-	{ label: 'the last', value: TimepointOption.LAST },
-	{ label: 'the first', value: TimepointOption.FIRST }
-];
-
-const rankOptions = [
-	{ label: 'minimum', value: RankOption.MINIMUM },
-	{ label: 'maximum', value: RankOption.MAXIMUM }
-];
-
 const emit = defineEmits(['delete', 'update']);
 defineProps<{
 	card: CriteriaOfInterestCard;
+	variables: string[];
 }>();
 </script>
 
@@ -72,5 +55,22 @@ defineProps<{
 	gap: var(--gap-2);
 	display: flex;
 	flex-direction: column;
+}
+
+p {
+	display: flex;
+	flex-wrap: wrap;
+	gap: var(--gap-1);
+	align-items: center;
+}
+
+.p-dropdown {
+	height: 2rem;
+	margin-bottom: var(--gap-1);
+}
+
+footer {
+	font-size: var(--font-caption);
+	color: var(--text-color-secondary);
 }
 </style>

@@ -9,20 +9,32 @@
 				option-value="assetId"
 				placeholder="Select a model"
 				@update:model-value="scenario.setModelSpec($event)"
+				class="mb-3"
 			/>
 
-			<label>Select configuration representing best and generous estimates of the initial conditions</label>
+			<label :class="{ 'disabled-label': isEmpty(filterModelConfigurations) || isFetchingModelInformation }"
+				>Select configuration representing best and generous estimates of the initial conditions</label
+			>
 			<Dropdown
 				:model-value="scenario.modelConfigSpec.id"
 				placeholder="Select a configuration"
-				:options="modelConfigurations"
+				:options="filterModelConfigurations"
 				option-label="name"
 				option-value="id"
 				@update:model-value="scenario.setModelConfigSpec($event)"
-				:disabled="isEmpty(modelConfigurations) || isFetchingModelInformation"
+				:disabled="isEmpty(filterModelConfigurations) || isFetchingModelInformation"
 				:loading="isFetchingModelInformation"
-			/>
-			<label>Select uncertain parameters of interest and adjust ranges to be explored if needed</label>
+				class="mb-3"
+			>
+				<template #option="slotProps">
+					<p>
+						{{ slotProps.option.name }} <span class="subtext">({{ formatTimestamp(slotProps.option.createdOn) }})</span>
+					</p>
+				</template>
+			</Dropdown>
+			<label :class="{ 'disabled-label': !selectedModelConfiguration }"
+				>Select uncertain parameters of interest and adjust ranges to be explored if needed</label
+			>
 			<template v-for="(parameter, i) in scenario.parameters" :key="i">
 				<div class="flex">
 					<Dropdown
@@ -35,6 +47,7 @@
 						:disabled="!selectedModelConfiguration"
 						:loading="isFetchingModelConfiguration || isFetchingModelInformation"
 						@update:model-value="onParameterSelect($event, i)"
+						filter
 					>
 						<template #option="slotProps">
 							<span>{{ displayParameter(modelParameters, slotProps.option.referenceId) }}</span>
@@ -68,12 +81,14 @@
 			</div>
 		</template>
 		<template #outputs>
-			<label>Select an output metric</label>
+			<label :class="{ 'disabled-label': isEmpty(modelStateOptions) || isFetchingModelInformation }"
+				>Select an output metric</label
+			>
 			<MultiSelect
 				:disabled="isEmpty(modelStateOptions) || isFetchingModelInformation"
 				:model-value="scenario.simulateSpec.ids"
 				placeholder="Select output metrics"
-				option-label="name"
+				option-label="id"
 				option-value="id"
 				:options="modelStateOptions"
 				@update:model-value="scenario.setSimulateSpec($event)"
@@ -81,6 +96,7 @@
 				filter
 			/>
 			<!-- <img :src="simulate" alt="Simulate chart" /> -->
+			<tera-simulation-settings :scenario-instance="scenario" />
 		</template>
 	</tera-scenario-template>
 </template>
@@ -97,9 +113,11 @@ import MultiSelect from 'primevue/multiselect';
 import Button from 'primevue/button';
 import { getModelConfigurationById, getParameter, getParameters } from '@/services/model-configurations';
 import TeraInputNumber from '@/components/widgets/tera-input-number.vue';
+import { sortDatesDesc, formatTimestamp } from '@/utils/date';
 import { ScenarioHeader } from '../base-scenario';
 import TeraScenarioTemplate from '../tera-scenario-template.vue';
 import { displayParameter } from '../scenario-template-utils';
+import teraSimulationSettings from '../tera-simulation-settings.vue';
 
 const header: ScenarioHeader = Object.freeze({
 	title: 'Sensitivity analysis template',
@@ -125,6 +143,12 @@ const props = defineProps<{
 }>();
 
 const emit = defineEmits(['save-workflow']);
+
+const filterModelConfigurations = computed<ModelConfiguration[]>(() =>
+	modelConfigurations.value
+		.filter((mc) => isEmpty(mc.inferredParameterList))
+		.sort((a, b) => sortDatesDesc(a.createdOn, b.createdOn))
+);
 
 const onParameterSelect = (parameterId: string, index: number) => {
 	if (!selectedModelConfiguration.value) return;
@@ -168,7 +192,9 @@ watch(
 		isFetchingModelConfiguration.value = true;
 		selectedModelConfiguration.value = await getModelConfigurationById(modelConfigId);
 		if (!selectedModelConfiguration.value) return;
-		modelParameters.value = getParameters(selectedModelConfiguration.value);
+		modelParameters.value = getParameters(selectedModelConfiguration.value).sort((a, b) =>
+			a.referenceId.localeCompare(b.referenceId)
+		);
 		isFetchingModelConfiguration.value = false;
 	}
 );
@@ -181,5 +207,8 @@ watch(
 	padding: var(--gap-2) var(--gap-1);
 	margin: var(--gap-0-5) 0;
 	background-color: var(--surface-100);
+}
+.disabled-label {
+	color: var(--text-color-disabled);
 }
 </style>

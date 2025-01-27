@@ -12,6 +12,7 @@
 				v-model:is-open="isDocViewerOpen"
 				header="Document viewer"
 				content-width="100%"
+				:document-viewer="true"
 			>
 				<template #content>
 					<tera-drilldown-section :is-loading="isFetchingPDF">
@@ -26,17 +27,39 @@
 						<header class="pb-2">
 							<nav class="flex justify-content-between pb-2">
 								<span class="flex align-items-center">Specify which equations to use for this model.</span>
-								<section class="white-space-nowrap min-w-min">
-									<Button class="mr-1" label="Reset" severity="secondary" outlined />
-
-									<SplitButton
-										label="Run"
-										:model="runItems"
-										:disabled="isDocumentLoading || isEmpty(includedEquations) || isModelLoading"
+								<section class="flex align-items-center min-w-min">
+									<RadioButton
+										class="ml-3"
+										:model-value="runType"
+										:input-id="uniqueId()"
+										:name="RunType.mira"
+										:value="RunType.mira"
+										@click="switchRunType(RunType.mira)"
 									/>
+									<label for="static" class="ml-2 text-sm">MIRA</label>
+									<RadioButton
+										:model-value="runType"
+										:input-id="uniqueId()"
+										:name="RunType.skema"
+										:value="RunType.skema"
+										class="ml-3"
+										@click="switchRunType(RunType.skema)"
+									/>
+									<label for="dynamic" class="ml-2 mr-3 text-sm">SKEMA</label>
+
+									<Button class="h-3rem mr-1" label="Reset" severity="secondary" outlined />
+									<Button class="h-3rem mr-1" label="Run" @click="onRun(runType)" />
 								</section>
 							</nav>
-							<section class="header-group">
+							<section
+								class="header-group"
+								@dragenter.prevent="dragEnterCount++"
+								@dragleave.prevent="dragEnterCount--"
+								@dragover.prevent
+								@drop.prevent.stop="handleDrop"
+							>
+								<!-- Add visual feedback for drag state -->
+								<div v-if="dragEnterCount > 0" class="drag-overlay">Drop image here</div>
 								<Textarea
 									v-model="multipleEquations"
 									autoResize
@@ -58,6 +81,9 @@
 						</header>
 						<h6 class="py-3">Use {{ includedEquations.length > 1 ? 'these equations' : 'this equation' }}</h6>
 						<ul class="blocks-container">
+							<div v-if="pastedImage" class="pasted-image">
+								<img :src="'data:image/png;base64,' + pastedImage" alt="Pasted image" height="160" />
+							</div>
 							<li v-for="(equation, i) in includedEquations" :key="i" @click.capture="selectItem(equation, $event)">
 								<tera-asset-block
 									:is-toggleable="false"
@@ -71,11 +97,13 @@
 										<h6 v-else>Manually entered</h6>
 									</template>
 									<section>
-										<Checkbox
-											v-model="equation.includeInProcess"
-											@update:model-value="onCheckBoxChange(equation)"
-											:binary="true"
-										/>
+										<section class="checkbox-container">
+											<Checkbox
+												v-model="equation.includeInProcess"
+												@update:model-value="onCheckBoxChange(equation)"
+												:binary="true"
+											/>
+										</section>
 										<div class="block-container">
 											<tera-math-editor
 												v-if="equation.asset.text"
@@ -94,11 +122,10 @@
 										rows="1"
 										placeholder="Add an expression with LaTeX"
 										class="w-full"
-										@update:model-value="emit('update-state', clonedState)"
 									/>
 								</tera-asset-block>
 							</li>
-							<p v-if="isEmpty(includedEquations)" class="secondary-text">No equations selected</p>
+							<p v-if="isEmpty(includedEquations) && !pastedImage" class="secondary-text">No equations selected</p>
 						</ul>
 						<div class="spacer mb-5" />
 						<h6 class="pb-3">Other equations extracted from document</h6>
@@ -140,7 +167,6 @@
 										rows="1"
 										placeholder="Add an expression with LaTeX"
 										class="w-full"
-										@update:model-value="emit('update-state', clonedState)"
 									/>
 								</tera-asset-block>
 							</li>
@@ -155,14 +181,10 @@
 				content-width="100%"
 			>
 				<template #content>
-					<tera-drilldown-preview :is-loading="isModelLoading">
-						<tera-model
-							v-if="selectedModel"
-							is-workflow
-							is-save-for-reuse
-							:assetId="selectedModel.id"
-							@on-save="onModelSaveEvent"
-						/>
+					<!--The isOutputOpen condition enables the model diagram within tera-model to render properly
+						since we need some sort of width available-->
+					<tera-drilldown-preview v-if="isOutputOpen" :is-loading="isModelLoading">
+						<tera-model v-if="selectedModel" is-workflow is-save-for-reuse :asset-id="selectedModel.id" />
 						<tera-operator-placeholder v-else :node="node" class="h-100">
 							<p v-if="isModelLoading">Model is being created...</p>
 							<p v-else>Select equations to create a model</p>
@@ -184,7 +206,7 @@ import TeraDrilldownPreview from '@/components/drilldown/tera-drilldown-preview.
 import TeraAssetBlock from '@/components/widgets/tera-asset-block.vue';
 import { computed, onMounted, onBeforeUnmount, ref, watch } from 'vue';
 import type { Card, DocumentAsset, Model } from '@/types/Types';
-import { cloneDeep, isEmpty } from 'lodash';
+import { cloneDeep, isEmpty, uniqueId } from 'lodash';
 import { equationsToAMR, getCleanedEquations, type EquationsToAMRRequest } from '@/services/knowledge';
 import { downloadDocumentAsset, getDocumentAsset, getDocumentFileAsText } from '@/services/document-assets';
 import { equationsFromImage } from '@/services/goLLM';
@@ -198,26 +220,25 @@ import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.
 import TeraPdfEmbed from '@/components/widgets/tera-pdf-embed.vue';
 import TeraTextEditor from '@/components/documents/tera-text-editor.vue';
 import { logger } from '@/utils/logger';
-import SplitButton from 'primevue/splitbutton';
+import RadioButton from 'primevue/radiobutton';
 import { ModelFromEquationsState, EquationBlock } from './model-from-equations-operation';
 
-const emit = defineEmits(['close', 'update-state', 'append-output', 'update-output', 'select-output']);
+const emit = defineEmits(['close', 'update-state', 'append-output', 'select-output']);
 const props = defineProps<{
 	node: WorkflowNode<ModelFromEquationsState>;
 }>();
 
 const selectedOutputId = ref<string>('');
 
-const runItems = [
-	{
-		label: 'SKEMA',
-		command: () => onRun('skema')
-	},
-	{
-		label: 'Mira',
-		command: () => onRun('mira')
-	}
-];
+enum RunType {
+	mira = 'mira',
+	skema = 'skema'
+}
+
+const runType = ref(RunType.mira);
+function switchRunType(type: RunType) {
+	runType.value = type;
+}
 
 const clonedState = ref<ModelFromEquationsState>({
 	equations: [],
@@ -329,7 +350,7 @@ onMounted(async () => {
 		emit('update-state', state);
 	}
 });
-
+const pastedImage = ref<string | null>(null);
 function handlePasteEvent(e) {
 	// checks if the user pasted a file or collection of files
 	if (e.clipboardData?.files.length) {
@@ -337,12 +358,14 @@ function handlePasteEvent(e) {
 		Array.from(e.clipboardData.files).forEach((item) => {
 			const reader = new FileReader();
 			reader.onload = function ({ target }) {
-				if (target && document.value?.id) {
+				if (target) {
 					const base64 = arrayBufferToBase64(target.result);
+					pastedImage.value = base64;
 					// send base64 to gollm
-					equationsFromImage(document.value.id, base64).then((response) => {
+					equationsFromImage(base64).then((response) => {
 						const responseJson = JSON.parse(window.atob(response.output)).response;
 						multipleEquations.value = responseJson.equations.join('\n');
+						multipleEquationsDisabled.value = false;
 					});
 				}
 			};
@@ -351,6 +374,29 @@ function handlePasteEvent(e) {
 			}
 		});
 	}
+}
+
+// drag n drop image to get equations
+const dragEnterCount = ref(0);
+
+function handleDrop(e: DragEvent) {
+	dragEnterCount.value = 0; // Reset counter on drop
+	const file = e.dataTransfer?.files[0];
+	if (!file) return;
+	multipleEquationsDisabled.value = true;
+	const reader = new FileReader();
+	reader.onload = ({ target }) => {
+		if (target?.result) {
+			const base64 = arrayBufferToBase64(target.result);
+			pastedImage.value = base64;
+			equationsFromImage(base64).then((response) => {
+				const responseJson = JSON.parse(window.atob(response.output)).response;
+				multipleEquations.value = responseJson.equations.join('\n');
+				multipleEquationsDisabled.value = false;
+			});
+		}
+	};
+	reader.readAsArrayBuffer(file);
 }
 
 function arrayBufferToBase64(buffer) {
@@ -363,6 +409,9 @@ function arrayBufferToBase64(buffer) {
 }
 
 onBeforeUnmount(async () => {
+	// flush changes
+	emit('update-state', clonedState.value);
+
 	window.removeEventListener('paste', handlePasteEvent);
 });
 
@@ -482,14 +531,6 @@ function getEquationErrorLabel(equation) {
 	return equation.asset.extractionError ? "Couldn't extract equation" : '';
 }
 
-function onModelSaveEvent(model: Model) {
-	if (!model) return;
-	const outputPort = cloneDeep(props.node.outputs?.find((port) => port.value?.[0] === model.id));
-	if (!outputPort) return;
-	outputPort.label = model.header.name;
-	emit('update-output', outputPort);
-}
-
 watch(
 	() => props.node.state,
 	() => {
@@ -527,31 +568,26 @@ watch(
 }
 
 .asset-panel {
-	border-width: 1px 1px 0 1px;
-	border-color: var(--surface-border-light);
-	border-style: solid;
-	border-radius: unset;
+	border: 1px solid var(--surface-border-light);
+	border-left: 4px solid var(--surface-400);
+	border-radius: var(--border-radius);
 	overflow: auto;
-
+	background: var(--surface-0);
+	cursor: pointer;
 	&.selected {
-		border-left: var(--gap-1) solid var(--primary-color);
+		border-left: 4px solid var(--primary-color);
 	}
 }
 .asset-panel:deep(.p-panel-header) {
 	padding-bottom: var(--gap-1);
+	background: transparent;
 }
-
-.blocks-container li:first-of-type .asset-panel {
-	border-top-left-radius: var(--border-radius-medium);
-	border-top-right-radius: var(--border-radius-medium);
+.asset-panel:deep(.p-panel-content) {
+	background: transparent;
 }
-
-.blocks-container li:last-of-type .asset-panel {
-	border-bottom-width: 1px;
-	border-bottom-left-radius: var(--border-radius-medium);
-	border-bottom-right-radius: var(--border-radius-medium);
+.asset-panel:hover {
+	background: var(--surface-highlight);
 }
-
 /* TODO: to be implemented when displaying the extracted equations.
 .equation-image {
 	border-style: dashed;
@@ -561,6 +597,7 @@ watch(
 */
 
 .header-group {
+	position: relative;
 	display: flex;
 	flex-direction: row;
 	align-items: center;
@@ -570,7 +607,21 @@ watch(
 	border: 1px solid var(--surface-border-light);
 	padding: var(--gap-3);
 }
-
+.drag-overlay {
+	position: absolute;
+	top: 0;
+	left: 0;
+	right: 0;
+	bottom: 0;
+	background: var(--surface-highlight);
+	border: 2px dashed var(--primary-color);
+	border-radius: var(--border-radius-medium);
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	color: var(--primary-color);
+	z-index: 1;
+}
 .equation-view {
 	display: flex;
 	gap: var(--gap-2);
@@ -585,6 +636,14 @@ watch(
 .secondary-text {
 	color: var(--text-color-subdued);
 }
+.panel-content section {
+	.checkbox-container {
+		min-height: 65px;
+		display: flex;
+		align-items: center;
+	}
+}
+
 /* PrimeVue Override */
 
 .p-panel {
@@ -606,5 +665,9 @@ watch(
 	border-top-left-radius: 0;
 	border-bottom-left-radius: 0;
 	color: #fff;
+}
+
+:deep(.p-panel section) {
+	align-items: start;
 }
 </style>

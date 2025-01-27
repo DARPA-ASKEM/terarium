@@ -1,42 +1,16 @@
 <template>
 	<main>
-		<tera-progress-spinner v-if="inProgressForecastRun" :font-size="2" is-centered style="height: 100%">
-			Processing...
-		</tera-progress-spinner>
-		<template v-else-if="selectedRunId && runResults[selectedRunId]">
-			<section>
-				<div v-if="isChartsEmpty" class="empty-chart">
-					<img src="@assets/svg/seed.svg" alt="" draggable="false" class="empty-image" />
-					<p class="helpMessage">No variables selected</p>
-				</div>
-				<vega-chart
-					v-for="setting of selectedInterventionSettings"
-					:key="setting.id"
-					expandable
-					are-embed-actions-visible
-					:visualization-spec="interventionCharts[setting.id]"
-					:interactive="false"
-				/>
-				<vega-chart
-					v-for="setting of selectedVariableSettings"
-					:key="setting.id"
-					expandable
-					are-embed-actions-visible
-					:visualization-spec="variableCharts[setting.id]"
-					:interactive="false"
-				/>
-				<vega-chart
-					v-for="setting of selectedComparisonChartSettings"
-					:key="setting.id"
-					expandable
-					are-embed-actions-visible
-					:visualization-spec="comparisonCharts[setting.id]"
-					:interactive="false"
-				/>
-			</section>
-		</template>
-		<Button v-if="areInputsFilled" label="Edit" @click="emit('open-drilldown')" severity="secondary" outlined />
-		<tera-operator-placeholder v-else :node="node"> Connect a model configuration </tera-operator-placeholder>
+		<section>
+			<tera-node-preview
+				:node="node"
+				:is-loading="!!inProgressForecastRun"
+				:prepared-charts="[interventionCharts, variableCharts, comparisonCharts]"
+				:chart-settings="[selectedInterventionSettings, selectedVariableSettings, selectedComparisonChartSettings]"
+				:are-embed-actions-visible="true"
+				:placeholder="placeholderText"
+			/>
+		</section>
+		<Button v-if="areInputsFilled" label="Open" @click="emit('open-drilldown')" severity="secondary" outlined />
 	</main>
 </template>
 
@@ -44,24 +18,25 @@
 import _ from 'lodash';
 import { computed, ref, toRef, watch } from 'vue';
 import Button from 'primevue/button';
-
 import { logger } from '@/utils/logger';
-
-import { updateChartSettingsBySelectedVariables } from '@/services/chart-settings';
+import { updateChartSettingsBySelectedVariables, updateSensitivityChartSettingOption } from '@/services/chart-settings';
 import { createDatasetFromSimulationResult } from '@/services/dataset';
 import { flattenInterventionData, getInterventionPolicyById } from '@/services/intervention-policy';
 import { getModelByModelConfigurationId, getTypesFromModelParts, getUnitsFromModelParts } from '@/services/model';
 import { getModelConfigurationById } from '@/services/model-configurations';
-import { getRunResultCSV, parsePyCiemssMap, pollAction, DataArray } from '@/services/models/simulation-service';
+import {
+	getRunResultCSV,
+	parsePyCiemssMap,
+	pollAction,
+	DataArray,
+	getSimulation
+} from '@/services/models/simulation-service';
 import { createLLMSummary } from '@/services/summary-service';
 
-import TeraOperatorPlaceholder from '@/components/operator/tera-operator-placeholder.vue';
-import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue';
-import VegaChart from '@/components/widgets/VegaChart.vue';
 import { nodeOutputLabel } from '@/components/workflow/util';
 
 import { ModelConfiguration, type InterventionPolicy, type Model } from '@/types/Types';
-import { ChartSettingType } from '@/types/common';
+import { ChartSettingSensitivity, ChartSettingType } from '@/types/common';
 import type { WorkflowNode } from '@/types/workflow';
 
 import { useChartSettings } from '@/composables/useChartSettings';
@@ -69,6 +44,7 @@ import { useCharts } from '@/composables/useCharts';
 import { useProjects } from '@/composables/project';
 
 import { Poller, PollerState } from '@/api/api';
+import TeraNodePreview from '../tera-node-preview.vue';
 import { SimulateCiemssOperationState, SimulateCiemssOperation } from './simulate-ciemss-operation';
 import { mergeResults, renameFnGenerator } from '../calibrate-ciemss/calibrate-utils';
 import { usePreparedChartInputs } from './simulate-utils';
@@ -113,10 +89,29 @@ const processResult = async (runId: string) => {
 				.filter((c) => ['state', 'observable'].includes(modelPartTypesMap.value[c]))
 				.slice(0, 5) // Limit the number of initial variables to first 5 to prevent too many charts
 		);
-		emit('update-state', state);
 	}
 
 	const summaryData = await getRunResultCSV(runId, 'result_summary.csv');
+
+	if (
+		(state.chartSettings as ChartSettingSensitivity[]).some((setting) => setting.type === ChartSettingType.SENSITIVITY)
+	) {
+		// If sensitivity chart settings are present, set the timepoint to the last timepoint
+		const selectedSensitivityVariables = state
+			.chartSettings!.filter((setting) => setting.type === ChartSettingType.SENSITIVITY)
+			.flatMap((setting) => setting.selectedVariables);
+		const lastTimepoint = _.last(result)?.timepoint_id;
+		const firstSensitiveSetting = (state.chartSettings as ChartSettingSensitivity[]).find(
+			(setting) => setting.type === ChartSettingType.SENSITIVITY
+		);
+		state.chartSettings = updateSensitivityChartSettingOption(state.chartSettings as ChartSettingSensitivity[], {
+			selectedVariables: selectedSensitivityVariables,
+			selectedInputVariables: firstSensitiveSetting!.selectedInputVariables,
+			timepoint: lastTimepoint
+		});
+	}
+
+	emit('update-state', state);
 	const start = _.first(summaryData);
 	const end = _.last(summaryData);
 
@@ -141,24 +136,33 @@ Provide a summary in 100 words or less.
 
 	const summaryResponse = await createLLMSummary(prompt);
 
-	const datasetName = `Forecast run ${runId}`;
+	// generate label like "Configuration (intervention)"
+	const nodeLabel = (): string => {
+		const configName = modelConfiguration.value?.name;
+		const interventionName = interventionPolicy.value?.name ?? 'no intervention';
+		return configName ? `${configName} (${interventionName})` : '';
+	};
+
+	const datasetName = nodeOutputLabel(props.node, nodeLabel());
 	const projectId = useProjects().activeProject.value?.id ?? '';
-	const datasetResult = await createDatasetFromSimulationResult(projectId, runId, datasetName, false);
+	const datasetResult = await createDatasetFromSimulationResult(
+		projectId,
+		runId,
+		datasetName,
+		false,
+		modelConfiguration.value?.id,
+		interventionPolicy.value?.id
+	);
 	if (!datasetResult) {
 		logger.error('Error creating dataset from simulation result.');
 		return;
 	}
+
 	emit('append-output', {
 		type: SimulateCiemssOperation.outputs[0].type,
-		label: nodeOutputLabel(props.node, 'Dataset'),
+		label: datasetName,
 		value: [datasetResult.id],
-		state: {
-			currentTimespan: state.currentTimespan,
-			numSamples: state.numSamples,
-			method: state.method,
-			summaryId: summaryResponse?.id,
-			forecastId: runId
-		},
+		state: _.omit({ ...props.node.state, summaryId: summaryResponse?.id }, ['chartSettings']),
 		isSelected: false
 	});
 };
@@ -184,10 +188,19 @@ const { useInterventionCharts, useVariableCharts, useComparisonCharts } = useCha
 );
 const interventionCharts = useInterventionCharts(selectedInterventionSettings, true);
 const variableCharts = useVariableCharts(selectedVariableSettings, null);
-const comparisonCharts = useComparisonCharts(selectedComparisonChartSettings);
+const comparisonCharts = useComparisonCharts(selectedComparisonChartSettings, true);
 const isChartsEmpty = computed(
 	() => _.isEmpty(interventionCharts.value) && _.isEmpty(variableCharts.value) && _.isEmpty(comparisonCharts.value)
 );
+const placeholderText = computed(() => {
+	if (!areInputsFilled.value) {
+		return 'Connect a model configuration';
+	}
+	if (isChartsEmpty.value) {
+		return 'No variables selected';
+	}
+	return undefined;
+});
 
 const poller = new Poller();
 const pollResult = async (runId: string) => {
@@ -201,39 +214,57 @@ const pollResult = async (runId: string) => {
 		state.inProgressBaseForecastId = '';
 		poller.stop();
 	} else if (pollerResults.state !== PollerState.Done || !pollerResults.data) {
+		state.inProgressForecastId = '';
+		state.inProgressBaseForecastId = '';
+		const simulation = await getSimulation(runId);
+		if (simulation?.status && simulation?.statusMessage) {
+			state.errorMessage = {
+				name: runId,
+				value: simulation.status,
+				traceback: simulation.statusMessage
+			};
+			emit('update-state', state);
+		}
 		// throw if there are any failed runs for now
 		logger.error(`Simulate: ${runId} has failed`, {
 			toastTitle: 'Error - Pyciemss'
 		});
 	}
+	emit('update-state', state);
 	return pollerResults;
 };
 
-async function processPolling(id, propName, inProgressPropName) {
-	const response = await pollResult(id);
-	if (response.state === PollerState.Done) {
-		const state = _.cloneDeep(props.node.state);
-		state[propName] = id;
-		state[inProgressPropName] = '';
-		emit('update-state', state);
-	}
-	await processResult(id);
-}
-
 watch(
-	() => props.node.state.inProgressForecastId,
+	() => props.node.state.inProgressForecastId + props.node.state.inProgressBaseForecastId,
 	async (id) => {
 		if (!id || id === '') return;
-		await processPolling(id, 'forecastId', 'inProgressForecastId');
-	},
-	{ immediate: true }
-);
 
-watch(
-	() => props.node.state.inProgressBaseForecastId,
-	async (id) => {
-		if (!id || id === '') return;
-		await processPolling(id, 'baseForecastId', 'inProgressBaseForecastId');
+		let doneProcess = true;
+		let response;
+		if (props.node.state.inProgressBaseForecastId) {
+			const baseForecastId = props.node.state.inProgressBaseForecastId;
+			response = await pollResult(baseForecastId);
+		}
+		if (response?.state && response.state !== PollerState.Done) {
+			doneProcess = false;
+		}
+
+		if (props.node.state.inProgressForecastId) {
+			const forecastId = props.node.state.inProgressForecastId;
+			response = await pollResult(forecastId);
+		}
+		if (response?.state && response.state !== PollerState.Done) {
+			doneProcess = false;
+		}
+		if (doneProcess) {
+			const state = _.cloneDeep(props.node.state);
+			state.forecastId = state.inProgressForecastId;
+			state.baseForecastId = state.inProgressBaseForecastId;
+			state.inProgressForecastId = '';
+			state.inProgressBaseForecastId = '';
+			emit('update-state', state);
+			await processResult(state.forecastId); // Only process and output result for main forecast
+		}
 	},
 	{ immediate: true }
 );

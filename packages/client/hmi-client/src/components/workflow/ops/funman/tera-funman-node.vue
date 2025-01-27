@@ -9,7 +9,7 @@
 		</tera-progress-spinner>
 
 		<template v-if="node.inputs[0].value">
-			<Button @click="emit('open-drilldown')" label="Review checks" severity="secondary" outlined />
+			<Button @click="emit('open-drilldown')" label="Open" severity="secondary" outlined />
 		</template>
 	</section>
 </template>

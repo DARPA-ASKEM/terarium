@@ -3,7 +3,7 @@ import type { TimeSpan } from '@/types/Types';
 import { Operation, WorkflowOperationTypes, BaseState } from '@/types/workflow';
 import simulateProbabilistic from '@assets/svg/operator-images/simulate-probabilistic.svg';
 
-const DOCUMENTATION_URL = 'https://github.com/ciemss/pyciemss/blob/main/pyciemss/interfaces.py#L323';
+const DOCUMENTATION_URL = 'https://documentation.terarium.ai/simulation/simulate-model/';
 
 export interface SimulateCiemssOperationState extends BaseState {
 	// state shared across all runs
@@ -12,6 +12,7 @@ export interface SimulateCiemssOperationState extends BaseState {
 	// state specific to individual simulate runs
 	currentTimespan: TimeSpan;
 	numSamples: number;
+	solverStepSize: number;
 	method: string;
 	forecastId: string; // Completed run's Id
 	baseForecastId: string; // Simulation without intervention
@@ -45,6 +46,7 @@ export const SimulateCiemssOperation: Operation = {
 			chartSettings: null,
 			currentTimespan: { start: 0, end: 100 },
 			numSamples: 100,
+			solverStepSize: 0.1,
 			method: 'dopri5',
 			forecastId: '',
 			baseForecastId: '',

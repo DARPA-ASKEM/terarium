@@ -1,15 +1,16 @@
 import { CiemssMethodOptions } from '@/services/models/simulation-service';
-import { ChartSetting, CiemssPresetTypes } from '@/types/common';
+import { ChartSetting } from '@/types/common';
 import { Operation, WorkflowOperationTypes, BaseState } from '@/types/workflow';
 import calibrateEnsembleCiemss from '@assets/svg/operator-images/calibrate-ensemble-probabilistic.svg';
 
-const DOCUMENTATION_URL = 'https://github.com/ciemss/pyciemss/blob/main/pyciemss/interfaces.py#L156';
+const DOCUMENTATION_URL = 'https://documentation.terarium.ai/simulation/calibrate-ensemble/';
 
 export const speedPreset = Object.freeze({
 	numSamples: 1,
 	method: CiemssMethodOptions.euler,
 	numIterations: 10,
-	learningRate: 0.1
+	learningRate: 0.1,
+	stepSize: 0.1
 });
 
 export const qualityPreset = Object.freeze({
@@ -20,7 +21,6 @@ export const qualityPreset = Object.freeze({
 });
 export interface EnsembleCalibrateExtraCiemss {
 	numParticles: number; // The number of particles to use for the inference algorithm. https://github.com/ciemss/pyciemss/blob/1fc62b0d4b0870ca992514ad7a9b7a09a175ce44/pyciemss/interfaces.py#L225
-	presetType: CiemssPresetTypes;
 	solverMethod: CiemssMethodOptions;
 	numIterations: number;
 	endTime: number;
@@ -71,6 +71,7 @@ export const CalibrateEnsembleCiemssOperation: Operation = {
 	imageUrl: calibrateEnsembleCiemss,
 	inputs: [
 		{ type: 'datasetId', label: 'Dataset' },
+		{ type: 'modelConfigId', label: 'Model configuration' },
 		{ type: 'modelConfigId', label: 'Model configuration' }
 	],
 	outputs: [{ type: 'datasetId' }],
@@ -89,7 +90,6 @@ export const CalibrateEnsembleCiemssOperation: Operation = {
 				solverMethod: speedPreset.method,
 				numParticles: speedPreset.numSamples,
 				numIterations: speedPreset.numIterations,
-				presetType: CiemssPresetTypes.Fast,
 				endTime: 100,
 				stepSize: 1,
 				learningRate: speedPreset.learningRate

@@ -17,6 +17,7 @@
 				@blur="onBlur"
 				@input="updateValue"
 				@keydown.space.stop
+				autocomplete="off"
 			/>
 		</main>
 		<aside v-if="getErrorMessage"><i class="pi pi-exclamation-circle" /> {{ getErrorMessage }}</aside>

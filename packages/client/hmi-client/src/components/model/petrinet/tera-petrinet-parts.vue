@@ -7,6 +7,7 @@
 			</template>
 			<tera-model-part
 				v-if="!isEmpty(mmt.initials)"
+				:part-type="PartType.STATE"
 				:items="stateList"
 				:collapsed-items="collapsedInitials"
 				:feature-config="featureConfig"
@@ -21,6 +22,7 @@
 			</template>
 			<tera-model-part
 				v-if="!isEmpty(mmt.parameters)"
+				:part-type="PartType.PARAMETER"
 				:items="parameterList"
 				:collapsed-items="collapsedParameters"
 				:feature-config="featureConfig"
@@ -45,6 +47,7 @@
 				<tera-input-text class="ml-auto" placeholder="Filter" v-model="observablesFilter" />
 			</template>
 			<tera-model-part
+				:part-type="PartType.OBSERVABLE"
 				v-if="!isEmpty(observables)"
 				:items="observablesList"
 				:feature-config="featureConfig"
@@ -58,6 +61,7 @@
 				<tera-input-text class="ml-auto" placeholder="Filter" v-model="transitionsFilter" />
 			</template>
 			<tera-model-part
+				:part-type="PartType.TRANSITION"
 				v-if="!isEmpty(transitions) && !isEmpty(mmt.templates)"
 				:items="transitionsList"
 				:collapsed-items="collapsedTemplates"
@@ -83,7 +87,7 @@
 			</template>
 			<tera-model-part
 				v-if="time"
-				is-time-part
+				:part-type="PartType.TIME"
 				:items="timeList"
 				:feature-config="featureConfig"
 				@update-item="$emit('update-time', $event)"

@@ -7,19 +7,18 @@
 		@update:selection="onSelection"
 		v-bind="$attrs"
 	>
-		<div :tabName="StratifyTabs.Wizard">
+		<div :tabName="StratifyTabs.Wizard" class="input-section">
 			<tera-drilldown-section class="px-3 wizard-section">
 				<template #header-controls-left>
 					<section>
 						<h5>Stratification settings</h5>
-						<p>The model will be stratified with the following settings.</p>
 						<p v-if="node.state.hasCodeBeenRun" class="code-executed-warning">
 							Note: Code has been executed which may not be reflected here.
 						</p>
 					</section>
 				</template>
 				<template #header-controls-right>
-					<Button size="small" severity="secondary" outlined label="Reset" @click="resetModel" />
+					<Button size="small" severity="secondary" outlined label="Reset" @click="resetModel" class="mr-1" />
 					<Button
 						:loading="isStratifyInProgress"
 						:label="isStratifyInProgress ? 'Loading...' : 'Stratify'"
@@ -37,27 +36,25 @@
 		</div>
 		<div :tabName="StratifyTabs.Notebook">
 			<tera-drilldown-section class="notebook-section">
-				<div class="toolbar">
-					<tera-notebook-jupyter-input
-						:kernel-manager="kernelManager"
-						:default-options="sampleAgentQuestions"
-						:context-language="'python3'"
-						@llm-output="(data: any) => processLLMOutput(data)"
-						@llm-thought-output="(data: any) => llmThoughts.push(data)"
-						@question-asked="updateLlmQuery"
-					>
-						<template #toolbar-right-side>
-							<Button
-								:loading="isStratifyInProgress"
-								:label="isStratifyInProgress ? 'Loading...' : 'Run'"
-								size="small"
-								icon="pi pi-play"
-								@click="runCodeStratify"
-								:disabled="isEmpty(codeText)"
-							/>
-						</template>
-					</tera-notebook-jupyter-input>
-				</div>
+				<tera-notebook-jupyter-input
+					:kernel-manager="kernelManager"
+					:default-options="sampleAgentQuestions"
+					:context-language="'python3'"
+					@llm-output="(data: any) => processLLMOutput(data)"
+					@llm-thought-output="(data: any) => llmThoughts.push(data)"
+					@question-asked="updateLlmQuery"
+				>
+					<template #toolbar-right-side>
+						<Button
+							:loading="isStratifyInProgress"
+							:label="isStratifyInProgress ? 'Loading...' : 'Run'"
+							size="small"
+							icon="pi pi-play"
+							@click="runCodeStratify"
+							:disabled="isEmpty(codeText)"
+						/>
+					</template>
+				</tera-notebook-jupyter-input>
 				<v-ace-editor
 					v-model:value="codeText"
 					@init="initialize"
@@ -82,7 +79,7 @@
 					:value="executeResponse.value"
 					:traceback="executeResponse.traceback"
 				/>
-				<tera-model v-else-if="outputAmr" is-workflow is-save-for-reuse :assetId="outputAmr.id" @on-save="updateNode" />
+				<tera-model v-else-if="outputAmr" is-workflow is-save-for-reuse :assetId="outputAmr.id" />
 				<template v-else>
 					<tera-progress-spinner v-if="isStratifyInProgress" is-centered :font-size="2">
 						Processing...
@@ -123,7 +120,7 @@ import { blankStratifyGroup, StratifyGroup, StratifyOperationStateMira } from '.
 const props = defineProps<{
 	node: WorkflowNode<StratifyOperationStateMira>;
 }>();
-const emit = defineEmits(['append-output', 'update-state', 'close', 'select-output', 'update-output']);
+const emit = defineEmits(['append-output', 'update-state', 'close', 'select-output']);
 
 enum StratifyTabs {
 	Wizard = 'Wizard',
@@ -292,6 +289,9 @@ const getStatesAndParameters = (amrModel: Model) => {
 	const model = amrModel.model;
 	const semantics = amrModel.semantics;
 
+	const rates = semantics!.ode.rates || [];
+	const rateExpressions = rates.map((r) => r.expression);
+
 	if ((modelFramework === AMRSchemaNames.PETRINET || modelFramework === AMRSchemaNames.STOCKFLOW) && semantics?.ode) {
 		const { initials, parameters, observables } = semantics.ode;
 
@@ -299,7 +299,15 @@ const getStatesAndParameters = (amrModel: Model) => {
 			modelStates.push(i.target);
 		});
 		parameters?.forEach((p) => {
-			modelParameters.push(p.id);
+			// Parameters should be used within transition expressions for them to be "stratifiable"
+			// FIXME: This would be more accurate if we parse and check rate expressions' free variables
+			// instead of just the rate expression string
+			for (let i = 0; i < rateExpressions.length; i++) {
+				if (rateExpressions[i]?.includes(p.id)) {
+					modelParameters.push(p.id);
+					break;
+				}
+			}
 		});
 		observables?.forEach((o) => {
 			modelStates.push(o.id);
@@ -432,15 +440,6 @@ const hasCodeChange = () => {
 };
 const checkForCodeChange = debounce(hasCodeChange, 100);
 
-function updateNode(model: Model) {
-	if (!model) return;
-	outputAmr.value = model;
-	const outputPort = cloneDeep(props.node.outputs?.find((port) => port.value?.[0] === model.id));
-	if (!outputPort) return;
-	outputPort.label = model.header.name;
-	emit('update-output', outputPort);
-}
-
 watch(
 	() => codeText.value,
 	() => checkForCodeChange()
@@ -487,6 +486,15 @@ onUnmounted(() => {
 </script>
 
 <style scoped>
+/* set width of wizard section */
+:deep(main):has(.input-section) {
+	grid-template-columns: auto;
+}
+/* set width of notebook section */
+:deep(main):has(.notebook-section) {
+	grid-template-columns: 40% 60%;
+}
+
 .notebook-section:deep(main) {
 	gap: var(--gap-2);
 	position: relative;
@@ -507,6 +515,6 @@ onUnmounted(() => {
 
 .wizard-section {
 	background-color: var(--surface-disabled);
-	border-right: 1px solid var(--surface-border-dark);
+	border-right: 1px solid var(--surface-border-light);
 }
 </style>
