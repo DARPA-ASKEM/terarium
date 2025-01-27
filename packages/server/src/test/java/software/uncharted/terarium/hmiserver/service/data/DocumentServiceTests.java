@@ -55,7 +55,7 @@ public class DocumentServiceTests extends TerariumApplicationTests {
 	}
 
 	static Grounding createGrounding(final String key) {
-		final DKG dkg = new DKG("curie", "maria", "", null, null);
+		final DKG dkg = new DKG("curie:test", "maria", "", null, null);
 		final Grounding grounding = new Grounding(dkg);
 		final Map<String, String> context = new HashMap<>();
 		context.put("hello", "world-" + key);
