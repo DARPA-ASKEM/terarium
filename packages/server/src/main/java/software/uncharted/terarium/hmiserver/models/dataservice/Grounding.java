@@ -5,9 +5,7 @@ import io.hypersistence.utils.hibernate.type.json.JsonType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import java.io.Serial;
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -32,7 +30,7 @@ public class Grounding extends TerariumEntity {
 	/** Ontological identifier per DKG */
 	@Type(JsonType.class)
 	@Column(columnDefinition = "json")
-	private List<DKG> identifiers;
+	private Map<String, String> identifiers;
 
 	/** (Optional) Additional context that informs the grounding */
 	@TSOptional
@@ -42,14 +40,15 @@ public class Grounding extends TerariumEntity {
 
 	/** Default constructor */
 	public Grounding() {
-		this.identifiers = new ArrayList<>();
+		this.identifiers = new HashMap<>();
 		this.context = new HashMap<>();
 	}
 
 	/** Constructor from a DKG */
 	public Grounding(DKG dkg) {
-		this.identifiers = new ArrayList<>();
-		this.identifiers.add(dkg);
+		this.identifiers = new HashMap<>();
+		final String[] curie = dkg.getCurie().split(":");
+		this.identifiers.put(curie[0], curie[1]);
 		this.context = new HashMap<>();
 	}
 
@@ -58,8 +57,8 @@ public class Grounding extends TerariumEntity {
 		final Grounding clone = new Grounding();
 
 		if (this.identifiers != null && !this.identifiers.isEmpty()) {
-			clone.identifiers = new ArrayList<>();
-			clone.identifiers.addAll(this.identifiers);
+			clone.identifiers = new HashMap<>();
+			clone.identifiers.putAll(this.identifiers);
 		}
 		if (this.context != null && !this.context.isEmpty()) {
 			clone.context = new HashMap<>();
