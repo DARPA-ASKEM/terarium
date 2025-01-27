@@ -27,7 +27,7 @@
 				</template>
 			</Toolbar>
 			<figure ref="graphElement" class="graph-element"></figure>
-			<ul class="legend" v-if="!isEmpty(graphLegendLabels)">
+			<ul class="legend text-sm" v-if="!isEmpty(graphLegendLabels)">
 				<li v-for="(label, index) in graphLegendLabels" :key="index">
 					<div class="legend-circle" :style="`background: ${graphLegendColors[index]}`" />
 					{{ label }}
@@ -364,5 +364,6 @@ ul.legend {
 	display: inline-block;
 	height: 1rem;
 	width: 1rem;
+	margin-right: var(--gap-1);
 }
 </style>
