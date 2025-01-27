@@ -20,7 +20,13 @@
 						<p>{{ blankMessage }}.</p>
 						<span class="flex gap-2">
 							<tera-pyciemss-cancel-button :simulation-run-id="cancelRunIds" />
-							<Button label="Run" icon="pi pi-play" @click="run" :loading="inProgressForecastRun" />
+							<Button
+								label="Run"
+								icon="pi pi-play"
+								@click="run"
+								:loading="inProgressForecastRun"
+								:disabled="isRunDisabled"
+							/>
 						</span>
 					</div>
 					<div class="form-section" v-if="isSidebarOpen">
@@ -463,6 +469,7 @@ import { useDrilldownChartSize } from '@/composables/useDrilldownChartSize';
 import { SimulateCiemssOperationState } from './simulate-ciemss-operation';
 import { mergeResults, renameFnGenerator } from '../calibrate-ciemss/calibrate-utils';
 import { qualityPreset, speedPreset, usePreparedChartInputs } from './simulate-utils';
+import { isInterventionPolicyBlank } from '../intervention-policy/intervention-policy-operation';
 
 const props = defineProps<{
 	node: WorkflowNode<SimulateCiemssOperationState>;
@@ -607,6 +614,12 @@ const setPresetValues = (data: CiemssPresetTypes) => {
 
 const groupedInterventionOutputs = computed(() =>
 	_.groupBy(flattenInterventionData(interventionPolicy.value?.interventions ?? []), 'appliedTo')
+);
+
+const isRunDisabled = computed(
+	() =>
+		// run is disable if the attached intervention policy is blank
+		!!interventionPolicy.value && isInterventionPolicyBlank(interventionPolicy.value)
 );
 
 const preparedChartInputs = usePreparedChartInputs(props, runResults, runResultsSummary, pyciemssMap);
