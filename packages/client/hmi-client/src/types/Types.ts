@@ -134,7 +134,6 @@ export interface CsvColumnStats {
 export interface Grounding extends TerariumEntity {
     identifiers: { [index: string]: string };
     context?: { [index: string]: string };
-    empty: boolean;
 }
 
 export interface PresignedURL {
