@@ -181,7 +181,7 @@ public class TaskUtilities {
 			.collect(Collectors.toMap(TaskUtilities::getSearchTerm, part -> part));
 
 		// Perform the DKG search for all search terms at once
-		List<String> searchTerms = new ArrayList<>(searchTermToPartMap.keySet());
+		final List<String> searchTerms = new ArrayList<>(searchTermToPartMap.keySet());
 		List<DKG> listDKG = new ArrayList<>();
 		try {
 			listDKG = dkgService.knnSearchEpiDKG(0, 100, 1, searchTerms, null);
@@ -189,9 +189,10 @@ public class TaskUtilities {
 			log.warn("Unable to find DKG for semantics: {}", searchTerms, e);
 		}
 
-		// Map the DKG results back to the corresponding parts
-		for (DKG dkg : listDKG) {
-			String searchTerm = dkg.getCurie(); // Assuming the search term is stored in the Curie field
+		// Map the DKG results back to the corresponding parts using an index
+		for (int i = 0; i < listDKG.size(); i++) {
+			DKG dkg = listDKG.get(i);
+			String searchTerm = searchTerms.get(i);
 			GroundedSemantic part = searchTermToPartMap.get(searchTerm);
 			if (part != null) {
 				part.setGrounding(new Grounding(dkg));
