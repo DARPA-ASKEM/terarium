@@ -67,4 +67,8 @@ public class Grounding extends TerariumEntity {
 
 		return clone;
 	}
+
+	public Boolean isEmpty() {
+		return this.identifiers.isEmpty() && this.context.isEmpty();
+	}
 }

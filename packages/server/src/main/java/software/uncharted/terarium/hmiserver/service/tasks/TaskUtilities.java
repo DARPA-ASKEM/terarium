@@ -167,7 +167,7 @@ public class TaskUtilities {
 	public static void performDKGSearchAndSetGrounding(DKGService dkgService, List<? extends GroundedSemantic> parts) {
 		// First check if we have a curated grounding match for the parts
 		for (GroundedSemantic part : parts) {
-			if (part == null || part.getGrounding() != null) continue;
+			if (part == null || !isGroundingNonExistent(part.getGrounding())) continue;
 			final Grounding curatedGrounding = ContextMatcher.searchBest(getSearchTerm(part));
 			if (curatedGrounding != null) {
 				part.setGrounding(curatedGrounding);
@@ -177,7 +177,10 @@ public class TaskUtilities {
 		// Create a map to store the search terms and their corresponding parts
 		Map<String, GroundedSemantic> searchTermToPartMap = parts
 			.stream()
-			.filter(part -> part != null && part.getId() != null && !part.getId().isBlank() && part.getGrounding() == null)
+			.filter(
+				part ->
+					part != null && part.getId() != null && !part.getId().isBlank() && isGroundingNonExistent(part.getGrounding())
+			)
 			.collect(Collectors.toMap(TaskUtilities::getSearchTerm, part -> part));
 
 		// Perform the DKG search for all search terms at once
@@ -205,5 +208,9 @@ public class TaskUtilities {
 	 */
 	private static String getSearchTerm(GroundedSemantic part) {
 		return (part.getDescription() == null || part.getDescription().isBlank()) ? part.getName() : part.getDescription();
+	}
+
+	private static Boolean isGroundingNonExistent(Grounding grounding) {
+		return grounding == null || grounding.isEmpty();
 	}
 }
