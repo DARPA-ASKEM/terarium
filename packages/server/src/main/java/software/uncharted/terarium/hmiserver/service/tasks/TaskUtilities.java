@@ -168,7 +168,7 @@ public class TaskUtilities {
 		// First check if we have a curated grounding match for the parts
 		for (GroundedSemantic part : parts) {
 			if (part == null || !isGroundingNonExistent(part.getGrounding())) continue;
-			final Grounding curatedGrounding = ContextMatcher.searchBest(getSearchTerm(part));
+			final Grounding curatedGrounding = ContextMatcher.searchBest(getNameSearchTerm(part));
 			if (curatedGrounding != null) {
 				part.setGrounding(curatedGrounding);
 			}
@@ -203,13 +203,17 @@ public class TaskUtilities {
 		}
 	}
 
-	/**
-	 * Get the search term for a grounded semantic part. This is the description if it exists, otherwise the name.
-	 */
+	/** Get the search term for a grounded semantic part. This is the description if it exists, otherwise the name. */
 	private static String getSearchTerm(GroundedSemantic part) {
 		return (part.getDescription() == null || part.getDescription().isBlank()) ? part.getName() : part.getDescription();
 	}
 
+	/** Get the search term for a grounded semantic part. This is the name if it exists, otherwise the id. */
+	private static String getNameSearchTerm(GroundedSemantic part) {
+		return (part.getName() == null || part.getName().isBlank()) ? part.getId() : part.getName();
+	}
+
+	/** Check if a grounding is non-existent. */
 	private static Boolean isGroundingNonExistent(Grounding grounding) {
 		return grounding == null || grounding.isEmpty();
 	}

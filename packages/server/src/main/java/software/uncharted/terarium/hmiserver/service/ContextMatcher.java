@@ -74,15 +74,24 @@ public class ContextMatcher {
 	 * @return A SearchMatch object with the key, score, and matched terms.
 	 */
 	private static SearchMatch calculateScore(String key, String term) {
-		double score = 0;
+		// Handle short strings separately
+		if (key.length() <= 2 || term.length() <= 2) {
+			String shortKey = key.toLowerCase();
+			String shortTerm = term.toLowerCase();
 
-		int distance = levenshteinDistance(term.toLowerCase(), key.toLowerCase());
-		boolean matched = distance <= Math.min(3, key.length() / 2);
-
-		if (matched) {
-			score = 1.0 / (1.0 + distance);
+			// If one is contained in the other, give it a good score
+			if (shortKey.contains(shortTerm) || shortTerm.contains(shortKey)) {
+				return new SearchMatch(key, 0.8);
+			}
 		}
 
+		int distance = levenshteinDistance(term.toLowerCase(), key.toLowerCase());
+
+		// More lenient threshold for short strings
+		int threshold = key.length() <= 3 ? 1 : Math.min(3, key.length() / 2);
+		boolean matched = distance <= threshold;
+
+		double score = matched ? 1.0 / (1.0 + distance) : 0;
 		return new SearchMatch(key, score);
 	}
 
