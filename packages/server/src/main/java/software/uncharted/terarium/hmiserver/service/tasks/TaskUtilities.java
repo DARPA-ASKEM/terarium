@@ -8,6 +8,7 @@ import io.micrometer.observation.annotation.Observed;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
@@ -173,13 +174,14 @@ public class TaskUtilities {
 			}
 		}
 
-		// Then do a DKD search for the parts that don't have a grounding
-		final List<String> searchTerms = parts
+		// Create a map to store the search terms and their corresponding parts
+		Map<String, GroundedSemantic> searchTermToPartMap = parts
 			.stream()
 			.filter(part -> part != null && part.getId() != null && !part.getId().isBlank() && part.getGrounding() == null)
-			.map(TaskUtilities::getSearchTerm)
-			.collect(Collectors.toList());
+			.collect(Collectors.toMap(TaskUtilities::getSearchTerm, part -> part));
 
+		// Perform the DKG search for all search terms at once
+		List<String> searchTerms = new ArrayList<>(searchTermToPartMap.keySet());
 		List<DKG> listDKG = new ArrayList<>();
 		try {
 			listDKG = dkgService.knnSearchEpiDKG(0, 100, 1, searchTerms, null);
@@ -187,10 +189,13 @@ public class TaskUtilities {
 			log.warn("Unable to find DKG for semantics: {}", searchTerms, e);
 		}
 
-		// I'm not sure that parts.get(i) fetch the appropriate part?
-		for (int i = 0; i < listDKG.size(); i++) {
-			DKG dkg = listDKG.get(i);
-			parts.get(i).setGrounding(new Grounding(dkg));
+		// Map the DKG results back to the corresponding parts
+		for (DKG dkg : listDKG) {
+			String searchTerm = dkg.getCurie(); // Assuming the search term is stored in the Curie field
+			GroundedSemantic part = searchTermToPartMap.get(searchTerm);
+			if (part != null) {
+				part.setGrounding(new Grounding(dkg));
+			}
 		}
 	}
 
