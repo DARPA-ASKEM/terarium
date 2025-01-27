@@ -85,9 +85,9 @@
 			:throw-on-error="false"
 		/>
 		<span v-if="!isTimePart" class="description" :class="{ 'mt-1': showDescription }">
-			<template v-if="!featureConfig.isPreview">{{ descriptionText }}</template>
+			<template v-if="featureConfig.isPreview">{{ descriptionText }}</template>
 			<tera-input-text
-				v-if="showDescription"
+				v-else-if="showDescription"
 				placeholder="Add a description"
 				v-model="descriptionText"
 				@change="$emit('update-item', { key: 'description', value: descriptionText })"
