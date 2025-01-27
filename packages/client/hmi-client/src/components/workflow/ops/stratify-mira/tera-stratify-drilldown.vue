@@ -209,7 +209,6 @@ const stratifyModel = () => {
 		if (modelParameters.includes(v)) parametersToStratify.push(v);
 	});
 
-	let executedCode = '';
 	const messageContent = {
 		key: strataOption.name,
 		strata: strataOption.groupLabels.split(',').map((d) => d.trim()),
@@ -222,7 +221,7 @@ const stratifyModel = () => {
 		kernelManager
 			.sendMessage('stratify_request', messageContent)
 			.register('stratify_response', (data: any) => {
-				executedCode = data.content.executed_code;
+				const executedCode = data.content.executed_code;
 				saveCodeToState(executedCode, false);
 			})
 			.register('model_preview', async (data: any) => {
