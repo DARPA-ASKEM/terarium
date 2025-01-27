@@ -132,7 +132,7 @@ export interface CsvColumnStats {
 }
 
 export interface Grounding extends TerariumEntity {
-    identifiers: DKG[];
+    identifiers: { [index: string]: string };
     context?: { [index: string]: string };
 }
 
