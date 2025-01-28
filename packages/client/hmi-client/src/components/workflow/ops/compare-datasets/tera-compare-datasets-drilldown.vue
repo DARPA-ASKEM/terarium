@@ -9,7 +9,7 @@
 				class="input-config"
 				v-model:is-open="isInputSettingsOpen"
 				header="Compare settings"
-				content-width="440px"
+				content-width="400px"
 			>
 				<template #content>
 					<tera-drilldown-section class="px-3">
@@ -22,13 +22,6 @@
 							option-value="value"
 							@change="outputPanelBehavior"
 						/>
-						<!-- Pascale asked me to hide this until the feature is implemented -->
-						<!-- <tera-checkbox
-							class="pt-2"
-							v-model="isSimulationsFromSameModel"
-							label="All simulations are from the same model"
-							disabled
-						/> -->
 						<tera-checkbox
 							class="mt-2 mb-4"
 							v-model="areSimulationsFromSameModel"
@@ -107,7 +100,35 @@
 								<p class="text-center">Select variables of interest in the output panel</p>
 							</div>
 						</AccordionTab>
-						<AccordionTab header="Comparison table"> </AccordionTab>
+						<AccordionTab header="Impact of intervention metrics" v-if="showATETable">
+							<p class="mb-3">
+								The average treatment effect (ATE) estimates the impact of a policy on the outcome in a given
+								population; it is the mean difference in the outcome between those who were and weren't treated. Larger
+								values of ATE are better, meaning a very impactful policy. Reference:
+								<a target="_blank" rel="noopener noreferrer" href="https://pmc.ncbi.nlm.nih.gov/articles/PMC6794006/">
+									https://pmc.ncbi.nlm.nih.gov/articles/PMC6794006/
+								</a>
+							</p>
+							<DataTable :value="ateTable">
+								<Column field="policyName" header="Intervention policy" />
+								<Column
+									v-for="variableName in [...variableNames, 'overall']"
+									:field="variableName"
+									:header="variableName === 'overall' ? 'Overall' : variableName"
+									sortable
+									:key="variableName"
+								>
+									<template #body="{ data, field }">
+										<div class="flex gap-2">
+											<div>{{ displayNumber(data[field]) }}</div>
+											<div v-if="showATEErrors" class="error ml-auto">
+												± {{ displayNumber(data[`${field}_error`]) }}
+											</div>
+										</div>
+									</template>
+								</Column>
+							</DataTable>
+						</AccordionTab>
 					</template>
 					<template v-else>
 						<AccordionTab header="Ranking results">
@@ -166,21 +187,24 @@
 						>
 							<!-- plot options -->
 							<div class="plot-options">
-								<p class="mb-2">How do you want to plot the values?</p>
-								<div v-for="option in plotOptions" class="flex align-items-center" :key="option.value">
+								<p>How do you want to plot the values?</p>
+								<div v-for="option in plotOptions" class="flex align-items-center gap-2" :key="option.value">
 									<RadioButton
 										v-model="knobs.selectedPlotType"
 										:value="option.value"
 										name="plotValues"
 										@change="onChangeImpactComparison"
 									/>
-									<label class="pl-2 py-1" :for="option.value">{{ option.label }}</label>
+									<label :for="option.value">{{ option.label }}</label>
 								</div>
 							</div>
 						</tera-chart-settings>
 						<Divider />
 						<tera-chart-settings-quantiles :settings="chartSettings" @update-options="updateQauntilesOptions" />
 						<Divider />
+						<h5>Impact of intervention metrics</h5>
+						<tera-checkbox v-model="showATETable" label="Average treatment effect (ATE)" />
+						<tera-checkbox v-if="showATETable" v-model="showATEErrors" label="Show errors" />
 					</div>
 				</template>
 			</tera-slider-panel>
@@ -213,6 +237,10 @@ import { useChartSettings } from '@/composables/useChartSettings';
 import { useDrilldownChartSize } from '@/composables/useDrilldownChartSize';
 import { useCharts, type ChartData } from '@/composables/useCharts';
 import { DataArray } from '@/services/models/simulation-service';
+import DataTable from 'primevue/datatable';
+import Column from 'primevue/column';
+import { mean, stddev } from '@/utils/stats';
+import { displayNumber } from '@/utils/number';
 import TeraCriteriaOfInterestCard from './tera-criteria-of-interest-card.vue';
 import {
 	blankCriteriaOfInterest,
@@ -243,6 +271,10 @@ const datasetResults = ref<{
 const modelConfigurations = ref<ModelConfiguration[]>([]);
 const interventionPolicies = ref<InterventionPolicy[]>([]);
 const modelConfigIdToInterventionPolicyIdMap = ref<Record<string, string[]>>({});
+
+const showATETable = ref(true);
+const showATEErrors = ref(false);
+const ateTable = ref<any[]>([]);
 
 const plotOptions = [
 	{ label: 'Raw values', value: PlotValue.VALUE },
@@ -347,13 +379,62 @@ function outputPanelBehavior() {
 	}
 }
 
-onMounted(() => {
+function constructATETable() {
+	const means: Record<string, number> = {};
+	const meanErrors: Record<string, number> = {};
+
+	datasetResults.value?.summaryResults.forEach((summaryResult) => {
+		Object.keys(summaryResult[0]).forEach((key) => {
+			if (!key.includes('_mean:')) return;
+			const values = summaryResult.map((row) => row[key]);
+			means[key] = mean(values);
+			meanErrors[key] = stddev(values) / Math.sqrt(values.length);
+		});
+	});
+
+	const meanKeyNames = Object.keys(means);
+
+	datasets.value.forEach((dataset, index) => {
+		if (index === baselineDatasetIndex.value) return;
+
+		const ateRow: Record<string, number> = {};
+		const ateValues: number[] = [];
+
+		variableNames.value.forEach((variableName) => {
+			const potentialKeys = [
+				`${variableName}_state_mean:${index}`,
+				`persistent_${variableName}_param_mean:${index}`,
+				`${variableName}_observable_state_mean:${index}`
+			];
+
+			potentialKeys.forEach((key) => {
+				if (!ateRow[variableName] && meanKeyNames.includes(key)) {
+					const baselineKey = `${key.slice(0, -1)}${baselineDatasetIndex.value}`;
+
+					const ate = means[key] - means[baselineKey];
+					const ateError = Math.sqrt(meanErrors[key] ** 2 + meanErrors[baselineKey] ** 2);
+
+					ateRow[variableName] = ate;
+					ateRow[`${variableName}_error`] = ateError;
+
+					ateValues.push(ate);
+				}
+			});
+		});
+		ateRow.overall = mean(ateValues);
+		ateRow.overall_error = stddev(ateValues) / Math.sqrt(ateValues.length);
+
+		ateTable.value.push({ policyName: dataset.name, ...ateRow });
+	});
+}
+
+onMounted(async () => {
 	const state = cloneDeep(props.node.state);
 	knobs.value = Object.assign(knobs.value, state);
 
 	outputPanelBehavior();
 
-	initialize(
+	await initialize(
 		props.node,
 		knobs,
 		isFetchingDatasets,
@@ -369,6 +450,8 @@ onMounted(() => {
 		rankingCriteriaCharts,
 		rankingResultsChart
 	);
+
+	constructATETable();
 });
 
 watch(
@@ -386,10 +469,6 @@ watch(
 </script>
 
 <style scoped>
-label {
-	padding: var(--gap-2) 0;
-}
-
 .output-settings-panel {
 	padding: var(--gap-4);
 	display: flex;
@@ -403,6 +482,9 @@ label {
 }
 
 .plot-options {
+	display: flex;
+	flex-direction: column;
+	gap: var(--gap-2);
 	padding: var(--gap-3);
 	background: var(--surface-200);
 	border-radius: var(--border-radius);
@@ -422,5 +504,18 @@ label {
 	background: var(--surface-100);
 	color: var(--text-color-secondary);
 	border-radius: var(--border-radius);
+}
+
+/* See if this rule should be applied to all tables, it makes a lot of sense */
+:deep(th) {
+	padding: var(--gap-4);
+}
+
+:deep(td) {
+	white-space: nowrap;
+}
+
+.error {
+	color: var(--text-color-secondary);
 }
 </style>
