@@ -2,7 +2,7 @@ package software.uncharted.terarium.hmiserver.models.dataservice.modelparts.sema
 
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import software.uncharted.terarium.hmiserver.annotations.TSOptional;
-import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.ModelGrounding;
+import software.uncharted.terarium.hmiserver.models.dataservice.Grounding;
 
 @JsonPropertyOrder({ "id", "name", "description", "grounding" })
 public interface GroundedSemantic {
@@ -10,10 +10,10 @@ public interface GroundedSemantic {
 	void setId(String id);
 
 	@TSOptional
-	ModelGrounding getGrounding();
+	Grounding getGrounding();
 
 	@TSOptional
-	void setGrounding(ModelGrounding grounding);
+	void setGrounding(Grounding grounding);
 
 	@TSOptional
 	String getName();

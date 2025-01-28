@@ -17,17 +17,10 @@ import software.uncharted.terarium.hmiserver.models.mira.DKG;
 
 public class ContextMatcher {
 
-	@Value
-	static class CuratedGrounding {
-
-		Map<String, String> identifiers;
-		Map<String, String> context;
-	}
-
 	private static final String CONFIG_FILE = "curated-context.json";
-	private static final Map<String, CuratedGrounding> configData = loadConfig();
+	private static final Map<String, Grounding> configData = loadConfig();
 
-	private static Map<String, CuratedGrounding> loadConfig() {
+	private static Map<String, Grounding> loadConfig() {
 		try (InputStream inputStream = ContextMatcher.class.getClassLoader().getResourceAsStream(CONFIG_FILE)) {
 			if (inputStream == null) {
 				throw new RuntimeException("Configuration file not found: " + CONFIG_FILE);
@@ -41,7 +34,7 @@ public class ContextMatcher {
 
 	@Value
 	static class SearchMatch {
-		
+
 		String key;
 		double score;
 	}
@@ -81,17 +74,26 @@ public class ContextMatcher {
 	 * @return A SearchMatch object with the key, score, and matched terms.
 	 */
 	private static SearchMatch calculateScore(String key, String term) {
-    double score = 0; 
+		// Handle short strings separately
+		if (key.length() <= 2 || term.length() <= 2) {
+			String shortKey = key.toLowerCase();
+			String shortTerm = term.toLowerCase();
 
-    int distance = levenshteinDistance(term.toLowerCase(), key.toLowerCase());
-    boolean matched = distance <= Math.min(3, key.length() / 2); 
+			// If one is contained in the other, give it a good score
+			if (shortKey.contains(shortTerm) || shortTerm.contains(shortKey)) {
+				return new SearchMatch(key, 0.8);
+			}
+		}
 
-    if (matched) {
-        score = 1.0 / (1.0 + distance); 
-    }
+		int distance = levenshteinDistance(term.toLowerCase(), key.toLowerCase());
 
-    return new SearchMatch(key, score);
-}
+		// More lenient threshold for short strings
+		int threshold = key.length() <= 3 ? 1 : Math.min(3, key.length() / 2);
+		boolean matched = distance <= threshold;
+
+		double score = matched ? 1.0 / (1.0 + distance) : 0;
+		return new SearchMatch(key, score);
+	}
 
 	/**
 	 * Search for the given terms in the configuration file, with a minimum score of 0.5
@@ -111,19 +113,7 @@ public class ContextMatcher {
 
 		List<Grounding> groundings = new ArrayList<>();
 		for (SearchMatch match : matches) {
-			CuratedGrounding curatedGrounding = configData.get(match.getKey());
-			ArrayList<DKG> identifiers = curatedGrounding
-				.getIdentifiers()
-				.entrySet()
-				.stream()
-				.map(e -> new DKG(e.getKey() + ":" + e.getValue()))
-				.collect(Collectors.toCollection(ArrayList::new));
-			JsonNode context = new ObjectMapper().valueToTree(curatedGrounding.getContext());
-
-			Grounding grounding = new Grounding();
-			grounding.setIdentifiers(identifiers);
-			grounding.setContext(context);
-			groundings.add(grounding);
+			groundings.add(configData.get(match.getKey()));
 		}
 		return groundings;
 	}

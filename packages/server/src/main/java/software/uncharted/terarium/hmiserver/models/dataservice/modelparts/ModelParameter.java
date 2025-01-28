@@ -7,6 +7,7 @@ import lombok.EqualsAndHashCode;
 import software.uncharted.terarium.hmiserver.annotations.AMRSchemaType;
 import software.uncharted.terarium.hmiserver.annotations.TSOptional;
 import software.uncharted.terarium.hmiserver.models.SupportAdditionalProperties;
+import software.uncharted.terarium.hmiserver.models.dataservice.Grounding;
 import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.semantics.GroundedSemantic;
 
 @Data
@@ -29,7 +30,7 @@ public class ModelParameter extends SupportAdditionalProperties implements Seria
 	private Double value;
 
 	@TSOptional
-	private ModelGrounding grounding;
+	private Grounding grounding;
 
 	@TSOptional
 	private ModelDistribution distribution;
