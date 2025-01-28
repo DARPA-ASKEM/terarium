@@ -100,7 +100,7 @@ const getStatus = async (runId: string) => {
 function StuckRequest() {
 	const state = _.cloneDeep(props.node.state);
 	state.isRequestStuck = true;
-	message.value = "Process is stuck in Funman, open node and click 'Stop' to cancel";
+	message.value = "Process is stuck in Funman, open node and click 'Stop' to cancel.";
 	emit('update-state', state);
 }
 
