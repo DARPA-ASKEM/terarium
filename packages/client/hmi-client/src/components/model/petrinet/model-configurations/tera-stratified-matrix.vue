@@ -87,7 +87,7 @@
 								/>
 								<div class="w-full" :class="{ 'hide-content': editableCellStates[cell.row][cell.col] }">
 									<div
-										class="subdue mb-1 flex align-items-center gap-1 w-full justify-content-between"
+										class="subdue text-sm mb-1 flex align-items-center gap-1 w-full justify-content-between"
 										v-if="stratifiedMatrixType !== StratifiedMatrix.Initials"
 									>
 										{{ cell?.content.id }}
