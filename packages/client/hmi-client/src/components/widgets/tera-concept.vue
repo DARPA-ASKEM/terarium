@@ -2,7 +2,7 @@
 	<main>
 		<p>Concept</p>
 
-		<section v-if="isPreview || true">
+		<section v-if="isPreview">
 			<p>{{ identifierName }}</p>
 			<ul>
 				<li v-for="(context, index) in contextNames" :key="index">
