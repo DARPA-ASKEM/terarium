@@ -327,7 +327,12 @@ const updateWorkflowHandler = debounce(_updateWorkflow, 250);
 const saveNodeStateHandler = debounce(async () => {
 	const updatedWorkflow = await workflowService.updateState(wf.value.getId(), nodeStateMap);
 	nodeStateMap.clear();
-	wf.value.update(updatedWorkflow, false);
+
+	(updatedWorkflow as Workflow).nodes.forEach((node) => {
+		if (node.isDeleted === false) {
+			wf.value.updateNodeState(node.id, node.state);
+		}
+	});
 }, 250);
 
 const saveWorkflowHandler = () => {
