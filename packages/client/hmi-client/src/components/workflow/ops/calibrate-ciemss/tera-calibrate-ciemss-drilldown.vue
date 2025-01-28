@@ -1090,7 +1090,7 @@ onMounted(async () => {
 });
 
 watch(
-	() => knobs.value,
+	() => ({ ...knobs.value }),
 	(newValue, oldValue) => {
 		if (_.isEqual(newValue, oldValue)) return;
 		const state = _.cloneDeep(props.node.state);

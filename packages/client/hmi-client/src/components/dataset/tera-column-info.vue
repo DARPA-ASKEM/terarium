@@ -56,8 +56,7 @@
 </template>
 
 <script setup lang="ts">
-/* Copied the structure of tera-model-parts.vue */
-import { ref, watch } from 'vue';
+import { ref } from 'vue';
 import TeraInputText from '@/components/widgets/tera-input-text.vue';
 import TeraBoxplot from '@/components/widgets/tera-boxplot.vue';
 import AutoComplete from 'primevue/autocomplete';
@@ -76,7 +75,7 @@ type ColumnInfo = {
 	stats?: any;
 };
 
-const props = defineProps<{
+defineProps<{
 	column: ColumnInfo;
 }>();
 
@@ -99,15 +98,6 @@ function applyValidConcept() {
 		}
 	}
 }
-
-watch(
-	() => props.column.grounding?.identifiers,
-	(identifiers) => {
-		// console.log(identifiers); // FIXME: Multiple identifiers are held in here after enrichment! Designs have to be updated to handle more.
-		query.value = identifiers?.[0].name ?? ''; // Just show first one for now.
-	},
-	{ immediate: true }
-);
 </script>
 
 <style scoped>
@@ -133,7 +123,6 @@ section.entries {
 		'description description description description description';
 	grid-template-columns: auto max-content max-content max-content max-content;
 	grid-auto-flow: dense;
-	overflow: hidden;
 	gap: var(--gap-1) var(--gap-2);
 	align-items: center;
 	font-size: var(--font-caption);

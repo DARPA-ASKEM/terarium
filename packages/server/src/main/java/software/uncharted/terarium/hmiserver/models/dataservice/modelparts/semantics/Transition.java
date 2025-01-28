@@ -9,7 +9,7 @@ import software.uncharted.terarium.hmiserver.annotations.AMRSchemaType;
 import software.uncharted.terarium.hmiserver.annotations.TSModel;
 import software.uncharted.terarium.hmiserver.annotations.TSOptional;
 import software.uncharted.terarium.hmiserver.models.SupportAdditionalProperties;
-import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.ModelGrounding;
+import software.uncharted.terarium.hmiserver.models.dataservice.Grounding;
 
 @Data
 @EqualsAndHashCode(callSuper = true)
@@ -36,7 +36,7 @@ public class Transition extends SupportAdditionalProperties implements Serializa
 	private String expression;
 
 	@TSOptional
-	private ModelGrounding grounding;
+	private Grounding grounding;
 
 	@TSOptional
 	private Properties properties;
