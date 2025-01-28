@@ -57,7 +57,7 @@ export interface FunmanOperationState extends BaseState {
 	currentProgress: number;
 	notebookHistory: NotebookHistory[];
 	hasCodeRun: boolean;
-	isRequestStuck: boolean;
+	isRequestUnresponsive: boolean;
 }
 
 let timer;
@@ -94,7 +94,7 @@ export const FunmanOperation: Operation = {
 			currentProgress: 0,
 			notebookHistory: [],
 			hasCodeRun: false,
-			isRequestStuck: false
+			isRequestUnresponsive: false
 		};
 		return init;
 	}

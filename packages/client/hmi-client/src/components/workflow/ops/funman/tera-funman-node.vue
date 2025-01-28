@@ -97,9 +97,9 @@ const getStatus = async (runId: string) => {
 	return pollerResults;
 };
 
-function StuckRequest() {
+function RequestUnresponsive() {
 	const state = _.cloneDeep(props.node.state);
-	state.isRequestStuck = true;
+	state.isRequestUnresponsive = true;
 	message.value = "Process is stuck in Funman, open node and click 'Stop' to cancel.";
 	emit('update-state', state);
 }
@@ -131,11 +131,11 @@ watch(
 	() => [inProgressId.value, currentProgress.value],
 	() => {
 		if (inProgressId.value) {
-			timer.value = StartRequestTimer(StuckRequest);
+			timer.value = StartRequestTimer(RequestUnresponsive);
 		} else {
 			message.value = '';
 			const state = _.cloneDeep(props.node.state);
-			state.isRequestStuck = false;
+			state.isRequestUnresponsive = false;
 			emit('update-state', state);
 			clearTimeout(timer.value);
 		}
