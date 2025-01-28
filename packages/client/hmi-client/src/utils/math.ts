@@ -283,3 +283,54 @@ export function calculateUncertaintyRange(value: number, percentage: number): { 
 		max
 	};
 }
+
+/**
+ * Sums the corresponding elements of multiple arrays of numbers.
+ *
+ * @param arrays - An array of arrays of numbers.
+ * @returns A new array where each element is the sum of the corresponding elements of the input arrays.
+ * @throws Will throw an error if the input arrays are not of the same length.
+ */
+export function sumArrays(...arrays: number[][]): number[] {
+	if (arrays.length === 0) {
+		throw new Error('At least one array is required');
+	}
+
+	const length = arrays[0].length;
+	if (!arrays.every((array) => array.length === length)) {
+		throw new Error('All arrays must be of the same length');
+	}
+
+	const result = new Array(length).fill(0);
+	// eslint-disable-next-line
+	for (const array of arrays) {
+		for (let i = 0; i < length; i++) {
+			result[i] += array[i];
+		}
+	}
+
+	return result;
+}
+
+/**
+ * Divides the corresponding elements of two arrays of numbers.
+ *
+ * @param array1 - The first array of numbers.
+ * @param array2 - The second array of numbers.
+ * @returns A new array where each element is the result of dividing the corresponding elements of `array1` by `array2`.
+ * @throws Will throw an error if the input arrays are not of the same length or if division by zero occurs.
+ */
+export function divideArrays(array1: number[], array2: number[]): number[] {
+	if (array1.length !== array2.length) {
+		throw new Error('Arrays must be of the same length');
+	}
+
+	const result = new Array(array1.length);
+	for (let i = 0; i < array1.length; i++) {
+		if (array2[i] === 0) {
+			throw new Error('Division by zero');
+		}
+		result[i] = array1[i] / array2[i];
+	}
+	return result;
+}

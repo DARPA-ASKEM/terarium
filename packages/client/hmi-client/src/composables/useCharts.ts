@@ -41,6 +41,7 @@ import { getModelConfigName } from '@/services/model-configurations';
 import { EnsembleErrorData } from '@/components/workflow/ops/calibrate-ensemble-ciemss/calibrate-ensemble-util';
 import { PlotValue } from '@/components/workflow/ops/compare-datasets/compare-datasets-operation';
 import { DATASET_VAR_NAME_PREFIX } from '@/services/dataset';
+import { divideArrays, sumArrays } from '@/utils/math';
 import { useChartAnnotations } from './useChartAnnotations';
 
 export interface ChartData {
@@ -548,11 +549,25 @@ export function useCharts(
 		Object.keys(selectedVarGroup).forEach((group) => {
 			denominatorVariables[group] = Object.values(data.pyciemssMap).filter((v) => v.endsWith(`_${group}`));
 		});
+		const includeBeforeData = setting.showBeforeAfter && setting.smallMultiples;
 
+		// If show quantiles is on,  normalize group by timepoint data
 		if (setting.showQuantiles) {
-			// Normalize group by timepoint data
-			const resultGroupByTimepoint = [];
-			// Implement
+			const resultGroupByTimepoint: GroupedDataArray = [];
+			(data.resultGroupByTimepoint ?? []).forEach((row) => {
+				const newEntry = { timepoint_id: row.timepoint_id, sample_id: row.sample_id };
+				Object.entries(selectedVarGroup).forEach(([group, variables]) => {
+					// Sum all values for the variables in the same strata group
+					const denominatorValues = sumArrays(...denominatorVariables[group].map((g) => row[g]));
+					variables.forEach((variable) => {
+						newEntry[variable] = divideArrays(row[variable], denominatorValues).map((v) => v * 100);
+						if (includeBeforeData) {
+							newEntry[`${variable}:pre`] = divideArrays(row[`${variable}:pre`], denominatorValues).map((v) => v * 100);
+						}
+					});
+				});
+				resultGroupByTimepoint.push(newEntry);
+			});
 			return { ...data, resultGroupByTimepoint };
 		}
 		// Else, normalize result and resultSummary data
@@ -562,10 +577,13 @@ export function useCharts(
 		data.resultSummary.forEach((row) => {
 			const newEntry = { timepoint_id: row.timepoint_id };
 			Object.entries(selectedVarGroup).forEach(([group, variables]) => {
-				const denominator = denominatorVariables[group].reduce((acc, v) => acc + row[v], 0);
+				const denominator = denominatorVariables[group].reduce((acc, v) => acc + row[`${v}_mean`], 0);
 				variables.forEach((variable) => {
 					const key = `${variable}_mean`;
-					newEntry[key] = row[key] / denominator;
+					newEntry[key] = (row[key] / denominator) * 100;
+					if (includeBeforeData) {
+						newEntry[`${key}:pre`] = (row[`${key}:pre`] / denominator) * 100;
+					}
 				});
 			});
 			resultSummary.push(newEntry);
@@ -578,7 +596,10 @@ export function useCharts(
 			Object.entries(selectedVarGroup).forEach(([group, variables]) => {
 				const denominator = denominatorVariables[group].reduce((acc, v) => acc + row[v], 0);
 				variables.forEach((variable) => {
-					newEntry[variable] = row[variable] / denominator;
+					newEntry[variable] = (row[variable] / denominator) * 100;
+					if (includeBeforeData) {
+						newEntry[`${variable}:pre`] = (row[`${variable}:pre`] / denominator) * 100;
+					}
 				});
 			});
 			result.push(newEntry);
