@@ -395,6 +395,8 @@ async function appendOutput(
 
 	const updatedWorkflow = await workflowService.appendOutput(wf.value.getId(), node.id, outputPort, newState);
 	wf.value.update(updatedWorkflow, false);
+
+	relinkEdges(node);
 }
 
 function updateWorkflowNodeState(node: WorkflowNode<any> | null, state: any) {
