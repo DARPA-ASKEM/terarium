@@ -107,6 +107,7 @@ function StartRequestTimer() {
 
 onUnmounted(() => {
 	poller.stop();
+	clearTimeout(timer.value);
 });
 
 watch(

@@ -13,8 +13,7 @@
 			<tera-progress-spinner v-if="isLoading" :font-size="2" is-centered>
 				<span v-if="!loadingMessage">Processing... </span>
 				<span v-if="loadingProgress">{{ loadingProgress }}% </span>
-				<span v-if="loadingProgress && loadingMessage">{{ loadingMessage }}</span>
-				<span v-if="loadingProgress === 0 && loadingMessage">{{ loadingMessage }}</span>
+				<span v-if="displayMessage">{{ loadingMessage }}</span>
 			</tera-progress-spinner>
 			<div v-else-if="isBlank" class="empty-state">
 				<Vue3Lottie :animationData="EmptySeed" :height="150" :width="150" loop autoplay />
@@ -33,7 +32,7 @@ import { Vue3Lottie } from 'vue3-lottie';
 import EmptySeed from '@/assets/images/lottie-empty-seed.json';
 import TeraProgressSpinner from '../widgets/tera-progress-spinner.vue';
 
-defineProps<{
+const props = defineProps<{
 	isLoading?: boolean;
 	showSlotWhileLoading?: boolean;
 	isBlank?: boolean;
@@ -44,6 +43,7 @@ defineProps<{
 
 const slots = useSlots();
 const hasHeaderSlots = computed(() => !!slots['header-controls-left'] || !!slots['header-controls-right']);
+const displayMessage = computed(() => (props.loadingProgress || props.loadingProgress === 0) && props.loadingMessage);
 
 /* This is for adding a shadow to the header if user has scrolled */
 const main = ref<HTMLElement | null>(null);
