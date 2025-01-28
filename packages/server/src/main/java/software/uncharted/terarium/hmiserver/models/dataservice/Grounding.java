@@ -39,10 +39,17 @@ public class Grounding extends TerariumEntity {
 	@Column(columnDefinition = "json")
 	private Map<String, String> context;
 
+	/** (Optional) Additional context that informs the grounding */
+	@TSOptional
+	@Type(JsonType.class)
+	@Column(columnDefinition = "json")
+	private Map<String, String> modifiers;
+
 	/** Default constructor */
 	public Grounding() {
 		this.identifiers = new HashMap<>();
 		this.context = new HashMap<>();
+		this.modifiers = new HashMap<>();
 	}
 
 	/** Constructor from a DKG */
@@ -51,6 +58,7 @@ public class Grounding extends TerariumEntity {
 		final String[] curie = dkg.getCurie().split(":");
 		this.identifiers.put(curie[0], curie[1]);
 		this.context = new HashMap<>();
+		this.modifiers = new HashMap<>();
 	}
 
 	@Override
@@ -64,6 +72,10 @@ public class Grounding extends TerariumEntity {
 		if (this.context != null && !this.context.isEmpty()) {
 			clone.context = new HashMap<>();
 			clone.context.putAll(this.context);
+		}
+		if (this.modifiers != null && !this.modifiers.isEmpty()) {
+			clone.modifiers = new HashMap<>();
+			clone.modifiers.putAll(this.modifiers);
 		}
 
 		return clone;
