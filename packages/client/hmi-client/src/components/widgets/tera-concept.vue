@@ -1,6 +1,6 @@
 <template>
 	<main>
-		<p>Concept</p>
+		<h6>Concept</h6>
 
 		<section v-if="isPreview">
 			<p>{{ identifierName }}</p>
@@ -77,7 +77,8 @@ watch(
 </script>
 
 <style scoped>
-main > p {
+h6 {
 	color: var(--text-color-subdued);
+	font-size: var(--font-body-small);
 }
 </style>
