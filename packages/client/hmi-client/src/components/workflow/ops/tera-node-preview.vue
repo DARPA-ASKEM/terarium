@@ -79,4 +79,3 @@ const visibleChartSettings = computed(() => {
 	return null;
 });
 </script>
-s
