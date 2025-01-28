@@ -36,7 +36,6 @@
 					/>
 				</template>
 			</span>
-
 			<span v-if="!featureConfig.isPreview && !isTimePart" class="flex ml-auto gap-3">
 				<!-- Three states of description buttons: Hide / Show / Add description -->
 				<Button
