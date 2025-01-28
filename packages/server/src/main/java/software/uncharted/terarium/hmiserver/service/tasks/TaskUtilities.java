@@ -25,14 +25,19 @@ import software.uncharted.terarium.hmiserver.service.data.DKGService;
 @Slf4j
 public class TaskUtilities {
 
-	public static TaskRequest getEnrichAMRTaskRequest(String userId, DocumentAsset document, Model model, UUID projectId)
-		throws IOException {
+	public static TaskRequest getEnrichModelTaskRequest(
+		String userId,
+		DocumentAsset document,
+		Model model,
+		UUID projectId,
+		Boolean overwrite
+	) throws IOException {
 		final ObjectMapper objectMapper = new ObjectMapper();
 
 		final EnrichAmrResponseHandler.Input input = new EnrichAmrResponseHandler.Input();
 		if (document != null) {
 			try {
-				input.setResearchPaper(objectMapper.writeValueAsString(document.getExtractions()));
+				input.setDocument(objectMapper.writeValueAsString(document.getExtractions()));
 			} catch (JsonProcessingException e) {
 				throw new IOException("Unable to serialize document text");
 			}

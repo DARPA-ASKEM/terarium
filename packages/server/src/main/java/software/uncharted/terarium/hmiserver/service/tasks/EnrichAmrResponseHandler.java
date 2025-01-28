@@ -1,8 +1,12 @@
 package software.uncharted.terarium.hmiserver.service.tasks;
 
+import static software.uncharted.terarium.hmiserver.utils.JsonToHTML.renderJsonToHTML;
+
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.StreamSupport;
@@ -11,8 +15,14 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.Model;
+import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.ModelMetadata;
+import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.ModelParameter;
 import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.ModelUnit;
+import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.semantics.Observable;
+import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.semantics.State;
+import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.semantics.Transition;
 import software.uncharted.terarium.hmiserver.models.task.TaskResponse;
+import software.uncharted.terarium.hmiserver.service.data.DKGService;
 import software.uncharted.terarium.hmiserver.service.data.ModelService;
 
 @Component
@@ -24,6 +34,7 @@ public class EnrichAmrResponseHandler extends TaskResponseHandler {
 
 	private final ObjectMapper objectMapper;
 	private final ModelService modelService;
+	private final DKGService dkgService;
 
 	@Override
 	public String getName() {
@@ -33,8 +44,8 @@ public class EnrichAmrResponseHandler extends TaskResponseHandler {
 	@Data
 	public static class Input {
 
-		@JsonProperty("research_paper")
-		String researchPaper;
+		@JsonProperty("document")
+		String document;
 
 		@JsonProperty("amr")
 		String amr;
@@ -74,7 +85,8 @@ public class EnrichAmrResponseHandler extends TaskResponseHandler {
 	@Data
 	public static class Response {
 
-		Enrichment response;
+		JsonNode modelCard;
+		Enrichment modelEnrichment;
 	}
 
 	@Data
@@ -90,13 +102,23 @@ public class EnrichAmrResponseHandler extends TaskResponseHandler {
 	public TaskResponse onSuccess(final TaskResponse resp) {
 		try {
 			final Properties props = resp.getAdditionalProperties(Properties.class);
-			final Response response = objectMapper.readValue(resp.getOutput(), Response.class);
+			final JsonNode node = objectMapper.readValue(resp.getOutput(), JsonNode.class);
+			final Response response = objectMapper.treeToValue(node.get("response"), Response.class);
 
 			final Model model = modelService
 				.getAsset(props.getModelId(), ASSUME_WRITE_PERMISSION_ON_BEHALF_OF_USER)
 				.orElseThrow();
 
-			for (final DescriptionsAndUnits state : response.response.states) {
+			// update the model card
+			final JsonNode card = response.modelCard;
+			if (model.getMetadata() == null) {
+				model.setMetadata(new ModelMetadata());
+			}
+			model.getMetadata().setGollmCard(card);
+			model.getMetadata().setDescription(renderJsonToHTML(card).getBytes(StandardCharsets.UTF_8));
+
+			// update the model with the enriched data
+			for (final DescriptionsAndUnits state : response.modelEnrichment.states) {
 				model
 					.getInitials()
 					.stream()
@@ -118,7 +140,7 @@ public class EnrichAmrResponseHandler extends TaskResponseHandler {
 					});
 			}
 
-			for (final DescriptionsAndUnits parameter : response.response.parameters) {
+			for (final DescriptionsAndUnits parameter : response.modelEnrichment.parameters) {
 				model
 					.getParameters()
 					.stream()
@@ -136,7 +158,7 @@ public class EnrichAmrResponseHandler extends TaskResponseHandler {
 					});
 			}
 
-			for (final DescriptionsAndUnits observable : response.response.observables) {
+			for (final DescriptionsAndUnits observable : response.modelEnrichment.observables) {
 				model
 					.getObservables()
 					.stream()
@@ -154,7 +176,7 @@ public class EnrichAmrResponseHandler extends TaskResponseHandler {
 					});
 			}
 
-			for (final Descriptions transition : response.response.transitions) {
+			for (final Descriptions transition : response.modelEnrichment.transitions) {
 				model
 					.getRates()
 					.stream()
@@ -170,6 +192,34 @@ public class EnrichAmrResponseHandler extends TaskResponseHandler {
 								((ObjectNode) transitionNode).put("description", transition.description);
 							});
 					});
+			}
+
+			// Update State Grounding
+			if (model.getStates() != null && !model.getStates().isEmpty()) {
+				final List<State> states = model.getStates();
+				TaskUtilities.performDKGSearchAndSetGrounding(dkgService, states);
+				model.setStates(states);
+			}
+
+			// Update Observable Grounding
+			if (model.getObservables() != null && !model.getObservables().isEmpty()) {
+				final List<Observable> observables = model.getObservables();
+				TaskUtilities.performDKGSearchAndSetGrounding(dkgService, observables);
+				model.setObservables(observables);
+			}
+
+			// Update Parameter Grounding
+			if (model.getParameters() != null && !model.getParameters().isEmpty()) {
+				final List<ModelParameter> parameters = model.getParameters();
+				TaskUtilities.performDKGSearchAndSetGrounding(dkgService, parameters);
+				model.setParameters(parameters);
+			}
+
+			// Update Transition Grounding
+			if (model.getTransitions() != null && !model.getTransitions().isEmpty()) {
+				final List<Transition> transitions = model.getTransitions();
+				TaskUtilities.performDKGSearchAndSetGrounding(dkgService, transitions);
+				model.setTransitions(transitions);
 			}
 
 			modelService.updateAsset(model, model.getId(), ASSUME_WRITE_PERMISSION_ON_BEHALF_OF_USER);
