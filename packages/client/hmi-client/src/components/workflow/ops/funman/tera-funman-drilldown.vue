@@ -501,9 +501,7 @@ const parameterIds = ref<string[]>([]);
 const observableIds = ref<string[]>([]);
 
 const message = computed(() =>
-	props.node.state.isRequestUnresponsive
-		? `${props.node.state.currentProgress}% Process is stuck in Funman, click 'Stop' to cancel.`
-		: null
+	props.node.state.isRequestUnresponsive ? "Process is stuck in Funman, click 'Stop' to cancel." : null
 );
 
 const variablesOfInterest = ref();

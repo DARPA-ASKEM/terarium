@@ -39,10 +39,11 @@ const props = defineProps<{
 	node: WorkflowNode<FunmanOperationState>;
 }>();
 const inProgressId = computed(() => props.node.state.inProgressId);
-const currentProgress = computed(() => props.node.state.currentProgress);
 const message = ref('');
 const timer = ref();
 const poller = new Poller();
+
+const TIME_LIMIT = 5 * 60 * 1000;
 
 const addOutputPorts = async (runId: string) => {
 	// The validated configuration id is set as the output value
@@ -65,6 +66,16 @@ const addOutputPorts = async (runId: string) => {
 	});
 };
 
+function StartRequestTimer(state) {
+	clearTimeout(timer.value);
+	timer.value = setTimeout(() => {
+		state.isRequestUnresponsive = true;
+		message.value = "Process is stuck in Funman, open node and click 'Stop' to cancel.";
+		emit('update-state', state);
+		clearTimeout(timer.value);
+	}, TIME_LIMIT);
+}
+
 const getStatus = async (runId: string) => {
 	poller
 		.setInterval(6000)
@@ -73,7 +84,13 @@ const getStatus = async (runId: string) => {
 		.setProgressAction((data: Simulation) => {
 			if (data.progress) {
 				const state = _.cloneDeep(props.node.state);
-				state.currentProgress = +(100 * data.progress).toFixed(2);
+				const newProgress = +(100 * data.progress).toFixed(2);
+				if (newProgress !== state.currentProgress) {
+					state.isRequestUnresponsive = false;
+					StartRequestTimer(state);
+				}
+
+				state.currentProgress = newProgress;
 				emit('update-state', state);
 			}
 		});
@@ -93,18 +110,6 @@ const getStatus = async (runId: string) => {
 	return pollerResults;
 };
 
-const TIME_LIMIT = 5 * 60 * 1000;
-function StartRequestTimer() {
-	clearTimeout(timer.value);
-	timer.value = setTimeout(() => {
-		const state = _.cloneDeep(props.node.state);
-		state.isRequestUnresponsive = true;
-		message.value = "Process is stuck in Funman, open node and click 'Stop' to cancel.";
-		emit('update-state', state);
-		clearTimeout(timer.value);
-	}, TIME_LIMIT);
-}
-
 onUnmounted(() => {
 	poller.stop();
 	clearTimeout(timer.value);
@@ -113,35 +118,19 @@ onUnmounted(() => {
 watch(
 	() => props.node.state.inProgressId,
 	async (id) => {
-		if (!id || id === '') {
-			clearTimeout(timer.value);
-			return;
-		}
+		if (!id || id === '') return;
 		const response = await getStatus(id);
 		if (response.state === PollerState.Done) {
 			addOutputPorts(id);
 			const state = _.cloneDeep(props.node.state);
 			state.inProgressId = '';
-			state.currentProgress = 0;
-			emit('update-state', state);
-		}
-	},
-	{ immediate: true }
-);
-
-watch(
-	() => [inProgressId.value, currentProgress.value],
-	() => {
-		if (inProgressId.value) {
-			StartRequestTimer();
-		} else {
 			message.value = '';
-			const state = _.cloneDeep(props.node.state);
 			state.isRequestUnresponsive = false;
+			state.currentProgress = 0;
 			emit('update-state', state);
 			clearTimeout(timer.value);
 		}
 	},
-	{ immediate: true, deep: true }
+	{ immediate: true }
 );
 </script>
