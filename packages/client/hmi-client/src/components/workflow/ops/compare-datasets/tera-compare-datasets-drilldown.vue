@@ -81,7 +81,6 @@
 								option-value="id"
 								:loading="isFetchingDatasets"
 								placeholder="Dataset"
-								@change="onChangeImpactComparison"
 							/>
 							<DataTable class="mapping-table" :value="knobs.mapping">
 								<Column field="datasetVariable">
@@ -160,9 +159,9 @@
 							<DataTable :value="ateTable">
 								<Column field="policyName" header="Intervention policy" />
 								<Column
-									v-for="variableName in [...variableNames, 'overall']"
+									v-for="variableName in ateVariableHeaders"
+									:header="variableName"
 									:field="variableName"
-									:header="variableName === 'overall' ? 'Overall' : variableName"
 									sortable
 									:key="variableName"
 								>
@@ -172,6 +171,14 @@
 											<div v-if="showATEErrors" class="error ml-auto">
 												± {{ displayNumber(data[`${field}_error`]) }}
 											</div>
+										</div>
+									</template>
+								</Column>
+								<Column field="overall" header="Overall" sortable>
+									<template #body="{ data, field }">
+										<div class="flex gap-2">
+											<div>{{ displayNumber(data[field]) }}</div>
+											<div v-if="showATEErrors" class="error ml-auto">± {{ displayNumber(data['overall_error']) }}</div>
 										</div>
 									</template>
 								</Column>
@@ -228,10 +235,15 @@
 							:settings="chartSettings"
 							:type="ChartSettingType.VARIABLE"
 							:select-options="variableNames"
-							:selected-options="selectedVariableSettings.map((s) => s.selectedVariables[0])"
+							:selected-options="selectedVariableNames"
 							@open="setActiveChartSettings($event)"
 							@remove="removeChartSettings"
-							@selection-change="updateChartSettings"
+							@selection-change="
+								($event) => {
+									updateChartSettings($event, ChartSettingType.VARIABLE);
+									constructATETable();
+								}
+							"
 						>
 							<!-- plot options -->
 							<div class="plot-options">
@@ -325,6 +337,7 @@ const modelConfigIdToInterventionPolicyIdMap = ref<Record<string, string[]>>({})
 const showATETable = ref(true);
 const showATEErrors = ref(false);
 const ateTable = ref<any[]>([]);
+const ateVariableHeaders = ref<string[]>([]);
 
 const plotOptions = [
 	{ label: 'Raw values', value: PlotValue.VALUE },
@@ -340,20 +353,28 @@ const isFetchingDatasets = ref(false);
 const areSimulationsFromSameModel = ref(true);
 
 const onRun = () => {
-	generateRankingCharts(
-		rankingCriteriaCharts,
-		rankingResultsChart,
-		props.node,
-		rankingChartData,
-		datasets,
-		modelConfigurations,
-		interventionPolicies
-	);
+	if (knobs.value.selectedCompareOption === CompareValue.RANK) {
+		generateRankingCharts(
+			rankingCriteriaCharts,
+			rankingResultsChart,
+			props.node,
+			rankingChartData,
+			datasets,
+			modelConfigurations,
+			interventionPolicies
+		);
+	} else if (knobs.value.selectedCompareOption === CompareValue.SCENARIO) {
+		constructATETable();
+	}
 };
 
 function onChangeImpactComparison() {
 	generateImpactCharts(impactChartData, datasets, datasetResults, baselineDatasetIndex, selectedPlotType);
 }
+
+// function onChangeModelErrorComparison() {
+// 	console.log('change');
+// }
 
 interface BasicKnobs {
 	selectedCompareOption: CompareValue;
@@ -399,6 +420,8 @@ const {
 	updateQauntilesOptions
 } = useChartSettings(props, emit);
 
+const selectedVariableNames = computed(() => selectedVariableSettings.value.map((s) => s.selectedVariables[0]));
+
 const outputPanel = ref(null);
 const chartSize = useDrilldownChartSize(outputPanel);
 
@@ -437,12 +460,32 @@ function outputPanelBehavior() {
 }
 
 function constructATETable() {
+	ateTable.value = [];
+	ateVariableHeaders.value = [];
+
+	const variableToTypeMap: Record<string, string> = {};
 	const means: Record<string, number> = {};
 	const meanErrors: Record<string, number> = {};
 
 	datasetResults.value?.summaryResults.forEach((summaryResult) => {
 		Object.keys(summaryResult[0]).forEach((key) => {
-			if (!key.includes('_mean:')) return;
+			if (
+				key.includes('_param_') ||
+				!key.includes('_mean:') ||
+				// Skip if the variable is not selected in output settings
+				!selectedVariableNames.value.some((variableName) => {
+					if (key.includes(variableName)) {
+						if (!variableToTypeMap[variableName]) {
+							variableToTypeMap[variableName] = key.includes('_observable_state_') ? '_observable_state_' : '_state_';
+							ateVariableHeaders.value.push(variableName);
+						}
+						return true;
+					}
+					return false;
+				})
+			) {
+				return;
+			}
 			const values = summaryResult.map((row) => row[key]);
 			means[key] = mean(values);
 			meanErrors[key] = stddev(values) / Math.sqrt(values.length);
@@ -457,26 +500,19 @@ function constructATETable() {
 		const ateRow: Record<string, number> = {};
 		const ateValues: number[] = [];
 
-		variableNames.value.forEach((variableName) => {
-			const potentialKeys = [
-				`${variableName}_state_mean:${index}`,
-				`persistent_${variableName}_param_mean:${index}`,
-				`${variableName}_observable_state_mean:${index}`
-			];
+		Object.entries(variableToTypeMap).forEach(([variableName, type]) => {
+			const key = `${variableName}${type}mean:${index}`;
+			if (!meanKeyNames.includes(key)) return;
 
-			potentialKeys.forEach((key) => {
-				if (!ateRow[variableName] && meanKeyNames.includes(key)) {
-					const baselineKey = `${key.slice(0, -1)}${baselineDatasetIndex.value}`;
+			const baselineKey = `${key.slice(0, -1)}${baselineDatasetIndex.value}`;
 
-					const ate = means[key] - means[baselineKey];
-					const ateError = Math.sqrt(meanErrors[key] ** 2 + meanErrors[baselineKey] ** 2);
+			const ate = means[key] - means[baselineKey];
+			const ateError = Math.sqrt(meanErrors[key] ** 2 + meanErrors[baselineKey] ** 2);
 
-					ateRow[variableName] = ate;
-					ateRow[`${variableName}_error`] = ateError;
+			ateRow[variableName] = ate;
+			ateRow[`${variableName}_error`] = ateError;
 
-					ateValues.push(ate);
-				}
-			});
+			ateValues.push(ate);
 		});
 		ateRow.overall = mean(ateValues);
 		ateRow.overall_error = stddev(ateValues) / Math.sqrt(ateValues.length);
