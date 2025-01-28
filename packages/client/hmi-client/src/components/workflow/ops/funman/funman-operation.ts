@@ -60,14 +60,6 @@ export interface FunmanOperationState extends BaseState {
 	isRequestUnresponsive: boolean;
 }
 
-let timer;
-const TIME_LIMIT = 5 * 60 * 1000;
-export function StartRequestTimer(callback: Function) {
-	clearTimeout(timer);
-	timer = setTimeout(() => callback(), TIME_LIMIT);
-	return timer;
-}
-
 export const FunmanOperation: Operation = {
 	name: WorkflowOperationTypes.FUNMAN,
 	displayName: 'Validate configuration',

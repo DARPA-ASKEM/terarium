@@ -24,11 +24,7 @@ import { watch, computed, onUnmounted, ref } from 'vue';
 import TeraOperatorPlaceholder from '@/components/operator/tera-operator-placeholder.vue';
 import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue';
 import { WorkflowNode } from '@/types/workflow';
-import {
-	FunmanOperationState,
-	FunmanOperation,
-	StartRequestTimer
-} from '@/components/workflow/ops/funman/funman-operation';
+import { FunmanOperationState, FunmanOperation } from '@/components/workflow/ops/funman/funman-operation';
 import Button from 'primevue/button';
 import { Poller, PollerState } from '@/api/api';
 import { pollAction, getRunResult } from '@/services/models/simulation-service';
@@ -97,11 +93,16 @@ const getStatus = async (runId: string) => {
 	return pollerResults;
 };
 
-function RequestUnresponsive() {
-	const state = _.cloneDeep(props.node.state);
-	state.isRequestUnresponsive = true;
-	message.value = "Process is stuck in Funman, open node and click 'Stop' to cancel.";
-	emit('update-state', state);
+const TIME_LIMIT = 5 * 60 * 1000;
+function StartRequestTimer() {
+	clearTimeout(timer.value);
+	timer.value = setTimeout(() => {
+		const state = _.cloneDeep(props.node.state);
+		state.isRequestUnresponsive = true;
+		message.value = "Process is stuck in Funman, open node and click 'Stop' to cancel.";
+		emit('update-state', state);
+		clearTimeout(timer.value);
+	}, TIME_LIMIT);
 }
 
 onUnmounted(() => {
@@ -131,7 +132,7 @@ watch(
 	() => [inProgressId.value, currentProgress.value],
 	() => {
 		if (inProgressId.value) {
-			timer.value = StartRequestTimer(RequestUnresponsive);
+			StartRequestTimer();
 		} else {
 			message.value = '';
 			const state = _.cloneDeep(props.node.state);
