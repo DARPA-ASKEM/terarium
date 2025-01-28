@@ -1983,7 +1983,17 @@ export function createRankingInterventionsChart(
 				field: 'score',
 				type: 'quantitative',
 				// If a specific variable is selected the score should hold its actual value
-				title: variableName || 'Score'
+				title: variableName || 'Score',
+				axis: {
+					gridColor: {
+						condition: { test: 'datum.value === 0', value: 'black' },
+						value: '#DDDDDD'
+					},
+					gridWidth: {
+						condition: { test: 'datum.value === 0', value: 2 },
+						value: 1
+					}
+				}
 			},
 			color: {
 				field: 'policyName',
