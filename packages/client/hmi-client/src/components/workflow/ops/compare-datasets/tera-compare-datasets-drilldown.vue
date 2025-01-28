@@ -100,7 +100,7 @@
 								<p class="text-center">Select variables of interest in the output panel</p>
 							</div>
 						</AccordionTab>
-						<AccordionTab header="Impact of intervention metric">
+						<AccordionTab header="Impact of intervention metrics" v-if="showATETable">
 							<p class="mb-3">
 								The average treatment effect (ATE) estimates the impact of a policy on the outcome in a given
 								population; it is the mean difference in the outcome between those who were and weren't treated. Larger
@@ -121,7 +121,7 @@
 									<template #body="{ data, field }">
 										<div class="flex gap-2">
 											<div>{{ data[field] }}</div>
-											<div class="error ml-auto">± {{ data[`${field}_error`] }}</div>
+											<div v-if="showATEErrors" class="error ml-auto">± {{ data[`${field}_error`] }}</div>
 										</div>
 									</template>
 								</Column>
@@ -185,21 +185,26 @@
 						>
 							<!-- plot options -->
 							<div class="plot-options">
-								<p class="mb-2">How do you want to plot the values?</p>
-								<div v-for="option in plotOptions" class="flex align-items-center" :key="option.value">
+								<p>How do you want to plot the values?</p>
+								<div v-for="option in plotOptions" class="flex align-items-center gap-2" :key="option.value">
 									<RadioButton
 										v-model="knobs.selectedPlotType"
 										:value="option.value"
 										name="plotValues"
 										@change="onChangeImpactComparison"
 									/>
-									<label class="pl-2 py-1" :for="option.value">{{ option.label }}</label>
+									<label :for="option.value">{{ option.label }}</label>
 								</div>
 							</div>
 						</tera-chart-settings>
 						<Divider />
 						<tera-chart-settings-quantiles :settings="chartSettings" @update-options="updateQauntilesOptions" />
 						<Divider />
+						<h5>Impact of intervention metrics</h5>
+						<div class="plot-options">
+							<tera-checkbox v-model="showATETable" label="Average teratment effect (ATE)" />
+							<tera-checkbox v-if="showATETable" v-model="showATEErrors" label="Show errors" />
+						</div>
 					</div>
 				</template>
 			</tera-slider-panel>
@@ -265,6 +270,9 @@ const datasetResults = ref<{
 const modelConfigurations = ref<ModelConfiguration[]>([]);
 const interventionPolicies = ref<InterventionPolicy[]>([]);
 const modelConfigIdToInterventionPolicyIdMap = ref<Record<string, string[]>>({});
+
+const showATETable = ref(true);
+const showATEErrors = ref(false);
 const ateTable = ref<any[]>([]);
 
 const plotOptions = [
@@ -457,10 +465,6 @@ watch(
 </script>
 
 <style scoped>
-label {
-	padding: var(--gap-2) 0;
-}
-
 .output-settings-panel {
 	padding: var(--gap-4);
 	display: flex;
@@ -474,6 +478,9 @@ label {
 }
 
 .plot-options {
+	display: flex;
+	flex-direction: column;
+	gap: var(--gap-2);
 	padding: var(--gap-3);
 	background: var(--surface-200);
 	border-radius: var(--border-radius);
