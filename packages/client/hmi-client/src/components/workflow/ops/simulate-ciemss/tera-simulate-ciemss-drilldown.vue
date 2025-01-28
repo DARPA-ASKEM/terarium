@@ -85,7 +85,7 @@
 									@update:model-value="updateState"
 								/>
 							</div>
-							<div class="label-and-input mt-2">
+							<div class="label-and-input">
 								<label for="num-samples">Solver step size</label>
 								<tera-input-number
 									v-model="solverStepSize"
@@ -180,7 +180,7 @@
 								<template v-for="setting in selectedInterventionSettings" :key="setting.id">
 									<vega-chart
 										expandable
-										:are-embed-actions-visible="true"
+										are-embed-actions-visible
 										:visualization-spec="interventionCharts[setting.id]"
 									/>
 								</template>
@@ -227,14 +227,16 @@
 								<template v-for="setting of selectedSensitivityChartSettings" :key="setting.id">
 									<vega-chart
 										expandable
-										are-embed-actions-visible
+										:are-embed-actions-visible="true"
 										:visualization-spec="sensitivityCharts[setting.id].lineChart"
 									/>
-									<vega-chart
-										expandable
-										are-embed-actions-visible
-										:visualization-spec="sensitivityCharts[setting.id].scatterChart"
-									/>
+									<div class="sensitivity-scatterplot">
+										<vega-chart
+											expandable
+											:are-embed-actions-visible="true"
+											:visualization-spec="sensitivityCharts[setting.id].scatterChart"
+										/>
+									</div>
 								</template>
 							</AccordionTab>
 						</Accordion>
@@ -976,5 +978,10 @@ onUnmounted(() => kernelManager.shutdown());
 }
 .common-input-height:deep(main) {
 	height: 2.35rem;
+}
+.sensitivity-scatterplot {
+	width: 100%;
+	display: flex;
+	overflow: scroll;
 }
 </style>
