@@ -1,5 +1,6 @@
 package software.uncharted.terarium.hmiserver.models.dataservice.workflow;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import java.io.Serializable;
@@ -11,6 +12,7 @@ import lombok.experimental.Accessors;
 
 @Data
 @Accessors(chain = true)
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class InputPort implements Serializable {
 
 	private UUID id;
