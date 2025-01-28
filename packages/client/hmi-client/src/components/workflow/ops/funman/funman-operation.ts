@@ -58,6 +58,15 @@ export interface FunmanOperationState extends BaseState {
 	notebookHistory: NotebookHistory[];
 	hasCodeRun: boolean;
 	message?: string;
+	isRequestStuck: boolean;
+}
+
+let timer;
+const TIME_LIMIT = 5 * 60 * 1000;
+export function StartRequestTimer(callback: Function) {
+	clearTimeout(timer);
+	timer = setTimeout(() => callback(), TIME_LIMIT);
+	return timer;
 }
 
 export const FunmanOperation: Operation = {
@@ -85,7 +94,8 @@ export const FunmanOperation: Operation = {
 			chartSettings: null,
 			currentProgress: 0,
 			notebookHistory: [],
-			hasCodeRun: false
+			hasCodeRun: false,
+			isRequestStuck: false
 		};
 		return init;
 	}

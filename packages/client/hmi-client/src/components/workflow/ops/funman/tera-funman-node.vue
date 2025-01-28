@@ -8,7 +8,7 @@
 			{{ node.state.currentProgress }}%
 		</tera-progress-spinner>
 
-		<section v-if="message">
+		<section v-if="!_.isEmpty(message)">
 			<p>{{ message }}</p>
 		</section>
 
@@ -24,7 +24,11 @@ import { watch, computed, onUnmounted, ref } from 'vue';
 import TeraOperatorPlaceholder from '@/components/operator/tera-operator-placeholder.vue';
 import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue';
 import { WorkflowNode } from '@/types/workflow';
-import { FunmanOperationState, FunmanOperation } from '@/components/workflow/ops/funman/funman-operation';
+import {
+	FunmanOperationState,
+	FunmanOperation,
+	StartRequestTimer
+} from '@/components/workflow/ops/funman/funman-operation';
 import Button from 'primevue/button';
 import { Poller, PollerState } from '@/api/api';
 import { pollAction, getRunResult } from '@/services/models/simulation-service';
@@ -40,7 +44,7 @@ const props = defineProps<{
 }>();
 const inProgressId = computed(() => props.node.state.inProgressId);
 const currentProgress = computed(() => props.node.state.currentProgress);
-const message = computed(() => props.node.state.message ?? '');
+const message = ref('');
 const timer = ref();
 const poller = new Poller();
 
@@ -93,17 +97,11 @@ const getStatus = async (runId: string) => {
 	return pollerResults;
 };
 
-function startTimer() {
-	clearTimeout(timer.value);
-	timer.value = setTimeout(
-		() => {
-			const state = _.cloneDeep(props.node.state);
-			state.message = "Process is stuck in Funman, click 'Stop' to cancel";
-			emit('update-state', state);
-			clearTimeout(timer.value);
-		},
-		5 * 60 * 1000
-	);
+function StuckRequest() {
+	const state = _.cloneDeep(props.node.state);
+	state.isRequestStuck = true;
+	message.value = "Process is stuck in Funman, open node and click 'Stop' to cancel";
+	emit('update-state', state);
 }
 
 onUnmounted(() => {
@@ -133,10 +131,11 @@ watch(
 	() => [inProgressId.value, currentProgress.value],
 	() => {
 		if (inProgressId.value) {
-			startTimer();
+			timer.value = StartRequestTimer(StuckRequest);
 		} else {
+			message.value = '';
 			const state = _.cloneDeep(props.node.state);
-			state.message = '';
+			state.isRequestStuck = false;
 			emit('update-state', state);
 			clearTimeout(timer.value);
 		}
