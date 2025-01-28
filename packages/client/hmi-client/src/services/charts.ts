@@ -543,7 +543,7 @@ export function createForecastChart(
 		symbolSize: 200,
 		labelFontSize: isCompact ? 8 : 12,
 		labelOffset: isCompact ? 2 : 4,
-		labelLimit: isCompact ? 100 : 200,
+		labelLimit: isCompact ? 100 : 250,
 		columnPadding: 16,
 		symbolType: 'stroke',
 		offset: isCompact ? 8 : 16,
@@ -1139,7 +1139,7 @@ export function createQuantilesForecastChart(
 		symbolSize: 200,
 		labelFontSize: isCompact ? 8 : 12,
 		labelOffset: isCompact ? 2 : 4,
-		labelLimit: isCompact ? 100 : 200,
+		labelLimit: isCompact ? 100 : 250,
 		columnPadding: 16,
 		...options.legendProperties
 	};
