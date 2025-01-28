@@ -50,6 +50,22 @@
 		<!-- data -->
 		<template #data>
 			<ContextMenu ref="contextMenu" :model="contextMenuItems" style="white-space: nowrap; width: auto" />
+
+			<!-- Annotation test -->
+			<tera-canvas-item
+				v-for="annotation in wf.getAnnotations()"
+				:key="annotation.id"
+				:style="{ width: `300px`, top: `${annotation.y}px`, left: `${annotation.x}px` }"
+				@dragging="(event) => updateAnnotationPosition(annotation, event)"
+				@dragend="() => updateAnnotation(annotation)"
+			>
+				<tera-workflow-annotation
+					:annotation="annotation"
+					@remove-annotation="(event) => removeAnnotation(event)"
+					@update-annotation="(event) => updateAnnotation(event)"
+				/>
+			</tera-canvas-item>
+
 			<tera-canvas-item
 				v-for="node in wf.getNodes()"
 				:key="node.id"
@@ -177,10 +193,12 @@ import {
 	WorkflowPort,
 	WorkflowDirection,
 	WorkflowPortStatus,
-	OperatorStatus
+	OperatorStatus,
+	WorkflowAnnotation
 } from '@/types/workflow';
 // Operation imports
 import TeraOperator from '@/components/operator/tera-operator.vue';
+import TeraWorkflowAnnotation from '@/components/workflow/tera-workflow-annotation.vue';
 import Button from 'primevue/button';
 import TeraToggleableInput from '@/components/widgets/tera-toggleable-input.vue';
 import ContextMenu from 'primevue/contextmenu';
@@ -605,6 +623,12 @@ const contextMenuItems: MenuItem[] = [
 				command: addOperatorToWorkflow(CompareDatasetsOp)
 			}
 		]
+	},
+	{
+		label: 'Text block',
+		command: () => {
+			addAnnotationToWorkflow();
+		}
 	}
 ];
 const addComponentMenu = ref();
@@ -756,71 +780,32 @@ function resizeHandler(node: WorkflowNode<any>) {
 	relinkEdges(node);
 }
 
-// For relinking
-const dist2 = (a: Position, b: Position) => (a.x - b.x) * (a.x - b.x) + (a.y - b.y) * (a.y - b.y);
-const threshold2 = 5.0 * 5.0;
-
 /*
  * Relink edges that have become detached
  *
  * [output-port](edge source => edge target)[input-port]
- *
- * FIXME: not efficient, need cache/map for larger workflows
  */
 function relinkEdges(node: WorkflowNode<any> | null) {
-	const nodes = node ? [node] : wf.value.getNodes();
 	const allEdges = wf.value.getEdges();
+	const candidateEdges = node ? allEdges.filter((e) => e.source === node.id || e.target === node.id) : allEdges;
 
 	// Note id can start with numerals, so we need [id=...]
 	const getPortElement = (id: string) => d3.select(`[id='${id}']`).select('.port').node() as HTMLElement;
 
-	// Relink heuristic, this will modify source
-	const relink = (source: Position, target: Position) => {
-		if (dist2(source, target) > threshold2) {
-			source.x = target.x;
-			source.y = target.y;
-		}
-	};
+	// Cache
+	const nodeMap = new Map<string, WorkflowNode<any>>(wf.value.getNodes().map((n) => [n.id, n]));
 
-	for (let i = 0; i < nodes.length; i++) {
-		const n = nodes[i];
-		const nodePosition: Position = { x: n.x, y: n.y };
+	for (let i = 0; i < candidateEdges.length; i++) {
+		const edge = candidateEdges[i];
+		const sourceNode = nodeMap.get(edge.source as string);
+		const sourcePortElem = getPortElement(edge.sourcePortId as string);
+		const targetNode = nodeMap.get(edge.target as string);
+		const targetPortElem = getPortElement(edge.targetPortId as string);
 
-		// The input ports connects to the edge's target
-		const inputs = n.inputs;
-		inputs.forEach((port) => {
-			const edges = allEdges.filter((e) => e.targetPortId === port.id);
-			if (!edges || edges.length === 0) return;
-
-			edges.forEach((edge) => {
-				const portElem = getPortElement(edge.targetPortId as string);
-				const totalOffsetY = portElem.offsetTop + portElem.offsetHeight / 2;
-
-				const portPos = {
-					x: nodePosition.x,
-					y: nodePosition.y + totalOffsetY
-				};
-				relink(edge.points[1], portPos);
-			});
-		});
-
-		// The output ports connects to the edge's source
-		const outputs = n.outputs;
-		outputs.forEach((port) => {
-			const edges = allEdges.filter((e) => e.sourcePortId === port.id);
-			if (!edges || edges.length === 0) return;
-
-			edges.forEach((edge) => {
-				const portElem = getPortElement(edge.sourcePortId as string);
-				if (!portElem) return;
-				const totalOffsetY = portElem.offsetTop + portElem.offsetHeight / 2;
-				const portPos = {
-					x: nodePosition.x + n.width + portElem.offsetWidth * 0.5,
-					y: nodePosition.y + totalOffsetY
-				};
-				relink(edge.points[0], portPos);
-			});
-		});
+		edge.points[0].x = sourceNode!.x + sourceNode!.width + sourcePortElem.offsetWidth * 0.5;
+		edge.points[0].y = sourceNode!.y + sourcePortElem.offsetTop + sourcePortElem.offsetHeight * 0.5;
+		edge.points[1].x = targetNode!.x + targetPortElem.offsetWidth * 0.5;
+		edge.points[1].y = targetNode!.y + targetPortElem.offsetTop + targetPortElem.offsetHeight * 0.5;
 	}
 }
 
@@ -897,6 +882,33 @@ const updatePosition = (node: WorkflowNode<any>, { x, y }) => {
 	node.x += x / canvasTransform.k;
 	node.y += y / canvasTransform.k;
 	updateEdgePositions(node, { x, y });
+};
+
+const addAnnotationToWorkflow = async () => {
+	const updatedWorkflow = await workflowService.addOrUpdateAnnotation(wf.value.getId(), {
+		id: uuidv4(),
+		x: newNodePosition.x,
+		y: newNodePosition.y,
+		content: 'Double click to edit...',
+		type: '',
+		textSize: 12
+	});
+	wf.value.update(updatedWorkflow, false);
+};
+
+const updateAnnotationPosition = (annotation: WorkflowAnnotation, event: any) => {
+	annotation.x += event.x / canvasTransform.k;
+	annotation.y += event.y / canvasTransform.k;
+};
+
+const updateAnnotation = async (annotation: WorkflowAnnotation) => {
+	const updatedWorkflow = await workflowService.addOrUpdateAnnotation(wf.value.getId(), annotation);
+	wf.value.update(updatedWorkflow, false);
+};
+
+const removeAnnotation = async (annotationId: string) => {
+	const updatedWorkflow = await workflowService.removeAnnotation(wf.value.getId(), annotationId);
+	wf.value.update(updatedWorkflow, false);
 };
 
 function interpolatePointsForCurve(a: Position, b: Position): Position[] {

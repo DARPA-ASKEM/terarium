@@ -7,19 +7,20 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import io.micrometer.observation.annotation.Observed;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
+import software.uncharted.terarium.hmiserver.models.dataservice.Grounding;
 import software.uncharted.terarium.hmiserver.models.dataservice.dataset.Dataset;
 import software.uncharted.terarium.hmiserver.models.dataservice.dataset.DatasetColumn;
 import software.uncharted.terarium.hmiserver.models.dataservice.document.DocumentAsset;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.Model;
-import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.ModelGrounding;
 import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.semantics.GroundedSemantic;
 import software.uncharted.terarium.hmiserver.models.mira.DKG;
 import software.uncharted.terarium.hmiserver.models.task.TaskRequest;
+import software.uncharted.terarium.hmiserver.service.ContextMatcher;
 import software.uncharted.terarium.hmiserver.service.data.DKGService;
 
 @Slf4j
@@ -164,31 +165,56 @@ public class TaskUtilities {
 
 	@Observed(name = "function_profile")
 	public static void performDKGSearchAndSetGrounding(DKGService dkgService, List<? extends GroundedSemantic> parts) {
-		List<String> searchTerms = parts
-			.stream()
-			.filter(part -> part != null && part.getId() != null && !part.getId().isEmpty())
-			.map(TaskUtilities::getSearchTerm)
-			.collect(Collectors.toList());
-
-		List<DKG> curies = new ArrayList<>();
-		try {
-			curies = dkgService.knnSearchEpiDKG(0, 100, 1, searchTerms, null);
-		} catch (Exception e) {
-			log.warn("Unable to find DKG for semantics: {}", searchTerms, e);
-			return;
+		// First check if we have a curated grounding match for the parts
+		for (GroundedSemantic part : parts) {
+			if (part == null || !isGroundingNonExistent(part.getGrounding())) continue;
+			final Grounding curatedGrounding = ContextMatcher.searchBest(getNameSearchTerm(part));
+			if (curatedGrounding != null) {
+				part.setGrounding(curatedGrounding);
+			}
 		}
 
-		for (int i = 0; i < curies.size(); i++) {
-			DKG dkg = curies.get(i);
-			GroundedSemantic part = parts.get(i);
-			if (part.getGrounding() == null) part.setGrounding(new ModelGrounding());
-			if (part.getGrounding().getIdentifiers() == null) part.getGrounding().setIdentifiers(new HashMap<>());
-			String[] currieId = dkg.getCurie().split(":");
-			part.getGrounding().getIdentifiers().put(currieId[0], currieId[1]);
+		// Create a map to store the search terms and their corresponding parts
+		Map<String, GroundedSemantic> searchTermToPartMap = parts
+			.stream()
+			.filter(
+				part ->
+					part != null && part.getId() != null && !part.getId().isBlank() && isGroundingNonExistent(part.getGrounding())
+			)
+			.collect(Collectors.toMap(TaskUtilities::getSearchTerm, part -> part));
+
+		// Perform the DKG search for all search terms at once
+		final List<String> searchTerms = new ArrayList<>(searchTermToPartMap.keySet());
+		List<DKG> listDKG = new ArrayList<>();
+		try {
+			listDKG = dkgService.knnSearchEpiDKG(0, 100, 1, searchTerms, null);
+		} catch (Exception e) {
+			log.warn("Unable to find DKG for semantics: {}", searchTerms, e);
+		}
+
+		// Map the DKG results back to the corresponding parts using an index
+		for (int i = 0; i < listDKG.size(); i++) {
+			DKG dkg = listDKG.get(i);
+			String searchTerm = searchTerms.get(i);
+			GroundedSemantic part = searchTermToPartMap.get(searchTerm);
+			if (part != null) {
+				part.setGrounding(new Grounding(dkg));
+			}
 		}
 	}
 
+	/** Get the search term for a grounded semantic part. This is the description if it exists, otherwise the name. */
 	private static String getSearchTerm(GroundedSemantic part) {
-		return (part.getDescription() == null || part.getDescription().isEmpty()) ? part.getId() : part.getDescription();
+		return (part.getDescription() == null || part.getDescription().isBlank()) ? part.getName() : part.getDescription();
+	}
+
+	/** Get the search term for a grounded semantic part. This is the name if it exists, otherwise the id. */
+	private static String getNameSearchTerm(GroundedSemantic part) {
+		return (part.getName() == null || part.getName().isBlank()) ? part.getId() : part.getName();
+	}
+
+	/** Check if a grounding is non-existent. */
+	private static Boolean isGroundingNonExistent(Grounding grounding) {
+		return grounding == null || grounding.isEmpty();
 	}
 }

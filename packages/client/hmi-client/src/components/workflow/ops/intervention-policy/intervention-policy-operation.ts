@@ -22,7 +22,7 @@ export const InterventionPolicyOperation: Operation = {
 		{ type: 'documentId', label: 'Document', isOptional: true },
 		{ type: 'datasetId', label: 'Dataset', isOptional: true }
 	],
-	outputs: [{ type: 'policyInterventionId', label: 'Intervention Policy' }],
+	outputs: [{ type: 'policyInterventionId', label: 'Intervention policy' }],
 	action: () => {},
 
 	initState: () => {
@@ -65,7 +65,7 @@ export const isInterventionPoliciesValuesEqual = (
 export const isInterventionPolicyBlank = (policy: InterventionPolicy | null): boolean =>
 	policy?.interventions.length === 1 &&
 	isEqual(policy.interventions[0], {
-		name: 'New Intervention',
+		name: 'New intervention',
 		staticInterventions: [
 			{
 				type: InterventionSemanticType.Parameter,

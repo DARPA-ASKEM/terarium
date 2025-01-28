@@ -8,14 +8,14 @@ import { operation as CompareDatasetOp } from '@/components/workflow/ops/compare
 import { operation as InterventionOp } from '@/components/workflow/ops/intervention-policy/mod';
 import { OperatorNodeSize } from '@/services/workflow';
 import { createModelConfiguration, getModelConfigurationById, getParameter } from '@/services/model-configurations';
-import { ChartSetting, ChartSettingType } from '@/types/common';
+import { ChartSetting, ChartSettingType, CiemssPresetTypes } from '@/types/common';
 import { updateChartSettingsBySelectedVariables } from '@/services/chart-settings';
 import { AssetType, InterventionPolicy, ParameterSemantic } from '@/types/Types';
 import { DistributionType } from '@/services/distribution';
 import { calculateUncertaintyRange } from '@/utils/math';
 import { blankIntervention, createInterventionPolicy, getInterventionPolicyById } from '@/services/intervention-policy';
 import { useProjects } from '@/composables/project';
-import { cartesianProduct } from '../scenario-template-utils';
+import { cartesianProduct, createDefaultForecastSettings, runSimulations } from '../scenario-template-utils';
 
 export interface HorizonScanningParameter {
 	id: string;
@@ -68,7 +68,7 @@ export class HorizonScanningScenario extends BaseScenario {
 
 	newInterventionSpecs: { id: string; name: string }[];
 
-	simulateSpec: { ids: string[] };
+	simulateSpec: { ids: string[]; endTime: number; preset: CiemssPresetTypes; runSimulationsAutomatically: boolean };
 
 	parameters: (HorizonScanningParameter | null)[];
 
@@ -82,7 +82,10 @@ export class HorizonScanningScenario extends BaseScenario {
 			id: ''
 		};
 		this.simulateSpec = {
-			ids: []
+			ids: [],
+			preset: CiemssPresetTypes.Fast,
+			endTime: 100,
+			runSimulationsAutomatically: false
 		};
 		this.interventionSpecs = [{ id: '' }];
 		this.newInterventionSpecs = [];
@@ -144,6 +147,22 @@ export class HorizonScanningScenario extends BaseScenario {
 		this.parameters[index] = { id: parameter.referenceId, low, high };
 	}
 
+	setPreset(preset: CiemssPresetTypes) {
+		this.simulateSpec.preset = preset;
+	}
+
+	setEndTime(endTime: number) {
+		this.simulateSpec.endTime = endTime;
+	}
+
+	setRunSimulationsAutomatically(runSimulationsAutomatically: boolean) {
+		this.simulateSpec.runSimulationsAutomatically = runSimulationsAutomatically;
+	}
+
+	getDefaultForecastSettings() {
+		return createDefaultForecastSettings(this.simulateSpec.endTime, this.simulateSpec.preset);
+	}
+
 	toJSON() {
 		return {
 			templateId: HorizonScanningScenario.templateId,
@@ -170,6 +189,8 @@ export class HorizonScanningScenario extends BaseScenario {
 		wf.setWorkflowName(this.workflowName);
 		wf.setWorkflowScenario(this.toJSON());
 
+		const fetchedInterventionPolicies: InterventionPolicy[] = [];
+
 		// 1. Add model and compare dataset nodes
 		const modelNode = wf.addNode(
 			ModelOp,
@@ -188,6 +209,34 @@ export class HorizonScanningScenario extends BaseScenario {
 			}
 		});
 
+		const modelConfig = await getModelConfigurationById(this.modelConfigSpec.id);
+
+		const baseModelConfigNode = wf.addNode(
+			ModelConfigOp,
+			{ x: 0, y: 0 },
+			{
+				size: OperatorNodeSize.medium
+			}
+		);
+
+		const baseSimulateNode = wf.addNode(
+			SimulateCiemssOp,
+			{ x: 0, y: 0 },
+			{
+				size: OperatorNodeSize.medium
+			}
+		);
+
+		wf.updateNode(baseModelConfigNode, {
+			state: {
+				transientModelConfig: modelConfig
+			},
+			output: {
+				value: [modelConfig.id],
+				state: _.omit(baseModelConfigNode.state, ['transientModelConfig'])
+			}
+		});
+
 		const compareDatasetNode = wf.addNode(
 			CompareDatasetOp,
 			{ x: 0, y: 0 },
@@ -196,17 +245,42 @@ export class HorizonScanningScenario extends BaseScenario {
 			}
 		);
 
+		wf.addEdge(modelNode.id, modelNode.outputs[0].id, baseModelConfigNode.id, baseModelConfigNode.inputs[0].id, [
+			{ x: 0, y: 0 },
+			{ x: 0, y: 0 }
+		]);
+
+		wf.addEdge(
+			baseModelConfigNode.id,
+			baseModelConfigNode.outputs[0].id,
+			baseSimulateNode.id,
+			baseSimulateNode.inputs[0].id,
+			[
+				{ x: 0, y: 0 },
+				{ x: 0, y: 0 }
+			]
+		);
+
+		wf.addEdge(
+			baseSimulateNode.id,
+			baseSimulateNode.outputs[0].id,
+			compareDatasetNode.id,
+			compareDatasetNode.inputs[0].id,
+			[
+				{ x: 0, y: 0 },
+				{ x: 0, y: 0 }
+			]
+		);
+
 		// add input ports for each simulation to the dataset transformer, this will be a matrix of intervention x parameter low and high
-		for (let i = 0; i < this.interventionSpecs.length * 2 ** this.parameters.length - 1; i++) {
+		for (let i = 0; i < this.interventionSpecs.length * 2 ** this.parameters.length; i++) {
 			workflowService.appendInputPort(compareDatasetNode, {
 				type: 'datasetId|simulationId',
 				label: 'Dataset or Simulation'
 			});
 		}
 
-		let compareDatasetIndex = 0;
-
-		const modelConfig = await getModelConfigurationById(this.modelConfigSpec.id);
+		let compareDatasetIndex = 1;
 
 		// chart settings for simulate node
 		let simulateChartSettings: ChartSetting[] = [];
@@ -215,6 +289,13 @@ export class HorizonScanningScenario extends BaseScenario {
 			ChartSettingType.VARIABLE,
 			this.simulateSpec.ids
 		);
+
+		wf.updateNode(baseSimulateNode, {
+			state: {
+				chartSettings: simulateChartSettings,
+				...this.getDefaultForecastSettings()
+			}
+		});
 
 		let compareDatasetChartSettings: ChartSetting[] = [];
 		compareDatasetChartSettings = updateChartSettingsBySelectedVariables(
@@ -231,8 +312,8 @@ export class HorizonScanningScenario extends BaseScenario {
 
 		// Generate Cartesian product of parameter extrema
 		const parameterExtrema = this.parameters.map((parameter) => [
-			{ id: parameter!.id, value: parameter!.low },
-			{ id: parameter!.id, value: parameter!.high }
+			{ id: parameter!.id, label: 'Low', value: parameter!.low },
+			{ id: parameter!.id, label: 'High', value: parameter!.high }
 		]);
 
 		const cartesianConfigs = cartesianProduct(parameterExtrema);
@@ -248,8 +329,7 @@ export class HorizonScanningScenario extends BaseScenario {
 				}
 			});
 
-			const configName = config.map((param) => `${param.id}_${param.value}`).join('_');
-			clonedModelConfig.name = `${modelConfig.name}_${configName}`;
+			clonedModelConfig.name = config.map((param) => `${param.id}${param.label}`).join('_');
 			clonedModelConfig.description = `This is a configuration created from "${modelConfig.name}" with extreme values for the parameters: ${config.map((param) => `${param.id}: ${param.value}`).join(', ')} using the horizon scanning scenario template.`;
 
 			const newModelConfig = await createModelConfiguration(clonedModelConfig);
@@ -308,7 +388,16 @@ export class HorizonScanningScenario extends BaseScenario {
 						},
 						true
 					);
+
+					await useProjects().addAsset(
+						AssetType.InterventionPolicy,
+						interventionPolicy!.id,
+						useProjects().activeProject.value?.id
+					);
 				}
+
+				// Add to list of intervention policies
+				fetchedInterventionPolicies.push(interventionPolicy!);
 
 				const interventionNode = wf.addNode(
 					InterventionOp,
@@ -353,7 +442,8 @@ export class HorizonScanningScenario extends BaseScenario {
 
 			wf.updateNode(simulateNode, {
 				state: {
-					chartSettings: simulateChartSettings
+					chartSettings: simulateChartSettings,
+					...this.getDefaultForecastSettings()
 				}
 			});
 
@@ -380,7 +470,8 @@ export class HorizonScanningScenario extends BaseScenario {
 
 					wf.updateNode(additionalSimNode, {
 						state: {
-							chartSettings: simulateChartSettings
+							chartSettings: simulateChartSettings,
+							...this.getDefaultForecastSettings()
 						}
 					});
 
@@ -431,6 +522,11 @@ export class HorizonScanningScenario extends BaseScenario {
 			compareDatasetIndex++;
 		});
 
+		// Run simulations automatically if indicated
+		if (this.simulateSpec.runSimulationsAutomatically) {
+			await runSimulations(wf, this.getDefaultForecastSettings(), fetchedInterventionPolicies);
+		}
+
 		// 4. Run layout
 		// The schematic for horizon-scanning is as follows
 		//
@@ -451,7 +547,8 @@ export class HorizonScanningScenario extends BaseScenario {
 			interventionNode.y = modelNode.y - 50;
 		});
 
-		modelConfigNodes.forEach((modelConfigNode, idx) => {
+		const configNodes = wf.getNodes().filter((node) => node.operationType === ModelConfigOp.name);
+		configNodes.forEach((modelConfigNode, idx) => {
 			modelConfigNode.x = modelNode.x + nodeGapHorizontal;
 			modelConfigNode.y = modelNode.y + nodeGapVertical * (idx + 1);
 		});

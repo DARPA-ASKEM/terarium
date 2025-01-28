@@ -5,13 +5,14 @@ import { ChartSetting } from '@/types/common';
 const DOCUMENTATION_URL = 'https://documentation.terarium.ai/datasets/compare-datasets/';
 
 export enum TimepointOption {
-	LAST = 'last',
-	FIRST = 'first'
+	LAST = 'at the last timepoint',
+	FIRST = 'at the first timepoint',
+	OVERALL = 'at its peak'
 }
 
 export enum RankOption {
-	MINIMUM = 'minimum',
-	MAXIMUM = 'maximum'
+	MINIMUM = 'minimize',
+	MAXIMUM = 'maximize'
 }
 
 export enum PlotValue {
@@ -21,7 +22,7 @@ export enum PlotValue {
 }
 
 export enum CompareValue {
-	IMPACT = 'impact',
+	SCENARIO = 'scenario',
 	RANK = 'rank',
 	ERROR = 'error'
 }
@@ -31,7 +32,7 @@ export const blankCriteriaOfInterest = {
 	selectedConfigurationId: null,
 	selectedVariable: null,
 	rank: RankOption.MINIMUM,
-	timepoint: TimepointOption.LAST
+	timepoint: TimepointOption.OVERALL
 };
 
 // Map datasetId to dataset name
@@ -41,7 +42,6 @@ export interface CompareDatasetsMap {
 
 export interface CriteriaOfInterestCard {
 	name: string;
-	selectedConfigurationId: string | null;
 	selectedVariable: string | null;
 	rank: RankOption;
 	timepoint: TimepointOption;
@@ -72,7 +72,7 @@ export const CompareDatasetsOperation: Operation = {
 		const init: CompareDatasetsState = {
 			criteriaOfInterestCards: [blankCriteriaOfInterest],
 			selectedPlotType: PlotValue.PERCENTAGE,
-			selectedCompareOption: CompareValue.IMPACT,
+			selectedCompareOption: CompareValue.SCENARIO,
 			selectedBaselineDatasetId: null,
 			selectedGroundTruthDatasetId: null,
 			chartSettings: null,

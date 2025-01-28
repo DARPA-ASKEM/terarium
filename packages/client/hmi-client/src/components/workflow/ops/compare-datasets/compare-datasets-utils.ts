@@ -1,7 +1,9 @@
-import { isEmpty } from 'lodash';
-import { Dataset } from '@/types/Types';
-import { WorkflowPortStatus } from '@/types/workflow';
+import { isEmpty, cloneDeep } from 'lodash';
+import { mean, stddev } from '@/utils/stats';
+import { Dataset, InterventionPolicy, ModelConfiguration } from '@/types/Types';
+import { WorkflowNode, WorkflowPortStatus } from '@/types/workflow';
 import { renameFnGenerator } from '@/components/workflow/ops/calibrate-ciemss/calibrate-utils';
+import { Ref } from 'vue';
 
 import { createRankingInterventionsChart, CATEGORICAL_SCHEME } from '@/services/charts';
 import { DATASET_VAR_NAME_PREFIX, getDatasetResultCSV, mergeResults, getDataset } from '@/services/dataset';
@@ -16,7 +18,7 @@ import { getModelConfigurationById } from '@/services/model-configurations';
 
 import { ChartData } from '@/composables/useCharts';
 
-import { PlotValue, TimepointOption, RankOption } from './compare-datasets-operation';
+import { PlotValue, TimepointOption, RankOption, CompareDatasetsState } from './compare-datasets-operation';
 
 interface DataResults {
 	results: DataArray[];
@@ -83,6 +85,7 @@ export const transformRowValuesRelativeToBaseline = (
 	plotType: PlotValue
 ) => {
 	const transformed: Record<string, number> = {};
+	// FIXME: When refreshing the drilldown Chrome auto-pauses here sometimes to avoid a potential memory crash
 	Object.entries(row).forEach(([key, value]) => {
 		const [dataKey, datasetIndex] = key.split(':');
 		if (datasetIndex === undefined) {
@@ -181,61 +184,79 @@ export function buildChartData(
 export function generateRankingCharts(
 	rankingCriteriaCharts,
 	rankingResultsChart,
-	props,
-	modelConfigIdToInterventionPolicyIdMap,
+	node: WorkflowNode<CompareDatasetsState>,
 	chartData,
-	datasets,
+	datasets: Ref<Dataset[]>,
+	modelConfigurations,
 	interventionPolicies
 ) {
 	// Reset charts
 	rankingCriteriaCharts.value = [];
 	rankingResultsChart.value = null;
 
-	// Might be uneccessary
-	const commonInterventionPolicyIds = props.node.state.criteriaOfInterestCards
-		.map(({ selectedConfigurationId }) => {
-			if (!selectedConfigurationId) return [];
-			return modelConfigIdToInterventionPolicyIdMap.value?.[selectedConfigurationId] ?? [];
-		})
-		.flat();
-	const allRankedCriteriaValues: { score: number; name: string }[][] = [];
+	const allRankedCriteriaValues: { score: number; policyName: string; configName: string }[][] = [];
 	const interventionNameColorMap: Record<string, string> = {};
+	const interventionNameScoresMap: Record<string, number[]> = {};
 
-	props.node.state.criteriaOfInterestCards.forEach((card) => {
-		if (!card.selectedConfigurationId || !chartData.value) return;
+	node.state.criteriaOfInterestCards.forEach((card) => {
+		if (!chartData.value || !card.selectedVariable) return;
 
-		const pointOfComparison =
-			card.timepoint === TimepointOption.FIRST
-				? chartData.value.resultSummary[0]
-				: chartData.value.resultSummary[chartData.value.resultSummary.length - 1];
+		const variableKey = `${chartData.value.pyciemssMap[card.selectedVariable]}_mean`;
+		let pointOfComparison: Record<string, number> = {};
 
-		const rankingCriteriaValues: { score: number; name: string }[] = [];
+		if (card.timepoint === TimepointOption.OVERALL) {
+			const resultSummary = cloneDeep(chartData.value.resultSummary); // Must clone to avoid modifying the original data
+
+			// Note that the reduce function here only compares the variable of interest
+			// so only those key/value pairs will be relevant in the pointOfComparison object.
+			// Other keys like timepoint_id (that we aren't using) will be in pointOfComparison
+			// but they won't coincide with the value of the variable of interest.
+			pointOfComparison = resultSummary.reduce((acc, val) =>
+				Object.keys(val).reduce((acc2, key) => {
+					if (key.includes(variableKey)) {
+						acc2[key] = Math.max(acc[key], val[key]);
+					}
+					return acc2;
+				}, acc)
+			);
+		} else if (card.timepoint === TimepointOption.FIRST) {
+			pointOfComparison = chartData.value.resultSummary[0];
+		} else if (card.timepoint === TimepointOption.LAST) {
+			pointOfComparison = chartData.value.resultSummary[chartData.value.resultSummary.length - 1];
+		}
+
+		const rankingCriteriaValues: { score: number; policyName: string; configName: string }[] = [];
 
 		let colorIndex = 0;
-		datasets.value.forEach(({ metadata }, index: number) => {
-			const policy = interventionPolicies.value.find(
+		datasets.value.forEach((dataset, index: number) => {
+			const { metadata } = dataset;
+			const modelConfiguration: ModelConfiguration = modelConfigurations.value.find(
+				({ id }) => id === metadata.simulationAttributes?.modelConfigurationId
+			);
+			const policy: InterventionPolicy = interventionPolicies.value.find(
 				({ id }) => id === metadata.simulationAttributes?.interventionPolicyId
 			);
 
-			// Skip this intervention policy if a configuration is not using it
-			if (
-				!policy ||
-				!policy.id ||
-				!policy.name ||
-				!commonInterventionPolicyIds.includes(policy.id) ||
-				!card.selectedVariable
-			) {
+			const policyName = policy?.name ?? 'no policy';
+
+			if (!modelConfiguration?.name) {
 				return;
 			}
 
-			if (!interventionNameColorMap[policy.name]) {
-				interventionNameColorMap[policy.name] = CATEGORICAL_SCHEME[colorIndex];
-				colorIndex++;
+			if (!interventionNameColorMap[policyName]) {
+				interventionNameScoresMap[policyName] = [];
+				if (!policy?.name) {
+					interventionNameColorMap[policyName] = 'black';
+				} else {
+					interventionNameColorMap[policyName] = CATEGORICAL_SCHEME[colorIndex];
+					colorIndex++;
+				}
 			}
 
 			rankingCriteriaValues.push({
-				score: pointOfComparison[`${chartData.value?.pyciemssMap[card.selectedVariable]}_mean:${index}`] ?? 0,
-				name: policy.name ?? ''
+				score: pointOfComparison[`${variableKey}:${index}`] ?? 0,
+				policyName,
+				configName: modelConfiguration.name
 			});
 		});
 
@@ -255,31 +276,41 @@ export function generateRankingCharts(
 		allRankedCriteriaValues.push(sortedRankingCriteriaValues);
 	});
 
-	// Sum up the values of the same intervention policy
-	const valueMap: Record<string, number> = {};
-	allRankedCriteriaValues.flat().forEach(({ score, name }) => {
-		if (valueMap[name]) {
-			valueMap[name] += score;
-		} else {
-			valueMap[name] = score;
-		}
+	// For each criteria
+	allRankedCriteriaValues.forEach((criteriaValues, index) => {
+		const rankMutliplier = node.state.criteriaOfInterestCards[index].rank === RankOption.MINIMUM ? -1 : 1;
+
+		// Calculate mean and stdev for this criteria
+		const values = criteriaValues.map((val) => val.score);
+		const meanValue = mean(values);
+		let stdevValue = stddev(values);
+		if (stdevValue === 0) stdevValue = 1;
+
+		// For each policy
+		Object.keys(interventionNameScoresMap).forEach((policyName) => {
+			// For each value of the criteria
+			criteriaValues.forEach((criteriaValue) => {
+				if (criteriaValue.policyName !== policyName) return; // Skip criteria values that don't belong to this policy
+				const scoredPolicyCriteria = rankMutliplier * ((criteriaValue.score - meanValue) / stdevValue);
+				interventionNameScoresMap[policyName].push(scoredPolicyCriteria);
+			});
+		});
 	});
 
-	const rankingResultsScores: { score: number; name: string }[] = Object.keys(valueMap)
-		.map((name) => ({
-			name,
-			score: valueMap[name]
-		}))
-		.sort((a, b) => a.score - b.score)
-		// Instead of the values, we want to rank by score
-		.map((value, index) => ({ ...value, score: index + 1 }));
+	const scoredPolicies = Object.keys(interventionNameScoresMap)
+		.map((policyName) => ({
+			score: mean(interventionNameScoresMap[policyName]),
+			policyName,
+			configName: ''
+		})) // Sort from highest to lowest value
+		.sort((a, b) => b.score - a.score);
 
-	rankingResultsChart.value = createRankingInterventionsChart(rankingResultsScores, interventionNameColorMap);
+	rankingResultsChart.value = createRankingInterventionsChart(scoredPolicies, interventionNameColorMap);
 }
 
 export async function generateImpactCharts(
 	chartData,
-	datasets,
+	datasets: Ref<Dataset[]>,
 	datasetResults,
 	baselineDatasetIndex,
 	selectedPlotType
@@ -295,9 +326,10 @@ export async function generateImpactCharts(
 // TODO: this should probably be split up into smaller functions but for now it's at least not duplicated in the node and drilldown
 // TODO: Please type the function params in this file for a later pass
 export async function initialize(
-	props,
-	isFetchingDatasets,
-	datasets,
+	node: WorkflowNode<CompareDatasetsState>,
+	knobs: Ref<any> | null,
+	isFetchingDatasets: Ref<boolean>,
+	datasets: Ref<Dataset[]>,
 	datasetResults,
 	modelConfigIdToInterventionPolicyIdMap,
 	impactChartData,
@@ -309,7 +341,7 @@ export async function initialize(
 	rankingCriteriaCharts,
 	rankingResultsChart
 ) {
-	const { inputs } = props.node;
+	const { inputs } = node;
 	const datasetInputs = inputs.filter(
 		(input) => input.type === 'datasetId' && input.status === WorkflowPortStatus.CONNECTED
 	);
@@ -329,15 +361,23 @@ export async function initialize(
 			if (!modelConfigIdToInterventionPolicyIdMap.value[modelConfigurationId]) {
 				modelConfigIdToInterventionPolicyIdMap.value[modelConfigurationId] = [];
 			}
-			if (!interventionPolicyId) return;
+			if (!interventionPolicyId) {
+				// Select a default baseline by choosing the first dataset that lacks an intervention policy
+				if (knobs && !knobs.value.selectedBaselineDatasetId) knobs.value.selectedBaselineDatasetId = dataset.id;
+				return;
+			}
 			modelConfigIdToInterventionPolicyIdMap.value[modelConfigurationId].push(interventionPolicyId);
 		});
 	});
+	// Fallback to the first dataset if no dataset ends up being selected
+	if (knobs && !knobs.value.selectedBaselineDatasetId) knobs.value.selectedBaselineDatasetId = datasets.value[0].id;
+
 	// Fetch the results
 	datasetResults.value = await fetchDatasetResults(datasets.value);
 	isFetchingDatasets.value = false;
 
 	await generateImpactCharts(impactChartData, datasets, datasetResults, baselineDatasetIndex, selectedPlotType);
+
 	const modelConfigurationIds = Object.keys(modelConfigIdToInterventionPolicyIdMap.value);
 	if (isEmpty(modelConfigurationIds)) return;
 	const modelConfigurationPromises = modelConfigurationIds.map((id) => getModelConfigurationById(id));
@@ -364,10 +404,10 @@ export async function initialize(
 	generateRankingCharts(
 		rankingCriteriaCharts,
 		rankingResultsChart,
-		props,
-		modelConfigIdToInterventionPolicyIdMap,
+		node,
 		rankingChartData,
 		datasets,
+		modelConfigurations,
 		interventionPolicies
 	);
 }

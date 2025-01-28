@@ -1,11 +1,4 @@
-import {
-	AssetType,
-	ClientEventType,
-	ModelGrounding,
-	ProgrammingLanguage,
-	ProgressState,
-	StatusUpdate
-} from '@/types/Types';
+import { AssetType, ClientEventType, Grounding, ProgrammingLanguage, ProgressState, StatusUpdate } from '@/types/Types';
 import { ProjectPages } from './Project';
 
 export interface FeatureConfig {
@@ -35,7 +28,7 @@ export interface ModelConfigTableData {
 	name: string;
 	type: ParamType;
 	description: string;
-	concept: ModelGrounding;
+	concept: Grounding;
 	unit?: string;
 	value: any;
 	source: string;
@@ -183,6 +176,7 @@ export interface NotificationItemStatus {
 
 export enum ChartSettingType {
 	VARIABLE = 'variable',
+	VARIABLE_OBSERVABLE = 'variable-observable',
 	VARIABLE_COMPARISON = 'variable-comparison',
 	VARIABLE_ENSEMBLE = 'variable-ensemble',
 	DISTRIBUTION_COMPARISON = 'distribution-comparison',

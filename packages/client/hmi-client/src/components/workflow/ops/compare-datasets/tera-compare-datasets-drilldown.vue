@@ -9,7 +9,7 @@
 				class="input-config"
 				v-model:is-open="isInputSettingsOpen"
 				header="Compare settings"
-				content-width="440px"
+				content-width="400px"
 			>
 				<template #content>
 					<tera-drilldown-section class="px-3">
@@ -22,21 +22,14 @@
 							option-value="value"
 							@change="outputPanelBehavior"
 						/>
-						<!-- Pascale asked me to hide this until the feature is implemented -->
-						<!-- <tera-checkbox
-							class="pt-2"
-							v-model="isSimulationsFromSameModel"
-							label="All simulations are from the same model"
-							disabled
-						/> -->
 						<tera-checkbox
 							class="mt-2 mb-4"
 							v-model="areSimulationsFromSameModel"
 							label="All simulations are from the same model"
 							disabled
 						/>
-						<template v-if="knobs.selectedCompareOption === CompareValue.IMPACT">
-							<label> Select dataset to use as a baseline (optional) </label>
+						<template v-if="knobs.selectedCompareOption === CompareValue.SCENARIO">
+							<label> Select simulation to use as a baseline </label>
 							<Dropdown
 								v-model="knobs.selectedBaselineDatasetId"
 								:options="datasets"
@@ -46,8 +39,6 @@
 								placeholder="Optional"
 								@change="onChangeImpactComparison"
 							/>
-							<label>Comparison tables</label>
-							<tera-checkbox v-model="isATESelected" label="Average treatment effect (ATE)" />
 						</template>
 						<!-- Pascale asked me to omit this timepoint selector, but I'm keeping it here until we are certain it's not needed -->
 						<!--
@@ -66,7 +57,6 @@
 								v-for="(card, i) in node.state.criteriaOfInterestCards"
 								:key="i"
 								:card="card"
-								:model-configurations="modelConfigurations"
 								:variables="variableNames"
 								@delete="deleteCriteria(i)"
 								@update="(e) => updateCriteria(e, i)"
@@ -136,10 +126,10 @@
 		</template>
 
 		<tera-drilldown-section :tabName="DrilldownTabs.Wizard">
-			<div ref="outputPanel">
+			<div ref="outputPanel" class="p-2">
 				<Accordion multiple :active-index="activeIndices">
 					<AccordionTab header="Summary"> </AccordionTab>
-					<template v-if="knobs.selectedCompareOption === CompareValue.IMPACT">
+					<template v-if="knobs.selectedCompareOption === CompareValue.SCENARIO">
 						<AccordionTab header="Variables">
 							<template v-for="setting of selectedVariableSettings" :key="setting.id">
 								<vega-chart
@@ -148,8 +138,45 @@
 									expandable
 								/>
 							</template>
+							<div v-if="selectedVariableSettings.length === 0" class="empty-state-chart">
+								<img
+									src="@assets/svg/operator-images/simulate-deterministic.svg"
+									alt="Select a variable"
+									draggable="false"
+									height="80px"
+								/>
+								<p class="text-center">Select variables of interest in the output panel</p>
+							</div>
 						</AccordionTab>
-						<AccordionTab header="Comparison table"> </AccordionTab>
+						<AccordionTab header="Impact of intervention metrics" v-if="showATETable">
+							<p class="mb-3">
+								The average treatment effect (ATE) estimates the impact of a policy on the outcome in a given
+								population; it is the mean difference in the outcome between those who were and weren't treated. Larger
+								values of ATE are better, meaning a very impactful policy. Reference:
+								<a target="_blank" rel="noopener noreferrer" href="https://pmc.ncbi.nlm.nih.gov/articles/PMC6794006/">
+									https://pmc.ncbi.nlm.nih.gov/articles/PMC6794006/
+								</a>
+							</p>
+							<DataTable :value="ateTable">
+								<Column field="policyName" header="Intervention policy" />
+								<Column
+									v-for="variableName in [...variableNames, 'overall']"
+									:field="variableName"
+									:header="variableName === 'overall' ? 'Overall' : variableName"
+									sortable
+									:key="variableName"
+								>
+									<template #body="{ data, field }">
+										<div class="flex gap-2">
+											<div>{{ displayNumber(data[field]) }}</div>
+											<div v-if="showATEErrors" class="error ml-auto">
+												± {{ displayNumber(data[`${field}_error`]) }}
+											</div>
+										</div>
+									</template>
+								</Column>
+							</DataTable>
+						</AccordionTab>
 					</template>
 					<template v-else-if="knobs.selectedCompareOption === CompareValue.RANK">
 						<AccordionTab header="Ranking results">
@@ -178,7 +205,7 @@
 				header="Output settings"
 				content-width="360px"
 			>
-				<template #overlay v-if="knobs.selectedCompareOption === CompareValue.IMPACT">
+				<template #overlay v-if="knobs.selectedCompareOption === CompareValue.SCENARIO">
 					<tera-chart-settings-panel
 						:annotations="
 							[ChartSettingType.VARIABLE, ChartSettingType.VARIABLE_COMPARISON].includes(
@@ -194,7 +221,7 @@
 						@close="setActiveChartSettings(null)"
 					/>
 				</template>
-				<template #content v-if="knobs.selectedCompareOption === CompareValue.IMPACT">
+				<template #content v-if="knobs.selectedCompareOption === CompareValue.SCENARIO">
 					<div class="output-settings-panel">
 						<tera-chart-settings
 							:title="'Variables over time'"
@@ -208,21 +235,24 @@
 						>
 							<!-- plot options -->
 							<div class="plot-options">
-								<p class="mb-2">How do you want to plot the values?</p>
-								<div v-for="option in plotOptions" class="flex align-items-center" :key="option.value">
+								<p>How do you want to plot the values?</p>
+								<div v-for="option in plotOptions" class="flex align-items-center gap-2" :key="option.value">
 									<RadioButton
 										v-model="knobs.selectedPlotType"
 										:value="option.value"
 										name="plotValues"
 										@change="onChangeImpactComparison"
 									/>
-									<label class="pl-2 py-1" :for="option.value">{{ option.label }}</label>
+									<label :for="option.value">{{ option.label }}</label>
 								</div>
 							</div>
 						</tera-chart-settings>
 						<Divider />
 						<tera-chart-settings-quantiles :settings="chartSettings" @update-options="updateQauntilesOptions" />
 						<Divider />
+						<h5>Impact of intervention metrics</h5>
+						<tera-checkbox v-model="showATETable" label="Average treatment effect (ATE)" />
+						<tera-checkbox v-if="showATETable" v-model="showATEErrors" label="Show errors" />
 					</div>
 				</template>
 			</tera-slider-panel>
@@ -257,6 +287,8 @@ import { useChartSettings } from '@/composables/useChartSettings';
 import { useDrilldownChartSize } from '@/composables/useDrilldownChartSize';
 import { useCharts, type ChartData } from '@/composables/useCharts';
 import { DataArray } from '@/services/models/simulation-service';
+import { mean, stddev } from '@/utils/stats';
+import { displayNumber } from '@/utils/number';
 import TeraCriteriaOfInterestCard from './tera-criteria-of-interest-card.vue';
 import {
 	blankCriteriaOfInterest,
@@ -275,7 +307,7 @@ const props = defineProps<{
 const emit = defineEmits(['update-state', 'close']);
 
 const compareOptions: { label: string; value: CompareValue }[] = [
-	{ label: 'Compare the impact of interventions', value: CompareValue.IMPACT },
+	{ label: 'Compare scenarios', value: CompareValue.SCENARIO },
 	{ label: 'Rank interventions based on multiple criteria', value: CompareValue.RANK },
 	{ label: 'Compare model errors', value: CompareValue.ERROR }
 ];
@@ -290,6 +322,10 @@ const modelConfigurations = ref<ModelConfiguration[]>([]);
 const interventionPolicies = ref<InterventionPolicy[]>([]);
 const modelConfigIdToInterventionPolicyIdMap = ref<Record<string, string[]>>({});
 
+const showATETable = ref(true);
+const showATEErrors = ref(false);
+const ateTable = ref<any[]>([]);
+
 const plotOptions = [
 	{ label: 'Raw values', value: PlotValue.VALUE },
 	{ label: 'Percent change', value: PlotValue.PERCENTAGE },
@@ -302,16 +338,15 @@ const activeIndices = ref([0, 1, 2]);
 
 const isFetchingDatasets = ref(false);
 const areSimulationsFromSameModel = ref(true);
-const isATESelected = ref(false);
 
 const onRun = () => {
 	generateRankingCharts(
 		rankingCriteriaCharts,
 		rankingResultsChart,
-		props,
-		modelConfigIdToInterventionPolicyIdMap,
+		props.node,
 		rankingChartData,
 		datasets,
+		modelConfigurations,
 		interventionPolicies
 	);
 };
@@ -330,7 +365,7 @@ interface BasicKnobs {
 }
 
 const knobs = ref<BasicKnobs>({
-	selectedCompareOption: CompareValue.IMPACT,
+	selectedCompareOption: CompareValue.SCENARIO,
 	// Impact
 	selectedBaselineDatasetId: null,
 	selectedPlotType: PlotValue.PERCENTAGE,
@@ -396,20 +431,69 @@ const variableCharts = useCompareDatasetCharts(selectedVariableSettings, selecte
 function outputPanelBehavior() {
 	if (knobs.value.selectedCompareOption === CompareValue.RANK) {
 		isOutputSettingsOpen.value = false;
-	} else if (knobs.value.selectedCompareOption === CompareValue.IMPACT) {
+	} else if (knobs.value.selectedCompareOption === CompareValue.SCENARIO) {
 		isOutputSettingsOpen.value = true;
 	}
 }
 
-onMounted(() => {
+function constructATETable() {
+	const means: Record<string, number> = {};
+	const meanErrors: Record<string, number> = {};
+
+	datasetResults.value?.summaryResults.forEach((summaryResult) => {
+		Object.keys(summaryResult[0]).forEach((key) => {
+			if (!key.includes('_mean:')) return;
+			const values = summaryResult.map((row) => row[key]);
+			means[key] = mean(values);
+			meanErrors[key] = stddev(values) / Math.sqrt(values.length);
+		});
+	});
+
+	const meanKeyNames = Object.keys(means);
+
+	datasets.value.forEach((dataset, index) => {
+		if (index === baselineDatasetIndex.value) return;
+
+		const ateRow: Record<string, number> = {};
+		const ateValues: number[] = [];
+
+		variableNames.value.forEach((variableName) => {
+			const potentialKeys = [
+				`${variableName}_state_mean:${index}`,
+				`persistent_${variableName}_param_mean:${index}`,
+				`${variableName}_observable_state_mean:${index}`
+			];
+
+			potentialKeys.forEach((key) => {
+				if (!ateRow[variableName] && meanKeyNames.includes(key)) {
+					const baselineKey = `${key.slice(0, -1)}${baselineDatasetIndex.value}`;
+
+					const ate = means[key] - means[baselineKey];
+					const ateError = Math.sqrt(meanErrors[key] ** 2 + meanErrors[baselineKey] ** 2);
+
+					ateRow[variableName] = ate;
+					ateRow[`${variableName}_error`] = ateError;
+
+					ateValues.push(ate);
+				}
+			});
+		});
+		ateRow.overall = mean(ateValues);
+		ateRow.overall_error = stddev(ateValues) / Math.sqrt(ateValues.length);
+
+		ateTable.value.push({ policyName: dataset.name, ...ateRow });
+	});
+}
+
+onMounted(async () => {
 	const state = cloneDeep(props.node.state);
 	knobs.value = Object.assign(knobs.value, state);
-	if (!knobs.value.selectedBaselineDatasetId) knobs.value.selectedBaselineDatasetId = datasets.value[0]?.id ?? null;
 
 	outputPanelBehavior();
 
-	initialize(
-		props,
+	await initialize(
+		props.node,
+		knobs,
 		isFetchingDatasets,
 		datasets,
 		datasetResults,
@@ -423,6 +507,8 @@ onMounted(() => {
 		rankingCriteriaCharts,
 		rankingResultsChart
 	);
+
+	constructATETable();
 });
 
 watch(
@@ -441,10 +527,6 @@ watch(
 </script>
 
 <style scoped>
-label {
-	padding: var(--gap-2) 0;
-}
-
 .output-settings-panel {
 	padding: var(--gap-4);
 	display: flex;
@@ -458,10 +540,40 @@ label {
 }
 
 .plot-options {
+	display: flex;
+	flex-direction: column;
+	gap: var(--gap-2);
 	padding: var(--gap-3);
 	background: var(--surface-200);
 	border-radius: var(--border-radius);
 	box-shadow: inset 0 0 6px rgba(0, 0, 0, 0.1);
 	margin-bottom: var(--gap-1);
+}
+.empty-state-chart {
+	display: flex;
+	flex-direction: column;
+	flex-grow: 1;
+	gap: var(--gap-4);
+	justify-content: center;
+	align-items: center;
+	height: 12rem;
+	margin: var(--gap-6);
+	padding: var(--gap-4);
+	background: var(--surface-100);
+	color: var(--text-color-secondary);
+	border-radius: var(--border-radius);
+}
+
+/* See if this rule should be applied to all tables, it makes a lot of sense */
+:deep(th) {
+	padding: var(--gap-4);
+}
+
+:deep(td) {
+	white-space: nowrap;
+}
+
+.error {
+	color: var(--text-color-secondary);
 }
 </style>

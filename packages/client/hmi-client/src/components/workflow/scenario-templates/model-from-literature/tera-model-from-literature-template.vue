@@ -41,6 +41,7 @@
 					:model-value="scenario.modelSelectionCriteria"
 					placeholder="What is your goal (optional)"
 					@update:model-value="scenario.setModelSelectionCriteria($event)"
+					:autoResize="true"
 				/>
 			</template>
 		</template>

@@ -1,11 +1,11 @@
 package software.uncharted.terarium.hmiserver.service.data;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import lombok.extern.slf4j.Slf4j;
@@ -26,9 +26,6 @@ import software.uncharted.terarium.hmiserver.models.mira.DKG;
 
 @Slf4j
 public class DocumentServiceTests extends TerariumApplicationTests {
-
-	@Autowired
-	private ObjectMapper mapper;
 
 	@Autowired
 	private DocumentAssetService documentAssetService;
@@ -58,12 +55,12 @@ public class DocumentServiceTests extends TerariumApplicationTests {
 	}
 
 	static Grounding createGrounding(final String key) {
-		final ObjectMapper mapper = new ObjectMapper();
-
-		final Grounding grounding = new Grounding();
-		grounding.setContext(mapper.createObjectNode().put("hello", "world-" + key).put("foo", "bar-" + key));
-		grounding.setIdentifiers(new ArrayList<>());
-		grounding.getIdentifiers().add(new DKG("curie", "maria", "", null, null));
+		final DKG dkg = new DKG("curie:test", "maria", "", null, null);
+		final Grounding grounding = new Grounding(dkg);
+		final Map<String, String> context = new HashMap<>();
+		context.put("hello", "world-" + key);
+		context.put("foo", "bar-" + key);
+		grounding.setContext(context);
 		return grounding;
 	}
 
@@ -106,8 +103,6 @@ public class DocumentServiceTests extends TerariumApplicationTests {
 		Assertions.assertNotNull(after.getGrounding().getId());
 		Assertions.assertNotNull(after.getGrounding().getCreatedOn());
 		Assertions.assertNotNull(after.getGrounding().getIdentifiers());
-		Assertions.assertNotNull(after.getGrounding().getIdentifiers().get(0).getCurie());
-		Assertions.assertNotNull(after.getGrounding().getIdentifiers().get(0).getName());
 		Assertions.assertNotNull(after.getGrounding().getContext());
 		Assertions.assertEquals(after.getGrounding().getContext().size(), 2);
 	}

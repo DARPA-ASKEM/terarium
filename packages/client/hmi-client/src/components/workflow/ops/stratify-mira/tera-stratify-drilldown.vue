@@ -7,7 +7,7 @@
 		@update:selection="onSelection"
 		v-bind="$attrs"
 	>
-		<div :tabName="StratifyTabs.Wizard">
+		<div :tabName="StratifyTabs.Wizard" class="input-section">
 			<tera-drilldown-section class="px-3 wizard-section">
 				<template #header-controls-left>
 					<section>
@@ -209,7 +209,6 @@ const stratifyModel = () => {
 		if (modelParameters.includes(v)) parametersToStratify.push(v);
 	});
 
-	let executedCode = '';
 	const messageContent = {
 		key: strataOption.name,
 		strata: strataOption.groupLabels.split(',').map((d) => d.trim()),
@@ -222,11 +221,11 @@ const stratifyModel = () => {
 		kernelManager
 			.sendMessage('stratify_request', messageContent)
 			.register('stratify_response', (data: any) => {
-				executedCode = data.content.executed_code;
+				const executedCode = data.content.executed_code;
+				saveCodeToState(executedCode, false);
 			})
 			.register('model_preview', async (data: any) => {
 				await handleModelPreview(data);
-				saveCodeToState(executedCode, false);
 			});
 	});
 };
@@ -486,6 +485,15 @@ onUnmounted(() => {
 </script>
 
 <style scoped>
+/* set width of wizard section */
+:deep(main):has(.input-section) {
+	grid-template-columns: auto;
+}
+/* set width of notebook section */
+:deep(main):has(.notebook-section) {
+	grid-template-columns: 40% 60%;
+}
+
 .notebook-section:deep(main) {
 	gap: var(--gap-2);
 	position: relative;

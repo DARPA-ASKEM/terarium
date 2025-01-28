@@ -2,7 +2,7 @@
 	<section>
 		<div v-if="!isEmpty(node.state.transientModelConfig.id)" class="configuration-card">
 			<div class="content">
-				<h6 class="pb-1 line-wrap">{{ node.state.transientModelConfig.name }}</h6>
+				<p class="text-sm font-semibold line-wrap">{{ node.state.transientModelConfig.name }}</p>
 				<p class="text-sm">{{ node.state.transientModelConfig.description }}</p>
 			</div>
 		</div>

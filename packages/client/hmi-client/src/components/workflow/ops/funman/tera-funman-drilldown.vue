@@ -17,6 +17,7 @@
 			<template #content>
 				<div class="top-toolbar">
 					<div class="btn-group">
+						<Button v-if="showSpinner" label="Stop" icon="pi pi-stop" @click="stop" />
 						<Button :loading="showSpinner" label="Run" icon="pi pi-play" @click="run" />
 					</div>
 				</div>
@@ -120,6 +121,7 @@
 							</section>
 						</AccordionTab>
 					</Accordion>
+					<div class="spacer mb-6"></div>
 				</main>
 			</template>
 		</tera-slider-panel>
@@ -203,6 +205,27 @@
 								/>
 								<span class="ml-4" v-else> To view parameter charts select some in the Output settings. </span>
 							</AccordionTab>
+							<AccordionTab
+								v-if="!isEmpty(calibratedConfigObservables) || !isEmpty(observableCharts)"
+								header="Observables"
+							>
+								<tera-model-part
+									v-if="!isEmpty(calibratedConfigObservables)"
+									class="pl-4"
+									:part-type="PartType.OBSERVABLE"
+									:items="calibratedConfigObservables"
+									:feature-config="{ isPreview: true }"
+								/>
+								<template v-if="!isEmpty(observableCharts)">
+									<vega-chart
+										v-for="(observableChart, index) in selectedObservableCharts"
+										:key="index"
+										:visualization-spec="observableChart"
+										:are-embed-actions-visible="false"
+										expandable
+									/>
+								</template>
+							</AccordionTab>
 							<AccordionTab header="Diagram">
 								<tera-model-diagram v-if="model" :model="model" />
 							</AccordionTab>
@@ -224,16 +247,6 @@
 								:mmt-params="mmtParams"
 								:feature-config="{ isPreview: true }"
 							/>
-							<Accordion :active-index="observableActiveIndex" v-if="!isEmpty(calibratedConfigObservables)">
-								<AccordionTab v-if="!isEmpty(calibratedConfigObservables)" header="Observables">
-									<tera-model-part
-										class="pl-4"
-										:part-type="PartType.OBSERVABLE"
-										:items="calibratedConfigObservables"
-										:feature-config="{ isPreview: true }"
-									/>
-								</AccordionTab>
-							</Accordion>
 						</template>
 					</template>
 					<v-ace-editor
@@ -301,6 +314,27 @@
 							@remove="removeChartSetting"
 						/>
 						<hr />
+						<h5>Observable</h5>
+						<tera-chart-control
+							class="w-full"
+							:chart-config="{
+								selectedRun: 'fixme',
+								selectedVariable: selectedObservableSettings.map((s) => s.selectedVariables[0])
+							}"
+							multi-select
+							:show-remove-button="false"
+							:variables="observableOptions"
+							@configuration-change="updateSelectedObservables"
+						/>
+						<tera-chart-settings-item
+							v-for="settings of chartSettings.filter(
+								(setting) => setting.type === ChartSettingType.VARIABLE_OBSERVABLE
+							)"
+							:key="settings.id"
+							:settings="settings"
+							@open="activeChartSettings = settings"
+							@remove="removeChartSetting"
+						/>
 					</div>
 					<div class="flex align-items-center gap-2 ml-4 mb-3">
 						<Checkbox v-model="onlyShowLatestResults" binary @change="renderCharts" />
@@ -374,6 +408,7 @@ import {
 	type ProcessedFunmanResult,
 	type FunmanConstraintsResponse,
 	processFunman,
+	cancelQueries,
 	makeQueries
 } from '@/services/models/funman-service';
 import { createFunmanStateChart, createFunmanParameterCharts } from '@/services/charts';
@@ -459,7 +494,6 @@ let configuredInputModel: Model | null = null;
 
 const toolbarActiveIndicies = ref([0, 1]);
 const parameterAndStateActiveIndicies = ref([0, 1, 2, 3]);
-const observableActiveIndex = ref([0]);
 
 const stateIds = ref<string[]>([]);
 const parameterIds = ref<string[]>([]);
@@ -614,6 +648,15 @@ async function run() {
 	// Setup the in-progress id
 	const state = cloneDeep(props.node.state);
 	state.inProgressId = response.id;
+	emit('update-state', state);
+}
+
+async function stop() {
+	const state = cloneDeep(props.node.state);
+	await cancelQueries(state.inProgressId);
+	showSpinner.value = false;
+	// Clean up the in-progress id
+	state.inProgressId = '';
 	emit('update-state', state);
 }
 
@@ -803,7 +846,7 @@ onMounted(async () => {
 	const modelConfigurationId = props.node.inputs[0].value?.[0];
 	if (!modelConfigurationId) return;
 	const modelConfiguration = await getModelConfigurationById(modelConfigurationId);
-	configuredInputModel = await getAsConfiguredModel(modelConfiguration);
+	configuredInputModel = await getAsConfiguredModel(modelConfigurationId);
 
 	setModelOptions();
 
@@ -829,7 +872,7 @@ onMounted(async () => {
 let constraintsResponse: FunmanConstraintsResponse[] = [];
 let mmt: MiraModel = emptyMiraModel();
 let funmanResult: any = {};
-const processedFunmanResult = ref<ProcessedFunmanResult>({ boxes: [], trajectories: [] });
+const processedFunmanResult = ref<ProcessedFunmanResult>({ boxes: [], trajectories: [], observableTrajectories: [] });
 
 // Model configuration stuff
 const validatedModelConfiguration = ref<ModelConfiguration | null>(null);
@@ -845,8 +888,15 @@ const selectedStateCharts = computed(() => {
 });
 const parameterCharts = ref<any>({});
 
+const observableCharts = ref<any>([{}]);
+const selectedObservableCharts = computed(() => {
+	const selectedObservableIds = selectedObservableSettings.value.map((setting) => setting.selectedVariables[0]);
+	return observableCharts.value.filter((chart) => selectedObservableIds.includes(chart.id));
+});
+
 const stateOptions = ref<string[]>([]);
 const parameterOptions = ref<string[]>([]);
+const observableOptions = ref<string[]>([]);
 const onlyShowLatestResults = ref(false);
 const focusOnModelChecks = ref(false);
 
@@ -858,6 +908,9 @@ const selectedStateSettings = computed(() =>
 );
 const selectedParameterSettings = computed(() =>
 	chartSettings.value.filter((setting) => setting.type === ChartSettingType.DISTRIBUTION_COMPARISON)
+);
+const selectedObservableSettings = computed(() =>
+	chartSettings.value.filter((setting) => setting.type === ChartSettingType.VARIABLE_OBSERVABLE)
 );
 
 let selectedBoxId: number = -1;
@@ -897,6 +950,16 @@ function updateParameterCharts() {
 	parameterCharts.value = createFunmanParameterCharts(distributionParameters, boxes);
 }
 
+function updateObservableCharts() {
+	if (isEmpty(processedFunmanResult.value.observableTrajectories)) return;
+	const observableTrajectories = onlyShowLatestResults.value
+		? processedFunmanResult.value.observableTrajectories.filter(({ isAtLatestTimestep }) => isAtLatestTimestep)
+		: processedFunmanResult.value.observableTrajectories;
+	observableCharts.value = funmanResult.model.petrinet.semantics.ode.observables.map(({ id }) =>
+		createFunmanStateChart(observableTrajectories, constraintsResponse, id, focusOnModelChecks.value, selectedBoxId)
+	);
+}
+
 function updateSelectedStates(event) {
 	emit('update-state', {
 		...props.node.state,
@@ -920,6 +983,17 @@ function updateSelectedParameters(event) {
 	updateParameterCharts(); // Rerender when we remove/add charts since they are all contained in the same visualization
 }
 
+function updateSelectedObservables(event) {
+	emit('update-state', {
+		...props.node.state,
+		chartSettings: updateChartSettingsBySelectedVariables(
+			chartSettings.value,
+			ChartSettingType.VARIABLE_OBSERVABLE,
+			event.selectedVariable
+		)
+	});
+}
+
 function removeChartSetting(chartId: string) {
 	const chartType = chartSettings.value.find((setting) => setting.id === chartId)?.type;
 	emit('update-state', {
@@ -934,6 +1008,7 @@ function removeChartSetting(chartId: string) {
 function renderCharts() {
 	updateStateCharts();
 	updateParameterCharts();
+	updateObservableCharts();
 }
 
 async function prepareOutput() {
@@ -971,6 +1046,7 @@ async function prepareOutput() {
 	parameterOptions.value = funmanResult.request.parameters
 		.filter((d: any) => d.interval.lb !== d.interval.ub)
 		.map(({ name }) => name);
+	observableOptions.value = funmanResult.model?.petrinet?.semantics?.ode?.observables.map(({ id }) => id);
 
 	// Initialize default output settings
 	const state = cloneDeep(props.node.state);
@@ -979,6 +1055,11 @@ async function prepareOutput() {
 		state.chartSettings,
 		ChartSettingType.DISTRIBUTION_COMPARISON,
 		parameterOptions.value
+	);
+	state.chartSettings = updateChartSettingsBySelectedVariables(
+		state.chartSettings,
+		ChartSettingType.VARIABLE_OBSERVABLE,
+		observableOptions.value
 	);
 	emit('update-state', state);
 
