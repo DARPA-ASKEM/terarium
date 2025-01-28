@@ -80,7 +80,7 @@
 								/>
 							</div>
 							<div class="label-and-input">
-								<label class="" for="num-samples">Solver step size</label>
+								<label for="num-samples">Solver step size</label>
 								<tera-input-number
 									v-model="solverStepSize"
 									:disabled="method !== CiemssMethodOptions.euler"
