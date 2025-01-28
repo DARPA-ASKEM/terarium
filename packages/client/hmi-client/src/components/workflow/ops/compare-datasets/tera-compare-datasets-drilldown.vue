@@ -202,7 +202,7 @@
 						<Divider />
 						<h5>Impact of intervention metrics</h5>
 						<div class="plot-options">
-							<tera-checkbox v-model="showATETable" label="Average teratment effect (ATE)" />
+							<tera-checkbox v-model="showATETable" label="Average treatment effect (ATE)" />
 							<tera-checkbox v-if="showATETable" v-model="showATEErrors" label="Show errors" />
 						</div>
 					</div>
