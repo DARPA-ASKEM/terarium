@@ -29,7 +29,7 @@ import {
 } from '@/types/common';
 import { ChartAnnotation, Intervention, Model, ModelConfiguration } from '@/types/Types';
 import { displayNumber } from '@/utils/number';
-import { getUnitsFromModelParts, getVegaDateOptions } from '@/services/model';
+import { getStateVariableStrata, getUnitsFromModelParts, getVegaDateOptions } from '@/services/model';
 import { CalibrateMap, isCalibrateMap } from '@/services/calibrate-workflow';
 import { isChartSettingComparisonVariable, isChartSettingEnsembleVariable } from '@/services/chart-settings';
 import {
@@ -131,6 +131,131 @@ const calculateYExtent = (resultSummary: DataArray, variables: string[], include
 
 // Consider provided reference object is ready if it is set to null explicitly or if it's value is available
 const isRefReady = (ref: Ref | null) => ref === null || Boolean(ref.value);
+
+/**
+ * Normalize the stratified model chart data by the total strata population.
+ * Only supported for stratified models.
+ * @param setting ChartSettingComparison
+ * @param data ChartData
+ * @param model Model
+ * @returns ChartData where the values for the state variables are normalized by the total strata population
+ */
+const normalizeStratifiedModelChartData = (setting: ChartSettingComparison, data: ChartData, model: Model) => {
+	if (!model) return data;
+	if (!setting.normalize) return data;
+	// Group selected variables by their corresponding strata
+	const selectedVarGroup = _.groupBy(setting.selectedVariables, (v) => getStateVariableStrata(v, model).join('-'));
+	delete selectedVarGroup['']; // Remove the empty group (no state variable)
+	const denominatorVariables = {};
+	Object.keys(selectedVarGroup).forEach((group) => {
+		denominatorVariables[group] = Object.entries(data.pyciemssMap)
+			.filter(([k]) => group === getStateVariableStrata(k, model).join('-'))
+			.map(([, v]) => v);
+	});
+	const includeBeforeData = setting.showBeforeAfter && setting.smallMultiples;
+
+	// If show quantiles is on,  normalize group by timepoint data
+	if (setting.showQuantiles) {
+		const resultGroupByTimepoint: GroupedDataArray = [];
+		(data.resultGroupByTimepoint ?? []).forEach((row) => {
+			const normalizedEntry = {};
+			Object.entries(selectedVarGroup).forEach(([group, variables]) => {
+				// Sum all values for the variables in the same strata group
+				const denominatorValues = sumArrays(...denominatorVariables[group].map((g) => row[g]));
+				variables
+					.map((v) => data.pyciemssMap[v])
+					.forEach((variable) => {
+						normalizedEntry[variable] = divideArrays(row[variable], denominatorValues).map((v) => v * 100);
+						if (includeBeforeData) {
+							normalizedEntry[`${variable}:pre`] = divideArrays(row[`${variable}:pre`], denominatorValues).map(
+								(v) => v * 100
+							);
+						}
+					});
+			});
+			resultGroupByTimepoint.push({ ...row, ...normalizedEntry });
+		});
+		return { ...data, resultGroupByTimepoint };
+	}
+	// Else, normalize result and resultSummary data
+
+	// Normalize stat data
+	const resultSummary: DataArray = [];
+	data.resultSummary.forEach((row) => {
+		const normalizedEntry = { timepoint_id: row.timepoint_id };
+		Object.entries(selectedVarGroup).forEach(([group, variables]) => {
+			const denominator = denominatorVariables[group].reduce((acc, v) => acc + row[`${v}_mean`], 0);
+			variables
+				.map((v) => data.pyciemssMap[v])
+				.forEach((variable) => {
+					const key = `${variable}_mean`;
+					normalizedEntry[key] = (row[key] / denominator) * 100;
+					if (includeBeforeData) {
+						normalizedEntry[`${key}:pre`] = (row[`${key}:pre`] / denominator) * 100;
+					}
+				});
+		});
+		resultSummary.push({ ...row, ...normalizedEntry });
+	});
+
+	// Normalize sample data
+	const result: DataArray = [];
+	data.result.forEach((row) => {
+		const normalizedEntry = { timepoint_id: row.timepoint_id, sample_id: row.sample_id };
+		Object.entries(selectedVarGroup).forEach(([group, variables]) => {
+			const denominator = denominatorVariables[group].reduce((acc, v) => acc + row[v], 0);
+			variables
+				.map((v) => data.pyciemssMap[v])
+				.forEach((variable) => {
+					normalizedEntry[variable] = (row[variable] / denominator) * 100;
+					if (includeBeforeData) {
+						normalizedEntry[`${variable}:pre`] = (row[`${variable}:pre`] / denominator) * 100;
+					}
+				});
+		});
+		result.push({ ...row, ...normalizedEntry });
+	});
+	return { ...data, result, resultSummary };
+};
+
+// A helper function to create a comparison chart
+function createComparisonChart(
+	setting: ChartSettingComparison,
+	result: DataArray,
+	resultSummary: DataArray,
+	statLayerVariables: string[],
+	sampleLayerVariables: string[],
+	options: ForecastChartOptions,
+	annotations: ChartAnnotation[],
+	resultGroupByTimepoint?: GroupedDataArray
+) {
+	const chart = !setting.showQuantiles
+		? applyForecastChartAnnotations(
+				createForecastChart(
+					{
+						data: result,
+						variables: sampleLayerVariables,
+						timeField: 'timepoint_id',
+						groupField: 'sample_id'
+					},
+					{
+						data: resultSummary,
+						variables: statLayerVariables,
+						timeField: 'timepoint_id'
+					},
+					null,
+					options
+				),
+				annotations
+			)
+		: createQuantilesForecastChart(
+				resultGroupByTimepoint ?? [],
+				sampleLayerVariables,
+				setting.quantiles ?? [],
+				options
+			);
+	return chart as VisualizationSpec;
+}
 
 /**
  * Composable to manage the creation and configuration of various types of charts used in operator nodes and drilldown.
@@ -500,113 +625,6 @@ export function useCharts(
 		return variableCharts;
 	};
 
-	function createComparisonChart(
-		setting: ChartSettingComparison,
-		result: DataArray,
-		resultSummary: DataArray,
-		statLayerVariables: string[],
-		sampleLayerVariables: string[],
-		options: ForecastChartOptions,
-		annotations: ChartAnnotation[]
-	) {
-		const chart = !setting.showQuantiles
-			? applyForecastChartAnnotations(
-					createForecastChart(
-						{
-							data: result,
-							variables: sampleLayerVariables,
-							timeField: 'timepoint_id',
-							groupField: 'sample_id'
-						},
-						{
-							data: resultSummary,
-							variables: statLayerVariables,
-							timeField: 'timepoint_id'
-						},
-						null,
-						options
-					),
-					annotations
-				)
-			: createQuantilesForecastChart(
-					chartData.value?.resultGroupByTimepoint ?? [],
-					sampleLayerVariables,
-					setting.quantiles ?? [],
-					options
-				);
-		return chart as VisualizationSpec;
-	}
-
-	const normalizeComparisonChartData = (setting: ChartSettingComparison, data: ChartData) => {
-		// Normalize data by total strata population. Only supported for stratified models.
-		if (!setting.normalize) return data;
-
-		const selectedVarRawNames = setting.selectedVariables.map((v) => data.pyciemssMap[v]);
-		// Group by the last two parts of the variable name where the last part is the strata and variable type. e.g. 'I_young_state where {varname}_{strata}_{type}' is grouped by 'young_state'
-		// Note: We assume strata label does not contain '_' character other wise it will break the grouping
-		const selectedVarGroup = _.groupBy(selectedVarRawNames, (v) => v.split('_').slice(-2).join('_')); // assume all variables are state variable. FIXME: Generalize this
-		const denominatorVariables = {};
-		Object.keys(selectedVarGroup).forEach((group) => {
-			denominatorVariables[group] = Object.values(data.pyciemssMap).filter((v) => v.endsWith(`_${group}`));
-		});
-		const includeBeforeData = setting.showBeforeAfter && setting.smallMultiples;
-
-		// If show quantiles is on,  normalize group by timepoint data
-		if (setting.showQuantiles) {
-			const resultGroupByTimepoint: GroupedDataArray = [];
-			(data.resultGroupByTimepoint ?? []).forEach((row) => {
-				const newEntry = { timepoint_id: row.timepoint_id, sample_id: row.sample_id };
-				Object.entries(selectedVarGroup).forEach(([group, variables]) => {
-					// Sum all values for the variables in the same strata group
-					const denominatorValues = sumArrays(...denominatorVariables[group].map((g) => row[g]));
-					variables.forEach((variable) => {
-						newEntry[variable] = divideArrays(row[variable], denominatorValues).map((v) => v * 100);
-						if (includeBeforeData) {
-							newEntry[`${variable}:pre`] = divideArrays(row[`${variable}:pre`], denominatorValues).map((v) => v * 100);
-						}
-					});
-				});
-				resultGroupByTimepoint.push(newEntry);
-			});
-			return { ...data, resultGroupByTimepoint };
-		}
-		// Else, normalize result and resultSummary data
-
-		// Normalize stat data
-		const resultSummary: DataArray = [];
-		data.resultSummary.forEach((row) => {
-			const newEntry = { timepoint_id: row.timepoint_id };
-			Object.entries(selectedVarGroup).forEach(([group, variables]) => {
-				const denominator = denominatorVariables[group].reduce((acc, v) => acc + row[`${v}_mean`], 0);
-				variables.forEach((variable) => {
-					const key = `${variable}_mean`;
-					newEntry[key] = (row[key] / denominator) * 100;
-					if (includeBeforeData) {
-						newEntry[`${key}:pre`] = (row[`${key}:pre`] / denominator) * 100;
-					}
-				});
-			});
-			resultSummary.push(newEntry);
-		});
-
-		// Normalize sample data
-		const result: DataArray = [];
-		data.result.forEach((row) => {
-			const newEntry = { timepoint_id: row.timepoint_id, sample_id: row.sample_id };
-			Object.entries(selectedVarGroup).forEach(([group, variables]) => {
-				const denominator = denominatorVariables[group].reduce((acc, v) => acc + row[v], 0);
-				variables.forEach((variable) => {
-					newEntry[variable] = (row[variable] / denominator) * 100;
-					if (includeBeforeData) {
-						newEntry[`${variable}:pre`] = (row[`${variable}:pre`] / denominator) * 100;
-					}
-				});
-			});
-			result.push(newEntry);
-		});
-		return { ...data, result, resultSummary };
-	};
-
 	// Create comparison charts based on chart settings
 	const useComparisonCharts = (chartSettings: ComputedRef<ChartSettingComparison[]>, isNodeChart = false) => {
 		const comparisonCharts = computed(() => {
@@ -614,7 +632,11 @@ export function useCharts(
 			if (!isChartReadyToBuild.value) return charts;
 
 			chartSettings.value.forEach((setting) => {
-				const { result, resultSummary } = normalizeComparisonChartData(setting, chartData.value as ChartData);
+				const { result, resultSummary, resultGroupByTimepoint } = normalizeStratifiedModelChartData(
+					setting,
+					chartData.value as ChartData,
+					model?.value as Model
+				);
 
 				const selectedVars = setting.selectedVariables;
 				const annotations = getChartAnnotationsByChartId(setting.id);
@@ -644,7 +666,8 @@ export function useCharts(
 							statLayerVariables,
 							sampleLayerVariables,
 							options,
-							annotations
+							annotations,
+							resultGroupByTimepoint
 						);
 					});
 				} else {
@@ -656,7 +679,8 @@ export function useCharts(
 						statLayerVariables,
 						sampleLayerVariables,
 						options,
-						annotations
+						annotations,
+						resultGroupByTimepoint
 					);
 					charts[setting.id] = [chart];
 				}
