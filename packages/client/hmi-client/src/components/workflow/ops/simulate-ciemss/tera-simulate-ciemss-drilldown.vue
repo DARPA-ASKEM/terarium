@@ -224,12 +224,13 @@
 										:are-embed-actions-visible="true"
 										:visualization-spec="sensitivityCharts[setting.id].lineChart"
 									/>
-									<vega-chart
-										expandable
-										class="sensitivity-scatterplot"
-										:are-embed-actions-visible="true"
-										:visualization-spec="sensitivityCharts[setting.id].scatterChart"
-									/>
+									<div class="sensitivity-scatterplot">
+										<vega-chart
+											expandable
+											:are-embed-actions-visible="true"
+											:visualization-spec="sensitivityCharts[setting.id].scatterChart"
+										/>
+									</div>
 								</template>
 							</AccordionTab>
 						</Accordion>
@@ -966,7 +967,8 @@ onUnmounted(() => kernelManager.shutdown());
 	height: 2.35rem;
 }
 .sensitivity-scatterplot {
-	height: auto;
-	width: 10rem;
+	width: 100%;
+	display: flex;
+	overflow: scroll;
 }
 </style>
