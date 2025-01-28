@@ -174,7 +174,7 @@
 								<template v-for="setting in selectedInterventionSettings" :key="setting.id">
 									<vega-chart
 										expandable
-										:are-embed-actions-visible="true"
+										are-embed-actions-visible
 										:visualization-spec="interventionCharts[setting.id]"
 									/>
 								</template>
