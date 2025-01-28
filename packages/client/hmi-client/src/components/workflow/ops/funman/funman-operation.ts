@@ -57,7 +57,6 @@ export interface FunmanOperationState extends BaseState {
 	currentProgress: number;
 	notebookHistory: NotebookHistory[];
 	hasCodeRun: boolean;
-	message?: string;
 	isRequestStuck: boolean;
 }
 
