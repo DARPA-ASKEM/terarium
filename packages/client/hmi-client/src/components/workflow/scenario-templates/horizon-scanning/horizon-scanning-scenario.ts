@@ -13,9 +13,15 @@ import { updateChartSettingsBySelectedVariables } from '@/services/chart-setting
 import { AssetType, InterventionPolicy, ParameterSemantic } from '@/types/Types';
 import { DistributionType } from '@/services/distribution';
 import { calculateUncertaintyRange } from '@/utils/math';
-import { blankIntervention, createInterventionPolicy, getInterventionPolicyById } from '@/services/intervention-policy';
+import {
+	blankIntervention,
+	createInterventionPolicy,
+	flattenInterventionData,
+	getInterventionPolicyById
+} from '@/services/intervention-policy';
 import { useProjects } from '@/composables/project';
 import { cartesianProduct, createDefaultForecastSettings, runSimulations } from '../scenario-template-utils';
+import { isInterventionPolicyBlank } from '../../ops/intervention-policy/intervention-policy-operation';
 
 export interface HorizonScanningParameter {
 	id: string;
@@ -453,12 +459,30 @@ export class HorizonScanningScenario extends BaseScenario {
 			]);
 
 			interventionNodes.forEach((interventionNode, index) => {
+				const interventionPolicy = fetchedInterventionPolicies.find(
+					(policy) => policy.id === interventionNode.outputs[0].value?.[0]
+				);
+				let chartSettingsClone = _.cloneDeep(simulateChartSettings);
+				// apply intervention chart settings if the intervention policy is not blank
+				if (!isInterventionPolicyBlank(interventionPolicy!)) {
+					chartSettingsClone = updateChartSettingsBySelectedVariables(
+						chartSettingsClone,
+						ChartSettingType.INTERVENTION,
+						Object.keys(_.groupBy(flattenInterventionData(interventionPolicy?.interventions ?? []), 'appliedTo'))
+					);
+				}
 				// If this is the first intervention node, connect it to the model config node and the already created simulate node
 				if (index === 0) {
 					wf.addEdge(interventionNode.id, interventionNode.outputs[0].id, simulateNode.id, simulateNode.inputs[1].id, [
 						{ x: 0, y: 0 },
 						{ x: 0, y: 0 }
 					]);
+					wf.updateNode(simulateNode, {
+						state: {
+							...simulateNode.state,
+							chartSettings: chartSettingsClone
+						}
+					});
 				} else {
 					const additionalSimNode = wf.addNode(
 						SimulateCiemssOp,
@@ -470,7 +494,7 @@ export class HorizonScanningScenario extends BaseScenario {
 
 					wf.updateNode(additionalSimNode, {
 						state: {
-							chartSettings: simulateChartSettings,
+							chartSettings: chartSettingsClone,
 							...this.getDefaultForecastSettings()
 						}
 					});
