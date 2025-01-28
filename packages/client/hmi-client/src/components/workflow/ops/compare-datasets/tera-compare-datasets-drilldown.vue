@@ -120,8 +120,10 @@
 								>
 									<template #body="{ data, field }">
 										<div class="flex gap-2">
-											<div>{{ data[field] }}</div>
-											<div v-if="showATEErrors" class="error ml-auto">± {{ data[`${field}_error`] }}</div>
+											<div>{{ displayNumber(data[field]) }}</div>
+											<div v-if="showATEErrors" class="error ml-auto">
+												± {{ displayNumber(data[`${field}_error`]) }}
+											</div>
 										</div>
 									</template>
 								</Column>
@@ -201,10 +203,8 @@
 						<tera-chart-settings-quantiles :settings="chartSettings" @update-options="updateQauntilesOptions" />
 						<Divider />
 						<h5>Impact of intervention metrics</h5>
-						<div class="plot-options">
-							<tera-checkbox v-model="showATETable" label="Average treatment effect (ATE)" />
-							<tera-checkbox v-if="showATETable" v-model="showATEErrors" label="Show errors" />
-						</div>
+						<tera-checkbox v-model="showATETable" label="Average treatment effect (ATE)" />
+						<tera-checkbox v-if="showATETable" v-model="showATEErrors" label="Show errors" />
 					</div>
 				</template>
 			</tera-slider-panel>
@@ -240,6 +240,7 @@ import { DataArray } from '@/services/models/simulation-service';
 import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
 import { mean, stddev } from '@/utils/stats';
+import { displayNumber } from '@/utils/number';
 import TeraCriteriaOfInterestCard from './tera-criteria-of-interest-card.vue';
 import {
 	blankCriteriaOfInterest,
@@ -378,30 +379,7 @@ function outputPanelBehavior() {
 	}
 }
 
-onMounted(async () => {
-	const state = cloneDeep(props.node.state);
-	knobs.value = Object.assign(knobs.value, state);
-
-	outputPanelBehavior();
-
-	await initialize(
-		props.node,
-		knobs,
-		isFetchingDatasets,
-		datasets,
-		datasetResults,
-		modelConfigIdToInterventionPolicyIdMap,
-		impactChartData,
-		rankingChartData,
-		baselineDatasetIndex,
-		selectedPlotType,
-		modelConfigurations,
-		interventionPolicies,
-		rankingCriteriaCharts,
-		rankingResultsChart
-	);
-
-	// Construct ateTable data
+function constructATETable() {
 	const means: Record<string, number> = {};
 	const meanErrors: Record<string, number> = {};
 
@@ -448,6 +426,32 @@ onMounted(async () => {
 
 		ateTable.value.push({ policyName: dataset.name, ...ateRow });
 	});
+}
+
+onMounted(async () => {
+	const state = cloneDeep(props.node.state);
+	knobs.value = Object.assign(knobs.value, state);
+
+	outputPanelBehavior();
+
+	await initialize(
+		props.node,
+		knobs,
+		isFetchingDatasets,
+		datasets,
+		datasetResults,
+		modelConfigIdToInterventionPolicyIdMap,
+		impactChartData,
+		rankingChartData,
+		baselineDatasetIndex,
+		selectedPlotType,
+		modelConfigurations,
+		interventionPolicies,
+		rankingCriteriaCharts,
+		rankingResultsChart
+	);
+
+	constructATETable();
 });
 
 watch(
