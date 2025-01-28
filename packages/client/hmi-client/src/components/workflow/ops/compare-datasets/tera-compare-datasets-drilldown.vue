@@ -111,6 +111,10 @@
 					</template>
 					<template v-else>
 						<AccordionTab header="Ranking results">
+							<p class="mb-3">
+								This score represents the number of standard deviations away from the mean outcome. A higher score means
+								the scenario outcome meets the criteria of interest more.
+							</p>
 							<vega-chart :visualization-spec="rankingResultsChart" :are-embed-actions-visible="false" expandable />
 						</AccordionTab>
 						<AccordionTab header="Ranking criteria">

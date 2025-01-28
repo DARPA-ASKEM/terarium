@@ -1992,7 +1992,7 @@ export function createRankingInterventionsChart(
 						value: '#DDDDDD'
 					},
 					gridWidth: {
-						condition: { test: 'datum.value === 0', value: 2 },
+						condition: { test: 'datum.value === 0', value: 1 },
 						value: 1
 					}
 				}
@@ -2033,9 +2033,6 @@ export function createRankingInterventionsChart(
 					angle: 90,
 					fill: 'black',
 					padding: 4
-					// FIXME:
-					// I don't know how to fix the text to the bottom of the bar, its origin seems to be around the top
-					// and giving it the proper dx shift varies depending on the bar size
 				},
 				encoding: {
 					text: { field: 'name', type: 'nominal', color: 'black' },
