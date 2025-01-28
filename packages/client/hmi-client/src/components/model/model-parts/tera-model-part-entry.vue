@@ -39,18 +39,10 @@
 			<span v-if="!featureConfig.isPreview && !isTimePart" class="flex ml-auto gap-3">
 				<!-- Three states of description buttons: Hide / Show / Add description -->
 				<Button
-					v-if="(descriptionText && showDescription) || (!descriptionText && showDescription)"
 					text
 					size="small"
-					label="Hide description"
-					@click="showDescription = false"
-				/>
-				<Button
-					v-else-if="!showDescription"
-					text
-					size="small"
-					:label="descriptionText ? 'Show description' : 'Add description'"
-					@click="showDescription = true"
+					:label="showDescription ? 'Hide description' : descriptionText ? 'Show description' : 'Add description'"
+					@click="showDescription = !showDescription"
 				/>
 				<tera-concept class="concept" v-model:grounding="grounding" :is-preview="featureConfig.isPreview" />
 			</span>
@@ -69,7 +61,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue';
+import { computed, ref } from 'vue';
 import Button from 'primevue/button';
 import Dropdown from 'primevue/dropdown';
 import TeraConcept from '@/components/widgets/tera-concept.vue';
@@ -105,9 +97,12 @@ const unitExpression = computed({
 });
 const descriptionText = computed({
 	get: () => props.description,
-	set: (newDescription) => emit('update-item', { key: 'description', value: newDescription })
+	set: (newDescription) => {
+		emit('update-item', { key: 'description', value: newDescription });
+		showDescription.value = !!newDescription;
+	}
 });
-const showDescription = computed(() => !!descriptionText.value);
+const showDescription = ref<boolean>(!!descriptionText.value);
 const grounding = computed({
 	get: () => props.grounding,
 	set: (newGrounding) => emit('update-item', { key: 'grounding', value: newGrounding })
