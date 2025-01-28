@@ -577,6 +577,7 @@ import { useChartSettings } from '@/composables/useChartSettings';
 import { parseCsvAsset } from '@/utils/csv';
 import type { CalibrationOperationStateCiemss } from './calibrate-operation';
 import { renameFnGenerator, getErrorData, usePreparedChartInputs, getSelectedOutputMapping } from './calibrate-utils';
+import { isInterventionPolicyBlank } from '../intervention-policy/intervention-policy-operation';
 
 const isSidebarOpen = ref(true);
 
@@ -749,7 +750,13 @@ const isMappingfilled = computed(
 
 const areNodeInputsFilled = computed(() => datasetId.value && modelConfigId.value);
 
-const isRunDisabled = computed(() => !isMappingfilled.value || !areNodeInputsFilled.value || isLoading.value);
+const isRunDisabled = computed(
+	() =>
+		!isMappingfilled.value ||
+		!areNodeInputsFilled.value ||
+		isLoading.value ||
+		(!!interventionPolicy.value && isInterventionPolicyBlank(interventionPolicy.value))
+);
 
 const mappingFilledTooltip = computed(() =>
 	!isMappingfilled.value ? 'Must contain a Timestamp column and at least one filled in mapping. \n' : ''
@@ -1090,7 +1097,7 @@ onMounted(async () => {
 });
 
 watch(
-	() => knobs.value,
+	() => ({ ...knobs.value }),
 	(newValue, oldValue) => {
 		if (_.isEqual(newValue, oldValue)) return;
 		const state = _.cloneDeep(props.node.state);
