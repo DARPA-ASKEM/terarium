@@ -26,6 +26,7 @@ import software.uncharted.terarium.hmiserver.models.dataservice.workflow.Workflo
 import software.uncharted.terarium.hmiserver.models.dataservice.workflow.WorkflowAnnotation;
 import software.uncharted.terarium.hmiserver.models.dataservice.workflow.WorkflowEdge;
 import software.uncharted.terarium.hmiserver.models.dataservice.workflow.WorkflowNode;
+import software.uncharted.terarium.hmiserver.models.dataservice.workflow.WorkflowPositions;
 import software.uncharted.terarium.hmiserver.repository.data.WorkflowRepository;
 import software.uncharted.terarium.hmiserver.service.s3.S3ClientService;
 import software.uncharted.terarium.hmiserver.utils.rebac.Schema;
@@ -71,6 +72,16 @@ public class WorkflowService extends TerariumAssetServiceWithoutSearch<Workflow,
 				if (node.getVersion() == null) {
 					node.setVersion(1L);
 				}
+				for (final InputPort port : node.getInputs()) {
+					if (port.getVersion() == null) {
+						port.setVersion(1L);
+					}
+				}
+				for (final OutputPort port : node.getOutputs()) {
+					if (port.getVersion() == null) {
+						port.setVersion(1L);
+					}
+				}
 			}
 		}
 		if (asset.getEdges() != null) {
@@ -111,6 +122,16 @@ public class WorkflowService extends TerariumAssetServiceWithoutSearch<Workflow,
 				if (node.getVersion() == null) {
 					node.setVersion(1L);
 				}
+				for (final InputPort port : node.getInputs()) {
+					if (port.getVersion() == null) {
+						port.setVersion(1L);
+					}
+				}
+				for (final OutputPort port : node.getOutputs()) {
+					if (port.getVersion() == null) {
+						port.setVersion(1L);
+					}
+				}
 				nodeMap.put(node.getId(), node);
 			}
 		}
@@ -145,11 +166,101 @@ public class WorkflowService extends TerariumAssetServiceWithoutSearch<Workflow,
 
 				// Only update if if node is not already deleted in the db
 				if (dbNode.getIsDeleted() == false && dbNode.getVersion().equals(node.getVersion())) {
-					node.setVersion(dbNode.getVersion() + 1L);
-					dbWorkflowNodes.set(index, node);
+					dbNode.setVersion(dbNode.getVersion() + 1L);
+					dbNode.setCreatedBy(node.getCreatedBy());
+					dbNode.setCreatedAt(node.getCreatedAt());
+					dbNode.setDisplayName(node.getDisplayName());
+					dbNode.setOperationType(node.getOperationType());
+					dbNode.setDocumentationUrl(node.getDocumentationUrl());
+					dbNode.setImageUrl(node.getImageUrl());
+					dbNode.setUniqueInputs(node.getUniqueInputs());
+
+					dbNode.setX(node.getX());
+					dbNode.setY(node.getY());
+					dbNode.setWidth(node.getWidth());
+					dbNode.setHeight(node.getHeight());
+
+					dbNode.setStatus(node.getStatus());
+					dbNode.setState(node.getState());
+					dbNode.setActive(node.getActive());
+				} else {
+					log.warn("Version conflict");
 				}
 
-				// remove once updated
+				// Manage outputs
+				if (dbNode.getIsDeleted() == false && node.getOutputs().size() > 0) {
+					for (final OutputPort port : node.getOutputs()) {
+						final OutputPort dbPort = dbNode
+							.getOutputs()
+							.stream()
+							.filter(p -> p.getId().equals(port.getId()))
+							.findFirst()
+							.orElse(null);
+						if (dbPort == null) {
+							dbNode.getOutputs().add(port);
+						} else {
+							final JsonNode portContent = this.objectMapper.valueToTree(port);
+							final JsonNode dbPortContent = this.objectMapper.valueToTree(dbPort);
+							if (portContent.equals(dbPortContent)) {
+								continue; // Nothing to update
+							}
+
+							if (dbPort.getVersion().equals(port.getVersion())) {
+								dbPort.setVersion(dbPort.getVersion() + 1L);
+								dbPort.setType(port.getType());
+								dbPort.setOriginalType(port.getOriginalType());
+								dbPort.setState(port.getState());
+								dbPort.setStatus(port.getStatus());
+								dbPort.setValue(port.getValue());
+								dbPort.setIsSelected(port.getIsSelected());
+								dbPort.setLabel(port.getLabel());
+								dbPort.setTimestamp(port.getTimestamp());
+								dbPort.setOperatorStatus(port.getOperatorStatus());
+							} else {
+								log.warn("Version conflict");
+							}
+						}
+					}
+
+					// Normalize
+					dbNode.setOutputs(
+						dbNode.getOutputs().stream().filter(output -> output.getValue() != null).collect(Collectors.toList())
+					);
+				}
+
+				// Manage inputs
+				if (dbNode.getIsDeleted() == false && node.getInputs().size() > 0) {
+					for (final InputPort port : node.getInputs()) {
+						final InputPort dbPort = dbNode
+							.getInputs()
+							.stream()
+							.filter(p -> p.getId().equals(port.getId()))
+							.findFirst()
+							.orElse(null);
+						if (dbPort == null) {
+							dbNode.getInputs().add(port);
+						} else {
+							final JsonNode portContent = this.objectMapper.valueToTree(port);
+							final JsonNode dbPortContent = this.objectMapper.valueToTree(dbPort);
+							if (portContent.equals(dbPortContent)) {
+								continue; // Nothing to update
+							}
+
+							if (dbPort.getVersion().equals(port.getVersion())) {
+								dbPort.setVersion(dbPort.getVersion() + 1L);
+								dbPort.setType(port.getType());
+								dbPort.setOriginalType(port.getOriginalType());
+								dbPort.setStatus(port.getStatus());
+								dbPort.setValue(port.getValue());
+								dbPort.setLabel(port.getLabel());
+							} else {
+								log.warn("Version conflict");
+							}
+						}
+					}
+				}
+
+				// remove once we processed the update
 				nodeMap.remove(node.getId());
 			}
 		}
@@ -666,6 +777,8 @@ public class WorkflowService extends TerariumAssetServiceWithoutSearch<Workflow,
 			node.setStatus(entry.getValue());
 		}
 	}
+
+	public void updatePositions(final Workflow workflow, final WorkflowPositions positions) {}
 
 	public void addOrUpdateAnnotation(final Workflow workflow, final WorkflowAnnotation annotation) {
 		if (workflow.getAnnotations() == null || workflow.getAnnotations().isEmpty()) {

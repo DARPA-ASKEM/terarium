@@ -14,6 +14,7 @@ import lombok.experimental.Accessors;
 public class InputPort implements Serializable {
 
 	private UUID id;
+	private Long version;
 	private String type;
 	private String originalType;
 	private String status;
