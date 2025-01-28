@@ -3,9 +3,6 @@
 		<div v-if="processing">{{ processing }}</div>
 		<div v-else>Processing...</div>
 	</tera-progress-spinner>
-	<tera-operator-placeholder v-else-if="placeholder" :node="node">
-		{{ placeholder }}
-	</tera-operator-placeholder>
 	<div
 		v-else-if="visibleChartSettings && _.isArray(visibleChartSettings[0])"
 		v-for="(settingsArray, index) of visibleChartSettings"
@@ -36,6 +33,9 @@
 		:visualization-spec="getChartSpec(chartSpec)"
 		:interactive="false"
 	/>
+	<tera-operator-placeholder v-else-if="placeholder" :node="node">
+		{{ placeholder }}
+	</tera-operator-placeholder>
 </template>
 
 <script setup lang="ts">
@@ -66,8 +66,11 @@ const visibleChartSettings = computed(() => {
 		// null check
 		if (_.isArray(props.chartSettings[0])) {
 			// ChartSetting[][] check
-			return (props.chartSettings as ChartSetting[][]).map((settingsArray) =>
-				settingsArray.filter((setting) => !setting?.hideInNode)
+			return (
+				(props.chartSettings as ChartSetting[][])
+					// TODO: find source of empty arrays instead of this hack
+					.filter((settingArray) => settingArray.length)
+					.map((settingsArray) => settingsArray.filter((setting) => !setting?.hideInNode))
 			);
 		}
 		// ChartSetting[]
@@ -76,4 +79,3 @@ const visibleChartSettings = computed(() => {
 	return null;
 });
 </script>
-s
