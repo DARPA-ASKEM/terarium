@@ -239,6 +239,7 @@ public abstract class TerariumAssetServiceWithSearch<
 			return Optional.empty();
 		}
 
+		/** TODO - Asset search needs to be removed properly	
 		if (!updated.get().getTemporary() && updated.get().getPublicAsset()) {
 			elasticService.index(getAssetAlias(), updated.get().getId().toString(), updated);
 		}
@@ -246,7 +247,8 @@ public abstract class TerariumAssetServiceWithSearch<
 		if (updated.get().getTemporary() || !updated.get().getPublicAsset()) {
 			elasticService.delete(getAssetAlias(), updated.get().getId().toString());
 		}
-
+		*/
+		
 		return updated;
 	}
 
