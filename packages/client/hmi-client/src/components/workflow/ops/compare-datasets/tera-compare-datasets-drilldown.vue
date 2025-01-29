@@ -81,6 +81,7 @@
 								option-value="id"
 								:loading="isFetchingDatasets"
 								placeholder="Dataset"
+								@change="onChangeGroundTruth"
 							/>
 							<DataTable class="mapping-table" :value="knobs.mapping">
 								<Column field="datasetVariable">
@@ -166,7 +167,7 @@
 									:key="variableName"
 								>
 									<template #body="{ data, field }">
-										<div class="flex gap-2">
+										<div class="flex gap-2" v-if="data[field]">
 											<div>{{ displayNumber(data[field]) }}</div>
 											<div v-if="showATEErrors" class="error ml-auto">
 												± {{ displayNumber(data[`${field}_error`]) }}
@@ -264,7 +265,6 @@
 						knobs.selectedCompareOption === CompareValue.SCENARIO || knobs.selectedCompareOption === CompareValue.ERROR
 					"
 				>
-					{{ chartSettings }}
 					<div class="output-settings-panel">
 						<tera-chart-settings
 							:title="'Variables over time'"
@@ -430,6 +430,9 @@ function onChangeImpactComparison() {
 	generateImpactCharts(impactChartData, datasets, datasetResults, baselineDatasetIndex, selectedPlotType);
 }
 
+function onChangeGroundTruth() {
+	console.log('change');
+}
 // function onChangeModelErrorComparison() {
 // 	console.log('change');
 // }
