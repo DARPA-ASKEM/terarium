@@ -49,10 +49,12 @@ export interface CriteriaOfInterestCard {
 export interface CompareDatasetsState extends BaseState {
 	criteriaOfInterestCards: CriteriaOfInterestCard[];
 	selectedPlotType: PlotValue;
+	selectedErrorPlotType: PlotValue;
 	selectedCompareOption: CompareValue;
 	selectedBaselineDatasetId: string | null;
 	selectedGroundTruthDatasetId: string | null;
 	chartSettings: ChartSetting[] | null;
+	errorChartSettings: ChartSetting[] | null;
 	mapping: CompareDatasetsMap[];
 }
 
@@ -72,10 +74,12 @@ export const CompareDatasetsOperation: Operation = {
 		const init: CompareDatasetsState = {
 			criteriaOfInterestCards: [blankCriteriaOfInterest],
 			selectedPlotType: PlotValue.PERCENTAGE,
+			selectedErrorPlotType: PlotValue.VALUE,
 			selectedCompareOption: CompareValue.SCENARIO,
 			selectedBaselineDatasetId: null,
 			selectedGroundTruthDatasetId: null,
 			chartSettings: null,
+			errorChartSettings: null,
 			mapping: []
 		};
 		return init;

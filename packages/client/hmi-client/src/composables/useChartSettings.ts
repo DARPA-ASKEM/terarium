@@ -1,5 +1,5 @@
 import { cloneDeep } from 'lodash';
-import { ref, computed, watch } from 'vue';
+import { ref, computed, watch, type ComputedRef } from 'vue';
 import {
 	ChartSetting,
 	ChartSettingComparison,
@@ -30,9 +30,11 @@ import { WorkflowNode } from '@/types/workflow';
  */
 export function useChartSettings(
 	props: { node: WorkflowNode<{ chartSettings: ChartSetting[] | null }> },
-	emit: (...args: any[]) => void
+	emit: (...args: any[]) => void,
+	// If there are multiple chart settings in a single node, this key can be used to distinguish them
+	chartSettingsKey: ComputedRef<string> = computed(() => 'chartSettings')
 ) {
-	const chartSettings = computed(() => props.node.state.chartSettings ?? []);
+	const chartSettings = computed(() => props.node.state[chartSettingsKey.value] ?? []);
 	const activeChartSettings = ref<ChartSetting | null>(null);
 	const comparisonChartsSettingsSelection = computed<{ [settingId: string]: string[] }>(() =>
 		selectedComparisonChartSettings.value.reduce((acc, setting) => {
@@ -85,21 +87,21 @@ export function useChartSettings(
 	const removeChartSettings = (chartId: string) => {
 		emit('update-state', {
 			...props.node.state,
-			chartSettings: removeChartSettingById(chartSettings.value, chartId)
+			[chartSettingsKey.value]: removeChartSettingById(chartSettings.value, chartId)
 		});
 	};
 
 	const updateChartSettings = (selectedVariables: string[], type: ChartSettingType) => {
 		emit('update-state', {
 			...props.node.state,
-			chartSettings: updateChartSettingsBySelectedVariables(chartSettings.value, type, selectedVariables)
+			[chartSettingsKey.value]: updateChartSettingsBySelectedVariables(chartSettings.value, type, selectedVariables)
 		});
 	};
 
 	const addEmptyComparisonChart = () => {
 		emit('update-state', {
 			...props.node.state,
-			chartSettings: [
+			[chartSettingsKey.value]: [
 				...chartSettings.value,
 				createNewChartSetting('', ChartSettingType.VARIABLE_COMPARISON, [], {
 					...getQauntileChartSettingOptions(chartSettings.value)
@@ -110,8 +112,8 @@ export function useChartSettings(
 
 	const updateComparisonChartSetting = (chartId: string, selectedVariables: string[]) => {
 		const state = cloneDeep(props.node.state);
-		if (!state.chartSettings) return;
-		const setting = state.chartSettings.find(
+		if (!state[chartSettingsKey.value]) return;
+		const setting = state[chartSettingsKey.value].find(
 			(settings) => settings.id === chartId && settings.type === ChartSettingType.VARIABLE_COMPARISON
 		) as ChartSettingComparison | undefined;
 		if (!setting) return;
@@ -126,7 +128,7 @@ export function useChartSettings(
 	const updateEnsembleVariableSettingOption = (option: EnsembleVariableChartSettingOption, value: boolean) => {
 		emit('update-state', {
 			...props.node.state,
-			chartSettings: updateAllChartSettings(chartSettings.value, { [option]: value }, [
+			[chartSettingsKey.value]: updateAllChartSettings(chartSettings.value, { [option]: value }, [
 				ChartSettingType.VARIABLE_ENSEMBLE
 			])
 		});
@@ -135,7 +137,11 @@ export function useChartSettings(
 	const updateQauntilesOptions = (options: { showQuantiles: boolean; quantiles: number[] }) => {
 		emit('update-state', {
 			...props.node.state,
-			chartSettings: updateAllChartSettings(chartSettings.value, options, CHART_SETTING_WITH_QUANTILES_OPTIONS)
+			[chartSettingsKey.value]: updateAllChartSettings(
+				chartSettings.value,
+				options,
+				CHART_SETTING_WITH_QUANTILES_OPTIONS
+			)
 		});
 	};
 
@@ -146,7 +152,10 @@ export function useChartSettings(
 	}) => {
 		emit('update-state', {
 			...props.node.state,
-			chartSettings: updateSensitivityChartSettingOption(chartSettings.value as ChartSettingSensitivity[], options)
+			[chartSettingsKey.value]: updateSensitivityChartSettingOption(
+				chartSettings.value as ChartSettingSensitivity[],
+				options
+			)
 		});
 	};
 
@@ -157,8 +166,8 @@ export function useChartSettings(
 	 */
 	const findAndUpdateChartSettingsById = (id: string, update: Partial<ChartSetting>) => {
 		const state = cloneDeep(props.node.state);
-		if (state.chartSettings) {
-			const setting = state.chartSettings.find((settings) => settings.id === id);
+		if (state[chartSettingsKey.value]) {
+			const setting = state[chartSettingsKey.value].find((settings) => settings.id === id);
 			if (setting) {
 				Object.assign(setting, update);
 				emit('update-state', state);

@@ -199,6 +199,31 @@
 							/>
 						</AccordionTab>
 					</template>
+					<template v-else-if="knobs.selectedCompareOption === CompareValue.ERROR">
+						<AccordionTab header="Model errors">
+							<p>Model errors comparison</p>
+						</AccordionTab>
+						<AccordionTab header="Model error metrics" v-if="showWIS || showMAE">
+							<template v-if="showWIS">
+								<h5>Weighted interval score (WIS)</h5>
+								<p class="mb-3">
+									The weighted interval score (WIS) measures the accuracy of a probabilistic forecasts relative to
+									observations (i.e. ground truth). Low WIS values are better, meaning the forecast performed well and
+									assigned high probability to observed outcomes. Reference:
+									<a
+										target="_blank"
+										rel="noopener noreferrer"
+										href="https://journals.plos.org/ploscompbiol/article?id=10.1371/journal.pcbi.1008618"
+									>
+										https://journals.plos.org/ploscompbiol/article?id=10.1371/journal.pcbi.1008618
+									</a>
+								</p>
+							</template>
+							<template v-if="showMAE">
+								<h5>Mean average error (MAE)</h5>
+							</template>
+						</AccordionTab>
+					</template>
 				</Accordion>
 			</div>
 		</tera-drilldown-section>
@@ -228,7 +253,13 @@
 						@close="setActiveChartSettings(null)"
 					/>
 				</template>
-				<template #content v-if="knobs.selectedCompareOption === CompareValue.SCENARIO">
+				<template
+					#content
+					v-if="
+						knobs.selectedCompareOption === CompareValue.SCENARIO || knobs.selectedCompareOption === CompareValue.ERROR
+					"
+				>
+					{{ chartSettings }}
 					<div class="output-settings-panel">
 						<tera-chart-settings
 							:title="'Variables over time'"
@@ -250,21 +281,36 @@
 								<p>How do you want to plot the values?</p>
 								<div v-for="option in plotOptions" class="flex align-items-center gap-2" :key="option.value">
 									<RadioButton
+										v-if="knobs.selectedCompareOption === CompareValue.SCENARIO"
 										v-model="knobs.selectedPlotType"
 										:value="option.value"
 										name="plotValues"
 										@change="onChangeImpactComparison"
 									/>
+									<RadioButton
+										v-else-if="knobs.selectedCompareOption === CompareValue.ERROR"
+										v-model="knobs.selectedErrorPlotType"
+										:value="option.value"
+										name="plotValues"
+									/>
 									<label :for="option.value">{{ option.label }}</label>
 								</div>
 							</div>
 						</tera-chart-settings>
-						<Divider />
-						<tera-chart-settings-quantiles :settings="chartSettings" @update-options="updateQauntilesOptions" />
-						<Divider />
-						<h5>Impact of intervention metrics</h5>
-						<tera-checkbox v-model="showATETable" label="Average treatment effect (ATE)" />
-						<tera-checkbox v-if="showATETable" v-model="showATEErrors" label="Show errors" />
+						<template v-if="knobs.selectedCompareOption === CompareValue.SCENARIO">
+							<Divider />
+							<tera-chart-settings-quantiles :settings="chartSettings" @update-options="updateQauntilesOptions" />
+							<Divider />
+							<h5>Impact of intervention metrics</h5>
+							<tera-checkbox v-model="showATETable" label="Average treatment effect (ATE)" />
+							<tera-checkbox v-if="showATETable" v-model="showATEErrors" label="Show errors" />
+						</template>
+						<template v-if="knobs.selectedCompareOption === CompareValue.ERROR">
+							<Divider />
+							<h5>Model error metrics</h5>
+							<tera-checkbox v-model="showWIS" label="Weighted interval score (WIS)" />
+							<tera-checkbox v-model="showMAE" label="Mean average error (MAE)" />
+						</template>
 					</div>
 				</template>
 			</tera-slider-panel>
@@ -339,11 +385,18 @@ const showATEErrors = ref(false);
 const ateTable = ref<any[]>([]);
 const ateVariableHeaders = ref<string[]>([]);
 
+const showWIS = ref(true);
+const showMAE = ref(false);
+
 const plotOptions = [
 	{ label: 'Raw values', value: PlotValue.VALUE },
 	{ label: 'Percent change', value: PlotValue.PERCENTAGE },
 	{ label: 'Difference', value: PlotValue.DIFFERENCE }
 ];
+
+const chartSettingsKey = computed(() =>
+	knobs.value.selectedCompareOption === CompareValue.ERROR ? 'errorChartSettings' : 'chartSettings'
+);
 
 const isInputSettingsOpen = ref(true);
 const isOutputSettingsOpen = ref(true);
@@ -382,6 +435,7 @@ interface BasicKnobs {
 	selectedBaselineDatasetId: string | null;
 	selectedGroundTruthDatasetId: string | null;
 	selectedPlotType: PlotValue;
+	selectedErrorPlotType: PlotValue;
 	mapping: CompareDatasetsMap[];
 }
 
@@ -394,6 +448,7 @@ const knobs = ref<BasicKnobs>({
 	criteriaOfInterestCards: [],
 	// Compare model errors
 	selectedGroundTruthDatasetId: null,
+	selectedErrorPlotType: PlotValue.VALUE,
 	mapping: []
 });
 
@@ -418,7 +473,7 @@ const {
 	updateActiveChartSettings,
 	setActiveChartSettings,
 	updateQauntilesOptions
-} = useChartSettings(props, emit);
+} = useChartSettings(props, emit, chartSettingsKey);
 
 const selectedVariableNames = computed(() => selectedVariableSettings.value.map((s) => s.selectedVariables[0]));
 
@@ -556,6 +611,7 @@ watch(
 		state.selectedBaselineDatasetId = knobs.value.selectedBaselineDatasetId;
 		state.selectedGroundTruthDatasetId = knobs.value.selectedGroundTruthDatasetId;
 		state.selectedPlotType = knobs.value.selectedPlotType;
+		state.selectedErrorPlotType = knobs.value.selectedErrorPlotType;
 		emit('update-state', state);
 	},
 	{ deep: true }
