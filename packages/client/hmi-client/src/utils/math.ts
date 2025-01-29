@@ -333,7 +333,7 @@ export function sumArrays(...arrays: number[][]): number[] {
  * @param array1 - The first array of numbers.
  * @param array2 - The second array of numbers.
  * @returns A new array where each element is the result of dividing the corresponding elements of `array1` by `array2`.
- * @throws Will throw an error if the input arrays are not of the same length or if division by zero occurs.
+ * @throws Will throw an error if the input arrays are not of the same length.
  */
 export function divideArrays(array1: number[], array2: number[]): number[] {
 	if (array1.length !== array2.length) {
@@ -344,7 +344,7 @@ export function divideArrays(array1: number[], array2: number[]): number[] {
 	for (let i = 0; i < array1.length; i++) {
 		if (array2[i] === 0) {
 			// Division by zero
-			result[i] = Infinity;
+			result[i] = NaN;
 		}
 		result[i] = array1[i] / array2[i];
 	}
@@ -361,5 +361,5 @@ export function divideArrays(array1: number[], array2: number[]): number[] {
  */
 export function calculatePercentages(numerators: number[], denominators: number[]): number[] {
 	const ratios = divideArrays(numerators, denominators);
-	return ratios.map((ratio) => (ratio === Infinity ? 0 : ratio * 100));
+	return ratios.map((ratio) => (Number.isNaN(ratio) ? 0 : ratio * 100));
 }
