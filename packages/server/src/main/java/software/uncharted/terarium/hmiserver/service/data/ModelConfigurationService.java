@@ -156,7 +156,7 @@ public class ModelConfigurationService
 
 		for (final Observable observable : model.getObservables()) {
 			final ObservableSemantic observableSemantic = new ObservableSemantic();
-			observableSemantic.setReferenceId(observable.getId());
+			observableSemantic.setReferenceId(observable.getConceptId());
 			observableSemantic.setStates(observable.getStates());
 			observableSemantic.setExpression(observable.getExpression());
 			observableSemantic.setExpressionMathml(observable.getExpressionMathml());
@@ -172,7 +172,7 @@ public class ModelConfigurationService
 
 		for (final ModelParameter parameter : model.getParameters()) {
 			final ParameterSemantic parameterSemantic = new ParameterSemantic();
-			parameterSemantic.setReferenceId(parameter.getId());
+			parameterSemantic.setReferenceId(parameter.getConceptId());
 
 			final ModelDistribution distribution = getModelDistribution(parameter);
 
@@ -229,7 +229,7 @@ public class ModelConfigurationService
 		// Iterate through the list of ModelParameter objects
 		for (final ModelParameter modelParameter : modelParameters) {
 			// Look up the corresponding ConfigParameter in the map
-			final ParameterSemantic matchingConfigParameter = configParameterMap.get(modelParameter.getId());
+			final ParameterSemantic matchingConfigParameter = configParameterMap.get(modelParameter.getConceptId());
 			if (matchingConfigParameter != null) {
 				// set distributions
 				if (CONSTANT_TYPE.equals(matchingConfigParameter.getDistribution().getType())) {
@@ -275,7 +275,7 @@ public class ModelConfigurationService
 		}
 
 		for (final Observable modelObservable : modelObservables) {
-			final ObservableSemantic matchingConfigObservable = configObservableMap.get(modelObservable.getId());
+			final ObservableSemantic matchingConfigObservable = configObservableMap.get(modelObservable.getConceptId());
 			if (matchingConfigObservable != null) {
 				modelObservable.setStates(matchingConfigObservable.getStates());
 				modelObservable.setExpression(matchingConfigObservable.getExpression());

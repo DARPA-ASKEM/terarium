@@ -171,10 +171,10 @@ public class DatasetService extends TerariumAssetServiceWithSearch<Dataset, Data
 			dataset.setColumns(new ArrayList<>());
 		}
 		for (final String header : headers) {
-			final DatasetColumn column = new DatasetColumn()
-				.setName(header)
-				.setFileName(fileName)
-				.setAnnotations(new ArrayList<>());
+			final DatasetColumn column = new DatasetColumn();
+			column.setName(header);
+			column.setFileName(fileName);
+			column.setAnnotations(new ArrayList<>());
 			column.setDataset(dataset);
 			dataset.getColumns().add(column);
 		}

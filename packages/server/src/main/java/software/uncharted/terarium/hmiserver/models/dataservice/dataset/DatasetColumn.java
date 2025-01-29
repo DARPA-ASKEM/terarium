@@ -16,28 +16,32 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToOne;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
 import org.hibernate.annotations.Type;
+import software.uncharted.terarium.hmiserver.annotations.TSIgnore;
 import software.uncharted.terarium.hmiserver.annotations.TSModel;
 import software.uncharted.terarium.hmiserver.annotations.TSOptional;
 import software.uncharted.terarium.hmiserver.models.TerariumEntity;
 import software.uncharted.terarium.hmiserver.models.dataservice.Grounding;
+import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.semantics.GroundedSemantic;
 import software.uncharted.terarium.hmiserver.utils.JsonUtil;
 
 /** Represents a column in a dataset */
 @Data
 @EqualsAndHashCode(callSuper = true)
-@Accessors(chain = true)
+@Accessors
 @TSModel
 @Entity
-public class DatasetColumn extends TerariumEntity {
+public class DatasetColumn extends TerariumEntity implements GroundedSemantic {
 
 	/** Name of the column */
 	@Column(length = 255)
 	private String name;
+
+	@TSOptional
+	private String conceptId;
 
 	@TSOptional
 	@ManyToOne
@@ -93,6 +97,16 @@ public class DatasetColumn extends TerariumEntity {
 		} else {
 			JsonUtil.setAll((ObjectNode) this.metadata, metadata);
 		}
+	}
+
+	@TSIgnore
+	public String getConceptId() {
+		return conceptId;
+	}
+
+	@TSIgnore
+	public void setConceptId(String id) {
+		this.conceptId = id;
 	}
 
 	@Override

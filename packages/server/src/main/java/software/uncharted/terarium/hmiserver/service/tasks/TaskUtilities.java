@@ -9,6 +9,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
@@ -177,17 +178,14 @@ public class TaskUtilities {
 		// Create a map to store the search terms and their corresponding parts
 		Map<String, GroundedSemantic> searchTermToPartMap = parts
 			.stream()
-			.filter(
-				part ->
-					part != null && part.getId() != null && !part.getId().isBlank() && isGroundingNonExistent(part.getGrounding())
-			)
+			.filter(Objects::nonNull/*&& isGroundingNonExistent(part.getGrounding())*/)
 			.collect(Collectors.toMap(TaskUtilities::getSearchTerm, part -> part));
 
 		// Perform the DKG search for all search terms at once
 		final List<String> searchTerms = new ArrayList<>(searchTermToPartMap.keySet());
 		List<DKG> listDKG = new ArrayList<>();
 		try {
-			listDKG = dkgService.knnSearchEpiDKG(0, 100, 1, searchTerms, null);
+			if (!searchTerms.isEmpty()) listDKG = dkgService.knnSearchEpiDKG(0, 100, 1, searchTerms, null);
 		} catch (Exception e) {
 			log.warn("Unable to find DKG for semantics: {}", searchTerms, e);
 		}
@@ -210,7 +208,7 @@ public class TaskUtilities {
 
 	/** Get the search term for a grounded semantic part. This is the name if it exists, otherwise the id. */
 	private static String getNameSearchTerm(GroundedSemantic part) {
-		return (part.getName() == null || part.getName().isBlank()) ? part.getId() : part.getName();
+		return (part.getName() == null || part.getName().isBlank()) ? part.getConceptId() : part.getName();
 	}
 
 	/** Check if a grounding is non-existent. */
