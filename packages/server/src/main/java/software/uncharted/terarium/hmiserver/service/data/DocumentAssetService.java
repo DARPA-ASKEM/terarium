@@ -98,9 +98,8 @@ public class DocumentAssetService extends TerariumAssetServiceWithSearch<Documen
 			return Optional.empty();
 		}
 
-		//TODO: Temporary fix for performance issue. Disabling embeddings for now. Jan 29 2025
-		// final DocumentAsset updated = updatedOptional.get();
-		// generateAndUpsertEmbeddings(updated);
+		final DocumentAsset updated = updatedOptional.get();
+		generateAndUpsertEmbeddings(updated);
 
 		return updatedOptional;
 	}

@@ -191,8 +191,7 @@ public class ModelService extends TerariumAssetServiceWithSearch<Model, ModelRep
 			asset.getSemantics().getOde().setTime(timeNode);
 		}
 		final Model created = super.createAsset(asset, projectId, hasWritePermission);
-		//TODO: Temporary fix for performance issue. Disabling embeddings for now. Jan 29 2025
-		// generateAndUpsertEmbeddings(created);
+		generateAndUpsertEmbeddings(created);
 
 		return created;
 	}
@@ -221,9 +220,7 @@ public class ModelService extends TerariumAssetServiceWithSearch<Model, ModelRep
 		}
 
 		final Model updated = updatedOptional.get();
-
-		//TODO: Temporary fix for performance issue. Disabling embeddings for now. Jan 29 2025
-		// generateAndUpsertEmbeddings(updated);
+		generateAndUpsertEmbeddings(updated);
 
 		return updatedOptional;
 	}
