@@ -543,7 +543,8 @@ export function createForecastChart(
 		symbolSize: 200,
 		labelFontSize: isCompact ? 8 : 12,
 		labelOffset: isCompact ? 2 : 4,
-		labelLimit: isCompact ? 100 : 150,
+		labelLimit: isCompact ? 100 : 250,
+		columnPadding: 16,
 		symbolType: 'stroke',
 		offset: isCompact ? 8 : 16,
 		// Add columns if legend would overflow
@@ -1138,7 +1139,8 @@ export function createQuantilesForecastChart(
 		symbolSize: 200,
 		labelFontSize: isCompact ? 8 : 12,
 		labelOffset: isCompact ? 2 : 4,
-		labelLimit: isCompact ? 50 : 150,
+		labelLimit: isCompact ? 100 : 250,
+		columnPadding: 16,
 		...options.legendProperties
 	};
 
@@ -1983,7 +1985,17 @@ export function createRankingInterventionsChart(
 				field: 'score',
 				type: 'quantitative',
 				// If a specific variable is selected the score should hold its actual value
-				title: variableName || 'Score'
+				title: variableName || 'Score',
+				axis: {
+					gridColor: {
+						condition: { test: 'datum.value === 0', value: 'black' },
+						value: '#DDDDDD'
+					},
+					gridWidth: {
+						condition: { test: 'datum.value === 0', value: 1 },
+						value: 1
+					}
+				}
 			},
 			color: {
 				field: 'policyName',
@@ -2014,17 +2026,17 @@ export function createRankingInterventionsChart(
 			{
 				mark: {
 					type: 'text',
-					align: 'right',
-					baseline: 'bottom',
-					dy: -15,
-					angle: 270,
-					fill: 'black'
-					// FIXME:
-					// I don't know how to fix the text to the bottom of the bar, its origin seems to be around the top
-					// and giving it the proper dx shift varies depending on the bar size
+					align: 'left',
+					baseline: 'middle',
+					dy: -20,
+					dx: 5,
+					angle: 90,
+					fill: 'black',
+					padding: 4
 				},
 				encoding: {
-					text: { field: 'name', type: 'nominal', color: 'black' }
+					text: { field: 'name', type: 'nominal', color: 'black' },
+					y: { value: 0 } // This positions the text at the top of the chart
 				}
 			}
 		]
