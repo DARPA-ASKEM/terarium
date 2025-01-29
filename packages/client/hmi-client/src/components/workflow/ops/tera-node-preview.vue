@@ -69,7 +69,6 @@ const visibleChartSettings = computed(() => {
 			return (
 				(props.chartSettings as ChartSetting[][])
 					// TODO: find source of empty arrays instead of this hack
-					.filter((settingArray) => settingArray.length)
 					.map((settingsArray) => settingsArray.filter((setting) => !setting?.hideInNode))
 			);
 		}
