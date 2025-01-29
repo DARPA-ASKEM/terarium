@@ -40,38 +40,36 @@
 import { ref, watch } from 'vue';
 import AutoComplete, { AutoCompleteCompleteEvent } from 'primevue/autocomplete';
 import type { DKG, Grounding } from '@/types/Types';
-import { getNameOfCurieCached, searchCuriesEntities } from '@/services/concept';
-
-const grounding = defineModel<Grounding>();
+import { getDKGFromGroundingIdentifier, parseCurieToIdentifier, searchCuriesEntities } from '@/services/concept';
 
 defineProps<{
 	isPreview?: boolean;
 }>();
 
-const selectedConcept = ref<DKG>();
+// Define the v-model of the component
+const grounding = defineModel<Grounding>();
 
 const resultsDKG = ref<DKG[]>([]);
 async function searchDKG(event: AutoCompleteCompleteEvent) {
 	resultsDKG.value = await searchCuriesEntities(event.query);
 }
 
-// Used if an option isn't selected from the Autocomplete suggestions but is typed in regularly
+const selectedConcept = ref<DKG>();
+/**
+ * Save the selected concept to the grounding
+ * There is only one concept in the identifier field of the grounding
+ */
 function saveConcept() {
-	if (selectedConcept.value?.curie) {
-		const [key, value] = selectedConcept.value.curie.split(':');
-		const identifiers = { [key]: value };
-		grounding.value = { ...grounding.value, identifiers };
-	}
+	const identifiers = parseCurieToIdentifier(selectedConcept.value?.curie);
+	grounding.value = { ...grounding.value, identifiers };
 }
 
 watch(
 	() => grounding.value,
 	(newGrounding) => {
 		if (newGrounding) {
-			const [key, value] = Object.entries(newGrounding.identifiers)[0];
-			const curie = `${key}:${value}`;
-			getNameOfCurieCached(curie).then((name) => {
-				selectedConcept.value = { name, curie, description: '' };
+			getDKGFromGroundingIdentifier(newGrounding.identifiers).then((dkg) => {
+				selectedConcept.value = dkg;
 			});
 		}
 	},

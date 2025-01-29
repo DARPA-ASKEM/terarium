@@ -115,10 +115,16 @@ function getCurieFromGroundingIdentifier(identifier: Object | undefined): string
 	return '';
 }
 
-function parseCurie(curie: string | undefined): { [key: string]: string } {
+async function getDKGFromGroundingIdentifier(identifier: Object | undefined): Promise<DKG> {
+	const dkg: DKG = { name: '', curie: '', description: '' };
+	dkg.curie = getCurieFromGroundingIdentifier(identifier);
+	dkg.name = await getNameOfCurieCached(dkg.curie);
+	return dkg;
+}
+
+function parseCurieToIdentifier(curie: string | undefined): { [key: string]: string } {
 	if (!curie) return {};
-	const key = curie.split(':')[0];
-	const value = curie.split(':')[1];
+	const [key, value] = curie.split(':');
 	return { [key]: value };
 }
 
@@ -321,7 +327,8 @@ export {
 	searchCuriesEntities,
 	getNameOfCurieCached,
 	getCurieFromGroundingIdentifier,
-	parseCurie,
+	getDKGFromGroundingIdentifier,
+	parseCurieToIdentifier,
 	autoModelMapping,
 	autoCalibrationMapping,
 	autoEntityMapping,
