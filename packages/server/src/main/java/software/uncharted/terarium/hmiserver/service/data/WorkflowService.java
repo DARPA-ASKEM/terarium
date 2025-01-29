@@ -72,14 +72,18 @@ public class WorkflowService extends TerariumAssetServiceWithoutSearch<Workflow,
 				if (node.getVersion() == null) {
 					node.setVersion(1L);
 				}
-				for (final InputPort port : node.getInputs()) {
-					if (port.getVersion() == null) {
-						port.setVersion(1L);
+				if (node.getInputs() != null) {
+					for (final InputPort port : node.getInputs()) {
+						if (port.getVersion() == null) {
+							port.setVersion(1L);
+						}
 					}
 				}
-				for (final OutputPort port : node.getOutputs()) {
-					if (port.getVersion() == null) {
-						port.setVersion(1L);
+				if (node.getOutputs() != null) {
+					for (final OutputPort port : node.getOutputs()) {
+						if (port.getVersion() == null) {
+							port.setVersion(1L);
+						}
 					}
 				}
 			}
@@ -122,14 +126,18 @@ public class WorkflowService extends TerariumAssetServiceWithoutSearch<Workflow,
 				if (node.getVersion() == null) {
 					node.setVersion(1L);
 				}
-				for (final InputPort port : node.getInputs()) {
-					if (port.getVersion() == null) {
-						port.setVersion(1L);
+				if (node.getInputs() != null) {
+					for (final InputPort port : node.getInputs()) {
+						if (port.getVersion() == null) {
+							port.setVersion(1L);
+						}
 					}
 				}
-				for (final OutputPort port : node.getOutputs()) {
-					if (port.getVersion() == null) {
-						port.setVersion(1L);
+				if (node.getOutputs() != null) {
+					for (final OutputPort port : node.getOutputs()) {
+						if (port.getVersion() == null) {
+							port.setVersion(1L);
+						}
 					}
 				}
 				nodeMap.put(node.getId(), node);
