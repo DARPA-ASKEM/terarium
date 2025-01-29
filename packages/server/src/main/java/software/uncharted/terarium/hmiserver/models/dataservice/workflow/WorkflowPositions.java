@@ -1,7 +1,5 @@
 package software.uncharted.terarium.hmiserver.models.dataservice.workflow;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.ArrayNode;
 import java.io.Serializable;
 import java.util.List;
 import java.util.Map;
@@ -15,12 +13,12 @@ import lombok.experimental.Accessors;
 public class WorkflowPositions implements Serializable {
 
 	@Data
-	class Position {
+	public class Position {
 
 		private Double x;
 		private Double y;
 	}
 
-	private Map<String, Position> nodes;
-	private Map<String, List<Position>> edges;
+	private Map<UUID, Position> nodes;
+	private Map<UUID, List<Position>> edges;
 }

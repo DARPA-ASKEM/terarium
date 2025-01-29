@@ -778,7 +778,20 @@ public class WorkflowService extends TerariumAssetServiceWithoutSearch<Workflow,
 		}
 	}
 
-	public void updatePositions(final Workflow workflow, final WorkflowPositions positions) {}
+	public void updatePositions(final Workflow workflow, final WorkflowPositions positions) {
+		for (final WorkflowNode node : workflow.getNodes()) {
+			final WorkflowPositions.Position pos = positions.getNodes().get(node.getId());
+			if (pos == null) return;
+			node.setX(pos.getX());
+			node.setY(pos.getY());
+		}
+
+		for (final WorkflowEdge edge : workflow.getEdges()) {
+			final List<WorkflowPositions.Position> posList = positions.getEdges().get(edge.getId());
+			if (posList == null) return;
+			edge.setPoints(this.objectMapper.valueToTree(posList));
+		}
+	}
 
 	public void addOrUpdateAnnotation(final Workflow workflow, final WorkflowAnnotation annotation) {
 		if (workflow.getAnnotations() == null || workflow.getAnnotations().isEmpty()) {
@@ -821,6 +834,17 @@ public class WorkflowService extends TerariumAssetServiceWithoutSearch<Workflow,
 		for (final WorkflowNode node : workflow.getNodes()) {
 			if (node.getIsDeleted() == false) {
 				map.put(node.getId(), node);
+			}
+		}
+		return map;
+	}
+
+	// Build a lookup map for faster edge retrival
+	private Map<UUID, WorkflowEdge> buildEdgeMap(final Workflow workflow) {
+		final Map<UUID, WorkflowEdge> map = new HashMap<>();
+		for (final WorkflowEdge edge : workflow.getEdges()) {
+			if (edge.getIsDeleted() == false) {
+				map.put(edge.getId(), edge);
 			}
 		}
 		return map;
