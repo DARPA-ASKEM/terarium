@@ -307,11 +307,6 @@ async function updateWorkflowName(newName: string) {
 }
 
 // eslint-disable-next-line
-const _saveWorkflow = async () => {
-	await workflowService.saveWorkflow(wf.value.dump(), currentProjectId.value ?? undefined);
-	// wf.value.update(updated);
-};
-// eslint-disable-next-line
 const _updateWorkflow = (event: ClientEvent<any>) => {
 	if (event.data.id !== wf.value.getId()) {
 		return;
