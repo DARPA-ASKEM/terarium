@@ -59,6 +59,8 @@ type VariableMappings = CalibrateMap[] | EnsembleVariableMappings;
 const BASE_GREY = '#AAB3C6';
 const PRIMARY_COLOR = CATEGORICAL_SCHEME[0];
 
+// ======================================= Helper functions ==========================================================
+
 // Get the model variable name for the corresponding model configuration and the ensemble variable name from the mapping
 const getModelConfigVariable = (
 	mapping: EnsembleVariableMappings,
@@ -262,6 +264,8 @@ function createComparisonChart(
 
 const buildYAxisTitle = (variables: string[], getUnitFn: (id: string) => string) =>
 	_.uniq(variables.map(getUnitFn).filter((v) => !!v)).join(', ') || '';
+
+// ====================================================================================================================
 
 /**
  * Composable to manage the creation and configuration of various types of charts used in operator nodes and drilldown.
