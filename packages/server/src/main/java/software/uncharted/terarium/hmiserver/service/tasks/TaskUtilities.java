@@ -7,8 +7,10 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import io.micrometer.observation.annotation.Observed;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
@@ -174,6 +176,9 @@ public class TaskUtilities {
 			}
 		}
 
+		// Create a set to store unique search terms
+		Set<String> uniqueSearchTerms = new HashSet<>();
+
 		// Create a map to store the search terms and their corresponding parts
 		Map<String, GroundedSemantic> searchTermToPartMap = parts
 			.stream()
@@ -181,6 +186,7 @@ public class TaskUtilities {
 				part ->
 					part != null && part.getId() != null && !part.getId().isBlank() && isGroundingNonExistent(part.getGrounding())
 			)
+			.filter(part -> uniqueSearchTerms.add(getSearchTerm(part))) // Filter out duplicates
 			.collect(Collectors.toMap(TaskUtilities::getSearchTerm, part -> part));
 
 		// Perform the DKG search for all search terms at once
@@ -205,7 +211,9 @@ public class TaskUtilities {
 
 	/** Get the search term for a grounded semantic part. This is the description if it exists, otherwise the name. */
 	private static String getSearchTerm(GroundedSemantic part) {
-		return (part.getDescription() == null || part.getDescription().isBlank()) ? part.getName() : part.getDescription();
+		return (part.getDescription() == null || part.getDescription().isBlank())
+			? getNameSearchTerm(part)
+			: part.getDescription();
 	}
 
 	/** Get the search term for a grounded semantic part. This is the name if it exists, otherwise the id. */
