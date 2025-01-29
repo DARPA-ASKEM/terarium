@@ -290,7 +290,6 @@ export function calculateUncertaintyRange(value: number, percentage: number): { 
  * @param numerator - The numerator value.
  * @param denominator - The denominator value.
  * @returns The calculated percentage value.
- * @throws Will throw an error if the denominator is zero.
  */
 export function calculatePercentage(numerator: number, denominator: number): number {
 	if (denominator === 0) {
