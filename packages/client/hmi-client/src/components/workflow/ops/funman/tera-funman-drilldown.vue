@@ -161,6 +161,7 @@
 			<tera-drilldown-preview
 				:is-loading="showSpinner"
 				:loading-progress="props.node.state.currentProgress"
+				:loading-message="message"
 				class="p-4"
 			>
 				<template v-if="!isEmpty(node.state.runId)">
@@ -498,6 +499,10 @@ const parameterAndStateActiveIndicies = ref([0, 1, 2, 3]);
 const stateIds = ref<string[]>([]);
 const parameterIds = ref<string[]>([]);
 const observableIds = ref<string[]>([]);
+
+const message = computed(() =>
+	props.node.state.isRequestUnresponsive ? "Process is stuck in Funman, click 'Stop' to cancel." : null
+);
 
 const variablesOfInterest = ref();
 const onToggleVariableOfInterest = (event: any[]) => {
