@@ -285,6 +285,21 @@ export function calculateUncertaintyRange(value: number, percentage: number): { 
 }
 
 /**
+ * Calculates the percentage value given a numerator and a denominator.
+ *
+ * @param numerator - The numerator value.
+ * @param denominator - The denominator value.
+ * @returns The calculated percentage value.
+ * @throws Will throw an error if the denominator is zero.
+ */
+export function calculatePercentage(numerator: number, denominator: number): number {
+	if (denominator === 0) {
+		return 0;
+	}
+	return (numerator / denominator) * 100;
+}
+
+/**
  * Sums the corresponding elements of multiple arrays of numbers.
  *
  * @param arrays - An array of arrays of numbers.
@@ -328,9 +343,23 @@ export function divideArrays(array1: number[], array2: number[]): number[] {
 	const result = new Array(array1.length);
 	for (let i = 0; i < array1.length; i++) {
 		if (array2[i] === 0) {
-			throw new Error('Division by zero');
+			// Division by zero
+			result[i] = Infinity;
 		}
 		result[i] = array1[i] / array2[i];
 	}
 	return result;
+}
+
+/**
+ * Calculates the percentage values given arrays of numerators and denominators.
+ *
+ * @param numerators - An array of numerator values.
+ * @param denominators - An array of denominator values.
+ * @returns An array of calculated percentage values.
+ * @throws Will throw an error if the input arrays are not of the same length.
+ */
+export function calculatePercentages(numerators: number[], denominators: number[]): number[] {
+	const ratios = divideArrays(numerators, denominators);
+	return ratios.map((ratio) => (ratio === Infinity ? 0 : ratio * 100));
 }

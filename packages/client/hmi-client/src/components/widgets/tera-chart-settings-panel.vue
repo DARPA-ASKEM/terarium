@@ -79,7 +79,6 @@
 						<h5>Normalize</h5>
 						<tera-checkbox
 							label="Normalize data by total strata population"
-							:disabled="false"
 							:model-value="normalizeData"
 							@update:model-value="toggleNormalizeData($event)"
 						/>

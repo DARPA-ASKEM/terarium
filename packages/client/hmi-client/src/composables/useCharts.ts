@@ -41,7 +41,7 @@ import { getModelConfigName } from '@/services/model-configurations';
 import { EnsembleErrorData } from '@/components/workflow/ops/calibrate-ensemble-ciemss/calibrate-ensemble-util';
 import { PlotValue } from '@/components/workflow/ops/compare-datasets/compare-datasets-operation';
 import { DATASET_VAR_NAME_PREFIX } from '@/services/dataset';
-import { divideArrays, sumArrays } from '@/utils/math';
+import { calculatePercentage, calculatePercentages, sumArrays } from '@/utils/math';
 import { useChartAnnotations } from './useChartAnnotations';
 
 export interface ChartData {
@@ -166,13 +166,11 @@ const normalizeStratifiedModelChartData = (setting: ChartSettingComparison, data
 				variables
 					.map((v) => data.pyciemssMap[v])
 					.forEach((variable) => {
-						newEntry[variable] = !group
-							? row[variable]
-							: divideArrays(row[variable], denominatorValues).map((v) => v * 100);
+						newEntry[variable] = !group ? row[variable] : calculatePercentages(row[variable], denominatorValues);
 						if (includeBeforeData) {
 							newEntry[`${variable}:pre`] = !group
 								? row[variable]
-								: divideArrays(row[`${variable}:pre`], denominatorValues).map((v) => v * 100);
+								: calculatePercentages(row[variable], denominatorValues);
 						}
 					});
 			});
@@ -192,9 +190,9 @@ const normalizeStratifiedModelChartData = (setting: ChartSettingComparison, data
 				.map((v) => data.pyciemssMap[v])
 				.forEach((variable) => {
 					const key = `${variable}_mean`;
-					newEntry[key] = !group ? row[variable] : (row[key] / denominator) * 100;
+					newEntry[key] = !group ? row[variable] : calculatePercentage(row[key], denominator);
 					if (includeBeforeData) {
-						newEntry[`${key}:pre`] = !group ? row[variable] : (row[`${key}:pre`] / denominator) * 100;
+						newEntry[`${key}:pre`] = !group ? row[variable] : calculatePercentage(row[`${key}:pre`], denominator);
 					}
 				});
 		});
@@ -210,9 +208,11 @@ const normalizeStratifiedModelChartData = (setting: ChartSettingComparison, data
 			variables
 				.map((v) => data.pyciemssMap[v])
 				.forEach((variable) => {
-					newEntry[variable] = !group ? row[variable] : (row[variable] / denominator) * 100;
+					newEntry[variable] = !group ? row[variable] : calculatePercentage(row[variable], denominator);
 					if (includeBeforeData) {
-						newEntry[`${variable}:pre`] = !group ? row[variable] : (row[`${variable}:pre`] / denominator) * 100;
+						newEntry[`${variable}:pre`] = !group
+							? row[variable]
+							: calculatePercentage(row[`${variable}:pre`], denominator);
 					}
 				});
 		});
