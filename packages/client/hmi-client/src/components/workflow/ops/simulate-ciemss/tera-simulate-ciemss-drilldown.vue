@@ -226,7 +226,7 @@
 							<AccordionTab v-if="selectedSensitivityChartSettings.length > 0" header="Sensitivity analysis">
 								<p class="ml-2 mb-3">
 									A selected outcome (a model output at a given timepoint) can be strongly or weakly sensitive on the
-									value of the different model parameters. Colour is used here to illustrate this mapping: if the colour
+									value of the different model parameters. Color is used here to illustrate this mapping: if the color
 									varies quickly along a parameter axis, then the outcome is strongly sensitive to this parameter.
 								</p>
 								<template v-for="setting of selectedSensitivityChartSettings" :key="setting.id">
