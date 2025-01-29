@@ -85,7 +85,7 @@
 							/>
 							<label class="mt-2"> Map column names for each input </label>
 							<DataTable class="mt-2" :value="knobs.mapping">
-								<Column :header="datasets[baselineDatasetIndex].name">
+								<Column v-if="datasets[groundTruthDatasetIndex]" :header="datasets[groundTruthDatasetIndex].name">
 									<template #body="{ data, field }">
 										<Dropdown
 											class="mapping-dropdown"
@@ -100,7 +100,7 @@
 									</template>
 								</Column>
 								<Column
-									v-for="dataset in datasets.filter(({ id }) => id !== knobs.selectedBaselineDatasetId)"
+									v-for="dataset in datasets.filter(({ id }) => id !== knobs.selectedGroundTruthDatasetId)"
 									:key="dataset.id"
 									:header="dataset.name"
 								>
@@ -145,7 +145,12 @@
 			<div ref="outputPanel" class="p-2">
 				<Accordion multiple :active-index="activeIndices">
 					<AccordionTab header="Summary"> </AccordionTab>
-					<template v-if="knobs.selectedCompareOption === CompareValue.SCENARIO">
+					<template
+						v-if="
+							knobs.selectedCompareOption === CompareValue.SCENARIO ||
+							knobs.selectedCompareOption === CompareValue.ERROR
+						"
+					>
 						<AccordionTab header="Variables">
 							<template v-for="setting of selectedVariableSettings" :key="setting.id">
 								<vega-chart
@@ -164,44 +169,45 @@
 								<p class="text-center">Select variables of interest in the output panel</p>
 							</div>
 						</AccordionTab>
-						<AccordionTab header="Impact of intervention metrics" v-if="showATETable">
-							<p class="mb-3">
-								The average treatment effect (ATE) estimates the impact of a policy on the outcome in a given
-								population; it is the mean difference in the outcome between those who were and weren't treated. Larger
-								values of ATE are better, meaning a very impactful policy. Reference:
-								<a target="_blank" rel="noopener noreferrer" href="https://pmc.ncbi.nlm.nih.gov/articles/PMC6794006/">
-									https://pmc.ncbi.nlm.nih.gov/articles/PMC6794006/
-								</a>
-							</p>
-							<DataTable :value="ateTable">
-								<Column field="policyName" header="Intervention policy" />
-								<Column
-									v-for="variableName in ateVariableHeaders"
-									:header="variableName"
-									:field="variableName"
-									sortable
-									:key="variableName"
-								>
-									<template #body="{ data, field }">
-										<div class="flex gap-2" v-if="data[field]">
-											<div>{{ displayNumber(data[field]) }}</div>
-											<div v-if="showATEErrors" class="error ml-auto">
-												± {{ displayNumber(data[`${field}_error`]) }}
-											</div>
-										</div>
-									</template>
-								</Column>
-								<Column field="overall" header="Overall" sortable>
-									<template #body="{ data, field }">
-										<div class="flex gap-2">
-											<div>{{ displayNumber(data[field]) }}</div>
-											<div v-if="showATEErrors" class="error ml-auto">± {{ displayNumber(data['overall_error']) }}</div>
-										</div>
-									</template>
-								</Column>
-							</DataTable>
-						</AccordionTab>
 					</template>
+					<AccordionTab
+						v-if="knobs.selectedCompareOption === CompareValue.SCENARIO && showATETable"
+						header="Impact of intervention metrics"
+					>
+						<p class="mb-3">
+							The average treatment effect (ATE) estimates the impact of a policy on the outcome in a given population;
+							it is the mean difference in the outcome between those who were and weren't treated. Larger values of ATE
+							are better, meaning a very impactful policy. Reference:
+							<a target="_blank" rel="noopener noreferrer" href="https://pmc.ncbi.nlm.nih.gov/articles/PMC6794006/">
+								https://pmc.ncbi.nlm.nih.gov/articles/PMC6794006/
+							</a>
+						</p>
+						<DataTable :value="ateTable">
+							<Column field="policyName" header="Intervention policy" />
+							<Column
+								v-for="variableName in ateVariableHeaders"
+								:header="variableName"
+								:field="variableName"
+								sortable
+								:key="variableName"
+							>
+								<template #body="{ data, field }">
+									<div class="flex gap-2" v-if="data[field]">
+										<div>{{ displayNumber(data[field]) }}</div>
+										<div v-if="showATEErrors" class="error ml-auto">± {{ displayNumber(data[`${field}_error`]) }}</div>
+									</div>
+								</template>
+							</Column>
+							<Column field="overall" header="Overall" sortable>
+								<template #body="{ data, field }">
+									<div class="flex gap-2">
+										<div>{{ displayNumber(data[field]) }}</div>
+										<div v-if="showATEErrors" class="error ml-auto">± {{ displayNumber(data['overall_error']) }}</div>
+									</div>
+								</template>
+							</Column>
+						</DataTable>
+					</AccordionTab>
 					<template v-else-if="knobs.selectedCompareOption === CompareValue.RANK">
 						<AccordionTab header="Ranking results">
 							<p class="mb-3">
@@ -222,9 +228,6 @@
 						</AccordionTab>
 					</template>
 					<template v-else-if="knobs.selectedCompareOption === CompareValue.ERROR">
-						<AccordionTab header="Model errors">
-							<p>Model errors comparison</p>
-						</AccordionTab>
 						<AccordionTab header="Model error metrics" v-if="showWIS || showMAE">
 							<template v-if="showWIS">
 								<h5>Weighted interval score (WIS)</h5>
@@ -331,17 +334,10 @@
 								<p>How do you want to plot the values?</p>
 								<div v-for="option in plotOptions" class="flex align-items-center gap-2" :key="option.value">
 									<RadioButton
-										v-if="knobs.selectedCompareOption === CompareValue.SCENARIO"
 										v-model="knobs.selectedPlotType"
 										:value="option.value"
 										name="plotValues"
 										@change="onChangeImpactComparison"
-									/>
-									<RadioButton
-										v-else-if="knobs.selectedCompareOption === CompareValue.ERROR"
-										v-model="knobs.selectedErrorPlotType"
-										:value="option.value"
-										name="plotValues"
 									/>
 									<label :for="option.value">{{ option.label }}</label>
 								</div>
@@ -397,7 +393,6 @@ import { useCharts, type ChartData } from '@/composables/useCharts';
 import { DataArray } from '@/services/models/simulation-service';
 import { mean, stddev } from '@/utils/stats';
 import { displayNumber } from '@/utils/number';
-import { getErrorData } from '@/components/workflow/ops/calibrate-ciemss/calibrate-utils';
 import TeraCriteriaOfInterestCard from './tera-criteria-of-interest-card.vue';
 import {
 	blankCriteriaOfInterest,
@@ -446,10 +441,6 @@ const plotOptions = [
 	{ label: 'Difference', value: PlotValue.DIFFERENCE }
 ];
 
-const chartSettingsKey = computed(() =>
-	knobs.value.selectedCompareOption === CompareValue.ERROR ? 'errorChartSettings' : 'chartSettings'
-);
-
 const isInputSettingsOpen = ref(true);
 const isOutputSettingsOpen = ref(true);
 const activeIndices = ref([0, 1, 2]);
@@ -478,7 +469,7 @@ function onChangeImpactComparison() {
 }
 
 function onChangeGroundTruth() {
-	console.log('change');
+	// knobs.value.selectedGroundTruthDatasetId = id;
 }
 // function onChangeModelErrorComparison() {
 // 	console.log('change');
@@ -490,7 +481,6 @@ interface BasicKnobs {
 	selectedBaselineDatasetId: string | null;
 	selectedGroundTruthDatasetId: string | null;
 	selectedPlotType: PlotValue;
-	selectedErrorPlotType: PlotValue;
 	mapping: CompareDatasetsMap[];
 }
 
@@ -503,7 +493,6 @@ const knobs = ref<BasicKnobs>({
 	criteriaOfInterestCards: [],
 	// Compare model errors
 	selectedGroundTruthDatasetId: null,
-	selectedErrorPlotType: PlotValue.VALUE,
 	mapping: []
 });
 
@@ -528,7 +517,7 @@ const {
 	updateActiveChartSettings,
 	setActiveChartSettings,
 	updateQauntilesOptions
-} = useChartSettings(props, emit, chartSettingsKey);
+} = useChartSettings(props, emit);
 
 const selectedVariableNames = computed(() => selectedVariableSettings.value.map((s) => s.selectedVariables[0]));
 
@@ -635,25 +624,14 @@ function constructATETable() {
 }
 
 function addMapping() {
-	knobs.value.mapping.push({ modelVariable: '', datasetVariable: '' });
+	knobs.value.mapping.push({ groundTruthDatasetVariable: '', datasetVariables: datasets.value.map(() => '') });
 }
 
 function deleteMapRow(index: number) {
 	knobs.value.mapping.splice(index, 1);
 }
 
-function generateErrorCharts() {
-	if (!datasetResults.value || !impactChartData.value) return;
-	const errorData = getErrorData(
-		datasetResults.value.results[groundTruthDatasetIndex.value],
-		datasetResults.value.results[groundTruthDatasetIndex.value],
-		knobs.value.mapping,
-		'timepoint_id',
-		impactChartData.value.pyciemssMap
-	);
-
-	console.log(errorData);
-}
+function constructWisTable() {}
 
 onMounted(async () => {
 	const state = cloneDeep(props.node.state);
@@ -681,7 +659,7 @@ onMounted(async () => {
 	constructATETable();
 
 	if (isEmpty(knobs.value.mapping)) addMapping();
-	generateErrorCharts();
+	constructWisTable();
 });
 
 watch(
@@ -693,7 +671,6 @@ watch(
 		state.selectedBaselineDatasetId = knobs.value.selectedBaselineDatasetId;
 		state.selectedGroundTruthDatasetId = knobs.value.selectedGroundTruthDatasetId;
 		state.selectedPlotType = knobs.value.selectedPlotType;
-		state.selectedErrorPlotType = knobs.value.selectedErrorPlotType;
 		state.mapping = knobs.value.mapping;
 		emit('update-state', state);
 	},

@@ -35,10 +35,10 @@ export const blankCriteriaOfInterest = {
 	timepoint: TimepointOption.OVERALL
 };
 
-// Map datasetId to dataset name
+// Map groundTruth dataset variable to the other dataset variables
 export interface CompareDatasetsMap {
-	modelVariable: string;
-	datasetVariable: string;
+	groundTruthDatasetVariable: string;
+	datasetVariables: string[];
 }
 
 export interface CriteriaOfInterestCard {
@@ -50,12 +50,10 @@ export interface CriteriaOfInterestCard {
 export interface CompareDatasetsState extends BaseState {
 	criteriaOfInterestCards: CriteriaOfInterestCard[];
 	selectedPlotType: PlotValue;
-	selectedErrorPlotType: PlotValue;
 	selectedCompareOption: CompareValue;
 	selectedBaselineDatasetId: string | null;
 	selectedGroundTruthDatasetId: string | null;
 	chartSettings: ChartSetting[] | null;
-	errorChartSettings: ChartSetting[] | null;
 	mapping: CompareDatasetsMap[];
 }
 
@@ -75,12 +73,10 @@ export const CompareDatasetsOperation: Operation = {
 		const init: CompareDatasetsState = {
 			criteriaOfInterestCards: [blankCriteriaOfInterest],
 			selectedPlotType: PlotValue.PERCENTAGE,
-			selectedErrorPlotType: PlotValue.VALUE,
 			selectedCompareOption: CompareValue.SCENARIO,
 			selectedBaselineDatasetId: null,
 			selectedGroundTruthDatasetId: null,
 			chartSettings: null,
-			errorChartSettings: null,
 			mapping: []
 		};
 		return init;
