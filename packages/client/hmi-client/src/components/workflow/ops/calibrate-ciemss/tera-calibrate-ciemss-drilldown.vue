@@ -868,7 +868,9 @@ const updateLossChartSpec = (data: string | Record<string, any>[], size: { width
 };
 
 const initDefaultChartSettings = (state: CalibrationOperationStateCiemss) => {
-	const defaultSelectedParam = modelParameters.value.filter((p) => !!p.distribution).map((p) => p.id);
+	// TODO: Determine the most interesting parameters to show to the user.
+	// https://github.com/DARPA-ASKEM/terarium/issues/6284
+	const defaultSelectedParam = [];
 	const mappedModelVariables = mapping.value
 		.filter((c) => ['state', 'observable'].includes(modelPartTypesMap.value[c.modelVariable]))
 		.map((c) => c.modelVariable);

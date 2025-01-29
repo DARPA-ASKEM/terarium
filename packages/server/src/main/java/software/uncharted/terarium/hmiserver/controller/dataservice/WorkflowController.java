@@ -37,6 +37,7 @@ import software.uncharted.terarium.hmiserver.models.dataservice.workflow.Workflo
 import software.uncharted.terarium.hmiserver.models.dataservice.workflow.WorkflowAnnotation;
 import software.uncharted.terarium.hmiserver.models.dataservice.workflow.WorkflowEdge;
 import software.uncharted.terarium.hmiserver.models.dataservice.workflow.WorkflowNode;
+import software.uncharted.terarium.hmiserver.models.dataservice.workflow.WorkflowPositions;
 import software.uncharted.terarium.hmiserver.security.Roles;
 import software.uncharted.terarium.hmiserver.service.ClientEventService;
 import software.uncharted.terarium.hmiserver.service.CurrentUserService;
@@ -324,6 +325,51 @@ public class WorkflowController {
 		}
 		broadCastWorkflowChange(updated.get(), projectId);
 
+		return updated.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
+	}
+
+	@PostMapping("/{id}/update-position")
+	@Secured(Roles.USER)
+	@Operation(summary = "Update node and edge positions")
+	@ApiResponses(
+		value = {
+			@ApiResponse(
+				responseCode = "200",
+				description = "Workflow updated.",
+				content = @Content(
+					mediaType = MediaType.APPLICATION_JSON_VALUE,
+					schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = Workflow.class)
+				)
+			),
+			@ApiResponse(responseCode = "404", description = "Workflow could not be found", content = @Content),
+			@ApiResponse(responseCode = "500", description = "There was an issue updating the workflow", content = @Content)
+		}
+	)
+	public ResponseEntity<Workflow> updatePositions(
+		@PathVariable("id") final UUID id,
+		@RequestBody final WorkflowPositions payload,
+		@RequestParam(name = "project-id", required = false) final UUID projectId
+	) {
+		final Schema.Permission permission = projectService.checkPermissionCanRead(
+			currentUserService.get().getId(),
+			projectId
+		);
+
+		final Optional<Workflow> workflow = workflowService.getAsset(id, permission);
+		final Optional<Workflow> updated;
+
+		try {
+			workflowService.updatePositions(workflow.get(), payload);
+			updated = workflowService.updateAsset(workflow.get(), projectId, permission);
+		} catch (final Exception e) {
+			log.error("Unable to update workflow", e);
+			throw new ResponseStatusException(
+				org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
+				messages.get("workflow.update.create-output")
+			);
+		}
+
+		broadCastWorkflowChange(updated.get(), projectId);
 		return updated.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
 	}
 
