@@ -116,7 +116,7 @@ public class TaskServiceTest extends TerariumApplicationTests {
 		final ClassPathResource documentResource = new ClassPathResource("gollm/SIR.txt");
 		final String documentContent = new String(Files.readAllBytes(documentResource.getFile().toPath()));
 
-		final EnrichAmrResponseHandler.Input input = new EnrichAmrResponseHandler.Input();
+		final EnrichModelResponseHandler.Input input = new EnrichModelResponseHandler.Input();
 		input.setResearchPaper(documentContent);
 		input.setAmr(modelContent);
 

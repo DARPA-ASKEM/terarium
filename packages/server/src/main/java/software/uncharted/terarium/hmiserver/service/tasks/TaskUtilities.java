@@ -34,7 +34,7 @@ public class TaskUtilities {
 	) throws IOException {
 		final ObjectMapper objectMapper = new ObjectMapper();
 
-		final EnrichAmrResponseHandler.Input input = new EnrichAmrResponseHandler.Input();
+		final EnrichModelResponseHandler.Input input = new EnrichModelResponseHandler.Input();
 		if (document != null) {
 			try {
 				input.setDocument(objectMapper.writeValueAsString(document.getExtractions()));
@@ -48,7 +48,7 @@ public class TaskUtilities {
 		// Create the task
 		final TaskRequest req = new TaskRequest();
 		req.setType(TaskRequest.TaskType.GOLLM);
-		req.setScript(EnrichAmrResponseHandler.NAME);
+		req.setScript(EnrichModelResponseHandler.NAME);
 		req.setUserId(userId);
 
 		try {
@@ -59,7 +59,7 @@ public class TaskUtilities {
 
 		req.setProjectId(projectId);
 
-		final EnrichAmrResponseHandler.Properties props = new EnrichAmrResponseHandler.Properties();
+		final EnrichModelResponseHandler.Properties props = new EnrichModelResponseHandler.Properties();
 		props.setProjectId(projectId);
 		if (document != null) props.setDocumentId(document.getId());
 		props.setModelId(model.getId());

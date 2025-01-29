@@ -28,9 +28,9 @@ import software.uncharted.terarium.hmiserver.service.data.ModelService;
 @Component
 @RequiredArgsConstructor
 @Slf4j
-public class EnrichAmrResponseHandler extends TaskResponseHandler {
+public class EnrichModelResponseHandler extends TaskResponseHandler {
 
-	public static final String NAME = "gollm:enrich_amr";
+	public static final String NAME = "gollm:enrich_model";
 
 	private final ObjectMapper objectMapper;
 	private final ModelService modelService;

@@ -72,18 +72,19 @@ export async function interventionPolicyFromDataset(
 	return data;
 }
 
-export async function enrichModelMetadata(modelId: string, documentId: string, overwrite: boolean): Promise<void> {
-	try {
-		await API.get('/gollm/enrich-model-metadata', {
-			params: {
-				'model-id': modelId,
-				'document-id': documentId,
-				overwrite
-			}
-		});
-	} catch (err) {
-		logger.error(err);
-	}
+export async function enrichModelMetadata(
+	modelId: string,
+	documentId: string,
+	overwrite: boolean
+): Promise<TaskResponse> {
+	const { data } = await API.get<TaskResponse>('/gollm/enrich-model-metadata', {
+		params: {
+			'model-id': modelId,
+			'document-id': documentId,
+			overwrite
+		}
+	});
+	return data;
 }
 
 export async function configureModelFromDocument(

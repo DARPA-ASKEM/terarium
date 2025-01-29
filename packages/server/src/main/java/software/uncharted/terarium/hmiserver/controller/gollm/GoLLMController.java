@@ -54,8 +54,8 @@ import software.uncharted.terarium.hmiserver.service.tasks.ChartAnnotationRespon
 import software.uncharted.terarium.hmiserver.service.tasks.CompareModelsResponseHandler;
 import software.uncharted.terarium.hmiserver.service.tasks.ConfigureModelFromDatasetResponseHandler;
 import software.uncharted.terarium.hmiserver.service.tasks.ConfigureModelFromDocumentResponseHandler;
-import software.uncharted.terarium.hmiserver.service.tasks.EnrichAmrResponseHandler;
 import software.uncharted.terarium.hmiserver.service.tasks.EnrichDatasetResponseHandler;
+import software.uncharted.terarium.hmiserver.service.tasks.EnrichModelResponseHandler;
 import software.uncharted.terarium.hmiserver.service.tasks.EquationsFromImageResponseHandler;
 import software.uncharted.terarium.hmiserver.service.tasks.GenerateSummaryHandler;
 import software.uncharted.terarium.hmiserver.service.tasks.InterventionsFromDatasetResponseHandler;
@@ -85,7 +85,7 @@ public class GoLLMController {
 	private final CompareModelsResponseHandler compareModelsResponseHandler;
 	private final ConfigureModelFromDatasetResponseHandler configureModelFromDatasetResponseHandler;
 	private final ConfigureModelFromDocumentResponseHandler configureModelFromDocumentResponseHandler;
-	private final EnrichAmrResponseHandler enrichAmrResponseHandler;
+	private final EnrichModelResponseHandler enrichModelResponseHandler;
 	private final EnrichDatasetResponseHandler enrichDatasetResponseHandler;
 	private final EquationsFromImageResponseHandler equationsFromImageResponseHandler;
 	private final ChartAnnotationResponseHandler chartAnnotationResponseHandler;
@@ -101,7 +101,7 @@ public class GoLLMController {
 		taskService.addResponseHandler(compareModelsResponseHandler);
 		taskService.addResponseHandler(configureModelFromDatasetResponseHandler);
 		taskService.addResponseHandler(configureModelFromDocumentResponseHandler);
-		taskService.addResponseHandler(enrichAmrResponseHandler);
+		taskService.addResponseHandler(enrichModelResponseHandler);
 		taskService.addResponseHandler(enrichDatasetResponseHandler);
 		taskService.addResponseHandler(equationsFromImageResponseHandler);
 		taskService.addResponseHandler(chartAnnotationResponseHandler);

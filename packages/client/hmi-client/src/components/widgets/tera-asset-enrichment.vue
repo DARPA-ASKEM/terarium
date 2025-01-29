@@ -38,8 +38,17 @@
 
 <script setup lang="ts">
 import { getRelatedArtifacts, mapAssetTypeToProvenanceType } from '@/services/provenance';
-import type { DocumentAsset, ProjectAsset, TerariumAsset } from '@/types/Types';
-import { AssetType, ProvenanceType } from '@/types/Types';
+import {
+	AssetType,
+	ClientEvent,
+	ClientEventType,
+	DocumentAsset,
+	ProjectAsset,
+	ProvenanceType,
+	TaskResponse,
+	TaskStatus,
+	TerariumAsset
+} from '@/types/Types';
 import { isDocumentAsset } from '@/utils/asset';
 import Button from 'primevue/button';
 import RadioButton from 'primevue/radiobutton';
@@ -47,16 +56,26 @@ import { computed, ref, watch } from 'vue';
 import { datasetCard, enrichModelMetadata } from '@/services/goLLM';
 import { useProjects } from '@/composables/project';
 import TeraModal from '@/components/widgets/tera-modal.vue';
+import { useClientEvent } from '@/composables/useClientEvent';
 
 const props = defineProps<{
 	assetType: AssetType.Model | AssetType.Dataset;
 	assetId: TerariumAsset['id'];
 }>();
 
-const emit = defineEmits(['finished-job']);
-
 const isLoading = ref(false);
 const isModalVisible = ref(false);
+
+const taskId = ref<string>('');
+const enrichEventHandler = async (event: ClientEvent<TaskResponse>) => {
+	if (taskId.value !== event.data?.id) return;
+	if ([TaskStatus.Success, TaskStatus.Cancelled, TaskStatus.Failed].includes(event.data.status)) {
+		taskId.value = '';
+		isLoading.value = false;
+	}
+};
+useClientEvent(ClientEventType.TaskGollmEnrichModel, enrichEventHandler);
+useClientEvent(ClientEventType.TaskGollmEnrichDataset, enrichEventHandler);
 
 const selectedResourceId = ref<string>('');
 const relatedDocuments = ref<Array<{ name: string; id: string }>>([]);
@@ -77,21 +96,18 @@ function closeDialog() {
 async function confirm() {
 	isLoading.value = true;
 	closeDialog();
-	await sendForEnrichment(); // Wait for enrichment/extraction so once we call finished-job the newly fetched dataset will have the new data
-	emit('finished-job');
+	sendForEnrichment(); // Wait for enrichment/extraction so once we call finished-job the newly fetched dataset will have the new data
 	getRelatedDocuments();
-	isLoading.value = false;
 }
 
-async function sendForEnrichment(): Promise<void> {
+function sendForEnrichment() {
 	if (props.assetId) {
 		if (props.assetType === AssetType.Model) {
 			// Build enrichment job ids list (profile asset, align model, etc...)
-			return enrichModelMetadata(props.assetId, selectedResourceId.value, true);
+			enrichModelMetadata(props.assetId, selectedResourceId.value, true);
 		}
-		return datasetCard(props.assetId, selectedResourceId.value);
+		datasetCard(props.assetId, selectedResourceId.value);
 	}
-	return Promise.resolve();
 }
 
 function getRelatedDocuments() {
