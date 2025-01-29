@@ -88,10 +88,10 @@ const getStatus = async (runId: string) => {
 				if (newProgress !== state.currentProgress) {
 					state.isRequestUnresponsive = false;
 					StartRequestTimer(state);
-				}
 
-				state.currentProgress = newProgress;
-				emit('update-state', state);
+					state.currentProgress = newProgress;
+					emit('update-state', state);
+				}
 			}
 		});
 
@@ -119,10 +119,11 @@ watch(
 	() => props.node.state.inProgressId,
 	async (id) => {
 		if (!id || id === '') return;
+		const state = _.cloneDeep(props.node.state);
+		StartRequestTimer(state);
 		const response = await getStatus(id);
 		if (response.state === PollerState.Done) {
 			addOutputPorts(id);
-			const state = _.cloneDeep(props.node.state);
 			state.inProgressId = '';
 			message.value = '';
 			state.isRequestUnresponsive = false;
