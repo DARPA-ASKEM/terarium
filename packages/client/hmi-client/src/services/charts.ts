@@ -675,6 +675,8 @@ export function createForecastChart(
 		} as any;
 	};
 
+	const buildStatLayer = statisticsLayer && !isEmpty(statisticsLayer.variables) && !isEmpty(statisticsLayer.data);
+
 	// Build expression to check if the legend item is selected for each layer.
 	const LEGEND_SELECT_PARAM = 'legend_selection';
 	const sampleToStatVar = {};
@@ -682,7 +684,9 @@ export function createForecastChart(
 	(samplingLayer?.variables ?? []).forEach((sampleVar, index) => {
 		sampleToStatVar[sampleVar] = (statisticsLayer?.variables ?? [])[index];
 	});
-	const sampleLayerlegendSelctionTestExpr = `!${LEGEND_SELECT_PARAM}.variableField || indexof(${LEGEND_SELECT_PARAM}.variableField || [], (${JSON.stringify(sampleToStatVar)})[datum.variableField]) >= 0`;
+	const sampleLayerlegendSelctionTestExpr = buildStatLayer
+		? `!${LEGEND_SELECT_PARAM}.variableField || indexof(${LEGEND_SELECT_PARAM}.variableField || [], (${JSON.stringify(sampleToStatVar)})[datum.variableField]) >= 0`
+		: 'true';
 	const statLayerlegendSelectionTestExpr = `!${LEGEND_SELECT_PARAM}.variableField || indexof(${LEGEND_SELECT_PARAM}.variableField || [], datum.variableField) >= 0`;
 
 	// Build sample layer
@@ -708,7 +712,7 @@ export function createForecastChart(
 	}
 
 	// Build statistical layer
-	if (statisticsLayer && !isEmpty(statisticsLayer.variables) && !isEmpty(statisticsLayer.data)) {
+	if (buildStatLayer) {
 		const layerSpec = newLayer(statisticsLayer, 'line');
 		const lineSubLayer = layerSpec.layer[0];
 
