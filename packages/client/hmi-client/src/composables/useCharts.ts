@@ -144,12 +144,11 @@ const normalizeStratifiedModelChartData = (setting: ChartSettingComparison, data
 	if (!model) return data;
 	if (!setting.normalize) return data;
 	// Group selected variables by their corresponding strata
-	const selectedVarGroup = _.groupBy(setting.selectedVariables, (v) =>
+	const selectedVarGroupByStrata = _.groupBy(setting.selectedVariables, (v) =>
 		getStateVariableStrataEntries(v, model).join('-')
 	);
-	delete selectedVarGroup['']; // Remove the empty group (no state variable)
 	const denominatorVariables = {};
-	Object.keys(selectedVarGroup).forEach((group) => {
+	Object.keys(selectedVarGroupByStrata).forEach((group) => {
 		denominatorVariables[group] = Object.entries(data.pyciemssMap)
 			.filter(([k]) => group === getStateVariableStrataEntries(k, model).join('-'))
 			.map(([, v]) => v);
@@ -160,22 +159,24 @@ const normalizeStratifiedModelChartData = (setting: ChartSettingComparison, data
 	if (setting.showQuantiles) {
 		const resultGroupByTimepoint: GroupedDataArray = [];
 		(data.resultGroupByTimepoint ?? []).forEach((row) => {
-			const normalizedEntry = {};
-			Object.entries(selectedVarGroup).forEach(([group, variables]) => {
+			const newEntry = { timepoint_id: row.timepoint_id, sample_id: row.sample_id };
+			Object.entries(selectedVarGroupByStrata).forEach(([group, variables]) => {
 				// Sum all values for the variables in the same strata group
 				const denominatorValues = sumArrays(...denominatorVariables[group].map((g) => row[g]));
 				variables
 					.map((v) => data.pyciemssMap[v])
 					.forEach((variable) => {
-						normalizedEntry[variable] = divideArrays(row[variable], denominatorValues).map((v) => v * 100);
+						newEntry[variable] = !group
+							? row[variable]
+							: divideArrays(row[variable], denominatorValues).map((v) => v * 100);
 						if (includeBeforeData) {
-							normalizedEntry[`${variable}:pre`] = divideArrays(row[`${variable}:pre`], denominatorValues).map(
-								(v) => v * 100
-							);
+							newEntry[`${variable}:pre`] = !group
+								? row[variable]
+								: divideArrays(row[`${variable}:pre`], denominatorValues).map((v) => v * 100);
 						}
 					});
 			});
-			resultGroupByTimepoint.push({ ...row, ...normalizedEntry });
+			resultGroupByTimepoint.push(newEntry);
 		});
 		return { ...data, resultGroupByTimepoint };
 	}
@@ -184,38 +185,38 @@ const normalizeStratifiedModelChartData = (setting: ChartSettingComparison, data
 	// Normalize stat data
 	const resultSummary: DataArray = [];
 	data.resultSummary.forEach((row) => {
-		const normalizedEntry = { timepoint_id: row.timepoint_id };
-		Object.entries(selectedVarGroup).forEach(([group, variables]) => {
+		const newEntry = { timepoint_id: row.timepoint_id };
+		Object.entries(selectedVarGroupByStrata).forEach(([group, variables]) => {
 			const denominator = denominatorVariables[group].reduce((acc, v) => acc + row[`${v}_mean`], 0);
 			variables
 				.map((v) => data.pyciemssMap[v])
 				.forEach((variable) => {
 					const key = `${variable}_mean`;
-					normalizedEntry[key] = (row[key] / denominator) * 100;
+					newEntry[key] = !group ? row[variable] : (row[key] / denominator) * 100;
 					if (includeBeforeData) {
-						normalizedEntry[`${key}:pre`] = (row[`${key}:pre`] / denominator) * 100;
+						newEntry[`${key}:pre`] = !group ? row[variable] : (row[`${key}:pre`] / denominator) * 100;
 					}
 				});
 		});
-		resultSummary.push({ ...row, ...normalizedEntry });
+		resultSummary.push(newEntry);
 	});
 
 	// Normalize sample data
 	const result: DataArray = [];
 	data.result.forEach((row) => {
-		const normalizedEntry = { timepoint_id: row.timepoint_id, sample_id: row.sample_id };
-		Object.entries(selectedVarGroup).forEach(([group, variables]) => {
+		const newEntry = { timepoint_id: row.timepoint_id, sample_id: row.sample_id };
+		Object.entries(selectedVarGroupByStrata).forEach(([group, variables]) => {
 			const denominator = denominatorVariables[group].reduce((acc, v) => acc + row[v], 0);
 			variables
 				.map((v) => data.pyciemssMap[v])
 				.forEach((variable) => {
-					normalizedEntry[variable] = (row[variable] / denominator) * 100;
+					newEntry[variable] = !group ? row[variable] : (row[variable] / denominator) * 100;
 					if (includeBeforeData) {
-						normalizedEntry[`${variable}:pre`] = (row[`${variable}:pre`] / denominator) * 100;
+						newEntry[`${variable}:pre`] = !group ? row[variable] : (row[`${variable}:pre`] / denominator) * 100;
 					}
 				});
 		});
-		result.push({ ...row, ...normalizedEntry });
+		result.push(newEntry);
 	});
 	return { ...data, result, resultSummary };
 };
