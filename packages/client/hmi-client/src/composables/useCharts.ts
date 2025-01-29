@@ -223,7 +223,7 @@ const normalizeStratifiedModelChartData = (setting: ChartSettingComparison, data
 	return { ...data, result, resultSummary };
 };
 
-// A helper function to create a comparison chart
+/** A helper function to create a comparison chart */
 function createComparisonChart(
 	setting: ChartSettingComparison,
 	result: DataArray,
