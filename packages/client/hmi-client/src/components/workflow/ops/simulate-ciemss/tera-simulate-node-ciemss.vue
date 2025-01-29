@@ -111,6 +111,7 @@ const processResult = async (runId: string) => {
 		});
 	}
 
+	// FIXME: This emit might be getting overridden by the one in the poller
 	emit('update-state', state);
 	const start = _.first(summaryData);
 	const end = _.last(summaryData);
