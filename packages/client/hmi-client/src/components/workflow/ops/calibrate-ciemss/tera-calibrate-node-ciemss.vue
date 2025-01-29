@@ -6,8 +6,8 @@
 			<tera-node-preview
 				:node="node"
 				:is-loading="!!inProgressCalibrationId"
-				:prepared-charts="[variableCharts, interventionCharts]"
-				:chart-settings="[selectedVariableSettings, selectedInterventionSettings]"
+				:prepared-charts="Object.assign({}, variableCharts, interventionCharts)"
+				:chart-settings="[...selectedVariableSettings, ...selectedInterventionSettings]"
 				:progress="node.state.currentProgress + '%'"
 			/>
 		</template>
