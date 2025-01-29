@@ -386,7 +386,9 @@ async function appendOutput(
 	const updatedWorkflow = await workflowService.appendOutput(wf.value.getId(), node.id, outputPort, newState);
 	wf.value.update(updatedWorkflow, false);
 
-	await nextTick().then(() => {
+	// We want to try to wait here, because we replace default dummy outputs we might
+	// try to do id-lookup to a non-existing element
+	nextTick().then(() => {
 		relinkEdges(node);
 	});
 }
