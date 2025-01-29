@@ -3,20 +3,6 @@
 		<div v-if="processing">{{ processing }}</div>
 		<div v-else>Processing...</div>
 	</tera-progress-spinner>
-	<div
-		v-else-if="visibleChartSettings && _.isArray(visibleChartSettings[0])"
-		v-for="(settingsArray, index) of visibleChartSettings"
-		:key="index"
-	>
-		<vega-chart
-			v-for="setting of settingsArray"
-			:key="chartSettingKey || setting"
-			:expandable="expandable"
-			:are-embed-actions-visible="areEmbedActionsVisible"
-			:visualization-spec="getChartSpec(preparedCharts[index][chartSettingKey || setting['id']])"
-			:interactive="false"
-		/>
-	</div>
 	<vega-chart
 		v-else-if="visibleChartSettings?.length"
 		v-for="(setting, index) of visibleChartSettings"
@@ -50,7 +36,7 @@ import { WorkflowNode } from '@/types/workflow';
 const props = defineProps<{
 	node: WorkflowNode<any>;
 	preparedCharts: any;
-	chartSettings: ChartSetting[][] | ChartSetting[];
+	chartSettings: ChartSetting[];
 	chartSettingKey?: string;
 	isLoading?: boolean;
 	placeholder?: string;
@@ -63,15 +49,6 @@ const getChartSpec = (spec: any[] | any) => (_.isArray(spec) ? spec[0] : spec);
 
 const visibleChartSettings = computed(() => {
 	if (props.chartSettings) {
-		// null check
-		if (_.isArray(props.chartSettings[0])) {
-			// ChartSetting[][] check
-			return (
-				(props.chartSettings as ChartSetting[][])
-					// TODO: find source of empty arrays instead of this hack
-					.map((settingsArray) => settingsArray.filter((setting) => !setting?.hideInNode))
-			);
-		}
 		// ChartSetting[]
 		return (props.chartSettings as ChartSetting[]).filter((setting) => !setting?.hideInNode);
 	}
