@@ -233,7 +233,7 @@ export const getModelStateModifiers = (id: string, model: Model) => {
 /**
  * For a given state variable, return the state modifiers object entries in a array of string formatted in the form of key:value, e.g. ['key:value']. The array is sorted.
  */
-export const getStateVariableStrata = (id: string, model: Model) => {
+export const getStateVariableStrataEntries = (id: string, model: Model) => {
 	const modifiers = getModelStateModifiers(id, model);
 	const entries = Object.entries(modifiers)
 		.map(([key, value]) => `${key}:${value}`)

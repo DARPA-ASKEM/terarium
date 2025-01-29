@@ -29,7 +29,7 @@ import {
 } from '@/types/common';
 import { ChartAnnotation, Intervention, Model, ModelConfiguration } from '@/types/Types';
 import { displayNumber } from '@/utils/number';
-import { getStateVariableStrata, getUnitsFromModelParts, getVegaDateOptions } from '@/services/model';
+import { getStateVariableStrataEntries, getUnitsFromModelParts, getVegaDateOptions } from '@/services/model';
 import { CalibrateMap, isCalibrateMap } from '@/services/calibrate-workflow';
 import { isChartSettingComparisonVariable, isChartSettingEnsembleVariable } from '@/services/chart-settings';
 import {
@@ -144,12 +144,14 @@ const normalizeStratifiedModelChartData = (setting: ChartSettingComparison, data
 	if (!model) return data;
 	if (!setting.normalize) return data;
 	// Group selected variables by their corresponding strata
-	const selectedVarGroup = _.groupBy(setting.selectedVariables, (v) => getStateVariableStrata(v, model).join('-'));
+	const selectedVarGroup = _.groupBy(setting.selectedVariables, (v) =>
+		getStateVariableStrataEntries(v, model).join('-')
+	);
 	delete selectedVarGroup['']; // Remove the empty group (no state variable)
 	const denominatorVariables = {};
 	Object.keys(selectedVarGroup).forEach((group) => {
 		denominatorVariables[group] = Object.entries(data.pyciemssMap)
-			.filter(([k]) => group === getStateVariableStrata(k, model).join('-'))
+			.filter(([k]) => group === getStateVariableStrataEntries(k, model).join('-'))
 			.map(([, v]) => v);
 	});
 	const includeBeforeData = setting.showBeforeAfter && setting.smallMultiples;
@@ -257,6 +259,9 @@ function createComparisonChart(
 	return chart as VisualizationSpec;
 }
 
+const buildYAxisTitle = (variables: string[], getUnitFn: (id: string) => string) =>
+	_.uniq(variables.map(getUnitFn).filter((v) => !!v)).join(', ') || '';
+
 /**
  * Composable to manage the creation and configuration of various types of charts used in operator nodes and drilldown.
  *
@@ -290,6 +295,18 @@ export function useCharts(
 		return getUnitsFromModelParts(model.value)[paramId] || '';
 	};
 
+	const getUnitForNormalizedStratifiedModelData = (id: string) => {
+		if (!model?.value) return '';
+		const strata = getStateVariableStrataEntries(id, model.value);
+		if (!strata.length) return getUnit(id);
+		// sort strata labels in a same order it appears in the id
+		const label = strata
+			.map((v) => v.split(':')[1])
+			.sort((a, b) => id.indexOf(a) - id.indexOf(b))
+			.join('_');
+		return `% ${label}`;
+	};
+
 	/**
 	 * Create a base forecast chart options that's common for different types of forecast charts.
 	 * @param setting ChartSetting
@@ -305,7 +322,7 @@ export function useCharts(
 			height: chartSize.value.height,
 			translationMap: chartData.value?.translationMap || {},
 			xAxisTitle: getUnit('_time') || 'Time',
-			yAxisTitle: _.uniq(variables.map(getUnit).filter((v) => !!v)).join(',') || '',
+			yAxisTitle: buildYAxisTitle(variables, getUnit),
 			dateOptions,
 			colorscheme: [BASE_GREY, setting.primaryColor ?? PRIMARY_COLOR],
 			scale: setting.scale
@@ -654,11 +671,14 @@ export function useCharts(
 					if (selectedVars.length > 1) width = chartSize.value.width / 2;
 					if (selectedVars.length > 4) width = chartSize.value.width / 3;
 					const height = selectedVars.length <= 1 ? chartSize.value.height : chartSize.value.height / 2;
-					charts[setting.id] = selectedVars.map((_selectedVar, index) => {
+					charts[setting.id] = selectedVars.map((selectedVar, index) => {
 						const { options, sampleLayerVariables, statLayerVariables } = createComparisonChartOptions(setting, index);
 						options.width = width;
 						options.height = height;
 						options.yExtent = sharedYExtent;
+						if (setting.normalize) {
+							options.yAxisTitle = buildYAxisTitle([selectedVar], getUnitForNormalizedStratifiedModelData);
+						}
 						return createComparisonChart(
 							setting,
 							result,
@@ -672,6 +692,9 @@ export function useCharts(
 					});
 				} else {
 					const { options, sampleLayerVariables, statLayerVariables } = createComparisonChartOptions(setting);
+					if (setting.normalize) {
+						options.yAxisTitle = buildYAxisTitle(setting.selectedVariables, getUnitForNormalizedStratifiedModelData);
+					}
 					const chart = createComparisonChart(
 						setting,
 						result,
