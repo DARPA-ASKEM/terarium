@@ -37,7 +37,8 @@ export const blankCriteriaOfInterest = {
 
 // Map datasetId to dataset name
 export interface CompareDatasetsMap {
-	[key: string]: string;
+	modelVariable: string;
+	datasetVariable: string;
 }
 
 export interface CriteriaOfInterestCard {

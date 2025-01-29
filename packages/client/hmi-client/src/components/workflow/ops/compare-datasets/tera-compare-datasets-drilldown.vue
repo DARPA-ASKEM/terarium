@@ -9,7 +9,7 @@
 				class="input-config"
 				v-model:is-open="isInputSettingsOpen"
 				header="Compare settings"
-				content-width="400px"
+				content-width="440px"
 			>
 				<template #content>
 					<tera-drilldown-section class="px-3">
@@ -83,38 +83,54 @@
 								placeholder="Dataset"
 								@change="onChangeGroundTruth"
 							/>
-							<DataTable class="mapping-table" :value="knobs.mapping">
-								<Column field="datasetVariable">
-									<template #header>
-										<span class="column-header">Dataset: Other variables</span>
-									</template>
-									<!-- <template #body="{ data, field }">
+							<label class="mt-2"> Map column names for each input </label>
+							<DataTable class="mt-2" :value="knobs.mapping">
+								<Column :header="datasets[baselineDatasetIndex].name">
+									<template #body="{ data, field }">
 										<Dropdown
-											class="w-full"
-											:placeholder="mappingDropdownPlaceholder"
+											class="mapping-dropdown"
 											v-model="data[field]"
-											:options="datasetColumns?.map((ele) => ele.name)"
-											@change="updateMapping()"
+											:options="
+												datasets[groundTruthDatasetIndex].columns
+													?.map((ele) => ele.name)
+													.filter((ele) => ele.includes('mean'))
+											"
+											placeholder="Variable"
 										/>
-									</template> -->
+									</template>
+								</Column>
+								<Column
+									v-for="dataset in datasets.filter(({ id }) => id !== knobs.selectedBaselineDatasetId)"
+									:key="dataset.id"
+									:header="dataset.name"
+								>
+									<template #body="{ data, field }">
+										<Dropdown
+											class="mapping-dropdown"
+											placeholder="Variable"
+											v-model="data[field]"
+											:options="dataset.columns?.map((ele) => ele.name).filter((ele) => ele.includes('mean'))"
+										/>
+									</template>
 								</Column>
 								<Column field="deleteRow">
 									<template #header>
 										<span class="column-header"></span>
 									</template>
-									<!-- 	<template #body="{ index }">
+									<template #body="{ index }">
 										<Button class="p-button-sm p-button-text" icon="pi pi-trash" @click="deleteMapRow(index)" />
-									</template>-->
+									</template>
 								</Column>
 							</DataTable>
-							<label> Map column names for each input </label>
+
 							<div class="flex justify-content-between">
 								<div>
-									<!-- <Button class="p-button-sm p-button-text" icon="pi pi-plus" label="Add mapping" @click="addMapping" />
-									<Button
+									<Button class="p-button-sm p-button-text" icon="pi pi-plus" label="Add mapping" @click="addMapping" />
+									<!-- TODO: Automapping
+									 <Button
 										class="p-button-sm p-button-text"
 										icon="pi pi-sparkles"
-										label="Auto map"
+										label="Auto map"@change="updateMapping()"
 										@click="getAutoMapping"
 									/> -->
 								</div>
@@ -214,8 +230,8 @@
 								<h5>Weighted interval score (WIS)</h5>
 								<p class="mb-3">
 									The weighted interval score (WIS) measures the accuracy of a probabilistic forecasts relative to
-									observations (i.e. ground truth). Low WIS values are better, meaning the forecast performed well and
-									assigned high probability to observed outcomes. Reference:
+									observations (i.e. ground truth). <b>Low WIS values are better</b>, meaning the forecast performed
+									well and assigned high probability to observed outcomes. Reference:
 									<a
 										target="_blank"
 										rel="noopener noreferrer"
@@ -224,6 +240,35 @@
 										https://journals.plos.org/ploscompbiol/article?id=10.1371/journal.pcbi.1008618
 									</a>
 								</p>
+								<DataTable :value="wisTable">
+									<Column field="modelName" header="Model" />
+									<Column
+										v-for="variableName in ateVariableHeaders"
+										:header="variableName"
+										:field="variableName"
+										sortable
+										:key="variableName"
+									>
+										<template #body="{ data, field }">
+											<div class="flex gap-2" v-if="data[field]">
+												<div>{{ displayNumber(data[field]) }}</div>
+												<div v-if="showATEErrors" class="error ml-auto">
+													± {{ displayNumber(data[`${field}_error`]) }}
+												</div>
+											</div>
+										</template>
+									</Column>
+									<Column field="overall" header="Overall" sortable>
+										<template #body="{ data, field }">
+											<div class="flex gap-2">
+												<div>{{ displayNumber(data[field]) }}</div>
+												<div v-if="showATEErrors" class="error ml-auto">
+													± {{ displayNumber(data['overall_error']) }}
+												</div>
+											</div>
+										</template>
+									</Column>
+								</DataTable>
 							</template>
 							<template v-if="showMAE">
 								<h5>Mean average error (MAE)</h5>
@@ -324,6 +369,7 @@
 </template>
 
 <script setup lang="ts">
+import { isEmpty, cloneDeep } from 'lodash';
 import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
 import { WorkflowNode } from '@/types/workflow';
 import TeraSliderPanel from '@/components/widgets/tera-slider-panel.vue';
@@ -340,7 +386,6 @@ import Column from 'primevue/column';
 import { Dataset, InterventionPolicy, ModelConfiguration } from '@/types/Types';
 import TeraCheckbox from '@/components/widgets/tera-checkbox.vue';
 import RadioButton from 'primevue/radiobutton';
-import { cloneDeep } from 'lodash';
 import VegaChart from '@/components/widgets/VegaChart.vue';
 import { deleteAnnotation } from '@/services/chart-settings';
 import TeraChartSettings from '@/components/widgets/tera-chart-settings.vue';
@@ -352,6 +397,7 @@ import { useCharts, type ChartData } from '@/composables/useCharts';
 import { DataArray } from '@/services/models/simulation-service';
 import { mean, stddev } from '@/utils/stats';
 import { displayNumber } from '@/utils/number';
+import { getErrorData } from '@/components/workflow/ops/calibrate-ciemss/calibrate-utils';
 import TeraCriteriaOfInterestCard from './tera-criteria-of-interest-card.vue';
 import {
 	blankCriteriaOfInterest,
@@ -391,6 +437,7 @@ const ateTable = ref<any[]>([]);
 const ateVariableHeaders = ref<string[]>([]);
 
 const showWIS = ref(true);
+const wisTable = ref<any[]>([]);
 const showMAE = ref(false);
 
 const plotOptions = [
@@ -512,6 +559,9 @@ const selectedPlotType = computed(() => knobs.value.selectedPlotType);
 const baselineDatasetIndex = computed(() =>
 	datasets.value.findIndex((dataset) => dataset.id === knobs.value.selectedBaselineDatasetId)
 );
+const groundTruthDatasetIndex = computed(() =>
+	datasets.value.findIndex((dataset) => dataset.id === knobs.value.selectedGroundTruthDatasetId)
+);
 const variableCharts = useCompareDatasetCharts(selectedVariableSettings, selectedPlotType, baselineDatasetIndex);
 
 function outputPanelBehavior() {
@@ -584,6 +634,27 @@ function constructATETable() {
 	});
 }
 
+function addMapping() {
+	knobs.value.mapping.push({ modelVariable: '', datasetVariable: '' });
+}
+
+function deleteMapRow(index: number) {
+	knobs.value.mapping.splice(index, 1);
+}
+
+function generateErrorCharts() {
+	if (!datasetResults.value || !impactChartData.value) return;
+	const errorData = getErrorData(
+		datasetResults.value.results[groundTruthDatasetIndex.value],
+		datasetResults.value.results[groundTruthDatasetIndex.value],
+		knobs.value.mapping,
+		'timepoint_id',
+		impactChartData.value.pyciemssMap
+	);
+
+	console.log(errorData);
+}
+
 onMounted(async () => {
 	const state = cloneDeep(props.node.state);
 	knobs.value = Object.assign(knobs.value, state);
@@ -608,6 +679,9 @@ onMounted(async () => {
 	);
 
 	constructATETable();
+
+	if (isEmpty(knobs.value.mapping)) addMapping();
+	generateErrorCharts();
 });
 
 watch(
@@ -620,6 +694,7 @@ watch(
 		state.selectedGroundTruthDatasetId = knobs.value.selectedGroundTruthDatasetId;
 		state.selectedPlotType = knobs.value.selectedPlotType;
 		state.selectedErrorPlotType = knobs.value.selectedErrorPlotType;
+		state.mapping = knobs.value.mapping;
 		emit('update-state', state);
 	},
 	{ deep: true }
@@ -675,5 +750,9 @@ watch(
 
 .error {
 	color: var(--text-color-secondary);
+}
+
+.mapping-dropdown {
+	width: 7rem;
 }
 </style>
