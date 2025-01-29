@@ -192,7 +192,7 @@ public class WorkflowService extends TerariumAssetServiceWithoutSearch<Workflow,
 					dbNode.setState(node.getState());
 					dbNode.setActive(node.getActive());
 				} else {
-					log.warn("!! Node version conflict");
+					log.warn("Node version conflict node id=" + dbNode.getId() + ", workflow id=" + dbWorkflow.getId());
 				}
 
 				// Manage outputs
@@ -230,7 +230,14 @@ public class WorkflowService extends TerariumAssetServiceWithoutSearch<Workflow,
 								dbPort.setTimestamp(port.getTimestamp());
 								dbPort.setOperatorStatus(port.getOperatorStatus());
 							} else {
-								log.warn("!! Port ersion conflict");
+								log.warn(
+									"Port version conflict port id=" +
+									dbPort.getId() +
+									", node id=" +
+									dbNode.getId() +
+									", workflow id=" +
+									dbWorkflow.getId()
+								);
 							}
 						}
 					}
@@ -272,7 +279,14 @@ public class WorkflowService extends TerariumAssetServiceWithoutSearch<Workflow,
 								dbPort.setValue(port.getValue());
 								dbPort.setLabel(port.getLabel());
 							} else {
-								log.warn("!! Port version conflict");
+								log.warn(
+									"Port version conflict port id=" +
+									dbPort.getId() +
+									", node id=" +
+									dbNode.getId() +
+									", workflow id=" +
+									dbWorkflow.getId()
+								);
 							}
 						}
 					}
