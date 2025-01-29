@@ -328,7 +328,7 @@ public class WorkflowController {
 		return updated.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
 	}
 
-	@PostMapping("/{id}/update-positions")
+	@PostMapping("/{id}/update-position")
 	@Secured(Roles.USER)
 	@Operation(summary = "Update node and edge positions")
 	@ApiResponses(

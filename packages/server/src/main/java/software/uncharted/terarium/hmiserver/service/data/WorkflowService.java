@@ -205,6 +205,11 @@ public class WorkflowService extends TerariumAssetServiceWithoutSearch<Workflow,
 								continue; // Nothing to update
 							}
 
+							// Make old workflow compatible
+							if (dbPort.getVersion() == null) {
+								dbPort.setVersion(1L);
+							}
+
 							if (dbPort.getVersion().equals(port.getVersion())) {
 								dbPort.setVersion(dbPort.getVersion() + 1L);
 								dbPort.setType(port.getType());
@@ -244,6 +249,11 @@ public class WorkflowService extends TerariumAssetServiceWithoutSearch<Workflow,
 							final JsonNode dbPortContent = this.objectMapper.valueToTree(dbPort);
 							if (portContent.equals(dbPortContent)) {
 								continue; // Nothing to update
+							}
+
+							// Make old workflow compatible
+							if (dbPort.getVersion() == null) {
+								dbPort.setVersion(1L);
 							}
 
 							if (dbPort.getVersion().equals(port.getVersion())) {
