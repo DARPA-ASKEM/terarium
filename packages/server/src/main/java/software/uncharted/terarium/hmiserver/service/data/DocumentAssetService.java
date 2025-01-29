@@ -99,7 +99,6 @@ public class DocumentAssetService extends TerariumAssetServiceWithSearch<Documen
 		}
 
 		final DocumentAsset updated = updatedOptional.get();
-
 		generateAndUpsertEmbeddings(updated);
 
 		return updatedOptional;

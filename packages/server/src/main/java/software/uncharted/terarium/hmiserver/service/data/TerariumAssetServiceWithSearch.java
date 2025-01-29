@@ -394,7 +394,9 @@ public abstract class TerariumAssetServiceWithSearch<
 	}
 
 	public Future<Void> generateAndUpsertEmbeddings(final T asset) {
-		if (!isRunningTestProfile() && asset.getPublicAsset() && !asset.getTemporary()) {
+		//TODO: Temporary fix for performance issue. Disabling embeddings for now. Jan 29 2025
+
+		/*if (!isRunningTestProfile() && asset.getPublicAsset() && !asset.getTemporary()) {
 			final String embeddingText = asset.getEmbeddingSourceText();
 			if (embeddingText == null) {
 				return null;
@@ -412,7 +414,7 @@ public abstract class TerariumAssetServiceWithSearch<
 					}
 				}).start();
 			});
-		}
+		}*/
 		return null;
 	}
 }

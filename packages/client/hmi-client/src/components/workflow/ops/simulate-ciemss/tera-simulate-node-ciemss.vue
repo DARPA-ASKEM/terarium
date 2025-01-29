@@ -4,8 +4,12 @@
 			<tera-node-preview
 				:node="node"
 				:is-loading="!!inProgressForecastRun"
-				:prepared-charts="[interventionCharts, variableCharts, comparisonCharts]"
-				:chart-settings="[selectedInterventionSettings, selectedVariableSettings, selectedComparisonChartSettings]"
+				:prepared-charts="Object.assign({}, interventionCharts, variableCharts, comparisonCharts)"
+				:chart-settings="[
+					...selectedInterventionSettings,
+					...selectedVariableSettings,
+					...selectedComparisonChartSettings
+				]"
 				:are-embed-actions-visible="true"
 				:placeholder="placeholderText"
 			/>
@@ -111,6 +115,7 @@ const processResult = async (runId: string) => {
 		});
 	}
 
+	// FIXME: This emit might be getting overridden by the one in the poller
 	emit('update-state', state);
 	const start = _.first(summaryData);
 	const end = _.last(summaryData);
