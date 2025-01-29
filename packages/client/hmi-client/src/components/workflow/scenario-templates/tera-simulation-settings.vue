@@ -29,7 +29,7 @@
 		</div>
 
 		<tera-checkbox
-			label="Run simulations in automatically"
+			label="Run simulations automatically"
 			:model-value="scenarioInstance.simulateSpec.runSimulationsAutomatically"
 			@update:model-value="scenarioInstance.setRunSimulationsAutomatically($event)"
 		/>
