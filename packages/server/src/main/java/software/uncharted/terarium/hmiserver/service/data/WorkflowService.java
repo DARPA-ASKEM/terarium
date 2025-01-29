@@ -33,7 +33,7 @@ import software.uncharted.terarium.hmiserver.utils.rebac.Schema;
 
 @Service
 @Slf4j
-public class WorkflowService extends TerariumAssetServiceWithoutSearch<Workflow, WorkflowRepository> {
+public class WorkflowService extends TerariumAssetService<Workflow, WorkflowRepository> {
 
 	public WorkflowService(
 		final ObjectMapper objectMapper,
@@ -348,7 +348,7 @@ public class WorkflowService extends TerariumAssetServiceWithoutSearch<Workflow,
 	@Observed(name = "function_profile")
 	private void cascadeInvalidStatus(final WorkflowNode sourceNode, final Map<UUID, List<WorkflowNode>> nodeCache) {
 		sourceNode.setStatus("invalid");
-		List<WorkflowNode> downstreamNodes = nodeCache.get(sourceNode.getId());
+		final List<WorkflowNode> downstreamNodes = nodeCache.get(sourceNode.getId());
 		if (downstreamNodes == null) return;
 
 		for (final WorkflowNode node : downstreamNodes) {
@@ -377,7 +377,7 @@ public class WorkflowService extends TerariumAssetServiceWithoutSearch<Workflow,
 			.filter(edge -> edge.getSource().equals(nodeToRemove.getId()) || edge.getTarget().equals(nodeToRemove.getId()))
 			.collect(Collectors.toList());
 
-		for (WorkflowEdge edge : edgesToRemove) {
+		for (final WorkflowEdge edge : edgesToRemove) {
 			this.removeEdge(workflow, edge.getId());
 		}
 		nodeToRemove.setIsDeleted(true);
@@ -420,7 +420,7 @@ public class WorkflowService extends TerariumAssetServiceWithoutSearch<Workflow,
 			edge.setId(UUID.randomUUID());
 		}
 
-		WorkflowEdge existingEdge = workflow
+		final WorkflowEdge existingEdge = workflow
 			.getEdges()
 			.stream()
 			.filter(e -> {
@@ -508,9 +508,9 @@ public class WorkflowService extends TerariumAssetServiceWithoutSearch<Workflow,
 		// Transfer data value/reference
 		targetInputPort.setLabel(sourceOutputPort.getLabel());
 		if (outputTypes.size() > 1) {
-			String concreteType = intersectionTypes.get(0);
+			final String concreteType = intersectionTypes.get(0);
 			if (sourceOutputPort.getValue() != null) {
-				ArrayNode arrayNode = objectMapper.createArrayNode();
+				final ArrayNode arrayNode = objectMapper.createArrayNode();
 				arrayNode.add(sourceOutputPort.getValue().get(0).get(concreteType));
 				targetInputPort.setValue(arrayNode);
 			}
@@ -629,7 +629,7 @@ public class WorkflowService extends TerariumAssetServiceWithoutSearch<Workflow,
 	 *
 	 **/
 	@Observed(name = "function_profile")
-	public void selectOutput(final Workflow workflow, UUID nodeId, UUID selectedId) throws Exception {
+	public void selectOutput(final Workflow workflow, final UUID nodeId, final UUID selectedId) throws Exception {
 		final WorkflowNode operator = getOperator(workflow, nodeId);
 		if (operator == null) {
 			throw new Exception("Cannot find node " + nodeId);
@@ -724,9 +724,9 @@ public class WorkflowService extends TerariumAssetServiceWithoutSearch<Workflow,
 
 				// Finally we should be okay at this point
 				if (selectedTypes.size() > 1) {
-					String concreteType = intersectionTypes.get(0);
+					final String concreteType = intersectionTypes.get(0);
 					if (selected.getValue() != null) {
-						ArrayNode arrayNode = objectMapper.createArrayNode();
+						final ArrayNode arrayNode = objectMapper.createArrayNode();
 						arrayNode.add(selected.getValue().get(0).get(concreteType));
 						targetPort.setValue(arrayNode);
 					}
@@ -751,7 +751,7 @@ public class WorkflowService extends TerariumAssetServiceWithoutSearch<Workflow,
 	}
 
 	@Observed(name = "function_profile")
-	public void appendInput(final Workflow workflow, UUID nodeId, InputPort port) throws Exception {
+	public void appendInput(final Workflow workflow, final UUID nodeId, final InputPort port) throws Exception {
 		final WorkflowNode operator = getOperator(workflow, nodeId);
 		if (operator == null) {
 			throw new Exception("Cannot find node " + nodeId);
@@ -760,7 +760,8 @@ public class WorkflowService extends TerariumAssetServiceWithoutSearch<Workflow,
 	}
 
 	@Observed(name = "function_profile")
-	public void appendOutput(final Workflow workflow, UUID nodeId, OutputPort port, JsonNode nodeState) throws Exception {
+	public void appendOutput(final Workflow workflow, final UUID nodeId, final OutputPort port, final JsonNode nodeState)
+		throws Exception {
 		final WorkflowNode operator = getOperator(workflow, nodeId);
 		if (operator == null) {
 			throw new Exception("Cannot find node " + nodeId);
@@ -848,7 +849,7 @@ public class WorkflowService extends TerariumAssetServiceWithoutSearch<Workflow,
 	////////////////////////////////////////////////////////////////////////////////
 	// Helpers
 	////////////////////////////////////////////////////////////////////////////////
-	private WorkflowNode getOperator(Workflow workflow, UUID nodeId) {
+	private WorkflowNode getOperator(final Workflow workflow, final UUID nodeId) {
 		final WorkflowNode operator = workflow
 			.getNodes()
 			.stream()
@@ -883,7 +884,7 @@ public class WorkflowService extends TerariumAssetServiceWithoutSearch<Workflow,
 	}
 
 	// Merge nodeB into nodeA
-	public static JsonNode deepMergeWithOverwrite(JsonNode nodeA, JsonNode nodeB) {
+	public static JsonNode deepMergeWithOverwrite(final JsonNode nodeA, final JsonNode nodeB) {
 		if (nodeA == null && nodeB == null) {
 			return null;
 		} else if (nodeA == null && nodeB != null) {
@@ -891,14 +892,14 @@ public class WorkflowService extends TerariumAssetServiceWithoutSearch<Workflow,
 		}
 
 		if (nodeA.isObject() && nodeB.isObject()) {
-			ObjectNode objectA = (ObjectNode) nodeA;
+			final ObjectNode objectA = (ObjectNode) nodeA;
 			nodeB
 				.fields()
 				.forEachRemaining(entry -> {
-					String fieldName = entry.getKey();
-					JsonNode valueB = entry.getValue();
+					final String fieldName = entry.getKey();
+					final JsonNode valueB = entry.getValue();
 					if (objectA.has(fieldName)) {
-						JsonNode valueA = objectA.get(fieldName);
+						final JsonNode valueA = objectA.get(fieldName);
 						objectA.set(fieldName, deepMergeWithOverwrite(valueA, valueB));
 					} else {
 						objectA.set(fieldName, valueB);
@@ -911,12 +912,12 @@ public class WorkflowService extends TerariumAssetServiceWithoutSearch<Workflow,
 	}
 
 	// eg [ " datasetId | modelId "] => ["datasetId", "modelId"]
-	public static List<String> splitAndTrim(String input) {
+	public static List<String> splitAndTrim(final String input) {
 		return Arrays.stream(input.split("\\|")).map(String::trim).collect(Collectors.toList());
 	}
 
-	public static List<String> findIntersection(List<String> list1, List<String> list2) {
-		List<String> intersection = new ArrayList<>(list1);
+	public static List<String> findIntersection(final List<String> list1, final List<String> list2) {
+		final List<String> intersection = new ArrayList<>(list1);
 		intersection.retainAll(list2); // Retain only elements that are in both lists
 		return intersection;
 	}

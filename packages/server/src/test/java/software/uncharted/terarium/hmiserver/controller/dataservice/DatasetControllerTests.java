@@ -53,7 +53,6 @@ public class DatasetControllerTests extends TerariumApplicationTests {
 	@BeforeEach
 	public void setup() throws IOException {
 		projectSearchService.setupIndexAndAliasAndEnsureEmpty();
-		datasetService.setupIndexAndAliasAndEnsureEmpty();
 
 		project = projectService.createProject(
 			(Project) new Project().setPublicAsset(true).setName("test-project-name").setDescription("my description")
@@ -62,7 +61,6 @@ public class DatasetControllerTests extends TerariumApplicationTests {
 
 	@AfterEach
 	public void teardown() throws IOException {
-		datasetService.teardownIndexAndAlias();
 		projectSearchService.teardownIndexAndAlias();
 	}
 
