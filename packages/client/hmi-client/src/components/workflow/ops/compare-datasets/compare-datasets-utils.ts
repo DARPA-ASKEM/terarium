@@ -357,6 +357,7 @@ export async function initialize(
 		ds.forEach((dataset) => {
 			// Add dataset
 			if (!dataset) return;
+			datasets.value.push(dataset);
 
 			// Collect model configuration id and intervention policy id
 			const modelConfigurationId: string | undefined = dataset.metadata?.simulationAttributes?.modelConfigurationId;
