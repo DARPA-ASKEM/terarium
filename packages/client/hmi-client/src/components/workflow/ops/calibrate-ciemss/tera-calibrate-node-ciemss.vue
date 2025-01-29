@@ -8,7 +8,7 @@
 				:is-loading="!!inProgressCalibrationId"
 				:prepared-charts="[variableCharts, interventionCharts]"
 				:chart-settings="[selectedVariableSettings, selectedInterventionSettings]"
-				:progress="node.state.currentProgress + '%'"
+				:processing="node.state.currentProgress + '%'"
 			/>
 		</template>
 		<vega-chart v-else-if="lossChartSpec" :are-embed-actions-visible="false" :visualization-spec="lossChartSpec" />
