@@ -187,6 +187,11 @@
 					</template>
 					<template v-else-if="knobs.selectedCompareOption === CompareValue.RANK">
 						<AccordionTab header="Ranking results">
+							<p class="mb-3">
+								This score represents the number of standard deviations away from the mean outcome. A higher score means
+								the scenario outcome meets the criteria of interest more. The dark line (zero) is the mean outcome
+								across all scenarios.
+							</p>
 							<vega-chart :visualization-spec="rankingResultsChart" :are-embed-actions-visible="false" expandable />
 						</AccordionTab>
 						<AccordionTab header="Ranking criteria">
