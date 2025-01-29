@@ -4,8 +4,12 @@
 			<tera-node-preview
 				:node="node"
 				:is-loading="!!inProgressForecastRun"
-				:prepared-charts="[interventionCharts, variableCharts, comparisonCharts]"
-				:chart-settings="[selectedInterventionSettings, selectedVariableSettings, selectedComparisonChartSettings]"
+				:prepared-charts="Object.assign({}, interventionCharts, variableCharts, comparisonCharts)"
+				:chart-settings="[
+					...selectedInterventionSettings,
+					...selectedVariableSettings,
+					...selectedComparisonChartSettings
+				]"
 				:are-embed-actions-visible="true"
 				:placeholder="placeholderText"
 			/>
