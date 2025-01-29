@@ -792,6 +792,7 @@ public class WorkflowController {
 					schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = Workflow.class)
 				)
 			),
+			@ApiResponse(responseCode = "404", description = "Workflow could not be found", content = @Content),
 			@ApiResponse(responseCode = "500", description = "There was an issue updating the workflow", content = @Content)
 		}
 	)
@@ -807,6 +808,11 @@ public class WorkflowController {
 
 		final Optional<Workflow> workflow = workflowService.getAsset(id, permission);
 		final Optional<Workflow> updated;
+
+		if (workflow.isPresent()) {
+			return ResponseEntity.notFound().build();
+		}
+
 		try {
 			workflowService.removeAnnotation(workflow.get(), annotationId);
 			updated = workflowService.updateAsset(workflow.get(), projectId, permission);
