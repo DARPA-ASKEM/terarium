@@ -132,8 +132,7 @@ h6::after {
 	margin-left: var(--gap-2);
 }
 
-.unit,
-.concept {
+.unit {
 	display: flex;
 	align-items: center;
 	gap: var(--gap-1);

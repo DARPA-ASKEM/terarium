@@ -2,16 +2,16 @@
 	<main>
 		<h6>Concept</h6>
 
-		<section v-if="isPreview">
+		<template v-if="isPreview">
 			<p>{{ identifierName }}</p>
 			<ul>
 				<li v-for="(context, index) in contextNames" :key="index">
 					{{ context }}
 				</li>
 			</ul>
-		</section>
+		</template>
 
-		<section v-else>
+		<template v-else>
 			<AutoComplete size="small" placeholder="Search concepts" optionLabel="name" />
 			<!--				v-model="query"-->
 			<!--				:suggestions="results"-->
@@ -26,7 +26,7 @@
 			<!--				@item-select="$emit('update-item', { key: 'concept', value: $event.value.curie })"-->
 			<!--				@keyup.enter="applyValidConcept"-->
 			<!--				@blur="applyValidConcept"-->
-		</section>
+		</template>
 	</main>
 </template>
 
@@ -77,8 +77,15 @@ watch(
 </script>
 
 <style scoped>
+main {
+	align-items: center;
+	display: flex;
+	gap: var(--gap-2);
+}
+
 h6 {
 	color: var(--text-color-subdued);
-	font-size: var(--font-body-small);
+	font-size: var(--font-caption);
+	font-weight: var(--font-weight);
 }
 </style>
