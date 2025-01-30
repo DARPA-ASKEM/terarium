@@ -44,7 +44,7 @@
 					:label="showDescription ? 'Hide description' : descriptionText ? 'Show description' : 'Add description'"
 					@click="showDescription = !showDescription"
 				/>
-				<tera-concept class="concept" v-model="grounding" :is-preview="featureConfig.isPreview" />
+				<tera-concept v-model="grounding" :is-preview="featureConfig.isPreview" />
 			</span>
 		</span>
 		<katex-element

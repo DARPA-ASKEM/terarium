@@ -20,14 +20,12 @@
 				@blur="saveConcept"
 			/>
 
-			<!-- Three states of additional concepts buttons: Hide / Show / Add additional concepts -->
 			<Button
 				text
 				size="small"
 				:label="showAdditionalConceptsLabel"
 				@click="showAdditionalConcepts = !showAdditionalConcepts"
 			/>
-
 			<AutoComplete
 				v-if="showAdditionalConcepts"
 				multiple
