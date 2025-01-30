@@ -81,7 +81,6 @@
 								option-value="id"
 								:loading="isFetchingDatasets"
 								placeholder="Dataset"
-								@change="onChangeGroundTruth"
 							/>
 							<label class="mt-2"> Map column names for each input </label>
 							<DataTable class="mt-2" :value="knobs.mapping">
@@ -334,6 +333,7 @@
 								($event) => {
 									updateChartSettings($event, ChartSettingType.VARIABLE);
 									constructATETable();
+									constructWisTable();
 								}
 							"
 						>
@@ -475,13 +475,6 @@ const onRun = () => {
 function onChangeImpactComparison() {
 	generateImpactCharts(impactChartData, datasets, datasetResults, baselineDatasetIndex, selectedPlotType);
 }
-
-function onChangeGroundTruth() {
-	// knobs.value.selectedGroundTruthDatasetId = id;
-}
-// function onChangeModelErrorComparison() {
-// 	console.log('change');
-// }
 
 interface BasicKnobs {
 	selectedCompareOption: CompareValue;
@@ -637,7 +630,6 @@ function addMapping() {
 		newMapping[id as string] = '';
 	});
 	knobs.value.mapping.push(newMapping);
-	console.log(knobs.value.mapping);
 }
 
 function deleteMapRow(index: number) {
@@ -695,8 +687,6 @@ function intervalScore(
 	}
 
 	const total = calibration.map((cal) => cal + sharpness);
-
-	console.log(total, sharpness, calibration, 3);
 
 	return { total, sharpness, calibration };
 }
