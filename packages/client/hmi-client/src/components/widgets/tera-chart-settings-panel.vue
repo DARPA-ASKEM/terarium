@@ -82,7 +82,7 @@
 							:model-value="normalizeData"
 							@update:model-value="toggleNormalizeData($event)"
 						/>
-						<slot name="normalize-content"></slot>
+						<slot v-if="normalizeData" name="normalize-content"></slot>
 						<Divider />
 					</section>
 				</div>

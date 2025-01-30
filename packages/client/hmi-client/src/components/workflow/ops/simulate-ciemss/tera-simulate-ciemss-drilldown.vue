@@ -681,13 +681,13 @@ const comparisonCharts = useComparisonCharts(selectedComparisonChartSettings);
 const sensitivityCharts = useSimulateSensitivityCharts(selectedSensitivityChartSettings);
 
 const normalizeEquations = computed(() => {
-	if (!activeChartSettings.value || !preparedChartInputs.value?.pyciemssMap || !model.value) return '';
+	const equations: string[] = [];
+	if (!activeChartSettings.value || !preparedChartInputs.value?.pyciemssMap || !model.value) return equations;
 	const { selectedVariablesGroupByStrata, allVariablesGroupByStrata } = groupVariablesByStrata(
 		activeChartSettings.value.selectedVariables,
 		preparedChartInputs.value.pyciemssMap,
 		model.value
 	);
-	const equations: string[] = [];
 	Object.entries(selectedVariablesGroupByStrata).forEach(([group, variables]) => {
 		if (group === '') return;
 		const denominator = allVariablesGroupByStrata[group].map((v) => `${v}(t)`).join(' + ');
