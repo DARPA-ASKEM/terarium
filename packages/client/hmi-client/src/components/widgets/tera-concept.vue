@@ -24,13 +24,7 @@
 			<Button
 				text
 				size="small"
-				:label="
-					showAdditionalConcepts
-						? 'Hide additional concepts'
-						: isAdditionalConceptsEmpty
-							? 'Add additional concepts'
-							: 'Show additional concepts'
-				"
+				:label="showAdditionalConceptsLabel"
 				@click="showAdditionalConcepts = !showAdditionalConcepts"
 			/>
 
@@ -38,7 +32,6 @@
 				v-if="showAdditionalConcepts"
 				multiple
 				optionLabel="name"
-				placeholder="Additional concepts"
 				size="small"
 				v-model="selectedAdditionalConcepts"
 				:suggestions="resultsDKG"
@@ -85,7 +78,13 @@ function saveConcept() {
 
 const selectedAdditionalConcepts = ref<DKG[]>([]);
 const showAdditionalConcepts = ref(false);
-const isAdditionalConceptsEmpty = computed(() => isEmpty(selectedAdditionalConcepts.value));
+const showAdditionalConceptsLabel = computed(() => {
+	if (showAdditionalConcepts.value) {
+		return 'Hide additional concepts';
+	}
+	const verb = isEmpty(selectedAdditionalConcepts.value) ? 'Add' : 'Show';
+	return `${verb} additional concepts`;
+});
 function saveAdditionalConcepts() {
 	const context = parseListDKGToGroundingContext(selectedAdditionalConcepts.value);
 	grounding.value = { ...(grounding.value as Grounding), context };
