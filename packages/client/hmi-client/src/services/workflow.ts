@@ -63,7 +63,7 @@ export class WorkflowWrapper {
 	 * not rejected) and skip the rest. For example, the user may be dragging an operator on the
 	 * canvas when the db upate comes in.
 	 * */
-	update(updatedWF: Workflow, delayUpdate: boolean) {
+	update(updatedWF: Workflow) {
 		if (updatedWF.id !== this.wf.id) {
 			throw new Error(`Workflow failed, inconsistent ids updated=${updatedWF.id} self=${this.wf.id}`);
 		}
@@ -75,10 +75,6 @@ export class WorkflowWrapper {
 		const edges = this.wf.edges;
 		const updatedNodeMap = new Map<string, WorkflowNode<any>>(updatedWF.nodes.map((n) => [n.id, n]));
 		const updatedEdgeMap = new Map<string, WorkflowEdge>(updatedWF.edges.map((e) => [e.id, e]));
-
-		if (delayUpdate) {
-			console.log('TODO');
-		}
 
 		// Update and deletes
 		for (let i = 0; i < nodes.length; i++) {
