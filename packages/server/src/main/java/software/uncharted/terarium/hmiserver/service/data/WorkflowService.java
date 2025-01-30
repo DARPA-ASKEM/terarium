@@ -166,14 +166,20 @@ public class WorkflowService extends TerariumAssetServiceWithoutSearch<Workflow,
 				final JsonNode nodeContent = this.objectMapper.valueToTree(node);
 				final JsonNode dbNodeContent = this.objectMapper.valueToTree(dbNode);
 
+				// Remove inputs/outputs, these are dealt with separately
+				((ObjectNode) nodeContent).remove("inputs");
+				((ObjectNode) nodeContent).remove("outputs");
+				((ObjectNode) dbNodeContent).remove("inputs");
+				((ObjectNode) dbNodeContent).remove("outputs");
+
 				// No changes, skip
+				boolean sameContent = false;
 				if (nodeContent.equals(dbNodeContent)) {
-					nodeMap.remove(node.getId());
-					continue;
+					sameContent = true;
 				}
 
 				// Only update if if node is not already deleted in the db
-				if (dbNode.getIsDeleted() == false && dbNode.getVersion().equals(node.getVersion())) {
+				if (dbNode.getIsDeleted() == false && sameContent == false && dbNode.getVersion().equals(node.getVersion())) {
 					dbNode.setVersion(dbNode.getVersion() + 1L);
 					dbNode.setCreatedBy(node.getCreatedBy());
 					dbNode.setCreatedAt(node.getCreatedAt());
@@ -182,6 +188,7 @@ public class WorkflowService extends TerariumAssetServiceWithoutSearch<Workflow,
 					dbNode.setDocumentationUrl(node.getDocumentationUrl());
 					dbNode.setImageUrl(node.getImageUrl());
 					dbNode.setUniqueInputs(node.getUniqueInputs());
+					dbNode.setIsDeleted(node.getIsDeleted());
 
 					dbNode.setX(node.getX());
 					dbNode.setY(node.getY());
@@ -213,6 +220,13 @@ public class WorkflowService extends TerariumAssetServiceWithoutSearch<Workflow,
 								continue; // Nothing to update
 							}
 
+							System.out.println(">>>");
+							System.out.println(">>>");
+							System.out.println(port);
+							System.out.println(dbPort);
+							System.out.println(">>>");
+							System.out.println(">>>");
+
 							// Make old workflow compatible
 							if (dbPort.getVersion() == null) {
 								dbPort.setVersion(1L);
@@ -229,6 +243,10 @@ public class WorkflowService extends TerariumAssetServiceWithoutSearch<Workflow,
 								dbPort.setLabel(port.getLabel());
 								dbPort.setTimestamp(port.getTimestamp());
 								dbPort.setOperatorStatus(port.getOperatorStatus());
+
+								System.out.println("===");
+								System.out.println(dbPort);
+								System.out.println("===");
 							} else {
 								log.warn(
 									"Port version conflict port id=" +

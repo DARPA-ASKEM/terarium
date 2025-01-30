@@ -13,7 +13,7 @@ import lombok.experimental.Accessors;
 public class WorkflowPositions implements Serializable {
 
 	@Data
-	public class Position {
+	public static class Position {
 
 		private Double x;
 		private Double y;
