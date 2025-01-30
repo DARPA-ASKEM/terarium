@@ -620,7 +620,7 @@ const isEndTimeValid = computed(() =>
 	activePolicyGroups.value.every((ele) => {
 		if (
 			[OptimizationInterventionObjective.startTime, OptimizationInterventionObjective.paramValueAndStartTime].includes(
-				ele.optimizationType
+				ele.optimizeFunction.type
 			)
 		) {
 			return ele.endTime <= knobs.value.endTime;
@@ -847,30 +847,32 @@ const runOptimize = async () => {
 		startTime.push(ele.intervention.staticInterventions[0].timestep);
 		relativeImportance.push(ele.relativeImportance);
 
-		if (ele.optimizationType === OptimizationInterventionObjective.startTime) {
+		const objectiveType = ele.optimizeFunction.type;
+		const objectiveFunction = ele.optimizeFunction.objectiveFunction;
+		if (objectiveType === OptimizationInterventionObjective.startTime) {
 			initialGuess.push(ele.startTimeGuess);
 			listBoundsInterventions.push([ele.startTime]);
 			listBoundsInterventions.push([ele.endTime]);
-		} else if (ele.optimizationType === OptimizationInterventionObjective.paramValue) {
+		} else if (objectiveType === OptimizationInterventionObjective.paramValue) {
 			initialGuess.push(ele.initialGuessValue);
 			listBoundsInterventions.push([ele.lowerBoundValue]);
 			listBoundsInterventions.push([ele.upperBoundValue]);
-		} else if (ele.optimizationType === OptimizationInterventionObjective.paramValueAndStartTime) {
+		} else if (objectiveType === OptimizationInterventionObjective.paramValueAndStartTime) {
 			initialGuess.push(ele.startTimeGuess);
 			initialGuess.push(ele.initialGuessValue);
 			listBoundsInterventions.push([ele.lowerBoundValue]);
 			listBoundsInterventions.push([ele.upperBoundValue]);
 		} else {
-			console.error(`invalid optimization type used:${ele.optimizationType}`);
+			console.error(`invalid optimization type used:${objectiveType}`);
 		}
 
 		optimizeInterventions.push({
-			interventionType: ele.optimizationType,
+			interventionType: objectiveType,
 			paramNames,
 			startTime,
 			paramValues,
 			initialGuess,
-			objectiveFunctionOption: ele.objectiveFunctionOption,
+			objectiveFunctionOption: objectiveFunction,
 			relativeImportance: ele.relativeImportance
 		});
 	});

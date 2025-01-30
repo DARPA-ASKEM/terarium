@@ -15,7 +15,7 @@
 					Find the
 					<Dropdown
 						class="toolbar-button"
-						v-model="knobs.optimizationType"
+						v-model="knobs.optimizeFunction.type"
 						option-value="value"
 						option-label="label"
 						:options="OPTIMIZATION_TYPE_MAP"
@@ -42,7 +42,7 @@
 							<span>value closest to the</span>
 							<Dropdown
 								class="toolbar-button ml-1 mr-1"
-								v-model="knobs.objectiveFunctionOption"
+								v-model="knobs.optimizeFunction.objectiveFunctionOption"
 								option-value="value"
 								option-label="label"
 								:options="OBJECTIVE_FUNCTION_MAP"
@@ -53,7 +53,7 @@
 						<template v-if="showStartTimeOptions">
 							<Dropdown
 								class="toolbar-button ml-1 mr-1"
-								v-model="knobs.objectiveFunctionOption"
+								v-model="knobs.optimizeFunction.objectiveFunctionOption"
 								option-value="value"
 								option-label="label"
 								:options="OBJECTIVE_FUNCTION_MAP"
@@ -166,13 +166,13 @@ const knobs = ref<InterventionPolicyGroupForm>({
 });
 
 const isOptimizationTypeStartTime = computed(
-	() => knobs.value.optimizationType === OptimizationInterventionObjective.startTime
+	() => knobs.value.optimizeFunction.type === OptimizationInterventionObjective.startTime
 );
 const isOptimizationTypeParamValue = computed(
-	() => knobs.value.optimizationType === OptimizationInterventionObjective.paramValue
+	() => knobs.value.optimizeFunction.type === OptimizationInterventionObjective.paramValue
 );
 const isOptimizationTypeParamValueAndStartTime = computed(
-	() => knobs.value.optimizationType === OptimizationInterventionObjective.paramValueAndStartTime
+	() => knobs.value.optimizeFunction.type === OptimizationInterventionObjective.paramValueAndStartTime
 );
 const showStartTimeOptions = computed(
 	() => isOptimizationTypeStartTime.value || isOptimizationTypeParamValueAndStartTime.value
