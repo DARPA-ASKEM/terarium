@@ -96,7 +96,6 @@ public class WorkflowController {
 			// }
 		} catch (final Exception e) {
 			log.error("Unable to notify users of update to workflow", e);
-			// No response status exception here because the workflow was updated successfully, and it's just the update that's failed.
 		}
 	}
 
@@ -113,7 +112,7 @@ public class WorkflowController {
 					schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = Workflow.class)
 				)
 			),
-			@ApiResponse(responseCode = "204", description = "There was no workflow found", content = @Content),
+			@ApiResponse(responseCode = "404", description = "There was no workflow found", content = @Content),
 			@ApiResponse(
 				responseCode = "500",
 				description = "There was an issue retrieving the workflow from the data store",
@@ -131,7 +130,7 @@ public class WorkflowController {
 		);
 
 		final Optional<Workflow> workflow = workflowService.getAsset(id, permission);
-		return workflow.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.noContent().build());
+		return workflow.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
 	}
 
 	@PostMapping
@@ -312,6 +311,9 @@ public class WorkflowController {
 
 		final Optional<Workflow> workflow = workflowService.getAsset(id, permission);
 		final Optional<Workflow> updated;
+		if (workflow.isPresent() == false) {
+			return ResponseEntity.notFound().build();
+		}
 
 		try {
 			workflowService.selectOutput(workflow.get(), nodeId, outputId);
@@ -357,6 +359,9 @@ public class WorkflowController {
 
 		final Optional<Workflow> workflow = workflowService.getAsset(id, permission);
 		final Optional<Workflow> updated;
+		if (workflow.isPresent() == false) {
+			return ResponseEntity.notFound().build();
+		}
 
 		try {
 			workflowService.updatePositions(workflow.get(), payload);
@@ -402,6 +407,9 @@ public class WorkflowController {
 
 		final Optional<Workflow> workflow = workflowService.getAsset(id, permission);
 		final Optional<Workflow> updated;
+		if (workflow.isPresent() == false) {
+			return ResponseEntity.notFound().build();
+		}
 
 		try {
 			workflowService.updateNodeState(workflow.get(), payload);
@@ -447,6 +455,9 @@ public class WorkflowController {
 
 		final Optional<Workflow> workflow = workflowService.getAsset(id, permission);
 		final Optional<Workflow> updated;
+		if (workflow.isPresent() == false) {
+			return ResponseEntity.notFound().build();
+		}
 
 		try {
 			workflowService.updateNodeStatus(workflow.get(), payload);
@@ -500,6 +511,9 @@ public class WorkflowController {
 
 		final Optional<Workflow> workflow = workflowService.getAsset(id, permission);
 		final Optional<Workflow> updated;
+		if (workflow.isPresent() == false) {
+			return ResponseEntity.notFound().build();
+		}
 
 		try {
 			workflowService.appendInput(workflow.get(), nodeId, payload);
@@ -546,6 +560,9 @@ public class WorkflowController {
 
 		final Optional<Workflow> workflow = workflowService.getAsset(id, permission);
 		final Optional<Workflow> updated;
+		if (workflow.isPresent() == false) {
+			return ResponseEntity.notFound().build();
+		}
 
 		try {
 			workflowService.appendOutput(workflow.get(), nodeId, payload.getOutput(), payload.getNodeState());
@@ -591,6 +608,10 @@ public class WorkflowController {
 
 		final Optional<Workflow> workflow = workflowService.getAsset(id, permission);
 		final Optional<Workflow> updated;
+		if (workflow.isPresent() == false) {
+			return ResponseEntity.notFound().build();
+		}
+
 		try {
 			workflowService.addNode(workflow.get(), node);
 			updated = workflowService.updateAsset(workflow.get(), projectId, permission);
@@ -635,6 +656,10 @@ public class WorkflowController {
 
 		final Optional<Workflow> workflow = workflowService.getAsset(id, permission);
 		final Optional<Workflow> updated;
+		if (workflow.isPresent() == false) {
+			return ResponseEntity.notFound().build();
+		}
+
 		try {
 			workflowService.removeNodes(workflow.get(), nodes);
 			updated = workflowService.updateAsset(workflow.get(), projectId, permission);
@@ -679,6 +704,10 @@ public class WorkflowController {
 
 		final Optional<Workflow> workflow = workflowService.getAsset(id, permission);
 		final Optional<Workflow> updated;
+		if (workflow.isPresent() == false) {
+			return ResponseEntity.notFound().build();
+		}
+
 		try {
 			workflowService.addEdge(workflow.get(), edge);
 			updated = workflowService.updateAsset(workflow.get(), projectId, permission);
@@ -707,6 +736,7 @@ public class WorkflowController {
 					schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = Workflow.class)
 				)
 			),
+			@ApiResponse(responseCode = "404", description = "Workflow could not be found", content = @Content),
 			@ApiResponse(responseCode = "500", description = "There was an issue updating the workflow", content = @Content)
 		}
 	)
@@ -722,6 +752,10 @@ public class WorkflowController {
 
 		final Optional<Workflow> workflow = workflowService.getAsset(id, permission);
 		final Optional<Workflow> updated;
+		if (workflow.isPresent() == false) {
+			return ResponseEntity.notFound().build();
+		}
+
 		try {
 			workflowService.removeEdges(workflow.get(), edges);
 			updated = workflowService.updateAsset(workflow.get(), projectId, permission);
@@ -750,6 +784,7 @@ public class WorkflowController {
 					schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = Workflow.class)
 				)
 			),
+			@ApiResponse(responseCode = "404", description = "Workflow could not be found", content = @Content),
 			@ApiResponse(responseCode = "500", description = "There was an issue updating the workflow", content = @Content)
 		}
 	)
@@ -765,6 +800,10 @@ public class WorkflowController {
 
 		final Optional<Workflow> workflow = workflowService.getAsset(id, permission);
 		final Optional<Workflow> updated;
+		if (workflow.isPresent() == false) {
+			return ResponseEntity.notFound().build();
+		}
+
 		try {
 			workflowService.addOrUpdateAnnotation(workflow.get(), annotation);
 			updated = workflowService.updateAsset(workflow.get(), projectId, permission);
@@ -792,6 +831,7 @@ public class WorkflowController {
 					schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = Workflow.class)
 				)
 			),
+			@ApiResponse(responseCode = "404", description = "Workflow could not be found", content = @Content),
 			@ApiResponse(responseCode = "500", description = "There was an issue updating the workflow", content = @Content)
 		}
 	)
@@ -807,6 +847,10 @@ public class WorkflowController {
 
 		final Optional<Workflow> workflow = workflowService.getAsset(id, permission);
 		final Optional<Workflow> updated;
+		if (workflow.isPresent() == false) {
+			return ResponseEntity.notFound().build();
+		}
+
 		try {
 			workflowService.removeAnnotation(workflow.get(), annotationId);
 			updated = workflowService.updateAsset(workflow.get(), projectId, permission);
