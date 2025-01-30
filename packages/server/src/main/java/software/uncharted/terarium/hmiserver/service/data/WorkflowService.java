@@ -220,13 +220,6 @@ public class WorkflowService extends TerariumAssetServiceWithoutSearch<Workflow,
 								continue; // Nothing to update
 							}
 
-							System.out.println(">>>");
-							System.out.println(">>>");
-							System.out.println(port);
-							System.out.println(dbPort);
-							System.out.println(">>>");
-							System.out.println(">>>");
-
 							// Make old workflow compatible
 							if (dbPort.getVersion() == null) {
 								dbPort.setVersion(1L);
@@ -243,10 +236,6 @@ public class WorkflowService extends TerariumAssetServiceWithoutSearch<Workflow,
 								dbPort.setLabel(port.getLabel());
 								dbPort.setTimestamp(port.getTimestamp());
 								dbPort.setOperatorStatus(port.getOperatorStatus());
-
-								System.out.println("===");
-								System.out.println(dbPort);
-								System.out.println("===");
 							} else {
 								log.warn(
 									"Port version conflict port id=" +
