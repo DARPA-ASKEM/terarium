@@ -873,7 +873,8 @@ const runOptimize = async () => {
 			startTime,
 			paramValues,
 			initialGuess,
-			objectiveFunctionOption: [timeObjFunction, parameterObjFunction],
+			timeObjectiveFunction: timeObjFunction,
+			parameterObjectiveFunction: parameterObjFunction,
 			relativeImportance: ele.relativeImportance
 		});
 	});

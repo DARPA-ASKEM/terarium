@@ -177,7 +177,8 @@ export async function getOptimizedInterventions(optimizeRunId: string) {
 		param_names: string[];
 		param_values?: number[];
 		start_time?: number[];
-		objective_function_option: string;
+		time_objective_function: string;
+		parameter_objective_function: string;
 		initial_guess?: number[];
 		relative_importance: number;
 	}

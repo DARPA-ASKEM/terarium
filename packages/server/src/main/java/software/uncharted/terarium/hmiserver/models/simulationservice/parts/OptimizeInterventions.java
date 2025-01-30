@@ -28,8 +28,11 @@ public class OptimizeInterventions {
 	@JsonAlias("start_time")
 	private List<Integer> startTime;
 
-	@JsonAlias("objective_function_option")
-	private List<String> objectiveFunctionOption;
+	@JsonAlias("time_objective_function")
+	private String timeObjectiveFunction;
+
+	@JsonAlias("parameter_objective_function")
+	private String parameterObjectiveFunction;
 
 	@TSOptional
 	@JsonAlias("initial_guess")

@@ -661,7 +661,8 @@ export interface OptimizeInterventions {
     paramNames: string[];
     paramValues?: number[];
     startTime?: number[];
-    objectiveFunctionOption: string[];
+    timeObjectiveFunction: string;
+    parameterObjectiveFunction: string;
     initialGuess?: number[];
     relativeImportance: number;
 }
