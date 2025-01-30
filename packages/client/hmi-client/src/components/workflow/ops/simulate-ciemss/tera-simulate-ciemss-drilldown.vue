@@ -681,7 +681,14 @@ const comparisonCharts = useComparisonCharts(selectedComparisonChartSettings);
 const sensitivityCharts = useSimulateSensitivityCharts(selectedSensitivityChartSettings);
 
 const normalizeEquations = computed(() => {
-	if (!activeChartSettings.value || !preparedChartInputs.value?.pyciemssMap || !model.value) return '';
+	if (
+		!activeChartSettings.value ||
+		!preparedChartInputs.value?.pyciemssMap ||
+		!model.value ||
+		!preparedChartInputs.value?.translationMap
+	)
+		return '';
+	const translateMap = preparedChartInputs.value?.translationMap;
 	const { selectedVariablesGroupByStrata, allVariablesGroupByStrata } = groupVariablesByStrata(
 		activeChartSettings.value.selectedVariables,
 		preparedChartInputs.value.pyciemssMap,
@@ -690,7 +697,7 @@ const normalizeEquations = computed(() => {
 	const equations: string[] = [];
 	Object.entries(selectedVariablesGroupByStrata).forEach(([group, variables]) => {
 		if (group === '') return;
-		const denominator = allVariablesGroupByStrata[group].map((v) => `${v}(t)`).join(' + ');
+		const denominator = allVariablesGroupByStrata[group].map((v) => `${translateMap[v]}(t)`).join(' + ');
 		variables.forEach((variable) => {
 			const equation = `${variable}(t) / (${denominator})`;
 			equations.push(equation);
