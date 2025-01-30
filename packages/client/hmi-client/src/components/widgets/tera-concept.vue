@@ -26,11 +26,10 @@
 				v-model="selectedAdditionalConcepts"
 				:suggestions="resultsDKG"
 				@complete="searchDKG"
+				@item-select="saveAdditionalConcepts"
+				@keyup.enter="saveAdditionalConcepts"
+				@blur="saveAdditionalConcepts"
 			/>
-			<!--				@item-select="saveConcept"-->
-			<!--				@keyup.enter="saveConcept"-->
-			<!--				@blur="saveConcept"-->
-			<!--			/>-->
 		</template>
 	</main>
 </template>
@@ -43,6 +42,7 @@ import {
 	getDKGFromGroundingContext,
 	getDKGFromGroundingIdentifier,
 	parseCurieToIdentifier,
+	parseListDKGToGroundingContext,
 	searchCuriesEntities
 } from '@/services/concept';
 
@@ -59,16 +59,16 @@ async function searchDKG(event: AutoCompleteCompleteEvent) {
 }
 
 const selectedConcept = ref<DKG>();
-/**
- * Save the selected concept to the grounding
- * There is only one concept in the identifier field of the grounding
- */
 function saveConcept() {
 	const identifiers = parseCurieToIdentifier(selectedConcept.value?.curie);
-	grounding.value = { ...grounding.value, identifiers };
+	grounding.value = { ...(grounding.value as Grounding), identifiers };
 }
 
 const selectedAdditionalConcepts = ref<DKG[]>([]);
+function saveAdditionalConcepts() {
+	const context = parseListDKGToGroundingContext(selectedAdditionalConcepts.value);
+	grounding.value = { ...(grounding.value as Grounding), context };
+}
 
 watch(
 	() => grounding.value,
