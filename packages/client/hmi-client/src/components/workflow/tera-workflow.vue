@@ -77,7 +77,7 @@
 				@dragging="(event) => updatePosition(node, event)"
 				@dragend="
 					isDragging = false;
-					saveWorkflowHandler();
+					saveWorkflowPositions();
 				"
 			>
 				<tera-operator
@@ -180,7 +180,7 @@
 
 <script setup lang="ts">
 import { cloneDeep, isArray, intersection, debounce } from 'lodash';
-import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
+import { computed, onMounted, onUnmounted, ref, watch, nextTick } from 'vue';
 import TeraInfiniteCanvas from '@/components/widgets/tera-infinite-canvas.vue';
 import TeraCanvasItem from '@/components/widgets/tera-canvas-item.vue';
 import type { Position } from '@/types/common';
@@ -307,11 +307,6 @@ async function updateWorkflowName(newName: string) {
 }
 
 // eslint-disable-next-line
-const _saveWorkflow = async () => {
-	await workflowService.saveWorkflow(wf.value.dump(), currentProjectId.value ?? undefined);
-	// wf.value.update(updated);
-};
-// eslint-disable-next-line
 const _updateWorkflow = (event: ClientEvent<any>) => {
 	if (event.data.id !== wf.value.getId()) {
 		return;
@@ -322,17 +317,17 @@ const _updateWorkflow = (event: ClientEvent<any>) => {
 };
 
 const nodeStateMap: Map<string, any> = new Map();
-const saveWorkflowDebounced = debounce(_saveWorkflow, 400);
 const updateWorkflowHandler = debounce(_updateWorkflow, 250);
 const saveNodeStateHandler = debounce(async () => {
 	const updatedWorkflow = await workflowService.updateState(wf.value.getId(), nodeStateMap);
 	nodeStateMap.clear();
-	wf.value.update(updatedWorkflow, false);
-}, 250);
 
-const saveWorkflowHandler = () => {
-	saveWorkflowDebounced();
-};
+	(updatedWorkflow as Workflow).nodes.forEach((node) => {
+		if (node.isDeleted === false) {
+			wf.value.updateNodeState(node.id, node.state);
+		}
+	});
+}, 250);
 
 async function appendInput(
 	node: WorkflowNode<any>,
@@ -390,6 +385,12 @@ async function appendOutput(
 
 	const updatedWorkflow = await workflowService.appendOutput(wf.value.getId(), node.id, outputPort, newState);
 	wf.value.update(updatedWorkflow, false);
+
+	// We want to try to wait here, because we replace default dummy outputs we might
+	// try to do id-lookup to a non-existing element
+	nextTick().then(() => {
+		relinkEdges(node);
+	});
 }
 
 function updateWorkflowNodeState(node: WorkflowNode<any> | null, state: any) {
@@ -459,11 +460,13 @@ const removeNode = async (nodeId: string) => {
 	wf.value.update(updatedWorkflow, false);
 };
 
-const duplicateBranch = (nodeId: string) => {
+const duplicateBranch = async (nodeId: string) => {
 	wf.value.branchWorkflow(nodeId);
 
 	cloneNoteBookSessions();
-	saveWorkflowHandler();
+
+	const updatedWorkflow = await workflowService.saveWorkflow(wf.value.dump(), currentProjectId.value ?? undefined);
+	wf.value.update(updatedWorkflow, false);
 };
 
 // We need to clone data-transform sessions, unlike other operators that are
@@ -802,6 +805,8 @@ function relinkEdges(node: WorkflowNode<any> | null) {
 		const targetNode = nodeMap.get(edge.target as string);
 		const targetPortElem = getPortElement(edge.targetPortId as string);
 
+		// console.log(`node_id = ${node?.id}, port_id = ${edge.sourcePortId}`, sourcePortElem);
+
 		edge.points[0].x = sourceNode!.x + sourceNode!.width + sourcePortElem.offsetWidth * 0.5;
 		edge.points[0].y = sourceNode!.y + sourcePortElem.offsetTop + sourcePortElem.offsetHeight * 0.5;
 		edge.points[1].x = targetNode!.x + targetPortElem.offsetWidth * 0.5;
@@ -872,6 +877,24 @@ function updateEdgePositions(node: WorkflowNode<any>, { x, y }) {
 		}
 	});
 }
+
+const saveWorkflowPositions = async () => {
+	const nodes = new Map(wf.value.getNodes().map((n) => [n.id, { x: n.x, y: n.y }]));
+	const edges = new Map(
+		wf.value.getEdges().map((e) => {
+			const start = e.points[0];
+			const end = e.points[1];
+			return [
+				e.id,
+				[
+					{ x: start.x, y: start.y },
+					{ x: end.x, y: end.y }
+				]
+			];
+		})
+	);
+	await workflowService.updatePositions(wf.value.getId(), nodes, edges);
+};
 
 const updatePosition = (node: WorkflowNode<any>, { x, y }) => {
 	const teraNode = teraOperatorRefs.value.find((operatorNode) => operatorNode.id === node.id);
