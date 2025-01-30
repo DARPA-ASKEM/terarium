@@ -147,7 +147,7 @@
 									<label><br />Solver method</label>
 									<Dropdown
 										class="p-inputtext-sm"
-										:options="[CiemssMethodOptions.dopri5, CiemssMethodOptions.euler]"
+										:options="[CiemssMethodOptions.dopri5, CiemssMethodOptions.rk4, CiemssMethodOptions.euler]"
 										v-model="knobs.solverMethod"
 										placeholder="Select"
 									/>
@@ -157,7 +157,7 @@
 									<div>
 										<tera-input-number
 											v-model="knobs.solverStepSize"
-											:disabled="knobs.solverMethod !== CiemssMethodOptions.euler"
+											:disabled="![CiemssMethodOptions.rk4, CiemssMethodOptions.euler].includes(knobs.solverMethod)"
 											:min="0"
 										/>
 									</div>
@@ -545,7 +545,7 @@ interface BasicKnobs {
 	endTime: number;
 	numSamples: number;
 	solverStepSize: number;
-	solverMethod: string;
+	solverMethod: CiemssMethodOptions;
 	maxiter: number;
 	maxfeval: number;
 	preForecastRunId: string;

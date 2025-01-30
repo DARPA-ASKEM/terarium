@@ -81,7 +81,7 @@
 								<Dropdown
 									id="solver-method"
 									v-model="method"
-									:options="[CiemssMethodOptions.dopri5, CiemssMethodOptions.euler]"
+									:options="[CiemssMethodOptions.dopri5, CiemssMethodOptions.rk4, CiemssMethodOptions.euler]"
 									@update:model-value="updateState"
 								/>
 							</div>
@@ -89,7 +89,7 @@
 								<label for="num-samples">Solver step size</label>
 								<tera-input-number
 									v-model="solverStepSize"
-									:disabled="method !== CiemssMethodOptions.euler"
+									:disabled="![CiemssMethodOptions.rk4, CiemssMethodOptions.euler].includes(method)"
 									:min="0"
 									@update:model-value="updateState"
 								/>
