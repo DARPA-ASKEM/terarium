@@ -1,9 +1,10 @@
 <template>
 	<main>
 		<h6>Concept</h6>
-
 		<template v-if="isPreview">
 			<p :title="selectedConcept?.curie">{{ selectedConcept?.name }}</p>
+			<h6 v-if="!isEmpty(selectedAdditionalConcepts)">Additional concepts</h6>
+			<p>{{ selectedAdditionalConcepts.map((dkg) => dkg.name).join(', ') }}</p>
 		</template>
 
 		<template v-else>
@@ -19,10 +20,10 @@
 				@blur="saveConcept"
 			/>
 			<AutoComplete
-				size="small"
-				placeholder="Additional concepts"
-				optionLabel="name"
 				multiple
+				optionLabel="name"
+				placeholder="Additional concepts"
+				size="small"
 				v-model="selectedAdditionalConcepts"
 				:suggestions="resultsDKG"
 				@complete="searchDKG"
@@ -45,6 +46,7 @@ import {
 	parseListDKGToGroundingContext,
 	searchCuriesEntities
 } from '@/services/concept';
+import { isEmpty } from 'lodash';
 
 defineProps<{
 	isPreview?: boolean;
