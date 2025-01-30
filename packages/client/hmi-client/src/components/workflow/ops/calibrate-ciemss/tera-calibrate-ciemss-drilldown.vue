@@ -1075,8 +1075,8 @@ const initialize = async () => {
 
 	// look for timestamp col in dataset if its not yet filled in.
 	if (knobs.value.timestampColName === '') {
-		const timeCol = datasetColumns.value?.find((ele) => ele.name.toLocaleLowerCase().startsWith('time'));
-		if (timeCol) {
+		const timeCol = datasetColumns.value?.find((ele) => ele.name?.toLocaleLowerCase().startsWith('time'));
+		if (timeCol && timeCol.name !== undefined) {
 			knobs.value.timestampColName = timeCol.name;
 		}
 	}
