@@ -84,7 +84,15 @@
 											"
 										/>
 									</div>
-									<div v-if="isEmpty(multipleEquations) && !pastedImage" class="flex align-items-center gap-2">
+									<div
+										v-if="
+											isEmpty(multipleEquations) &&
+											pastedImage &&
+											includedEquations.length === 0 &&
+											notIncludedEquations.length === 0
+										"
+										class="flex align-items-center gap-2"
+									>
 										<span class="pi pi-spinner pi-spin secondary-text"></span>
 										<span class="secondary-text">Converting to LaTeX</span>
 									</div>
