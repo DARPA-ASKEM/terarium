@@ -111,7 +111,7 @@ public class DatasetServiceTests extends TerariumApplicationTests {
 		Assertions.assertEquals(after.getColumns().size(), 2);
 
 		for (final DatasetColumn col : after.getColumns()) {
-			Assertions.assertNotNull(col.getConceptId());
+			Assertions.assertNotNull(col.getId());
 			Assertions.assertNotNull(col.getCreatedOn());
 			Assertions.assertNotNull(col.getGrounding());
 			Assertions.assertNotNull(col.getGrounding().getId());
@@ -160,7 +160,7 @@ public class DatasetServiceTests extends TerariumApplicationTests {
 
 		Assertions.assertEquals(updated.getColumns().size(), 2);
 		for (final DatasetColumn col : updated.getColumns()) {
-			Assertions.assertNotNull(col.getConceptId());
+			Assertions.assertNotNull(col.getId());
 			Assertions.assertNotNull(col.getCreatedOn());
 			Assertions.assertNotNull(col.getGrounding());
 			Assertions.assertNotNull(col.getGrounding().getId());
