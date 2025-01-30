@@ -541,8 +541,8 @@ async function onMenuSelection(operatorType: string, menuNode: WorkflowNode<any>
 			target: newNode.id,
 			targetPortId: inputPorts[0].id,
 			points: [
-				{ x: currentPortPosition.x, y: currentPortPosition.y },
-				{ x: currentPortPosition.x, y: currentPortPosition.y }
+				{ x: 0, y: 0 },
+				{ x: 0, y: 0 }
 			]
 		};
 
@@ -550,6 +550,7 @@ async function onMenuSelection(operatorType: string, menuNode: WorkflowNode<any>
 		wf.value.update(updatedWorkflow);
 
 		// Force edges to re-evaluate
+		await nextTick();
 		relinkEdges(null);
 	}
 }
