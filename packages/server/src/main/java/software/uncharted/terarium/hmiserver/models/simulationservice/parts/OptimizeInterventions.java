@@ -29,7 +29,7 @@ public class OptimizeInterventions {
 	private List<Integer> startTime;
 
 	@JsonAlias("objective_function_option")
-	private String objectiveFunctionOption;
+	private List<String> objectiveFunctionOption;
 
 	@TSOptional
 	@JsonAlias("initial_guess")

@@ -35,8 +35,10 @@ export interface InterventionPolicyGroupForm {
 	upperBoundValue: number;
 	initialGuessValue: number;
 	relativeImportance: number;
-	optimizationType: OptimizationInterventionObjective;
-	objectiveFunctionOption: InterventionObjectiveFunctions;
+	optimizeFunction: {
+		type: OptimizationInterventionObjective;
+		objectiveFunction: InterventionObjectiveFunctions[];
+	};
 	intervention: Intervention;
 }
 
@@ -102,8 +104,10 @@ export const blankInterventionPolicyGroup: InterventionPolicyGroupForm = {
 	upperBoundValue: 0,
 	initialGuessValue: 0,
 	relativeImportance: 5,
-	optimizationType: OptimizationInterventionObjective.startTime,
-	objectiveFunctionOption: InterventionObjectiveFunctions.initialGuess,
+	optimizeFunction: {
+		type: OptimizationInterventionObjective.startTime,
+		objectiveFunction: [InterventionObjectiveFunctions.initialGuess]
+	},
 	intervention: blankIntervention
 };
 
