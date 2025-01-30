@@ -1,6 +1,6 @@
 import { Operation, WorkflowOperationTypes, BaseState } from '@/types/workflow';
 import { Intervention, InterventionSemanticType, InterventionPolicy } from '@/types/Types';
-import { getRunResult, getSimulation } from '@/services/models/simulation-service';
+import { CiemssMethodOptions, getRunResult, getSimulation } from '@/services/models/simulation-service';
 import { getModelIdFromModelConfigurationId } from '@/services/model-configurations';
 import { createInterventionPolicy, blankIntervention } from '@/services/intervention-policy';
 import optimizeModel from '@assets/svg/operator-images/optimize-model.svg';
@@ -55,7 +55,7 @@ export interface OptimizeCiemssOperationState extends BaseState {
 	endTime: number;
 	numSamples: number;
 	solverStepSize: number;
-	solverMethod: string;
+	solverMethod: CiemssMethodOptions;
 	maxiter: number;
 	maxfeval: number;
 	// Intervention policies
@@ -138,7 +138,7 @@ export const OptimizeCiemssOperation: Operation = {
 			endTime: 90,
 			numSamples: 100,
 			solverStepSize: 0.1,
-			solverMethod: 'dopri5',
+			solverMethod: CiemssMethodOptions.dopri5,
 			maxiter: 5,
 			maxfeval: 25,
 			interventionPolicyId: '',
