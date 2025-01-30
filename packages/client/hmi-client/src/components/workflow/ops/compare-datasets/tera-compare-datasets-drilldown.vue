@@ -333,7 +333,7 @@
 								($event) => {
 									updateChartSettings($event, ChartSettingType.VARIABLE);
 									constructATETable();
-									constructWisTable();
+									// constructWisTable();
 								}
 							"
 						>
@@ -847,7 +847,7 @@ onMounted(async () => {
 	constructATETable();
 
 	if (isEmpty(knobs.value.mapping)) addMapping();
-	constructWisTable();
+	if (false) constructWisTable();
 });
 
 watch(
