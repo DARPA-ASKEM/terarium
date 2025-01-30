@@ -1,3 +1,4 @@
+import _ from 'lodash';
 import API from '@/api/api';
 import { useProjects } from '@/composables/project';
 import type { MMT } from '@/model-representation/mira/mira-common';
@@ -6,7 +7,6 @@ import type { Initial, InterventionPolicy, Model, ModelConfiguration, ModelParam
 import { Artifact, EventType } from '@/types/Types';
 import { AMRSchemaNames, CalendarDateType } from '@/types/common';
 import { fileToJson } from '@/utils/file';
-import _, { isEmpty } from 'lodash';
 import { Ref } from 'vue';
 import { DateOptions } from './charts';
 
@@ -126,7 +126,7 @@ export async function processAndAddModelToProject(artifact: Artifact): Promise<s
 // A helper function to check if a model is empty.
 export function isModelEmpty(model: Model) {
 	if (getModelType(model) === AMRSchemaNames.PETRINET) {
-		return isEmpty(model.model?.states) && isEmpty(model.model?.transitions);
+		return _.isEmpty(model.model?.states) && _.isEmpty(model.model?.transitions);
 	}
 	// TODO: support different frameworks' version of empty
 	return false;
