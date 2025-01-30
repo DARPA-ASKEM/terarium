@@ -39,7 +39,7 @@ export const SimulateCiemssOperation: Operation = {
 			isOptional: true
 		}
 	],
-	outputs: [{ type: 'datasetId' }],
+	outputs: [{ type: 'datasetId', label: 'Dataset' }],
 	isRunnable: true,
 
 	initState: () => {
