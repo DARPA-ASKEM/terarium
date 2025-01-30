@@ -467,7 +467,7 @@ onMounted(async () => {
 	// initialze weights
 	if (_.isEmpty(knobs.value.weights)) {
 		allModelConfigurations.forEach((config) => {
-			knobs.value.weights[config.id as string] = 5;
+			knobs.value.weights[config.id as string] = 1;
 		});
 	}
 });
