@@ -157,6 +157,19 @@ function parseCurieToIdentifier(curie: string | undefined): { [key: string]: str
 	return { [key]: value };
 }
 
+function parseListDKGToGroundingContext(dkgList: DKG[]): { [index: string]: string } {
+	const context: Grounding['context'] = {};
+	dkgList.forEach((dkg) => {
+		if (dkg.name.includes(':')) {
+			const [key, value] = dkg.name.split(':');
+			context[key] = value;
+		} else {
+			context[dkg.name] = dkg.curie;
+		}
+	});
+	return context;
+}
+
 // Takes in 2 lists of generic {id, groundings} and returns the singular
 // closest match for each element in list one
 const autoEntityMapping = async (sourceEntities: Entity[], targetEntities: Entity[], acceptableDist?: number) => {
@@ -359,6 +372,7 @@ export {
 	getDKGFromGroundingIdentifier,
 	getDKGFromGroundingContext,
 	parseCurieToIdentifier,
+	parseListDKGToGroundingContext,
 	autoModelMapping,
 	autoCalibrationMapping,
 	autoEntityMapping,
