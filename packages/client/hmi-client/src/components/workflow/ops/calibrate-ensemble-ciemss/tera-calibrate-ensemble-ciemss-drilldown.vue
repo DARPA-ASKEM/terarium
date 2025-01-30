@@ -149,13 +149,15 @@
 										<label>Solver method</label>
 										<Dropdown
 											v-model="knobs.extra.solverMethod"
-											:options="[CiemssMethodOptions.dopri5, CiemssMethodOptions.euler]"
+											:options="[CiemssMethodOptions.dopri5, CiemssMethodOptions.rk4, CiemssMethodOptions.euler]"
 										/>
 									</div>
 									<div class="label-and-input">
 										<label for="num-steps">Solver step size</label>
 										<tera-input-number
-											:disabled="knobs.extra.solverMethod !== CiemssMethodOptions.euler"
+											:disabled="
+												![CiemssMethodOptions.rk4, CiemssMethodOptions.euler].includes(knobs.extra.solverMethod)
+											"
 											:min="0"
 											v-model="knobs.extra.stepSize"
 										/>
