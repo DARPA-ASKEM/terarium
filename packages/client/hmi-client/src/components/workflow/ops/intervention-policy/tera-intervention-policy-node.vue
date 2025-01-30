@@ -8,14 +8,17 @@
 		<div v-if="displayedInterventions.length > 0" class="intervention-summary">
 			<div v-for="(intervention, index) in displayedInterventions" :key="index">
 				<p class="name">{{ intervention.name }}</p>
+				<div>
+					Starting at time step
+					<span class="semi-bold">{{ intervention.staticInterventions[0].timestep }},</span>
+				</div>
 				<div class="body" v-if="intervention.staticInterventions.length > 0">
 					<p
 						v-for="staticIntervention in intervention.staticInterventions"
 						:key="staticIntervention.type + staticIntervention.appliedTo"
 					>
 						Set {{ staticIntervention.type }} <span class="semi-bold">{{ staticIntervention.appliedTo }}</span> to
-						<span class="semi-bold">{{ staticIntervention.value }}</span> at time step
-						<span class="semi-bold">{{ staticIntervention.timestep }}</span>
+						<span class="semi-bold">{{ staticIntervention.value }}</span>
 					</p>
 				</div>
 				<div class="body" v-if="intervention.dynamicInterventions.length > 0">

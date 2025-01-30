@@ -28,8 +28,7 @@ import software.uncharted.terarium.hmiserver.service.s3.S3ClientService;
 import software.uncharted.terarium.hmiserver.utils.rebac.Schema;
 
 @Service
-public class ModelConfigurationService
-	extends TerariumAssetServiceWithoutSearch<ModelConfiguration, ModelConfigRepository> {
+public class ModelConfigurationService extends TerariumAssetService<ModelConfiguration, ModelConfigRepository> {
 
 	public ModelConfigurationService(
 		final ObjectMapper objectMapper,

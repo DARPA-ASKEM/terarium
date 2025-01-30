@@ -160,14 +160,14 @@
 									<Dropdown
 										id="5"
 										v-model="knobs.method"
-										:options="[CiemssMethodOptions.dopri5, CiemssMethodOptions.euler]"
+										:options="[CiemssMethodOptions.dopri5, CiemssMethodOptions.rk4, CiemssMethodOptions.euler]"
 										@update:model-value="updateState"
 									/>
 								</div>
 								<div class="label-and-input">
 									<label for="num-steps">Solver step size</label>
 									<tera-input-number
-										:disabled="knobs.method !== CiemssMethodOptions.euler"
+										:disabled="![CiemssMethodOptions.rk4, CiemssMethodOptions.euler].includes(knobs.method)"
 										:min="0"
 										v-model="knobs.stepSize"
 									/>
@@ -594,7 +594,7 @@ interface BasicKnobs {
 	endTime: number;
 	stepSize: number;
 	learningRate: number;
-	method: string;
+	method: CiemssMethodOptions;
 	timestampColName: string;
 }
 
