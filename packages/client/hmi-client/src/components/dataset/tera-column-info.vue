@@ -65,7 +65,7 @@ import { type DKG, ColumnType, type Grounding } from '@/types/Types';
 import { getCurieFromGroundingIdentifier, getNameOfCurieCached, searchCuriesEntities } from '@/services/concept';
 
 type ColumnInfo = {
-	symbol: string;
+	symbol?: string;
 	dataType?: ColumnType;
 	description?: string;
 	grounding?: Grounding;
