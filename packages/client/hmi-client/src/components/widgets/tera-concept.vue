@@ -18,20 +18,19 @@
 				@keyup.enter="saveConcept"
 				@blur="saveConcept"
 			/>
-			<!--
 			<AutoComplete
 				size="small"
 				placeholder="Additional concepts"
 				optionLabel="name"
 				multiple
-				v-model="query"
-				:suggestions="results"
-				@complete="async () => (results = await searchCuriesEntities(query))"
-				@item-select="$emit('update-item', { key: 'concept', value: $event.value.curie })"
-				@keyup.enter="applyValidConcept"
-				@blur="applyValidConcept"
+				v-model="selectedAdditionalConcepts"
+				:suggestions="resultsDKG"
+				@complete="searchDKG"
 			/>
-			-->
+			<!--				@item-select="saveConcept"-->
+			<!--				@keyup.enter="saveConcept"-->
+			<!--				@blur="saveConcept"-->
+			<!--			/>-->
 		</template>
 	</main>
 </template>
@@ -40,7 +39,12 @@
 import { ref, watch } from 'vue';
 import AutoComplete, { AutoCompleteCompleteEvent } from 'primevue/autocomplete';
 import type { DKG, Grounding } from '@/types/Types';
-import { getDKGFromGroundingIdentifier, parseCurieToIdentifier, searchCuriesEntities } from '@/services/concept';
+import {
+	getDKGFromGroundingContext,
+	getDKGFromGroundingIdentifier,
+	parseCurieToIdentifier,
+	searchCuriesEntities
+} from '@/services/concept';
 
 defineProps<{
 	isPreview?: boolean;
@@ -64,12 +68,18 @@ function saveConcept() {
 	grounding.value = { ...grounding.value, identifiers };
 }
 
+const selectedAdditionalConcepts = ref<DKG[]>([]);
+
 watch(
 	() => grounding.value,
 	(newGrounding) => {
 		if (newGrounding) {
 			getDKGFromGroundingIdentifier(newGrounding.identifiers).then((dkg) => {
 				selectedConcept.value = dkg;
+			});
+
+			getDKGFromGroundingContext(newGrounding.context).then((dkgList) => {
+				selectedAdditionalConcepts.value = dkgList;
 			});
 		}
 	},
