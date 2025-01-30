@@ -26,6 +26,7 @@ import software.uncharted.terarium.hmiserver.models.dataservice.workflow.Workflo
 import software.uncharted.terarium.hmiserver.models.dataservice.workflow.WorkflowAnnotation;
 import software.uncharted.terarium.hmiserver.models.dataservice.workflow.WorkflowEdge;
 import software.uncharted.terarium.hmiserver.models.dataservice.workflow.WorkflowNode;
+import software.uncharted.terarium.hmiserver.models.dataservice.workflow.WorkflowPositions;
 import software.uncharted.terarium.hmiserver.repository.data.WorkflowRepository;
 import software.uncharted.terarium.hmiserver.service.s3.S3ClientService;
 import software.uncharted.terarium.hmiserver.utils.rebac.Schema;
@@ -71,6 +72,20 @@ public class WorkflowService extends TerariumAssetService<Workflow, WorkflowRepo
 				if (node.getVersion() == null) {
 					node.setVersion(1L);
 				}
+				if (node.getInputs() != null) {
+					for (final InputPort port : node.getInputs()) {
+						if (port.getVersion() == null) {
+							port.setVersion(1L);
+						}
+					}
+				}
+				if (node.getOutputs() != null) {
+					for (final OutputPort port : node.getOutputs()) {
+						if (port.getVersion() == null) {
+							port.setVersion(1L);
+						}
+					}
+				}
 			}
 		}
 		if (asset.getEdges() != null) {
@@ -111,6 +126,20 @@ public class WorkflowService extends TerariumAssetService<Workflow, WorkflowRepo
 				if (node.getVersion() == null) {
 					node.setVersion(1L);
 				}
+				if (node.getInputs() != null) {
+					for (final InputPort port : node.getInputs()) {
+						if (port.getVersion() == null) {
+							port.setVersion(1L);
+						}
+					}
+				}
+				if (node.getOutputs() != null) {
+					for (final OutputPort port : node.getOutputs()) {
+						if (port.getVersion() == null) {
+							port.setVersion(1L);
+						}
+					}
+				}
 				nodeMap.put(node.getId(), node);
 			}
 		}
@@ -137,19 +166,147 @@ public class WorkflowService extends TerariumAssetService<Workflow, WorkflowRepo
 				final JsonNode nodeContent = this.objectMapper.valueToTree(node);
 				final JsonNode dbNodeContent = this.objectMapper.valueToTree(dbNode);
 
+				// Remove inputs/outputs, these are dealt with separately
+				((ObjectNode) nodeContent).remove("inputs");
+				((ObjectNode) nodeContent).remove("outputs");
+				((ObjectNode) dbNodeContent).remove("inputs");
+				((ObjectNode) dbNodeContent).remove("outputs");
+
 				// No changes, skip
+				boolean sameContent = false;
 				if (nodeContent.equals(dbNodeContent)) {
-					nodeMap.remove(node.getId());
-					continue;
+					sameContent = true;
 				}
 
 				// Only update if if node is not already deleted in the db
-				if (dbNode.getIsDeleted() == false && dbNode.getVersion().equals(node.getVersion())) {
-					node.setVersion(dbNode.getVersion() + 1L);
-					dbWorkflowNodes.set(index, node);
+				if (sameContent == false) {
+					if (dbNode.getIsDeleted() == false && dbNode.getVersion().equals(node.getVersion())) {
+						dbNode.setVersion(dbNode.getVersion() + 1L);
+						dbNode.setCreatedBy(node.getCreatedBy());
+						dbNode.setCreatedAt(node.getCreatedAt());
+						dbNode.setDisplayName(node.getDisplayName());
+						dbNode.setOperationType(node.getOperationType());
+						dbNode.setDocumentationUrl(node.getDocumentationUrl());
+						dbNode.setImageUrl(node.getImageUrl());
+						dbNode.setUniqueInputs(node.getUniqueInputs());
+						dbNode.setIsDeleted(node.getIsDeleted());
+
+						dbNode.setX(node.getX());
+						dbNode.setY(node.getY());
+						dbNode.setWidth(node.getWidth());
+						dbNode.setHeight(node.getHeight());
+
+						dbNode.setStatus(node.getStatus());
+						dbNode.setState(node.getState());
+						dbNode.setActive(node.getActive());
+					} else {
+						log.warn("Node version conflict node id=" + dbNode.getId() + ", workflow id=" + dbWorkflow.getId());
+					}
 				}
 
-				// remove once updated
+				// Manage outputs
+				if (dbNode.getIsDeleted() == false && node.getOutputs() != null && node.getOutputs().size() > 0) {
+					for (final OutputPort port : node.getOutputs()) {
+						final OutputPort dbPort = dbNode
+							.getOutputs()
+							.stream()
+							.filter(p -> p.getId().equals(port.getId()))
+							.findFirst()
+							.orElse(null);
+						if (dbPort == null) {
+							dbNode.getOutputs().add(port);
+						} else {
+							final JsonNode portContent = this.objectMapper.valueToTree(port);
+							final JsonNode dbPortContent = this.objectMapper.valueToTree(dbPort);
+							if (portContent.equals(dbPortContent)) {
+								continue; // Nothing to update
+							}
+
+							// Make old workflow compatible
+							if (dbPort.getVersion() == null) {
+								dbPort.setVersion(1L);
+							}
+
+							if (dbPort.getVersion().equals(port.getVersion())) {
+								dbPort.setVersion(dbPort.getVersion() + 1L);
+								dbPort.setType(port.getType());
+								dbPort.setOriginalType(port.getOriginalType());
+								dbPort.setState(port.getState());
+								dbPort.setStatus(port.getStatus());
+								dbPort.setValue(port.getValue());
+								dbPort.setIsSelected(port.getIsSelected());
+								dbPort.setLabel(port.getLabel());
+								dbPort.setTimestamp(port.getTimestamp());
+								dbPort.setOperatorStatus(port.getOperatorStatus());
+							} else {
+								log.warn(
+									"Port version conflict port id=" +
+									dbPort.getId() +
+									", node id=" +
+									dbNode.getId() +
+									", workflow id=" +
+									dbWorkflow.getId()
+								);
+							}
+						}
+					}
+
+					// Normalize
+					final List<OutputPort> filteredOutputs = dbNode
+						.getOutputs()
+						.stream()
+						.filter(output -> output.getValue() != null)
+						.collect(Collectors.toList());
+					if (filteredOutputs.size() > 0) {
+						dbNode.setOutputs(filteredOutputs);
+					}
+				}
+
+				// Manage inputs
+				if (dbNode.getIsDeleted() == false && node.getInputs() != null && node.getInputs().size() > 0) {
+					for (final InputPort port : node.getInputs()) {
+						final InputPort dbPort = dbNode
+							.getInputs()
+							.stream()
+							.filter(p -> p.getId().equals(port.getId()))
+							.findFirst()
+							.orElse(null);
+						if (dbPort == null) {
+							dbNode.getInputs().add(port);
+						} else {
+							final JsonNode portContent = this.objectMapper.valueToTree(port);
+							final JsonNode dbPortContent = this.objectMapper.valueToTree(dbPort);
+							if (portContent.equals(dbPortContent)) {
+								continue; // Nothing to update
+							}
+
+							// Make old workflow compatible
+							if (dbPort.getVersion() == null) {
+								dbPort.setVersion(1L);
+							}
+
+							if (dbPort.getVersion().equals(port.getVersion())) {
+								dbPort.setVersion(dbPort.getVersion() + 1L);
+								dbPort.setType(port.getType());
+								dbPort.setOriginalType(port.getOriginalType());
+								dbPort.setStatus(port.getStatus());
+								dbPort.setValue(port.getValue());
+								dbPort.setLabel(port.getLabel());
+							} else {
+								log.warn(
+									"Port version conflict port id=" +
+									dbPort.getId() +
+									", node id=" +
+									dbNode.getId() +
+									", workflow id=" +
+									dbWorkflow.getId()
+								);
+							}
+						}
+					}
+				}
+
+				// remove once we processed the update
 				nodeMap.remove(node.getId());
 			}
 		}
@@ -668,6 +825,22 @@ public class WorkflowService extends TerariumAssetService<Workflow, WorkflowRepo
 		}
 	}
 
+	public void updatePositions(final Workflow workflow, final WorkflowPositions positions) {
+		for (final WorkflowNode node : workflow.getNodes()) {
+			final WorkflowPositions.Position pos = positions.getNodes().get(node.getId());
+			if (pos == null) continue;
+			node.setX(pos.getX());
+			node.setY(pos.getY());
+		}
+
+		for (final WorkflowEdge edge : workflow.getEdges()) {
+			final List<WorkflowPositions.Position> posList = positions.getEdges().get(edge.getId());
+			if (posList == null) continue;
+			edge.getPoints().set(0, this.objectMapper.valueToTree(posList.get(0)));
+			edge.getPoints().set(1, this.objectMapper.valueToTree(posList.get(1)));
+		}
+	}
+
 	public void addOrUpdateAnnotation(final Workflow workflow, final WorkflowAnnotation annotation) {
 		if (workflow.getAnnotations() == null || workflow.getAnnotations().isEmpty()) {
 			workflow.setAnnotations(new HashMap<UUID, WorkflowAnnotation>());
@@ -709,6 +882,17 @@ public class WorkflowService extends TerariumAssetService<Workflow, WorkflowRepo
 		for (final WorkflowNode node : workflow.getNodes()) {
 			if (node.getIsDeleted() == false) {
 				map.put(node.getId(), node);
+			}
+		}
+		return map;
+	}
+
+	// Build a lookup map for faster edge retrival
+	private Map<UUID, WorkflowEdge> buildEdgeMap(final Workflow workflow) {
+		final Map<UUID, WorkflowEdge> map = new HashMap<>();
+		for (final WorkflowEdge edge : workflow.getEdges()) {
+			if (edge.getIsDeleted() == false) {
+				map.put(edge.getId(), edge);
 			}
 		}
 		return map;

@@ -1,6 +1,6 @@
 import { Component } from 'vue';
 import { v4 as uuidv4 } from 'uuid';
-import _ from 'lodash';
+import _, { cloneDeep } from 'lodash';
 import API from '@/api/api';
 import { logger } from '@/utils/logger';
 import { EventEmitter } from '@/utils/emitter';
@@ -56,14 +56,8 @@ export class WorkflowWrapper {
 	 * FIXME: Need to split workflow into different categories and sending the commands
 	 * instead of the result. It is possible here to become de-synced: eg state-update-response
 	 * comes in as we are about to change the output ports.
-	 *
-	 * delayUpdate is a used to indicate there are actions in progress, and an update from
-	 * the DB can potentially overwrite what the user had already done that have yet to be flushed
-	 * to the backend. In situation like this, we will update the version (so our subsequent updates are
-	 * not rejected) and skip the rest. For example, the user may be dragging an operator on the
-	 * canvas when the db upate comes in.
 	 * */
-	update(updatedWF: Workflow, delayUpdate: boolean) {
+	update(updatedWF: Workflow) {
 		if (updatedWF.id !== this.wf.id) {
 			throw new Error(`Workflow failed, inconsistent ids updated=${updatedWF.id} self=${this.wf.id}`);
 		}
@@ -76,52 +70,28 @@ export class WorkflowWrapper {
 		const updatedNodeMap = new Map<string, WorkflowNode<any>>(updatedWF.nodes.map((n) => [n.id, n]));
 		const updatedEdgeMap = new Map<string, WorkflowEdge>(updatedWF.edges.map((e) => [e.id, e]));
 
-		if (delayUpdate) {
-			for (let i = 0; i < nodes.length; i++) {
-				const nodeId = nodes[i].id;
-				const updated = updatedNodeMap.get(nodeId);
-				if (updated) {
-					if (!nodes[i].version || (updated.version as number) > (nodes[i].version as number)) {
-						nodes[i].version = updated.version;
-					}
-				}
-			}
-			for (let i = 0; i < edges.length; i++) {
-				const edgeId = edges[i].id;
-				const updated = updatedEdgeMap.get(edgeId);
-				if (updated) {
-					if (!edges[i].version || (updated.version as number) > (edges[i].version as number)) {
-						edges[i].version = updated.version;
-					}
-				}
-			}
-			return;
-		}
-
 		// Update and deletes
 		for (let i = 0; i < nodes.length; i++) {
 			const nodeId = nodes[i].id;
 			const updated = updatedNodeMap.get(nodeId);
 			if (updated) {
-				if (!nodes[i].version || (updated.version as number) > (nodes[i].version as number)) {
-					nodes[i].version = updated.version;
-					nodes[i].isDeleted = updated.isDeleted;
-					nodes[i].status = updated.status;
-					nodes[i].x = updated.x;
-					nodes[i].y = updated.y;
-					nodes[i].width = updated.width;
-					nodes[i].height = updated.height;
-					nodes[i].active = updated.active;
+				nodes[i].version = updated.version;
+				nodes[i].isDeleted = updated.isDeleted;
+				nodes[i].status = updated.status;
+				nodes[i].x = updated.x;
+				nodes[i].y = updated.y;
+				nodes[i].width = updated.width;
+				nodes[i].height = updated.height;
+				nodes[i].active = updated.active;
 
-					if (!_.isEqual(nodes[i].inputs, updated.inputs)) {
-						nodes[i].inputs = updated.inputs;
-					}
-					if (!_.isEqual(nodes[i].outputs, updated.outputs)) {
-						nodes[i].outputs = updated.outputs;
-					}
-					if (!_.isEqual(nodes[i].state, updated.state)) {
-						nodes[i].state = updated.state;
-					}
+				if (!_.isEqual(nodes[i].inputs, updated.inputs)) {
+					nodes[i].inputs = updated.inputs;
+				}
+				if (!_.isEqual(nodes[i].outputs, updated.outputs)) {
+					nodes[i].outputs = updated.outputs;
+				}
+				if (!_.isEqual(nodes[i].state, updated.state)) {
+					nodes[i].state = updated.state;
 				}
 				updatedNodeMap.delete(nodeId);
 			}
@@ -130,8 +100,26 @@ export class WorkflowWrapper {
 			const edgeId = edges[i].id;
 			const updated = updatedEdgeMap.get(edgeId);
 			if (updated) {
-				if (!edges[i].version || (updated.version as number) > (edges[i].version as number)) {
-					edges[i] = Object.assign(edges[i], updated);
+				// edges[i] = Object.assign(edges[i], updated);
+				edges[i].isDeleted = updated.isDeleted;
+				edges[i].version = updated.version;
+				edges[i].direction = updated.direction;
+
+				edges[i].source = updated.source;
+				edges[i].sourcePortId = updated.sourcePortId;
+				edges[i].target = updated.target;
+				edges[i].targetPortId = updated.targetPortId;
+
+				const points = updated.points;
+
+				// The edge probably came from scenario-template and has yet to be saved
+				// with a proper points, don't update
+				let updatePoints = true;
+				if (points[0].x === 0 && points[0].y === 0 && points[1].x === 0 && points[1].y === 0) {
+					updatePoints = false;
+				}
+				if (updatePoints) {
+					edges[i].points = cloneDeep(points);
 				}
 				updatedEdgeMap.delete(edgeId);
 			}
@@ -819,7 +807,9 @@ export const createWorkflow = async (workflow: Workflow) => {
 };
 
 // Update/save
+// @deprecated - use fine-grained save
 export const saveWorkflow = async (workflow: Workflow, projectId?: string) => {
+	console.log('!!! workflowService.saveWorkflow (deprecated)');
 	const id = workflow.id;
 	const response = await API.put(`/workflows/${id}`, workflow, { params: { 'project-id': projectId } });
 	return response?.data ?? null;
@@ -949,6 +939,15 @@ export const removeNodes = async (id: string, nodeIds: string[]) => {
 export const removeEdges = async (id: string, edgeIds: string[]) => {
 	console.log('>> workflowService.removeEdge', edgeIds);
 	const response = await API.post(`/workflows/${id}/remove-edges`, edgeIds);
+	return response.data ?? null;
+};
+
+export const updatePositions = async (id: string, nodes: Map<string, Position>, edges: Map<string, Position[]>) => {
+	console.log('>> workflowService.updatePositions');
+	const response = await API.post(`/workflows/${id}/update-position`, {
+		nodes: Object.fromEntries(nodes),
+		edges: Object.fromEntries(edges)
+	});
 	return response.data ?? null;
 };
 

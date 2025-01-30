@@ -47,7 +47,7 @@ export const SimulateEnsembleCiemssOperation: Operation = {
 	documentationUrl: DOCUMENTATION_URL,
 	imageUrl: simulateEnsembleCiemss,
 	inputs: [{ type: 'modelConfigId', label: 'Model configuration' }],
-	outputs: [{ type: 'datasetId' }],
+	outputs: [{ type: 'datasetId', label: 'Dataset' }],
 	isRunnable: true,
 	uniqueInputs: true,
 
