@@ -41,7 +41,6 @@ public class DocumentServiceTests extends TerariumApplicationTests {
 	@BeforeEach
 	public void setup() throws IOException {
 		projectSearchService.setupIndexAndAliasAndEnsureEmpty();
-		documentAssetService.setupIndexAndAliasAndEnsureEmpty();
 
 		project = projectService.createProject(
 			(Project) new Project().setPublicAsset(true).setName("test-project-name").setDescription("my description")
@@ -50,7 +49,6 @@ public class DocumentServiceTests extends TerariumApplicationTests {
 
 	@AfterEach
 	public void teardown() throws IOException {
-		documentAssetService.teardownIndexAndAlias();
 		projectSearchService.teardownIndexAndAlias();
 	}
 
@@ -203,67 +201,5 @@ public class DocumentServiceTests extends TerariumApplicationTests {
 		Assertions.assertNotEquals(documentAsset.getId(), cloned.getId());
 		Assertions.assertEquals(documentAsset.getGrounding().getIdentifiers(), cloned.getGrounding().getIdentifiers());
 		Assertions.assertEquals(documentAsset.getGrounding().getContext(), cloned.getGrounding().getContext());
-	}
-
-	@Test
-	@WithUserDetails(MockUser.URSULA)
-	public void testItCanSearchAssets() throws Exception {
-		final int NUM = 32;
-
-		List<DocumentAsset> documentAssets = new ArrayList<>();
-		for (int i = 0; i < NUM; i++) {
-			documentAssets.add(createDocument(String.valueOf(i)));
-		}
-		documentAssets = documentAssetService.createAssets(documentAssets, project.getId(), ASSUME_WRITE_PERMISSION);
-
-		final List<DocumentAsset> results = documentAssetService.searchAssets(0, NUM, null);
-
-		Assertions.assertEquals(NUM, results.size());
-
-		for (int i = 0; i < results.size(); i++) {
-			Assertions.assertEquals(documentAssets.get(i).getName(), results.get(i).getName());
-			Assertions.assertEquals(documentAssets.get(i).getDescription(), results.get(i).getDescription());
-			Assertions.assertEquals(
-				documentAssets.get(i).getGrounding().getIdentifiers(),
-				results.get(i).getGrounding().getIdentifiers()
-			);
-			Assertions.assertEquals(
-				documentAssets.get(i).getGrounding().getContext(),
-				results.get(i).getGrounding().getContext()
-			);
-			Assertions.assertEquals(
-				documentAssets.get(i).getCreatedOn().toInstant().getEpochSecond(),
-				results.get(i).getCreatedOn().toInstant().getEpochSecond()
-			);
-			Assertions.assertEquals(
-				documentAssets.get(i).getUpdatedOn().toInstant().getEpochSecond(),
-				results.get(i).getUpdatedOn().toInstant().getEpochSecond()
-			);
-			Assertions.assertEquals(documentAssets.get(i).getDeletedOn(), results.get(i).getDeletedOn());
-		}
-	}
-
-	@Test
-	@WithUserDetails(MockUser.URSULA)
-	public void testItCanSyncToNewIndex() throws Exception {
-		final int NUM = 32;
-
-		final List<DocumentAsset> documentAssets = new ArrayList<>();
-		for (int i = 0; i < NUM; i++) {
-			documentAssets.add(createDocument(String.valueOf(i)));
-		}
-		documentAssetService.createAssets(documentAssets, project.getId(), ASSUME_WRITE_PERMISSION);
-
-		final String currentIndex = documentAssetService.getCurrentAssetIndex();
-
-		Assertions.assertEquals(NUM, documentAssetService.searchAssets(0, NUM, null).size());
-
-		documentAssetService.syncAllAssetsToNewIndex(true);
-
-		final String newIndex = documentAssetService.getCurrentAssetIndex();
-
-		Assertions.assertEquals(NUM, documentAssetService.searchAssets(0, NUM, null).size());
-
-		Assertions.assertNotEquals(currentIndex, newIndex);
 	}
 }

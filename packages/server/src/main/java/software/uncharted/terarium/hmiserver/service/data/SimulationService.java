@@ -30,7 +30,7 @@ import software.uncharted.terarium.hmiserver.utils.rebac.Schema;
 
 @Service
 @Slf4j
-public class SimulationService extends TerariumAssetServiceWithoutSearch<Simulation, SimulationRepository> {
+public class SimulationService extends TerariumAssetService<Simulation, SimulationRepository> {
 
 	private final SimulationUpdateRepository simulationUpdateRepository;
 	private final DatasetService datasetService;
@@ -116,8 +116,8 @@ public class SimulationService extends TerariumAssetServiceWithoutSearch<Simulat
 			dataset.setColumns(new ArrayList<>());
 
 			// Set the metadata
-			ObjectNode metadata = objectMapper.createObjectNode();
-			ObjectNode simulationAttributes = objectMapper.createObjectNode();
+			final ObjectNode metadata = objectMapper.createObjectNode();
+			final ObjectNode simulationAttributes = objectMapper.createObjectNode();
 
 			metadata.put("simulationId", simId.toString());
 			if (modelConfigurationId != null) {
