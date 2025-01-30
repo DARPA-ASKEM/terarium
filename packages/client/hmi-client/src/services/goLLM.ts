@@ -25,17 +25,14 @@ export async function modelCard(modelId: string, documentId?: string): Promise<v
  * @param {string} datasetId - The model ID.
  * @param {string} documentId - The document ID.
  */
-export async function datasetCard(datasetId: string, documentId?: string): Promise<void> {
-	try {
-		await API.get<TaskResponse>('/gollm/enrich-dataset', {
-			params: {
-				'dataset-id': datasetId,
-				'document-id': documentId
-			}
-		});
-	} catch (err) {
-		logger.error(err);
-	}
+export async function datasetCard(datasetId: string, documentId?: string): Promise<TaskResponse> {
+	const { data } = await API.get<TaskResponse>('/gollm/enrich-dataset', {
+		params: {
+			'dataset-id': datasetId,
+			'document-id': documentId
+		}
+	});
+	return data;
 }
 
 export async function interventionPolicyFromDocument(

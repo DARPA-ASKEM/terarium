@@ -63,15 +63,16 @@ const props = defineProps<{
 	assetId: TerariumAsset['id'];
 }>();
 
-const isLoading = ref(false);
+const isLoading = computed(() => taskId.value !== '');
 const isModalVisible = ref(false);
 
+const emit = defineEmits(['finished-job']);
 const taskId = ref<string>('');
 const enrichEventHandler = async (event: ClientEvent<TaskResponse>) => {
 	if (taskId.value !== event.data?.id) return;
 	if ([TaskStatus.Success, TaskStatus.Cancelled, TaskStatus.Failed].includes(event.data.status)) {
 		taskId.value = '';
-		isLoading.value = false;
+		emit('finished-job');
 	}
 };
 useClientEvent(ClientEventType.TaskGollmEnrichModel, enrichEventHandler);
@@ -94,19 +95,21 @@ function closeDialog() {
 }
 
 async function confirm() {
-	isLoading.value = true;
 	closeDialog();
-	sendForEnrichment(); // Wait for enrichment/extraction so once we call finished-job the newly fetched dataset will have the new data
+	await sendForEnrichment();
 	getRelatedDocuments();
 }
 
-function sendForEnrichment() {
+async function sendForEnrichment() {
 	if (props.assetId) {
+		let taskRes: TaskResponse;
 		if (props.assetType === AssetType.Model) {
 			// Build enrichment job ids list (profile asset, align model, etc...)
-			enrichModelMetadata(props.assetId, selectedResourceId.value, true);
+			taskRes = await enrichModelMetadata(props.assetId, selectedResourceId.value, true);
+		} else {
+			taskRes = await datasetCard(props.assetId, selectedResourceId.value);
 		}
-		datasetCard(props.assetId, selectedResourceId.value);
+		taskId.value = taskRes.id;
 	}
 }
 
