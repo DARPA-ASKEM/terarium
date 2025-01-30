@@ -178,7 +178,7 @@ public class TaskUtilities {
 		// Create a map to store the search terms and their corresponding parts
 		Map<String, GroundedSemantic> searchTermToPartMap = parts
 			.stream()
-			.filter(Objects::nonNull/*&& isGroundingNonExistent(part.getGrounding())*/)
+			.filter(part -> (part != null && getSearchTerm(part) != null))
 			.collect(Collectors.toMap(TaskUtilities::getSearchTerm, part -> part));
 
 		// Perform the DKG search for all search terms at once
