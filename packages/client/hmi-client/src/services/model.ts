@@ -6,7 +6,7 @@ import type { Initial, InterventionPolicy, Model, ModelConfiguration, ModelParam
 import { Artifact, EventType } from '@/types/Types';
 import { AMRSchemaNames, CalendarDateType } from '@/types/common';
 import { fileToJson } from '@/utils/file';
-import { isEmpty } from 'lodash';
+import _, { isEmpty } from 'lodash';
 import { Ref } from 'vue';
 import { DateOptions } from './charts';
 
@@ -243,6 +243,33 @@ export const getStateVariableStrataEntries = (varId: string, model: Model) => {
 	// TODO: This is not ideal and have potential issues in some edge cases. We need to find a better way to identify the strata for each state variable.
 	const filtered = entries.filter((entry) => varId.includes(entry.split(':')[1]));
 	return filtered;
+};
+
+/**
+ * Group selected state variables for the model by strata.
+ *
+ * @param {string[]} selectedVariables - Array of selected variable IDs.
+ * @param {Record<string, string>} pyciemssMap - Mapping of variable IDs to their corresponding pyciemss representation.
+ * @param {Model} model - The model containing the state variables.
+ * @returns {Object} An object containing two properties:
+ *  - selectedVariablesGroupByStrata: A grouping of selected variables by their strata.
+ *  - allVariablesGroupByStrata: A grouping of all variables by their strata.
+ */
+export const groupVariablesByStrata = (
+	selectedVariables: string[],
+	pyciemssMap: Record<string, string>,
+	model: Model
+) => {
+	const selectedVariablesGroupByStrata = _.groupBy(selectedVariables, (v) =>
+		getStateVariableStrataEntries(v, model).join('-')
+	);
+	const allVariablesGroupByStrata = {};
+	Object.keys(selectedVariablesGroupByStrata).forEach((group) => {
+		allVariablesGroupByStrata[group] = Object.entries(pyciemssMap)
+			.filter(([k]) => group === getStateVariableStrataEntries(k, model).join('-'))
+			.map(([, v]) => v);
+	});
+	return { selectedVariablesGroupByStrata, allVariablesGroupByStrata };
 };
 
 export function isInitial(obj: Initial | ModelParameter | null): obj is Initial {
