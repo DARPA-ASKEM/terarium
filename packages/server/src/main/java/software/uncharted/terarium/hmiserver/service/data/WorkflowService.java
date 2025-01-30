@@ -203,7 +203,7 @@ public class WorkflowService extends TerariumAssetServiceWithoutSearch<Workflow,
 				}
 
 				// Manage outputs
-				if (dbNode.getIsDeleted() == false && node.getOutputs().size() > 0) {
+				if (dbNode.getIsDeleted() == false && node.getOutputs() != null && node.getOutputs().size() > 0) {
 					for (final OutputPort port : node.getOutputs()) {
 						final OutputPort dbPort = dbNode
 							.getOutputs()
@@ -256,7 +256,7 @@ public class WorkflowService extends TerariumAssetServiceWithoutSearch<Workflow,
 				}
 
 				// Manage inputs
-				if (dbNode.getIsDeleted() == false && node.getInputs().size() > 0) {
+				if (dbNode.getIsDeleted() == false && node.getInputs() != null && node.getInputs().size() > 0) {
 					for (final InputPort port : node.getInputs()) {
 						final InputPort dbPort = dbNode
 							.getInputs()
