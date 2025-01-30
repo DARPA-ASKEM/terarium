@@ -215,7 +215,7 @@ import { useRouter, useRoute } from 'vue-router';
 import { MenuItem } from 'primevue/menuitem';
 import * as EventService from '@/services/event';
 import { useProjects } from '@/composables/project';
-import useAuthStore from '@/stores/auth';
+// import useAuthStore from '@/stores/auth';
 import { cloneNoteBookSession } from '@/services/notebook-session';
 import * as SimulateCiemssOp from '@/components/workflow/ops/simulate-ciemss/mod';
 import * as StratifyMiraOp from '@/components/workflow/ops/stratify-mira/mod';
@@ -239,7 +239,7 @@ import { activeProjectId } from '@/composables/activeProject';
 
 const WORKFLOW_SAVE_INTERVAL = 4000;
 
-const currentUserId = useAuthStore().user?.id;
+// const currentUserId = useAuthStore().user?.id;
 
 const registry = new workflowService.WorkflowRegistry();
 registry.registerOp(SimulateCiemssOp);
@@ -312,8 +312,8 @@ const _updateWorkflow = (event: ClientEvent<any>) => {
 		return;
 	}
 
-	const delayUpdate = isDragging || event.userId === currentUserId;
-	wf.value.update(event.data as Workflow, delayUpdate);
+	// const delayUpdate = isDragging || event.userId === currentUserId;
+	wf.value.update(event.data as Workflow);
 };
 
 const nodeStateMap: Map<string, any> = new Map();
@@ -331,7 +331,7 @@ const saveNodeStateHandler = debounce(async () => {
 
 const debounceSaveWorkflowPositions = debounce(() => {
 	saveWorkflowPositions();
-}, 250);
+}, 100);
 
 async function appendInput(
 	node: WorkflowNode<any>,
@@ -351,7 +351,7 @@ async function appendInput(
 	};
 
 	const updatedWorkflow = await workflowService.appendInput(wf.value.getId(), node.id, inputPort);
-	wf.value.update(updatedWorkflow, false);
+	wf.value.update(updatedWorkflow);
 }
 
 /**
