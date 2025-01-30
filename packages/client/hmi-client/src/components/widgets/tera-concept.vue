@@ -19,7 +19,23 @@
 				@keyup.enter="saveConcept"
 				@blur="saveConcept"
 			/>
+
+			<!-- Three states of additional concepts buttons: Hide / Show / Add additional concepts -->
+			<Button
+				text
+				size="small"
+				:label="
+					showAdditionalConcepts
+						? 'Hide additional concepts'
+						: isAdditionalConceptsEmpty
+							? 'Add additional concepts'
+							: 'Show additional concepts'
+				"
+				@click="showAdditionalConcepts = !showAdditionalConcepts"
+			/>
+
 			<AutoComplete
+				v-if="showAdditionalConcepts"
 				multiple
 				optionLabel="name"
 				placeholder="Additional concepts"
@@ -36,7 +52,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch } from 'vue';
+import { computed, ref, watch } from 'vue';
 import AutoComplete, { AutoCompleteCompleteEvent } from 'primevue/autocomplete';
 import type { DKG, Grounding } from '@/types/Types';
 import {
@@ -47,6 +63,7 @@ import {
 	searchCuriesEntities
 } from '@/services/concept';
 import { isEmpty } from 'lodash';
+import Button from 'primevue/button';
 
 defineProps<{
 	isPreview?: boolean;
@@ -67,6 +84,8 @@ function saveConcept() {
 }
 
 const selectedAdditionalConcepts = ref<DKG[]>([]);
+const showAdditionalConcepts = ref(false);
+const isAdditionalConceptsEmpty = computed(() => isEmpty(selectedAdditionalConcepts.value));
 function saveAdditionalConcepts() {
 	const context = parseListDKGToGroundingContext(selectedAdditionalConcepts.value);
 	grounding.value = { ...(grounding.value as Grounding), context };
