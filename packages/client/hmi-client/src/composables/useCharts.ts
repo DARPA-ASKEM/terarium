@@ -166,7 +166,7 @@ const normalizeStratifiedModelChartData = (setting: ChartSettingComparison, data
 			const newEntry = { timepoint_id: row.timepoint_id, sample_id: row.sample_id };
 			Object.entries(selectedVariablesGroupByStrata).forEach(([group, variables]) => {
 				// Sum all values for the variables in the same strata group
-				const denominatorValues = sumArrays(...allVariablesGroupByStrata[group].map((g) => row[g]));
+				const denominatorValues = sumArrays(...allVariablesGroupByStrata[group].map((v) => row[data.pyciemssMap[v]]));
 				variables
 					.map((v) => data.pyciemssMap[v])
 					.forEach((variable) => {
@@ -189,7 +189,10 @@ const normalizeStratifiedModelChartData = (setting: ChartSettingComparison, data
 	data.resultSummary.forEach((row) => {
 		const newEntry = { timepoint_id: row.timepoint_id };
 		Object.entries(selectedVariablesGroupByStrata).forEach(([group, variables]) => {
-			const denominator = allVariablesGroupByStrata[group].reduce((acc, v) => acc + row[`${v}_mean`], 0);
+			const denominator = allVariablesGroupByStrata[group].reduce(
+				(acc, v) => acc + row[`${data.pyciemssMap[v]}_mean`],
+				0
+			);
 			variables
 				.map((v) => data.pyciemssMap[v])
 				.forEach((variable) => {
@@ -208,7 +211,7 @@ const normalizeStratifiedModelChartData = (setting: ChartSettingComparison, data
 	data.result.forEach((row) => {
 		const newEntry = { timepoint_id: row.timepoint_id, sample_id: row.sample_id };
 		Object.entries(selectedVariablesGroupByStrata).forEach(([group, variables]) => {
-			const denominator = allVariablesGroupByStrata[group].reduce((acc, v) => acc + row[v], 0);
+			const denominator = allVariablesGroupByStrata[group].reduce((acc, v) => acc + row[data.pyciemssMap[v]], 0);
 			variables
 				.map((v) => data.pyciemssMap[v])
 				.forEach((variable) => {

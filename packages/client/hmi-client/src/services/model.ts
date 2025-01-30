@@ -265,9 +265,9 @@ export const groupVariablesByStrata = (
 	);
 	const allVariablesGroupByStrata = {};
 	Object.keys(selectedVariablesGroupByStrata).forEach((group) => {
-		allVariablesGroupByStrata[group] = Object.entries(pyciemssMap)
-			.filter(([k]) => group === getStateVariableStrataEntries(k, model).join('-'))
-			.map(([, v]) => v);
+		allVariablesGroupByStrata[group] = Object.keys(pyciemssMap).filter(
+			(k) => group === getStateVariableStrataEntries(k, model).join('-')
+		);
 	});
 	return { selectedVariablesGroupByStrata, allVariablesGroupByStrata };
 };
