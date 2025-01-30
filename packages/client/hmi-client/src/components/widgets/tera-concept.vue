@@ -117,4 +117,19 @@ h6 {
 	font-size: var(--font-caption);
 	font-weight: var(--font-weight);
 }
+
+:deep(.p-autocomplete-input) {
+	height: 2rem;
+	font-size: var(--font-caption);
+}
+
+/* To match the other input height */
+:deep(.p-autocomplete-multiple-container),
+:deep(.p-autocomplete-token) {
+	padding: 1px var(--gap-2);
+}
+
+:deep(.p-autocomplete-token-label) {
+	font-size: var(--font-caption);
+}
 </style>

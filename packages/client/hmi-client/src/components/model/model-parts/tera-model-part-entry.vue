@@ -154,8 +154,4 @@ h6::after {
 	height: 1.25rem;
 	font-size: var(--font-caption);
 }
-:deep(.p-autocomplete-input) {
-	height: 2rem;
-	font-size: var(--font-caption);
-}
 </style>
