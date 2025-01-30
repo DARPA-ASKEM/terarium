@@ -250,10 +250,16 @@ public class WorkflowService extends TerariumAssetServiceWithoutSearch<Workflow,
 							}
 						}
 					}
+
 					// Normalize
-					// dbNode.setOutputs(
-					// 	dbNode.getOutputs().stream().filter(output -> output.getValue() != null).collect(Collectors.toList())
-					// );
+					final List<OutputPort> filteredOutputs = dbNode
+						.getOutputs()
+						.stream()
+						.filter(output -> output.getValue() != null)
+						.collect(Collectors.toList());
+					if (filteredOutputs.size() > 0) {
+						dbNode.setOutputs(filteredOutputs);
+					}
 				}
 
 				// Manage inputs
