@@ -43,3 +43,21 @@ export const mae = (arr1: DataArray, arr2: DataArray, keyField: string, valueFie
 	});
 	return error;
 };
+
+export function quantile(numberList: number[], q: number) {
+	if (numberList.length === 0) return 0;
+
+	const pos = (numberList.length - 1) * q;
+	const lowerIndex = Math.floor(pos);
+	const upperIndex = Math.ceil(pos);
+
+	if (lowerIndex === upperIndex) {
+		return numberList[lowerIndex];
+	}
+
+	// Linear interpolation between two closest ranks
+	const lowerValue = numberList[lowerIndex];
+	const upperValue = numberList[upperIndex];
+
+	return lowerValue + (upperValue - lowerValue) * (pos - lowerIndex);
+}

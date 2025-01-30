@@ -37,8 +37,7 @@ export const blankCriteriaOfInterest = {
 
 // Map groundTruth dataset variable to the other dataset variables
 export interface CompareDatasetsMap {
-	groundTruthDatasetVariable: string;
-	datasetVariables: string[];
+	[id: string]: string;
 }
 
 export interface CriteriaOfInterestCard {
@@ -72,7 +71,7 @@ export const CompareDatasetsOperation: Operation = {
 	initState: () => {
 		const init: CompareDatasetsState = {
 			criteriaOfInterestCards: [blankCriteriaOfInterest],
-			selectedPlotType: PlotValue.PERCENTAGE,
+			selectedPlotType: PlotValue.DIFFERENCE,
 			selectedCompareOption: CompareValue.SCENARIO,
 			selectedBaselineDatasetId: null,
 			selectedGroundTruthDatasetId: null,

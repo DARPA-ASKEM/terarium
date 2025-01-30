@@ -85,11 +85,11 @@
 							/>
 							<label class="mt-2"> Map column names for each input </label>
 							<DataTable class="mt-2" :value="knobs.mapping">
-								<Column v-if="datasets[groundTruthDatasetIndex]" :header="datasets[groundTruthDatasetIndex].name">
-									<template #body="{ data, field }">
+								<Column v-if="datasets[groundTruthDatasetIndex]?.id" :header="datasets[groundTruthDatasetIndex].name">
+									<template #body="{ data }">
 										<Dropdown
 											class="mapping-dropdown"
-											v-model="data[field]"
+											v-model="data[datasets?.[groundTruthDatasetIndex].id as string]"
 											:options="
 												datasets[groundTruthDatasetIndex].columns
 													?.map((ele) => ele.name)
@@ -104,12 +104,23 @@
 									:key="dataset.id"
 									:header="dataset.name"
 								>
-									<template #body="{ data, field }">
+									<template #body="{ data }">
 										<Dropdown
+											v-if="dataset.id"
 											class="mapping-dropdown"
 											placeholder="Variable"
-											v-model="data[field]"
-											:options="dataset.columns?.map((ele) => ele.name).filter((ele) => ele.includes('mean'))"
+											v-model="data[dataset.id]"
+											:options="
+												dataset.columns
+													?.map((ele) => ele.name)
+													.filter(
+														(ele) =>
+															!ele.includes('median') &&
+															!ele.includes('std') &&
+															!ele.includes('min') &&
+															!ele.includes('max')
+													)
+											"
 										/>
 									</template>
 								</Column>
@@ -122,18 +133,15 @@
 									</template>
 								</Column>
 							</DataTable>
-
-							<div class="flex justify-content-between">
-								<div>
-									<Button class="p-button-sm p-button-text" icon="pi pi-plus" label="Add mapping" @click="addMapping" />
-									<!-- TODO: Automapping
+							<div class="flex justify-content-between mt-2">
+								<Button class="p-button-sm p-button-text" icon="pi pi-plus" label="Add mapping" @click="addMapping" />
+								<!-- TODO: Automapping
 									 <Button
 										class="p-button-sm p-button-text"
 										icon="pi pi-sparkles"
 										label="Auto map"@change="updateMapping()"
 										@click="getAutoMapping"
 									/> -->
-								</div>
 							</div>
 						</template>
 					</tera-drilldown-section>
@@ -391,7 +399,7 @@ import { useChartSettings } from '@/composables/useChartSettings';
 import { useDrilldownChartSize } from '@/composables/useDrilldownChartSize';
 import { useCharts, type ChartData } from '@/composables/useCharts';
 import { DataArray } from '@/services/models/simulation-service';
-import { mean, stddev } from '@/utils/stats';
+import { mean, stddev, quantile } from '@/utils/stats';
 import { displayNumber } from '@/utils/number';
 import TeraCriteriaOfInterestCard from './tera-criteria-of-interest-card.vue';
 import {
@@ -624,14 +632,204 @@ function constructATETable() {
 }
 
 function addMapping() {
-	knobs.value.mapping.push({ groundTruthDatasetVariable: '', datasetVariables: datasets.value.map(() => '') });
+	const newMapping: CompareDatasetsMap = {};
+	datasets.value.forEach(({ id }) => {
+		newMapping[id as string] = '';
+	});
+	knobs.value.mapping.push(newMapping);
+	console.log(knobs.value.mapping);
 }
 
 function deleteMapRow(index: number) {
 	knobs.value.mapping.splice(index, 1);
 }
 
-function constructWisTable() {}
+// TODO: All WIS functions should probably be moved to a stats or util file and deserve some cleaning up
+function computeQuantile(values: number[], quantiles: number[]) {
+	// Compute the estimated quantiles from a time-series dataset with many samples.
+	//     Parameters
+	//     ------------
+	//     df: pandas.DataFrame
+	//         Dataset with columns named "timepoint_unknown" (contains timepoint values of given outcome variable) and an outcome variable name.
+	//     quantiles: iterable
+	//         List of alpha values for which quantiles are estimated from the sampled data points.
+	const quantileValueMap: Record<number, number> = {};
+	quantiles.forEach((q) => {
+		quantileValueMap[q] = quantile(values, q);
+	});
+	return quantileValueMap;
+}
+
+function intervalScore(
+	groundTruthObservations: Record<number, number>,
+	variableObservations: Record<number, number>,
+	alpha: number,
+	percent: boolean,
+	checkConsistency: boolean,
+	leftQuantile: number | null = null,
+	rightQuantile: number | null = null
+) {
+	if (!leftQuantile) {
+		leftQuantile = variableObservations[alpha / 2];
+	}
+	if (!rightQuantile) {
+		rightQuantile = variableObservations[1 - alpha / 2];
+	}
+
+	if (checkConsistency && leftQuantile > rightQuantile) {
+		throw new Error('Left quantile must be smaller than right quantile.');
+	}
+
+	let sharpness = rightQuantile - leftQuantile;
+
+	let calibration = Object.values(groundTruthObservations).map((obs) => {
+		const leftClip = Math.max(0, leftQuantile - obs);
+		const rightClip = Math.max(0, obs - rightQuantile);
+		return ((leftClip + rightClip) * 2) / alpha;
+	});
+
+	if (percent) {
+		sharpness /= mean(Object.values(groundTruthObservations));
+		// sharpness = sharpness / observations.map((obs) => Math.abs(obs));
+		calibration = calibration.map((cal, index) => cal / Math.abs(groundTruthObservations[index]));
+	}
+
+	const total = calibration.map((cal) => cal + sharpness);
+
+	console.log(total, sharpness, calibration, 3);
+
+	return { total, sharpness, calibration };
+}
+
+function weightedIntervalScore(
+	groundTruthObservations: Record<number, number>,
+	variableObservations: Record<number, number>,
+	alphas: number[],
+	weights: number[],
+	percent: boolean = false,
+	checkConsistency: boolean = true
+) {
+	if (isEmpty(weights)) {
+		weights = alphas.map((alpha) => alpha / 2);
+	}
+
+	// Helper function to weigh scores
+	function weighScores(tupleIn, weight) {
+		return [tupleIn[0] * weight, tupleIn[1] * weight, tupleIn[2] * weight];
+	}
+
+	// Calculate interval scores for each alpha and weight
+	const intervalScores = alphas.map((alpha, index) => {
+		const { total, sharpness, calibration } = intervalScore(
+			groundTruthObservations,
+			variableObservations,
+			alpha,
+			percent,
+			checkConsistency
+		);
+		return weighScores([total, sharpness, calibration], weights[index]);
+	});
+
+	// Transpose the result to sum across different alphas
+	const summedScores = intervalScores.reduce(
+		(acc: any, scoreTuple) => {
+			scoreTuple.forEach((score, idx) => {
+				acc[idx].push(score);
+			});
+			return acc;
+		},
+		[[], [], []]
+	);
+
+	const [totalScores, sharpnessScores, calibrationScores] = summedScores;
+
+	// Sum the scores across all alphas and normalize by the sum of the weights
+	const total = totalScores.reduce((sum, val) => sum + val, 0) / weights.reduce((sum, val) => sum + val, 0);
+	const sharpness = sharpnessScores.reduce((sum, val) => sum + val, 0) / weights.reduce((sum, val) => sum + val, 0);
+	const calibration = calibrationScores.reduce((sum, val) => sum + val, 0) / weights.reduce((sum, val) => sum + val, 0);
+
+	return { total, sharpness, calibration };
+}
+
+function constructWisTable() {
+	const DEFAULT_ALPHA_QS = [
+		0.01, 0.025, 0.05, 0.1, 0.15, 0.2, 0.25, 0.3, 0.35, 0.4, 0.45, 0.5, 0.55, 0.6, 0.65, 0.7, 0.75, 0.8, 0.85, 0.9,
+		0.95, 0.975, 0.99
+	];
+
+	wisTable.value = [];
+
+	const observationsMap: Record<number, number> = {};
+	const variableToTypeMap: Record<string, string> = {};
+
+	datasetResults.value?.summaryResults.forEach((summaryResult) => {
+		Object.keys(summaryResult[0]).forEach((key) => {
+			if (
+				key.includes('_param_') ||
+				!key.includes('_mean:') ||
+				// Skip if the variable is not selected in output settings
+				!selectedVariableNames.value.some((variableName) => {
+					if (key.includes(variableName)) {
+						if (!variableToTypeMap[variableName]) {
+							variableToTypeMap[variableName] = key.includes('_observable_state_') ? '_observable_state_' : '_state_';
+							ateVariableHeaders.value.push(variableName);
+						}
+						return true;
+					}
+					return false;
+				})
+			) {
+				return;
+			}
+			const values = summaryResult.map((row) => row[key]);
+			const observations = computeQuantile(values, DEFAULT_ALPHA_QS);
+			observationsMap[key] = observations;
+		});
+	});
+
+	const observationsKeyNames = Object.keys(observationsMap);
+
+	datasets.value.forEach((dataset, index) => {
+		if (index === groundTruthDatasetIndex.value) return;
+
+		const wisRow: Record<string, number> = {};
+		const wisValues: number[] = [];
+
+		Object.entries(variableToTypeMap).forEach(([variableName, type]) => {
+			const key = `${variableName}${type}mean:${index}`;
+			if (!observationsKeyNames.includes(key)) return;
+
+			let groundTruthKey = `${key.slice(0, -1)}${groundTruthDatasetIndex.value}`;
+			// Use mapping to get ground truth key
+			if (!observationsKeyNames.includes(groundTruthKey)) {
+				let isFound = false;
+				knobs.value.mapping.forEach((mapping) => {
+					if (
+						!isFound &&
+						Object.values(mapping).includes(key.slice(0, -2)) &&
+						knobs.value.selectedGroundTruthDatasetId
+					) {
+						groundTruthKey = `${mapping[knobs.value.selectedGroundTruthDatasetId]}:${groundTruthDatasetIndex.value}`;
+						isFound = true;
+					}
+				});
+			}
+
+			const wis = weightedIntervalScore(
+				observationsMap[groundTruthKey],
+				observationsMap[key],
+				[0.02, 0.05, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9],
+				[],
+				true
+			);
+
+			wisRow[variableName] = wis.total;
+			wisValues.push(wis.total);
+		});
+		wisRow.overall = mean(wisValues);
+		wisTable.value.push({ modelName: dataset.name, ...wisRow });
+	});
+}
 
 onMounted(async () => {
 	const state = cloneDeep(props.node.state);
