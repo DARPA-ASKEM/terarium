@@ -303,7 +303,17 @@
 						@update-settings="updateActiveChartSettings"
 						@delete-annotation="deleteAnnotation"
 						@close="setActiveChartSettings(null)"
-					/>
+					>
+						<template #normalize-content>
+							<div
+								class="p-3 border-2 border-gray-300 border-round-md font-italic bg-gray-100"
+								v-for="(equation, i) of normalizeEquations"
+								:key="i"
+							>
+								{{ equation }}
+							</div>
+						</template>
+					</tera-chart-settings-panel>
 				</template>
 				<template #content>
 					<div class="output-settings-panel">
@@ -438,7 +448,8 @@ import {
 	getModelByModelConfigurationId,
 	getUnitsFromModelParts,
 	getCalendarSettingsFromModel,
-	getTypesFromModelParts
+	getTypesFromModelParts,
+	groupVariablesByStrata
 } from '@/services/model';
 import { getModelConfigurationById } from '@/services/model-configurations';
 import {
@@ -668,6 +679,25 @@ const interventionCharts = useInterventionCharts(selectedInterventionSettings, t
 const variableCharts = useVariableCharts(selectedVariableSettings, null);
 const comparisonCharts = useComparisonCharts(selectedComparisonChartSettings);
 const sensitivityCharts = useSimulateSensitivityCharts(selectedSensitivityChartSettings);
+
+const normalizeEquations = computed(() => {
+	if (!activeChartSettings.value || !preparedChartInputs.value?.pyciemssMap || !model.value) return '';
+	const { selectedVariablesGroupByStrata, allVariablesGroupByStrata } = groupVariablesByStrata(
+		activeChartSettings.value.selectedVariables,
+		preparedChartInputs.value.pyciemssMap,
+		model.value
+	);
+	const equations: string[] = [];
+	Object.entries(selectedVariablesGroupByStrata).forEach(([group, variables]) => {
+		if (group === '') return;
+		const denominator = allVariablesGroupByStrata[group].map((v) => `${v}(t)`).join(' + ');
+		variables.forEach((variable) => {
+			const equation = `${variable}(t) / (${denominator})`;
+			equations.push(equation);
+		});
+	});
+	return equations;
+});
 
 const updateState = () => {
 	const state = _.cloneDeep(props.node.state);

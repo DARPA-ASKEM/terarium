@@ -191,11 +191,11 @@ const cancelGenerateAnnotation = () => {
 
 <style scoped>
 .chart-settings-panel-anchor {
-	position: fixed;
-	top: 7.5rem;
-	right: var(--gap-8);
+	position: absolute;
+	top: 0;
+	right: 0;
 	width: 360px;
-	height: 100vh;
+	height: 100%;
 	pointer-events: none;
 	overflow-x: hidden;
 }
@@ -204,7 +204,7 @@ const cancelGenerateAnnotation = () => {
 	top: 0;
 	z-index: 3;
 	margin-top: 50px;
-	height: calc(100% - 50px);
+	height: calc(100% - 50px - var(--surface-border-light));
 	width: 100%;
 	background: #fff;
 	border-top-left-radius: var(--border-radius-bigger);
