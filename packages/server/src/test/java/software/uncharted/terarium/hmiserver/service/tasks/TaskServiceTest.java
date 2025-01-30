@@ -109,7 +109,7 @@ public class TaskServiceTest extends TerariumApplicationTests {
 
 	// @Test
 	@WithUserDetails(MockUser.URSULA)
-	public void testItCanSendGoLLMEnrichAMRRequest() throws Exception {
+	public void testItCanSendGoLLMEnrichModelRequest() throws Exception {
 		final ClassPathResource modelResource = new ClassPathResource("gollm/SIR.json");
 		final String modelContent = new String(Files.readAllBytes(modelResource.getFile().toPath()));
 
@@ -117,7 +117,7 @@ public class TaskServiceTest extends TerariumApplicationTests {
 		final String documentContent = new String(Files.readAllBytes(documentResource.getFile().toPath()));
 
 		final EnrichModelResponseHandler.Input input = new EnrichModelResponseHandler.Input();
-		input.setResearchPaper(documentContent);
+		input.setDocument(documentContent);
 		input.setAmr(modelContent);
 
 		final TaskRequest req = new TaskRequest();
