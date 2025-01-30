@@ -77,7 +77,7 @@
 				@dragging="(event) => updatePosition(node, event)"
 				@dragend="
 					isDragging = false;
-					saveWorkflowPositions();
+					debounceSaveWorkflowPositions();
 				"
 			>
 				<tera-operator
@@ -388,7 +388,7 @@ async function appendOutput(
 	};
 
 	const updatedWorkflow = await workflowService.appendOutput(wf.value.getId(), node.id, outputPort, newState);
-	wf.value.update(updatedWorkflow, false);
+	wf.value.update(updatedWorkflow);
 
 	// We want to try to wait here, because we replace default dummy outputs we might
 	// try to do id-lookup to a non-existing element
@@ -420,12 +420,12 @@ async function updateWorkflowNodeStatus(node: WorkflowNode<any> | null, status: 
 	const payload: Map<string, OperatorStatus> = new Map([[node.id, status]]);
 
 	const updatedWorkflow = await workflowService.updateStatus(wf.value.getId(), payload);
-	wf.value.update(updatedWorkflow, false);
+	wf.value.update(updatedWorkflow);
 }
 
 async function selectOutput(node: WorkflowNode<any> | null, selectedOutputId: string) {
 	const updatedWorkflow = await workflowService.selectOutput(wf.value.getId(), node!.id, selectedOutputId);
-	wf.value.update(updatedWorkflow, false);
+	wf.value.update(updatedWorkflow);
 }
 
 // Route is mutated then watcher is triggered to open or close the drilldown
@@ -462,7 +462,7 @@ const closeDrilldown = async () => {
 
 const removeNode = async (nodeId: string) => {
 	const updatedWorkflow = await workflowService.removeNodes(wf.value.getId(), [nodeId]);
-	wf.value.update(updatedWorkflow, false);
+	wf.value.update(updatedWorkflow);
 };
 
 const duplicateBranch = async (nodeId: string) => {
@@ -471,7 +471,7 @@ const duplicateBranch = async (nodeId: string) => {
 	cloneNoteBookSessions();
 
 	const updatedWorkflow = await workflowService.saveWorkflow(wf.value.dump(), currentProjectId.value ?? undefined);
-	wf.value.update(updatedWorkflow, false);
+	wf.value.update(updatedWorkflow);
 };
 
 // We need to clone data-transform sessions, unlike other operators that are
@@ -506,7 +506,7 @@ const addOperatorToWorkflow: Function =
 			size: nodeSize
 		});
 		const updatedWorkflow = await workflowService.addNode(wf.value.getId(), node);
-		wf.value.update(updatedWorkflow, false);
+		wf.value.update(updatedWorkflow);
 
 		return node;
 	};
@@ -547,7 +547,7 @@ async function onMenuSelection(operatorType: string, menuNode: WorkflowNode<any>
 		};
 
 		const updatedWorkflow = await workflowService.addEdge(wf.value.getId(), edgePayload);
-		wf.value.update(updatedWorkflow, false);
+		wf.value.update(updatedWorkflow);
 
 		// Force edges to re-evaluate
 		relinkEdges(null);
@@ -692,7 +692,7 @@ async function onDrop(event: DragEvent) {
 		}
 		const operator = workflowService.newOperator(wf.value.getId(), operation, newNodePosition, { state });
 		const updatedWorkflow = await workflowService.addNode(wf.value.getId(), operator);
-		wf.value.update(updatedWorkflow, false);
+		wf.value.update(updatedWorkflow);
 	}
 }
 
@@ -748,7 +748,7 @@ async function createNewEdge(node: WorkflowNode<any>, port: WorkflowPort, direct
 		}
 
 		const updatedWorkflow = await workflowService.addEdge(wf.value.getId(), edgePayload);
-		wf.value.update(updatedWorkflow, false);
+		wf.value.update(updatedWorkflow);
 		cancelNewEdge();
 	}
 }
@@ -762,7 +762,7 @@ async function removeEdges(portId: string) {
 		wf.value.getId(),
 		edges.map((e) => e.id)
 	);
-	wf.value.update(updatedWorkflow, false);
+	wf.value.update(updatedWorkflow);
 }
 
 function onCanvasClick() {
@@ -921,7 +921,7 @@ const addAnnotationToWorkflow = async () => {
 		type: '',
 		textSize: 12
 	});
-	wf.value.update(updatedWorkflow, false);
+	wf.value.update(updatedWorkflow);
 };
 
 const updateAnnotationPosition = (annotation: WorkflowAnnotation, event: any) => {
@@ -931,12 +931,12 @@ const updateAnnotationPosition = (annotation: WorkflowAnnotation, event: any) =>
 
 const updateAnnotation = async (annotation: WorkflowAnnotation) => {
 	const updatedWorkflow = await workflowService.addOrUpdateAnnotation(wf.value.getId(), annotation);
-	wf.value.update(updatedWorkflow, false);
+	wf.value.update(updatedWorkflow);
 };
 
 const removeAnnotation = async (annotationId: string) => {
 	const updatedWorkflow = await workflowService.removeAnnotation(wf.value.getId(), annotationId);
-	wf.value.update(updatedWorkflow, false);
+	wf.value.update(updatedWorkflow);
 };
 
 function interpolatePointsForCurve(a: Position, b: Position): Position[] {
@@ -952,9 +952,6 @@ const pathFn = d3
 
 // Get around typescript complaints
 const drawPath = (v: any) => pathFn(v) as string;
-const unloadCheck = () => {
-	saveWorkflowPositions();
-};
 
 const handleDrilldown = () => {
 	const operatorId = route.query?.operator?.toString();
@@ -1042,7 +1039,6 @@ onMounted(() => {
 	}
 
 	document.addEventListener('mousemove', mouseUpdate);
-	window.addEventListener('beforeunload', unloadCheck);
 
 	saveTimer = setInterval(async () => {
 		workflowService.setLocalStorageTransform(wf.value.getId(), canvasTransform);

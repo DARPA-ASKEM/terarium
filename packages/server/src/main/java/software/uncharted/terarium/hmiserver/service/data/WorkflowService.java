@@ -179,27 +179,29 @@ public class WorkflowService extends TerariumAssetServiceWithoutSearch<Workflow,
 				}
 
 				// Only update if if node is not already deleted in the db
-				if (dbNode.getIsDeleted() == false && sameContent == false && dbNode.getVersion().equals(node.getVersion())) {
-					dbNode.setVersion(dbNode.getVersion() + 1L);
-					dbNode.setCreatedBy(node.getCreatedBy());
-					dbNode.setCreatedAt(node.getCreatedAt());
-					dbNode.setDisplayName(node.getDisplayName());
-					dbNode.setOperationType(node.getOperationType());
-					dbNode.setDocumentationUrl(node.getDocumentationUrl());
-					dbNode.setImageUrl(node.getImageUrl());
-					dbNode.setUniqueInputs(node.getUniqueInputs());
-					dbNode.setIsDeleted(node.getIsDeleted());
+				if (sameContent == false) {
+					if (dbNode.getIsDeleted() == false && dbNode.getVersion().equals(node.getVersion())) {
+						dbNode.setVersion(dbNode.getVersion() + 1L);
+						dbNode.setCreatedBy(node.getCreatedBy());
+						dbNode.setCreatedAt(node.getCreatedAt());
+						dbNode.setDisplayName(node.getDisplayName());
+						dbNode.setOperationType(node.getOperationType());
+						dbNode.setDocumentationUrl(node.getDocumentationUrl());
+						dbNode.setImageUrl(node.getImageUrl());
+						dbNode.setUniqueInputs(node.getUniqueInputs());
+						dbNode.setIsDeleted(node.getIsDeleted());
 
-					dbNode.setX(node.getX());
-					dbNode.setY(node.getY());
-					dbNode.setWidth(node.getWidth());
-					dbNode.setHeight(node.getHeight());
+						dbNode.setX(node.getX());
+						dbNode.setY(node.getY());
+						dbNode.setWidth(node.getWidth());
+						dbNode.setHeight(node.getHeight());
 
-					dbNode.setStatus(node.getStatus());
-					dbNode.setState(node.getState());
-					dbNode.setActive(node.getActive());
-				} else {
-					log.warn("Node version conflict node id=" + dbNode.getId() + ", workflow id=" + dbWorkflow.getId());
+						dbNode.setStatus(node.getStatus());
+						dbNode.setState(node.getState());
+						dbNode.setActive(node.getActive());
+					} else {
+						log.warn("Node version conflict node id=" + dbNode.getId() + ", workflow id=" + dbWorkflow.getId());
+					}
 				}
 
 				// Manage outputs
@@ -248,11 +250,10 @@ public class WorkflowService extends TerariumAssetServiceWithoutSearch<Workflow,
 							}
 						}
 					}
-
 					// Normalize
-					dbNode.setOutputs(
-						dbNode.getOutputs().stream().filter(output -> output.getValue() != null).collect(Collectors.toList())
-					);
+					// dbNode.setOutputs(
+					// 	dbNode.getOutputs().stream().filter(output -> output.getValue() != null).collect(Collectors.toList())
+					// );
 				}
 
 				// Manage inputs
