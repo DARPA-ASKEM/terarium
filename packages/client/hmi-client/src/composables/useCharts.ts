@@ -29,7 +29,7 @@ import {
 } from '@/types/common';
 import { ChartAnnotation, Intervention, Model, ModelConfiguration } from '@/types/Types';
 import { displayNumber } from '@/utils/number';
-import { getUnitsFromModelParts, getVegaDateOptions } from '@/services/model';
+import { getStateVariableStrataEntries, getUnitsFromModelParts, getVegaDateOptions } from '@/services/model';
 import { CalibrateMap, isCalibrateMap } from '@/services/calibrate-workflow';
 import { isChartSettingComparisonVariable, isChartSettingEnsembleVariable } from '@/services/chart-settings';
 import {
@@ -41,6 +41,7 @@ import { getModelConfigName } from '@/services/model-configurations';
 import { EnsembleErrorData } from '@/components/workflow/ops/calibrate-ensemble-ciemss/calibrate-ensemble-util';
 import { PlotValue } from '@/components/workflow/ops/compare-datasets/compare-datasets-operation';
 import { DATASET_VAR_NAME_PREFIX } from '@/services/dataset';
+import { calculatePercentage, calculatePercentages, sumArrays } from '@/utils/math';
 import { useChartAnnotations } from './useChartAnnotations';
 
 export interface ChartData {
@@ -57,6 +58,8 @@ type VariableMappings = CalibrateMap[] | EnsembleVariableMappings;
 
 const BASE_GREY = '#AAB3C6';
 const PRIMARY_COLOR = CATEGORICAL_SCHEME[0];
+
+// ======================================= Helper functions ==========================================================
 
 // Get the model variable name for the corresponding model configuration and the ensemble variable name from the mapping
 const getModelConfigVariable = (
@@ -132,6 +135,139 @@ const calculateYExtent = (resultSummary: DataArray, variables: string[], include
 const isRefReady = (ref: Ref | null) => ref === null || Boolean(ref.value);
 
 /**
+ * Normalize the stratified model chart data by the total strata population.
+ * Only supported for stratified models.
+ * @param setting ChartSettingComparison
+ * @param data ChartData
+ * @param model Model
+ * @returns ChartData where the values for the state variables are normalized by the total strata population
+ */
+const normalizeStratifiedModelChartData = (setting: ChartSettingComparison, data: ChartData, model: Model) => {
+	if (!model) return data;
+	if (!setting.normalize) return data;
+	// Group selected variables by their corresponding strata
+	const selectedVarGroupByStrata = _.groupBy(setting.selectedVariables, (v) =>
+		getStateVariableStrataEntries(v, model).join('-')
+	);
+	const denominatorVariables = {};
+	Object.keys(selectedVarGroupByStrata).forEach((group) => {
+		denominatorVariables[group] = Object.entries(data.pyciemssMap)
+			.filter(([k]) => group === getStateVariableStrataEntries(k, model).join('-'))
+			.map(([, v]) => v);
+	});
+	const includeBeforeData = setting.showBeforeAfter && setting.smallMultiples;
+
+	// If show quantiles is on,  normalize group by timepoint data
+	if (setting.showQuantiles) {
+		const resultGroupByTimepoint: GroupedDataArray = [];
+		(data.resultGroupByTimepoint ?? []).forEach((row) => {
+			const newEntry = { timepoint_id: row.timepoint_id, sample_id: row.sample_id };
+			Object.entries(selectedVarGroupByStrata).forEach(([group, variables]) => {
+				// Sum all values for the variables in the same strata group
+				const denominatorValues = sumArrays(...denominatorVariables[group].map((g) => row[g]));
+				variables
+					.map((v) => data.pyciemssMap[v])
+					.forEach((variable) => {
+						newEntry[variable] = !group ? row[variable] : calculatePercentages(row[variable], denominatorValues);
+						if (includeBeforeData) {
+							newEntry[`${variable}:pre`] = !group
+								? row[variable]
+								: calculatePercentages(row[variable], denominatorValues);
+						}
+					});
+			});
+			resultGroupByTimepoint.push(newEntry);
+		});
+		return { ...data, resultGroupByTimepoint };
+	}
+	// Else, normalize result and resultSummary data
+
+	// Normalize stat data
+	const resultSummary: DataArray = [];
+	data.resultSummary.forEach((row) => {
+		const newEntry = { timepoint_id: row.timepoint_id };
+		Object.entries(selectedVarGroupByStrata).forEach(([group, variables]) => {
+			const denominator = denominatorVariables[group].reduce((acc, v) => acc + row[`${v}_mean`], 0);
+			variables
+				.map((v) => data.pyciemssMap[v])
+				.forEach((variable) => {
+					const key = `${variable}_mean`;
+					newEntry[key] = !group ? row[variable] : calculatePercentage(row[key], denominator);
+					if (includeBeforeData) {
+						newEntry[`${key}:pre`] = !group ? row[variable] : calculatePercentage(row[`${key}:pre`], denominator);
+					}
+				});
+		});
+		resultSummary.push(newEntry);
+	});
+
+	// Normalize sample data
+	const result: DataArray = [];
+	data.result.forEach((row) => {
+		const newEntry = { timepoint_id: row.timepoint_id, sample_id: row.sample_id };
+		Object.entries(selectedVarGroupByStrata).forEach(([group, variables]) => {
+			const denominator = denominatorVariables[group].reduce((acc, v) => acc + row[v], 0);
+			variables
+				.map((v) => data.pyciemssMap[v])
+				.forEach((variable) => {
+					newEntry[variable] = !group ? row[variable] : calculatePercentage(row[variable], denominator);
+					if (includeBeforeData) {
+						newEntry[`${variable}:pre`] = !group
+							? row[variable]
+							: calculatePercentage(row[`${variable}:pre`], denominator);
+					}
+				});
+		});
+		result.push(newEntry);
+	});
+	return { ...data, result, resultSummary };
+};
+
+/** A helper function to create a comparison chart */
+function createComparisonChart(
+	setting: ChartSettingComparison,
+	result: DataArray,
+	resultSummary: DataArray,
+	statLayerVariables: string[],
+	sampleLayerVariables: string[],
+	options: ForecastChartOptions,
+	annotations: ChartAnnotation[],
+	resultGroupByTimepoint?: GroupedDataArray
+) {
+	const chart = !setting.showQuantiles
+		? applyForecastChartAnnotations(
+				createForecastChart(
+					{
+						data: result,
+						variables: sampleLayerVariables,
+						timeField: 'timepoint_id',
+						groupField: 'sample_id'
+					},
+					{
+						data: resultSummary,
+						variables: statLayerVariables,
+						timeField: 'timepoint_id'
+					},
+					null,
+					options
+				),
+				annotations
+			)
+		: createQuantilesForecastChart(
+				resultGroupByTimepoint ?? [],
+				sampleLayerVariables,
+				setting.quantiles ?? [],
+				options
+			);
+	return chart as VisualizationSpec;
+}
+
+const buildYAxisTitle = (variables: string[], getUnitFn: (id: string) => string) =>
+	_.uniq(variables.map(getUnitFn).filter((v) => !!v)).join(', ') || '';
+
+// ====================================================================================================================
+
+/**
  * Composable to manage the creation and configuration of various types of charts used in operator nodes and drilldown.
  *
  * @param nodeId - The ID of the node.
@@ -164,6 +300,18 @@ export function useCharts(
 		return getUnitsFromModelParts(model.value)[paramId] || '';
 	};
 
+	const getUnitForNormalizedStratifiedModelData = (id: string) => {
+		if (!model?.value) return '';
+		const strata = getStateVariableStrataEntries(id, model.value);
+		if (!strata.length) return getUnit(id);
+		// sort strata labels in a same order it appears in the id
+		const label = strata
+			.map((v) => v.split(':')[1])
+			.sort((a, b) => id.indexOf(a) - id.indexOf(b))
+			.join('_');
+		return `% ${label}`;
+	};
+
 	/**
 	 * Create a base forecast chart options that's common for different types of forecast charts.
 	 * @param setting ChartSetting
@@ -179,7 +327,7 @@ export function useCharts(
 			height: chartSize.value.height,
 			translationMap: chartData.value?.translationMap || {},
 			xAxisTitle: getUnit('_time') || 'Time',
-			yAxisTitle: _.uniq(variables.map(getUnit).filter((v) => !!v)).join(',') || '',
+			yAxisTitle: buildYAxisTitle(variables, getUnit),
 			dateOptions,
 			colorscheme: [BASE_GREY, setting.primaryColor ?? PRIMARY_COLOR],
 			scale: setting.scale
@@ -499,51 +647,19 @@ export function useCharts(
 		return variableCharts;
 	};
 
-	function createComparisonChart(
-		setting: ChartSettingComparison,
-		result: DataArray,
-		resultSummary: DataArray,
-		statLayerVariables: string[],
-		sampleLayerVariables: string[],
-		options: ForecastChartOptions,
-		annotations: ChartAnnotation[]
-	) {
-		const chart = !setting.showQuantiles
-			? applyForecastChartAnnotations(
-					createForecastChart(
-						{
-							data: result,
-							variables: sampleLayerVariables,
-							timeField: 'timepoint_id',
-							groupField: 'sample_id'
-						},
-						{
-							data: resultSummary,
-							variables: statLayerVariables,
-							timeField: 'timepoint_id'
-						},
-						null,
-						options
-					),
-					annotations
-				)
-			: createQuantilesForecastChart(
-					chartData.value?.resultGroupByTimepoint ?? [],
-					sampleLayerVariables,
-					setting.quantiles ?? [],
-					options
-				);
-		return chart as VisualizationSpec;
-	}
-
 	// Create comparison charts based on chart settings
 	const useComparisonCharts = (chartSettings: ComputedRef<ChartSettingComparison[]>, isNodeChart = false) => {
 		const comparisonCharts = computed(() => {
 			const charts: Record<string, VisualizationSpec[]> = {};
 			if (!isChartReadyToBuild.value) return charts;
-			const { result, resultSummary } = chartData.value as ChartData;
 
 			chartSettings.value.forEach((setting) => {
+				const { result, resultSummary, resultGroupByTimepoint } = normalizeStratifiedModelChartData(
+					setting,
+					chartData.value as ChartData,
+					model?.value as Model
+				);
+
 				const selectedVars = setting.selectedVariables;
 				const annotations = getChartAnnotationsByChartId(setting.id);
 				if (setting.smallMultiples && setting.selectedVariables.length > 1 && !isNodeChart) {
@@ -560,11 +676,14 @@ export function useCharts(
 					if (selectedVars.length > 1) width = chartSize.value.width / 2;
 					if (selectedVars.length > 4) width = chartSize.value.width / 3;
 					const height = selectedVars.length <= 1 ? chartSize.value.height : chartSize.value.height / 2;
-					charts[setting.id] = selectedVars.map((_selectedVar, index) => {
+					charts[setting.id] = selectedVars.map((selectedVar, index) => {
 						const { options, sampleLayerVariables, statLayerVariables } = createComparisonChartOptions(setting, index);
 						options.width = width;
 						options.height = height;
 						options.yExtent = sharedYExtent;
+						if (setting.normalize) {
+							options.yAxisTitle = buildYAxisTitle([selectedVar], getUnitForNormalizedStratifiedModelData);
+						}
 						return createComparisonChart(
 							setting,
 							result,
@@ -572,11 +691,15 @@ export function useCharts(
 							statLayerVariables,
 							sampleLayerVariables,
 							options,
-							annotations
+							annotations,
+							resultGroupByTimepoint
 						);
 					});
 				} else {
 					const { options, sampleLayerVariables, statLayerVariables } = createComparisonChartOptions(setting);
+					if (setting.normalize) {
+						options.yAxisTitle = buildYAxisTitle(setting.selectedVariables, getUnitForNormalizedStratifiedModelData);
+					}
 					const chart = createComparisonChart(
 						setting,
 						result,
@@ -584,7 +707,8 @@ export function useCharts(
 						statLayerVariables,
 						sampleLayerVariables,
 						options,
-						annotations
+						annotations,
+						resultGroupByTimepoint
 					);
 					charts[setting.id] = [chart];
 				}

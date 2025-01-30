@@ -221,6 +221,30 @@ export const getTypesFromModelParts = (model: Model) => {
 	return typeMapping;
 };
 
+/**
+ * For a given state variable, return the state modifiers
+ */
+export const getModelStateModifiers = (varId: string, model: Model) => {
+	const states = model.model.states;
+	const modifiers: Record<string, string> = (states as any[]).find((s) => s.id === varId)?.grounding?.modifiers || {};
+	return modifiers;
+};
+
+/**
+ * For a given state variable, return the state modifiers object entries in a array of string formatted in the form of key:value, e.g. ['key:value']. The array is sorted.
+ */
+export const getStateVariableStrataEntries = (varId: string, model: Model) => {
+	const modifiers = getModelStateModifiers(varId, model);
+	const entries = Object.entries(modifiers)
+		.map(([key, value]) => `${key}:${value}`)
+		.sort();
+	// Filter out entries with value that are not included in the name.
+	// For example, we see something like "modifiers": { "diagnosis": "ncit:C15220", "Age": "old" }, for id, `I_old`. We only care about strata, 'old' in this case.
+	// TODO: This is not ideal and have potential issues in some edge cases. We need to find a better way to identify the strata for each state variable.
+	const filtered = entries.filter((entry) => varId.includes(entry.split(':')[1]));
+	return filtered;
+};
+
 export function isInitial(obj: Initial | ModelParameter | null): obj is Initial {
 	return obj !== null && 'target' in obj && 'expression' in obj && 'expression_mathml' in obj;
 }

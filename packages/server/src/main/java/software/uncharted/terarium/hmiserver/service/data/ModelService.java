@@ -191,7 +191,6 @@ public class ModelService extends TerariumAssetServiceWithSearch<Model, ModelRep
 			asset.getSemantics().getOde().setTime(timeNode);
 		}
 		final Model created = super.createAsset(asset, projectId, hasWritePermission);
-
 		generateAndUpsertEmbeddings(created);
 
 		return created;
@@ -221,7 +220,6 @@ public class ModelService extends TerariumAssetServiceWithSearch<Model, ModelRep
 		}
 
 		final Model updated = updatedOptional.get();
-
 		generateAndUpsertEmbeddings(updated);
 
 		return updatedOptional;

@@ -819,9 +819,7 @@ export const createWorkflow = async (workflow: Workflow) => {
 };
 
 // Update/save
-// @deprecated - use fine-grained save
 export const saveWorkflow = async (workflow: Workflow, projectId?: string) => {
-	console.log('!!! workflowService.saveWorkflow (deprecated)');
 	const id = workflow.id;
 	const response = await API.put(`/workflows/${id}`, workflow, { params: { 'project-id': projectId } });
 	return response?.data ?? null;
@@ -951,15 +949,6 @@ export const removeNodes = async (id: string, nodeIds: string[]) => {
 export const removeEdges = async (id: string, edgeIds: string[]) => {
 	console.log('>> workflowService.removeEdge', edgeIds);
 	const response = await API.post(`/workflows/${id}/remove-edges`, edgeIds);
-	return response.data ?? null;
-};
-
-export const updatePositions = async (id: string, nodes: Map<string, Position>, edges: Map<string, Position[]>) => {
-	console.log('>> workflowService.updatePositions');
-	const response = await API.post(`/workflows/${id}/update-position`, {
-		nodes,
-		edges
-	});
 	return response.data ?? null;
 };
 
