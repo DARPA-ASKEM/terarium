@@ -947,6 +947,9 @@ const pathFn = d3
 
 // Get around typescript complaints
 const drawPath = (v: any) => pathFn(v) as string;
+const unloadCheck = () => {
+	saveWorkflowPositions();
+};
 
 const handleDrilldown = () => {
 	const operatorId = route.query?.operator?.toString();
@@ -998,6 +1001,7 @@ watch(
 	async (newId, oldId) => {
 		// Save previous workflow, if applicable
 		if (newId !== oldId && oldId) {
+			saveWorkflowPositions();
 			workflowService.setLocalStorageTransform(wf.value.getId(), canvasTransform);
 		}
 
@@ -1033,6 +1037,8 @@ onMounted(() => {
 	}
 
 	document.addEventListener('mousemove', mouseUpdate);
+	window.addEventListener('beforeunload', unloadCheck);
+
 	saveTimer = setInterval(async () => {
 		workflowService.setLocalStorageTransform(wf.value.getId(), canvasTransform);
 	}, WORKFLOW_SAVE_INTERVAL);
@@ -1042,6 +1048,7 @@ onMounted(() => {
 });
 
 onUnmounted(() => {
+	saveWorkflowPositions();
 	if (saveTimer) {
 		clearInterval(saveTimer);
 	}
@@ -1051,6 +1058,7 @@ onUnmounted(() => {
 		workflowService.setLocalStorageTransform(wf.value.getId(), canvasTransform);
 	}
 	document.removeEventListener('mousemove', mouseUpdate);
+	workflowService.saveWorkflow(wf.value.dump());
 });
 </script>
 
