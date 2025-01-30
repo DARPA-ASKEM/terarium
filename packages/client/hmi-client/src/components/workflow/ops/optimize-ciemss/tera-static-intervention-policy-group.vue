@@ -42,7 +42,7 @@
 							<span>value closest to the</span>
 							<Dropdown
 								class="toolbar-button ml-1 mr-1"
-								v-model="knobs.optimizeFunction.objectiveFunctionOption"
+								v-model="knobs.optimizeFunction.parameterObjectiveFunction"
 								option-value="value"
 								option-label="label"
 								:options="OBJECTIVE_FUNCTION_MAP"
@@ -53,7 +53,7 @@
 						<template v-if="showStartTimeOptions">
 							<Dropdown
 								class="toolbar-button ml-1 mr-1"
-								v-model="knobs.optimizeFunction.objectiveFunctionOption"
+								v-model="knobs.optimizeFunction.timeObjectiveFunction"
 								option-value="value"
 								option-label="label"
 								:options="OBJECTIVE_FUNCTION_MAP"

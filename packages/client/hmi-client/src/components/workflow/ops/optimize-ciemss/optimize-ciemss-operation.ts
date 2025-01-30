@@ -37,7 +37,8 @@ export interface InterventionPolicyGroupForm {
 	relativeImportance: number;
 	optimizeFunction: {
 		type: OptimizationInterventionObjective;
-		objectiveFunction: InterventionObjectiveFunctions[];
+		timeObjectiveFunction: InterventionObjectiveFunctions;
+		parameterObjectiveFunction: InterventionObjectiveFunctions;
 	};
 	intervention: Intervention;
 }
@@ -106,7 +107,8 @@ export const blankInterventionPolicyGroup: InterventionPolicyGroupForm = {
 	relativeImportance: 5,
 	optimizeFunction: {
 		type: OptimizationInterventionObjective.startTime,
-		objectiveFunction: [InterventionObjectiveFunctions.initialGuess]
+		timeObjectiveFunction: InterventionObjectiveFunctions.initialGuess,
+		parameterObjectiveFunction: InterventionObjectiveFunctions.initialGuess
 	},
 	intervention: blankIntervention
 };

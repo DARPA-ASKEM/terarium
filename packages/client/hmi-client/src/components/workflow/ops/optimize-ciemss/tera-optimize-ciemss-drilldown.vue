@@ -848,7 +848,8 @@ const runOptimize = async () => {
 		relativeImportance.push(ele.relativeImportance);
 
 		const objectiveType = ele.optimizeFunction.type;
-		const objectiveFunction = ele.optimizeFunction.objectiveFunction;
+		const timeObjFunction = ele.optimizeFunction.timeObjectiveFunction;
+		const parameterObjFunction = ele.optimizeFunction.parameterObjectiveFunction;
 		if (objectiveType === OptimizationInterventionObjective.startTime) {
 			initialGuess.push(ele.startTimeGuess);
 			listBoundsInterventions.push([ele.startTime]);
@@ -872,7 +873,7 @@ const runOptimize = async () => {
 			startTime,
 			paramValues,
 			initialGuess,
-			objectiveFunctionOption: objectiveFunction,
+			objectiveFunctionOption: [timeObjFunction, parameterObjFunction],
 			relativeImportance: ele.relativeImportance
 		});
 	});
