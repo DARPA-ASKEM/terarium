@@ -329,6 +329,10 @@ const saveNodeStateHandler = debounce(async () => {
 	});
 }, 250);
 
+const debounceSaveWorkflowPositions = debounce(() => {
+	saveWorkflowPositions();
+}, 250);
+
 async function appendInput(
 	node: WorkflowNode<any>,
 	port: {
@@ -389,7 +393,8 @@ async function appendOutput(
 	// We want to try to wait here, because we replace default dummy outputs we might
 	// try to do id-lookup to a non-existing element
 	nextTick().then(() => {
-		relinkEdges(node);
+		relinkEdges(null);
+		debounceSaveWorkflowPositions();
 	});
 }
 
@@ -805,7 +810,7 @@ function relinkEdges(node: WorkflowNode<any> | null) {
 		const targetNode = nodeMap.get(edge.target as string);
 		const targetPortElem = getPortElement(edge.targetPortId as string);
 
-		// console.log(`node_id = ${node?.id}, port_id = ${edge.sourcePortId}`, sourcePortElem);
+		if (!sourcePortElem || !targetPortElem) continue;
 
 		edge.points[0].x = sourceNode!.x + sourceNode!.width + sourcePortElem.offsetWidth * 0.5;
 		edge.points[0].y = sourceNode!.y + sourcePortElem.offsetTop + sourcePortElem.offsetHeight * 0.5;

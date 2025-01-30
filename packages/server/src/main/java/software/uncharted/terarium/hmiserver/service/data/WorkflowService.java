@@ -820,15 +820,16 @@ public class WorkflowService extends TerariumAssetServiceWithoutSearch<Workflow,
 	public void updatePositions(final Workflow workflow, final WorkflowPositions positions) {
 		for (final WorkflowNode node : workflow.getNodes()) {
 			final WorkflowPositions.Position pos = positions.getNodes().get(node.getId());
-			if (pos == null) return;
+			if (pos == null) continue;
 			node.setX(pos.getX());
 			node.setY(pos.getY());
 		}
 
 		for (final WorkflowEdge edge : workflow.getEdges()) {
 			final List<WorkflowPositions.Position> posList = positions.getEdges().get(edge.getId());
-			if (posList == null) return;
-			edge.setPoints(this.objectMapper.valueToTree(posList));
+			if (posList == null) continue;
+			edge.getPoints().set(0, this.objectMapper.valueToTree(posList.get(0)));
+			edge.getPoints().set(1, this.objectMapper.valueToTree(posList.get(1)));
 		}
 	}
 
