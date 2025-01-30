@@ -3,7 +3,7 @@
  */
 
 import API from '@/api/api';
-import type { Curies, DatasetColumn, DKG, EntitySimilarityResult, State, Model } from '@/types/Types';
+import type { Curies, DatasetColumn, DKG, EntitySimilarityResult, State, Model, Grounding } from '@/types/Types';
 import { logger } from '@/utils/logger';
 import { isEmpty } from 'lodash';
 import { CalibrateMap } from '@/services/calibrate-workflow';
@@ -120,6 +120,35 @@ async function getDKGFromGroundingIdentifier(identifier: Object | undefined): Pr
 	dkg.curie = getCurieFromGroundingIdentifier(identifier);
 	dkg.name = await getNameOfCurieCached(dkg.curie);
 	return dkg;
+}
+
+async function getDKGFromGroundingContext(context: Grounding['context']): Promise<DKG[]> {
+	let dkgList: DKG[] = [];
+	if (!isEmpty(context)) {
+		Object.entries(context).forEach(([key, value]) => {
+			const dkg: DKG = { name: '', curie: '', description: '' };
+
+			// Test if the value is a curie or a string
+			if (value.includes(':')) {
+				dkg.curie = value;
+				dkg.name = key;
+			} else {
+				dkg.name = `${key}: ${value}`;
+			}
+			dkgList.push(dkg);
+		});
+
+		// Resolve the name of curies properly
+		dkgList = await Promise.all(
+			dkgList.map(async (dkg) => {
+				if (isEmpty(dkg.curie)) return dkg;
+				const newName = await getNameOfCurieCached(dkg.curie);
+				if (!isEmpty(newName)) dkg.name = newName;
+				return dkg;
+			})
+		);
+	}
+	return dkgList;
 }
 
 function parseCurieToIdentifier(curie: string | undefined): { [key: string]: string } {
@@ -328,6 +357,7 @@ export {
 	getNameOfCurieCached,
 	getCurieFromGroundingIdentifier,
 	getDKGFromGroundingIdentifier,
+	getDKGFromGroundingContext,
 	parseCurieToIdentifier,
 	autoModelMapping,
 	autoCalibrationMapping,
