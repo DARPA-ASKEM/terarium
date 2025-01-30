@@ -63,7 +63,7 @@ export class WorkflowWrapper {
 	 * not rejected) and skip the rest. For example, the user may be dragging an operator on the
 	 * canvas when the db upate comes in.
 	 * */
-	update(updatedWF: Workflow, delayUpdate: boolean) {
+	update(updatedWF: Workflow) {
 		if (updatedWF.id !== this.wf.id) {
 			throw new Error(`Workflow failed, inconsistent ids updated=${updatedWF.id} self=${this.wf.id}`);
 		}
@@ -76,52 +76,28 @@ export class WorkflowWrapper {
 		const updatedNodeMap = new Map<string, WorkflowNode<any>>(updatedWF.nodes.map((n) => [n.id, n]));
 		const updatedEdgeMap = new Map<string, WorkflowEdge>(updatedWF.edges.map((e) => [e.id, e]));
 
-		if (delayUpdate) {
-			for (let i = 0; i < nodes.length; i++) {
-				const nodeId = nodes[i].id;
-				const updated = updatedNodeMap.get(nodeId);
-				if (updated) {
-					if (!nodes[i].version || (updated.version as number) > (nodes[i].version as number)) {
-						nodes[i].version = updated.version;
-					}
-				}
-			}
-			for (let i = 0; i < edges.length; i++) {
-				const edgeId = edges[i].id;
-				const updated = updatedEdgeMap.get(edgeId);
-				if (updated) {
-					if (!edges[i].version || (updated.version as number) > (edges[i].version as number)) {
-						edges[i].version = updated.version;
-					}
-				}
-			}
-			return;
-		}
-
 		// Update and deletes
 		for (let i = 0; i < nodes.length; i++) {
 			const nodeId = nodes[i].id;
 			const updated = updatedNodeMap.get(nodeId);
 			if (updated) {
-				if (!nodes[i].version || (updated.version as number) > (nodes[i].version as number)) {
-					nodes[i].version = updated.version;
-					nodes[i].isDeleted = updated.isDeleted;
-					nodes[i].status = updated.status;
-					nodes[i].x = updated.x;
-					nodes[i].y = updated.y;
-					nodes[i].width = updated.width;
-					nodes[i].height = updated.height;
-					nodes[i].active = updated.active;
+				nodes[i].version = updated.version;
+				nodes[i].isDeleted = updated.isDeleted;
+				nodes[i].status = updated.status;
+				nodes[i].x = updated.x;
+				nodes[i].y = updated.y;
+				nodes[i].width = updated.width;
+				nodes[i].height = updated.height;
+				nodes[i].active = updated.active;
 
-					if (!_.isEqual(nodes[i].inputs, updated.inputs)) {
-						nodes[i].inputs = updated.inputs;
-					}
-					if (!_.isEqual(nodes[i].outputs, updated.outputs)) {
-						nodes[i].outputs = updated.outputs;
-					}
-					if (!_.isEqual(nodes[i].state, updated.state)) {
-						nodes[i].state = updated.state;
-					}
+				if (!_.isEqual(nodes[i].inputs, updated.inputs)) {
+					nodes[i].inputs = updated.inputs;
+				}
+				if (!_.isEqual(nodes[i].outputs, updated.outputs)) {
+					nodes[i].outputs = updated.outputs;
+				}
+				if (!_.isEqual(nodes[i].state, updated.state)) {
+					nodes[i].state = updated.state;
 				}
 				updatedNodeMap.delete(nodeId);
 			}
@@ -130,9 +106,7 @@ export class WorkflowWrapper {
 			const edgeId = edges[i].id;
 			const updated = updatedEdgeMap.get(edgeId);
 			if (updated) {
-				if (!edges[i].version || (updated.version as number) > (edges[i].version as number)) {
-					edges[i] = Object.assign(edges[i], updated);
-				}
+				edges[i] = Object.assign(edges[i], updated);
 				updatedEdgeMap.delete(edgeId);
 			}
 		}
@@ -957,8 +931,8 @@ export const removeEdges = async (id: string, edgeIds: string[]) => {
 export const updatePositions = async (id: string, nodes: Map<string, Position>, edges: Map<string, Position[]>) => {
 	console.log('>> workflowService.updatePositions');
 	const response = await API.post(`/workflows/${id}/update-position`, {
-		nodes,
-		edges
+		nodes: Object.fromEntries(nodes),
+		edges: Object.fromEntries(edges)
 	});
 	return response.data ?? null;
 };

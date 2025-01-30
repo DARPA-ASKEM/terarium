@@ -329,6 +329,10 @@ const saveNodeStateHandler = debounce(async () => {
 	});
 }, 250);
 
+const debounceSaveWorkflowPositions = debounce(() => {
+	saveWorkflowPositions();
+}, 250);
+
 async function appendInput(
 	node: WorkflowNode<any>,
 	port: {
@@ -389,7 +393,8 @@ async function appendOutput(
 	// We want to try to wait here, because we replace default dummy outputs we might
 	// try to do id-lookup to a non-existing element
 	nextTick().then(() => {
-		relinkEdges(node);
+		relinkEdges(null);
+		debounceSaveWorkflowPositions();
 	});
 }
 
@@ -805,7 +810,7 @@ function relinkEdges(node: WorkflowNode<any> | null) {
 		const targetNode = nodeMap.get(edge.target as string);
 		const targetPortElem = getPortElement(edge.targetPortId as string);
 
-		// console.log(`node_id = ${node?.id}, port_id = ${edge.sourcePortId}`, sourcePortElem);
+		if (!sourcePortElem || !targetPortElem) continue;
 
 		edge.points[0].x = sourceNode!.x + sourceNode!.width + sourcePortElem.offsetWidth * 0.5;
 		edge.points[0].y = sourceNode!.y + sourcePortElem.offsetTop + sourcePortElem.offsetHeight * 0.5;
@@ -947,9 +952,8 @@ const pathFn = d3
 
 // Get around typescript complaints
 const drawPath = (v: any) => pathFn(v) as string;
-
 const unloadCheck = () => {
-	workflowService.saveWorkflow(wf.value.dump());
+	saveWorkflowPositions();
 };
 
 const handleDrilldown = () => {
@@ -1002,7 +1006,7 @@ watch(
 	async (newId, oldId) => {
 		// Save previous workflow, if applicable
 		if (newId !== oldId && oldId) {
-			workflowService.saveWorkflow(wf.value.dump());
+			saveWorkflowPositions();
 			workflowService.setLocalStorageTransform(wf.value.getId(), canvasTransform);
 		}
 
@@ -1039,6 +1043,7 @@ onMounted(() => {
 
 	document.addEventListener('mousemove', mouseUpdate);
 	window.addEventListener('beforeunload', unloadCheck);
+
 	saveTimer = setInterval(async () => {
 		workflowService.setLocalStorageTransform(wf.value.getId(), canvasTransform);
 	}, WORKFLOW_SAVE_INTERVAL);
@@ -1048,7 +1053,7 @@ onMounted(() => {
 });
 
 onUnmounted(() => {
-	workflowService.saveWorkflow(wf.value.dump());
+	saveWorkflowPositions();
 	if (saveTimer) {
 		clearInterval(saveTimer);
 	}
@@ -1058,7 +1063,7 @@ onUnmounted(() => {
 		workflowService.setLocalStorageTransform(wf.value.getId(), canvasTransform);
 	}
 	document.removeEventListener('mousemove', mouseUpdate);
-	window.removeEventListener('beforeunload', unloadCheck);
+	workflowService.saveWorkflow(wf.value.dump());
 });
 </script>
 

@@ -166,14 +166,20 @@ public class WorkflowService extends TerariumAssetServiceWithoutSearch<Workflow,
 				final JsonNode nodeContent = this.objectMapper.valueToTree(node);
 				final JsonNode dbNodeContent = this.objectMapper.valueToTree(dbNode);
 
+				// Remove inputs/outputs, these are dealt with separately
+				((ObjectNode) nodeContent).remove("inputs");
+				((ObjectNode) nodeContent).remove("outputs");
+				((ObjectNode) dbNodeContent).remove("inputs");
+				((ObjectNode) dbNodeContent).remove("outputs");
+
 				// No changes, skip
+				boolean sameContent = false;
 				if (nodeContent.equals(dbNodeContent)) {
-					nodeMap.remove(node.getId());
-					continue;
+					sameContent = true;
 				}
 
 				// Only update if if node is not already deleted in the db
-				if (dbNode.getIsDeleted() == false && dbNode.getVersion().equals(node.getVersion())) {
+				if (dbNode.getIsDeleted() == false && sameContent == false && dbNode.getVersion().equals(node.getVersion())) {
 					dbNode.setVersion(dbNode.getVersion() + 1L);
 					dbNode.setCreatedBy(node.getCreatedBy());
 					dbNode.setCreatedAt(node.getCreatedAt());
@@ -182,6 +188,7 @@ public class WorkflowService extends TerariumAssetServiceWithoutSearch<Workflow,
 					dbNode.setDocumentationUrl(node.getDocumentationUrl());
 					dbNode.setImageUrl(node.getImageUrl());
 					dbNode.setUniqueInputs(node.getUniqueInputs());
+					dbNode.setIsDeleted(node.getIsDeleted());
 
 					dbNode.setX(node.getX());
 					dbNode.setY(node.getY());
@@ -196,7 +203,7 @@ public class WorkflowService extends TerariumAssetServiceWithoutSearch<Workflow,
 				}
 
 				// Manage outputs
-				if (dbNode.getIsDeleted() == false && node.getOutputs().size() > 0) {
+				if (dbNode.getIsDeleted() == false && node.getOutputs() != null && node.getOutputs().size() > 0) {
 					for (final OutputPort port : node.getOutputs()) {
 						final OutputPort dbPort = dbNode
 							.getOutputs()
@@ -249,7 +256,7 @@ public class WorkflowService extends TerariumAssetServiceWithoutSearch<Workflow,
 				}
 
 				// Manage inputs
-				if (dbNode.getIsDeleted() == false && node.getInputs().size() > 0) {
+				if (dbNode.getIsDeleted() == false && node.getInputs() != null && node.getInputs().size() > 0) {
 					for (final InputPort port : node.getInputs()) {
 						final InputPort dbPort = dbNode
 							.getInputs()
@@ -813,15 +820,16 @@ public class WorkflowService extends TerariumAssetServiceWithoutSearch<Workflow,
 	public void updatePositions(final Workflow workflow, final WorkflowPositions positions) {
 		for (final WorkflowNode node : workflow.getNodes()) {
 			final WorkflowPositions.Position pos = positions.getNodes().get(node.getId());
-			if (pos == null) return;
+			if (pos == null) continue;
 			node.setX(pos.getX());
 			node.setY(pos.getY());
 		}
 
 		for (final WorkflowEdge edge : workflow.getEdges()) {
 			final List<WorkflowPositions.Position> posList = positions.getEdges().get(edge.getId());
-			if (posList == null) return;
-			edge.setPoints(this.objectMapper.valueToTree(posList));
+			if (posList == null) continue;
+			edge.getPoints().set(0, this.objectMapper.valueToTree(posList.get(0)));
+			edge.getPoints().set(1, this.objectMapper.valueToTree(posList.get(1)));
 		}
 	}
 
