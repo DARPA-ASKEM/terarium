@@ -26,7 +26,12 @@
 					<main class="p-3">
 						<header class="pb-2">
 							<nav class="flex justify-content-between pb-2">
-								<span class="flex align-items-center">Specify which equations to use for this model.</span>
+								<span v-if="document" class="flex align-items-center"
+									>Specify which equations to use for this model.</span
+								>
+								<span v-else class="flex align-items-center"
+									>Connect a document or enter equations manually below.</span
+								>
 								<section class="flex align-items-center min-w-min">
 									<RadioButton
 										class="ml-3"
@@ -46,44 +51,72 @@
 										@click="switchRunType(RunType.skema)"
 									/>
 									<label for="dynamic" class="ml-2 mr-3 text-sm">SKEMA</label>
-
-									<Button class="h-3rem mr-1" label="Reset" severity="secondary" outlined />
-									<Button class="h-3rem mr-1" label="Run" @click="onRun(runType)" />
+									<Button
+										class="h-3rem mr-1"
+										label="Run"
+										@click="onRun(runType)"
+										:disabled="includedEquations.length < 1"
+									/>
 								</section>
 							</nav>
 							<section
-								class="header-group"
+								class="input-container"
 								@dragenter.prevent="dragEnterCount++"
 								@dragleave.prevent="dragEnterCount--"
 								@dragover.prevent
 								@drop.prevent.stop="handleDrop"
 							>
-								<!-- Add visual feedback for drag state -->
-								<div v-if="dragEnterCount > 0" class="drag-overlay">Drop image here</div>
-								<Textarea
-									v-model="multipleEquations"
-									autoResize
-									rows="1"
-									placeholder="Add one or more LaTex equations, or paste in a screenshot"
-									class="w-full"
-									:disabled="multipleEquationsDisabled"
-								/>
-								<Button
-									label="Add"
-									icon="pi pi-plus"
-									size="small"
-									@click="getEquations"
-									text
-									class="ml-2"
-									:disabled="isEmpty(multipleEquations)"
-								/>
+								<div v-if="pastedImage" class="flex gap-3">
+									<div v-if="includedEquations.length == 0" class="flex gap-2 align-items-start">
+										<img
+											:src="'data:image/png;base64,' + pastedImage"
+											alt="Pasted image"
+											height="120"
+											class="pasted-image"
+										/>
+										<Button
+											icon="pi pi-times"
+											rounded
+											text
+											@click="
+												pastedImage = null;
+												multipleEquations = '';
+											"
+										/>
+									</div>
+									<div v-if="isEmpty(multipleEquations) && !pastedImage" class="flex align-items-center gap-2">
+										<span class="pi pi-spinner pi-spin secondary-text"></span>
+										<span class="secondary-text">Converting to LaTeX</span>
+									</div>
+								</div>
+								<div class="input-group">
+									<!-- Add visual feedback for drag state -->
+									<div v-if="dragEnterCount > 0" class="drag-overlay">Drop image here</div>
+									<Textarea
+										v-model="multipleEquations"
+										autoResize
+										rows="1"
+										placeholder="Add one or more LaTex equations, or paste in a screenshot"
+										class="w-full"
+										:disabled="multipleEquationsDisabled"
+									/>
+									<Button
+										label="Add"
+										icon="pi pi-plus"
+										size="small"
+										@click="getEquations"
+										text
+										class="ml-2"
+										:disabled="isEmpty(multipleEquations)"
+									/>
+								</div>
 							</section>
 						</header>
-						<h6 class="py-3">Use {{ includedEquations.length > 1 ? 'these equations' : 'this equation' }}</h6>
+						<h6 v-if="includedEquations.length > 0" class="py-3">
+							Use {{ includedEquations.length > 1 ? 'these equations' : 'this equation' }}
+						</h6>
+						<p v-if="isEmpty(includedEquations) && document" class="secondary-text mt-3">No equations selected</p>
 						<ul class="blocks-container">
-							<div v-if="pastedImage" class="pasted-image">
-								<img :src="'data:image/png;base64,' + pastedImage" alt="Pasted image" height="160" />
-							</div>
 							<li v-for="(equation, i) in includedEquations" :key="i" @click.capture="selectItem(equation, $event)">
 								<tera-asset-block
 									:is-toggleable="false"
@@ -114,6 +147,14 @@
 												{{ getEquationErrorLabel(equation) }}
 											</div>
 										</div>
+										<Button
+											v-if="selectedItem !== equation.name"
+											icon="pi pi-pencil"
+											text
+											severity="secondary"
+											size="small"
+											class="ml-auto"
+										/>
 									</section>
 									<Textarea
 										v-if="selectedItem === equation.name"
@@ -125,10 +166,10 @@
 									/>
 								</tera-asset-block>
 							</li>
-							<p v-if="isEmpty(includedEquations) && !pastedImage" class="secondary-text">No equations selected</p>
+							<!-- <p v-if="isEmpty(includedEquations) && !pastedImage" class="secondary-text">No equations selected</p> -->
 						</ul>
 						<div class="spacer mb-5" />
-						<h6 class="pb-3">Other equations extracted from document</h6>
+						<h6 v-if="notIncludedEquations.length > 0" class="pb-3">Other equations extracted from document</h6>
 						<ul class="blocks-container">
 							<li v-for="(equation, i) in notIncludedEquations" :key="i" @click.capture="selectItem(equation, $event)">
 								<tera-asset-block
@@ -159,6 +200,14 @@
 												{{ getEquationErrorLabel(equation) }}
 											</div>
 										</div>
+										<Button
+											v-if="selectedItem !== equation.name"
+											icon="pi pi-pencil"
+											text
+											severity="secondary"
+											size="small"
+											class="ml-auto"
+										/>
 									</section>
 									<Textarea
 										v-if="selectedItem === equation.name"
@@ -596,16 +645,27 @@ watch(
 }
 */
 
-.header-group {
+.input-container {
 	position: relative;
 	display: flex;
-	flex-direction: row;
-	align-items: center;
+	flex-direction: column;
 	justify-content: space-between;
 	background: var(--surface-50);
 	border-radius: var(--border-radius-medium);
 	border: 1px solid var(--surface-border-light);
 	padding: var(--gap-3);
+}
+.input-group {
+	display: flex;
+	align-items: center;
+	flex-direction: row;
+}
+.pasted-image {
+	border: 1px solid var(--surface-border-light);
+	border-radius: var(--border-radius);
+	margin-bottom: var(--gap-3);
+	width: fit-content;
+	overflow: hidden;
 }
 .drag-overlay {
 	position: absolute;
@@ -669,5 +729,10 @@ watch(
 
 :deep(.p-panel section) {
 	align-items: start;
+}
+
+/* fix patch for document viewer */
+:deep(.document-viewer-header) {
+	width: 3rem !important;
 }
 </style>
