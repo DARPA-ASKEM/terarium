@@ -1,3 +1,4 @@
+import { CiemssMethodOptions } from '@/services/models/simulation-service';
 import { ChartSetting } from '@/types/common';
 import type { TimeSpan } from '@/types/Types';
 import { Operation, WorkflowOperationTypes, BaseState } from '@/types/workflow';
@@ -13,7 +14,7 @@ export interface SimulateCiemssOperationState extends BaseState {
 	currentTimespan: TimeSpan;
 	numSamples: number;
 	solverStepSize: number;
-	method: string;
+	method: CiemssMethodOptions;
 	forecastId: string; // Completed run's Id
 	baseForecastId: string; // Simulation without intervention
 
@@ -47,7 +48,7 @@ export const SimulateCiemssOperation: Operation = {
 			currentTimespan: { start: 0, end: 100 },
 			numSamples: 100,
 			solverStepSize: 0.1,
-			method: 'dopri5',
+			method: CiemssMethodOptions.dopri5,
 			forecastId: '',
 			baseForecastId: '',
 			inProgressForecastId: '',
