@@ -189,16 +189,13 @@ export interface Dataset extends TerariumAsset {
     grounding?: Grounding;
 }
 
-export interface DatasetColumn extends TerariumEntity {
-    name: string;
+export interface DatasetColumn extends TerariumEntity, GroundedSemantic {
     fileName: string;
     dataType: ColumnType;
     stats?: DatasetColumnStats;
     formatStr?: string;
     annotations: string[];
     metadata?: any;
-    grounding?: Grounding;
-    description?: string;
     dataset?: Dataset;
 }
 
@@ -294,10 +291,12 @@ export interface Author {
 }
 
 export interface State extends GroundedSemantic {
+    id: string;
     units?: ModelUnit;
 }
 
 export interface Transition extends GroundedSemantic {
+    id: string;
     input: string[];
     output: string[];
     expression?: string;
@@ -385,6 +384,7 @@ export interface RegNetParameter {
 }
 
 export interface RegNetVertex extends GroundedSemantic {
+    id: string;
     sign: boolean;
     initial?: any;
     rate_constant?: any;
@@ -762,6 +762,12 @@ export interface Links {
     self: string;
 }
 
+export interface GroundedSemantic {
+    name?: string;
+    description?: string;
+    grounding?: Grounding;
+}
+
 export interface NumericColumnStats {
     mean: number;
     median: number;
@@ -839,13 +845,6 @@ export interface ModelDistribution {
 export interface ModelUnit {
     expression: string;
     expression_mathml: string;
-}
-
-export interface GroundedSemantic {
-    id: string;
-    name?: string;
-    description?: string;
-    grounding?: Grounding;
 }
 
 export interface Properties {
@@ -963,12 +962,14 @@ export interface Initial {
 }
 
 export interface ModelParameter extends GroundedSemantic {
+    id: string;
     value?: number;
     distribution?: ModelDistribution;
     units?: ModelUnit;
 }
 
 export interface Observable extends GroundedSemantic {
+    id: string;
     states?: string[];
     units?: ModelUnit;
     expression?: string;
