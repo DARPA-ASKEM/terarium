@@ -119,13 +119,11 @@ function updateColumn(index: number, key: string, value: any) {
 		}
 		transientDataset.value.columns[index].metadata[key] = value;
 	} else if (key === 'concept') {
-		// Only one identifier is supported for now
 		if (!transientDataset.value.columns[index]?.grounding?.identifiers) {
-			transientDataset.value.columns[index].grounding = { identifiers: [] };
+			transientDataset.value.columns[index].grounding = { identifiers: {} };
 		}
-		// Replaces first element of identifiers' array
-		transientDataset.value.columns[index].grounding?.identifiers?.shift();
-		transientDataset.value.columns[index].grounding?.identifiers?.unshift(value);
+		const curie = (value as string).split(':');
+		transientDataset.value.columns[index].grounding.identifiers[curie[0]] = curie[1];
 	} else {
 		transientDataset.value.columns[index][key] = value;
 	}

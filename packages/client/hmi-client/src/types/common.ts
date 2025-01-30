@@ -1,11 +1,4 @@
-import {
-	AssetType,
-	ClientEventType,
-	ModelGrounding,
-	ProgrammingLanguage,
-	ProgressState,
-	StatusUpdate
-} from '@/types/Types';
+import { AssetType, ClientEventType, Grounding, ProgrammingLanguage, ProgressState, StatusUpdate } from '@/types/Types';
 import { ProjectPages } from './Project';
 
 export interface FeatureConfig {
@@ -35,7 +28,7 @@ export interface ModelConfigTableData {
 	name: string;
 	type: ParamType;
 	description: string;
-	concept: ModelGrounding;
+	concept: Grounding;
 	unit?: string;
 	value: any;
 	source: string;
@@ -212,6 +205,8 @@ export interface ChartSettingComparison extends ChartSettingBase {
 	shareYAxis?: boolean;
 	/** If true, also plot the pre-calibration or base simulation (without the intervention) data */
 	showBeforeAfter?: boolean;
+	/** Normalize data by total strata population. Only supported for stratified models */
+	normalize?: boolean;
 }
 
 export interface ChartSettingEnsembleVariableOptions {

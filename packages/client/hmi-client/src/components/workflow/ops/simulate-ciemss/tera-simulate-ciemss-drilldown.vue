@@ -20,7 +20,13 @@
 						<p>{{ blankMessage }}.</p>
 						<span class="flex gap-2">
 							<tera-pyciemss-cancel-button :simulation-run-id="cancelRunIds" />
-							<Button label="Run" icon="pi pi-play" @click="run" :loading="inProgressForecastRun" />
+							<Button
+								label="Run"
+								icon="pi pi-play"
+								@click="run"
+								:loading="inProgressForecastRun"
+								:disabled="isRunDisabled"
+							/>
 						</span>
 					</div>
 					<div class="form-section" v-if="isSidebarOpen">
@@ -79,7 +85,7 @@
 									@update:model-value="updateState"
 								/>
 							</div>
-							<div class="label-and-input mt-2">
+							<div class="label-and-input">
 								<label for="num-samples">Solver step size</label>
 								<tera-input-number
 									v-model="solverStepSize"
@@ -174,7 +180,7 @@
 								<template v-for="setting in selectedInterventionSettings" :key="setting.id">
 									<vega-chart
 										expandable
-										:are-embed-actions-visible="true"
+										are-embed-actions-visible
 										:visualization-spec="interventionCharts[setting.id]"
 									/>
 								</template>
@@ -218,17 +224,24 @@
 							</AccordionTab>
 							<!-- Section: Sensitivity -->
 							<AccordionTab v-if="selectedSensitivityChartSettings.length > 0" header="Sensitivity analysis">
+								<p class="ml-2 mb-3">
+									A selected outcome (a model output at a given timepoint) can be strongly or weakly sensitive on the
+									value of the different model parameters. Color is used here to illustrate this mapping: if the color
+									varies quickly along a parameter axis, then the outcome is strongly sensitive to this parameter.
+								</p>
 								<template v-for="setting of selectedSensitivityChartSettings" :key="setting.id">
 									<vega-chart
 										expandable
-										are-embed-actions-visible
+										:are-embed-actions-visible="true"
 										:visualization-spec="sensitivityCharts[setting.id].lineChart"
 									/>
-									<vega-chart
-										expandable
-										are-embed-actions-visible
-										:visualization-spec="sensitivityCharts[setting.id].scatterChart"
-									/>
+									<div class="sensitivity-scatterplot">
+										<vega-chart
+											expandable
+											:are-embed-actions-visible="true"
+											:visualization-spec="sensitivityCharts[setting.id].scatterChart"
+										/>
+									</div>
 								</template>
 							</AccordionTab>
 						</Accordion>
@@ -463,6 +476,7 @@ import { useDrilldownChartSize } from '@/composables/useDrilldownChartSize';
 import { SimulateCiemssOperationState } from './simulate-ciemss-operation';
 import { mergeResults, renameFnGenerator } from '../calibrate-ciemss/calibrate-utils';
 import { qualityPreset, speedPreset, usePreparedChartInputs } from './simulate-utils';
+import { isInterventionPolicyBlank } from '../intervention-policy/intervention-policy-operation';
 
 const props = defineProps<{
 	node: WorkflowNode<SimulateCiemssOperationState>;
@@ -607,6 +621,12 @@ const setPresetValues = (data: CiemssPresetTypes) => {
 
 const groupedInterventionOutputs = computed(() =>
 	_.groupBy(flattenInterventionData(interventionPolicy.value?.interventions ?? []), 'appliedTo')
+);
+
+const isRunDisabled = computed(
+	() =>
+		// run is disable if the attached intervention policy is blank
+		!!interventionPolicy.value && isInterventionPolicyBlank(interventionPolicy.value)
 );
 
 const preparedChartInputs = usePreparedChartInputs(props, runResults, runResultsSummary, pyciemssMap);
@@ -963,5 +983,10 @@ onUnmounted(() => kernelManager.shutdown());
 }
 .common-input-height:deep(main) {
 	height: 2.35rem;
+}
+.sensitivity-scatterplot {
+	width: 100%;
+	display: flex;
+	overflow: scroll;
 }
 </style>

@@ -345,7 +345,13 @@ export async function initialize(
 	const datasetInputs = inputs.filter(
 		(input) => input.type === 'datasetId' && input.status === WorkflowPortStatus.CONNECTED
 	);
-	const datasetPromises = datasetInputs.map((input) => getDataset(input.value![0]));
+
+	const datasetPromises = datasetInputs.map((input) => {
+		const datasetId = input.value?.[0];
+		if (!datasetId) return Promise.resolve(null);
+		return getDataset(datasetId);
+	});
+
 	isFetchingDatasets.value = true;
 	await Promise.all(datasetPromises).then((ds) => {
 		ds.forEach((dataset) => {
@@ -377,6 +383,7 @@ export async function initialize(
 	isFetchingDatasets.value = false;
 
 	await generateImpactCharts(impactChartData, datasets, datasetResults, baselineDatasetIndex, selectedPlotType);
+
 	const modelConfigurationIds = Object.keys(modelConfigIdToInterventionPolicyIdMap.value);
 	if (isEmpty(modelConfigurationIds)) return;
 	const modelConfigurationPromises = modelConfigurationIds.map((id) => getModelConfigurationById(id));

@@ -76,6 +76,13 @@
 							/>
 						</div>
 						<Divider />
+						<h5>Normalize</h5>
+						<tera-checkbox
+							label="Normalize data by total strata population"
+							:model-value="normalizeData"
+							@update:model-value="toggleNormalizeData($event)"
+						/>
+						<Divider />
 					</section>
 				</div>
 			</div>
@@ -122,16 +129,22 @@ const toggleHideInNode = (hideInNode: boolean) => {
 
 // Settings for comparison method
 const comparisonSettings = computed(() => props.activeSettings as ChartSettingComparison | null);
+// Small multiples
 const smallMultiplesRadioValue = computed(() =>
 	comparisonSettings.value?.smallMultiples ? 'small-multiples' : 'all-charts'
 );
 const onSmallMultiplesRadioButtonChange = (value: 'all-charts' | 'small-multiples') => {
 	emit('update-settings', { smallMultiples: value === 'small-multiples' });
 };
+// Share Y axis
 const isShareYAxis = computed(() => Boolean(comparisonSettings.value?.shareYAxis));
-const showBeforeAfter = computed(() => Boolean(comparisonSettings.value?.showBeforeAfter));
 const toggleShareYAxis = (value: boolean) => emit('update-settings', { shareYAxis: value });
+// Show before and after
+const showBeforeAfter = computed(() => Boolean(comparisonSettings.value?.showBeforeAfter));
 const toggleShowBeforeAfter = (value: boolean) => emit('update-settings', { showBeforeAfter: value });
+// Normalize
+const normalizeData = computed(() => Boolean(comparisonSettings.value?.normalize));
+const toggleNormalizeData = (value: boolean) => emit('update-settings', { normalize: value });
 // ==============================
 
 // Primary color
