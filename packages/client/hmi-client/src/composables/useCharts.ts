@@ -1,6 +1,6 @@
 import _, { capitalize, cloneDeep } from 'lodash';
 import { mean, variance } from 'd3';
-import { computed, ComputedRef, Ref } from 'vue';
+import { computed, ComputedRef, ref, Ref, watchEffect } from 'vue';
 import { VisualizationSpec } from 'vega-embed';
 import {
 	applyForecastChartAnnotations,
@@ -16,7 +16,8 @@ import {
 	createSimulateSensitivityScatter,
 	ForecastChartOptions,
 	expressionFunctions,
-	GroupedDataArray
+	GroupedDataArray,
+	createSensitivityRankingChart
 } from '@/services/charts';
 import { flattenInterventionData } from '@/services/intervention-policy';
 import { DataArray, extractModelConfigIdsInOrder, extractModelConfigIds } from '@/services/models/simulation-service';
@@ -47,6 +48,7 @@ import { EnsembleErrorData } from '@/components/workflow/ops/calibrate-ensemble-
 import { PlotValue } from '@/components/workflow/ops/compare-datasets/compare-datasets-operation';
 import { DATASET_VAR_NAME_PREFIX } from '@/services/dataset';
 import { calculatePercentage, calculatePercentages, sumArrays } from '@/utils/math';
+import { pythonInstance } from '@/python/PyodideController';
 import { useChartAnnotations } from './useChartAnnotations';
 
 export interface ChartData {
@@ -137,7 +139,7 @@ const calculateYExtent = (resultSummary: DataArray, variables: string[], include
 };
 
 // Consider provided reference object is ready if it is set to null explicitly or if it's value is available
-const isRefReady = (ref: Ref | null) => ref === null || Boolean(ref.value);
+const isRefReady = (reference: Ref | null) => reference === null || Boolean(reference.value);
 
 /**
  * Normalize the stratified model chart data by the total strata population.
@@ -1102,12 +1104,17 @@ export function useCharts(
 	}
 
 	const useSimulateSensitivityCharts = (chartSettings: ComputedRef<ChartSettingSensitivity[]>) => {
-		const sensitivity = computed(() => {
+		const sensitivityData = ref<
+			Record<string, { lineChart: VisualizationSpec; scatterChart: VisualizationSpec; rankingChart: VisualizationSpec }>
+		>({});
+		const sensitivityDataLoading = ref(false);
+		let rankingScores: Map<string, Map<string, number>> = new Map();
+
+		const fetchSensitivityData = async () => {
 			// pick the first setting's timepoint for now
 			const timepoint = chartSettings.value[0].timepoint;
 			const { result } = chartData.value as ChartData;
 			const sliceData = result.filter((d: any) => d.timepoint_id === timepoint) as any[];
-
 			// Translate names ahead of time, because we can't seem to customize titles
 			// in vegalite with repeat
 			const translationMap = chartData.value?.translationMap;
@@ -1126,9 +1133,12 @@ export function useCharts(
 
 			const inputVariables: string[] = chartSettings.value[0].selectedInputVariables ?? [];
 
-			const charts: Record<string, { lineChart: VisualizationSpec; scatterChart: VisualizationSpec }> = {};
+			const charts: Record<
+				string,
+				{ lineChart: VisualizationSpec; scatterChart: VisualizationSpec; rankingChart: VisualizationSpec }
+			> = {};
 			// eslint-disable-next-line
-			chartSettings.value.forEach((settings) => {
+			for (const settings of chartSettings.value) {
 				const selectedVariable =
 					chartData.value?.pyciemssMap[settings.selectedVariables[0]] || settings.selectedVariables[0];
 				const unit = getUnit(settings.selectedVariables[0]);
@@ -1140,6 +1150,8 @@ export function useCharts(
 				options.legend = true;
 				options.title = `${settings.selectedVariables[0]} sensitivity`;
 				options.legendProperties = { direction: 'vertical', columns: 1, labelLimit: 500 };
+
+				const rankingSpec = createSensitivityRankingChart(rankingScores.get(selectedVariable)!, options);
 
 				const lineSpec = createForecastChart(
 					{
@@ -1213,11 +1225,35 @@ export function useCharts(
 						colorscheme: SENSITIVITY_COLOUR_SCHEME
 					}
 				);
-				charts[settings.id] = { lineChart: lineSpec, scatterChart: spec };
-			});
-			return charts;
+
+				charts[settings.id] = { lineChart: lineSpec, scatterChart: spec, rankingChart: rankingSpec };
+			}
+
+			sensitivityData.value = charts;
+		};
+
+		watchEffect(async () => {
+			if (!chartData.value || !model?.value) return;
+			sensitivityDataLoading.value = true;
+
+			const allSelectedVariables = chartSettings.value.map(
+				(s) => chartData.value?.pyciemssMap[s.selectedVariables[0]] || s.selectedVariables[0]
+			);
+			// only run if the ranking scores keys are not equal to the selectedVariables
+			const hasAllScores =
+				allSelectedVariables.every((v) => rankingScores.has(v)) &&
+				Array.from(rankingScores.keys()).every((k) => allSelectedVariables.includes(k));
+			if (!hasAllScores) {
+				const timepoint = chartSettings.value[0].timepoint;
+				const allParameters = model?.value?.semantics?.ode.parameters?.map((p) => p.id) ?? [];
+				const sliceData = chartData.value.result.filter((d) => d.timepoint_id === timepoint);
+				rankingScores = await pythonInstance.getRankingScores(sliceData, allSelectedVariables, allParameters);
+			}
+			fetchSensitivityData();
+			sensitivityDataLoading.value = false;
 		});
-		return sensitivity;
+
+		return computed(() => ({ data: sensitivityData.value, loading: sensitivityDataLoading.value }));
 	};
 
 	return {
