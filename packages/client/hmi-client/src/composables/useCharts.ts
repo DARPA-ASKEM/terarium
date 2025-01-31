@@ -1230,15 +1230,20 @@ export function useCharts(
 		watchEffect(async () => {
 			if (!chartData.value || !model?.value) return;
 			sensitivityDataLoading.value = true;
+
 			const allSelectedVariables = chartSettings.value.map(
 				(s) => chartData.value?.pyciemssMap[s.selectedVariables[0]] || s.selectedVariables[0]
 			);
-			const allParameters = model?.value?.semantics?.ode.parameters?.map((p) => p.id) ?? [];
-			rankingScores = await pythonInstance.getRankingScores(
-				chartData.value.result,
-				allSelectedVariables,
-				allParameters
-			);
+			// only run if the ranking scores keys are not equal to the selectedVariables
+			const hasAllScores =
+				allSelectedVariables.every((v) => rankingScores.has(v)) &&
+				Array.from(rankingScores.keys()).every((k) => allSelectedVariables.includes(k));
+			if (!hasAllScores) {
+				const timepoint = chartSettings.value[0].timepoint;
+				const allParameters = model?.value?.semantics?.ode.parameters?.map((p) => p.id) ?? [];
+				const sliceData = chartData.value.result.filter((d) => d.timepoint_id === timepoint);
+				rankingScores = await pythonInstance.getRankingScores(sliceData, allSelectedVariables, allParameters);
+			}
 			fetchSensitivityData();
 			sensitivityDataLoading.value = false;
 		});

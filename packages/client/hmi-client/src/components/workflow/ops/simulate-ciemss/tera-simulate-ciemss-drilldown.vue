@@ -231,7 +231,7 @@
 								</p>
 								<tera-progress-spinner v-if="sensitivityCharts.loading" :font-size="2" is-centered />
 
-								<template v-else>
+								<div v-else>
 									<template v-for="setting of selectedSensitivityChartSettings" :key="setting.id">
 										<template v-if="sensitivityCharts.data[setting.id]">
 											<vega-chart
@@ -253,7 +253,7 @@
 											</div>
 										</template>
 									</template>
-								</template>
+								</div>
 							</AccordionTab>
 						</Accordion>
 
