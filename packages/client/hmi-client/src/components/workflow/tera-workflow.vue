@@ -329,6 +329,8 @@ const saveNodeStateHandler = debounce(async () => {
 	});
 }, 250);
 
+const nodePositionSet: Set<string> = new Set();
+const edgePositionSet: Set<string> = new Set();
 const debounceSaveWorkflowPositions = debounce(() => {
 	saveWorkflowPositions();
 }, 100);
@@ -787,6 +789,7 @@ function onPortMouseleave() {
 
 function resizeHandler(node: WorkflowNode<any>) {
 	relinkEdges(node);
+	debounceSaveWorkflowPositions();
 }
 
 /*
@@ -817,6 +820,7 @@ function relinkEdges(node: WorkflowNode<any> | null) {
 		edge.points[0].y = sourceNode!.y + sourcePortElem.offsetTop + sourcePortElem.offsetHeight * 0.5;
 		edge.points[1].x = targetNode!.x + targetPortElem.offsetWidth * 0.5;
 		edge.points[1].y = targetNode!.y + targetPortElem.offsetTop + targetPortElem.offsetHeight * 0.5;
+		edgePositionSet.add(edge.id);
 	}
 }
 
@@ -876,29 +880,43 @@ function updateEdgePositions(node: WorkflowNode<any>, { x, y }) {
 		if (edge.source === node.id) {
 			edge.points[0].x += x / canvasTransform.k;
 			edge.points[0].y += y / canvasTransform.k;
+			edgePositionSet.add(edge.id);
 		}
 		if (edge.target === node.id) {
 			edge.points[edge.points.length - 1].x += x / canvasTransform.k;
 			edge.points[edge.points.length - 1].y += y / canvasTransform.k;
+			edgePositionSet.add(edge.id);
 		}
 	});
 }
 
 const saveWorkflowPositions = async () => {
-	const nodes = new Map(wf.value.getNodes().map((n) => [n.id, { x: n.x, y: n.y }]));
-	const edges = new Map(
-		wf.value.getEdges().map((e) => {
-			const start = e.points[0];
-			const end = e.points[1];
-			return [
-				e.id,
-				[
-					{ x: start.x, y: start.y },
-					{ x: end.x, y: end.y }
-				]
-			];
-		})
+	const nodes = new Map(
+		wf.value
+			.getNodes()
+			.filter((n) => nodePositionSet.has(n.id))
+			.map((n) => [n.id, { x: n.x, y: n.y }])
 	);
+
+	const edges = new Map(
+		wf.value
+			.getEdges()
+			.filter((e) => edgePositionSet.has(e.id))
+			.map((e) => {
+				const start = e.points[0];
+				const end = e.points[1];
+				return [
+					e.id,
+					[
+						{ x: start.x, y: start.y },
+						{ x: end.x, y: end.y }
+					]
+				];
+			})
+	);
+
+	nodePositionSet.clear();
+	edgePositionSet.clear();
 	await workflowService.updatePositions(wf.value.getId(), nodes, edges);
 };
 
@@ -910,6 +928,7 @@ const updatePosition = (node: WorkflowNode<any>, { x, y }) => {
 	isDragging = true;
 	node.x += x / canvasTransform.k;
 	node.y += y / canvasTransform.k;
+	nodePositionSet.add(node.id);
 	updateEdgePositions(node, { x, y });
 };
 

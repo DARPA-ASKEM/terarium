@@ -38,4 +38,14 @@ public class RegNetVertex extends SupportAdditionalProperties implements Seriali
 
 	@TSIgnore
 	private String description;
+
+	@Override
+	public String getConceptReference() {
+		return id;
+	}
+
+	@Override
+	public void setConceptReference(String id) {
+		this.id = id;
+	}
 }

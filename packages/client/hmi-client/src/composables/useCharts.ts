@@ -1,6 +1,6 @@
 import _, { capitalize } from 'lodash';
 import { mean, variance } from 'd3';
-import { computed, ComputedRef, Ref } from 'vue';
+import { computed, ComputedRef, ref, Ref, watchEffect } from 'vue';
 import { VisualizationSpec } from 'vega-embed';
 import {
 	applyForecastChartAnnotations,
@@ -16,7 +16,8 @@ import {
 	createSimulateSensitivityScatter,
 	ForecastChartOptions,
 	expressionFunctions,
-	GroupedDataArray
+	GroupedDataArray,
+	createSensitivityRankingChart
 } from '@/services/charts';
 import { flattenInterventionData } from '@/services/intervention-policy';
 import { DataArray, extractModelConfigIdsInOrder, extractModelConfigIds } from '@/services/models/simulation-service';
@@ -29,7 +30,12 @@ import {
 } from '@/types/common';
 import { ChartAnnotation, Dataset, Intervention, InterventionPolicy, Model, ModelConfiguration } from '@/types/Types';
 import { displayNumber } from '@/utils/number';
-import { getStateVariableStrataEntries, getUnitsFromModelParts, getVegaDateOptions } from '@/services/model';
+import {
+	getStateVariableStrataEntries,
+	getUnitsFromModelParts,
+	getVegaDateOptions,
+	groupVariablesByStrata
+} from '@/services/model';
 import { CalibrateMap, isCalibrateMap } from '@/services/calibrate-workflow';
 import { isChartSettingComparisonVariable, isChartSettingEnsembleVariable } from '@/services/chart-settings';
 import {
@@ -42,6 +48,7 @@ import { EnsembleErrorData } from '@/components/workflow/ops/calibrate-ensemble-
 import { PlotValue } from '@/components/workflow/ops/compare-datasets/compare-datasets-operation';
 import { DATASET_VAR_NAME_PREFIX } from '@/services/dataset';
 import { calculatePercentage, calculatePercentages, sumArrays } from '@/utils/math';
+import { pythonInstance } from '@/python/PyodideController';
 import { useChartAnnotations } from './useChartAnnotations';
 
 export interface ChartData {
@@ -132,7 +139,7 @@ const calculateYExtent = (resultSummary: DataArray, variables: string[], include
 };
 
 // Consider provided reference object is ready if it is set to null explicitly or if it's value is available
-const isRefReady = (ref: Ref | null) => ref === null || Boolean(ref.value);
+const isRefReady = (reference: Ref | null) => reference === null || Boolean(reference.value);
 
 /**
  * Normalize the stratified model chart data by the total strata population.
@@ -145,16 +152,13 @@ const isRefReady = (ref: Ref | null) => ref === null || Boolean(ref.value);
 const normalizeStratifiedModelChartData = (setting: ChartSettingComparison, data: ChartData, model: Model) => {
 	if (!model) return data;
 	if (!setting.normalize) return data;
-	// Group selected variables by their corresponding strata
-	const selectedVarGroupByStrata = _.groupBy(setting.selectedVariables, (v) =>
-		getStateVariableStrataEntries(v, model).join('-')
+
+	const { selectedVariablesGroupByStrata, allVariablesGroupByStrata } = groupVariablesByStrata(
+		setting.selectedVariables,
+		data.pyciemssMap,
+		model
 	);
-	const denominatorVariables = {};
-	Object.keys(selectedVarGroupByStrata).forEach((group) => {
-		denominatorVariables[group] = Object.entries(data.pyciemssMap)
-			.filter(([k]) => group === getStateVariableStrataEntries(k, model).join('-'))
-			.map(([, v]) => v);
-	});
+
 	const includeBeforeData = setting.showBeforeAfter && setting.smallMultiples;
 
 	// If show quantiles is on,  normalize group by timepoint data
@@ -162,9 +166,9 @@ const normalizeStratifiedModelChartData = (setting: ChartSettingComparison, data
 		const resultGroupByTimepoint: GroupedDataArray = [];
 		(data.resultGroupByTimepoint ?? []).forEach((row) => {
 			const newEntry = { timepoint_id: row.timepoint_id, sample_id: row.sample_id };
-			Object.entries(selectedVarGroupByStrata).forEach(([group, variables]) => {
+			Object.entries(selectedVariablesGroupByStrata).forEach(([group, variables]) => {
 				// Sum all values for the variables in the same strata group
-				const denominatorValues = sumArrays(...denominatorVariables[group].map((g) => row[g]));
+				const denominatorValues = sumArrays(...allVariablesGroupByStrata[group].map((v) => row[data.pyciemssMap[v]]));
 				variables
 					.map((v) => data.pyciemssMap[v])
 					.forEach((variable) => {
@@ -186,8 +190,11 @@ const normalizeStratifiedModelChartData = (setting: ChartSettingComparison, data
 	const resultSummary: DataArray = [];
 	data.resultSummary.forEach((row) => {
 		const newEntry = { timepoint_id: row.timepoint_id };
-		Object.entries(selectedVarGroupByStrata).forEach(([group, variables]) => {
-			const denominator = denominatorVariables[group].reduce((acc, v) => acc + row[`${v}_mean`], 0);
+		Object.entries(selectedVariablesGroupByStrata).forEach(([group, variables]) => {
+			const denominator = allVariablesGroupByStrata[group].reduce(
+				(acc, v) => acc + row[`${data.pyciemssMap[v]}_mean`],
+				0
+			);
 			variables
 				.map((v) => data.pyciemssMap[v])
 				.forEach((variable) => {
@@ -205,8 +212,8 @@ const normalizeStratifiedModelChartData = (setting: ChartSettingComparison, data
 	const result: DataArray = [];
 	data.result.forEach((row) => {
 		const newEntry = { timepoint_id: row.timepoint_id, sample_id: row.sample_id };
-		Object.entries(selectedVarGroupByStrata).forEach(([group, variables]) => {
-			const denominator = denominatorVariables[group].reduce((acc, v) => acc + row[v], 0);
+		Object.entries(selectedVariablesGroupByStrata).forEach(([group, variables]) => {
+			const denominator = allVariablesGroupByStrata[group].reduce((acc, v) => acc + row[data.pyciemssMap[v]], 0);
 			variables
 				.map((v) => data.pyciemssMap[v])
 				.forEach((variable) => {
@@ -1117,12 +1124,17 @@ export function useCharts(
 	}
 
 	const useSimulateSensitivityCharts = (chartSettings: ComputedRef<ChartSettingSensitivity[]>) => {
-		const sensitivity = computed(() => {
+		const sensitivityData = ref<
+			Record<string, { lineChart: VisualizationSpec; scatterChart: VisualizationSpec; rankingChart: VisualizationSpec }>
+		>({});
+		const sensitivityDataLoading = ref(false);
+		let rankingScores: Map<string, Map<string, number>> = new Map();
+
+		const fetchSensitivityData = async () => {
 			// pick the first setting's timepoint for now
 			const timepoint = chartSettings.value[0].timepoint;
 			const { result } = chartData.value as ChartData;
 			const sliceData = result.filter((d: any) => d.timepoint_id === timepoint) as any[];
-
 			// Translate names ahead of time, because we can't seem to customize titles
 			// in vegalite with repeat
 			const translationMap = chartData.value?.translationMap;
@@ -1141,9 +1153,12 @@ export function useCharts(
 
 			const inputVariables: string[] = chartSettings.value[0].selectedInputVariables ?? [];
 
-			const charts: Record<string, { lineChart: VisualizationSpec; scatterChart: VisualizationSpec }> = {};
+			const charts: Record<
+				string,
+				{ lineChart: VisualizationSpec; scatterChart: VisualizationSpec; rankingChart: VisualizationSpec }
+			> = {};
 			// eslint-disable-next-line
-			chartSettings.value.forEach((settings) => {
+			for (const settings of chartSettings.value) {
 				const selectedVariable =
 					chartData.value?.pyciemssMap[settings.selectedVariables[0]] || settings.selectedVariables[0];
 				const unit = getUnit(settings.selectedVariables[0]);
@@ -1155,6 +1170,8 @@ export function useCharts(
 				options.legend = true;
 				options.title = `${settings.selectedVariables[0]} sensitivity`;
 				options.legendProperties = { direction: 'vertical', columns: 1, labelLimit: 500 };
+
+				const rankingSpec = createSensitivityRankingChart(rankingScores.get(selectedVariable)!, options);
 
 				const lineSpec = createForecastChart(
 					{
@@ -1228,11 +1245,35 @@ export function useCharts(
 						colorscheme: SENSITIVITY_COLOUR_SCHEME
 					}
 				);
-				charts[settings.id] = { lineChart: lineSpec, scatterChart: spec };
-			});
-			return charts;
+
+				charts[settings.id] = { lineChart: lineSpec, scatterChart: spec, rankingChart: rankingSpec };
+			}
+
+			sensitivityData.value = charts;
+		};
+
+		watchEffect(async () => {
+			if (!chartData.value || !model?.value) return;
+			sensitivityDataLoading.value = true;
+
+			const allSelectedVariables = chartSettings.value.map(
+				(s) => chartData.value?.pyciemssMap[s.selectedVariables[0]] || s.selectedVariables[0]
+			);
+			// only run if the ranking scores keys are not equal to the selectedVariables
+			const hasAllScores =
+				allSelectedVariables.every((v) => rankingScores.has(v)) &&
+				Array.from(rankingScores.keys()).every((k) => allSelectedVariables.includes(k));
+			if (!hasAllScores) {
+				const timepoint = chartSettings.value[0].timepoint;
+				const allParameters = model?.value?.semantics?.ode.parameters?.map((p) => p.id) ?? [];
+				const sliceData = chartData.value.result.filter((d) => d.timepoint_id === timepoint);
+				rankingScores = await pythonInstance.getRankingScores(sliceData, allSelectedVariables, allParameters);
+			}
+			fetchSensitivityData();
+			sensitivityDataLoading.value = false;
 		});
-		return sensitivity;
+
+		return computed(() => ({ data: sensitivityData.value, loading: sensitivityDataLoading.value }));
 	};
 
 	return {
