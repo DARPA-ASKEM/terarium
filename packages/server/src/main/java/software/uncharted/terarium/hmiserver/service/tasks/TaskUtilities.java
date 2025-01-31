@@ -177,13 +177,7 @@ public class TaskUtilities {
 		// Create a map to store the search terms and their corresponding parts
 		Map<String, GroundedSemantic> searchTermToPartMap = parts
 			.stream()
-			.filter(
-				part ->
-					part != null &&
-					part.getName() != null &&
-					!part.getName().isBlank() &&
-					isGroundingNonExistent(part.getGrounding())
-			)
+			.filter(part -> (part != null && getSearchTerm(part) != null))
 			.filter(part -> uniqueSearchTerms.add(getSearchTerm(part))) // Filter out duplicates
 			.collect(Collectors.toMap(TaskUtilities::getSearchTerm, part -> part));
 
