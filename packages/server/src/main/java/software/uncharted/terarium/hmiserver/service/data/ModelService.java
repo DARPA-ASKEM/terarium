@@ -227,32 +227,32 @@ public class ModelService extends TerariumAssetService<Model, ModelRepository> {
 		// Update State Grounding
 		if (newModel.get().isRegnet()) {
 			final List<RegNetVertex> vertices = newModel.get().getVerticies();
-			TaskUtilities.performDKGSearchAndSetGrounding(dkgService, vertices);
+			TaskUtilities.getCuratedGrounding(vertices);
 			newModel.get().setVerticies(vertices);
 		} else {
 			final List<State> states = newModel.get().getStates();
-			TaskUtilities.performDKGSearchAndSetGrounding(dkgService, states);
+			TaskUtilities.getCuratedGrounding(states);
 			newModel.get().setStates(states);
 		}
 
 		// Update Observable Grounding
 		if (newModel.get().getObservables() != null && !newModel.get().getObservables().isEmpty()) {
 			final List<Observable> observables = newModel.get().getObservables();
-			TaskUtilities.performDKGSearchAndSetGrounding(dkgService, observables);
+			TaskUtilities.getCuratedGrounding(observables);
 			newModel.get().setObservables(observables);
 		}
 
 		// Update Parameter Grounding
 		if (newModel.get().getParameters() != null && !newModel.get().getParameters().isEmpty()) {
 			final List<ModelParameter> parameters = newModel.get().getParameters();
-			TaskUtilities.performDKGSearchAndSetGrounding(dkgService, parameters);
+			TaskUtilities.getCuratedGrounding(parameters);
 			newModel.get().setParameters(parameters);
 		}
 
 		// Update Transition Grounding
 		if (newModel.get().getTransitions() != null && !newModel.get().getTransitions().isEmpty()) {
 			final List<Transition> transitions = newModel.get().getTransitions();
-			TaskUtilities.performDKGSearchAndSetGrounding(dkgService, transitions);
+			TaskUtilities.getCuratedGrounding(transitions);
 			newModel.get().setTransitions(transitions);
 		}
 
