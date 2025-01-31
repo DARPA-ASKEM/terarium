@@ -181,6 +181,7 @@ export interface Dataset extends TerariumAsset {
 }
 
 export interface DatasetColumn extends TerariumEntity, GroundedSemantic {
+    conceptId?: string;
     fileName: string;
     dataType: ColumnType;
     stats?: DatasetColumnStats;
