@@ -294,7 +294,7 @@ const getChildrenSelectedState = (childParameters: ParameterSemantic[]) => {
 
 	return { all, some };
 };
-function updateSelection(baseParameter: string, childParameters: ParameterSemantic[]) {
+function updateSelection(childParameters: ParameterSemantic[]) {
 	const selectableChildren = childParameters
 		.filter(
 			({ referenceId }) =>
