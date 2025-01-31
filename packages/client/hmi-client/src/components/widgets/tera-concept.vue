@@ -1,44 +1,19 @@
 <template>
 	<main>
 		<h6>Concept</h6>
-		<template v-if="isPreview">
-			<p :title="selectedConcept?.curie">{{ selectedConcept?.name }}</p>
-			<h6 v-if="!isEmpty(selectedAdditionalConcepts)">Additional concepts</h6>
-			<p>{{ selectedAdditionalConcepts.map((dkg) => dkg.name).join(', ') }}</p>
-		</template>
-
-		<template v-else>
-			<AutoComplete
-				optionLabel="name"
-				placeholder="Search concepts"
-				size="small"
-				v-model="selectedConcept"
-				:suggestions="resultsDKG"
-				@complete="searchDKG"
-				@item-select="saveConcept"
-				@keyup.enter="saveConcept"
-				@blur="saveConcept"
-			/>
-
-			<Button
-				text
-				size="small"
-				:label="showAdditionalConceptsLabel"
-				@click="showAdditionalConcepts = !showAdditionalConcepts"
-			/>
-			<AutoComplete
-				v-if="showAdditionalConcepts"
-				multiple
-				optionLabel="name"
-				size="small"
-				v-model="selectedAdditionalConcepts"
-				:suggestions="resultsDKG"
-				@complete="searchDKG"
-				@item-select="saveAdditionalConcepts"
-				@keyup.enter="saveAdditionalConcepts"
-				@blur="saveAdditionalConcepts"
-			/>
-		</template>
+		<p v-if="isPreview">{{ names }}</p>
+		<AutoComplete
+			v-else
+			multiple
+			optionLabel="name"
+			size="small"
+			v-model="concepts"
+			:suggestions="resultsDKG"
+			@complete="searchDKG"
+			@item-select="saveConcepts"
+			@keyup.enter="saveConcepts"
+			@blur="saveConcepts"
+		/>
 	</main>
 </template>
 
@@ -54,7 +29,6 @@ import {
 	searchCuriesEntities
 } from '@/services/concept';
 import { isEmpty } from 'lodash';
-import Button from 'primevue/button';
 
 defineProps<{
 	isPreview?: boolean;
@@ -68,37 +42,55 @@ async function searchDKG(event: AutoCompleteCompleteEvent) {
 	resultsDKG.value = await searchCuriesEntities(event.query);
 }
 
-const selectedConcept = ref<DKG>();
-function saveConcept() {
-	const identifiers = parseCurieToIdentifier(selectedConcept.value?.curie);
-	grounding.value = { ...(grounding.value as Grounding), identifiers };
+const concepts = ref<DKG[]>([]);
+function saveConcepts() {
+	const newGrounding = { ...(grounding.value as Grounding), identifiers: {}, context: {} };
+
+	if (!isEmpty(concepts.value)) {
+		// Split the list of concepts into identifier (first item) and context (rest of the items)
+		const [identifierConcept, ...contextConcepts] = concepts.value;
+
+		if (identifierConcept) {
+			newGrounding.identifiers = parseCurieToIdentifier(identifierConcept.curie);
+		}
+
+		if (!isEmpty(contextConcepts)) {
+			newGrounding.context = parseListDKGToGroundingContext(contextConcepts);
+		}
+	}
+
+	grounding.value = newGrounding;
 }
 
-const selectedAdditionalConcepts = ref<DKG[]>([]);
-const showAdditionalConcepts = ref(false);
-const showAdditionalConceptsLabel = computed(() => {
-	if (showAdditionalConcepts.value) {
-		return 'Hide additional concepts';
-	}
-	const verb = isEmpty(selectedAdditionalConcepts.value) ? 'Add' : 'Show';
-	return `${verb} additional concepts`;
-});
-function saveAdditionalConcepts() {
-	const context = parseListDKGToGroundingContext(selectedAdditionalConcepts.value);
-	grounding.value = { ...(grounding.value as Grounding), context };
-}
+const names = computed(() =>
+	isEmpty(concepts.value)
+		? ''
+		: concepts
+				.value!.map((dkg) => dkg?.name ?? dkg?.curie)
+				.filter(Boolean)
+				.join(', ')
+);
 
 watch(
 	() => grounding.value,
 	(newGrounding) => {
 		if (newGrounding) {
-			getDKGFromGroundingIdentifier(newGrounding.identifiers).then((dkg) => {
-				selectedConcept.value = dkg;
-			});
+			// Reset the list of concepts
+			concepts.value = [];
 
-			getDKGFromGroundingContext(newGrounding.context).then((dkgList) => {
-				selectedAdditionalConcepts.value = dkgList;
-			});
+			// Add the identifier concept first
+			if (!isEmpty(newGrounding.identifiers)) {
+				getDKGFromGroundingIdentifier(newGrounding.identifiers).then((dkg) => {
+					concepts.value.push(dkg);
+				});
+			}
+
+			// Then add the context concepts
+			if (!isEmpty(newGrounding.context)) {
+				getDKGFromGroundingContext(newGrounding.context).then((dkgList) => {
+					concepts.value.push(...dkgList);
+				});
+			}
 		}
 	},
 	{ immediate: true }

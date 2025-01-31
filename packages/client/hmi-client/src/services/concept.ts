@@ -115,10 +115,11 @@ function getCurieFromGroundingIdentifier(identifier: Object | undefined): string
 	return '';
 }
 
-async function getDKGFromGroundingIdentifier(identifier: Object | undefined): Promise<DKG> {
+async function getDKGFromGroundingIdentifier(identifier: Object): Promise<DKG> {
 	const dkg: DKG = { name: '', curie: '', description: '' };
 	dkg.curie = getCurieFromGroundingIdentifier(identifier);
 	dkg.name = await getNameOfCurieCached(dkg.curie);
+	if (isEmpty(dkg.name)) dkg.name = dkg.curie; // in case no name could be found, display the curie
 	return dkg;
 }
 
