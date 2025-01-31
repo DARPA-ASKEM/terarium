@@ -59,8 +59,14 @@
 						<Accordion multiple>
 							<AccordionTab>
 								<template #header>
-									<span>{{ baseParameter }}</span>
-									<Button label="Open matrix" text size="small" @click.stop="matrixModalId = baseParameter" />
+									<div class="flex align-items-center">
+										<span>{{ baseParameter }}</span>
+										<div v-if="isAddingUncertainty" class="mx-5 flex align-items-center gap-2" @click.stop>
+											<Checkbox @click.stop="selectedParameters = childParameters.map((p) => p.referenceId)" />
+											<label class="text-sm font-normal">Select all</label>
+										</div>
+										<Button label="Open matrix" text size="small" @click.stop="matrixModalId = baseParameter" />
+									</div>
 								</template>
 								<div class="flex">
 									<ul class="ml-1">
