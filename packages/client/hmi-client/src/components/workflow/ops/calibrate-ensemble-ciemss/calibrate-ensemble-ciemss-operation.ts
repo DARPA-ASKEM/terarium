@@ -87,12 +87,12 @@ export const CalibrateEnsembleCiemssOperation: Operation = {
 			configurationWeights: {},
 			timestampColName: '',
 			extra: {
-				solverMethod: speedPreset.method,
-				numParticles: speedPreset.numSamples,
-				numIterations: speedPreset.numIterations,
+				solverMethod: qualityPreset.method,
+				numParticles: qualityPreset.numSamples,
+				numIterations: qualityPreset.numIterations,
 				endTime: 100,
 				stepSize: 1,
-				learningRate: speedPreset.learningRate
+				learningRate: qualityPreset.learningRate
 			},
 			inProgressCalibrationId: '',
 			inProgressForecastId: '',
