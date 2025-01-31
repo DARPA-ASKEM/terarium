@@ -222,9 +222,7 @@ public class TaskUtilities {
 
 	/** Get the search term for a grounded semantic part. This is the description if it exists, otherwise the name. */
 	private static String getSearchTerm(GroundedSemantic part) {
-		return (part.getDescription() == null || part.getDescription().isBlank())
-			? getNameSearchTerm(part)
-			: part.getDescription();
+		return (part.getDescription() == null || part.getDescription().isBlank()) ? part.getName() : part.getDescription();
 	}
 
 	/** Get the search term for a grounded semantic part. This is the name if it exists, otherwise the id. */
