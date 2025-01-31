@@ -92,7 +92,7 @@
 											:options="
 												datasets[groundTruthDatasetIndex].columns
 													?.map((ele) => ele.name)
-													.filter((ele) => ele.includes('mean'))
+													.filter((ele) => ele?.includes('mean'))
 											"
 											placeholder="Variable"
 										/>
@@ -114,10 +114,10 @@
 													?.map((ele) => ele.name)
 													.filter(
 														(ele) =>
-															!ele.includes('median') &&
-															!ele.includes('std') &&
-															!ele.includes('min') &&
-															!ele.includes('max')
+															!ele?.includes('median') &&
+															!ele?.includes('std') &&
+															!ele?.includes('min') &&
+															!ele?.includes('max')
 													)
 											"
 										/>
