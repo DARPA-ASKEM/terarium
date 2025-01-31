@@ -1,4 +1,5 @@
 import { meanBy, isEmpty } from 'lodash';
+import { logger } from '@/utils/logger';
 
 export type DataArray = Record<string, any>[];
 
@@ -88,7 +89,8 @@ export function computeQuantile(
 // Compute interval scores (1) for an array of observations and predicted intervals.
 // Either a dictionary with the respective (alpha/2) and (1-(alpha/2)) quantiles via q_dict needs to be
 // specified or the quantiles need to be specified via q_left and q_right.
-export function intervalScore(
+// This is a dumbed down version of the original function as it's just handling the case where the left and right quantiles are not specified, etc.
+export function getIntervalScore(
 	groundTruthObservations: Record<number, number>,
 	variableObservations: Record<number, number>,
 	alpha: number,
@@ -104,9 +106,10 @@ export function intervalScore(
 		rightQuantile = variableObservations[1 - alpha / 2];
 	}
 
-	console.log('leftQuantile', leftQuantile, 'rightQuantile', rightQuantile);
+	// console.log('leftQuantile', leftQuantile, 'rightQuantile', rightQuantile);
 	if (checkConsistency && leftQuantile > rightQuantile) {
-		throw new Error('Left quantile must be smaller than right quantile.');
+		logger.error('Left quantile must be smaller than right quantile.');
+		return { sharpness: [], calibration: [], total: [] };
 	}
 
 	const sharpness = rightQuantile - leftQuantile;
@@ -117,11 +120,11 @@ export function intervalScore(
 		return ((leftClip + rightClip) * 2) / alpha;
 	});
 
-	// if (percent) {
-	// 	sharpness /= mean(Object.values(groundTruthObservations));
-	// 	// sharpness = sharpness / observations.map((obs) => Math.abs(obs));
+	// if (!percent) {
+	// 	sharpness /= Math.abs(groundTruthObservations[0]);
 	// 	calibration = calibration.map((cal, index) => cal / Math.abs(groundTruthObservations[index]));
 	// }
+	console.log(percent);
 
 	const total = calibration.map((cal) => cal + sharpness);
 
@@ -134,28 +137,27 @@ export function weightedIntervalScore(
 	variableObservations: Record<number, number>,
 	alphas: number[] = [0.02, 0.05, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9],
 	weights: number[] = [],
-	percent: boolean = false,
+	percent: boolean = true,
 	checkConsistency: boolean = true
 ) {
 	if (isEmpty(weights)) {
 		weights = alphas.map((alpha) => alpha / 2);
 	}
 
-	// Helper function to weigh scores
-	function weighScores(tupleIn: any[], weight: number) {
-		return [tupleIn[0].map((d) => d * weight), tupleIn[1].map((d) => d * weight), tupleIn[2].map((d) => d * weight)];
-	}
-
 	// Calculate interval scores for each alpha and weight
 	const intervalScores = alphas.map((alpha, index) => {
-		const { total, sharpness, calibration } = intervalScore(
+		const intervalScore = getIntervalScore(
 			groundTruthObservations,
 			variableObservations,
 			alpha,
 			percent,
 			checkConsistency
 		);
-		return weighScores([total, sharpness, calibration], weights[index]);
+
+		// Weigh scores
+		const { total, sharpness, calibration } = intervalScore;
+		const weight = weights[index];
+		return [total.map((d) => d * weight), sharpness.map((d) => d * weight), calibration.map((d) => d * weight)];
 	});
 
 	console.log('intervalScores', intervalScores);

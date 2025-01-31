@@ -712,7 +712,7 @@ function constructWisTable() {
 		wisRow.overall = mean(wisValues);
 		wisTable.value.push({ modelName: dataset.name, ...wisRow });
 	});
-	// console.log('wisTable', wisTable.value);
+	console.log('wisTable', wisTable.value);
 }
 
 onMounted(async () => {
