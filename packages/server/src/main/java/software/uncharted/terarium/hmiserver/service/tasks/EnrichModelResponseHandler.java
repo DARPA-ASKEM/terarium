@@ -23,7 +23,6 @@ import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.seman
 import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.semantics.Transition;
 import software.uncharted.terarium.hmiserver.models.dataservice.regnet.RegNetVertex;
 import software.uncharted.terarium.hmiserver.models.task.TaskResponse;
-import software.uncharted.terarium.hmiserver.service.data.DKGService;
 import software.uncharted.terarium.hmiserver.service.data.ModelService;
 
 @Component
@@ -35,7 +34,6 @@ public class EnrichModelResponseHandler extends TaskResponseHandler {
 
 	private final ObjectMapper objectMapper;
 	private final ModelService modelService;
-	private final DKGService dkgService;
 
 	@Override
 	public String getName() {
@@ -199,13 +197,13 @@ public class EnrichModelResponseHandler extends TaskResponseHandler {
 			if (model.isRegnet()) {
 				if (model.getVerticies() != null && !model.getVerticies().isEmpty()) {
 					final List<RegNetVertex> vertices = model.getVerticies();
-					TaskUtilities.performDKGSearchAndSetGrounding(dkgService, vertices);
+					TaskUtilities.getCuratedGrounding(vertices);
 					model.setVerticies(vertices);
 				}
 			} else {
 				if (model.getStates() != null && !model.getStates().isEmpty()) {
 					final List<State> states = model.getStates();
-					TaskUtilities.performDKGSearchAndSetGrounding(dkgService, states);
+					TaskUtilities.getCuratedGrounding(states);
 					model.setStates(states);
 				}
 			}
@@ -213,21 +211,21 @@ public class EnrichModelResponseHandler extends TaskResponseHandler {
 			// Update Observable Grounding
 			if (model.getObservables() != null && !model.getObservables().isEmpty()) {
 				final List<Observable> observables = model.getObservables();
-				TaskUtilities.performDKGSearchAndSetGrounding(dkgService, observables);
+				TaskUtilities.getCuratedGrounding(observables);
 				model.setObservables(observables);
 			}
 
 			// Update Parameter Grounding
 			if (model.getParameters() != null && !model.getParameters().isEmpty()) {
 				final List<ModelParameter> parameters = model.getParameters();
-				TaskUtilities.performDKGSearchAndSetGrounding(dkgService, parameters);
+				TaskUtilities.getCuratedGrounding(parameters);
 				model.setParameters(parameters);
 			}
 
 			// Update Transition Grounding
 			if (model.getTransitions() != null && !model.getTransitions().isEmpty()) {
 				final List<Transition> transitions = model.getTransitions();
-				TaskUtilities.performDKGSearchAndSetGrounding(dkgService, transitions);
+				TaskUtilities.getCuratedGrounding(transitions);
 				model.setTransitions(transitions);
 			}
 

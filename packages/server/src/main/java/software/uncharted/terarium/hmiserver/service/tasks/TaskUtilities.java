@@ -168,16 +168,11 @@ public class TaskUtilities {
 		return req;
 	}
 
+	@Deprecated
 	@Observed(name = "function_profile")
 	public static void performDKGSearchAndSetGrounding(DKGService dkgService, List<? extends GroundedSemantic> parts) {
 		// First check if we have a curated grounding match for the parts
-		for (GroundedSemantic part : parts) {
-			if (part == null || !isGroundingNonExistent(part.getGrounding())) continue;
-			final Grounding curatedGrounding = ContextMatcher.searchBest(getNameSearchTerm(part));
-			if (curatedGrounding != null) {
-				part.setGrounding(curatedGrounding);
-			}
-		}
+		getCuratedGrounding(parts);
 
 		// Create a map to store the search terms and their corresponding parts
 		Map<String, GroundedSemantic> searchTermToPartMap = parts
@@ -204,6 +199,18 @@ public class TaskUtilities {
 			GroundedSemantic part = searchTermToPartMap.get(searchTerm);
 			if (part != null) {
 				part.setGrounding(new Grounding(dkg));
+			}
+		}
+	}
+
+	/** Perform a search for curated groundings for all parts. */
+	@Observed(name = "function_profile")
+	public static void getCuratedGrounding(List<? extends GroundedSemantic> parts) {
+		for (GroundedSemantic part : parts) {
+			if (part == null) continue;
+			final Grounding curatedGrounding = ContextMatcher.searchBest(getNameSearchTerm(part));
+			if (curatedGrounding != null) {
+				part.setGrounding(curatedGrounding);
 			}
 		}
 	}
