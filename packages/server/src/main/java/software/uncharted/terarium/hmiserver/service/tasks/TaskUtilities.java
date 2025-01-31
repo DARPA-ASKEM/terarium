@@ -179,7 +179,10 @@ public class TaskUtilities {
 			.stream()
 			.filter(
 				part ->
-					part != null && part.getId() != null && !part.getId().isBlank() && isGroundingNonExistent(part.getGrounding())
+					part != null &&
+					part.getName() != null &&
+					!part.getName().isBlank() &&
+					isGroundingNonExistent(part.getGrounding())
 			)
 			.filter(part -> uniqueSearchTerms.add(getSearchTerm(part))) // Filter out duplicates
 			.collect(Collectors.toMap(TaskUtilities::getSearchTerm, part -> part));
