@@ -1,4 +1,4 @@
-import _, { capitalize, cloneDeep } from 'lodash';
+import _, { capitalize } from 'lodash';
 import { mean, variance } from 'd3';
 import { computed, ComputedRef, Ref } from 'vue';
 import { VisualizationSpec } from 'vega-embed';
@@ -27,7 +27,7 @@ import {
 	ChartSettingSensitivity,
 	ChartSettingType
 } from '@/types/common';
-import { ChartAnnotation, Intervention, Model, ModelConfiguration } from '@/types/Types';
+import { ChartAnnotation, Dataset, Intervention, InterventionPolicy, Model, ModelConfiguration } from '@/types/Types';
 import { displayNumber } from '@/utils/number';
 import { getStateVariableStrataEntries, getUnitsFromModelParts, getVegaDateOptions } from '@/services/model';
 import { CalibrateMap, isCalibrateMap } from '@/services/calibrate-workflow';
@@ -540,22 +540,42 @@ export function useCharts(
 	const useCompareDatasetCharts = (
 		chartSettings: ComputedRef<ChartSetting[]>,
 		selectedPlotType: ComputedRef<PlotValue>,
-		baselineIndex: ComputedRef<number>
+		// baselineIndex: ComputedRef<number>,
+		datasets: Ref<Dataset[]>,
+		modelConfigurations,
+		interventionPolicies
 	) => {
 		const compareDatasetCharts = computed(() => {
 			const charts: Record<string, VisualizationSpec> = {};
 			if (!isChartReadyToBuild.value) return charts;
 
-			// Make baseline black
-			const colorScheme = cloneDeep(CATEGORICAL_SCHEME);
-			colorScheme.splice(baselineIndex.value, 0, 'black');
+			const interventionNameColorMap: Record<string, string> = {};
+			const interventionNameScoreMap: Record<string, string> = {};
+			setInterventionColorAndScoreMaps(
+				datasets,
+				modelConfigurations,
+				interventionPolicies,
+				interventionNameColorMap,
+				interventionNameScoreMap
+			);
+
+			const variableColorMap = datasets.value.map(({ name }) => {
+				const interventionName = name?.match(/\(([^)]+)\)/);
+				if (interventionName?.length) {
+					if (interventionNameColorMap[interventionName[1]]) {
+						return interventionNameColorMap[interventionName[1]];
+					}
+				}
+				return 'black';
+			});
 
 			chartSettings.value.forEach((settings) => {
 				const varName = settings.selectedVariables[0];
 				const { statLayerVariables, sampleLayerVariables, options } = createForecastChartOptions(settings);
 				options.title = varName;
 				options.yAxisTitle = capitalize(selectedPlotType.value);
-				options.colorscheme = colorScheme;
+
+				options.colorscheme = variableColorMap;
 
 				const annotations = getChartAnnotationsByChartId(settings.id);
 				const chart = !settings.showQuantiles
@@ -1229,4 +1249,39 @@ export function useCharts(
 		useSimulateSensitivityCharts,
 		useEnsembleErrorCharts
 	};
+}
+
+export function setInterventionColorAndScoreMaps(
+	datasets,
+	modelConfigurations,
+	interventionPolicies,
+	interventionNameColorMap,
+	interventionNameScoresMap
+) {
+	let colorIndex = 0;
+	datasets.value.forEach((dataset) => {
+		const { metadata } = dataset;
+		const modelConfiguration: ModelConfiguration = modelConfigurations.value.find(
+			({ id }) => id === metadata.simulationAttributes?.modelConfigurationId
+		);
+		const policy: InterventionPolicy = interventionPolicies.value.find(
+			({ id }) => id === metadata.simulationAttributes?.interventionPolicyId
+		);
+
+		const policyName = policy?.name ?? 'no policy';
+
+		if (!modelConfiguration?.name) {
+			return;
+		}
+
+		if (!interventionNameColorMap[policyName]) {
+			interventionNameScoresMap[policyName] = [];
+			if (!policy?.name) {
+				interventionNameColorMap[policyName] = 'black';
+			} else {
+				interventionNameColorMap[policyName] = CATEGORICAL_SCHEME[colorIndex];
+				colorIndex++;
+			}
+		}
+	});
 }

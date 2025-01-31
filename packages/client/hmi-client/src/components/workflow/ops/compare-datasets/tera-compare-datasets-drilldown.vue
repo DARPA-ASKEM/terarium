@@ -374,7 +374,13 @@ const selectedPlotType = computed(() => knobs.value.selectedPlotType);
 const baselineDatasetIndex = computed(() =>
 	datasets.value.findIndex((dataset) => dataset.id === knobs.value.selectedBaselineDatasetId)
 );
-const variableCharts = useCompareDatasetCharts(selectedVariableSettings, selectedPlotType, baselineDatasetIndex);
+const variableCharts = useCompareDatasetCharts(
+	selectedVariableSettings,
+	selectedPlotType,
+	datasets,
+	modelConfigurations,
+	interventionPolicies
+);
 
 function outputPanelBehavior() {
 	if (knobs.value.selectedCompareOption === CompareValue.RANK) {

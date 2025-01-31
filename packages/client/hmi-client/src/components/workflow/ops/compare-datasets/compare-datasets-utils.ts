@@ -5,7 +5,7 @@ import { WorkflowNode, WorkflowPortStatus } from '@/types/workflow';
 import { renameFnGenerator } from '@/components/workflow/ops/calibrate-ciemss/calibrate-utils';
 import { Ref } from 'vue';
 
-import { createRankingInterventionsChart, CATEGORICAL_SCHEME } from '@/services/charts';
+import { createRankingInterventionsChart } from '@/services/charts';
 import { DATASET_VAR_NAME_PREFIX, getDatasetResultCSV, mergeResults, getDataset } from '@/services/dataset';
 import {
 	DataArray,
@@ -16,7 +16,7 @@ import {
 import { getInterventionPolicyById } from '@/services/intervention-policy';
 import { getModelConfigurationById } from '@/services/model-configurations';
 
-import { ChartData } from '@/composables/useCharts';
+import { ChartData, setInterventionColorAndScoreMaps } from '@/composables/useCharts';
 
 import { PlotValue, TimepointOption, RankOption, CompareDatasetsState } from './compare-datasets-operation';
 
@@ -227,7 +227,13 @@ export function generateRankingCharts(
 
 		const rankingCriteriaValues: { score: number; policyName: string; configName: string }[] = [];
 
-		let colorIndex = 0;
+		setInterventionColorAndScoreMaps(
+			datasets,
+			modelConfigurations,
+			interventionPolicies,
+			interventionNameColorMap,
+			interventionNameScoresMap
+		);
 		datasets.value.forEach((dataset, index: number) => {
 			const { metadata } = dataset;
 			const modelConfiguration: ModelConfiguration = modelConfigurations.value.find(
@@ -241,16 +247,6 @@ export function generateRankingCharts(
 
 			if (!modelConfiguration?.name) {
 				return;
-			}
-
-			if (!interventionNameColorMap[policyName]) {
-				interventionNameScoresMap[policyName] = [];
-				if (!policy?.name) {
-					interventionNameColorMap[policyName] = 'black';
-				} else {
-					interventionNameColorMap[policyName] = CATEGORICAL_SCHEME[colorIndex];
-					colorIndex++;
-				}
 			}
 
 			rankingCriteriaValues.push({
