@@ -155,6 +155,7 @@
 					/>
 					when
 					<Dropdown
+						class="applied-to-menu"
 						:model-value="intervention.dynamicInterventions[0].parameter"
 						@change="onTargetParameterChange"
 						:options="stateOptions"
@@ -423,4 +424,6 @@ ul {
 .nudge-left {
 	margin-left: -0.5rem;
 }
+
+/* smaller dropdown to match other inputs in this card */
 </style>
