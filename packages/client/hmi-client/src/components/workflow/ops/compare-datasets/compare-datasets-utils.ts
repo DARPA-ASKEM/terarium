@@ -373,7 +373,10 @@ export async function initialize(
 		});
 	});
 	// Fallback to the first dataset if no dataset ends up being selected
-	if (knobs && !knobs.value.selectedBaselineDatasetId) knobs.value.selectedBaselineDatasetId = datasets.value[0].id;
+	if (knobs) {
+		if (!knobs.value.selectedBaselineDatasetId) knobs.value.selectedBaselineDatasetId = datasets.value[0].id;
+		if (!knobs.value.selectedGroundTruthDatasetId) knobs.value.selectedGroundTruthDatasetId = datasets.value[0].id;
+	}
 
 	// Fetch the results
 	datasetResults.value = await fetchDatasetResults(datasets.value);

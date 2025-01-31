@@ -13,52 +13,34 @@ import java.util.UUID;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
-import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Service;
 import software.uncharted.terarium.hmiserver.configuration.Config;
-import software.uncharted.terarium.hmiserver.configuration.ElasticsearchConfiguration;
 import software.uncharted.terarium.hmiserver.models.dataservice.PresignedURL;
 import software.uncharted.terarium.hmiserver.models.dataservice.dataset.Dataset;
 import software.uncharted.terarium.hmiserver.models.dataservice.dataset.DatasetColumn;
 import software.uncharted.terarium.hmiserver.repository.data.DatasetRepository;
-import software.uncharted.terarium.hmiserver.service.elasticsearch.ElasticsearchService;
 import software.uncharted.terarium.hmiserver.service.gollm.DatasetStatistics;
-import software.uncharted.terarium.hmiserver.service.gollm.EmbeddingService;
 import software.uncharted.terarium.hmiserver.service.s3.S3ClientService;
+import software.uncharted.terarium.hmiserver.service.tasks.TaskService;
 import software.uncharted.terarium.hmiserver.utils.rebac.Schema;
 
 @Slf4j
 @Service
-public class DatasetService extends TerariumAssetServiceWithSearch<Dataset, DatasetRepository> {
+public class DatasetService extends TerariumAssetService<Dataset, DatasetRepository> {
 
 	private final DatasetStatistics datasetStatistics;
 
 	public DatasetService(
 		final ObjectMapper objectMapper,
 		final Config config,
-		final ElasticsearchConfiguration elasticConfig,
-		final ElasticsearchService elasticService,
-		final EmbeddingService embeddingService,
-		final Environment env,
 		final ProjectService projectService,
 		final ProjectAssetService projectAssetService,
+		final DatasetRepository repository,
 		final S3ClientService s3ClientService,
 		final DatasetStatistics datasetStatistics,
-		final DatasetRepository repository
+		final TaskService taskService
 	) {
-		super(
-			objectMapper,
-			config,
-			elasticConfig,
-			elasticService,
-			embeddingService,
-			env,
-			projectService,
-			projectAssetService,
-			s3ClientService,
-			repository,
-			Dataset.class
-		);
+		super(objectMapper, config, projectService, projectAssetService, repository, s3ClientService, Dataset.class);
 		this.datasetStatistics = datasetStatistics;
 	}
 
@@ -66,17 +48,6 @@ public class DatasetService extends TerariumAssetServiceWithSearch<Dataset, Data
 	@Observed(name = "function_profile")
 	protected String getAssetPath() {
 		return config.getDatasetPath();
-	}
-
-	@Override
-	@Observed(name = "function_profile")
-	protected String getAssetIndex() {
-		return elasticConfig.getDatasetIndex();
-	}
-
-	@Override
-	public String getAssetAlias() {
-		return elasticConfig.getDatasetAlias();
 	}
 
 	@Override

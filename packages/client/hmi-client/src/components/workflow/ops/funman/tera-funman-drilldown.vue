@@ -116,7 +116,7 @@
 								<label class="mt-3">Tolerance</label>
 								<div class="input-tolerance fadein animation-ease-in-out animation-duration-350">
 									<tera-input-number v-model="knobs.tolerance" />
-									<Slider v-model="knobs.tolerance" :min="0" :max="1" :step="0.01" class="w-full mr-2" />
+									<Slider v-model="knobs.tolerance" :min="0.01" :max="1" :step="0.01" class="w-full mr-2" />
 								</div>
 							</section>
 						</AccordionTab>

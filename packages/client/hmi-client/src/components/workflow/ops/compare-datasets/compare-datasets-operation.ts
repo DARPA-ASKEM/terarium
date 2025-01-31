@@ -9,6 +9,7 @@ export enum TimepointOption {
 	FIRST = 'at the first timepoint',
 	OVERALL = 'at its peak'
 }
+
 export enum RankOption {
 	MINIMUM = 'minimize',
 	MAXIMUM = 'maximize'
@@ -22,7 +23,8 @@ export enum PlotValue {
 
 export enum CompareValue {
 	SCENARIO = 'scenario',
-	RANK = 'rank'
+	RANK = 'rank',
+	ERROR = 'error'
 }
 
 export const blankCriteriaOfInterest = {
@@ -32,6 +34,12 @@ export const blankCriteriaOfInterest = {
 	rank: RankOption.MINIMUM,
 	timepoint: TimepointOption.OVERALL
 };
+
+// Map groundTruth dataset variable to the other dataset variables
+export interface CompareDatasetsMap {
+	[id: string]: string;
+}
+
 export interface CriteriaOfInterestCard {
 	name: string;
 	selectedVariable: string | null;
@@ -43,7 +51,9 @@ export interface CompareDatasetsState extends BaseState {
 	selectedPlotType: PlotValue;
 	selectedCompareOption: CompareValue;
 	selectedBaselineDatasetId: string | null;
+	selectedGroundTruthDatasetId: string | null;
 	chartSettings: ChartSetting[] | null;
+	mapping: CompareDatasetsMap[];
 }
 
 export const CompareDatasetsOperation: Operation = {
@@ -61,10 +71,12 @@ export const CompareDatasetsOperation: Operation = {
 	initState: () => {
 		const init: CompareDatasetsState = {
 			criteriaOfInterestCards: [blankCriteriaOfInterest],
-			selectedPlotType: PlotValue.PERCENTAGE,
+			selectedPlotType: PlotValue.DIFFERENCE,
 			selectedCompareOption: CompareValue.SCENARIO,
 			selectedBaselineDatasetId: null,
-			chartSettings: null
+			selectedGroundTruthDatasetId: null,
+			chartSettings: null,
+			mapping: []
 		};
 		return init;
 	}

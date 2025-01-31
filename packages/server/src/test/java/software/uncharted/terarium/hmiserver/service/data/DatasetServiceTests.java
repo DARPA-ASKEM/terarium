@@ -43,7 +43,6 @@ public class DatasetServiceTests extends TerariumApplicationTests {
 	@BeforeEach
 	public void setup() throws IOException {
 		projectSearchService.setupIndexAndAliasAndEnsureEmpty();
-		datasetService.setupIndexAndAliasAndEnsureEmpty();
 
 		project = projectService.createProject(
 			(Project) new Project().setPublicAsset(true).setName("test-project-name").setDescription("my description")
@@ -52,7 +51,6 @@ public class DatasetServiceTests extends TerariumApplicationTests {
 
 	@AfterEach
 	public void teardown() throws IOException {
-		datasetService.teardownIndexAndAlias();
 		projectSearchService.teardownIndexAndAlias();
 	}
 
@@ -273,64 +271,5 @@ public class DatasetServiceTests extends TerariumApplicationTests {
 				cloned.getColumns().get(i).getGrounding().getContext()
 			);
 		}
-	}
-
-	@Test
-	@WithUserDetails(MockUser.URSULA)
-	public void testItCanSearchAssets() throws Exception {
-		final int NUM = 32;
-
-		List<Dataset> datasets = new ArrayList<>();
-		for (int i = 0; i < NUM; i++) {
-			datasets.add(createDataset(String.valueOf(i)));
-		}
-		datasets = datasetService.createAssets(datasets, project.getId(), ASSUME_WRITE_PERMISSION);
-
-		final List<Dataset> results = datasetService.searchAssets(0, NUM, null);
-
-		Assertions.assertEquals(NUM, results.size());
-
-		for (int i = 0; i < results.size(); i++) {
-			Assertions.assertEquals(datasets.get(i).getName(), results.get(i).getName());
-			Assertions.assertEquals(datasets.get(i).getDescription(), results.get(i).getDescription());
-			Assertions.assertEquals(
-				datasets.get(i).getGrounding().getIdentifiers(),
-				results.get(i).getGrounding().getIdentifiers()
-			);
-			Assertions.assertEquals(datasets.get(i).getGrounding().getContext(), results.get(i).getGrounding().getContext());
-			Assertions.assertEquals(
-				datasets.get(i).getCreatedOn().toInstant().getEpochSecond(),
-				results.get(i).getCreatedOn().toInstant().getEpochSecond()
-			);
-			Assertions.assertEquals(
-				datasets.get(i).getUpdatedOn().toInstant().getEpochSecond(),
-				results.get(i).getUpdatedOn().toInstant().getEpochSecond()
-			);
-			Assertions.assertEquals(datasets.get(i).getDeletedOn(), results.get(i).getDeletedOn());
-		}
-	}
-
-	@Test
-	@WithUserDetails(MockUser.URSULA)
-	public void testItCanSyncToNewIndex() throws Exception {
-		final int NUM = 32;
-
-		final List<Dataset> datasets = new ArrayList<>();
-		for (int i = 0; i < NUM; i++) {
-			datasets.add(createDataset(String.valueOf(i)));
-		}
-		datasetService.createAssets(datasets, project.getId(), ASSUME_WRITE_PERMISSION);
-
-		final String currentIndex = datasetService.getCurrentAssetIndex();
-
-		Assertions.assertEquals(NUM, datasetService.searchAssets(0, NUM, null).size());
-
-		datasetService.syncAllAssetsToNewIndex(true);
-
-		final String newIndex = datasetService.getCurrentAssetIndex();
-
-		Assertions.assertEquals(NUM, datasetService.searchAssets(0, NUM, null).size());
-
-		Assertions.assertNotEquals(currentIndex, newIndex);
 	}
 }
