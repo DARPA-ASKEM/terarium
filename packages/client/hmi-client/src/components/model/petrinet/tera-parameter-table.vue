@@ -74,7 +74,7 @@
 												binary
 											/>
 											<label class="text-sm font-normal cursor-pointer">
-												{{ getSelectionLabel(baseParameter, childParameters) }}
+												{{ getSelectionLabel(childParameters) }}
 											</label>
 										</div>
 										<Button
@@ -273,7 +273,7 @@ const onUpdateDistributions = () => {
 };
 
 /* Handle selection */
-const getSelectionLabel = (baseParameter: string, childParameters: ParameterSemantic[]) => {
+const getSelectionLabel = (childParameters: ParameterSemantic[]) => {
 	const { all, some } = getChildrenSelectedState(childParameters);
 	if (all) return 'All selcted';
 	if (some) return 'Some selected';
