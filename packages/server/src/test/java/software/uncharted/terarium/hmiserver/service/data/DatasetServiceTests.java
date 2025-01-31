@@ -71,18 +71,18 @@ public class DatasetServiceTests extends TerariumApplicationTests {
 	Dataset createDataset(final String key) throws Exception {
 		final ObjectMapper mapper = new ObjectMapper();
 
-		final DatasetColumn column1 = new DatasetColumn()
-			.setName("Title")
-			.setDataType(DatasetColumn.ColumnType.STRING)
-			.setDescription("hello world")
-			.setMetadata(mapper.createObjectNode().put("hello", "world-" + key).put("foo", "bar-" + key))
-			.setGrounding(createGrounding(key));
-		final DatasetColumn column2 = new DatasetColumn()
-			.setName("Value")
-			.setDataType(DatasetColumn.ColumnType.FLOAT)
-			.setDescription("3.1415926")
-			.setMetadata(mapper.createObjectNode().put("hello", "world-" + key).put("foo", "bar-" + key))
-			.setGrounding(createGrounding(key));
+		final DatasetColumn column1 = new DatasetColumn();
+		column1.setName("Title");
+		column1.setDataType(DatasetColumn.ColumnType.STRING);
+		column1.setDescription("hello world");
+		column1.setMetadata(mapper.createObjectNode().put("hello", "world-" + key).put("foo", "bar-" + key));
+		column1.setGrounding(createGrounding(key));
+		final DatasetColumn column2 = new DatasetColumn();
+		column2.setName("Value");
+		column2.setDataType(DatasetColumn.ColumnType.FLOAT);
+		column2.setDescription("3.1415926");
+		column2.setMetadata(mapper.createObjectNode().put("hello", "world-" + key).put("foo", "bar-" + key));
+		column2.setGrounding(createGrounding(key));
 
 		final Dataset dataset = new Dataset();
 		dataset.setName("test-dataset-name-" + key);
@@ -137,18 +137,18 @@ public class DatasetServiceTests extends TerariumApplicationTests {
 
 		Assertions.assertNull(after.getColumns());
 
-		final DatasetColumn column1 = new DatasetColumn()
-			.setName("Title")
-			.setDataType(DatasetColumn.ColumnType.STRING)
-			.setDescription("hello world")
-			.setMetadata(mapper.createObjectNode().put("hello", "world").put("foo", "bar"))
-			.setGrounding(createGrounding("test"));
-		final DatasetColumn column2 = new DatasetColumn()
-			.setName("Value")
-			.setDataType(DatasetColumn.ColumnType.FLOAT)
-			.setDescription("3.1415926")
-			.setMetadata(mapper.createObjectNode().put("hello", "world").put("foo", "bar"))
-			.setGrounding(createGrounding("another"));
+		final DatasetColumn column1 = new DatasetColumn();
+		column1.setName("Title");
+		column1.setDataType(DatasetColumn.ColumnType.STRING);
+		column1.setDescription("hello world");
+		column1.setMetadata(mapper.createObjectNode().put("hello", "world").put("foo", "bar"));
+		column1.setGrounding(createGrounding("test"));
+		final DatasetColumn column2 = new DatasetColumn();
+		column2.setName("Value");
+		column2.setDataType(DatasetColumn.ColumnType.FLOAT);
+		column2.setDescription("3.1415926");
+		column2.setMetadata(mapper.createObjectNode().put("hello", "world").put("foo", "bar"));
+		column2.setGrounding(createGrounding("another"));
 
 		after.setColumns(new ArrayList<>());
 		after.getColumns().add(column1);

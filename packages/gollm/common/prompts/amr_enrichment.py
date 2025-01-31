@@ -24,26 +24,26 @@ Use the following user-provided text as the research paper to answer the query:
 
 For each state found in `states` in the AMR model, you will extract a description and units using the following rules.
     1. `id` will reference the id of the state.
-    2. `description` will be extracted from the document.
+    2. `description` will be extracted from the document and the model. Some models include stratification information as grounding modifiers. Use this information when producing a description.
     3. `units` will be extracted from the document.
         a.	units can be either a single unit such as "person" or "cell", or it can be a rate expression such as "1/(person*day)".
         b.	`expressionMathml` should be `expression` written in MathML format.
 
 For each parameter found in `semantics.ode.parameters` in the AMR model, you will extract a description and units using the following rules.
     1. `id` will reference the id of the parameter.
-    2. `description` will be extracted from the document.
+    2. `description` will be extracted from the document and the model. Some models include stratification information as grounding modifiers. Use this information when producing a description.
     3. `units` will be extracted from the document.
         a.	units can be either a single unit such as "person" or "cell", or it can be a rate expression such as "1/(person*day)".
         b.	`expressionMathml` should be `expression` written in MathML format.
 
 For each observable found in `semantics.ode.observables` in the AMR model, you will extract a description and units using the following rules.
     1. `id` will reference the id of the observable.
-    2. `description` will be extracted from the document.
+    2. `description` will be extracted from the document and the model. Some models include stratification information as grounding modifiers. Use this information when producing a description.
     3. `units` will be extracted from the document.
         a.	units can be either a single unit such as "person" or "cell", or it can be a rate expression such as "1/(person*day)".
         b.	`expressionMathml` should be `expression` written in MathML format.
 
 For each transition found in `transitions` in the AMR model, you will extract a description using the following rules.
     1. `id` will reference the id of the transition.
-    2. `description` will be extracted from the document.
+    2. `description` will be extracted from the document and the model. Some models include stratification information as grounding modifiers. Use this information when producing a description.
 """

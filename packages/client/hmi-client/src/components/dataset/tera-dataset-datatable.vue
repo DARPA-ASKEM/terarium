@@ -261,7 +261,7 @@ watch(
 				columnStats.missingValues = column.stats.nonNumericStats.missing_values;
 				columnStats.most_common = column.stats.nonNumericStats.most_common;
 			}
-			stats.set(column.name, columnStats);
+			stats.set(column.name ?? '', columnStats);
 		});
 		statistics.value = stats;
 	},

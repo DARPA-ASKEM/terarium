@@ -288,7 +288,7 @@ const autoCalibrationMapping = async (modelOptions: State[], datasetOptions: Dat
 
 	// Fill targetEntities with datasetOptions
 	datasetOptions.forEach((col) => {
-		targetEntities.push({ id: col.name, groundings: [col.grounding] });
+		targetEntities.push({ id: col.name ?? '', groundings: [col.grounding] });
 	});
 
 	const entityResult = await autoEntityMapping(sourceEntities, targetEntities, acceptableDistance);
