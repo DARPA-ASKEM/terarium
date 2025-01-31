@@ -205,7 +205,14 @@ public class TaskUtilities {
 			if (part == null) continue;
 			final Grounding curatedGrounding = ContextMatcher.searchBest(getNameSearchTerm(part));
 			if (curatedGrounding != null) {
-				part.setGrounding(curatedGrounding);
+				final Grounding newGrounding = part.getGrounding();
+				if (newGrounding == null) {
+					part.setGrounding(curatedGrounding);
+				} else {
+					newGrounding.setIdentifiers(curatedGrounding.getIdentifiers());
+					newGrounding.setContext(curatedGrounding.getContext());
+					part.setGrounding(newGrounding);
+				}
 			}
 		}
 	}

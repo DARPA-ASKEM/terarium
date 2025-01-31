@@ -125,6 +125,7 @@ export interface CsvAsset {
 export interface Grounding extends TerariumEntity {
     identifiers: { [index: string]: string };
     context?: { [index: string]: string };
+    modifiers?: { [index: string]: string };
 }
 
 export interface PresignedURL {
