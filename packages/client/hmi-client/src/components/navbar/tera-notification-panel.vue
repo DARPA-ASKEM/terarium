@@ -5,7 +5,7 @@
 	</div>
 	<OverlayPanel class="notification-panel-container" ref="panel" @hide="acknowledgeFinishedItems">
 		<header>
-			<h1>Notifications</h1>
+			<h1 class="mb-2">Notifications</h1>
 			<Button label="Clear notifications" text :disabled="!hasFinishedItems" @click="clearFinishedItems" />
 		</header>
 		<ul class="notification-items-container" v-if="sortedNotificationItems.length > 0">
@@ -221,7 +221,12 @@ header {
 }
 
 .notification-item {
-	padding: 1rem 0;
+	margin-bottom: var(--gap-2);
+	box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+	border: 1px solid var(--surface-border-light);
+	border-radius: var(--border-radius);
+	border-left: 4px solid var(--surface-500);
+	padding: var(--gap-3);
 	&:not(:first-child) {
 		border-top: 1px solid #dee2e6;
 	}
