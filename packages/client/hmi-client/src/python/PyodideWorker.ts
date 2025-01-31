@@ -46,6 +46,23 @@ def serialize_expr(expr):
         }
 `);
 
+/**
+ * Calculates sensitivity ranking scores for multiple outcomes based on their relationships with input parameters.
+ *
+ * Algorithm:
+ * 1. Converts input data to pandas DataFrame
+ * 2. For each outcome of interest (ooi):
+ *    - Formats parameter names with 'persistent_' prefix
+ *    - Normalizes parameter and outcome values to [0,1] range
+ *    - Calculates linear regression coefficient between each parameter and outcome
+ *    - Stores coefficient as sensitivity score
+ *
+ * @param {Array<Object>} data - Raw data containing parameters and outcomes
+ * @param {Array<string>} outcomesofInterest - Names of outcome variables to analyze
+ * @param {Array<string>} parametersOfInterest - Names of input parameters to evaluate
+ * @returns {Object} Dictionary with structure {scores_by_ooi: {outcome: {parameter: score}}}
+ *                   where score is the linear regression coefficient indicating sensitivity
+ */
 pyodide.runPython(`
 	def get_ranking_scores(data, outcomesofInterest, parametersOfInterest):
 		d1 = pd.DataFrame(data)
