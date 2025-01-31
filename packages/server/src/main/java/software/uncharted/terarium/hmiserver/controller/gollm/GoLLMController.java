@@ -1096,7 +1096,7 @@ public class GoLLMController {
 
 		if (newDataset.get().getColumns() != null && !newDataset.get().getColumns().isEmpty()) {
 			final List<DatasetColumn> columns = newDataset.get().getColumns();
-			TaskUtilities.performDKGSearchAndSetGrounding(dkgService, columns);
+			TaskUtilities.getCuratedGrounding(columns);
 		}
 
 		try {
