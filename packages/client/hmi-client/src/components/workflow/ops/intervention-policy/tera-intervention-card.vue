@@ -60,6 +60,8 @@
 							option-label="label"
 							option-value="value"
 							placeholder="Select"
+							filter
+							autoFilterFocus
 						/>
 					</section>
 				</template>
@@ -84,6 +86,8 @@
 								option-label="label"
 								option-value="value"
 								placeholder="Select"
+								filter
+								autoFilterFocus
 							/>
 						</section>
 						to
@@ -116,6 +120,8 @@
 										option-label="label"
 										option-value="value"
 										placeholder="Select"
+										filter
+										autoFilterFocus
 									/>
 								</section>
 								to
@@ -155,6 +161,8 @@
 						option-label="label"
 						option-value="value"
 						placeholder="Select a trigger"
+						filter
+						autoFilterFocus
 					/>
 					crosses the threshold
 					<tera-input-number
