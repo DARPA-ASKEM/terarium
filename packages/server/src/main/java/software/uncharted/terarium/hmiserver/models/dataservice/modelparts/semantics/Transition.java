@@ -40,4 +40,14 @@ public class Transition extends SupportAdditionalProperties implements Serializa
 
 	@TSOptional
 	private Properties properties;
+
+	@Override
+	public String getConceptReference() {
+		return id;
+	}
+
+	@Override
+	public void setConceptReference(String id) {
+		this.id = id;
+	}
 }

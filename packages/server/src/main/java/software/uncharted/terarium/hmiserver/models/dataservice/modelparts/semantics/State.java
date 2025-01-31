@@ -33,4 +33,14 @@ public class State extends SupportAdditionalProperties implements Serializable, 
 
 	@TSOptional
 	private ModelUnit units;
+
+	@Override
+	public String getConceptReference() {
+		return id;
+	}
+
+	@Override
+	public void setConceptReference(String id) {
+		this.id = id;
+	}
 }

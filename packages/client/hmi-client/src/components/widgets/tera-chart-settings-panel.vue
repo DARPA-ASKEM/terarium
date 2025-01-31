@@ -82,6 +82,7 @@
 							:model-value="normalizeData"
 							@update:model-value="toggleNormalizeData($event)"
 						/>
+						<slot v-if="normalizeData" name="normalize-content"></slot>
 						<Divider />
 					</section>
 				</div>
@@ -117,17 +118,16 @@ const emit = defineEmits(['close', 'update-settings', 'delete-annotation', 'crea
 
 // Log scale
 const useLog = computed<boolean>(() => props.activeSettings?.scale === 'log');
-const isHiddenInNode = computed<boolean>(() => !!props.activeSettings?.hideInNode);
-
 const toggleLogScale = (useLogScale: boolean) => {
 	emit('update-settings', { scale: useLogScale ? 'log' : '' });
 };
-
+// Hide in node
+const isHiddenInNode = computed<boolean>(() => !!props.activeSettings?.hideInNode);
 const toggleHideInNode = (hideInNode: boolean) => {
 	emit('update-settings', { hideInNode: !!hideInNode });
 };
 
-// Settings for comparison method
+// === Settings for comparison method ===
 const comparisonSettings = computed(() => props.activeSettings as ChartSettingComparison | null);
 // Small multiples
 const smallMultiplesRadioValue = computed(() =>
@@ -142,10 +142,11 @@ const toggleShareYAxis = (value: boolean) => emit('update-settings', { shareYAxi
 // Show before and after
 const showBeforeAfter = computed(() => Boolean(comparisonSettings.value?.showBeforeAfter));
 const toggleShowBeforeAfter = (value: boolean) => emit('update-settings', { showBeforeAfter: value });
+// ======================================
+
 // Normalize
 const normalizeData = computed(() => Boolean(comparisonSettings.value?.normalize));
 const toggleNormalizeData = (value: boolean) => emit('update-settings', { normalize: value });
-// ==============================
 
 // Primary color
 const isColorPickerEnabled = computed(() => {
@@ -159,7 +160,7 @@ const onColorChange = (event) => {
 	emit('update-settings', { primaryColor: event.target?.value });
 };
 
-// Chart Annotations
+// ========== Chart Annotations =========
 const chartAnnotations = computed(() => {
 	if (props.annotations === undefined) {
 		return undefined;
@@ -185,7 +186,7 @@ const createAnnotationDebounced = _.debounce(createAnnotation, 100);
 const cancelGenerateAnnotation = () => {
 	generateAnnotationQuery.value = '';
 };
-// ==============================
+// ======================================
 </script>
 
 <style scoped>
@@ -194,16 +195,17 @@ const cancelGenerateAnnotation = () => {
 	top: 7.5rem;
 	right: var(--gap-8);
 	width: 360px;
-	height: 100vh;
+	height: calc(100% - 7.5rem);
 	pointer-events: none;
-	overflow-x: hidden;
+	overflow: hidden;
 }
 .chart-settings-panel {
-	position: absolute;
+	position: relative;
+	overflow-y: auto;
 	top: 0;
 	z-index: 3;
 	margin-top: 50px;
-	height: calc(100% - 50px);
+	height: calc(100% - 51px); /* 51px = margin-top + border */
 	width: 100%;
 	background: #fff;
 	border-top-left-radius: var(--border-radius-bigger);

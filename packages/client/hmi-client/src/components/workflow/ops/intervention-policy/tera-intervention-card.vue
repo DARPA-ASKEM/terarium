@@ -60,6 +60,8 @@
 							option-label="label"
 							option-value="value"
 							placeholder="Select"
+							:filter="semanticOptions(intervention.dynamicInterventions[0].type).length > 5"
+							autoFilterFocus
 						/>
 					</section>
 				</template>
@@ -84,6 +86,8 @@
 								option-label="label"
 								option-value="value"
 								placeholder="Select"
+								:filter="semanticOptions(intervention.staticInterventions[0].type).length > 5"
+								autoFilterFocus
 							/>
 						</section>
 						to
@@ -116,6 +120,8 @@
 										option-label="label"
 										option-value="value"
 										placeholder="Select"
+										:filter="semanticOptions(i.type).length > 5"
+										autoFilterFocus
 									/>
 								</section>
 								to
@@ -149,12 +155,15 @@
 					/>
 					when
 					<Dropdown
+						class="applied-to-menu"
 						:model-value="intervention.dynamicInterventions[0].parameter"
 						@change="onTargetParameterChange"
 						:options="stateOptions"
 						option-label="label"
 						option-value="value"
 						placeholder="Select a trigger"
+						:filter="stateOptions.length > 5"
+						autoFilterFocus
 					/>
 					crosses the threshold
 					<tera-input-number
@@ -415,4 +424,6 @@ ul {
 .nudge-left {
 	margin-left: -0.5rem;
 }
+
+/* smaller dropdown to match other inputs in this card */
 </style>
