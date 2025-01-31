@@ -229,20 +229,31 @@
 									value of the different model parameters. Color is used here to illustrate this mapping: if the color
 									varies quickly along a parameter axis, then the outcome is strongly sensitive to this parameter.
 								</p>
-								<template v-for="setting of selectedSensitivityChartSettings" :key="setting.id">
-									<vega-chart
-										expandable
-										:are-embed-actions-visible="true"
-										:visualization-spec="sensitivityCharts[setting.id].lineChart"
-									/>
-									<div class="sensitivity-scatterplot">
-										<vega-chart
-											expandable
-											:are-embed-actions-visible="true"
-											:visualization-spec="sensitivityCharts[setting.id].scatterChart"
-										/>
-									</div>
-								</template>
+								<tera-progress-spinner v-if="sensitivityCharts.loading" :font-size="2" is-centered />
+
+								<div v-else>
+									<template v-for="setting of selectedSensitivityChartSettings" :key="setting.id">
+										<template v-if="sensitivityCharts.data[setting.id]">
+											<vega-chart
+												expandable
+												:are-embed-actions-visible="true"
+												:visualization-spec="sensitivityCharts.data[setting.id].lineChart"
+											/>
+											<vega-chart
+												expandable
+												:are-embed-actions-visible="true"
+												:visualization-spec="sensitivityCharts.data[setting.id].rankingChart"
+											/>
+											<div class="sensitivity-scatterplot">
+												<vega-chart
+													expandable
+													:are-embed-actions-visible="true"
+													:visualization-spec="sensitivityCharts.data[setting.id].scatterChart"
+												/>
+											</div>
+										</template>
+									</template>
+								</div>
 							</AccordionTab>
 						</Accordion>
 
@@ -484,6 +495,7 @@ import { useCharts } from '@/composables/useCharts';
 import { useChartSettings } from '@/composables/useChartSettings';
 import { useProjects } from '@/composables/project';
 import { useDrilldownChartSize } from '@/composables/useDrilldownChartSize';
+import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue';
 import { SimulateCiemssOperationState } from './simulate-ciemss-operation';
 import { mergeResults, renameFnGenerator } from '../calibrate-ciemss/calibrate-utils';
 import { qualityPreset, speedPreset, usePreparedChartInputs } from './simulate-utils';

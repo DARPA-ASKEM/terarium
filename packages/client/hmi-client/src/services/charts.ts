@@ -1318,6 +1318,58 @@ export function createSimulateSensitivityScatter(samplingLayer: SensitivityChart
 	return spec;
 }
 
+/* -------------------------------------------------------------------------- */
+/*                          Sensitivity Ranking Chart                         */
+/* -------------------------------------------------------------------------- */
+
+export function createSensitivityRankingChart(data: Map<string, number>, options: BaseChartOptions) {
+	const spec: any = {
+		$schema: VEGALITE_SCHEMA,
+		description: 'Sensitivity score ranking chart',
+		data: { values: Array.from(data).map(([parameter, score]) => ({ parameter, score })) },
+		transform: [
+			{
+				calculate: 'abs(datum.score)',
+				as: 'abs_value'
+			}
+		],
+		width: options.width,
+		mark: { type: 'bar' },
+		layer: [
+			{
+				mark: { type: 'bar', height: 10 },
+				encoding: {
+					x: {
+						field: 'score',
+						type: 'quantitative'
+					},
+					y: {
+						field: 'parameter',
+						type: 'ordinal',
+						sort: {
+							field: 'abs_value',
+							order: 'descending'
+						},
+						scale: {
+							paddingInner: 0.01,
+							paddingOuter: 0.02
+						}
+					},
+					color: { value: '#1B8073' }
+				}
+			},
+			// add vertical line a 0
+			{
+				mark: { type: 'rule' },
+				encoding: {
+					x: { datum: 0 }
+				}
+			}
+		]
+	};
+	return spec;
+}
+
 /**
  * Applies annotation layers to a forecast chart. Each annotation is represented as a layer specification object.
  * By default, the annotation layers are added as sub-layers to the second layer (statistics layer) of the forecast chart specification.
