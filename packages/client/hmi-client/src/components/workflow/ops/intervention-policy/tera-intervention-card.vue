@@ -60,7 +60,7 @@
 							option-label="label"
 							option-value="value"
 							placeholder="Select"
-							filter
+							:filter="semanticOptions(intervention.dynamicInterventions[0].type).length > 5"
 							autoFilterFocus
 						/>
 					</section>
@@ -86,7 +86,7 @@
 								option-label="label"
 								option-value="value"
 								placeholder="Select"
-								filter
+								:filter="semanticOptions(intervention.staticInterventions[0].type).length > 5"
 								autoFilterFocus
 							/>
 						</section>
@@ -120,7 +120,7 @@
 										option-label="label"
 										option-value="value"
 										placeholder="Select"
-										filter
+										:filter="semanticOptions(i.type).length > 5"
 										autoFilterFocus
 									/>
 								</section>
@@ -161,7 +161,7 @@
 						option-label="label"
 						option-value="value"
 						placeholder="Select a trigger"
-						filter
+						:filter="stateOptions.length > 5"
 						autoFilterFocus
 					/>
 					crosses the threshold
