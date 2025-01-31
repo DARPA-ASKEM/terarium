@@ -62,6 +62,18 @@ def serialize_expr(expr):
  * @param {Array<string>} parametersOfInterest - Names of input parameters to evaluate
  * @returns {Object} Dictionary with structure {scores_by_ooi: {outcome: {parameter: score}}}
  *                   where score is the linear regression coefficient indicating sensitivity
+ *
+ * For example: output = get_ranking_scores(data, ['deaths', 'cases'], ['R0', 'gamma'])
+ * output = {
+ *  scores_by_ooi: {
+ * 	deaths: {
+ * 		R0: 0.5,
+ * 		gamma: 0.3
+ * 	},
+ * 	cases: {
+ * 		R0: 0.2,
+ * 		gamma: 0.1
+ * 	}
  */
 pyodide.runPython(`
 	def get_ranking_scores(data, outcomesofInterest, parametersOfInterest):
@@ -69,10 +81,9 @@ pyodide.runPython(`
 		oois = outcomesofInterest # outcome of interest
 		pois = parametersOfInterest # parameters of interest
 
-		# Format column names
-
 		scores_by_ooi = {}
 		for ooi in oois:
+			# Column names for parameters
 			pois_ = [f'persistent_{p}_param' for p in pois]
 
 			poi_scores = {}
