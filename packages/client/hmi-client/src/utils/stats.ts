@@ -95,19 +95,13 @@ export function getIntervalScore(
 	variableObservations: Record<number, number>,
 	alpha: number,
 	percent: boolean,
-	checkConsistency: boolean,
-	leftQuantile: number | null = null,
-	rightQuantile: number | null = null
+	checkConsistency: boolean
 ) {
-	if (!leftQuantile) {
-		leftQuantile = variableObservations[alpha / 2];
-	}
-	if (!rightQuantile) {
-		rightQuantile = variableObservations[1 - alpha / 2];
-	}
+	const leftQuantile = variableObservations[alpha / 2];
+	const rightQuantile = variableObservations[1 - alpha / 2];
 
 	if (checkConsistency && leftQuantile > rightQuantile) {
-		logger.error('Left quantile must be smaller than right quantile.');
+		logger.error('Left quantile must be smaller than right quantile. Datasets are not ideal for WIS calculation.');
 		return { sharpness: [], calibration: [], total: [] };
 	}
 
