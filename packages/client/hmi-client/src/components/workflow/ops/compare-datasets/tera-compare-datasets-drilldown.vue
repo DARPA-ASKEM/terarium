@@ -847,6 +847,7 @@ onMounted(async () => {
 	constructATETable();
 
 	if (isEmpty(knobs.value.mapping)) addMapping();
+	// eslint-disable-next-line
 	if (false) constructWisTable();
 });
 
