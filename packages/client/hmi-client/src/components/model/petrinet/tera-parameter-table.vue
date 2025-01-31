@@ -61,7 +61,7 @@
 								<template #header>
 									<div class="flex align-items-center w-full">
 										<span>{{ baseParameter }}</span>
-										<!--- Select all checkbox -->
+										<!--- Select all checkbox with indeterminate -->
 										<div
 											v-if="isAddingUncertainty"
 											class="mx-4 flex align-items-center gap-2"
