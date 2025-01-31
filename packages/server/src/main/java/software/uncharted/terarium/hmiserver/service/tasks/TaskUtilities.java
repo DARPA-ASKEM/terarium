@@ -7,8 +7,10 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import io.micrometer.observation.annotation.Observed;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
@@ -169,10 +171,14 @@ public class TaskUtilities {
 		// First check if we have a curated grounding match for the parts
 		getCuratedGrounding(parts);
 
+		// Create a set to store unique search terms
+		Set<String> uniqueSearchTerms = new HashSet<>();
+
 		// Create a map to store the search terms and their corresponding parts
 		Map<String, GroundedSemantic> searchTermToPartMap = parts
 			.stream()
 			.filter(part -> (part != null && getSearchTerm(part) != null))
+			.filter(part -> uniqueSearchTerms.add(getSearchTerm(part))) // Filter out duplicates
 			.collect(Collectors.toMap(TaskUtilities::getSearchTerm, part -> part));
 
 		// Perform the DKG search for all search terms at once

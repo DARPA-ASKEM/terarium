@@ -3,7 +3,7 @@
 		<AccordionTab>
 			<template #header>
 				State variables<span class="artifact-amount">({{ states.length }})</span>
-				<tera-input-text class="ml-auto" placeholder="Filter" v-model="statesFilter" />
+				<tera-input-text v-if="!isEmpty(mmt.initials)" class="ml-auto" placeholder="Filter" v-model="statesFilter" />
 			</template>
 			<tera-model-part
 				v-if="!isEmpty(mmt.initials)"
@@ -18,7 +18,12 @@
 		<AccordionTab>
 			<template #header>
 				Parameters<span class="artifact-amount">({{ parameters.length }})</span>
-				<tera-input-text class="ml-auto" placeholder="Filter" v-model="parametersFilter" />
+				<tera-input-text
+					v-if="!isEmpty(mmt.parameters)"
+					class="ml-auto"
+					placeholder="Filter"
+					v-model="parametersFilter"
+				/>
 			</template>
 			<tera-model-part
 				v-if="!isEmpty(mmt.parameters)"
@@ -44,7 +49,12 @@
 		<AccordionTab>
 			<template #header>
 				Observables <span class="artifact-amount">({{ observables.length }})</span>
-				<tera-input-text class="ml-auto" placeholder="Filter" v-model="observablesFilter" />
+				<tera-input-text
+					v-if="!isEmpty(observables)"
+					class="ml-auto"
+					placeholder="Filter"
+					v-model="observablesFilter"
+				/>
 			</template>
 			<tera-model-part
 				:part-type="PartType.OBSERVABLE"
