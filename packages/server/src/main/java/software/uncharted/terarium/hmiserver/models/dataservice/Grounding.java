@@ -39,7 +39,7 @@ public class Grounding extends TerariumEntity {
 	@Column(columnDefinition = "json")
 	private Map<String, String> context;
 
-	/** (Optional) Additional context that informs the grounding */
+	/** (Optional) Additional stratification modifiers */
 	@TSOptional
 	@Type(JsonType.class)
 	@Column(columnDefinition = "json")
@@ -83,6 +83,6 @@ public class Grounding extends TerariumEntity {
 
 	@TSIgnore
 	public Boolean isEmpty() {
-		return this.identifiers.isEmpty() && this.context.isEmpty();
+		return this.identifiers.isEmpty() && this.context.isEmpty() && this.modifiers.isEmpty();
 	}
 }
