@@ -1,6 +1,6 @@
 <template>
 	<section class="flex flex-column">
-		<span class="flex align-items-center gap-3">
+		<div class="top-entry">
 			<h6>{{ id }}</h6>
 			<span v-if="!isTimePart" class="name">
 				<template v-if="featureConfig.isPreview">{{ nameText }}</template>
@@ -36,17 +36,20 @@
 					/>
 				</template>
 			</span>
-			<span v-if="!featureConfig.isPreview && !isTimePart" class="flex ml-auto gap-3">
+			<template v-if="!featureConfig.isPreview && !isTimePart">
 				<!-- Three states of description buttons: Hide / Show / Add description -->
 				<Button
+					class="button-description"
 					text
 					size="small"
 					:label="showDescription ? 'Hide description' : descriptionText ? 'Show description' : 'Add description'"
 					@click="showDescription = !showDescription"
 				/>
-				<tera-concept v-model="grounding" :is-preview="featureConfig.isPreview" />
-			</span>
-		</span>
+				<aside class="concept">
+					<tera-concept v-model="grounding" :is-preview="featureConfig.isPreview" />
+				</aside>
+			</template>
+		</div>
 		<katex-element
 			v-if="expression"
 			class="expression"
@@ -119,6 +122,31 @@ const isTimePart = props.partType === PartType.TIME;
 <style scoped>
 section {
 	font-size: var(--font-caption);
+}
+
+.top-entry {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: var(--gap-3);
+}
+
+.button-description {
+	margin-left: auto;
+}
+
+.concept {
+	/* container-type: inline-size; */
+	container-name: concept;
+	margin-left: var(--gap-1);
+}
+
+@container concept (max-width: 25%) {
+	.concept {
+		margin-left: 0;
+		flex-basis: 100%;
+		width: 100%;
+	}
 }
 
 label,

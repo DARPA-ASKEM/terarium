@@ -18,6 +18,7 @@
 </template>
 
 <script setup lang="ts">
+import { isEmpty } from 'lodash';
 import { computed, ref, watch } from 'vue';
 import AutoComplete, { AutoCompleteCompleteEvent } from 'primevue/autocomplete';
 import type { DKG, Grounding } from '@/types/Types';
@@ -28,7 +29,6 @@ import {
 	parseListDKGToGroundingContext,
 	searchCuriesEntities
 } from '@/services/concept';
-import { isEmpty } from 'lodash';
 
 defineProps<{
 	isPreview?: boolean;
@@ -102,6 +102,7 @@ main {
 	align-items: center;
 	display: flex;
 	gap: var(--gap-2);
+	width: 100%;
 }
 
 h6 {
@@ -110,18 +111,32 @@ h6 {
 	font-weight: var(--font-weight);
 }
 
-:deep(.p-autocomplete-input) {
+:deep(.p-autocomplete) {
 	height: 2rem;
-	font-size: var(--font-caption);
+	min-width: 10rem;
+	width: 100%;
+
+	ul {
+		width: 100%;
+	}
 }
 
 /* To match the other input height */
 :deep(.p-autocomplete-multiple-container),
 :deep(.p-autocomplete-token) {
-	padding: 1px var(--gap-2);
+	padding: 2px var(--gap-2);
 }
 
 :deep(.p-autocomplete-token-label) {
 	font-size: var(--font-caption);
+}
+
+:deep(.p-autocomplete-input-token input) {
+	font-size: var(--font-caption);
+	width: 9rem;
+}
+
+:deep(.p-autocomplete:not(.p-focus) .p-autocomplete-input-token input) {
+	width: 1rem;
 }
 </style>
