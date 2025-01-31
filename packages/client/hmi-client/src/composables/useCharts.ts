@@ -548,14 +548,9 @@ export function useCharts(
 			const charts: Record<string, VisualizationSpec> = {};
 			if (!isChartReadyToBuild.value) return charts;
 
-			if (
-				!modelConfigurations.value ||
-				modelConfigurations.value.length === 0 ||
-				!interventionPolicies.value ||
-				interventionPolicies.value.length === 0
-			) {
-				return charts;
-			}
+			// TODO: We will want to in the future check that all the configs and interventions are
+			// loaded before rendering the charts, but beware to not break rendering in the case
+			// when there are no interventions
 
 			const { interventionNameColorMap } = getInterventionColorAndScoreMaps(
 				datasets,
@@ -563,13 +558,14 @@ export function useCharts(
 				interventionPolicies
 			);
 
-			// match variables with intervention colors
-			const variableColorMap = datasets.value.map(({ name }) => {
-				const interventionName = name?.match(/\(([^)]+)\)/);
-				if (interventionName?.length) {
-					if (interventionNameColorMap[interventionName[1]]) {
-						return interventionNameColorMap[interventionName[1]];
-					}
+			// Match variables with intervention colors
+			const variableColorMap = datasets.value.map(({ metadata }) => {
+				const policy = interventionPolicies.value.find(
+					({ id }) => id === metadata?.simulationAttributes?.interventionPolicyId
+				);
+				if (!policy || !policy.name) return 'black';
+				if (interventionNameColorMap[policy.name]) {
+					return interventionNameColorMap[policy.name];
 				}
 				return 'black';
 			});
