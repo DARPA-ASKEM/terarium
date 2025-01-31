@@ -136,25 +136,49 @@ public class DatasetController {
 		@PathVariable("id") final UUID id,
 		@RequestParam(name = "project-id", required = false) final UUID projectId
 	) {
-		final Schema.Permission permission = projectService.checkPermissionCanReadOrNone(
-			currentUserService.get().getId(),
-			projectId
-		);
+		final String userId = currentUserService.get().getId();
+		final Schema.Permission permission = projectService.checkPermissionCanReadOrNone(userId, projectId);
 
 		try {
-			final Optional<Dataset> dataset = datasetService.getAsset(id, permission);
+			Dataset dataset = datasetService
+				.getAsset(id, permission)
+				.orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, messages.get("dataset.not-found")));
 
-			if (dataset.isEmpty()) {
-				return ResponseEntity.noContent().build();
-			}
 			// GETs not associated to a projectId cannot read private or temporary assets
-			if (
-				permission.equals(Schema.Permission.NONE) && (!dataset.get().getPublicAsset() || dataset.get().getTemporary())
-			) {
+			if (permission.equals(Schema.Permission.NONE) && (!dataset.getPublicAsset() || dataset.getTemporary())) {
 				throw new ResponseStatusException(HttpStatus.FORBIDDEN, messages.get("rebac.unauthorized-read"));
 			}
 
-			return dataset.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
+			// If the user as write permission, and the stats are not present, calculate them
+			final Schema.Permission permissionCanWrite = projectService.checkPermissionCanWrite(userId, projectId);
+			if (
+				permissionCanWrite.equals(Schema.Permission.WRITE) &&
+				dataset.getColumns().stream().anyMatch(column -> column.getStats() == null)
+			) {
+				// Calculate the statistics for the columns
+				final Optional<PresignedURL> datasetUrl = datasetService.getDownloadUrl(
+					dataset.getId(),
+					dataset.getFileNames().get(0)
+				);
+
+				if (datasetUrl.isEmpty()) {
+					log.warn("Error calculating statistics for dataset {}", dataset.getId());
+				} else {
+					datasetStatistics.add(dataset, datasetUrl.get());
+
+					// Update and fetch updated dataset
+					datasetService.updateAsset(dataset, projectId, Schema.Permission.WRITE);
+					Optional<Dataset> updatedDataset = datasetService.getAsset(id, permission);
+
+					if (updatedDataset.isEmpty()) {
+						log.warn("Failed to get dataset after update");
+					} else {
+						dataset = updatedDataset.get();
+					}
+				}
+			}
+
+			return ResponseEntity.ok(dataset);
 		} catch (final Exception e) {
 			log.error("Unable to get dataset", e);
 			throw new ResponseStatusException(
@@ -426,7 +450,7 @@ public class DatasetController {
 	}
 
 	/**
-	 * Uploads a CSV file from github given the path and owner name, then uploads
+	 * Uploads a CSV file from GitHub given the path and owner name, then uploads
 	 * it to the dataset.
 	 */
 	@PutMapping("/{id}/upload-csv-from-github")
@@ -459,7 +483,7 @@ public class DatasetController {
 
 		log.debug("Uploading CSV file from github to dataset {}", datasetId);
 
-		// download CSV from github
+		// download CSV from GitHub
 		final String csvString = githubProxy.getGithubCode(repoOwnerAndName, path).getBody();
 
 		if (csvString == null) {
@@ -471,7 +495,7 @@ public class DatasetController {
 			);
 		}
 
-		CSVParser csvParser = null;
+		CSVParser csvParser;
 		try {
 			csvParser = new CSVParser(
 				new StringReader(csvString),
