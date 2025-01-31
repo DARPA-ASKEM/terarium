@@ -164,16 +164,20 @@ public class DatasetController {
 				if (datasetUrl.isEmpty()) {
 					log.warn("Error calculating statistics for dataset {}", dataset.getId());
 				} else {
-					datasetStatistics.add(dataset, datasetUrl.get());
+					try {
+						datasetStatistics.add(dataset, datasetUrl.get());
 
-					// Update and fetch updated dataset
-					datasetService.updateAsset(dataset, projectId, Schema.Permission.WRITE);
-					Optional<Dataset> updatedDataset = datasetService.getAsset(id, permission);
+						// Update and fetch updated dataset
+						datasetService.updateAsset(dataset, projectId, Schema.Permission.WRITE);
+						Optional<Dataset> updatedDataset = datasetService.getAsset(id, permission);
 
-					if (updatedDataset.isEmpty()) {
-						log.warn("Failed to get dataset after update");
-					} else {
-						dataset = updatedDataset.get();
+						if (updatedDataset.isEmpty()) {
+							log.warn("Failed to get dataset after update");
+						} else {
+							dataset = updatedDataset.get();
+						}
+					} catch (final Exception e) {
+						log.error("Error calculating statistics for dataset {}", dataset.getId(), e);
 					}
 				}
 			}
