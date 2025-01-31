@@ -56,16 +56,16 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue';
+import { ref, watch } from 'vue';
 import TeraInputText from '@/components/widgets/tera-input-text.vue';
 import TeraBoxplot from '@/components/widgets/tera-boxplot.vue';
 import AutoComplete from 'primevue/autocomplete';
 import Dropdown from 'primevue/dropdown';
 import { type DKG, ColumnType, type Grounding } from '@/types/Types';
-import { searchCuriesEntities } from '@/services/concept';
+import { getCurieFromGroundingIdentifier, getNameOfCurieCached, searchCuriesEntities } from '@/services/concept';
 
 type ColumnInfo = {
-	symbol: string;
+	symbol?: string;
 	dataType?: ColumnType;
 	description?: string;
 	grounding?: Grounding;
@@ -75,7 +75,7 @@ type ColumnInfo = {
 	stats?: any;
 };
 
-defineProps<{
+const props = defineProps<{
 	column: ColumnInfo;
 }>();
 
@@ -98,6 +98,14 @@ function applyValidConcept() {
 		}
 	}
 }
+
+watch(
+	() => props.column.grounding?.identifiers,
+	async (identifiers) => {
+		if (identifiers) query.value = await getNameOfCurieCached(getCurieFromGroundingIdentifier(identifiers));
+	},
+	{ immediate: true }
+);
 </script>
 
 <style scoped>

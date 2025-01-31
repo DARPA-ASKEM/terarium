@@ -39,9 +39,19 @@ public class ModelParameter extends SupportAdditionalProperties implements Seria
 	private ModelUnit units;
 
 	@Override
+	public String getConceptReference() {
+		return id;
+	}
+
+	@Override
+	public void setConceptReference(String id) {
+		this.id = id;
+	}
+
+	@Override
 	public ModelParameter clone() {
 		final ModelParameter clone = (ModelParameter) super.clone();
-		clone.setId(this.getId());
+		clone.setConceptReference(this.getConceptReference());
 		clone.setName(this.getName());
 		clone.setDescription(this.getDescription());
 		clone.setValue(this.getValue());

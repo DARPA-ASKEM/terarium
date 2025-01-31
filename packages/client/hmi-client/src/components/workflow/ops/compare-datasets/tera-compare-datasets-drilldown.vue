@@ -93,7 +93,7 @@
 											:options="
 												datasets[groundTruthDatasetIndex].columns
 													?.map((ele) => ele.name)
-													.filter((ele) => ele.includes('mean') || ele.includes('time'))
+													.filter((ele) => ele?.includes('mean') || ele?.includes('time'))
 											"
 											filter
 											placeholder="Variable"
@@ -118,10 +118,10 @@
 													?.map((ele) => ele.name)
 													.filter(
 														(ele) =>
-															!ele.includes('median') &&
-															!ele.includes('std') &&
-															!ele.includes('min') &&
-															!ele.includes('max')
+															!ele?.includes('median') &&
+															!ele?.includes('std') &&
+															!ele?.includes('min') &&
+															!ele?.includes('max')
 													)
 											"
 											@change="constructWisTable"
