@@ -45,7 +45,7 @@ public class StellaToStockflowResponseHandler extends TaskResponseHandler {
 				.getParameters()
 				.forEach(param -> {
 					if (param.getName() == null || param.getName().isEmpty()) {
-						param.setName(param.getConceptId());
+						param.setName(param.getConceptReference());
 					}
 				});
 

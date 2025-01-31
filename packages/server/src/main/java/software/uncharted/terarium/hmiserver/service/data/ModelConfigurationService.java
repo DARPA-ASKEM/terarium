@@ -155,7 +155,7 @@ public class ModelConfigurationService extends TerariumAssetService<ModelConfigu
 
 		for (final Observable observable : model.getObservables()) {
 			final ObservableSemantic observableSemantic = new ObservableSemantic();
-			observableSemantic.setReferenceId(observable.getConceptId());
+			observableSemantic.setReferenceId(observable.getConceptReference());
 			observableSemantic.setStates(observable.getStates());
 			observableSemantic.setExpression(observable.getExpression());
 			observableSemantic.setExpressionMathml(observable.getExpressionMathml());
@@ -171,7 +171,7 @@ public class ModelConfigurationService extends TerariumAssetService<ModelConfigu
 
 		for (final ModelParameter parameter : model.getParameters()) {
 			final ParameterSemantic parameterSemantic = new ParameterSemantic();
-			parameterSemantic.setReferenceId(parameter.getConceptId());
+			parameterSemantic.setReferenceId(parameter.getConceptReference());
 
 			final ModelDistribution distribution = getModelDistribution(parameter);
 
@@ -228,7 +228,7 @@ public class ModelConfigurationService extends TerariumAssetService<ModelConfigu
 		// Iterate through the list of ModelParameter objects
 		for (final ModelParameter modelParameter : modelParameters) {
 			// Look up the corresponding ConfigParameter in the map
-			final ParameterSemantic matchingConfigParameter = configParameterMap.get(modelParameter.getConceptId());
+			final ParameterSemantic matchingConfigParameter = configParameterMap.get(modelParameter.getConceptReference());
 			if (matchingConfigParameter != null) {
 				// set distributions
 				if (CONSTANT_TYPE.equals(matchingConfigParameter.getDistribution().getType())) {
@@ -274,7 +274,9 @@ public class ModelConfigurationService extends TerariumAssetService<ModelConfigu
 		}
 
 		for (final Observable modelObservable : modelObservables) {
-			final ObservableSemantic matchingConfigObservable = configObservableMap.get(modelObservable.getConceptId());
+			final ObservableSemantic matchingConfigObservable = configObservableMap.get(
+				modelObservable.getConceptReference()
+			);
 			if (matchingConfigObservable != null) {
 				modelObservable.setStates(matchingConfigObservable.getStates());
 				modelObservable.setExpression(matchingConfigObservable.getExpression());

@@ -40,12 +40,12 @@ public class RegNetVertex extends SupportAdditionalProperties implements Seriali
 	private String description;
 
 	@Override
-	public String getConceptId() {
+	public String getConceptReference() {
 		return id;
 	}
 
 	@Override
-	public void setConceptId(String id) {
+	public void setConceptReference(String id) {
 		this.id = id;
 	}
 }

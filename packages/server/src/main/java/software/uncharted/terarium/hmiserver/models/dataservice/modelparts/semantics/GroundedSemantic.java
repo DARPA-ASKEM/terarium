@@ -8,10 +8,10 @@ import software.uncharted.terarium.hmiserver.models.dataservice.Grounding;
 @JsonPropertyOrder({ "id", "name", "description", "grounding" })
 public interface GroundedSemantic {
 	@TSIgnore
-	String getConceptId();
+	String getConceptReference();
 
 	@TSIgnore
-	void setConceptId(String id);
+	void setConceptReference(String id);
 
 	@TSOptional
 	Grounding getGrounding();

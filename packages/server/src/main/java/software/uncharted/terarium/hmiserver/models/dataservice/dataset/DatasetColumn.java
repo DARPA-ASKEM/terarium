@@ -100,12 +100,12 @@ public class DatasetColumn extends TerariumEntity implements GroundedSemantic {
 	}
 
 	@TSIgnore
-	public String getConceptId() {
+	public String getConceptReference() {
 		return conceptId;
 	}
 
 	@TSIgnore
-	public void setConceptId(String id) {
+	public void setConceptReference(String id) {
 		this.conceptId = id;
 	}
 

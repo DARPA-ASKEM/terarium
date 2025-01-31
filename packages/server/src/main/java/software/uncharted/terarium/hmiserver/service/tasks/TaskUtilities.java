@@ -9,7 +9,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
@@ -215,7 +214,7 @@ public class TaskUtilities {
 
 	/** Get the search term for a grounded semantic part. This is the name if it exists, otherwise the id. */
 	private static String getNameSearchTerm(GroundedSemantic part) {
-		return (part.getName() == null || part.getName().isBlank()) ? part.getConceptId() : part.getName();
+		return (part.getName() == null || part.getName().isBlank()) ? part.getConceptReference() : part.getName();
 	}
 
 	/** Check if a grounding is non-existent. */

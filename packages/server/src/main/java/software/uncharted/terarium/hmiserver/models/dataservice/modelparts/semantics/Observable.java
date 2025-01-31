@@ -45,12 +45,12 @@ public class Observable extends SupportAdditionalProperties implements Serializa
 	private String expressionMathml;
 
 	@Override
-	public String getConceptId() {
+	public String getConceptReference() {
 		return id;
 	}
 
 	@Override
-	public void setConceptId(String id) {
+	public void setConceptReference(String id) {
 		this.id = id;
 	}
 
@@ -58,7 +58,7 @@ public class Observable extends SupportAdditionalProperties implements Serializa
 	public Observable clone() {
 		Observable clone = (Observable) super.clone();
 
-		clone.setConceptId(this.getConceptId());
+		clone.setConceptReference(this.getConceptReference());
 		clone.setName(this.getName());
 		if (this.states != null) {
 			clone.setStates(this.getStates());

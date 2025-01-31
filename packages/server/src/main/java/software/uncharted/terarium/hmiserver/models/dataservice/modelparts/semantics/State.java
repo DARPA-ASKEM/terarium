@@ -35,12 +35,12 @@ public class State extends SupportAdditionalProperties implements Serializable, 
 	private ModelUnit units;
 
 	@Override
-	public String getConceptId() {
+	public String getConceptReference() {
 		return id;
 	}
 
 	@Override
-	public void setConceptId(String id) {
+	public void setConceptReference(String id) {
 		this.id = id;
 	}
 }
