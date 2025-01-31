@@ -273,10 +273,14 @@
 									>
 										<template #body="{ data, field }">
 											<div class="flex gap-2" v-if="data[field]">
-												<div>{{ displayNumber(data[field]) }}</div>
-												<div v-if="showATEErrors" class="error ml-auto">
-													± {{ displayNumber(data[`${field}_error`]) }}
+												<div>
+													{{ displayNumber(data[field]) }}
+													<template v-if="calculateWisByPercentage">%</template>
 												</div>
+												<!-- TODO: I don't think there are errors based on the WIS code but they're in the design
+												  <div v-if="showATEErrors" class="error ml-auto">
+													± {{ displayNumber(data[`${field}_error`]) }}
+												</div> -->
 											</div>
 										</template>
 									</Column>
@@ -284,9 +288,11 @@
 										<template #body="{ data, field }">
 											<div class="flex gap-2">
 												<div>{{ displayNumber(data[field]) }}</div>
+												<template v-if="calculateWisByPercentage">%</template>
+												<!-- TODO: I don't think there are errors based on the WIS code but they're in the design
 												<div v-if="showATEErrors" class="error ml-auto">
 													± {{ displayNumber(data['overall_error']) }}
-												</div>
+												</div> -->
 											</div>
 										</template>
 									</Column>
