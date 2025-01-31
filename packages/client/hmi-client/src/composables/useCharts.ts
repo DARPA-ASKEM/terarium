@@ -540,25 +540,30 @@ export function useCharts(
 	const useCompareDatasetCharts = (
 		chartSettings: ComputedRef<ChartSetting[]>,
 		selectedPlotType: ComputedRef<PlotValue>,
-		// baselineIndex: ComputedRef<number>,
 		datasets: Ref<Dataset[]>,
-		modelConfigurations,
-		interventionPolicies
+		modelConfigurations: Ref<ModelConfiguration[]>,
+		interventionPolicies: Ref<InterventionPolicy[]>
 	) => {
 		const compareDatasetCharts = computed(() => {
 			const charts: Record<string, VisualizationSpec> = {};
 			if (!isChartReadyToBuild.value) return charts;
 
-			const interventionNameColorMap: Record<string, string> = {};
-			const interventionNameScoreMap: Record<string, string> = {};
-			setInterventionColorAndScoreMaps(
+			if (
+				!modelConfigurations.value ||
+				modelConfigurations.value.length === 0 ||
+				!interventionPolicies.value ||
+				interventionPolicies.value.length === 0
+			) {
+				return charts;
+			}
+
+			const { interventionNameColorMap } = getInterventionColorAndScoreMaps(
 				datasets,
 				modelConfigurations,
-				interventionPolicies,
-				interventionNameColorMap,
-				interventionNameScoreMap
+				interventionPolicies
 			);
 
+			// match variables with intervention colors
 			const variableColorMap = datasets.value.map(({ name }) => {
 				const interventionName = name?.match(/\(([^)]+)\)/);
 				if (interventionName?.length) {
@@ -574,7 +579,6 @@ export function useCharts(
 				const { statLayerVariables, sampleLayerVariables, options } = createForecastChartOptions(settings);
 				options.title = varName;
 				options.yAxisTitle = capitalize(selectedPlotType.value);
-
 				options.colorscheme = variableColorMap;
 
 				const annotations = getChartAnnotationsByChartId(settings.id);
@@ -1251,20 +1255,20 @@ export function useCharts(
 	};
 }
 
-export function setInterventionColorAndScoreMaps(
-	datasets,
-	modelConfigurations,
-	interventionPolicies,
-	interventionNameColorMap,
-	interventionNameScoresMap
+export function getInterventionColorAndScoreMaps(
+	datasets: Ref<Dataset[]>,
+	modelConfigurations: Ref<ModelConfiguration[]>,
+	interventionPolicies: Ref<InterventionPolicy[]>
 ) {
+	const interventionNameColorMap: Record<string, string> = {};
+	const interventionNameScoresMap: Record<string, number[]> = {};
 	let colorIndex = 0;
 	datasets.value.forEach((dataset) => {
 		const { metadata } = dataset;
-		const modelConfiguration: ModelConfiguration = modelConfigurations.value.find(
+		const modelConfiguration = modelConfigurations.value.find(
 			({ id }) => id === metadata.simulationAttributes?.modelConfigurationId
 		);
-		const policy: InterventionPolicy = interventionPolicies.value.find(
+		const policy = interventionPolicies.value.find(
 			({ id }) => id === metadata.simulationAttributes?.interventionPolicyId
 		);
 
@@ -1275,7 +1279,7 @@ export function setInterventionColorAndScoreMaps(
 		}
 
 		if (!interventionNameColorMap[policyName]) {
-			interventionNameScoresMap[policyName] = [];
+			if (interventionNameScoresMap) interventionNameScoresMap[policyName] = [];
 			if (!policy?.name) {
 				interventionNameColorMap[policyName] = 'black';
 			} else {
@@ -1284,4 +1288,6 @@ export function setInterventionColorAndScoreMaps(
 			}
 		}
 	});
+
+	return { interventionNameColorMap, interventionNameScoresMap };
 }

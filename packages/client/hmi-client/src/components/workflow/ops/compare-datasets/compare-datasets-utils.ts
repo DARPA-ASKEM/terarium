@@ -16,7 +16,7 @@ import {
 import { getInterventionPolicyById } from '@/services/intervention-policy';
 import { getModelConfigurationById } from '@/services/model-configurations';
 
-import { ChartData, setInterventionColorAndScoreMaps } from '@/composables/useCharts';
+import { ChartData, getInterventionColorAndScoreMaps } from '@/composables/useCharts';
 
 import { PlotValue, TimepointOption, RankOption, CompareDatasetsState } from './compare-datasets-operation';
 
@@ -195,8 +195,12 @@ export function generateRankingCharts(
 	rankingResultsChart.value = null;
 
 	const allRankedCriteriaValues: { score: number; policyName: string; configName: string }[][] = [];
-	const interventionNameColorMap: Record<string, string> = {};
-	const interventionNameScoresMap: Record<string, number[]> = {};
+
+	const { interventionNameColorMap, interventionNameScoresMap } = getInterventionColorAndScoreMaps(
+		datasets,
+		modelConfigurations,
+		interventionPolicies
+	);
 
 	node.state.criteriaOfInterestCards.forEach((card) => {
 		if (!chartData.value || !card.selectedVariable) return;
@@ -227,13 +231,6 @@ export function generateRankingCharts(
 
 		const rankingCriteriaValues: { score: number; policyName: string; configName: string }[] = [];
 
-		setInterventionColorAndScoreMaps(
-			datasets,
-			modelConfigurations,
-			interventionPolicies,
-			interventionNameColorMap,
-			interventionNameScoresMap
-		);
 		datasets.value.forEach((dataset, index: number) => {
 			const { metadata } = dataset;
 			const modelConfiguration: ModelConfiguration = modelConfigurations.value.find(
@@ -326,16 +323,20 @@ export async function initialize(
 	knobs: Ref<any> | null,
 	isFetchingDatasets: Ref<boolean>,
 	datasets: Ref<Dataset[]>,
-	datasetResults,
-	modelConfigIdToInterventionPolicyIdMap,
-	impactChartData,
+	datasetResults: Ref<{
+		results: DataArray[];
+		summaryResults: DataArray[];
+		datasetResults: DataArray[];
+	} | null>,
+	modelConfigIdToInterventionPolicyIdMap: Ref<Record<string, string[]>>,
+	impactChartData: Ref<ChartData | null>,
 	rankingChartData,
 	baselineDatasetIndex,
 	selectedPlotType,
-	modelConfigurations,
-	interventionPolicies,
-	rankingCriteriaCharts,
-	rankingResultsChart
+	modelConfigurations: Ref<ModelConfiguration[]>,
+	interventionPolicies: Ref<InterventionPolicy[]>,
+	rankingCriteriaCharts: Ref<any>,
+	rankingResultsChart: Ref<any>
 ) {
 	const { inputs } = node;
 	const datasetInputs = inputs.filter(

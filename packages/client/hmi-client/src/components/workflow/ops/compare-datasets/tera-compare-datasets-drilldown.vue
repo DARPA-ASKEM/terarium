@@ -81,7 +81,7 @@
 			<div ref="outputPanel" class="p-2">
 				<Accordion multiple :active-index="activeIndices">
 					<AccordionTab header="Summary"> </AccordionTab>
-					<template v-if="knobs.selectedCompareOption === CompareValue.SCENARIO">
+					<template v-if="knobs.selectedCompareOption === CompareValue.SCENARIO && variableCharts">
 						<AccordionTab header="Variables">
 							<template v-for="setting of selectedVariableSettings" :key="setting.id">
 								<vega-chart
