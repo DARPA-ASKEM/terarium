@@ -21,6 +21,7 @@ import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.Model
 import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.semantics.Observable;
 import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.semantics.State;
 import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.semantics.Transition;
+import software.uncharted.terarium.hmiserver.models.dataservice.regnet.RegNetVertex;
 import software.uncharted.terarium.hmiserver.models.task.TaskResponse;
 import software.uncharted.terarium.hmiserver.service.data.DKGService;
 import software.uncharted.terarium.hmiserver.service.data.ModelService;
@@ -195,10 +196,18 @@ public class EnrichModelResponseHandler extends TaskResponseHandler {
 			}
 
 			// Update State Grounding
-			if (model.getStates() != null && !model.getStates().isEmpty()) {
-				final List<State> states = model.getStates();
-				TaskUtilities.performDKGSearchAndSetGrounding(dkgService, states);
-				model.setStates(states);
+			if (model.isRegnet()) {
+				if (model.getVerticies() != null && !model.getVerticies().isEmpty()) {
+					final List<RegNetVertex> vertices = model.getVerticies();
+					TaskUtilities.performDKGSearchAndSetGrounding(dkgService, vertices);
+					model.setVerticies(vertices);
+				}
+			} else {
+				if (model.getStates() != null && !model.getStates().isEmpty()) {
+					final List<State> states = model.getStates();
+					TaskUtilities.performDKGSearchAndSetGrounding(dkgService, states);
+					model.setStates(states);
+				}
 			}
 
 			// Update Observable Grounding
