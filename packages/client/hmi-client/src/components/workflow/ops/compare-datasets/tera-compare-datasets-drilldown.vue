@@ -242,7 +242,14 @@
 					<template v-else-if="knobs.selectedCompareOption === CompareValue.ERROR">
 						<AccordionTab header="Model error metrics" v-if="showWIS || showMAE">
 							<template v-if="showWIS">
-								<h5>Weighted interval score (WIS)</h5>
+								<header class="flex justify-content-between mb-2">
+									<h5>Weighted interval score (WIS)</h5>
+									<tera-checkbox
+										v-model="calculateWisByPercentage"
+										label="Calculate by percentage"
+										@change="constructWisTable"
+									/>
+								</header>
 								<p class="mb-3">
 									The weighted interval score (WIS) measures the accuracy of a probabilistic forecasts relative to
 									observations (i.e. ground truth). <b>Low WIS values are better</b>, meaning the forecast performed
@@ -404,7 +411,7 @@ import { useChartSettings } from '@/composables/useChartSettings';
 import { useDrilldownChartSize } from '@/composables/useDrilldownChartSize';
 import { useCharts, type ChartData } from '@/composables/useCharts';
 import { DataArray } from '@/services/models/simulation-service';
-import { mean, stddev, computeQuantile, weightedIntervalScore } from '@/utils/stats';
+import { mean, stddev, computeQuantile, getWeightedIntervalScore } from '@/utils/stats';
 import { displayNumber } from '@/utils/number';
 import TeraCriteriaOfInterestCard from './tera-criteria-of-interest-card.vue';
 import {
@@ -446,6 +453,7 @@ const ateVariableHeaders = ref<string[]>([]);
 
 const showWIS = ref(true);
 const wisTable = ref<any[]>([]);
+const calculateWisByPercentage = ref(true);
 const wisVariableHeaders = ref<string[]>([]);
 const showMAE = ref(false);
 
@@ -644,6 +652,8 @@ function deleteMapRow(index: number) {
 	constructWisTable();
 }
 
+// TODO: Investigate sharing similar logic between constructing ate and wis tables since they are very similar
+// It may or may not be a good idea
 function constructWisTable() {
 	wisTable.value = [];
 	wisVariableHeaders.value = [];
@@ -703,7 +713,11 @@ function constructWisTable() {
 				});
 			}
 
-			const wis = weightedIntervalScore(observationsMap[groundTruthKey], observationsMap[key]);
+			const wis = getWeightedIntervalScore(
+				observationsMap[groundTruthKey],
+				observationsMap[key],
+				calculateWisByPercentage.value
+			);
 
 			const totalMean = mean(wis.total);
 			wisRow[variableName] = totalMean;
@@ -712,7 +726,6 @@ function constructWisTable() {
 		wisRow.overall = mean(wisValues);
 		wisTable.value.push({ modelName: dataset.name, ...wisRow });
 	});
-	console.log('wisTable', wisTable.value);
 }
 
 onMounted(async () => {

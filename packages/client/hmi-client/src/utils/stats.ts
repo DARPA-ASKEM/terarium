@@ -106,38 +106,44 @@ export function getIntervalScore(
 		rightQuantile = variableObservations[1 - alpha / 2];
 	}
 
-	// console.log('leftQuantile', leftQuantile, 'rightQuantile', rightQuantile);
 	if (checkConsistency && leftQuantile > rightQuantile) {
 		logger.error('Left quantile must be smaller than right quantile.');
 		return { sharpness: [], calibration: [], total: [] };
 	}
 
-	const sharpness = rightQuantile - leftQuantile;
+	// FIXME: The python code expects sharpness to be a list but for now it makes sense for it to be a number
+	let sharpness = rightQuantile - leftQuantile;
 
-	const calibration = Object.values(groundTruthObservations).map((obs) => {
+	let calibration = Object.values(groundTruthObservations).map((obs) => {
 		const leftClip = Math.max(0, leftQuantile - obs);
 		const rightClip = Math.max(0, obs - rightQuantile);
 		return ((leftClip + rightClip) * 2) / alpha;
 	});
 
-	// if (!percent) {
-	// 	sharpness /= Math.abs(groundTruthObservations[0]);
-	// 	calibration = calibration.map((cal, index) => cal / Math.abs(groundTruthObservations[index]));
-	// }
-	console.log(percent);
+	if (percent) {
+		const groundTruthObservationsValues = Object.values(groundTruthObservations);
+		sharpness /= Math.abs(groundTruthObservationsValues[0]);
+		calibration = calibration.map((cal, index) => cal / Math.abs(groundTruthObservationsValues[index]));
+	}
 
 	const total = calibration.map((cal) => cal + sharpness);
 
-	return { total, sharpness: [sharpness], calibration };
+	return {
+		total,
+		sharpness: [sharpness], // Make sharpness a list for consistency with the original python code (and so it works at all lol)
+		calibration
+	};
 }
 
 // Compute weighted interval scores for an array of observations and a number of different predicted intervals.
-export function weightedIntervalScore(
+// This function implements the WIS-score (2). A dictionary with the respective (alpha/2)
+// and (1-(alpha/2)) quantiles for all alpha levels given in `alphas` needs to be specified.
+export function getWeightedIntervalScore(
 	groundTruthObservations: Record<number, number>,
 	variableObservations: Record<number, number>,
+	percent: boolean = true,
 	alphas: number[] = [0.02, 0.05, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9],
 	weights: number[] = [],
-	percent: boolean = true,
 	checkConsistency: boolean = true
 ) {
 	if (isEmpty(weights)) {
@@ -160,36 +166,22 @@ export function weightedIntervalScore(
 		return [total.map((d) => d * weight), sharpness.map((d) => d * weight), calibration.map((d) => d * weight)];
 	});
 
-	console.log('intervalScores', intervalScores);
-
-	// Transpose the result to sum across different alphas
-	const summedScores = intervalScores.reduce(
-		(acc: any, scoreTuple) => {
-			scoreTuple.forEach((score, idx) => {
-				acc[idx].push(score);
-			});
-			return acc;
-		},
-		[[], [], []]
+	// This is what zip does in python
+	const [totalScores, sharpnessScores, calibrationScores] = intervalScores[0].map((_, colIndex) =>
+		intervalScores.map((row) => row[colIndex])
 	);
-
-	console.log('summedScores', summedScores);
-
-	const [totalScores, sharpnessScores, calibrationScores] = summedScores;
 
 	// Sum the scores across all alphas and normalize by the sum of the weights
 	const weightSum = weights.reduce((sum, val) => sum + val, 0);
 
-	// Sum column-wise
+	// Sum column-wise (equivalent to np.sum(np.vstack(interval_scores[i]), axis=0))
 	function columnWiseSum(array: number[][]) {
 		return array[0].map((_, colIndex) => array.reduce((sum, row) => sum + row[colIndex], 0));
 	}
 
 	const total = columnWiseSum(totalScores).map((d) => d / weightSum);
-	const sharpness = sharpnessScores.reduce((sum, val) => sum + val, 0) / weightSum;
+	const sharpness = columnWiseSum(sharpnessScores).map((d) => d / weightSum);
 	const calibration = columnWiseSum(calibrationScores).map((d) => d / weightSum);
-
-	console.log('total', total, 'sharpness', sharpness, 'calibration', calibration);
 
 	return { total, sharpness, calibration };
 }
