@@ -65,7 +65,7 @@
 										<div
 											v-if="isAddingUncertainty"
 											class="mx-4 flex align-items-center gap-2"
-											@click.stop="updateSelection(baseParameter, childParameters)"
+											@click.stop="updateSelection(childParameters)"
 										>
 											<Checkbox
 												:model-value="getChildrenSelectedState(childParameters).all"
@@ -294,7 +294,7 @@ const getChildrenSelectedState = (childParameters: ParameterSemantic[]) => {
 
 	return { all, some };
 };
-function updateSelection(baseParameter: string, childParameters: ParameterSemantic[]) {
+function updateSelection(childParameters: ParameterSemantic[]) {
 	const selectableChildren = childParameters
 		.filter(
 			({ referenceId }) =>
