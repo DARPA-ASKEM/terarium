@@ -44,6 +44,7 @@
 							v-for="(input, index) in node.inputs.filter((input) => input.value)"
 							:key="index"
 							:label="useProjects().getAssetName(input.value?.[0]) || input.label"
+							v-tooltip.bottom="useProjects().getAssetName(input.value?.[0]) || input.label"
 						>
 							<template #icon>
 								<tera-operator-port-icon v-if="input.type" :portType="input.type" />
@@ -123,6 +124,9 @@ import { isEmpty } from 'lodash';
 import { ref, computed, onMounted, onUnmounted, useSlots, ComponentPublicInstance } from 'vue';
 import Button from 'primevue/button';
 import Chip from 'primevue/chip';
+// Tooltip is used in the chips, but not recgonized by eslint
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+import Tooltip from 'primevue/tooltip';
 import Menu from 'primevue/menu';
 import { MenuItem, MenuItemCommandEvent } from 'primevue/menuitem';
 import type { TabViewChangeEvent } from 'primevue/tabview';
@@ -333,6 +337,10 @@ onUnmounted(() => window.removeEventListener('keydown', handleKeyNavigation));
 	margin-right: auto;
 	overflow-x: auto;
 	scrollbar-width: thin;
+	cursor: pointer;
+}
+.chips:hover .p-chip {
+	background-color: var(--surface-hover);
 }
 
 footer {
