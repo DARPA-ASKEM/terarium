@@ -408,7 +408,7 @@ export function createHistogramChart(dataset: Record<string, any>[], options: Hi
 }
 
 /* This function estimates the legend width, because if it's too we will have to draw it with columns since there's no linewrap */
-function estimateLegendWidth(items: string[], fontSize: number): number {
+function estimateLegendWidth(items: string[], fontSize: number) {
 	// Approximate width of each character (assuming monospace-like proportions)
 	const charWidth = fontSize * 0.4;
 
@@ -416,16 +416,22 @@ function estimateLegendWidth(items: string[], fontSize: number): number {
 	const symbolWidth = fontSize * 3; // Symbol + padding
 	const itemSpacing = fontSize * 4; // Space between items
 
-	// Calculate total width
-	return items.reduce((totalWidth, item) => {
+	const totalWidth = items.reduce((acc, item) => {
 		const itemWidth = item.length * charWidth + symbolWidth;
-		return totalWidth + itemWidth + itemSpacing;
+		return acc + itemWidth + itemSpacing;
 	}, 0);
+
+	const maxItemWidth = Math.max(...items.map((item) => item.length)) * charWidth;
+
+	return {
+		totalWidth,
+		maxItemWidth
+	};
 }
 
 function calculateLegendColumns(
 	isCompact: boolean,
-	estimatedWidth: number,
+	estimatedWidth: { totalWidth: number; maxItemWidth: number },
 	chartWidth: number,
 	numItems: number | undefined
 ): number | undefined {
@@ -436,14 +442,14 @@ function calculateLegendColumns(
 		return isCompact ? 1 : undefined;
 	}
 
-	if (estimatedWidth <= chartWidth) {
+	if (estimatedWidth.totalWidth <= chartWidth) {
 		return undefined; // Everything fits in one row
 	}
 
-	const avgItemWidth = (estimatedWidth / numItems) * 0.85; // Reduce by 15% since our estimation seems high
+	const maxItemWidth = estimatedWidth.maxItemWidth;
 
 	// Calculate how many columns can fit without any extra buffer
-	const maxColumns = Math.floor(chartWidth / avgItemWidth);
+	const maxColumns = Math.floor(chartWidth / maxItemWidth);
 
 	// Use as many columns as we can fit, up to the number of items
 	return Math.max(1, Math.min(maxColumns, numItems));
@@ -530,11 +536,11 @@ export function createForecastChart(
 	};
 
 	const isCompact = options.width < 200;
-	const legendFontSize = isCompact ? 8 : 12;
+	const legendLabelFontSize = isCompact ? 8 : 12;
 
 	// Estimate total legend width
 	const legendItems = getAllLegendItems();
-	const estimatedWidth = estimateLegendWidth(legendItems, legendFontSize);
+	const estimatedWidth = estimateLegendWidth(legendItems, legendLabelFontSize);
 
 	const legendProperties = {
 		title: null,
@@ -544,7 +550,7 @@ export function createForecastChart(
 		direction: isCompact ? 'vertical' : 'horizontal',
 		symbolStrokeWidth: isCompact ? 2 : 4,
 		symbolSize: 200,
-		labelFontSize: isCompact ? 8 : 12,
+		labelFontSize: legendLabelFontSize,
 		labelOffset: isCompact ? 2 : 4,
 		labelLimit: isCompact ? 120 : 320,
 		columnPadding: 16,
@@ -1135,11 +1141,11 @@ export function createQuantilesForecastChart(
 	}
 
 	const isCompact = options.width < 200;
-	const legendFontSize = isCompact ? 8 : 12;
+	const legendLabelFontSize = isCompact ? 8 : 12;
 
 	// Get all unique legend items
 	const legendItems = variables.map((v) => translationMap?.[v] ?? v);
-	const estimatedWidth = estimateLegendWidth(legendItems, legendFontSize);
+	const estimatedWidth = estimateLegendWidth(legendItems, legendLabelFontSize);
 
 	const legendProperties = {
 		title: null,
@@ -1149,7 +1155,7 @@ export function createQuantilesForecastChart(
 		direction: isCompact ? 'vertical' : 'horizontal',
 		symbolStrokeWidth: isCompact ? 2 : 4,
 		symbolSize: 200,
-		labelFontSize: isCompact ? 8 : 12,
+		labelFontSize: legendLabelFontSize,
 		labelOffset: isCompact ? 2 : 4,
 		labelLimit: isCompact ? 120 : 320,
 		columnPadding: 16,
