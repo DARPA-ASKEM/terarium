@@ -1254,7 +1254,7 @@ export function useCharts(
 		};
 
 		watchEffect(async () => {
-			if (!chartData.value || !model?.value) return;
+			if (!chartData.value || !model?.value || _.isEmpty(chartSettings.value)) return;
 			sensitivityDataLoading.value = true;
 
 			const allSelectedVariables = chartSettings.value.map(
