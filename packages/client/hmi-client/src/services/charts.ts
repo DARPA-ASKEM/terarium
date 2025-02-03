@@ -410,7 +410,7 @@ export function createHistogramChart(dataset: Record<string, any>[], options: Hi
 /* This function estimates the legend width, because if it's too we will have to draw it with columns since there's no linewrap */
 function estimateLegendWidth(items: string[], fontSize: number): number {
 	// Approximate width of each character (assuming monospace-like proportions)
-	const charWidth = fontSize * 0.3;
+	const charWidth = fontSize * 0.4;
 
 	// Account for symbol width, padding, and spacing between items
 	const symbolWidth = fontSize * 2; // Symbol + padding
