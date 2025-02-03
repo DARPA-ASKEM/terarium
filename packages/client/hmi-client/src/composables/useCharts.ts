@@ -1128,13 +1128,13 @@ export function useCharts(
 			Record<string, { lineChart: VisualizationSpec; scatterChart: VisualizationSpec; rankingChart: VisualizationSpec }>
 		>({});
 		const sensitivityDataLoading = ref(false);
-		let rankingScores: Map<string, Map<string, number>> = new Map();
+		const rankingScores = ref<Map<string, Map<string, number>>>(new Map());
+		const timepoint = ref(0);
 
 		const fetchSensitivityData = async () => {
 			// pick the first setting's timepoint for now
-			const timepoint = chartSettings.value[0].timepoint;
 			const { result } = chartData.value as ChartData;
-			const sliceData = result.filter((d: any) => d.timepoint_id === timepoint) as any[];
+			const sliceData = result.filter((d: any) => d.timepoint_id === timepoint.value) as any[];
 			// Translate names ahead of time, because we can't seem to customize titles
 			// in vegalite with repeat
 			const translationMap = chartData.value?.translationMap;
@@ -1171,7 +1171,7 @@ export function useCharts(
 				options.title = `${settings.selectedVariables[0]} sensitivity`;
 				options.legendProperties = { direction: 'vertical', columns: 1, labelLimit: 500 };
 
-				const rankingSpec = createSensitivityRankingChart(rankingScores.get(selectedVariable)!, options);
+				const rankingSpec = createSensitivityRankingChart(rankingScores.value.get(selectedVariable)!, options);
 
 				const lineSpec = createForecastChart(
 					{
@@ -1227,7 +1227,7 @@ export function useCharts(
 				}
 
 				// Add sensitivity annotation
-				const annotation = createForecastChartAnnotation('x', timepoint, 'Sensitivity analysis', true);
+				const annotation = createForecastChartAnnotation('x', timepoint.value, 'Sensitivity analysis', true);
 				lineSpec.layer[0].layer.push(annotation.layerSpec);
 
 				const spec = createSimulateSensitivityScatter(
@@ -1259,15 +1259,19 @@ export function useCharts(
 			const allSelectedVariables = chartSettings.value.map(
 				(s) => chartData.value?.pyciemssMap[s.selectedVariables[0]] || s.selectedVariables[0]
 			);
-			// only run if the ranking scores keys are not equal to the selectedVariables
+
+			// only run if the ranking scores if keys are not equal to the selectedVariables or timepoint has changed
 			const hasAllScores =
-				allSelectedVariables.every((v) => rankingScores.has(v)) &&
-				Array.from(rankingScores.keys()).every((k) => allSelectedVariables.includes(k));
-			if (!hasAllScores) {
-				const timepoint = chartSettings.value[0].timepoint;
+				allSelectedVariables.every((v) => rankingScores.value.has(v)) &&
+				Array.from(rankingScores.value.keys()).every((k) => allSelectedVariables.includes(k));
+
+			const hasTimepointChanged = timepoint.value !== chartSettings.value[0].timepoint;
+			timepoint.value = chartSettings.value[0].timepoint;
+
+			if (!hasAllScores || hasTimepointChanged) {
 				const allParameters = model?.value?.semantics?.ode.parameters?.map((p) => p.id) ?? [];
-				const sliceData = chartData.value.result.filter((d) => d.timepoint_id === timepoint);
-				rankingScores = await pythonInstance.getRankingScores(sliceData, allSelectedVariables, allParameters);
+				const sliceData = chartData.value.result.filter((d) => d.timepoint_id === timepoint.value);
+				rankingScores.value = await pythonInstance.getRankingScores(sliceData, allSelectedVariables, allParameters);
 			}
 			fetchSensitivityData();
 			sensitivityDataLoading.value = false;
