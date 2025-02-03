@@ -410,11 +410,11 @@ export function createHistogramChart(dataset: Record<string, any>[], options: Hi
 /* This function estimates the legend width, because if it's too we will have to draw it with columns since there's no linewrap */
 function estimateLegendWidth(items: string[], fontSize: number): number {
 	// Approximate width of each character (assuming monospace-like proportions)
-	const charWidth = fontSize * 0.3;
+	const charWidth = fontSize * 0.4;
 
 	// Account for symbol width, padding, and spacing between items
-	const symbolWidth = fontSize * 2; // Symbol + padding
-	const itemSpacing = fontSize * 2; // Space between items
+	const symbolWidth = fontSize * 3; // Symbol + padding
+	const itemSpacing = fontSize * 4; // Space between items
 
 	// Calculate total width
 	return items.reduce((totalWidth, item) => {
@@ -429,6 +429,9 @@ function calculateLegendColumns(
 	chartWidth: number,
 	numItems: number | undefined
 ): number | undefined {
+	// account for left-padding from chart width
+	if (!isCompact) chartWidth -= 100;
+
 	if (isCompact || !numItems) {
 		return isCompact ? 1 : undefined;
 	}
@@ -543,7 +546,7 @@ export function createForecastChart(
 		symbolSize: 200,
 		labelFontSize: isCompact ? 8 : 12,
 		labelOffset: isCompact ? 2 : 4,
-		labelLimit: isCompact ? 100 : 250,
+		labelLimit: isCompact ? 120 : 320,
 		columnPadding: 16,
 		symbolType: 'stroke',
 		offset: isCompact ? 8 : 16,
@@ -1132,6 +1135,11 @@ export function createQuantilesForecastChart(
 	}
 
 	const isCompact = options.width < 200;
+	const legendFontSize = isCompact ? 8 : 12;
+
+	// Get all unique legend items
+	const legendItems = variables.map((v) => translationMap?.[v] ?? v);
+	const estimatedWidth = estimateLegendWidth(legendItems, legendFontSize);
 
 	const legendProperties = {
 		title: null,
@@ -1143,8 +1151,10 @@ export function createQuantilesForecastChart(
 		symbolSize: 200,
 		labelFontSize: isCompact ? 8 : 12,
 		labelOffset: isCompact ? 2 : 4,
-		labelLimit: isCompact ? 100 : 250,
+		labelLimit: isCompact ? 120 : 320,
 		columnPadding: 16,
+		// Add columns if legend would overflow
+		columns: calculateLegendColumns(isCompact, estimatedWidth, options.width, legendItems.length),
 		...options.legendProperties
 	};
 
