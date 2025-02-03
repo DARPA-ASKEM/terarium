@@ -100,7 +100,7 @@ public class ContextMatcher {
 	 * @param term the term to search for
 	 * @return the first result, or null if no results were found
 	 */
-	public static List<Grounding> search(String term) {
+	private static List<Grounding> search(String term) {
 		List<SearchMatch> matches = new ArrayList<>();
 		for (String key : configData.keySet()) {
 			SearchMatch match = calculateScore(key, term);
@@ -113,7 +113,7 @@ public class ContextMatcher {
 
 		List<Grounding> groundings = new ArrayList<>();
 		for (SearchMatch match : matches) {
-			groundings.add(configData.get(match.getKey()));
+			groundings.add(configData.get(match.getKey()).clone());
 		}
 		return groundings;
 	}

@@ -37,6 +37,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 import software.uncharted.terarium.hmiserver.models.dataservice.dataset.Dataset;
+import software.uncharted.terarium.hmiserver.models.dataservice.dataset.DatasetColumn;
 import software.uncharted.terarium.hmiserver.models.dataservice.document.DocumentAsset;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.Model;
 import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.ModelMetadata;
@@ -1086,25 +1087,25 @@ public class GoLLMController {
 			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("task.gollm.execution-failure"));
 		}
 
-		//		// Update Grounding
-		//		final Optional<Dataset> newDataset = datasetService.getAsset(datasetId, permission);
-		//		if (newDataset.isEmpty()) {
-		//			log.warn(String.format("Dataset %s not found", datasetId));
-		//			throw new ResponseStatusException(HttpStatus.NOT_FOUND, messages.get("dataset.not-found"));
-		//		}
-		//
-		//		if (newDataset.get().getColumns() != null && !newDataset.get().getColumns().isEmpty()) {
-		//			final List<DatasetColumn> columns = newDataset.get().getColumns();
-		//			TaskUtilities.getCuratedGrounding(columns);
-		//		}
-		//
-		//		try {
-		//			datasetService.updateAsset(newDataset.get(), projectId, permission);
-		//		} catch (final IOException e) {
-		//			final String errorString = String.format("Failed to update dataset %s", datasetId);
-		//			log.warn(errorString);
-		//			// exception is not thrown here because we don't want to *fail* because of this?
-		//		}
+		// Update Grounding
+		final Optional<Dataset> newDataset = datasetService.getAsset(datasetId, permission);
+		if (newDataset.isEmpty()) {
+			log.warn(String.format("Dataset %s not found", datasetId));
+			throw new ResponseStatusException(HttpStatus.NOT_FOUND, messages.get("dataset.not-found"));
+		}
+
+		if (newDataset.get().getColumns() != null && !newDataset.get().getColumns().isEmpty()) {
+			final List<DatasetColumn> columns = newDataset.get().getColumns();
+			TaskUtilities.getCuratedGrounding(columns);
+		}
+
+		try {
+			datasetService.updateAsset(newDataset.get(), projectId, permission);
+		} catch (final IOException e) {
+			final String errorString = String.format("Failed to update dataset %s", datasetId);
+			log.warn(errorString);
+			// exception is not thrown here because we don't want to *fail* because of this?
+		}
 
 		return ResponseEntity.ok().body(resp);
 	}
