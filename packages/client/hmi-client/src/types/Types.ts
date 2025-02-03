@@ -662,9 +662,13 @@ export interface OptimizeInterventions {
     startTime?: number;
     timeObjectiveFunction: string;
     parameterObjectiveFunction: string;
-    startTimeInitialGuess?: number;
-    paramValueInitialGuess?: number;
     relativeImportance: number;
+    paramValueInitialGuess?: number;
+    parameterValueLowerBound: number;
+    parameterValueUpperBound: number;
+    startTimeInitialGuess?: number;
+    startTimeLowerBound: number;
+    startTimeUpperBound: number;
 }
 
 export interface OptimizeQoi {

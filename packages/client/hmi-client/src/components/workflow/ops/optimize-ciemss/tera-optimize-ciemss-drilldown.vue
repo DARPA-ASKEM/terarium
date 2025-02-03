@@ -832,50 +832,37 @@ const runOptimize = async () => {
 	setOutputSettingDefaults();
 
 	const optimizeInterventions: OptimizeInterventions[] = [];
-	const listBoundsInterventions: number[][] = [];
 
 	activePolicyGroups.value.forEach((ele) => {
-		const paramNames: string[] = [];
-		const paramValues: number[] = [];
-		const startTime: number[] = [];
-		const initialGuess: number[] = [];
-		const relativeImportance: number[] = [];
-
-		// Only allowed to optimize on interventions that arent grouped aka staticInterventions' length is 1
-		paramNames.push(ele.intervention.staticInterventions[0].appliedTo);
-		paramValues.push(ele.intervention.staticInterventions[0].value);
-		startTime.push(ele.intervention.staticInterventions[0].timestep);
-		relativeImportance.push(ele.relativeImportance);
-
-		const objectiveType = ele.optimizeFunction.type;
-		const timeObjFunction = ele.optimizeFunction.timeObjectiveFunction;
-		const parameterObjFunction = ele.optimizeFunction.parameterObjectiveFunction;
-		if (objectiveType === OptimizationInterventionObjective.startTime) {
-			initialGuess.push(ele.startTimeGuess);
-			listBoundsInterventions.push([ele.startTime]);
-			listBoundsInterventions.push([ele.endTime]);
-		} else if (objectiveType === OptimizationInterventionObjective.paramValue) {
-			initialGuess.push(ele.initialGuessValue);
-			listBoundsInterventions.push([ele.lowerBoundValue]);
-			listBoundsInterventions.push([ele.upperBoundValue]);
-		} else if (objectiveType === OptimizationInterventionObjective.paramValueAndStartTime) {
-			initialGuess.push(ele.startTimeGuess);
-			initialGuess.push(ele.initialGuessValue);
-			listBoundsInterventions.push([ele.lowerBoundValue]);
-			listBoundsInterventions.push([ele.upperBoundValue]);
-		} else {
-			console.error(`invalid optimization type used:${objectiveType}`);
-		}
+		// Note: Only allowed to optimize on interventions that arent grouped aka staticInterventions' length is 1
+		const interventionType = ele.optimizeFunction.type;
+		const paramName: string = ele.intervention.staticInterventions[0].appliedTo;
+		const paramValue: number = ele.intervention.staticInterventions[0].value;
+		const startTime: number = ele.intervention.staticInterventions[0].timestep;
+		const timeObjectiveFunction = ele.optimizeFunction.timeObjectiveFunction;
+		const parameterObjectiveFunction = ele.optimizeFunction.parameterObjectiveFunction;
+		const relativeImportance: number = ele.relativeImportance;
+		const startTimeInitialGuess: number = ele.startTimeGuess;
+		const startTimeLowerBound: number = ele.startTime;
+		const startTimeUpperBound: number = ele.endTime;
+		const paramValueInitialGuess: number = ele.initialGuessValue;
+		const parameterValueLowerBound: number = ele.lowerBoundValue;
+		const parameterValueUpperBound: number = ele.upperBoundValue;
 
 		optimizeInterventions.push({
-			interventionType: objectiveType,
-			paramNames,
+			interventionType,
+			paramName,
 			startTime,
-			paramValues,
-			initialGuess,
-			timeObjectiveFunction: timeObjFunction,
-			parameterObjectiveFunction: parameterObjFunction,
-			relativeImportance: ele.relativeImportance
+			paramValue,
+			timeObjectiveFunction,
+			parameterObjectiveFunction,
+			relativeImportance,
+			paramValueInitialGuess,
+			parameterValueLowerBound,
+			parameterValueUpperBound,
+			startTimeInitialGuess,
+			startTimeLowerBound,
+			startTimeUpperBound
 		});
 	});
 
@@ -906,7 +893,6 @@ const runOptimize = async () => {
 		optimizeInterventions,
 		fixedInterventions,
 		qoi: qois,
-		boundsInterventions: listBoundsInterventions,
 		extra: {
 			numSamples: knobs.value.numSamples,
 			maxiter: knobs.value.maxiter,

@@ -34,16 +34,28 @@ public class OptimizeInterventions {
 	@JsonAlias("parameter_objective_function")
 	private String parameterObjectiveFunction;
 
-	@TSOptional
-	@JsonAlias("start_time_initial_guess")
-	private Double startTimeInitialGuess;
+	@JsonAlias("relative_importance")
+	private Double relativeImportance;
 
 	@TSOptional
 	@JsonAlias("param_value_initial_guess")
 	private Double paramValueInitialGuess;
 
-	@JsonAlias("relative_importance")
-	private Double relativeImportance;
+	@JsonAlias("parameter_value_lower_bound")
+	private Double parameterValueLowerBound;
+
+	@JsonAlias("parameter_value_upper_bound")
+	private Double parameterValueUpperBound;
+
+	@TSOptional
+	@JsonAlias("start_time_initial_guess")
+	private Double startTimeInitialGuess;
+
+	@JsonAlias("start_time_lower_bound")
+	private Double startTimeLowerBound;
+
+	@JsonAlias("start_time_upper_bound")
+	private Double startTimeUpperBound;
 
 	@Override
 	public String toString() {
