@@ -76,10 +76,16 @@ const interventionPolicy = ref<InterventionPolicy | null>(null);
 
 const pyciemssMap = ref<Record<string, string>>({});
 
-const processResult = async (runId: string) => {
-	const result = await getRunResultCSV(runId, 'result.csv');
-	pyciemssMap.value = parsePyCiemssMap(result[0]);
+const processResult = async () => {
 	const state = _.cloneDeep(props.node.state);
+	state.forecastId = state.inProgressForecastId;
+	state.baseForecastId = state.inProgressBaseForecastId;
+	state.inProgressForecastId = '';
+	state.inProgressBaseForecastId = '';
+	const runId = state.forecastId;
+	const result = await getRunResultCSV(runId, 'result.csv');
+
+	pyciemssMap.value = parsePyCiemssMap(result[0]);
 	if (_.isEmpty(state.chartSettings)) {
 		state.chartSettings = updateChartSettingsBySelectedVariables(
 			state.chartSettings ?? [],
@@ -115,8 +121,6 @@ const processResult = async (runId: string) => {
 		});
 	}
 
-	// FIXME: This emit might be getting overridden by the one in the poller
-	emit('update-state', state);
 	const start = _.first(summaryData);
 	const end = _.last(summaryData);
 
@@ -141,6 +145,8 @@ Provide a summary in 100 words or less.
 
 	const summaryResponse = await createLLMSummary(prompt);
 
+	state.summaryId = summaryResponse?.id ?? '';
+
 	// generate label like "Configuration (intervention)"
 	const nodeLabel = (): string => {
 		const configName = modelConfiguration.value?.name;
@@ -160,14 +166,21 @@ Provide a summary in 100 words or less.
 	);
 	if (!datasetResult) {
 		logger.error('Error creating dataset from simulation result.');
+		state.errorMessage = {
+			name: 'Failed to create dataset',
+			value: '',
+			traceback: `Failed to create dataset from simulation result: ${runId}`
+		};
+		emit('update-state', state);
 		return;
 	}
 
+	// Note: this will also update state
 	emit('append-output', {
 		type: SimulateCiemssOperation.outputs[0].type,
 		label: datasetName,
 		value: [datasetResult.id],
-		state: _.omit({ ...props.node.state, summaryId: summaryResponse?.id }, ['chartSettings']),
+		state: _.omit(state, ['chartSettings']),
 		isSelected: false
 	});
 };
@@ -262,13 +275,7 @@ watch(
 			doneProcess = false;
 		}
 		if (doneProcess) {
-			const state = _.cloneDeep(props.node.state);
-			state.forecastId = state.inProgressForecastId;
-			state.baseForecastId = state.inProgressBaseForecastId;
-			state.inProgressForecastId = '';
-			state.inProgressBaseForecastId = '';
-			emit('update-state', state);
-			await processResult(state.forecastId); // Only process and output result for main forecast
+			processResult();
 		}
 	},
 	{ immediate: true }
