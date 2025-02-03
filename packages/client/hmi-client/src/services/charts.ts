@@ -529,21 +529,27 @@ export function createForecastChart(
 	const isCompact = options.width < 200;
 	const legendFontSize = isCompact ? 8 : 12;
 
-	// Estimate total legend width
+	// Estimate total legend width & height
 	const legendItems = getAllLegendItems();
 	const estimatedWidth = estimateLegendWidth(legendItems, legendFontSize);
+
+	const legendColumns = calculateLegendColumns(isCompact, estimatedWidth, options.width, legendItems.length);
+	const rowsNeeded = legendColumns ? Math.ceil(legendItems.length / legendColumns) : 1;
+	const estimatedLegendHeight = legendFontSize * 1.65 * rowsNeeded;
 
 	const legendProperties = {
 		title: null,
 		padding: { value: 0 },
 		strokeColor: null,
-		orient: 'top',
+		orient: 'none',
+		legendX: -28,
+		legendY: -estimatedLegendHeight - 16,
 		direction: isCompact ? 'vertical' : 'horizontal',
 		symbolStrokeWidth: isCompact ? 2 : 4,
 		symbolSize: 200,
 		labelFontSize: isCompact ? 8 : 12,
 		labelOffset: isCompact ? 2 : 4,
-		labelLimit: isCompact ? 100 : 250,
+		labelLimit: isCompact ? 120 : 350,
 		columnPadding: 16,
 		symbolType: 'stroke',
 		offset: isCompact ? 8 : 16,
@@ -558,6 +564,13 @@ export function createForecastChart(
 		title: titleObj,
 		description: '',
 		width: options.width,
+		// Push chart down to make space for legend
+		padding: {
+			top: estimatedLegendHeight + 16,
+			left: 0,
+			right: 0,
+			bottom: 0
+		},
 		height: options.height,
 		autosize: {
 			type: options.autosize || AUTOSIZE.FIT_X
@@ -1143,7 +1156,7 @@ export function createQuantilesForecastChart(
 		symbolSize: 200,
 		labelFontSize: isCompact ? 8 : 12,
 		labelOffset: isCompact ? 2 : 4,
-		labelLimit: isCompact ? 100 : 250,
+		labelLimit: isCompact ? 120 : 350,
 		columnPadding: 16,
 		...options.legendProperties
 	};
