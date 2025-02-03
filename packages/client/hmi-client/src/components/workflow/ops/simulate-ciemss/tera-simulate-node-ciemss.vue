@@ -102,7 +102,6 @@ const processResult = async () => {
 	}
 
 	const summaryData = await getRunResultCSV(runId, 'result_summary.csv');
-
 	if (
 		(state.chartSettings as ChartSettingSensitivity[]).some((setting) => setting.type === ChartSettingType.SENSITIVITY)
 	) {
@@ -176,13 +175,17 @@ Provide a summary in 100 words or less.
 	}
 
 	// Note: this will also update state
-	emit('append-output', {
-		type: SimulateCiemssOperation.outputs[0].type,
-		label: datasetName,
-		value: [datasetResult.id],
-		state: _.omit(state, ['chartSettings']),
-		isSelected: false
-	});
+	emit(
+		'append-output',
+		{
+			type: SimulateCiemssOperation.outputs[0].type,
+			label: datasetName,
+			value: [datasetResult.id],
+			state: _.omit(state, ['chartSettings']),
+			isSelected: false
+		},
+		state
+	);
 };
 const groupedInterventionOutputs = computed(() =>
 	_.groupBy(flattenInterventionData(interventionPolicy.value?.interventions ?? []), 'appliedTo')
