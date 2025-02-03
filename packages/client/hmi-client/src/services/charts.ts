@@ -549,7 +549,7 @@ export function createForecastChart(
 		symbolSize: 200,
 		labelFontSize: isCompact ? 8 : 12,
 		labelOffset: isCompact ? 2 : 4,
-		labelLimit: isCompact ? 120 : 350,
+		labelLimit: isCompact ? 145 : 350,
 		columnPadding: 16,
 		symbolType: 'stroke',
 		offset: isCompact ? 8 : 16,
@@ -561,7 +561,14 @@ export function createForecastChart(
 	// Start building
 	const spec: any = {
 		$schema: VEGALITE_SCHEMA,
-		title: titleObj,
+		title: titleObj
+			? {
+					...titleObj,
+					offset: estimatedLegendHeight,
+					anchor: 'start',
+					frame: 'bounds'
+				}
+			: null,
 		description: '',
 		width: options.width,
 		// Push chart down to make space for legend
@@ -1145,19 +1152,30 @@ export function createQuantilesForecastChart(
 	}
 
 	const isCompact = options.width < 200;
+	const legendFontSize = isCompact ? 8 : 12;
+	const legendItems = variables;
+	const estimatedWidth = estimateLegendWidth(legendItems, legendFontSize);
+	const legendColumns = calculateLegendColumns(isCompact, estimatedWidth, options.width, legendItems.length);
+	const rowsNeeded = legendColumns ? Math.ceil(legendItems.length / legendColumns) : 1;
+	const estimatedLegendHeight = legendFontSize * 1.75 * rowsNeeded + 8;
 
 	const legendProperties = {
 		title: null,
 		padding: { value: 0 },
 		strokeColor: null,
-		orient: 'top',
+		orient: 'none',
+		legendX: -28,
+		legendY: -estimatedLegendHeight - 16,
 		direction: isCompact ? 'vertical' : 'horizontal',
 		symbolStrokeWidth: isCompact ? 2 : 4,
 		symbolSize: 200,
 		labelFontSize: isCompact ? 8 : 12,
 		labelOffset: isCompact ? 2 : 4,
-		labelLimit: isCompact ? 120 : 350,
+		labelLimit: isCompact ? 145 : 350,
 		columnPadding: 16,
+		symbolType: 'stroke',
+		offset: isCompact ? 8 : 16,
+		columns: legendColumns,
 		...options.legendProperties
 	};
 
@@ -1182,10 +1200,23 @@ export function createQuantilesForecastChart(
 
 	const spec: any = {
 		$schema: VEGALITE_SCHEMA,
-		title: titleObj,
+		title: titleObj
+			? {
+					...titleObj,
+					offset: estimatedLegendHeight,
+					anchor: 'start',
+					frame: 'bounds'
+				}
+			: null,
 		description: '',
 		width: options.width,
 		height: options.height,
+		margin: {
+			top: estimatedLegendHeight + 16,
+			left: 0,
+			right: 0,
+			bottom: 0
+		},
 		autosize: {
 			type: options.autosize || AUTOSIZE.FIT_X
 		},
