@@ -7,7 +7,7 @@ import { extractNestedStratas } from '@/model-representation/petrinet/mira-petri
 import type { Initial, Model, ModelParameter, State, RegNetVertex, Transition, Rate, Observable } from '@/types/Types';
 import { getModelType } from '@/services/model';
 import { AMRSchemaNames } from '@/types/common';
-import { parseCurie } from '@/services/concept';
+import { parseCurieToIdentifier } from '@/services/concept';
 import { PetrinetRenderer } from '@/model-representation/petrinet/petrinet-renderer';
 import { NestedPetrinetRenderer } from './petrinet/nested-petrinet-renderer';
 import { isStratifiedModel, getContext, collapseTemplates } from './mira/mira';
@@ -139,7 +139,7 @@ export function updateModelPartProperty(modelPart: any, key: string, value: any)
 		modelPart.units.expression_mathml = `<ci>${value}</ci>`;
 	} else if (key === 'concept') {
 		if (!modelPart.grounding?.identifiers) modelPart.grounding = { identifiers: {}, modifiers: {} };
-		modelPart.grounding.identifiers = parseCurie(value);
+		modelPart.grounding.identifiers = parseCurieToIdentifier(value);
 	} else {
 		modelPart[key] = value;
 	}

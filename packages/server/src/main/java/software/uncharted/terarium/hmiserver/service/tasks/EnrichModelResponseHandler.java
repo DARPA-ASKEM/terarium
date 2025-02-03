@@ -143,7 +143,7 @@ public class EnrichModelResponseHandler extends TaskResponseHandler {
 				model
 					.getParameters()
 					.stream()
-					.filter(param -> param.getId().equalsIgnoreCase(parameter.id))
+					.filter(param -> param.getConceptReference().equalsIgnoreCase(parameter.id))
 					.findFirst()
 					.ifPresent(param -> {
 						param.setDescription(parameter.description);
@@ -161,7 +161,7 @@ public class EnrichModelResponseHandler extends TaskResponseHandler {
 				model
 					.getObservables()
 					.stream()
-					.filter(observe -> observe.getId().equalsIgnoreCase(observable.id))
+					.filter(observe -> observe.getConceptReference().equalsIgnoreCase(observable.id))
 					.findFirst()
 					.ifPresent(observe -> {
 						observe.setDescription(observable.description);

@@ -92,7 +92,7 @@
 											:options="
 												datasets[groundTruthDatasetIndex].columns
 													?.map((ele) => ele.name)
-													.filter((ele) => ele.includes('mean'))
+													.filter((ele) => ele?.includes('mean'))
 											"
 											placeholder="Variable"
 										/>
@@ -114,10 +114,10 @@
 													?.map((ele) => ele.name)
 													.filter(
 														(ele) =>
-															!ele.includes('median') &&
-															!ele.includes('std') &&
-															!ele.includes('min') &&
-															!ele.includes('max')
+															!ele?.includes('median') &&
+															!ele?.includes('std') &&
+															!ele?.includes('min') &&
+															!ele?.includes('max')
 													)
 											"
 										/>
@@ -549,10 +549,16 @@ const selectedPlotType = computed(() => knobs.value.selectedPlotType);
 const baselineDatasetIndex = computed(() =>
 	datasets.value.findIndex((dataset) => dataset.id === knobs.value.selectedBaselineDatasetId)
 );
+const variableCharts = useCompareDatasetCharts(
+	selectedVariableSettings,
+	selectedPlotType,
+	datasets,
+	modelConfigurations,
+	interventionPolicies
+);
 const groundTruthDatasetIndex = computed(() =>
 	datasets.value.findIndex((dataset) => dataset.id === knobs.value.selectedGroundTruthDatasetId)
 );
-const variableCharts = useCompareDatasetCharts(selectedVariableSettings, selectedPlotType, baselineDatasetIndex);
 
 function outputPanelBehavior() {
 	if (knobs.value.selectedCompareOption === CompareValue.RANK) {

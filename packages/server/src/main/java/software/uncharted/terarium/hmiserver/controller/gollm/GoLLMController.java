@@ -1029,6 +1029,26 @@ public class GoLLMController {
 			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("task.gollm.execution-failure"));
 		}
 
+		//		// Update Grounding
+		//		final Optional<Dataset> newDataset = datasetService.getAsset(datasetId, permission);
+		//		if (newDataset.isEmpty()) {
+		//			log.warn(String.format("Dataset %s not found", datasetId));
+		//			throw new ResponseStatusException(HttpStatus.NOT_FOUND, messages.get("dataset.not-found"));
+		//		}
+		//
+		//		if (newDataset.get().getColumns() != null && !newDataset.get().getColumns().isEmpty()) {
+		//			final List<DatasetColumn> columns = newDataset.get().getColumns();
+		//			TaskUtilities.getCuratedGrounding(columns);
+		//		}
+		//
+		//		try {
+		//			datasetService.updateAsset(newDataset.get(), projectId, permission);
+		//		} catch (final IOException e) {
+		//			final String errorString = String.format("Failed to update dataset %s", datasetId);
+		//			log.warn(errorString);
+		//			// exception is not thrown here because we don't want to *fail* because of this?
+		//		}
+
 		return ResponseEntity.ok().body(resp);
 	}
 
