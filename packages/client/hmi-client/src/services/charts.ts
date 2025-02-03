@@ -437,7 +437,7 @@ function calculateLegendColumns(
 		return undefined; // Everything fits in one row
 	}
 
-	const avgItemWidth = (estimatedWidth / numItems) * 0.85; // Reduce by 15% since our estimation seems high
+	const avgItemWidth = (estimatedWidth / numItems) * 0.9; // Reduce by 10% since our estimation seems high
 
 	// Calculate how many columns can fit without any extra buffer
 	const maxColumns = Math.floor(chartWidth / avgItemWidth);
