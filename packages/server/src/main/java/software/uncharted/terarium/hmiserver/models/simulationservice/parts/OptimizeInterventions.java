@@ -17,16 +17,16 @@ public class OptimizeInterventions {
 	// https://github.com/DARPA-ASKEM/pyciemss-service/blob/main/service/models/operations/optimize.py#L99
 	private String interventionType;
 
-	@JsonAlias("param_names")
-	private List<String> paramNames;
+	@JsonAlias("param_name")
+	private String paramName;
 
 	@TSOptional
-	@JsonAlias("param_values")
-	private List<Double> paramValues;
+	@JsonAlias("param_value")
+	private Double paramValue;
 
 	@TSOptional
 	@JsonAlias("start_time")
-	private List<Integer> startTime;
+	private Integer startTime;
 
 	@JsonAlias("time_objective_function")
 	private String timeObjectiveFunction;
@@ -35,14 +35,18 @@ public class OptimizeInterventions {
 	private String parameterObjectiveFunction;
 
 	@TSOptional
-	@JsonAlias("initial_guess")
-	private List<Double> initialGuess;
+	@JsonAlias("start_time_initial_guess")
+	private Double startTimeInitialGuess;
+
+	@TSOptional
+	@JsonAlias("param_value_initial_guess")
+	private Double paramValueInitialGuess;
 
 	@JsonAlias("relative_importance")
 	private Double relativeImportance;
 
 	@Override
 	public String toString() {
-		return (" { Parameter Names: " + this.paramNames + " start time: " + startTime.toString() + " } ");
+		return (" { Parameter Names: " + this.paramName + " start time: " + startTime.toString() + " } ");
 	}
 }
