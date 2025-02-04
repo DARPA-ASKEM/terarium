@@ -167,6 +167,7 @@
 									<Textarea
 										v-if="selectedItem === equation.name"
 										v-model="equation.asset.text"
+										@blur="onUpdateEquation($event, equation)"
 										autoResize
 										rows="1"
 										placeholder="Add an expression with LaTeX"
@@ -220,6 +221,7 @@
 									<Textarea
 										v-if="selectedItem === equation.name"
 										v-model="equation.asset.text"
+										@blur="onUpdateEquation($event, equation)"
 										autoResize
 										rows="1"
 										placeholder="Add an expression with LaTeX"
@@ -480,6 +482,13 @@ function onCheckBoxChange(equation) {
 	const state = cloneDeep(props.node.state);
 	const index = state.equations.findIndex((e) => e.name === equation.name);
 	state.equations[index].includeInProcess = equation.includeInProcess;
+	emit('update-state', state);
+}
+
+function onUpdateEquation(event, equation) {
+	const state = cloneDeep(props.node.state);
+	const index = state.equations.findIndex((e) => e.name === equation.name);
+	state.equations[index].asset.text = event.target.value;
 	emit('update-state', state);
 }
 
