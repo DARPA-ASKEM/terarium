@@ -64,7 +64,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue';
+import { computed, ref } from 'vue';
 import { debounce } from 'lodash';
 import Button from 'primevue/button';
 import Dropdown from 'primevue/dropdown';
@@ -91,35 +91,30 @@ const props = defineProps<{
 
 const emit = defineEmits(['update-item']);
 
-const nameText = ref(props.name);
-const unitExpression = ref(props.unitExpression);
-const descriptionText = ref(props.description);
-const grounding = ref(props.grounding);
-const showDescription = ref<boolean>(!!descriptionText.value);
-
-const debouncedWatch = debounce((key: string, value: string) => {
+const debouncer = debounce((key: string, value: string = '') => {
 	emit('update-item', { key, value });
 }, 300);
 
-watch(
-	() => nameText.value,
-	(newValue = '') => debouncedWatch('name', newValue)
-);
-watch(
-	() => unitExpression.value,
-	(newValue = '') => debouncedWatch('unitExpression', newValue)
-);
-watch(
-	() => descriptionText.value,
-	(newValue = '') => {
-		debouncedWatch('description', newValue);
-		showDescription.value = !!newValue;
+const nameText = computed({
+	get: () => props.name,
+	set: (newName) => debouncer('name', newName)
+});
+const unitExpression = computed({
+	get: () => props.unitExpression,
+	set: (newUnitExpression) => debouncer('unitExpression', newUnitExpression)
+});
+const descriptionText = computed({
+	get: () => props.description,
+	set: (newDescription) => {
+		debouncer('description', newDescription);
+		showDescription.value = !!newDescription;
 	}
-);
-watch(
-	() => grounding.value,
-	(newValue = '') => debouncedWatch('grounding', newValue)
-);
+});
+const showDescription = ref<boolean>(!!descriptionText.value);
+const grounding = computed({
+	get: () => props.grounding,
+	set: (newGrounding) => debouncer('grounding', newGrounding)
+});
 
 // If we are in preview mode and there is no content, show nothing
 const showUnit = computed(
