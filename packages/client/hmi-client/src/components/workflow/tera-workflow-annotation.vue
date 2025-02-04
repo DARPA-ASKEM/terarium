@@ -5,9 +5,8 @@
 		class="wf-annotation"
 		:style="{ fontSize: annotationRef.textSize + 'px' }"
 		@dblclick.stop="edit"
-	>
-		{{ annotationRef.content }}
-	</div>
+		v-html="formattedContent"
+	></div>
 	<!-- Editing view -->
 	<div v-else class="wf-annotation-editing">
 		<textarea
@@ -81,7 +80,7 @@
 <script setup lang="ts">
 import Button from 'primevue/button';
 import { WorkflowAnnotation } from '@/types/workflow';
-import { ref } from 'vue';
+import { ref, nextTick, computed } from 'vue';
 
 const props = defineProps<{
 	annotation: WorkflowAnnotation;
@@ -101,6 +100,9 @@ const reset = () => {
 const edit = () => {
 	isEditing.value = !isEditing.value;
 	autoResize();
+	nextTick(() => {
+		textarea.value?.focus();
+	});
 };
 
 const update = () => {
@@ -133,6 +135,8 @@ const autoResize = () => {
 		element.style.height = `${element.scrollHeight}px`;
 	}
 };
+
+const formattedContent = computed(() => annotationRef.value.content.replace(/\n/g, '<br>'));
 </script>
 
 <style scoped>
@@ -158,8 +162,9 @@ const autoResize = () => {
 }
 .wf-annotation-editing .text-area {
 	width: 100%;
-	padding: var(--gap-4);
-	border: 1px solid var(--primary-color);
+	padding: 10px 14px;
+	min-height: 40px;
+	border: 2px solid var(--primary-color);
 	border-radius: var(--border-radius);
 	font-family: var(--font-family);
 }
