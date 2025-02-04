@@ -143,7 +143,7 @@ export function getWeightedIntervalScore(
 		weights = alphas.map((alpha) => alpha / 2);
 	}
 
-	let isConsistent = false;
+	let isConsistent = true;
 
 	// Calculate interval scores for each alpha and weight
 	const intervalScores = alphas.map((alpha, index) => {

@@ -462,7 +462,7 @@ const ateTable = ref<any[]>([]);
 const ateVariableHeaders = ref<string[]>([]);
 
 const showWIS = ref(true);
-const checkConsistency = ref(true);
+const checkConsistency = ref(false);
 const wisTable = ref<any[]>([]);
 const calculateWisByPercentage = ref(true);
 const wisVariableHeaders = ref<string[]>([]);
@@ -668,8 +668,8 @@ function deleteMapRow(index: number) {
 function constructWisTable() {
 	wisTable.value = [];
 	wisVariableHeaders.value = [];
-	let lacksConsistency = false;
 
+	let isConsistent = true;
 	const observationsMap: Record<number, number> = {};
 	const variableToTypeMap: Record<string, string> = {};
 
@@ -732,8 +732,8 @@ function constructWisTable() {
 				checkConsistency.value
 			);
 
-			if (!lacksConsistency) {
-				lacksConsistency = wis.isConsistent;
+			if (!isConsistent) {
+				isConsistent = wis.isConsistent;
 			}
 
 			const totalMean = mean(wis.total);
@@ -744,7 +744,7 @@ function constructWisTable() {
 		wisTable.value.push({ modelName: dataset.name, ...wisRow });
 	});
 
-	if (lacksConsistency) {
+	if (!isConsistent) {
 		logger.error('Left quantile must be smaller than right quantile. Datasets are not ideal for WIS calculation.');
 	}
 }
