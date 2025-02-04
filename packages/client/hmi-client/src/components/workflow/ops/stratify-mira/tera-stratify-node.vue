@@ -34,11 +34,12 @@ watch(
 	async () => {
 		const input = props.node.inputs[0];
 		// Create a default if we dont have an output yet:
-		if (input && !props.node.outputs[0].value) {
+		// if (input && !props.node.outputs[0].value) {
+		if (input && input.value) {
 			let baseModelId = '';
 
 			if (input.type === 'modelId') {
-				baseModelId = input.value?.[0];
+				baseModelId = input.value[0];
 			} else if (input.type === 'modelConfigId') {
 				const modelConfigId = input.value?.[0];
 
@@ -48,7 +49,7 @@ watch(
 				// Mark the model as orginating from the config
 				model.temporary = true;
 				model.name += `(${modelConfiguration.name})`;
-				model.header.name = model.name;
+				model.header.name = model.name as string;
 
 				const res = await createModel(model);
 				if (res) {
