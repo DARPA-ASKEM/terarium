@@ -9,7 +9,11 @@
 			<ul>
 				<li v-for="{ baseInitial, childInitials, isVirtual } in initialList" :key="baseInitial">
 					<!-- Stratified -->
-					<section v-if="isVirtual" class="initial-entry-stratified">
+					<section
+						v-if="isVirtual"
+						class="initial-entry-stratified"
+						:class="{ warning: hasEmptyExpressions({ baseInitial }) }"
+					>
 						<Accordion multiple>
 							<AccordionTab>
 								<template #header>
@@ -116,6 +120,12 @@ const initialList = computed<
 		.filter(({ baseInitial }) => baseInitial.toLowerCase().includes(filterText.value.toLowerCase()));
 });
 
+const hasEmptyExpressions = computed(() => ({ baseInitial }) => {
+	const semanticsForThisInitial = props.modelConfiguration.initialSemanticList.filter((s) =>
+		s.target.startsWith(`${baseInitial}_`)
+	);
+	return semanticsForThisInitial.some((s) => !s.expression);
+});
 const currentActiveIndicies = ref([0]);
 
 const matrixModalId = ref('');
@@ -144,15 +154,13 @@ ul {
 	border-left: 4px solid var(--surface-300);
 	padding-left: var(--gap-1);
 }
-.initial-entry-stratified:hover {
-	border-left-color: var(--primary-color);
-	background: var(--surface-highlight);
+.initial-entry-stratified.warning {
+	border-left-color: var(--error-color);
 }
-/* But set a lighter hover state when hovering over child elements */
-.initial-entry-stratified:hover:has(.initial-entry:hover) {
-	border-left: 4px solid var(--primary-color-light);
-	background: color-mix(in srgb, var(--surface-highlight) 30%, var(--surface-0) 70%);
+.initial-entry-stratified.warning:hover {
+	border-left-color: var(--error-color);
 }
+
 .artifact-amount {
 	font-size: var(--font-caption);
 	color: var(--text-color-subdued);
