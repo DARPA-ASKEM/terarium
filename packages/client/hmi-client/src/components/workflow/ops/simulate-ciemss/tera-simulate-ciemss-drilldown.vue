@@ -902,6 +902,17 @@ watch(
 	{ immediate: true }
 );
 
+// Watch for run results and open settings panel if no charts are configured
+watch(
+	[() => runResults.value[selectedRunId.value], () => chartSettings.value],
+	([results, settings]) => {
+		if (results && (!settings || isEmpty(settings))) {
+			isOutputSettingsPanelOpen.value = true;
+		}
+	},
+	{ immediate: true }
+);
+
 onMounted(() => {
 	buildJupyterContext();
 });
