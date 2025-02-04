@@ -283,7 +283,7 @@
 					<section class="pb-3" v-if="modelConfig && csvAsset">
 						<div class="mx-4" ref="chartWidthDiv"></div>
 						<Accordion multiple :active-index="currentActiveIndicies" class="px-2">
-							<!-- Paramater distributions sectin -->
+							<!-- Parameter distributions section -->
 							<AccordionTab v-if="selectedParameterSettings.length > 0" header="Parameter distributions">
 								<template v-for="setting of selectedParameterSettings" :key="setting.id">
 									<div class="flex flex-column">
@@ -1024,7 +1024,7 @@ async function getAutoMapping() {
 		toast.error('', 'No dataset columns to map with');
 		return;
 	}
-	mapping.value = (await autoCalibrationMapping(modelStateOptions.value, datasetColumns.value)) as CalibrateMap[];
+	mapping.value = await autoCalibrationMapping(modelStateOptions.value, datasetColumns.value);
 	const state = _.cloneDeep(props.node.state);
 	state.mapping = mapping.value;
 	emit('update-state', state);
