@@ -117,7 +117,7 @@ const addModelConfigNameToTranslationMap = (
 
 /**
  * Calculate the extent of the y-axis based on the provided result summary and variables.
- * @param result The result summary data array.
+ * @param result The result data array.
  * @param variables The list of variables to calculate the extent for.
  * @returns The extent of the y-axis as a tuple of [min, max].
  */
