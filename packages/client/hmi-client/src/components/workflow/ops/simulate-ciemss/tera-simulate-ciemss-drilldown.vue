@@ -329,17 +329,19 @@
 				<template #content>
 					<div class="output-settings-panel">
 						<!-- Intervention charts -->
-						<tera-chart-settings
-							:title="'Interventions over time'"
-							:settings="chartSettings"
-							:type="ChartSettingType.INTERVENTION"
-							:select-options="Object.keys(groupedInterventionOutputs)"
-							:selected-options="selectedInterventionSettings.map((s) => s.selectedVariables[0])"
-							@open="setActiveChartSettings($event)"
-							@remove="removeChartSettings"
-							@selection-change="updateChartSettings"
-						/>
-						<Divider />
+						<div v-if="interventionPolicy">
+							<tera-chart-settings
+								:title="'Interventions over time'"
+								:settings="chartSettings"
+								:type="ChartSettingType.INTERVENTION"
+								:select-options="Object.keys(groupedInterventionOutputs)"
+								:selected-options="selectedInterventionSettings.map((s) => s.selectedVariables[0])"
+								@open="setActiveChartSettings($event)"
+								@remove="removeChartSettings"
+								@selection-change="updateChartSettings"
+							/>
+							<Divider />
+						</div>
 						<!-- Variable charts -->
 						<tera-chart-settings
 							:title="'Variables over time'"
