@@ -38,12 +38,6 @@
 									id="searchProject"
 									:icon="isSearchLoading ? 'pi pi-spin pi-spinner' : 'pi pi-search'"
 									class="search-input"
-									@keydown.enter="searchedProjects"
-								/>
-								<Button
-									label="Search"
-									:disabled="searchProjectsQuery.length === 0 || isSearchLoading"
-									@click="searchedProjects"
 								/>
 							</span>
 							<Dropdown
@@ -158,9 +152,8 @@ import EmptySeed from '@/assets/images/lottie-empty-seed.json';
 import TeraInputText from '@/components/widgets/tera-input-text.vue';
 import { useNotificationManager } from '@/composables/notificationManager';
 import teraUploadProjectModal from '@/components/project/tera-upload-project-modal.vue';
-import { findProjects } from '@/services/project';
-import { useToastService } from '@/services/toast';
 import TeraModal from '@/components/widgets/tera-modal.vue';
+import { FilterService } from 'primevue/api';
 
 const { isProjectConfigDialogVisible, menuProject } = useProjectMenu();
 
@@ -281,20 +274,23 @@ function sortProjectByDates(projects: Project[], dateType: DateType, sorting: 'A
 
 function filterAndSortProjects(projects: Project[]) {
 	if (projects) {
+		const userInput = searchProjectsQuery.value.trim();
+		const result = FilterService.filter(projects, ['name', 'description', 'userName'], userInput, 'contains');
+
 		if (selectedSort.value === 'Alphabetical') {
-			return projects.sort((a, b) => (a.name ?? '').toLowerCase().localeCompare((b.name ?? '').toLowerCase()));
+			return result.sort((a, b) => (a.name ?? '').toLowerCase().localeCompare((b.name ?? '').toLowerCase()));
 		}
 		if (selectedSort.value === 'Last updated (descending)') {
-			return sortProjectByDates(projects, 'updatedOn', 'DESC');
+			return sortProjectByDates(result, 'updatedOn', 'DESC');
 		}
 		if (selectedSort.value === 'Last updated (ascending)') {
-			return sortProjectByDates(projects, 'updatedOn', 'ASC');
+			return sortProjectByDates(result, 'updatedOn', 'ASC');
 		}
 		if (selectedSort.value === 'Creation date (descending)') {
-			return sortProjectByDates(projects, 'createdOn', 'DESC');
+			return sortProjectByDates(result, 'createdOn', 'DESC');
 		}
 		if (selectedSort.value === 'Creation date (ascending)') {
-			return sortProjectByDates(projects, 'createdOn', 'ASC');
+			return sortProjectByDates(result, 'createdOn', 'ASC');
 		}
 	}
 	return [];
@@ -340,29 +336,30 @@ watch(cloningProjects, () => {
 	}
 });
 
-async function searchedProjects() {
-	// If the search query is empty, show all projects
-	if (isEmpty(searchProjectsQuery.value)) {
-		searchProjectsResults.value = [];
-		return;
-	}
-
-	isSearchLoading.value = true;
-	findProjects(searchProjectsQuery.value)
-		.then((response) => {
-			// If no projects found, display a toast message
-			if (isEmpty(response)) {
-				useToastService().info('No projects found', 'Try searching for something else', 5000);
-			} else {
-				// Display search results using the table view
-				searchProjectsResults.value = response;
-				view.value = ProjectsView.Table;
-			}
-		})
-		.finally(() => {
-			isSearchLoading.value = false;
-		});
-}
+// TODO: Feb 3 2025 - this will call out to the back end to perform a search. Its been disabled for now.
+// async function searchedProjects() {
+// 	// If the search query is empty, show all projects
+// 	if (isEmpty(searchProjectsQuery.value)) {
+// 		searchProjectsResults.value = [];
+// 		return;
+// 	}
+//
+// 	isSearchLoading.value = true;
+// 	findProjects(searchProjectsQuery.value)
+// 		.then((response) => {
+// 			// If no projects found, display a toast message
+// 			if (isEmpty(response)) {
+// 				useToastService().info('No projects found', 'Try searching for something else', 5000);
+// 			} else {
+// 				// Display search results using the table view
+// 				searchProjectsResults.value = response;
+// 				view.value = ProjectsView.Table;
+// 			}
+// 		})
+// 		.finally(() => {
+// 			isSearchLoading.value = false;
+// 		});
+// }
 </script>
 
 <style scoped>
