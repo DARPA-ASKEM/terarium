@@ -726,7 +726,7 @@ public class KnowledgeController {
 
 		try {
 			sympyToAMRRequest = createSympyToAMRTask(code.getCode());
-			sympyToAMRResponse = taskService.runTaskSync(sympyToAMRRequest);
+			sympyToAMRResponse = taskService.runTaskSyncDebug(sympyToAMRRequest);
 			response = mapper.readValue(sympyToAMRResponse.getOutput(), JsonNode.class);
 			return ResponseEntity.ok().body(response);
 		} catch (final TimeoutException e) {
@@ -740,8 +740,10 @@ public class KnowledgeController {
 			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("task.mira.execution-failure"));
 		} catch (final Exception e) {
 			log.error("Unexpected error", e);
+			ObjectNode objectNode = mapper.createObjectNode();
+			objectNode.put("error", sympyToAMRResponse.getStderr());
+			return ResponseEntity.ok().body(objectNode);
 		}
-		throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("generic.io-error.read"));
 	}
 
 	@PostMapping("/equations-to-model-debug")
