@@ -244,11 +244,14 @@
 							<template v-if="showWIS">
 								<header class="flex justify-content-between mb-2">
 									<h5>Weighted interval score (WIS)</h5>
-									<tera-checkbox
-										v-model="calculateWisByPercentage"
-										label="Calculate by percentage"
-										@change="constructWisTable"
-									/>
+									<div class="flex gap-4">
+										<tera-checkbox
+											v-model="calculateWisByPercentage"
+											label="Calculate by percentage"
+											@change="constructWisTable"
+										/>
+										<tera-checkbox v-model="checkConsistency" label="Check consistency" @change="constructWisTable" />
+									</div>
 								</header>
 								<p class="mb-3">
 									The weighted interval score (WIS) measures the accuracy of a probabilistic forecasts relative to
@@ -392,6 +395,7 @@
 
 <script setup lang="ts">
 import { isEmpty, cloneDeep } from 'lodash';
+import { logger } from '@/utils/logger';
 import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
 import { WorkflowNode } from '@/types/workflow';
 import TeraSliderPanel from '@/components/widgets/tera-slider-panel.vue';
@@ -458,6 +462,7 @@ const ateTable = ref<any[]>([]);
 const ateVariableHeaders = ref<string[]>([]);
 
 const showWIS = ref(true);
+const checkConsistency = ref(true);
 const wisTable = ref<any[]>([]);
 const calculateWisByPercentage = ref(true);
 const wisVariableHeaders = ref<string[]>([]);
@@ -663,6 +668,7 @@ function deleteMapRow(index: number) {
 function constructWisTable() {
 	wisTable.value = [];
 	wisVariableHeaders.value = [];
+	let lacksConsistency = false;
 
 	const observationsMap: Record<number, number> = {};
 	const variableToTypeMap: Record<string, string> = {};
@@ -722,8 +728,13 @@ function constructWisTable() {
 			const wis = getWeightedIntervalScore(
 				observationsMap[groundTruthKey],
 				observationsMap[key],
-				calculateWisByPercentage.value
+				calculateWisByPercentage.value,
+				checkConsistency.value
 			);
+
+			if (!lacksConsistency) {
+				lacksConsistency = wis.isConsistent;
+			}
 
 			const totalMean = mean(wis.total);
 			wisRow[variableName] = totalMean;
@@ -732,6 +743,10 @@ function constructWisTable() {
 		wisRow.overall = mean(wisValues);
 		wisTable.value.push({ modelName: dataset.name, ...wisRow });
 	});
+
+	if (lacksConsistency) {
+		logger.error('Left quantile must be smaller than right quantile. Datasets are not ideal for WIS calculation.');
+	}
 }
 
 onMounted(async () => {

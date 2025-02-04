@@ -1,5 +1,4 @@
 import { meanBy, isEmpty } from 'lodash';
-import { logger } from '@/utils/logger';
 
 export type DataArray = Record<string, any>[];
 
@@ -101,8 +100,7 @@ export function getIntervalScore(
 	const rightQuantile = variableObservations[1 - alpha / 2];
 
 	if (checkConsistency && leftQuantile > rightQuantile) {
-		logger.error('Left quantile must be smaller than right quantile. Datasets are not ideal for WIS calculation.');
-		return { sharpness: [], calibration: [], total: [] };
+		return { sharpness: [], calibration: [], total: [], isConsistent: false };
 	}
 
 	// FIXME: The python code expects sharpness to be a list but for now it makes sense for it to be a number
@@ -125,7 +123,8 @@ export function getIntervalScore(
 	return {
 		total,
 		sharpness: [sharpness], // Make sharpness a list for consistency with the original python code (and so it works at all lol)
-		calibration
+		calibration,
+		isConsistent: true
 	};
 }
 
@@ -136,13 +135,15 @@ export function getWeightedIntervalScore(
 	groundTruthObservations: Record<number, number>,
 	variableObservations: Record<number, number>,
 	percent: boolean = true,
+	checkConsistency: boolean = true,
 	alphas: number[] = [0.02, 0.05, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9],
-	weights: number[] = [],
-	checkConsistency: boolean = true
+	weights: number[] = []
 ) {
 	if (isEmpty(weights)) {
 		weights = alphas.map((alpha) => alpha / 2);
 	}
+
+	let isConsistent = false;
 
 	// Calculate interval scores for each alpha and weight
 	const intervalScores = alphas.map((alpha, index) => {
@@ -153,6 +154,10 @@ export function getWeightedIntervalScore(
 			percent,
 			checkConsistency
 		);
+
+		if (!isConsistent) {
+			isConsistent = intervalScore.isConsistent;
+		}
 
 		// Weigh scores
 		const { total, sharpness, calibration } = intervalScore;
@@ -177,5 +182,5 @@ export function getWeightedIntervalScore(
 	const sharpness = columnWiseSum(sharpnessScores).map((d) => d / weightSum);
 	const calibration = columnWiseSum(calibrationScores).map((d) => d / weightSum);
 
-	return { total, sharpness, calibration };
+	return { total, sharpness, calibration, isConsistent };
 }
