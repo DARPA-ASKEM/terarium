@@ -17,6 +17,7 @@ import CustomInputTest from '@/temp/custom-input-test.vue';
 import ClipboardTest from '@/temp/Clipboard.vue';
 import VegaliteTest from '@/temp/Vegalite.vue';
 import EquationsTest from '@/temp/Equations.vue';
+import SymPyAMRTest from '@/temp/SympyAMR.vue';
 import FunmanDebugger from '@/temp/FunmanDebugger.vue';
 import { RouteName } from './routes';
 
@@ -65,7 +66,8 @@ const routes = [
 	{ path: '/clipboard', component: ClipboardTest },
 	{ path: '/vegalite', component: VegaliteTest },
 	{ path: '/funman-debugger', component: FunmanDebugger },
-	{ path: '/equations', component: EquationsTest }
+	{ path: '/equations', component: EquationsTest },
+	{ path: '/sympy-to-amr', component: SymPyAMRTest }
 ];
 
 const router = createRouter({
