@@ -82,7 +82,7 @@
 											text
 											size="small"
 											@click.stop="matrixModalId = baseParameter"
-											class="ml-auto"
+											class="ml-3"
 										/>
 									</div>
 								</template>

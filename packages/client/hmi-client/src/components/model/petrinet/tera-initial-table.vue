@@ -14,7 +14,13 @@
 							<AccordionTab>
 								<template #header>
 									<span>{{ baseInitial }}</span>
-									<Button label="Open Matrix" text size="small" @click.stop="matrixModalId = baseInitial" />
+									<Button
+										label="Open matrix"
+										text
+										size="small"
+										@click.stop="matrixModalId = baseInitial"
+										class="ml-3"
+									/>
 								</template>
 								<ul>
 									<li v-for="{ target } in childInitials" :key="target">
