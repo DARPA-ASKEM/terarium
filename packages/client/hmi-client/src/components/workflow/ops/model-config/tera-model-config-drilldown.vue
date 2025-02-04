@@ -543,9 +543,8 @@ const missingInputCount = (modelConfiguration: ModelConfiguration) => {
 	if (selectedConfigId.value === modelConfiguration.id) {
 		return selectedConfigMissingInputCount.value;
 	}
-	const inferredParameterList = modelConfiguration.inferredParameterList?.length ?? 0;
 	const total = amrInitials.value.length + amrParameters.value.length;
-	const amount = total - getTotalInput(modelConfiguration) - inferredParameterList;
+	const amount = total - getTotalInput(modelConfiguration);
 	return getMissingInputsMessage(amount, total);
 };
 
