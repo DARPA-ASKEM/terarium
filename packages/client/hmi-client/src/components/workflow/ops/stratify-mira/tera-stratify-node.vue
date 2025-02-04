@@ -48,7 +48,7 @@ watch(
 
 				// Mark the model as orginating from the config
 				model.temporary = true;
-				model.name += `(${modelConfiguration.name})`;
+				model.name += ` (${modelConfiguration.name})`;
 				model.header.name = model.name as string;
 
 				const res = await createModel(model);
