@@ -1343,6 +1343,7 @@ export function createSensitivityRankingChart(data: Map<string, number>, options
 	const parametersShownCount = 20;
 	const foramttedData = Array.from(data)
 		.map(([parameter, score]) => ({ parameter, score }))
+		.filter((d) => d.score !== 0)
 		.sort((a, b) => Math.abs(b.score) - Math.abs(a.score))
 		.slice(0, parametersShownCount);
 
