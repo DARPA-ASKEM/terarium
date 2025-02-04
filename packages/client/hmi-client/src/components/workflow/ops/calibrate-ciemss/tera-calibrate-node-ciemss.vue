@@ -1,22 +1,18 @@
 <template>
 	<main>
-		<template
-			v-if="!inProgressCalibrationId && runResult && csvAsset && runResultPre && selectedVariableSettings.length"
-		>
+		<section>
 			<tera-node-preview
 				:node="node"
-				:is-loading="!!inProgressCalibrationId"
-				:prepared-charts="Object.assign({}, variableCharts, interventionCharts)"
-				:chart-settings="[...selectedVariableSettings, ...selectedInterventionSettings]"
-				:progress="node.state.currentProgress + '%'"
+				:is-loading="isLoading"
+				:prepared-charts="Object.assign({}, interventionCharts, variableCharts)"
+				:chart-settings="[...selectedInterventionSettings, ...selectedVariableSettings]"
+				:are-embed-actions-visible="true"
+				:placeholder="placeholderText"
+				:processing="processingMessage"
 			/>
-		</template>
-		<vega-chart v-else-if="lossChartSpec" :are-embed-actions-visible="false" :visualization-spec="lossChartSpec" />
-
+			<vega-chart v-if="lossChartSpec" :are-embed-actions-visible="false" :visualization-spec="lossChartSpec" />
+		</section>
 		<Button v-if="areInputsFilled" label="Open" @click="emit('open-drilldown')" severity="secondary" outlined />
-		<tera-operator-placeholder v-else :node="node">
-			Connect a model configuration and dataset
-		</tera-operator-placeholder>
 	</main>
 </template>
 
@@ -24,8 +20,6 @@
 import _ from 'lodash';
 import { computed, watch, ref, shallowRef, onMounted, toRef } from 'vue';
 import Button from 'primevue/button';
-
-import TeraOperatorPlaceholder from '@/components/operator/tera-operator-placeholder.vue';
 import {
 	getRunResultCSV,
 	pollAction,
@@ -41,6 +35,7 @@ import { nodeMetadata, nodeOutputLabel } from '@/components/workflow/util';
 import { logger } from '@/utils/logger';
 import { Poller, PollerState } from '@/api/api';
 import type { WorkflowNode } from '@/types/workflow';
+import VegaChart from '@/components/widgets/VegaChart.vue';
 import {
 	CsvAsset,
 	Simulation,
@@ -54,7 +49,6 @@ import {
 } from '@/types/Types';
 import { createLLMSummary } from '@/services/summary-service';
 import { createForecastChart, AUTOSIZE } from '@/services/charts';
-import VegaChart from '@/components/widgets/VegaChart.vue';
 import * as stats from '@/utils/stats';
 import { createDatasetFromSimulationResult, getDataset } from '@/services/dataset';
 import { useProjects } from '@/composables/project';
@@ -92,7 +86,28 @@ const csvAsset = shallowRef<CsvAsset | undefined>(undefined);
 const groundTruth = computed<DataArray>(() => parseCsvAsset(csvAsset.value as CsvAsset));
 
 const areInputsFilled = computed(() => props.node.inputs[0].value && props.node.inputs[1].value);
-const inProgressCalibrationId = computed(() => props.node.state.inProgressCalibrationId);
+const isLoading = computed<boolean>(
+	() =>
+		props.node.state.inProgressCalibrationId !== '' ||
+		props.node.state.inProgressPreForecastId !== '' ||
+		props.node.state.inProgressForecastId !== ''
+);
+const placeholderText = computed(() => {
+	if (!areInputsFilled.value) {
+		return 'Connect a model configuration and dataset';
+	}
+	return undefined;
+});
+const processingMessage = computed(() => {
+	if (props.node.state.inProgressCalibrationId) {
+		return `Processing calibration... ${props.node.state.currentProgress}%`;
+	}
+	if (props.node.state.inProgressPreForecastId || props.node.state.inProgressForecastId) {
+		return 'Calibration complete. Running simulations';
+	}
+
+	return undefined;
+});
 
 const chartSize = { width: 180, height: 120 };
 
@@ -292,7 +307,6 @@ watch(
 
 			state.inProgressForecastId = '';
 			state.inProgressPreForecastId = '';
-			emit('update-state', state);
 
 			// Get the calibrate losses to generate a run summary
 			const calibrateResponse = await pollAction(state.calibrationId);
@@ -381,6 +395,12 @@ watch(
 			const projectId = useProjects().activeProjectId.value;
 			const datasetResult = await createDatasetFromSimulationResult(projectId, state.forecastId, datasetName, false);
 			if (!datasetResult) {
+				state.errorMessage = {
+					name: 'Failed to create dataset',
+					value: '',
+					traceback: `Failed to create dataset from simulation result: ${state.forecastId}`
+				};
+				emit('update-state', state);
 				return;
 			}
 
@@ -394,18 +414,21 @@ watch(
 				mappedModelVariables
 			);
 
-			// const portLabel = props.node.inputs[0].label;
-			emit('append-output', {
-				type: CalibrationOperationCiemss.outputs[0].type,
-				label: nodeOutputLabel(props.node, `Calibration Result`),
-				value: [
-					{
-						modelConfigId: modelConfigResponse.id,
-						datasetId: datasetResult.id
-					}
-				],
-				state: _.omit(state, ['chartSettings'])
-			});
+			emit(
+				'append-output',
+				{
+					type: CalibrationOperationCiemss.outputs[0].type,
+					label: nodeOutputLabel(props.node, `Calibration Result`),
+					value: [
+						{
+							modelConfigId: modelConfigResponse.id,
+							datasetId: datasetResult.id
+						}
+					],
+					state: _.omit(state, ['chartSettings'])
+				},
+				state
+			);
 		}
 	},
 	{ immediate: true }
