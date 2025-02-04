@@ -167,7 +167,6 @@
 									<Textarea
 										v-if="selectedItem === equation.name"
 										v-model="equation.asset.text"
-										@blur="onUpdateEquation($event, equation)"
 										autoResize
 										rows="1"
 										placeholder="Add an expression with LaTeX"
@@ -221,7 +220,6 @@
 									<Textarea
 										v-if="selectedItem === equation.name"
 										v-model="equation.asset.text"
-										@blur="onUpdateEquation($event, equation)"
 										autoResize
 										rows="1"
 										placeholder="Add an expression with LaTeX"
@@ -479,17 +477,8 @@ const onSelection = (id: string) => {
 };
 
 function onCheckBoxChange(equation) {
-	const state = cloneDeep(props.node.state);
-	const index = state.equations.findIndex((e) => e.name === equation.name);
-	state.equations[index].includeInProcess = equation.includeInProcess;
-	emit('update-state', state);
-}
-
-function onUpdateEquation(event, equation) {
-	const state = cloneDeep(props.node.state);
-	const index = state.equations.findIndex((e) => e.name === equation.name);
-	state.equations[index].asset.text = event.target.value;
-	emit('update-state', state);
+	const index = clonedState.value.equations.findIndex((e) => e.name === equation.name);
+	clonedState.value.equations[index].includeInProcess = equation.includeInProcess;
 }
 
 async function onRun(extractionService: 'mira' | 'skema' = 'skema') {
