@@ -28,6 +28,7 @@ export interface StratifyOperationStateMira extends BaseState {
 	strataGroup: StratifyGroup;
 	strataCodeHistory: StratifyCode[];
 	hasCodeBeenRun: boolean;
+	baseModelId: string;
 }
 
 export const blankStratifyGroup: StratifyGroup = {
@@ -68,7 +69,8 @@ export const StratifyMiraOperation: Operation = {
 		const init: StratifyOperationStateMira = {
 			strataGroup: blankStratifyGroup,
 			strataCodeHistory: [],
-			hasCodeBeenRun: false
+			hasCodeBeenRun: false,
+			baseModelId: ''
 		};
 		return init;
 	}
