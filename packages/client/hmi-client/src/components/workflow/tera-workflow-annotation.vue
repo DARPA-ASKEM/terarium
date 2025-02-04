@@ -20,7 +20,7 @@
 			@mousedown.stop
 			@mousemove.stop
 		/>
-		<div class="floating-toolbar">
+		<div class="floating-toolbar" @mousedown.stop @mousemove.stop>
 			<!-- Trash -->
 			<Button
 				style="right: 0"
@@ -88,17 +88,26 @@ const props = defineProps<{
 
 const annotationRef = ref<WorkflowAnnotation>(props.annotation);
 const isEditing = ref(false);
-const defaultContent = props.annotation.content;
 
 const emit = defineEmits(['update-annotation', 'remove-annotation']);
 
 const reset = () => {
 	isEditing.value = false;
-	annotationRef.value.content = defaultContent;
+	annotationRef.value.content = annotationContentBackup.value || defaultPlaceholder;
 };
 
+const defaultPlaceholder = 'Double click to edit...';
+const annotationContentBackup = ref<string | null>(null);
+
 const edit = () => {
-	isEditing.value = !isEditing.value;
+	// Backup current content to handle cancelation
+	annotationContentBackup.value = annotationRef.value.content;
+
+	if (annotationRef.value.content === defaultPlaceholder) {
+		annotationRef.value.content = '';
+	}
+
+	isEditing.value = true;
 	autoResize();
 	nextTick(() => {
 		textarea.value?.focus();
@@ -106,6 +115,11 @@ const edit = () => {
 };
 
 const update = () => {
+	/* Reset to default placeholder if content is empty */
+	if (!annotationRef.value.content.trim()) {
+		annotationRef.value.content = defaultPlaceholder;
+	}
+
 	emit('update-annotation', annotationRef.value);
 	isEditing.value = false;
 };
@@ -136,6 +150,7 @@ const autoResize = () => {
 	}
 };
 
+/* display newline characters as line breaks */
 const formattedContent = computed(() => annotationRef.value.content.replace(/\n/g, '<br>'));
 </script>
 
@@ -192,7 +207,6 @@ const formattedContent = computed(() => annotationRef.value.content.replace(/\n/
 	display: flex;
 	gap: var(--gap-2);
 	justify-content: space-between;
-	cursor: move;
 
 	/* Animation */
 	animation: fadeInUp 0.3s ease forwards;
