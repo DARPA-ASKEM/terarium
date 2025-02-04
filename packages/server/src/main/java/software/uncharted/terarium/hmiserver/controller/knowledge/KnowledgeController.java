@@ -697,6 +697,53 @@ public class KnowledgeController {
 		return ResponseEntity.accepted().build();
 	}
 
+	@Data
+	public static class SympyCode {
+
+		private String code;
+	}
+
+	@PostMapping("/sympy-code-to-amr")
+	@Secured(Roles.USER)
+	@Operation(summary = "Generate AMR from sympy python code, DEBUGGING only")
+	@ApiResponses(
+		value = {
+			@ApiResponse(
+				responseCode = "200",
+				description = "Dispatched successfully",
+				content = @Content(
+					mediaType = "application/json",
+					schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = TaskResponse.class)
+				)
+			),
+			@ApiResponse(responseCode = "500", description = "There was an issue dispatching the request", content = @Content)
+		}
+	)
+	public ResponseEntity<JsonNode> sympyCodeToAMRDebug(@RequestBody final SympyCode code) {
+		final TaskRequest sympyToAMRRequest;
+		TaskResponse sympyToAMRResponse = null;
+		final JsonNode response;
+
+		try {
+			sympyToAMRRequest = createSympyToAMRTask(code.getCode());
+			sympyToAMRResponse = taskService.runTaskSync(sympyToAMRRequest);
+			response = mapper.readValue(sympyToAMRResponse.getOutput(), JsonNode.class);
+			return ResponseEntity.ok().body(response);
+		} catch (final TimeoutException e) {
+			log.warn("Timeout while waiting for task response", e);
+			throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, messages.get("task.mira.timeout"));
+		} catch (final InterruptedException e) {
+			log.warn("Interrupted while waiting for task response", e);
+			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("task.mira.interrupted"));
+		} catch (final ExecutionException e) {
+			log.error("Error while waiting for task response", e);
+			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("task.mira.execution-failure"));
+		} catch (final Exception e) {
+			log.error("Unexpected error", e);
+		}
+		throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("generic.io-error.read"));
+	}
+
 	@PostMapping("/equations-to-model-debug")
 	@Secured(Roles.USER)
 	@Operation(summary = "Generate AMR from latex ODE equations, DEBUGGING only")
