@@ -117,21 +117,19 @@ const addModelConfigNameToTranslationMap = (
 
 /**
  * Calculate the extent of the y-axis based on the provided result summary and variables.
- * @param resultSummary The result summary data array.
+ * @param result The result summary data array.
  * @param variables The list of variables to calculate the extent for.
  * @returns The extent of the y-axis as a tuple of [min, max].
  */
-const calculateYExtent = (resultSummary: DataArray, variables: string[], includeBeforeValues = false) => {
+const calculateYExtent = (result: DataArray, variables: string[], includeBeforeValues = false) => {
 	const extent: [number, number] = [Infinity, -Infinity];
-	resultSummary.forEach((row) => {
+	result.forEach((row) => {
 		variables.forEach((variable) => {
-			const minVarName = `${variable}_min`;
-			const maxVarName = `${variable}_max`;
-			extent[0] = Math.min(extent[0], row[minVarName]);
-			extent[1] = Math.max(extent[1], row[maxVarName]);
+			extent[0] = Math.min(extent[0], row[variable]);
+			extent[1] = Math.max(extent[1], row[variable]);
 			if (includeBeforeValues) {
-				extent[0] = Math.min(extent[0], row[`${minVarName}:pre`]);
-				extent[1] = Math.max(extent[1], row[`${maxVarName}:pre`]);
+				extent[0] = Math.min(extent[0], row[`${variable}:pre`]);
+				extent[1] = Math.max(extent[1], row[`${variable}:pre`]);
 			}
 		});
 	});
@@ -693,7 +691,7 @@ export function useCharts(
 				if (setting.smallMultiples && setting.selectedVariables.length > 1 && !isNodeChart) {
 					const sharedYExtent = setting.shareYAxis
 						? calculateYExtent(
-								resultSummary,
+								result,
 								selectedVars.map((v) => chartData.value?.pyciemssMap[v] ?? ''),
 								Boolean(setting.showBeforeAfter)
 							)
