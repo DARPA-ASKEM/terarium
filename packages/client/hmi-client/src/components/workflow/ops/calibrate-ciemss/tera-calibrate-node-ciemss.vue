@@ -3,7 +3,7 @@
 		<section>
 			<tera-node-preview
 				:node="node"
-				:is-loading="!!isLoading"
+				:is-loading="isLoading"
 				:prepared-charts="Object.assign({}, interventionCharts, variableCharts)"
 				:chart-settings="[...selectedInterventionSettings, ...selectedVariableSettings]"
 				:are-embed-actions-visible="true"
@@ -86,11 +86,11 @@ const csvAsset = shallowRef<CsvAsset | undefined>(undefined);
 const groundTruth = computed<DataArray>(() => parseCsvAsset(csvAsset.value as CsvAsset));
 
 const areInputsFilled = computed(() => props.node.inputs[0].value && props.node.inputs[1].value);
-const isLoading = computed(
+const isLoading = computed<boolean>(
 	() =>
-		props.node.state.inProgressCalibrationId ||
-		props.node.state.inProgressPreForecastId ||
-		props.node.state.inProgressForecastId
+		props.node.state.inProgressCalibrationId !== '' ||
+		props.node.state.inProgressPreForecastId !== '' ||
+		props.node.state.inProgressForecastId !== ''
 );
 const placeholderText = computed(() => {
 	if (!areInputsFilled.value) {
