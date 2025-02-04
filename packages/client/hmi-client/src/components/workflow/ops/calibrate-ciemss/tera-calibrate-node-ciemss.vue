@@ -370,7 +370,7 @@ watch(
 				simulationId: state.calibrationId,
 				modelId: baseConfig.modelId,
 				observableSemanticList: _.cloneDeep(baseConfig.observableSemanticList),
-				parameterSemanticList: [],
+				parameterSemanticList: _.cloneDeep(baseConfig.parameterSemanticList),
 				initialSemanticList: _.cloneDeep(baseConfig.initialSemanticList),
 				inferredParameterList: inferredParameters,
 				temporary: true
