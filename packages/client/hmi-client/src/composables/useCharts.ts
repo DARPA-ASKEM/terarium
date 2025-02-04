@@ -1134,12 +1134,12 @@ export function useCharts(
 		const fetchSensitivityData = async () => {
 			// pick the first setting's timepoint for now
 			const { result } = chartData.value as ChartData;
-			const sliceData = result.filter((d: any) => d.timepoint_id === timepoint.value) as any[];
+			const sliceData = result.filter((d) => d.timepoint_id === timepoint.value);
 			// Translate names ahead of time, because we can't seem to customize titles
 			// in vegalite with repeat
 			const translationMap = chartData.value?.translationMap;
-			const sliceDataTranslated = sliceData.map((obj: any) => {
-				const r: any = {};
+			const sliceDataTranslated = sliceData.map((obj) => {
+				const r = {};
 				Object.keys(obj).forEach((key) => {
 					if (translationMap && translationMap[key]) {
 						const newKey = translationMap[key];
