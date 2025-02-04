@@ -20,7 +20,12 @@ import {
 	createSensitivityRankingChart
 } from '@/services/charts';
 import { flattenInterventionData } from '@/services/intervention-policy';
-import { DataArray, extractModelConfigIdsInOrder, extractModelConfigIds } from '@/services/models/simulation-service';
+import {
+	DataArray,
+	extractModelConfigIdsInOrder,
+	extractModelConfigIds,
+	processAndSortSamplesByTimepoint
+} from '@/services/models/simulation-service';
 import {
 	ChartSetting,
 	ChartSettingComparison,
@@ -47,7 +52,7 @@ import { getModelConfigName } from '@/services/model-configurations';
 import { EnsembleErrorData } from '@/components/workflow/ops/calibrate-ensemble-ciemss/calibrate-ensemble-util';
 import { PlotValue } from '@/components/workflow/ops/compare-datasets/compare-datasets-operation';
 import { DATASET_VAR_NAME_PREFIX } from '@/services/dataset';
-import { calculatePercentage, calculatePercentages, sumArrays } from '@/utils/math';
+import { calculatePercentage } from '@/utils/math';
 import { pythonInstance } from '@/python/PyodideController';
 import { useChartAnnotations } from './useChartAnnotations';
 
@@ -159,27 +164,31 @@ const normalizeStratifiedModelChartData = (setting: ChartSettingComparison, data
 
 	const includeBeforeData = setting.showBeforeAfter && setting.smallMultiples;
 
-	// If show quantiles is on,  normalize group by timepoint data
-	if (setting.showQuantiles) {
-		const resultGroupByTimepoint: GroupedDataArray = [];
-		(data.resultGroupByTimepoint ?? []).forEach((row) => {
+	const normalizeSampleData = () => {
+		const result: DataArray = [];
+		data.result.forEach((row) => {
 			const newEntry = { timepoint_id: row.timepoint_id, sample_id: row.sample_id };
 			Object.entries(selectedVariablesGroupByStrata).forEach(([group, variables]) => {
-				// Sum all values for the variables in the same strata group
-				const denominatorValues = sumArrays(...allVariablesGroupByStrata[group].map((v) => row[data.pyciemssMap[v]]));
+				const denominator = allVariablesGroupByStrata[group].reduce((acc, v) => acc + row[data.pyciemssMap[v]], 0);
 				variables
 					.map((v) => data.pyciemssMap[v])
 					.forEach((variable) => {
-						newEntry[variable] = !group ? row[variable] : calculatePercentages(row[variable], denominatorValues);
+						newEntry[variable] = !group ? row[variable] : calculatePercentage(row[variable], denominator);
 						if (includeBeforeData) {
 							newEntry[`${variable}:pre`] = !group
 								? row[variable]
-								: calculatePercentages(row[`${variable}:pre`], denominatorValues);
+								: calculatePercentage(row[`${variable}:pre`], denominator);
 						}
 					});
 			});
-			resultGroupByTimepoint.push(newEntry);
+			result.push(newEntry);
 		});
+		return result;
+	};
+
+	// If show quantiles is on,  normalize group by timepoint data
+	if (setting.showQuantiles) {
+		const resultGroupByTimepoint = processAndSortSamplesByTimepoint(normalizeSampleData());
 		return { ...data, resultGroupByTimepoint };
 	}
 	// Else, normalize result and resultSummary data
@@ -207,24 +216,7 @@ const normalizeStratifiedModelChartData = (setting: ChartSettingComparison, data
 	});
 
 	// Normalize sample data
-	const result: DataArray = [];
-	data.result.forEach((row) => {
-		const newEntry = { timepoint_id: row.timepoint_id, sample_id: row.sample_id };
-		Object.entries(selectedVariablesGroupByStrata).forEach(([group, variables]) => {
-			const denominator = allVariablesGroupByStrata[group].reduce((acc, v) => acc + row[data.pyciemssMap[v]], 0);
-			variables
-				.map((v) => data.pyciemssMap[v])
-				.forEach((variable) => {
-					newEntry[variable] = !group ? row[variable] : calculatePercentage(row[variable], denominator);
-					if (includeBeforeData) {
-						newEntry[`${variable}:pre`] = !group
-							? row[variable]
-							: calculatePercentage(row[`${variable}:pre`], denominator);
-					}
-				});
-		});
-		result.push(newEntry);
-	});
+	const result = normalizeSampleData();
 	return { ...data, result, resultSummary };
 };
 
