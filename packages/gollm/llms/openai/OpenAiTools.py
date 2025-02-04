@@ -15,7 +15,7 @@ from common.prompts.config_from_dataset import (
 )
 from common.prompts.config_from_document import CONFIGURE_FROM_DOCUMENT_PROMPT
 from common.prompts.dataset_enrichment import (
-    DATASET_ENRICH_PROMPT,
+    DATASET_ENRICH_PROMPT_WITH_DOCUMENT,
     DATASET_ENRICH_PROMPT_WITHOUT_DOCUMENT
 )
 from common.prompts.equations_cleanup import EQUATIONS_CLEANUP_PROMPT
@@ -166,7 +166,7 @@ class OpenAiTools(LlmToolsInterface):
             return DATASET_ENRICH_PROMPT_WITHOUT_DOCUMENT.format(dataset=dataset)
         else:
             print("Building prompt to extract dataset enrichments from a research paper...")
-            return DATASET_ENRICH_PROMPT.format(
+            return DATASET_ENRICH_PROMPT_WITH_DOCUMENT.format(
                 research_paper=escape_curly_braces(document),
                 dataset=dataset
             )
