@@ -20,7 +20,7 @@
 			@mousedown.stop
 			@mousemove.stop
 		/>
-		<div class="floating-toolbar" @mousedown.stop @mousemove.stop>
+		<div class="floating-toolbar">
 			<!-- Trash -->
 			<Button
 				style="right: 0"
@@ -168,6 +168,19 @@ const formattedContent = computed(() => annotationRef.value.content.replace(/\n/
 	border-radius: var(--border-radius);
 	font-family: var(--font-family);
 }
+
+/* Floating toolbar */
+@keyframes fadeInUp {
+	0% {
+		opacity: 0;
+		transform: translateY(10px);
+	}
+	100% {
+		opacity: 1;
+		transform: translateY(0);
+	}
+}
+
 .wf-annotation-editing .floating-toolbar {
 	position: absolute;
 	background: var(--surface-highlight);
@@ -179,5 +192,10 @@ const formattedContent = computed(() => annotationRef.value.content.replace(/\n/
 	display: flex;
 	gap: var(--gap-2);
 	justify-content: space-between;
+	cursor: move;
+
+	/* Animation */
+	animation: fadeInUp 0.3s ease forwards;
+	opacity: 0;
 }
 </style>
