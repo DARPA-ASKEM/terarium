@@ -105,7 +105,6 @@ import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue'
 import TeraStratificationGroupForm from '@/components/workflow/ops/stratify-mira/tera-stratification-group-form.vue';
 import { KernelSessionManager } from '@/services/jupyter';
 import { createModelFromOld, getModel } from '@/services/model';
-// import { getModelIdFromModelConfigurationId } from '@/services/model-configurations';
 import type { Model } from '@/types/Types';
 import { AMRSchemaNames } from '@/types/common';
 import { OperatorStatus, WorkflowNode } from '@/types/workflow';
@@ -326,18 +325,6 @@ const getStatesAndParameters = (amrModel: Model) => {
 };
 
 const inputChangeHandler = async () => {
-	/*
-	const input = props.node.inputs[0];
-	if (!input) return;
-
-	let modelId: string | null = null;
-	if (input.type === 'modelId') {
-		modelId = input.value?.[0];
-	} else if (input.type === 'modelConfigId') {
-		modelId = await getModelIdFromModelConfigurationId(input.value?.[0]);
-	}
-	if (!modelId) return;
-	*/
 	const modelId = props.node.state.baseModelId;
 	if (!modelId) return;
 

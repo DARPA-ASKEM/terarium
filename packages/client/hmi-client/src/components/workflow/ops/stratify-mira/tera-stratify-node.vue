@@ -17,7 +17,8 @@ import TeraModelDiagram from '@/components/model/petrinet/tera-model-diagram.vue
 import Button from 'primevue/button';
 import { getModel, createModel } from '@/services/model';
 import { getModelConfigurationById, getAsConfiguredModel } from '@/services/model-configurations';
-import { Model } from '@/types/Types';
+import { Model, AssetType } from '@/types/Types';
+import { useProjects } from '@/composables/project';
 import { StratifyOperationStateMira, StratifyMiraOperation } from './stratify-mira-operation';
 
 const emit = defineEmits(['open-drilldown', 'append-output']);
@@ -55,6 +56,7 @@ watch(
 				if (res) {
 					baseModelId = res.id as string;
 				}
+				await useProjects().addAsset(AssetType.Model, baseModelId, useProjects().activeProject.value?.id);
 			}
 			if (!baseModelId) return;
 
