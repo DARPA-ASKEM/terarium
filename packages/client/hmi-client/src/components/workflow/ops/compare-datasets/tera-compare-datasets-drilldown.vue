@@ -419,6 +419,7 @@ const props = defineProps<{
 }>();
 
 const emit = defineEmits(['update-state', 'close']);
+
 const compareOptions: { label: string; value: CompareValue }[] = [
 	{ label: 'Compare scenarios', value: CompareValue.SCENARIO },
 	{ label: 'Rank interventions based on multiple criteria', value: CompareValue.RANK },
