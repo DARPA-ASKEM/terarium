@@ -293,6 +293,7 @@ import TeraTextEditor from '@/components/documents/tera-text-editor.vue';
 import { logger } from '@/utils/logger';
 import RadioButton from 'primevue/radiobutton';
 import TeraModal from '@/components/widgets/tera-modal.vue';
+import { setClipboardText } from '@/utils/clipboard';
 import { ModelFromEquationsState, EquationBlock } from './model-from-equations-operation';
 
 const emit = defineEmits(['close', 'update-state', 'append-output', 'select-output']);
@@ -335,8 +336,7 @@ const allEquationsCopy = computed(() => allEquations.value.join('\n'));
 const btnCopyLabel = ref('Copy to Clipboard');
 const copyEquationsToClipboard = () => {
 	btnCopyLabel.value = 'Copying';
-	navigator.clipboard
-		.writeText(allEquationsCopy.value)
+	setClipboardText(allEquationsCopy.value)
 		.then(() => {
 			btnCopyLabel.value = 'Equations copied to clipboard';
 		})
