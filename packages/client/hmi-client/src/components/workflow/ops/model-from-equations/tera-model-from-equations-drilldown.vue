@@ -477,10 +477,8 @@ const onSelection = (id: string) => {
 };
 
 function onCheckBoxChange(equation) {
-	const state = cloneDeep(props.node.state);
-	const index = state.equations.findIndex((e) => e.name === equation.name);
-	state.equations[index].includeInProcess = equation.includeInProcess;
-	emit('update-state', state);
+	const index = clonedState.value.equations.findIndex((e) => e.name === equation.name);
+	clonedState.value.equations[index].includeInProcess = equation.includeInProcess;
 }
 
 async function onRun(extractionService: 'mira' | 'skema' = 'skema') {
