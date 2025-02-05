@@ -536,16 +536,15 @@ const amrParameters = ref<ModelParameter[]>([]);
 const getMissingInputsMessage = (amount, total) => {
 	if (!total) return '';
 	const percent = (amount / total) * 100;
-	return amount ? `Missing values: ${amount}/${total} (${percent.toFixed(0)}%)` : '';
+	return amount ? `Missing values: ${amount} of ${total} (${percent.toFixed(0)}%)` : '';
 };
 
 const missingInputCount = (modelConfiguration: ModelConfiguration) => {
 	if (selectedConfigId.value === modelConfiguration.id) {
 		return selectedConfigMissingInputCount.value;
 	}
-	const inferredParameterList = modelConfiguration.inferredParameterList?.length ?? 0;
 	const total = amrInitials.value.length + amrParameters.value.length;
-	const amount = total - getTotalInput(modelConfiguration) - inferredParameterList;
+	const amount = total - getTotalInput(modelConfiguration);
 	return getMissingInputsMessage(amount, total);
 };
 
