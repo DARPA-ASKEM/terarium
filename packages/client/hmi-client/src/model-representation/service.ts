@@ -1,6 +1,7 @@
 // TODO: it might be best to move all these to getters and setters related to the model to services/model since these all seem to be split up at the moment
 import _, { isEmpty } from 'lodash';
-import { runDagreLayout, rerouteEdges } from '@/services/graph';
+import { runDagreLayout } from '@/services/graph';
+import { rerouteEdges } from '@/layout/worker';
 import { MiraModel } from '@/model-representation/mira/mira-common';
 import { ModelPartItem } from '@/types/Model';
 import { extractNestedStratas } from '@/model-representation/petrinet/mira-petri';
