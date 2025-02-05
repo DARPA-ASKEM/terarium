@@ -25,9 +25,9 @@
 						/>
 						<span class="flex gap-2">
 							<tera-pyciemss-cancel-button class="mr-auto" :simulation-run-id="cancelRunId" />
-							<div v-tooltip="runButtonMessage">
+							<span v-tooltip="runButtonMessage">
 								<Button label="Run" icon="pi pi-play" @click="runCalibrate" :disabled="isRunDisabled" />
-							</div>
+							</span>
 						</span>
 					</div>
 
@@ -1076,9 +1076,9 @@ const initialize = async () => {
 		}
 	}
 
-	getConfiguredModelConfig();
+	await getConfiguredModelConfig();
 
-	// look for timestamp col in dataset if its not yet filled in.
+	// look for timestamp col in dataset if it has not yet filled in.
 	if (knobs.value.timestampColName === '') {
 		const timeCol = datasetColumns.value?.find((ele) => ele.name?.toLocaleLowerCase().startsWith('time'));
 		if (timeCol && timeCol.name !== undefined) {
@@ -1338,7 +1338,7 @@ img {
 	background: var(--surface-200);
 	padding: var(--gap-3);
 	border-radius: var(--border-radius-medium);
-	box-shadow: inset 0px 0px 4px var(--surface-border);
+	box-shadow: inset 0 0 4px var(--surface-border);
 }
 
 input {
