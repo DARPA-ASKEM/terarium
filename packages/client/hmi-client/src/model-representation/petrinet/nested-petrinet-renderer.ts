@@ -176,7 +176,8 @@ export class NestedPetrinetRenderer extends PetrinetRenderer {
 		// transitions label text
 		transitions
 			.append('text')
-			.attr('y', (d) => setFontSize(d.id) / 4)
+			// .attr('y', (d) => setFontSize(d.id) / 4)
+			.attr('y', (d) => setFontSize(d.id))
 			.style('text-anchor', 'middle')
 			.classed('latex-font', true)
 			.style('font-style', 'italic')
@@ -196,7 +197,7 @@ export class NestedPetrinetRenderer extends PetrinetRenderer {
 		// transitions expression text
 		transitions
 			.append('text')
-			.attr('y', (d) => -d.height / 2 - 8)
+			.attr('y', -8)
 			.classed('latex-font', true)
 			.style('font-style', 'italic')
 			.style('font-size', FONT_SIZE_SMALL)
@@ -320,7 +321,8 @@ export class NestedPetrinetRenderer extends PetrinetRenderer {
 
 		stratifiedTransitions
 			.append('text')
-			.attr('y', (d) => setFontSize(d.id) / 4)
+			// .attr('y', (d) => setFontSize(d.id) / 4)
+			.attr('y', (d) => d.height)
 			.style('text-anchor', 'middle')
 			.classed('latex-font', true)
 			.style('font-style', 'italic')
