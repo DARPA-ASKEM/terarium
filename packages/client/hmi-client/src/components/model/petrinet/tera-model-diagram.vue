@@ -41,7 +41,7 @@
 		</tera-resizable-panel>
 		<figure v-else-if="model" ref="graphElement" class="graph-element preview" :key="`preview_${model.id}`"></figure>
 
-		<tera-progress-spinner v-if="mmt.templates.length === 0" class="spinner" is-centered :font-size="2">
+		<tera-progress-spinner v-if="mmt.templates.length === 0 || isRendering" class="spinner" is-centered :font-size="2">
 			Loading...
 		</tera-progress-spinner>
 
@@ -124,6 +124,7 @@ const resetZoom = async () => {
 	renderer?.setToDefaultZoom();
 };
 
+const isRendering = ref(false);
 async function renderGraph() {
 	// Sanity guard
 	if (mmt.value.templates.length === 0) return;
@@ -160,6 +161,7 @@ async function renderGraph() {
 	);
 
 	// Render graph, this will either render to the DOM or a virutal element
+	isRendering.value = true;
 	if (renderer) {
 		renderer.isGraphDirty = true;
 		await renderer.setData(graphData);
@@ -178,6 +180,7 @@ async function renderGraph() {
 		graphElement.value.appendChild(image);
 		elem = null;
 	}
+	isRendering.value = false;
 }
 
 // eslint-disable-next-line
