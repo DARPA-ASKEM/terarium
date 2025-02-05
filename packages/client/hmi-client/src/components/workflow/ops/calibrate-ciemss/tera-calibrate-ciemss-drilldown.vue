@@ -1079,7 +1079,7 @@ const initialize = async () => {
 		}
 	}
 
-	await getConfiguredModelConfig();
+	getConfiguredModelConfig();
 
 	// look for timestamp col in dataset if it has not yet filled in.
 	if (knobs.value.timestampColName === '') {
@@ -1102,8 +1102,8 @@ const getConfiguredModelConfig = async () => {
 	}
 };
 
-onMounted(async () => {
-	await initialize();
+onMounted(() => {
+	initialize();
 });
 
 watch(
