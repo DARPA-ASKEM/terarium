@@ -83,18 +83,14 @@
 								placeholder="Dataset"
 							/>
 							<label class="mt-2"> Map column names for each input </label>
-							<label class="mt-1"> (This mapping just assists in making the WIS table appear) </label>
+							<label class="mt-1"> (This mapping just assists in making the WIS table appear)</label>
 							<DataTable class="mt-2" :value="knobs.mapping">
-								<Column v-if="datasets[groundTruthDatasetIndex]?.id" :header="datasets[groundTruthDatasetIndex].name">
+								<Column v-if="knobs.selectedGroundTruthDatasetId" :header="datasets[groundTruthDatasetIndex].name">
 									<template #body="{ data }">
 										<Dropdown
 											class="mapping-dropdown"
 											v-model="data[datasets?.[groundTruthDatasetIndex].id as string]"
-											:options="
-												datasets[groundTruthDatasetIndex].columns
-													?.map((ele) => ele.name)
-													.filter((ele) => ele?.includes('mean') || ele?.includes('time'))
-											"
+											:options="mappingOptions[knobs.selectedGroundTruthDatasetId]"
 											filter
 											placeholder="Variable"
 											@change="constructWisTable"
@@ -113,17 +109,7 @@
 											placeholder="Variable"
 											filter
 											v-model="data[dataset.id]"
-											:options="
-												dataset.columns
-													?.map((ele) => ele.name)
-													.filter(
-														(ele) =>
-															!ele?.includes('median') &&
-															!ele?.includes('std') &&
-															!ele?.includes('min') &&
-															!ele?.includes('max')
-													)
-											"
+											:options="mappingOptions[dataset.id]"
 											@change="constructWisTable"
 										/>
 									</template>
@@ -137,6 +123,7 @@
 									</template>
 								</Column>
 							</DataTable>
+							ssss
 							<div class="flex justify-content-between mt-2">
 								<Button class="p-button-sm p-button-text" icon="pi pi-plus" label="Add mapping" @click="addMapping" />
 								<!-- TODO: Automapping
@@ -555,11 +542,8 @@ const rankingChartData = ref<ChartData | null>(null);
 const rankingResultsChart = ref<any>(null);
 const rankingCriteriaCharts = ref<any>([]);
 
-const variableNames = computed(() => {
-	if (impactChartData.value === null) return [];
-	const excludes = ['timepoint_id', 'sample_id', 'timepoint_unknown'];
-	return Object.keys(impactChartData.value.pyciemssMap).filter((key) => !excludes.includes(key));
-});
+const variableNames = ref<string[]>([]);
+const mappingOptions = ref<Record<string, string[]>>({});
 
 const { generateAnnotation, getChartAnnotationsByChartId, useCompareDatasetCharts } = useCharts(
 	props.node.id,
@@ -778,11 +762,34 @@ onMounted(async () => {
 		rankingResultsChart
 	);
 
+	let allVariableNames: string[] = [];
+	if (impactChartData.value) {
+		allVariableNames = Object.keys(impactChartData.value.pyciemssMap);
+		variableNames.value = allVariableNames.filter(
+			(key) => !['timepoint_id', 'sample_id', 'timepoint_unknown'].includes(key)
+		);
+	}
+
+	datasets.value.forEach((dataset) => {
+		const datasetId = dataset.id as string;
+		mappingOptions.value[datasetId] = [];
+
+		if (!dataset.columns) return;
+		dataset.columns.forEach((column) => {
+			if (!column.name) return;
+			mappingOptions.value[datasetId].push(column.name);
+		});
+	});
+	// return Object.keys(impactChartData.value.pyciemssMap).filter((key) => !excludes.includes(key));
+
+	console.log(mappingOptions.value);
+	console.log(impactChartData.value);
+
 	constructATETable();
 
 	if (isEmpty(knobs.value.mapping)) addMapping();
 
-	constructWisTable();
+	// constructWisTable();
 });
 
 watch(
