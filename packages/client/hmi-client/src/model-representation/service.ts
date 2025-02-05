@@ -1,7 +1,6 @@
 // TODO: it might be best to move all these to getters and setters related to the model to services/model since these all seem to be split up at the moment
 import _, { isEmpty } from 'lodash';
-import { runDagreLayout } from '@/services/graph';
-import { rerouteEdges } from '@/layout/worker';
+import { rerouteEdges } from '@/services/graph';
 import { MiraModel } from '@/model-representation/mira/mira-common';
 import { ModelPartItem } from '@/types/Model';
 import { extractNestedStratas } from '@/model-representation/petrinet/mira-petri';
@@ -10,9 +9,16 @@ import { getModelType } from '@/services/model';
 import { AMRSchemaNames } from '@/types/common';
 import { parseCurieToIdentifier } from '@/services/concept';
 import { PetrinetRenderer } from '@/model-representation/petrinet/petrinet-renderer';
+import { layoutInstance } from '@/layout/controller';
+import { IGraph } from '@graph-scaffolder/index';
 import { NestedPetrinetRenderer } from './petrinet/nested-petrinet-renderer';
 import { isStratifiedModel, getContext, collapseTemplates } from './mira/mira';
 import { extractTemplateMatrix } from './mira/mira-util';
+
+export const runDagreLayout = async <V, E>(graphData: IGraph<V, E>): Promise<IGraph<V, E>> => {
+	const graphLayout = await layoutInstance.runLayout(graphData);
+	return graphLayout as any;
+};
 
 export const getVariable = (miraModel: MiraModel, variableName: string) => {
 	if (miraModel.initials[variableName]) {

@@ -34,7 +34,7 @@ export default class LayoutController {
 		return this._isBusy;
 	}
 
-	async runLayout<V, E>(graphData: IGraph<V, E>) {
+	async runLayout<V, E>(graphData: IGraph<V, E>): Promise<IGraph<V, E>> {
 		return new Promise((...promise) => {
 			this.taskQueue.push({
 				action: 'runLayout',
