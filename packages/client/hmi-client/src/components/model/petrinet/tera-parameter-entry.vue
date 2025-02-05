@@ -1,5 +1,5 @@
 <template>
-	<div class="parameter-entry flex flex-column flex-1" :class="{ empty: isParameterEmpty }">
+	<div class="parameter-entry flex flex-column flex-1" :class="{ empty: computedIsParameterEmpty }">
 		<header class="gap-1 pt-2 pb-2">
 			<div class="flex">
 				<strong>{{ parameterId }}</strong>
@@ -82,7 +82,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, onMounted } from 'vue';
+import { computed, ref, onMounted, watch } from 'vue';
 import { Model, ModelConfiguration } from '@/types/Types';
 import {
 	getParameterSource,
@@ -149,6 +149,19 @@ onMounted(async () => {
 	const parameter = getParameterDistribution(props.modelConfiguration, props.parameterId, true);
 	isParameterEmpty.value = inferredDistribution.value ? false : isParameterInputEmpty(parameter);
 });
+
+const computedIsParameterEmpty = computed(() => {
+	const parameter = getParameterDistribution(props.modelConfiguration, props.parameterId);
+	return inferredDistribution.value ? false : isParameterInputEmpty(parameter);
+});
+
+watch(
+	[inferredDistribution, () => getParameterDistribution(props.modelConfiguration, props.parameterId)],
+	([newInferredDist, newParameter]) => {
+		isParameterEmpty.value = newInferredDist ? false : isParameterInputEmpty(newParameter);
+	},
+	{ immediate: true }
+);
 </script>
 
 <style scoped>
@@ -162,7 +175,7 @@ onMounted(async () => {
 	transition: all 0.15s;
 	box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
 }
-.parameter-entry:hover {
+.parameter-entry:hover:not(.empty) {
 	border-left: 4px solid var(--primary-color);
 	background: var(--surface-highlight);
 }
