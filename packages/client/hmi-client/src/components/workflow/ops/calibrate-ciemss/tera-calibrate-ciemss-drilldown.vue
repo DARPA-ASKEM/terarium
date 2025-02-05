@@ -21,7 +21,7 @@
 							outlined
 							@click="resetState"
 							severity="secondary"
-							:disabled="_.isEmpty(node.outputs[0].value)"
+							:disabled="isEmpty(node.outputs[0].value)"
 						/>
 						<span class="flex gap-2">
 							<tera-pyciemss-cancel-button class="mr-auto" :simulation-run-id="cancelRunId" />
@@ -251,7 +251,7 @@
 					/>
 				</template>
 				<tera-notebook-error
-					v-if="!_.isEmpty(node.state?.errorMessage?.traceback) && !isLoading"
+					v-if="!isEmpty(node.state?.errorMessage?.traceback) && !isLoading"
 					v-bind="node.state.errorMessage"
 				/>
 				<tera-operator-output-summary
@@ -511,7 +511,7 @@
 </template>
 
 <script setup lang="ts">
-import _, { isEmpty } from 'lodash';
+import { cloneDeep, groupBy, intersection, isEmpty, isEqual } from 'lodash';
 import * as vega from 'vega';
 import { computed, onMounted, ref, shallowRef, watch } from 'vue';
 import { useConfirm } from 'primevue/useconfirm';
@@ -696,7 +696,7 @@ const isLoading = computed<boolean>(
 const mapping = ref<CalibrateMap[]>(props.node.state.mapping);
 
 const mappingDropdownPlaceholder = computed(() => {
-	if (!_.isEmpty(modelStateOptions.value) && !_.isEmpty(datasetColumns.value)) return 'Select variable';
+	if (!isEmpty(modelStateOptions.value) && !isEmpty(datasetColumns.value)) return 'Select variable';
 	return 'Please wait...';
 });
 
@@ -704,12 +704,12 @@ const showOutputSection = computed(
 	() =>
 		lossValues.value.length > 0 ||
 		isLoading.value ||
-		!_.isEmpty(props.node.state?.errorMessage?.traceback) ||
+		!isEmpty(props.node.state?.errorMessage?.traceback) ||
 		selectedOutputId.value
 );
 
 const updateState = () => {
-	const state = _.cloneDeep(props.node.state);
+	const state = cloneDeep(props.node.state);
 	state.numSamples = knobs.value.numSamples;
 	state.method = knobs.value.method;
 	state.numIterations = knobs.value.numIterations;
@@ -741,7 +741,7 @@ const resetState = () => {
 			// Restore to the original output port state
 			const outputPort = props.node.outputs.find((output) => output.id === selectedOutputId.value);
 			if (outputPort?.state) {
-				knobs.value = _.cloneDeep(outputPort.state as CalibrationOperationStateCiemss);
+				knobs.value = cloneDeep(outputPort.state as CalibrationOperationStateCiemss);
 				mapping.value = outputPort.state.mapping as CalibrateMap[];
 			}
 		}
@@ -783,7 +783,7 @@ const chartWidthDiv = ref(null);
 const chartSize = useDrilldownChartSize(chartWidthDiv);
 
 const groupedInterventionOutputs = computed(() =>
-	_.groupBy(flattenInterventionData(interventionPolicy.value?.interventions ?? []), 'appliedTo')
+	groupBy(flattenInterventionData(interventionPolicy.value?.interventions ?? []), 'appliedTo')
 );
 
 const selectedOutputMapping = computed(() => getSelectedOutputMapping(props.node));
@@ -901,7 +901,7 @@ const initDefaultChartSettings = (state: CalibrationOperationStateCiemss) => {
 	state.chartSettings = updateChartSettingsBySelectedVariables(
 		state.chartSettings,
 		ChartSettingType.INTERVENTION,
-		_.intersection(Object.keys(groupedInterventionOutputs.value), [...defaultSelectedParam, ...mappedModelVariables])
+		intersection(Object.keys(groupedInterventionOutputs.value), [...defaultSelectedParam, ...mappedModelVariables])
 	);
 };
 
@@ -925,7 +925,7 @@ const runCalibrate = async () => {
 	// Reset loss buffer
 	lossValues.value = [];
 
-	const state = _.cloneDeep(props.node.state);
+	const state = cloneDeep(props.node.state);
 
 	// Create request
 	const calibrationRequest: CalibrationRequestCiemss = {
@@ -985,20 +985,20 @@ function addMapping() {
 		datasetVariable: ''
 	});
 
-	const state = _.cloneDeep(props.node.state);
+	const state = cloneDeep(props.node.state);
 	state.mapping = mapping.value;
 
 	emit('update-state', state);
 }
 
 const updateMapping = () => {
-	const state = _.cloneDeep(props.node.state);
+	const state = cloneDeep(props.node.state);
 	state.mapping = mapping.value;
 	emit('update-state', state);
 };
 
 const updateTimeline = () => {
-	const state = _.cloneDeep(props.node.state);
+	const state = cloneDeep(props.node.state);
 	state.timestampColName = knobs.value.timestampColName;
 	emit('update-state', state);
 };
@@ -1006,7 +1006,7 @@ const updateTimeline = () => {
 function deleteAllMappings() {
 	mapping.value = [];
 
-	const state = _.cloneDeep(props.node.state);
+	const state = cloneDeep(props.node.state);
 	state.mapping = mapping.value;
 
 	emit('update-state', state);
@@ -1014,30 +1014,30 @@ function deleteAllMappings() {
 
 function deleteMapRow(index: number) {
 	mapping.value.splice(index, 1);
-	const state = _.cloneDeep(props.node.state);
+	const state = cloneDeep(props.node.state);
 	state.mapping = mapping.value;
 
 	emit('update-state', state);
 }
 
 async function getAutoMapping() {
-	if (isEmpty(modelStateOptions.value)) {
+	if (!modelStateOptions.value || isEmpty(modelStateOptions.value)) {
 		toast.error('', 'No model states to map with');
 		return;
 	}
-	if (isEmpty(datasetColumns.value)) {
+	if (!datasetColumns.value || isEmpty(datasetColumns.value)) {
 		toast.error('', 'No dataset columns to map with');
 		return;
 	}
 	mapping.value = await autoCalibrationMapping(modelStateOptions.value, datasetColumns.value);
-	const state = _.cloneDeep(props.node.state);
+	const state = cloneDeep(props.node.state);
 	state.mapping = mapping.value;
 	emit('update-state', state);
 }
 
 const initialize = async () => {
 	// Update Wizard form fields with current selected output state
-	const state = _.cloneDeep(props.node.state);
+	const state = cloneDeep(props.node.state);
 	knobs.value = {
 		numIterations: state.numIterations ?? 1000,
 		numSamples: state.numSamples ?? 100,
@@ -1088,7 +1088,7 @@ const initialize = async () => {
 };
 
 const onSaveAsModelConfiguration = async () => {
-	getConfiguredModelConfig();
+	await getConfiguredModelConfig();
 };
 
 const getConfiguredModelConfig = async () => {
@@ -1100,14 +1100,14 @@ const getConfiguredModelConfig = async () => {
 };
 
 onMounted(async () => {
-	initialize();
+	await initialize();
 });
 
 watch(
 	() => ({ ...knobs.value }),
 	(newValue, oldValue) => {
-		if (_.isEqual(newValue, oldValue)) return;
-		const state = _.cloneDeep(props.node.state);
+		if (isEqual(newValue, oldValue)) return;
+		const state = cloneDeep(props.node.state);
 		state.numIterations = knobs.value.numIterations;
 		state.numSamples = knobs.value.numSamples;
 		state.endTime = knobs.value.endTime;
