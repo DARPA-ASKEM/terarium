@@ -48,14 +48,14 @@ function saveConcepts() {
 
 	if (!isEmpty(concepts.value)) {
 		// Split the list of concepts into identifier (first item) and context (rest of the items)
-		const [identifierConcept, ...contextConcepts] = concepts.value;
+		const [identifierConcept, ...modifiersConcepts] = concepts.value;
 
 		if (identifierConcept) {
 			newGrounding.identifiers = parseCurieToIdentifier(identifierConcept.curie);
 		}
 
-		if (!isEmpty(contextConcepts)) {
-			newGrounding.modifiers = parseListDKGToGroundingModifiers(contextConcepts);
+		if (!isEmpty(modifiersConcepts)) {
+			newGrounding.modifiers = parseListDKGToGroundingModifiers(modifiersConcepts);
 		}
 	}
 
