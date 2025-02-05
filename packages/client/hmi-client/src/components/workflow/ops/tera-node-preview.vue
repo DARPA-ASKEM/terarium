@@ -1,6 +1,6 @@
 <template>
 	<tera-progress-spinner v-if="isLoading" :font-size="2" is-centered style="height: 100%">
-		<div v-if="progress">{{ progress }}</div>
+		<div v-if="processing">{{ processing }}</div>
 		<div v-else>Processing...</div>
 	</tera-progress-spinner>
 	<vega-chart
@@ -40,7 +40,7 @@ const props = defineProps<{
 	chartSettingKey?: string;
 	isLoading?: boolean;
 	placeholder?: string;
-	progress?: string;
+	processing?: string;
 	expandable?: boolean;
 	areEmbedActionsVisible?: boolean;
 }>();
