@@ -63,7 +63,7 @@ interface IPoint {
 	y: number;
 }
 
-// A faster but not good looking edges
+// A faster but not great looking edges
 export const rerouteEdgesFast = (nodes: INode<any>[], edges: IEdge<any>[]) => {
 	function basicCollisionFn(p: IPoint) {
 		const buffer = 0;
@@ -336,12 +336,15 @@ export const runDagreLayout = <V, E>(graphData: IGraph<V, E>, lr: boolean = true
 		});
 
 		// manual route controller edges
-		rerouteEdgesFast(
-			graphData.nodes,
-			graphData.edges.filter((edge: IEdge<any>) => edge.data?.isController === true)
-		);
+		const controllerEdges = graphData.edges.filter((edge: IEdge<any>) => edge.data?.isController === true);
+		if (controllerEdges.length < 8) {
+			rerouteEdges(graphData.nodes, controllerEdges);
+		} else {
+			rerouteEdgesFast(graphData.nodes, controllerEdges);
+		}
 
 		// FIXME: temp hack, need to optimize OrthogonalConnector
+		// Rearrange non-controller edges to make them nicer
 		const nonControllerEdges = graphData.edges.filter((edge: IEdge<any>) => edge.data?.isController !== true);
 		if (nonControllerEdges.length < 25) {
 			rerouteEdges(graphData.nodes, nonControllerEdges);
