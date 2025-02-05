@@ -258,7 +258,7 @@
 		<template #header
 			><div class="flex align-items-center">
 				<h4>LaTeX</h4>
-				<Button class="p-button-sm ml-auto" severity="secondary" @click="copyEquationsToClipboard">{{
+				<Button class="p-button-sm ml-auto" severity="secondary" @click="setCopyClipboard(allEquationsCopy)">{{
 					btnCopyLabel
 				}}</Button>
 			</div>
@@ -293,7 +293,7 @@ import TeraTextEditor from '@/components/documents/tera-text-editor.vue';
 import { logger } from '@/utils/logger';
 import RadioButton from 'primevue/radiobutton';
 import TeraModal from '@/components/widgets/tera-modal.vue';
-import { setClipboardText } from '@/utils/clipboard';
+import { createCopyTextToClipboard } from '@/utils/clipboard';
 import { ModelFromEquationsState, EquationBlock } from './model-from-equations-operation';
 
 const emit = defineEmits(['close', 'update-state', 'append-output', 'select-output']);
@@ -333,22 +333,7 @@ const notIncludedEquations = computed(() =>
 const viewAllEquations = ref(false);
 const allEquations = computed(() => includedEquations.value.map((eq) => eq.asset.text));
 const allEquationsCopy = computed(() => allEquations.value.join('\n'));
-const btnCopyLabel = ref('Copy to Clipboard');
-const copyEquationsToClipboard = () => {
-	btnCopyLabel.value = 'Copying';
-	setClipboardText(allEquationsCopy.value)
-		.then(() => {
-			btnCopyLabel.value = 'Equations copied to clipboard';
-		})
-		.catch(() => {
-			btnCopyLabel.value = 'Failed to copy equations to clipboard';
-		})
-		.finally(() => {
-			setTimeout(() => {
-				btnCopyLabel.value = 'Copy to Clipboard';
-			}, 2000);
-		});
-};
+const { btnCopyLabel, setCopyClipboard } = createCopyTextToClipboard();
 /* End Copy all equations */
 
 const pdfViewer = ref();
