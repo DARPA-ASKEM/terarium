@@ -284,16 +284,15 @@
 						<div class="mx-4" ref="chartWidthDiv"></div>
 						<Accordion multiple :active-index="currentActiveIndicies" class="px-2">
 							<!-- Paramater distributions section -->
-							<AccordionTab v-if="selectedParameterSettings?.length > 0" header="Parameter distributions">
+							<AccordionTab v-if="selectedParameterSettings.length > 0" header="Parameter distributions">
 								<template v-for="setting of selectedParameterSettings" :key="setting.id">
-									<div class="flex flex-column">
+									<div v-if="parameterDistributionCharts[setting.id]" class="flex flex-column">
 										<vega-chart
-											v-if="parameterDistributionCharts[setting.id]"
 											expandable
 											:are-embed-actions-visible="true"
 											:visualization-spec="parameterDistributionCharts[setting.id].histogram"
 										/>
-										<table v-if="parameterDistributionCharts[setting.id]" class="distribution-table">
+										<table class="distribution-table">
 											<thead>
 												<tr>
 													<th scope="col"></th>
