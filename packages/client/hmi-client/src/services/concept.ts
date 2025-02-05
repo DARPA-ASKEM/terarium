@@ -123,10 +123,10 @@ async function getDKGFromGroundingIdentifier(identifier: Object): Promise<DKG> {
 	return dkg;
 }
 
-async function getDKGFromGroundingContext(context: Grounding['context']): Promise<DKG[]> {
+async function getDKGFromGroundingModifier(modifiers: Grounding['modifiers']): Promise<DKG[]> {
 	let dkgList: DKG[] = [];
-	if (!isEmpty(context)) {
-		Object.entries(context).forEach(([key, value]) => {
+	if (!isEmpty(modifiers)) {
+		Object.entries(modifiers).forEach(([key, value]) => {
 			const dkg: DKG = { name: '', curie: '', description: '' };
 
 			// Test if the value is a curie or a string
@@ -158,17 +158,17 @@ function parseCurieToIdentifier(curie: string | undefined): { [key: string]: str
 	return { [key]: value };
 }
 
-function parseListDKGToGroundingContext(dkgList: DKG[]): { [index: string]: string } {
-	const context: Grounding['context'] = {};
+function parseListDKGToGroundingModifiers(dkgList: DKG[]): { [index: string]: string } {
+	const modifiers: Grounding['modifiers'] = {};
 	dkgList.forEach((dkg) => {
 		if (dkg.name.includes(':')) {
 			const [key, value] = dkg.name.split(':');
-			context[key] = value;
+			modifiers[key] = value;
 		} else {
-			context[dkg.name] = dkg.curie;
+			modifiers[dkg.name] = dkg.curie;
 		}
 	});
-	return context;
+	return modifiers;
 }
 
 // Takes in 2 lists of generic {id, groundings} and returns the singular
@@ -371,9 +371,9 @@ export {
 	getNameOfCurieCached,
 	getCurieFromGroundingIdentifier,
 	getDKGFromGroundingIdentifier,
-	getDKGFromGroundingContext,
+	getDKGFromGroundingModifier,
 	parseCurieToIdentifier,
-	parseListDKGToGroundingContext,
+	parseListDKGToGroundingModifiers,
 	autoModelMapping,
 	autoCalibrationMapping,
 	autoEntityMapping,
