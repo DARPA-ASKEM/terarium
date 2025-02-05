@@ -282,10 +282,6 @@ const mergeResults = (...results: DataArray[]) => {
 	return result;
 };
 
-const getFileName = (dataset: Dataset) =>
-	// If our dataset includes a result.csv we will ensure to pick it.
-	dataset.fileNames?.includes('result.csv') ? 'result.csv' : (dataset?.fileNames?.[0] ?? '');
-
 export {
 	getDataset,
 	updateDataset,
@@ -300,6 +296,5 @@ export {
 	getRawContent,
 	getCsvAsset,
 	getDatasetResultCSV,
-	mergeResults,
-	getFileName
+	mergeResults
 };

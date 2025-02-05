@@ -115,7 +115,6 @@
 											v-model="data[dataset.id]"
 											:options="
 												dataset.columns
-													?.filter((ele) => ele.fileName === getFileName(dataset))
 													?.map((ele) => ele.name)
 													.filter(
 														(ele) =>
@@ -424,7 +423,6 @@ import { useCharts, type ChartData } from '@/composables/useCharts';
 import { DataArray } from '@/services/models/simulation-service';
 import { mean, stddev, computeQuantile, getWeightedIntervalScore } from '@/utils/stats';
 import { displayNumber } from '@/utils/number';
-import { getFileName } from '@/services/dataset';
 import TeraCriteriaOfInterestCard from './tera-criteria-of-interest-card.vue';
 import {
 	blankCriteriaOfInterest,
@@ -449,7 +447,6 @@ const compareOptions: { label: string; value: CompareValue }[] = [
 ];
 
 const datasets = ref<Dataset[]>([]);
-
 const datasetResults = ref<{
 	results: DataArray[];
 	summaryResults: DataArray[];
