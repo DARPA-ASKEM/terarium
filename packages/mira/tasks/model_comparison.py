@@ -74,7 +74,10 @@ def main():
             taskrunner.log("Concept context comparison — started")
             comp = TemplateModelComparison(models.values(), is_ontological_child, tags, run_on_init=False)
             concept_context_comparison = comp.compare_context().to_csv(encoding='utf-8')
-            taskrunner.log("Concept context comparison — completed")
+            previous_end = end
+            end = time.time()
+            taskrunner.log(f"Concept context comparison — completed — {(end - previous_end) * 1000} ms")
+        
         except Exception as e:
             sys.stderr.write(f"Error in concept context comparison: {str(e)}\n")
             sys.stderr.write(traceback.format_exc())
@@ -88,7 +91,9 @@ def main():
                 table = get_concept_comparison_table(models[i], models[j], name_only=True, refinement_func=is_ontological_child)
                 taskrunner.log(f"Tabular concept comparison — between {tags[i]} and {tags[j]}")
                 tabular_comparison[f"{tags[i]} — {tags[j]}"] = table.to_csv(encoding='utf-8')
-            taskrunner.log("Tabular concept comparison — completed")
+            previous_end = end
+            end = time.time()
+            taskrunner.log("Tabular concept comparison — completed — {(end - previous_end) * 1000} ms")
         except Exception as e:
             sys.stderr.write(f"Error in tabular concept comparison: {str(e)}\n")
             sys.stderr.write(traceback.format_exc())
@@ -109,7 +114,9 @@ def main():
                 tmd.draw_jupyter(name=f"{tags[i]}-{tags[j]}.png", args="-Grankdir=LR")
                 image_base64 = png_to_base64_and_delete(f"{tags[i]}-{tags[j]}.png")
                 concept_graph_comparison[f"{tags[i]} — {tags[j]}"] = image_base64
-            taskrunner.log("Concept graph comparison — completed")
+            previous_end = end
+            end = time.time()
+            taskrunner.log("Concept graph comparison — completed — {(end - previous_end) * 1000} ms")
         except Exception as e:
             sys.stderr.write(f"Error in concept graph comparison: {str(e)}\n")
             sys.stderr.write(traceback.format_exc())
@@ -125,7 +132,7 @@ def main():
 
         # Log the time taken to compare model concepts
         end = time.time()
-        taskrunner.log(f"Compare Model Concepts — took {(end - start) * 1000} ms")
+        taskrunner.log(f"Compare Model Concepts — completed {(end - start) * 1000} ms")
 
         print("Compare Model Concepts succeeded")
     except Exception as e:
