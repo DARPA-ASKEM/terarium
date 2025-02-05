@@ -749,7 +749,7 @@ const resetState = () => {
 };
 
 // Checks for disabling run button:
-const isMappingfilled = computed(
+const isMappingFilled = computed(
 	() => mapping.value.find((ele) => ele.datasetVariable && ele.modelVariable) && knobs.value.timestampColName
 );
 
@@ -757,14 +757,14 @@ const areNodeInputsFilled = computed(() => datasetId.value && modelConfigId.valu
 
 const isRunDisabled = computed(
 	() =>
-		!isMappingfilled.value ||
+		!isMappingFilled.value ||
 		!areNodeInputsFilled.value ||
 		isLoading.value ||
 		(!!interventionPolicy.value && isInterventionPolicyBlank(interventionPolicy.value))
 );
 
 const mappingFilledTooltip = computed(() =>
-	!isMappingfilled.value ? 'Must contain a Timestamp column and at least one filled in mapping. \n' : ''
+	!isMappingFilled.value ? 'Must contain a Timestamp column and at least one filled in mapping. \n' : ''
 );
 const nodeInputsFilledTooltip = computed(() =>
 	!areNodeInputsFilled.value ? 'Must a valid dataset and model configuration\n' : ''
