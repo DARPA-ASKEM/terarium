@@ -103,7 +103,7 @@ const addFiles = (addedFiles: File[] | undefined) => {
 			const addedFile = addedFiles[i];
 			if (
 				props.acceptTypes.includes(addedFile.type as AcceptedTypes) ||
-				props.acceptExtensions.includes(addedFile.name.split('.').pop()?.toLowerCase() as AcceptedExtensions)
+				props.acceptExtensions.includes(addedFile.name.split('.').pop() as AcceptedExtensions)
 			) {
 				// only add files that weren't added before
 				const index = importFiles.value.findIndex((item) => item.name === addedFile.name);
