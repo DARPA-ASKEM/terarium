@@ -780,9 +780,6 @@ onMounted(async () => {
 	});
 	const pyciemssNames = Object.keys(swappedPyCiemssMap);
 
-	console.log(impactChartData.value?.pyciemssMap);
-	console.log(swappedPyCiemssMap);
-
 	datasets.value.forEach((dataset) => {
 		const datasetId = dataset.id as string;
 		mappingOptions.value[datasetId] = [];
@@ -799,9 +796,6 @@ onMounted(async () => {
 			mappingOptions.value[datasetId].push(option);
 		});
 	});
-
-	console.log(mappingOptions.value);
-	console.log(swappedPyCiemssMap);
 
 	// Construct tables
 	constructATETable();
