@@ -63,7 +63,7 @@ def main():
             models[i] = template_model_from_amr_json(amr)
 
         end = time.time()
-        taskrunner.log(f"Created {len(models)} MMTs from input — took {(end - start) * 1000} ms")
+        taskrunner.log(f"Created {len(models)} MMTs from input — completed — {(end - start) * 1000} ms")
 
         concept_context_comparison = None
         tabular_comparison = None
