@@ -1,6 +1,6 @@
-import _, { capitalize, cloneDeep } from 'lodash';
+import _, { capitalize } from 'lodash';
 import { mean, variance } from 'd3';
-import { computed, ComputedRef, Ref } from 'vue';
+import { computed, ComputedRef, ref, Ref, watchEffect } from 'vue';
 import { VisualizationSpec } from 'vega-embed';
 import {
 	applyForecastChartAnnotations,
@@ -16,10 +16,16 @@ import {
 	createSimulateSensitivityScatter,
 	ForecastChartOptions,
 	expressionFunctions,
-	GroupedDataArray
+	GroupedDataArray,
+	createSensitivityRankingChart
 } from '@/services/charts';
 import { flattenInterventionData } from '@/services/intervention-policy';
-import { DataArray, extractModelConfigIdsInOrder, extractModelConfigIds } from '@/services/models/simulation-service';
+import {
+	DataArray,
+	extractModelConfigIdsInOrder,
+	extractModelConfigIds,
+	processAndSortSamplesByTimepoint
+} from '@/services/models/simulation-service';
 import {
 	ChartSetting,
 	ChartSettingComparison,
@@ -27,9 +33,14 @@ import {
 	ChartSettingSensitivity,
 	ChartSettingType
 } from '@/types/common';
-import { ChartAnnotation, Intervention, Model, ModelConfiguration } from '@/types/Types';
+import { ChartAnnotation, Dataset, Intervention, InterventionPolicy, Model, ModelConfiguration } from '@/types/Types';
 import { displayNumber } from '@/utils/number';
-import { getStateVariableStrataEntries, getUnitsFromModelParts, getVegaDateOptions } from '@/services/model';
+import {
+	getStateVariableStrataEntries,
+	getUnitsFromModelParts,
+	getVegaDateOptions,
+	groupVariablesByStrata
+} from '@/services/model';
 import { CalibrateMap, isCalibrateMap } from '@/services/calibrate-workflow';
 import { isChartSettingComparisonVariable, isChartSettingEnsembleVariable } from '@/services/chart-settings';
 import {
@@ -41,7 +52,8 @@ import { getModelConfigName } from '@/services/model-configurations';
 import { EnsembleErrorData } from '@/components/workflow/ops/calibrate-ensemble-ciemss/calibrate-ensemble-util';
 import { PlotValue } from '@/components/workflow/ops/compare-datasets/compare-datasets-operation';
 import { DATASET_VAR_NAME_PREFIX } from '@/services/dataset';
-import { calculatePercentage, calculatePercentages, sumArrays } from '@/utils/math';
+import { calculatePercentage } from '@/utils/math';
+import { pythonInstance } from '@/python/PyodideController';
 import { useChartAnnotations } from './useChartAnnotations';
 
 export interface ChartData {
@@ -110,21 +122,19 @@ const addModelConfigNameToTranslationMap = (
 
 /**
  * Calculate the extent of the y-axis based on the provided result summary and variables.
- * @param resultSummary The result summary data array.
+ * @param result The result data array.
  * @param variables The list of variables to calculate the extent for.
  * @returns The extent of the y-axis as a tuple of [min, max].
  */
-const calculateYExtent = (resultSummary: DataArray, variables: string[], includeBeforeValues = false) => {
+const calculateYExtent = (result: DataArray, variables: string[], includeBeforeValues = false) => {
 	const extent: [number, number] = [Infinity, -Infinity];
-	resultSummary.forEach((row) => {
+	result.forEach((row) => {
 		variables.forEach((variable) => {
-			const minVarName = `${variable}_min`;
-			const maxVarName = `${variable}_max`;
-			extent[0] = Math.min(extent[0], row[minVarName]);
-			extent[1] = Math.max(extent[1], row[maxVarName]);
+			extent[0] = Math.min(extent[0], row[variable]);
+			extent[1] = Math.max(extent[1], row[variable]);
 			if (includeBeforeValues) {
-				extent[0] = Math.min(extent[0], row[`${minVarName}:pre`]);
-				extent[1] = Math.max(extent[1], row[`${maxVarName}:pre`]);
+				extent[0] = Math.min(extent[0], row[`${variable}:pre`]);
+				extent[1] = Math.max(extent[1], row[`${variable}:pre`]);
 			}
 		});
 	});
@@ -132,7 +142,7 @@ const calculateYExtent = (resultSummary: DataArray, variables: string[], include
 };
 
 // Consider provided reference object is ready if it is set to null explicitly or if it's value is available
-const isRefReady = (ref: Ref | null) => ref === null || Boolean(ref.value);
+const isRefReady = (reference: Ref | null) => reference === null || Boolean(reference.value);
 
 /**
  * Normalize the stratified model chart data by the total strata population.
@@ -145,39 +155,40 @@ const isRefReady = (ref: Ref | null) => ref === null || Boolean(ref.value);
 const normalizeStratifiedModelChartData = (setting: ChartSettingComparison, data: ChartData, model: Model) => {
 	if (!model) return data;
 	if (!setting.normalize) return data;
-	// Group selected variables by their corresponding strata
-	const selectedVarGroupByStrata = _.groupBy(setting.selectedVariables, (v) =>
-		getStateVariableStrataEntries(v, model).join('-')
+
+	const { selectedVariablesGroupByStrata, allVariablesGroupByStrata } = groupVariablesByStrata(
+		setting.selectedVariables,
+		data.pyciemssMap,
+		model
 	);
-	const denominatorVariables = {};
-	Object.keys(selectedVarGroupByStrata).forEach((group) => {
-		denominatorVariables[group] = Object.entries(data.pyciemssMap)
-			.filter(([k]) => group === getStateVariableStrataEntries(k, model).join('-'))
-			.map(([, v]) => v);
-	});
+
 	const includeBeforeData = setting.showBeforeAfter && setting.smallMultiples;
 
-	// If show quantiles is on,  normalize group by timepoint data
-	if (setting.showQuantiles) {
-		const resultGroupByTimepoint: GroupedDataArray = [];
-		(data.resultGroupByTimepoint ?? []).forEach((row) => {
+	const normalizeSampleData = () => {
+		const result: DataArray = [];
+		data.result.forEach((row) => {
 			const newEntry = { timepoint_id: row.timepoint_id, sample_id: row.sample_id };
-			Object.entries(selectedVarGroupByStrata).forEach(([group, variables]) => {
-				// Sum all values for the variables in the same strata group
-				const denominatorValues = sumArrays(...denominatorVariables[group].map((g) => row[g]));
+			Object.entries(selectedVariablesGroupByStrata).forEach(([group, variables]) => {
+				const denominator = allVariablesGroupByStrata[group].reduce((acc, v) => acc + row[data.pyciemssMap[v]], 0);
 				variables
 					.map((v) => data.pyciemssMap[v])
 					.forEach((variable) => {
-						newEntry[variable] = !group ? row[variable] : calculatePercentages(row[variable], denominatorValues);
+						newEntry[variable] = !group ? row[variable] : calculatePercentage(row[variable], denominator);
 						if (includeBeforeData) {
 							newEntry[`${variable}:pre`] = !group
 								? row[variable]
-								: calculatePercentages(row[variable], denominatorValues);
+								: calculatePercentage(row[`${variable}:pre`], denominator);
 						}
 					});
 			});
-			resultGroupByTimepoint.push(newEntry);
+			result.push(newEntry);
 		});
+		return result;
+	};
+
+	// If show quantiles is on,  normalize group by timepoint data
+	if (setting.showQuantiles) {
+		const resultGroupByTimepoint = processAndSortSamplesByTimepoint(normalizeSampleData());
 		return { ...data, resultGroupByTimepoint };
 	}
 	// Else, normalize result and resultSummary data
@@ -186,8 +197,11 @@ const normalizeStratifiedModelChartData = (setting: ChartSettingComparison, data
 	const resultSummary: DataArray = [];
 	data.resultSummary.forEach((row) => {
 		const newEntry = { timepoint_id: row.timepoint_id };
-		Object.entries(selectedVarGroupByStrata).forEach(([group, variables]) => {
-			const denominator = denominatorVariables[group].reduce((acc, v) => acc + row[`${v}_mean`], 0);
+		Object.entries(selectedVariablesGroupByStrata).forEach(([group, variables]) => {
+			const denominator = allVariablesGroupByStrata[group].reduce(
+				(acc, v) => acc + row[`${data.pyciemssMap[v]}_mean`],
+				0
+			);
 			variables
 				.map((v) => data.pyciemssMap[v])
 				.forEach((variable) => {
@@ -202,24 +216,7 @@ const normalizeStratifiedModelChartData = (setting: ChartSettingComparison, data
 	});
 
 	// Normalize sample data
-	const result: DataArray = [];
-	data.result.forEach((row) => {
-		const newEntry = { timepoint_id: row.timepoint_id, sample_id: row.sample_id };
-		Object.entries(selectedVarGroupByStrata).forEach(([group, variables]) => {
-			const denominator = denominatorVariables[group].reduce((acc, v) => acc + row[v], 0);
-			variables
-				.map((v) => data.pyciemssMap[v])
-				.forEach((variable) => {
-					newEntry[variable] = !group ? row[variable] : calculatePercentage(row[variable], denominator);
-					if (includeBeforeData) {
-						newEntry[`${variable}:pre`] = !group
-							? row[variable]
-							: calculatePercentage(row[`${variable}:pre`], denominator);
-					}
-				});
-		});
-		result.push(newEntry);
-	});
+	const result = normalizeSampleData();
 	return { ...data, result, resultSummary };
 };
 
@@ -540,22 +537,43 @@ export function useCharts(
 	const useCompareDatasetCharts = (
 		chartSettings: ComputedRef<ChartSetting[]>,
 		selectedPlotType: ComputedRef<PlotValue>,
-		baselineIndex: ComputedRef<number>
+		datasets: Ref<Dataset[]>,
+		modelConfigurations: Ref<ModelConfiguration[]>,
+		interventionPolicies: Ref<InterventionPolicy[]>
 	) => {
 		const compareDatasetCharts = computed(() => {
 			const charts: Record<string, VisualizationSpec> = {};
 			if (!isChartReadyToBuild.value) return charts;
 
-			// Make baseline black
-			const colorScheme = cloneDeep(CATEGORICAL_SCHEME);
-			colorScheme.splice(baselineIndex.value, 0, 'black');
+			// TODO: We will want to in the future check that all the configs and interventions are
+			// loaded before rendering the charts, but beware to not break rendering in the case
+			// when there are no interventions
+
+			// TODO: create the color map outside of this function and pass `interventionNameColorMap` as parameter
+			const { interventionNameColorMap } = getInterventionColorAndScoreMaps(
+				datasets,
+				modelConfigurations,
+				interventionPolicies
+			);
+
+			// Match variables with intervention colors
+			const variableColorMap = datasets.value.map(({ metadata }) => {
+				const policy = interventionPolicies.value.find(
+					({ id }) => id === metadata?.simulationAttributes?.interventionPolicyId
+				);
+				if (!policy || !policy.name) return 'black';
+				if (interventionNameColorMap[policy.name]) {
+					return interventionNameColorMap[policy.name];
+				}
+				return 'black';
+			});
 
 			chartSettings.value.forEach((settings) => {
 				const varName = settings.selectedVariables[0];
 				const { statLayerVariables, sampleLayerVariables, options } = createForecastChartOptions(settings);
 				options.title = varName;
 				options.yAxisTitle = capitalize(selectedPlotType.value);
-				options.colorscheme = colorScheme;
+				options.colorscheme = variableColorMap;
 
 				const annotations = getChartAnnotationsByChartId(settings.id);
 				const chart = !settings.showQuantiles
@@ -665,7 +683,7 @@ export function useCharts(
 				if (setting.smallMultiples && setting.selectedVariables.length > 1 && !isNodeChart) {
 					const sharedYExtent = setting.shareYAxis
 						? calculateYExtent(
-								resultSummary,
+								result,
 								selectedVars.map((v) => chartData.value?.pyciemssMap[v] ?? ''),
 								Boolean(setting.showBeforeAfter)
 							)
@@ -1097,17 +1115,22 @@ export function useCharts(
 	}
 
 	const useSimulateSensitivityCharts = (chartSettings: ComputedRef<ChartSettingSensitivity[]>) => {
-		const sensitivity = computed(() => {
-			// pick the first setting's timepoint for now
-			const timepoint = chartSettings.value[0].timepoint;
-			const { result } = chartData.value as ChartData;
-			const sliceData = result.filter((d: any) => d.timepoint_id === timepoint) as any[];
+		const sensitivityData = ref<
+			Record<string, { lineChart: VisualizationSpec; scatterChart: VisualizationSpec; rankingChart: VisualizationSpec }>
+		>({});
+		const sensitivityDataLoading = ref(false);
+		const rankingScores = ref<Map<string, Map<string, number>>>(new Map());
+		const timepoint = ref(0);
 
+		const fetchSensitivityData = async () => {
+			// pick the first setting's timepoint for now
+			const { result } = chartData.value as ChartData;
+			const sliceData = result.filter((d) => d.timepoint_id === timepoint.value);
 			// Translate names ahead of time, because we can't seem to customize titles
 			// in vegalite with repeat
 			const translationMap = chartData.value?.translationMap;
-			const sliceDataTranslated = sliceData.map((obj: any) => {
-				const r: any = {};
+			const sliceDataTranslated = sliceData.map((obj) => {
+				const r = {};
 				Object.keys(obj).forEach((key) => {
 					if (translationMap && translationMap[key]) {
 						const newKey = translationMap[key];
@@ -1121,9 +1144,12 @@ export function useCharts(
 
 			const inputVariables: string[] = chartSettings.value[0].selectedInputVariables ?? [];
 
-			const charts: Record<string, { lineChart: VisualizationSpec; scatterChart: VisualizationSpec }> = {};
+			const charts: Record<
+				string,
+				{ lineChart: VisualizationSpec; scatterChart: VisualizationSpec; rankingChart: VisualizationSpec }
+			> = {};
 			// eslint-disable-next-line
-			chartSettings.value.forEach((settings) => {
+			for (const settings of chartSettings.value) {
 				const selectedVariable =
 					chartData.value?.pyciemssMap[settings.selectedVariables[0]] || settings.selectedVariables[0];
 				const unit = getUnit(settings.selectedVariables[0]);
@@ -1135,6 +1161,8 @@ export function useCharts(
 				options.legend = true;
 				options.title = `${settings.selectedVariables[0]} sensitivity`;
 				options.legendProperties = { direction: 'vertical', columns: 1, labelLimit: 500 };
+
+				const rankingSpec = createSensitivityRankingChart(rankingScores.value.get(selectedVariable)!, options);
 
 				const lineSpec = createForecastChart(
 					{
@@ -1190,7 +1218,7 @@ export function useCharts(
 				}
 
 				// Add sensitivity annotation
-				const annotation = createForecastChartAnnotation('x', timepoint, 'Sensitivity analysis', true);
+				const annotation = createForecastChartAnnotation('x', timepoint.value, 'Sensitivity analysis', true);
 				lineSpec.layer[0].layer.push(annotation.layerSpec);
 
 				const spec = createSimulateSensitivityScatter(
@@ -1208,11 +1236,39 @@ export function useCharts(
 						colorscheme: SENSITIVITY_COLOUR_SCHEME
 					}
 				);
-				charts[settings.id] = { lineChart: lineSpec, scatterChart: spec };
-			});
-			return charts;
+
+				charts[settings.id] = { lineChart: lineSpec, scatterChart: spec, rankingChart: rankingSpec };
+			}
+
+			sensitivityData.value = charts;
+		};
+
+		watchEffect(async () => {
+			if (!chartData.value || !model?.value || _.isEmpty(chartSettings.value)) return;
+			sensitivityDataLoading.value = true;
+
+			const allSelectedVariables = chartSettings.value.map(
+				(s) => chartData.value?.pyciemssMap[s.selectedVariables[0]] || s.selectedVariables[0]
+			);
+
+			// only run if the ranking scores if keys are not equal to the selectedVariables or timepoint has changed
+			const hasAllScores =
+				allSelectedVariables.every((v) => rankingScores.value.has(v)) &&
+				Array.from(rankingScores.value.keys()).every((k) => allSelectedVariables.includes(k));
+
+			const hasTimepointChanged = timepoint.value !== chartSettings.value[0].timepoint;
+			timepoint.value = chartSettings.value[0].timepoint;
+
+			if (!hasAllScores || hasTimepointChanged) {
+				const allParameters = model?.value?.semantics?.ode.parameters?.map((p) => p.id) ?? [];
+				const sliceData = chartData.value.result.filter((d) => d.timepoint_id === timepoint.value);
+				rankingScores.value = await pythonInstance.getRankingScores(sliceData, allSelectedVariables, allParameters);
+			}
+			fetchSensitivityData();
+			sensitivityDataLoading.value = false;
 		});
-		return sensitivity;
+
+		return computed(() => ({ data: sensitivityData.value, loading: sensitivityDataLoading.value }));
 	};
 
 	return {
@@ -1229,4 +1285,42 @@ export function useCharts(
 		useSimulateSensitivityCharts,
 		useEnsembleErrorCharts
 	};
+}
+
+// TODO: Move this out of this file. Maybe to compare-datasets-utils.ts
+export function getInterventionColorAndScoreMaps(
+	datasets: Ref<Dataset[]>,
+	modelConfigurations: Ref<ModelConfiguration[]>,
+	interventionPolicies: Ref<InterventionPolicy[]>
+) {
+	const interventionNameColorMap: Record<string, string> = {};
+	const interventionNameScoresMap: Record<string, number[]> = {};
+	let colorIndex = 0;
+	datasets.value.forEach((dataset) => {
+		const { metadata } = dataset;
+		const modelConfiguration = modelConfigurations.value.find(
+			({ id }) => id === metadata.simulationAttributes?.modelConfigurationId
+		);
+		const policy = interventionPolicies.value.find(
+			({ id }) => id === metadata.simulationAttributes?.interventionPolicyId
+		);
+
+		const policyName = policy?.name ?? 'no policy';
+
+		if (!modelConfiguration?.name) {
+			return;
+		}
+
+		if (!interventionNameColorMap[policyName]) {
+			if (interventionNameScoresMap) interventionNameScoresMap[policyName] = [];
+			if (!policy?.name) {
+				interventionNameColorMap[policyName] = 'black';
+			} else {
+				interventionNameColorMap[policyName] = CATEGORICAL_SCHEME[colorIndex];
+				colorIndex++;
+			}
+		}
+	});
+
+	return { interventionNameColorMap, interventionNameScoresMap };
 }

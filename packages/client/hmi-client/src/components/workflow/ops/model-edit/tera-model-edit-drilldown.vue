@@ -80,7 +80,7 @@ import type { Model } from '@/types/Types';
 import { OperatorStatus, WorkflowNode, WorkflowOutput } from '@/types/workflow';
 import { KernelSessionManager } from '@/services/jupyter';
 import { createModel, getModel } from '@/services/model';
-import { getModelIdFromModelConfigurationId } from '@/services/model-configurations';
+import { getAsConfiguredModel, getModelConfigurationById } from '@/services/model-configurations';
 import { saveCodeToState } from '@/services/notebook';
 import { logger } from '@/utils/logger';
 import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
@@ -127,19 +127,20 @@ let activeOutputModelId: string | null = null;
 
 let editor: VAceEditorInstance['_editor'] | null;
 const sampleAgentQuestions = [
-	'Add a new transition from S to R with the name vaccine with the rate of v and unit Days.',
+	'Add a new transition from S to R with the name vaccine with the rate of v and unit Days',
 	'Add a new transition from I to D. Name the transition death that has a dependency on R. The rate is I*R*u with unit Days',
-	'Add a new transition (from nowhere) to S with a rate constant of f with unit Days.',
-	'Add a new transition (from nowhere) to S with a rate constant of f with unit Days. The rate depends on R.',
+	'Add a new transition (from nowhere) to S with a rate constant of f with unit Days',
+	'Add a new transition (from nowhere) to S with a rate constant of f with unit Days. The rate depends on R',
 	'Add a new transition from S (to nowhere) with a rate constant of v with unit Days',
 	'Add a new transition from S (to nowhere) with a rate constant of v with unit Days. The Rate depends on R',
-	'Add an observable titled sample with the expression A * B  * p.',
-	'Add a new parameter with id θ and value 0.5.',
-	'Rename the state S to Susceptible in the infection transition.',
-	'Rename the transition infection to inf.',
-	'Change rate law of inf to S * I * z.',
+	'Add an observable titled sample with the expression "A * B  * p"',
+	'Add a new parameter with id "θ" and value 0.5',
+	'Rename the state "S" to "Susceptible" in the "infection" transition',
+	'Rename the transition "infection" to "inf"',
+	'Rename the parameter "k" to "m"',
+	'Change rate law of inf to S * I * z',
 	'Remove all unused parameters',
-	'Remove the parameter θ',
+	'Remove the parameter "θ"',
 	'Specify the time unit of the model to be "day"',
 	'Add a new transition that represents the states "Infected", "Hospitalized" controlling the production of the state "WastewaterViralLoad" with rate law "shed_rate * (Infected + Hospitalized)"',
 	'Add a new transition that represents the states "Susceptible", "Infected", "Recovered" controlling the degradation of the state "Hospitalized" with rate law "rec_rate * Hospitalized / (Susceptible + Infected + Recovered)"',
@@ -355,7 +356,17 @@ onMounted(async () => {
 	if (input.type === 'modelId') {
 		inputModelId = input.value?.[0];
 	} else if (input.type === 'modelConfigId') {
-		inputModelId = await getModelIdFromModelConfigurationId(input.value?.[0]);
+		const modelConfigId = input.value?.[0];
+		const modelConfiguration = await getModelConfigurationById(modelConfigId);
+		const model = (await getAsConfiguredModel(modelConfigId)) as Model;
+		// Mark the model as originating from the config
+		model.temporary = true;
+		model.name += ` (${modelConfiguration.name})`;
+		model.header.name = model.name as string;
+		const res = await createModel(model);
+		if (res) {
+			inputModelId = res.id as string;
+		}
 	}
 	if (!inputModelId) return;
 

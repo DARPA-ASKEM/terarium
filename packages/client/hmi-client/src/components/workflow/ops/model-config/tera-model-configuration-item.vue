@@ -14,7 +14,7 @@
 		/>
 		<p class="constrain-width">{{ configuration.description }}</p>
 		<p>{{ formatTimestamp(configuration.createdOn) }}</p>
-		<span v-if="emptyInputCount" :class="{ 'input-count': emptyInputCount }">{{ emptyInputCount }}</span>
+		<div v-if="emptyInputCount" class="input-count">{{ emptyInputCount }}</div>
 	</div>
 </template>
 
@@ -122,10 +122,6 @@ span {
 	color: var(--text-color-subdued);
 	font-size: var(--font-caption);
 	padding-right: var(--gap-6);
-
-	&.input-count {
-		background-color: var(--error-background);
-	}
 }
 span {
 	padding-right: unset;
@@ -140,5 +136,18 @@ p + p {
 	overflow-wrap: break-word; /* Modern property */
 	word-break: break-word; /* For compatibility */
 	max-width: 100%; /* Ensures the text stays within container */
+}
+
+.input-count {
+	padding: var(--gap-1) var(--gap-2);
+	border-radius: var(--border-radius);
+	margin-top: var(--gap-2);
+	width: fit-content;
+	font-size: var(--font-caption);
+	background-color: var(--error-background);
+	border: 1px solid var(--error-color);
+}
+.input-count:hover {
+	background-color: var(--error-background);
 }
 </style>

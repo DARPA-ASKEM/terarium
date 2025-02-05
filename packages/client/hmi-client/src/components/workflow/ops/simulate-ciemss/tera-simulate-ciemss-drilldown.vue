@@ -229,20 +229,31 @@
 									value of the different model parameters. Color is used here to illustrate this mapping: if the color
 									varies quickly along a parameter axis, then the outcome is strongly sensitive to this parameter.
 								</p>
-								<template v-for="setting of selectedSensitivityChartSettings" :key="setting.id">
-									<vega-chart
-										expandable
-										:are-embed-actions-visible="true"
-										:visualization-spec="sensitivityCharts[setting.id].lineChart"
-									/>
-									<div class="sensitivity-scatterplot">
-										<vega-chart
-											expandable
-											:are-embed-actions-visible="true"
-											:visualization-spec="sensitivityCharts[setting.id].scatterChart"
-										/>
-									</div>
-								</template>
+								<tera-progress-spinner v-if="sensitivityCharts.loading" :font-size="2" is-centered />
+
+								<div v-else>
+									<template v-for="setting of selectedSensitivityChartSettings" :key="setting.id">
+										<template v-if="sensitivityCharts.data[setting.id]">
+											<vega-chart
+												expandable
+												:are-embed-actions-visible="true"
+												:visualization-spec="sensitivityCharts.data[setting.id].lineChart"
+											/>
+											<vega-chart
+												expandable
+												:are-embed-actions-visible="true"
+												:visualization-spec="sensitivityCharts.data[setting.id].rankingChart"
+											/>
+											<div class="sensitivity-scatterplot">
+												<vega-chart
+													expandable
+													:are-embed-actions-visible="true"
+													:visualization-spec="sensitivityCharts.data[setting.id].scatterChart"
+												/>
+											</div>
+										</template>
+									</template>
+								</div>
 							</AccordionTab>
 						</Accordion>
 
@@ -303,22 +314,34 @@
 						@update-settings="updateActiveChartSettings"
 						@delete-annotation="deleteAnnotation"
 						@close="setActiveChartSettings(null)"
-					/>
+					>
+						<template #normalize-content>
+							<div
+								class="p-3 border-2 border-gray-300 border-round-md font-italic bg-gray-100"
+								v-for="(equation, i) of normalizeEquations"
+								:key="i"
+							>
+								{{ equation }}
+							</div>
+						</template>
+					</tera-chart-settings-panel>
 				</template>
 				<template #content>
 					<div class="output-settings-panel">
 						<!-- Intervention charts -->
-						<tera-chart-settings
-							:title="'Interventions over time'"
-							:settings="chartSettings"
-							:type="ChartSettingType.INTERVENTION"
-							:select-options="Object.keys(groupedInterventionOutputs)"
-							:selected-options="selectedInterventionSettings.map((s) => s.selectedVariables[0])"
-							@open="setActiveChartSettings($event)"
-							@remove="removeChartSettings"
-							@selection-change="updateChartSettings"
-						/>
-						<Divider />
+						<div v-if="interventionPolicy">
+							<tera-chart-settings
+								:title="'Interventions over time'"
+								:settings="chartSettings"
+								:type="ChartSettingType.INTERVENTION"
+								:select-options="Object.keys(groupedInterventionOutputs)"
+								:selected-options="selectedInterventionSettings.map((s) => s.selectedVariables[0])"
+								@open="setActiveChartSettings($event)"
+								@remove="removeChartSettings"
+								@selection-change="updateChartSettings"
+							/>
+							<Divider />
+						</div>
 						<!-- Variable charts -->
 						<tera-chart-settings
 							:title="'Variables over time'"
@@ -438,7 +461,8 @@ import {
 	getModelByModelConfigurationId,
 	getUnitsFromModelParts,
 	getCalendarSettingsFromModel,
-	getTypesFromModelParts
+	getTypesFromModelParts,
+	groupVariablesByStrata
 } from '@/services/model';
 import { getModelConfigurationById } from '@/services/model-configurations';
 import {
@@ -473,6 +497,7 @@ import { useCharts } from '@/composables/useCharts';
 import { useChartSettings } from '@/composables/useChartSettings';
 import { useProjects } from '@/composables/project';
 import { useDrilldownChartSize } from '@/composables/useDrilldownChartSize';
+import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue';
 import { SimulateCiemssOperationState } from './simulate-ciemss-operation';
 import { mergeResults, renameFnGenerator } from '../calibrate-ciemss/calibrate-utils';
 import { qualityPreset, speedPreset, usePreparedChartInputs } from './simulate-utils';
@@ -669,6 +694,25 @@ const variableCharts = useVariableCharts(selectedVariableSettings, null);
 const comparisonCharts = useComparisonCharts(selectedComparisonChartSettings);
 const sensitivityCharts = useSimulateSensitivityCharts(selectedSensitivityChartSettings);
 
+const normalizeEquations = computed(() => {
+	const equations: string[] = [];
+	if (!activeChartSettings.value || !preparedChartInputs.value?.pyciemssMap || !model.value) return equations;
+	const { selectedVariablesGroupByStrata, allVariablesGroupByStrata } = groupVariablesByStrata(
+		activeChartSettings.value.selectedVariables,
+		preparedChartInputs.value.pyciemssMap,
+		model.value
+	);
+	Object.entries(selectedVariablesGroupByStrata).forEach(([group, variables]) => {
+		if (group === '') return;
+		const denominator = allVariablesGroupByStrata[group].map((v) => `${v}(t)`).join(' + ');
+		variables.forEach((variable) => {
+			const equation = `${variable}(t) / (${denominator})`;
+			equations.push(equation);
+		});
+	});
+	return equations;
+});
+
 const updateState = () => {
 	const state = _.cloneDeep(props.node.state);
 	state.currentTimespan = timespan.value;
@@ -855,6 +899,17 @@ watch(
 			getInterventionPolicyById(policyInterventionId.value).then((policy) => {
 				interventionPolicy.value = policy;
 			});
+		}
+	},
+	{ immediate: true }
+);
+
+// Watch for run results and open settings panel if no charts are configured
+watch(
+	[() => runResults.value[selectedRunId.value], () => chartSettings.value],
+	([results, settings]) => {
+		if (results && (!settings || isEmpty(settings))) {
+			isOutputSettingsPanelOpen.value = true;
 		}
 	},
 	{ immediate: true }

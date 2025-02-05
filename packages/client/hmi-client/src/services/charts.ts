@@ -408,39 +408,48 @@ export function createHistogramChart(dataset: Record<string, any>[], options: Hi
 }
 
 /* This function estimates the legend width, because if it's too we will have to draw it with columns since there's no linewrap */
-function estimateLegendWidth(items: string[], fontSize: number): number {
+function estimateLegendWidth(items: string[], fontSize: number) {
 	// Approximate width of each character (assuming monospace-like proportions)
-	const charWidth = fontSize * 0.3;
+	const charWidth = fontSize * 0.4;
 
 	// Account for symbol width, padding, and spacing between items
-	const symbolWidth = fontSize * 2; // Symbol + padding
-	const itemSpacing = fontSize * 2; // Space between items
+	const symbolWidth = fontSize * 3; // Symbol + padding
+	const itemSpacing = fontSize * 4; // Space between items
 
-	// Calculate total width
-	return items.reduce((totalWidth, item) => {
+	const totalWidth = items.reduce((acc, item) => {
 		const itemWidth = item.length * charWidth + symbolWidth;
-		return totalWidth + itemWidth + itemSpacing;
+		return acc + itemWidth + itemSpacing;
 	}, 0);
+
+	const maxItemWidth = Math.max(...items.map((item) => item.length)) * charWidth;
+
+	return {
+		totalWidth,
+		maxItemWidth
+	};
 }
 
 function calculateLegendColumns(
 	isCompact: boolean,
-	estimatedWidth: number,
+	estimatedWidth: { totalWidth: number; maxItemWidth: number },
 	chartWidth: number,
 	numItems: number | undefined
 ): number | undefined {
+	// account for left-padding from chart width
+	if (!isCompact) chartWidth -= 100;
+
 	if (isCompact || !numItems) {
 		return isCompact ? 1 : undefined;
 	}
 
-	if (estimatedWidth <= chartWidth) {
+	if (estimatedWidth.totalWidth <= chartWidth) {
 		return undefined; // Everything fits in one row
 	}
 
-	const avgItemWidth = (estimatedWidth / numItems) * 0.85; // Reduce by 15% since our estimation seems high
+	const maxItemWidth = estimatedWidth.maxItemWidth;
 
 	// Calculate how many columns can fit without any extra buffer
-	const maxColumns = Math.floor(chartWidth / avgItemWidth);
+	const maxColumns = Math.floor(chartWidth / maxItemWidth);
 
 	// Use as many columns as we can fit, up to the number of items
 	return Math.max(1, Math.min(maxColumns, numItems));
@@ -527,11 +536,11 @@ export function createForecastChart(
 	};
 
 	const isCompact = options.width < 200;
-	const legendFontSize = isCompact ? 8 : 12;
+	const legendLabelFontSize = isCompact ? 8 : 12;
 
 	// Estimate total legend width
 	const legendItems = getAllLegendItems();
-	const estimatedWidth = estimateLegendWidth(legendItems, legendFontSize);
+	const estimatedWidth = estimateLegendWidth(legendItems, legendLabelFontSize);
 
 	const legendProperties = {
 		title: null,
@@ -541,9 +550,9 @@ export function createForecastChart(
 		direction: isCompact ? 'vertical' : 'horizontal',
 		symbolStrokeWidth: isCompact ? 2 : 4,
 		symbolSize: 200,
-		labelFontSize: isCompact ? 8 : 12,
+		labelFontSize: legendLabelFontSize,
 		labelOffset: isCompact ? 2 : 4,
-		labelLimit: isCompact ? 100 : 250,
+		labelLimit: isCompact ? 120 : 320,
 		columnPadding: 16,
 		symbolType: 'stroke',
 		offset: isCompact ? 8 : 16,
@@ -1132,6 +1141,11 @@ export function createQuantilesForecastChart(
 	}
 
 	const isCompact = options.width < 200;
+	const legendLabelFontSize = isCompact ? 8 : 12;
+
+	// Get all unique legend items
+	const legendItems = variables.map((v) => translationMap?.[v] ?? v);
+	const estimatedWidth = estimateLegendWidth(legendItems, legendLabelFontSize);
 
 	const legendProperties = {
 		title: null,
@@ -1141,10 +1155,12 @@ export function createQuantilesForecastChart(
 		direction: isCompact ? 'vertical' : 'horizontal',
 		symbolStrokeWidth: isCompact ? 2 : 4,
 		symbolSize: 200,
-		labelFontSize: isCompact ? 8 : 12,
+		labelFontSize: legendLabelFontSize,
 		labelOffset: isCompact ? 2 : 4,
-		labelLimit: isCompact ? 100 : 250,
+		labelLimit: isCompact ? 120 : 320,
 		columnPadding: 16,
+		// Add columns if legend would overflow
+		columns: calculateLegendColumns(isCompact, estimatedWidth, options.width, legendItems.length),
 		...options.legendProperties
 	};
 
@@ -1315,6 +1331,90 @@ export function createSimulateSensitivityScatter(samplingLayer: SensitivityChart
 		}
 	};
 
+	return spec;
+}
+
+/* -------------------------------------------------------------------------- */
+/*                          Sensitivity Ranking Chart                         */
+/* -------------------------------------------------------------------------- */
+
+export function createSensitivityRankingChart(data: Map<string, number>, options: BaseChartOptions) {
+	// use only 20 highest scores
+	const parametersShownCount = 20;
+	const foramttedData = Array.from(data)
+		.map(([parameter, score]) => ({ parameter, score }))
+		.filter((d) => d.score !== 0)
+		.sort((a, b) => Math.abs(b.score) - Math.abs(a.score))
+		.slice(0, parametersShownCount);
+
+	let title = '';
+	if (foramttedData.length === parametersShownCount) {
+		title = `Top ${parametersShownCount} most sensitive parameters displayed.`;
+	}
+	const notShownCount = data.size - foramttedData.length;
+	if (title && notShownCount > 0) title += ` ${notShownCount} parameters not shown.`;
+
+	const globalFont = 'Figtree';
+
+	const spec: any = {
+		$schema: VEGALITE_SCHEMA,
+		config: {
+			font: globalFont,
+			bar: {
+				discreteBandSize: 8 // Fixed bar width
+			}
+		},
+		title: {
+			text: title,
+			anchor: 'start',
+			subtitle: ' ',
+			subtitlePadding: 0
+		},
+		description: 'Sensitivity score ranking chart',
+		data: { values: foramttedData },
+		transform: [
+			{
+				calculate: 'abs(datum.score)',
+				as: 'abs_value'
+			}
+		],
+		width: options.width,
+		autosize: {
+			type: options.autosize ?? AUTOSIZE.FIT_X
+		},
+		mark: { type: 'bar' },
+		layer: [
+			{
+				mark: { type: 'bar' },
+				encoding: {
+					x: {
+						field: 'score',
+						type: 'quantitative'
+					},
+					y: {
+						field: 'parameter',
+						type: 'ordinal',
+						sort: {
+							field: 'abs_value',
+							order: 'descending'
+						},
+						scale: {
+							paddingInner: 0.01,
+							paddingOuter: 0.02
+						}
+					},
+					color: { value: '#1B8073' }
+				}
+			},
+			// add vertical line a 0
+			{
+				mark: { type: 'rule' },
+				encoding: {
+					x: { datum: 0 }
+				}
+			}
+		]
+	};
 	return spec;
 }
 

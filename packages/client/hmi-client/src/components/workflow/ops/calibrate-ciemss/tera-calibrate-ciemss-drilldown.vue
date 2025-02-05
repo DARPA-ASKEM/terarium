@@ -686,7 +686,12 @@ const runResultSummaryPre = ref<DataArray>([]);
 const showSaveModal = ref(false);
 const configuredModelConfig = ref<ModelConfiguration | null>(null);
 
-const isLoading = ref(false);
+const isLoading = computed<boolean>(
+	() =>
+		props.node.state.inProgressCalibrationId !== '' ||
+		props.node.state.inProgressPreForecastId !== '' ||
+		props.node.state.inProgressForecastId !== ''
+);
 
 const mapping = ref<CalibrateMap[]>(props.node.state.mapping);
 
@@ -1075,8 +1080,8 @@ const initialize = async () => {
 
 	// look for timestamp col in dataset if its not yet filled in.
 	if (knobs.value.timestampColName === '') {
-		const timeCol = datasetColumns.value?.find((ele) => ele.name.toLocaleLowerCase().startsWith('time'));
-		if (timeCol) {
+		const timeCol = datasetColumns.value?.find((ele) => ele.name?.toLocaleLowerCase().startsWith('time'));
+		if (timeCol && timeCol.name !== undefined) {
 			knobs.value.timestampColName = timeCol.name;
 		}
 	}
@@ -1116,11 +1121,9 @@ watch(
 	[() => props.node.state.inProgressCalibrationId, lossChartSize],
 	([id, size]) => {
 		if (id === '') {
-			isLoading.value = false;
 			updateLossChartSpec(lossValues.value, size);
 			unsubscribeToUpdateMessages([id], ClientEventType.SimulationPyciemss, messageHandler);
 		} else {
-			isLoading.value = true;
 			updateLossChartSpec(LOSS_CHART_DATA_SOURCE, size);
 			subscribeToUpdateMessages([id], ClientEventType.SimulationPyciemss, messageHandler);
 		}

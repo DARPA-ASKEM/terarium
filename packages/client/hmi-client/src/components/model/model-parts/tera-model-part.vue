@@ -240,6 +240,7 @@ const filteredToOriginalIndex = computed(() => {
 	});
 	return indexMap;
 });
+
 // Update references to parentEditingState to use the mapping
 function getEditingState(filteredIndex: number) {
 	const originalIndex = filteredToOriginalIndex.value.get(filteredIndex);
