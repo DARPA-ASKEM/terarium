@@ -138,10 +138,6 @@ onMounted(async () => {
 .empty {
 	border-left: 4px solid var(--error-color);
 }
-.empty:hover {
-	border-left: 4px solid var(--error-color);
-	background-color: var(--red-50);
-}
 header {
 	display: flex;
 	flex-direction: column;

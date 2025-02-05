@@ -257,6 +257,7 @@ watch(
 
 			state.inProgressForecastId = '';
 			state.inProgressPreForecastId = '';
+			emit('update-state', state);
 
 			const datasetName = `Forecast run ${state.postForecastId}`;
 			const projectId = useProjects().activeProjectId.value;
@@ -267,25 +268,15 @@ watch(
 				false
 			);
 			if (!datasetResult) {
-				state.errorMessage = {
-					name: 'Failed to create dataset',
-					value: '',
-					traceback: `Failed to create dataset from simulation result: ${state.postForecastId}`
-				};
-				emit('update-state', state);
 				return;
 			}
 
-			emit(
-				'append-output',
-				{
-					type: CalibrateEnsembleCiemssOperation.outputs[0].type,
-					label: nodeOutputLabel(props.node, `Calibration Result`),
-					value: datasetResult.id,
-					state: _.omit(state, ['chartSettings'])
-				},
-				state
-			);
+			emit('append-output', {
+				type: CalibrateEnsembleCiemssOperation.outputs[0].type,
+				label: nodeOutputLabel(props.node, `Calibration Result`),
+				value: datasetResult.id,
+				state: _.omit(state, ['chartSettings'])
+			});
 		}
 	},
 	{ immediate: true }

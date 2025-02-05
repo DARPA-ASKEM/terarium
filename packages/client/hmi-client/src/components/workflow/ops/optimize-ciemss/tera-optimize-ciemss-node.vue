@@ -245,6 +245,7 @@ Provide a consis summary in 100 words or less.
 			state.inProgressPostForecastId = '';
 			state.postForecastRunId = postSimId;
 			state.currentProgress = 0;
+			emit('update-state', state);
 
 			const datasetName = `Forecast run ${state.postForecastRunId}`;
 			const projectId = useProjects().activeProjectId.value;
@@ -255,31 +256,21 @@ Provide a consis summary in 100 words or less.
 				false
 			);
 			if (!datasetResult) {
-				state.simulateErrorMessage = {
-					name: 'Failed to create dataset',
-					value: '',
-					traceback: `Failed to create dataset from simulation result: ${state.postForecastRunId}`
-				};
-				emit('update-state', state);
 				return;
 			}
 
-			emit(
-				'append-output',
-				{
-					type: OptimizeCiemssOperation.outputs[0].type,
-					label: nodeOutputLabel(props.node, `Optimize output`),
-					value: [
-						{
-							policyInterventionId: state.optimizedInterventionPolicyId,
-							datasetId: datasetResult.id
-						}
-					],
-					isSelected: false,
-					state: _.omit(state, ['chartSettings'])
-				},
-				state
-			);
+			emit('append-output', {
+				type: OptimizeCiemssOperation.outputs[0].type,
+				label: nodeOutputLabel(props.node, `Optimize output`),
+				value: [
+					{
+						policyInterventionId: state.optimizedInterventionPolicyId,
+						datasetId: datasetResult.id
+					}
+				],
+				isSelected: false,
+				state: _.omit(state, ['chartSettings'])
+			});
 		} else {
 			// Simulation Failed:
 			const state = _.cloneDeep(props.node.state);

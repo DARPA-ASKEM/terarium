@@ -55,11 +55,7 @@
 			<ul class="pl-1">
 				<li v-for="{ baseParameter, childParameters, isVirtual } in parameterList" :key="baseParameter">
 					<!-- Stratified -->
-					<section
-						v-if="isVirtual"
-						class="parameter-entry-stratified"
-						:class="{ warning: hasEmptyParameters({ baseParameter }) }"
-					>
+					<section v-if="isVirtual" class="parameter-entry-stratified">
 						<Accordion multiple>
 							<AccordionTab>
 								<template #header>
@@ -86,7 +82,7 @@
 											text
 											size="small"
 											@click.stop="matrixModalId = baseParameter"
-											class="ml-3"
+											class="ml-auto"
 										/>
 									</div>
 								</template>
@@ -229,17 +225,6 @@ const parameterList = computed<{ baseParameter: string; childParameters: Paramet
 	}
 );
 
-const hasEmptyParameters = computed(() => ({ baseParameter }) => {
-	const parametersForThisGroup = props.modelConfiguration.parameterSemanticList.filter((s) =>
-		s.referenceId.startsWith(`${baseParameter}_`)
-	);
-
-	return parametersForThisGroup.some((p) => {
-		const value = p.distribution?.parameters?.value;
-		return value === null || value === undefined || value === '' || Number.isNaN(value);
-	});
-});
-
 const matrixModalId = ref('');
 
 const onAddUncertainty = () => {
@@ -350,19 +335,14 @@ ul {
 	border-left: 4px solid var(--surface-300);
 	padding-left: var(--gap-1);
 }
-.parameter-entry-stratified {
-	border: 1px solid var(--surface-border-light);
-	border-radius: var(--border-radius);
-	background: var(--surface-0);
-	box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-	border-left: 4px solid var(--surface-300);
-	padding-left: var(--gap-1);
+.parameter-entry-stratified:hover {
+	border-left-color: var(--primary-color);
+	background: var(--surface-highlight);
 }
-.parameter-entry-stratified.warning {
-	border-left-color: var(--error-color);
-}
-.parameter-entry-stratified.warning:hover {
-	border-left-color: var(--error-color);
+/* But set a lighter hover state when hovering over child elements */
+.parameter-entry-stratified:hover:has(.parameter-entry:hover) {
+	border-left: 4px solid var(--primary-color-light);
+	background: color-mix(in srgb, var(--surface-highlight) 30%, var(--surface-0) 70%);
 }
 
 .stratified {

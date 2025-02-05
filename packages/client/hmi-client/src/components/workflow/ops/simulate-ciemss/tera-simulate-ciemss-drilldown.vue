@@ -329,19 +329,17 @@
 				<template #content>
 					<div class="output-settings-panel">
 						<!-- Intervention charts -->
-						<div v-if="interventionPolicy">
-							<tera-chart-settings
-								:title="'Interventions over time'"
-								:settings="chartSettings"
-								:type="ChartSettingType.INTERVENTION"
-								:select-options="Object.keys(groupedInterventionOutputs)"
-								:selected-options="selectedInterventionSettings.map((s) => s.selectedVariables[0])"
-								@open="setActiveChartSettings($event)"
-								@remove="removeChartSettings"
-								@selection-change="updateChartSettings"
-							/>
-							<Divider />
-						</div>
+						<tera-chart-settings
+							:title="'Interventions over time'"
+							:settings="chartSettings"
+							:type="ChartSettingType.INTERVENTION"
+							:select-options="Object.keys(groupedInterventionOutputs)"
+							:selected-options="selectedInterventionSettings.map((s) => s.selectedVariables[0])"
+							@open="setActiveChartSettings($event)"
+							@remove="removeChartSettings"
+							@selection-change="updateChartSettings"
+						/>
+						<Divider />
 						<!-- Variable charts -->
 						<tera-chart-settings
 							:title="'Variables over time'"
@@ -899,17 +897,6 @@ watch(
 			getInterventionPolicyById(policyInterventionId.value).then((policy) => {
 				interventionPolicy.value = policy;
 			});
-		}
-	},
-	{ immediate: true }
-);
-
-// Watch for run results and open settings panel if no charts are configured
-watch(
-	[() => runResults.value[selectedRunId.value], () => chartSettings.value],
-	([results, settings]) => {
-		if (results && (!settings || isEmpty(settings))) {
-			isOutputSettingsPanelOpen.value = true;
 		}
 	},
 	{ immediate: true }

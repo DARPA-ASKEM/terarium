@@ -20,12 +20,7 @@ import {
 	createSensitivityRankingChart
 } from '@/services/charts';
 import { flattenInterventionData } from '@/services/intervention-policy';
-import {
-	DataArray,
-	extractModelConfigIdsInOrder,
-	extractModelConfigIds,
-	processAndSortSamplesByTimepoint
-} from '@/services/models/simulation-service';
+import { DataArray, extractModelConfigIdsInOrder, extractModelConfigIds } from '@/services/models/simulation-service';
 import {
 	ChartSetting,
 	ChartSettingComparison,
@@ -52,7 +47,7 @@ import { getModelConfigName } from '@/services/model-configurations';
 import { EnsembleErrorData } from '@/components/workflow/ops/calibrate-ensemble-ciemss/calibrate-ensemble-util';
 import { PlotValue } from '@/components/workflow/ops/compare-datasets/compare-datasets-operation';
 import { DATASET_VAR_NAME_PREFIX } from '@/services/dataset';
-import { calculatePercentage } from '@/utils/math';
+import { calculatePercentage, calculatePercentages, sumArrays } from '@/utils/math';
 import { pythonInstance } from '@/python/PyodideController';
 import { useChartAnnotations } from './useChartAnnotations';
 
@@ -122,19 +117,21 @@ const addModelConfigNameToTranslationMap = (
 
 /**
  * Calculate the extent of the y-axis based on the provided result summary and variables.
- * @param result The result data array.
+ * @param resultSummary The result summary data array.
  * @param variables The list of variables to calculate the extent for.
  * @returns The extent of the y-axis as a tuple of [min, max].
  */
-const calculateYExtent = (result: DataArray, variables: string[], includeBeforeValues = false) => {
+const calculateYExtent = (resultSummary: DataArray, variables: string[], includeBeforeValues = false) => {
 	const extent: [number, number] = [Infinity, -Infinity];
-	result.forEach((row) => {
+	resultSummary.forEach((row) => {
 		variables.forEach((variable) => {
-			extent[0] = Math.min(extent[0], row[variable]);
-			extent[1] = Math.max(extent[1], row[variable]);
+			const minVarName = `${variable}_min`;
+			const maxVarName = `${variable}_max`;
+			extent[0] = Math.min(extent[0], row[minVarName]);
+			extent[1] = Math.max(extent[1], row[maxVarName]);
 			if (includeBeforeValues) {
-				extent[0] = Math.min(extent[0], row[`${variable}:pre`]);
-				extent[1] = Math.max(extent[1], row[`${variable}:pre`]);
+				extent[0] = Math.min(extent[0], row[`${minVarName}:pre`]);
+				extent[1] = Math.max(extent[1], row[`${maxVarName}:pre`]);
 			}
 		});
 	});
@@ -164,31 +161,27 @@ const normalizeStratifiedModelChartData = (setting: ChartSettingComparison, data
 
 	const includeBeforeData = setting.showBeforeAfter && setting.smallMultiples;
 
-	const normalizeSampleData = () => {
-		const result: DataArray = [];
-		data.result.forEach((row) => {
+	// If show quantiles is on,  normalize group by timepoint data
+	if (setting.showQuantiles) {
+		const resultGroupByTimepoint: GroupedDataArray = [];
+		(data.resultGroupByTimepoint ?? []).forEach((row) => {
 			const newEntry = { timepoint_id: row.timepoint_id, sample_id: row.sample_id };
 			Object.entries(selectedVariablesGroupByStrata).forEach(([group, variables]) => {
-				const denominator = allVariablesGroupByStrata[group].reduce((acc, v) => acc + row[data.pyciemssMap[v]], 0);
+				// Sum all values for the variables in the same strata group
+				const denominatorValues = sumArrays(...allVariablesGroupByStrata[group].map((v) => row[data.pyciemssMap[v]]));
 				variables
 					.map((v) => data.pyciemssMap[v])
 					.forEach((variable) => {
-						newEntry[variable] = !group ? row[variable] : calculatePercentage(row[variable], denominator);
+						newEntry[variable] = !group ? row[variable] : calculatePercentages(row[variable], denominatorValues);
 						if (includeBeforeData) {
 							newEntry[`${variable}:pre`] = !group
 								? row[variable]
-								: calculatePercentage(row[`${variable}:pre`], denominator);
+								: calculatePercentages(row[`${variable}:pre`], denominatorValues);
 						}
 					});
 			});
-			result.push(newEntry);
+			resultGroupByTimepoint.push(newEntry);
 		});
-		return result;
-	};
-
-	// If show quantiles is on,  normalize group by timepoint data
-	if (setting.showQuantiles) {
-		const resultGroupByTimepoint = processAndSortSamplesByTimepoint(normalizeSampleData());
 		return { ...data, resultGroupByTimepoint };
 	}
 	// Else, normalize result and resultSummary data
@@ -216,7 +209,24 @@ const normalizeStratifiedModelChartData = (setting: ChartSettingComparison, data
 	});
 
 	// Normalize sample data
-	const result = normalizeSampleData();
+	const result: DataArray = [];
+	data.result.forEach((row) => {
+		const newEntry = { timepoint_id: row.timepoint_id, sample_id: row.sample_id };
+		Object.entries(selectedVariablesGroupByStrata).forEach(([group, variables]) => {
+			const denominator = allVariablesGroupByStrata[group].reduce((acc, v) => acc + row[data.pyciemssMap[v]], 0);
+			variables
+				.map((v) => data.pyciemssMap[v])
+				.forEach((variable) => {
+					newEntry[variable] = !group ? row[variable] : calculatePercentage(row[variable], denominator);
+					if (includeBeforeData) {
+						newEntry[`${variable}:pre`] = !group
+							? row[variable]
+							: calculatePercentage(row[`${variable}:pre`], denominator);
+					}
+				});
+		});
+		result.push(newEntry);
+	});
 	return { ...data, result, resultSummary };
 };
 
@@ -683,7 +693,7 @@ export function useCharts(
 				if (setting.smallMultiples && setting.selectedVariables.length > 1 && !isNodeChart) {
 					const sharedYExtent = setting.shareYAxis
 						? calculateYExtent(
-								result,
+								resultSummary,
 								selectedVars.map((v) => chartData.value?.pyciemssMap[v] ?? ''),
 								Boolean(setting.showBeforeAfter)
 							)
@@ -1119,18 +1129,18 @@ export function useCharts(
 			Record<string, { lineChart: VisualizationSpec; scatterChart: VisualizationSpec; rankingChart: VisualizationSpec }>
 		>({});
 		const sensitivityDataLoading = ref(false);
-		const rankingScores = ref<Map<string, Map<string, number>>>(new Map());
-		const timepoint = ref(0);
+		let rankingScores: Map<string, Map<string, number>> = new Map();
 
 		const fetchSensitivityData = async () => {
 			// pick the first setting's timepoint for now
+			const timepoint = chartSettings.value[0].timepoint;
 			const { result } = chartData.value as ChartData;
-			const sliceData = result.filter((d) => d.timepoint_id === timepoint.value);
+			const sliceData = result.filter((d: any) => d.timepoint_id === timepoint) as any[];
 			// Translate names ahead of time, because we can't seem to customize titles
 			// in vegalite with repeat
 			const translationMap = chartData.value?.translationMap;
-			const sliceDataTranslated = sliceData.map((obj) => {
-				const r = {};
+			const sliceDataTranslated = sliceData.map((obj: any) => {
+				const r: any = {};
 				Object.keys(obj).forEach((key) => {
 					if (translationMap && translationMap[key]) {
 						const newKey = translationMap[key];
@@ -1162,7 +1172,7 @@ export function useCharts(
 				options.title = `${settings.selectedVariables[0]} sensitivity`;
 				options.legendProperties = { direction: 'vertical', columns: 1, labelLimit: 500 };
 
-				const rankingSpec = createSensitivityRankingChart(rankingScores.value.get(selectedVariable)!, options);
+				const rankingSpec = createSensitivityRankingChart(rankingScores.get(selectedVariable)!, options);
 
 				const lineSpec = createForecastChart(
 					{
@@ -1218,7 +1228,7 @@ export function useCharts(
 				}
 
 				// Add sensitivity annotation
-				const annotation = createForecastChartAnnotation('x', timepoint.value, 'Sensitivity analysis', true);
+				const annotation = createForecastChartAnnotation('x', timepoint, 'Sensitivity analysis', true);
 				lineSpec.layer[0].layer.push(annotation.layerSpec);
 
 				const spec = createSimulateSensitivityScatter(
@@ -1250,19 +1260,15 @@ export function useCharts(
 			const allSelectedVariables = chartSettings.value.map(
 				(s) => chartData.value?.pyciemssMap[s.selectedVariables[0]] || s.selectedVariables[0]
 			);
-
-			// only run if the ranking scores if keys are not equal to the selectedVariables or timepoint has changed
+			// only run if the ranking scores keys are not equal to the selectedVariables
 			const hasAllScores =
-				allSelectedVariables.every((v) => rankingScores.value.has(v)) &&
-				Array.from(rankingScores.value.keys()).every((k) => allSelectedVariables.includes(k));
-
-			const hasTimepointChanged = timepoint.value !== chartSettings.value[0].timepoint;
-			timepoint.value = chartSettings.value[0].timepoint;
-
-			if (!hasAllScores || hasTimepointChanged) {
+				allSelectedVariables.every((v) => rankingScores.has(v)) &&
+				Array.from(rankingScores.keys()).every((k) => allSelectedVariables.includes(k));
+			if (!hasAllScores) {
+				const timepoint = chartSettings.value[0].timepoint;
 				const allParameters = model?.value?.semantics?.ode.parameters?.map((p) => p.id) ?? [];
-				const sliceData = chartData.value.result.filter((d) => d.timepoint_id === timepoint.value);
-				rankingScores.value = await pythonInstance.getRankingScores(sliceData, allSelectedVariables, allParameters);
+				const sliceData = chartData.value.result.filter((d) => d.timepoint_id === timepoint);
+				rankingScores = await pythonInstance.getRankingScores(sliceData, allSelectedVariables, allParameters);
 			}
 			fetchSensitivityData();
 			sensitivityDataLoading.value = false;

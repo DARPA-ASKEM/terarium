@@ -1339,39 +1339,10 @@ export function createSimulateSensitivityScatter(samplingLayer: SensitivityChart
 /* -------------------------------------------------------------------------- */
 
 export function createSensitivityRankingChart(data: Map<string, number>, options: BaseChartOptions) {
-	// use only 20 highest scores
-	const parametersShownCount = 20;
-	const foramttedData = Array.from(data)
-		.map(([parameter, score]) => ({ parameter, score }))
-		.filter((d) => d.score !== 0)
-		.sort((a, b) => Math.abs(b.score) - Math.abs(a.score))
-		.slice(0, parametersShownCount);
-
-	let title = '';
-	if (foramttedData.length === parametersShownCount) {
-		title = `Top ${parametersShownCount} most sensitive parameters displayed.`;
-	}
-	const notShownCount = data.size - foramttedData.length;
-	if (title && notShownCount > 0) title += ` ${notShownCount} parameters not shown.`;
-
-	const globalFont = 'Figtree';
-
 	const spec: any = {
 		$schema: VEGALITE_SCHEMA,
-		config: {
-			font: globalFont,
-			bar: {
-				discreteBandSize: 8 // Fixed bar width
-			}
-		},
-		title: {
-			text: title,
-			anchor: 'start',
-			subtitle: ' ',
-			subtitlePadding: 0
-		},
 		description: 'Sensitivity score ranking chart',
-		data: { values: foramttedData },
+		data: { values: Array.from(data).map(([parameter, score]) => ({ parameter, score })) },
 		transform: [
 			{
 				calculate: 'abs(datum.score)',
@@ -1379,13 +1350,10 @@ export function createSensitivityRankingChart(data: Map<string, number>, options
 			}
 		],
 		width: options.width,
-		autosize: {
-			type: options.autosize ?? AUTOSIZE.FIT_X
-		},
 		mark: { type: 'bar' },
 		layer: [
 			{
-				mark: { type: 'bar' },
+				mark: { type: 'bar', height: 10 },
 				encoding: {
 					x: {
 						field: 'score',

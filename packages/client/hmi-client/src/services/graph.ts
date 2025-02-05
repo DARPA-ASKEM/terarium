@@ -306,7 +306,7 @@ export const runDagreLayout = <V, E>(graphData: IGraph<V, E>, lr: boolean = true
 
 		// FIXME: temp hack, need to optimize OrthogonalConnector
 		const nonControllerEdges = graphData.edges.filter((edge: IEdge<any>) => edge.data?.isController !== true);
-		if (nonControllerEdges.length < 25) {
+		if (nonControllerEdges.length < 100) {
 			rerouteEdges(graphData.nodes, nonControllerEdges);
 		}
 

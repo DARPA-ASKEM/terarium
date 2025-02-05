@@ -65,7 +65,6 @@
 
 <script setup lang="ts">
 import { computed, ref } from 'vue';
-import { debounce } from 'lodash';
 import Button from 'primevue/button';
 import Dropdown from 'primevue/dropdown';
 import TeraConcept from '@/components/widgets/tera-concept.vue';
@@ -91,29 +90,25 @@ const props = defineProps<{
 
 const emit = defineEmits(['update-item']);
 
-const debouncer = debounce((key: string, value: string = '') => {
-	emit('update-item', { key, value });
-}, 300);
-
 const nameText = computed({
 	get: () => props.name,
-	set: (newName) => debouncer('name', newName)
+	set: (newName) => emit('update-item', { key: 'name', value: newName })
 });
 const unitExpression = computed({
 	get: () => props.unitExpression,
-	set: (newUnitExpression) => debouncer('unitExpression', newUnitExpression)
+	set: (newUnitExpression) => emit('update-item', { key: 'unitExpression', value: newUnitExpression })
 });
 const descriptionText = computed({
 	get: () => props.description,
 	set: (newDescription) => {
-		debouncer('description', newDescription);
+		emit('update-item', { key: 'description', value: newDescription });
 		showDescription.value = !!newDescription;
 	}
 });
 const showDescription = ref<boolean>(!!descriptionText.value);
 const grounding = computed({
 	get: () => props.grounding,
-	set: (newGrounding) => debouncer('grounding', newGrounding)
+	set: (newGrounding) => emit('update-item', { key: 'grounding', value: newGrounding })
 });
 
 // If we are in preview mode and there is no content, show nothing

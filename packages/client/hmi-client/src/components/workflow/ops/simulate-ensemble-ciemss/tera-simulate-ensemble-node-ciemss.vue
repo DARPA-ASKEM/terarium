@@ -76,40 +76,27 @@ const pollResult = async (runId: string) => {
 	return pollerResults;
 };
 
-const processResult = async () => {
+const processResult = async (simulationId: string) => {
 	const portLabel = props.node.inputs[0].label;
 	const state = _.cloneDeep(props.node.state);
-	state.errorMessage = { name: '', value: '', traceback: '' };
-	state.forecastId = state.inProgressForecastId;
-	state.inProgressForecastId = '';
-	const simulationId = state.forecastId;
 	if (state.chartConfigs.length === 0) {
 		chartProxy.addChart();
 	}
+
 	const datasetName = `Forecast run ${simulationId}`;
 	const projectId = useProjects().activeProjectId.value;
 	const datasetResult = await createDatasetFromSimulationResult(projectId, simulationId, datasetName, false);
 	if (!datasetResult) {
-		state.errorMessage = {
-			name: 'Failed to create dataset',
-			value: '',
-			traceback: `Failed to create dataset from simulation result: ${simulationId}`
-		};
-		emit('update-state', state);
 		return;
 	}
 
-	emit(
-		'append-output',
-		{
-			type: SimulateEnsembleCiemssOperation.outputs[0].type,
-			label: nodeOutputLabel(props.node, `${portLabel} Result`),
-			value: [datasetResult.id],
-			state: _.omit(state, ['chartSettings']),
-			isSelected: false
-		},
-		state
-	);
+	emit('append-output', {
+		type: SimulateEnsembleCiemssOperation.outputs[0].type,
+		label: nodeOutputLabel(props.node, `${portLabel} Result`),
+		value: [datasetResult.id],
+		state: _.omit(state, ['chartSettings']),
+		isSelected: false
+	});
 };
 
 watch(
@@ -129,7 +116,12 @@ watch(
 
 		const response = await pollResult(id);
 		if (response?.state === PollerState.Done) {
-			processResult();
+			const state = _.cloneDeep(props.node.state);
+			state.errorMessage = { name: '', value: '', traceback: '' };
+			state.inProgressForecastId = '';
+			state.forecastId = id;
+			emit('update-state', state);
+			await processResult(id);
 		}
 	},
 	{ immediate: true }
