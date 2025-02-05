@@ -293,7 +293,7 @@
 											:are-embed-actions-visible="true"
 											:visualization-spec="parameterDistributionCharts[setting.id].histogram"
 										/>
-										<table class="distribution-table">
+										<table v-if="parameterDistributionCharts[setting.id]" class="distribution-table">
 											<thead>
 												<tr>
 													<th scope="col"></th>
