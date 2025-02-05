@@ -1,6 +1,6 @@
 import type { Dataset, CsvAsset } from '@/types/Types';
 import { getModelConfigurationById, getObservables } from '@/services/model-configurations';
-import { getCsvAsset } from '@/services/dataset';
+import { getCsvAsset, getFileName } from '@/services/dataset';
 import { getUnitsFromModelParts, getModelByModelConfigurationId, getTypesFromModelParts } from '@/services/model';
 
 export interface CalibrateMap {
@@ -48,7 +48,3 @@ export const setupCsvAsset = async (dataset: Dataset): Promise<CsvAsset | undefi
 	const csv = await getCsvAsset(dataset, filename, limit);
 	return csv ?? undefined;
 };
-
-export const getFileName = (dataset: Dataset) =>
-	// If our dataset includes a result.csv we will ensure to pick it.
-	dataset.fileNames?.includes('result.csv') ? 'result.csv' : (dataset?.fileNames?.[0] ?? '');

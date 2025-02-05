@@ -401,6 +401,7 @@ import { useCharts, type ChartData } from '@/composables/useCharts';
 import { DataArray } from '@/services/models/simulation-service';
 import { mean, stddev, computeQuantile, getWeightedIntervalScore } from '@/utils/stats';
 import { displayNumber } from '@/utils/number';
+import { getFileName } from '@/services/dataset';
 import TeraCriteriaOfInterestCard from './tera-criteria-of-interest-card.vue';
 import {
 	blankCriteriaOfInterest,
@@ -425,6 +426,7 @@ const compareOptions: { label: string; value: CompareValue }[] = [
 ];
 
 const datasets = ref<Dataset[]>([]);
+
 const datasetResults = ref<{
 	results: DataArray[];
 	summaryResults: DataArray[];
@@ -647,6 +649,9 @@ function deleteMapRow(index: number) {
 // TODO: Investigate sharing similar logic between constructing ate and wis tables since they are very similar
 // It may or may not be a good idea
 function constructWisTable() {
+	if (knobs.value.selectedGroundTruthDatasetId === null) return;
+	const selectedGroundTruthDatasetId = knobs.value.selectedGroundTruthDatasetId;
+
 	wisTable.value = [];
 	wisVariableHeaders.value = [];
 
@@ -654,13 +659,17 @@ function constructWisTable() {
 	const observationsMap: Record<number, number> = {};
 	const variableToTypeMap: Record<string, string> = {};
 
+	const variablesOfInterest = [
+		...new Set([...selectedVariableNames.value, ...knobs.value.mapping.map((m) => Object.values(m)).flat()])
+	];
+
 	datasetResults.value?.summaryResults.forEach((summaryResult) => {
 		Object.keys(summaryResult[0]).forEach((key) => {
 			if (
 				key.includes('_param_') ||
 				!key.includes('_mean:') ||
-				// Skip if the variable is not selected in output settings
-				!selectedVariableNames.value.some((variableName) => {
+				// Skip if the variable is not selected in output settings or attached to the ground truth dataset in your mapping
+				!variablesOfInterest.some((variableName) => {
 					if (key.includes(variableName)) {
 						if (!variableToTypeMap[variableName]) {
 							variableToTypeMap[variableName] = key.includes('_observable_state_') ? '_observable_state_' : '_state_';
@@ -680,8 +689,6 @@ function constructWisTable() {
 
 	const observationsKeyNames = Object.keys(observationsMap);
 
-	console.log(observationsMap);
-
 	datasets.value.forEach((dataset, index) => {
 		if (index === groundTruthDatasetIndex.value) return;
 
@@ -690,27 +697,15 @@ function constructWisTable() {
 
 		Object.entries(variableToTypeMap).forEach(([variableName, type]) => {
 			const key = `${variableName}${type}mean:${index}`;
-			if (!observationsKeyNames.includes(key)) return;
+			if (!observationsKeyNames.includes(key)) {
+				return;
+			}
 
-			let groundTruthKey = ''; // `${key.slice(0, -1)}${groundTruthDatasetIndex.value}`;
-			// Use mapping to get ground truth key
-			// if (!observationsKeyNames.includes(groundTruthKey)) {/
-			let isFound = false;
-			knobs.value.mapping.forEach((mapping) => {
-				// Object.values(mapping).includes(key.slice(0, -2)) &&
-				if (!isFound && knobs.value.selectedGroundTruthDatasetId) {
-					groundTruthKey = `${mapping[knobs.value.selectedGroundTruthDatasetId]}${type}mean:${groundTruthDatasetIndex.value}`;
-					console.log('found', groundTruthKey);
-					isFound = true;
-				}
-			});
-			// }
+			const datasetMapping = knobs.value.mapping.find((m) => Object.values(m).includes(variableName));
+			if (!datasetMapping) return;
 
-			// console.log(observationsMap[groundTruthKey]);
-			// console.log(groundTruthKey);
-			// console.log(knobs.value.mapping);
-			// console.log('key', key);
-			// console.log('_____');
+			const groundTruthVariableName = datasetMapping[selectedGroundTruthDatasetId];
+			const groundTruthKey = `${groundTruthVariableName}${type}mean:${groundTruthDatasetIndex.value}`;
 
 			if (!observationsMap[groundTruthKey]) {
 				return;
@@ -728,7 +723,14 @@ function constructWisTable() {
 			}
 
 			const totalMean = mean(wis.total);
+
+			// FIXME: For now I am assigning to the value to the ground truth column and the variable column
+			// The table columns that end up actually appearing are the variables chosen in the output settings
+			// But the ground truth may not necessarily match up with what's chosen in the output settings
+			// So this is kind of a lazy solution that'll always work, (later we'll see how we exactly want to sync the mapping and the output settings selector)
+			wisRow[groundTruthVariableName] = totalMean;
 			wisRow[variableName] = totalMean;
+
 			wisValues.push(totalMean);
 		});
 		wisRow.overall = mean(wisValues);
@@ -784,10 +786,8 @@ onMounted(async () => {
 
 		if (!dataset.columns) return;
 		dataset.columns.forEach((column) => {
-			if (!column.name) return;
-			if (pyciemssNames.includes(column.name)) {
-				mappingOptions.value[datasetId].push(swappedPyCiemssMap[column.name]);
-			}
+			if (!column.name || column.fileName !== getFileName(dataset) || !pyciemssNames.includes(column.name)) return;
+			mappingOptions.value[datasetId].push(swappedPyCiemssMap[column.name]);
 		});
 	});
 
