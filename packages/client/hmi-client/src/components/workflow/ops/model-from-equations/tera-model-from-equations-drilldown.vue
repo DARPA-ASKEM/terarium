@@ -259,7 +259,7 @@
 			><div class="flex align-items-center">
 				<h4>LaTeX</h4>
 				<Button class="p-button-sm ml-auto" severity="secondary" @click="copyEquationsToClipboard">{{
-					btnCopyEquationsToClipboardLabel
+					btnCopyLabel
 				}}</Button>
 			</div>
 		</template>
@@ -332,18 +332,22 @@ const notIncludedEquations = computed(() =>
 const viewAllEquations = ref(false);
 const allEquations = computed(() => includedEquations.value.map((eq) => eq.asset.text));
 const allEquationsCopy = computed(() => allEquations.value.join('\n'));
-const btnCopyEquationsToClipboardLabel = ref('Copy to Clipboard');
+const btnCopyLabel = ref('Copy to Clipboard');
 const copyEquationsToClipboard = () => {
-	btnCopyEquationsToClipboardLabel.value = 'Copying';
+	btnCopyLabel.value = 'Copying';
 	navigator.clipboard
 		.writeText(allEquationsCopy.value)
 		.then(() => {
-			btnCopyEquationsToClipboardLabel.value = 'Equations copied to clipboard';
+			btnCopyLabel.value = 'Equations copied to clipboard';
 		})
 		.catch(() => {
-			btnCopyEquationsToClipboardLabel.value = 'Failed to copy equations to clipboard';
+			btnCopyLabel.value = 'Failed to copy equations to clipboard';
+		})
+		.finally(() => {
+			setTimeout(() => {
+				btnCopyLabel.value = 'Copy to Clipboard';
+			}, 2000);
 		});
-	// .finally(() => { setTimeout(() => btnCopyEquationsToClipboardLabel.value = 'Copy to Clipboard', 2000); });
 };
 /* End Copy all equations */
 
