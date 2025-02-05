@@ -511,7 +511,7 @@
 </template>
 
 <script setup lang="ts">
-import _ from 'lodash';
+import _, { isEmpty } from 'lodash';
 import * as vega from 'vega';
 import { computed, onMounted, ref, shallowRef, watch } from 'vue';
 import { useConfirm } from 'primevue/useconfirm';
@@ -1021,11 +1021,11 @@ function deleteMapRow(index: number) {
 }
 
 async function getAutoMapping() {
-	if (!modelStateOptions.value) {
+	if (isEmpty(modelStateOptions.value)) {
 		toast.error('', 'No model states to map with');
 		return;
 	}
-	if (!datasetColumns.value) {
+	if (isEmpty(datasetColumns.value)) {
 		toast.error('', 'No dataset columns to map with');
 		return;
 	}
