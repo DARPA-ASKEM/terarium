@@ -121,12 +121,26 @@ const addModelConfigNameToTranslationMap = (
 };
 
 /**
- * Calculate the extent of the y-axis based on the provided result summary and variables.
+ * Calculate the extent of the y-axis based on the provided result data array and variables.
+ * @param result The result data array. This can be a simple data array or a grouped data array.
+ * @param variables The list of variables to calculate the extent for.
+ * @returns The extent of the y-axis as a tuple of [min, max].
+ */
+const calculateYExtent = (result: DataArray | GroupedDataArray, variables: string[], includeBeforeValues = false) => {
+	if (!result.length) return [0, 1] as [number, number];
+	const isGroupedData = Array.isArray(Object.values(result[0])[0]);
+	return isGroupedData
+		? calculateYExtentFromGroupedData(result as GroupedDataArray, variables, includeBeforeValues)
+		: calculateYExtentFromData(result as DataArray, variables, includeBeforeValues);
+};
+
+/**
+ * Calculate the extent of the y-axis based on the provided result data and variables.
  * @param result The result data array.
  * @param variables The list of variables to calculate the extent for.
  * @returns The extent of the y-axis as a tuple of [min, max].
  */
-const calculateYExtent = (result: DataArray, variables: string[], includeBeforeValues = false) => {
+const calculateYExtentFromData = (result: DataArray, variables: string[], includeBeforeValues = false) => {
 	const extent: [number, number] = [Infinity, -Infinity];
 	result.forEach((row) => {
 		variables.forEach((variable) => {
@@ -135,6 +149,31 @@ const calculateYExtent = (result: DataArray, variables: string[], includeBeforeV
 			if (includeBeforeValues) {
 				extent[0] = Math.min(extent[0], row[`${variable}:pre`]);
 				extent[1] = Math.max(extent[1], row[`${variable}:pre`]);
+			}
+		});
+	});
+	return extent;
+};
+
+/**
+ * Calculate the extent of the y-axis based on the provided result data and variables.
+ * @param result The result data group by timepoint.
+ * @param variables The list of variables to calculate the extent for.
+ * @returns The extent of the y-axis as a tuple of [min, max].
+ */
+const calculateYExtentFromGroupedData = (
+	result: GroupedDataArray,
+	variables: string[],
+	includeBeforeValues = false
+) => {
+	const extent: [number, number] = [Infinity, -Infinity];
+	result.forEach((row) => {
+		variables.forEach((variable) => {
+			extent[0] = Math.min(extent[0], row[variable].at(0) as number);
+			extent[1] = Math.max(extent[1], row[variable].at(-1) as number);
+			if (includeBeforeValues) {
+				extent[0] = Math.min(extent[0], row[`${variable}:pre`].at(0) as number);
+				extent[1] = Math.max(extent[1], row[`${variable}:pre`].at(-1) as number);
 			}
 		});
 	});
@@ -683,7 +722,7 @@ export function useCharts(
 				if (setting.smallMultiples && setting.selectedVariables.length > 1 && !isNodeChart) {
 					const sharedYExtent = setting.shareYAxis
 						? calculateYExtent(
-								result,
+								setting.showQuantiles ? (resultGroupByTimepoint as GroupedDataArray) : result,
 								selectedVars.map((v) => chartData.value?.pyciemssMap[v] ?? ''),
 								Boolean(setting.showBeforeAfter)
 							)
