@@ -780,16 +780,28 @@ onMounted(async () => {
 	});
 	const pyciemssNames = Object.keys(swappedPyCiemssMap);
 
+	console.log(impactChartData.value?.pyciemssMap);
+	console.log(swappedPyCiemssMap);
+
 	datasets.value.forEach((dataset) => {
 		const datasetId = dataset.id as string;
 		mappingOptions.value[datasetId] = [];
 
 		if (!dataset.columns) return;
 		dataset.columns.forEach((column) => {
-			if (!column.name || column.fileName !== getFileName(dataset) || !pyciemssNames.includes(column.name)) return;
-			mappingOptions.value[datasetId].push(swappedPyCiemssMap[column.name]);
+			if (!column.name || column.fileName !== getFileName(dataset)) return;
+
+			let option = '';
+			if (pyciemssNames.includes(column.name)) option = swappedPyCiemssMap[column.name];
+			else if (pyciemssNames.includes(`data/${column.name}`)) option = swappedPyCiemssMap[`data/${column.name}`];
+			if (!option) return;
+
+			mappingOptions.value[datasetId].push(option);
 		});
 	});
+
+	console.log(mappingOptions.value);
+	console.log(swappedPyCiemssMap);
 
 	// Construct tables
 	constructATETable();
