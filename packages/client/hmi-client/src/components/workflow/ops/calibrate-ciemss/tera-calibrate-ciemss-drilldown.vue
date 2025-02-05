@@ -32,7 +32,7 @@
 					</div>
 
 					<!-- Mapping section -->
-					<div class="form-section">
+					<section class="form-section">
 						<h5 class="mb-1">Mapping</h5>
 						<p class="mb-2 p-text-secondary text-sm">
 							Select a subset of output variables of the model and individually associate them to columns in the
@@ -98,18 +98,16 @@
 						</DataTable>
 
 						<div class="flex justify-content-between">
-							<div>
-								<Button class="p-button-sm p-button-text" icon="pi pi-plus" label="Add mapping" @click="addMapping" />
-								<Button
-									class="p-button-sm p-button-text"
-									icon="pi pi-sparkles"
-									label="Auto map"
-									@click="getAutoMapping"
-								/>
-							</div>
-							<Button class="p-button-sm p-button-text" label="Delete all mapping" @click="deleteAllMappings" />
+							<Button class="p-button-sm p-button-text" icon="pi pi-plus" label="Add mapping" @click="addMapping" />
+							<Button
+								class="p-button-sm p-button-text"
+								icon="pi pi-sparkles"
+								label="Auto map"
+								@click="getAutoMapping"
+							/>
+							<Button class="ml-auto p-button-sm p-button-text" label="Delete all mapping" @click="deleteAllMappings" />
 						</div>
-					</div>
+					</section>
 
 					<!-- Mapping section -->
 					<section class="form-section">

@@ -21,7 +21,7 @@ export async function setupModelInput(modelConfigId: string | undefined) {
 		getModelByModelConfigurationId(modelConfigId)
 	]);
 
-	if (!model) return { modelConfiguration, modelOptions: null };
+	if (!model) return { modelConfiguration };
 
 	const modelPartUnits = getUnitsFromModelParts(model);
 	const modelPartTypes = getTypesFromModelParts(model);
