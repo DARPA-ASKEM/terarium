@@ -8,7 +8,7 @@
 				:chart-settings="[...selectedInterventionSettings, ...selectedVariableSettings]"
 				:are-embed-actions-visible="true"
 				:placeholder="placeholderText"
-				:progress="processingMessage"
+				:processing="processingMessage"
 			/>
 			<vega-chart v-if="lossChartSpec" :are-embed-actions-visible="false" :visualization-spec="lossChartSpec" />
 		</section>
@@ -265,7 +265,7 @@ watch(
 
 		// Calibration has finished, now kick of two forecast jobs to do comparison
 		// - using the default configuration ()
-		// - using the calibfrated configuration
+		// - using the calibrated configuration
 		if (response.state === PollerState.Done) {
 			// Default (Pre)
 			let forecastResponse = await makeForecastJobCiemss(baseRequestPayload, nodeMetadata(props.node));
@@ -310,12 +310,12 @@ watch(
 
 			// Get the calibrate losses to generate a run summary
 			const calibrateResponse = await pollAction(state.calibrationId);
-			const calibreateUpdates = calibrateResponse.data?.updates;
-			const errorStart = _.first(calibreateUpdates)?.data;
-			const errorEnd = _.last(calibreateUpdates)?.data;
+			const calibrateUpdates = calibrateResponse.data?.updates;
+			const errorStart = _.first(calibrateUpdates)?.data;
+			const errorEnd = _.last(calibrateUpdates)?.data;
 
 			const prompt = `
-		The following are the key attributes of a calibration/fitting process for a ODE epidemilogy model.
+		The following are the key attributes of a calibration/fitting process for a ODE epidemiology model.
 
 		- Fitting: ${JSON.stringify(state.mapping)}
 		- Loss at start is: ${JSON.stringify(errorStart)}
@@ -328,7 +328,7 @@ watch(
 
 			// Computed sampled model parameters from the forecast
 			// FIXME: this is highly dependent on the number of samples, we may want to compute
-			// the mean/stddev metrics independently of the forecsts directly querying the dill file
+			// the mean/stddev metrics independently of the forecasts directly querying the dill file
 			const sampledData = await getRunResultCSV(state.forecastId, 'result.csv');
 			const translationMap = parsePyCiemssMap(sampledData[0]);
 
@@ -345,7 +345,7 @@ watch(
 					parameterIds.forEach((parameterId) => {
 						let dataKey = translationMap[parameterId];
 
-						// propbably initials, need a proxy-translation map
+						// probably initials, need a proxy-translation map
 						if (!dataKey) {
 							const surrogateKey = ode?.initials?.find((d) => d.expression === parameterId)?.target;
 							if (!surrogateKey) return;

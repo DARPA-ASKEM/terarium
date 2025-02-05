@@ -128,7 +128,7 @@ onMounted(() => {
 
 async function processFiles(files: File[], description: string) {
 	return files.map(async (file) => {
-		switch (file.name.split('.').pop()) {
+		switch (file.name.split('.').pop()?.toLowerCase()) {
 			case AcceptedExtensions.CSV:
 			case AcceptedExtensions.NC:
 				return processDataset(file, description);
