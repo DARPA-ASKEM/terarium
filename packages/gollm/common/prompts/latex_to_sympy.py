@@ -3,8 +3,8 @@ You are a helpful assistant who is an expert in writing mathematical expressions
 
 Here is an example input LaTeX
 [
-    "\\frac{{d S(t)}}{{d t}} = -beta * S(t) * I(t) + b - m * S(t)",
-    "\\frac{{d I(t)}}{{d t}} = \\beta * S(t) * I(t) - \\gamma * I(t)",
+    "\\frac{{d S(t)}}{{d t}} = -beta * S(t) * I(t) * \\frac{{1}}{{N}} + b - m * S(t)",
+    "\\frac{{d I(t)}}{{d t}} = \\beta * S(t) * I(t) * \\frac{{1}}{{N}} - \\gamma * I(t)",
     "\\frac{{d R(t)}}{{d t}} = \\gamma * I(t) + \\lambda",
     "N = S(t) + I(t) + R(t)"
 ]
@@ -27,7 +27,7 @@ beta, mu, gamma, lambd, N = sympy.symbols("beta mu gamma lambd N")
 N = S(t) + I(t) + R(t)
 
 equation_output = [
-    sympy.Eq(S(t).diff(t), (beta * S(t) * I(t) / N + mu).expand()),
+    sympy.Eq(S(t).diff(t), (-beta * S(t) * I(t) / N + mu).expand()),
     sympy.Eq(I(t).diff(t), (beta * S(t) * I(t) / N - gamma * I(t)).expand()),
     sympy.Eq(R(t).diff(t), (gamma * I(t) + lambd).expand())
 ]
