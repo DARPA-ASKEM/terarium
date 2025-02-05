@@ -84,21 +84,13 @@
 							/>
 							<label class="mt-2"> Map column names for each input </label>
 							<label class="mt-1"> (This mapping just assists in making the WIS table appear)</label>
-							<DataTable class="mt-2" :value="knobs.mapping">
-								<Column v-if="knobs.selectedGroundTruthDatasetId" :header="datasets[groundTruthDatasetIndex].name">
-									<template #body="{ data }">
-										<Dropdown
-											class="mapping-dropdown"
-											v-model="data[datasets?.[groundTruthDatasetIndex].id as string]"
-											:options="mappingOptions[knobs.selectedGroundTruthDatasetId]"
-											filter
-											placeholder="Variable"
-											@change="constructWisTable"
-										/>
-									</template>
-								</Column>
+							<DataTable v-if="groundTruthDatasetIndex !== -1" class="mt-2" :value="knobs.mapping">
+								<!--Put ground truth dataset in the first column-->
 								<Column
-									v-for="dataset in datasets.filter(({ id }) => id !== knobs.selectedGroundTruthDatasetId)"
+									v-for="dataset in [
+										datasets[groundTruthDatasetIndex],
+										...datasets.filter((dataset) => dataset.id !== knobs.selectedGroundTruthDatasetId)
+									]"
 									:key="dataset.id"
 									:header="dataset.name"
 								>
@@ -123,7 +115,6 @@
 									</template>
 								</Column>
 							</DataTable>
-							ssss
 							<div class="flex justify-content-between mt-2">
 								<Button class="p-button-sm p-button-text" icon="pi pi-plus" label="Add mapping" @click="addMapping" />
 								<!-- TODO: Automapping
@@ -689,6 +680,8 @@ function constructWisTable() {
 
 	const observationsKeyNames = Object.keys(observationsMap);
 
+	console.log(observationsMap);
+
 	datasets.value.forEach((dataset, index) => {
 		if (index === groundTruthDatasetIndex.value) return;
 
@@ -699,20 +692,28 @@ function constructWisTable() {
 			const key = `${variableName}${type}mean:${index}`;
 			if (!observationsKeyNames.includes(key)) return;
 
-			let groundTruthKey = `${key.slice(0, -1)}${groundTruthDatasetIndex.value}`;
+			let groundTruthKey = ''; // `${key.slice(0, -1)}${groundTruthDatasetIndex.value}`;
 			// Use mapping to get ground truth key
-			if (!observationsKeyNames.includes(groundTruthKey)) {
-				let isFound = false;
-				knobs.value.mapping.forEach((mapping) => {
-					if (
-						!isFound &&
-						Object.values(mapping).includes(key.slice(0, -2)) &&
-						knobs.value.selectedGroundTruthDatasetId
-					) {
-						groundTruthKey = `${mapping[knobs.value.selectedGroundTruthDatasetId]}:${groundTruthDatasetIndex.value}`;
-						isFound = true;
-					}
-				});
+			// if (!observationsKeyNames.includes(groundTruthKey)) {/
+			let isFound = false;
+			knobs.value.mapping.forEach((mapping) => {
+				// Object.values(mapping).includes(key.slice(0, -2)) &&
+				if (!isFound && knobs.value.selectedGroundTruthDatasetId) {
+					groundTruthKey = `${mapping[knobs.value.selectedGroundTruthDatasetId]}${type}mean:${groundTruthDatasetIndex.value}`;
+					console.log('found', groundTruthKey);
+					isFound = true;
+				}
+			});
+			// }
+
+			// console.log(observationsMap[groundTruthKey]);
+			// console.log(groundTruthKey);
+			// console.log(knobs.value.mapping);
+			// console.log('key', key);
+			// console.log('_____');
+
+			if (!observationsMap[groundTruthKey]) {
+				return;
 			}
 
 			const wis = getWeightedIntervalScore(
@@ -762,6 +763,7 @@ onMounted(async () => {
 		rankingResultsChart
 	);
 
+	// Prepare variable dropdowns
 	let allVariableNames: string[] = [];
 	if (impactChartData.value) {
 		allVariableNames = Object.keys(impactChartData.value.pyciemssMap);
@@ -770,6 +772,12 @@ onMounted(async () => {
 		);
 	}
 
+	const swappedPyCiemssMap: Record<string, string> = {};
+	Object.entries(impactChartData.value?.pyciemssMap ?? {}).forEach(([key, value]) => {
+		swappedPyCiemssMap[value] = key;
+	});
+	const pyciemssNames = Object.keys(swappedPyCiemssMap);
+
 	datasets.value.forEach((dataset) => {
 		const datasetId = dataset.id as string;
 		mappingOptions.value[datasetId] = [];
@@ -777,19 +785,18 @@ onMounted(async () => {
 		if (!dataset.columns) return;
 		dataset.columns.forEach((column) => {
 			if (!column.name) return;
-			mappingOptions.value[datasetId].push(column.name);
+			if (pyciemssNames.includes(column.name)) {
+				mappingOptions.value[datasetId].push(swappedPyCiemssMap[column.name]);
+			}
 		});
 	});
-	// return Object.keys(impactChartData.value.pyciemssMap).filter((key) => !excludes.includes(key));
 
-	console.log(mappingOptions.value);
-	console.log(impactChartData.value);
-
+	// Construct tables
 	constructATETable();
 
 	if (isEmpty(knobs.value.mapping)) addMapping();
 
-	// constructWisTable();
+	constructWisTable();
 });
 
 watch(
