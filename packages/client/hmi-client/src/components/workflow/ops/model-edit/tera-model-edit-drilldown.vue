@@ -80,7 +80,7 @@ import type { Model } from '@/types/Types';
 import { OperatorStatus, WorkflowNode, WorkflowOutput } from '@/types/workflow';
 import { KernelSessionManager } from '@/services/jupyter';
 import { createModel, getModel } from '@/services/model';
-import { getModelIdFromModelConfigurationId } from '@/services/model-configurations';
+import { getAsConfiguredModel, getModelConfigurationById } from '@/services/model-configurations';
 import { saveCodeToState } from '@/services/notebook';
 import { logger } from '@/utils/logger';
 import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
@@ -356,7 +356,17 @@ onMounted(async () => {
 	if (input.type === 'modelId') {
 		inputModelId = input.value?.[0];
 	} else if (input.type === 'modelConfigId') {
-		inputModelId = await getModelIdFromModelConfigurationId(input.value?.[0]);
+		const modelConfigId = input.value?.[0];
+		const modelConfiguration = await getModelConfigurationById(modelConfigId);
+		const model = (await getAsConfiguredModel(modelConfigId)) as Model;
+		// Mark the model as originating from the config
+		model.temporary = true;
+		model.name += ` (${modelConfiguration.name})`;
+		model.header.name = model.name as string;
+		const res = await createModel(model);
+		if (res) {
+			inputModelId = res.id as string;
+		}
 	}
 	if (!inputModelId) return;
 
