@@ -769,7 +769,6 @@ const mappingFilledTooltip = computed(() =>
 const nodeInputsFilledTooltip = computed(() =>
 	!areNodeInputsFilled.value ? 'Must a valid dataset and model configuration\n' : ''
 );
-
 const isLoadingTooltip = computed(() => (isLoading.value ? 'Must wait for the current run to finish\n' : ''));
 
 const runButtonMessage = computed(() =>
@@ -978,6 +977,16 @@ const onSelection = (id: string) => {
 	emit('select-output', id);
 };
 
+const updateTimeline = () => {
+	const state = cloneDeep(props.node.state);
+	state.timestampColName = knobs.value.timestampColName;
+	emit('update-state', state);
+};
+
+/**
+ * Mapping functions
+ */
+
 // Used from button to add new entry to the mapping object
 function addMapping() {
 	mapping.value.push({
@@ -994,12 +1003,6 @@ function addMapping() {
 const updateMapping = () => {
 	const state = cloneDeep(props.node.state);
 	state.mapping = mapping.value;
-	emit('update-state', state);
-};
-
-const updateTimeline = () => {
-	const state = cloneDeep(props.node.state);
-	state.timestampColName = knobs.value.timestampColName;
 	emit('update-state', state);
 };
 
@@ -1034,6 +1037,8 @@ async function getAutoMapping() {
 	state.mapping = mapping.value;
 	emit('update-state', state);
 }
+
+/* End of Mapping functions */
 
 const initialize = async () => {
 	// Update Wizard form fields with current selected output state
