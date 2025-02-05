@@ -138,7 +138,13 @@ export class NestedPetrinetRenderer extends PetrinetRenderer {
 			.style('paint-order', 'stroke')
 			.style('fill', TEXT_COLOR)
 			.style('pointer-events', 'none')
-			.html((d) => d.id);
+			.html((d) => {
+				const matrix = this.transitionMatrices?.[d.id] ?? [];
+				if (matrix.length) {
+					return matrix[0][0].content.id;
+				}
+				return d.id;
+			});
 
 		// transitions expression text
 		transitions
@@ -264,6 +270,19 @@ export class NestedPetrinetRenderer extends PetrinetRenderer {
 				});
 			});
 		});
+
+		stratifiedTransitions
+			.append('text')
+			.attr('y', (d) => setFontSize(d.id) / 4)
+			.style('text-anchor', 'middle')
+			.classed('latex-font', true)
+			.style('font-style', 'italic')
+			.style('font-size', (d) => setFontSize(d.id))
+			.style('stroke', '#FFF')
+			.style('paint-order', 'stroke')
+			.style('fill', TEXT_COLOR)
+			.style('pointer-events', 'none')
+			.html((d) => d.id);
 
 		// species text
 		species
