@@ -133,6 +133,7 @@
 
 		<tera-drilldown-section :tabName="DrilldownTabs.Wizard">
 			<div ref="outputPanel" class="p-2">
+				<div class="px-2">For best behavior ensure that datasets have the same amount of timepoints</div>
 				<Accordion multiple :active-index="activeIndices">
 					<AccordionTab header="Summary"> </AccordionTab>
 					<template
@@ -664,11 +665,15 @@ function constructWisTable() {
 		...new Set([...selectedVariableNames.value, ...knobs.value.mapping.map((m) => Object.values(m)).flat()])
 	];
 
-	datasetResults.value?.summaryResults.forEach((summaryResult) => {
+	const summaryResults = [
+		...(datasetResults.value?.summaryResults ?? []),
+		...(datasetResults.value?.datasetResults ?? []) // Regular dataset asset
+	];
+
+	summaryResults.forEach((summaryResult) => {
 		Object.keys(summaryResult[0]).forEach((key) => {
 			if (
-				key.includes('_param_') ||
-				!key.includes('_mean:') ||
+				(!key.includes('data/') && (key.includes('_param_') || !key.includes('_mean:'))) ||
 				// Skip if the variable is not selected in output settings or attached to the ground truth dataset in your mapping
 				!variablesOfInterest.some((variableName) => {
 					if (key.includes(variableName)) {
@@ -697,19 +702,25 @@ function constructWisTable() {
 		const wisValues: number[] = [];
 
 		Object.entries(variableToTypeMap).forEach(([variableName, type]) => {
-			const key = `${variableName}${type}mean:${index}`;
+			let key = `${variableName}${type}mean:${index}`;
 			if (!observationsKeyNames.includes(key)) {
-				return;
+				key = `data/${variableName}:${index}`; // Check if it's from a regular dataset asset
+				if (!observationsKeyNames.includes(key)) {
+					return;
+				}
 			}
 
 			const datasetMapping = knobs.value.mapping.find((m) => Object.values(m).includes(variableName));
 			if (!datasetMapping) return;
 
 			const groundTruthVariableName = datasetMapping[selectedGroundTruthDatasetId];
-			const groundTruthKey = `${groundTruthVariableName}${type}mean:${groundTruthDatasetIndex.value}`;
+			let groundTruthKey = `${groundTruthVariableName}${type}mean:${groundTruthDatasetIndex.value}`;
 
 			if (!observationsMap[groundTruthKey]) {
-				return;
+				groundTruthKey = `data/${groundTruthVariableName}:${groundTruthDatasetIndex.value}`; // Check if it's from a regular dataset asset
+				if (!observationsMap[groundTruthKey]) {
+					return;
+				}
 			}
 
 			const wis = getWeightedIntervalScore(
