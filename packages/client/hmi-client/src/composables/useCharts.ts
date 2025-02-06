@@ -1,4 +1,4 @@
-import _, { capitalize } from 'lodash';
+import _, { capitalize, cloneDeep } from 'lodash';
 import { mean, variance } from 'd3';
 import { computed, ComputedRef, ref, Ref, watchEffect } from 'vue';
 import { VisualizationSpec } from 'vega-embed';
@@ -576,6 +576,7 @@ export function useCharts(
 	const useCompareDatasetCharts = (
 		chartSettings: ComputedRef<ChartSetting[]>,
 		selectedPlotType: ComputedRef<PlotValue>,
+		baselineIndex: ComputedRef<number>,
 		datasets: Ref<Dataset[]>,
 		modelConfigurations: Ref<ModelConfiguration[]>,
 		interventionPolicies: Ref<InterventionPolicy[]>
@@ -588,24 +589,31 @@ export function useCharts(
 			// loaded before rendering the charts, but beware to not break rendering in the case
 			// when there are no interventions
 
-			// TODO: create the color map outside of this function and pass `interventionNameColorMap` as parameter
-			const { interventionNameColorMap } = getInterventionColorAndScoreMaps(
-				datasets,
-				modelConfigurations,
-				interventionPolicies
-			);
+			let variableColorMap;
 
-			// Match variables with intervention colors
-			const variableColorMap = datasets.value.map(({ metadata }) => {
-				const policy = interventionPolicies.value.find(
-					({ id }) => id === metadata?.simulationAttributes?.interventionPolicyId
+			if (interventionPolicies.value.length > 0) {
+				// TODO: create the color map outside of this function and pass `interventionNameColorMap` as parameter
+				const { interventionNameColorMap } = getInterventionColorAndScoreMaps(
+					datasets,
+					modelConfigurations,
+					interventionPolicies
 				);
-				if (!policy || !policy.name) return 'black';
-				if (interventionNameColorMap[policy.name]) {
-					return interventionNameColorMap[policy.name];
-				}
-				return 'black';
-			});
+
+				// Match variables with intervention colors
+				variableColorMap = datasets.value.map(({ metadata }) => {
+					const policy = interventionPolicies.value.find(
+						({ id }) => id === metadata?.simulationAttributes?.interventionPolicyId
+					);
+					if (!policy || !policy.name) return 'black';
+					if (interventionNameColorMap[policy.name]) {
+						return interventionNameColorMap[policy.name];
+					}
+					return 'black';
+				});
+			} else {
+				variableColorMap = cloneDeep(CATEGORICAL_SCHEME);
+				variableColorMap.splice(baselineIndex.value, 0, 'black');
+			}
 
 			chartSettings.value.forEach((settings) => {
 				const varName = settings.selectedVariables[0];

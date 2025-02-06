@@ -555,6 +555,7 @@ const baselineDatasetIndex = computed(() =>
 const variableCharts = useCompareDatasetCharts(
 	selectedVariableSettings,
 	selectedPlotType,
+	baselineDatasetIndex,
 	datasets,
 	modelConfigurations,
 	interventionPolicies
@@ -693,10 +694,6 @@ function constructWisTable() {
 	});
 
 	const observationsKeyNames = Object.keys(observationsMap);
-
-	console.log(observationsMap);
-	console.log(variableToTypeMap);
-	console.log(groundTruthDatasetIndex.value);
 
 	datasets.value.forEach((dataset, index) => {
 		if (index === groundTruthDatasetIndex.value) return;
