@@ -85,7 +85,7 @@ watch(
 				});
 			}
 
-			// Then add the context concepts
+			// Then add the modifiers concepts
 			if (!isEmpty(newGrounding.modifiers)) {
 				getDKGFromGroundingModifier(newGrounding.modifiers).then((dkgList) => {
 					concepts.value.push(...dkgList);
