@@ -13,11 +13,13 @@
 				class="mr-3 parameter-input"
 			>
 				<template #option="slotProps">
-					<section
+					<!-- Disabling popup until the not disappearing issue is fixed -->
+					<!-- <section
 						class="flex align-items-center w-full"
 						@mouseover="showPopup(dropdownRef.$el, slotProps.index)"
 						@focusin="() => showPopup(dropdownRef.$el, slotProps.index)"
-					>
+					> -->
+					<section class="flex align-items-center w-full">
 						<div>{{ slotProps.option.name }}</div>
 					</section>
 				</template>
@@ -38,7 +40,7 @@
 	</span>
 </template>
 <script setup lang="ts">
-import { computed, ref, onMounted, nextTick } from 'vue';
+import { computed, ref, onMounted } from 'vue';
 import { getParameterDistribution, isNumberInputEmpty } from '@/services/model-configurations';
 import { Model, ModelConfiguration, ModelDistribution } from '@/types/Types';
 import Dropdown from 'primevue/dropdown';
@@ -68,29 +70,31 @@ function hidePopup() {
 	hoveredOption.value = null;
 }
 
-async function showPopup(item: HTMLElement | null, index: number) {
-	hidePopup();
-	if (!item) return;
+// Disabling popup until the not disappearing issue is fixed
 
-	hoveredOption.value = distributionOptions.value[index];
-	// nextTick() waiting for dropdown to render before getting position and height
-	await nextTick();
-	const rect = item.getBoundingClientRect();
-	const viewport = window.innerHeight;
+// async function showPopup(item: HTMLElement | null, index: number) {
+// 	hidePopup();
+// 	if (!item) return;
 
-	const element = cardRef.value.tooltipRef.getBoundingClientRect();
-	const cardBottom = element.height + rect.bottom;
+// 	hoveredOption.value = distributionOptions.value[index];
+// 	// nextTick() waiting for dropdown to render before getting position and height
+// 	await nextTick();
+// 	const rect = item.getBoundingClientRect();
+// 	const viewport = window.innerHeight;
 
-	let top = rect.y / rect.top + window.scrollY - 35;
-	if (cardBottom > viewport) {
-		top -= Math.abs(cardBottom - viewport) + 35;
-	}
+// 	const element = cardRef.value.tooltipRef.getBoundingClientRect();
+// 	const cardBottom = element.height + rect.bottom;
 
-	popupPosition.value = {
-		top,
-		left: rect.x / rect.left + rect.width
-	};
-}
+// 	let top = rect.y / rect.top + window.scrollY - 35;
+// 	if (cardBottom > viewport) {
+// 		top -= Math.abs(cardBottom - viewport) + 35;
+// 	}
+
+// 	popupPosition.value = {
+// 		top,
+// 		left: rect.x / rect.left + rect.width
+// 	};
+// }
 
 function onChange(event: { value: DistributionType }) {
 	const distribution = getParameterDistribution(props.modelConfiguration, props.parameterId, true);

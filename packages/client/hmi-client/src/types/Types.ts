@@ -583,7 +583,6 @@ export interface OptimizeRequestCiemss {
     fixedInterventions?: Intervention[];
     loggingStepSize?: number;
     qoi: OptimizeQoi[];
-    boundsInterventions: number[][];
     extra: OptimizeExtra;
     engine: string;
     userId: string;
@@ -651,12 +650,18 @@ export interface OptimizeExtra {
 
 export interface OptimizeInterventions {
     interventionType: string;
-    paramNames: string[];
-    paramValues?: number[];
-    startTime?: number[];
-    objectiveFunctionOption: string;
-    initialGuess?: number[];
+    paramName: string;
+    paramValue?: number;
+    startTime?: number;
+    timeObjectiveFunction: string;
+    parameterObjectiveFunction: string;
     relativeImportance: number;
+    paramValueInitialGuess?: number;
+    parameterValueLowerBound: number;
+    parameterValueUpperBound: number;
+    startTimeInitialGuess?: number;
+    startTimeLowerBound: number;
+    startTimeUpperBound: number;
 }
 
 export interface OptimizeQoi {
