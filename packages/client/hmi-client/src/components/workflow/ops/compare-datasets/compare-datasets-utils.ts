@@ -89,11 +89,15 @@ export const transformRowValuesRelativeToBaseline = (
 			transformed[key] = value;
 			return;
 		}
+		let eps = 1e-6;
 		const baselineValue = row[`${dataKey}:${baselineDataIndex}`];
 		if (plotType === PlotValue.DIFFERENCE) {
 			transformed[key] = value - baselineValue;
 		} else if (plotType === PlotValue.PERCENTAGE) {
-			transformed[key] = ((value - baselineValue) / baselineValue) * 100;
+			// keep numerator as 0 if value - baselineValue is 0
+			// FIXME: if just baseline is 0 we get a divide by 0 error and end up if NaN for the transformed value, keeping this for now as graphs look wonky if we don't
+			if (baselineValue === 0 || value - baselineValue === 0) eps = 0;
+			transformed[key] = ((value - baselineValue + eps) / (baselineValue + eps)) * 100;
 		} else if (plotType === PlotValue.VALUE) {
 			transformed[key] = value;
 		}
