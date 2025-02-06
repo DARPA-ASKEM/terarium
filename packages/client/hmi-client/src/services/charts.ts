@@ -1164,7 +1164,10 @@ export function createQuantilesForecastChart(
 		...options.legendProperties
 	};
 
-	const yScale = { type: options.scale === 'log' ? 'symlog' : 'linear' };
+	const yScale: { type: string; domain?: [number, number] } = { type: options.scale === 'log' ? 'symlog' : 'linear' };
+	if (options.yExtent) {
+		yScale.domain = options.yExtent;
+	}
 
 	const LEGEND_SELECT_PARAM = 'legend_selection';
 	const encodingColor = (legend = false) => ({
