@@ -73,9 +73,6 @@ jobs:
           username: ${{ github.repository_owner }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@v3
-
       - name: Setup Node 20.10.0 LTS
         uses: actions/setup-node@v4
         with:
