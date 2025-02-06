@@ -85,6 +85,7 @@ onMounted(() => {
 const comparisonCharts = useCompareDatasetCharts(
 	selectedVariableSettings,
 	selectedPlotType,
+	baselineDatasetIndex,
 	datasets,
 	modelConfigurations,
 	interventionPolicies
