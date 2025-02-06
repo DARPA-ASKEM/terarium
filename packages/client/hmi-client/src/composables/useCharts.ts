@@ -537,6 +537,7 @@ export function useCharts(
 	const useCompareDatasetCharts = (
 		chartSettings: ComputedRef<ChartSetting[]>,
 		selectedPlotType: ComputedRef<PlotValue>,
+		baselineIndex: ComputedRef<number>,
 		datasets: Ref<Dataset[]>,
 		modelConfigurations: Ref<ModelConfiguration[]>,
 		interventionPolicies: Ref<InterventionPolicy[]>
@@ -572,6 +573,7 @@ export function useCharts(
 				});
 			} else {
 				variableColorMap = cloneDeep(CATEGORICAL_SCHEME);
+				variableColorMap.splice(baselineIndex.value, 0, 'black');
 			}
 
 			chartSettings.value.forEach((settings) => {
