@@ -3,7 +3,16 @@
  */
 
 import API from '@/api/api';
-import type { Curies, DatasetColumn, DKG, EntitySimilarityResult, State, Model, Grounding } from '@/types/Types';
+import type {
+	Curies,
+	DatasetColumn,
+	DKG,
+	EntitySimilarityResult,
+	State,
+	Model,
+	Grounding,
+	Observable
+} from '@/types/Types';
 import { logger } from '@/utils/logger';
 import { isEmpty } from 'lodash';
 import { CalibrateMap } from '@/services/calibrate-workflow';
@@ -218,15 +227,18 @@ async function autoMappingGrounding(sources: Entity[], targets: Entity[]): Promi
 }
 
 /**
- Takes in a list of states and a list of dataset columns.
+ Takes in a list of states/observables and a list of dataset columns.
  Transforms them into generic entities with {id, Grounding}
  rewrites result in form {modelVariable, datasetVariable}
  */
-async function autoCalibrationMapping(modelOptions: State[], datasetColumns: DatasetColumn[]): Promise<CalibrateMap[]> {
+async function autoCalibrationMapping(
+	modelOptions: (State | Observable)[],
+	datasetColumns: DatasetColumn[]
+): Promise<CalibrateMap[]> {
 	// Sources are modelOptions
 	const sources: Entity[] = modelOptions
-		.filter((state) => state.grounding)
-		.map((state) => ({ id: state.id, grounding: state.grounding }) as Entity);
+		.filter((variable) => variable.grounding)
+		.map((variable) => ({ id: variable.id, grounding: variable.grounding }) as Entity);
 
 	// Targets are datasetColumns
 	const targets: Entity[] = datasetColumns

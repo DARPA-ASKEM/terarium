@@ -1,5 +1,5 @@
-import type { Dataset, CsvAsset } from '@/types/Types';
-import { getModelConfigurationById, getObservables } from '@/services/model-configurations';
+import type { Dataset, CsvAsset, Observable, State } from '@/types/Types';
+import { getModelConfigurationById } from '@/services/model-configurations';
 import { getCsvAsset } from '@/services/dataset';
 import { getUnitsFromModelParts, getModelByModelConfigurationId, getTypesFromModelParts } from '@/services/model';
 
@@ -25,7 +25,8 @@ export async function setupModelInput(modelConfigId: string | undefined) {
 
 	const modelPartUnits = getUnitsFromModelParts(model);
 	const modelPartTypes = getTypesFromModelParts(model);
-	const modelOptions: any[] = [...model.model.states, ...getObservables(modelConfiguration)];
+	const observables: Observable[] = model?.semantics?.ode?.observables ?? [];
+	const modelOptions: (State | Observable)[] = [...model.model.states, ...observables];
 
 	return {
 		model,
