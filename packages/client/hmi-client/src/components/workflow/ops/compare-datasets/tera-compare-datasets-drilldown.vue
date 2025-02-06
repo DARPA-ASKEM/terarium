@@ -580,6 +580,7 @@ const baselineDatasetIndex = computed(() =>
 const variableCharts = useCompareDatasetCharts(
 	selectedVariableSettings,
 	selectedPlotType,
+	baselineDatasetIndex,
 	datasets,
 	modelConfigurations,
 	interventionPolicies
