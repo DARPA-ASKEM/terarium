@@ -1,4 +1,4 @@
-import { select } from 'd3';
+import * as d3 from 'd3';
 import { D3SelectionINode, Options } from '@graph-scaffolder/types';
 import { useNodeTypeColorPalette, useNestedTypeColorPalette } from '@/utils/petrinet-color-palette';
 import { NodeType } from '@/services/graph';
@@ -14,6 +14,15 @@ const FONT_SIZE_LARGE = 36;
 
 const NODE_COLOR = '#E0E0E0';
 const TEXT_COLOR = 'rgb(16, 24, 40)';
+
+const EDGE_COLOR = '#616161';
+const EDGE_OPACITY = 0.5;
+
+const pathFn = d3
+	.line<{ x: number; y: number }>()
+	.x((d) => d.x)
+	.y((d) => d.y)
+	.curve(d3.curveBasis);
 
 function setFontSize(label: string) {
 	if (label.length < 3) {
@@ -112,6 +121,43 @@ export class NestedPetrinetRenderer extends PetrinetRenderer {
 			.style('cursor', 'pointer');
 
 		// transitions
+		const transitionRadius = 5;
+		transitions
+			.append('path')
+			.attr('d', (d) =>
+				pathFn([
+					{ x: -0.5 * d.width, y: 0 },
+					{ x: -(transitionRadius + 1), y: 0 }
+				])
+			)
+			.style('fill', 'none')
+			.style('stroke', EDGE_COLOR)
+			.style('stroke-opacity', EDGE_OPACITY)
+			.style('stroke-width', 3);
+		transitions
+			.append('path')
+			.attr('d', (d) =>
+				pathFn([
+					{ x: transitionRadius + 1, y: 0 },
+					{ x: 0.5 * d.width, y: 0 }
+				])
+			)
+			.style('fill', 'none')
+			.style('stroke', EDGE_COLOR)
+			.style('stroke-opacity', EDGE_OPACITY)
+			.style('stroke-width', 3);
+
+		transitions
+			.append('circle')
+			.classed('shape selectableNode', true)
+			.attr('r', transitionRadius)
+			.style('fill', EDGE_COLOR)
+			.style('fill-opacity', EDGE_OPACITY)
+			.style('cursor', 'pointer')
+			.attr('stroke', NODE_COLOR)
+			.attr('stroke-width', 1);
+
+		/*
 		transitions
 			.append('rect')
 			.classed('shape selectableNode', true)
@@ -125,11 +171,13 @@ export class NestedPetrinetRenderer extends PetrinetRenderer {
 			.style('cursor', 'pointer')
 			.attr('stroke', NODE_COLOR)
 			.attr('stroke-width', 1);
+		*/
 
 		// transitions label text
 		transitions
 			.append('text')
-			.attr('y', (d) => setFontSize(d.id) / 4)
+			// .attr('y', (d) => setFontSize(d.id) / 4)
+			.attr('y', (d) => setFontSize(d.id))
 			.style('text-anchor', 'middle')
 			.classed('latex-font', true)
 			.style('font-style', 'italic')
@@ -138,12 +186,18 @@ export class NestedPetrinetRenderer extends PetrinetRenderer {
 			.style('paint-order', 'stroke')
 			.style('fill', TEXT_COLOR)
 			.style('pointer-events', 'none')
-			.html((d) => d.id);
+			.html((d) => {
+				const matrix = this.transitionMatrices?.[d.id] ?? [];
+				if (matrix.length) {
+					return matrix[0][0].content.id;
+				}
+				return d.id;
+			});
 
 		// transitions expression text
 		transitions
 			.append('text')
-			.attr('y', (d) => -d.height / 2 - 8)
+			.attr('y', -8)
 			.classed('latex-font', true)
 			.style('font-style', 'italic')
 			.style('font-size', FONT_SIZE_SMALL)
@@ -192,7 +246,7 @@ export class NestedPetrinetRenderer extends PetrinetRenderer {
 
 			const nestedNodesLen = Object.keys(node).filter((d) => d !== '_key').length;
 			if (nestedNodesLen >= CIRCLE_PACKING_CHILD_NORMALIZED_VECTORS.length) {
-				select(g[idx])
+				d3.select(g[idx])
 					.append('text')
 					.classed('latex-font', true)
 					.attr('y', parentRadius)
@@ -216,7 +270,7 @@ export class NestedPetrinetRenderer extends PetrinetRenderer {
 				const xPos = parentRadius * CIRCLE_PACKING_CHILD_NORMALIZED_VECTORS[nestedNodesLen][i][0] + parentX;
 				const yPos = parentRadius * CIRCLE_PACKING_CHILD_NORMALIZED_VECTORS[nestedNodesLen][i][1] + parentY;
 
-				select(g[idx])
+				d3.select(g[idx])
 					.append('circle')
 					.classed('shape', true)
 					.attr('r', () => childRadius)
@@ -240,7 +294,7 @@ export class NestedPetrinetRenderer extends PetrinetRenderer {
 
 			const matrixRowLen = transitionMatrix.length;
 			const matrixColLen = transitionMatrix[0].length;
-			const transitionNode = select(g[idx]);
+			const transitionNode = d3.select(g[idx]);
 
 			transitionMatrix.forEach((row, ridx) => {
 				const rowIdx = ridx;
@@ -264,6 +318,20 @@ export class NestedPetrinetRenderer extends PetrinetRenderer {
 				});
 			});
 		});
+
+		stratifiedTransitions
+			.append('text')
+			// .attr('y', (d) => setFontSize(d.id) / 4)
+			.attr('y', (d) => d.height)
+			.style('text-anchor', 'middle')
+			.classed('latex-font', true)
+			.style('font-style', 'italic')
+			.style('font-size', (d) => setFontSize(d.id))
+			.style('stroke', '#FFF')
+			.style('paint-order', 'stroke')
+			.style('fill', TEXT_COLOR)
+			.style('pointer-events', 'none')
+			.html((d) => d.id);
 
 		// species text
 		species

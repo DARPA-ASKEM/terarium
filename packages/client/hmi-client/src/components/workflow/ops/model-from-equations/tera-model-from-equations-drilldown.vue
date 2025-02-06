@@ -120,9 +120,12 @@
 								</div>
 							</section>
 						</header>
-						<h6 v-if="includedEquations.length > 0" class="py-3">
-							Use {{ includedEquations.length > 1 ? 'these equations' : 'this equation' }}
-						</h6>
+						<div class="flex align-items-center">
+							<h6 v-if="includedEquations.length > 0" class="py-3">
+								Use {{ includedEquations.length > 1 ? 'these equations' : 'this equation' }}
+							</h6>
+							<Button class="p-button-sm p-button-text ml-auto" label="View all" @click="viewAllEquations = true" />
+						</div>
 						<p v-if="isEmpty(includedEquations) && document" class="secondary-text mt-3">No equations selected</p>
 						<ul class="blocks-container">
 							<li v-for="(equation, i) in includedEquations" :key="i" @click.capture="selectItem(equation, $event)">
@@ -251,6 +254,17 @@
 			</tera-slider-panel>
 		</template>
 	</tera-drilldown>
+	<tera-modal v-if="viewAllEquations" class="w-8" @modal-mask-clicked="viewAllEquations = false">
+		<template #header
+			><div class="flex align-items-center">
+				<h4>LaTeX</h4>
+				<Button class="p-button-sm ml-auto" severity="secondary" @click="setCopyClipboard(allEquationsCopy)">{{
+					btnCopyLabel
+				}}</Button>
+			</div>
+		</template>
+		<textarea v-model="allEquationsCopy" readonly width="100%" :rows="allEquations.length + 1" />
+	</tera-modal>
 </template>
 
 <script setup lang="ts">
@@ -278,6 +292,8 @@ import TeraPdfEmbed from '@/components/widgets/tera-pdf-embed.vue';
 import TeraTextEditor from '@/components/documents/tera-text-editor.vue';
 import { logger } from '@/utils/logger';
 import RadioButton from 'primevue/radiobutton';
+import TeraModal from '@/components/widgets/tera-modal.vue';
+import { createCopyTextToClipboard } from '@/utils/clipboard';
 import { ModelFromEquationsState, EquationBlock } from './model-from-equations-operation';
 
 const emit = defineEmits(['close', 'update-state', 'append-output', 'select-output']);
@@ -310,6 +326,15 @@ const includedEquations = computed(() =>
 const notIncludedEquations = computed(() =>
 	clonedState.value.equations.filter((equation) => equation.includeInProcess === false)
 );
+
+/**
+ * View all equations
+ */
+const viewAllEquations = ref(false);
+const allEquations = computed(() => includedEquations.value.map((eq) => eq.asset.text));
+const allEquationsCopy = computed(() => allEquations.value.join('\n'));
+const { btnCopyLabel, setCopyClipboard } = createCopyTextToClipboard();
+/* End Copy all equations */
 
 const pdfViewer = ref();
 
@@ -643,13 +668,6 @@ watch(
 .asset-panel:hover {
 	background: var(--surface-highlight);
 }
-/* TODO: to be implemented when displaying the extracted equations.
-.equation-image {
-	border-style: dashed;
-	border-color: var(--primary-color);
-	border-width: thin;
-}
-*/
 
 .input-container {
 	position: relative;
