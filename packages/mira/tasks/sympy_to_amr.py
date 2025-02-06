@@ -60,22 +60,24 @@ def main():
     
         # Ensure model templates have unique names/ids and display names
         if len(mmt.templates) > 0:
-            if len({t.name for t in mmt.templates}) < len(mmt.templates):
-                for i, t in enumerate(mmt.templates):
-                    t.name = f't{i}'
-                    t.display_name = f'{t.type}'
-                    if 'Production' in t.type:
-                        t.display_name += f' of {t.outcome.display_name}'
-                    elif 'Degradation' in t.type:
-                        t.display_name += f' of {t.subject.display_name}'
-                    elif 'Conversion' in t.type:
-                        t.display_name += f' from {t.subject.display_name} to {t.outcome.display_name}'
-    
-                    if getattr(t, 'controller', False):
-                        t.display_name += f' controlled by {t.controller.display_name}'
-                    elif getattr(t, 'controllers', False):
-                        t.display_name += f' controlled by {" and ".join([c.display_name for c in t.controllers])}'
-                
+            for i, t in enumerate(mmt.templates):
+                t.name = f't{i}:'
+                t.display_name = f'{t.type}'
+                if 'Production' in t.type:
+                    t.name += f'->{t.outcome.name}'
+                    t.display_name += f' of {t.outcome.display_name}'
+                elif 'Degradation' in t.type:
+                    t.name += f'{t.subject.name}->'
+                    t.display_name += f' of {t.subject.display_name}'
+                elif 'Conversion' in t.type:
+                    t.name += f'{t.subject.name}->{t.outcome.name}'
+                    t.display_name += f' from {t.subject.display_name} to {t.outcome.display_name}'
+
+                if getattr(t, 'controller', False):
+                    t.display_name += f' controlled by {t.controller.display_name}'
+                elif getattr(t, 'controllers', False):
+                    t.display_name += f' controlled by {" and ".join([c.display_name for c in t.controllers])}'
+
         # Set default values for the model parameters
         for param in mmt.parameters.values():
             param.value = 0.0

@@ -33,7 +33,7 @@ watch(
 			document.value = await getDocumentAsset(assetId);
 			const filename = document.value?.fileNames?.[0];
 
-			const isPdf = filename?.endsWith('.pdf');
+			const isPdf = filename?.toLowerCase().endsWith('.pdf');
 			if (document.value?.id && filename) {
 				if (isPdf) {
 					pdfLink.value = (await downloadDocumentAsset(props.assetId, filename)) ?? null;

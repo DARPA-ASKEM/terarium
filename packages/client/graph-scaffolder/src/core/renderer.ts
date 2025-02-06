@@ -479,7 +479,10 @@ export abstract class Renderer<V, E> extends EventEmitter {
 			renderer.isDragEnabled = false;
 
 			if (sufficientlyMoved && options.edgeReroutingFn) {
-				options.edgeReroutingFn(nodes, edges);
+				const affectedEdges = edges.filter(
+					(e) => nodeDraggingIds.includes(e.source) || nodeDraggingIds.includes(e.target)
+				);
+				options.edgeReroutingFn(nodes, affectedEdges);
 			}
 
 			updateEdgePoints();
