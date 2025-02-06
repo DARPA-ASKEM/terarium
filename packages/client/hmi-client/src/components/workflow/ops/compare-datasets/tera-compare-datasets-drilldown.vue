@@ -83,26 +83,14 @@
 								placeholder="Dataset"
 							/>
 							<label class="mt-2"> Map column names for each input </label>
-							<label class="mt-1"> (This mapping just assists in making the WIS table appear) </label>
-							<DataTable class="mt-2" :value="knobs.mapping">
-								<Column v-if="datasets[groundTruthDatasetIndex]?.id" :header="datasets[groundTruthDatasetIndex].name">
-									<template #body="{ data }">
-										<Dropdown
-											class="mapping-dropdown"
-											v-model="data[datasets?.[groundTruthDatasetIndex].id as string]"
-											:options="
-												datasets[groundTruthDatasetIndex].columns
-													?.map((ele) => ele.name)
-													.filter((ele) => ele?.includes('mean') || ele?.includes('time'))
-											"
-											filter
-											placeholder="Variable"
-											@change="constructWisTable"
-										/>
-									</template>
-								</Column>
+							<label class="mt-1"> (This mapping just assists in making the WIS table appear)</label>
+							<DataTable v-if="groundTruthDatasetIndex !== -1" class="mt-2" :value="knobs.mapping">
+								<!--Put ground truth dataset in the first column-->
 								<Column
-									v-for="dataset in datasets.filter(({ id }) => id !== knobs.selectedGroundTruthDatasetId)"
+									v-for="dataset in [
+										datasets[groundTruthDatasetIndex],
+										...datasets.filter((dataset) => dataset.id !== knobs.selectedGroundTruthDatasetId)
+									]"
 									:key="dataset.id"
 									:header="dataset.name"
 								>
@@ -113,18 +101,7 @@
 											placeholder="Variable"
 											filter
 											v-model="data[dataset.id]"
-											:options="
-												dataset.columns
-													?.filter((ele) => ele.fileName === getFileName(dataset))
-													?.map((ele) => ele.name)
-													.filter(
-														(ele) =>
-															!ele?.includes('median') &&
-															!ele?.includes('std') &&
-															!ele?.includes('min') &&
-															!ele?.includes('max')
-													)
-											"
+											:options="mappingOptions[dataset.id]"
 											@change="constructWisTable"
 										/>
 									</template>
@@ -558,11 +535,8 @@ const rankingChartData = ref<ChartData | null>(null);
 const rankingResultsChart = ref<any>(null);
 const rankingCriteriaCharts = ref<any>([]);
 
-const variableNames = computed(() => {
-	if (impactChartData.value === null) return [];
-	const excludes = ['timepoint_id', 'sample_id', 'timepoint_unknown'];
-	return Object.keys(impactChartData.value.pyciemssMap).filter((key) => !excludes.includes(key));
-});
+const variableNames = ref<string[]>([]);
+const mappingOptions = ref<Record<string, string[]>>({});
 
 const { generateAnnotation, getChartAnnotationsByChartId, useCompareDatasetCharts } = useCharts(
 	props.node.id,
@@ -676,6 +650,9 @@ function deleteMapRow(index: number) {
 // TODO: Investigate sharing similar logic between constructing ate and wis tables since they are very similar
 // It may or may not be a good idea
 function constructWisTable() {
+	if (knobs.value.selectedGroundTruthDatasetId === null) return;
+	const selectedGroundTruthDatasetId = knobs.value.selectedGroundTruthDatasetId;
+
 	wisTable.value = [];
 	wisVariableHeaders.value = [];
 
@@ -683,13 +660,17 @@ function constructWisTable() {
 	const observationsMap: Record<number, number> = {};
 	const variableToTypeMap: Record<string, string> = {};
 
+	const variablesOfInterest = [
+		...new Set([...selectedVariableNames.value, ...knobs.value.mapping.map((m) => Object.values(m)).flat()])
+	];
+
 	datasetResults.value?.summaryResults.forEach((summaryResult) => {
 		Object.keys(summaryResult[0]).forEach((key) => {
 			if (
 				key.includes('_param_') ||
 				!key.includes('_mean:') ||
-				// Skip if the variable is not selected in output settings
-				!selectedVariableNames.value.some((variableName) => {
+				// Skip if the variable is not selected in output settings or attached to the ground truth dataset in your mapping
+				!variablesOfInterest.some((variableName) => {
 					if (key.includes(variableName)) {
 						if (!variableToTypeMap[variableName]) {
 							variableToTypeMap[variableName] = key.includes('_observable_state_') ? '_observable_state_' : '_state_';
@@ -717,22 +698,18 @@ function constructWisTable() {
 
 		Object.entries(variableToTypeMap).forEach(([variableName, type]) => {
 			const key = `${variableName}${type}mean:${index}`;
-			if (!observationsKeyNames.includes(key)) return;
+			if (!observationsKeyNames.includes(key)) {
+				return;
+			}
 
-			let groundTruthKey = `${key.slice(0, -1)}${groundTruthDatasetIndex.value}`;
-			// Use mapping to get ground truth key
-			if (!observationsKeyNames.includes(groundTruthKey)) {
-				let isFound = false;
-				knobs.value.mapping.forEach((mapping) => {
-					if (
-						!isFound &&
-						Object.values(mapping).includes(key.slice(0, -2)) &&
-						knobs.value.selectedGroundTruthDatasetId
-					) {
-						groundTruthKey = `${mapping[knobs.value.selectedGroundTruthDatasetId]}:${groundTruthDatasetIndex.value}`;
-						isFound = true;
-					}
-				});
+			const datasetMapping = knobs.value.mapping.find((m) => Object.values(m).includes(variableName));
+			if (!datasetMapping) return;
+
+			const groundTruthVariableName = datasetMapping[selectedGroundTruthDatasetId];
+			const groundTruthKey = `${groundTruthVariableName}${type}mean:${groundTruthDatasetIndex.value}`;
+
+			if (!observationsMap[groundTruthKey]) {
+				return;
 			}
 
 			const wis = getWeightedIntervalScore(
@@ -747,7 +724,14 @@ function constructWisTable() {
 			}
 
 			const totalMean = mean(wis.total);
+
+			// FIXME: For now I am assigning to the value to the ground truth column and the variable column
+			// The table columns that end up actually appearing are the variables chosen in the output settings
+			// But the ground truth may not necessarily match up with what's chosen in the output settings
+			// So this is kind of a lazy solution that'll always work, (later we'll see how we exactly want to sync the mapping and the output settings selector)
+			wisRow[groundTruthVariableName] = totalMean;
 			wisRow[variableName] = totalMean;
+
 			wisValues.push(totalMean);
 		});
 		wisRow.overall = mean(wisValues);
@@ -782,6 +766,39 @@ onMounted(async () => {
 		rankingResultsChart
 	);
 
+	// Prepare variable dropdowns
+	let allVariableNames: string[] = [];
+	if (impactChartData.value) {
+		allVariableNames = Object.keys(impactChartData.value.pyciemssMap);
+		variableNames.value = allVariableNames.filter(
+			(key) => !['timepoint_id', 'sample_id', 'timepoint_unknown'].includes(key)
+		);
+	}
+
+	const swappedPyCiemssMap: Record<string, string> = {};
+	Object.entries(impactChartData.value?.pyciemssMap ?? {}).forEach(([key, value]) => {
+		swappedPyCiemssMap[value] = key;
+	});
+	const pyciemssNames = Object.keys(swappedPyCiemssMap);
+
+	datasets.value.forEach((dataset) => {
+		const datasetId = dataset.id as string;
+		mappingOptions.value[datasetId] = [];
+
+		if (!dataset.columns) return;
+		dataset.columns.forEach((column) => {
+			if (!column.name || column.fileName !== getFileName(dataset)) return;
+
+			let option = '';
+			if (pyciemssNames.includes(column.name)) option = swappedPyCiemssMap[column.name];
+			else if (pyciemssNames.includes(`data/${column.name}`)) option = swappedPyCiemssMap[`data/${column.name}`];
+			if (!option) return;
+
+			mappingOptions.value[datasetId].push(option);
+		});
+	});
+
+	// Construct tables
 	constructATETable();
 
 	if (isEmpty(knobs.value.mapping)) addMapping();
