@@ -670,7 +670,6 @@ function constructWisTable() {
 	];
 
 	summaryResults.forEach((summaryResult) => {
-		console.log(summaryResult[0]);
 		Object.keys(summaryResult[0]).forEach((key) => {
 			if (
 				(!key.includes('data/') && (key.includes('_param_') || !key.includes('_mean:'))) ||
@@ -695,10 +694,9 @@ function constructWisTable() {
 
 	const observationsKeyNames = Object.keys(observationsMap);
 
-	console.log(datasetResults.value);
 	console.log(observationsMap);
 	console.log(variableToTypeMap);
-	console.log(variablesOfInterest);
+	console.log(groundTruthDatasetIndex.value);
 
 	datasets.value.forEach((dataset, index) => {
 		if (index === groundTruthDatasetIndex.value) return;
@@ -753,8 +751,6 @@ function constructWisTable() {
 		wisRow.overall = mean(wisValues);
 		wisTable.value.push({ modelName: dataset.name, ...wisRow });
 	});
-
-	console.log(wisTable.value);
 
 	if (!isConsistent) {
 		logger.error('Left quantile must be smaller than right quantile. Datasets are not ideal for WIS calculation.');
