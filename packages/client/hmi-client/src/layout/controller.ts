@@ -11,18 +11,23 @@ export default class LayoutController {
 
 	constructor() {
 		this.worker = new Promise((resolve, reject) => {
-			const worker = new Worker(new URL('./worker.ts', import.meta.url), {
-				type: 'module'
-			});
-			worker.onmessage = (e: any) => {
-				if (e.data) {
-					this._isReady = true;
-					resolve(worker);
-				} else {
-					console.error('Pyodide Init Error');
-					reject();
-				}
-			};
+			try {
+				const worker = new Worker(new URL('./worker.ts', import.meta.url), {
+					type: 'module'
+				});
+				worker.onmessage = (e: any) => {
+					if (e.data) {
+						this._isReady = true;
+						resolve(worker);
+					} else {
+						console.error('Pyodide Init Error');
+						reject();
+					}
+				};
+			} catch (e) {
+				console.error('Worker Creation Error:', e);
+				reject(e);
+			}
 		});
 	}
 
