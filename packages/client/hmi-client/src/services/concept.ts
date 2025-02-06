@@ -83,32 +83,18 @@ async function getDKGFromGroundingIdentifier(identifier: Object): Promise<DKG> {
 }
 
 async function getDKGFromGroundingModifier(modifiers: Grounding['modifiers']): Promise<DKG[]> {
-	let dkgList: DKG[] = [];
-	if (!isEmpty(modifiers)) {
-		Object.entries(modifiers).forEach(([key, value]) => {
-			const dkg: DKG = { name: '', curie: '', description: '' };
+	if (isEmpty(modifiers)) return [] as DKG[];
 
-			// Test if the value is a curie or a string
-			if (value.includes(':')) {
-				dkg.curie = value;
-				dkg.name = key;
-			} else {
-				dkg.name = `${key}: ${value}`;
-			}
-			dkgList.push(dkg);
-		});
-
-		// Resolve the name of curies properly
-		dkgList = await Promise.all(
-			dkgList.map(async (dkg) => {
-				if (isEmpty(dkg.curie)) return dkg;
-				const newName = await getNameOfCurieCached(dkg.curie);
+	return Promise.all(
+		Object.entries(modifiers)
+			.filter(([_key, value]) => value.includes(':')) // Test if the value is a curie or a string
+			.map(async ([key, value]) => {
+				const dkg: DKG = { name: key, curie: value, description: '' };
+				const newName = await getNameOfCurieCached(dkg.curie); // Resolve the name of curies properly
 				if (!isEmpty(newName)) dkg.name = newName;
 				return dkg;
 			})
-		);
-	}
-	return dkgList;
+	);
 }
 
 function parseCurieToIdentifier(curie: string | undefined): { [key: string]: string } {
