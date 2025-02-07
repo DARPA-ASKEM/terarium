@@ -162,10 +162,10 @@
 				:is-loading="showSpinner"
 				:loading-progress="props.node.state.currentProgress"
 				:loading-message="message"
-				class="p-4"
+				class="pl-2"
 			>
 				<template v-if="!isEmpty(node.state.runId)">
-					<header class="flex align-items-start">
+					<header class="flex align-items-start p-3">
 						<div>
 							<h4>{{ validatedModelConfiguration?.name }}</h4>
 							<span class="secondary-text">{{ formatShort(validatedModelConfiguration?.createdOn) }}</span>
@@ -206,15 +206,12 @@
 								/>
 								<span class="ml-4" v-else> To view parameter charts select some in the Output settings. </span>
 							</AccordionTab>
-							<AccordionTab
-								v-if="!isEmpty(calibratedConfigObservables) || !isEmpty(observableCharts)"
-								header="Observables"
-							>
+							<AccordionTab header="Observables">
 								<tera-model-part
-									v-if="!isEmpty(calibratedConfigObservables)"
+									v-if="!isEmpty(observablesList)"
 									class="pl-4"
 									:part-type="PartType.OBSERVABLE"
-									:items="calibratedConfigObservables"
+									:items="observablesList"
 									:feature-config="{ isPreview: true }"
 								/>
 								<template v-if="!isEmpty(observableCharts)">
@@ -494,7 +491,7 @@ const model = ref<Model | null>();
 let configuredInputModel: Model | null = null;
 
 const toolbarActiveIndicies = ref([0, 1]);
-const parameterAndStateActiveIndicies = ref([0, 1, 2, 3]);
+const parameterAndStateActiveIndicies = ref([0, 1, 2, 3, 4]);
 
 const stateIds = ref<string[]>([]);
 const parameterIds = ref<string[]>([]);
@@ -884,7 +881,7 @@ const validatedModelConfiguration = ref<ModelConfiguration | null>(null);
 const showSaveModal = ref(false);
 const configuredMmt = ref<MiraModel | null>(null);
 const mmtParams = ref<MiraTemplateParams>({});
-const calibratedConfigObservables = ref<Observable[]>([]);
+const observablesList = ref<any[]>([]);
 
 const stateCharts = ref<any>([{}]);
 const selectedStateCharts = computed(() => {
@@ -1038,12 +1035,18 @@ async function prepareOutput() {
 		return;
 	}
 	configuredMmt.value = makeConfiguredMMT(mmt, validatedModelConfiguration.value);
-	calibratedConfigObservables.value = validatedModelConfiguration.value.observableSemanticList.map(
-		({ referenceId, states, expression }) => ({
-			id: referenceId,
-			name: referenceId,
-			states,
-			expression
+	console.log('validatedModelConfiguration', validatedModelConfiguration.value.observableSemanticList);
+	observablesList.value = validatedModelConfiguration.value.observableSemanticList.map(
+		({ referenceId, expression, expressionMathml }) => ({
+			base: {
+				id: referenceId,
+				name: referenceId,
+				expression,
+				expression_mathml: expressionMathml
+			},
+			// Observables can't be stratified therefore don't have children
+			children: [],
+			isParent: false
 		})
 	);
 
