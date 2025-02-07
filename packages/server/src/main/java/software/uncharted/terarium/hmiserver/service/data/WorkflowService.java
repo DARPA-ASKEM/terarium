@@ -841,6 +841,71 @@ public class WorkflowService extends TerariumAssetService<Workflow, WorkflowRepo
 		}
 	}
 
+	/**
+	 * Including the node given by nodeId, copy/branch everything downstream,
+	 *
+	 * For example:
+	 *    P - B - C - D
+	 *    Q /
+	 *
+	 * if we branch at B, we will get
+	 *
+	 *    P - B  - C  - D
+	 *      X
+	 *    Q _ B' - C' - D'
+	 *
+	 * with { B', C', D' } new node entities
+	 * */
+	public void branchWorkflow(final Workflow workflow, final UUID nodeId) {
+		// 1. Find anchor point
+		final UUID workflowId = workflow.getId();
+		final WorkflowNode anchor = getOperator(workflow, nodeId);
+		if (anchor == null) return;
+
+		// 2. Collect the subgraph that we want to copy
+		final List<WorkflowNode> copyNodes = new ArrayList<WorkflowNode>();
+		final List<WorkflowEdge> copyEdges = new ArrayList<WorkflowEdge>();
+		final List<UUID> stack = new ArrayList<UUID>();
+		stack.add(anchor.getId());
+
+		final Set<UUID> processed = new HashSet<UUID>();
+
+		// basically depth-first-search
+		while (stack.size() > 0) {
+			final UUID id = stack.remove(0);
+			final WorkflowNode node = getOperator(workflow, id);
+
+			if (node != null) {
+				copyNodes.add(node.clone(workflowId));
+			} else {
+				continue;
+			}
+
+			// Grab downstream edges
+			final List<WorkflowEdge> edges = workflow
+				.getEdges()
+				.stream()
+				.filter(e -> e.getIsDeleted() == false && e.getSource().equals(id))
+				.collect(Collectors.toList());
+
+			for (final WorkflowEdge edge : edges) {
+				final UUID newId = edge.getTarget();
+				if (processed.contains(newId) == false) {
+					stack.add(newId);
+				}
+				copyEdges.add(edge.clone(workflowId, edge.getSource(), edge.getTarget()));
+			}
+		}
+
+		// 3. Collect the upstream edges
+		final List<UUID> targetIds = copyNodes.stream().map(node -> node.getId()).collect(Collectors.toList());
+		final List<WorkflowEdge> upstreamEdges = workflow
+			.getEdges()
+			.stream()
+			.filter(edge -> edge.getIsDeleted() == false && targetIds.contains(edge.getId()))
+			.collect(Collectors.toList());
+	}
+
 	public void addOrUpdateAnnotation(final Workflow workflow, final WorkflowAnnotation annotation) {
 		if (workflow.getAnnotations() == null || workflow.getAnnotations().isEmpty()) {
 			workflow.setAnnotations(new HashMap<UUID, WorkflowAnnotation>());
