@@ -36,8 +36,8 @@
 						/>
 						<Divider />
 					</section>
-					<section v-if="isColorPickerEnabled">
-						<h5 class="mb-3">Color picker</h5>
+					<section v-if="isColorSelectionEnabled">
+						<h5 class="mb-3">Color Selection</h5>
 						<input type="color" :value="activeSettings?.primaryColor ?? ''" @change="onColorChange($event)" />
 						<Divider />
 					</section>
@@ -85,7 +85,14 @@
 						<slot v-if="normalizeData" name="normalize-content"></slot>
 						<Divider />
 						<template v-if="activeSettings.type === ChartSettingType.VARIABLE_COMPARISON">
-							<tera-chart-settings-item v-for="v of variables" :key="v.id" :settings="v" :areButtonsEnabled="false">
+							<h5>Color Selection</h5>
+							<tera-chart-settings-item
+								class="tera-chart-settings-item"
+								v-for="v of variables"
+								:key="v.id"
+								:settings="v"
+								:areButtonsEnabled="false"
+							>
 								<template #main>
 									<input type="color" :value="v.primaryColor ?? ''" @change="onComparisonChange(v.name, $event)" />
 								</template>
@@ -138,7 +145,6 @@ const variables = computed(() => {
 });
 
 const emit = defineEmits([
-	'open',
 	'close',
 	'update-settings',
 	'delete-annotation',
@@ -179,7 +185,7 @@ const normalizeData = computed(() => Boolean(comparisonSettings.value?.normalize
 const toggleNormalizeData = (value: boolean) => emit('update-settings', { normalize: value });
 
 // Primary color
-const isColorPickerEnabled = computed(() => {
+const isColorSelectionEnabled = computed(() => {
 	const type = props.activeSettings?.type;
 	if (type) {
 		return ![ChartSettingType.ERROR_DISTRIBUTION, ChartSettingType.VARIABLE_COMPARISON].includes(type);
@@ -227,13 +233,14 @@ const onComparisonChange = (name, event) => {
 			variableColors: activeSettings.variableColors
 		});
 	}
-
-	// console.log('activeSettings?.variableColors', props.activeSettings)
 };
 // ======================================
 </script>
 
 <style scoped>
+.tera-chart-settings-item {
+	background: var(--surface-100);
+}
 .chart-settings-panel-anchor {
 	position: fixed;
 	top: 7.5rem;

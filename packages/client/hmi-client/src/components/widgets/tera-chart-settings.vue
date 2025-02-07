@@ -94,24 +94,6 @@
 					@remove="$emit('remove', $event)"
 				/>
 			</section>
-			<!-- <div v-for="s of targetSettings" :key="s.id" class="settings-item">
-				<div class="content">
-					<tera-chart-control
-						:chart-config="{
-							selectedRun: 'fixme',
-							selectedVariable: (comparisonSelectedOptions ?? {})[s.id] ?? []
-						}"
-						:multi-select="true"
-						:show-remove-button="false"
-						:variables="selectOptions"
-						@configuration-change="$emit('comparison-selection-change', s.id, $event.selectedVariable)"
-					/>
-				</div>
-				<div class="actions">
-					<Button icon="pi pi-cog" text rounded @click="$emit('open', s)" />
-					<Button icon="pi pi-times" text rounded @click="$emit('remove', s.id)" />
-				</div>
-			</div> -->
 		</template>
 		<template v-else>
 			<tera-chart-settings-item
