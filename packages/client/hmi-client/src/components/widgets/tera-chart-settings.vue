@@ -81,7 +81,6 @@
 			<div class="mb-1"></div>
 		</template>
 		<template v-if="type === ChartSettingType.VARIABLE_COMPARISON">
-			<!-- TODO: Move this part to it's own component, tera-chart-settings-item-comparison or inside tera-char-settings-item -->
 			<section>
 				<tera-chart-settings-item-comparison
 					:settings="settings"

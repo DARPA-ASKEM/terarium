@@ -84,20 +84,18 @@
 						/>
 						<slot v-if="normalizeData" name="normalize-content"></slot>
 						<Divider />
-						<template v-if="activeSettings.type === ChartSettingType.VARIABLE_COMPARISON">
-							<h5>Color Selection</h5>
-							<tera-chart-settings-item
-								class="tera-chart-settings-item"
-								v-for="v of variables"
-								:key="v.id"
-								:settings="v"
-								:areButtonsEnabled="false"
-							>
-								<template #main>
-									<input type="color" :value="v.primaryColor ?? ''" @change="onComparisonChange(v.name, $event)" />
-								</template>
-							</tera-chart-settings-item>
-						</template>
+						<h5>Color Selection</h5>
+						<tera-chart-settings-item
+							class="tera-chart-settings-item"
+							v-for="v of variables"
+							:key="v.id"
+							:settings="v"
+							:areButtonsEnabled="false"
+						>
+							<template #main>
+								<input type="color" :value="v.primaryColor ?? ''" @change="onComparisonChange(v.name, $event)" />
+							</template>
+						</tera-chart-settings-item>
 					</section>
 				</div>
 			</div>
@@ -129,20 +127,6 @@ const props = defineProps<{
 	 */
 	generateAnnotation?: (setting: ChartSetting, query: string) => Promise<ChartAnnotation | null>;
 }>();
-
-type Items = { name: string; id: string; primaryColor: string };
-
-const variables = computed(() => {
-	const items: Items[] = [];
-	if (!props.activeSettings) return items;
-	const activeSettings = cloneDeep(props.activeSettings as ChartSettingComparison | null);
-	if (activeSettings?.type !== ChartSettingType.VARIABLE_COMPARISON) return [];
-	activeSettings.selectedVariables.forEach((value) => {
-		const item = { name: value, id: activeSettings.id, primaryColor: activeSettings.variableColors?.[value] ?? '' };
-		items.push(item);
-	});
-	return items;
-});
 
 const emit = defineEmits([
 	'close',
@@ -178,6 +162,33 @@ const toggleShareYAxis = (value: boolean) => emit('update-settings', { shareYAxi
 // Show before and after
 const showBeforeAfter = computed(() => Boolean(comparisonSettings.value?.showBeforeAfter));
 const toggleShowBeforeAfter = (value: boolean) => emit('update-settings', { showBeforeAfter: value });
+
+type Items = { name: string; id: string; primaryColor: string };
+
+const variables = computed(() => {
+	const items: Items[] = [];
+	if (!props.activeSettings) return items;
+	const activeSettings = cloneDeep(props.activeSettings as ChartSettingComparison | null);
+	if (activeSettings?.type !== ChartSettingType.VARIABLE_COMPARISON) return [];
+	activeSettings.selectedVariables.forEach((value) => {
+		const item = { name: value, id: activeSettings.id, primaryColor: activeSettings.variableColors?.[value] ?? '' };
+		items.push(item);
+	});
+	return items;
+});
+
+const onComparisonChange = (name, event) => {
+	const activeSettings = cloneDeep(props.activeSettings as ChartSettingComparison | null);
+	if (activeSettings?.type === ChartSettingType.VARIABLE_COMPARISON && activeSettings.variableColors) {
+		if (!activeSettings.variableColors) activeSettings.variableColors = {};
+		activeSettings.variableColors[name] = event.target?.value;
+		emit('comparison-selection-change', {
+			id: activeSettings.id,
+			selectedVariables: activeSettings.selectedVariables,
+			variableColors: activeSettings.variableColors
+		});
+	}
+};
 // ======================================
 
 // Normalize
@@ -221,18 +232,6 @@ const createAnnotationDebounced = _.debounce(createAnnotation, 100);
 
 const cancelGenerateAnnotation = () => {
 	generateAnnotationQuery.value = '';
-};
-
-const onComparisonChange = (name, event) => {
-	const activeSettings = cloneDeep(props.activeSettings as ChartSettingComparison | null);
-	if (activeSettings?.type === ChartSettingType.VARIABLE_COMPARISON && activeSettings.variableColors) {
-		activeSettings.variableColors[name] = event.target?.value;
-		emit('comparison-selection-change', {
-			id: activeSettings.id,
-			selectedVariables: activeSettings.selectedVariables,
-			variableColors: activeSettings.variableColors
-		});
-	}
 };
 // ======================================
 </script>

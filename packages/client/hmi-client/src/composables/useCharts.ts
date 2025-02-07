@@ -1,4 +1,4 @@
-import _, { capitalize, cloneDeep, isEmpty } from 'lodash';
+import _, { capitalize, cloneDeep } from 'lodash';
 import { mean, variance } from 'd3';
 import { computed, ComputedRef, ref, Ref, watchEffect } from 'vue';
 import { VisualizationSpec } from 'vega-embed';
@@ -42,7 +42,11 @@ import {
 	groupVariablesByStrata
 } from '@/services/model';
 import { CalibrateMap, isCalibrateMap } from '@/services/calibrate-workflow';
-import { isChartSettingComparisonVariable, isChartSettingEnsembleVariable } from '@/services/chart-settings';
+import {
+	isChartSettingComparisonVariable,
+	isChartSettingEnsembleVariable,
+	generateComparisonColorScheme
+} from '@/services/chart-settings';
 import {
 	CalibrateEnsembleMappingRow,
 	isCalibrateEnsembleMappingRow
@@ -468,22 +472,8 @@ export function useCharts(
 					statLayerVariables.push(`${chartData.value?.pyciemssMap[v]}_mean:pre`);
 				}
 			});
-			if (!setting.variableColors || setting.variableColors === undefined) {
-				setting.variableColors = {};
-			}
-			const variableColors = {};
-			variables.forEach((variable, index) => {
-				if (setting.variableColors?.[variable] && !isEmpty(setting.variableColors[variable])) {
-					colorScheme.push(setting.variableColors[variable]);
-				} else {
-					variableColors[variable] = CATEGORICAL_SCHEME[index % CATEGORICAL_SCHEME.length];
-					colorScheme.push(variableColors[variable]);
-				}
-			});
-			Object.assign(setting.variableColors, variableColors);
-			setting.colorScheme = [...colorScheme];
 		}
-		options.colorscheme = colorScheme;
+		options.colorscheme = generateComparisonColorScheme(variables, setting.variableColors);
 		return { statLayerVariables, sampleLayerVariables, options };
 	};
 

@@ -331,3 +331,17 @@ export async function generateForecastChartAnnotation(
 		layerSpec
 	};
 }
+
+export function generateComparisonColorScheme(selectedVariables: string[], colors: object = {}) {
+	const colorScheme: string[] = [];
+	const variableColors: object = colors;
+	selectedVariables.forEach((variable, index) => {
+		if (variableColors?.[variable] && !_.isEmpty(variableColors[variable])) {
+			colorScheme.push(variableColors[variable]);
+		} else {
+			variableColors[variable] = CATEGORICAL_SCHEME[index % CATEGORICAL_SCHEME.length];
+			colorScheme.push(variableColors[variable]);
+		}
+	});
+	return colorScheme;
+}
