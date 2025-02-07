@@ -468,11 +468,10 @@ const removeNode = async (nodeId: string) => {
 };
 
 const duplicateBranch = async (nodeId: string) => {
-	wf.value.branchWorkflow(nodeId);
+	// wf.value.branchWorkflow(nodeId);
+	// cloneNoteBookSessions();
 
-	cloneNoteBookSessions();
-
-	const updatedWorkflow = await workflowService.saveWorkflow(wf.value.dump(), currentProjectId.value ?? undefined);
+	const updatedWorkflow = await workflowService.branchWorkflow(wf.value.getId(), nodeId);
 	wf.value.update(updatedWorkflow);
 };
 

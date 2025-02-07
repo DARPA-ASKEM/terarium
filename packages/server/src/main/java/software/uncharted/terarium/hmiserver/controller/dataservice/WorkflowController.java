@@ -805,7 +805,7 @@ public class WorkflowController {
 		}
 
 		try {
-			workflowService.branchWorkflow(workflow.get(), nodeId);
+			workflowService.branchWorkflow(workflow.get(), nodeId, projectId);
 			updated = workflowService.updateAsset(workflow.get(), projectId, permission);
 		} catch (final Exception e) {
 			log.error("Unable to update workflow", e);

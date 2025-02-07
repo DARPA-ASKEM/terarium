@@ -20,6 +20,7 @@ import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import software.uncharted.terarium.hmiserver.configuration.Config;
+import software.uncharted.terarium.hmiserver.models.dataservice.notebooksession.NotebookSession;
 import software.uncharted.terarium.hmiserver.models.dataservice.workflow.InputPort;
 import software.uncharted.terarium.hmiserver.models.dataservice.workflow.OutputPort;
 import software.uncharted.terarium.hmiserver.models.dataservice.workflow.Workflow;
@@ -28,6 +29,7 @@ import software.uncharted.terarium.hmiserver.models.dataservice.workflow.Workflo
 import software.uncharted.terarium.hmiserver.models.dataservice.workflow.WorkflowNode;
 import software.uncharted.terarium.hmiserver.models.dataservice.workflow.WorkflowPositions;
 import software.uncharted.terarium.hmiserver.repository.data.WorkflowRepository;
+import software.uncharted.terarium.hmiserver.service.data.NotebookSessionService;
 import software.uncharted.terarium.hmiserver.service.s3.S3ClientService;
 import software.uncharted.terarium.hmiserver.utils.rebac.Schema;
 
@@ -35,15 +37,19 @@ import software.uncharted.terarium.hmiserver.utils.rebac.Schema;
 @Slf4j
 public class WorkflowService extends TerariumAssetService<Workflow, WorkflowRepository> {
 
+	private final NotebookSessionService notebookSessionService;
+
 	public WorkflowService(
 		final ObjectMapper objectMapper,
 		final Config config,
 		final ProjectService projectService,
 		final ProjectAssetService projectAssetService,
 		final S3ClientService s3ClientService,
-		final WorkflowRepository repository
+		final WorkflowRepository repository,
+		final NotebookSessionService notebookSessionService
 	) {
 		super(objectMapper, config, projectService, projectAssetService, repository, s3ClientService, Workflow.class);
+		this.notebookSessionService = notebookSessionService;
 	}
 
 	@Observed(name = "function_profile")
@@ -856,7 +862,7 @@ public class WorkflowService extends TerariumAssetService<Workflow, WorkflowRepo
 	 *
 	 * with { B', C', D' } new node entities
 	 * */
-	public void branchWorkflow(final Workflow workflow, final UUID nodeId) {
+	public void branchWorkflow(final Workflow workflow, final UUID nodeId, final UUID projectId) throws Exception {
 		// 1. Find anchor point
 		final UUID workflowId = workflow.getId();
 		final WorkflowNode anchor = getOperator(workflow, nodeId);
@@ -989,7 +995,29 @@ public class WorkflowService extends TerariumAssetService<Workflow, WorkflowRepo
 			}
 		}
 
-		// 6. Finally put everything back into the workflow
+		// 6. Clone notebook sessions if they exist
+		for (final WorkflowNode node : copyNodes) {
+			if (node.getOperationType().equals("DatasetTransformer")) {
+				ObjectNode state = (ObjectNode) node.getState();
+				if (state.get("notebookSessionId") != null) {
+					UUID sessionId = UUID.fromString(state.get("notebookSessionId").asText());
+
+					final NotebookSession session = notebookSessionService
+						.getAsset(sessionId, Schema.Permission.WRITE)
+						.orElse(null);
+					if (session != null) {
+						final NotebookSession newNotebookSession = notebookSessionService.createAsset(
+							session.clone(),
+							projectId,
+							Schema.Permission.WRITE
+						);
+						state.put("notebookSessionId", newNotebookSession.getId().toString());
+					}
+				}
+			}
+		}
+
+		// 7. Finally put everything back into the workflow
 		for (final WorkflowNode node : copyNodes) {
 			workflow.getNodes().add(node);
 		}
