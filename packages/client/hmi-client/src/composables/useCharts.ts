@@ -459,7 +459,9 @@ export function useCharts(
 			}
 			sampleLayerVariables.push(`${chartData.value?.pyciemssMap[varName]}`);
 			statLayerVariables.push(`${chartData.value?.pyciemssMap[varName]}_mean`);
-			colorScheme.push(CATEGORICAL_SCHEME[variableIndex % CATEGORICAL_SCHEME.length]);
+			const selectedColor = generateComparisonColorScheme([varName], setting.variableColors);
+			const defaultColor = CATEGORICAL_SCHEME[variableIndex % CATEGORICAL_SCHEME.length];
+			colorScheme.push(...(selectedColor ?? defaultColor));
 		}
 		// Otherwise include all selected variables
 		else {
