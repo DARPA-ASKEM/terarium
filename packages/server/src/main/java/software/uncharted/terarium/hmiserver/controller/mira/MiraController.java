@@ -505,7 +505,7 @@ public class MiraController {
 			throw handleMiraFeignException(e, "ODE", "model", "", "mira.ode.bad-model");
 		}
 
-		return new ResponseEntity(response.getBody(), response.getStatusCode());
+		return new ResponseEntity<>(response.getBody(), response.getStatusCode());
 	}
 
 	@PostMapping("/entity-similarity")
@@ -518,7 +518,7 @@ public class MiraController {
 			throw handleMiraFeignException(e, "entity similarities", "curies", "", "mira.similarity.bad-curies");
 		}
 
-		return new ResponseEntity(response.getBody(), response.getStatusCode());
+		return new ResponseEntity<>(response.getBody(), response.getStatusCode());
 	}
 
 	private ResponseStatusException handleMiraFeignException(

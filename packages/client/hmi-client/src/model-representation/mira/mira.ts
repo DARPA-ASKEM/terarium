@@ -302,10 +302,10 @@ export const collapseTemplates = (miraModel: MiraModel) => {
 	// 3 Rename and sanitize everything
 	uniqueTemplates.forEach((t) => {
 		const key = generateKey(t);
-		t.name = `template-${check.get(key)}`;
+		t.name = `group-${check.get(key)}`;
 	});
 	tempMatrixMap.forEach((value, key) => {
-		const name = `template-${check.get(key)}`;
+		const name = `group-${check.get(key)}`;
 		matrixMap.set(name, value);
 	});
 
