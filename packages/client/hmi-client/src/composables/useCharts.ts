@@ -53,7 +53,7 @@ import { EnsembleErrorData } from '@/components/workflow/ops/calibrate-ensemble-
 import { PlotValue } from '@/components/workflow/ops/compare-datasets/compare-datasets-operation';
 import { DATASET_VAR_NAME_PREFIX } from '@/services/dataset';
 import { calculatePercentage } from '@/utils/math';
-import { pythonInstance } from '@/python/PyodideController';
+import { pythonInstance } from '@/web-workers/python/PyodideController';
 import { useChartAnnotations } from './useChartAnnotations';
 
 export interface ChartData {
