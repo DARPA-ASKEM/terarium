@@ -1,6 +1,7 @@
 import type { Dataset, CsvAsset, Observable, State } from '@/types/Types';
 import { getCsvAsset, getFileName } from '@/services/dataset';
 import { getUnitsFromModelParts, getModelByModelConfigurationId, getTypesFromModelParts } from '@/services/model';
+import { getModelConfigurationById } from './model-configurations';
 
 export interface CalibrateMap {
 	modelVariable: string;
