@@ -1,4 +1,4 @@
-import _, { capitalize } from 'lodash';
+import _, { capitalize, isEmpty } from 'lodash';
 import { mean, variance } from 'd3';
 import { computed, ComputedRef, ref, Ref, watchEffect } from 'vue';
 import { VisualizationSpec } from 'vega-embed';
@@ -429,7 +429,20 @@ export function useCharts(
 					statLayerVariables.push(`${chartData.value?.pyciemssMap[v]}_mean:pre`);
 				}
 			});
-			colorScheme.push(...CATEGORICAL_SCHEME);
+			if (!setting.variableColors || setting.variableColors === undefined) {
+				setting.variableColors = {};
+			}
+			const variableColors = {};
+			variables.forEach((variable, index) => {
+				if (setting.variableColors?.[variable] && !isEmpty(setting.variableColors[variable])) {
+					colorScheme.push(setting.variableColors[variable]);
+				} else {
+					variableColors[variable] = CATEGORICAL_SCHEME[index % CATEGORICAL_SCHEME.length];
+					colorScheme.push(variableColors[variable]);
+				}
+			});
+			Object.assign(setting.variableColors, variableColors);
+			setting.colorScheme = [...colorScheme];
 		}
 		options.colorscheme = colorScheme;
 		return { statLayerVariables, sampleLayerVariables, options };

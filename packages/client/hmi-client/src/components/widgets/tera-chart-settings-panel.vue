@@ -84,6 +84,13 @@
 						/>
 						<slot v-if="normalizeData" name="normalize-content"></slot>
 						<Divider />
+						<template v-if="activeSettings.type === ChartSettingType.VARIABLE_COMPARISON">
+							<tera-chart-settings-item v-for="v of variables" :key="v.id" :settings="v" :areButtonsEnabled="false">
+								<template #main>
+									<input type="color" :value="v.primaryColor ?? ''" @change="onComparisonChange(v.name, $event)" />
+								</template>
+							</tera-chart-settings-item>
+						</template>
 					</section>
 				</div>
 			</div>
@@ -92,7 +99,7 @@
 </template>
 
 <script setup lang="ts">
-import _ from 'lodash';
+import _, { cloneDeep } from 'lodash';
 import { ref, computed } from 'vue';
 import Button from 'primevue/button';
 import RadioButton from 'primevue/radiobutton';
@@ -101,10 +108,12 @@ import { ChartAnnotation } from '@/types/Types';
 import Divider from 'primevue/divider';
 import TeraInputText from '@/components/widgets/tera-input-text.vue';
 import TeraCheckbox from '@/components/widgets/tera-checkbox.vue';
+import TeraChartSettingsItem from '@/components/widgets/tera-chart-settings-item.vue';
 
 const props = defineProps<{
 	activeSettings: ChartSetting | null;
 	annotations?: ChartAnnotation[];
+	comparisonSelectedOptions?: { [settingId: string]: string[] };
 	/**
 	 * We receives generateAnnotation as a functor from the parent to access the parent scope directly. This allows us to utilize dependencies defined in the parent component without passing them all as props, which can be cumbersome.
 	 * Additionally, it enables us to handle post-generation actions (like resetting loading state or clearing input) after function completion.
@@ -114,7 +123,28 @@ const props = defineProps<{
 	generateAnnotation?: (setting: ChartSetting, query: string) => Promise<ChartAnnotation | null>;
 }>();
 
-const emit = defineEmits(['close', 'update-settings', 'delete-annotation', 'create-annotation']);
+type Items = { name: string; id: string; primaryColor: string };
+
+const variables = computed(() => {
+	const items: Items[] = [];
+	if (!props.activeSettings) return items;
+	const activeSettings = cloneDeep(props.activeSettings as ChartSettingComparison | null);
+	if (activeSettings?.type !== ChartSettingType.VARIABLE_COMPARISON) return [];
+	activeSettings.selectedVariables.forEach((value) => {
+		const item = { name: value, id: activeSettings.id, primaryColor: activeSettings.variableColors?.[value] ?? '' };
+		items.push(item);
+	});
+	return items;
+});
+
+const emit = defineEmits([
+	'open',
+	'close',
+	'update-settings',
+	'delete-annotation',
+	'create-annotation',
+	'comparison-selection-change'
+]);
 
 // Log scale
 const useLog = computed<boolean>(() => props.activeSettings?.scale === 'log');
@@ -185,6 +215,20 @@ const createAnnotationDebounced = _.debounce(createAnnotation, 100);
 
 const cancelGenerateAnnotation = () => {
 	generateAnnotationQuery.value = '';
+};
+
+const onComparisonChange = (name, event) => {
+	const activeSettings = cloneDeep(props.activeSettings as ChartSettingComparison | null);
+	if (activeSettings?.type === ChartSettingType.VARIABLE_COMPARISON && activeSettings.variableColors) {
+		activeSettings.variableColors[name] = event.target?.value;
+		emit('comparison-selection-change', {
+			id: activeSettings.id,
+			selectedVariables: activeSettings.selectedVariables,
+			variableColors: activeSettings.variableColors
+		});
+	}
+
+	// console.log('activeSettings?.variableColors', props.activeSettings)
 };
 // ======================================
 </script>

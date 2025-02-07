@@ -108,7 +108,11 @@ export function useChartSettings(
 		});
 	};
 
-	const updateComparisonChartSetting = (chartId: string, selectedVariables: string[]) => {
+	const updateComparisonChartSetting = (
+		chartId: string,
+		selectedVariables: string[],
+		variableColors: { [name: string]: string } = {}
+	) => {
 		const state = cloneDeep(props.node.state);
 		if (!state.chartSettings) return;
 		const setting = state.chartSettings.find(
@@ -116,6 +120,7 @@ export function useChartSettings(
 		) as ChartSettingComparison | undefined;
 		if (!setting) return;
 		Object.assign(setting, { selectedVariables, name: selectedVariables.join(', ') });
+		setting.variableColors = variableColors;
 		if (setting.smallMultiples === undefined && selectedVariables.length > 5) {
 			// If there are more than 5 variables and the option isn't set yet, enable small multiples by default
 			setting.smallMultiples = true;
