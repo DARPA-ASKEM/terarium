@@ -419,7 +419,7 @@ import type { MiraModel, MiraTemplateParams } from '@/model-representation/mira/
 import { emptyMiraModel, makeConfiguredMMT } from '@/model-representation/mira/mira';
 import { getAsConfiguredModel, getModelConfigurationById } from '@/services/model-configurations';
 import { useToastService } from '@/services/toast';
-import { pythonInstance } from '@/python/PyodideController';
+import { pythonInstance } from '@/web-workers/python/PyodideController';
 import TeraConstraintGroupForm from '@/components/workflow/ops/funman/tera-constraint-group-form.vue';
 import { DrilldownTabs, type ChartSetting, ChartSettingType } from '@/types/common';
 import { stringToLatexExpression, getModel, getMMT } from '@/services/model';
