@@ -1035,7 +1035,6 @@ async function prepareOutput() {
 		return;
 	}
 	configuredMmt.value = makeConfiguredMMT(mmt, validatedModelConfiguration.value);
-	console.log('validatedModelConfiguration', validatedModelConfiguration.value.observableSemanticList);
 	observablesList.value = validatedModelConfiguration.value.observableSemanticList.map(
 		({ referenceId, expression, expressionMathml }) => ({
 			base: {
