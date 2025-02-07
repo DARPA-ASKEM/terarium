@@ -179,7 +179,7 @@ const variables = computed(() => {
 
 const onComparisonChange = (name, event) => {
 	const activeSettings = cloneDeep(props.activeSettings as ChartSettingComparison | null);
-	if (activeSettings?.type === ChartSettingType.VARIABLE_COMPARISON && activeSettings.variableColors) {
+	if (activeSettings?.type === ChartSettingType.VARIABLE_COMPARISON) {
 		if (!activeSettings.variableColors) activeSettings.variableColors = {};
 		activeSettings.variableColors[name] = event.target?.value;
 		emit('comparison-selection-change', {
