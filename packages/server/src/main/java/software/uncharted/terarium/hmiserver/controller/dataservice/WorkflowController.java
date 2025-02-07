@@ -771,6 +771,54 @@ public class WorkflowController {
 		return updated.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
 	}
 
+	@PostMapping("/{id}/branch-from-node/{nodeId}")
+	@Secured(Roles.USER)
+	@Operation(summary = "Remove an edge from a workflow")
+	@ApiResponses(
+		value = {
+			@ApiResponse(
+				responseCode = "200",
+				description = "Workflow updated.",
+				content = @Content(
+					mediaType = MediaType.APPLICATION_JSON_VALUE,
+					schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = Workflow.class)
+				)
+			),
+			@ApiResponse(responseCode = "404", description = "Workflow could not be found", content = @Content),
+			@ApiResponse(responseCode = "500", description = "There was an issue updating the workflow", content = @Content)
+		}
+	)
+	public ResponseEntity<Workflow> branchWorkflow(
+		@PathVariable("id") final UUID id,
+		@PathVariable("nodeId") final UUID nodeId,
+		@RequestParam(name = "project-id", required = false) final UUID projectId
+	) {
+		final Schema.Permission permission = projectService.checkPermissionCanRead(
+			currentUserService.get().getId(),
+			projectId
+		);
+
+		final Optional<Workflow> workflow = workflowService.getAsset(id, permission);
+		final Optional<Workflow> updated;
+		if (workflow.isPresent() == false) {
+			return ResponseEntity.notFound().build();
+		}
+
+		try {
+			workflowService.branchWorkflow(workflow.get(), nodeId);
+			updated = workflowService.updateAsset(workflow.get(), projectId, permission);
+		} catch (final Exception e) {
+			log.error("Unable to update workflow", e);
+			throw new ResponseStatusException(
+				org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
+				messages.get("workflow.update.remove-edge")
+			);
+		}
+
+		broadCastWorkflowChange(updated.get(), projectId);
+		return updated.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
+	}
+
 	@PostMapping("/{id}/annotation")
 	@Secured(Roles.USER)
 	@Operation(summary = "Add or update a workflow annotation")
