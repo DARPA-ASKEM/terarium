@@ -398,8 +398,7 @@ import type {
 	Model,
 	ModelParameter,
 	TimeSpan,
-	ModelConfiguration,
-	Observable
+	ModelConfiguration
 } from '@/types/Types';
 import { AssetType } from '@/types/Types';
 import {
