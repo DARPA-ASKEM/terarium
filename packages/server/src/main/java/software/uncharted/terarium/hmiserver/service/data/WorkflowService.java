@@ -937,6 +937,65 @@ public class WorkflowService extends TerariumAssetService<Workflow, WorkflowRepo
 		for (final WorkflowEdge edge : copyEdges) {
 			registry.put(edge.getId(), UUID.randomUUID());
 		}
+
+		for (final WorkflowEdge edge : copyEdges) {
+			// Don't replace anchor upstream edge sources, they are still valid
+			if (
+				anchorUpstreamEdges.stream().map(e -> e.getSource()).collect(Collectors.toList()).contains(edge.getSource()) ==
+				false
+			) {
+				edge.setSource(registry.get(edge.getSource()));
+				edge.setSourcePortId(registry.get(edge.getSourcePortId()));
+			}
+			edge.setId(registry.get(edge.getId()));
+			edge.setTarget(registry.get(edge.getTarget()));
+			edge.setTargetPortId(registry.get(edge.getTargetPortId()));
+		}
+
+		for (final WorkflowNode node : copyNodes) {
+			node.setId(registry.get(node.getId()));
+			for (final InputPort input : node.getInputs()) {
+				input.setId(registry.get(input.getId()));
+			}
+			for (final OutputPort output : node.getOutputs()) {
+				output.setId(registry.get(output.getId()));
+			}
+			if (node.getActive() != null) {
+				node.setActive(registry.get(node.getActive()));
+			}
+		}
+
+		// 5. Reposition new nodes so they don't exaclty overlap
+		final float offset = 75;
+		for (final WorkflowNode node : copyNodes) {
+			node.setY(node.getY() + offset);
+		}
+
+		List<UUID> copyNodeIds = copyNodes.stream().map(n -> n.getId()).collect(Collectors.toList());
+
+		for (final WorkflowEdge edge : copyEdges) {
+			if (edge.getPoints().size() < 2) continue;
+
+			if (copyNodeIds.contains(edge.getSource())) {
+				ObjectNode temp = (ObjectNode) edge.getPoints().get(0);
+				float y = Float.parseFloat(temp.get("y").asText());
+				temp.put("y", y + offset);
+			}
+			if (copyNodeIds.contains(edge.getTarget())) {
+				int len = edge.getPoints().size();
+				ObjectNode temp = (ObjectNode) edge.getPoints().get(len - 1);
+				float y = Float.parseFloat(temp.get("y").asText());
+				temp.put("y", y + offset);
+			}
+		}
+
+		// 6. Finally put everything back into the workflow
+		for (final WorkflowNode node : copyNodes) {
+			workflow.getNodes().add(node);
+		}
+		for (final WorkflowEdge edge : copyEdges) {
+			workflow.getEdges().add(edge);
+		}
 	}
 
 	public void addOrUpdateAnnotation(final Workflow workflow, final WorkflowAnnotation annotation) {
