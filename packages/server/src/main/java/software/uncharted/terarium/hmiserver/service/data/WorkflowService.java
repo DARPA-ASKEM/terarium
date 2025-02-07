@@ -904,6 +904,25 @@ public class WorkflowService extends TerariumAssetService<Workflow, WorkflowRepo
 			.stream()
 			.filter(edge -> edge.getIsDeleted() == false && targetIds.contains(edge.getId()))
 			.collect(Collectors.toList());
+
+		final List<WorkflowEdge> anchorUpstreamEdges = workflow
+			.getEdges()
+			.filter(edge -> edge.isDeleted() == false && edge.getTarget().equals(anchor.getId()))
+			.collect(Collectors.toList());
+
+		for (final WorkflowEdge edge : upstreamEdges) {
+			final WorkflowEdge foundEdge = copyEdges
+				.stream()
+				.filter(copyEdge -> copyEdge.getId().equals(edge.getId()))
+				.findFirst()
+				.orElse(null);
+			if (foundEdge == null) {
+				copyEdges.add(edge.clone(workflowId, edge.getSource(), edge.getTarget()));
+			}
+		}
+
+		// 4. Reassign identifiers
+		final Map<UUID, UUID> registry = new HashMap<UUID, UUID>();
 	}
 
 	public void addOrUpdateAnnotation(final Workflow workflow, final WorkflowAnnotation annotation) {
