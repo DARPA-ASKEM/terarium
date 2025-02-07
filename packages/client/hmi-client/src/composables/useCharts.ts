@@ -472,8 +472,9 @@ export function useCharts(
 					statLayerVariables.push(`${chartData.value?.pyciemssMap[v]}_mean:pre`);
 				}
 			});
+			colorScheme.push(...generateComparisonColorScheme(variables, setting.variableColors));
 		}
-		options.colorscheme = generateComparisonColorScheme(variables, setting.variableColors);
+		options.colorscheme = colorScheme;
 		return { statLayerVariables, sampleLayerVariables, options };
 	};
 
