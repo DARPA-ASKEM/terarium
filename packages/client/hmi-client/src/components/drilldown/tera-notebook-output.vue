@@ -2,6 +2,7 @@
 	<tera-resizable-panel v-if="!isHidden" :start-height="100" :resize-from-top="true" class="container output-panel">
 		<h6 class="pt-1">
 			<span>{{ name }}</span>
+
 			<Button rounded text icon="pi pi-times" @click="isHidden = true" />
 		</h6>
 		<code class="code-section">{{ props.traceback }}</code>
@@ -41,6 +42,7 @@ const isHidden = ref<boolean>(false);
 }
 
 .output-panel {
+	overflow-y: auto;
 	background: var(--surface-50);
 }
 .output-panel-closed {
