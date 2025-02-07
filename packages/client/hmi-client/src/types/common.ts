@@ -217,6 +217,12 @@ export interface ChartSettingEnsembleVariableOptions {
 export interface ChartSettingSensitivityOptions {
 	selectedInputVariables: string[];
 	timepoint: number;
+	chartType: SensitivityChartType;
+}
+
+export enum SensitivityChartType {
+	SCATTER = 'scatter',
+	HEATMAP = 'heatmap'
 }
 
 export interface ChartSettingBase {

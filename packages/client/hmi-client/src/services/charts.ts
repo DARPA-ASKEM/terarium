@@ -66,6 +66,10 @@ export interface ForecastChartOptions extends BaseChartOptions {
 	yExtent?: [number, number];
 }
 
+export interface SensitivityChartOptions extends ForecastChartOptions {
+	isHeatmap?: boolean;
+}
+
 export interface ForecastChartLayer {
 	data: Record<string, any>[] | { name: string } | { url: string };
 	variables: string[];
@@ -1270,7 +1274,10 @@ export function createQuantilesForecastChart(
  * FIXME: The design calls for combinations of different types of charts
  * in the grid, which we don't know how to achieve currently with vegalite
  * */
-export function createSimulateSensitivityScatter(samplingLayer: SensitivityChartLayer, options: ForecastChartOptions) {
+export function createSimulateSensitivityScatter(
+	samplingLayer: SensitivityChartLayer,
+	options: SensitivityChartOptions
+) {
 	// Start building
 	let calculateExpr = '';
 	options.bins?.forEach((sampleIds, quantile) => {
@@ -1333,6 +1340,12 @@ export function createSimulateSensitivityScatter(samplingLayer: SensitivityChart
 			}
 		}
 	};
+
+	if (options.isHeatmap) {
+		spec.spec.mark = 'rect';
+		spec.spec.encoding.x.bin = { maxbins: 8 };
+		spec.spec.encoding.y.bin = { maxbins: 8 };
+	}
 
 	return spec;
 }
