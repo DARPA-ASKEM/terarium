@@ -312,9 +312,6 @@
 						:generate-annotation="generateAnnotation"
 						:comparison="activeChartSettings?.type === ChartSettingType.VARIABLE_COMPARISON"
 						:comparison-selected-options="comparisonChartsSettingsSelection"
-						@comparison-selection-change="
-							updateComparisonChartSetting($event.id, $event.selectedVariables, $event.variableColors)
-						"
 						@update-settings="updateActiveChartSettings"
 						@delete-annotation="deleteAnnotation"
 						@close="setActiveChartSettings(null)"

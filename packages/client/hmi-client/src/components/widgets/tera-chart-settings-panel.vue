@@ -114,6 +114,7 @@ import Divider from 'primevue/divider';
 import TeraInputText from '@/components/widgets/tera-input-text.vue';
 import TeraCheckbox from '@/components/widgets/tera-checkbox.vue';
 import TeraChartSettingsItem from '@/components/widgets/tera-chart-settings-item.vue';
+import { getComparisonVariableColors } from '@/services/chart-settings';
 
 const props = defineProps<{
 	activeSettings: ChartSetting | null;
@@ -128,13 +129,7 @@ const props = defineProps<{
 	generateAnnotation?: (setting: ChartSetting, query: string) => Promise<ChartAnnotation | null>;
 }>();
 
-const emit = defineEmits([
-	'close',
-	'update-settings',
-	'delete-annotation',
-	'create-annotation',
-	'comparison-selection-change'
-]);
+const emit = defineEmits(['close', 'update-settings', 'delete-annotation', 'create-annotation']);
 
 // Log scale
 const useLog = computed<boolean>(() => props.activeSettings?.scale === 'log');
@@ -171,7 +166,11 @@ const variables = computed(() => {
 	const activeSettings = cloneDeep(props.activeSettings as ChartSettingComparison | null);
 	if (activeSettings?.type !== ChartSettingType.VARIABLE_COMPARISON) return [];
 	activeSettings.selectedVariables.forEach((value) => {
-		const item = { name: value, id: activeSettings.id, primaryColor: activeSettings.variableColors?.[value] ?? '' };
+		const item = {
+			name: value,
+			id: activeSettings.id,
+			primaryColor: getComparisonVariableColors(activeSettings)[value] ?? ''
+		};
 		items.push(item);
 	});
 	return items;
@@ -182,11 +181,7 @@ const onComparisonChange = (name, event) => {
 	if (activeSettings?.type === ChartSettingType.VARIABLE_COMPARISON) {
 		if (!activeSettings.variableColors) activeSettings.variableColors = {};
 		activeSettings.variableColors[name] = event.target?.value;
-		emit('comparison-selection-change', {
-			id: activeSettings.id,
-			selectedVariables: activeSettings.selectedVariables,
-			variableColors: activeSettings.variableColors
-		});
+		emit('update-settings', { variableColors: activeSettings.variableColors });
 	}
 };
 // ======================================

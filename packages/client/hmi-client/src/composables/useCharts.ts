@@ -459,9 +459,7 @@ export function useCharts(
 			}
 			sampleLayerVariables.push(`${chartData.value?.pyciemssMap[varName]}`);
 			statLayerVariables.push(`${chartData.value?.pyciemssMap[varName]}_mean`);
-			const selectedColor = generateComparisonColorScheme([varName], setting.variableColors);
-			const defaultColor = CATEGORICAL_SCHEME[variableIndex % CATEGORICAL_SCHEME.length];
-			colorScheme.push(...(selectedColor ?? defaultColor));
+			colorScheme.push(...generateComparisonColorScheme(setting, variableIndex));
 		}
 		// Otherwise include all selected variables
 		else {
@@ -474,7 +472,7 @@ export function useCharts(
 					statLayerVariables.push(`${chartData.value?.pyciemssMap[v]}_mean:pre`);
 				}
 			});
-			colorScheme.push(...generateComparisonColorScheme(variables, setting.variableColors));
+			colorScheme.push(...generateComparisonColorScheme(setting));
 		}
 		options.colorscheme = colorScheme;
 		return { statLayerVariables, sampleLayerVariables, options };
