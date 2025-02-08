@@ -62,12 +62,16 @@ public class WorkflowNode extends SupportAdditionalProperties implements Seriali
 		clone.setWorkflowId(workflowId);
 
 		clone.setInputs(new ArrayList<>());
-		for (final InputPort port : inputs) {
-			clone.getInputs().add(port.clone());
+		if (inputs != null) {
+			for (final InputPort port : inputs) {
+				clone.getInputs().add(port.clone());
+			}
 		}
 		clone.setOutputs(new ArrayList<>());
-		for (final OutputPort port : outputs) {
-			clone.getOutputs().add(port.clone());
+		if (outputs != null) {
+			for (final OutputPort port : outputs) {
+				clone.getOutputs().add(port.clone());
+			}
 		}
 		return clone;
 	}
@@ -79,12 +83,16 @@ public class WorkflowNode extends SupportAdditionalProperties implements Seriali
 		clone.setId(id);
 		clone.setWorkflowId(workflowId);
 		clone.setInputs(new ArrayList<>());
-		for (final InputPort port : inputs) {
-			clone.getInputs().add(port.clone());
+		if (inputs != null) {
+			for (final InputPort port : inputs) {
+				clone.getInputs().add(port.clone());
+			}
 		}
 		clone.setOutputs(new ArrayList<>());
-		for (final OutputPort port : outputs) {
-			clone.getOutputs().add(port.clone());
+		if (outputs != null) {
+			for (final OutputPort port : outputs) {
+				clone.getOutputs().add(port.clone());
+			}
 		}
 		return clone;
 	}

@@ -47,8 +47,10 @@ public class WorkflowEdge extends SupportAdditionalProperties implements Seriali
 		clone.setTargetPortId(targetPortId);
 
 		clone.setPoints(new ArrayList<>());
-		for (final JsonNode d : points) {
-			clone.getPoints().add(d.deepCopy());
+		if (points != null) {
+			for (final JsonNode d : points) {
+				clone.getPoints().add(d.deepCopy());
+			}
 		}
 		return clone;
 	}
@@ -65,8 +67,10 @@ public class WorkflowEdge extends SupportAdditionalProperties implements Seriali
 		clone.setTargetPortId(targetPortId);
 
 		clone.setPoints(new ArrayList<>());
-		for (final JsonNode d : points) {
-			clone.getPoints().add(d.deepCopy());
+		if (points != null) {
+			for (final JsonNode d : points) {
+				clone.getPoints().add(d.deepCopy());
+			}
 		}
 		return clone;
 	}
