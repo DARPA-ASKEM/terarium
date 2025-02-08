@@ -882,8 +882,7 @@ public class WorkflowService extends TerariumAssetService<Workflow, WorkflowRepo
 			final WorkflowNode node = getOperator(workflow, id);
 
 			if (node != null) {
-				WorkflowNode nodeClone = node.clone(workflowId);
-				nodeClone.setId(node.getId());
+				WorkflowNode nodeClone = node.clone();
 				copyNodes.add(nodeClone);
 			} else {
 				continue;
@@ -901,8 +900,7 @@ public class WorkflowService extends TerariumAssetService<Workflow, WorkflowRepo
 				if (processed.contains(newId) == false) {
 					stack.add(newId);
 				}
-				WorkflowEdge edgeClone = edge.clone(workflowId, edge.getSource(), edge.getTarget());
-				edgeClone.setId(edge.getId());
+				WorkflowEdge edgeClone = edge.clone();
 				copyEdges.add(edgeClone);
 			}
 		}
@@ -910,21 +908,11 @@ public class WorkflowService extends TerariumAssetService<Workflow, WorkflowRepo
 		// 3. Collect the upstream edges
 		final List<UUID> targetIds = copyNodes.stream().map(node -> node.getId()).collect(Collectors.toList());
 
-		System.out.println("");
-		System.out.println("targetIds " + targetIds);
-		System.out.println("edges" + workflow.getEdges());
-		System.out.println("");
-
 		final List<WorkflowEdge> upstreamEdges = workflow
 			.getEdges()
 			.stream()
 			.filter(edge -> edge.getIsDeleted() == false && targetIds.contains(edge.getTarget()))
 			.collect(Collectors.toList());
-
-		System.out.println("");
-		System.out.println("upstram edges");
-		System.out.println(upstreamEdges);
-		System.out.println("");
 
 		final List<WorkflowEdge> anchorUpstreamEdges = workflow
 			.getEdges()
@@ -939,8 +927,7 @@ public class WorkflowService extends TerariumAssetService<Workflow, WorkflowRepo
 				.findFirst()
 				.orElse(null);
 			if (foundEdge == null) {
-				WorkflowEdge edgeClone = edge.clone(workflowId, edge.getSource(), edge.getTarget());
-				edgeClone.setId(edge.getId());
+				WorkflowEdge edgeClone = edge.clone();
 				copyEdges.add(edgeClone);
 			}
 		}
