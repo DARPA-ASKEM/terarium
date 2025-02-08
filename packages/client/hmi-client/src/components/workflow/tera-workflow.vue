@@ -216,7 +216,7 @@ import { MenuItem } from 'primevue/menuitem';
 import * as EventService from '@/services/event';
 import { useProjects } from '@/composables/project';
 // import useAuthStore from '@/stores/auth';
-import { cloneNoteBookSession } from '@/services/notebook-session';
+// import { cloneNoteBookSession } from '@/services/notebook-session';
 import * as SimulateCiemssOp from '@/components/workflow/ops/simulate-ciemss/mod';
 import * as StratifyMiraOp from '@/components/workflow/ops/stratify-mira/mod';
 import * as DatasetOp from '@/components/workflow/ops/dataset/mod';
@@ -477,6 +477,7 @@ const duplicateBranch = async (nodeId: string) => {
 
 // We need to clone data-transform sessions, unlike other operators that are
 // append-only, data-transform updates so we need to create distinct copies.
+/*
 const cloneNoteBookSessions = async () => {
 	const sessionIdSet = new Set<string>();
 
@@ -499,6 +500,7 @@ const cloneNoteBookSessions = async () => {
 		}
 	}
 };
+*/
 
 const addOperatorToWorkflow: Function =
 	(operator: OperatorImport, nodeSize: OperatorNodeSize = OperatorNodeSize.medium) =>
