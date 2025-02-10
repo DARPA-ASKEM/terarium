@@ -91,6 +91,12 @@ const props = defineProps<{
 
 const emit = defineEmits(['update-item']);
 
+const debouncers: { [key: string]: any } = {};
+
+const startDebouncer = (key, value) => {
+	debouncers[key] = debouncer(key, value);
+};
+
 const debouncer = debounce((key: string, value: string = '') => {
 	emit('update-item', { key, value });
 }, 300);
@@ -101,19 +107,19 @@ const nameText = computed({
 });
 const unitExpression = computed({
 	get: () => props.unitExpression,
-	set: (newUnitExpression) => debouncer('unitExpression', newUnitExpression)
+	set: (newUnitExpression) => startDebouncer('unitExpression', newUnitExpression)
 });
 const descriptionText = computed({
 	get: () => props.description,
 	set: (newDescription) => {
-		debouncer('description', newDescription);
+		startDebouncer('description', newDescription);
 		showDescription.value = !!newDescription;
 	}
 });
 const showDescription = ref<boolean>(!!descriptionText.value);
 const grounding = computed({
 	get: () => props.grounding,
-	set: (newGrounding) => debouncer('grounding', newGrounding)
+	set: (newGrounding) => startDebouncer('grounding', newGrounding)
 });
 
 // If we are in preview mode and there is no content, show nothing
