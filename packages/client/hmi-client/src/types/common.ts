@@ -207,6 +207,8 @@ export interface ChartSettingComparison extends ChartSettingBase {
 	showBeforeAfter?: boolean;
 	/** Normalize data by total strata population. Only supported for stratified models */
 	normalize?: boolean;
+	colorScheme?: string[];
+	variableColors?: { [name: string]: string };
 }
 
 export interface ChartSettingEnsembleVariableOptions {

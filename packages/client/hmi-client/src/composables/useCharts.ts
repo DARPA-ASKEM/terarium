@@ -42,7 +42,11 @@ import {
 	groupVariablesByStrata
 } from '@/services/model';
 import { CalibrateMap, isCalibrateMap } from '@/services/calibrate-workflow';
-import { isChartSettingComparisonVariable, isChartSettingEnsembleVariable } from '@/services/chart-settings';
+import {
+	isChartSettingComparisonVariable,
+	isChartSettingEnsembleVariable,
+	generateComparisonColorScheme
+} from '@/services/chart-settings';
 import {
 	CalibrateEnsembleMappingRow,
 	isCalibrateEnsembleMappingRow
@@ -456,7 +460,7 @@ export function useCharts(
 			}
 			sampleLayerVariables.push(`${chartData.value?.pyciemssMap[varName]}`);
 			statLayerVariables.push(`${chartData.value?.pyciemssMap[varName]}_mean`);
-			colorScheme.push(CATEGORICAL_SCHEME[variableIndex % CATEGORICAL_SCHEME.length]);
+			colorScheme.push(...generateComparisonColorScheme(setting, variableIndex));
 		}
 		// Otherwise include all selected variables
 		else {
@@ -469,7 +473,7 @@ export function useCharts(
 					statLayerVariables.push(`${chartData.value?.pyciemssMap[v]}_mean:pre`);
 				}
 			});
-			colorScheme.push(...CATEGORICAL_SCHEME);
+			colorScheme.push(...generateComparisonColorScheme(setting));
 		}
 		options.colorscheme = colorScheme;
 		return { statLayerVariables, sampleLayerVariables, options };
