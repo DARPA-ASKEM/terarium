@@ -9,7 +9,7 @@ import type {
 } from '@/types/Types';
 import { SemanticType } from '@/types/Types';
 import { isEmpty, isNaN, isNumber, keyBy } from 'lodash';
-import { pythonInstance } from '@/python/PyodideController';
+import { pythonInstance } from '@/web-workers/python/PyodideController';
 import { DistributionType } from './distribution';
 
 export interface SemanticOtherValues {
