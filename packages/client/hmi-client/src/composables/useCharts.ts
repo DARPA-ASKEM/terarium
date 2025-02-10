@@ -31,8 +31,7 @@ import {
 	ChartSettingComparison,
 	ChartSettingEnsembleVariable,
 	ChartSettingSensitivity,
-	ChartSettingType,
-	SensitivityChartType
+	ChartSettingType
 } from '@/types/common';
 import { ChartAnnotation, Dataset, Intervention, InterventionPolicy, Model, ModelConfiguration } from '@/types/Types';
 import { displayNumber } from '@/utils/number';
@@ -1283,7 +1282,7 @@ export function useCharts(
 						yAxisTitle: '',
 						bins,
 						colorscheme: SENSITIVITY_COLOUR_SCHEME,
-						isHeatmap: chartType === SensitivityChartType.HEATMAP
+						chartType
 					}
 				);
 
