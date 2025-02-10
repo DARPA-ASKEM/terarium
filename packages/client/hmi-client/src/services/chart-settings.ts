@@ -6,7 +6,8 @@ import {
 	ChartSettingEnsembleVariableOptions,
 	ChartSettingComparison,
 	ChartSettingSensitivity,
-	ChartSettingType
+	ChartSettingType,
+	SensitivityChartType
 } from '@/types/common';
 import { v4 as uuidv4 } from 'uuid';
 import { b64DecodeUnicode } from '@/utils/binary';
@@ -164,7 +165,12 @@ export function updateChartSettingsBySelectedVariables(
 
 export function updateSensitivityChartSettingOption(
 	settings: ChartSettingSensitivity[],
-	options: { selectedVariables: string[]; selectedInputVariables: string[]; timepoint: number }
+	options: {
+		selectedVariables: string[];
+		selectedInputVariables: string[];
+		timepoint: number;
+		chartType: SensitivityChartType;
+	}
 ) {
 	// previous settings without the settings of the given type
 	const previousSettings = settings.filter((setting) => setting.type !== ChartSettingType.SENSITIVITY);
@@ -176,11 +182,13 @@ export function updateSensitivityChartSettingOption(
 		if (found) {
 			found.selectedInputVariables = options.selectedInputVariables;
 			found.timepoint = options.timepoint;
+			found.chartType = options.chartType;
 			return found;
 		}
 		return createNewChartSetting(variable, ChartSettingType.SENSITIVITY, [variable], {
 			selectedInputVariables: options.selectedInputVariables,
-			timepoint: options.timepoint
+			timepoint: options.timepoint,
+			chartType: options.chartType
 		});
 	});
 
