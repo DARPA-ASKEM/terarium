@@ -4,7 +4,7 @@ import { percentile } from '@/utils/math';
 import { VisualizationSpec } from 'vega-embed';
 import { v4 as uuidv4 } from 'uuid';
 import type { ChartAnnotation, FunmanInterval } from '@/types/Types';
-import { CalendarDateType } from '@/types/common';
+import { CalendarDateType, SensitivityChartType } from '@/types/common';
 import { countDigits, fixPrecisionError } from '@/utils/number';
 import { format } from 'd3';
 import { flattenInterventionData } from './intervention-policy';
@@ -66,6 +66,10 @@ export interface ForecastChartOptions extends BaseChartOptions {
 	yExtent?: [number, number];
 }
 
+export interface SensitivityChartOptions extends ForecastChartOptions {
+	chartType: SensitivityChartType;
+}
+
 export interface ForecastChartLayer {
 	data: Record<string, any>[] | { name: string } | { url: string };
 	variables: string[];
@@ -117,6 +121,14 @@ function formatDateLabelFn(date: Date, datum: string, type: CalendarDateType): s
 		default:
 			return `timeFormat(datetime(${date.getFullYear()}, ${date.getMonth()}, ${date.getDate()} + ${datum}), '%b %d, %Y')`;
 	}
+}
+
+export function createVariableColorMap(variables: string[]) {
+	const variableColorMap: Record<string, string> = {};
+	variables.forEach((variable, index) => {
+		variableColorMap[variable] = CATEGORICAL_SCHEME[index % CATEGORICAL_SCHEME.length];
+	});
+	return variableColorMap;
 }
 
 export function createErrorChart(dataset: Record<string, any>[], options: ErrorChartOptions) {
@@ -1270,7 +1282,10 @@ export function createQuantilesForecastChart(
  * FIXME: The design calls for combinations of different types of charts
  * in the grid, which we don't know how to achieve currently with vegalite
  * */
-export function createSimulateSensitivityScatter(samplingLayer: SensitivityChartLayer, options: ForecastChartOptions) {
+export function createSimulateSensitivityScatter(
+	samplingLayer: SensitivityChartLayer,
+	options: SensitivityChartOptions
+) {
 	// Start building
 	let calculateExpr = '';
 	options.bins?.forEach((sampleIds, quantile) => {
@@ -1334,6 +1349,12 @@ export function createSimulateSensitivityScatter(samplingLayer: SensitivityChart
 		}
 	};
 
+	if (options.chartType === SensitivityChartType.HEATMAP) {
+		spec.spec.mark = 'rect';
+		spec.spec.encoding.x.bin = { maxbins: 8 };
+		spec.spec.encoding.y.bin = { maxbins: 8 };
+	}
+
 	return spec;
 }
 
@@ -1341,22 +1362,7 @@ export function createSimulateSensitivityScatter(samplingLayer: SensitivityChart
 /*                          Sensitivity Ranking Chart                         */
 /* -------------------------------------------------------------------------- */
 
-export function createSensitivityRankingChart(data: Map<string, number>, options: BaseChartOptions) {
-	// use only 20 highest scores
-	const parametersShownCount = 20;
-	const foramttedData = Array.from(data)
-		.map(([parameter, score]) => ({ parameter, score }))
-		.filter((d) => d.score !== 0)
-		.sort((a, b) => Math.abs(b.score) - Math.abs(a.score))
-		.slice(0, parametersShownCount);
-
-	let title = '';
-	if (foramttedData.length === parametersShownCount) {
-		title = `Top ${parametersShownCount} most sensitive parameters displayed.`;
-	}
-	const notShownCount = data.size - foramttedData.length;
-	if (title && notShownCount > 0) title += ` ${notShownCount} parameters not shown.`;
-
+export function createSensitivityRankingChart(data: { parameter: string; score: number }[], options: BaseChartOptions) {
 	const globalFont = 'Figtree';
 
 	const spec: any = {
@@ -1368,13 +1374,13 @@ export function createSensitivityRankingChart(data: Map<string, number>, options
 			}
 		},
 		title: {
-			text: title,
+			text: options.title,
 			anchor: 'start',
 			subtitle: ' ',
 			subtitlePadding: 0
 		},
 		description: 'Sensitivity score ranking chart',
-		data: { values: foramttedData },
+		data: { values: data },
 		transform: [
 			{
 				calculate: 'abs(datum.score)',
