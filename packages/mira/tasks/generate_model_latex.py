@@ -23,7 +23,7 @@ def main():
         # Generate LaTeX code string from MMT model
         # =========================================
 
-        odeterms = {var: 0 for var in model.get_concepts_name_map().keys()}
+        odeterms = {var: 0 for var in sorted(model.get_concepts_name_map().keys())}
 
         for template in model.templates:
             if hasattr(template, "subject"):
