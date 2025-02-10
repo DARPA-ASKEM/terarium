@@ -1,7 +1,8 @@
 <template>
 	<div class="chart-settings-item" :style="{ 'border-left': borderStyle }">
 		<h6>{{ settings.name }}</h6>
-		<div class="btn-group">
+		<slot name="main"></slot>
+		<div v-if="areButtonsEnabled" class="btn-group">
 			<Button icon="pi pi-cog" rounded text @click="$emit('open')" />
 			<Button icon="pi pi-times" rounded text @click="$emit('remove', settings.id)" />
 		</div>
@@ -16,8 +17,13 @@ const props = defineProps({
 	settings: {
 		type: Object,
 		default: () => ({})
+	},
+	areButtonsEnabled: {
+		type: Boolean,
+		default: true
 	}
 });
+
 defineEmits(['open', 'remove']);
 
 const borderStyle = computed(() => (props.settings.primaryColor ? `4px solid ${props.settings.primaryColor}` : ''));
