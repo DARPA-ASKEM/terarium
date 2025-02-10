@@ -311,6 +311,7 @@
 						:active-settings="activeChartSettings"
 						:generate-annotation="generateAnnotation"
 						:comparison="activeChartSettings?.type === ChartSettingType.VARIABLE_COMPARISON"
+						:comparison-selected-options="comparisonChartsSettingsSelection"
 						@update-settings="updateActiveChartSettings"
 						@delete-annotation="deleteAnnotation"
 						@close="setActiveChartSettings(null)"

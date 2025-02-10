@@ -99,25 +99,18 @@
 			</div>
 		</template>
 		<template v-if="type === ChartSettingType.VARIABLE_COMPARISON">
-			<!-- TODO: Move this part to it's own component, tera-chart-settings-item-comparison or inside tera-char-settings-item -->
-			<div v-for="s of targetSettings" :key="s.id" class="settings-item">
-				<div class="content">
-					<tera-chart-control
-						:chart-config="{
-							selectedRun: 'fixme',
-							selectedVariable: (comparisonSelectedOptions ?? {})[s.id] ?? []
-						}"
-						:multi-select="true"
-						:show-remove-button="false"
-						:variables="selectOptions"
-						@configuration-change="$emit('comparison-selection-change', s.id, $event.selectedVariable)"
-					/>
-				</div>
-				<div class="actions">
-					<Button icon="pi pi-cog" text rounded @click="$emit('open', s)" />
-					<Button icon="pi pi-times" text rounded @click="$emit('remove', s.id)" />
-				</div>
-			</div>
+			<section>
+				<tera-chart-settings-item-comparison
+					:settings="settings"
+					:type="type"
+					:selectOptions="selectOptions"
+					:selectedOptions="selectedOptions"
+					:comparisonSelectedOptions="comparisonSelectedOptions"
+					@comparison-selection-change="$emit('comparison-selection-change', $event.id, $event.value)"
+					@open="$emit('open', $event)"
+					@remove="$emit('remove', $event)"
+				/>
+			</section>
 		</template>
 		<template v-else>
 			<tera-chart-settings-item
@@ -134,11 +127,11 @@
 <script setup lang="ts">
 import TeraCheckbox from '@/components/widgets/tera-checkbox.vue';
 import TeraChartSettingsItem from '@/components/widgets/tera-chart-settings-item.vue';
+import TeraChartSettingsItemComparison from '@/components/widgets/tera-chart-settings-item-comparison.vue';
 import TeraChartControl from '@/components/workflow/tera-chart-control.vue';
 import MultiSelect from 'primevue/multiselect';
 import { ChartSetting, ChartSettingType, SensitivityChartType } from '@/types/common';
 import { computed } from 'vue';
-import Button from 'primevue/button';
 import { EnsembleVariableChartSettingOption, getEnsembleChartSettingOptions } from '@/services/chart-settings';
 import _, { isEmpty } from 'lodash';
 import RadioButton from 'primevue/radiobutton';

@@ -123,6 +123,14 @@ function formatDateLabelFn(date: Date, datum: string, type: CalendarDateType): s
 	}
 }
 
+export function createVariableColorMap(variables: string[]) {
+	const variableColorMap: Record<string, string> = {};
+	variables.forEach((variable, index) => {
+		variableColorMap[variable] = CATEGORICAL_SCHEME[index % CATEGORICAL_SCHEME.length];
+	});
+	return variableColorMap;
+}
+
 export function createErrorChart(dataset: Record<string, any>[], options: ErrorChartOptions) {
 	const axisColor = '#EEE';
 	const labelColor = '#667085';

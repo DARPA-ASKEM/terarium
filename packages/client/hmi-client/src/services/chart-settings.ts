@@ -12,7 +12,7 @@ import {
 import { v4 as uuidv4 } from 'uuid';
 import { b64DecodeUnicode } from '@/utils/binary';
 import { ChartAnnotation } from '@/types/Types';
-import { CATEGORICAL_SCHEME, ForecastChartOptions } from './charts';
+import { CATEGORICAL_SCHEME, createVariableColorMap, ForecastChartOptions } from './charts';
 
 export interface LLMGeneratedChartAnnotation {
 	request: string;
@@ -338,4 +338,19 @@ export async function generateForecastChartAnnotation(
 		request,
 		layerSpec
 	};
+}
+
+export function generateComparisonColorScheme(setting: ChartSettingComparison, variableIndex = -1) {
+	const colorScheme: string[] = [];
+	const variables = variableIndex === -1 ? setting.selectedVariables : [setting.selectedVariables[variableIndex]];
+	const variableColors = getComparisonVariableColors(setting);
+	variables.forEach((variable) => {
+		colorScheme.push(variableColors[variable]);
+	});
+	return colorScheme;
+}
+
+export function getComparisonVariableColors(setting: ChartSettingComparison) {
+	const defaultMap = createVariableColorMap(setting.selectedVariables);
+	return { ...defaultMap, ...setting.variableColors };
 }
