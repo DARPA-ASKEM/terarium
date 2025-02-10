@@ -7,6 +7,7 @@ import type { ChartAnnotation, FunmanInterval } from '@/types/Types';
 import { CalendarDateType, SensitivityChartType } from '@/types/common';
 import { countDigits, fixPrecisionError } from '@/utils/number';
 import { format } from 'd3';
+import { BinParams } from 'vega-lite/build/src/bin';
 import { flattenInterventionData } from './intervention-policy';
 import type { FunmanBox, FunmanConstraintsResponse } from './models/funman-service';
 
@@ -392,12 +393,17 @@ export function createHistogramChart(dataset: Record<string, any>[], options: Hi
 			domain: opts.variables.map((v) => v.label ?? v.field),
 			range: opts.variables.map((v) => v.color)
 		};
-		const bin = { maxbins: maxBins, extent };
+		let bin: BinParams | null = { maxbins: maxBins, extent };
+
+		// If there is only one value (min and max extent are the same), we do not want to bin it
+		if (extent[0] === extent[1]) {
+			bin = null;
+		}
 		const aggregate = 'count';
 		return opts.variables.map((varOption) => ({
 			mark: { type: 'bar', width: varOption.width, tooltip: true },
 			encoding: {
-				x: { bin, field: varOption.field, axis: xaxis, scale: { padding: xPadding } },
+				x: { bin, field: varOption.field, axis: xaxis, scale: { padding: xPadding }, type: 'quantitative' },
 				y: { aggregate, axis: yaxis },
 				color: {
 					legend: { ...legendProperties },
