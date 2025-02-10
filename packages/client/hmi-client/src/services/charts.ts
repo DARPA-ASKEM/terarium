@@ -4,7 +4,7 @@ import { percentile } from '@/utils/math';
 import { VisualizationSpec } from 'vega-embed';
 import { v4 as uuidv4 } from 'uuid';
 import type { ChartAnnotation, FunmanInterval } from '@/types/Types';
-import { CalendarDateType } from '@/types/common';
+import { CalendarDateType, SensitivityChartType } from '@/types/common';
 import { countDigits, fixPrecisionError } from '@/utils/number';
 import { format } from 'd3';
 import { flattenInterventionData } from './intervention-policy';
@@ -64,6 +64,10 @@ export interface ForecastChartOptions extends BaseChartOptions {
 	legendProperties?: Record<string, any>;
 	bins?: Map<string, number[]>;
 	yExtent?: [number, number];
+}
+
+export interface SensitivityChartOptions extends ForecastChartOptions {
+	chartType: SensitivityChartType;
 }
 
 export interface ForecastChartLayer {
@@ -1270,7 +1274,10 @@ export function createQuantilesForecastChart(
  * FIXME: The design calls for combinations of different types of charts
  * in the grid, which we don't know how to achieve currently with vegalite
  * */
-export function createSimulateSensitivityScatter(samplingLayer: SensitivityChartLayer, options: ForecastChartOptions) {
+export function createSimulateSensitivityScatter(
+	samplingLayer: SensitivityChartLayer,
+	options: SensitivityChartOptions
+) {
 	// Start building
 	let calculateExpr = '';
 	options.bins?.forEach((sampleIds, quantile) => {
@@ -1333,6 +1340,12 @@ export function createSimulateSensitivityScatter(samplingLayer: SensitivityChart
 			}
 		}
 	};
+
+	if (options.chartType === SensitivityChartType.HEATMAP) {
+		spec.spec.mark = 'rect';
+		spec.spec.encoding.x.bin = { maxbins: 8 };
+		spec.spec.encoding.y.bin = { maxbins: 8 };
+	}
 
 	return spec;
 }

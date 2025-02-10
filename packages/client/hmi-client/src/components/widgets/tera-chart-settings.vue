@@ -54,7 +54,8 @@
 				@change="
 					$emit('sensitivity-selection-change', {
 						selectedInputVariables: $event.value,
-						timepoint: sensitivityOptions.timepoint
+						timepoint: sensitivityOptions.timepoint,
+						chartType: sensitivityOptions.chartType
 					})
 				"
 			>
@@ -67,18 +68,35 @@
 			</MultiSelect>
 
 			<div class="mb-2"></div>
-			<label :class="_.isEmpty(selectedOptions) ? 'disabled' : ''">Select time slice of interest</label>
+			<label :class="{ disabled: isEmpty(selectedOptions) }">Select time slice of interest</label>
 			<tera-input-number
 				:disabled="_.isEmpty(selectedOptions)"
 				:model-value="sensitivityOptions.timepoint"
 				@update:model-value="
 					$emit('sensitivity-selection-change', {
 						selectedInputVariables: sensitivityOptions.selectedInputOptions,
-						timepoint: $event
+						timepoint: $event,
+						chartType: sensitivityOptions.chartType
 					})
 				"
 			/>
 			<div class="mb-1"></div>
+			<div v-for="option in sensitivityChartOptions" class="flex align-items-center gap-2" :key="option.value">
+				<RadioButton
+					:disabled="_.isEmpty(selectedOptions)"
+					:model-value="sensitivityOptions.chartType"
+					:value="option.value"
+					name="sensitivityChartTypes"
+					@change="
+						$emit('sensitivity-selection-change', {
+							selectedInputVariables: sensitivityOptions.selectedInputOptions,
+							timepoint: sensitivityOptions.timepoint,
+							chartType: option.value
+						})
+					"
+				/>
+				<label :class="{ disabled: isEmpty(selectedOptions) }" :for="option.value">{{ option.label }}</label>
+			</div>
 		</template>
 		<template v-if="type === ChartSettingType.VARIABLE_COMPARISON">
 			<!-- TODO: Move this part to it's own component, tera-chart-settings-item-comparison or inside tera-char-settings-item -->
@@ -118,11 +136,12 @@ import TeraCheckbox from '@/components/widgets/tera-checkbox.vue';
 import TeraChartSettingsItem from '@/components/widgets/tera-chart-settings-item.vue';
 import TeraChartControl from '@/components/workflow/tera-chart-control.vue';
 import MultiSelect from 'primevue/multiselect';
-import { ChartSetting, ChartSettingType } from '@/types/common';
+import { ChartSetting, ChartSettingType, SensitivityChartType } from '@/types/common';
 import { computed } from 'vue';
 import Button from 'primevue/button';
 import { EnsembleVariableChartSettingOption, getEnsembleChartSettingOptions } from '@/services/chart-settings';
-import _ from 'lodash';
+import _, { isEmpty } from 'lodash';
+import RadioButton from 'primevue/radiobutton';
 import TeraInputNumber from './tera-input-number.vue';
 
 const props = defineProps<{
@@ -146,6 +165,7 @@ const props = defineProps<{
 		inputOptions: string[];
 		selectedInputOptions: string[];
 		timepoint: number;
+		chartType: SensitivityChartType;
 	};
 }>();
 const emits = defineEmits([
@@ -156,6 +176,11 @@ const emits = defineEmits([
 	'sensitivity-selection-change',
 	'comparison-selection-change'
 ]);
+
+const sensitivityChartOptions = [
+	{ label: 'Scatter', value: SensitivityChartType.SCATTER },
+	{ label: 'Heatmap', value: SensitivityChartType.HEATMAP }
+];
 
 // Settings of the same type that we want to interact with.
 const targetSettings = computed(() => props.settings.filter((s) => s.type === props.type));
