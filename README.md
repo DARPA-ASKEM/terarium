@@ -313,6 +313,13 @@ yarn workspace hmi-client run test
 ./gradlew test
 ```
 
+To run a specific test, or a set of tests, you can specify a `--tests=PATTERN` filter. Note however, for this option to work, you need to be under `terarium/packages/server` directory when running gradlew.
+
+```shell
+./gradlew test --rerun-tasks --tests="WorkflowS*"
+```
+
+
 ## Contributing
 
 Please see further documentation in the [Terarium Contributing Guide](.github/CONTRIBUTING.md)
