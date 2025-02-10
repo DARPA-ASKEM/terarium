@@ -281,7 +281,7 @@
 					<section class="pb-3" v-if="modelConfig && csvAsset">
 						<div class="mx-4" ref="chartWidthDiv"></div>
 						<Accordion multiple :active-index="currentActiveIndicies" class="px-2">
-							<!-- Paramater distributions section -->
+							<!-- Parameter distributions section -->
 							<AccordionTab v-if="selectedParameterSettings.length > 0" header="Parameter distributions">
 								<template v-for="setting of selectedParameterSettings" :key="setting.id">
 									<div v-if="parameterDistributionCharts[setting.id]" class="flex flex-column">
