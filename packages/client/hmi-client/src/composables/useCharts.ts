@@ -1171,6 +1171,7 @@ export function useCharts(
 
 		const fetchSensitivityData = async () => {
 			// pick the first setting's timepoint for now
+			const chartType = chartSettings.value[0].chartType;
 			const { result } = chartData.value as ChartData;
 			const sliceData = result.filter((d) => d.timepoint_id === timepoint.value);
 			// Translate names ahead of time, because we can't seem to customize titles
@@ -1280,7 +1281,8 @@ export function useCharts(
 						xAxisTitle: '',
 						yAxisTitle: '',
 						bins,
-						colorscheme: SENSITIVITY_COLOUR_SCHEME
+						colorscheme: SENSITIVITY_COLOUR_SCHEME,
+						chartType
 					}
 				);
 
