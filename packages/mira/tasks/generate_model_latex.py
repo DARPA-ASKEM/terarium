@@ -23,16 +23,19 @@ def main():
         # Generate LaTeX code string from MMT model
         # =========================================
 
-        odeterms = {var: 0 for var in sorted(model.get_concepts_name_map().keys())}
+        odeterms = {var: [] for var in sorted(model.get_concepts_name_map().keys())}
 
         for template in model.templates:
             if hasattr(template, "subject"):
                 var = template.subject.name
-                odeterms[var] -= template.rate_law.args[0]
+                odeterms[var].append(-template.rate_law.args[0])
 
             if hasattr(template, "outcome"):
                 var = template.outcome.name
-                odeterms[var] += template.rate_law.args[0]
+                odeterms[var].append(template.rate_law.args[0])
+
+        # Sort the terms such that all negative ones come first
+        odeterms = {var: sorted(terms, key = lambda term: str(term)) for var, terms in odeterms.items()}
 
         # Time
         if model.time and model.time.name:
