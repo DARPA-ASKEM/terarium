@@ -773,7 +773,7 @@ public class WorkflowController {
 
 	@PostMapping("/{id}/branch-from-node/{nodeId}")
 	@Secured(Roles.USER)
-	@Operation(summary = "Remove an edge from a workflow")
+	@Operation(summary = "Branch workflow starting from a given node")
 	@ApiResponses(
 		value = {
 			@ApiResponse(
