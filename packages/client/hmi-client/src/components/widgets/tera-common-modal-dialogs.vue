@@ -57,7 +57,7 @@ import { RoutePath, useCurrentRoute } from '@/router/index';
 import { RouteName } from '@/router/routes';
 import { useProjects } from '@/composables/project';
 import { useProjectMenu } from '@/composables/project-menu';
-import { isEmtpy } from 'lodash';
+import { isEmpty } from 'lodash';
 
 const router = useRouter();
 const currentRoute = useCurrentRoute();
