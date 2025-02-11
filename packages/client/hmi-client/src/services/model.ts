@@ -10,17 +10,25 @@ import { fileToJson } from '@/utils/file';
 import { Ref } from 'vue';
 import { DateOptions } from './charts';
 
-export async function createModel(model: Model): Promise<Model | null> {
+export async function createModel(
+	model: Model,
+	modelConfigurationId?: ModelConfiguration['id']
+): Promise<Model | null> {
 	delete model.id;
-	const response = await API.post(`/models`, model);
+	const response = await API.post(`/models`, { model, modelConfigurationId });
 	return response?.data ?? null;
 }
 
-export async function createModelFromOld(oldModel: Model, newModel: Model): Promise<Model | null> {
+export async function createModelFromOld(
+	oldModel: Model,
+	newModel: Model,
+	modelConfigurationId?: ModelConfiguration['id']
+): Promise<Model | null> {
 	delete newModel.id;
 	const response = await API.post(`/models/new-from-old`, {
 		newModel,
-		oldModel
+		oldModel,
+		modelConfigurationId
 	});
 	return response?.data ?? null;
 }

@@ -111,7 +111,7 @@ import { OperatorStatus, WorkflowNode } from '@/types/workflow';
 import { logger } from '@/utils/logger';
 import Button from 'primevue/button';
 import { v4 as uuidv4 } from 'uuid';
-import { onMounted, onUnmounted, ref, watch } from 'vue';
+import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
 import { VAceEditor } from 'vue3-ace-editor';
 import { VAceEditorInstance } from 'vue3-ace-editor/types';
 import { blankStratifyGroup, StratifyGroup, StratifyOperationStateMira } from './stratify-mira-operation';
@@ -248,7 +248,8 @@ const handleModelPreview = async (data: any) => {
 	amrResponse.header.name = newName;
 
 	// Create output
-	const modelData = await createModelFromOld(amr.value, amrResponse);
+	const modelConfigId = props.node.inputs.find((i) => i.type === 'modelConfigId')?.value?.[0];
+	const modelData = await createModelFromOld(amr.value, amrResponse, modelConfigId);
 	if (!modelData) return;
 	outputAmr.value = modelData;
 

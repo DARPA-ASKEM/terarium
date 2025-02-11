@@ -45,6 +45,7 @@ import software.uncharted.terarium.hmiserver.security.Roles;
 import software.uncharted.terarium.hmiserver.service.CurrentUserService;
 import software.uncharted.terarium.hmiserver.service.data.ArtifactService;
 import software.uncharted.terarium.hmiserver.service.data.ModelConfigurationService;
+import software.uncharted.terarium.hmiserver.service.data.ModelConfigurationService.ModelConfigurationUpdate;
 import software.uncharted.terarium.hmiserver.service.data.ModelService;
 import software.uncharted.terarium.hmiserver.service.data.ProjectService;
 import software.uncharted.terarium.hmiserver.service.tasks.AMRToMMTResponseHandler;
@@ -455,8 +456,7 @@ public class MiraController {
 			// create a default configuration
 			final ModelConfiguration modelConfiguration = ModelConfigurationService.modelConfigurationFromAMR(
 				model,
-				null,
-				null
+				new ModelConfigurationUpdate()
 			);
 			modelConfigurationService.createAsset(modelConfiguration, conversionRequest.projectId, permission);
 		} catch (final IOException e) {
