@@ -2,6 +2,7 @@ import { cloneDeep, isEqual, sortBy } from 'lodash';
 import { ref, computed, watch, ComputedRef } from 'vue';
 import {
 	ChartSetting,
+	ChartSettingBase,
 	ChartSettingComparison,
 	ChartSettingEnsembleVariable,
 	ChartSettingSensitivity,
@@ -30,13 +31,13 @@ const createComputedFilteredSettings = <T = ChartSetting>(
 	chartSettings: ComputedRef<ChartSetting[]>,
 	type: ChartSettingType
 ) => {
-	const settingsFiltered = computed(() => chartSettings.value.filter((setting) => setting.type === type) as T[]);
 	const settings = ref<T[]>([]);
 	watch(
-		settingsFiltered,
-		(newSettings, oldSettings) => {
+		chartSettings,
+		(allSettings) => {
+			const newSettings = allSettings.filter((setting) => setting.type === type) as T[];
 			// Only update the settings if the settings of the given type have changed
-			if (isEqual(sortBy(newSettings, ['id']), sortBy(oldSettings, ['id']))) return;
+			if (isEqual(sortBy(settings.value, ['id']), sortBy(newSettings, ['id']))) return;
 			settings.value = newSettings;
 		},
 		{ immediate: true }
@@ -60,23 +61,17 @@ export function useChartSettings(
 	const activeChartSettings = ref<ChartSetting | null>(null);
 
 	// Computed properties for chart settings filtered by type
-	const selectedParameterSettings = createComputedFilteredSettings<ChartSetting>(
+	const selectedParameterSettings = createComputedFilteredSettings(
 		chartSettings,
 		ChartSettingType.DISTRIBUTION_COMPARISON
 	);
-	const selectedInterventionSettings = createComputedFilteredSettings<ChartSetting>(
-		chartSettings,
-		ChartSettingType.INTERVENTION
-	);
-	const selectedVariableSettings = createComputedFilteredSettings<ChartSetting>(
-		chartSettings,
-		ChartSettingType.VARIABLE
-	);
+	const selectedInterventionSettings = createComputedFilteredSettings(chartSettings, ChartSettingType.INTERVENTION);
+	const selectedVariableSettings = createComputedFilteredSettings(chartSettings, ChartSettingType.VARIABLE);
 	const selectedEnsembleVariableSettings = createComputedFilteredSettings<ChartSettingEnsembleVariable>(
 		chartSettings,
 		ChartSettingType.VARIABLE_ENSEMBLE
 	);
-	const selectedErrorVariableSettings = createComputedFilteredSettings<ChartSetting>(
+	const selectedErrorVariableSettings = createComputedFilteredSettings(
 		chartSettings,
 		ChartSettingType.ERROR_DISTRIBUTION
 	);
