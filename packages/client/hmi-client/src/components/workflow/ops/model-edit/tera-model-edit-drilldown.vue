@@ -76,11 +76,15 @@ import { VAceEditor } from 'vue3-ace-editor';
 import { VAceEditorInstance } from 'vue3-ace-editor/types';
 import Button from 'primevue/button';
 import { DrilldownTabs } from '@/types/common';
-import type { Model } from '@/types/Types';
+import type { Model, ModelConfiguration } from '@/types/Types';
 import { OperatorStatus, WorkflowNode, WorkflowOutput } from '@/types/workflow';
 import { KernelSessionManager } from '@/services/jupyter';
-import { createModel, getModel } from '@/services/model';
-import { getAsConfiguredModel, getModelConfigurationById } from '@/services/model-configurations';
+import { createModel, getModel, getModelConfigurationsForModel } from '@/services/model';
+import {
+	getAsConfiguredModel,
+	getModelConfigurationById,
+	updateModelConfiguration
+} from '@/services/model-configurations';
 import { saveCodeToState } from '@/services/notebook';
 import { logger } from '@/utils/logger';
 import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
@@ -164,6 +168,8 @@ const executeErrorResponse = ref({
 });
 
 const executeResponseTraceback = ref('');
+
+const modelConfiguration = ref<ModelConfiguration | null>(null);
 
 const updateLlmQuery = (query: string) => {
 	llmThoughts.value = [];
@@ -277,6 +283,16 @@ const createOutput = async (modelToSave: Model) => {
 	// If it's the original model, use that otherwise create a new one
 	const modelData = isReadyToCreateDefaultOutput.value ? modelToSave : await createModel(modelToSave);
 	if (!modelData) return;
+	// we want to update the new model's configuration with the old one's temporal context
+	if (modelConfiguration.value?.temporalContext) {
+		getModelConfigurationsForModel(modelData.id).then((modelConfigurations) => {
+			// the first model configuration is the one we want to update (default)
+			const mc = modelConfigurations[0];
+			if (!mc) return;
+			mc.temporalContext = modelConfiguration.value!.temporalContext;
+			updateModelConfiguration(mc);
+		});
+	}
 
 	const modelLabel = isReadyToCreateDefaultOutput.value
 		? (modelData.name as string)
@@ -351,17 +367,16 @@ onMounted(async () => {
 	// Save input model id to use throughout the component
 	const input = props.node.inputs[0];
 	if (!input) return;
-
 	// Get input model id
 	if (input.type === 'modelId') {
 		inputModelId = input.value?.[0];
 	} else if (input.type === 'modelConfigId') {
 		const modelConfigId = input.value?.[0];
-		const modelConfiguration = await getModelConfigurationById(modelConfigId);
+		modelConfiguration.value = await getModelConfigurationById(modelConfigId);
 		const model = (await getAsConfiguredModel(modelConfigId)) as Model;
 		// Mark the model as originating from the config
 		model.temporary = true;
-		model.name += ` (${modelConfiguration.name})`;
+		model.name += ` (${modelConfiguration.value.name})`;
 		model.header.name = model.name as string;
 		const res = await createModel(model);
 		if (res) {
