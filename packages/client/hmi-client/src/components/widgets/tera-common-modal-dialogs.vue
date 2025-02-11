@@ -95,12 +95,8 @@ watch(
 	() => isCopyDialogVisible.value,
 	async () => {
 		if (isCopyDialogVisible.value) {
-			project.value = await useProjects().activeProject.value;
-			if (project.value === null) {
-				project.value = menuProject.value;
-			}
-			const name = project.value.name ?? null;
-			projectName.value = name ? `Copy of ${name}` : 'Enter new project name';
+			const name = await useProjects().getActiveProjectName();
+			projectName.value = isEmpty(name) ? 'Enter new project name' : `Copy of ${name}`;
 		}
 	}
 );
