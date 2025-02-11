@@ -41,10 +41,12 @@ import software.uncharted.terarium.hmiserver.models.dataservice.workflow.Workflo
 import software.uncharted.terarium.hmiserver.security.Roles;
 import software.uncharted.terarium.hmiserver.service.ClientEventService;
 import software.uncharted.terarium.hmiserver.service.CurrentUserService;
+import software.uncharted.terarium.hmiserver.service.TaskManager;
 import software.uncharted.terarium.hmiserver.service.data.ProjectAssetService;
 import software.uncharted.terarium.hmiserver.service.data.ProjectPermissionsService;
 import software.uncharted.terarium.hmiserver.service.data.ProjectService;
 import software.uncharted.terarium.hmiserver.service.data.WorkflowService;
+import software.uncharted.terarium.hmiserver.service.workflowop.*;
 import software.uncharted.terarium.hmiserver.utils.Messages;
 import software.uncharted.terarium.hmiserver.utils.rebac.ReBACService;
 import software.uncharted.terarium.hmiserver.utils.rebac.Schema;
@@ -55,6 +57,8 @@ import software.uncharted.terarium.hmiserver.utils.rebac.askem.RebacProject;
 @Slf4j
 @RequiredArgsConstructor
 public class WorkflowController {
+
+	final TaskManager taskManager;
 
 	final WorkflowService workflowService;
 
@@ -769,6 +773,25 @@ public class WorkflowController {
 
 		broadCastWorkflowChange(updated.get(), projectId);
 		return updated.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
+	}
+
+	final UUID testId = UUID.randomUUID();
+
+	@PostMapping("/{id}/abcde-start")
+	@Secured(Roles.USER)
+	@Operation(summary = "Add or update a workflow annotation")
+	public ResponseEntity<String> testABCDE() {
+		final Runnable testRunnable = new TestOp();
+		taskManager.submitTask(testId, testRunnable);
+		return ResponseEntity.ok().build();
+	}
+
+	@PostMapping("/{id}/abcde-cancel")
+	@Secured(Roles.USER)
+	@Operation(summary = "Add or update a workflow annotation")
+	public ResponseEntity<String> testABCDE2() {
+		taskManager.cancelTask(testId);
+		return ResponseEntity.ok().build();
 	}
 
 	@PostMapping("/{id}/annotation")
