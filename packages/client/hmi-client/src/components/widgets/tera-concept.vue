@@ -56,6 +56,16 @@ function saveConcepts() {
 
 		if (!isEmpty(modifiersConcepts)) {
 			newGrounding.modifiers = parseListDKGToGroundingModifiers(modifiersConcepts);
+
+			if (grounding.value?.modifiers) {
+				// Remove the curie modifiers from the original list of modifiers
+				const nonCurieModifiers = Object.fromEntries(
+					Object.entries(grounding.value.modifiers).filter(([_key, value]) => !value.includes(':'))
+				);
+
+				// Add the original list of non-curie modifiers to the new modifiers
+				Object.assign(newGrounding.modifiers, nonCurieModifiers);
+			}
 		}
 	}
 
