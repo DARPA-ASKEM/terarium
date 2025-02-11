@@ -166,6 +166,18 @@ export function createErrorChart(dataset: Record<string, any>[], options: ErrorC
 
 	const brushParamName = 'brush';
 
+	// Explicitly calculate the x extent to avoid issues with empty datasets or dataset with length 1
+	const xExtent =
+		dataset.length > 0
+			? variables.reduce(
+					(acc, variable) => {
+						const extent = d3.extent(dataset, (d) => d[variable]);
+						return [Math.min(acc[0], extent[0]), Math.max(acc[1], extent[1])];
+					},
+					[Infinity, -Infinity]
+				)
+			: [0, 0];
+
 	const config = {
 		facet: { spacing: 2 },
 		font: globalFont,
@@ -227,7 +239,8 @@ export function createErrorChart(dataset: Record<string, any>[], options: ErrorC
 					field: '_value',
 					type: 'quantitative',
 					title: options.xAxisTitle,
-					axis: { labels: true, domain: true, ticks: true }
+					axis: { labels: true, domain: true, ticks: true },
+					scale: { domain: xExtent }
 				},
 				y: {
 					title: ''
