@@ -1,4 +1,4 @@
-import { cloneDeep } from 'lodash';
+import { cloneDeep, isEqual } from 'lodash';
 import { ref, computed, watch } from 'vue';
 import {
 	ChartSetting,
@@ -35,14 +35,31 @@ export function useChartSettings(
 ) {
 	const chartSettings = computed(() => props.node.state.chartSettings ?? []);
 	const activeChartSettings = ref<ChartSetting | null>(null);
-	const comparisonChartsSettingsSelection = computed<{ [settingId: string]: string[] }>(() =>
-		selectedComparisonChartSettings.value.reduce((acc, setting) => {
-			acc[setting.id] = setting.selectedVariables;
-			return acc;
-		}, {})
-	);
+
+	// const chartSettingsByType = ref<Partial<Record<ChartSettingType, ChartSetting[]>>>({});
+	// watch(chartSettings, (settings) => {
+	// 	// Find the types of chart settings that have changed
+	// 	const typesDirty: Set<ChartSettingType> = new Set();
+	// 	settings.forEach((setting) => {
+	// 		const previousSetting = settings.find((s) => s.id === setting.id);
+	// 		if (!_.isEqual(previousSetting, setting)) typesDirty.add(setting.type);
+	// 	});
+	// 	// Only update the chart settings of the types that have changed
+	// 	typesDirty.forEach((type) => {
+	// 		chartSettingsByType.value[type] = settings.filter((setting) => setting.type === type);
+	// 	});
+	// });
+
+	// const chartSettings = ref<ChartSetting[]>([]);
+	// watch(() => props.node.state.chartSettings, (settings, newSettings) => {
+	// 	if (isEqual(settings, newSettings)) return;
+	// 	console.log(JSON.stringify(settings, null, 2));
+	// 	console.log(JSON.stringify(newSettings, null, 2));
+	// 	chartSettings.value = settings ?? [];
+	// }, { immediate: true });
 
 	// Computed properties to filter chart settings by type
+	// const selectedParameterSettings = computed(() => chartSettingsByType.value[ChartSettingType.DISTRIBUTION_COMPARISON] ?? []);
 	const selectedParameterSettings = computed(() =>
 		chartSettings.value.filter((setting) => setting.type === ChartSettingType.DISTRIBUTION_COMPARISON)
 	);
@@ -61,7 +78,15 @@ export function useChartSettings(
 	const selectedErrorVariableSettings = computed(() =>
 		chartSettings.value.filter((setting) => setting.type === ChartSettingType.ERROR_DISTRIBUTION)
 	);
+
 	const selectedComparisonChartSettings = computed(() => chartSettings.value.filter(isChartSettingComparisonVariable));
+
+	const comparisonChartsSettingsSelection = computed<{ [settingId: string]: string[] }>(() =>
+		selectedComparisonChartSettings.value.reduce((acc, setting) => {
+			acc[setting.id] = setting.selectedVariables;
+			return acc;
+		}, {})
+	);
 
 	const selectedSensitivityChartSettings = computed(
 		() =>

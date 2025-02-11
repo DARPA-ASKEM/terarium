@@ -267,13 +267,13 @@
 					<AccordionTab header="Loss">
 						<!-- Loss chart -->
 						<div ref="lossChartContainer">
-							<vega-chart
+							<!-- <vega-chart
 								expandable
 								v-if="lossValues.length > 0 || isLoading"
 								ref="lossChartRef"
 								:are-embed-actions-visible="true"
 								:visualization-spec="lossChartSpec"
-							/>
+							/> -->
 						</div>
 					</AccordionTab>
 				</Accordion>

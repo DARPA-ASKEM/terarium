@@ -37,7 +37,7 @@ import _ from 'lodash';
 import embed, { Config, Result, VisualizationSpec } from 'vega-embed';
 import Button from 'primevue/button';
 import Dialog from 'primevue/dialog';
-import { ref, watch, toRaw, isRef, isReactive, isProxy, computed, h, render, onUnmounted } from 'vue';
+import { ref, watch, toRaw, isRef, isReactive, isProxy, computed, h, render, onUnmounted, onMounted } from 'vue';
 import { expressionFunctions } from '@/services/charts';
 
 // This config is default for all charts, but can be overridden by individual chart spec
@@ -210,7 +210,11 @@ watch(
 	async ([, newSpec], [, oldSpec]) => {
 		if (_.isEmpty(newSpec)) return;
 		const isEqual = _.isEqual(newSpec, oldSpec);
-		if (isEqual && vegaVisualization.value !== undefined) return;
+		const isAlreadyRendered =
+			interactive.value === false ? imageDataURL.value !== '' : vegaVisualization.value !== undefined;
+		console.log('compare charts spec');
+		if (isEqual && isAlreadyRendered) return;
+
 		const spec = deepToRaw(props.visualizationSpec);
 
 		if (interactive.value === false) {
@@ -233,8 +237,7 @@ watch(
 
 			// dispose
 			viz.finalize();
-
-			emit('done-render');
+			console.log('render non-interactive chart');
 		} else {
 			// render interactive
 			if (!vegaContainer.value) return;
@@ -243,8 +246,9 @@ watch(
 				actions: props.areEmbedActionsVisible,
 				expandable: !!props.expandable
 			});
-			emit('done-render');
+			console.log('render interactive chart');
 		}
+		emit('done-render');
 	},
 	{ immediate: true }
 );
