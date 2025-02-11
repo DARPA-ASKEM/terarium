@@ -24,10 +24,9 @@ async function getDocumentAsset(documentId: string, projectId?: string): Promise
 /**
  * This is a helper function which uploads an arbitrary document to TDS and creates a new document asset from it.
  * @param file the file to upload
- * @param userName owner of this project
- * @param projectId the project ID
- * @param description? description of the file. Optional. If not given description will be just the file name
- * @param progress? reference to display in ui
+ * @param userId
+ * @param description
+ * @param progress
  */
 async function uploadDocumentAssetToProject(
 	file: File,
@@ -90,7 +89,7 @@ async function createNewDocumentFromGithubFile(
 
 /**
  * Creates a new document asset in TDS and returns the new document asset object id
- * @param document the document asset to create
+ * @param documentAsset
  */
 async function createNewDocumentAsset(documentAsset: DocumentAsset): Promise<DocumentAsset | null> {
 	const response = await API.post('/document-asset', documentAsset);
@@ -102,6 +101,7 @@ async function createNewDocumentAsset(documentAsset: DocumentAsset): Promise<Doc
  * Adds a file to a document in TDS
  * @param documentId the documentId to add the file to
  * @param file the file to upload
+ * @param progress
  */
 async function addFileToDocumentAsset(documentId: string, file: File, progress?: Ref<number>): Promise<boolean> {
 	const formData = new FormData();
@@ -149,16 +149,6 @@ async function getDocumentFileAsText(documentId: string, fileName: string): Prom
 	return response.data;
 }
 
-async function getEquationFromImageUrl(documentId: string, filename: string): Promise<string | null> {
-	const response = await API.get(`/document-asset/${documentId}/image-to-equation?filename=${filename}`, {});
-
-	if (!response) {
-		return null;
-	}
-
-	return response.data;
-}
-
 async function getBulkDocumentAssets(docIDs: string[]) {
 	const result: DocumentAsset[] = [];
 	const promiseList = [] as Promise<DocumentAsset | null>[];
@@ -181,6 +171,5 @@ export {
 	getBulkDocumentAssets,
 	getDocumentAsset,
 	getDocumentFileAsText,
-	getEquationFromImageUrl,
 	uploadDocumentAssetToProject
 };
