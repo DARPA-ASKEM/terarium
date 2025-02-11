@@ -6,13 +6,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.IOException;
 import java.nio.file.Files;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.UUID;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.http.HttpEntity;
-import org.apache.http.entity.ByteArrayEntity;
-import org.apache.http.entity.ContentType;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
@@ -25,8 +20,6 @@ import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import software.uncharted.terarium.hmiserver.TerariumApplicationTests;
 import software.uncharted.terarium.hmiserver.configuration.MockUser;
-import software.uncharted.terarium.hmiserver.models.dataservice.code.Code;
-import software.uncharted.terarium.hmiserver.models.dataservice.code.CodeFile;
 import software.uncharted.terarium.hmiserver.models.dataservice.dataset.Dataset;
 import software.uncharted.terarium.hmiserver.models.dataservice.document.DocumentAsset;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.Model;
@@ -327,118 +320,5 @@ public class KnowledgeControllerTests extends TerariumApplicationTests {
 		dataset = datasetService.getAsset(dataset.getId(), ASSUME_WRITE_PERMISSION).orElseThrow();
 
 		Assertions.assertNotNull(dataset.getMetadata().get("dataCard"));
-	}
-
-	// @Test
-	@WithUserDetails(MockUser.URSULA)
-	public void codeToAmrTest() throws Exception {
-		final ClassPathResource resource = new ClassPathResource("knowledge/code.py");
-		final byte[] content = Files.readAllBytes(resource.getFile().toPath());
-
-		final String filename = "code.py";
-
-		final CodeFile codeFile = new CodeFile();
-		codeFile.setFileNameAndProgrammingLanguage(filename);
-
-		final Map<String, CodeFile> files = new HashMap<>();
-		files.put(filename, codeFile);
-
-		final Code code = codeService.createAsset(
-			(Code) new Code().setFiles(files).setName("test-code-name").setDescription("my description"),
-			project.getId(),
-			ASSUME_WRITE_PERMISSION
-		);
-
-		final HttpEntity fileEntity = new ByteArrayEntity(content, ContentType.TEXT_PLAIN);
-		codeService.uploadFile(code.getId(), filename, fileEntity);
-
-		final MvcResult res = mockMvc
-			.perform(
-				MockMvcRequestBuilders.post("/knowledge/code-to-amr")
-					.contentType(MediaType.APPLICATION_JSON)
-					.param("code-id", code.getId().toString())
-					.with(csrf())
-			)
-			.andExpect(status().isOk())
-			.andReturn();
-
-		final Model model = objectMapper.readValue(res.getResponse().getContentAsString(), Model.class);
-		Assertions.assertNotNull(model);
-	}
-
-	// @Test
-	@WithUserDetails(MockUser.URSULA)
-	public void codeToAmrTestLLM() throws Exception {
-		final ClassPathResource resource = new ClassPathResource("knowledge/code.py");
-		final byte[] content = Files.readAllBytes(resource.getFile().toPath());
-
-		final String filename = "code.py";
-
-		final CodeFile codeFile = new CodeFile();
-		codeFile.setFileNameAndProgrammingLanguage(filename);
-
-		final Map<String, CodeFile> files = new HashMap<>();
-		files.put(filename, codeFile);
-
-		final Code code = codeService.createAsset(
-			(Code) new Code().setFiles(files).setName("test-code-name").setDescription("my description"),
-			project.getId(),
-			ASSUME_WRITE_PERMISSION
-		);
-
-		final HttpEntity fileEntity = new ByteArrayEntity(content, ContentType.TEXT_PLAIN);
-		codeService.uploadFile(code.getId(), filename, fileEntity);
-
-		final MvcResult res = mockMvc
-			.perform(
-				MockMvcRequestBuilders.post("/knowledge/code-to-amr")
-					.contentType(MediaType.APPLICATION_JSON)
-					.param("code-id", code.getId().toString())
-					.param("llm-assisted", "true")
-					.with(csrf())
-			)
-			.andExpect(status().isOk())
-			.andReturn();
-
-		final Model model = objectMapper.readValue(res.getResponse().getContentAsString(), Model.class);
-		Assertions.assertNotNull(model);
-	}
-
-	// @Test
-	@WithUserDetails(MockUser.URSULA)
-	public void codeToAmrTestDynamicsOnly() throws Exception {
-		final ClassPathResource resource = new ClassPathResource("knowledge/code.py");
-		final byte[] content = Files.readAllBytes(resource.getFile().toPath());
-
-		final String filename = "code.py";
-
-		final CodeFile codeFile = new CodeFile();
-		codeFile.setFileNameAndProgrammingLanguage(filename);
-
-		final Map<String, CodeFile> files = new HashMap<>();
-		files.put(filename, codeFile);
-
-		final Code code = codeService.createAsset(
-			(Code) new Code().setFiles(files).setName("test-code-name").setDescription("my description"),
-			project.getId(),
-			ASSUME_WRITE_PERMISSION
-		);
-
-		final HttpEntity fileEntity = new ByteArrayEntity(content, ContentType.TEXT_PLAIN);
-		codeService.uploadFile(code.getId(), filename, fileEntity);
-
-		final MvcResult res = mockMvc
-			.perform(
-				MockMvcRequestBuilders.post("/knowledge/code-to-amr")
-					.contentType(MediaType.APPLICATION_JSON)
-					.param("code-id", code.getId().toString())
-					.param("dynamics-only", "true")
-					.with(csrf())
-			)
-			.andExpect(status().isOk())
-			.andReturn();
-
-		final Model model = objectMapper.readValue(res.getResponse().getContentAsString(), Model.class);
-		Assertions.assertNotNull(model);
 	}
 }
