@@ -135,7 +135,7 @@ public class KnowledgeController {
 	}
 
 	/**
-	 * Send the equations to the skema unified service to get the AMR
+	 * Equations LaTeX to AMR
 	 *
 	 * @return UUID Model ID, or null if the model was not created or updated
 	 */
