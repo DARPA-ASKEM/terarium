@@ -44,40 +44,69 @@ def main():
             time = "t"
         t = sympy.Symbol(time)
 
-        # Construct Sympy equations
-        odesys = []
+        # Add "(t)" to all the state variables as time-dependent functions
         for var, terms in odeterms.items():
+            for i, term in enumerate(terms):
+                if hasattr(term, 'atoms'):
+                    for atom in term.atoms(sympy.Symbol):
+                        if str(atom) in odeterms.keys():
+                            term = term.subs(atom, sympy.Function(str(atom))(t))
+                    terms[i] = term
+
+ 
+        # Construct equations
+        num_terms = 5 # Max number of terms per line in LaTeX align
+        odesys = []
+        exprs = ""
+        for i, (var, terms) in enumerate(odeterms.items()):
+
             lhs = sympy.diff(sympy.Function(var)(t), t)
+            rhs = sum(terms)
+            exprs += sympy.latex(lhs) + " ={}& "
 
-            # Write (time-dependent) symbols with "(t)"
-            rhs = terms
-            if hasattr(terms, 'atoms'):
-                for atom in terms.atoms(sympy.Symbol):
-                    if str(atom) in odeterms.keys():
-                        rhs = rhs.subs(atom, sympy.Function(str(atom))(t))
+            # Few equation terms = no wrapping needed
+            if len(terms) < num_terms:
+                exprs += sympy.latex(rhs)
 
-            odesys.append(sympy.latex(sympy.Eq(lhs, rhs)))
+            # otherwise, wrap around
+            else:
+                rhs = [sympy.latex(sum(terms[j:(j + num_terms)])) for j in range(0, len(terms), num_terms)]
+                rhs = [line if (j == 0) | (line[0] == '-') else "+ " + line for j, line in enumerate(rhs)] # Add '+ ' to all lines past the first if not start with '- '
+                exprs += " \\\\ \n    &".join(rhs)
 
-        # Observables
+            if i < (len(odeterms) - 1):
+                exprs += " \\\\ \n"
+            
+            odesys = [exprs]
+
+
+        # Repeat for observables if present
         if len(model.observables) > 0:
 
-            # Write (time-dependent) symbols with "(t)"
-            obs_eqs = []
-            for obs in model.observables.values():
-                lhs = sympy.Function(obs.name)(t)
-                terms = obs.expression.args[0]
-                rhs = terms
-                if hasattr(terms, 'atoms'):
-                    for atom in terms.atoms(sympy.Symbol):
-                        if str(atom) in odeterms.keys():
-                            rhs = rhs.subs(atom, sympy.Function(str(atom))(t))
-                obs_eqs.append(sympy.latex(sympy.Eq(lhs, rhs)))
+            # Sort observables alphabetically
+            observables = {obs: model.observables[obs].expression.args[0] for obs in sorted(model.observables.keys())}
 
-            # Add observables
-            odesys += obs_eqs
+            # Add "(t)" for all the state variables as time-dependent symbols
+            for obs, expr in observables.items():
+                if hasattr(expr, 'atoms'):
+                    for atom in expr.atoms(sympy.Symbol):
+                        if str(atom) in odeterms.keys():
+                            expr = expr.subs(atom, sympy.Function(str(atom))(t))
+                    observables[obs] = expr
+
+            for i, (obs, expr) in enumerate(observables.items()):
+                lhs = sympy.Function(obs)(t)
+                rhs = expr
+                exprs = "     " + sympy.latex(lhs) + " ={}& " + sympy.latex(rhs)
+                if i == 0:
+                    exprs = " \\\\ \n" + exprs
+                if i < (len(observables) - 1):
+                    exprs += " \\\\ \n"
+
+                odesys[0] += exprs
 
         # Reformat:
-        odesys = "\\begin{align} \n    " + " \\\\ \n    ".join([eq for eq in odesys]) + "\n\\end{align}"
+        odesys = "\\begin{align*} \n    " + odesys[0] + "\n\\end{align*}"
         # =========================================
 
         taskrunner.write_output_dict_with_timeout({"response": odesys})
