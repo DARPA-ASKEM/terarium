@@ -1,5 +1,5 @@
-import { cloneDeep, isEqual } from 'lodash';
-import { ref, computed, watch } from 'vue';
+import { cloneDeep, isEqual, sortBy } from 'lodash';
+import { ref, computed, watch, ComputedRef } from 'vue';
 import {
 	ChartSetting,
 	ChartSettingComparison,
@@ -16,10 +16,33 @@ import {
 	updateSensitivityChartSettingOption,
 	CHART_SETTING_WITH_QUANTILES_OPTIONS,
 	createNewChartSetting,
-	isChartSettingComparisonVariable,
 	getQauntileChartSettingOptions
 } from '@/services/chart-settings';
 import { WorkflowNode } from '@/types/workflow';
+
+/**
+ * Factory function to create a computed property that filters chart settings by type.
+ * Returned computed property will be updated only when the value of the filtered settings changes.
+ * @param type chart setting type to filter by
+ * @returns computed property with filtered settings
+ */
+const createComputedFilteredSettings = <T = ChartSetting>(
+	chartSettings: ComputedRef<ChartSetting[]>,
+	type: ChartSettingType
+) => {
+	const settingsFiltered = computed(() => chartSettings.value.filter((setting) => setting.type === type) as T[]);
+	const settings = ref<T[]>([]);
+	watch(
+		settingsFiltered,
+		(newSettings, oldSettings) => {
+			// Only update the settings if the settings of the given type have changed
+			if (isEqual(sortBy(newSettings, ['id']), sortBy(oldSettings, ['id']))) return;
+			settings.value = newSettings;
+		},
+		{ immediate: true }
+	);
+	return computed(() => settings.value);
+};
 
 /**
  * Composable to manage chart settings for a given workflow node.
@@ -36,50 +59,35 @@ export function useChartSettings(
 	const chartSettings = computed(() => props.node.state.chartSettings ?? []);
 	const activeChartSettings = ref<ChartSetting | null>(null);
 
-	// const chartSettingsByType = ref<Partial<Record<ChartSettingType, ChartSetting[]>>>({});
-	// watch(chartSettings, (settings) => {
-	// 	// Find the types of chart settings that have changed
-	// 	const typesDirty: Set<ChartSettingType> = new Set();
-	// 	settings.forEach((setting) => {
-	// 		const previousSetting = settings.find((s) => s.id === setting.id);
-	// 		if (!_.isEqual(previousSetting, setting)) typesDirty.add(setting.type);
-	// 	});
-	// 	// Only update the chart settings of the types that have changed
-	// 	typesDirty.forEach((type) => {
-	// 		chartSettingsByType.value[type] = settings.filter((setting) => setting.type === type);
-	// 	});
-	// });
-
-	// const chartSettings = ref<ChartSetting[]>([]);
-	// watch(() => props.node.state.chartSettings, (settings, newSettings) => {
-	// 	if (isEqual(settings, newSettings)) return;
-	// 	console.log(JSON.stringify(settings, null, 2));
-	// 	console.log(JSON.stringify(newSettings, null, 2));
-	// 	chartSettings.value = settings ?? [];
-	// }, { immediate: true });
-
-	// Computed properties to filter chart settings by type
-	// const selectedParameterSettings = computed(() => chartSettingsByType.value[ChartSettingType.DISTRIBUTION_COMPARISON] ?? []);
-	const selectedParameterSettings = computed(() =>
-		chartSettings.value.filter((setting) => setting.type === ChartSettingType.DISTRIBUTION_COMPARISON)
+	// Computed properties for chart settings filtered by type
+	const selectedParameterSettings = createComputedFilteredSettings<ChartSetting>(
+		chartSettings,
+		ChartSettingType.DISTRIBUTION_COMPARISON
 	);
-	const selectedInterventionSettings = computed(() =>
-		chartSettings.value.filter((setting) => setting.type === ChartSettingType.INTERVENTION)
+	const selectedInterventionSettings = createComputedFilteredSettings<ChartSetting>(
+		chartSettings,
+		ChartSettingType.INTERVENTION
 	);
-	const selectedVariableSettings = computed(() =>
-		chartSettings.value.filter((setting) => setting.type === ChartSettingType.VARIABLE)
+	const selectedVariableSettings = createComputedFilteredSettings<ChartSetting>(
+		chartSettings,
+		ChartSettingType.VARIABLE
 	);
-	const selectedEnsembleVariableSettings = computed(
-		() =>
-			chartSettings.value.filter(
-				(setting) => setting.type === ChartSettingType.VARIABLE_ENSEMBLE
-			) as ChartSettingEnsembleVariable[]
+	const selectedEnsembleVariableSettings = createComputedFilteredSettings<ChartSettingEnsembleVariable>(
+		chartSettings,
+		ChartSettingType.VARIABLE_ENSEMBLE
 	);
-	const selectedErrorVariableSettings = computed(() =>
-		chartSettings.value.filter((setting) => setting.type === ChartSettingType.ERROR_DISTRIBUTION)
+	const selectedErrorVariableSettings = createComputedFilteredSettings<ChartSetting>(
+		chartSettings,
+		ChartSettingType.ERROR_DISTRIBUTION
 	);
-
-	const selectedComparisonChartSettings = computed(() => chartSettings.value.filter(isChartSettingComparisonVariable));
+	const selectedComparisonChartSettings = createComputedFilteredSettings<ChartSettingComparison>(
+		chartSettings,
+		ChartSettingType.VARIABLE_COMPARISON
+	);
+	const selectedSensitivityChartSettings = createComputedFilteredSettings<ChartSettingSensitivity>(
+		chartSettings,
+		ChartSettingType.SENSITIVITY
+	);
 
 	const comparisonChartsSettingsSelection = computed<{ [settingId: string]: string[] }>(() =>
 		selectedComparisonChartSettings.value.reduce((acc, setting) => {
@@ -88,18 +96,11 @@ export function useChartSettings(
 		}, {})
 	);
 
-	const selectedSensitivityChartSettings = computed(
-		() =>
-			chartSettings.value.filter(
-				(setting) => setting.type === ChartSettingType.SENSITIVITY
-			) as ChartSettingSensitivity[]
-	);
-
 	watch(chartSettings, (settings) => {
 		// Update active chart settings
 		if (activeChartSettings.value) {
 			const updated = settings.find((setting) => setting.id === activeChartSettings.value?.id);
-			activeChartSettings.value = updated ?? null;
+			setActiveChartSettings(updated ?? null);
 		}
 	});
 
