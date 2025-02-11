@@ -1472,7 +1472,8 @@ export function createForecastChartAnnotation(axis: 'x' | 'y', datum: number, la
 					dx: 16,
 					dy: -16,
 					angle: isVertical ? 90 : 0,
-					baseline: 'top'
+					baseline: 'top',
+					fontSize: 12
 				},
 				encoding: {
 					text: { value: label }
