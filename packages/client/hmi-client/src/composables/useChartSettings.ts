@@ -2,7 +2,6 @@ import { cloneDeep, isEqual, sortBy } from 'lodash';
 import { ref, computed, watch, ComputedRef } from 'vue';
 import {
 	ChartSetting,
-	ChartSettingBase,
 	ChartSettingComparison,
 	ChartSettingEnsembleVariable,
 	ChartSettingSensitivity,
