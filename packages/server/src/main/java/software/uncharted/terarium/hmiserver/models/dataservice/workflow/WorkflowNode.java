@@ -60,6 +60,40 @@ public class WorkflowNode extends SupportAdditionalProperties implements Seriali
 		final WorkflowNode clone = (WorkflowNode) super.clone();
 		clone.setId(UUID.randomUUID());
 		clone.setWorkflowId(workflowId);
+
+		clone.setInputs(new ArrayList<>());
+		if (inputs != null) {
+			for (final InputPort port : inputs) {
+				clone.getInputs().add(port.clone());
+			}
+		}
+		clone.setOutputs(new ArrayList<>());
+		if (outputs != null) {
+			for (final OutputPort port : outputs) {
+				clone.getOutputs().add(port.clone());
+			}
+		}
+		return clone;
+	}
+
+	// Used for branching
+	@Override
+	public WorkflowNode clone() {
+		final WorkflowNode clone = (WorkflowNode) super.clone();
+		clone.setId(id);
+		clone.setWorkflowId(workflowId);
+		clone.setInputs(new ArrayList<>());
+		if (inputs != null) {
+			for (final InputPort port : inputs) {
+				clone.getInputs().add(port.clone());
+			}
+		}
+		clone.setOutputs(new ArrayList<>());
+		if (outputs != null) {
+			for (final OutputPort port : outputs) {
+				clone.getOutputs().add(port.clone());
+			}
+		}
 		return clone;
 	}
 

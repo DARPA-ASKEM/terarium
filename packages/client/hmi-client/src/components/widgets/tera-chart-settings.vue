@@ -58,6 +58,7 @@
 						chartType: sensitivityOptions.chartType
 					})
 				"
+				filter
 			>
 				<template v-slot:value>
 					<template v-for="(variable, index) in sensitivityOptions.selectedInputOptions" :key="index">
