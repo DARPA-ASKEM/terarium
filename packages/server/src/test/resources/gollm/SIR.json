@@ -407,7 +407,7 @@
               "name": "\u03b1",
               "extraction_source": null,
               "provenance": {
-                "method": "MIT extractor V1.0 - text, dataset, formula annotation (chunwei@mit.edu)",
+                "method": "extractor V1.0 - text, dataset, formula annotation",
                 "timestamp": "2023-06-15T22:59:13.177022"
               }
             }
@@ -452,7 +452,7 @@
               "grounding": null,
               "extraction_source": null,
               "provenance": {
-                "method": "MIT extractor V1.0 - text, dataset, formula annotation (chunwei@mit.edu)",
+                "method": "extractor V1.0 - text, dataset, formula annotation",
                 "timestamp": "2023-06-15T22:59:13.177022"
               }
             }
@@ -465,7 +465,7 @@
               "source": [],
               "score": 1.0,
               "provenance": {
-                "method": "MIT extractor V1.0 - text, dataset, formula annotation (chunwei@mit.edu)",
+                "method": "extractor V1.0 - text, dataset, formula annotation",
                 "timestamp": "2023-06-15T22:59:13.177022"
               }
             },
@@ -475,7 +475,7 @@
               "source": [],
               "score": 1.0,
               "provenance": {
-                "method": "MIT extractor V1.0 - text, dataset, formula annotation (chunwei@mit.edu)",
+                "method": "extractor V1.0 - text, dataset, formula annotation",
                 "timestamp": "2023-06-15T22:59:13.177022"
               }
             }
@@ -515,7 +515,7 @@
               "name": "asym_frac",
               "extraction_source": null,
               "provenance": {
-                "method": "MIT extractor V1.0 - text, dataset, formula annotation (chunwei@mit.edu)",
+                "method": "extractor V1.0 - text, dataset, formula annotation",
                 "timestamp": "2023-06-15T22:59:13.177022"
               }
             }
@@ -560,7 +560,7 @@
               "grounding": null,
               "extraction_source": null,
               "provenance": {
-                "method": "MIT extractor V1.0 - text, dataset, formula annotation (chunwei@mit.edu)",
+                "method": "extractor V1.0 - text, dataset, formula annotation",
                 "timestamp": "2023-06-15T22:59:13.177022"
               }
             }
