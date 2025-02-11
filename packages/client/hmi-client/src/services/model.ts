@@ -29,7 +29,7 @@ export async function createModelAndModelConfig(file: File, progress?: Ref<numbe
 	const formData = new FormData();
 	formData.append('file', file);
 
-	const response = await API.post(`/model-configurations/import`, formData, {
+	const response = await API.post(`/model-configurations/import-archive`, formData, {
 		headers: {
 			'Content-Type': 'multipart/form-data'
 		},
