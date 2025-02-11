@@ -212,7 +212,7 @@ watch(
 		const isEqual = _.isEqual(newSpec, oldSpec);
 		const isAlreadyRendered =
 			interactive.value === false ? imageDataURL.value !== '' : vegaVisualization.value !== undefined;
-		console.log('VegaChart: check spec diff');
+		console.log(`VegaChart: check spec diff. (interactive: ${interactive.value})`);
 		if (isEqual && isAlreadyRendered) return;
 
 		const spec = deepToRaw(props.visualizationSpec);

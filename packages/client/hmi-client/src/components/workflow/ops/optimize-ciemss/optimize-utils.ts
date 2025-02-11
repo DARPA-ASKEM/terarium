@@ -12,16 +12,14 @@ export function usePreparedChartInputs(
 	runResults: Ref<{ [runId: string]: DataArray }>,
 	runResultsSummary: Ref<{ [runId: string]: DataArray }>
 ) {
-	const forecastRunId = computed(() => ({
-		pre: props.node.state.preForecastRunId,
-		post: props.node.state.postForecastRunId
-	}));
+	const preForecastRunId = computed(() => props.node.state.preForecastRunId);
+	const postForecastRunId = computed(() => props.node.state.postForecastRunId);
 	return computed(() => {
-		if (!forecastRunId.value.post || !forecastRunId.value.pre) return null;
-		const preResult = runResults.value[forecastRunId.value.pre];
-		const preResultSummary = runResultsSummary.value[forecastRunId.value.pre];
-		const postResult = runResults.value[forecastRunId.value.post];
-		const postResultSummary = runResultsSummary.value[forecastRunId.value.post];
+		if (!postForecastRunId.value || !preForecastRunId.value) return null;
+		const preResult = runResults.value[preForecastRunId.value];
+		const preResultSummary = runResultsSummary.value[preForecastRunId.value];
+		const postResult = runResults.value[postForecastRunId.value];
+		const postResultSummary = runResultsSummary.value[postForecastRunId.value];
 
 		if (!postResult || !postResultSummary || !preResultSummary || !preResult) return null;
 		const pyciemssMap = parsePyCiemssMap(postResult[0]);
