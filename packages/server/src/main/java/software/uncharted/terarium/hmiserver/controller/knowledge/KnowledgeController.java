@@ -4,7 +4,6 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import feign.FeignException;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -212,68 +211,38 @@ public class KnowledgeController {
 			}
 		}
 
-		// Get an AMR from Skema Unified Service or MIRA
 		final Model responseAMR;
-		String extractionService = "mira";
-		if (req.get("extractionService") != null) {
-			extractionService = req.get("extractionService").asText();
-		}
+		final TaskRequest latexToSympyRequest;
+		final TaskResponse latexToSympyResponse;
+		final TaskRequest sympyToAMRRequest;
+		final TaskResponse sympyToAMRResponse;
 
-		if (extractionService.equals("mira")) {
-			final TaskRequest latexToSympyRequest;
-			final TaskResponse latexToSympyResponse;
-			final TaskRequest sympyToAMRRequest;
-			final TaskResponse sympyToAMRResponse;
+		try {
+			// 1. LaTeX to sympy code
+			latexToSympyRequest = createLatexToSympyTask(equationsReq);
+			latexToSympyResponse = taskService.runTaskSync(latexToSympyRequest);
 
-			try {
-				// 1. LaTeX to sympy code
-				latexToSympyRequest = createLatexToSympyTask(equationsReq);
-				latexToSympyResponse = taskService.runTaskSync(latexToSympyRequest);
+			// 2. hand off
+			final String code = extractCodeFromLatexToSympy(latexToSympyResponse);
 
-				// 2. hand off
-				final String code = extractCodeFromLatexToSympy(latexToSympyResponse);
+			// 3. sympy code string to amr json
+			sympyToAMRRequest = createSympyToAMRTask(code);
+			sympyToAMRResponse = taskService.runTaskSync(sympyToAMRRequest);
 
-				// 3. sympy code string to amr json
-				sympyToAMRRequest = createSympyToAMRTask(code);
-				sympyToAMRResponse = taskService.runTaskSync(sympyToAMRRequest);
-
-				final JsonNode taskResponseJSON = mapper.readValue(sympyToAMRResponse.getOutput(), JsonNode.class);
-				final ObjectNode amrNode = taskResponseJSON.get("response").get("amr").deepCopy();
-				responseAMR = mapper.convertValue(amrNode, Model.class);
-			} catch (final Exception e) {
-				log.error(messages.get("task.mira.internal-error"), e);
-				throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("task.mira.internal-error"));
-			}
-		} else {
-			try {
-				// Create a request for SKEMA with the cleaned-up equations.
-				final JsonNode skemaRequest = mapper.createObjectNode().put("model", "petrinet").set("equations", equationsReq);
-				responseAMR = skemaUnifiedProxy.consolidatedEquationsToAMR(skemaRequest).getBody();
-				if (responseAMR == null) {
-					log.warn("Skema Unified Service did not return a valid AMR based on the provided equations");
-					throw new ResponseStatusException(HttpStatus.UNPROCESSABLE_ENTITY, messages.get("skema.bad-equations"));
-				}
-			} catch (final FeignException e) {
-				log.error(
-					"An exception occurred while Skema Unified Service was trying to produce an AMR based on the provided equations",
-					e
-				);
-				throw handleSkemaFeignException(e);
-			} catch (final Exception e) {
-				log.error(
-					"An unhandled error occurred while Skema Unified Service was trying to produce an AMR based on the provided equations",
-					e
-				);
-				throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("skema.internal-error"));
-			}
+			final JsonNode taskResponseJSON = mapper.readValue(sympyToAMRResponse.getOutput(), JsonNode.class);
+			final ObjectNode amrNode = taskResponseJSON.get("response").get("amr").deepCopy();
+			responseAMR = mapper.convertValue(amrNode, Model.class);
+		} catch (final Exception e) {
+			log.error(messages.get("task.mira.internal-error"), e);
+			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("task.mira.internal-error"));
 		}
 
 		// We only handle Petri Net models
 		if (!responseAMR.isPetrinet()) {
-			throw new ResponseStatusException(HttpStatus.UNPROCESSABLE_ENTITY, messages.get("skema.bad-equations.petrinet"));
+			throw new ResponseStatusException(HttpStatus.UNPROCESSABLE_ENTITY, messages.get("bad-equations.petrinet"));
 		}
 
-		notificationInterface.sendMessage("AMR extracted via SKEMA.");
+		notificationInterface.sendMessage("AMR extracted via MIRA.");
 
 		// If no model id is provided, create a new model asset
 		Model model;
@@ -472,28 +441,6 @@ public class KnowledgeController {
 			log.error("Unexpected error", e);
 		}
 		throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("generic.io-error.read"));
-	}
-
-	private ResponseStatusException handleSkemaFeignException(final FeignException e) {
-		final HttpStatus statusCode = HttpStatus.resolve(e.status());
-		if (statusCode != null && statusCode.is4xxClientError()) {
-			log.warn("Skema Unified Service did not return a valid AMR based on the provided resources");
-			return new ResponseStatusException(statusCode, messages.get("skema.bad-equations"));
-		} else if (statusCode == HttpStatus.SERVICE_UNAVAILABLE) {
-			log.warn("Skema Unified Service is currently unavailable");
-			return new ResponseStatusException(statusCode, messages.get("skema.service-unavailable"));
-		} else if (statusCode != null && statusCode.is5xxServerError()) {
-			log.error(
-				"An error occurred while Skema Unified Service was trying to produce an AMR based on the provided resources"
-			);
-			return new ResponseStatusException(statusCode, messages.get("skema.internal-error"));
-		}
-
-		final HttpStatus httpStatus = (statusCode == null) ? HttpStatus.INTERNAL_SERVER_ERROR : statusCode;
-		log.error(
-			"An unknown error occurred while Skema Unified Service was trying to produce an AMR based on the provided resources"
-		);
-		return new ResponseStatusException(httpStatus, messages.get("generic.unknown"));
 	}
 
 	private TaskRequest cleanupEquationsTaskRequest(UUID projectId, List<String> equations) {
