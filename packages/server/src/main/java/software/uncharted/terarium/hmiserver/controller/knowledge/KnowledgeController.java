@@ -627,39 +627,6 @@ public class KnowledgeController {
 		return postCodeToAMR(createdCode.getId(), projectId, "temp model", "temp model description", false, false);
 	}
 
-	@PostMapping("/align-model")
-	@Secured(Roles.USER)
-	@ApiResponses(
-		value = {
-			@ApiResponse(responseCode = "204", description = "Model as been align with document", content = @Content),
-			@ApiResponse(
-				responseCode = "500",
-				description = "Error aligning model with variable extracted from document",
-				content = @Content
-			)
-		}
-	)
-	public ResponseEntity<Model> alignModel(
-		@RequestParam("document-id") final UUID documentId,
-		@RequestParam("model-id") final UUID modelId,
-		@RequestParam(name = "project-id", required = false) final UUID projectId
-	) {
-		final Schema.Permission permission = projectService.checkPermissionCanWrite(
-			currentUserService.get().getId(),
-			projectId
-		);
-
-		try {
-			return ResponseEntity.ok(extractionService.alignAMR(projectId, documentId, modelId, permission).get());
-		} catch (final InterruptedException | ExecutionException e) {
-			log.error("Error aligning model with document", e);
-			throw new ResponseStatusException(
-				org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
-				messages.get("skema.error.align-model")
-			);
-		}
-	}
-
 	/**
 	 * Document Extractions
 	 *

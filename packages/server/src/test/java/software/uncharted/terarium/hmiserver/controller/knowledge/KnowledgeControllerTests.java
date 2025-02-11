@@ -6,7 +6,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.IOException;
 import java.nio.file.Files;
-import java.util.ArrayList;
 import java.util.Base64;
 import java.util.HashMap;
 import java.util.Map;
@@ -332,42 +331,6 @@ public class KnowledgeControllerTests extends TerariumApplicationTests {
 					.with(csrf())
 			)
 			.andExpect(status().isAccepted());
-	}
-
-	// @Test
-	@WithUserDetails(MockUser.URSULA)
-	public void linkAmrTests() throws Exception {
-		DocumentAsset documentAsset = (DocumentAsset) new DocumentAsset()
-			.setText("x = 0. y = 1. I = Infected population.")
-			.setName("test-document-name")
-			.setDescription("my description");
-
-		documentAsset = documentAssetService.createAsset(documentAsset, project.getId(), ASSUME_WRITE_PERMISSION);
-
-		documentAsset = extractionService
-			.extractVariables(project.getId(), documentAsset.getId(), new ArrayList<>(), ASSUME_WRITE_PERMISSION)
-			.get();
-
-		final ClassPathResource resource = new ClassPathResource("knowledge/sir.json");
-		final byte[] content = Files.readAllBytes(resource.getFile().toPath());
-		Model model = objectMapper.readValue(content, Model.class);
-
-		model = modelService.createAsset(model, project.getId(), ASSUME_WRITE_PERMISSION);
-
-		final MvcResult res = mockMvc
-			.perform(
-				MockMvcRequestBuilders.post("/knowledge/align-model")
-					.contentType(MediaType.APPLICATION_JSON)
-					.param("document-id", documentAsset.getId().toString())
-					.param("model-id", model.getId().toString())
-					.with(csrf())
-			)
-			.andExpect(status().isOk())
-			.andReturn();
-
-		model = objectMapper.readValue(res.getResponse().getContentAsString(), Model.class);
-
-		Assertions.assertNotNull(model);
 	}
 
 	// @Test
