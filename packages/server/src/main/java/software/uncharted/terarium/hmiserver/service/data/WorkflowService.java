@@ -20,6 +20,7 @@ import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import software.uncharted.terarium.hmiserver.configuration.Config;
+import software.uncharted.terarium.hmiserver.models.dataservice.notebooksession.NotebookSession;
 import software.uncharted.terarium.hmiserver.models.dataservice.workflow.InputPort;
 import software.uncharted.terarium.hmiserver.models.dataservice.workflow.OutputPort;
 import software.uncharted.terarium.hmiserver.models.dataservice.workflow.Workflow;
@@ -28,6 +29,7 @@ import software.uncharted.terarium.hmiserver.models.dataservice.workflow.Workflo
 import software.uncharted.terarium.hmiserver.models.dataservice.workflow.WorkflowNode;
 import software.uncharted.terarium.hmiserver.models.dataservice.workflow.WorkflowPositions;
 import software.uncharted.terarium.hmiserver.repository.data.WorkflowRepository;
+import software.uncharted.terarium.hmiserver.service.data.NotebookSessionService;
 import software.uncharted.terarium.hmiserver.service.s3.S3ClientService;
 import software.uncharted.terarium.hmiserver.utils.rebac.Schema;
 
@@ -35,15 +37,19 @@ import software.uncharted.terarium.hmiserver.utils.rebac.Schema;
 @Slf4j
 public class WorkflowService extends TerariumAssetService<Workflow, WorkflowRepository> {
 
+	private final NotebookSessionService notebookSessionService;
+
 	public WorkflowService(
 		final ObjectMapper objectMapper,
 		final Config config,
 		final ProjectService projectService,
 		final ProjectAssetService projectAssetService,
 		final S3ClientService s3ClientService,
-		final WorkflowRepository repository
+		final WorkflowRepository repository,
+		final NotebookSessionService notebookSessionService
 	) {
 		super(objectMapper, config, projectService, projectAssetService, repository, s3ClientService, Workflow.class);
+		this.notebookSessionService = notebookSessionService;
 	}
 
 	@Observed(name = "function_profile")
@@ -838,6 +844,189 @@ public class WorkflowService extends TerariumAssetService<Workflow, WorkflowRepo
 			if (posList == null) continue;
 			edge.getPoints().set(0, this.objectMapper.valueToTree(posList.get(0)));
 			edge.getPoints().set(1, this.objectMapper.valueToTree(posList.get(1)));
+		}
+	}
+
+	/**
+	 * Including the node given by nodeId, copy/branch everything downstream,
+	 *
+	 * For example:
+	 *    P - B - C - D
+	 *    Q /
+	 *
+	 * if we branch at B, we will get
+	 *
+	 *    P - B  - C  - D
+	 *      X
+	 *    Q _ B' - C' - D'
+	 *
+	 * with { B', C', D' } new node entities
+	 * */
+	public void branchWorkflow(final Workflow workflow, final UUID nodeId, final UUID projectId) throws Exception {
+		// 1. Find anchor point
+		final UUID workflowId = workflow.getId();
+		final WorkflowNode anchor = getOperator(workflow, nodeId);
+		if (anchor == null) return;
+
+		// 2. Collect the subgraph that we want to copy
+		final List<WorkflowNode> copyNodes = new ArrayList<WorkflowNode>();
+		final List<WorkflowEdge> copyEdges = new ArrayList<WorkflowEdge>();
+		final List<UUID> stack = new ArrayList<UUID>();
+		stack.add(anchor.getId());
+
+		final Set<UUID> processed = new HashSet<UUID>();
+
+		// basically depth-first-search
+		while (stack.size() > 0) {
+			final UUID id = stack.remove(0);
+			final WorkflowNode node = getOperator(workflow, id);
+
+			if (node != null) {
+				WorkflowNode nodeClone = node.clone();
+				copyNodes.add(nodeClone);
+			} else {
+				continue;
+			}
+
+			// Grab downstream edges
+			final List<WorkflowEdge> edges = workflow
+				.getEdges()
+				.stream()
+				.filter(e -> e.getIsDeleted() == false && e.getSource().equals(id))
+				.collect(Collectors.toList());
+
+			for (final WorkflowEdge edge : edges) {
+				final UUID newId = edge.getTarget();
+				if (processed.contains(newId) == false) {
+					stack.add(newId);
+				}
+				WorkflowEdge edgeClone = edge.clone();
+				copyEdges.add(edgeClone);
+			}
+		}
+
+		// 3. Collect the upstream edges
+		final List<UUID> targetIds = copyNodes.stream().map(node -> node.getId()).collect(Collectors.toList());
+
+		final List<WorkflowEdge> upstreamEdges = workflow
+			.getEdges()
+			.stream()
+			.filter(edge -> edge.getIsDeleted() == false && targetIds.contains(edge.getTarget()))
+			.collect(Collectors.toList());
+
+		final List<WorkflowEdge> anchorUpstreamEdges = workflow
+			.getEdges()
+			.stream()
+			.filter(edge -> edge.getIsDeleted() == false && edge.getTarget().equals(anchor.getId()))
+			.collect(Collectors.toList());
+
+		for (final WorkflowEdge edge : upstreamEdges) {
+			final WorkflowEdge foundEdge = copyEdges
+				.stream()
+				.filter(copyEdge -> copyEdge.getId().equals(edge.getId()))
+				.findFirst()
+				.orElse(null);
+			if (foundEdge == null) {
+				WorkflowEdge edgeClone = edge.clone();
+				copyEdges.add(edgeClone);
+			}
+		}
+
+		// 4. Reassign identifiers
+		final Map<UUID, UUID> registry = new HashMap<UUID, UUID>();
+		for (final WorkflowNode node : copyNodes) {
+			registry.put(node.getId(), UUID.randomUUID());
+
+			for (final InputPort input : node.getInputs()) {
+				registry.put(input.getId(), UUID.randomUUID());
+			}
+			for (final OutputPort output : node.getOutputs()) {
+				registry.put(output.getId(), UUID.randomUUID());
+			}
+		}
+		for (final WorkflowEdge edge : copyEdges) {
+			registry.put(edge.getId(), UUID.randomUUID());
+		}
+
+		for (final WorkflowEdge edge : copyEdges) {
+			// Don't replace anchor upstream edge sources, they are still valid
+			if (
+				anchorUpstreamEdges.stream().map(e -> e.getSource()).collect(Collectors.toList()).contains(edge.getSource()) ==
+				false
+			) {
+				edge.setSource(registry.get(edge.getSource()));
+				edge.setSourcePortId(registry.get(edge.getSourcePortId()));
+			}
+			edge.setId(registry.get(edge.getId()));
+			edge.setTarget(registry.get(edge.getTarget()));
+			edge.setTargetPortId(registry.get(edge.getTargetPortId()));
+		}
+
+		for (final WorkflowNode node : copyNodes) {
+			node.setId(registry.get(node.getId()));
+			for (final InputPort input : node.getInputs()) {
+				input.setId(registry.get(input.getId()));
+			}
+			for (final OutputPort output : node.getOutputs()) {
+				output.setId(registry.get(output.getId()));
+			}
+			if (node.getActive() != null) {
+				node.setActive(registry.get(node.getActive()));
+			}
+		}
+
+		// 5. Reposition new nodes so they don't exaclty overlap
+		final float offset = 75;
+		for (final WorkflowNode node : copyNodes) {
+			node.setY(node.getY() + offset);
+		}
+
+		List<UUID> copyNodeIds = copyNodes.stream().map(n -> n.getId()).collect(Collectors.toList());
+
+		for (final WorkflowEdge edge : copyEdges) {
+			if (edge.getPoints().size() < 2) continue;
+
+			if (copyNodeIds.contains(edge.getSource())) {
+				ObjectNode temp = (ObjectNode) edge.getPoints().get(0);
+				float y = Float.parseFloat(temp.get("y").asText());
+				temp.put("y", y + offset);
+			}
+			if (copyNodeIds.contains(edge.getTarget())) {
+				int len = edge.getPoints().size();
+				ObjectNode temp = (ObjectNode) edge.getPoints().get(len - 1);
+				float y = Float.parseFloat(temp.get("y").asText());
+				temp.put("y", y + offset);
+			}
+		}
+
+		// 6. Clone notebook sessions if they exist
+		for (final WorkflowNode node : copyNodes) {
+			if (node.getOperationType().equals("DatasetTransformer")) {
+				ObjectNode state = (ObjectNode) node.getState();
+				if (state.get("notebookSessionId") != null) {
+					UUID sessionId = UUID.fromString(state.get("notebookSessionId").asText());
+
+					final NotebookSession session = notebookSessionService
+						.getAsset(sessionId, Schema.Permission.WRITE)
+						.orElse(null);
+					if (session != null) {
+						final NotebookSession newNotebookSession = notebookSessionService.createAsset(
+							session.clone(),
+							projectId,
+							Schema.Permission.WRITE
+						);
+						state.put("notebookSessionId", newNotebookSession.getId().toString());
+					}
+				}
+			}
+		}
+
+		// 7. Finally put everything back into the workflow
+		for (final WorkflowNode node : copyNodes) {
+			workflow.getNodes().add(node);
+		}
+		for (final WorkflowEdge edge : copyEdges) {
+			workflow.getEdges().add(edge);
 		}
 	}
 

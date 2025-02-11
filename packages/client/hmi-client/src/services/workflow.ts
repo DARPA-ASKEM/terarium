@@ -963,6 +963,12 @@ export const updateStatus = async (id: string, statusMap: Map<string, OperatorSt
 	return response.data ?? null;
 };
 
+export const branchWorkflow = async (id: string, nodeId: string) => {
+	console.log(`>> workflowService.branchWorkflow ${nodeId}`);
+	const response = await API.post(`/workflows/${id}/branch-from-node/${nodeId}`);
+	return response.data ?? null;
+};
+
 /// /////////////////////////////////////////////////////////////////////////////
 // Events bus for workflow
 /// /////////////////////////////////////////////////////////////////////////////

@@ -25,39 +25,10 @@
 				<template #content>
 					<main class="p-3">
 						<header class="pb-2">
-							<nav class="flex justify-content-between pb-2">
-								<span v-if="document" class="flex align-items-center"
-									>Specify which equations to use for this model.</span
-								>
-								<span v-else class="flex align-items-center"
-									>Connect a document or enter equations manually below.</span
-								>
-								<section class="flex align-items-center min-w-min">
-									<RadioButton
-										class="ml-3"
-										:model-value="runType"
-										:input-id="uniqueId()"
-										:name="RunType.mira"
-										:value="RunType.mira"
-										@click="switchRunType(RunType.mira)"
-									/>
-									<label for="static" class="ml-2 text-sm">MIRA</label>
-									<RadioButton
-										:model-value="runType"
-										:input-id="uniqueId()"
-										:name="RunType.skema"
-										:value="RunType.skema"
-										class="ml-3"
-										@click="switchRunType(RunType.skema)"
-									/>
-									<label for="dynamic" class="ml-2 mr-3 text-sm">SKEMA</label>
-									<Button
-										class="h-3rem mr-1"
-										label="Run"
-										@click="onRun(runType)"
-										:disabled="includedEquations.length < 1"
-									/>
-								</section>
+							<nav class="flex align-items-center mb-2">
+								<p v-if="document">Specify which equations to use for this model.</p>
+								<p v-else>Connect a document or enter equations manually below.</p>
+								<Button class="ml-auto" label="Run" @click="onRun" :disabled="includedEquations.length < 1" />
 							</nav>
 							<section
 								class="input-container"
@@ -277,7 +248,7 @@ import TeraDrilldownPreview from '@/components/drilldown/tera-drilldown-preview.
 import TeraAssetBlock from '@/components/widgets/tera-asset-block.vue';
 import { computed, onMounted, onBeforeUnmount, ref, watch } from 'vue';
 import type { Card, DocumentAsset, Model } from '@/types/Types';
-import { cloneDeep, isEmpty, uniqueId } from 'lodash';
+import { cloneDeep, isEmpty } from 'lodash';
 import { equationsToAMR, getCleanedEquations, type EquationsToAMRRequest } from '@/services/knowledge';
 import { downloadDocumentAsset, getDocumentAsset, getDocumentFileAsText } from '@/services/document-assets';
 import { equationsFromImage } from '@/services/goLLM';
@@ -291,7 +262,6 @@ import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.
 import TeraPdfEmbed from '@/components/widgets/tera-pdf-embed.vue';
 import TeraTextEditor from '@/components/documents/tera-text-editor.vue';
 import { logger } from '@/utils/logger';
-import RadioButton from 'primevue/radiobutton';
 import TeraModal from '@/components/widgets/tera-modal.vue';
 import { createCopyTextToClipboard } from '@/utils/clipboard';
 import { ModelFromEquationsState, EquationBlock } from './model-from-equations-operation';
@@ -302,16 +272,6 @@ const props = defineProps<{
 }>();
 
 const selectedOutputId = ref<string>('');
-
-enum RunType {
-	mira = 'mira',
-	skema = 'skema'
-}
-
-const runType = ref(RunType.mira);
-function switchRunType(type: RunType) {
-	runType.value = type;
-}
 
 const clonedState = ref<ModelFromEquationsState>({
 	equations: [],
@@ -506,7 +466,7 @@ function onCheckBoxChange(equation) {
 	clonedState.value.equations[index].includeInProcess = equation.includeInProcess;
 }
 
-async function onRun(extractionService: 'mira' | 'skema' = 'skema') {
+async function onRun() {
 	isOutputOpen.value = true;
 	isModelLoading.value = true;
 	const equationsText = clonedState.value.equations
@@ -523,9 +483,9 @@ async function onRun(extractionService: 'mira' | 'skema' = 'skema') {
 		equations: cleanedEquations,
 		documentId: document.value?.id,
 		workflowId: props.node.workflowId,
-		nodeId: props.node.id,
-		extractionService
+		nodeId: props.node.id
 	};
+
 	const modelId = await equationsToAMR(request);
 	// If there isn't a modelId returned at least show the cleaned equations
 	if (modelId) {

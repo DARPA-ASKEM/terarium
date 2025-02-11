@@ -24,6 +24,23 @@ public class InputPort implements Serializable {
 	private ArrayNode value;
 	private Boolean isOptional;
 
+	@Override
+	public InputPort clone() {
+		final InputPort clone = new InputPort();
+		clone.setId(id);
+		clone.setVersion(version);
+		clone.setType(type);
+		clone.setOriginalType(originalType);
+		clone.setStatus(status);
+		clone.setLabel(label);
+		if (value != null) {
+			clone.setValue(value.deepCopy());
+		}
+		clone.setIsOptional(isOptional);
+
+		return clone;
+	}
+
 	// FIXME: backwards compatibility, to be removed
 	private Boolean acceptMultiple;
 }
