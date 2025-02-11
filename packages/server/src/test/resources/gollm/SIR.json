@@ -204,7 +204,7 @@
                 }
               },
               "provenance": {
-                "method": "Skema TR Pipeline rules",
+                "method": "TR Pipeline rules",
                 "timestamp": "2023-06-15T22:59:11.974474"
               }
             }
@@ -222,7 +222,7 @@
                   "source": [],
                   "score": 0.8945620059967041,
                   "provenance": {
-                    "method": "SKEMA-TR-Embedding",
+                    "method": "TR-Embedding",
                     "timestamp": "2023-06-15T22:59:11.974644"
                   }
                 }
@@ -237,7 +237,7 @@
                 }
               },
               "provenance": {
-                "method": "Skema TR Pipeline rules",
+                "method": "TR Pipeline rules",
                 "timestamp": "2023-06-15T22:59:11.974474"
               }
             }
@@ -268,7 +268,7 @@
                 }
               },
               "provenance": {
-                "method": "Skema TR Pipeline rules",
+                "method": "TR Pipeline rules",
                 "timestamp": "2023-06-15T22:59:11.974780"
               }
             }
@@ -290,7 +290,7 @@
                 }
               },
               "provenance": {
-                "method": "Skema TR Pipeline rules",
+                "method": "TR Pipeline rules",
                 "timestamp": "2023-06-15T22:59:11.974780"
               }
             }
@@ -321,7 +321,7 @@
                 }
               },
               "provenance": {
-                "method": "Skema TR Pipeline rules",
+                "method": "TR Pipeline rules",
                 "timestamp": "2023-06-15T22:59:11.974931"
               }
             }
@@ -339,7 +339,7 @@
                   "source": [],
                   "score": 0.8330355286598206,
                   "provenance": {
-                    "method": "SKEMA-TR-Embedding",
+                    "method": "TR-Embedding",
                     "timestamp": "2023-06-15T22:59:11.975009"
                   }
                 }
@@ -354,7 +354,7 @@
                 }
               },
               "provenance": {
-                "method": "Skema TR Pipeline rules",
+                "method": "TR Pipeline rules",
                 "timestamp": "2023-06-15T22:59:11.974931"
               }
             }
@@ -367,7 +367,7 @@
               "source": [],
               "score": 0.7847759127616882,
               "provenance": {
-                "method": "SKEMA-TR-Embedding",
+                "method": "TR-Embedding",
                 "timestamp": "2023-06-15T22:59:11.974960"
               }
             }
@@ -396,7 +396,7 @@
                 }
               },
               "provenance": {
-                "method": "Skema TR Pipeline rules",
+                "method": "TR Pipeline rules",
                 "timestamp": "2023-06-15T22:59:11.975127"
               }
             },
@@ -425,7 +425,7 @@
                   "source": [],
                   "score": 0.8812347650527954,
                   "provenance": {
-                    "method": "SKEMA-TR-Embedding",
+                    "method": "TR-Embedding",
                     "timestamp": "2023-06-15T22:59:11.975201"
                   }
                 }
@@ -440,7 +440,7 @@
                 }
               },
               "provenance": {
-                "method": "Skema TR Pipeline rules",
+                "method": "TR Pipeline rules",
                 "timestamp": "2023-06-15T22:59:11.975127"
               }
             },
@@ -504,7 +504,7 @@
                 }
               },
               "provenance": {
-                "method": "Skema TR Pipeline rules",
+                "method": "TR Pipeline rules",
                 "timestamp": "2023-06-15T22:59:11.975270"
               }
             },
@@ -533,7 +533,7 @@
                   "source": [],
                   "score": 0.8812347650527954,
                   "provenance": {
-                    "method": "SKEMA-TR-Embedding",
+                    "method": "TR-Embedding",
                     "timestamp": "2023-06-15T22:59:11.975340"
                   }
                 }
@@ -548,7 +548,7 @@
                 }
               },
               "provenance": {
-                "method": "Skema TR Pipeline rules",
+                "method": "TR Pipeline rules",
                 "timestamp": "2023-06-15T22:59:11.975270"
               }
             },
@@ -591,7 +591,7 @@
                 }
               },
               "provenance": {
-                "method": "Skema TR Pipeline rules",
+                "method": "TR Pipeline rules",
                 "timestamp": "2023-06-15T22:59:11.975409"
               }
             }
@@ -609,7 +609,7 @@
                   "source": [],
                   "score": 0.8812347650527954,
                   "provenance": {
-                    "method": "SKEMA-TR-Embedding",
+                    "method": "TR-Embedding",
                     "timestamp": "2023-06-15T22:59:11.975479"
                   }
                 }
@@ -624,7 +624,7 @@
                 }
               },
               "provenance": {
-                "method": "Skema TR Pipeline rules",
+                "method": "TR Pipeline rules",
                 "timestamp": "2023-06-15T22:59:11.975409"
               }
             }
