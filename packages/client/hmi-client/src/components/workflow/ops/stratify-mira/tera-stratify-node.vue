@@ -15,9 +15,13 @@ import { WorkflowNode } from '@/types/workflow';
 import TeraOperatorPlaceholder from '@/components/operator/tera-operator-placeholder.vue';
 import TeraModelDiagram from '@/components/model/petrinet/tera-model-diagram.vue';
 import Button from 'primevue/button';
-import { getModel, createModel } from '@/services/model';
-import { getModelConfigurationById, getAsConfiguredModel } from '@/services/model-configurations';
-import { Model } from '@/types/Types';
+import { getModel, createModel, getModelConfigurationsForModel } from '@/services/model';
+import {
+	getModelConfigurationById,
+	getAsConfiguredModel,
+	updateModelConfiguration
+} from '@/services/model-configurations';
+import { Model, ModelConfiguration } from '@/types/Types';
 // import { useProjects } from '@/composables/project';
 import { StratifyOperationStateMira, StratifyMiraOperation } from './stratify-mira-operation';
 
@@ -38,13 +42,14 @@ watch(
 		// if (input && !props.node.outputs[0].value) {
 		if (input && input.value) {
 			let baseModelId = '';
+			let modelConfiguration: ModelConfiguration | null = null;
 
 			if (input.type === 'modelId') {
 				baseModelId = input.value[0];
 			} else if (input.type === 'modelConfigId') {
 				const modelConfigId = input.value?.[0];
 
-				const modelConfiguration = await getModelConfigurationById(modelConfigId);
+				modelConfiguration = await getModelConfigurationById(modelConfigId);
 				const model = (await getAsConfiguredModel(modelConfigId)) as Model;
 
 				// Mark the model as orginating from the config
@@ -61,6 +66,16 @@ watch(
 			if (!baseModelId) return;
 
 			const model = await getModel(baseModelId);
+			// we want to update the new model's configuration with the old one's temporal context
+			if (modelConfiguration?.temporalContext) {
+				getModelConfigurationsForModel(baseModelId).then((modelConfigurations) => {
+					// the first model configuration is the one we want to update (default)
+					const mc = modelConfigurations[0];
+					if (!mc) return;
+					mc.temporalContext = modelConfiguration.temporalContext;
+					updateModelConfiguration(mc);
+				});
+			}
 			const modelName = model?.name;
 
 			const state = cloneDeep(props.node.state);

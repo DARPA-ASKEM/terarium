@@ -104,7 +104,7 @@ import TeraOperatorPlaceholder from '@/components/operator/tera-operator-placeho
 import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue';
 import TeraStratificationGroupForm from '@/components/workflow/ops/stratify-mira/tera-stratification-group-form.vue';
 import { KernelSessionManager } from '@/services/jupyter';
-import { createModelFromOld, getModel } from '@/services/model';
+import { createModelFromOld, getModel, getModelConfigurationsForModel } from '@/services/model';
 import type { Model } from '@/types/Types';
 import { AMRSchemaNames } from '@/types/common';
 import { OperatorStatus, WorkflowNode } from '@/types/workflow';
@@ -114,6 +114,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { onMounted, onUnmounted, ref, watch } from 'vue';
 import { VAceEditor } from 'vue3-ace-editor';
 import { VAceEditorInstance } from 'vue3-ace-editor/types';
+import { getModelConfigurationById, updateModelConfiguration } from '@/services/model-configurations';
 import { blankStratifyGroup, StratifyGroup, StratifyOperationStateMira } from './stratify-mira-operation';
 
 const props = defineProps<{
@@ -250,6 +251,19 @@ const handleModelPreview = async (data: any) => {
 	// Create output
 	const modelData = await createModelFromOld(amr.value, amrResponse);
 	if (!modelData) return;
+
+	// we want to update the new model's configuration with the old one's temporal context
+	const inputModelConfigurationId = props.node.inputs.find((i) => i.type === 'modelConfigId')?.value?.[0];
+	if (inputModelConfigurationId) {
+		getModelConfigurationsForModel(modelData.id).then(async (modelConfigurations) => {
+			// the first model configuration is the one we want to update (default)
+			const mc = modelConfigurations[0];
+			const inputModelConfig = await getModelConfigurationById(inputModelConfigurationId);
+			if (!mc) return;
+			mc.temporalContext = inputModelConfig.temporalContext;
+			updateModelConfiguration(mc);
+		});
+	}
 	outputAmr.value = modelData;
 
 	emit('append-output', {
