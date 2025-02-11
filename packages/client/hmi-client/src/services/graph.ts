@@ -337,7 +337,9 @@ export const runDagreLayout = <V, E>(graphData: IGraph<V, E>, lr: boolean = true
 
 		// manual route controller edges
 		const controllerEdges = graphData.edges.filter((edge: IEdge<any>) => edge.data?.isController === true);
-		if (controllerEdges.length < 8) {
+
+		// Effectively disabling fast-version, DC Feb 2025
+		if (controllerEdges.length < 99999) {
 			rerouteEdges(graphData.nodes, controllerEdges);
 		} else {
 			rerouteEdgesFast(graphData.nodes, controllerEdges);

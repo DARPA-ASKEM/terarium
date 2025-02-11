@@ -4,7 +4,6 @@ import { Dataset, InterventionPolicy, ModelConfiguration } from '@/types/Types';
 import { WorkflowNode, WorkflowPortStatus } from '@/types/workflow';
 import { renameFnGenerator } from '@/components/workflow/ops/calibrate-ciemss/calibrate-utils';
 import { Ref } from 'vue';
-
 import { createRankingInterventionsChart } from '@/services/charts';
 import { DATASET_VAR_NAME_PREFIX, getDatasetResultCSV, mergeResults, getDataset } from '@/services/dataset';
 import {
@@ -15,9 +14,7 @@ import {
 } from '@/services/models/simulation-service';
 import { getInterventionPolicyById } from '@/services/intervention-policy';
 import { getModelConfigurationById } from '@/services/model-configurations';
-
 import { ChartData, getInterventionColorAndScoreMaps } from '@/composables/useCharts';
-
 import { PlotValue, TimepointOption, RankOption, CompareDatasetsState } from './compare-datasets-operation';
 
 interface DataResults {
@@ -92,11 +89,17 @@ export const transformRowValuesRelativeToBaseline = (
 			transformed[key] = value;
 			return;
 		}
+		const eps = 1e-6;
 		const baselineValue = row[`${dataKey}:${baselineDataIndex}`];
 		if (plotType === PlotValue.DIFFERENCE) {
 			transformed[key] = value - baselineValue;
 		} else if (plotType === PlotValue.PERCENTAGE) {
-			transformed[key] = ((value - baselineValue) / baselineValue) * 100;
+			// set to 0 if value - baselineValue is 0
+			if (Math.abs(value - baselineValue) <= eps) {
+				transformed[key] = 0;
+			} else {
+				transformed[key] = ((value - baselineValue + eps) / (baselineValue + eps)) * 100;
+			}
 		} else if (plotType === PlotValue.VALUE) {
 			transformed[key] = value;
 		}

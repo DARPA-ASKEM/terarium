@@ -87,7 +87,7 @@ export default defineConfig({
 				}
 			}
 		}),
-		// By default SVGs are imported as URL in order to easily reference them in img tags
+		// By default, SVGs are imported as URL in order to easily reference them in img tags
 		// In order to import SVGs as components you must add '?component' as a suffix of an SVG's path
 		svgLoader({ defaultImport: 'url' })
 	],
@@ -97,6 +97,7 @@ export default defineConfig({
 		outputFile: {
 			junit: './tests/unit/reports/junit-report.xml'
 		},
-		environment: 'jsdom'
+		environment: 'jsdom', // Ensures a browser-like environment
+		setupFiles: './tests/setup.ts' // Points to a test setup file
 	}
 });

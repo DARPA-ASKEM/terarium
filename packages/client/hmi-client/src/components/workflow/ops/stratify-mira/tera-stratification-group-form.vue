@@ -18,6 +18,7 @@
 				display="chip"
 				@update:model-value="emit('update-self', updatedConfig)"
 				class="common-input-height"
+				filter
 			/>
 		</div>
 		<div class="flex flex-column gap-2 mb-4 w-full">

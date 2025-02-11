@@ -296,16 +296,17 @@ export const collapseTemplates = (miraModel: MiraModel) => {
 		if (check.has(key)) return;
 
 		uniqueTemplates.push(t);
-		check.set(key, ++keyCounter);
+		check.set(key, keyCounter);
+		keyCounter++;
 	});
 
 	// 3 Rename and sanitize everything
 	uniqueTemplates.forEach((t) => {
 		const key = generateKey(t);
-		t.name = `template-${check.get(key)}`;
+		t.name = `group-${check.get(key)}`;
 	});
 	tempMatrixMap.forEach((value, key) => {
-		const name = `template-${check.get(key)}`;
+		const name = `group-${check.get(key)}`;
 		matrixMap.set(name, value);
 	});
 
