@@ -57,6 +57,7 @@ import { RoutePath, useCurrentRoute } from '@/router/index';
 import { RouteName } from '@/router/routes';
 import { useProjects } from '@/composables/project';
 import { useProjectMenu } from '@/composables/project-menu';
+import { isEmpty } from 'lodash';
 
 const router = useRouter();
 const currentRoute = useCurrentRoute();
@@ -95,9 +96,8 @@ watch(
 	() => isCopyDialogVisible.value,
 	async () => {
 		if (isCopyDialogVisible.value) {
-			project.value = await useProjects().activeProject.value;
-			const name = project.value.name ?? null;
-			projectName.value = name ? `Copy of ${name}` : 'Enter new project name';
+			const name = await useProjects().getActiveProjectName();
+			projectName.value = isEmpty(name) ? 'Enter new project name' : `Copy of ${name}`;
 		}
 	}
 );
