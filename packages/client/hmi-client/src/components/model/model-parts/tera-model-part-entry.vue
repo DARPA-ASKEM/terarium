@@ -91,35 +91,41 @@ const props = defineProps<{
 
 const emit = defineEmits(['update-item']);
 
-const debouncers: { [key: string]: any } = {};
+const nameDebouncer = debounce((key: string, value: string = '') => {
+	emit('update-item', { key, value });
+}, 300);
 
-const startDebouncer = (key, value) => {
-	debouncers[key] = debouncer(key, value);
-};
+const unitDebouncer = debounce((key: string, value: string = '') => {
+	emit('update-item', { key, value });
+}, 300);
 
-const debouncer = debounce((key: string, value: string = '') => {
+const descriptionDebouncer = debounce((key: string, value: string = '') => {
+	emit('update-item', { key, value });
+}, 300);
+
+const groundingDebouncer = debounce((key: string, value: string = '') => {
 	emit('update-item', { key, value });
 }, 300);
 
 const nameText = computed({
 	get: () => props.name,
-	set: (newName) => debouncer('name', newName)
+	set: (newName) => nameDebouncer('name', newName)
 });
 const unitExpression = computed({
 	get: () => props.unitExpression,
-	set: (newUnitExpression) => startDebouncer('unitExpression', newUnitExpression)
+	set: (newUnitExpression) => unitDebouncer('unitExpression', newUnitExpression)
 });
 const descriptionText = computed({
 	get: () => props.description,
 	set: (newDescription) => {
-		startDebouncer('description', newDescription);
+		descriptionDebouncer('description', newDescription);
 		showDescription.value = !!newDescription;
 	}
 });
 const showDescription = ref<boolean>(!!descriptionText.value);
 const grounding = computed({
 	get: () => props.grounding,
-	set: (newGrounding) => startDebouncer('grounding', newGrounding)
+	set: (newGrounding) => groundingDebouncer('grounding', newGrounding)
 });
 
 // If we are in preview mode and there is no content, show nothing
