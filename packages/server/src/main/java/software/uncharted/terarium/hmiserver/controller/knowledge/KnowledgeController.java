@@ -338,28 +338,6 @@ public class KnowledgeController {
 		return ResponseEntity.ok(model.getId());
 	}
 
-	@PostMapping("/base64-equations-to-model")
-	@Secured(Roles.USER)
-	public ResponseEntity<Model> base64EquationsToAMR(@RequestBody final JsonNode req) {
-		try {
-			return ResponseEntity.ok(skemaUnifiedProxy.base64EquationsToAMR(req).getBody());
-		} catch (final FeignException e) {
-			log.error("Error with Skema Unified Service while converting base64 equations to AMR", e);
-			throw handleSkemaFeignException(e);
-		}
-	}
-
-	@PostMapping("/base64-equations-to-latex")
-	@Secured(Roles.USER)
-	public ResponseEntity<String> base64EquationsToLatex(@RequestBody final JsonNode req) {
-		try {
-			return ResponseEntity.ok(skemaUnifiedProxy.base64EquationsToLatex(req).getBody());
-		} catch (final FeignException e) {
-			log.error("Error with Skema Unified Service while converting base64 equations to Latex", e);
-			throw handleSkemaFeignException(e);
-		}
-	}
-
 	/**
 	 * Transform source code to AMR
 	 *
