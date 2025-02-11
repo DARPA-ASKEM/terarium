@@ -208,7 +208,7 @@
                       }
                     },
                     "provenance": {
-                      "method": "Skema TR Pipeline rules",
+                      "method": "TR Pipeline rules",
                       "timestamp": "2023-06-15T22:59:11.974474"
                     }
                   }
@@ -224,11 +224,11 @@
                         "grounding_text": "time since time scale zero",
                         "grounding_id": "apollosv:00000272",
                         "source": [
-                          
+
                         ],
                         "score": 0.8945620059967041,
                         "provenance": {
-                          "method": "SKEMA-TR-Embedding",
+                          "method": "TR-Embedding",
                           "timestamp": "2023-06-15T22:59:11.974644"
                         }
                       }
@@ -243,16 +243,16 @@
                       }
                     },
                     "provenance": {
-                      "method": "Skema TR Pipeline rules",
+                      "method": "TR Pipeline rules",
                       "timestamp": "2023-06-15T22:59:11.974474"
                     }
                   }
                 ],
                 "value_specs": [
-                  
+
                 ],
                 "groundings": [
-                  
+
                 ]
               }
             },
@@ -278,7 +278,7 @@
                       }
                     },
                     "provenance": {
-                      "method": "Skema TR Pipeline rules",
+                      "method": "TR Pipeline rules",
                       "timestamp": "2023-06-15T22:59:11.974780"
                     }
                   }
@@ -290,7 +290,7 @@
                     },
                     "source": "spatially distributed",
                     "grounding": [
-                      
+
                     ],
                     "extraction_source": {
                       "page": 0,
@@ -302,16 +302,16 @@
                       }
                     },
                     "provenance": {
-                      "method": "Skema TR Pipeline rules",
+                      "method": "TR Pipeline rules",
                       "timestamp": "2023-06-15T22:59:11.974780"
                     }
                   }
                 ],
                 "value_specs": [
-                  
+
                 ],
                 "groundings": [
-                  
+
                 ]
               }
             },
@@ -337,7 +337,7 @@
                       }
                     },
                     "provenance": {
-                      "method": "Skema TR Pipeline rules",
+                      "method": "TR Pipeline rules",
                       "timestamp": "2023-06-15T22:59:11.974931"
                     }
                   }
@@ -353,11 +353,11 @@
                         "grounding_text": "count of simulated population",
                         "grounding_id": "apollosv:00000022",
                         "source": [
-                          
+
                         ],
                         "score": 0.8330355286598206,
                         "provenance": {
-                          "method": "SKEMA-TR-Embedding",
+                          "method": "TR-Embedding",
                           "timestamp": "2023-06-15T22:59:11.975009"
                         }
                       }
@@ -372,24 +372,24 @@
                       }
                     },
                     "provenance": {
-                      "method": "Skema TR Pipeline rules",
+                      "method": "TR Pipeline rules",
                       "timestamp": "2023-06-15T22:59:11.974931"
                     }
                   }
                 ],
                 "value_specs": [
-                  
+
                 ],
                 "groundings": [
                   {
                     "grounding_text": "Meruvax I",
                     "grounding_id": "vo:0003109",
                     "source": [
-                      
+
                     ],
                     "score": 0.7847759127616882,
                     "provenance": {
-                      "method": "SKEMA-TR-Embedding",
+                      "method": "TR-Embedding",
                       "timestamp": "2023-06-15T22:59:11.974960"
                     }
                   }
@@ -418,7 +418,7 @@
                       }
                     },
                     "provenance": {
-                      "method": "Skema TR Pipeline rules",
+                      "method": "TR Pipeline rules",
                       "timestamp": "2023-06-15T22:59:11.975127"
                     }
                   },
@@ -445,11 +445,11 @@
                         "grounding_text": "percentage of cases",
                         "grounding_id": "cemo:percentage_of_cases",
                         "source": [
-                          
+
                         ],
                         "score": 0.8812347650527954,
                         "provenance": {
-                          "method": "SKEMA-TR-Embedding",
+                          "method": "TR-Embedding",
                           "timestamp": "2023-06-15T22:59:11.975201"
                         }
                       }
@@ -464,7 +464,7 @@
                       }
                     },
                     "provenance": {
-                      "method": "Skema TR Pipeline rules",
+                      "method": "TR Pipeline rules",
                       "timestamp": "2023-06-15T22:59:11.975127"
                     }
                   },
@@ -482,14 +482,14 @@
                   }
                 ],
                 "value_specs": [
-                  
+
                 ],
                 "groundings": [
                   {
                     "grounding_text": "Van",
                     "grounding_id": "geonames:298117",
                     "source": [
-                      
+
                     ],
                     "score": 1.0,
                     "provenance": {
@@ -501,7 +501,7 @@
                     "grounding_text": "Sanaa",
                     "grounding_id": "geonames:71137",
                     "source": [
-                      
+
                     ],
                     "score": 1.0,
                     "provenance": {
@@ -534,7 +534,7 @@
                       }
                     },
                     "provenance": {
-                      "method": "Skema TR Pipeline rules",
+                      "method": "TR Pipeline rules",
                       "timestamp": "2023-06-15T22:59:11.975270"
                     }
                   },
@@ -561,11 +561,11 @@
                         "grounding_text": "percentage of cases",
                         "grounding_id": "cemo:percentage_of_cases",
                         "source": [
-                          
+
                         ],
                         "score": 0.8812347650527954,
                         "provenance": {
-                          "method": "SKEMA-TR-Embedding",
+                          "method": "TR-Embedding",
                           "timestamp": "2023-06-15T22:59:11.975340"
                         }
                       }
@@ -580,7 +580,7 @@
                       }
                     },
                     "provenance": {
-                      "method": "Skema TR Pipeline rules",
+                      "method": "TR Pipeline rules",
                       "timestamp": "2023-06-15T22:59:11.975270"
                     }
                   },
@@ -598,10 +598,10 @@
                   }
                 ],
                 "value_specs": [
-                  
+
                 ],
                 "groundings": [
-                  
+
                 ]
               }
             },
@@ -627,7 +627,7 @@
                       }
                     },
                     "provenance": {
-                      "method": "Skema TR Pipeline rules",
+                      "method": "TR Pipeline rules",
                       "timestamp": "2023-06-15T22:59:11.975409"
                     }
                   }
@@ -643,11 +643,11 @@
                         "grounding_text": "percentage of cases",
                         "grounding_id": "cemo:percentage_of_cases",
                         "source": [
-                          
+
                         ],
                         "score": 0.8812347650527954,
                         "provenance": {
-                          "method": "SKEMA-TR-Embedding",
+                          "method": "TR-Embedding",
                           "timestamp": "2023-06-15T22:59:11.975479"
                         }
                       }
@@ -662,16 +662,16 @@
                       }
                     },
                     "provenance": {
-                      "method": "Skema TR Pipeline rules",
+                      "method": "TR Pipeline rules",
                       "timestamp": "2023-06-15T22:59:11.975409"
                     }
                   }
                 ],
                 "value_specs": [
-                  
+
                 ],
                 "groundings": [
-                  
+
                 ]
               }
             }
