@@ -212,7 +212,7 @@ watch(
 		const isEqual = _.isEqual(newSpec, oldSpec);
 		const isAlreadyRendered =
 			interactive.value === false ? imageDataURL.value !== '' : vegaVisualization.value !== undefined;
-		console.log('compare charts spec');
+		console.log('VegaChart: check spec diff');
 		if (isEqual && isAlreadyRendered) return;
 
 		const spec = deepToRaw(props.visualizationSpec);
@@ -237,7 +237,7 @@ watch(
 
 			// dispose
 			viz.finalize();
-			console.log('render non-interactive chart');
+			console.log('VegaChart: render image');
 		} else {
 			// render interactive
 			if (!vegaContainer.value) return;
@@ -246,7 +246,7 @@ watch(
 				actions: props.areEmbedActionsVisible,
 				expandable: !!props.expandable
 			});
-			console.log('render interactive chart');
+			console.log('VegaChart: render interactive');
 		}
 		emit('done-render');
 	},
