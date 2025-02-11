@@ -583,7 +583,6 @@ export interface OptimizeRequestCiemss {
     fixedInterventions?: Intervention[];
     loggingStepSize?: number;
     qoi: OptimizeQoi[];
-    boundsInterventions: number[][];
     extra: OptimizeExtra;
     engine: string;
     userId: string;
@@ -651,12 +650,18 @@ export interface OptimizeExtra {
 
 export interface OptimizeInterventions {
     interventionType: string;
-    paramNames: string[];
-    paramValues?: number[];
-    startTime?: number[];
-    objectiveFunctionOption: string;
-    initialGuess?: number[];
+    paramName: string;
+    paramValue?: number;
+    startTime?: number;
+    timeObjectiveFunction: string;
+    parameterObjectiveFunction: string;
     relativeImportance: number;
+    paramValueInitialGuess?: number;
+    parameterValueLowerBound: number;
+    parameterValueUpperBound: number;
+    startTimeInitialGuess?: number;
+    startTimeLowerBound: number;
+    startTimeUpperBound: number;
 }
 
 export interface OptimizeQoi {
@@ -1125,7 +1130,7 @@ export enum ClientEventType {
     TaskGollmCompareModel = "TASK_GOLLM_COMPARE_MODEL",
     TaskGollmConfigureModelFromDataset = "TASK_GOLLM_CONFIGURE_MODEL_FROM_DATASET",
     TaskGollmConfigureModelFromDocument = "TASK_GOLLM_CONFIGURE_MODEL_FROM_DOCUMENT",
-    TaskGollmEnrichAmr = "TASK_GOLLM_ENRICH_AMR",
+    TaskGollmEnrichModel = "TASK_GOLLM_ENRICH_MODEL",
     TaskGollmEnrichDataset = "TASK_GOLLM_ENRICH_DATASET",
     TaskGollmEquationsFromImage = "TASK_GOLLM_EQUATIONS_FROM_IMAGE",
     TaskGollmGenerateSummary = "TASK_GOLLM_GENERATE_SUMMARY",

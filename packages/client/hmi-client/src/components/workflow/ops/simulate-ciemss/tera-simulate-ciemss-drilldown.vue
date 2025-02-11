@@ -311,6 +311,7 @@
 						:active-settings="activeChartSettings"
 						:generate-annotation="generateAnnotation"
 						:comparison="activeChartSettings?.type === ChartSettingType.VARIABLE_COMPARISON"
+						:comparison-selected-options="comparisonChartsSettingsSelection"
 						@update-settings="updateActiveChartSettings"
 						@delete-annotation="deleteAnnotation"
 						@close="setActiveChartSettings(null)"
@@ -329,17 +330,19 @@
 				<template #content>
 					<div class="output-settings-panel">
 						<!-- Intervention charts -->
-						<tera-chart-settings
-							:title="'Interventions over time'"
-							:settings="chartSettings"
-							:type="ChartSettingType.INTERVENTION"
-							:select-options="Object.keys(groupedInterventionOutputs)"
-							:selected-options="selectedInterventionSettings.map((s) => s.selectedVariables[0])"
-							@open="setActiveChartSettings($event)"
-							@remove="removeChartSettings"
-							@selection-change="updateChartSettings"
-						/>
-						<Divider />
+						<div v-if="interventionPolicy">
+							<tera-chart-settings
+								:title="'Interventions over time'"
+								:settings="chartSettings"
+								:type="ChartSettingType.INTERVENTION"
+								:select-options="Object.keys(groupedInterventionOutputs)"
+								:selected-options="selectedInterventionSettings.map((s) => s.selectedVariables[0])"
+								@open="setActiveChartSettings($event)"
+								@remove="removeChartSettings"
+								@selection-change="updateChartSettings"
+							/>
+							<Divider />
+						</div>
 						<!-- Variable charts -->
 						<tera-chart-settings
 							:title="'Variables over time'"
@@ -398,14 +401,16 @@
 							:sensitivity-options="{
 								inputOptions: Object.keys(pyciemssMap).filter((c) => ['parameter'].includes(modelPartTypesMap[c])),
 								selectedInputOptions: selectedSensitivityChartSettings[0]?.selectedInputVariables ?? [],
-								timepoint: selectedSensitivityChartSettings[0]?.timepoint ?? lastTimepoint
+								timepoint: selectedSensitivityChartSettings[0]?.timepoint ?? lastTimepoint,
+								chartType: selectedSensitivityChartSettings[0]?.chartType ?? SensitivityChartType.SCATTER
 							}"
 							@selection-change="
 								(e) =>
 									updateSensitivityChartSettings({
 										selectedVariables: e,
 										selectedInputVariables: selectedSensitivityChartSettings[0]?.selectedInputVariables ?? [],
-										timepoint: selectedSensitivityChartSettings[0]?.timepoint ?? lastTimepoint
+										timepoint: selectedSensitivityChartSettings[0]?.timepoint ?? lastTimepoint,
+										chartType: selectedSensitivityChartSettings[0]?.chartType ?? SensitivityChartType.SCATTER
 									})
 							"
 							@sensitivity-selection-change="
@@ -472,7 +477,7 @@ import {
 	CiemssMethodOptions
 } from '@/services/models/simulation-service';
 import { logger } from '@/utils/logger';
-import { ChartSettingType, CiemssPresetTypes, DrilldownTabs } from '@/types/common';
+import { ChartSettingType, CiemssPresetTypes, DrilldownTabs, SensitivityChartType } from '@/types/common';
 import VegaChart from '@/components/widgets/VegaChart.vue';
 import { KernelSessionManager } from '@/services/jupyter';
 import TeraChartSettings from '@/components/widgets/tera-chart-settings.vue';
@@ -897,6 +902,17 @@ watch(
 			getInterventionPolicyById(policyInterventionId.value).then((policy) => {
 				interventionPolicy.value = policy;
 			});
+		}
+	},
+	{ immediate: true }
+);
+
+// Watch for run results and open settings panel if no charts are configured
+watch(
+	[() => runResults.value[selectedRunId.value], () => chartSettings.value],
+	([results, settings]) => {
+		if (results && (!settings || isEmpty(settings))) {
+			isOutputSettingsPanelOpen.value = true;
 		}
 	},
 	{ immediate: true }

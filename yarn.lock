@@ -3336,10 +3336,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/lodash@npm:4.17.14":
-  version: 4.17.14
-  resolution: "@types/lodash@npm:4.17.14"
-  checksum: 10/6ee40725f3e192f5ef1f493caca19210aa7acd7adc3136b8dba84d418a35be0abea0668105aed9f696ad62a54310a9c0d328971ad4b157f5bcda700424ed5aae
+"@types/lodash@npm:4.17.15":
+  version: 4.17.15
+  resolution: "@types/lodash@npm:4.17.15"
+  checksum: 10/27b348b5971b9c670215331b52448a13d7d65bf1fbd320a7049c9c153c1186ff5d116ba75f05f07d32d7ece8a992b26a30c7bdc9be22a3d1e4e3e6068aa04603
   languageName: node
   linkType: hard
 
@@ -8494,7 +8494,7 @@ __metadata:
   dependencies:
     "@types/d3": "npm:7.4.3"
     "@types/jest": "npm:29.5.14"
-    "@types/lodash": "npm:4.17.14"
+    "@types/lodash": "npm:4.17.15"
     "@typescript-eslint/eslint-plugin": "npm:5.62.0"
     "@typescript-eslint/parser": "npm:5.62.0"
     copy: "npm:0.3.2"
@@ -8684,7 +8684,7 @@ __metadata:
     "@playwright/test": "npm:1.31.2"
     "@rushstack/eslint-patch": "npm:1.10.5"
     "@types/d3": "npm:7.4.3"
-    "@types/lodash": "npm:4.17.14"
+    "@types/lodash": "npm:4.17.15"
     "@types/markdown-it": "npm:14.1.2"
     "@types/node": "npm:18.19.3"
     "@types/papaparse": "npm:5.3.15"
@@ -8728,7 +8728,7 @@ __metadata:
     vega: "npm:5.30.0"
     vega-embed: "npm:6.25.0"
     vega-lite: "npm:5.19.0"
-    vite: "npm:5.4.12"
+    vite: "npm:5.4.14"
     vite-svg-loader: "npm:4.0.0"
     vitest: "npm:0.24.5"
     vue: "npm:3.5.12"
@@ -9721,14 +9721,14 @@ __metadata:
   languageName: node
   linkType: hard
 
-"java-parser@npm:2.3.2":
-  version: 2.3.2
-  resolution: "java-parser@npm:2.3.2"
+"java-parser@npm:2.3.3":
+  version: 2.3.3
+  resolution: "java-parser@npm:2.3.3"
   dependencies:
     chevrotain: "npm:11.0.3"
     chevrotain-allstar: "npm:0.3.1"
     lodash: "npm:4.17.21"
-  checksum: 10/bb927c3171b5daccde391bfa4bebc51ab7fc0c6b72b2ad3d9fe48b52f9f975a56763ffd216e0e6da852cc3d23b56db0a31e2478997bb7aeb471bd7ea68bba7ae
+  checksum: 10/6383937f3448ab1d6790e13bab5a721a6fe189b3993648b11ec34cdb5582097ef8d7d4dab867f2bae873a1374ab02f257b8eb4081429f3f3b5aa4d3e01dd4845
   languageName: node
   linkType: hard
 
@@ -12214,23 +12214,15 @@ __metadata:
   languageName: node
   linkType: hard
 
-"prettier-plugin-java@npm:2.6.5":
-  version: 2.6.5
-  resolution: "prettier-plugin-java@npm:2.6.5"
+"prettier-plugin-java@npm:2.6.7":
+  version: 2.6.7
+  resolution: "prettier-plugin-java@npm:2.6.7"
   dependencies:
-    java-parser: "npm:2.3.2"
+    java-parser: "npm:2.3.3"
     lodash: "npm:4.17.21"
-    prettier: "npm:3.2.5"
-  checksum: 10/ce960aa9e968dcbbbf4ac03ba15cbd1ec2d932d96a9eb28e871b3662602db288ca3228240f70484714df7d03cf509f4c7bc4c221997eceb4c8694540167db382
-  languageName: node
-  linkType: hard
-
-"prettier@npm:3.2.5":
-  version: 3.2.5
-  resolution: "prettier@npm:3.2.5"
-  bin:
-    prettier: bin/prettier.cjs
-  checksum: 10/d509f9da0b70e8cacc561a1911c0d99ec75117faed27b95cc8534cb2349667dee6351b0ca83fa9d5703f14127faa52b798de40f5705f02d843da133fc3aa416a
+  peerDependencies:
+    prettier: ^3.0.0
+  checksum: 10/6bcf3ed8125a583aaf351781fa1b55a5d01fde4afae99568aaa5f65f0594557d965d0950ea63056dc6beae58e621d488e54ebe33a83750711ff09b92eab6bc8b
   languageName: node
   linkType: hard
 
@@ -13986,7 +13978,7 @@ __metadata:
     husky: "npm:8.0.3"
     lint-staged: "npm:15.3.0"
     prettier: "npm:3.3.3"
-    prettier-plugin-java: "npm:2.6.5"
+    prettier-plugin-java: "npm:2.6.7"
   languageName: unknown
   linkType: soft
 
@@ -15132,9 +15124,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"vite@npm:5.4.12":
-  version: 5.4.12
-  resolution: "vite@npm:5.4.12"
+"vite@npm:5.4.14":
+  version: 5.4.14
+  resolution: "vite@npm:5.4.14"
   dependencies:
     esbuild: "npm:^0.21.3"
     fsevents: "npm:~2.3.3"
@@ -15171,7 +15163,7 @@ __metadata:
       optional: true
   bin:
     vite: bin/vite.js
-  checksum: 10/16a2b486164717b51f8a22db750bba1d1d5be939e28d199a27a3c3f54cea484b3f2e8618eeafaec8b5075c011aa9aafd3e86b54411ba90555617190e626fe4ef
+  checksum: 10/ce382f4059eb6c939823b8f62163794752243755d84c71a4b73ad0f7d4d9f4c7a557a6ef4c78e0640f4bcf5ae5ec6b20c7ee4816419af3c81ba275f478b73468
   languageName: node
   linkType: hard
 

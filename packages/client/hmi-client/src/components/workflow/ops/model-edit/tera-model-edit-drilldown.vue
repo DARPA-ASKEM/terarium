@@ -80,7 +80,7 @@ import type { Model } from '@/types/Types';
 import { OperatorStatus, WorkflowNode, WorkflowOutput } from '@/types/workflow';
 import { KernelSessionManager } from '@/services/jupyter';
 import { createModel, getModel } from '@/services/model';
-import { getModelIdFromModelConfigurationId } from '@/services/model-configurations';
+import { getAsConfiguredModel, getModelConfigurationById } from '@/services/model-configurations';
 import { saveCodeToState } from '@/services/notebook';
 import { logger } from '@/utils/logger';
 import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
@@ -127,21 +127,21 @@ let activeOutputModelId: string | null = null;
 
 let editor: VAceEditorInstance['_editor'] | null;
 const sampleAgentQuestions = [
-	'Add a new transition from S to R with the name vaccine with the rate of v and unit Days',
-	'Add a new transition from I to D. Name the transition death that has a dependency on R. The rate is I*R*u with unit Days',
-	'Add a new transition (from nowhere) to S with a rate constant of f with unit Days',
-	'Add a new transition (from nowhere) to S with a rate constant of f with unit Days. The rate depends on R',
-	'Add a new transition from S (to nowhere) with a rate constant of v with unit Days',
-	'Add a new transition from S (to nowhere) with a rate constant of v with unit Days. The Rate depends on R',
-	'Add an observable titled sample with the expression "A * B  * p"',
-	'Add a new parameter with id "θ" and value 0.5',
-	'Rename the state "S" to "Susceptible" in the "infection" transition',
-	'Rename the transition "infection" to "inf"',
+	'Add a new natural transition from I to R with the name "recovery" with the rate law of "g * I". The unit of "g" is "days".',
+	'Add a new transition from S to E that depends on I. The rate law is "b * S * I". The unit of "b" is "1/(persons * days)"',
+	'Add a new natural transition (from nowhere) to S with a rate constant of "f" with unit "days"',
+	'Add a new transition (from nowhere) to S with a rate constant of "f" with unit "days". The rate law depends on "R"',
+	'Add a new transition from S (to nowhere) with a rate constant of "v" with unit "days"',
+	'Add a new transition from S (to nowhere) with a rate constant of "v" with unit "days". The rate law depends on "R"',
+	'Add an observable named "Infected" with the expression "Iasym + Isym"',
+	'Add a new parameter named "b" with value 0.5',
+	'Rename the state "S" to "Susceptible" in the transition named "InfectionProcess"',
+	'Rename the transition "InfectionProcess" to "Inf"',
 	'Rename the parameter "k" to "m"',
-	'Change rate law of inf to S * I * z',
+	'Change rate law of the transition "Inf" to "S * I * z"',
 	'Remove all unused parameters',
-	'Remove the parameter "θ"',
-	'Specify the time unit of the model to be "day"',
+	'Remove the parameter "b"',
+	'Specify the time unit of the model to be "days"',
 	'Add a new transition that represents the states "Infected", "Hospitalized" controlling the production of the state "WastewaterViralLoad" with rate law "shed_rate * (Infected + Hospitalized)"',
 	'Add a new transition that represents the states "Susceptible", "Infected", "Recovered" controlling the degradation of the state "Hospitalized" with rate law "rec_rate * Hospitalized / (Susceptible + Infected + Recovered)"',
 	'Add a new transition that represents the states "Infected", "Recovered" controlling the conversion from the state "Susceptible" to the state "Vaccinated" with rate law "vac_rate / (Infected + Recovered)"'
@@ -356,7 +356,17 @@ onMounted(async () => {
 	if (input.type === 'modelId') {
 		inputModelId = input.value?.[0];
 	} else if (input.type === 'modelConfigId') {
-		inputModelId = await getModelIdFromModelConfigurationId(input.value?.[0]);
+		const modelConfigId = input.value?.[0];
+		const modelConfiguration = await getModelConfigurationById(modelConfigId);
+		const model = (await getAsConfiguredModel(modelConfigId)) as Model;
+		// Mark the model as originating from the config
+		model.temporary = true;
+		model.name += ` (${modelConfiguration.name})`;
+		model.header.name = model.name as string;
+		const res = await createModel(model);
+		if (res) {
+			inputModelId = res.id as string;
+		}
 	}
 	if (!inputModelId) return;
 
