@@ -52,7 +52,7 @@ watch(
 				model.name += ` (${modelConfiguration.name})`;
 				model.header.name = model.name as string;
 
-				const res = await createModel(model);
+				const res = await createModel(model, modelConfiguration.id);
 				if (res) {
 					baseModelId = res.id as string;
 				}
