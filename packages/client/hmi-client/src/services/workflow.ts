@@ -158,22 +158,6 @@ export class WorkflowWrapper {
 	}
 
 	// @deprecated
-	removeNode(id: string) {
-		// Remove all the edges first
-		const edgesToRemove = this.getEdges().filter((d) => d.source === id || d.target === id);
-		const edgeIds = edgesToRemove.map((d) => d.id);
-		edgeIds.forEach((edgeId) => {
-			this.removeEdge(edgeId);
-		});
-
-		// Tombstone
-		const node = this.wf.nodes.find((n) => n.id === id);
-		if (node) {
-			node.isDeleted = true;
-		}
-	}
-
-	// @deprecated
 	removeEdge(id: string) {
 		const edgeToRemove = this.wf.edges.find((d) => d.id === id);
 		if (!edgeToRemove) return;
@@ -210,6 +194,7 @@ export class WorkflowWrapper {
 		}
 	}
 
+	// @deprecated
 	addNode(op: Operation, pos: Position, options: { size?: OperatorNodeSize; state?: any }) {
 		let currentUserName: string | undefined = '';
 		try {
@@ -299,6 +284,7 @@ export class WorkflowWrapper {
 	 * We do not deal with this and throw an error/warning, and the edge creation will be cancelled.
 	 *
 	 * */
+	// @deprecated
 	addEdge(sourceId: string, sourcePortId: string, targetId: string, targetPortId: string, points: Position[]) {
 		let currentUserName: string | undefined = '';
 		try {
@@ -618,12 +604,6 @@ export class WorkflowWrapper {
 		const node = this.getNodes().find((d) => d.id === nodeId);
 		if (!node) return;
 		node.state = state;
-	}
-
-	updateNodeStatus(nodeId: string, status: OperatorStatus) {
-		const node = this.getNodes().find((d) => d.id === nodeId);
-		if (!node) return;
-		node.status = status;
 	}
 
 	// Get neighbor nodes for drilldown navigation
@@ -960,6 +940,12 @@ export const updateState = async (id: string, stateMap: Map<string, any>) => {
 export const updateStatus = async (id: string, statusMap: Map<string, OperatorStatus>) => {
 	console.log('>> workflowService.updateStatus');
 	const response = await API.post(`/workflows/${id}/update-status`, Object.fromEntries(statusMap));
+	return response.data ?? null;
+};
+
+export const branchWorkflow = async (id: string, nodeId: string) => {
+	console.log(`>> workflowService.branchWorkflow ${nodeId}`);
+	const response = await API.post(`/workflows/${id}/branch-from-node/${nodeId}`);
 	return response.data ?? null;
 };
 

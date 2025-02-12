@@ -83,8 +83,8 @@ import { NestedPetrinetRenderer } from '@/model-representation/petrinet/nested-p
 import { PetrinetRenderer } from '@/model-representation/petrinet/petrinet-renderer';
 import { getModelRenderer } from '@/model-representation/service';
 import { NodeType } from '@/services/graph';
-import { getModelType, getMMT } from '@/services/model';
-import { AMRSchemaNames, type FeatureConfig } from '@/types/common';
+import { getMMT } from '@/services/model';
+import type { FeatureConfig } from '@/types/common';
 import { StratifiedMatrix } from '@/types/Model';
 import type { Model } from '@/types/Types';
 import { observeElementSizeChange } from '@/utils/observer';
@@ -100,7 +100,6 @@ const graphElement = ref<HTMLDivElement | null>(null);
 const graphLegendLabels = ref<string[]>([]);
 const graphLegendColors = ref<string[]>([]);
 const selectedTransitionId = ref('');
-const modelType = computed(() => getModelType(props.model));
 const mmt = ref<MiraModel>(emptyMiraModel());
 const mmtParams = ref<MiraTemplateParams>({});
 
@@ -233,7 +232,7 @@ async function toggleCollapsedView(view: StratifiedView) {
 watch(
 	() => [props.model.model, props.model?.semantics, props.mmtData, graphElement.value],
 	async (newValue, oldValue) => {
-		if (isEqual(newValue, oldValue) || modelType.value === AMRSchemaNames.DECAPODES || graphElement.value === null) {
+		if (isEqual(newValue, oldValue) || graphElement.value === null) {
 			return;
 		}
 		// If no MMT data is provided from the parent component, fetch it from the server

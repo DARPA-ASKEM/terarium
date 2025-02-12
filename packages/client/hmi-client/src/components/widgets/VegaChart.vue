@@ -48,6 +48,9 @@ const defaultChartConfig: Partial<Config> = {
 	tooltipFormat: {
 		numberFormat: 'tooltipFormatter',
 		numberFormatType: 'tooltipFormatter'
+	},
+	axis: {
+		labelFontSize: 12
 	}
 };
 

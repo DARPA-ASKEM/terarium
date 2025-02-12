@@ -10,7 +10,13 @@ import {
 	setParameterDistributions
 } from '@/services/model-configurations';
 import _ from 'lodash';
-import { ChartSetting, ChartSettingSensitivity, ChartSettingType, CiemssPresetTypes } from '@/types/common';
+import {
+	ChartSetting,
+	ChartSettingSensitivity,
+	ChartSettingType,
+	CiemssPresetTypes,
+	SensitivityChartType
+} from '@/types/common';
 import { updateChartSettingsBySelectedVariables, updateSensitivityChartSettingOption } from '@/services/chart-settings';
 import { AssetType, ParameterSemantic } from '@/types/Types';
 import { useProjects } from '@/composables/project';
@@ -194,7 +200,8 @@ export class SensitivityAnalysisScenario extends BaseScenario {
 		simulateChartSettings = updateSensitivityChartSettingOption(simulateChartSettings as ChartSettingSensitivity[], {
 			selectedVariables: this.simulateSpec.ids,
 			selectedInputVariables: this.parameters.map((parameter) => parameter!.referenceId),
-			timepoint: this.simulateSpec.endTime
+			timepoint: this.simulateSpec.endTime,
+			chartType: SensitivityChartType.SCATTER
 		});
 
 		wf.updateNode(simulateNode, {

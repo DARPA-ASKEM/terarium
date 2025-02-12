@@ -116,7 +116,8 @@ const processResult = async () => {
 		state.chartSettings = updateSensitivityChartSettingOption(state.chartSettings as ChartSettingSensitivity[], {
 			selectedVariables: selectedSensitivityVariables,
 			selectedInputVariables: firstSensitiveSetting!.selectedInputVariables,
-			timepoint: lastTimepoint
+			timepoint: lastTimepoint,
+			chartType: firstSensitiveSetting!.chartType
 		});
 	}
 

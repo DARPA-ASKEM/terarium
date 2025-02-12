@@ -8,20 +8,44 @@ import { Artifact, EventType } from '@/types/Types';
 import { AMRSchemaNames, CalendarDateType } from '@/types/common';
 import { fileToJson } from '@/utils/file';
 import { Ref } from 'vue';
+import { AxiosRequestConfig } from 'axios';
 import { DateOptions } from './charts';
 
-export async function createModel(model: Model): Promise<Model | null> {
+export async function createModel(
+	model: Model,
+	modelConfigurationId?: ModelConfiguration['id']
+): Promise<Model | null> {
 	delete model.id;
-	const response = await API.post(`/models`, model);
+	const params: AxiosRequestConfig['params'] = {};
+	if (modelConfigurationId) {
+		params['model-configuration-id'] = modelConfigurationId;
+	}
+	const response = await API.post(`/models`, model, {
+		params
+	});
 	return response?.data ?? null;
 }
 
-export async function createModelFromOld(oldModel: Model, newModel: Model): Promise<Model | null> {
+export async function createModelFromOld(
+	oldModel: Model,
+	newModel: Model,
+	modelConfigurationId?: ModelConfiguration['id']
+): Promise<Model | null> {
 	delete newModel.id;
-	const response = await API.post(`/models/new-from-old`, {
-		newModel,
-		oldModel
-	});
+	const params: AxiosRequestConfig['params'] = {};
+	if (modelConfigurationId) {
+		params['model-configuration-id'] = modelConfigurationId;
+	}
+	const response = await API.post(
+		`/models/new-from-old`,
+		{
+			newModel,
+			oldModel
+		},
+		{
+			params
+		}
+	);
 	return response?.data ?? null;
 }
 
@@ -29,7 +53,7 @@ export async function createModelAndModelConfig(file: File, progress?: Ref<numbe
 	const formData = new FormData();
 	formData.append('file', file);
 
-	const response = await API.post(`/model-configurations/import`, formData, {
+	const response = await API.post(`/model-configurations/import-archive`, formData, {
 		headers: {
 			'Content-Type': 'multipart/form-data'
 		},
@@ -82,7 +106,6 @@ export async function getBulkModels(modelIDs: string[]) {
 	return result;
 }
 
-// Note: will not work with decapodes
 export async function getMMT(model: Model): Promise<MMT | null> {
 	const response = await API.post('/mira/amr-to-mmt', model);
 	const mmt = response?.data?.response;
@@ -173,20 +196,11 @@ export function getModelType(model: Model | null | undefined): AMRSchemaNames {
 	if (schemaName === 'stockflow') {
 		return AMRSchemaNames.STOCKFLOW;
 	}
-	if (schemaName === 'decapodes' || schemaName === 'decapode') {
-		return AMRSchemaNames.DECAPODES;
-	}
 	return AMRSchemaNames.PETRINET;
 }
 
 // Converts a model into LaTeX equation, either one of PetriNet, StockN'Flow, or RegNet;
 export async function getModelEquation(model: Model): Promise<string> {
-	const unSupportedFormats = ['decapodes'];
-	if (unSupportedFormats.includes(model.header.schema_name as string)) {
-		console.warn(`getModelEquation: ${model.header.schema_name} not supported `);
-		return '';
-	}
-
 	const response = await API.post(`/mira/model-to-latex`, model);
 	return response?.data?.response ?? '';
 }
