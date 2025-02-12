@@ -606,12 +606,6 @@ export class WorkflowWrapper {
 		node.state = state;
 	}
 
-	// updateNodeStatus(nodeId: string, status: OperatorStatus) {
-	// 	const node = this.getNodes().find((d) => d.id === nodeId);
-	// 	if (!node) return;
-	// 	node.status = status;
-	// }
-
 	// Get neighbor nodes for drilldown navigation
 	getNeighborNodes = (id: string) => {
 		const cache = new Map(this.getNodes().map((node) => [node.id, node]));
