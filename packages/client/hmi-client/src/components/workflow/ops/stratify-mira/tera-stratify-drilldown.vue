@@ -248,7 +248,8 @@ const handleModelPreview = async (data: any) => {
 	amrResponse.header.name = newName;
 
 	// Create output
-	const modelData = await createModelFromOld(amr.value, amrResponse);
+	const modelConfigId = props.node.inputs.find((i) => i.type === 'modelConfigId')?.value?.[0];
+	const modelData = await createModelFromOld(amr.value, amrResponse, modelConfigId);
 	if (!modelData) return;
 	outputAmr.value = modelData;
 
