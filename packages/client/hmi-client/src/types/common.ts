@@ -106,8 +106,7 @@ export enum AcceptedExtensions {
 export enum AMRSchemaNames {
 	PETRINET = 'petrinet',
 	REGNET = 'regnet',
-	STOCKFLOW = 'stockflow',
-	DECAPODES = 'decapodes'
+	STOCKFLOW = 'stockflow'
 }
 
 export interface PDFExtractionResponseType {
