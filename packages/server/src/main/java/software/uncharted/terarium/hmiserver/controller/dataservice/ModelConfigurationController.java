@@ -40,6 +40,7 @@ import software.uncharted.terarium.hmiserver.models.dataservice.project.ProjectE
 import software.uncharted.terarium.hmiserver.security.Roles;
 import software.uncharted.terarium.hmiserver.service.CurrentUserService;
 import software.uncharted.terarium.hmiserver.service.data.ModelConfigurationService;
+import software.uncharted.terarium.hmiserver.service.data.ModelConfigurationService.ModelConfigurationUpdate;
 import software.uncharted.terarium.hmiserver.service.data.ModelService;
 import software.uncharted.terarium.hmiserver.service.data.ProjectService;
 import software.uncharted.terarium.hmiserver.utils.Messages;
@@ -374,10 +375,13 @@ public class ModelConfigurationController {
 	) {
 		final Permission permission = projectService.checkPermissionCanRead(currentUserService.get().getId(), projectId);
 
+		final ModelConfigurationUpdate options = new ModelConfigurationUpdate();
+		options.setName(name);
+		options.setDescription(description);
+
 		final ModelConfiguration modelConfiguration = ModelConfigurationService.modelConfigurationFromAMR(
 			configuredModel,
-			name,
-			description
+			options
 		);
 
 		try {
@@ -419,10 +423,13 @@ public class ModelConfigurationController {
 	) {
 		final Permission permission = projectService.checkPermissionCanRead(currentUserService.get().getId(), projectId);
 
+		final ModelConfigurationUpdate options = new ModelConfigurationUpdate();
+		options.setName(name);
+		options.setDescription(description);
+
 		final ModelConfiguration modelConfiguration = ModelConfigurationService.modelConfigurationFromAMR(
 			configuredModel,
-			name,
-			description
+			options
 		);
 
 		modelConfiguration.setId(id);
