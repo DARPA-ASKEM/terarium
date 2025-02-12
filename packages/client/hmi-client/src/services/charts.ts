@@ -7,10 +7,12 @@ import type { ChartAnnotation, FunmanInterval } from '@/types/Types';
 import { CalendarDateType, SensitivityChartType } from '@/types/common';
 import { countDigits, fixPrecisionError } from '@/utils/number';
 import { format } from 'd3';
+import { BinParams } from 'vega-lite/build/src/bin';
 import { flattenInterventionData } from './intervention-policy';
 import type { FunmanBox, FunmanConstraintsResponse } from './models/funman-service';
 
 const VEGALITE_SCHEMA = 'https://vega.github.io/schema/vega-lite/v5.json';
+const GLOBAL_FONT = 'Figtree';
 
 const NUMBER_FORMAT = '.3~s';
 export const expressionFunctions = {
@@ -135,7 +137,6 @@ export function createErrorChart(dataset: Record<string, any>[], options: ErrorC
 	const axisColor = '#EEE';
 	const labelColor = '#667085';
 	const labelFontWeight = 'normal';
-	const globalFont = 'Figtree';
 
 	const areaChartColor = options.color ?? '#1B8073';
 	const dotColor = options.color ?? '#1B8073';
@@ -180,7 +181,7 @@ export function createErrorChart(dataset: Record<string, any>[], options: ErrorC
 
 	const config = {
 		facet: { spacing: 2 },
-		font: globalFont,
+		font: GLOBAL_FONT,
 		mark: { opacity: 1 },
 		view: { stroke: 'transparent' },
 		axis: {
@@ -324,7 +325,6 @@ export function createHistogramChart(dataset: Record<string, any>[], options: Hi
 	const axisColor = '#EEE';
 	const labelColor = '#667085';
 	const labelFontWeight = 'normal';
-	const globalFont = 'Figtree';
 	const titleObj = options.title
 		? {
 				text: options.title,
@@ -376,7 +376,7 @@ export function createHistogramChart(dataset: Record<string, any>[], options: Hi
 		},
 		layer: [],
 		config: {
-			font: globalFont
+			font: GLOBAL_FONT
 		}
 	};
 
@@ -405,12 +405,17 @@ export function createHistogramChart(dataset: Record<string, any>[], options: Hi
 			domain: opts.variables.map((v) => v.label ?? v.field),
 			range: opts.variables.map((v) => v.color)
 		};
-		const bin = { maxbins: maxBins, extent };
+		let bin: BinParams | null = { maxbins: maxBins, extent };
+
+		// If there is only one value (min and max extent are the same), we do not want to bin it
+		if (extent[0] === extent[1]) {
+			bin = null;
+		}
 		const aggregate = 'count';
 		return opts.variables.map((varOption) => ({
 			mark: { type: 'bar', width: varOption.width, tooltip: true },
 			encoding: {
-				x: { bin, field: varOption.field, axis: xaxis, scale: { padding: xPadding } },
+				x: { bin, field: varOption.field, axis: xaxis, scale: { padding: xPadding }, type: 'quantitative' },
 				y: { aggregate, axis: yaxis },
 				color: {
 					legend: { ...legendProperties },
@@ -508,7 +513,6 @@ export function createForecastChart(
 	const axisColor = '#EEE';
 	const labelColor = '#667085';
 	const labelFontWeight = 'normal';
-	const globalFont = 'Figtree';
 	const titleObj = options.title
 		? {
 				text: options.title,
@@ -597,7 +601,7 @@ export function createForecastChart(
 			type: options.autosize || AUTOSIZE.FIT_X
 		},
 		config: {
-			font: globalFont,
+			font: GLOBAL_FONT,
 			legend: {
 				layout: {
 					anchor: 'start'
@@ -1129,7 +1133,6 @@ export function createQuantilesForecastChart(
 	const axisColor = '#EEE';
 	const labelColor = '#667085';
 	const labelFontWeight = 'normal';
-	const globalFont = 'Figtree';
 	const titleObj = options.title
 		? {
 				text: options.title,
@@ -1221,7 +1224,7 @@ export function createQuantilesForecastChart(
 			type: options.autosize || AUTOSIZE.FIT_X
 		},
 		config: {
-			font: globalFont,
+			font: GLOBAL_FONT,
 			legend: {
 				layout: {
 					direction: legendProperties.direction,
@@ -1376,12 +1379,10 @@ export function createSimulateSensitivityScatter(
 /* -------------------------------------------------------------------------- */
 
 export function createSensitivityRankingChart(data: { parameter: string; score: number }[], options: BaseChartOptions) {
-	const globalFont = 'Figtree';
-
 	const spec: any = {
 		$schema: VEGALITE_SCHEMA,
 		config: {
-			font: globalFont,
+			font: GLOBAL_FONT,
 			bar: {
 				discreteBandSize: 8 // Fixed bar width
 			}
@@ -1477,7 +1478,8 @@ export function createForecastChartAnnotation(axis: 'x' | 'y', datum: number, la
 					dx: 16,
 					dy: -16,
 					angle: isVertical ? 90 : 0,
-					baseline: 'top'
+					baseline: 'top',
+					fontSize: 12
 				},
 				encoding: {
 					text: { value: label }
@@ -1749,7 +1751,6 @@ export function createFunmanStateChart(
 	if (isEmpty(trajectories)) return null;
 
 	const threshold = 1e25;
-	const globalFont = 'Figtree';
 
 	const stateIdConstraints = constraints.filter((c) => c.variables.includes(stateId));
 	// Find min/max values to set an appropriate viewing range for y-axis
@@ -1791,7 +1792,7 @@ export function createFunmanStateChart(
 	return {
 		$schema: VEGALITE_SCHEMA,
 		id: stateId,
-		config: { font: globalFont },
+		config: { font: GLOBAL_FONT },
 		width: 600,
 		height: 300,
 		title: {
@@ -1907,11 +1908,10 @@ export function createFunmanParameterCharts(
 		});
 	});
 
-	const globalFont = 'Figtree';
 	return {
 		$schema: VEGALITE_SCHEMA,
 		config: {
-			font: globalFont,
+			font: GLOBAL_FONT,
 			tick: { thickness: 2 }
 		},
 		width: 600,
@@ -2073,12 +2073,10 @@ export function createRankingInterventionsChart(
 	title: string | null = null,
 	variableName: string | null = null
 ) {
-	const globalFont = 'Figtree';
-
 	return {
 		$schema: VEGALITE_SCHEMA,
 		config: {
-			font: globalFont,
+			font: GLOBAL_FONT,
 			bar: {
 				discreteBandSize: 20 // Fixed bar width
 			},

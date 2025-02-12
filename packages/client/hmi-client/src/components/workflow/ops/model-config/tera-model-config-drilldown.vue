@@ -55,7 +55,8 @@
 									:empty-input-count="missingInputCount(configuration)"
 									@click="onSelectConfiguration(configuration)"
 									@delete="fetchConfigurations(model.id)"
-									@download="downloadModelArchive(configuration)"
+									@downloadArchive="downloadZippedModelAndConfig(configuration)"
+									@downloadModel="downloadModel(configuration)"
 									@use="onSelectConfiguration(configuration)"
 								/>
 							</li>
@@ -263,7 +264,8 @@ import {
 	setInitialSource,
 	setParameterDistributions,
 	setParameterSource,
-	updateModelConfiguration
+	updateModelConfiguration,
+	getAsConfiguredModel
 } from '@/services/model-configurations';
 import { useToastService } from '@/services/toast';
 import type { Initial, Model, ModelConfiguration, TaskResponse } from '@/types/Types';
@@ -566,12 +568,26 @@ const configuredMmt = ref(makeConfiguredMMT(mmt.value, knobs.value.transientMode
 
 const calendarSettings = ref<CalendarSettings | null>(null);
 
-const downloadModelArchive = async (configuration: ModelConfiguration = knobs.value.transientModelConfig) => {
+const downloadZippedModelAndConfig = async (configuration: ModelConfiguration = knobs.value.transientModelConfig) => {
 	const archive = await getArchive(configuration);
 	if (archive) {
 		const a = document.createElement('a');
 		a.href = URL.createObjectURL(archive);
 		a.download = `${configuration.name}.modelconfig`;
+		a.click();
+		a.remove();
+	}
+};
+
+const downloadModel = async (configuration: ModelConfiguration = knobs.value.transientModelConfig) => {
+	if (!configuration.id) return;
+
+	const configuredModel = await getAsConfiguredModel(configuration.id);
+	if (configuredModel) {
+		const data = `text/json;charset=utf-8,${encodeURIComponent(JSON.stringify(configuredModel, null, 2))}`;
+		const a = document.createElement('a');
+		a.href = `data:${data}`;
+		a.download = `${configuredModel.name ?? 'model'}.json`;
 		a.click();
 		a.remove();
 	}

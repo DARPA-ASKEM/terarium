@@ -53,7 +53,7 @@ export const getAsConfiguredModel = async (modelConfigurationId: string): Promis
 };
 
 export const getArchive = async (modelConfiguration: ModelConfiguration): Promise<any> => {
-	const response = await API.get(`model-configurations/download/${modelConfiguration.id}`, {
+	const response = await API.get(`model-configurations/download-archive/${modelConfiguration.id}`, {
 		responseType: 'arraybuffer'
 	});
 	const blob = new Blob([response?.data], { type: 'application/octet-stream' });
