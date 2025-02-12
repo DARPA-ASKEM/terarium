@@ -14,7 +14,6 @@ import org.springframework.security.test.context.support.WithUserDetails;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import software.uncharted.terarium.hmiserver.TerariumApplicationTests;
 import software.uncharted.terarium.hmiserver.configuration.MockUser;
-import software.uncharted.terarium.hmiserver.controller.dataservice.ModelController.UpdateModelRequest;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.Model;
 import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.ModelHeader;
 import software.uncharted.terarium.hmiserver.models.dataservice.project.Project;
@@ -64,17 +63,13 @@ public class ModelControllerTests extends TerariumApplicationTests {
 					.setDescription("test-description")
 					.setSchemaName("petrinet")
 			);
-
-		UpdateModelRequest updateModelRequest = new UpdateModelRequest();
-		updateModelRequest.setModel(model);
-
 		mockMvc
 			.perform(
 				MockMvcRequestBuilders.post("/models")
 					.param("project-id", PROJECT_ID.toString())
 					.with(csrf())
 					.contentType("application/json")
-					.content(objectMapper.writeValueAsString(updateModelRequest))
+					.content(objectMapper.writeValueAsString(model))
 			)
 			.andExpect(status().isCreated());
 	}

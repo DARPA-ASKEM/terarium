@@ -8,6 +8,7 @@ import { Artifact, EventType } from '@/types/Types';
 import { AMRSchemaNames, CalendarDateType } from '@/types/common';
 import { fileToJson } from '@/utils/file';
 import { Ref } from 'vue';
+import { AxiosRequestConfig } from 'axios';
 import { DateOptions } from './charts';
 
 export async function createModel(
@@ -15,7 +16,13 @@ export async function createModel(
 	modelConfigurationId?: ModelConfiguration['id']
 ): Promise<Model | null> {
 	delete model.id;
-	const response = await API.post(`/models`, { model, modelConfigurationId });
+	const params: AxiosRequestConfig['params'] = {};
+	if (modelConfigurationId) {
+		params['model-configuration-id'] = modelConfigurationId;
+	}
+	const response = await API.post(`/models`, model, {
+		params
+	});
 	return response?.data ?? null;
 }
 
@@ -25,11 +32,20 @@ export async function createModelFromOld(
 	modelConfigurationId?: ModelConfiguration['id']
 ): Promise<Model | null> {
 	delete newModel.id;
-	const response = await API.post(`/models/new-from-old`, {
-		newModel,
-		oldModel,
-		modelConfigurationId
-	});
+	const params: AxiosRequestConfig['params'] = {};
+	if (modelConfigurationId) {
+		params['model-configuration-id'] = modelConfigurationId;
+	}
+	const response = await API.post(
+		`/models/new-from-old`,
+		{
+			newModel,
+			oldModel
+		},
+		{
+			params
+		}
+	);
 	return response?.data ?? null;
 }
 

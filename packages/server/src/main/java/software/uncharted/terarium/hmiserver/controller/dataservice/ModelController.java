@@ -411,13 +411,6 @@ public class ModelController {
 		}
 	}
 
-	@Data
-	public static class UpdateModelRequest {
-
-		Model model;
-		UUID modelConfigurationId;
-	}
-
 	@PostMapping
 	@Secured(Roles.USER)
 	@Operation(summary = "Create a new model")
@@ -435,8 +428,9 @@ public class ModelController {
 		}
 	)
 	ResponseEntity<Model> createModel(
-		@RequestBody final UpdateModelRequest req,
-		@RequestParam(name = "project-id", required = false) final UUID projectId
+		@RequestBody final Model model,
+		@RequestParam(name = "project-id", required = false) final UUID projectId,
+		@RequestParam(name = "model-configuration-id", required = false) final UUID modelConfigId
 	) {
 		final Schema.Permission permission = projectService.checkPermissionCanWrite(
 			currentUserService.get().getId(),
@@ -447,11 +441,10 @@ public class ModelController {
 			// Set the model name from the AMR header name.
 			// TerariumAsset have a name field, but it's not used for the model name outside
 			// the front-end.
-			final Model model = req.model;
 
 			ModelConfiguration oldModelConfiguration = null;
-			if (req.getModelConfigurationId() != null) {
-				oldModelConfiguration = modelConfigurationService.getAsset(req.getModelConfigurationId(), permission).get();
+			if (modelConfigId != null) {
+				oldModelConfiguration = modelConfigurationService.getAsset(modelConfigId, permission).get();
 			}
 
 			final ModelConfigurationUpdate options = new ModelConfigurationUpdate();
@@ -493,7 +486,6 @@ public class ModelController {
 
 		Model oldModel;
 		Model newModel;
-		UUID modelConfigurationId;
 	}
 
 	@PostMapping("/new-from-old")
@@ -514,7 +506,8 @@ public class ModelController {
 	)
 	ResponseEntity<Model> createModelFromOld(
 		@RequestBody final CreateModelFromOldRequest req,
-		@RequestParam(name = "project-id", required = false) final UUID projectId
+		@RequestParam(name = "project-id", required = false) final UUID projectId,
+		@RequestParam(name = "model-configuration-id", required = false) final UUID modelConfigId
 	) {
 		final Schema.Permission permission = projectService.checkPermissionCanWrite(
 			currentUserService.get().getId(),
@@ -531,8 +524,8 @@ public class ModelController {
 			final Model created = modelService.createAsset(req.newModel, projectId, permission);
 
 			ModelConfiguration oldModelConfiguration = null;
-			if (req.getModelConfigurationId() != null) {
-				oldModelConfiguration = modelConfigurationService.getAsset(req.getModelConfigurationId(), permission).get();
+			if (modelConfigId != null) {
+				oldModelConfiguration = modelConfigurationService.getAsset(modelConfigId, permission).get();
 			}
 
 			final ModelConfigurationUpdate options = new ModelConfigurationUpdate();
