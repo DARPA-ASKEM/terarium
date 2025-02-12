@@ -112,7 +112,7 @@ public class ModelConfigurationController {
 		}
 	}
 
-	@PostMapping(value = "/import", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+	@PostMapping(value = "/import-archive", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
 	@Secured(Roles.USER)
 	@Operation(summary = "Imports both a model and its configuration in a single go")
 	@ApiResponses(
@@ -180,9 +180,9 @@ public class ModelConfigurationController {
 		}
 	}
 
-	@GetMapping("/download/{id}")
+	@GetMapping("/download-archive/{id}")
 	@Secured(Roles.USER)
-	@Operation(summary = "Imports both a model and its configuration in a single go")
+	@Operation(summary = "Downloads both a model and its configuration in a single go in a zipped archive")
 	@ApiResponses(
 		value = {
 			@ApiResponse(
