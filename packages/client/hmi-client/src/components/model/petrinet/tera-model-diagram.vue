@@ -83,7 +83,7 @@ import { NestedPetrinetRenderer } from '@/model-representation/petrinet/nested-p
 import { PetrinetRenderer } from '@/model-representation/petrinet/petrinet-renderer';
 import { getModelRenderer } from '@/model-representation/service';
 import { NodeType } from '@/services/graph';
-import { getModelType, getMMT } from '@/services/model';
+import { getMMT } from '@/services/model';
 import type { FeatureConfig } from '@/types/common';
 import { StratifiedMatrix } from '@/types/Model';
 import type { Model } from '@/types/Types';
@@ -100,7 +100,6 @@ const graphElement = ref<HTMLDivElement | null>(null);
 const graphLegendLabels = ref<string[]>([]);
 const graphLegendColors = ref<string[]>([]);
 const selectedTransitionId = ref('');
-const modelType = computed(() => getModelType(props.model));
 const mmt = ref<MiraModel>(emptyMiraModel());
 const mmtParams = ref<MiraTemplateParams>({});
 
