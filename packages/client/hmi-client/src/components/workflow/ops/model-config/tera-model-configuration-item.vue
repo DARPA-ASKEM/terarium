@@ -27,7 +27,7 @@ import { ref } from 'vue';
 import { useConfirm } from 'primevue/useconfirm';
 import { deleteModelConfiguration } from '@/services/model-configurations';
 
-const emit = defineEmits(['delete', 'use', 'download']);
+const emit = defineEmits(['delete', 'use', 'downloadArchive', 'downloadModel']);
 const props = defineProps<{
 	configuration: ModelConfiguration;
 	selected?: boolean;
@@ -46,10 +46,17 @@ const contextMenuItems = ref([
 		}
 	},
 	{
-		label: 'Download',
+		label: 'Download model configuration',
 		icon: 'pi pi-download',
 		command() {
-			emit('download');
+			emit('downloadArchive');
+		}
+	},
+	{
+		label: 'Download as Model',
+		icon: 'pi pi-download',
+		command() {
+			emit('downloadModel');
 		}
 	},
 	{

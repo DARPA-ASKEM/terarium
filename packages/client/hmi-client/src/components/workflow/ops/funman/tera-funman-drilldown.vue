@@ -606,7 +606,7 @@ const request = computed<FunmanPostQueriesRequest | null>(() => {
 		model: configuredInputModel,
 		request: {
 			constraints,
-			parameters: knobs.value.requestParameters.map(({ disabled, ...rest }) => rest), // Remove the disabled property from the request (it's only used for UI)
+			parameters: knobs.value.requestParameters.map(({ disabled: _disabled, ...rest }) => rest), // Remove the disabled property from the request (it's only used for UI)
 			structure_parameters: [
 				{
 					name: 'schedules',
