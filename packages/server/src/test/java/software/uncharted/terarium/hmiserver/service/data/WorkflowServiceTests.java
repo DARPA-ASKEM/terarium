@@ -124,7 +124,7 @@ public class WorkflowServiceTests extends TerariumApplicationTests {
 		Assertions.assertNotNull(modelConfigNode);
 		workflowService.branchWorkflow(wf1, modelConfigNode.getId(), null);
 		Assertions.assertEquals(wf1.getNodes().size(), 5);
-		Assertions.assertEquals(wf.getEdges().size(), 4);
+		Assertions.assertEquals(wf1.getEdges().size(), 4);
 
 		final Workflow wf2 = createWorkflowFromFile();
 		final WorkflowNode modelNode = wf2
@@ -135,9 +135,9 @@ public class WorkflowServiceTests extends TerariumApplicationTests {
 			.orElse(null);
 
 		Assertions.assertNotNull(modelNode);
-		workflowService.branchWorkflow(wf1, modelNode.getId(), null);
-		Assertions.assertEquals(wf1.getNodes().size(), 6);
-		Assertions.assertEquals(wf.getEdges().size(), 4);
+		workflowService.branchWorkflow(wf2, modelNode.getId(), null);
+		Assertions.assertEquals(wf2.getNodes().size(), 6);
+		Assertions.assertEquals(wf2.getEdges().size(), 4);
 	}
 
 	@Test
