@@ -6,12 +6,13 @@ import {
 	ChartSettingEnsembleVariableOptions,
 	ChartSettingComparison,
 	ChartSettingSensitivity,
-	ChartSettingType
+	ChartSettingType,
+	SensitivityChartType
 } from '@/types/common';
 import { v4 as uuidv4 } from 'uuid';
 import { b64DecodeUnicode } from '@/utils/binary';
 import { ChartAnnotation } from '@/types/Types';
-import { CATEGORICAL_SCHEME, ForecastChartOptions } from './charts';
+import { CATEGORICAL_SCHEME, createVariableColorMap, ForecastChartOptions } from './charts';
 
 export interface LLMGeneratedChartAnnotation {
 	request: string;
@@ -164,7 +165,12 @@ export function updateChartSettingsBySelectedVariables(
 
 export function updateSensitivityChartSettingOption(
 	settings: ChartSettingSensitivity[],
-	options: { selectedVariables: string[]; selectedInputVariables: string[]; timepoint: number }
+	options: {
+		selectedVariables: string[];
+		selectedInputVariables: string[];
+		timepoint: number;
+		chartType: SensitivityChartType;
+	}
 ) {
 	// previous settings without the settings of the given type
 	const previousSettings = settings.filter((setting) => setting.type !== ChartSettingType.SENSITIVITY);
@@ -176,11 +182,13 @@ export function updateSensitivityChartSettingOption(
 		if (found) {
 			found.selectedInputVariables = options.selectedInputVariables;
 			found.timepoint = options.timepoint;
+			found.chartType = options.chartType;
 			return found;
 		}
 		return createNewChartSetting(variable, ChartSettingType.SENSITIVITY, [variable], {
 			selectedInputVariables: options.selectedInputVariables,
-			timepoint: options.timepoint
+			timepoint: options.timepoint,
+			chartType: options.chartType
 		});
 	});
 
@@ -330,4 +338,19 @@ export async function generateForecastChartAnnotation(
 		request,
 		layerSpec
 	};
+}
+
+export function generateComparisonColorScheme(setting: ChartSettingComparison, variableIndex = -1) {
+	const colorScheme: string[] = [];
+	const variables = variableIndex === -1 ? setting.selectedVariables : [setting.selectedVariables[variableIndex]];
+	const variableColors = getComparisonVariableColors(setting);
+	variables.forEach((variable) => {
+		colorScheme.push(variableColors[variable]);
+	});
+	return colorScheme;
+}
+
+export function getComparisonVariableColors(setting: ChartSettingComparison) {
+	const defaultMap = createVariableColorMap(setting.selectedVariables);
+	return { ...defaultMap, ...setting.variableColors };
 }

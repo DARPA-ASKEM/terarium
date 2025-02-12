@@ -19,6 +19,7 @@ import software.uncharted.terarium.hmiserver.models.dataservice.simulation.Progr
 import software.uncharted.terarium.hmiserver.models.dataservice.simulation.Simulation;
 import software.uncharted.terarium.hmiserver.models.task.TaskResponse;
 import software.uncharted.terarium.hmiserver.service.data.ModelConfigurationService;
+import software.uncharted.terarium.hmiserver.service.data.ModelConfigurationService.ModelConfigurationUpdate;
 import software.uncharted.terarium.hmiserver.service.data.SimulationService;
 
 @Component
@@ -123,10 +124,13 @@ public class ValidateModelConfigHandler extends TaskResponseHandler {
 			// Only use contracted model to create model configuration, no need to save it
 			final Model contractedModel = objectMapper.convertValue(contractedModelObject, Model.class);
 
+			final ModelConfigurationUpdate options = new ModelConfigurationUpdate();
+			options.setName(props.newModelConfigName);
+			options.setDescription(contractedModel.getDescription());
+
 			final ModelConfiguration contractedModelConfiguration = ModelConfigurationService.modelConfigurationFromAMR(
 				contractedModel,
-				props.newModelConfigName,
-				contractedModel.getDescription()
+				options
 			);
 			contractedModelConfiguration.setTemporary(true);
 			contractedModelConfiguration.setModelId(props.modelId); // Config should be linked to the original model

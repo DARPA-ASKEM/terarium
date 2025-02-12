@@ -74,10 +74,13 @@ const model = ref<Model | null>(null);
 const modelConfiguration = ref<ModelConfiguration | null>(null);
 const modelVarUnits = ref<{ [key: string]: string }>({});
 
-const runResult = ref<DataArray>([]);
-const runResultPre = ref<DataArray>([]);
-const runResultSummary = ref<DataArray>([]);
-const runResultSummaryPre = ref<DataArray>([]);
+const runResult = ref<{
+	result: DataArray;
+	resultPre: DataArray;
+	resultSummary: DataArray;
+	resultSummaryPre: DataArray;
+} | null>(null);
+
 const policyInterventionId = computed(() => props.node.inputs[2].value?.[0]);
 const interventionPolicy = ref<InterventionPolicy | null>(null);
 
@@ -152,13 +155,7 @@ async function updateLossChartWithSimulation() {
 onMounted(async () => updateLossChartWithSimulation());
 
 const selectedOutputMapping = computed(() => getSelectedOutputMapping(props.node));
-const preparedChartInputs = usePreparedChartInputs(
-	props,
-	runResult,
-	runResultSummary,
-	runResultPre,
-	runResultSummaryPre
-);
+const preparedChartInputs = usePreparedChartInputs(props, runResult);
 
 const { selectedVariableSettings, selectedInterventionSettings } = useChartSettings(props, emit);
 const { useInterventionCharts, useVariableCharts } = useCharts(
@@ -442,16 +439,18 @@ watch(
 		if (!active) return;
 		if (!state.forecastId) return;
 
-		// Simulates
-		runResult.value = await getRunResultCSV(state.forecastId, 'result.csv');
-		runResultSummary.value = await getRunResultCSV(state.forecastId, 'result_summary.csv');
-
-		runResultPre.value = await getRunResultCSV(state.preForecastId, 'result.csv', renameFnGenerator('pre'));
-		runResultSummaryPre.value = await getRunResultCSV(
-			state.preForecastId,
-			'result_summary.csv',
-			renameFnGenerator('pre')
-		);
+		const [result, resultSummary, resultPre, resultSummaryPre] = await Promise.all([
+			getRunResultCSV(state.forecastId, 'result.csv'),
+			getRunResultCSV(state.forecastId, 'result_summary.csv'),
+			getRunResultCSV(state.preForecastId, 'result.csv', renameFnGenerator('pre')),
+			getRunResultCSV(state.preForecastId, 'result_summary.csv', renameFnGenerator('pre'))
+		]);
+		runResult.value = {
+			result,
+			resultSummary,
+			resultPre,
+			resultSummaryPre
+		};
 
 		// Dataset used to calibrate
 		const datasetId = props.node.inputs[1]?.value?.[0];

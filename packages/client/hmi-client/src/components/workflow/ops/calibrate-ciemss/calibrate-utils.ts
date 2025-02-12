@@ -95,23 +95,28 @@ export function usePreparedChartInputs(
 	props: {
 		node: WorkflowNode<CalibrationOperationStateCiemss>;
 	},
-	runResult: Ref<DataArray>,
-	runResultSummary: Ref<DataArray>,
-	runResultPre: Ref<DataArray>,
-	runResultSummaryPre: Ref<DataArray>
+	runResult: Ref<{
+		result: DataArray;
+		resultPre: DataArray;
+		resultSummary: DataArray;
+		resultSummaryPre: DataArray;
+	} | null>
 ) {
-	const pyciemssMap = computed(() => (!runResult.value.length ? {} : parsePyCiemssMap(runResult.value[0])));
-
 	return computed(() => {
+		if (!runResult.value) return null;
+		const pyciemssMap = computed(() =>
+			!runResult.value?.result?.length ? {} : parsePyCiemssMap(runResult.value.result[0])
+		);
+
 		const state = props.node.state;
 		if (!state.calibrationId || _.isEmpty(pyciemssMap.value)) return null;
 
 		// Merge before/after for chart
 		const { result, resultSummary } = mergeResults(
-			runResultPre.value,
-			runResult.value,
-			runResultSummaryPre.value,
-			runResultSummary.value
+			runResult.value.resultPre,
+			runResult.value.result,
+			runResult.value.resultSummaryPre,
+			runResult.value.resultSummary
 		);
 
 		// Build lookup map for calibration, include before/after and dataset (observations)

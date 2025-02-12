@@ -284,9 +284,8 @@
 							<!-- Parameter distributions section -->
 							<AccordionTab v-if="selectedParameterSettings.length > 0" header="Parameter distributions">
 								<template v-for="setting of selectedParameterSettings" :key="setting.id">
-									<div class="flex flex-column">
+									<div v-if="parameterDistributionCharts[setting.id]" class="flex flex-column">
 										<vega-chart
-											v-if="parameterDistributionCharts[setting.id]"
 											expandable
 											:are-embed-actions-visible="true"
 											:visualization-spec="parameterDistributionCharts[setting.id].histogram"
@@ -678,10 +677,12 @@ const cancelRunId = computed(
 );
 const currentDatasetFileName = ref<string>();
 
-const runResult = ref<DataArray>([]);
-const runResultPre = ref<DataArray>([]);
-const runResultSummary = ref<DataArray>([]);
-const runResultSummaryPre = ref<DataArray>([]);
+const runResult = ref<{
+	result: DataArray;
+	resultPre: DataArray;
+	resultSummary: DataArray;
+	resultSummaryPre: DataArray;
+} | null>(null);
 const showSaveModal = ref(false);
 const configuredModelConfig = ref<ModelConfiguration | null>(null);
 
@@ -790,20 +791,14 @@ const selectedOutputTimestampColName = computed(() => getActiveOutput(props.node
 const errorData = computed<DataArray>(() =>
 	getErrorData(
 		groundTruthData.value,
-		runResult.value,
+		runResult.value?.result ?? [],
 		selectedOutputMapping.value,
 		selectedOutputTimestampColName.value,
 		pyciemssMap.value
 	)
 );
 
-const preparedChartInputs = usePreparedChartInputs(
-	props,
-	runResult,
-	runResultSummary,
-	runResultPre,
-	runResultSummaryPre
-);
+const preparedChartInputs = usePreparedChartInputs(props, runResult);
 const pyciemssMap = computed(() => preparedChartInputs.value?.pyciemssMap ?? {});
 const {
 	activeChartSettings,
@@ -1068,9 +1063,13 @@ const initialize = async () => {
 		if (dataset.value) {
 			currentDatasetFileName.value = getFileName(dataset.value);
 
-			setupCsvAsset(dataset.value).then((csv) => {
-				csvAsset.value = csv;
-			});
+			try {
+				setupCsvAsset(dataset.value).then((csv) => {
+					csvAsset.value = csv;
+				});
+			} catch (e) {
+				console.error(e);
+			}
 		}
 	}
 
@@ -1149,15 +1148,18 @@ watch(
 			}
 
 			const state = props.node.state;
-			runResult.value = await getRunResultCSV(state.forecastId, 'result.csv');
-			runResultSummary.value = await getRunResultCSV(state.forecastId, 'result_summary.csv');
-
-			runResultPre.value = await getRunResultCSV(state.preForecastId, 'result.csv', renameFnGenerator('pre'));
-			runResultSummaryPre.value = await getRunResultCSV(
-				state.preForecastId,
-				'result_summary.csv',
-				renameFnGenerator('pre')
-			);
+			const [result, resultSummary, resultPre, resultSummaryPre] = await Promise.all([
+				getRunResultCSV(state.forecastId, 'result.csv'),
+				getRunResultCSV(state.forecastId, 'result_summary.csv'),
+				getRunResultCSV(state.preForecastId, 'result.csv', renameFnGenerator('pre')),
+				getRunResultCSV(state.preForecastId, 'result_summary.csv', renameFnGenerator('pre'))
+			]);
+			runResult.value = {
+				result,
+				resultSummary,
+				resultPre,
+				resultSummaryPre
+			};
 		}
 	},
 	{ immediate: true }
