@@ -626,6 +626,22 @@ export function useCharts(
 				options.title = varName;
 				options.yAxisTitle = capitalize(selectedPlotType.value);
 				options.colorscheme = variableColorMap;
+				// if (modelConfigurations.value.length > 0) {
+				// 	options.startDate = modelConfigurations.value[0].temporalContext;
+				// }
+
+				// add datestrings to data
+
+				// if (options.startDate) {
+				// 	chartData.value?.resultGroupByTimepoint?.forEach((datum) => {
+				// 		if (datum['timepoint_id']) {
+				// 			const startDate = new Date(options.startDate);
+				// 			startDate.setDate(startDate.getDate() + datum['timepoint_id'][0]);
+				// 			datum['timepoint_id_str'] = datum['timepoint_id'].map(() => startDate.toISOString());
+				// 		}
+				// 	});
+				// }
+				// console.log(chartData.value?.resultGroupByTimepoint)
 
 				const annotations = getChartAnnotationsByChartId(settings.id);
 				const chart = !settings.showQuantiles
