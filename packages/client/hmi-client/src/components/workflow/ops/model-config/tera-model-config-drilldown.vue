@@ -588,7 +588,6 @@ const downloadModel = async (configuration: ModelConfiguration = knobs.value.tra
 		const a = document.createElement('a');
 		a.href = `data:${data}`;
 		a.download = `${configuredModel.name ?? 'model'}.json`;
-		a.innerHTML = 'download JSON';
 		a.click();
 		a.remove();
 	}
