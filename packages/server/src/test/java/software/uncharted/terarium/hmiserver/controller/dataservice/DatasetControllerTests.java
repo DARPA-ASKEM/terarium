@@ -299,6 +299,7 @@ public class DatasetControllerTests extends TerariumApplicationTests {
 			)
 			.andExpect(status().isOk());
 
+		@SuppressWarnings("unused")
 		final MvcResult res = mockMvc
 			.perform(
 				MockMvcRequestBuilders.get("/datasets/" + dataset.getId() + "/download-file")

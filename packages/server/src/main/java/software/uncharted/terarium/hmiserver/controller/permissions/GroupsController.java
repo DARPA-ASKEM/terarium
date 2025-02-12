@@ -36,6 +36,7 @@ public class GroupsController {
 
 	private final ReBACService reBACService;
 
+	@SuppressWarnings("unused")
 	private final CurrentUserService currentUserService;
 
 	@GetMapping

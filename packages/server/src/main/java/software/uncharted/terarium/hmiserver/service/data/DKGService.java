@@ -173,6 +173,7 @@ public class DKGService {
 			return null; //error case
 		}
 
+		@SuppressWarnings("unused")
 		final MultisearchBody.Builder msBuilder = new MultisearchBody.Builder();
 
 		final List<KnnQuery> queries = new ArrayList<>();

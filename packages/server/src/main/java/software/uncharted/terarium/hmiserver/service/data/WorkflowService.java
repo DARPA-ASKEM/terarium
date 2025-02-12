@@ -33,6 +33,7 @@ import software.uncharted.terarium.hmiserver.service.data.NotebookSessionService
 import software.uncharted.terarium.hmiserver.service.s3.S3ClientService;
 import software.uncharted.terarium.hmiserver.utils.rebac.Schema;
 
+@SuppressWarnings("unused")
 @Service
 @Slf4j
 public class WorkflowService extends TerariumAssetService<Workflow, WorkflowRepository> {

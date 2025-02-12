@@ -24,7 +24,10 @@ public class ModelCardResponseHandler extends TaskResponseHandler {
 
 	public static final String NAME = "gollm:model_card";
 	private final ObjectMapper objectMapper;
+
+	@SuppressWarnings("unused")
 	private final DocumentAssetService documentAssetService;
+
 	private final ModelService modelService;
 
 	public static final int MAX_TEXT_SIZE = 600000;

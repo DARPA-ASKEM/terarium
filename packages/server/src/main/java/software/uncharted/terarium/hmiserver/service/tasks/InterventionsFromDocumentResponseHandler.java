@@ -23,7 +23,11 @@ public class InterventionsFromDocumentResponseHandler extends TaskResponseHandle
 
 	private final ObjectMapper objectMapper;
 	private final InterventionService interventionService;
+
+	@SuppressWarnings("unused")
 	private final ProvenanceService provenanceService;
+
+	@SuppressWarnings("unused")
 	private final DocumentAssetService documentAssetService;
 
 	@Override
@@ -74,6 +78,7 @@ public class InterventionsFromDocumentResponseHandler extends TaskResponseHandle
 				// Set the extraction document id
 				ip.getInterventions().forEach(intervention -> intervention.setExtractionDocumentId(props.documentId));
 
+				@SuppressWarnings("unused")
 				final InterventionPolicy newPolicy = interventionService.createAsset(
 					ip,
 					props.projectId,

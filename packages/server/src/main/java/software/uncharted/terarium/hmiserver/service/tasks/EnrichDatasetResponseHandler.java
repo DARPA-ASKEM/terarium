@@ -31,6 +31,8 @@ public class EnrichDatasetResponseHandler extends TaskResponseHandler {
 
 	private final ObjectMapper objectMapper;
 	private final DatasetService datasetService;
+
+	@SuppressWarnings("unused")
 	private final DKGService dkgService;
 
 	@Override

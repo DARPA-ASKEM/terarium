@@ -50,12 +50,14 @@ public class KnowledgeControllerTests extends TerariumApplicationTests {
 	@Autowired
 	private ProjectService projectService;
 
+	@SuppressWarnings("unused")
 	@Autowired
 	private CodeService codeService;
 
 	@Autowired
 	private ProjectSearchService projectSearchService;
 
+	@SuppressWarnings("unused")
 	@Autowired
 	private ExtractionService extractionService;
 

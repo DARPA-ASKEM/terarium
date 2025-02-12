@@ -3,7 +3,6 @@ package software.uncharted.terarium.hmiserver.service;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.IOException;
 import java.nio.file.Files;
-import java.util.ArrayList;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.http.HttpEntity;
@@ -17,7 +16,6 @@ import org.springframework.security.test.context.support.WithUserDetails;
 import software.uncharted.terarium.hmiserver.TerariumApplicationTests;
 import software.uncharted.terarium.hmiserver.configuration.MockUser;
 import software.uncharted.terarium.hmiserver.models.dataservice.document.DocumentAsset;
-import software.uncharted.terarium.hmiserver.models.dataservice.model.Model;
 import software.uncharted.terarium.hmiserver.models.dataservice.project.Project;
 import software.uncharted.terarium.hmiserver.service.data.DatasetService;
 import software.uncharted.terarium.hmiserver.service.data.DocumentAssetService;
@@ -28,12 +26,14 @@ import software.uncharted.terarium.hmiserver.service.data.ProjectService;
 @Slf4j
 public class ExtractionServiceTests extends TerariumApplicationTests {
 
+	@SuppressWarnings("unused")
 	@Autowired
 	private ObjectMapper objectMapper;
 
 	@Autowired
 	private DocumentAssetService documentAssetService;
 
+	@SuppressWarnings("unused")
 	@Autowired
 	private ModelService modelService;
 
@@ -43,6 +43,7 @@ public class ExtractionServiceTests extends TerariumApplicationTests {
 	@Autowired
 	private ProjectService projectService;
 
+	@SuppressWarnings("unused")
 	@Autowired
 	private DatasetService datasetService;
 

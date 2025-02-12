@@ -26,7 +26,10 @@ public class InterventionsFromDatasetResponseHandler extends TaskResponseHandler
 
 	private final ObjectMapper objectMapper;
 	private final InterventionService interventionService;
+
+	@SuppressWarnings("unused")
 	private final ProvenanceService provenanceService;
+
 	private final DatasetService datasetService;
 
 	@Override
@@ -75,6 +78,7 @@ public class InterventionsFromDatasetResponseHandler extends TaskResponseHandler
 				}
 
 				// Fetch the dataset name
+				@SuppressWarnings("unused")
 				final Optional<Dataset> dataset = datasetService.getAsset(
 					props.datasetId,
 					ASSUME_WRITE_PERMISSION_ON_BEHALF_OF_USER
@@ -83,6 +87,7 @@ public class InterventionsFromDatasetResponseHandler extends TaskResponseHandler
 				// Set the extraction dataset id
 				ip.getInterventions().forEach(intervention -> intervention.setExtractionDatasetId(props.datasetId));
 
+				@SuppressWarnings("unused")
 				final InterventionPolicy newPolicy = interventionService.createAsset(
 					ip,
 					props.projectId,

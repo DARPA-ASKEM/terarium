@@ -236,6 +236,7 @@ public class TaskUtilities {
 	}
 
 	/** Check if a grounding is non-existent. */
+	@SuppressWarnings("unused")
 	private static Boolean isGroundingNonExistent(Grounding grounding) {
 		return grounding == null || grounding.isEmpty();
 	}

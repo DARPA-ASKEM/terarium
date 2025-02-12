@@ -5,14 +5,11 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import io.micrometer.observation.annotation.Observed;
 import java.io.IOException;
-import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import software.uncharted.terarium.hmiserver.configuration.Config;
-import software.uncharted.terarium.hmiserver.configuration.ElasticsearchConfiguration;
-import software.uncharted.terarium.hmiserver.models.dataservice.document.DocumentAsset;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.Model;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.ModelDescription;
 import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.ModelMetadata;
@@ -27,9 +24,16 @@ import software.uncharted.terarium.hmiserver.utils.rebac.Schema;
 @Service
 public class ModelService extends TerariumAssetService<Model, ModelRepository> {
 
+	@SuppressWarnings("unused")
 	private final CurrentUserService currentUserService;
+
+	@SuppressWarnings("unused")
 	private final DocumentAssetService documentAssetService;
+
+	@SuppressWarnings("unused")
 	private final TaskService taskService;
+
+	@SuppressWarnings("unused")
 	private final DKGService dkgService;
 
 	public ModelService(

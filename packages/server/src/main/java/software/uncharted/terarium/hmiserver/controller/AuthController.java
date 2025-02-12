@@ -13,6 +13,7 @@ import software.uncharted.terarium.hmiserver.service.CurrentUserService;
 @RequiredArgsConstructor
 public class AuthController {
 
+	@SuppressWarnings("unused")
 	private final CurrentUserService currentUserService;
 
 	@GetMapping

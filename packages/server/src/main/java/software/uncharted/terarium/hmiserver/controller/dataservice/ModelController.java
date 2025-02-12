@@ -564,6 +564,7 @@ public class ModelController {
 		@RequestParam(value = "page-size", required = false, defaultValue = "100") final int pageSize,
 		@RequestParam(name = "project-id", required = false) final UUID projectId
 	) {
+		@SuppressWarnings("unused")
 		final Schema.Permission permission = projectService.checkPermissionCanRead(
 			currentUserService.get().getId(),
 			projectId

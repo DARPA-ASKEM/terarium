@@ -34,6 +34,7 @@ public class KeycloakJwtAuthenticationConverter implements Converter<Jwt, Abstra
 
 	private final RoleService roleService;
 
+	@SuppressWarnings("unused")
 	private final DataInitializationService dataInitializationService;
 
 	private final AdminClientService adminClientService;
