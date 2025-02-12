@@ -1,4 +1,4 @@
-import { Workflow, WorkflowPort, Operation, WorkflowNode, WorkflowPortStatus } from '@/types/workflow';
+import { WorkflowPort, Operation, WorkflowNode, WorkflowPortStatus } from '@/types/workflow';
 import * as workflowService from '@/services/workflow';
 
 import { describe, expect, it } from 'vitest';
