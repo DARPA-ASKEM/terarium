@@ -615,6 +615,11 @@ export function createForecastChart(
 		}
 	};
 
+	let dateExpression;
+	if (options.dateOptions) {
+		dateExpression = formatDateLabelFn(options.dateOptions.startDate, 'datum.value', options.dateOptions.dateFormat);
+	}
+
 	// Helper function to capture common layer structure
 	const newLayer = (layer: ForecastChartLayer, markType: string) => {
 		const selectedFields = layer.variables.concat([layer.timeField]);
@@ -646,10 +651,6 @@ export function createForecastChart(
 			});
 		}
 
-		let dateExpression;
-		if (options.dateOptions) {
-			dateExpression = formatDateLabelFn(options.dateOptions.startDate, 'datum.value', options.dateOptions.dateFormat);
-		}
 		const encodingX: ChartEncoding = {
 			field: layer.timeField,
 			type: 'quantitative',
@@ -840,7 +841,7 @@ export function createForecastChart(
 				type: 'rect',
 				color: '#dddddd',
 				opacity: 0.5,
-				width: 30,
+				width: options?.dateOptions?.startDate ? 80 : 30,
 				height: 20,
 				cornerRadius: 4
 			},
@@ -881,10 +882,22 @@ export function createForecastChart(
 				color: '#111111',
 				dx: 0
 			},
+			transform: [
+				{
+					calculate: options.dateOptions
+						? formatDateLabelFn(
+								options.dateOptions.startDate,
+								`datum.${statisticsLayer.timeField}`,
+								options.dateOptions.dateFormat
+							)
+						: undefined,
+					as: 'tooltipText'
+				}
+			],
 			encoding: {
 				text: {
-					field: statisticsLayer.timeField,
-					type: 'quantitative'
+					field: options?.dateOptions?.startDate ? 'tooltipText' : statisticsLayer.timeField,
+					type: options?.dateOptions?.startDate ? 'nominal' : 'quantitative'
 				},
 				x: {
 					field: statisticsLayer.timeField,
@@ -971,11 +984,6 @@ export function createForecastChart(
 				dy: -5
 			},
 			encoding: {
-				text: {
-					field: 'valueField',
-					type: 'quantitative',
-					format: '.3f'
-				},
 				x: {
 					field: statisticsLayer.timeField,
 					type: 'quantitative'
@@ -1018,11 +1026,23 @@ export function createForecastChart(
 				dx: 5,
 				dy: -5
 			},
+			transform: [
+				{
+					calculate: options.dateOptions
+						? formatDateLabelFn(
+								options.dateOptions.startDate,
+								`datum.${statisticsLayer.timeField}`,
+								options.dateOptions.dateFormat
+							)
+						: undefined,
+					as: 'tooltipText'
+				}
+			],
 			encoding: {
 				text: {
-					field: 'valueField',
-					type: 'quantitative',
-					format: '.3f'
+					field: options.dateOptions?.startDate ? 'tooltipText' : statisticsLayer.timeField,
+					type: options.dateOptions?.startDate ? 'nominal' : 'quantitative',
+					format: options.dateOptions?.startDate ? undefined : '.3f'
 				},
 				x: {
 					field: statisticsLayer.timeField,
