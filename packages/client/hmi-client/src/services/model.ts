@@ -8,20 +8,44 @@ import { Artifact, EventType } from '@/types/Types';
 import { AMRSchemaNames, CalendarDateType } from '@/types/common';
 import { fileToJson } from '@/utils/file';
 import { Ref } from 'vue';
+import { AxiosRequestConfig } from 'axios';
 import { DateOptions } from './charts';
 
-export async function createModel(model: Model): Promise<Model | null> {
+export async function createModel(
+	model: Model,
+	modelConfigurationId?: ModelConfiguration['id']
+): Promise<Model | null> {
 	delete model.id;
-	const response = await API.post(`/models`, model);
+	const params: AxiosRequestConfig['params'] = {};
+	if (modelConfigurationId) {
+		params['model-configuration-id'] = modelConfigurationId;
+	}
+	const response = await API.post(`/models`, model, {
+		params
+	});
 	return response?.data ?? null;
 }
 
-export async function createModelFromOld(oldModel: Model, newModel: Model): Promise<Model | null> {
+export async function createModelFromOld(
+	oldModel: Model,
+	newModel: Model,
+	modelConfigurationId?: ModelConfiguration['id']
+): Promise<Model | null> {
 	delete newModel.id;
-	const response = await API.post(`/models/new-from-old`, {
-		newModel,
-		oldModel
-	});
+	const params: AxiosRequestConfig['params'] = {};
+	if (modelConfigurationId) {
+		params['model-configuration-id'] = modelConfigurationId;
+	}
+	const response = await API.post(
+		`/models/new-from-old`,
+		{
+			newModel,
+			oldModel
+		},
+		{
+			params
+		}
+	);
 	return response?.data ?? null;
 }
 
@@ -29,7 +53,7 @@ export async function createModelAndModelConfig(file: File, progress?: Ref<numbe
 	const formData = new FormData();
 	formData.append('file', file);
 
-	const response = await API.post(`/model-configurations/import`, formData, {
+	const response = await API.post(`/model-configurations/import-archive`, formData, {
 		headers: {
 			'Content-Type': 'multipart/form-data'
 		},

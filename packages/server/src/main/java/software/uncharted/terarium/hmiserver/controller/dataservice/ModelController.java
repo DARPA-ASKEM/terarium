@@ -51,6 +51,7 @@ import software.uncharted.terarium.hmiserver.service.CurrentUserService;
 import software.uncharted.terarium.hmiserver.service.data.DatasetService;
 import software.uncharted.terarium.hmiserver.service.data.DocumentAssetService;
 import software.uncharted.terarium.hmiserver.service.data.ModelConfigurationService;
+import software.uncharted.terarium.hmiserver.service.data.ModelConfigurationService.ModelConfigurationUpdate;
 import software.uncharted.terarium.hmiserver.service.data.ModelService;
 import software.uncharted.terarium.hmiserver.service.data.ProjectAssetService;
 import software.uncharted.terarium.hmiserver.service.data.ProjectService;
@@ -428,7 +429,8 @@ public class ModelController {
 	)
 	ResponseEntity<Model> createModel(
 		@RequestBody final Model model,
-		@RequestParam(name = "project-id", required = false) final UUID projectId
+		@RequestParam(name = "project-id", required = false) final UUID projectId,
+		@RequestParam(name = "model-configuration-id", required = false) final UUID modelConfigId
 	) {
 		final Schema.Permission permission = projectService.checkPermissionCanWrite(
 			currentUserService.get().getId(),
@@ -439,14 +441,24 @@ public class ModelController {
 			// Set the model name from the AMR header name.
 			// TerariumAsset have a name field, but it's not used for the model name outside
 			// the front-end.
+
+			ModelConfiguration oldModelConfiguration = null;
+			if (modelConfigId != null) {
+				oldModelConfiguration = modelConfigurationService.getAsset(modelConfigId, permission).get();
+			}
+
+			final ModelConfigurationUpdate options = new ModelConfigurationUpdate();
+			if (oldModelConfiguration != null) {
+				options.setTemporalContext(oldModelConfiguration.getTemporalContext());
+			}
+
 			model.setName(model.getHeader().getName());
 			final Model created = modelService.createAsset(model, projectId, permission);
 
 			// create default configuration
 			final ModelConfiguration modelConfiguration = ModelConfigurationService.modelConfigurationFromAMR(
 				created,
-				null,
-				null
+				options
 			);
 			modelConfigurationService.createAsset(modelConfiguration, projectId, permission);
 
@@ -494,7 +506,8 @@ public class ModelController {
 	)
 	ResponseEntity<Model> createModelFromOld(
 		@RequestBody final CreateModelFromOldRequest req,
-		@RequestParam(name = "project-id", required = false) final UUID projectId
+		@RequestParam(name = "project-id", required = false) final UUID projectId,
+		@RequestParam(name = "model-configuration-id", required = false) final UUID modelConfigId
 	) {
 		final Schema.Permission permission = projectService.checkPermissionCanWrite(
 			currentUserService.get().getId(),
@@ -510,11 +523,20 @@ public class ModelController {
 			req.newModel.setName(req.newModel.getHeader().getName());
 			final Model created = modelService.createAsset(req.newModel, projectId, permission);
 
+			ModelConfiguration oldModelConfiguration = null;
+			if (modelConfigId != null) {
+				oldModelConfiguration = modelConfigurationService.getAsset(modelConfigId, permission).get();
+			}
+
+			final ModelConfigurationUpdate options = new ModelConfigurationUpdate();
+			if (oldModelConfiguration != null) {
+				options.setTemporalContext(oldModelConfiguration.getTemporalContext());
+			}
+
 			// create default configuration
 			final ModelConfiguration modelConfiguration = ModelConfigurationService.modelConfigurationFromAMR(
 				created,
-				null,
-				null
+				options
 			);
 			modelConfigurationService.createAsset(modelConfiguration, projectId, permission);
 
@@ -650,11 +672,10 @@ public class ModelController {
 		@RequestParam(name = "project-id", required = false) final UUID projectId
 	) {
 		try {
-			final ModelConfiguration modelConfiguration = ModelConfigurationService.modelConfigurationFromAMR(
-				model,
-				model.getName(),
-				model.getDescription()
-			);
+			final ModelConfigurationUpdate options = new ModelConfigurationUpdate();
+			options.setName(model.getName());
+			options.setName(model.getDescription());
+			final ModelConfiguration modelConfiguration = ModelConfigurationService.modelConfigurationFromAMR(model, options);
 			return ResponseEntity.ok(modelConfiguration);
 		} catch (final Exception e) {
 			final String error = "Unable to get model configurations";
