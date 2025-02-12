@@ -1,6 +1,5 @@
 package software.uncharted.terarium.hmiserver.controller.dataservice;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -10,7 +9,6 @@ import java.awt.image.BufferedImage;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.util.Base64;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
@@ -49,16 +47,11 @@ import software.uncharted.terarium.hmiserver.models.dataservice.ResponseDeleted;
 import software.uncharted.terarium.hmiserver.models.dataservice.ResponseStatus;
 import software.uncharted.terarium.hmiserver.models.dataservice.document.DocumentAsset;
 import software.uncharted.terarium.hmiserver.proxies.jsdelivr.JsDelivrProxy;
-import software.uncharted.terarium.hmiserver.proxies.skema.SkemaRustProxy;
-import software.uncharted.terarium.hmiserver.proxies.skema.SkemaUnifiedProxy;
 import software.uncharted.terarium.hmiserver.security.Roles;
 import software.uncharted.terarium.hmiserver.service.CurrentUserService;
-import software.uncharted.terarium.hmiserver.service.ExtractionService;
 import software.uncharted.terarium.hmiserver.service.data.DocumentAssetService;
 import software.uncharted.terarium.hmiserver.service.data.ProjectService;
-import software.uncharted.terarium.hmiserver.service.gollm.EmbeddingService;
 import software.uncharted.terarium.hmiserver.utils.Messages;
-import software.uncharted.terarium.hmiserver.utils.rebac.ReBACService;
 import software.uncharted.terarium.hmiserver.utils.rebac.Schema;
 
 @RequestMapping("/document-asset")
@@ -68,25 +61,11 @@ import software.uncharted.terarium.hmiserver.utils.rebac.Schema;
 public class DocumentController {
 
 	final Config config;
-	final ReBACService reBACService;
 	final CurrentUserService currentUserService;
 	final Messages messages;
-
-	final SkemaUnifiedProxy skemaUnifiedProxy;
-
-	final SkemaRustProxy skemaRustProxy;
-
 	final JsDelivrProxy gitHubProxy;
-
-	final DownloadService downloadService;
-
 	private final ProjectService projectService;
-
 	final DocumentAssetService documentAssetService;
-
-	final ObjectMapper objectMapper;
-	final ExtractionService extractionService;
-	final EmbeddingService embeddingService;
 
 	@PostMapping
 	@Secured(Roles.USER)
@@ -157,10 +136,7 @@ public class DocumentController {
 
 		try {
 			final Optional<DocumentAsset> updated = documentAssetService.updateAsset(document, projectId, permission);
-			if (updated.isEmpty()) {
-				return ResponseEntity.notFound().build();
-			}
-			return ResponseEntity.ok(updated.get());
+			return updated.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
 		} catch (final IOException e) {
 			final String error = "Unable to update document";
 			log.error(error, e);
@@ -584,66 +560,5 @@ public class DocumentController {
 			log.error(error, e);
 			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, error);
 		}
-	}
-
-	/**
-	 * Post Images to Equations Unified service to get an AMR
-	 *
-	 * @param documentId document id
-	 * @param filename   filename of the image
-	 * @return LaTeX representation of the equation
-	 */
-	@GetMapping("/{id}/image-to-equation")
-	@Secured(Roles.USER)
-	@Operation(summary = "Post Images to Equations Unified service to get an AMR")
-	@ApiResponses(
-		value = {
-			@ApiResponse(
-				responseCode = "200",
-				description = "Converts image to string",
-				content = @Content(
-					mediaType = "application/text",
-					schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = String.class)
-				)
-			),
-			@ApiResponse(responseCode = "500", description = "There was an issue creating equation", content = @Content)
-		}
-	)
-	public ResponseEntity<String> postImageToEquation(
-		@PathVariable("id") final UUID documentId,
-		@RequestParam("filename") final String filename
-	) {
-		Optional<byte[]> bytes = Optional.empty();
-		try {
-			bytes = documentAssetService.fetchFileAsBytes(documentId, filename);
-		} catch (IOException e) {
-			log.error("Unable to fetch files from the document asset service", e);
-			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("generic.io-error.read"));
-		}
-
-		if (bytes.isEmpty()) {
-			return ResponseEntity.notFound().build();
-		}
-
-		final byte[] imagesByte = bytes.get();
-
-		// Encode the image in Base 64
-		final String imageB64 = Base64.getEncoder().encodeToString(imagesByte);
-
-		// image -> mathML
-		final String mathML = skemaUnifiedProxy.postImageToEquations(imageB64).getBody();
-
-		// mathML -> LaTeX
-		final String latex = skemaRustProxy.convertMathML2Latex(mathML).getBody();
-		if (latex == null) {
-			log.error("Unable to convert MathML to LaTeX");
-			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("skema.error.image-2-equation"));
-		}
-
-		// Add spaces before and after "*"
-		String latexWithSpaces = latex.replaceAll("(?<!\\s)\\*", " *");
-		latexWithSpaces = latexWithSpaces.replaceAll("\\*(?!\\s)", "* ");
-
-		return ResponseEntity.ok(latexWithSpaces);
 	}
 }

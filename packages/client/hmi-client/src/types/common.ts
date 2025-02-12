@@ -106,8 +106,7 @@ export enum AcceptedExtensions {
 export enum AMRSchemaNames {
 	PETRINET = 'petrinet',
 	REGNET = 'regnet',
-	STOCKFLOW = 'stockflow',
-	DECAPODES = 'decapodes'
+	STOCKFLOW = 'stockflow'
 }
 
 export interface PDFExtractionResponseType {
@@ -118,10 +117,6 @@ export interface PDFExtractionResponseType {
 export interface Position {
 	x: number;
 	y: number;
-}
-export enum ModelServiceType {
-	TA1 = 'SKEMA-MIT',
-	TA4 = 'GoLLM'
 }
 
 export interface CompareModelsResponseType {
