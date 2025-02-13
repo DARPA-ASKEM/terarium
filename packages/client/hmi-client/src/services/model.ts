@@ -1,3 +1,4 @@
+import _ from 'lodash';
 import API from '@/api/api';
 import { useProjects } from '@/composables/project';
 import type { MMT } from '@/model-representation/mira/mira-common';
@@ -6,22 +7,45 @@ import type { Initial, InterventionPolicy, Model, ModelConfiguration, ModelParam
 import { Artifact, EventType } from '@/types/Types';
 import { AMRSchemaNames, CalendarDateType } from '@/types/common';
 import { fileToJson } from '@/utils/file';
-import { isEmpty } from 'lodash';
 import { Ref } from 'vue';
+import { AxiosRequestConfig } from 'axios';
 import { DateOptions } from './charts';
 
-export async function createModel(model: Model): Promise<Model | null> {
+export async function createModel(
+	model: Model,
+	modelConfigurationId?: ModelConfiguration['id']
+): Promise<Model | null> {
 	delete model.id;
-	const response = await API.post(`/models`, model);
+	const params: AxiosRequestConfig['params'] = {};
+	if (modelConfigurationId) {
+		params['model-configuration-id'] = modelConfigurationId;
+	}
+	const response = await API.post(`/models`, model, {
+		params
+	});
 	return response?.data ?? null;
 }
 
-export async function createModelFromOld(oldModel: Model, newModel: Model): Promise<Model | null> {
+export async function createModelFromOld(
+	oldModel: Model,
+	newModel: Model,
+	modelConfigurationId?: ModelConfiguration['id']
+): Promise<Model | null> {
 	delete newModel.id;
-	const response = await API.post(`/models/new-from-old`, {
-		newModel,
-		oldModel
-	});
+	const params: AxiosRequestConfig['params'] = {};
+	if (modelConfigurationId) {
+		params['model-configuration-id'] = modelConfigurationId;
+	}
+	const response = await API.post(
+		`/models/new-from-old`,
+		{
+			newModel,
+			oldModel
+		},
+		{
+			params
+		}
+	);
 	return response?.data ?? null;
 }
 
@@ -29,7 +53,7 @@ export async function createModelAndModelConfig(file: File, progress?: Ref<numbe
 	const formData = new FormData();
 	formData.append('file', file);
 
-	const response = await API.post(`/model-configurations/import`, formData, {
+	const response = await API.post(`/model-configurations/import-archive`, formData, {
 		headers: {
 			'Content-Type': 'multipart/form-data'
 		},
@@ -82,7 +106,6 @@ export async function getBulkModels(modelIDs: string[]) {
 	return result;
 }
 
-// Note: will not work with decapodes
 export async function getMMT(model: Model): Promise<MMT | null> {
 	const response = await API.post('/mira/amr-to-mmt', model);
 	const mmt = response?.data?.response;
@@ -126,7 +149,7 @@ export async function processAndAddModelToProject(artifact: Artifact): Promise<s
 // A helper function to check if a model is empty.
 export function isModelEmpty(model: Model) {
 	if (getModelType(model) === AMRSchemaNames.PETRINET) {
-		return isEmpty(model.model?.states) && isEmpty(model.model?.transitions);
+		return _.isEmpty(model.model?.states) && _.isEmpty(model.model?.transitions);
 	}
 	// TODO: support different frameworks' version of empty
 	return false;
@@ -173,20 +196,11 @@ export function getModelType(model: Model | null | undefined): AMRSchemaNames {
 	if (schemaName === 'stockflow') {
 		return AMRSchemaNames.STOCKFLOW;
 	}
-	if (schemaName === 'decapodes' || schemaName === 'decapode') {
-		return AMRSchemaNames.DECAPODES;
-	}
 	return AMRSchemaNames.PETRINET;
 }
 
 // Converts a model into LaTeX equation, either one of PetriNet, StockN'Flow, or RegNet;
 export async function getModelEquation(model: Model): Promise<string> {
-	const unSupportedFormats = ['decapodes'];
-	if (unSupportedFormats.includes(model.header.schema_name as string)) {
-		console.warn(`getModelEquation: ${model.header.schema_name} not supported `);
-		return '';
-	}
-
 	const response = await API.post(`/mira/model-to-latex`, model);
 	return response?.data?.response ?? '';
 }
@@ -219,6 +233,57 @@ export const getTypesFromModelParts = (model: Model) => {
 		typeMapping[o.id] = 'observable';
 	});
 	return typeMapping;
+};
+
+/**
+ * For a given state variable, return the state modifiers
+ */
+export const getModelStateModifiers = (varId: string, model: Model) => {
+	const states = model.model.states;
+	const modifiers: Record<string, string> = (states as any[]).find((s) => s.id === varId)?.grounding?.modifiers || {};
+	return modifiers;
+};
+
+/**
+ * For a given state variable, return the state modifiers object entries in a array of string formatted in the form of key:value, e.g. ['key:value']. The array is sorted.
+ */
+export const getStateVariableStrataEntries = (varId: string, model: Model) => {
+	const modifiers = getModelStateModifiers(varId, model);
+	const entries = Object.entries(modifiers)
+		.map(([key, value]) => `${key}:${value}`)
+		.sort();
+	// Filter out entries with value that are not included in the name.
+	// For example, we see something like "modifiers": { "diagnosis": "ncit:C15220", "Age": "old" }, for id, `I_old`. We only care about strata, 'old' in this case.
+	// TODO: This is not ideal and have potential issues in some edge cases. We need to find a better way to identify the strata for each state variable.
+	const filtered = entries.filter((entry) => varId.includes(entry.split(':')[1]));
+	return filtered;
+};
+
+/**
+ * Group selected state variables for the model by strata.
+ *
+ * @param {string[]} selectedVariables - Array of selected variable IDs.
+ * @param {Record<string, string>} pyciemssMap - Mapping of variable IDs to their corresponding pyciemss representation.
+ * @param {Model} model - The model containing the state variables.
+ * @returns {Object} An object containing two properties:
+ *  - selectedVariablesGroupByStrata: A grouping of selected variables by their strata.
+ *  - allVariablesGroupByStrata: A grouping of all variables by their strata.
+ */
+export const groupVariablesByStrata = (
+	selectedVariables: string[],
+	pyciemssMap: Record<string, string>,
+	model: Model
+) => {
+	const selectedVariablesGroupByStrata = _.groupBy(selectedVariables, (v) =>
+		getStateVariableStrataEntries(v, model).join('-')
+	);
+	const allVariablesGroupByStrata = {};
+	Object.keys(selectedVariablesGroupByStrata).forEach((group) => {
+		allVariablesGroupByStrata[group] = Object.keys(pyciemssMap).filter(
+			(k) => group === getStateVariableStrataEntries(k, model).join('-')
+		);
+	});
+	return { selectedVariablesGroupByStrata, allVariablesGroupByStrata };
 };
 
 export function isInitial(obj: Initial | ModelParameter | null): obj is Initial {

@@ -1,99 +1,54 @@
 package software.uncharted.terarium.hmiserver.service.data;
 
-import co.elastic.clients.elasticsearch.core.SearchRequest;
-import co.elastic.clients.elasticsearch.core.search.SourceConfig;
-import co.elastic.clients.elasticsearch.core.search.SourceFilter;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import io.micrometer.observation.annotation.Observed;
 import java.io.IOException;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Service;
 import software.uncharted.terarium.hmiserver.configuration.Config;
 import software.uncharted.terarium.hmiserver.configuration.ElasticsearchConfiguration;
-import software.uncharted.terarium.hmiserver.models.TerariumAssetEmbeddings;
+import software.uncharted.terarium.hmiserver.models.dataservice.document.DocumentAsset;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.Model;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.ModelDescription;
 import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.ModelMetadata;
 import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.metadata.Annotations;
 import software.uncharted.terarium.hmiserver.repository.data.ModelRepository;
-import software.uncharted.terarium.hmiserver.service.elasticsearch.ElasticsearchService;
-import software.uncharted.terarium.hmiserver.service.gollm.EmbeddingService;
+import software.uncharted.terarium.hmiserver.service.CurrentUserService;
 import software.uncharted.terarium.hmiserver.service.s3.S3ClientService;
+import software.uncharted.terarium.hmiserver.service.tasks.TaskService;
 import software.uncharted.terarium.hmiserver.utils.rebac.Schema;
 
 @Slf4j
 @Service
-public class ModelService extends TerariumAssetServiceWithSearch<Model, ModelRepository> {
+public class ModelService extends TerariumAssetService<Model, ModelRepository> {
 
-	private final EmbeddingService embeddingService;
-
-	private final Environment env;
+	private final CurrentUserService currentUserService;
+	private final DocumentAssetService documentAssetService;
+	private final TaskService taskService;
+	private final DKGService dkgService;
 
 	public ModelService(
 		final ObjectMapper objectMapper,
 		final Config config,
-		final ElasticsearchConfiguration elasticConfig,
-		final ElasticsearchService elasticService,
+		final CurrentUserService currentUserService,
+		final DocumentAssetService documentAssetService,
 		final ProjectService projectService,
 		final ProjectAssetService projectAssetService,
-		final S3ClientService s3ClientService,
 		final ModelRepository repository,
-		final EmbeddingService embeddingService,
-		final Environment env
+		final S3ClientService s3ClientService,
+		final TaskService taskService,
+		final DKGService dkgService
 	) {
-		super(
-			objectMapper,
-			config,
-			elasticConfig,
-			elasticService,
-			projectService,
-			projectAssetService,
-			s3ClientService,
-			repository,
-			Model.class
-		);
-		this.embeddingService = embeddingService;
-		this.env = env;
-	}
-
-	private boolean isRunningTestProfile() {
-		final String[] activeProfiles = env.getActiveProfiles();
-
-		for (final String profile : activeProfiles) {
-			if ("test".equals(profile)) {
-				return true;
-			}
-		}
-
-		return false;
-	}
-
-	@Observed(name = "function_profile")
-	public List<ModelDescription> getDescriptions(final Integer page, final Integer pageSize) throws IOException {
-		final SourceConfig source = new SourceConfig.Builder()
-			.filter(new SourceFilter.Builder().excludes("model", "semantics").build())
-			.build();
-
-		final SearchRequest req = new SearchRequest.Builder()
-			.index(getAssetAlias())
-			.from(page)
-			.size(pageSize)
-			.query(q ->
-				q.bool(b ->
-					b
-						.mustNot(mn -> mn.exists(e -> e.field("deletedOn")))
-						.mustNot(mn -> mn.term(t -> t.field("temporary").value(true)))
-						.mustNot(mn -> mn.term(t -> t.field("isPublic").value(false)))
-				)
-			)
-			.source(source)
-			.build();
-
-		return elasticService.search(req, Model.class).stream().map(m -> ModelDescription.fromModel(m)).toList();
+		super(objectMapper, config, projectService, projectAssetService, repository, s3ClientService, Model.class);
+		this.currentUserService = currentUserService;
+		this.documentAssetService = documentAssetService;
+		this.taskService = taskService;
+		this.dkgService = dkgService;
 	}
 
 	@Observed(name = "function_profile")
@@ -110,19 +65,8 @@ public class ModelService extends TerariumAssetServiceWithSearch<Model, ModelRep
 
 	@Override
 	@Observed(name = "function_profile")
-	protected String getAssetIndex() {
-		return elasticConfig.getModelIndex();
-	}
-
-	@Override
-	@Observed(name = "function_profile")
 	protected String getAssetPath() {
 		throw new UnsupportedOperationException("Models are not stored in S3");
-	}
-
-	@Override
-	public String getAssetAlias() {
-		return elasticConfig.getModelAlias();
 	}
 
 	@Observed(name = "function_profile")
@@ -161,29 +105,24 @@ public class ModelService extends TerariumAssetServiceWithSearch<Model, ModelRep
 		if (asset.getHeader() != null && asset.getHeader().getName() != null) {
 			asset.setName(asset.getHeader().getName());
 		}
-		final Model created = super.createAsset(asset, projectId, hasWritePermission);
 
-		if (!isRunningTestProfile() && created.getPublicAsset() && !created.getTemporary()) {
-			String text;
-			if (created.getMetadata() != null && created.getMetadata().getGollmCard() != null) {
-				text = objectMapper.writeValueAsString(created.getMetadata().getGollmCard());
-			} else {
-				text = objectMapper.writeValueAsString(created);
-			}
-
-			new Thread(() -> {
-				try {
-					final TerariumAssetEmbeddings embeddings = embeddingService.generateEmbeddings(text);
-
-					// Execute the update request
-					uploadEmbeddings(created.getId(), embeddings, hasWritePermission);
-				} catch (final Exception e) {
-					log.error("Failed to update embeddings for model {}", created.getId(), e);
-				}
-			}).start();
+		final JsonNode time = asset.getSemantics().getOde().getTime();
+		// set a time parameter and default to day for the model if it doesn't exist
+		if (time == null || time.get("id") == null) {
+			asset.getSemantics().getOde().setTime(objectMapper.createObjectNode().put("id", "t"));
 		}
 
-		return created;
+		// if there is a time parameter, set the default to date if it is "day"
+		if (time != null && time.get("units") != null && time.get("units").get("expression").asText().equals("day")) {
+			final String id = asset.getSemantics().getOde().getTime().get("id").asText();
+			final ObjectNode unitsNode = objectMapper
+				.createObjectNode()
+				.put("expression", "date")
+				.put("expression_mathml", "<ci>date</ci>");
+			final ObjectNode timeNode = objectMapper.createObjectNode().put("id", id).set("units", unitsNode);
+			asset.getSemantics().getOde().setTime(timeNode);
+		}
+		return super.createAsset(asset, projectId, hasWritePermission);
 	}
 
 	@Override
@@ -207,28 +146,6 @@ public class ModelService extends TerariumAssetServiceWithSearch<Model, ModelRep
 		final Optional<Model> updatedOptional = super.updateAsset(asset, projectId, hasWritePermission);
 		if (updatedOptional.isEmpty()) {
 			return Optional.empty();
-		}
-
-		final Model updated = updatedOptional.get();
-
-		if (!isRunningTestProfile() && updated.getPublicAsset() && !updated.getTemporary()) {
-			String text;
-			if (updated.getMetadata() != null && updated.getMetadata().getGollmCard() != null) {
-				text = objectMapper.writeValueAsString(updated.getMetadata().getGollmCard());
-			} else {
-				text = objectMapper.writeValueAsString(updated);
-			}
-
-			new Thread(() -> {
-				try {
-					final TerariumAssetEmbeddings embeddings = embeddingService.generateEmbeddings(text);
-
-					// Execute the update request
-					uploadEmbeddings(updated.getId(), embeddings, hasWritePermission);
-				} catch (final Exception e) {
-					log.error("Failed to update embeddings for model {}", updated.getId(), e);
-				}
-			}).start();
 		}
 
 		return updatedOptional;

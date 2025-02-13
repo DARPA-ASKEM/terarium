@@ -11,7 +11,7 @@
 		/>
 	</section>
 
-	<Button v-if="node.inputs[0].value" label="Edit" @click="emit('open-drilldown')" severity="secondary" outlined />
+	<Button v-if="node.inputs[0].value" label="Open" @click="emit('open-drilldown')" severity="secondary" outlined />
 	<tera-operator-placeholder v-else :node="node">Connect a model configuration</tera-operator-placeholder>
 	<tera-progress-spinner v-if="inProgressForecastId" :font-size="2" is-centered style="height: 100%" />
 </template>
@@ -51,67 +51,65 @@ const chartProxy = chartActionsProxy(props.node, (state: SimulateEnsembleCiemssO
 });
 
 const poller = new Poller();
-
-const getStatus = async (simulationId: string) => {
-	poller
-		.setInterval(3000)
-		.setThreshold(300)
-		.setPollAction(async () => pollAction(simulationId));
+const pollResult = async (runId: string) => {
+	poller.setPollAction(async () => pollAction(runId));
 	const pollerResults = await poller.start();
-	let state = _.cloneDeep(props.node.state);
-	state.errorMessage = { name: '', value: '', traceback: '' };
 
 	if (pollerResults.state === PollerState.Cancelled) {
-		state.inProgressForecastId = '';
 		poller.stop();
 	} else if (pollerResults.state !== PollerState.Done || !pollerResults.data) {
-		logger.error(`Simulation: ${simulationId} has failed`, {
-			toastTitle: 'Error - Pyciemss'
-		});
-		const simulation = await getSimulation(simulationId);
+		const simulation = await getSimulation(runId);
 		if (simulation?.status && simulation?.statusMessage) {
-			state = _.cloneDeep(props.node.state);
-			state.inProgressForecastId = '';
+			const state = _.cloneDeep(props.node.state);
 			state.errorMessage = {
-				name: simulationId,
+				name: runId,
 				value: simulation.status,
 				traceback: simulation.statusMessage
 			};
 			emit('update-state', state);
 		}
-		throw Error('Failed Runs');
+		// throw if there are any failed runs for now
+		logger.error(`Simulate: ${runId} has failed`, {
+			toastTitle: 'Error - Pyciemss'
+		});
 	}
-
-	emit('update-state', state);
 	return pollerResults;
 };
 
-const processResult = async (simulationId: string) => {
+const processResult = async () => {
 	const portLabel = props.node.inputs[0].label;
 	const state = _.cloneDeep(props.node.state);
+	state.errorMessage = { name: '', value: '', traceback: '' };
+	state.forecastId = state.inProgressForecastId;
+	state.inProgressForecastId = '';
+	const simulationId = state.forecastId;
 	if (state.chartConfigs.length === 0) {
 		chartProxy.addChart();
 	}
-
 	const datasetName = `Forecast run ${simulationId}`;
 	const projectId = useProjects().activeProjectId.value;
 	const datasetResult = await createDatasetFromSimulationResult(projectId, simulationId, datasetName, false);
 	if (!datasetResult) {
+		state.errorMessage = {
+			name: 'Failed to create dataset',
+			value: '',
+			traceback: `Failed to create dataset from simulation result: ${simulationId}`
+		};
+		emit('update-state', state);
 		return;
 	}
 
-	emit('append-output', {
-		type: SimulateEnsembleCiemssOperation.outputs[0].type,
-		label: nodeOutputLabel(props.node, `${portLabel} Result`),
-		value: [datasetResult.id],
-		state: {
-			mapping: state.mapping,
-			timeSpan: state.timeSpan,
-			numSamples: state.numSamples,
-			forecastId: simulationId
+	emit(
+		'append-output',
+		{
+			type: SimulateEnsembleCiemssOperation.outputs[0].type,
+			label: nodeOutputLabel(props.node, `${portLabel} Result`),
+			value: [datasetResult.id],
+			state: _.omit(state, ['chartSettings']),
+			isSelected: false
 		},
-		isSelected: false
-	});
+		state
+	);
 };
 
 watch(
@@ -129,14 +127,10 @@ watch(
 	async (id) => {
 		if (!id || id === '') return;
 
-		const response = await getStatus(id);
+		const response = await pollResult(id);
 		if (response?.state === PollerState.Done) {
-			processResult(id);
+			processResult();
 		}
-		const state = _.cloneDeep(props.node.state);
-		state.inProgressForecastId = '';
-		state.forecastId = id;
-		emit('update-state', state);
 	},
 	{ immediate: true }
 );

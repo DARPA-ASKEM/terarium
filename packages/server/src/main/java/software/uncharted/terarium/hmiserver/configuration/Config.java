@@ -134,6 +134,9 @@ public class Config {
 		 */
 		String baseUrl;
 
+		/** The url of the help documentation */
+		String documentationUrl;
+
 		/**
 		 * If true, we will log all client-side errors to the server. This is useful for
 		 * debugging, but should be false

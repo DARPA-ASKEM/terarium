@@ -8,12 +8,24 @@
 		:closeOnEscape="true"
 		@show="onExpand"
 	>
+		<template #header>
+			<Button
+				icon="pi pi-times"
+				class="p-dialog-header-icon p-dialog-header-close"
+				style="margin-left: auto"
+				@click="isExpanded = false"
+			/>
+		</template>
 		<div>
 			<div ref="vegaContainerLg"></div>
 		</div>
 	</Dialog>
 	<div class="vega-chart-container">
-		<div ref="vegaContainer" />
+		<div v-if="!interactive">
+			<img v-if="imageDataURL.length > 0" :src="imageDataURL" alt="chart" class="not-interactive" />
+		</div>
+		<div v-else ref="vegaContainer" />
+
 		<footer v-if="$slots.footer">
 			<slot name="footer" />
 		</footer>
@@ -21,31 +33,12 @@
 </template>
 
 <script setup lang="ts">
-import { format } from 'd3';
+import _ from 'lodash';
 import embed, { Config, Result, VisualizationSpec } from 'vega-embed';
 import Button from 'primevue/button';
 import Dialog from 'primevue/dialog';
-import { countDigits, fixPrecisionError } from '@/utils/number';
-import { ref, watch, toRaw, isRef, isReactive, isProxy, computed, h, render } from 'vue';
-
-const NUMBER_FORMAT = '.3~s';
-
-// Define the custom expression functions that can be registered and used in the Vega charts
-const expressionFunctions = {
-	// chartNumberFormatter is a custom number format that will display numbers in a more readable format
-	chartNumberFormatter: (value: number) => {
-		const correctedValue = fixPrecisionError(value);
-		if (value > -1 && value < 1) {
-			return countDigits(correctedValue) > 6 ? correctedValue.toExponential(3) : correctedValue.toString();
-		}
-		return format(NUMBER_FORMAT)(correctedValue);
-	},
-	// Just show full value in tooltip
-	tooltipFormatter: (value) => {
-		if (value === undefined) return 'N/A';
-		return fixPrecisionError(value);
-	}
-};
+import { ref, watch, toRaw, isRef, isReactive, isProxy, computed, h, render, onUnmounted } from 'vue';
+import { expressionFunctions } from '@/services/charts';
 
 // This config is default for all charts, but can be overridden by individual chart spec
 const defaultChartConfig: Partial<Config> = {
@@ -55,6 +48,9 @@ const defaultChartConfig: Partial<Config> = {
 	tooltipFormat: {
 		numberFormat: 'tooltipFormatter',
 		numberFormatType: 'tooltipFormatter'
+	},
+	axis: {
+		labelFontSize: 12
 	}
 };
 
@@ -76,12 +72,17 @@ const props = withDefaults(
 		 * If a function is provided, it will be called before expanding the chart, and the returned spec will be used for the expanded chart.
 		 */
 		expandable?: boolean | ((spec: VisualizationSpec) => VisualizationSpec);
+		/**
+		 * Whether to render interactive chart or png
+		 */
+		interactive?: boolean;
 	}>(),
 	{
 		areEmbedActionsVisible: true,
 		intervalSelectionSignalNames: () => [],
 		config: null,
-		expandable: false
+		expandable: false,
+		interactive: true
 	}
 );
 const vegaContainer = ref<HTMLElement>();
@@ -93,6 +94,9 @@ const vegaVisualizationExpanded = ref<Result>();
 const expandedView = computed(() => vegaVisualizationExpanded.value?.view);
 
 const isExpanded = ref(false);
+
+const interactive = ref(props.interactive);
+const imageDataURL = ref('');
 
 const onExpand = async () => {
 	if (vegaContainerLg.value) {
@@ -106,6 +110,7 @@ const onExpand = async () => {
 		if (typeof props.expandable === 'function') {
 			spec = props.expandable(spec);
 		}
+		vegaVisualizationExpanded.value?.finalize(); // dispose previous visualization before creating a new one
 		vegaVisualizationExpanded.value = await createVegaVisualization(vegaContainerLg.value, spec, props.config, {
 			actions: props.areEmbedActionsVisible,
 			expandable: false
@@ -120,6 +125,7 @@ const emit = defineEmits<{
 		intervalExtent: { [fieldName: string]: [number, number] } | null
 	): void;
 	(e: 'chart-click', datum: any | null): void;
+	(e: 'done-render'): void;
 }>();
 
 /**
@@ -202,15 +208,57 @@ async function createVegaVisualization(
 	return viz;
 }
 
-watch([vegaContainer, () => props.visualizationSpec], async () => {
-	if (!vegaContainer.value) {
-		return;
-	}
-	const spec = deepToRaw(props.visualizationSpec);
-	vegaVisualization.value = await createVegaVisualization(vegaContainer.value, spec, props.config, {
-		actions: props.areEmbedActionsVisible,
-		expandable: !!props.expandable
-	});
+watch(
+	[vegaContainer, () => props.visualizationSpec],
+	async ([, newSpec], [, oldSpec]) => {
+		if (_.isEmpty(newSpec)) return;
+		const isEqual = _.isEqual(newSpec, oldSpec);
+		const isAlreadyRendered =
+			interactive.value === false ? imageDataURL.value !== '' : vegaVisualization.value !== undefined;
+		// console.debug(`VegaChart: check spec diff. (interactive: ${interactive.value})`);
+		if (isEqual && isAlreadyRendered) return;
+
+		const spec = deepToRaw(props.visualizationSpec);
+
+		if (interactive.value === false) {
+			// render png
+			const shadowContainer = document.createElement('div');
+			const viz = await embed(
+				shadowContainer,
+				{ ...spec },
+				{
+					config: { ...defaultChartConfig, ...props.config } as Config,
+					actions: props.areEmbedActionsVisible,
+					expressionFunctions // Register expression functions
+				}
+			);
+
+			// svg or png, svg seems to yield crisper renderings at a cost of a
+			// much higher size
+			const dataURL = await viz.view.toImageURL('svg');
+			imageDataURL.value = dataURL;
+
+			// dispose
+			viz.finalize();
+			// console.debug('VegaChart: render image');
+		} else {
+			// render interactive
+			if (!vegaContainer.value) return;
+			vegaVisualization.value?.finalize(); // dispose previous visualization before creating a new one
+			vegaVisualization.value = await createVegaVisualization(vegaContainer.value, spec, props.config, {
+				actions: props.areEmbedActionsVisible,
+				expandable: !!props.expandable
+			});
+			// console.debug('VegaChart: render interactive');
+		}
+		emit('done-render');
+	},
+	{ immediate: true }
+);
+
+onUnmounted(() => {
+	vegaVisualization.value?.finalize();
+	vegaVisualizationExpanded.value?.finalize();
 });
 
 defineExpose({
@@ -233,9 +281,10 @@ defineExpose({
 </style>
 <style scoped>
 .vega-chart-container {
+	display: flex;
+	justify-content: center;
 	background: var(--surface-0);
 	margin-bottom: var(--gap-4);
-	padding-top: var(--gap-2);
 	footer {
 		padding: var(--gap-3);
 	}
@@ -276,5 +325,9 @@ defineExpose({
 :deep(.vega-embed .vega-actions a) {
 	font-family: 'Figtree', sans-serif;
 	font-weight: 400;
+}
+
+.not-interactive {
+	pointer-events: none;
 }
 </style>

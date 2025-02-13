@@ -7,6 +7,7 @@ import dagre from 'dagre';
 import graphScaffolder, { IGraph, INode, IEdge } from '@graph-scaffolder/index';
 import type { Position } from '@/types/common';
 import OrthogonalConnector, { Side } from '@/utils/ortho-router';
+import { getAStarPath } from '@graph-scaffolder/core';
 
 export type D3SelectionINode<T> = d3.Selection<d3.BaseType, INode<T>, null, any>;
 export type D3SelectionIEdge<T> = d3.Selection<d3.BaseType, IEdge<T>, null, any>;
@@ -55,6 +56,42 @@ enum EdgeProportion {
 const routeOptions = {
 	edgeProportion: EdgeProportion.None,
 	edgeAdaptiveSide: false
+};
+
+interface IPoint {
+	x: number;
+	y: number;
+}
+
+// A faster but not great looking edges
+export const rerouteEdgesFast = (nodes: INode<any>[], edges: IEdge<any>[]) => {
+	function basicCollisionFn(p: IPoint) {
+		const buffer = 0;
+		for (let i = 0; i < nodes.length; i++) {
+			const checkingObj = nodes[i];
+			if (p.x >= checkingObj.x - buffer && p.x <= checkingObj.x + checkingObj.width + buffer) {
+				if (p.y >= checkingObj.y - buffer && p.y <= checkingObj.y + checkingObj.height + buffer) {
+					return true;
+				}
+			}
+		}
+		return false;
+	}
+
+	const nodeMap: Map<string, any> = new Map();
+	nodes.forEach((node) => {
+		nodeMap.set(node.id, {
+			x: node.x,
+			y: node.y
+		});
+	});
+
+	edges.forEach((edge: IEdge<any>) => {
+		const a = nodeMap.get(edge.source);
+		const b = nodeMap.get(edge.target);
+		const path = getAStarPath(a, b, { collider: basicCollisionFn });
+		edge.points = path;
+	});
 };
 
 export const rerouteEdges = (nodes: INode<any>[], edges: IEdge<any>[]) => {
@@ -132,7 +169,7 @@ export const rerouteEdges = (nodes: INode<any>[], edges: IEdge<any>[]) => {
 			pointB: { shape: shapeB, side: sideB, distance: 0.5 },
 			shapeMargin: 20,
 			globalBoundsMargin: 10,
-			globalBounds: { left: -8000, top: -8000, width: 8000, height: 8000 },
+			globalBounds: { left: -2000, top: -2000, width: 4000, height: 4000 },
 			obstacles
 		};
 
@@ -151,6 +188,30 @@ export const rerouteEdges = (nodes: INode<any>[], edges: IEdge<any>[]) => {
 		}
 		const path = OrthogonalConnector.route(orthoOptions);
 		edge.points = path;
+
+		// Just in case algorithm fails to return, set manual edge points so
+		// at least it renders
+		if (edge.points.length === 0) {
+			console.warn(`failed ortho edge ${edge.source} => ${edge.target}`);
+			const startX = sideA === 'right' ? shapeA.cx + 0.5 * shapeA.width : shapeA.cx - 0.5 * shapeA.width;
+			const startY = shapeA.cy;
+
+			const endX = sideB === 'right' ? shapeB.cx + 0.5 * shapeB.width : shapeB.cx - 0.5 * shapeB.width;
+			const endY = shapeA.cy;
+
+			edge.points.push({
+				x: startX,
+				y: startY
+			});
+			edge.points.push({
+				x: startX + 0.5 * (endX - startX),
+				y: startY + 0.5 * (endY - startY) + 40
+			});
+			edge.points.push({
+				x: endX,
+				y: endY
+			});
+		}
 
 		sourceNodeCounter.set(edge.source, sourceCounter);
 		targetNodeCounter.set(edge.target, targetCounter);
@@ -172,9 +233,15 @@ export const runDagreLayout = <V, E>(graphData: IGraph<V, E>, lr: boolean = true
 		});
 		node.nodes.forEach((child) => g.setParent(child.id, node.id));
 	});
+
 	// Set state/transitions edges
+	// Ignore
+	// - observable edges, they are realized at interaction time
+	// - controller edges, they are routed after initial layout because they can
+	//   intefere with the general topological structure
 	graphData.edges.forEach((edge: IEdge<any>) => {
 		if (edge.data?.isObservable) return;
+		if (edge.data?.isController) return;
 		g.setEdge(edge.source, edge.target);
 	});
 
@@ -268,7 +335,22 @@ export const runDagreLayout = <V, E>(graphData: IGraph<V, E>, lr: boolean = true
 			if (node.y + 0.5 * node.height > maxY) maxY = node.y + 0.5 * node.height;
 		});
 
-		rerouteEdges(graphData.nodes, graphData.edges);
+		// manual route controller edges
+		const controllerEdges = graphData.edges.filter((edge: IEdge<any>) => edge.data?.isController === true);
+
+		// Effectively disabling fast-version, DC Feb 2025
+		if (controllerEdges.length < 99999) {
+			rerouteEdges(graphData.nodes, controllerEdges);
+		} else {
+			rerouteEdgesFast(graphData.nodes, controllerEdges);
+		}
+
+		// FIXME: temp hack, need to optimize OrthogonalConnector
+		// Rearrange non-controller edges to make them nicer
+		const nonControllerEdges = graphData.edges.filter((edge: IEdge<any>) => edge.data?.isController !== true);
+		if (nonControllerEdges.length < 25) {
+			rerouteEdges(graphData.nodes, nonControllerEdges);
+		}
 
 		// Give the bounds a little extra buffer
 		const buffer = 10;

@@ -1,6 +1,6 @@
 import { computed } from 'vue';
 import { createRouter, createWebHistory } from 'vue-router';
-import HomeView from '@/page/Home.vue';
+import HomeView from '@/page/tera-home.vue';
 import UnauthorizedView from '@/page/Unauthorized.vue';
 import ProjectView from '@/page/tera-project.vue';
 import WorkflowNodeView from '@/page/WorkflowNode.vue';
@@ -16,6 +16,8 @@ import JupyterTest from '@/temp/JupyterTest.vue';
 import CustomInputTest from '@/temp/custom-input-test.vue';
 import ClipboardTest from '@/temp/Clipboard.vue';
 import VegaliteTest from '@/temp/Vegalite.vue';
+import EquationsTest from '@/temp/Equations.vue';
+import SymPyAMRTest from '@/temp/SympyAMR.vue';
 import FunmanDebugger from '@/temp/FunmanDebugger.vue';
 import { RouteName } from './routes';
 
@@ -63,7 +65,9 @@ const routes = [
 	{ path: '/custom-input-test', component: CustomInputTest },
 	{ path: '/clipboard', component: ClipboardTest },
 	{ path: '/vegalite', component: VegaliteTest },
-	{ path: '/funman-debugger', component: FunmanDebugger }
+	{ path: '/funman-debugger', component: FunmanDebugger },
+	{ path: '/equations', component: EquationsTest },
+	{ path: '/sympy-to-amr', component: SymPyAMRTest }
 ];
 
 const router = createRouter({

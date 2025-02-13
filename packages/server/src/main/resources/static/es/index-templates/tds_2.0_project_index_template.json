@@ -24,6 +24,9 @@
             "project": "permission"
           }
         },
+        "name": {
+          "type": "keyword"
+        },
         "type": {
           "type": "keyword"
         },
@@ -50,10 +53,16 @@
             "assetType": {
               "type": "keyword"
             },
+            "embeddingType": {
+              "type": "keyword"
+            },
             "vector": {
               "type": "dense_vector",
               "element_type": "float",
-              "dims": 1536
+              "dims": 1536,
+              "index_options": {
+                "type": "int8_hnsw"
+              }
             },
             "embeddingId": {
               "type": "keyword"

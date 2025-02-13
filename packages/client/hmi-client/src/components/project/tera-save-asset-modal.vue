@@ -63,7 +63,7 @@ const props = defineProps({
 	}
 });
 
-const emit = defineEmits(['close-modal', 'on-save']);
+const emit = defineEmits(['close-modal', 'on-save', 'on-update']);
 
 let newAsset: any = null;
 const newName = ref<string>('');
@@ -77,6 +77,10 @@ const title = computed(() => {
 
 function onSave(data: any) {
 	emit('on-save', data);
+}
+
+function onUpdate(data: any) {
+	emit('on-update', data);
 }
 
 function closeModal() {
@@ -138,7 +142,7 @@ function save() {
 
 	// Save method
 	if (props.isUpdatingAsset) {
-		saveAssetService.updateAddToProject(newAsset, props.assetType, onSave);
+		saveAssetService.updateAddToProject(newAsset, props.assetType, onUpdate);
 	} else {
 		saveAssetService.saveAs(newAsset, props.assetType, props.openOnSave, onSave);
 	}
@@ -182,6 +186,6 @@ function initializeAsset() {
 
 <style scoped>
 form {
-	margin-top: var(--gap);
+	margin-top: var(--gap-4);
 }
 </style>

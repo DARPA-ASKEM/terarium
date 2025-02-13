@@ -8,9 +8,8 @@
 				v-for="m in node.state.selectedOutputs?.[0]?.messages ?? []"
 				:key="m.header.msg_id"
 				:jupyter-message="m"
-				:feature-config="{ isPreview: true }"
 			/>
-			<Button label="Edit" @click="emit('open-drilldown')" severity="secondary" outlined />
+			<Button label="Open" @click="emit('open-drilldown')" severity="secondary" outlined />
 		</template>
 	</section>
 </template>

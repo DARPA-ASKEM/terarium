@@ -11,11 +11,13 @@ import * as ProjectService from '@/services/project';
 import type { PermissionRelationships, Project, ProjectAsset } from '@/types/Types';
 import { AssetType } from '@/types/Types';
 import { shallowRef } from 'vue';
+import { useToastService } from '@/services/toast';
 
 const TIMEOUT_MS = 100;
 
 const projectLoading = shallowRef<boolean>(false);
 const allProjects = shallowRef<Project[] | null>(null);
+let areProjectsLoaded = false;
 
 export function useProjects() {
 	/**
@@ -49,7 +51,33 @@ export function useProjects() {
 	 */
 	async function getAll(): Promise<Project[]> {
 		allProjects.value = (await ProjectService.getAll()) as Project[];
+		areProjectsLoaded = true;
 		return allProjects.value;
+	}
+
+	/**
+	 * Return all projects except the active project.
+	 * @returns Project[]
+	 */
+	async function getAllExceptActive(): Promise<Project[]> {
+		return new Promise((resolve) => {
+			const interval = setInterval(() => {
+				if (areProjectsLoaded) {
+					clearInterval(interval);
+					const projects: Project[] = (allProjects.value ?? [])
+						.filter((project) => project.id !== activeProjectId.value)
+						.sort((a, b) => {
+							// sort by name
+							const nameA = (a?.name ?? '').toUpperCase();
+							const nameB = (b?.name ?? '').toUpperCase();
+							if (nameA < nameB) return -1;
+							if (nameA > nameB) return 1;
+							return 0; // names must be equal
+						});
+					resolve(projects);
+				}
+			}, TIMEOUT_MS);
+		});
 	}
 
 	/**
@@ -197,6 +225,21 @@ export function useProjects() {
 		}
 	}
 
+	/**
+	 * Make a project a sample project
+	 * @param {Project['id]} projectId - the id of the project to set as a sample project
+	 * @param {boolean} isSample - true if the project should be a sample project, false otherwise
+	 */
+	async function setSample(projectId: Project['id'], isSample: boolean): Promise<boolean> {
+		const response = await ProjectService.setSample(projectId, isSample);
+		if (response) {
+			await getAll();
+			return true;
+		}
+		useToastService().error(undefined, 'Error changing the sample status of the project');
+		return false;
+	}
+
 	async function getPermissions(projectId: Project['id']): Promise<PermissionRelationships | null> {
 		return ProjectService.getPermissions(projectId);
 	}
@@ -241,6 +284,7 @@ export function useProjects() {
 		projectLoading,
 		get,
 		getAll,
+		getAllExceptActive,
 		getActiveProjectAssets,
 		getActiveProjectName,
 		addAsset,
@@ -252,6 +296,7 @@ export function useProjects() {
 		remove,
 		refresh,
 		setAccessibility,
+		setSample,
 		getPermissions,
 		hasAssetInActiveProject,
 		hasEditPermission,

@@ -85,7 +85,7 @@
 						class="flex flex-column"
 						v-else-if="['stream', 'display_data', 'execute_result', 'error'].includes(m.header.msg_type)"
 					>
-						<tera-beaker-code-cell-output :jupyter-message="m" />
+						<tera-beaker-code-cell-output ref="codeOutputCell" :jupyter-message="m" />
 						<aside class="ml-auto">
 							<label class="px-2">Display on node thumbnail</label>
 							<Checkbox :model-value="msg.selected" @change="emit('on-selected', $event)" binary />
@@ -135,6 +135,7 @@ const props = defineProps<{
 }>();
 
 const codeCell = ref(null);
+const codeOutputCell = ref(null);
 const resp = ref(<HTMLElement | null>null);
 // Reference for showThought, initially set to false
 const showThought = ref(false);
@@ -212,7 +213,8 @@ onMounted(() => {
 });
 
 defineExpose({
-	codeCell
+	codeCell,
+	codeOutputCell
 });
 
 function onDeleteRequested(msgId: string) {
@@ -234,7 +236,7 @@ function onDeleteRequested(msgId: string) {
 	font-size: var(--font-body-medium);
 	font-weight: 600;
 	font-family: var(--font-family);
-	padding-bottom: var(--gap);
+	padding-bottom: var(--gap-4);
 }
 .edit-query-box {
 	display: flex;
@@ -253,18 +255,19 @@ function onDeleteRequested(msgId: string) {
 	display: flex;
 	align-items: center;
 	gap: 10px;
-	margin-top: var(--gap-small);
+	margin-top: var(--gap-2);
 }
 
 .error {
+	background: var(--red-50);
 	color: darkred;
 	white-space: pre-wrap;
-	padding-top: 10px;
+	padding: var(--gap-4);
 }
 
 .jupyter-response {
 	position: relative;
-	margin: var(--gap);
+	margin: var(--gap-4);
 	padding: var(--gap-4);
 	display: flex;
 	flex-direction: column;
@@ -275,8 +278,7 @@ function onDeleteRequested(msgId: string) {
 }
 
 .jupyter-response:hover:not(.selected) {
-	background-color: var(--surface-50);
-	border: 1px solid var(--surface-border-light);
+	border: 1px solid color-mix(in srgb, var(--primary-color) 20%, var(--surface-border-light) 80%);
 }
 
 .jupyter-response .menu-container {
@@ -294,7 +296,7 @@ function onDeleteRequested(msgId: string) {
 .query,
 .llm-thought,
 .llm-response {
-	padding-bottom: var(--gap-small);
+	padding-bottom: var(--gap-2);
 }
 
 .llm-thought {
@@ -310,7 +312,7 @@ function onDeleteRequested(msgId: string) {
 		padding: 0rem 0 0.625rem 2.25rem;
 	}
 	li {
-		margin-bottom: var(--gap-xsmall);
+		margin-bottom: var(--gap-1);
 		padding-left: 2.25rem;
 	}
 	li::first-letter {

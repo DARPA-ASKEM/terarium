@@ -3,7 +3,7 @@
 		<tera-operator-placeholder v-if="!node.inputs[0].value" :node="node">
 			Attach one or more resources
 		</tera-operator-placeholder>
-		<Button v-else label="Edit" @click="emit('open-drilldown')" severity="secondary" outlined />
+		<Button v-else label="Open" @click="emit('open-drilldown')" severity="secondary" outlined />
 	</section>
 </template>
 

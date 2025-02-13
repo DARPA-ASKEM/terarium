@@ -28,7 +28,7 @@ p.inline {
 }
 
 p:not(.inline) {
-	margin-top: var(--gap-small);
+	margin-top: var(--gap-4);
 }
 
 .center {
@@ -37,6 +37,12 @@ p:not(.inline) {
 	justify-content: center;
 	align-items: center;
 	flex-direction: column;
+	margin-left: auto;
+	margin-right: auto;
+
+	p {
+		text-align: center;
+	}
 }
 
 i {

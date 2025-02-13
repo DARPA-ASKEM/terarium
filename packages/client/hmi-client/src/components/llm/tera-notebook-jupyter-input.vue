@@ -23,6 +23,7 @@
 			@change="onInputChange"
 			placeholder="What do you want to do?"
 			emptySearchMessage="No suggestions"
+			:showEmptyMessage="false"
 			:disabled="kernelStatus === KernelState.busy"
 		/>
 
@@ -129,6 +130,11 @@ const submitQuestion = () => {
 const searchOptions = () => {
 	const query = questionString.value.toLowerCase();
 	filteredOptions.value = props.defaultOptions.filter((option) => option.toLowerCase().includes(query));
+
+	// Hide the panel if there are no suggestions
+	if (filteredOptions.value.length === 0) {
+		autoComplete.value?.hide();
+	}
 };
 
 const onInputChange = async () => {
@@ -155,13 +161,12 @@ const onInputChange = async () => {
 .ai-assistant {
 	display: flex;
 	align-items: center;
-	gap: var(--gap-small);
+	gap: var(--gap-2);
 }
 
 .notebook-toolbar {
 	display: flex;
 	flex-direction: row;
-	margin-top: var(--gap-small);
 	gap: var(--gap-3);
 	justify-content: space-between;
 }
@@ -169,7 +174,7 @@ const onInputChange = async () => {
 .toolbar-left-side,
 .toolbar-right-side {
 	display: flex;
-	gap: var(--gap-small);
+	gap: var(--gap-2);
 	align-items: center;
 }
 
@@ -182,7 +187,7 @@ const onInputChange = async () => {
 	width: 100%;
 	background-image: url('@assets/svg/icons/message.svg');
 	background-size: 1rem;
-	background-position: var(--gap-small) 9px;
+	background-position: var(--gap-2) 9px;
 	background-repeat: no-repeat;
 	padding-right: 2rem;
 	padding-left: 2rem;

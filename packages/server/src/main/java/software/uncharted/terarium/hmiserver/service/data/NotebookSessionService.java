@@ -15,8 +15,7 @@ import software.uncharted.terarium.hmiserver.service.s3.S3ClientService;
 import software.uncharted.terarium.hmiserver.utils.rebac.Schema;
 
 @Service
-public class NotebookSessionService
-	extends TerariumAssetServiceWithoutSearch<NotebookSession, NotebookSessionRepository> {
+public class NotebookSessionService extends TerariumAssetService<NotebookSession, NotebookSessionRepository> {
 
 	public NotebookSessionService(
 		final ObjectMapper objectMapper,
@@ -49,12 +48,6 @@ public class NotebookSessionService
 		final NotebookSession oldAsset,
 		final Schema.Permission hasWritePermission
 	) throws IOException {
-		throw new UnsupportedOperationException("Unimplemented");
-	}
-
-	@Override
-	@Observed(name = "function_profile")
-	public Map<String, FileExport> exportAssetFiles(final UUID assetId, final Schema.Permission hasReadPermission) {
 		throw new UnsupportedOperationException("Unimplemented");
 	}
 

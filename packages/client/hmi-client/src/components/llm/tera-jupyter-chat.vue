@@ -8,10 +8,6 @@
 			tabindex="0"
 			class="message-container"
 		>
-			<div v-if="showRerunMessage" class="rerun-message" @click="hideRerunMessage">
-				Re-run all the cells to restore the context if you need to make any changes or use them downstream.
-				<Button class="close-mask" icon="pi pi-times" text rounded aria-label="Close" />
-			</div>
 			<tera-jupyter-response
 				@keydown.stop
 				v-for="(msg, index) in filteredNotebookItems"
@@ -65,7 +61,6 @@ const selectedCellId = ref();
 const filteredNotebookItems = computed<INotebookItem[]>(() =>
 	notebookItems.value.filter((item) => !isEmpty(item.messages))
 );
-const showRerunMessage = ref(true);
 
 const emit = defineEmits([
 	'new-message',
@@ -237,12 +232,12 @@ const reRunPrompt = (queryId: string, query?: string) => {
 	notebookItem.messages = [llmRequestMsg];
 	if (query) {
 		llmRequestMsg.content.request = query;
+		notebookItem.query = query;
 	}
 	kernel.sendJupyterMessage(llmRequestMsg);
 	isExecutingCode.value = true;
 };
 
-// here
 const addCodeCell = (isDefaultCell: boolean = false, isNextCell: boolean = true) => {
 	const msgId = createMessageId('code_cell');
 	const date = new Date().toISOString();
@@ -402,16 +397,12 @@ const clearOutputs = () => {
 	}
 	for (let i = 0; i < notebookCells.value.length; i++) {
 		const el = notebookCells.value[i];
-		if (el.codeCell) {
-			for (let j = 0; j < el.codeCell.length; j++) {
-				el.codeCell[j].clear();
+		if (el.codeOutputCell) {
+			for (let j = 0; j < el.codeOutputCell.length; j++) {
+				el.codeOutputCell[j].clear();
 			}
 		}
 	}
-};
-
-const hideRerunMessage = () => {
-	showRerunMessage.value = false;
 };
 
 onUnmounted(() => {
@@ -463,9 +454,8 @@ watch(
 defineExpose({
 	clearHistory,
 	clearOutputs,
-	submitQuery
-
-	// here
+	submitQuery,
+	addCodeCell
 });
 </script>
 
@@ -481,31 +471,22 @@ section {
 	display: flex;
 	flex-direction: column;
 	width: 100%;
-	height: 100%;
-	overflow: hidden;
+	isolation: isolate;
 }
 
 .selected {
-	background-color: var(--surface-50);
+	background-color: var(--surface-0);
 	border: 1px solid var(--primary-color);
 }
 
 .add-cell-button {
-	margin-left: var(--gap);
+	margin-left: var(--gap-4);
 	width: calc(100% - 2rem);
 }
 .add-cell-button:deep(.p-button-label) {
 	text-align: left;
 }
 .message-container {
-	height: calc(100% - 3.5rem);
-	overflow-y: auto;
-}
-.rerun-message {
-	display: flex;
-	background-color: var(--surface-warning);
-	justify-content: space-between;
-	align-items: center;
-	padding: var(--gap-2);
+	background: var(--surface-100);
 }
 </style>

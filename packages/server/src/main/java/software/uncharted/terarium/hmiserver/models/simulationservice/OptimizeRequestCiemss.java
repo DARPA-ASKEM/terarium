@@ -38,9 +38,6 @@ public class OptimizeRequestCiemss implements Serializable {
 
 	private List<OptimizeQoi> qoi;
 
-	@JsonAlias("bounds_interventions")
-	private List<List<Double>> boundsInterventions;
-
 	private OptimizeExtra extra;
 	private String engine;
 

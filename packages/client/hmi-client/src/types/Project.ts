@@ -1,8 +1,13 @@
-import { AssetType } from '@/types/Types';
+import { AssetType, ProjectSearchResult } from '@/types/Types';
+import type { Project } from '@/types/Types';
 
 export enum ProjectPages {
 	OVERVIEW = 'overview'
 }
+
+/* Amalgamation of the ProjectSearchResult and Project types,
+this allows us to display in the same table normal project and search results */
+export interface ProjectWithKnnData extends ProjectSearchResult, Project {}
 
 /**
  * Return the list of AssetTypes that are visible in the project
@@ -15,7 +20,9 @@ export const listOfVisibleAssetTypes: AssetType[] = Object.values(AssetType).fil
 			AssetType.Code,
 			AssetType.Simulation,
 			AssetType.ModelConfiguration,
-			AssetType.InterventionPolicy
+			AssetType.InterventionPolicy,
+			AssetType.NotebookSession,
+			AssetType.Project
 		].includes(type)
 );
 

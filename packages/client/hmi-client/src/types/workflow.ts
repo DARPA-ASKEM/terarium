@@ -19,7 +19,8 @@ export const WorkflowOperationTypes = Object.freeze({
 	DOCUMENT: 'Document',
 	MODEL_FROM_EQUATIONS: 'ModelFromEquations',
 	REGRIDDING: 'Regridding',
-	INTERVENTION_POLICY: 'InterventionPolicy'
+	INTERVENTION_POLICY: 'InterventionPolicy',
+	COMPARE_DATASETS: 'CompareDatasets'
 });
 
 export enum OperatorStatus {
@@ -60,6 +61,7 @@ export interface Operation {
 
 	inputs: OperationData[];
 	outputs: OperationData[];
+	uniqueInputs?: boolean;
 }
 
 // Defines the data-exchange between WorkflowNode
@@ -88,6 +90,15 @@ export interface BaseState {
 	summaryId?: string;
 }
 
+export interface WorkflowAnnotation {
+	id: string;
+	type: string;
+	x: number;
+	y: number;
+	textSize: number;
+	content: string;
+}
+
 // Node definition in the workflow
 // This is the graphical operation of the operation defined in operationType
 export interface WorkflowNode<S> {
@@ -96,6 +107,8 @@ export interface WorkflowNode<S> {
 	workflowId: string;
 	isDeleted?: boolean;
 	version?: number;
+	createdBy?: string;
+	createdAt?: number;
 
 	displayName: string;
 	operationType: string;
@@ -118,6 +131,8 @@ export interface WorkflowNode<S> {
 
 	// Behaviour
 	status: OperatorStatus;
+
+	uniqueInputs?: boolean;
 }
 
 export interface WorkflowEdge {
@@ -125,6 +140,8 @@ export interface WorkflowEdge {
 	workflowId: string;
 	isDeleted?: boolean;
 	version?: number;
+	createdBy?: string;
+	createdAt?: number;
 
 	points: Position[];
 	source?: WorkflowNode<any>['id'];
@@ -157,6 +174,9 @@ export interface Workflow {
 	transform: Transform;
 	nodes: WorkflowNode<any>[];
 	edges: WorkflowEdge[];
+
+	annotations?: { [key: string]: WorkflowAnnotation };
+	scenario?: any;
 }
 
 export interface Size {

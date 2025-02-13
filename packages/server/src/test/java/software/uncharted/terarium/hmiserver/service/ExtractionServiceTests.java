@@ -54,8 +54,6 @@ public class ExtractionServiceTests extends TerariumApplicationTests {
 	@BeforeEach
 	public void setup() throws IOException {
 		projectSearchService.setupIndexAndAliasAndEnsureEmpty();
-		datasetService.setupIndexAndAliasAndEnsureEmpty();
-		modelService.setupIndexAndAliasAndEnsureEmpty();
 
 		project = projectService.createProject(
 			(Project) new Project().setPublicAsset(true).setName("test-project-name").setDescription("my description")
@@ -65,72 +63,6 @@ public class ExtractionServiceTests extends TerariumApplicationTests {
 	@AfterEach
 	public void teardown() throws IOException {
 		projectSearchService.teardownIndexAndAlias();
-		datasetService.teardownIndexAndAlias();
-		modelService.teardownIndexAndAlias();
-	}
-
-	// @Test
-	@WithUserDetails(MockUser.URSULA)
-	public void variableExtractionTests() throws Exception {
-		DocumentAsset documentAsset = (DocumentAsset) new DocumentAsset()
-			.setText("x = 0. y = 1. I = Infected population.")
-			.setName("test-document-name")
-			.setDescription("my description");
-
-		documentAsset = documentAssetService.createAsset(documentAsset, project.getId(), ASSUME_WRITE_PERMISSION);
-
-		documentAsset = extractionService
-			.extractVariables(project.getId(), documentAsset.getId(), new ArrayList<>(), ASSUME_WRITE_PERMISSION)
-			.get();
-	}
-
-	// @Test
-	@WithUserDetails(MockUser.URSULA)
-	public void variableExtractionWithModelTests() throws Exception {
-		final ClassPathResource resource1 = new ClassPathResource("knowledge/extraction_text.txt");
-		final byte[] content1 = Files.readAllBytes(resource1.getFile().toPath());
-
-		DocumentAsset documentAsset = (DocumentAsset) new DocumentAsset()
-			.setText(new String(content1))
-			.setName("test-document-name")
-			.setDescription("my description");
-
-		documentAsset = documentAssetService.createAsset(documentAsset, project.getId(), ASSUME_WRITE_PERMISSION);
-
-		final ClassPathResource resource2 = new ClassPathResource("knowledge/extraction_amr.json");
-		final byte[] content2 = Files.readAllBytes(resource2.getFile().toPath());
-		Model model = objectMapper.readValue(content2, Model.class);
-
-		model = modelService.createAsset(model, project.getId(), ASSUME_WRITE_PERMISSION);
-
-		documentAsset = extractionService
-			.extractVariables(project.getId(), documentAsset.getId(), List.of(model.getId()), ASSUME_WRITE_PERMISSION)
-			.get();
-	}
-
-	// @Test
-	@WithUserDetails(MockUser.URSULA)
-	public void linkAmrTests() throws Exception {
-		DocumentAsset documentAsset = (DocumentAsset) new DocumentAsset()
-			.setText("x = 0. y = 1. I = Infected population.")
-			.setName("test-document-name")
-			.setDescription("my description");
-
-		documentAsset = documentAssetService.createAsset(documentAsset, project.getId(), ASSUME_WRITE_PERMISSION);
-
-		documentAsset = extractionService
-			.extractVariables(project.getId(), documentAsset.getId(), new ArrayList<>(), ASSUME_WRITE_PERMISSION)
-			.get();
-
-		final ClassPathResource resource = new ClassPathResource("knowledge/sir.json");
-		final byte[] content = Files.readAllBytes(resource.getFile().toPath());
-		Model model = objectMapper.readValue(content, Model.class);
-
-		model = modelService.createAsset(model, project.getId(), ASSUME_WRITE_PERMISSION);
-
-		model = extractionService
-			.alignAMR(project.getId(), documentAsset.getId(), model.getId(), ASSUME_WRITE_PERMISSION)
-			.get();
 	}
 
 	// @Test

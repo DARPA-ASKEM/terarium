@@ -4,7 +4,9 @@
 	<section v-if="editorContent.length === 0" class="empty-state">
 		<Vue3Lottie :animationData="EmptySeed" :height="150" loop autoplay />
 		<p class="helpMessage"><strong>Use this space however you like.</strong></p>
-		<p class="helpMessage">Just click and start typing.</p>
+		<div class="flex gap-1">
+			<p class="helpMessage">Just click and start typing.</p>
+		</div>
 	</section>
 
 	<!-- empty state message -->
@@ -19,11 +21,13 @@
 		<div class="p-message-content">
 			<p>Here are some things you can try:</p>
 			<ul>
-				<li><b>Upload stuff.</b> Upload documents, models or datasets.</li>
-				<li><b>Build a model.</b> Create a model that fits just what you need.</li>
+				<li><b>Upload stuff.</b> Drag documents, models and datasets onto the resources panel to upload files.</li>
 				<li>
-					<b>Create a workflow.</b> Connect resources with operators so you can focus on the science and not the
-					plumbing.
+					<b>Build a model.</b> Extract equations from documents or use LaTex to create a model that fits what you need.
+				</li>
+				<li>
+					<b>Create a workflow.</b> Configure your model, calibrate it with observational data, set intervention
+					policies and run simulations for various scenarios.
 				</li>
 			</ul>
 		</div>
@@ -148,12 +152,12 @@ const showWelcomeMessage = ref(true);
 	width: calc(100% - 264px); /* 240px + 12px + 12px */
 	margin-top: 3.5rem;
 	margin-left: var(--gap-3);
-	padding: var(--gap-1) var(--gap-3);
+	padding: 0 var(--gap-3) var(--gap-1);
 	display: flex;
 	flex-direction: column;
 	border: 1px solid var(--surface-border-light);
 	z-index: 10;
-	background-color: var(--surface-0);
+	background: linear-gradient(to right, var(--yellow-100), var(--yellow-50));
 }
 .welcome-message .p-message-content {
 	display: flex;
@@ -162,6 +166,12 @@ const showWelcomeMessage = ref(true);
 }
 .welcome-message:deep(.p-panel-title) {
 	font-weight: 600;
+}
+.welcome-message:deep(.p-panel-header) {
+	background-color: transparent;
+}
+.welcome-message:deep(.p-panel-content) {
+	background-color: transparent;
 }
 .welcome-message ul {
 	list-style-position: inside;

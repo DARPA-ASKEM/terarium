@@ -3,6 +3,7 @@ package software.uncharted.terarium.hmiserver.service.data;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.micrometer.observation.annotation.Observed;
 import java.io.IOException;
+import java.sql.Timestamp;
 import java.text.NumberFormat;
 import java.text.ParseException;
 import java.util.ArrayList;
@@ -11,6 +12,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
+import lombok.Data;
 import org.springframework.stereotype.Service;
 import software.uncharted.terarium.hmiserver.configuration.Config;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.Model;
@@ -28,8 +30,7 @@ import software.uncharted.terarium.hmiserver.service.s3.S3ClientService;
 import software.uncharted.terarium.hmiserver.utils.rebac.Schema;
 
 @Service
-public class ModelConfigurationService
-	extends TerariumAssetServiceWithoutSearch<ModelConfiguration, ModelConfigRepository> {
+public class ModelConfigurationService extends TerariumAssetService<ModelConfiguration, ModelConfigRepository> {
 
 	public ModelConfigurationService(
 		final ObjectMapper objectMapper,
@@ -93,11 +94,22 @@ public class ModelConfigurationService
 		return super.createAssets(assets, projectId, hasWritePermission);
 	}
 
+	@Data
+	public static class ModelConfigurationUpdate {
+
+		private String name;
+		private String description;
+		private Timestamp temporalContext;
+	}
+
 	public static ModelConfiguration modelConfigurationFromAMR(
 		final Model model,
-		final String name,
-		final String description
+		final ModelConfigurationUpdate options
 	) {
+		final String name = options.getName();
+		final String description = options.getDescription();
+		final Timestamp temporalContext = options.getTemporalContext();
+
 		final ModelConfiguration modelConfiguration = new ModelConfiguration();
 		modelConfiguration.setName(name != null ? name : "Default configuration");
 		modelConfiguration.setDescription(description != null ? description : "This is a default configuration.");
@@ -105,6 +117,7 @@ public class ModelConfigurationService
 		modelConfiguration.setParameterSemanticList(createParameterSemanticList(model));
 		modelConfiguration.setInitialSemanticList(createInitialSemanticList(model));
 		modelConfiguration.setObservableSemanticList(createObservableSemanticList(model));
+		modelConfiguration.setTemporalContext(temporalContext);
 		return modelConfiguration;
 	}
 
@@ -156,7 +169,7 @@ public class ModelConfigurationService
 
 		for (final Observable observable : model.getObservables()) {
 			final ObservableSemantic observableSemantic = new ObservableSemantic();
-			observableSemantic.setReferenceId(observable.getId());
+			observableSemantic.setReferenceId(observable.getConceptReference());
 			observableSemantic.setStates(observable.getStates());
 			observableSemantic.setExpression(observable.getExpression());
 			observableSemantic.setExpressionMathml(observable.getExpressionMathml());
@@ -172,7 +185,7 @@ public class ModelConfigurationService
 
 		for (final ModelParameter parameter : model.getParameters()) {
 			final ParameterSemantic parameterSemantic = new ParameterSemantic();
-			parameterSemantic.setReferenceId(parameter.getId());
+			parameterSemantic.setReferenceId(parameter.getConceptReference());
 
 			final ModelDistribution distribution = getModelDistribution(parameter);
 
@@ -226,7 +239,7 @@ public class ModelConfigurationService
 		// Iterate through the list of ModelParameter objects
 		for (final ModelParameter modelParameter : modelParameters) {
 			// Look up the corresponding ConfigParameter in the map
-			final ParameterSemantic matchingConfigParameter = configParameterMap.get(modelParameter.getId());
+			final ParameterSemantic matchingConfigParameter = configParameterMap.get(modelParameter.getConceptReference());
 			if (matchingConfigParameter != null) {
 				// set distributions
 				if (CONSTANT_TYPE.equals(matchingConfigParameter.getDistribution().getType())) {
@@ -272,7 +285,9 @@ public class ModelConfigurationService
 		}
 
 		for (final Observable modelObservable : modelObservables) {
-			final ObservableSemantic matchingConfigObservable = configObservableMap.get(modelObservable.getId());
+			final ObservableSemantic matchingConfigObservable = configObservableMap.get(
+				modelObservable.getConceptReference()
+			);
 			if (matchingConfigObservable != null) {
 				modelObservable.setStates(matchingConfigObservable.getStates());
 				modelObservable.setExpression(matchingConfigObservable.getExpression());

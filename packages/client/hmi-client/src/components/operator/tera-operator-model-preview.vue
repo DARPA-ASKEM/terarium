@@ -30,6 +30,12 @@ const handleChange = (event) => {
 </script>
 
 <style scoped>
+.container {
+	border: 1px solid var(--surface-border-light);
+	border-radius: var(--border-radius);
+	overflow: hidden;
+}
+
 .p-selectbutton {
 	width: 100%;
 }

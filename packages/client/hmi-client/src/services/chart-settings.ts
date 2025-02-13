@@ -1,15 +1,42 @@
 import _ from 'lodash';
 import API from '@/api/api';
-import type { ChartSetting, ChartSettingType } from '@/types/common';
+import {
+	ChartSetting,
+	ChartSettingEnsembleVariable,
+	ChartSettingEnsembleVariableOptions,
+	ChartSettingComparison,
+	ChartSettingSensitivity,
+	ChartSettingType,
+	SensitivityChartType
+} from '@/types/common';
 import { v4 as uuidv4 } from 'uuid';
 import { b64DecodeUnicode } from '@/utils/binary';
 import { ChartAnnotation } from '@/types/Types';
-import { ForecastChartOptions } from './charts';
+import { CATEGORICAL_SCHEME, createVariableColorMap, ForecastChartOptions } from './charts';
 
 export interface LLMGeneratedChartAnnotation {
 	request: string;
 	layerSpec: any;
 }
+
+export type EnsembleVariableChartSettingOption =
+	| 'showIndividualModels'
+	| 'relativeToEnsemble'
+	| 'showIndividualModelsWithWeight';
+
+export function isChartSettingEnsembleVariable(setting: ChartSetting): setting is ChartSettingEnsembleVariable {
+	return (<ChartSettingEnsembleVariable>setting).type === ChartSettingType.VARIABLE_ENSEMBLE;
+}
+
+export function isChartSettingComparisonVariable(setting: ChartSetting): setting is ChartSettingComparison {
+	return (<ChartSettingComparison>setting).type === ChartSettingType.VARIABLE_COMPARISON;
+}
+
+export const CHART_SETTING_WITH_QUANTILES_OPTIONS = [
+	ChartSettingType.VARIABLE_ENSEMBLE,
+	ChartSettingType.VARIABLE_COMPARISON,
+	ChartSettingType.VARIABLE
+];
 
 /**
  * Adds a new multi-variable chart setting to the provided settings array if it doesn't already exist.
@@ -33,9 +60,74 @@ export function addMultiVariableChartSetting(
 		id: uuidv4(),
 		name: selectedVariables.join(', '),
 		selectedVariables,
-		type
+		type,
+		scale: ''
 	} as ChartSetting;
 	return [...settings, newSetting];
+}
+
+/**
+ * Get ensemble chart setting options from the chart settings. Assumes that all ensemble settings have the same options.
+ * @param chartSettings
+ * @returns The ensemble chart setting options.
+ */
+export function getEnsembleChartSettingOptions(
+	chartSettings: ChartSetting[]
+): ChartSettingEnsembleVariableOptions | null {
+	const ensembleSettings = chartSettings.find(isChartSettingEnsembleVariable);
+	return ensembleSettings
+		? {
+				showIndividualModels: ensembleSettings.showIndividualModels,
+				relativeToEnsemble: ensembleSettings.relativeToEnsemble,
+				showIndividualModelsWithWeight: ensembleSettings.showIndividualModelsWithWeight
+			}
+		: null;
+}
+
+/**
+ * Get existing qauntile chart setting options from the chart settings with the assumed that all applicable settings have the same options.
+ * @param chartSettings - The array of chart settings.
+ * @returns - The quantile chart setting options.
+ */
+export function getQauntileChartSettingOptions(chartSettings: ChartSetting[]) {
+	const settingsWithQuantilesOption = chartSettings.find((s) => s.showQuantiles || Boolean(s.quantiles?.length));
+	return settingsWithQuantilesOption
+		? {
+				showQuantiles: settingsWithQuantilesOption.showQuantiles,
+				quantiles: settingsWithQuantilesOption.quantiles
+			}
+		: null;
+}
+
+export function createNewChartSetting(
+	name: string,
+	type: ChartSettingType,
+	selectedVariables: string[],
+	options: Partial<ChartSetting> = {}
+): ChartSetting {
+	// Default setting
+	const setting: ChartSetting = {
+		id: uuidv4(),
+		name,
+		selectedVariables,
+		type,
+		scale: '',
+		primaryColor: CATEGORICAL_SCHEME[0]
+	};
+	if (isChartSettingEnsembleVariable(setting)) {
+		// Default options for ensemble variable chart
+		setting.showIndividualModels = true;
+		setting.relativeToEnsemble = false;
+	}
+	if (CHART_SETTING_WITH_QUANTILES_OPTIONS.includes(type)) {
+		// Default options for quantile chart
+		setting.showQuantiles = false;
+		setting.quantiles = [0.95, 0.5];
+	}
+	// Apply and override defaults with the provided options.
+	Object.assign(setting, options);
+
+	return setting;
 }
 
 /**
@@ -52,24 +144,99 @@ export function updateChartSettingsBySelectedVariables(
 	type: ChartSettingType,
 	variableSelection: string[]
 ) {
+	// Extract existing chart setting options that were applied to multiple charts for the new settings to inherit.
+	// So that the new settings will have the same options as the existing settings.
+	const existingOptions: Partial<ChartSetting> = {};
+	if (CHART_SETTING_WITH_QUANTILES_OPTIONS.includes(type))
+		Object.assign(existingOptions, getQauntileChartSettingOptions(settings));
+	if (type === ChartSettingType.VARIABLE_ENSEMBLE)
+		Object.assign(existingOptions, getEnsembleChartSettingOptions(settings));
+
 	// previous settings without the settings of the given type
 	const previousSettings = settings.filter((setting) => setting.type !== type);
 	// selected settings for the given type
 	const selectedSettings = variableSelection.map((variable) => {
-		const found = previousSettings.find(
-			(setting) => setting.selectedVariables[0] === variable && setting.type === type
-		);
-		return (
-			found ??
-			({
-				id: uuidv4(),
-				name: variable,
-				selectedVariables: [variable],
-				type
-			} as ChartSetting)
-		);
+		const found = settings.find((setting) => setting.selectedVariables[0] === variable && setting.type === type);
+		return found ?? createNewChartSetting(variable, type, [variable], existingOptions);
 	});
 	const newSettings: ChartSetting[] = [...previousSettings, ...selectedSettings];
+	return newSettings;
+}
+
+export function updateSensitivityChartSettingOption(
+	settings: ChartSettingSensitivity[],
+	options: {
+		selectedVariables: string[];
+		selectedInputVariables: string[];
+		timepoint: number;
+		chartType: SensitivityChartType;
+	}
+) {
+	// previous settings without the settings of the given type
+	const previousSettings = settings.filter((setting) => setting.type !== ChartSettingType.SENSITIVITY);
+
+	const selectedSettings = options.selectedVariables?.map((variable) => {
+		const found = settings.find(
+			(setting) => setting.selectedVariables[0] === variable && setting.type === ChartSettingType.SENSITIVITY
+		);
+		if (found) {
+			found.selectedInputVariables = options.selectedInputVariables;
+			found.timepoint = options.timepoint;
+			found.chartType = options.chartType;
+			return found;
+		}
+		return createNewChartSetting(variable, ChartSettingType.SENSITIVITY, [variable], {
+			selectedInputVariables: options.selectedInputVariables,
+			timepoint: options.timepoint,
+			chartType: options.chartType
+		});
+	});
+
+	const newSettings: ChartSetting[] = [...previousSettings, ...(selectedSettings ?? [])];
+	return newSettings;
+}
+
+/**
+ * Update all chart settings with the given update object. If includeTypes is provided, only the settings with the specified types will be updated.
+ * @param settings - The current array of chart settings.
+ * @param update - The partial update to apply to the chart settings.
+ * @param includeTypes - The types of chart settings to update.
+ * @returns The updated array of chart settings.
+ */
+export function updateAllChartSettings(
+	settings: ChartSetting[],
+	update: Partial<ChartSetting>,
+	includeTypes?: ChartSettingType[]
+) {
+	const newSettings = settings.map((setting) => {
+		if (includeTypes === undefined || includeTypes.includes(setting.type)) {
+			Object.assign(setting, update);
+		}
+		return setting;
+	});
+	return newSettings;
+}
+
+/**
+ * Filters chart settings based on the specified type and variable selection.
+ * Assume that this is used for single variable charts only.
+ *
+ * @param {ChartSetting[]} settings - The array of chart settings to filter.
+ * @param {ChartSettingType} type - The type of chart setting to filter by.
+ * @param {string[]} variableSelection - The array of variable selections to filter by.
+ * @returns {ChartSetting[]} The filtered array of chart settings.
+ */
+export function filterChartSettingsByVariables(
+	settings: ChartSetting[],
+	type: ChartSettingType,
+	variableSelection: string[]
+) {
+	// previous settings without the settings of the given type
+	const previousSettings = settings.filter((setting) => setting.type !== type);
+	const selected = settings.filter(
+		(setting) => setting.type === type && variableSelection.includes(setting.selectedVariables[0])
+	);
+	const newSettings: ChartSetting[] = [...previousSettings, ...selected];
 	return newSettings;
 }
 
@@ -124,214 +291,66 @@ export async function generateForecastChartAnnotation(
 		y: options.yAxisTitle ?? ''
 	};
 	const translateMap = _.pick(options.translationMap ?? {}, variables);
-	const prompt = `
-    You are an agent who is an expert in Vega-Lite chart specs. Provide a Vega-Lite layer JSON object for the annotation that can be added to an existing chart spec to satisfy the provided user request.
-
-    - The Vega-Lite schema version you must use is https://vega.github.io/schema/vega-lite/v5.json.
-    - Assume that you don’t know the exact data points from the data.
-    - You must give me the single layer object that renders all the necessary drawing objects, including multiple layers within the top layer object if needed.
-    - When adding a label, also draw a constant line perpendicular to the axis to which you are adding the label.
-
-    Assuming you are adding the annotations to the following chart spec,
-    ---- Example Chart Spec Start -----
-    {
-      "data": {"url": "data/samples.csv"},
-      "transform": [
-        {
-          "fold": ["price", "cost", "tax", "profit"],
-          "as": ["variableField", "valueField"]
-        }
-      ],
-      "layer": [
-        {
-          "mark": "line",
-          "encoding": {
-            "x": {"field": "date", "type": "quantitative", "axis": {"title": "Day"}},
-            "y": {"field": "valueField", "type": "quantitative", "axis": {"title": "Dollars"}}
-          }
-        }
-      ]
-    }
-    ---- Example Chart Spec End -----
-    Here are some example requests and the answers:
-
-    Request:
-    At day 200, add a label 'important'
-    Answer:
-    {
-      "description": "At day 200, add a label 'important'",
-      "layer": [
-        {
-          "mark": {
-            "type": "rule",
-            "strokeDash": [4, 4]
-          },
-          "encoding": {
-            "x": { "datum": 200, "axis": { "title": ""} }
-          }
-        },
-        {
-          "mark": {
-            "type": "text",
-            "align": "left",
-            "dx": 5,
-            "dy": -5
-          },
-          "encoding": {
-            "x": { "datum": 200, "axis": { "title": ""} }
-            "text": {"value": "important"}
-          }
-        }
-      ]
-    }
-
-    Request:
-    Add a label 'expensive' at price 20
-    Answer:
-    {
-      "description": "Add a label 'expensive' at price 20",
-      "layer": [
-        {
-          "mark": {
-            "type": "rule",
-            "strokeDash": [4, 4]
-          },
-          "encoding": {
-            "y": { "datum": 20, "axis": { "title": ""} }
-          }
-        },
-        {
-          "mark": {
-            "type": "text",
-            "align": "left",
-            "dx": 5,
-            "dy": -5
-          },
-          "encoding": {
-            "y": { "datum": 20, "axis": { "title": ""} },
-            "text": {"value": "expensive"}
-          }
-        }
-      ]
-    }
-
-    Request:
-    Add a vertical line for the day where the price exceeds 100.
-    Answer:
-    {
-      "description": "Add a vertical line for the day where the price exceeds 100.",
-      "transform": [
-        {"filter": "datum.valueField > 100"},
-        {"aggregate": [{"op": "min", "field": "date", "as": "min_date"}]}
-      ],
-      "layer": [
-        {
-          "mark": {
-            "type": "rule",
-            "strokeDash": [4, 4]
-          },
-          "encoding": {
-            "x": {"field": "min_date", "type": "quantitative", "axis": { "title": ""}}
-          }
-        },
-        {
-          "mark": {
-            "type": "text",
-            "align": "left",
-            "dx": 5,
-            "dy": -10
-          },
-          "encoding": {
-            "x": {"field": "min_date", "type": "quantitative", "axis": { "title": ""}},
-            "text": {"value": "Price > 100"}
-          }
-        }
-      ]
-    }
-
-    Request:
-    Add a vertical line at the day where the price reaches its peak value.
-    Answer:
-    {
-      "description": "Add a vertical line at the day where the price reaches its peak value.",
-      "transform": [
-        {"filter": "datum.variableField == 'price'"},
-        {
-          "joinaggregate": [{
-          "op": "max",
-          "field": "valueField",
-          "as": "max_price"
-          }]
-        },
-        {"filter": "datum.valueField >= datum.max_price"}
-      ],
-      "layer": [
-        {
-          "mark": {
-            "type": "rule",
-            "strokeDash": [4, 4]
-          },
-          "encoding": {
-            "x": {"field": "date", "type": "quantitative", "axis": { "title": ""}}
-          }
-        },
-        {
-          "mark": {
-            "type": "text",
-            "align": "left",
-            "dx": 5,
-            "dy": -10
-          },
-          "encoding": {
-            "x": {"field": "date", "type": "quantitative", "axis": { "title": ""}},
-            "text": {"value": "Max Price"}
-          }
-        }
-      ]
-    }
-
-    Here is the information of the existing target chart spec where you need to add the annotations:
+	const preamble = `
+		Here is the information of the existing target chart spec where you need to add the annotations:
     - The existing chart follows a similar pattern as the above Example Chart Spec like:
-        {
+        {{
           ...
           "transform": [
-            {
+            {{
               "fold": ${JSON.stringify(variables)},
               "as": ["variableField', "valueField"]
-            }
+            }}
           ],
           "layer": [
-            {
+            {{
               ...
-              "encoding": {
-                "x": {"field": "${timeField}", "type": "quantitative", "axis": {"title": "${axisTitle.x}"}},
-                "y": {"field": "valueField", "type": "quantitative", "axis": {"title": "${axisTitle.y}"}}
-              }
-            }
+              "encoding": {{
+                "x": {{"field": "${timeField}", "type": "quantitative", "axis": {{"title": "${axisTitle.x}"}}}},
+                "y": {{"field": "valueField", "type": "quantitative", "axis": {{"title": "${axisTitle.y}"}}}}
+              }}
+            }}
             ...
           ]
-        }
+        }}
     - Assume all unknown variables except the time field are for the y-axis and are renamed to the valueField.
     - Make sure possible values for 'valueField' are ${JSON.stringify(variables)} and try best to translate the variables mentioned from the request to the variables for the 'valueField'.
     - Leverage this variable to human readable name mapping: ${JSON.stringify(translateMap)} if needed.
-
+	`;
+	const instruction = `
     Give me the layer object to be added to the existing chart spec based on the following user request.
 
-    Request:
     ${request}
-    Answer
-    {
 	`;
-	const { data } = await API.post(`/gollm/generate-response?mode=SYNC&response-format=json`, prompt, {
-		headers: {
-			'Content-Type': 'application/json'
+	const { data } = await API.post(
+		`/gollm/chart-annotation?mode=SYNC`,
+		{ preamble, instruction },
+		{
+			headers: {
+				'Content-Type': 'application/json'
+			}
 		}
-	});
+	);
 	const str = b64DecodeUnicode(data.output);
 	const result = JSON.parse(str);
-	const layerSpec = JSON.parse(result.response);
+	const layerSpec = result.response ?? null;
 	return {
 		request,
 		layerSpec
 	};
+}
+
+export function generateComparisonColorScheme(setting: ChartSettingComparison, variableIndex = -1) {
+	const colorScheme: string[] = [];
+	const variables = variableIndex === -1 ? setting.selectedVariables : [setting.selectedVariables[variableIndex]];
+	const variableColors = getComparisonVariableColors(setting);
+	variables.forEach((variable) => {
+		colorScheme.push(variableColors[variable]);
+	});
+	return colorScheme;
+}
+
+export function getComparisonVariableColors(setting: ChartSettingComparison) {
+	const defaultMap = createVariableColorMap(setting.selectedVariables);
+	return { ...defaultMap, ...setting.variableColors };
 }

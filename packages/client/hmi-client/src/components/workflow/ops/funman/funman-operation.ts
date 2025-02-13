@@ -1,8 +1,9 @@
 import { Operation, WorkflowOperationTypes, BaseState } from '@/types/workflow';
 import type { FunmanInterval, TimeSpan } from '@/types/Types';
 import { ChartSetting } from '@/types/common';
+import { NotebookHistory } from '@/services/notebook';
 
-const DOCUMENTATION_URL = 'https://github.com/siftech/funman';
+const DOCUMENTATION_URL = 'https://documentation.terarium.ai/config-and-intervention/validate-model-configuration/';
 
 export enum Constraint {
 	State = 'state variable(s)',
@@ -54,6 +55,9 @@ export interface FunmanOperationState extends BaseState {
 	requestParameters: RequestParameter[];
 	chartSettings: ChartSetting[] | null;
 	currentProgress: number;
+	notebookHistory: NotebookHistory[];
+	hasCodeRun: boolean;
+	isRequestUnresponsive: boolean;
 }
 
 export const FunmanOperation: Operation = {
@@ -79,7 +83,10 @@ export const FunmanOperation: Operation = {
 			inProgressId: '',
 			runId: '',
 			chartSettings: null,
-			currentProgress: 0
+			currentProgress: 0,
+			notebookHistory: [],
+			hasCodeRun: false,
+			isRequestUnresponsive: false
 		};
 		return init;
 	}

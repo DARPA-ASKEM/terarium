@@ -1,16 +1,24 @@
 // TODO: it might be best to move all these to getters and setters related to the model to services/model since these all seem to be split up at the moment
 import _, { isEmpty } from 'lodash';
-import { runDagreLayout, rerouteEdges } from '@/services/graph';
+import { rerouteEdges } from '@/services/graph';
 import { MiraModel } from '@/model-representation/mira/mira-common';
+import { ModelPartItem } from '@/types/Model';
 import { extractNestedStratas } from '@/model-representation/petrinet/mira-petri';
-import type { Initial, Model, ModelParameter, State, RegNetVertex, Transition, Rate } from '@/types/Types';
+import type { Initial, Model, ModelParameter, State, RegNetVertex, Transition, Rate, Observable } from '@/types/Types';
 import { getModelType } from '@/services/model';
 import { AMRSchemaNames } from '@/types/common';
-import { parseCurie } from '@/services/concept';
+import { parseCurieToIdentifier } from '@/services/concept';
 import { PetrinetRenderer } from '@/model-representation/petrinet/petrinet-renderer';
+import { layoutInstance } from '@/web-workers/layout/controller';
+import { IGraph } from '@graph-scaffolder/index';
 import { NestedPetrinetRenderer } from './petrinet/nested-petrinet-renderer';
 import { isStratifiedModel, getContext, collapseTemplates } from './mira/mira';
 import { extractTemplateMatrix } from './mira/mira-util';
+
+export const runDagreLayout = async <V, E>(graphData: IGraph<V, E>): Promise<IGraph<V, E>> => {
+	const graphLayout = await layoutInstance.runLayout(graphData);
+	return graphLayout as any;
+};
 
 export const getVariable = (miraModel: MiraModel, variableName: string) => {
 	if (miraModel.initials[variableName]) {
@@ -138,7 +146,7 @@ export function updateModelPartProperty(modelPart: any, key: string, value: any)
 		modelPart.units.expression_mathml = `<ci>${value}</ci>`;
 	} else if (key === 'concept') {
 		if (!modelPart.grounding?.identifiers) modelPart.grounding = { identifiers: {}, modifiers: {} };
-		modelPart.grounding.identifiers = parseCurie(value);
+		modelPart.grounding.identifiers = parseCurieToIdentifier(value);
 	} else {
 		modelPart[key] = value;
 	}
@@ -349,4 +357,114 @@ export function checkPetrinetAMR(amr: Model) {
 	});
 
 	return results;
+}
+
+export enum PartType {
+	STATE = 'STATE',
+	PARAMETER = 'PARAMETER',
+	TRANSITION = 'TRANSITION',
+	OBSERVABLE = 'OBSERVABLE',
+	TIME = 'TIME'
+}
+
+// FIXME: should refactor so typing is explicit and clear
+// Note "model" is both an AMR model, or it can be a list of transition templates
+// FIXME: Nelson recommended we show subject/outcome/controllers instead of input/output
+export function createPartsList(parts, model, partType) {
+	return Array.from(parts.keys()).map((id) => {
+		const childTargets = parts.get(id) ?? [];
+		const isParent = childTargets.length > 1;
+		let types;
+
+		switch (partType) {
+			case PartType.STATE:
+				types = getStates(model);
+				break;
+			case PartType.PARAMETER:
+				types = getParameters(model);
+				break;
+			default:
+				types = model;
+		}
+
+		const children = childTargets
+			.map((childTarget) => {
+				const t = types.find((part) => part.id === childTarget);
+				if (!t) return null;
+				const returnObj = {
+					id: t.id,
+					name: t.name,
+					description: t.description,
+					grounding: t.grounding,
+					unitExpression: null,
+					expression: null,
+					input: null,
+					output: null
+				};
+				if (partType === PartType.STATE || partType === PartType.PARAMETER) {
+					returnObj.unitExpression = t.units?.expression;
+				} else if (partType === PartType.TRANSITION) {
+					returnObj.expression = t.expression;
+					returnObj.input = t.input.join(', ');
+					returnObj.output = t.output.join(', ');
+				}
+				return returnObj;
+			})
+			.filter(Boolean) as ModelPartItem[];
+
+		const basePart: any = types.find((t) => {
+			if (partType === PartType.TRANSITION) {
+				return t.id === childTargets[0];
+			}
+			return t.id === id;
+		});
+		const base: ModelPartItem =
+			isParent || !basePart
+				? { id: `${id}` }
+				: {
+						id: basePart.id,
+						name: basePart.name,
+						description: basePart.description,
+						grounding: basePart.grounding,
+						unitExpression: basePart.units?.expression
+					};
+		if (partType === PartType.TRANSITION) {
+			base.templateId = `${id}`;
+			if (basePart) {
+				base.expression = basePart.expression;
+				base.input = basePart.input.join(', ');
+				base.output = basePart.output.join(', ');
+			}
+		}
+
+		return { base, children, isParent };
+	});
+}
+
+export function createObservablesList(observables: Observable[]) {
+	return observables.map((observable) => {
+		const { id, name, expression, description, units, grounding } = observable;
+		return {
+			base: {
+				id,
+				name,
+				description,
+				unitExpression: units?.expression,
+				grounding,
+				expression,
+				expression_mathml: observable.expression_mathml
+			},
+			// Observables can't be stratified therefore don't have children
+			children: [],
+			isParent: false
+		};
+	});
+}
+
+export function createTimeList(time) {
+	return time.map(({ id, units }) => ({
+		base: { id, unitExpression: units?.expression },
+		children: [],
+		isParent: false
+	}));
 }

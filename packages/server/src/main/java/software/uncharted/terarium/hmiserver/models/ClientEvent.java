@@ -26,5 +26,8 @@ public class ClientEvent<T> implements Serializable {
 	@TSOptional
 	private UUID notificationGroupId;
 
+	@TSOptional
+	private String userId; // Event created by or due to userId
+
 	private T data;
 }

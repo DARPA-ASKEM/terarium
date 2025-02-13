@@ -1,40 +1,22 @@
 <template>
 	<header
-		v-if="showHeader"
+		v-if="showHeader && !isDocument"
 		:class="{
 			'overview-banner': pageType === ProjectPages.OVERVIEW,
 			'with-tabs': tabs.length > 1,
 			shadow: applyShadow
 		}"
 	>
-		<!-- put the buttons above the title if there is an overline -->
-		<div v-if="overline" class="row">
-			<span class="overline">{{ overline }}</span>
-			<slot name="edit-buttons" />
-			<Button
-				v-if="featureConfig.isPreview"
-				class="close"
-				icon="pi pi-times"
-				rounded
-				text
-				@click="emit('close-preview')"
-			/>
-		</div>
 		<!--For naming asset such as model or code file-->
 		<div class="row">
-			<slot name="name-input" />
-			<h4 v-if="!isNamingAsset" :class="{ shrink: shrinkHeader }">
-				{{ name }}
-			</h4>
-			<slot v-if="!overline" name="edit-buttons" />
-			<Button
-				v-if="!overline && featureConfig.isPreview"
-				class="close"
-				icon="pi pi-times"
-				rounded
-				text
-				@click="emit('close-preview')"
+			<tera-toggleable-input
+				v-if="[ProjectPages.OVERVIEW, AssetType.Dataset, AssetType.Model].includes(pageType) && name"
+				:model-value="name"
+				tag="h4"
+				@update:model-value="onRename"
 			/>
+			<h4 v-else>{{ name }}</h4>
+			<slot name="edit-buttons" />
 		</div>
 		<!--put model contributors here too-->
 		<span v-if="authors" class="authors">
@@ -54,8 +36,11 @@
 			<TabPanel v-for="(tab, index) in tabs" :key="index" :header="tab.props?.tabName" />
 		</TabView>
 	</header>
-	<main v-if="!isLoading" ref="assetElementRef" @scroll="onScroll">
-		<section :class="{ 'overflow-hidden': overflowHidden }">
+	<main v-if="!isLoading" ref="assetElementRef" @scroll="onScroll" :class="{ 'document-asset': isDocument }">
+		<template v-if="isDocument">
+			<slot name="default" />
+		</template>
+		<section v-else :class="{ 'overflow-hidden': overflowHidden }">
 			<template v-for="(tab, index) in tabs" :key="index">
 				<component :is="tab" v-show="selectedTabIndex === index" />
 			</template>
@@ -77,15 +62,15 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch, PropType, useSlots, nextTick } from 'vue';
+import { ref, computed, watch, useSlots, nextTick } from 'vue';
 import { useRoute } from 'vue-router';
-import Button from 'primevue/button';
-import type { FeatureConfig } from '@/types/common';
 import { ProjectPages } from '@/types/Project';
 import { AssetType } from '@/types/Types';
 import TabView from 'primevue/tabview';
 import TabPanel from 'primevue/tabpanel';
-import TeraProgressSpinner from '../widgets/tera-progress-spinner.vue';
+import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue';
+import TeraToggleableInput from '@/components/widgets/tera-toggleable-input.vue';
+import { isEmpty } from 'lodash';
 
 const props = defineProps({
 	id: {
@@ -95,10 +80,6 @@ const props = defineProps({
 	name: {
 		type: String,
 		default: ''
-	},
-	overline: {
-		type: String,
-		default: null
 	},
 	authors: {
 		type: String,
@@ -112,27 +93,23 @@ const props = defineProps({
 		type: String,
 		default: null
 	},
-	featureConfig: {
-		type: Object as PropType<FeatureConfig>,
-		default: { isPreview: false } as FeatureConfig
-	},
 	showHeader: {
 		type: Boolean,
 		default: true
 	},
 	// Booleans default to false if not specified
 	showTableOfContents: Boolean,
-	isNamingAsset: Boolean,
 	hideIntro: Boolean,
 	isLoading: Boolean,
 	overflowHidden: Boolean,
+	isDocument: Boolean,
 	selectedTabIndex: {
 		type: Number,
 		default: 0
 	}
 });
 
-const emit = defineEmits(['close-preview', 'tab-change']);
+const emit = defineEmits(['tab-change', 'rename']);
 
 const slots = useSlots();
 const pageType = useRoute().params.pageType as ProjectPages | AssetType;
@@ -142,7 +119,6 @@ const scrollPosition = ref(0);
 const navIds = ref<Map<string, string>>(new Map());
 const chosenItem = ref<string | null>(null);
 
-const shrinkHeader = computed(() => scrollPosition.value > 20); // Shrink header once we scroll down a bit
 const tabs = computed(() => {
 	if (slots.tabs?.()) {
 		if (slots.tabs().length === 1) {
@@ -186,6 +162,11 @@ function onScroll(event: Event) {
 		}
 	});
 	chosenItem.value = closestItem;
+}
+
+function onRename(newName: string) {
+	if (!newName || isEmpty(newName)) return;
+	emit('rename', newName);
 }
 
 watch(
@@ -235,6 +216,10 @@ main {
 	overflow-x: hidden;
 }
 
+.document-asset {
+	overflow: hidden;
+}
+
 main > section {
 	display: flex;
 	flex: 1;
@@ -242,6 +227,7 @@ main > section {
 		flex: 1;
 		max-width: 100%;
 		overflow-x: auto;
+		overflow-y: hidden;
 	}
 }
 
@@ -250,7 +236,7 @@ nav {
 	flex-direction: column;
 	width: fit-content;
 	gap: 1rem;
-	padding: var(--gap) var(--gap-large) 0 var(--gap-2);
+	padding: var(--gap-4) var(--gap-8) 0 var(--gap-2);
 	/* Responsible for stickiness */
 	position: sticky;
 	top: 0;
@@ -270,7 +256,7 @@ header {
 	flex-direction: column;
 	justify-content: space-between;
 	height: fit-content;
-	padding: var(--gap-2) var(--gap);
+	padding: var(--gap-2) var(--gap-4);
 	gap: var(--gap-2);
 	background-color: var(--surface-0);
 	backdrop-filter: blur(6px);
@@ -305,7 +291,7 @@ header.overview-banner section {
 }
 
 header.with-tabs {
-	padding: var(--gap-2) var(--gap) 0;
+	padding: var(--gap-2) var(--gap-4) 0;
 }
 
 .overview-banner {
@@ -370,7 +356,7 @@ main:deep(.p-accordion-content) {
 	padding-bottom: var(--gap-2);
 }
 
-main:deep(.p-accordion-content ul) {
+main:deep(.p-accordion-content ul:not(.p-autocomplete-multiple-container)) {
 	display: flex;
 	flex-direction: column;
 	gap: var(--gap-2);

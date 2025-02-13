@@ -1,7 +1,7 @@
 import inspect
 from datetime import datetime
 from pydantic import BaseModel, root_validator
-from typing import List, Callable, Type
+from typing import List, Callable, Type, Optional
 
 
 class ConfigureModelDocument(BaseModel):
@@ -14,22 +14,37 @@ class InterventionsFromDocument(BaseModel):
     amr: str  # expects AMR in a stringified JSON object
 
 
+class InterventionsFromDataset(BaseModel):
+    dataset: List[str]
+    amr: str  # expects AMR in a stringified JSON object
+
+
 class ConfigureModelDataset(BaseModel):
     dataset: List[str]
     amr: str  # expects AMR in a stringified JSON object
     matrix: str = None
 
 
+class DatasetStatistics(BaseModel):
+    datasetUrl: str  # expects a URL of a CSV file
+
+
+class DatasetCardModel(BaseModel):
+    dataset: str  # expects a stringified JSON object
+    document: Optional[str] = None
+
+
 class ModelCardModel(BaseModel):
     amr: str  # expects AMR in a stringified JSON object
-    research_paper: str = None
+    document: Optional[str] = None
 
 
 class ModelCompareModel(BaseModel):
     amrs: List[str]  # expects AMRs to be a stringified JSON object
+    goal: str = None
 
 
-class EquationsCleanup(BaseModel):
+class EquationsModel(BaseModel):
     equations: List[str]
 
 
@@ -37,8 +52,13 @@ class EquationsFromImage(BaseModel):
     image: str  # expects a base64 encoded image
 
 
+class ChartAnnotationModel(BaseModel):
+    preamble: str
+    instruction: str
+
+
 class EmbeddingModel(BaseModel):
-    text: str
+    text: List[str]
     embedding_model: str
 
     @root_validator(pre=False, skip_on_failure=True)

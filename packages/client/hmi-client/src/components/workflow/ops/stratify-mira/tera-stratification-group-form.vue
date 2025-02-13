@@ -6,6 +6,7 @@
 				v-model="strataName"
 				placeholder="e.g., Age group"
 				@focusout="emit('update-self', updatedConfig)"
+				class="common-input-height"
 			/>
 		</div>
 		<div class="input-row">
@@ -16,11 +17,21 @@
 				placeholder="Click to select"
 				display="chip"
 				@update:model-value="emit('update-self', updatedConfig)"
+				class="common-input-height"
+				filter
 			/>
 		</div>
-		<div class="input-row">
+		<div class="flex flex-column gap-2 mb-4 w-full">
 			<label>Enter a comma separated list of labels for each group.</label>
-			<tera-input-text v-model="labels" placeholder="e.g., Young, Old" @focusout="emit('update-self', updatedConfig)" />
+			<Textarea
+				v-model="labels"
+				rows="1"
+				placeholder="e.g., Young, Old"
+				@focusout="emit('update-self', updatedConfig)"
+				:autoResize="true"
+				class="w-full"
+				style="min-height: 2.35rem"
+			/>
 		</div>
 		<div class="input-row">
 			<div class="flex align-items-center gap-2">
@@ -38,6 +49,7 @@
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue';
 import TeraInputText from '@/components/widgets/tera-input-text.vue';
+import Textarea from 'primevue/textarea';
 import MultiSelect from 'primevue/multiselect';
 import Checkbox from 'primevue/checkbox';
 import { StratifyGroup } from '@/components/workflow/ops/stratify-mira/stratify-mira-operation';
@@ -95,7 +107,7 @@ watch(
 	padding-bottom: 0px;
 	justify-content: flex-end;
 	align-items: center;
-	gap: var(--gap);
+	gap: var(--gap-4);
 	align-self: stretch;
 }
 
@@ -107,8 +119,8 @@ watch(
 	width: 100%;
 	display: flex;
 	flex-direction: column;
-	gap: var(--gap-small);
-	margin-bottom: var(--gap-small);
+	gap: var(--gap-2);
+	margin-bottom: var(--gap-4);
 
 	& > * {
 		flex: 1;
@@ -118,7 +130,12 @@ watch(
 .label-and-input {
 	display: flex;
 	flex-direction: column;
-	gap: var(--gap-small);
+	gap: var(--gap-2);
 	width: 0; /* CSS is weird but for some reason this prevents the Multiselect from going nuts */
+}
+
+/* make all the inputs on this page the same height */
+.common-input-height:deep(main) {
+	height: 2.35rem;
 }
 </style>

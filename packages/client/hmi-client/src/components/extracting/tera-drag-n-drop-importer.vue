@@ -16,14 +16,14 @@
 				class="hidden-input"
 			/>
 			<label for="fileInput" class="file-label">
-				<div v-if="dragOver" class="flex row align-items-center gap-3">
-					<div><i class="pi pi-file" style="font-size: 2.5rem" /></div>
-					<div>Release mouse button to add files to import</div>
+				<div v-if="dragOver" class="drop-zone">
+					<div><i class="pi pi-upload" style="font-size: 2.5rem" /></div>
+					<div>Release mouse button to<br />add files to import</div>
 				</div>
 				<div v-else class="drop-zone">
 					<div><i class="pi pi-upload" style="font-size: 2.5rem" /></div>
-					<div>
-						Drop resources here <br />
+					<div class="drop-zone-text">
+						Drop {{ acceptTypes[0] === AcceptedTypes.PROJECTCONFIG ? 'your project' : 'resources' }} here <br />
 						or <span class="text-link">click to open a file browser</span>
 					</div>
 				</div>
@@ -40,6 +40,11 @@
 					>
 					</TeraDragAndDropFilePreviewer>
 				</div>
+				<div v-if="isProcessing" class="uploading-container">
+					<p>Uploading...</p>
+					<ProgressBar :value="props.progress"></ProgressBar>
+				</div>
+				<div v-else class="empty-uploading-container"></div>
 			</div>
 		</div>
 	</section>
@@ -47,8 +52,8 @@
 
 <script setup lang="ts">
 import { ref, watch, computed } from 'vue';
-import API from '@/api/api';
 import { AcceptedExtensions, AcceptedTypes } from '@/types/common';
+import ProgressBar from 'primevue/progressbar';
 import TeraDragAndDropFilePreviewer from './tera-drag-n-drop-file-previewer.vue';
 
 const emit = defineEmits(['import-completed', 'imported-files-updated']);
@@ -65,7 +70,7 @@ const props = defineProps({
 		type: Number,
 		default: undefined
 	},
-	// list of accepted types of files
+	// list of accepted files types
 	acceptTypes: {
 		type: Array<AcceptedTypes>,
 		required: true,
@@ -79,28 +84,7 @@ const props = defineProps({
 	// custom import action can be passed in as prop
 	importAction: {
 		type: Function,
-		required: true,
-		/**
-		 * Default import action which just logs the click event.
-		 * @param {Array<File>} currentFiles
-		 * @returns {any}
-		 */
-		default: async (currentFiles: Array<File>): Promise<{ file: string; response: string }[]> => {
-			try {
-				const result: string[] = [];
-				for (let i = 0; i < currentFiles.length; i++) {
-					result.push(currentFiles[i].name);
-				}
-				const resp = await API.post(`/logs/`, {
-					logs: [{ level: 'info', message: `Sending file(s) for Importing: ${result}` }]
-				});
-				const { status } = resp;
-				if (status !== 200) console.warn('POST to /logs did not return a 200');
-			} catch (error) {
-				console.error(error);
-			}
-			return [{ file: 'Default Import Action', response: 'Nothing' }];
-		}
+		required: true
 	}
 });
 
@@ -119,7 +103,7 @@ const addFiles = (addedFiles: File[] | undefined) => {
 			const addedFile = addedFiles[i];
 			if (
 				props.acceptTypes.includes(addedFile.type as AcceptedTypes) ||
-				props.acceptExtensions.includes(addedFile.name.split('.').pop() as AcceptedExtensions)
+				props.acceptExtensions.includes(addedFile.name.split('.').pop()?.toLowerCase() as AcceptedExtensions)
 			) {
 				// only add files that weren't added before
 				const index = importFiles.value.findIndex((item) => item.name === addedFile.name);
@@ -177,7 +161,7 @@ const onDragLeave = (event: DragEvent) => {
 };
 
 /**
- * remove file from list
+ * remove a file from list
  * @param {number} index
  * @returns {any}
  */
@@ -200,6 +184,12 @@ watch(
 		emit('imported-files-updated', importFiles.value);
 	}
 );
+
+// Make these methods available to parent components
+defineExpose({
+	addFiles,
+	importFiles
+});
 </script>
 
 <style scoped>
@@ -264,7 +254,7 @@ label.file-label {
 .preview-container {
 	display: flex;
 	flex-direction: column;
-	gap: 1rem;
+	gap: var(--gap-2);
 }
 
 .file-preview {
@@ -283,11 +273,29 @@ label.file-label {
 
 .drop-zone {
 	display: flex;
+	flex-direction: column;
 	gap: 1rem;
 	align-items: center;
+	text-align: center;
+}
+.drop-zone-text {
+	text-align: center;
 }
 
 i {
 	color: var(--text-color-secondary);
+}
+
+.uploading-container {
+	padding-top: var(--gap-2);
+	display: flex;
+	flex-direction: column;
+	height: 2rem;
+	gap: var(--gap-1);
+	font-size: var(--font-caption);
+	color: var(--text-color-secondary);
+}
+.empty-uploading-container {
+	height: 2rem;
 }
 </style>

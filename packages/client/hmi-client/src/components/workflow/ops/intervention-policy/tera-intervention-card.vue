@@ -1,7 +1,12 @@
 <template>
 	<div class="intervention-card">
 		<header class="card-section">
-			<tera-toggleable-input :model-value="intervention.name" @update:model-value="onUpdateName($event)" tag="h6" />
+			<tera-toggleable-input
+				:model-value="intervention.name"
+				@update:model-value="onUpdateName($event)"
+				tag="h6"
+				class="nudge-left"
+			/>
 			<div class="flex align-items-center ml-auto">
 				<RadioButton
 					:model-value="interventionType"
@@ -31,11 +36,11 @@
 					invalidate-negative
 					:model-value="intervention.staticInterventions[0].timestep"
 					@update:model-value="(val) => onUpdateThreshold(val, 0)"
-					placeholder="timestep"
+					placeholder="Timestep"
 				/>
-				,
+				:
 			</div>
-			<div class="card-section">
+			<div class="card-setting">
 				<template v-if="interventionType === 'dynamic'">
 					Set
 					<section>
@@ -55,6 +60,8 @@
 							option-label="label"
 							option-value="value"
 							placeholder="Select"
+							:filter="semanticOptions(intervention.dynamicInterventions[0].type).length > 5"
+							autoFilterFocus
 						/>
 					</section>
 				</template>
@@ -79,6 +86,8 @@
 								option-label="label"
 								option-value="value"
 								placeholder="Select"
+								:filter="semanticOptions(intervention.staticInterventions[0].type).length > 5"
+								autoFilterFocus
 							/>
 						</section>
 						to
@@ -111,6 +120,8 @@
 										option-label="label"
 										option-value="value"
 										placeholder="Select"
+										:filter="semanticOptions(i.type).length > 5"
+										autoFilterFocus
 									/>
 								</section>
 								to
@@ -120,9 +131,15 @@
 									@update:model-value="(val) => onUpdateValue(val, index)"
 									placeholder="value"
 								/>
-								<Button class="ml-auto" icon="pi pi-times" text @click="onRemoveStaticIntervention(index)" />
+								<Button
+									class="ml-auto"
+									icon="pi pi-times"
+									size="small"
+									rounded
+									text
+									@click="onRemoveStaticIntervention(index)"
+								/>
 							</div>
-							<Divider />
 						</li>
 					</ul>
 				</template>
@@ -138,12 +155,15 @@
 					/>
 					when
 					<Dropdown
+						class="applied-to-menu"
 						:model-value="intervention.dynamicInterventions[0].parameter"
 						@change="onTargetParameterChange"
 						:options="stateOptions"
 						option-label="label"
 						option-value="value"
 						placeholder="Select a trigger"
+						:filter="stateOptions.length > 5"
+						autoFilterFocus
 					/>
 					crosses the threshold
 					<tera-input-number
@@ -178,7 +198,6 @@ import { Intervention, InterventionSemanticType } from '@/types/Types';
 import Dropdown, { DropdownChangeEvent } from 'primevue/dropdown';
 import TeraInputNumber from '@/components/widgets/tera-input-number.vue';
 import { cloneDeep, debounce, uniqueId } from 'lodash';
-import Divider from 'primevue/divider';
 
 const emit = defineEmits(['update', 'delete', 'add']);
 const props = defineProps<{
@@ -346,24 +365,65 @@ const debounceUpdateState = debounce((intervention) => {
 
 .type-menu {
 	border-radius: var(--border-radius) 0 0 var(--border-radius);
-	background: var(--surface-200);
+	background: var(--surface-100);
+	height: 27px;
 }
 
 .applied-to-menu {
 	border-radius: 0 var(--border-radius) var(--border-radius) 0;
+	height: 27px;
 }
 
 .intervention-card {
-	background-color: var(--surface-50);
+	background-color: var(--surface-0);
 	border: 1px solid var(--surface-border-light);
 	border-radius: var(--border-radius-medium);
-	padding: var(--gap-2) var(--gap);
+	padding: var(--gap-2) var(--gap-4);
 	gap: var(--gap-2);
 	display: flex;
 	flex-direction: column;
+	cursor: pointer;
+	box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+}
+.intervention-card:hover {
+	background-color: var(--surface-highlight);
+	border-left-color: var(--primary-color);
+}
+.intervention-card:hover:has(.card-setting:hover) {
+	border-left-color: var(--primary-color-light);
+	background-color: color-mix(in srgb, var(--surface-highlight) 30%, var(--surface-0) 70%);
+}
+
+.card-setting {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: var(--gap-2);
+	background: var(--surface-50);
+	padding: var(--gap-2) var(--gap-4);
+	margin-bottom: var(--gap-1);
+	border-radius: var(--border-radius);
+	border: 1px solid var(--surface-border-light);
+	border-left: 4px solid var(--surface-300);
+}
+.card-setting:hover {
+	background: var(--surface-highlight);
+	border-left-color: var(--primary-color);
 }
 
 ul {
 	list-style: none;
 }
+
+/* lighten divider color */
+:deep(.p-divider.p-divider-horizontal:before) {
+	border-top-color: var(--surface-border-light);
+}
+
+/* Align name to the left edge even though it's a button */
+.nudge-left {
+	margin-left: -0.5rem;
+}
+
+/* smaller dropdown to match other inputs in this card */
 </style>

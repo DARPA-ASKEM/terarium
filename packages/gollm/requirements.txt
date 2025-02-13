@@ -1,9 +1,11 @@
 ## Used for docker image.
+boto3
 fastapi
-openai==1.52.2
+httpx==0.28.1
+jsonschema
+openai
 pandas
-pydantic==2.9.2
+pydantic==2.10.6
 regex
 tiktoken
 uvicorn
-jsonschema

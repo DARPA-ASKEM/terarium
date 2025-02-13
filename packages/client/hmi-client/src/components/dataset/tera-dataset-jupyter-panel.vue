@@ -4,7 +4,7 @@
 		<!-- Toolbar -->
 		<div class="toolbar flex">
 			<!-- Kernel Status -->
-			<div class="toolbar-section">
+			<div class="kernel-status-container">
 				<span><i class="pi pi-circle-fill kernel-status" :style="statusStyle" /></span>
 				<header id="GPT">
 					{{ kernelStatus === 'idle' ? 'Ready' : kernelStatus === 'busy' ? 'Busy' : 'Offline' }}
@@ -14,6 +14,7 @@
 			<tera-beaker-input
 				class="tera-beaker-input"
 				:kernel-is-busy="kernelStatus !== KernelState.idle"
+				:default-options="sampleAgentQuestions"
 				context="dataset"
 				@submitQuery="onSubmitQuery"
 				@add-code-cell="onAddCodeCell"
@@ -62,43 +63,60 @@
 			</div>
 
 			<!-- Reset kernel -->
-			<Dropdown
-				:model-value="selectedLanguage"
-				placeholder="Select a language"
-				:options="languages"
-				option-label="name"
-				option-value="value"
-				class="language-dropdown"
-				:disabled="kernelStatus !== 'idle'"
-				@change="onChangeLanguage"
-			/>
-			<Button
-				label="Reset kernel"
-				severity="secondary"
-				outlined
-				icon="pi pi-replay"
-				class="p-button p-button-sm pr-4"
-				@click="confirmReset"
+			<div class="toolbar-right">
+				<Dropdown
+					:model-value="selectedLanguage"
+					placeholder="Select a language"
+					:options="languages"
+					option-disabled="disabled"
+					option-label="name"
+					option-value="value"
+					class="language-dropdown"
+					:disabled="kernelStatus !== 'idle'"
+					@change="onChangeLanguage"
+				/>
+				<Button
+					label="Reset kernel"
+					severity="secondary"
+					outlined
+					icon="pi pi-replay"
+					class="p-button p-button-sm pr-4"
+					@click="confirmReset"
+				/>
+			</div>
+		</div>
+		<div class="notebook-container">
+			<!-- Re-run message banner -->
+			<div v-if="showRerunMessage" class="rerun-message">
+				Re-run all the cells to restore the context if you need to make any changes or use them downstream.
+				<Button icon="pi pi-times" text rounded aria-label="Close" @click="showRerunMessage = false" />
+			</div>
+
+			<!-- Data context description -->
+			<div class="context-description">
+				<ul>
+					<li v-for="(data, idx) in dataContextDescription" :key="idx">{{ data }}</li>
+				</ul>
+			</div>
+
+			<!-- Jupyter Chat -->
+			<tera-jupyter-chat
+				ref="chat"
+				:show-jupyter-settings="true"
+				:show-chat-thoughts="props.showChatThoughts"
+				:jupyter-session="jupyterSession"
+				:kernel-status="kernelStatus"
+				:language="selectedLanguage"
+				:default-preview="defaultPreview"
+				@update-kernel-state="(e) => emit('update-kernel-state', e)"
+				@update-kernel-status="updateKernelStatus"
+				@new-dataset-saved="onNewDatasetSaved"
+				@download-response="onDownloadResponse"
+				@update-language="(lang) => emit('update-language', lang)"
+				@update-selected-outputs="(outputs) => emit('update-selected-outputs', outputs)"
+				:notebook-session="props.notebookSession"
 			/>
 		</div>
-
-		<!-- Jupyter Chat -->
-		<tera-jupyter-chat
-			ref="chat"
-			:show-jupyter-settings="true"
-			:show-chat-thoughts="props.showChatThoughts"
-			:jupyter-session="jupyterSession"
-			:kernel-status="kernelStatus"
-			:language="selectedLanguage"
-			:default-preview="defaultPreview"
-			@update-kernel-state="(e) => emit('update-kernel-state', e)"
-			@update-kernel-status="updateKernelStatus"
-			@new-dataset-saved="onNewDatasetSaved"
-			@download-response="onDownloadResponse"
-			@update-language="(lang) => emit('update-language', lang)"
-			@update-selected-outputs="(outputs) => emit('update-selected-outputs', outputs)"
-			:notebook-session="props.notebookSession"
-		/>
 
 		<!-- Save as dialog -->
 		<tera-modal v-if="showSaveInput" class="w-4">
@@ -135,8 +153,8 @@ import {
 	getServerSettings,
 	getSessionManager,
 	JupyterMessage,
-	newSession,
-	KernelState
+	KernelState,
+	newSession
 } from '@/services/jupyter';
 import { SessionContext } from '@jupyterlab/apputils/lib/sessioncontext';
 import { createMessage } from '@jupyterlab/services/lib/kernel/messages';
@@ -146,6 +164,7 @@ import { useConfirm } from 'primevue/useconfirm';
 import { useProjects } from '@/composables/project';
 import { programmingLanguageOptions } from '@/types/common';
 import TeraBeakerInput from '@/components/llm/tera-beaker-input.vue';
+import { isEmpty } from 'lodash';
 
 const openDialog = () => {
 	showSaveInput.value = true;
@@ -158,17 +177,10 @@ const jupyterSession: SessionContext = await newSession('beaker_kernel', 'Beaker
 const selectedKernel = ref();
 const runningSessions = ref<any[]>([]);
 
-const defaultPreview = computed(() => {
-	let code = '';
-	props.assets.forEach((asset, index) => {
-		code += `#d${index + 1} = ${asset.name}\n`;
-	});
+// This is used to inform the user what is in the context.
+const dataContextDescription = computed(() => props.assets.map((asset, index) => `#d${index + 1} = ${asset.name}\n`));
 
-	// add first dataset to the code
-	code += 'd1';
-	return code;
-});
-
+const defaultPreview = ref<string>('d1');
 const confirm = useConfirm();
 
 const props = defineProps<{
@@ -179,8 +191,10 @@ const props = defineProps<{
 	programmingLanguage?: string;
 	kernelState: any;
 	selectedDataset: string | null;
+	sampleAgentQuestions: string[];
 }>();
 
+const showRerunMessage = ref(false);
 const languages = programmingLanguageOptions();
 const selectedLanguage = computed(() => props.programmingLanguage || languages[0].value);
 
@@ -304,6 +318,7 @@ watch(
 
 onMounted(() => {
 	// for admin panel
+
 	jupyterSession.ready.then(() => {
 		if (jupyterSession.session) {
 			const sessions = getSessionManager().running();
@@ -318,6 +333,10 @@ onMounted(() => {
 				kernelId: jupyterSession.session?.kernel?.id,
 				value: jupyterSession.session?.id
 			};
+			// Show rerun message if there are any cells that have been executed
+			if (props.notebookSession?.data.history?.some((historyItem) => !isEmpty(historyItem.executions))) {
+				showRerunMessage.value = true;
+			}
 		}
 	});
 });
@@ -394,7 +413,6 @@ const confirmReset = () => {
 This will reset the kernel back to its starting state, but keep all of your prompts and code cells.
 The code cells will need to be rerun.`,
 		header: 'Reset kernel',
-		icon: 'pi pi-exclamation-triangle',
 		accept: () => {
 			resetKernel();
 		}
@@ -478,10 +496,15 @@ const onAddCodeCell = () => {
 };
 
 const onRunAllCells = () => {
-	if (window.confirm('Are you sure you want to rerun all cells?')) {
-		const event = new Event('run-all-cells');
-		window.dispatchEvent(event);
-	}
+	confirm.require({
+		message: 'Are you sure you want to rerun all cells?',
+		header: 'Rerun all cells',
+		accept: () => {
+			const event = new Event('run-all-cells');
+			window.dispatchEvent(event);
+			showRerunMessage.value = false;
+		}
+	});
 };
 
 /* Download dataset feature has been removed, but keeping this code here in case it returns */
@@ -516,6 +539,17 @@ const onDownloadResponse = (payload) => {
 </script>
 
 <style scoped>
+.context-description {
+	background-color: var(--surface-100);
+	width: 100%;
+	width: fill-available;
+	font-family: var(--font-family);
+	font-feature-settings: 'tnum';
+	border: none;
+	margin: 0;
+	padding: var(--gap-4) var(--gap-12) 0;
+}
+
 .container {
 	margin-left: 1rem;
 	margin-right: 1rem;
@@ -545,6 +579,16 @@ const onDownloadResponse = (payload) => {
 	flex: 1;
 }
 
+.kernel-status-container {
+	display: flex;
+	flex-direction: row;
+	align-items: top;
+	flex-wrap: nowrap;
+	white-space: nowrap;
+	min-width: 5.25rem;
+	padding-top: var(--gap-2-5);
+}
+
 .kernel-status {
 	margin-right: 10px;
 }
@@ -556,7 +600,7 @@ const onDownloadResponse = (payload) => {
 .toolbar {
 	display: flex;
 	flex-direction: row;
-	align-items: center;
+	align-items: top;
 	background-color: var(--surface-100);
 	border-bottom: 1px solid var(--surface-border);
 	position: sticky;
@@ -564,22 +608,27 @@ const onDownloadResponse = (payload) => {
 	left: 0;
 	z-index: 100;
 	width: 100%;
-	height: 3.5rem;
-	padding: var(--gap-2) var(--gap) var(--gap-2) 1.5rem;
+	padding: var(--gap-2) var(--gap-4) var(--gap-2) 1.5rem;
 	gap: var(--gap-2);
+	box-shadow: 0 4px 6px -5px rgba(0, 0, 0, 0.2);
 }
 .toolbar:deep(.p-button .p-button-label) {
 	font-weight: 500;
 }
-.toolbar-section {
+.toolbar-right {
 	display: flex;
 	flex-direction: row;
-	align-items: center;
-	flex-wrap: nowrap;
-	white-space: nowrap;
+	align-items: top;
+	gap: var(--gap-2);
+	height: 32px; /* aligns with the height of the input buttons */
 }
+
 :deep(.language-dropdown span) {
 	font-size: 12px;
+	margin-left: var(--gap-1-5);
+}
+.tera-beaker-input {
+	padding-top: 0;
 }
 
 .variables-table {
@@ -613,5 +662,22 @@ const onDownloadResponse = (payload) => {
 	grid-row: 2;
 	grid-column: 1 / span 6;
 	color: var(--text-color-subdued);
+}
+
+.rerun-message {
+	position: sticky;
+	top: 0;
+	z-index: 1;
+	display: flex;
+	background-color: var(--surface-warning);
+	justify-content: space-between;
+	align-items: center;
+	padding: var(--gap-2);
+}
+
+.notebook-container {
+	height: calc(100% - 3.5rem);
+	overflow-y: auto;
+	background-color: var(--surface-100);
 }
 </style>
