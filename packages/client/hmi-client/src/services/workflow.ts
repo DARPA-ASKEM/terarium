@@ -14,7 +14,8 @@ import type {
 	WorkflowNode,
 	WorkflowPort,
 	WorkflowOutput,
-	WorkflowAnnotation
+	WorkflowAnnotation,
+	Transform
 } from '@/types/workflow';
 import { OperatorStatus, WorkflowOperationTypes, WorkflowPortStatus, WorkflowTransformations } from '@/types/workflow';
 import { useProjects } from '@/composables/project';
