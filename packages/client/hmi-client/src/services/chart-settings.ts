@@ -280,6 +280,15 @@ export async function fetchAnnotations(nodeId: string) {
 	return data as ChartAnnotation[];
 }
 
+export async function generateQuantileForecastChartAnnotation(
+	request: string,
+	timeField: string,
+	variables: string[],
+	options: Partial<ForecastChartOptions>
+) {
+	console.log('test');
+}
+
 export async function generateForecastChartAnnotation(
 	request: string,
 	timeField: string,
@@ -317,14 +326,9 @@ export async function generateForecastChartAnnotation(
     - Make sure possible values for 'valueField' are ${JSON.stringify(variables)} and try best to translate the variables mentioned from the request to the variables for the 'valueField'.
     - Leverage this variable to human readable name mapping: ${JSON.stringify(translateMap)} if needed.
 	`;
-	const instruction = `
-    Give me the layer object to be added to the existing chart spec based on the following user request.
-
-    ${request}
-	`;
 	const { data } = await API.post(
 		`/gollm/chart-annotation?mode=SYNC`,
-		{ preamble, instruction },
+		{ preamble, instruction: request },
 		{
 			headers: {
 				'Content-Type': 'application/json'

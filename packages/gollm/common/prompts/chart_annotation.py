@@ -6,6 +6,42 @@ You are an agent who is an expert in Vega-Lite chart specs. Provide a Vega-Lite 
 - You must give me the single layer object that renders all the necessary drawing objects, including multiple layers within the top layer object if needed.
 - When adding a label, also draw a constant line perpendicular to the axis to which you are adding the label.
 
+Here are some examples of user requests and the corresponding JSON objects that you should provide for a chart spec:
+--- EXAMPLES START ---
+{examples}
+--- EXAMPLES END ---
+
+{preamble}
+
+Give me the layer object described by the json schema found at https://vega.github.io/schema/vega-lite/v5.json to be added to the existing chart spec based on the following user instruction.
+Do not respond in full sentences; only create a JSON object that satisfies the JSON schema specified in https://vega.github.io/schema/vega-lite/v5.json. Make sure you follow the JSON standard for the data types and format.
+
+--- INSTRUCTION START ---
+
+{instruction}
+
+--- INSTRUCTION END ---
+"""
+
+FORECAST_CHART_ANNOTATION_EXAMPLES = """
+Assuming you are adding the annotations to the following chart spec,
+---- Example Chart Spec Start -----
+{{
+    "data": {{ "url": "data/samples.csv" }},
+    "transform": [
+        {{ "fold": ["price", "cost", "tax", "profit"], "as": ["variableField", "valueField"] }}
+    ],
+    "layer": [
+        {{
+            "mark": "line",
+            "encoding": {{
+                "x": {{ "field": "date", "type": "quantitative", "axis": {{ "title": "Day" }} }},
+                "y": {{ "field": "valueField", "type": "quantitative", "axis": {{ "title": "Dollars" }} }}
+            }}
+        }}
+    ]
+}}
+---- Example Chart Spec End -----
 Here are some example requests and the answers:
 
 Request:
@@ -142,15 +178,8 @@ Answer:
     }}
   ]
 }}
-
-{preamble}
-
-Give me the layer object described by the json schema found at https://vega.github.io/schema/vega-lite/v5.json to be added to the existing chart spec based on the following user instruction.
-Do not respond in full sentences; only create a JSON object that satisfies the JSON schema specified in https://vega.github.io/schema/vega-lite/v5.json. Make sure you follow the JSON standard for the data types and format.
-
---- INSTRUCTION START ---
-
-{instruction}
-
---- INSTRUCTION END ---
 """
+
+# def build_prompt(preamble: str, instruction: str, type: str) -> str:
+#     examples = FORECAST_CHART_ANNOTATION_EXAMPLES
+#     return CHART_ANNOTATION_PROMPT.format(examples=examples, preamble=preamble, instruction=instruction)

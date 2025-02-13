@@ -2,6 +2,7 @@ import boto3
 import json
 import os
 from typing import List, Optional
+from entities import ChartAnnotationType
 
 from common.LlmToolsInterface import LlmToolsInterface
 from common.prompts.chart_annotation import CHART_ANNOTATION_PROMPT
@@ -320,7 +321,7 @@ class LlamaTools(LlmToolsInterface):
         return prompt
 
 
-    def create_chart_annotation_prompt(self, preamble: str, instruction: str, schema: str) -> str:
+    def create_chart_annotation_prompt(self, chartType: ChartAnnotationType, preamble: str, instruction: str, schema: str) -> str:
         print("Building chart annotation prompt...")
         prompt = LLAMA_START_PROMPT
         prompt += CHART_ANNOTATION_PROMPT.format(

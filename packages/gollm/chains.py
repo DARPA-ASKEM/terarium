@@ -3,6 +3,7 @@ import imghdr
 import json
 import os
 from typing import List, Optional
+from entities import ChartAnnotationType
 
 from common import LlmToolsInterface
 from common.utils import validate_schema, model_config_adapter, get_image_format_string, extract_json_object, \
@@ -153,13 +154,10 @@ def general_query_chain(llm: LlmToolsInterface, instruction: str) -> str:
     prompt = llm.create_general_query_prompt(instruction)
     return llm.send_to_llm_with_string_output(prompt, None)
 
-
-def chart_annotation_chain(llm: LlmToolsInterface, preamble: str, instruction: str) -> dict:
+def chart_annotation_chain(llm: LlmToolsInterface, preamble: str, instruction: str, chartType: ChartAnnotationType ) -> dict:
     prompt = llm.create_chart_annotation_prompt(preamble, instruction)
     chart_annotation_string = llm.send_to_llm_with_string_output(prompt)
     return unescape_curly_braces(extract_json_object(chart_annotation_string))
-
-
 
 def latex_to_sympy_chain(llm: LlmToolsInterface, equations: List[str]) -> dict:
     print("Uploading and validating equations schema...")

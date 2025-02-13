@@ -22,28 +22,21 @@ import software.uncharted.terarium.hmiserver.models.TerariumAsset;
 @Entity
 public class ChartAnnotation extends TerariumAsset {
 
-	// TODO: Add chart type enums once we have the full list of the charts we support
-
-	// @TSModel
-	// public enum ChartType {
-	// 	@JsonAlias("variable")
-	// 	VARIABLE,
-	// 	@JsonAlias("parameter")
-	// 	PARAMETER,
-	// 	@JsonAlias("loss")
-	// 	LOSS,
-	// 	@JsonAlias("error")
-	// 	ERROR
-	// }
+	@TSModel
+	public enum ChartType {
+		// @JsonAlias("forecast_chart")
+		FORECAST_CHART,
+		// @JsonAlias("quantile_forecast_chart")
+		QUANTILE_FORECAST_CHART
+	}
 
 	private UUID nodeId;
 	private UUID outputId;
 
 	private UUID chartId;
 
-	// TODO: add chart type to specify which type of chart this annotation is applied to
-	// @Enumerated(EnumType.STRING)
-	// private ChartType chartType;
+	@Enumerated(EnumType.STRING)
+	private ChartType chartType;
 
 	@Type(JsonType.class)
 	@Column(columnDefinition = "json")

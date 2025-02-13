@@ -4,6 +4,7 @@ import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
+import software.uncharted.terarium.hmiserver.models.dataservice.ChartAnnotation.ChartType;
 
 @Component
 @RequiredArgsConstructor
@@ -22,6 +23,7 @@ public class ChartAnnotationResponseHandler extends TaskResponseHandler {
 
 		String preamble;
 		String instruction;
+		ChartType chartType;
 	}
 
 	@Data
