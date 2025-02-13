@@ -24,6 +24,18 @@ import software.uncharted.terarium.hmiserver.utils.rebac.Schema;
 @Service
 public class ModelService extends TerariumAssetService<Model, ModelRepository> {
 
+	@SuppressWarnings("unused")
+	private final CurrentUserService currentUserService;
+
+	@SuppressWarnings("unused")
+	private final DocumentAssetService documentAssetService;
+
+	@SuppressWarnings("unused")
+	private final TaskService taskService;
+
+	@SuppressWarnings("unused")
+	private final DKGService dkgService;
+
 	public ModelService(
 		final ObjectMapper objectMapper,
 		final Config config,
