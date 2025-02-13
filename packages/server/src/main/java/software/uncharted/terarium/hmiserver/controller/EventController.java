@@ -1,6 +1,5 @@
 package software.uncharted.terarium.hmiserver.controller;
 
-import jakarta.transaction.Transactional;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;

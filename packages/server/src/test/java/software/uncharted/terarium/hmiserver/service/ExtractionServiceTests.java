@@ -3,7 +3,6 @@ package software.uncharted.terarium.hmiserver.service;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.IOException;
 import java.nio.file.Files;
-import java.util.ArrayList;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.http.HttpEntity;
@@ -17,11 +16,8 @@ import org.springframework.security.test.context.support.WithUserDetails;
 import software.uncharted.terarium.hmiserver.TerariumApplicationTests;
 import software.uncharted.terarium.hmiserver.configuration.MockUser;
 import software.uncharted.terarium.hmiserver.models.dataservice.document.DocumentAsset;
-import software.uncharted.terarium.hmiserver.models.dataservice.model.Model;
 import software.uncharted.terarium.hmiserver.models.dataservice.project.Project;
-import software.uncharted.terarium.hmiserver.service.data.DatasetService;
 import software.uncharted.terarium.hmiserver.service.data.DocumentAssetService;
-import software.uncharted.terarium.hmiserver.service.data.ModelService;
 import software.uncharted.terarium.hmiserver.service.data.ProjectSearchService;
 import software.uncharted.terarium.hmiserver.service.data.ProjectService;
 
@@ -29,22 +25,13 @@ import software.uncharted.terarium.hmiserver.service.data.ProjectService;
 public class ExtractionServiceTests extends TerariumApplicationTests {
 
 	@Autowired
-	private ObjectMapper objectMapper;
-
-	@Autowired
 	private DocumentAssetService documentAssetService;
-
-	@Autowired
-	private ModelService modelService;
 
 	@Autowired
 	private ExtractionService extractionService;
 
 	@Autowired
 	private ProjectService projectService;
-
-	@Autowired
-	private DatasetService datasetService;
 
 	@Autowired
 	private ProjectSearchService projectSearchService;

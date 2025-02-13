@@ -30,7 +30,7 @@ import org.springframework.web.server.ResponseStatusException;
 import software.uncharted.terarium.hmiserver.models.ClientEvent;
 import software.uncharted.terarium.hmiserver.models.ClientEventType;
 import software.uncharted.terarium.hmiserver.models.dataservice.ResponseDeleted;
-import software.uncharted.terarium.hmiserver.models.dataservice.project.Contributor;
+// import software.uncharted.terarium.hmiserver.models.dataservice.project.Contributor;
 import software.uncharted.terarium.hmiserver.models.dataservice.workflow.InputPort;
 import software.uncharted.terarium.hmiserver.models.dataservice.workflow.OutputPort;
 import software.uncharted.terarium.hmiserver.models.dataservice.workflow.Workflow;
