@@ -6,12 +6,10 @@ import lombok.extern.slf4j.Slf4j;
 import software.uncharted.terarium.hmiserver.models.ClientEvent;
 import software.uncharted.terarium.hmiserver.models.ClientEventType;
 import software.uncharted.terarium.hmiserver.models.StatusUpdate;
-import software.uncharted.terarium.hmiserver.models.User;
 import software.uncharted.terarium.hmiserver.models.dataservice.simulation.ProgressState;
 import software.uncharted.terarium.hmiserver.models.notification.NotificationEvent;
 import software.uncharted.terarium.hmiserver.models.notification.NotificationGroup;
 import software.uncharted.terarium.hmiserver.service.ClientEventService;
-import software.uncharted.terarium.hmiserver.service.CurrentUserService;
 
 @Slf4j
 public class NotificationGroupInstance<T> {

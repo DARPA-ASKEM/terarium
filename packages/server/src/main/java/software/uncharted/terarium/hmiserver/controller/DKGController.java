@@ -14,10 +14,8 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-import software.uncharted.terarium.hmiserver.models.dataservice.Grounding;
 import software.uncharted.terarium.hmiserver.models.mira.DKG;
 import software.uncharted.terarium.hmiserver.security.Roles;
-import software.uncharted.terarium.hmiserver.service.ContextMatcher;
 import software.uncharted.terarium.hmiserver.service.data.DKGService;
 
 @RequestMapping("/dkg")

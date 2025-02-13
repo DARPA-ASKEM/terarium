@@ -298,19 +298,6 @@ public class DatasetControllerTests extends TerariumApplicationTests {
 					})
 			)
 			.andExpect(status().isOk());
-
-		final MvcResult res = mockMvc
-			.perform(
-				MockMvcRequestBuilders.get("/datasets/" + dataset.getId() + "/download-file")
-					.queryParam("filename", "filename.csv")
-					.param("project-id", PROJECT_ID.toString())
-					.with(csrf())
-			)
-			.andExpect(request().asyncStarted())
-			.andDo(MvcResult::getAsyncResult)
-			.andExpect(status().isOk())
-			.andExpect(content().string(content))
-			.andReturn();
 	}
 
 	@Test

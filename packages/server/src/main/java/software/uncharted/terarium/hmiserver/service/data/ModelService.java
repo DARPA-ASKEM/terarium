@@ -5,14 +5,11 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import io.micrometer.observation.annotation.Observed;
 import java.io.IOException;
-import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import software.uncharted.terarium.hmiserver.configuration.Config;
-import software.uncharted.terarium.hmiserver.configuration.ElasticsearchConfiguration;
-import software.uncharted.terarium.hmiserver.models.dataservice.document.DocumentAsset;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.Model;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.ModelDescription;
 import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.ModelMetadata;
@@ -27,28 +24,15 @@ import software.uncharted.terarium.hmiserver.utils.rebac.Schema;
 @Service
 public class ModelService extends TerariumAssetService<Model, ModelRepository> {
 
-	private final CurrentUserService currentUserService;
-	private final DocumentAssetService documentAssetService;
-	private final TaskService taskService;
-	private final DKGService dkgService;
-
 	public ModelService(
 		final ObjectMapper objectMapper,
 		final Config config,
-		final CurrentUserService currentUserService,
-		final DocumentAssetService documentAssetService,
 		final ProjectService projectService,
 		final ProjectAssetService projectAssetService,
 		final ModelRepository repository,
-		final S3ClientService s3ClientService,
-		final TaskService taskService,
-		final DKGService dkgService
+		final S3ClientService s3ClientService
 	) {
 		super(objectMapper, config, projectService, projectAssetService, repository, s3ClientService, Model.class);
-		this.currentUserService = currentUserService;
-		this.documentAssetService = documentAssetService;
-		this.taskService = taskService;
-		this.dkgService = dkgService;
 	}
 
 	@Observed(name = "function_profile")

@@ -3,7 +3,6 @@ package software.uncharted.terarium.hmiserver.service.data;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.micrometer.observation.annotation.Observed;
 import java.io.IOException;
-import java.util.Map;
 import java.util.UUID;
 import org.apache.http.entity.ContentType;
 import org.springframework.stereotype.Service;
