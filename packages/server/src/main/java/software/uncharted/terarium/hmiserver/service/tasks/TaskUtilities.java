@@ -234,10 +234,4 @@ public class TaskUtilities {
 	private static String getNameSearchTerm(GroundedSemantic part) {
 		return (part.getName() == null || part.getName().isBlank()) ? part.getConceptReference() : part.getName();
 	}
-
-	/** Check if a grounding is non-existent. */
-	@SuppressWarnings("unused")
-	private static Boolean isGroundingNonExistent(Grounding grounding) {
-		return grounding == null || grounding.isEmpty();
-	}
 }

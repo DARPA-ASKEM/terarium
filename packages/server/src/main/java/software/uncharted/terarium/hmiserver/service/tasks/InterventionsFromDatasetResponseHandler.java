@@ -15,7 +15,6 @@ import software.uncharted.terarium.hmiserver.models.simulationservice.interventi
 import software.uncharted.terarium.hmiserver.models.task.TaskResponse;
 import software.uncharted.terarium.hmiserver.service.data.DatasetService;
 import software.uncharted.terarium.hmiserver.service.data.InterventionService;
-import software.uncharted.terarium.hmiserver.service.data.ProvenanceService;
 
 @Component
 @RequiredArgsConstructor
@@ -26,10 +25,6 @@ public class InterventionsFromDatasetResponseHandler extends TaskResponseHandler
 
 	private final ObjectMapper objectMapper;
 	private final InterventionService interventionService;
-
-	@SuppressWarnings("unused")
-	private final ProvenanceService provenanceService;
-
 	private final DatasetService datasetService;
 
 	@Override
@@ -77,22 +72,8 @@ public class InterventionsFromDatasetResponseHandler extends TaskResponseHandler
 					ip.setModelId(props.modelId);
 				}
 
-				// Fetch the dataset name
-				@SuppressWarnings("unused")
-				final Optional<Dataset> dataset = datasetService.getAsset(
-					props.datasetId,
-					ASSUME_WRITE_PERMISSION_ON_BEHALF_OF_USER
-				);
-
 				// Set the extraction dataset id
 				ip.getInterventions().forEach(intervention -> intervention.setExtractionDatasetId(props.datasetId));
-
-				@SuppressWarnings("unused")
-				final InterventionPolicy newPolicy = interventionService.createAsset(
-					ip,
-					props.projectId,
-					ASSUME_WRITE_PERMISSION_ON_BEHALF_OF_USER
-				);
 			}
 		} catch (final Exception e) {
 			log.error("Failed to extract intervention policy", e);

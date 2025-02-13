@@ -30,9 +30,6 @@ import software.uncharted.terarium.hmiserver.filters.ServiceRequestFilter;
 )
 public class SecurityConfig {
 
-	@SuppressWarnings("unused")
-	private final KeycloakLogoutHandler keycloakLogoutHandler;
-
 	private final KeycloakJwtAuthenticationConverter authenticationConverter;
 	private final SwaggerRequestMatcher swaggerRequestMatcher;
 	private final UnauthenticatedUrlRequestMatcher unauthenticatedUrlRequestMatcher;

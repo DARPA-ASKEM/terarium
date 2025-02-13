@@ -17,35 +17,21 @@ import software.uncharted.terarium.hmiserver.TerariumApplicationTests;
 import software.uncharted.terarium.hmiserver.configuration.MockUser;
 import software.uncharted.terarium.hmiserver.models.dataservice.document.DocumentAsset;
 import software.uncharted.terarium.hmiserver.models.dataservice.project.Project;
-import software.uncharted.terarium.hmiserver.service.data.DatasetService;
 import software.uncharted.terarium.hmiserver.service.data.DocumentAssetService;
-import software.uncharted.terarium.hmiserver.service.data.ModelService;
 import software.uncharted.terarium.hmiserver.service.data.ProjectSearchService;
 import software.uncharted.terarium.hmiserver.service.data.ProjectService;
 
 @Slf4j
 public class ExtractionServiceTests extends TerariumApplicationTests {
 
-	@SuppressWarnings("unused")
-	@Autowired
-	private ObjectMapper objectMapper;
-
 	@Autowired
 	private DocumentAssetService documentAssetService;
-
-	@SuppressWarnings("unused")
-	@Autowired
-	private ModelService modelService;
 
 	@Autowired
 	private ExtractionService extractionService;
 
 	@Autowired
 	private ProjectService projectService;
-
-	@SuppressWarnings("unused")
-	@Autowired
-	private DatasetService datasetService;
 
 	@Autowired
 	private ProjectSearchService projectSearchService;

@@ -14,7 +14,6 @@ import org.springframework.stereotype.Component;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.Model;
 import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.ModelMetadata;
 import software.uncharted.terarium.hmiserver.models.task.TaskResponse;
-import software.uncharted.terarium.hmiserver.service.data.DocumentAssetService;
 import software.uncharted.terarium.hmiserver.service.data.ModelService;
 
 @Component
@@ -24,9 +23,6 @@ public class ModelCardResponseHandler extends TaskResponseHandler {
 
 	public static final String NAME = "gollm:model_card";
 	private final ObjectMapper objectMapper;
-
-	@SuppressWarnings("unused")
-	private final DocumentAssetService documentAssetService;
 
 	private final ModelService modelService;
 

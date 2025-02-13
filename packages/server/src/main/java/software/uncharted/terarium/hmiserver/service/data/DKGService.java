@@ -173,9 +173,6 @@ public class DKGService {
 			return null; //error case
 		}
 
-		@SuppressWarnings("unused")
-		final MultisearchBody.Builder msBuilder = new MultisearchBody.Builder();
-
 		final List<KnnQuery> queries = new ArrayList<>();
 		if (texts != null && !texts.isEmpty()) {
 			// remove null or empty strings from the list

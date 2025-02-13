@@ -19,7 +19,6 @@ import org.springframework.stereotype.Component;
 import software.uncharted.terarium.hmiserver.models.dataservice.dataset.Dataset;
 import software.uncharted.terarium.hmiserver.models.dataservice.dataset.DatasetColumn;
 import software.uncharted.terarium.hmiserver.models.task.TaskResponse;
-import software.uncharted.terarium.hmiserver.service.data.DKGService;
 import software.uncharted.terarium.hmiserver.service.data.DatasetService;
 
 @Component
@@ -31,9 +30,6 @@ public class EnrichDatasetResponseHandler extends TaskResponseHandler {
 
 	private final ObjectMapper objectMapper;
 	private final DatasetService datasetService;
-
-	@SuppressWarnings("unused")
-	private final DKGService dkgService;
 
 	@Override
 	public String getName() {

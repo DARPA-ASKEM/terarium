@@ -36,9 +36,6 @@ public class GroupsController {
 
 	private final ReBACService reBACService;
 
-	@SuppressWarnings("unused")
-	private final CurrentUserService currentUserService;
-
 	@GetMapping
 	@Secured(Roles.USER)
 	public ResponseEntity<List<PermissionGroup>> getGroups(

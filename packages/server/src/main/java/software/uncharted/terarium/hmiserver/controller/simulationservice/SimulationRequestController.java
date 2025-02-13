@@ -63,9 +63,6 @@ public class SimulationRequestController implements SnakeCaseController {
 	private final NotificationService notificationService;
 	private final ClientEventService clientEventService;
 
-	@SuppressWarnings("unused")
-	private final ObjectMapper objectMapper;
-
 	@Data
 	private static class SimulationRequestBody<T> {
 
