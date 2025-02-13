@@ -1,6 +1,5 @@
 package software.uncharted.terarium.hmiserver.controller.events;
 
-import jakarta.transaction.Transactional;
 import java.util.List;
 import java.util.UUID;
 import org.junit.jupiter.api.Assertions;

@@ -13,8 +13,6 @@ import software.uncharted.terarium.hmiserver.service.CurrentUserService;
 @RequiredArgsConstructor
 public class AuthController {
 
-	private final CurrentUserService currentUserService;
-
 	@GetMapping
 	ResponseEntity<String> isAuthenticated() {
 		final Jwt token = CurrentUserService.getToken();

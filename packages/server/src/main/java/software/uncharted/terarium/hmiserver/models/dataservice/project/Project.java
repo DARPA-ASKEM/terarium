@@ -13,7 +13,6 @@ import jakarta.persistence.Transient;
 import java.io.Serial;
 import java.sql.Types;
 import java.util.ArrayList;
-import java.util.Base64;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
