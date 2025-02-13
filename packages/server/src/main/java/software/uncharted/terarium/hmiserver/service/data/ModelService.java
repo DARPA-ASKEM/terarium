@@ -24,35 +24,15 @@ import software.uncharted.terarium.hmiserver.utils.rebac.Schema;
 @Service
 public class ModelService extends TerariumAssetService<Model, ModelRepository> {
 
-	@SuppressWarnings("unused")
-	private final CurrentUserService currentUserService;
-
-	@SuppressWarnings("unused")
-	private final DocumentAssetService documentAssetService;
-
-	@SuppressWarnings("unused")
-	private final TaskService taskService;
-
-	@SuppressWarnings("unused")
-	private final DKGService dkgService;
-
 	public ModelService(
 		final ObjectMapper objectMapper,
 		final Config config,
-		final CurrentUserService currentUserService,
-		final DocumentAssetService documentAssetService,
 		final ProjectService projectService,
 		final ProjectAssetService projectAssetService,
 		final ModelRepository repository,
-		final S3ClientService s3ClientService,
-		final TaskService taskService,
-		final DKGService dkgService
+		final S3ClientService s3ClientService
 	) {
 		super(objectMapper, config, projectService, projectAssetService, repository, s3ClientService, Model.class);
-		this.currentUserService = currentUserService;
-		this.documentAssetService = documentAssetService;
-		this.taskService = taskService;
-		this.dkgService = dkgService;
 	}
 
 	@Observed(name = "function_profile")
