@@ -20,7 +20,13 @@
 						<p>{{ blankMessage }}.</p>
 						<span class="flex gap-2">
 							<tera-pyciemss-cancel-button :simulation-run-id="cancelRunIds" />
-							<Button label="Run" icon="pi pi-play" @click="run" :loading="inProgressForecastRun" />
+							<Button
+								label="Run"
+								icon="pi pi-play"
+								@click="run"
+								:loading="inProgressForecastRun"
+								:disabled="isRunDisabled"
+							/>
 						</span>
 					</div>
 					<div class="form-section" v-if="isSidebarOpen">
@@ -75,15 +81,15 @@
 								<Dropdown
 									id="solver-method"
 									v-model="method"
-									:options="[CiemssMethodOptions.dopri5, CiemssMethodOptions.euler]"
+									:options="[CiemssMethodOptions.dopri5, CiemssMethodOptions.rk4, CiemssMethodOptions.euler]"
 									@update:model-value="updateState"
 								/>
 							</div>
-							<div class="label-and-input mt-2">
+							<div class="label-and-input">
 								<label for="num-samples">Solver step size</label>
 								<tera-input-number
 									v-model="solverStepSize"
-									:disabled="method !== CiemssMethodOptions.euler"
+									:disabled="![CiemssMethodOptions.rk4, CiemssMethodOptions.euler].includes(method)"
 									:min="0"
 									@update:model-value="updateState"
 								/>
@@ -174,7 +180,7 @@
 								<template v-for="setting in selectedInterventionSettings" :key="setting.id">
 									<vega-chart
 										expandable
-										:are-embed-actions-visible="true"
+										are-embed-actions-visible
 										:visualization-spec="interventionCharts[setting.id]"
 									/>
 								</template>
@@ -218,18 +224,36 @@
 							</AccordionTab>
 							<!-- Section: Sensitivity -->
 							<AccordionTab v-if="selectedSensitivityChartSettings.length > 0" header="Sensitivity analysis">
-								<template v-for="setting of selectedSensitivityChartSettings" :key="setting.id">
-									<vega-chart
-										expandable
-										are-embed-actions-visible
-										:visualization-spec="sensitivityCharts[setting.id].lineChart"
-									/>
-									<vega-chart
-										expandable
-										are-embed-actions-visible
-										:visualization-spec="sensitivityCharts[setting.id].scatterChart"
-									/>
-								</template>
+								<p class="ml-2 mb-3">
+									A selected outcome (a model output at a given timepoint) can be strongly or weakly sensitive on the
+									value of the different model parameters. Color is used here to illustrate this mapping: if the color
+									varies quickly along a parameter axis, then the outcome is strongly sensitive to this parameter.
+								</p>
+								<tera-progress-spinner v-if="sensitivityCharts.loading" :font-size="2" is-centered />
+
+								<div v-else>
+									<template v-for="setting of selectedSensitivityChartSettings" :key="setting.id">
+										<template v-if="sensitivityCharts.data[setting.id]">
+											<vega-chart
+												expandable
+												:are-embed-actions-visible="true"
+												:visualization-spec="sensitivityCharts.data[setting.id].lineChart"
+											/>
+											<vega-chart
+												expandable
+												:are-embed-actions-visible="true"
+												:visualization-spec="sensitivityCharts.data[setting.id].rankingChart"
+											/>
+											<div class="sensitivity-scatterplot">
+												<vega-chart
+													expandable
+													:are-embed-actions-visible="true"
+													:visualization-spec="sensitivityCharts.data[setting.id].scatterChart"
+												/>
+											</div>
+										</template>
+									</template>
+								</div>
 							</AccordionTab>
 						</Accordion>
 
@@ -287,25 +311,38 @@
 						:active-settings="activeChartSettings"
 						:generate-annotation="generateAnnotation"
 						:comparison="activeChartSettings?.type === ChartSettingType.VARIABLE_COMPARISON"
+						:comparison-selected-options="comparisonChartsSettingsSelection"
 						@update-settings="updateActiveChartSettings"
 						@delete-annotation="deleteAnnotation"
 						@close="setActiveChartSettings(null)"
-					/>
+					>
+						<template #normalize-content>
+							<div
+								class="p-3 border-2 border-gray-300 border-round-md font-italic bg-gray-100"
+								v-for="(equation, i) of normalizeEquations"
+								:key="i"
+							>
+								{{ equation }}
+							</div>
+						</template>
+					</tera-chart-settings-panel>
 				</template>
 				<template #content>
 					<div class="output-settings-panel">
 						<!-- Intervention charts -->
-						<tera-chart-settings
-							:title="'Interventions over time'"
-							:settings="chartSettings"
-							:type="ChartSettingType.INTERVENTION"
-							:select-options="Object.keys(groupedInterventionOutputs)"
-							:selected-options="selectedInterventionSettings.map((s) => s.selectedVariables[0])"
-							@open="setActiveChartSettings($event)"
-							@remove="removeChartSettings"
-							@selection-change="updateChartSettings"
-						/>
-						<Divider />
+						<div v-if="interventionPolicy">
+							<tera-chart-settings
+								:title="'Interventions over time'"
+								:settings="chartSettings"
+								:type="ChartSettingType.INTERVENTION"
+								:select-options="Object.keys(groupedInterventionOutputs)"
+								:selected-options="selectedInterventionSettings.map((s) => s.selectedVariables[0])"
+								@open="setActiveChartSettings($event)"
+								@remove="removeChartSettings"
+								@selection-change="updateChartSettings"
+							/>
+							<Divider />
+						</div>
 						<!-- Variable charts -->
 						<tera-chart-settings
 							:title="'Variables over time'"
@@ -364,14 +401,16 @@
 							:sensitivity-options="{
 								inputOptions: Object.keys(pyciemssMap).filter((c) => ['parameter'].includes(modelPartTypesMap[c])),
 								selectedInputOptions: selectedSensitivityChartSettings[0]?.selectedInputVariables ?? [],
-								timepoint: selectedSensitivityChartSettings[0]?.timepoint ?? lastTimepoint
+								timepoint: selectedSensitivityChartSettings[0]?.timepoint ?? lastTimepoint,
+								chartType: selectedSensitivityChartSettings[0]?.chartType ?? SensitivityChartType.SCATTER
 							}"
 							@selection-change="
 								(e) =>
 									updateSensitivityChartSettings({
 										selectedVariables: e,
 										selectedInputVariables: selectedSensitivityChartSettings[0]?.selectedInputVariables ?? [],
-										timepoint: selectedSensitivityChartSettings[0]?.timepoint ?? lastTimepoint
+										timepoint: selectedSensitivityChartSettings[0]?.timepoint ?? lastTimepoint,
+										chartType: selectedSensitivityChartSettings[0]?.chartType ?? SensitivityChartType.SCATTER
 									})
 							"
 							@sensitivity-selection-change="
@@ -425,7 +464,8 @@ import {
 	getModelByModelConfigurationId,
 	getUnitsFromModelParts,
 	getCalendarSettingsFromModel,
-	getTypesFromModelParts
+	getTypesFromModelParts,
+	groupVariablesByStrata
 } from '@/services/model';
 import { getModelConfigurationById } from '@/services/model-configurations';
 import {
@@ -437,7 +477,7 @@ import {
 	CiemssMethodOptions
 } from '@/services/models/simulation-service';
 import { logger } from '@/utils/logger';
-import { ChartSettingType, CiemssPresetTypes, DrilldownTabs } from '@/types/common';
+import { ChartSettingType, CiemssPresetTypes, DrilldownTabs, SensitivityChartType } from '@/types/common';
 import VegaChart from '@/components/widgets/VegaChart.vue';
 import { KernelSessionManager } from '@/services/jupyter';
 import TeraChartSettings from '@/components/widgets/tera-chart-settings.vue';
@@ -460,9 +500,11 @@ import { useCharts } from '@/composables/useCharts';
 import { useChartSettings } from '@/composables/useChartSettings';
 import { useProjects } from '@/composables/project';
 import { useDrilldownChartSize } from '@/composables/useDrilldownChartSize';
+import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue';
 import { SimulateCiemssOperationState } from './simulate-ciemss-operation';
 import { mergeResults, renameFnGenerator } from '../calibrate-ciemss/calibrate-utils';
 import { qualityPreset, speedPreset, usePreparedChartInputs } from './simulate-utils';
+import { isInterventionPolicyBlank } from '../intervention-policy/intervention-policy-operation';
 
 const props = defineProps<{
 	node: WorkflowNode<SimulateCiemssOperationState>;
@@ -609,6 +651,12 @@ const groupedInterventionOutputs = computed(() =>
 	_.groupBy(flattenInterventionData(interventionPolicy.value?.interventions ?? []), 'appliedTo')
 );
 
+const isRunDisabled = computed(
+	() =>
+		// run is disable if the attached intervention policy is blank
+		!!interventionPolicy.value && isInterventionPolicyBlank(interventionPolicy.value)
+);
+
 const preparedChartInputs = usePreparedChartInputs(props, runResults, runResultsSummary, pyciemssMap);
 const {
 	activeChartSettings,
@@ -648,6 +696,25 @@ const interventionCharts = useInterventionCharts(selectedInterventionSettings, t
 const variableCharts = useVariableCharts(selectedVariableSettings, null);
 const comparisonCharts = useComparisonCharts(selectedComparisonChartSettings);
 const sensitivityCharts = useSimulateSensitivityCharts(selectedSensitivityChartSettings);
+
+const normalizeEquations = computed(() => {
+	const equations: string[] = [];
+	if (!activeChartSettings.value || !preparedChartInputs.value?.pyciemssMap || !model.value) return equations;
+	const { selectedVariablesGroupByStrata, allVariablesGroupByStrata } = groupVariablesByStrata(
+		activeChartSettings.value.selectedVariables,
+		preparedChartInputs.value.pyciemssMap,
+		model.value
+	);
+	Object.entries(selectedVariablesGroupByStrata).forEach(([group, variables]) => {
+		if (group === '') return;
+		const denominator = allVariablesGroupByStrata[group].map((v) => `${v}(t)`).join(' + ');
+		variables.forEach((variable) => {
+			const equation = `${variable}(t) / (${denominator})`;
+			equations.push(equation);
+		});
+	});
+	return equations;
+});
 
 const updateState = () => {
 	const state = _.cloneDeep(props.node.state);
@@ -840,6 +907,17 @@ watch(
 	{ immediate: true }
 );
 
+// Watch for run results and open settings panel if no charts are configured
+watch(
+	[() => runResults.value[selectedRunId.value], () => chartSettings.value],
+	([results, settings]) => {
+		if (results && (!settings || isEmpty(settings))) {
+			isOutputSettingsPanelOpen.value = true;
+		}
+	},
+	{ immediate: true }
+);
+
 onMounted(() => {
 	buildJupyterContext();
 });
@@ -963,5 +1041,10 @@ onUnmounted(() => kernelManager.shutdown());
 }
 .common-input-height:deep(main) {
 	height: 2.35rem;
+}
+.sensitivity-scatterplot {
+	width: 100%;
+	display: flex;
+	overflow: scroll;
 }
 </style>

@@ -36,8 +36,8 @@
 						/>
 						<Divider />
 					</section>
-					<section v-if="isColorPickerEnabled">
-						<h5 class="mb-3">Color picker</h5>
+					<section v-if="isColorSelectionEnabled">
+						<h5 class="mb-3">Color Selection</h5>
 						<input type="color" :value="activeSettings?.primaryColor ?? ''" @change="onColorChange($event)" />
 						<Divider />
 					</section>
@@ -76,6 +76,26 @@
 							/>
 						</div>
 						<Divider />
+						<h5>Normalize</h5>
+						<tera-checkbox
+							label="Normalize data by total strata population"
+							:model-value="normalizeData"
+							@update:model-value="toggleNormalizeData($event)"
+						/>
+						<slot v-if="normalizeData" name="normalize-content"></slot>
+						<Divider />
+						<h5>Color Selection</h5>
+						<tera-chart-settings-item
+							class="tera-chart-settings-item"
+							v-for="v of variables"
+							:key="v.id"
+							:settings="v"
+							:areButtonsEnabled="false"
+						>
+							<template #main>
+								<input type="color" :value="v.primaryColor ?? ''" @change="onComparisonChange(v.name, $event)" />
+							</template>
+						</tera-chart-settings-item>
 					</section>
 				</div>
 			</div>
@@ -84,7 +104,7 @@
 </template>
 
 <script setup lang="ts">
-import _ from 'lodash';
+import _, { cloneDeep } from 'lodash';
 import { ref, computed } from 'vue';
 import Button from 'primevue/button';
 import RadioButton from 'primevue/radiobutton';
@@ -93,10 +113,13 @@ import { ChartAnnotation } from '@/types/Types';
 import Divider from 'primevue/divider';
 import TeraInputText from '@/components/widgets/tera-input-text.vue';
 import TeraCheckbox from '@/components/widgets/tera-checkbox.vue';
+import TeraChartSettingsItem from '@/components/widgets/tera-chart-settings-item.vue';
+import { getComparisonVariableColors } from '@/services/chart-settings';
 
 const props = defineProps<{
 	activeSettings: ChartSetting | null;
 	annotations?: ChartAnnotation[];
+	comparisonSelectedOptions?: { [settingId: string]: string[] };
 	/**
 	 * We receives generateAnnotation as a functor from the parent to access the parent scope directly. This allows us to utilize dependencies defined in the parent component without passing them all as props, which can be cumbersome.
 	 * Additionally, it enables us to handle post-generation actions (like resetting loading state or clearing input) after function completion.
@@ -110,32 +133,65 @@ const emit = defineEmits(['close', 'update-settings', 'delete-annotation', 'crea
 
 // Log scale
 const useLog = computed<boolean>(() => props.activeSettings?.scale === 'log');
-const isHiddenInNode = computed<boolean>(() => !!props.activeSettings?.hideInNode);
-
 const toggleLogScale = (useLogScale: boolean) => {
 	emit('update-settings', { scale: useLogScale ? 'log' : '' });
 };
-
+// Hide in node
+const isHiddenInNode = computed<boolean>(() => !!props.activeSettings?.hideInNode);
 const toggleHideInNode = (hideInNode: boolean) => {
 	emit('update-settings', { hideInNode: !!hideInNode });
 };
 
-// Settings for comparison method
+// === Settings for comparison method ===
 const comparisonSettings = computed(() => props.activeSettings as ChartSettingComparison | null);
+// Small multiples
 const smallMultiplesRadioValue = computed(() =>
 	comparisonSettings.value?.smallMultiples ? 'small-multiples' : 'all-charts'
 );
 const onSmallMultiplesRadioButtonChange = (value: 'all-charts' | 'small-multiples') => {
 	emit('update-settings', { smallMultiples: value === 'small-multiples' });
 };
+// Share Y axis
 const isShareYAxis = computed(() => Boolean(comparisonSettings.value?.shareYAxis));
-const showBeforeAfter = computed(() => Boolean(comparisonSettings.value?.showBeforeAfter));
 const toggleShareYAxis = (value: boolean) => emit('update-settings', { shareYAxis: value });
+// Show before and after
+const showBeforeAfter = computed(() => Boolean(comparisonSettings.value?.showBeforeAfter));
 const toggleShowBeforeAfter = (value: boolean) => emit('update-settings', { showBeforeAfter: value });
-// ==============================
+
+type Items = { name: string; id: string; primaryColor: string };
+
+const variables = computed(() => {
+	const items: Items[] = [];
+	if (!props.activeSettings) return items;
+	const activeSettings = cloneDeep(props.activeSettings as ChartSettingComparison | null);
+	if (activeSettings?.type !== ChartSettingType.VARIABLE_COMPARISON) return [];
+	activeSettings.selectedVariables.forEach((value) => {
+		const item = {
+			name: value,
+			id: activeSettings.id,
+			primaryColor: getComparisonVariableColors(activeSettings)[value] ?? ''
+		};
+		items.push(item);
+	});
+	return items;
+});
+
+const onComparisonChange = (name, event) => {
+	const activeSettings = cloneDeep(props.activeSettings as ChartSettingComparison | null);
+	if (activeSettings?.type === ChartSettingType.VARIABLE_COMPARISON) {
+		if (!activeSettings.variableColors) activeSettings.variableColors = {};
+		activeSettings.variableColors[name] = event.target?.value;
+		emit('update-settings', { variableColors: activeSettings.variableColors });
+	}
+};
+// ======================================
+
+// Normalize
+const normalizeData = computed(() => Boolean(comparisonSettings.value?.normalize));
+const toggleNormalizeData = (value: boolean) => emit('update-settings', { normalize: value });
 
 // Primary color
-const isColorPickerEnabled = computed(() => {
+const isColorSelectionEnabled = computed(() => {
 	const type = props.activeSettings?.type;
 	if (type) {
 		return ![ChartSettingType.ERROR_DISTRIBUTION, ChartSettingType.VARIABLE_COMPARISON].includes(type);
@@ -146,7 +202,7 @@ const onColorChange = (event) => {
 	emit('update-settings', { primaryColor: event.target?.value });
 };
 
-// Chart Annotations
+// ========== Chart Annotations =========
 const chartAnnotations = computed(() => {
 	if (props.annotations === undefined) {
 		return undefined;
@@ -172,25 +228,29 @@ const createAnnotationDebounced = _.debounce(createAnnotation, 100);
 const cancelGenerateAnnotation = () => {
 	generateAnnotationQuery.value = '';
 };
-// ==============================
+// ======================================
 </script>
 
 <style scoped>
+.tera-chart-settings-item {
+	background: var(--surface-100);
+}
 .chart-settings-panel-anchor {
 	position: fixed;
 	top: 7.5rem;
 	right: var(--gap-8);
 	width: 360px;
-	height: 100vh;
+	height: calc(100% - 7.5rem);
 	pointer-events: none;
-	overflow-x: hidden;
+	overflow: hidden;
 }
 .chart-settings-panel {
-	position: absolute;
+	position: relative;
+	overflow-y: auto;
 	top: 0;
 	z-index: 3;
 	margin-top: 50px;
-	height: calc(100% - 50px);
+	height: calc(100% - 51px); /* 51px = margin-top + border */
 	width: 100%;
 	background: #fff;
 	border-top-left-radius: var(--border-radius-bigger);

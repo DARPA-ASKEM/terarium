@@ -1,6 +1,6 @@
 import { Operation, WorkflowOperationTypes, BaseState } from '@/types/workflow';
 import { Intervention, InterventionSemanticType, InterventionPolicy } from '@/types/Types';
-import { getRunResult, getSimulation } from '@/services/models/simulation-service';
+import { CiemssMethodOptions, getRunResult, getSimulation } from '@/services/models/simulation-service';
 import { getModelIdFromModelConfigurationId } from '@/services/model-configurations';
 import { createInterventionPolicy, blankIntervention } from '@/services/intervention-policy';
 import optimizeModel from '@assets/svg/operator-images/optimize-model.svg';
@@ -35,8 +35,11 @@ export interface InterventionPolicyGroupForm {
 	upperBoundValue: number;
 	initialGuessValue: number;
 	relativeImportance: number;
-	optimizationType: OptimizationInterventionObjective;
-	objectiveFunctionOption: InterventionObjectiveFunctions;
+	optimizeFunction: {
+		type: OptimizationInterventionObjective;
+		timeObjectiveFunction: InterventionObjectiveFunctions;
+		parameterObjectiveFunction: InterventionObjectiveFunctions;
+	};
 	intervention: Intervention;
 }
 
@@ -55,7 +58,7 @@ export interface OptimizeCiemssOperationState extends BaseState {
 	endTime: number;
 	numSamples: number;
 	solverStepSize: number;
-	solverMethod: string;
+	solverMethod: CiemssMethodOptions;
 	maxiter: number;
 	maxfeval: number;
 	// Intervention policies
@@ -102,8 +105,11 @@ export const blankInterventionPolicyGroup: InterventionPolicyGroupForm = {
 	upperBoundValue: 0,
 	initialGuessValue: 0,
 	relativeImportance: 5,
-	optimizationType: OptimizationInterventionObjective.startTime,
-	objectiveFunctionOption: InterventionObjectiveFunctions.initialGuess,
+	optimizeFunction: {
+		type: OptimizationInterventionObjective.startTime,
+		timeObjectiveFunction: InterventionObjectiveFunctions.initialGuess,
+		parameterObjectiveFunction: InterventionObjectiveFunctions.initialGuess
+	},
 	intervention: blankIntervention
 };
 
@@ -138,7 +144,7 @@ export const OptimizeCiemssOperation: Operation = {
 			endTime: 90,
 			numSamples: 100,
 			solverStepSize: 0.1,
-			solverMethod: 'dopri5',
+			solverMethod: CiemssMethodOptions.dopri5,
 			maxiter: 5,
 			maxfeval: 25,
 			interventionPolicyId: '',
@@ -168,12 +174,18 @@ export async function getOptimizedInterventions(optimizeRunId: string) {
 	// This is a snake case version of types/Types OptimizeInterventions as we are reading from simulation execution payload
 	interface OptimizeInterventionsSnakeCase {
 		intervention_type: string;
-		param_names: string[];
-		param_values?: number[];
-		start_time?: number[];
-		objective_function_option: string;
-		initial_guess?: number[];
+		param_name: string;
+		param_value?: number;
+		start_time?: number;
+		time_objective_function: string;
+		parameter_objective_function: string;
 		relative_importance: number;
+		param_value_initial_guess?: number;
+		parameter_value_lower_bound: number;
+		parameter_value_upper_bound: number;
+		start_time_initial_guess?: number;
+		start_time_lower_bound: number;
+		start_time_upper_bound: number;
 	}
 
 	const allInterventions: Intervention[] = [];
@@ -198,62 +210,56 @@ export async function getOptimizedInterventions(optimizeRunId: string) {
 
 	optimizeInterventions.forEach((optimizedIntervention) => {
 		const interventionType = optimizedIntervention.intervention_type;
-		const paramNames: string[] = optimizedIntervention.param_names;
-		const paramValues: number[] = optimizedIntervention.param_values ?? [];
-		const startTimes: number[] = optimizedIntervention.start_time ?? [];
+		const paramName: string = optimizedIntervention.param_name;
+		const paramValue: number | undefined = optimizedIntervention.param_value;
+		const startTime: number | undefined = optimizedIntervention.start_time;
 
 		if (interventionType === OptimizationInterventionObjective.startTime) {
 			const newTimestepAsList = policyResults.splice(0, 1);
 			// If we our intervention type is param value our policyResult will provide a timestep.
-			for (let i = 0; i < paramNames.length; i++) {
-				allInterventions.push({
-					name: `Optimized ${paramNames[i]}`,
-					staticInterventions: [
-						{
-							appliedTo: paramNames[i],
-							type: InterventionSemanticType.Parameter,
-							timestep: newTimestepAsList[0],
-							value: paramValues[i]
-						}
-					],
-					dynamicInterventions: []
-				});
-			}
+			allInterventions.push({
+				name: `Optimized ${paramName}`,
+				staticInterventions: [
+					{
+						appliedTo: paramName,
+						type: InterventionSemanticType.Parameter,
+						timestep: newTimestepAsList[0],
+						value: paramValue as number
+					}
+				],
+				dynamicInterventions: []
+			});
 		} else if (interventionType === OptimizationInterventionObjective.paramValue) {
 			const valueAsList = policyResults.splice(0, 1);
 			// If we our intervention type is start time our policyResult will provide a parameter value.
-			for (let i = 0; i < paramNames.length; i++) {
-				allInterventions.push({
-					name: `Optimized ${paramNames[i]}`,
-					staticInterventions: [
-						{
-							timestep: startTimes[i],
-							value: valueAsList[0],
-							appliedTo: paramNames[i],
-							type: InterventionSemanticType.Parameter
-						}
-					],
-					dynamicInterventions: []
-				});
-			}
+			allInterventions.push({
+				name: `Optimized ${paramName}`,
+				staticInterventions: [
+					{
+						timestep: startTime as number,
+						value: valueAsList[0],
+						appliedTo: paramName,
+						type: InterventionSemanticType.Parameter
+					}
+				],
+				dynamicInterventions: []
+			});
 		} else if (interventionType === OptimizationInterventionObjective.paramValueAndStartTime) {
 			// If our intervention type is start_time_param_value our policyResult will contain the timestep value, then the parameter value.
 			// https://github.com/ciemss/pyciemss/blob/main/pyciemss/integration_utils/intervention_builder.py#L66
 			const timeAndValueAsList = policyResults.splice(0, 2);
-			for (let i = 0; i < paramNames.length; i++) {
-				allInterventions.push({
-					name: `Optimized ${paramNames[i]}`,
-					staticInterventions: [
-						{
-							timestep: timeAndValueAsList[0],
-							value: timeAndValueAsList[1],
-							appliedTo: paramNames[i],
-							type: InterventionSemanticType.Parameter
-						}
-					],
-					dynamicInterventions: []
-				});
-			}
+			allInterventions.push({
+				name: `Optimized ${paramName}`,
+				staticInterventions: [
+					{
+						timestep: timeAndValueAsList[0],
+						value: timeAndValueAsList[1],
+						appliedTo: paramName,
+						type: InterventionSemanticType.Parameter
+					}
+				],
+				dynamicInterventions: []
+			});
 		} else {
 			// Should realistically not be hit unless we change the interface and do not update
 			console.error(`Unable to find the intevention type for optimization run: ${optimizeRunId}`);

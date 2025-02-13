@@ -4,8 +4,7 @@ import { Dataset, InterventionPolicy, ModelConfiguration } from '@/types/Types';
 import { WorkflowNode, WorkflowPortStatus } from '@/types/workflow';
 import { renameFnGenerator } from '@/components/workflow/ops/calibrate-ciemss/calibrate-utils';
 import { Ref } from 'vue';
-
-import { createRankingInterventionsChart, CATEGORICAL_SCHEME } from '@/services/charts';
+import { createRankingInterventionsChart } from '@/services/charts';
 import { DATASET_VAR_NAME_PREFIX, getDatasetResultCSV, mergeResults, getDataset } from '@/services/dataset';
 import {
 	DataArray,
@@ -15,9 +14,7 @@ import {
 } from '@/services/models/simulation-service';
 import { getInterventionPolicyById } from '@/services/intervention-policy';
 import { getModelConfigurationById } from '@/services/model-configurations';
-
-import { ChartData } from '@/composables/useCharts';
-
+import { ChartData, getInterventionColorAndScoreMaps } from '@/composables/useCharts';
 import { PlotValue, TimepointOption, RankOption, CompareDatasetsState } from './compare-datasets-operation';
 
 interface DataResults {
@@ -92,11 +89,17 @@ export const transformRowValuesRelativeToBaseline = (
 			transformed[key] = value;
 			return;
 		}
+		const eps = 1e-6;
 		const baselineValue = row[`${dataKey}:${baselineDataIndex}`];
 		if (plotType === PlotValue.DIFFERENCE) {
 			transformed[key] = value - baselineValue;
 		} else if (plotType === PlotValue.PERCENTAGE) {
-			transformed[key] = ((value - baselineValue) / baselineValue) * 100;
+			// set to 0 if value - baselineValue is 0
+			if (Math.abs(value - baselineValue) <= eps) {
+				transformed[key] = 0;
+			} else {
+				transformed[key] = ((value - baselineValue + eps) / (baselineValue + eps)) * 100;
+			}
 		} else if (plotType === PlotValue.VALUE) {
 			transformed[key] = value;
 		}
@@ -195,8 +198,12 @@ export function generateRankingCharts(
 	rankingResultsChart.value = null;
 
 	const allRankedCriteriaValues: { score: number; policyName: string; configName: string }[][] = [];
-	const interventionNameColorMap: Record<string, string> = {};
-	const interventionNameScoresMap: Record<string, number[]> = {};
+
+	const { interventionNameColorMap, interventionNameScoresMap } = getInterventionColorAndScoreMaps(
+		datasets,
+		modelConfigurations,
+		interventionPolicies
+	);
 
 	node.state.criteriaOfInterestCards.forEach((card) => {
 		if (!chartData.value || !card.selectedVariable) return;
@@ -227,7 +234,6 @@ export function generateRankingCharts(
 
 		const rankingCriteriaValues: { score: number; policyName: string; configName: string }[] = [];
 
-		let colorIndex = 0;
 		datasets.value.forEach((dataset, index: number) => {
 			const { metadata } = dataset;
 			const modelConfiguration: ModelConfiguration = modelConfigurations.value.find(
@@ -241,16 +247,6 @@ export function generateRankingCharts(
 
 			if (!modelConfiguration?.name) {
 				return;
-			}
-
-			if (!interventionNameColorMap[policyName]) {
-				interventionNameScoresMap[policyName] = [];
-				if (!policy?.name) {
-					interventionNameColorMap[policyName] = 'black';
-				} else {
-					interventionNameColorMap[policyName] = CATEGORICAL_SCHEME[colorIndex];
-					colorIndex++;
-				}
 			}
 
 			rankingCriteriaValues.push({
@@ -330,22 +326,32 @@ export async function initialize(
 	knobs: Ref<any> | null,
 	isFetchingDatasets: Ref<boolean>,
 	datasets: Ref<Dataset[]>,
-	datasetResults,
-	modelConfigIdToInterventionPolicyIdMap,
-	impactChartData,
+	datasetResults: Ref<{
+		results: DataArray[];
+		summaryResults: DataArray[];
+		datasetResults: DataArray[];
+	} | null>,
+	modelConfigIdToInterventionPolicyIdMap: Ref<Record<string, string[]>>,
+	impactChartData: Ref<ChartData | null>,
 	rankingChartData,
 	baselineDatasetIndex,
 	selectedPlotType,
-	modelConfigurations,
-	interventionPolicies,
-	rankingCriteriaCharts,
-	rankingResultsChart
+	modelConfigurations: Ref<ModelConfiguration[]>,
+	interventionPolicies: Ref<InterventionPolicy[]>,
+	rankingCriteriaCharts: Ref<any>,
+	rankingResultsChart: Ref<any>
 ) {
 	const { inputs } = node;
 	const datasetInputs = inputs.filter(
 		(input) => input.type === 'datasetId' && input.status === WorkflowPortStatus.CONNECTED
 	);
-	const datasetPromises = datasetInputs.map((input) => getDataset(input.value![0]));
+
+	const datasetPromises = datasetInputs.map((input) => {
+		const datasetId = input.value?.[0];
+		if (!datasetId) return Promise.resolve(null);
+		return getDataset(datasetId);
+	});
+
 	isFetchingDatasets.value = true;
 	await Promise.all(datasetPromises).then((ds) => {
 		ds.forEach((dataset) => {
@@ -370,13 +376,17 @@ export async function initialize(
 		});
 	});
 	// Fallback to the first dataset if no dataset ends up being selected
-	if (knobs && !knobs.value.selectedBaselineDatasetId) knobs.value.selectedBaselineDatasetId = datasets.value[0].id;
+	if (knobs) {
+		if (!knobs.value.selectedBaselineDatasetId) knobs.value.selectedBaselineDatasetId = datasets.value[0].id;
+		if (!knobs.value.selectedGroundTruthDatasetId) knobs.value.selectedGroundTruthDatasetId = datasets.value[0].id;
+	}
 
 	// Fetch the results
 	datasetResults.value = await fetchDatasetResults(datasets.value);
 	isFetchingDatasets.value = false;
 
 	await generateImpactCharts(impactChartData, datasets, datasetResults, baselineDatasetIndex, selectedPlotType);
+
 	const modelConfigurationIds = Object.keys(modelConfigIdToInterventionPolicyIdMap.value);
 	if (isEmpty(modelConfigurationIds)) return;
 	const modelConfigurationPromises = modelConfigurationIds.map((id) => getModelConfigurationById(id));

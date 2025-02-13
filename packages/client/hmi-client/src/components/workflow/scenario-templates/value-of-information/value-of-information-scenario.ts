@@ -11,7 +11,12 @@ import { createModelConfiguration, getModelConfigurationById, getParameter } fro
 import { ChartSetting, ChartSettingType, CiemssPresetTypes } from '@/types/common';
 import { updateChartSettingsBySelectedVariables } from '@/services/chart-settings';
 import { AssetType, InterventionPolicy, ParameterSemantic } from '@/types/Types';
-import { blankIntervention, createInterventionPolicy, getInterventionPolicyById } from '@/services/intervention-policy';
+import {
+	blankIntervention,
+	createInterventionPolicy,
+	flattenInterventionData,
+	getInterventionPolicyById
+} from '@/services/intervention-policy';
 import { useProjects } from '@/composables/project';
 import { DistributionType } from '@/services/distribution';
 import {
@@ -21,6 +26,7 @@ import {
 	switchToUniformDistribution
 } from '../scenario-template-utils';
 import { CompareValue } from '../../ops/compare-datasets/compare-datasets-operation';
+import { isInterventionPolicyBlank } from '../../ops/intervention-policy/intervention-policy-operation';
 
 /*
  * Value of information scenario
@@ -261,16 +267,8 @@ export class ValueOfInformationScenario extends BaseScenario {
 			]
 		);
 
-		// add input ports for each simulation to the dataset transformer, this will be a matrix of intervention x parameter
-		for (let i = 0; i < this.interventionSpecs.length - 1; i++) {
-			workflowService.appendInputPort(compareDatasetNode, {
-				type: 'datasetId|simulationId',
-				label: 'Dataset or Simulation'
-			});
-		}
-
 		// add input ports for each simulation to the dataset transformer, this will be a matrix of intervention x parameter low and high
-		for (let i = 0; i < this.interventionSpecs.length * 2 ** this.parameters.length; i++) {
+		for (let i = 0; i < (this.interventionSpecs.length + 1) * 2 ** this.parameters.length; i++) {
 			workflowService.appendInputPort(compareDatasetNode, {
 				type: 'datasetId|simulationId',
 				label: 'Dataset or Simulation'
@@ -449,61 +447,65 @@ export class ValueOfInformationScenario extends BaseScenario {
 				{ x: 0, y: 0 }
 			]);
 
-			interventionNodes.forEach((interventionNode, index) => {
-				// If this is the first intervention node, connect it to the model config node and the already created simulate node
-				if (index === 0) {
-					wf.addEdge(interventionNode.id, interventionNode.outputs[0].id, simulateNode.id, simulateNode.inputs[1].id, [
+			interventionNodes.forEach((interventionNode) => {
+				const interventionPolicy = fetchedInterventionPolicies.find(
+					(policy) => policy.id === interventionNode.outputs[0].value?.[0]
+				);
+				let chartSettingsClone = _.cloneDeep(simulateChartSettings);
+				// apply intervention chart settings if the intervention policy is not blank
+				if (!isInterventionPolicyBlank(interventionPolicy!)) {
+					chartSettingsClone = updateChartSettingsBySelectedVariables(
+						chartSettingsClone,
+						ChartSettingType.INTERVENTION,
+						Object.keys(_.groupBy(flattenInterventionData(interventionPolicy?.interventions ?? []), 'appliedTo'))
+					);
+				}
+				const additionalSimNode = wf.addNode(
+					SimulateCiemssOp,
+					{ x: 0, y: 0 },
+					{
+						size: OperatorNodeSize.medium
+					}
+				);
+
+				wf.updateNode(additionalSimNode, {
+					state: {
+						chartSettings: chartSettingsClone,
+						...this.getDefaultForecastSettings()
+					}
+				});
+
+				wf.addEdge(
+					modelConfigNode.id,
+					modelConfigNode.outputs[0].id,
+					additionalSimNode.id,
+					additionalSimNode.inputs[0].id,
+					[
 						{ x: 0, y: 0 },
 						{ x: 0, y: 0 }
-					]);
-				} else {
-					const additionalSimNode = wf.addNode(
-						SimulateCiemssOp,
+					]
+				);
+				wf.addEdge(
+					interventionNode.id,
+					interventionNode.outputs[0].id,
+					additionalSimNode.id,
+					additionalSimNode.inputs[1].id,
+					[
 						{ x: 0, y: 0 },
-						{
-							size: OperatorNodeSize.medium
-						}
-					);
-
-					wf.updateNode(additionalSimNode, {
-						state: {
-							chartSettings: simulateChartSettings,
-							...this.getDefaultForecastSettings()
-						}
-					});
-
-					wf.addEdge(
-						modelConfigNode.id,
-						modelConfigNode.outputs[0].id,
-						additionalSimNode.id,
-						additionalSimNode.inputs[0].id,
-						[
-							{ x: 0, y: 0 },
-							{ x: 0, y: 0 }
-						]
-					);
-					wf.addEdge(
-						interventionNode.id,
-						interventionNode.outputs[0].id,
-						additionalSimNode.id,
-						additionalSimNode.inputs[1].id,
-						[
-							{ x: 0, y: 0 },
-							{ x: 0, y: 0 }
-						]
-					);
-					wf.addEdge(
-						additionalSimNode.id,
-						additionalSimNode.outputs[0].id,
-						compareDatasetNode.id,
-						compareDatasetNode.inputs[compareDatasetIndex].id,
-						[
-							{ x: 0, y: 0 },
-							{ x: 0, y: 0 }
-						]
-					);
-					compareDatasetIndex++;
-				}
+						{ x: 0, y: 0 }
+					]
+				);
+				wf.addEdge(
+					additionalSimNode.id,
+					additionalSimNode.outputs[0].id,
+					compareDatasetNode.id,
+					compareDatasetNode.inputs[compareDatasetIndex].id,
+					[
+						{ x: 0, y: 0 },
+						{ x: 0, y: 0 }
+					]
+				);
+				compareDatasetIndex++;
 			});
 
 			wf.addEdge(
@@ -540,7 +542,7 @@ export class ValueOfInformationScenario extends BaseScenario {
 
 		// Build the XY axis
 		interventionNodes.forEach((interventionNode, idx) => {
-			interventionNode.x = modelNode.x + nodeGapHorizontal * (idx + 2);
+			interventionNode.x = modelNode.x + nodeGapHorizontal * (idx + 3);
 			interventionNode.y = modelNode.y - 50;
 		});
 
@@ -571,7 +573,7 @@ export class ValueOfInformationScenario extends BaseScenario {
 		});
 
 		// Data comparison
-		compareDatasetNode.x = modelNode.x + (2 + interventionNodes.length) * nodeGapHorizontal;
+		compareDatasetNode.x = modelNode.x + (3 + interventionNodes.length) * nodeGapHorizontal;
 
 		compareDatasetNode.y = 500;
 

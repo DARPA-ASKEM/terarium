@@ -17,15 +17,15 @@ import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Map;
+// import java.util.Map;
 import java.util.UUID;
-import java.util.concurrent.CompletableFuture;
+// import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Future;
 import java.util.stream.Collectors;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.codec.digest.DigestUtils;
+// import org.apache.commons.codec.digest.DigestUtils;
 import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
@@ -344,10 +344,10 @@ public class ProjectSearchService {
 		return QueryBuilders.bool(b -> b.must(onlyProjects).must(permissionQuery));
 	}
 
-	private String getEmbeddingSha256(final Map<TerariumAssetEmbeddingType, String> embeddingTexts) {
-		final String concatenatedText = embeddingTexts.values().stream().sorted().reduce((a, b) -> a + " " + b).orElse("");
-		return DigestUtils.sha256Hex(concatenatedText);
-	}
+	// private String getEmbeddingSha256(final Map<TerariumAssetEmbeddingType, String> embeddingTexts) {
+	// 	final String concatenatedText = embeddingTexts.values().stream().sorted().reduce((a, b) -> a + " " + b).orElse("");
+	// 	return DigestUtils.sha256Hex(concatenatedText);
+	// }
 
 	/**
 	 * Generate asset embeddings for a project
@@ -362,7 +362,9 @@ public class ProjectSearchService {
 		final TerariumAsset asset,
 		final boolean force
 	) throws IOException {
-		if (force || (!isRunningTestProfile() && !asset.getTemporary())) {
+		//TODO: Temporary fix for performance issue. Disabling embeddings for now. Jan 29 2025
+
+		/*if (force || (!isRunningTestProfile() && !asset.getTemporary())) {
 			final Map<TerariumAssetEmbeddingType, String> embeddingTexts = asset.getEmbeddingsSourceByType();
 			if (embeddingTexts == null) {
 				log.warn("unable to get embedding sources for asset {}", asset.getId());
@@ -381,6 +383,11 @@ public class ProjectSearchService {
 			final String newEmbeddingSha256 = getEmbeddingSha256(embeddingTexts);
 
 			final ProjectDocument projectDoc = elasticService.get(getAlias(), projectId.toString(), ProjectDocument.class);
+
+			if (projectDoc == null) {
+				log.warn("Project {} not found, skipping", projectId);
+				return null;
+			}
 
 			if (projectDoc.embeddingSha256 != null && projectDoc.embeddingSha256.equals(newEmbeddingSha256)) {
 				log.info("Embedding for asset {} has not changed, skipping", asset.getId());
@@ -441,7 +448,7 @@ public class ProjectSearchService {
 					}
 				}).start();
 			});
-		}
+		}*/
 		return null;
 	}
 

@@ -1,11 +1,4 @@
-import {
-	AssetType,
-	ClientEventType,
-	ModelGrounding,
-	ProgrammingLanguage,
-	ProgressState,
-	StatusUpdate
-} from '@/types/Types';
+import { AssetType, ClientEventType, Grounding, ProgrammingLanguage, ProgressState, StatusUpdate } from '@/types/Types';
 import { ProjectPages } from './Project';
 
 export interface FeatureConfig {
@@ -35,7 +28,7 @@ export interface ModelConfigTableData {
 	name: string;
 	type: ParamType;
 	description: string;
-	concept: ModelGrounding;
+	concept: Grounding;
 	unit?: string;
 	value: any;
 	source: string;
@@ -113,8 +106,7 @@ export enum AcceptedExtensions {
 export enum AMRSchemaNames {
 	PETRINET = 'petrinet',
 	REGNET = 'regnet',
-	STOCKFLOW = 'stockflow',
-	DECAPODES = 'decapodes'
+	STOCKFLOW = 'stockflow'
 }
 
 export interface PDFExtractionResponseType {
@@ -125,10 +117,6 @@ export interface PDFExtractionResponseType {
 export interface Position {
 	x: number;
 	y: number;
-}
-export enum ModelServiceType {
-	TA1 = 'SKEMA-MIT',
-	TA4 = 'GoLLM'
 }
 
 export interface CompareModelsResponseType {
@@ -212,6 +200,10 @@ export interface ChartSettingComparison extends ChartSettingBase {
 	shareYAxis?: boolean;
 	/** If true, also plot the pre-calibration or base simulation (without the intervention) data */
 	showBeforeAfter?: boolean;
+	/** Normalize data by total strata population. Only supported for stratified models */
+	normalize?: boolean;
+	colorScheme?: string[];
+	variableColors?: { [name: string]: string };
 }
 
 export interface ChartSettingEnsembleVariableOptions {
@@ -222,6 +214,12 @@ export interface ChartSettingEnsembleVariableOptions {
 export interface ChartSettingSensitivityOptions {
 	selectedInputVariables: string[];
 	timepoint: number;
+	chartType: SensitivityChartType;
+}
+
+export enum SensitivityChartType {
+	SCATTER = 'scatter',
+	HEATMAP = 'heatmap'
 }
 
 export interface ChartSettingBase {

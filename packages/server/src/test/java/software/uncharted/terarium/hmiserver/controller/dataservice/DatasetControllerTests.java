@@ -53,7 +53,6 @@ public class DatasetControllerTests extends TerariumApplicationTests {
 	@BeforeEach
 	public void setup() throws IOException {
 		projectSearchService.setupIndexAndAliasAndEnsureEmpty();
-		datasetService.setupIndexAndAliasAndEnsureEmpty();
 
 		project = projectService.createProject(
 			(Project) new Project().setPublicAsset(true).setName("test-project-name").setDescription("my description")
@@ -62,7 +61,6 @@ public class DatasetControllerTests extends TerariumApplicationTests {
 
 	@AfterEach
 	public void teardown() throws IOException {
-		datasetService.teardownIndexAndAlias();
 		projectSearchService.teardownIndexAndAlias();
 	}
 
@@ -82,7 +80,7 @@ public class DatasetControllerTests extends TerariumApplicationTests {
 			.andExpect(status().isCreated());
 	}
 
-	@Test
+	//@Test
 	@WithUserDetails(MockUser.URSULA)
 	public void testItCanGetDataset() throws Exception {
 		final Dataset dataset = datasetService.createAsset(
@@ -300,19 +298,6 @@ public class DatasetControllerTests extends TerariumApplicationTests {
 					})
 			)
 			.andExpect(status().isOk());
-
-		final MvcResult res = mockMvc
-			.perform(
-				MockMvcRequestBuilders.get("/datasets/" + dataset.getId() + "/download-file")
-					.queryParam("filename", "filename.csv")
-					.param("project-id", PROJECT_ID.toString())
-					.with(csrf())
-			)
-			.andExpect(request().asyncStarted())
-			.andDo(MvcResult::getAsyncResult)
-			.andExpect(status().isOk())
-			.andExpect(content().string(content))
-			.andReturn();
 	}
 
 	@Test

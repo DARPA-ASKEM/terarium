@@ -14,10 +14,8 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-import software.uncharted.terarium.hmiserver.models.dataservice.Grounding;
 import software.uncharted.terarium.hmiserver.models.mira.DKG;
 import software.uncharted.terarium.hmiserver.security.Roles;
-import software.uncharted.terarium.hmiserver.service.ContextMatcher;
 import software.uncharted.terarium.hmiserver.service.data.DKGService;
 
 @RequestMapping("/dkg")
@@ -51,16 +49,8 @@ public class DKGController {
 		@RequestParam final String term
 	) {
 		try {
-			// First pass, search for exact matches using the curated contexts
-			Grounding grounding = ContextMatcher.searchBest(term);
-
-			// If grounding is empty do the dkgService search
-			if (grounding == null) {
-				return ResponseEntity.ok(dkgService.searchEpiDKG(page, pageSize, term, null));
-			} else {
-				// If grounding is not empty, return the grounding
-				return ResponseEntity.ok(grounding.getIdentifiers());
-			}
+			final List<DKG> result = dkgService.searchEpiDKG(page, pageSize, term, null);
+			return ResponseEntity.ok(result);
 		} catch (Exception e) {
 			log.error("Error searching assets", e);
 			return ResponseEntity.internalServerError().build();

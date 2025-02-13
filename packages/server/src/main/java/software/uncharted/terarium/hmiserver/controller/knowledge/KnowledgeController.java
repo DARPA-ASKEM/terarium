@@ -4,69 +4,42 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import feign.FeignException;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import jakarta.annotation.PostConstruct;
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeoutException;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipOutputStream;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.http.HttpEntity;
-import org.apache.http.entity.ByteArrayEntity;
-import org.apache.http.entity.ContentType;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.annotation.Secured;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
 import software.uncharted.terarium.hmiserver.models.ClientEventType;
-import software.uncharted.terarium.hmiserver.models.dataservice.code.Code;
-import software.uncharted.terarium.hmiserver.models.dataservice.code.CodeFile;
 import software.uncharted.terarium.hmiserver.models.dataservice.document.DocumentAsset;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.Model;
-import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.ModelHeader;
-import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.ModelMetadata;
-import software.uncharted.terarium.hmiserver.models.dataservice.provenance.Provenance;
-import software.uncharted.terarium.hmiserver.models.dataservice.provenance.ProvenanceRelationType;
-import software.uncharted.terarium.hmiserver.models.dataservice.provenance.ProvenanceType;
-import software.uncharted.terarium.hmiserver.models.extractionservice.ExtractionResponse;
 import software.uncharted.terarium.hmiserver.models.task.TaskRequest;
 import software.uncharted.terarium.hmiserver.models.task.TaskRequest.TaskType;
 import software.uncharted.terarium.hmiserver.models.task.TaskResponse;
-import software.uncharted.terarium.hmiserver.proxies.skema.SkemaUnifiedProxy;
 import software.uncharted.terarium.hmiserver.security.Roles;
 import software.uncharted.terarium.hmiserver.service.ClientEventService;
 import software.uncharted.terarium.hmiserver.service.CurrentUserService;
 import software.uncharted.terarium.hmiserver.service.ExtractionService;
-import software.uncharted.terarium.hmiserver.service.data.CodeService;
 import software.uncharted.terarium.hmiserver.service.data.ModelService;
 import software.uncharted.terarium.hmiserver.service.data.ProjectService;
-import software.uncharted.terarium.hmiserver.service.data.ProvenanceService;
 import software.uncharted.terarium.hmiserver.service.notification.NotificationGroupInstance;
 import software.uncharted.terarium.hmiserver.service.notification.NotificationService;
 import software.uncharted.terarium.hmiserver.service.tasks.EquationsCleanupResponseHandler;
@@ -74,7 +47,6 @@ import software.uncharted.terarium.hmiserver.service.tasks.LatexToSympyResponseH
 import software.uncharted.terarium.hmiserver.service.tasks.SympyToAMRResponseHandler;
 import software.uncharted.terarium.hmiserver.service.tasks.TaskService;
 import software.uncharted.terarium.hmiserver.service.tasks.TaskService.TaskMode;
-import software.uncharted.terarium.hmiserver.utils.ByteMultipartFile;
 import software.uncharted.terarium.hmiserver.utils.JsonUtil;
 import software.uncharted.terarium.hmiserver.utils.Messages;
 import software.uncharted.terarium.hmiserver.utils.rebac.Schema;
@@ -87,12 +59,7 @@ public class KnowledgeController {
 
 	private final ObjectMapper mapper;
 
-	private final SkemaUnifiedProxy skemaUnifiedProxy;
-
 	private final ModelService modelService;
-	private final ProvenanceService provenanceService;
-
-	private final CodeService codeService;
 
 	private final ExtractionService extractionService;
 	private final TaskService taskService;
@@ -168,7 +135,7 @@ public class KnowledgeController {
 	}
 
 	/**
-	 * Send the equations to the skema unified service to get the AMR
+	 * Equations LaTeX to AMR
 	 *
 	 * @return UUID Model ID, or null if the model was not created or updated
 	 */
@@ -244,68 +211,38 @@ public class KnowledgeController {
 			}
 		}
 
-		// Get an AMR from Skema Unified Service or MIRA
 		final Model responseAMR;
-		String extractionService = "mira";
-		if (req.get("extractionService") != null) {
-			extractionService = req.get("extractionService").asText();
-		}
+		final TaskRequest latexToSympyRequest;
+		final TaskResponse latexToSympyResponse;
+		final TaskRequest sympyToAMRRequest;
+		final TaskResponse sympyToAMRResponse;
 
-		if (extractionService.equals("mira")) {
-			final TaskRequest latexToSympyRequest;
-			final TaskResponse latexToSympyResponse;
-			final TaskRequest sympyToAMRRequest;
-			final TaskResponse sympyToAMRResponse;
+		try {
+			// 1. LaTeX to sympy code
+			latexToSympyRequest = createLatexToSympyTask(equationsReq);
+			latexToSympyResponse = taskService.runTaskSync(latexToSympyRequest);
 
-			try {
-				// 1. LaTeX to sympy code
-				latexToSympyRequest = createLatexToSympyTask(equationsReq);
-				latexToSympyResponse = taskService.runTaskSync(latexToSympyRequest);
+			// 2. hand off
+			final String code = extractCodeFromLatexToSympy(latexToSympyResponse);
 
-				// 2. hand off
-				final String code = extractCodeFromLatexToSympy(latexToSympyResponse);
+			// 3. sympy code string to amr json
+			sympyToAMRRequest = createSympyToAMRTask(code);
+			sympyToAMRResponse = taskService.runTaskSync(sympyToAMRRequest);
 
-				// 3. sympy code string to amr json
-				sympyToAMRRequest = createSympyToAMRTask(code);
-				sympyToAMRResponse = taskService.runTaskSync(sympyToAMRRequest);
-
-				final JsonNode taskResponseJSON = mapper.readValue(sympyToAMRResponse.getOutput(), JsonNode.class);
-				final ObjectNode amrNode = taskResponseJSON.get("response").get("amr").deepCopy();
-				responseAMR = mapper.convertValue(amrNode, Model.class);
-			} catch (final Exception e) {
-				log.error(messages.get("task.mira.internal-error"), e);
-				throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("task.mira.internal-error"));
-			}
-		} else {
-			try {
-				// Create a request for SKEMA with the cleaned-up equations.
-				final JsonNode skemaRequest = mapper.createObjectNode().put("model", "petrinet").set("equations", equationsReq);
-				responseAMR = skemaUnifiedProxy.consolidatedEquationsToAMR(skemaRequest).getBody();
-				if (responseAMR == null) {
-					log.warn("Skema Unified Service did not return a valid AMR based on the provided equations");
-					throw new ResponseStatusException(HttpStatus.UNPROCESSABLE_ENTITY, messages.get("skema.bad-equations"));
-				}
-			} catch (final FeignException e) {
-				log.error(
-					"An exception occurred while Skema Unified Service was trying to produce an AMR based on the provided equations",
-					e
-				);
-				throw handleSkemaFeignException(e);
-			} catch (final Exception e) {
-				log.error(
-					"An unhandled error occurred while Skema Unified Service was trying to produce an AMR based on the provided equations",
-					e
-				);
-				throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("skema.internal-error"));
-			}
+			final JsonNode taskResponseJSON = mapper.readValue(sympyToAMRResponse.getOutput(), JsonNode.class);
+			final ObjectNode amrNode = taskResponseJSON.get("response").get("amr").deepCopy();
+			responseAMR = mapper.convertValue(amrNode, Model.class);
+		} catch (final Exception e) {
+			log.error(messages.get("task.mira.internal-error"), e);
+			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("task.mira.internal-error"));
 		}
 
 		// We only handle Petri Net models
 		if (!responseAMR.isPetrinet()) {
-			throw new ResponseStatusException(HttpStatus.UNPROCESSABLE_ENTITY, messages.get("skema.bad-equations.petrinet"));
+			throw new ResponseStatusException(HttpStatus.UNPROCESSABLE_ENTITY, messages.get("bad-equations.petrinet"));
 		}
 
-		notificationInterface.sendMessage("AMR extracted via SKEMA.");
+		notificationInterface.sendMessage("AMR extracted via MIRA.");
 
 		// If no model id is provided, create a new model asset
 		Model model;
@@ -336,328 +273,6 @@ public class KnowledgeController {
 
 		// Return the model id
 		return ResponseEntity.ok(model.getId());
-	}
-
-	@PostMapping("/base64-equations-to-model")
-	@Secured(Roles.USER)
-	public ResponseEntity<Model> base64EquationsToAMR(@RequestBody final JsonNode req) {
-		try {
-			return ResponseEntity.ok(skemaUnifiedProxy.base64EquationsToAMR(req).getBody());
-		} catch (final FeignException e) {
-			log.error("Error with Skema Unified Service while converting base64 equations to AMR", e);
-			throw handleSkemaFeignException(e);
-		}
-	}
-
-	@PostMapping("/base64-equations-to-latex")
-	@Secured(Roles.USER)
-	public ResponseEntity<String> base64EquationsToLatex(@RequestBody final JsonNode req) {
-		try {
-			return ResponseEntity.ok(skemaUnifiedProxy.base64EquationsToLatex(req).getBody());
-		} catch (final FeignException e) {
-			log.error("Error with Skema Unified Service while converting base64 equations to Latex", e);
-			throw handleSkemaFeignException(e);
-		}
-	}
-
-	/**
-	 * Transform source code to AMR
-	 *
-	 * @param codeId       (String): id of the code artifact model
-	 * @param dynamicsOnly (Boolean): whether to only run the amr extraction over
-	 *                     specified dynamics from the code
-	 *                     object in TDS
-	 * @param llmAssisted  (Boolean): whether amr extraction is llm assisted
-	 * @return Model
-	 */
-	@PostMapping("/code-to-amr")
-	@Secured(Roles.USER)
-	ResponseEntity<Model> postCodeToAMR(
-		@RequestParam("code-id") final UUID codeId,
-		@RequestParam(name = "project-id", required = false) final UUID projectId,
-		@RequestParam(name = "name", required = false, defaultValue = "") final String name,
-		@RequestParam(name = "description", required = false, defaultValue = "") final String description,
-		@RequestParam(name = "dynamics-only", required = false, defaultValue = "false") Boolean dynamicsOnly,
-		@RequestParam(name = "llm-assisted", required = false, defaultValue = "false") final Boolean llmAssisted
-	) {
-		final Schema.Permission permission = projectService.checkPermissionCanWrite(
-			currentUserService.get().getId(),
-			projectId
-		);
-
-		final Optional<Code> code = codeService.getAsset(codeId, permission);
-		if (code.isEmpty()) {
-			log.error(String.format("Unable to fetch the requested code asset with codeId: %s", codeId));
-			throw new ResponseStatusException(HttpStatus.NOT_FOUND, messages.get("code.not-found"));
-		}
-
-		final Map<String, CodeFile> codeFiles = code.get().getFiles();
-
-		final Map<String, String> codeContent = new HashMap<>();
-
-		for (final Entry<String, CodeFile> file : codeFiles.entrySet()) {
-			final String filename = file.getKey();
-			final CodeFile codeFile = file.getValue();
-
-			final String content;
-			try {
-				content = codeService.fetchFileAsString(codeId, filename).orElseThrow();
-			} catch (final IOException e) {
-				log.error("Unable to fetch code as a string", e);
-				throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, messages.get("postgres.service-unavailable"));
-			}
-
-			if (dynamicsOnly && codeFile.getDynamics() != null && codeFile.getDynamics().getBlock() != null) {
-				final List<String> blocks = codeFile.getDynamics().getBlock();
-				for (final String block : blocks) {
-					final String[] parts = block.split("-");
-					final int startLine = Integer.parseInt(parts[0].substring(1));
-					final int endLine = Integer.parseInt(parts[1].substring(1));
-
-					final String[] codeLines = content.split("\n");
-					final List<String> targetLines = Arrays.asList(codeLines).subList(startLine - 1, endLine);
-
-					final String targetBlock = String.join("\n", targetLines);
-
-					codeContent.put(filename, targetBlock);
-				}
-			} else {
-				codeContent.put(filename, content);
-				dynamicsOnly = false;
-			}
-		}
-
-		final List<String> files = new ArrayList<>();
-		final List<String> blobs = new ArrayList<>();
-
-		final ResponseEntity<JsonNode> resp;
-
-		if (dynamicsOnly) {
-			for (final Entry<String, String> entry : codeContent.entrySet()) {
-				files.add(entry.getKey());
-				blobs.add(entry.getValue());
-			}
-
-			resp = skemaUnifiedProxy.snippetsToAMR(files, blobs);
-		} else {
-			final ByteArrayOutputStream zipBuffer = new ByteArrayOutputStream();
-			final ZipOutputStream zipf = new ZipOutputStream(zipBuffer, StandardCharsets.UTF_8);
-
-			try {
-				for (final Map.Entry<String, String> entry : codeContent.entrySet()) {
-					final String codeName = entry.getKey();
-					final String content = entry.getValue();
-					final ZipEntry zipEntry = new ZipEntry(codeName);
-					zipf.putNextEntry(zipEntry);
-					zipf.write(content.getBytes(StandardCharsets.UTF_8));
-					zipf.closeEntry();
-				}
-			} catch (final IOException e) {
-				log.error("Unable to write to zip file", e);
-				throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("generic.io-error.write"));
-			} finally {
-				try {
-					zipf.close();
-				} catch (final IOException e) {
-					log.error("Unable to close zip file", e);
-					throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("generic.io-error.write"));
-				}
-			}
-
-			final ByteMultipartFile file = new ByteMultipartFile(zipBuffer.toByteArray(), "zip_file.zip", "application/zip");
-
-			resp = llmAssisted ? skemaUnifiedProxy.llmCodebaseToAMR(file) : skemaUnifiedProxy.codebaseToAMR(file);
-		}
-
-		if (resp.getStatusCode().is4xxClientError()) {
-			log.warn("Skema Unified Service did not return a valid AMR because the provided code was not valid");
-			throw new ResponseStatusException(resp.getStatusCode(), messages.get("skema.bad-code"));
-		} else if (resp.getStatusCode() == HttpStatus.SERVICE_UNAVAILABLE) {
-			log.warn("Skema Unified Service is currently unavailable");
-			throw new ResponseStatusException(resp.getStatusCode(), messages.get("skema.service-unavailable"));
-		} else if (!resp.getStatusCode().is2xxSuccessful()) {
-			log.error(
-				"An error occurred while Skema Unified Service was trying to produce an AMR based on the provided code"
-			);
-			throw new ResponseStatusException(resp.getStatusCode(), messages.get("skema.internal-error"));
-		}
-
-		Model model;
-		try {
-			model = mapper.treeToValue(resp.getBody(), Model.class);
-		} catch (final IOException e) {
-			log.error("Unable to convert response to model", e);
-			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("generic.unknown"));
-		}
-
-		if (model.getMetadata() == null) {
-			model.setMetadata(new ModelMetadata());
-		}
-
-		// create the model
-		if (!name.isEmpty()) {
-			model.setName(name);
-		}
-		if (model.getMetadata() == null) {
-			model.setMetadata(new ModelMetadata());
-		}
-		model.getMetadata().setCodeId(codeId.toString());
-
-		if (!description.isEmpty()) {
-			if (model.getHeader() == null) {
-				model.setHeader(new ModelHeader());
-			}
-			model.getHeader().setDescription(description);
-		}
-
-		try {
-			model = modelService.createAsset(model, projectId, permission);
-		} catch (final IOException e) {
-			log.error("Unable to create model", e);
-			throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, messages.get("postgres.service-unavailable"));
-		}
-
-		// update the code
-		if (code.get().getMetadata() == null) {
-			code.get().setMetadata(new HashMap<>());
-		}
-		code.get().getMetadata().put("model_id", model.getId().toString());
-
-		try {
-			codeService.updateAsset(code.get(), projectId, permission);
-		} catch (final IOException e) {
-			log.error("Unable to update code", e);
-			throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, messages.get("postgres.service-unavailable"));
-		}
-
-		// set the provenance
-		final Provenance provenancePayload = new Provenance(
-			ProvenanceRelationType.EXTRACTED_FROM,
-			model.getId(),
-			ProvenanceType.MODEL,
-			codeId,
-			ProvenanceType.CODE
-		);
-		provenanceService.createProvenance(provenancePayload);
-
-		return ResponseEntity.ok(model);
-	}
-
-	// Create a model from code blocks
-	@Operation(summary = "Create a model from code blocks")
-	@ApiResponses(
-		value = {
-			@ApiResponse(
-				responseCode = "200",
-				description = "Return the extraction job for code to amr",
-				content = @Content(
-					mediaType = "application/json",
-					schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = ExtractionResponse.class)
-				)
-			),
-			@ApiResponse(
-				responseCode = "400",
-				description = "Invalid input - code file may be missing name",
-				content = @Content
-			),
-			@ApiResponse(responseCode = "500", description = "Error running code blocks to model", content = @Content)
-		}
-	)
-	@PostMapping(value = "/code-blocks-to-model", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-	@Secured(Roles.USER)
-	public ResponseEntity<Model> codeBlocksToModel(
-		@RequestParam(name = "project-id", required = false) final UUID projectId,
-		@RequestPart final Code code,
-		@RequestPart("file") final MultipartFile input
-	) {
-		final Schema.Permission permission = projectService.checkPermissionCanWrite(
-			currentUserService.get().getId(),
-			projectId
-		);
-
-		// 1. create code asset from code blocks
-		final Code createdCode;
-		try {
-			createdCode = codeService.createAsset(code, projectId, permission);
-		} catch (final IOException e) {
-			log.error("Unable to create code asset", e);
-			throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, messages.get("postgres.service-unavailable"));
-		}
-
-		// 2. upload file to code asset
-		final byte[] fileAsBytes;
-		try {
-			fileAsBytes = input.getBytes();
-		} catch (final IOException e) {
-			log.error("Unable to read file", e);
-			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("generic.io-error.read"));
-		}
-		final HttpEntity fileEntity = new ByteArrayEntity(fileAsBytes, ContentType.TEXT_PLAIN);
-		final String filename = input.getOriginalFilename();
-
-		if (filename == null) {
-			log.warn("Filename is missing from the file");
-			throw new ResponseStatusException(HttpStatus.BAD_REQUEST, messages.get("code.filename-needed"));
-		}
-
-		try {
-			codeService.uploadFile(code.getId(), filename, fileEntity);
-		} catch (final IOException e) {
-			log.error("Unable to upload file to code asset", e);
-			throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, messages.get("postgres.service-unavailable"));
-		}
-
-		// add the code file to the code asset
-		final CodeFile codeFile = new CodeFile();
-		codeFile.setFileNameAndProgrammingLanguage(filename);
-
-		if (code.getFiles() == null) {
-			code.setFiles(new HashMap<>());
-		}
-		code.getFiles().put(filename, codeFile);
-
-		try {
-			codeService.updateAsset(code, projectId, permission);
-		} catch (final IOException e) {
-			log.error("Unable to update code asset", e);
-			throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, messages.get("postgres.service-unavailable"));
-		}
-
-		// 3. create model from code asset
-		return postCodeToAMR(createdCode.getId(), projectId, "temp model", "temp model description", false, false);
-	}
-
-	@PostMapping("/align-model")
-	@Secured(Roles.USER)
-	@ApiResponses(
-		value = {
-			@ApiResponse(responseCode = "204", description = "Model as been align with document", content = @Content),
-			@ApiResponse(
-				responseCode = "500",
-				description = "Error aligning model with variable extracted from document",
-				content = @Content
-			)
-		}
-	)
-	public ResponseEntity<Model> alignModel(
-		@RequestParam("document-id") final UUID documentId,
-		@RequestParam("model-id") final UUID modelId,
-		@RequestParam(name = "project-id", required = false) final UUID projectId
-	) {
-		final Schema.Permission permission = projectService.checkPermissionCanWrite(
-			currentUserService.get().getId(),
-			projectId
-		);
-
-		try {
-			return ResponseEntity.ok(extractionService.alignAMR(projectId, documentId, modelId, permission).get());
-		} catch (final InterruptedException | ExecutionException e) {
-			log.error("Error aligning model with document", e);
-			throw new ResponseStatusException(
-				org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
-				messages.get("skema.error.align-model")
-			);
-		}
 	}
 
 	/**
@@ -695,6 +310,55 @@ public class KnowledgeController {
 			}
 		}
 		return ResponseEntity.accepted().build();
+	}
+
+	@Data
+	public static class SympyCode {
+
+		private String code;
+	}
+
+	@PostMapping("/sympy-code-to-amr")
+	@Secured(Roles.USER)
+	@Operation(summary = "Generate AMR from sympy python code, DEBUGGING only")
+	@ApiResponses(
+		value = {
+			@ApiResponse(
+				responseCode = "200",
+				description = "Dispatched successfully",
+				content = @Content(
+					mediaType = "application/json",
+					schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = TaskResponse.class)
+				)
+			),
+			@ApiResponse(responseCode = "500", description = "There was an issue dispatching the request", content = @Content)
+		}
+	)
+	public ResponseEntity<JsonNode> sympyCodeToAMRDebug(@RequestBody final SympyCode code) {
+		final TaskRequest sympyToAMRRequest;
+		TaskResponse sympyToAMRResponse = null;
+		final JsonNode response;
+
+		try {
+			sympyToAMRRequest = createSympyToAMRTask(code.getCode());
+			sympyToAMRResponse = taskService.runTaskSyncDebug(sympyToAMRRequest);
+			response = mapper.readValue(sympyToAMRResponse.getOutput(), JsonNode.class);
+			return ResponseEntity.ok().body(response);
+		} catch (final TimeoutException e) {
+			log.warn("Timeout while waiting for task response", e);
+			throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, messages.get("task.mira.timeout"));
+		} catch (final InterruptedException e) {
+			log.warn("Interrupted while waiting for task response", e);
+			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("task.mira.interrupted"));
+		} catch (final ExecutionException e) {
+			log.error("Error while waiting for task response", e);
+			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("task.mira.execution-failure"));
+		} catch (final Exception e) {
+			log.error("Unexpected error", e);
+			ObjectNode objectNode = mapper.createObjectNode();
+			objectNode.put("error", sympyToAMRResponse.getStderr());
+			return ResponseEntity.ok().body(objectNode);
+		}
 	}
 
 	@PostMapping("/equations-to-model-debug")
@@ -777,28 +441,6 @@ public class KnowledgeController {
 			log.error("Unexpected error", e);
 		}
 		throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("generic.io-error.read"));
-	}
-
-	private ResponseStatusException handleSkemaFeignException(final FeignException e) {
-		final HttpStatus statusCode = HttpStatus.resolve(e.status());
-		if (statusCode != null && statusCode.is4xxClientError()) {
-			log.warn("Skema Unified Service did not return a valid AMR based on the provided resources");
-			return new ResponseStatusException(statusCode, messages.get("skema.bad-equations"));
-		} else if (statusCode == HttpStatus.SERVICE_UNAVAILABLE) {
-			log.warn("Skema Unified Service is currently unavailable");
-			return new ResponseStatusException(statusCode, messages.get("skema.service-unavailable"));
-		} else if (statusCode != null && statusCode.is5xxServerError()) {
-			log.error(
-				"An error occurred while Skema Unified Service was trying to produce an AMR based on the provided resources"
-			);
-			return new ResponseStatusException(statusCode, messages.get("skema.internal-error"));
-		}
-
-		final HttpStatus httpStatus = (statusCode == null) ? HttpStatus.INTERNAL_SERVER_ERROR : statusCode;
-		log.error(
-			"An unknown error occurred while Skema Unified Service was trying to produce an AMR based on the provided resources"
-		);
-		return new ResponseStatusException(httpStatus, messages.get("generic.unknown"));
 	}
 
 	private TaskRequest cleanupEquationsTaskRequest(UUID projectId, List<String> equations) {

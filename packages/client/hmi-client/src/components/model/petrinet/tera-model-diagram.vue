@@ -1,5 +1,10 @@
 <template>
-	<tera-tooltip :custom-position="hoveredTransitionPosition" :show-tooltip="!isEmpty(hoveredTransitionId)">
+	<tera-tooltip
+		:custom-position="hoveredTransitionPosition"
+		:show-tooltip="!isEmpty(hoveredTransitionId)"
+		:has-arrow="false"
+		title=""
+	>
 		<tera-resizable-panel v-if="!featureConfig?.isPreview" class="diagram-container">
 			<Toolbar>
 				<template #start>
@@ -27,7 +32,7 @@
 				</template>
 			</Toolbar>
 			<figure ref="graphElement" class="graph-element"></figure>
-			<ul class="legend" v-if="!isEmpty(graphLegendLabels)">
+			<ul class="legend text-sm" v-if="!isEmpty(graphLegendLabels)">
 				<li v-for="(label, index) in graphLegendLabels" :key="index">
 					<div class="legend-circle" :style="`background: ${graphLegendColors[index]}`" />
 					{{ label }}
@@ -36,7 +41,7 @@
 		</tera-resizable-panel>
 		<figure v-else-if="model" ref="graphElement" class="graph-element preview" :key="`preview_${model.id}`"></figure>
 
-		<tera-progress-spinner v-if="mmt.templates.length === 0" class="spinner" is-centered :font-size="2">
+		<tera-progress-spinner v-if="mmt.templates.length === 0 || isRendering" class="spinner" is-centered :font-size="2">
 			Loading...
 		</tera-progress-spinner>
 
@@ -78,8 +83,8 @@ import { NestedPetrinetRenderer } from '@/model-representation/petrinet/nested-p
 import { PetrinetRenderer } from '@/model-representation/petrinet/petrinet-renderer';
 import { getModelRenderer } from '@/model-representation/service';
 import { NodeType } from '@/services/graph';
-import { getModelType, getMMT } from '@/services/model';
-import { AMRSchemaNames, type FeatureConfig } from '@/types/common';
+import { getMMT } from '@/services/model';
+import type { FeatureConfig } from '@/types/common';
 import { StratifiedMatrix } from '@/types/Model';
 import type { Model } from '@/types/Types';
 import { observeElementSizeChange } from '@/utils/observer';
@@ -95,7 +100,6 @@ const graphElement = ref<HTMLDivElement | null>(null);
 const graphLegendLabels = ref<string[]>([]);
 const graphLegendColors = ref<string[]>([]);
 const selectedTransitionId = ref('');
-const modelType = computed(() => getModelType(props.model));
 const mmt = ref<MiraModel>(emptyMiraModel());
 const mmtParams = ref<MiraTemplateParams>({});
 
@@ -119,6 +123,7 @@ const resetZoom = async () => {
 	renderer?.setToDefaultZoom();
 };
 
+const isRendering = ref(false);
 async function renderGraph() {
 	// Sanity guard
 	if (mmt.value.templates.length === 0) return;
@@ -155,6 +160,7 @@ async function renderGraph() {
 	);
 
 	// Render graph, this will either render to the DOM or a virutal element
+	isRendering.value = true;
 	if (renderer) {
 		renderer.isGraphDirty = true;
 		await renderer.setData(graphData);
@@ -173,6 +179,7 @@ async function renderGraph() {
 		graphElement.value.appendChild(image);
 		elem = null;
 	}
+	isRendering.value = false;
 }
 
 // eslint-disable-next-line
@@ -200,12 +207,11 @@ function makeGraphInteractive(renderer: PetrinetRenderer | NestedPetrinetRendere
 			if (diagramBounds && transitionMatrixBounds && tooltipHeight && tooltipWidth) {
 				const transitionMatrixX = transitionMatrixBounds.left - diagramBounds.left;
 				const transitionMatrixY = transitionMatrixBounds.top - diagramBounds.top;
-				const transitionMatrixHeight = selection.datum().height;
 				const transitionMatrixWidth = selection.datum().width;
 
 				// Shift tooltip to the top center of the transition matrix
 				const x = transitionMatrixX - (tooltipWidth + transitionMatrixWidth / 2) / 2 + transitionMatrixBounds.width / 2;
-				const y = transitionMatrixY - tooltipHeight - transitionMatrixHeight / 2;
+				const y = transitionMatrixY - tooltipHeight / 2;
 
 				hoveredTransitionPosition.value = { x, y };
 			}
@@ -226,7 +232,7 @@ async function toggleCollapsedView(view: StratifiedView) {
 watch(
 	() => [props.model.model, props.model?.semantics, props.mmtData, graphElement.value],
 	async (newValue, oldValue) => {
-		if (isEqual(newValue, oldValue) || modelType.value === AMRSchemaNames.DECAPODES || graphElement.value === null) {
+		if (isEqual(newValue, oldValue) || graphElement.value === null) {
 			return;
 		}
 		// If no MMT data is provided from the parent component, fetch it from the server
@@ -364,5 +370,6 @@ ul.legend {
 	display: inline-block;
 	height: 1rem;
 	width: 1rem;
+	margin-right: var(--gap-1);
 }
 </style>

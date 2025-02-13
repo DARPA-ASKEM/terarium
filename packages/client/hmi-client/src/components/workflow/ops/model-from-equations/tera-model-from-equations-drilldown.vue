@@ -25,65 +25,80 @@
 				<template #content>
 					<main class="p-3">
 						<header class="pb-2">
-							<nav class="flex justify-content-between pb-2">
-								<span class="flex align-items-center">Specify which equations to use for this model.</span>
-								<section class="flex align-items-center min-w-min">
-									<RadioButton
-										class="ml-3"
-										:model-value="runType"
-										:input-id="uniqueId()"
-										:name="RunType.mira"
-										:value="RunType.mira"
-										@click="switchRunType(RunType.mira)"
-									/>
-									<label for="static" class="ml-2 text-sm">MIRA</label>
-									<RadioButton
-										:model-value="runType"
-										:input-id="uniqueId()"
-										:name="RunType.skema"
-										:value="RunType.skema"
-										class="ml-3"
-										@click="switchRunType(RunType.skema)"
-									/>
-									<label for="dynamic" class="ml-2 mr-3 text-sm">SKEMA</label>
-
-									<Button class="h-3rem mr-1" label="Reset" severity="secondary" outlined />
-									<Button class="h-3rem mr-1" label="Run" @click="onRun(runType)" />
-								</section>
+							<nav class="flex align-items-center mb-2">
+								<p v-if="document">Specify which equations to use for this model.</p>
+								<p v-else>Connect a document or enter equations manually below.</p>
+								<Button class="ml-auto" label="Run" @click="onRun" :disabled="includedEquations.length < 1" />
 							</nav>
 							<section
-								class="header-group"
+								class="input-container"
 								@dragenter.prevent="dragEnterCount++"
 								@dragleave.prevent="dragEnterCount--"
 								@dragover.prevent
 								@drop.prevent.stop="handleDrop"
 							>
-								<!-- Add visual feedback for drag state -->
-								<div v-if="dragEnterCount > 0" class="drag-overlay">Drop image here</div>
-								<Textarea
-									v-model="multipleEquations"
-									autoResize
-									rows="1"
-									placeholder="Add one or more LaTex equations, or paste in a screenshot"
-									class="w-full"
-									:disabled="multipleEquationsDisabled"
-								/>
-								<Button
-									label="Add"
-									icon="pi pi-plus"
-									size="small"
-									@click="getEquations"
-									text
-									class="ml-2"
-									:disabled="isEmpty(multipleEquations)"
-								/>
+								<div v-if="pastedImage" class="flex gap-3">
+									<div v-if="includedEquations.length == 0" class="flex gap-2 align-items-start">
+										<img
+											:src="'data:image/png;base64,' + pastedImage"
+											alt="Pasted image"
+											height="120"
+											class="pasted-image"
+										/>
+										<Button
+											icon="pi pi-times"
+											rounded
+											text
+											@click="
+												pastedImage = null;
+												multipleEquations = '';
+											"
+										/>
+									</div>
+									<div
+										v-if="
+											isEmpty(multipleEquations) &&
+											pastedImage &&
+											includedEquations.length === 0 &&
+											notIncludedEquations.length === 0
+										"
+										class="flex align-items-center gap-2"
+									>
+										<span class="pi pi-spinner pi-spin secondary-text"></span>
+										<span class="secondary-text">Converting to LaTeX</span>
+									</div>
+								</div>
+								<div class="input-group">
+									<!-- Add visual feedback for drag state -->
+									<div v-if="dragEnterCount > 0" class="drag-overlay">Drop image here</div>
+									<Textarea
+										v-model="multipleEquations"
+										autoResize
+										rows="1"
+										placeholder="Add one or more LaTex equations, or paste in a screenshot"
+										class="w-full"
+										:disabled="multipleEquationsDisabled"
+									/>
+									<Button
+										label="Add"
+										icon="pi pi-plus"
+										size="small"
+										@click="getEquations"
+										text
+										class="ml-2"
+										:disabled="isEmpty(multipleEquations)"
+									/>
+								</div>
 							</section>
 						</header>
-						<h6 class="py-3">Use {{ includedEquations.length > 1 ? 'these equations' : 'this equation' }}</h6>
+						<div class="flex align-items-center">
+							<h6 v-if="includedEquations.length > 0" class="py-3">
+								Use {{ includedEquations.length > 1 ? 'these equations' : 'this equation' }}
+							</h6>
+							<Button class="p-button-sm p-button-text ml-auto" label="View all" @click="viewAllEquations = true" />
+						</div>
+						<p v-if="isEmpty(includedEquations) && document" class="secondary-text mt-3">No equations selected</p>
 						<ul class="blocks-container">
-							<div v-if="pastedImage" class="pasted-image">
-								<img :src="'data:image/png;base64,' + pastedImage" alt="Pasted image" height="160" />
-							</div>
 							<li v-for="(equation, i) in includedEquations" :key="i" @click.capture="selectItem(equation, $event)">
 								<tera-asset-block
 									:is-toggleable="false"
@@ -114,6 +129,14 @@
 												{{ getEquationErrorLabel(equation) }}
 											</div>
 										</div>
+										<Button
+											v-if="selectedItem !== equation.name"
+											icon="pi pi-pencil"
+											text
+											severity="secondary"
+											size="small"
+											class="ml-auto"
+										/>
 									</section>
 									<Textarea
 										v-if="selectedItem === equation.name"
@@ -125,10 +148,10 @@
 									/>
 								</tera-asset-block>
 							</li>
-							<p v-if="isEmpty(includedEquations) && !pastedImage" class="secondary-text">No equations selected</p>
+							<!-- <p v-if="isEmpty(includedEquations) && !pastedImage" class="secondary-text">No equations selected</p> -->
 						</ul>
 						<div class="spacer mb-5" />
-						<h6 class="pb-3">Other equations extracted from document</h6>
+						<h6 v-if="notIncludedEquations.length > 0" class="pb-3">Other equations extracted from document</h6>
 						<ul class="blocks-container">
 							<li v-for="(equation, i) in notIncludedEquations" :key="i" @click.capture="selectItem(equation, $event)">
 								<tera-asset-block
@@ -159,6 +182,14 @@
 												{{ getEquationErrorLabel(equation) }}
 											</div>
 										</div>
+										<Button
+											v-if="selectedItem !== equation.name"
+											icon="pi pi-pencil"
+											text
+											severity="secondary"
+											size="small"
+											class="ml-auto"
+										/>
 									</section>
 									<Textarea
 										v-if="selectedItem === equation.name"
@@ -194,6 +225,17 @@
 			</tera-slider-panel>
 		</template>
 	</tera-drilldown>
+	<tera-modal v-if="viewAllEquations" class="w-8" @modal-mask-clicked="viewAllEquations = false">
+		<template #header
+			><div class="flex align-items-center">
+				<h4>LaTeX</h4>
+				<Button class="p-button-sm ml-auto" severity="secondary" @click="setCopyClipboard(allEquationsCopy)">{{
+					btnCopyLabel
+				}}</Button>
+			</div>
+		</template>
+		<textarea v-model="allEquationsCopy" readonly width="100%" :rows="allEquations.length + 1" />
+	</tera-modal>
 </template>
 
 <script setup lang="ts">
@@ -206,7 +248,7 @@ import TeraDrilldownPreview from '@/components/drilldown/tera-drilldown-preview.
 import TeraAssetBlock from '@/components/widgets/tera-asset-block.vue';
 import { computed, onMounted, onBeforeUnmount, ref, watch } from 'vue';
 import type { Card, DocumentAsset, Model } from '@/types/Types';
-import { cloneDeep, isEmpty, uniqueId } from 'lodash';
+import { cloneDeep, isEmpty } from 'lodash';
 import { equationsToAMR, getCleanedEquations, type EquationsToAMRRequest } from '@/services/knowledge';
 import { downloadDocumentAsset, getDocumentAsset, getDocumentFileAsText } from '@/services/document-assets';
 import { equationsFromImage } from '@/services/goLLM';
@@ -220,7 +262,8 @@ import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.
 import TeraPdfEmbed from '@/components/widgets/tera-pdf-embed.vue';
 import TeraTextEditor from '@/components/documents/tera-text-editor.vue';
 import { logger } from '@/utils/logger';
-import RadioButton from 'primevue/radiobutton';
+import TeraModal from '@/components/widgets/tera-modal.vue';
+import { createCopyTextToClipboard } from '@/utils/clipboard';
 import { ModelFromEquationsState, EquationBlock } from './model-from-equations-operation';
 
 const emit = defineEmits(['close', 'update-state', 'append-output', 'select-output']);
@@ -229,16 +272,6 @@ const props = defineProps<{
 }>();
 
 const selectedOutputId = ref<string>('');
-
-enum RunType {
-	mira = 'mira',
-	skema = 'skema'
-}
-
-const runType = ref(RunType.mira);
-function switchRunType(type: RunType) {
-	runType.value = type;
-}
 
 const clonedState = ref<ModelFromEquationsState>({
 	equations: [],
@@ -253,6 +286,15 @@ const includedEquations = computed(() =>
 const notIncludedEquations = computed(() =>
 	clonedState.value.equations.filter((equation) => equation.includeInProcess === false)
 );
+
+/**
+ * View all equations
+ */
+const viewAllEquations = ref(false);
+const allEquations = computed(() => includedEquations.value.map((eq) => eq.asset.text));
+const allEquationsCopy = computed(() => allEquations.value.join('\n'));
+const { btnCopyLabel, setCopyClipboard } = createCopyTextToClipboard();
+/* End Copy all equations */
 
 const pdfViewer = ref();
 
@@ -420,13 +462,11 @@ const onSelection = (id: string) => {
 };
 
 function onCheckBoxChange(equation) {
-	const state = cloneDeep(props.node.state);
-	const index = state.equations.findIndex((e) => e.name === equation.name);
-	state.equations[index].includeInProcess = equation.includeInProcess;
-	emit('update-state', state);
+	const index = clonedState.value.equations.findIndex((e) => e.name === equation.name);
+	clonedState.value.equations[index].includeInProcess = equation.includeInProcess;
 }
 
-async function onRun(extractionService: 'mira' | 'skema' = 'skema') {
+async function onRun() {
 	isOutputOpen.value = true;
 	isModelLoading.value = true;
 	const equationsText = clonedState.value.equations
@@ -443,9 +483,9 @@ async function onRun(extractionService: 'mira' | 'skema' = 'skema') {
 		equations: cleanedEquations,
 		documentId: document.value?.id,
 		workflowId: props.node.workflowId,
-		nodeId: props.node.id,
-		extractionService
+		nodeId: props.node.id
 	};
+
 	const modelId = await equationsToAMR(request);
 	// If there isn't a modelId returned at least show the cleaned equations
 	if (modelId) {
@@ -588,24 +628,28 @@ watch(
 .asset-panel:hover {
 	background: var(--surface-highlight);
 }
-/* TODO: to be implemented when displaying the extracted equations.
-.equation-image {
-	border-style: dashed;
-	border-color: var(--primary-color);
-	border-width: thin;
-}
-*/
 
-.header-group {
+.input-container {
 	position: relative;
 	display: flex;
-	flex-direction: row;
-	align-items: center;
+	flex-direction: column;
 	justify-content: space-between;
 	background: var(--surface-50);
 	border-radius: var(--border-radius-medium);
 	border: 1px solid var(--surface-border-light);
 	padding: var(--gap-3);
+}
+.input-group {
+	display: flex;
+	align-items: center;
+	flex-direction: row;
+}
+.pasted-image {
+	border: 1px solid var(--surface-border-light);
+	border-radius: var(--border-radius);
+	margin-bottom: var(--gap-3);
+	width: fit-content;
+	overflow: hidden;
 }
 .drag-overlay {
 	position: absolute;
@@ -669,5 +713,10 @@ watch(
 
 :deep(.p-panel section) {
 	align-items: start;
+}
+
+/* fix patch for document viewer */
+:deep(.document-viewer-header) {
+	width: 3rem !important;
 }
 </style>

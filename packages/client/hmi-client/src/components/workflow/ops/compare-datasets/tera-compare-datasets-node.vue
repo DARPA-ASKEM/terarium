@@ -82,7 +82,14 @@ onMounted(() => {
 		rankingResultsChart
 	);
 });
-const comparisonCharts = useCompareDatasetCharts(selectedVariableSettings, selectedPlotType, baselineDatasetIndex);
+const comparisonCharts = useCompareDatasetCharts(
+	selectedVariableSettings,
+	selectedPlotType,
+	baselineDatasetIndex,
+	datasets,
+	modelConfigurations,
+	interventionPolicies
+);
 
 watch(
 	() => props.node.inputs,

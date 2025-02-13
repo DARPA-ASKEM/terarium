@@ -55,12 +55,40 @@
 			<ul class="pl-1">
 				<li v-for="{ baseParameter, childParameters, isVirtual } in parameterList" :key="baseParameter">
 					<!-- Stratified -->
-					<section v-if="isVirtual" class="parameter-entry-stratified">
+					<section
+						v-if="isVirtual"
+						class="parameter-entry-stratified"
+						:class="{ warning: hasEmptyParameters({ baseParameter }) }"
+					>
 						<Accordion multiple>
 							<AccordionTab>
 								<template #header>
-									<span>{{ baseParameter }}</span>
-									<Button label="Open matrix" text size="small" @click.stop="matrixModalId = baseParameter" />
+									<div class="flex align-items-center w-full">
+										<span>{{ baseParameter }}</span>
+										<!--- Select all checkbox -->
+										<div
+											v-if="isAddingUncertainty"
+											class="mx-4 flex align-items-center gap-2"
+											@click.stop="updateSelection(childParameters)"
+										>
+											<Checkbox
+												:model-value="getChildrenSelectedState(childParameters).all"
+												:indeterminate="getChildrenSelectedState(childParameters).some"
+												:class="getChildrenSelectedState(childParameters).some ? 'p-checkbox-indeterminate' : ''"
+												binary
+											/>
+											<label class="text-sm font-normal cursor-pointer">
+												{{ getSelectionLabel(childParameters) }}
+											</label>
+										</div>
+										<Button
+											label="Open matrix"
+											text
+											size="small"
+											@click.stop="matrixModalId = baseParameter"
+											class="ml-3"
+										/>
+									</div>
 								</template>
 								<div class="flex">
 									<ul class="ml-1">
@@ -201,6 +229,17 @@ const parameterList = computed<{ baseParameter: string; childParameters: Paramet
 	}
 );
 
+const hasEmptyParameters = computed(() => ({ baseParameter }) => {
+	const parametersForThisGroup = props.modelConfiguration.parameterSemanticList.filter((s) =>
+		s.referenceId.startsWith(`${baseParameter}_`)
+	);
+
+	return parametersForThisGroup.some((p) => {
+		const value = p.distribution?.parameters?.value;
+		return value === null || value === undefined || value === '' || Number.isNaN(value);
+	});
+});
+
 const matrixModalId = ref('');
 
 const onAddUncertainty = () => {
@@ -247,6 +286,43 @@ const onUpdateDistributions = () => {
 	emit('update-parameters', distributionParameterMappings);
 	isAddingUncertainty.value = false;
 };
+
+/* Handle selection */
+const getSelectionLabel = (childParameters: ParameterSemantic[]) => {
+	const { all, some } = getChildrenSelectedState(childParameters);
+	if (all) return 'All selcted';
+	if (some) return 'Some selected';
+	return 'None selected';
+};
+
+const getChildrenSelectedState = (childParameters: ParameterSemantic[]) => {
+	const selectableChildren = childParameters.filter(
+		({ referenceId }) =>
+			getParameterDistribution(props.modelConfiguration, referenceId).type === DistributionType.Constant
+	);
+
+	const all =
+		selectableChildren.length > 0 &&
+		selectableChildren.every(({ referenceId }) => selectedParameters.value.includes(referenceId));
+
+	const some = selectableChildren.some(({ referenceId }) => selectedParameters.value.includes(referenceId)) && !all;
+
+	return { all, some };
+};
+function updateSelection(childParameters: ParameterSemantic[]) {
+	const selectableChildren = childParameters
+		.filter(
+			({ referenceId }) =>
+				getParameterDistribution(props.modelConfiguration, referenceId).type === DistributionType.Constant
+		)
+		.map(({ referenceId }) => referenceId);
+
+	if (getChildrenSelectedState(childParameters).all) {
+		selectedParameters.value = selectedParameters.value.filter((id) => !selectableChildren.includes(id));
+	} else {
+		selectedParameters.value = [...new Set([...selectedParameters.value, ...selectableChildren])];
+	}
+}
 </script>
 
 <style scoped>
@@ -274,14 +350,19 @@ ul {
 	border-left: 4px solid var(--surface-300);
 	padding-left: var(--gap-1);
 }
-.parameter-entry-stratified:hover {
-	border-left-color: var(--primary-color);
-	background: var(--surface-highlight);
+.parameter-entry-stratified {
+	border: 1px solid var(--surface-border-light);
+	border-radius: var(--border-radius);
+	background: var(--surface-0);
+	box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+	border-left: 4px solid var(--surface-300);
+	padding-left: var(--gap-1);
 }
-/* But set a lighter hover state when hovering over child elements */
-.parameter-entry-stratified:hover:has(.parameter-entry:hover) {
-	border-left: 4px solid var(--primary-color-light);
-	background: color-mix(in srgb, var(--surface-highlight) 30%, var(--surface-0) 70%);
+.parameter-entry-stratified.warning {
+	border-left-color: var(--error-color);
+}
+.parameter-entry-stratified.warning:hover {
+	border-left-color: var(--error-color);
 }
 
 .stratified {
@@ -313,6 +394,7 @@ ul {
 	margin-bottom: var(--gap-2);
 	font-size: var(--font-caption);
 	border-radius: var(--border-radius);
+	border: 3px solid var(--primary-color);
 }
 
 :deep(.uncertainty-percentage) > input {
@@ -320,5 +402,22 @@ ul {
 }
 :deep(.p-accordion-content) {
 	padding-top: 0;
+}
+
+/* Checkbox: Indeterminate hackary */
+:deep(.p-checkbox-indeterminate .p-checkbox-box) {
+	background-color: var(--text-color-secondary);
+	position: relative;
+}
+
+:deep(.p-checkbox-indeterminate .p-checkbox-box)::after {
+	content: '';
+	position: absolute;
+	top: 50%;
+	left: 50%;
+	width: 10px;
+	height: 2px;
+	background-color: white;
+	transform: translate(-50%, -50%);
 }
 </style>

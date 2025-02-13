@@ -21,18 +21,18 @@
 							outlined
 							@click="resetState"
 							severity="secondary"
-							:disabled="_.isEmpty(node.outputs[0].value)"
+							:disabled="isEmpty(node.outputs[0].value)"
 						/>
 						<span class="flex gap-2">
 							<tera-pyciemss-cancel-button class="mr-auto" :simulation-run-id="cancelRunId" />
-							<div v-tooltip="runButtonMessage">
+							<span v-tooltip="runButtonMessage">
 								<Button label="Run" icon="pi pi-play" @click="runCalibrate" :disabled="isRunDisabled" />
-							</div>
+							</span>
 						</span>
 					</div>
 
 					<!-- Mapping section -->
-					<div class="form-section">
+					<section class="form-section">
 						<h5 class="mb-1">Mapping</h5>
 						<p class="mb-2 p-text-secondary text-sm">
 							Select a subset of output variables of the model and individually associate them to columns in the
@@ -68,7 +68,7 @@
 										class="w-full"
 										:placeholder="mappingDropdownPlaceholder"
 										v-model="data[field]"
-										:options="modelStateOptions?.map((ele) => ele.referenceId ?? ele.id)"
+										:options="modelOptions?.map((option) => option.id)"
 										@change="updateMapping()"
 									/>
 								</template>
@@ -98,18 +98,16 @@
 						</DataTable>
 
 						<div class="flex justify-content-between">
-							<div>
-								<Button class="p-button-sm p-button-text" icon="pi pi-plus" label="Add mapping" @click="addMapping" />
-								<Button
-									class="p-button-sm p-button-text"
-									icon="pi pi-sparkles"
-									label="Auto map"
-									@click="getAutoMapping"
-								/>
-							</div>
-							<Button class="p-button-sm p-button-text" label="Delete all mapping" @click="deleteAllMappings" />
+							<Button class="p-button-sm p-button-text" icon="pi pi-plus" label="Add mapping" @click="addMapping" />
+							<Button
+								class="p-button-sm p-button-text"
+								icon="pi pi-sparkles"
+								label="Auto map"
+								@click="getAutoMapping"
+							/>
+							<Button class="ml-auto p-button-sm p-button-text" label="Delete all mapping" @click="deleteAllMappings" />
 						</div>
-					</div>
+					</section>
 
 					<!-- Mapping section -->
 					<section class="form-section">
@@ -160,14 +158,14 @@
 									<Dropdown
 										id="5"
 										v-model="knobs.method"
-										:options="[CiemssMethodOptions.dopri5, CiemssMethodOptions.euler]"
+										:options="[CiemssMethodOptions.dopri5, CiemssMethodOptions.rk4, CiemssMethodOptions.euler]"
 										@update:model-value="updateState"
 									/>
 								</div>
 								<div class="label-and-input">
 									<label for="num-steps">Solver step size</label>
 									<tera-input-number
-										:disabled="knobs.method !== CiemssMethodOptions.euler"
+										:disabled="![CiemssMethodOptions.rk4, CiemssMethodOptions.euler].includes(knobs.method)"
 										:min="0"
 										v-model="knobs.stepSize"
 									/>
@@ -251,7 +249,7 @@
 					/>
 				</template>
 				<tera-notebook-error
-					v-if="!_.isEmpty(node.state?.errorMessage?.traceback) && !isLoading"
+					v-if="!isEmpty(node.state?.errorMessage?.traceback) && !isLoading"
 					v-bind="node.state.errorMessage"
 				/>
 				<tera-operator-output-summary
@@ -283,12 +281,11 @@
 					<section class="pb-3" v-if="modelConfig && csvAsset">
 						<div class="mx-4" ref="chartWidthDiv"></div>
 						<Accordion multiple :active-index="currentActiveIndicies" class="px-2">
-							<!-- Paramater distributions sectin -->
+							<!-- Parameter distributions section -->
 							<AccordionTab v-if="selectedParameterSettings.length > 0" header="Parameter distributions">
 								<template v-for="setting of selectedParameterSettings" :key="setting.id">
-									<div class="flex flex-column">
+									<div v-if="parameterDistributionCharts[setting.id]" class="flex flex-column">
 										<vega-chart
-											v-if="parameterDistributionCharts[setting.id]"
 											expandable
 											:are-embed-actions-visible="true"
 											:visualization-spec="parameterDistributionCharts[setting.id].histogram"
@@ -511,7 +508,7 @@
 </template>
 
 <script setup lang="ts">
-import _ from 'lodash';
+import { cloneDeep, groupBy, intersection, isEmpty, isEqual } from 'lodash';
 import * as vega from 'vega';
 import { computed, onMounted, ref, shallowRef, watch } from 'vue';
 import { useConfirm } from 'primevue/useconfirm';
@@ -523,7 +520,7 @@ import DataTable from 'primevue/datatable';
 import Dropdown from 'primevue/dropdown';
 import Column from 'primevue/column';
 import TeraInputNumber from '@/components/widgets/tera-input-number.vue';
-import { CalibrateMap, getFileName, setupCsvAsset, setupModelInput } from '@/services/calibrate-workflow';
+import { CalibrateMap, setupCsvAsset, setupModelInput } from '@/services/calibrate-workflow';
 import { deleteAnnotation, updateChartSettingsBySelectedVariables } from '@/services/chart-settings';
 import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
 import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.vue';
@@ -542,7 +539,9 @@ import {
 	ModelParameter,
 	AssetType,
 	Dataset,
-	Model
+	Model,
+	Observable,
+	State
 } from '@/types/Types';
 import { CiemssPresetTypes, DrilldownTabs, ChartSettingType } from '@/types/common';
 import { getActiveOutput, getTimespan, nodeMetadata } from '@/components/workflow/util';
@@ -558,7 +557,6 @@ import {
 	CiemssMethodOptions
 } from '@/services/models/simulation-service';
 import { getModelConfigurationById } from '@/services/model-configurations';
-
 import { WorkflowNode } from '@/types/workflow';
 import { createForecastChart, AUTOSIZE } from '@/services/charts';
 import VegaChart from '@/components/widgets/VegaChart.vue';
@@ -570,13 +568,14 @@ import { flattenInterventionData, getInterventionPolicyById } from '@/services/i
 import TeraInterventionSummaryCard from '@/components/intervention-policy/tera-intervention-summary-card.vue';
 import { getParameters } from '@/model-representation/service';
 import TeraTimestepCalendar from '@/components/widgets/tera-timestep-calendar.vue';
-import { getDataset } from '@/services/dataset';
+import { getDataset, getFileName } from '@/services/dataset';
 import { getCalendarSettingsFromModel } from '@/services/model';
 import { useCharts } from '@/composables/useCharts';
 import { useChartSettings } from '@/composables/useChartSettings';
 import { parseCsvAsset } from '@/utils/csv';
 import type { CalibrationOperationStateCiemss } from './calibrate-operation';
 import { renameFnGenerator, getErrorData, usePreparedChartInputs, getSelectedOutputMapping } from './calibrate-utils';
+import { isInterventionPolicyBlank } from '../intervention-policy/intervention-policy-operation';
 
 const isSidebarOpen = ref(true);
 
@@ -593,7 +592,7 @@ interface BasicKnobs {
 	endTime: number;
 	stepSize: number;
 	learningRate: number;
-	method: string;
+	method: CiemssMethodOptions;
 	timestampColName: string;
 }
 
@@ -642,8 +641,8 @@ const qualityPreset = Object.freeze({
 	learningRate: 0.03
 });
 
-// Model variables checked in the model configuration will be options in the mapping dropdown
-const modelStateOptions = ref<any[] | undefined>();
+// Model variables checked in the model will be options in the mapping dropdown
+const modelOptions = ref<(State | Observable)[] | undefined>();
 
 const modelParameters = ref<ModelParameter[]>([]);
 
@@ -678,19 +677,26 @@ const cancelRunId = computed(
 );
 const currentDatasetFileName = ref<string>();
 
-const runResult = ref<DataArray>([]);
-const runResultPre = ref<DataArray>([]);
-const runResultSummary = ref<DataArray>([]);
-const runResultSummaryPre = ref<DataArray>([]);
+const runResult = ref<{
+	result: DataArray;
+	resultPre: DataArray;
+	resultSummary: DataArray;
+	resultSummaryPre: DataArray;
+} | null>(null);
 const showSaveModal = ref(false);
 const configuredModelConfig = ref<ModelConfiguration | null>(null);
 
-const isLoading = ref(false);
+const isLoading = computed<boolean>(
+	() =>
+		props.node.state.inProgressCalibrationId !== '' ||
+		props.node.state.inProgressPreForecastId !== '' ||
+		props.node.state.inProgressForecastId !== ''
+);
 
 const mapping = ref<CalibrateMap[]>(props.node.state.mapping);
 
 const mappingDropdownPlaceholder = computed(() => {
-	if (!_.isEmpty(modelStateOptions.value) && !_.isEmpty(datasetColumns.value)) return 'Select variable';
+	if (!isEmpty(modelOptions.value) && !isEmpty(datasetColumns.value)) return 'Select variable';
 	return 'Please wait...';
 });
 
@@ -698,12 +704,12 @@ const showOutputSection = computed(
 	() =>
 		lossValues.value.length > 0 ||
 		isLoading.value ||
-		!_.isEmpty(props.node.state?.errorMessage?.traceback) ||
+		!isEmpty(props.node.state?.errorMessage?.traceback) ||
 		selectedOutputId.value
 );
 
 const updateState = () => {
-	const state = _.cloneDeep(props.node.state);
+	const state = cloneDeep(props.node.state);
 	state.numSamples = knobs.value.numSamples;
 	state.method = knobs.value.method;
 	state.numIterations = knobs.value.numIterations;
@@ -735,7 +741,7 @@ const resetState = () => {
 			// Restore to the original output port state
 			const outputPort = props.node.outputs.find((output) => output.id === selectedOutputId.value);
 			if (outputPort?.state) {
-				knobs.value = _.cloneDeep(outputPort.state as CalibrationOperationStateCiemss);
+				knobs.value = cloneDeep(outputPort.state as CalibrationOperationStateCiemss);
 				mapping.value = outputPort.state.mapping as CalibrateMap[];
 			}
 		}
@@ -743,21 +749,26 @@ const resetState = () => {
 };
 
 // Checks for disabling run button:
-const isMappingfilled = computed(
+const isMappingFilled = computed(
 	() => mapping.value.find((ele) => ele.datasetVariable && ele.modelVariable) && knobs.value.timestampColName
 );
 
 const areNodeInputsFilled = computed(() => datasetId.value && modelConfigId.value);
 
-const isRunDisabled = computed(() => !isMappingfilled.value || !areNodeInputsFilled.value || isLoading.value);
+const isRunDisabled = computed(
+	() =>
+		!isMappingFilled.value ||
+		!areNodeInputsFilled.value ||
+		isLoading.value ||
+		(!!interventionPolicy.value && isInterventionPolicyBlank(interventionPolicy.value))
+);
 
 const mappingFilledTooltip = computed(() =>
-	!isMappingfilled.value ? 'Must contain a Timestamp column and at least one filled in mapping. \n' : ''
+	!isMappingFilled.value ? 'Must contain a Timestamp column and at least one filled in mapping. \n' : ''
 );
 const nodeInputsFilledTooltip = computed(() =>
 	!areNodeInputsFilled.value ? 'Must a valid dataset and model configuration\n' : ''
 );
-
 const isLoadingTooltip = computed(() => (isLoading.value ? 'Must wait for the current run to finish\n' : ''));
 
 const runButtonMessage = computed(() =>
@@ -771,7 +782,7 @@ const chartWidthDiv = ref(null);
 const chartSize = useDrilldownChartSize(chartWidthDiv);
 
 const groupedInterventionOutputs = computed(() =>
-	_.groupBy(flattenInterventionData(interventionPolicy.value?.interventions ?? []), 'appliedTo')
+	groupBy(flattenInterventionData(interventionPolicy.value?.interventions ?? []), 'appliedTo')
 );
 
 const selectedOutputMapping = computed(() => getSelectedOutputMapping(props.node));
@@ -780,20 +791,14 @@ const selectedOutputTimestampColName = computed(() => getActiveOutput(props.node
 const errorData = computed<DataArray>(() =>
 	getErrorData(
 		groundTruthData.value,
-		runResult.value,
+		runResult.value?.result ?? [],
 		selectedOutputMapping.value,
 		selectedOutputTimestampColName.value,
 		pyciemssMap.value
 	)
 );
 
-const preparedChartInputs = usePreparedChartInputs(
-	props,
-	runResult,
-	runResultSummary,
-	runResultPre,
-	runResultSummaryPre
-);
+const preparedChartInputs = usePreparedChartInputs(props, runResult);
 const pyciemssMap = computed(() => preparedChartInputs.value?.pyciemssMap ?? {});
 const {
 	activeChartSettings,
@@ -861,7 +866,9 @@ const updateLossChartSpec = (data: string | Record<string, any>[], size: { width
 };
 
 const initDefaultChartSettings = (state: CalibrationOperationStateCiemss) => {
-	const defaultSelectedParam = modelParameters.value.filter((p) => !!p.distribution).map((p) => p.id);
+	// TODO: Determine the most interesting parameters to show to the user.
+	// https://github.com/DARPA-ASKEM/terarium/issues/6284
+	const defaultSelectedParam = [];
 	const mappedModelVariables = mapping.value
 		.filter((c) => ['state', 'observable'].includes(modelPartTypesMap.value[c.modelVariable]))
 		.map((c) => c.modelVariable);
@@ -887,7 +894,7 @@ const initDefaultChartSettings = (state: CalibrationOperationStateCiemss) => {
 	state.chartSettings = updateChartSettingsBySelectedVariables(
 		state.chartSettings,
 		ChartSettingType.INTERVENTION,
-		_.intersection(Object.keys(groupedInterventionOutputs.value), [...defaultSelectedParam, ...mappedModelVariables])
+		intersection(Object.keys(groupedInterventionOutputs.value), [...defaultSelectedParam, ...mappedModelVariables])
 	);
 };
 
@@ -911,7 +918,7 @@ const runCalibrate = async () => {
 	// Reset loss buffer
 	lossValues.value = [];
 
-	const state = _.cloneDeep(props.node.state);
+	const state = cloneDeep(props.node.state);
 
 	// Create request
 	const calibrationRequest: CalibrationRequestCiemss = {
@@ -964,6 +971,16 @@ const onSelection = (id: string) => {
 	emit('select-output', id);
 };
 
+const updateTimeline = () => {
+	const state = cloneDeep(props.node.state);
+	state.timestampColName = knobs.value.timestampColName;
+	emit('update-state', state);
+};
+
+/**
+ * Mapping functions
+ */
+
 // Used from button to add new entry to the mapping object
 function addMapping() {
 	mapping.value.push({
@@ -971,28 +988,22 @@ function addMapping() {
 		datasetVariable: ''
 	});
 
-	const state = _.cloneDeep(props.node.state);
+	const state = cloneDeep(props.node.state);
 	state.mapping = mapping.value;
 
 	emit('update-state', state);
 }
 
 const updateMapping = () => {
-	const state = _.cloneDeep(props.node.state);
+	const state = cloneDeep(props.node.state);
 	state.mapping = mapping.value;
-	emit('update-state', state);
-};
-
-const updateTimeline = () => {
-	const state = _.cloneDeep(props.node.state);
-	state.timestampColName = knobs.value.timestampColName;
 	emit('update-state', state);
 };
 
 function deleteAllMappings() {
 	mapping.value = [];
 
-	const state = _.cloneDeep(props.node.state);
+	const state = cloneDeep(props.node.state);
 	state.mapping = mapping.value;
 
 	emit('update-state', state);
@@ -1000,30 +1011,32 @@ function deleteAllMappings() {
 
 function deleteMapRow(index: number) {
 	mapping.value.splice(index, 1);
-	const state = _.cloneDeep(props.node.state);
+	const state = cloneDeep(props.node.state);
 	state.mapping = mapping.value;
 
 	emit('update-state', state);
 }
 
 async function getAutoMapping() {
-	if (!modelStateOptions.value) {
-		toast.error('', 'No model states to map with');
+	if (!modelOptions.value || isEmpty(modelOptions.value)) {
+		toast.error('', 'No model states or observables to map with');
 		return;
 	}
-	if (!datasetColumns.value) {
+	if (!datasetColumns.value || isEmpty(datasetColumns.value)) {
 		toast.error('', 'No dataset columns to map with');
 		return;
 	}
-	mapping.value = (await autoCalibrationMapping(modelStateOptions.value, datasetColumns.value)) as CalibrateMap[];
-	const state = _.cloneDeep(props.node.state);
+	mapping.value = await autoCalibrationMapping(modelOptions.value, datasetColumns.value);
+	const state = cloneDeep(props.node.state);
 	state.mapping = mapping.value;
 	emit('update-state', state);
 }
 
+/* End of Mapping functions */
+
 const initialize = async () => {
 	// Update Wizard form fields with current selected output state
-	const state = _.cloneDeep(props.node.state);
+	const state = cloneDeep(props.node.state);
 	knobs.value = {
 		numIterations: state.numIterations ?? 1000,
 		numSamples: state.numSamples ?? 100,
@@ -1035,19 +1048,13 @@ const initialize = async () => {
 	};
 
 	// Model configuration input
-	const {
-		model: m,
-		modelConfiguration,
-		modelOptions,
-		modelPartUnits,
-		modelPartTypes
-	} = await setupModelInput(modelConfigId.value);
-	modelConfig.value = modelConfiguration ?? null;
-	model.value = m ?? null;
-	modelStateOptions.value = modelOptions;
+	const modelInput = await setupModelInput(modelConfigId.value);
+	modelConfig.value = modelInput.modelConfiguration ?? null;
+	model.value = modelInput.model ?? null;
+	modelOptions.value = modelInput.modelOptions;
 	modelParameters.value = model.value ? getParameters(model.value) : [];
-	modelVarUnits.value = modelPartUnits ?? {};
-	modelPartTypesMap.value = modelPartTypes ?? {};
+	modelVarUnits.value = modelInput.modelPartUnits ?? {};
+	modelPartTypesMap.value = modelInput.modelPartTypes ?? {};
 
 	// dataset input
 	if (datasetId.value) {
@@ -1056,25 +1063,29 @@ const initialize = async () => {
 		if (dataset.value) {
 			currentDatasetFileName.value = getFileName(dataset.value);
 
-			setupCsvAsset(dataset.value).then((csv) => {
-				csvAsset.value = csv;
-			});
+			try {
+				setupCsvAsset(dataset.value).then((csv) => {
+					csvAsset.value = csv;
+				});
+			} catch (e) {
+				console.error(e);
+			}
 		}
 	}
 
 	getConfiguredModelConfig();
 
-	// look for timestamp col in dataset if its not yet filled in.
+	// look for timestamp col in dataset if it has not yet filled in.
 	if (knobs.value.timestampColName === '') {
-		const timeCol = datasetColumns.value?.find((ele) => ele.name.toLocaleLowerCase().startsWith('time'));
-		if (timeCol) {
+		const timeCol = datasetColumns.value?.find((ele) => ele.name?.toLocaleLowerCase().startsWith('time'));
+		if (timeCol && timeCol.name !== undefined) {
 			knobs.value.timestampColName = timeCol.name;
 		}
 	}
 };
 
 const onSaveAsModelConfiguration = async () => {
-	getConfiguredModelConfig();
+	await getConfiguredModelConfig();
 };
 
 const getConfiguredModelConfig = async () => {
@@ -1085,15 +1096,15 @@ const getConfiguredModelConfig = async () => {
 	}
 };
 
-onMounted(async () => {
+onMounted(() => {
 	initialize();
 });
 
 watch(
-	() => knobs.value,
+	() => ({ ...knobs.value }),
 	(newValue, oldValue) => {
-		if (_.isEqual(newValue, oldValue)) return;
-		const state = _.cloneDeep(props.node.state);
+		if (isEqual(newValue, oldValue)) return;
+		const state = cloneDeep(props.node.state);
 		state.numIterations = knobs.value.numIterations;
 		state.numSamples = knobs.value.numSamples;
 		state.endTime = knobs.value.endTime;
@@ -1107,11 +1118,9 @@ watch(
 	[() => props.node.state.inProgressCalibrationId, lossChartSize],
 	([id, size]) => {
 		if (id === '') {
-			isLoading.value = false;
 			updateLossChartSpec(lossValues.value, size);
 			unsubscribeToUpdateMessages([id], ClientEventType.SimulationPyciemss, messageHandler);
 		} else {
-			isLoading.value = true;
 			updateLossChartSpec(LOSS_CHART_DATA_SOURCE, size);
 			subscribeToUpdateMessages([id], ClientEventType.SimulationPyciemss, messageHandler);
 		}
@@ -1139,15 +1148,18 @@ watch(
 			}
 
 			const state = props.node.state;
-			runResult.value = await getRunResultCSV(state.forecastId, 'result.csv');
-			runResultSummary.value = await getRunResultCSV(state.forecastId, 'result_summary.csv');
-
-			runResultPre.value = await getRunResultCSV(state.preForecastId, 'result.csv', renameFnGenerator('pre'));
-			runResultSummaryPre.value = await getRunResultCSV(
-				state.preForecastId,
-				'result_summary.csv',
-				renameFnGenerator('pre')
-			);
+			const [result, resultSummary, resultPre, resultSummaryPre] = await Promise.all([
+				getRunResultCSV(state.forecastId, 'result.csv'),
+				getRunResultCSV(state.forecastId, 'result_summary.csv'),
+				getRunResultCSV(state.preForecastId, 'result.csv', renameFnGenerator('pre')),
+				getRunResultCSV(state.preForecastId, 'result_summary.csv', renameFnGenerator('pre'))
+			]);
+			runResult.value = {
+				result,
+				resultSummary,
+				resultPre,
+				resultSummaryPre
+			};
 		}
 	},
 	{ immediate: true }
@@ -1326,7 +1338,7 @@ img {
 	background: var(--surface-200);
 	padding: var(--gap-3);
 	border-radius: var(--border-radius-medium);
-	box-shadow: inset 0px 0px 4px var(--surface-border);
+	box-shadow: inset 0 0 4px var(--surface-border);
 }
 
 input {

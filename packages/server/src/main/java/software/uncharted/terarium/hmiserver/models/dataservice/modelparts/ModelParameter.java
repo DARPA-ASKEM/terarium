@@ -7,6 +7,7 @@ import lombok.EqualsAndHashCode;
 import software.uncharted.terarium.hmiserver.annotations.AMRSchemaType;
 import software.uncharted.terarium.hmiserver.annotations.TSOptional;
 import software.uncharted.terarium.hmiserver.models.SupportAdditionalProperties;
+import software.uncharted.terarium.hmiserver.models.dataservice.Grounding;
 import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.semantics.GroundedSemantic;
 
 @Data
@@ -29,7 +30,7 @@ public class ModelParameter extends SupportAdditionalProperties implements Seria
 	private Double value;
 
 	@TSOptional
-	private ModelGrounding grounding;
+	private Grounding grounding;
 
 	@TSOptional
 	private ModelDistribution distribution;
@@ -38,9 +39,19 @@ public class ModelParameter extends SupportAdditionalProperties implements Seria
 	private ModelUnit units;
 
 	@Override
+	public String getConceptReference() {
+		return id;
+	}
+
+	@Override
+	public void setConceptReference(String id) {
+		this.id = id;
+	}
+
+	@Override
 	public ModelParameter clone() {
 		final ModelParameter clone = (ModelParameter) super.clone();
-		clone.setId(this.getId());
+		clone.setConceptReference(this.getConceptReference());
 		clone.setName(this.getName());
 		clone.setDescription(this.getDescription());
 		clone.setValue(this.getValue());

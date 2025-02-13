@@ -20,19 +20,25 @@ import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import software.uncharted.terarium.hmiserver.configuration.Config;
+import software.uncharted.terarium.hmiserver.models.dataservice.notebooksession.NotebookSession;
 import software.uncharted.terarium.hmiserver.models.dataservice.workflow.InputPort;
 import software.uncharted.terarium.hmiserver.models.dataservice.workflow.OutputPort;
 import software.uncharted.terarium.hmiserver.models.dataservice.workflow.Workflow;
 import software.uncharted.terarium.hmiserver.models.dataservice.workflow.WorkflowAnnotation;
 import software.uncharted.terarium.hmiserver.models.dataservice.workflow.WorkflowEdge;
 import software.uncharted.terarium.hmiserver.models.dataservice.workflow.WorkflowNode;
+import software.uncharted.terarium.hmiserver.models.dataservice.workflow.WorkflowPositions;
 import software.uncharted.terarium.hmiserver.repository.data.WorkflowRepository;
+import software.uncharted.terarium.hmiserver.service.data.NotebookSessionService;
 import software.uncharted.terarium.hmiserver.service.s3.S3ClientService;
 import software.uncharted.terarium.hmiserver.utils.rebac.Schema;
 
+@SuppressWarnings("unused")
 @Service
 @Slf4j
-public class WorkflowService extends TerariumAssetServiceWithoutSearch<Workflow, WorkflowRepository> {
+public class WorkflowService extends TerariumAssetService<Workflow, WorkflowRepository> {
+
+	private final NotebookSessionService notebookSessionService;
 
 	public WorkflowService(
 		final ObjectMapper objectMapper,
@@ -40,9 +46,11 @@ public class WorkflowService extends TerariumAssetServiceWithoutSearch<Workflow,
 		final ProjectService projectService,
 		final ProjectAssetService projectAssetService,
 		final S3ClientService s3ClientService,
-		final WorkflowRepository repository
+		final WorkflowRepository repository,
+		final NotebookSessionService notebookSessionService
 	) {
 		super(objectMapper, config, projectService, projectAssetService, repository, s3ClientService, Workflow.class);
+		this.notebookSessionService = notebookSessionService;
 	}
 
 	@Observed(name = "function_profile")
@@ -70,6 +78,20 @@ public class WorkflowService extends TerariumAssetServiceWithoutSearch<Workflow,
 				node.setWorkflowId(asset.getId());
 				if (node.getVersion() == null) {
 					node.setVersion(1L);
+				}
+				if (node.getInputs() != null) {
+					for (final InputPort port : node.getInputs()) {
+						if (port.getVersion() == null) {
+							port.setVersion(1L);
+						}
+					}
+				}
+				if (node.getOutputs() != null) {
+					for (final OutputPort port : node.getOutputs()) {
+						if (port.getVersion() == null) {
+							port.setVersion(1L);
+						}
+					}
 				}
 			}
 		}
@@ -111,6 +133,20 @@ public class WorkflowService extends TerariumAssetServiceWithoutSearch<Workflow,
 				if (node.getVersion() == null) {
 					node.setVersion(1L);
 				}
+				if (node.getInputs() != null) {
+					for (final InputPort port : node.getInputs()) {
+						if (port.getVersion() == null) {
+							port.setVersion(1L);
+						}
+					}
+				}
+				if (node.getOutputs() != null) {
+					for (final OutputPort port : node.getOutputs()) {
+						if (port.getVersion() == null) {
+							port.setVersion(1L);
+						}
+					}
+				}
 				nodeMap.put(node.getId(), node);
 			}
 		}
@@ -137,19 +173,147 @@ public class WorkflowService extends TerariumAssetServiceWithoutSearch<Workflow,
 				final JsonNode nodeContent = this.objectMapper.valueToTree(node);
 				final JsonNode dbNodeContent = this.objectMapper.valueToTree(dbNode);
 
+				// Remove inputs/outputs, these are dealt with separately
+				((ObjectNode) nodeContent).remove("inputs");
+				((ObjectNode) nodeContent).remove("outputs");
+				((ObjectNode) dbNodeContent).remove("inputs");
+				((ObjectNode) dbNodeContent).remove("outputs");
+
 				// No changes, skip
+				boolean sameContent = false;
 				if (nodeContent.equals(dbNodeContent)) {
-					nodeMap.remove(node.getId());
-					continue;
+					sameContent = true;
 				}
 
 				// Only update if if node is not already deleted in the db
-				if (dbNode.getIsDeleted() == false && dbNode.getVersion().equals(node.getVersion())) {
-					node.setVersion(dbNode.getVersion() + 1L);
-					dbWorkflowNodes.set(index, node);
+				if (sameContent == false) {
+					if (dbNode.getIsDeleted() == false && dbNode.getVersion().equals(node.getVersion())) {
+						dbNode.setVersion(dbNode.getVersion() + 1L);
+						dbNode.setCreatedBy(node.getCreatedBy());
+						dbNode.setCreatedAt(node.getCreatedAt());
+						dbNode.setDisplayName(node.getDisplayName());
+						dbNode.setOperationType(node.getOperationType());
+						dbNode.setDocumentationUrl(node.getDocumentationUrl());
+						dbNode.setImageUrl(node.getImageUrl());
+						dbNode.setUniqueInputs(node.getUniqueInputs());
+						dbNode.setIsDeleted(node.getIsDeleted());
+
+						dbNode.setX(node.getX());
+						dbNode.setY(node.getY());
+						dbNode.setWidth(node.getWidth());
+						dbNode.setHeight(node.getHeight());
+
+						dbNode.setStatus(node.getStatus());
+						dbNode.setState(node.getState());
+						dbNode.setActive(node.getActive());
+					} else {
+						log.warn("Node version conflict node id=" + dbNode.getId() + ", workflow id=" + dbWorkflow.getId());
+					}
 				}
 
-				// remove once updated
+				// Manage outputs
+				if (dbNode.getIsDeleted() == false && node.getOutputs() != null && node.getOutputs().size() > 0) {
+					for (final OutputPort port : node.getOutputs()) {
+						final OutputPort dbPort = dbNode
+							.getOutputs()
+							.stream()
+							.filter(p -> p.getId().equals(port.getId()))
+							.findFirst()
+							.orElse(null);
+						if (dbPort == null) {
+							dbNode.getOutputs().add(port);
+						} else {
+							final JsonNode portContent = this.objectMapper.valueToTree(port);
+							final JsonNode dbPortContent = this.objectMapper.valueToTree(dbPort);
+							if (portContent.equals(dbPortContent)) {
+								continue; // Nothing to update
+							}
+
+							// Make old workflow compatible
+							if (dbPort.getVersion() == null) {
+								dbPort.setVersion(1L);
+							}
+
+							if (dbPort.getVersion().equals(port.getVersion())) {
+								dbPort.setVersion(dbPort.getVersion() + 1L);
+								dbPort.setType(port.getType());
+								dbPort.setOriginalType(port.getOriginalType());
+								dbPort.setState(port.getState());
+								dbPort.setStatus(port.getStatus());
+								dbPort.setValue(port.getValue());
+								dbPort.setIsSelected(port.getIsSelected());
+								dbPort.setLabel(port.getLabel());
+								dbPort.setTimestamp(port.getTimestamp());
+								dbPort.setOperatorStatus(port.getOperatorStatus());
+							} else {
+								log.warn(
+									"Port version conflict port id=" +
+									dbPort.getId() +
+									", node id=" +
+									dbNode.getId() +
+									", workflow id=" +
+									dbWorkflow.getId()
+								);
+							}
+						}
+					}
+
+					// Normalize
+					final List<OutputPort> filteredOutputs = dbNode
+						.getOutputs()
+						.stream()
+						.filter(output -> output.getValue() != null)
+						.collect(Collectors.toList());
+					if (filteredOutputs.size() > 0) {
+						dbNode.setOutputs(filteredOutputs);
+					}
+				}
+
+				// Manage inputs
+				if (dbNode.getIsDeleted() == false && node.getInputs() != null && node.getInputs().size() > 0) {
+					for (final InputPort port : node.getInputs()) {
+						final InputPort dbPort = dbNode
+							.getInputs()
+							.stream()
+							.filter(p -> p.getId().equals(port.getId()))
+							.findFirst()
+							.orElse(null);
+						if (dbPort == null) {
+							dbNode.getInputs().add(port);
+						} else {
+							final JsonNode portContent = this.objectMapper.valueToTree(port);
+							final JsonNode dbPortContent = this.objectMapper.valueToTree(dbPort);
+							if (portContent.equals(dbPortContent)) {
+								continue; // Nothing to update
+							}
+
+							// Make old workflow compatible
+							if (dbPort.getVersion() == null) {
+								dbPort.setVersion(1L);
+							}
+
+							if (dbPort.getVersion().equals(port.getVersion())) {
+								dbPort.setVersion(dbPort.getVersion() + 1L);
+								dbPort.setType(port.getType());
+								dbPort.setOriginalType(port.getOriginalType());
+								dbPort.setStatus(port.getStatus());
+								dbPort.setValue(port.getValue());
+								dbPort.setLabel(port.getLabel());
+							} else {
+								log.warn(
+									"Port version conflict port id=" +
+									dbPort.getId() +
+									", node id=" +
+									dbNode.getId() +
+									", workflow id=" +
+									dbWorkflow.getId()
+								);
+							}
+						}
+					}
+				}
+
+				// remove once we processed the update
 				nodeMap.remove(node.getId());
 			}
 		}
@@ -205,7 +369,7 @@ public class WorkflowService extends TerariumAssetServiceWithoutSearch<Workflow,
 	@Observed(name = "function_profile")
 	private void cascadeInvalidStatus(final WorkflowNode sourceNode, final Map<UUID, List<WorkflowNode>> nodeCache) {
 		sourceNode.setStatus("invalid");
-		List<WorkflowNode> downstreamNodes = nodeCache.get(sourceNode.getId());
+		final List<WorkflowNode> downstreamNodes = nodeCache.get(sourceNode.getId());
 		if (downstreamNodes == null) return;
 
 		for (final WorkflowNode node : downstreamNodes) {
@@ -234,7 +398,7 @@ public class WorkflowService extends TerariumAssetServiceWithoutSearch<Workflow,
 			.filter(edge -> edge.getSource().equals(nodeToRemove.getId()) || edge.getTarget().equals(nodeToRemove.getId()))
 			.collect(Collectors.toList());
 
-		for (WorkflowEdge edge : edgesToRemove) {
+		for (final WorkflowEdge edge : edgesToRemove) {
 			this.removeEdge(workflow, edge.getId());
 		}
 		nodeToRemove.setIsDeleted(true);
@@ -277,7 +441,7 @@ public class WorkflowService extends TerariumAssetServiceWithoutSearch<Workflow,
 			edge.setId(UUID.randomUUID());
 		}
 
-		WorkflowEdge existingEdge = workflow
+		final WorkflowEdge existingEdge = workflow
 			.getEdges()
 			.stream()
 			.filter(e -> {
@@ -365,9 +529,9 @@ public class WorkflowService extends TerariumAssetServiceWithoutSearch<Workflow,
 		// Transfer data value/reference
 		targetInputPort.setLabel(sourceOutputPort.getLabel());
 		if (outputTypes.size() > 1) {
-			String concreteType = intersectionTypes.get(0);
+			final String concreteType = intersectionTypes.get(0);
 			if (sourceOutputPort.getValue() != null) {
-				ArrayNode arrayNode = objectMapper.createArrayNode();
+				final ArrayNode arrayNode = objectMapper.createArrayNode();
 				arrayNode.add(sourceOutputPort.getValue().get(0).get(concreteType));
 				targetInputPort.setValue(arrayNode);
 			}
@@ -486,7 +650,7 @@ public class WorkflowService extends TerariumAssetServiceWithoutSearch<Workflow,
 	 *
 	 **/
 	@Observed(name = "function_profile")
-	public void selectOutput(final Workflow workflow, UUID nodeId, UUID selectedId) throws Exception {
+	public void selectOutput(final Workflow workflow, final UUID nodeId, final UUID selectedId) throws Exception {
 		final WorkflowNode operator = getOperator(workflow, nodeId);
 		if (operator == null) {
 			throw new Exception("Cannot find node " + nodeId);
@@ -581,9 +745,9 @@ public class WorkflowService extends TerariumAssetServiceWithoutSearch<Workflow,
 
 				// Finally we should be okay at this point
 				if (selectedTypes.size() > 1) {
-					String concreteType = intersectionTypes.get(0);
+					final String concreteType = intersectionTypes.get(0);
 					if (selected.getValue() != null) {
-						ArrayNode arrayNode = objectMapper.createArrayNode();
+						final ArrayNode arrayNode = objectMapper.createArrayNode();
 						arrayNode.add(selected.getValue().get(0).get(concreteType));
 						targetPort.setValue(arrayNode);
 					}
@@ -608,7 +772,7 @@ public class WorkflowService extends TerariumAssetServiceWithoutSearch<Workflow,
 	}
 
 	@Observed(name = "function_profile")
-	public void appendInput(final Workflow workflow, UUID nodeId, InputPort port) throws Exception {
+	public void appendInput(final Workflow workflow, final UUID nodeId, final InputPort port) throws Exception {
 		final WorkflowNode operator = getOperator(workflow, nodeId);
 		if (operator == null) {
 			throw new Exception("Cannot find node " + nodeId);
@@ -617,7 +781,8 @@ public class WorkflowService extends TerariumAssetServiceWithoutSearch<Workflow,
 	}
 
 	@Observed(name = "function_profile")
-	public void appendOutput(final Workflow workflow, UUID nodeId, OutputPort port, JsonNode nodeState) throws Exception {
+	public void appendOutput(final Workflow workflow, final UUID nodeId, final OutputPort port, final JsonNode nodeState)
+		throws Exception {
 		final WorkflowNode operator = getOperator(workflow, nodeId);
 		if (operator == null) {
 			throw new Exception("Cannot find node " + nodeId);
@@ -667,6 +832,205 @@ public class WorkflowService extends TerariumAssetServiceWithoutSearch<Workflow,
 		}
 	}
 
+	public void updatePositions(final Workflow workflow, final WorkflowPositions positions) {
+		for (final WorkflowNode node : workflow.getNodes()) {
+			final WorkflowPositions.Position pos = positions.getNodes().get(node.getId());
+			if (pos == null) continue;
+			node.setX(pos.getX());
+			node.setY(pos.getY());
+		}
+
+		for (final WorkflowEdge edge : workflow.getEdges()) {
+			final List<WorkflowPositions.Position> posList = positions.getEdges().get(edge.getId());
+			if (posList == null) continue;
+			edge.getPoints().set(0, this.objectMapper.valueToTree(posList.get(0)));
+			edge.getPoints().set(1, this.objectMapper.valueToTree(posList.get(1)));
+		}
+	}
+
+	/**
+	 * Including the node given by nodeId, copy/branch everything downstream,
+	 *
+	 * For example:
+	 *    P - B - C - D
+	 *    Q /
+	 *
+	 * if we branch at B, we will get
+	 *
+	 *    P - B  - C  - D
+	 *      X
+	 *    Q _ B' - C' - D'
+	 *
+	 * with { B', C', D' } new node entities
+	 * */
+	public void branchWorkflow(final Workflow workflow, final UUID nodeId, final UUID projectId) throws Exception {
+		// 1. Find anchor point
+		final UUID workflowId = workflow.getId();
+		final WorkflowNode anchor = getOperator(workflow, nodeId);
+		if (anchor == null) return;
+
+		// 2. Collect the subgraph that we want to copy
+		final List<WorkflowNode> copyNodes = new ArrayList<WorkflowNode>();
+		final List<WorkflowEdge> copyEdges = new ArrayList<WorkflowEdge>();
+		final List<UUID> stack = new ArrayList<UUID>();
+		stack.add(anchor.getId());
+
+		final Set<UUID> processed = new HashSet<UUID>();
+
+		// basically depth-first-search
+		while (stack.size() > 0) {
+			final UUID id = stack.remove(0);
+			final WorkflowNode node = getOperator(workflow, id);
+
+			if (node != null) {
+				WorkflowNode nodeClone = node.clone();
+				copyNodes.add(nodeClone);
+			} else {
+				continue;
+			}
+
+			// Grab downstream edges
+			final List<WorkflowEdge> edges = workflow
+				.getEdges()
+				.stream()
+				.filter(e -> e.getIsDeleted() == false && e.getSource().equals(id))
+				.collect(Collectors.toList());
+
+			for (final WorkflowEdge edge : edges) {
+				final UUID newId = edge.getTarget();
+				if (processed.contains(newId) == false) {
+					stack.add(newId);
+				}
+				WorkflowEdge edgeClone = edge.clone();
+				copyEdges.add(edgeClone);
+			}
+		}
+
+		// 3. Collect the upstream edges
+		final List<UUID> targetIds = copyNodes.stream().map(node -> node.getId()).collect(Collectors.toList());
+
+		final List<WorkflowEdge> upstreamEdges = workflow
+			.getEdges()
+			.stream()
+			.filter(edge -> edge.getIsDeleted() == false && targetIds.contains(edge.getTarget()))
+			.collect(Collectors.toList());
+
+		final List<WorkflowEdge> anchorUpstreamEdges = workflow
+			.getEdges()
+			.stream()
+			.filter(edge -> edge.getIsDeleted() == false && edge.getTarget().equals(anchor.getId()))
+			.collect(Collectors.toList());
+
+		for (final WorkflowEdge edge : upstreamEdges) {
+			final WorkflowEdge foundEdge = copyEdges
+				.stream()
+				.filter(copyEdge -> copyEdge.getId().equals(edge.getId()))
+				.findFirst()
+				.orElse(null);
+			if (foundEdge == null) {
+				WorkflowEdge edgeClone = edge.clone();
+				copyEdges.add(edgeClone);
+			}
+		}
+
+		// 4. Reassign identifiers
+		final Map<UUID, UUID> registry = new HashMap<UUID, UUID>();
+		for (final WorkflowNode node : copyNodes) {
+			registry.put(node.getId(), UUID.randomUUID());
+
+			for (final InputPort input : node.getInputs()) {
+				registry.put(input.getId(), UUID.randomUUID());
+			}
+			for (final OutputPort output : node.getOutputs()) {
+				registry.put(output.getId(), UUID.randomUUID());
+			}
+		}
+		for (final WorkflowEdge edge : copyEdges) {
+			registry.put(edge.getId(), UUID.randomUUID());
+		}
+
+		for (final WorkflowEdge edge : copyEdges) {
+			// Don't replace anchor upstream edge sources, they are still valid
+			if (
+				anchorUpstreamEdges.stream().map(e -> e.getSource()).collect(Collectors.toList()).contains(edge.getSource()) ==
+				false
+			) {
+				edge.setSource(registry.get(edge.getSource()));
+				edge.setSourcePortId(registry.get(edge.getSourcePortId()));
+			}
+			edge.setId(registry.get(edge.getId()));
+			edge.setTarget(registry.get(edge.getTarget()));
+			edge.setTargetPortId(registry.get(edge.getTargetPortId()));
+		}
+
+		for (final WorkflowNode node : copyNodes) {
+			node.setId(registry.get(node.getId()));
+			for (final InputPort input : node.getInputs()) {
+				input.setId(registry.get(input.getId()));
+			}
+			for (final OutputPort output : node.getOutputs()) {
+				output.setId(registry.get(output.getId()));
+			}
+			if (node.getActive() != null) {
+				node.setActive(registry.get(node.getActive()));
+			}
+		}
+
+		// 5. Reposition new nodes so they don't exaclty overlap
+		final float offset = 75;
+		for (final WorkflowNode node : copyNodes) {
+			node.setY(node.getY() + offset);
+		}
+
+		List<UUID> copyNodeIds = copyNodes.stream().map(n -> n.getId()).collect(Collectors.toList());
+
+		for (final WorkflowEdge edge : copyEdges) {
+			if (edge.getPoints().size() < 2) continue;
+
+			if (copyNodeIds.contains(edge.getSource())) {
+				ObjectNode temp = (ObjectNode) edge.getPoints().get(0);
+				float y = Float.parseFloat(temp.get("y").asText());
+				temp.put("y", y + offset);
+			}
+			if (copyNodeIds.contains(edge.getTarget())) {
+				int len = edge.getPoints().size();
+				ObjectNode temp = (ObjectNode) edge.getPoints().get(len - 1);
+				float y = Float.parseFloat(temp.get("y").asText());
+				temp.put("y", y + offset);
+			}
+		}
+
+		// 6. Clone notebook sessions if they exist
+		for (final WorkflowNode node : copyNodes) {
+			if (node.getOperationType().equals("DatasetTransformer")) {
+				ObjectNode state = (ObjectNode) node.getState();
+				if (state.get("notebookSessionId") != null) {
+					UUID sessionId = UUID.fromString(state.get("notebookSessionId").asText());
+
+					final NotebookSession session = notebookSessionService
+						.getAsset(sessionId, Schema.Permission.WRITE)
+						.orElse(null);
+					if (session != null) {
+						final NotebookSession newNotebookSession = notebookSessionService.createAsset(
+							session.clone(),
+							projectId,
+							Schema.Permission.WRITE
+						);
+						state.put("notebookSessionId", newNotebookSession.getId().toString());
+					}
+				}
+			}
+		}
+
+		// 7. Finally put everything back into the workflow
+		for (final WorkflowNode node : copyNodes) {
+			workflow.getNodes().add(node);
+		}
+		for (final WorkflowEdge edge : copyEdges) {
+			workflow.getEdges().add(edge);
+		}
+	}
+
 	public void addOrUpdateAnnotation(final Workflow workflow, final WorkflowAnnotation annotation) {
 		if (workflow.getAnnotations() == null || workflow.getAnnotations().isEmpty()) {
 			workflow.setAnnotations(new HashMap<UUID, WorkflowAnnotation>());
@@ -690,7 +1054,7 @@ public class WorkflowService extends TerariumAssetServiceWithoutSearch<Workflow,
 	////////////////////////////////////////////////////////////////////////////////
 	// Helpers
 	////////////////////////////////////////////////////////////////////////////////
-	private WorkflowNode getOperator(Workflow workflow, UUID nodeId) {
+	private WorkflowNode getOperator(final Workflow workflow, final UUID nodeId) {
 		final WorkflowNode operator = workflow
 			.getNodes()
 			.stream()
@@ -713,8 +1077,19 @@ public class WorkflowService extends TerariumAssetServiceWithoutSearch<Workflow,
 		return map;
 	}
 
+	// Build a lookup map for faster edge retrival
+	private Map<UUID, WorkflowEdge> buildEdgeMap(final Workflow workflow) {
+		final Map<UUID, WorkflowEdge> map = new HashMap<>();
+		for (final WorkflowEdge edge : workflow.getEdges()) {
+			if (edge.getIsDeleted() == false) {
+				map.put(edge.getId(), edge);
+			}
+		}
+		return map;
+	}
+
 	// Merge nodeB into nodeA
-	public static JsonNode deepMergeWithOverwrite(JsonNode nodeA, JsonNode nodeB) {
+	public static JsonNode deepMergeWithOverwrite(final JsonNode nodeA, final JsonNode nodeB) {
 		if (nodeA == null && nodeB == null) {
 			return null;
 		} else if (nodeA == null && nodeB != null) {
@@ -722,14 +1097,14 @@ public class WorkflowService extends TerariumAssetServiceWithoutSearch<Workflow,
 		}
 
 		if (nodeA.isObject() && nodeB.isObject()) {
-			ObjectNode objectA = (ObjectNode) nodeA;
+			final ObjectNode objectA = (ObjectNode) nodeA;
 			nodeB
 				.fields()
 				.forEachRemaining(entry -> {
-					String fieldName = entry.getKey();
-					JsonNode valueB = entry.getValue();
+					final String fieldName = entry.getKey();
+					final JsonNode valueB = entry.getValue();
 					if (objectA.has(fieldName)) {
-						JsonNode valueA = objectA.get(fieldName);
+						final JsonNode valueA = objectA.get(fieldName);
 						objectA.set(fieldName, deepMergeWithOverwrite(valueA, valueB));
 					} else {
 						objectA.set(fieldName, valueB);
@@ -742,12 +1117,12 @@ public class WorkflowService extends TerariumAssetServiceWithoutSearch<Workflow,
 	}
 
 	// eg [ " datasetId | modelId "] => ["datasetId", "modelId"]
-	public static List<String> splitAndTrim(String input) {
+	public static List<String> splitAndTrim(final String input) {
 		return Arrays.stream(input.split("\\|")).map(String::trim).collect(Collectors.toList());
 	}
 
-	public static List<String> findIntersection(List<String> list1, List<String> list2) {
-		List<String> intersection = new ArrayList<>(list1);
+	public static List<String> findIntersection(final List<String> list1, final List<String> list2) {
+		final List<String> intersection = new ArrayList<>(list1);
 		intersection.retainAll(list2); // Retain only elements that are in both lists
 		return intersection;
 	}

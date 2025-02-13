@@ -1,6 +1,6 @@
 import { Component } from 'vue';
 import { v4 as uuidv4 } from 'uuid';
-import _ from 'lodash';
+import _, { cloneDeep } from 'lodash';
 import API from '@/api/api';
 import { logger } from '@/utils/logger';
 import { EventEmitter } from '@/utils/emitter';
@@ -56,14 +56,8 @@ export class WorkflowWrapper {
 	 * FIXME: Need to split workflow into different categories and sending the commands
 	 * instead of the result. It is possible here to become de-synced: eg state-update-response
 	 * comes in as we are about to change the output ports.
-	 *
-	 * delayUpdate is a used to indicate there are actions in progress, and an update from
-	 * the DB can potentially overwrite what the user had already done that have yet to be flushed
-	 * to the backend. In situation like this, we will update the version (so our subsequent updates are
-	 * not rejected) and skip the rest. For example, the user may be dragging an operator on the
-	 * canvas when the db upate comes in.
 	 * */
-	update(updatedWF: Workflow, delayUpdate: boolean) {
+	update(updatedWF: Workflow) {
 		if (updatedWF.id !== this.wf.id) {
 			throw new Error(`Workflow failed, inconsistent ids updated=${updatedWF.id} self=${this.wf.id}`);
 		}
@@ -76,52 +70,28 @@ export class WorkflowWrapper {
 		const updatedNodeMap = new Map<string, WorkflowNode<any>>(updatedWF.nodes.map((n) => [n.id, n]));
 		const updatedEdgeMap = new Map<string, WorkflowEdge>(updatedWF.edges.map((e) => [e.id, e]));
 
-		if (delayUpdate) {
-			for (let i = 0; i < nodes.length; i++) {
-				const nodeId = nodes[i].id;
-				const updated = updatedNodeMap.get(nodeId);
-				if (updated) {
-					if (!nodes[i].version || (updated.version as number) > (nodes[i].version as number)) {
-						nodes[i].version = updated.version;
-					}
-				}
-			}
-			for (let i = 0; i < edges.length; i++) {
-				const edgeId = edges[i].id;
-				const updated = updatedEdgeMap.get(edgeId);
-				if (updated) {
-					if (!edges[i].version || (updated.version as number) > (edges[i].version as number)) {
-						edges[i].version = updated.version;
-					}
-				}
-			}
-			return;
-		}
-
 		// Update and deletes
 		for (let i = 0; i < nodes.length; i++) {
 			const nodeId = nodes[i].id;
 			const updated = updatedNodeMap.get(nodeId);
 			if (updated) {
-				if (!nodes[i].version || (updated.version as number) > (nodes[i].version as number)) {
-					nodes[i].version = updated.version;
-					nodes[i].isDeleted = updated.isDeleted;
-					nodes[i].status = updated.status;
-					nodes[i].x = updated.x;
-					nodes[i].y = updated.y;
-					nodes[i].width = updated.width;
-					nodes[i].height = updated.height;
-					nodes[i].active = updated.active;
+				nodes[i].version = updated.version;
+				nodes[i].isDeleted = updated.isDeleted;
+				nodes[i].status = updated.status;
+				nodes[i].x = updated.x;
+				nodes[i].y = updated.y;
+				nodes[i].width = updated.width;
+				nodes[i].height = updated.height;
+				nodes[i].active = updated.active;
 
-					if (!_.isEqual(nodes[i].inputs, updated.inputs)) {
-						nodes[i].inputs = updated.inputs;
-					}
-					if (!_.isEqual(nodes[i].outputs, updated.outputs)) {
-						nodes[i].outputs = updated.outputs;
-					}
-					if (!_.isEqual(nodes[i].state, updated.state)) {
-						nodes[i].state = updated.state;
-					}
+				if (!_.isEqual(nodes[i].inputs, updated.inputs)) {
+					nodes[i].inputs = updated.inputs;
+				}
+				if (!_.isEqual(nodes[i].outputs, updated.outputs)) {
+					nodes[i].outputs = updated.outputs;
+				}
+				if (!_.isEqual(nodes[i].state, updated.state)) {
+					nodes[i].state = updated.state;
 				}
 				updatedNodeMap.delete(nodeId);
 			}
@@ -130,8 +100,26 @@ export class WorkflowWrapper {
 			const edgeId = edges[i].id;
 			const updated = updatedEdgeMap.get(edgeId);
 			if (updated) {
-				if (!edges[i].version || (updated.version as number) > (edges[i].version as number)) {
-					edges[i] = Object.assign(edges[i], updated);
+				// edges[i] = Object.assign(edges[i], updated);
+				edges[i].isDeleted = updated.isDeleted;
+				edges[i].version = updated.version;
+				edges[i].direction = updated.direction;
+
+				edges[i].source = updated.source;
+				edges[i].sourcePortId = updated.sourcePortId;
+				edges[i].target = updated.target;
+				edges[i].targetPortId = updated.targetPortId;
+
+				const points = updated.points;
+
+				// The edge probably came from scenario-template and has yet to be saved
+				// with a proper points, don't update
+				let updatePoints = true;
+				if (points[0].x === 0 && points[0].y === 0 && points[1].x === 0 && points[1].y === 0) {
+					updatePoints = false;
+				}
+				if (updatePoints) {
+					edges[i].points = cloneDeep(points);
 				}
 				updatedEdgeMap.delete(edgeId);
 			}
@@ -167,22 +155,6 @@ export class WorkflowWrapper {
 			return Object.values(this.wf.annotations);
 		}
 		return [];
-	}
-
-	// @deprecated
-	removeNode(id: string) {
-		// Remove all the edges first
-		const edgesToRemove = this.getEdges().filter((d) => d.source === id || d.target === id);
-		const edgeIds = edgesToRemove.map((d) => d.id);
-		edgeIds.forEach((edgeId) => {
-			this.removeEdge(edgeId);
-		});
-
-		// Tombstone
-		const node = this.wf.nodes.find((n) => n.id === id);
-		if (node) {
-			node.isDeleted = true;
-		}
 	}
 
 	// @deprecated
@@ -222,6 +194,7 @@ export class WorkflowWrapper {
 		}
 	}
 
+	// @deprecated
 	addNode(op: Operation, pos: Position, options: { size?: OperatorNodeSize; state?: any }) {
 		let currentUserName: string | undefined = '';
 		try {
@@ -311,6 +284,7 @@ export class WorkflowWrapper {
 	 * We do not deal with this and throw an error/warning, and the edge creation will be cancelled.
 	 *
 	 * */
+	// @deprecated
 	addEdge(sourceId: string, sourcePortId: string, targetId: string, targetPortId: string, points: Position[]) {
 		let currentUserName: string | undefined = '';
 		try {
@@ -394,117 +368,6 @@ export class WorkflowWrapper {
 		this.wf.edges.push(edge);
 		sourceOutputPort.status = WorkflowPortStatus.CONNECTED;
 		targetInputPort.status = WorkflowPortStatus.CONNECTED;
-	}
-
-	/**
-	 * Including the node given by nodeId, copy/branch everything downstream,
-	 *
-	 * For example:
-	 *    P - B - C - D
-	 *    Q /
-	 *
-	 * if we branch at B, we will get
-	 *
-	 *    P - B  - C  - D
-	 *      X
-	 *    Q _ B' - C' - D'
-	 *
-	 * with { B', C', D' } new node entities
-	 * */
-	branchWorkflow(nodeId: string) {
-		// 1. Find anchor point
-		const anchor = this.getNodes().find((n) => n.id === nodeId);
-		if (!anchor) return;
-
-		// 2. Collect the subgraph that we want to copy
-		const copyNodes: WorkflowNode<any>[] = [];
-		const copyEdges: WorkflowEdge[] = [];
-		const stack = [anchor.id]; // working list of nodeIds to crawl
-		const processed: Set<string> = new Set();
-
-		// basically depth-first-search
-		while (stack.length > 0) {
-			const id = stack.pop();
-			const node = this.getNodes().find((n) => n.id === id);
-			if (node) copyNodes.push(_.cloneDeep(node));
-			processed.add(id as string);
-
-			// Grab downstream edges
-			const edges = this.getEdges().filter((e) => e.source === id);
-			edges.forEach((edge) => {
-				const newId = edge.target as string;
-				if (!processed.has(newId)) {
-					stack.push(edge.target as string);
-				}
-				copyEdges.push(_.cloneDeep(edge));
-			});
-		}
-
-		// 3. Collect the upstream edges
-		const targetIds = copyNodes.map((n) => n.id);
-		const upstreamEdges = this.getEdges().filter((edge) => targetIds.includes(edge.target as string));
-		const anchorUpstreamEdges = this.getEdges().filter((edge) => edge.target === anchor.id);
-		upstreamEdges.forEach((edge) => {
-			if (copyEdges.find((copyEdge) => copyEdge.id === edge.id)) return;
-			copyEdges.push(_.cloneDeep(edge));
-		});
-
-		// 4. Reassign identifiers
-		const registry: Map<string, string> = new Map();
-		copyNodes.forEach((node) => {
-			registry.set(node.id, uuidv4());
-			node.inputs.forEach((port) => {
-				registry.set(port.id, uuidv4());
-			});
-			node.outputs.forEach((port) => {
-				registry.set(port.id, uuidv4());
-			});
-		});
-		copyEdges.forEach((edge) => {
-			registry.set(edge.id, uuidv4());
-		});
-
-		copyEdges.forEach((edge) => {
-			// Don't replace anchor upstream edge sources, they are still valid
-			if (anchorUpstreamEdges.map((e) => e.source).includes(edge.source) === false) {
-				edge.source = registry.get(edge.source as string);
-				edge.sourcePortId = registry.get(edge.sourcePortId as string);
-			}
-			edge.id = registry.get(edge.id) as string;
-			edge.target = registry.get(edge.target as string);
-			edge.targetPortId = registry.get(edge.targetPortId as string);
-		});
-		copyNodes.forEach((node) => {
-			node.id = registry.get(node.id) as string;
-			node.inputs.forEach((port) => {
-				port.id = registry.get(port.id) as string;
-			});
-			node.outputs.forEach((port) => {
-				port.id = registry.get(port.id) as string;
-			});
-			if (node.active) {
-				node.active = registry.get(node.active) || null;
-			}
-		});
-
-		// 5. Reposition new nodes so they don't exaclty overlap
-		const offset = 75;
-		copyNodes.forEach((n) => {
-			n.y += offset;
-		});
-		copyEdges.forEach((edge) => {
-			if (!edge.points || edge.points.length < 2) return;
-			if (copyNodes.map((n) => n.id).includes(edge.source as string) === true) {
-				edge.points[0].y += offset;
-			}
-			if (copyNodes.map((n) => n.id).includes(edge.target as string) === true) {
-				edge.points[edge.points.length - 1].y += offset;
-			}
-		});
-
-		// 6. Finally put everything back into the workflow
-		this.wf.nodes.push(...copyNodes);
-		this.wf.edges.push(...copyEdges);
 	}
 
 	/**
@@ -630,12 +493,6 @@ export class WorkflowWrapper {
 		const node = this.getNodes().find((d) => d.id === nodeId);
 		if (!node) return;
 		node.state = state;
-	}
-
-	updateNodeStatus(nodeId: string, status: OperatorStatus) {
-		const node = this.getNodes().find((d) => d.id === nodeId);
-		if (!node) return;
-		node.status = status;
 	}
 
 	// Get neighbor nodes for drilldown navigation
@@ -819,7 +676,9 @@ export const createWorkflow = async (workflow: Workflow) => {
 };
 
 // Update/save
+// @deprecated - use fine-grained save
 export const saveWorkflow = async (workflow: Workflow, projectId?: string) => {
+	console.log('!!! workflowService.saveWorkflow (deprecated)');
 	const id = workflow.id;
 	const response = await API.put(`/workflows/${id}`, workflow, { params: { 'project-id': projectId } });
 	return response?.data ?? null;
@@ -956,6 +815,15 @@ export const removeEdges = async (id: string, edgeIds: string[]) => {
 	return response.data ?? null;
 };
 
+export const updatePositions = async (id: string, nodes: Map<string, Position>, edges: Map<string, Position[]>) => {
+	console.log('>> workflowService.updatePositions');
+	const response = await API.post(`/workflows/${id}/update-position`, {
+		nodes: Object.fromEntries(nodes),
+		edges: Object.fromEntries(edges)
+	});
+	return response.data ?? null;
+};
+
 export const updateState = async (id: string, stateMap: Map<string, any>) => {
 	console.log('>> workflowService.updateState');
 	const response = await API.post(`/workflows/${id}/update-state`, Object.fromEntries(stateMap));
@@ -965,6 +833,12 @@ export const updateState = async (id: string, stateMap: Map<string, any>) => {
 export const updateStatus = async (id: string, statusMap: Map<string, OperatorStatus>) => {
 	console.log('>> workflowService.updateStatus');
 	const response = await API.post(`/workflows/${id}/update-status`, Object.fromEntries(statusMap));
+	return response.data ?? null;
+};
+
+export const branchWorkflow = async (id: string, nodeId: string) => {
+	console.log(`>> workflowService.branchWorkflow ${nodeId}`);
+	const response = await API.post(`/workflows/${id}/branch-from-node/${nodeId}`);
 	return response.data ?? null;
 };
 

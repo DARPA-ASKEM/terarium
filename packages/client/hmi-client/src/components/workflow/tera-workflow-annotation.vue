@@ -5,9 +5,8 @@
 		class="wf-annotation"
 		:style="{ fontSize: annotationRef.textSize + 'px' }"
 		@dblclick.stop="edit"
-	>
-		{{ annotationRef.content }}
-	</div>
+		v-html="formattedContent"
+	></div>
 	<!-- Editing view -->
 	<div v-else class="wf-annotation-editing">
 		<textarea
@@ -81,7 +80,7 @@
 <script setup lang="ts">
 import Button from 'primevue/button';
 import { WorkflowAnnotation } from '@/types/workflow';
-import { ref } from 'vue';
+import { ref, nextTick, computed } from 'vue';
 
 const props = defineProps<{
 	annotation: WorkflowAnnotation;
@@ -89,21 +88,38 @@ const props = defineProps<{
 
 const annotationRef = ref<WorkflowAnnotation>(props.annotation);
 const isEditing = ref(false);
-const defaultContent = props.annotation.content;
 
 const emit = defineEmits(['update-annotation', 'remove-annotation']);
 
 const reset = () => {
 	isEditing.value = false;
-	annotationRef.value.content = defaultContent;
+	annotationRef.value.content = annotationContentBackup.value || defaultPlaceholder;
 };
 
+const defaultPlaceholder = 'Double click to edit...';
+const annotationContentBackup = ref<string | null>(null);
+
 const edit = () => {
-	isEditing.value = !isEditing.value;
+	// Backup current content to handle cancelation
+	annotationContentBackup.value = annotationRef.value.content;
+
+	if (annotationRef.value.content === defaultPlaceholder) {
+		annotationRef.value.content = '';
+	}
+
+	isEditing.value = true;
 	autoResize();
+	nextTick(() => {
+		textarea.value?.focus();
+	});
 };
 
 const update = () => {
+	/* Reset to default placeholder if content is empty */
+	if (!annotationRef.value.content.trim()) {
+		annotationRef.value.content = defaultPlaceholder;
+	}
+
 	emit('update-annotation', annotationRef.value);
 	isEditing.value = false;
 };
@@ -133,6 +149,9 @@ const autoResize = () => {
 		element.style.height = `${element.scrollHeight}px`;
 	}
 };
+
+/* display newline characters as line breaks */
+const formattedContent = computed(() => annotationRef.value.content.replace(/\n/g, '<br>'));
 </script>
 
 <style scoped>
@@ -158,11 +177,25 @@ const autoResize = () => {
 }
 .wf-annotation-editing .text-area {
 	width: 100%;
-	padding: var(--gap-4);
-	border: 1px solid var(--primary-color);
+	padding: 10px 14px;
+	min-height: 40px;
+	border: 2px solid var(--primary-color);
 	border-radius: var(--border-radius);
 	font-family: var(--font-family);
 }
+
+/* Floating toolbar */
+@keyframes fadeInUp {
+	0% {
+		opacity: 0;
+		transform: translateY(10px);
+	}
+	100% {
+		opacity: 1;
+		transform: translateY(0);
+	}
+}
+
 .wf-annotation-editing .floating-toolbar {
 	position: absolute;
 	background: var(--surface-highlight);
@@ -174,5 +207,9 @@ const autoResize = () => {
 	display: flex;
 	gap: var(--gap-2);
 	justify-content: space-between;
+
+	/* Animation */
+	animation: fadeInUp 0.3s ease forwards;
+	opacity: 0;
 }
 </style>

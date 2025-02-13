@@ -105,7 +105,6 @@ import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue'
 import TeraStratificationGroupForm from '@/components/workflow/ops/stratify-mira/tera-stratification-group-form.vue';
 import { KernelSessionManager } from '@/services/jupyter';
 import { createModelFromOld, getModel } from '@/services/model';
-import { getModelIdFromModelConfigurationId } from '@/services/model-configurations';
 import type { Model } from '@/types/Types';
 import { AMRSchemaNames } from '@/types/common';
 import { OperatorStatus, WorkflowNode } from '@/types/workflow';
@@ -209,7 +208,6 @@ const stratifyModel = () => {
 		if (modelParameters.includes(v)) parametersToStratify.push(v);
 	});
 
-	let executedCode = '';
 	const messageContent = {
 		key: strataOption.name,
 		strata: strataOption.groupLabels.split(',').map((d) => d.trim()),
@@ -222,11 +220,11 @@ const stratifyModel = () => {
 		kernelManager
 			.sendMessage('stratify_request', messageContent)
 			.register('stratify_response', (data: any) => {
-				executedCode = data.content.executed_code;
+				const executedCode = data.content.executed_code;
+				saveCodeToState(executedCode, false);
 			})
 			.register('model_preview', async (data: any) => {
 				await handleModelPreview(data);
-				saveCodeToState(executedCode, false);
 			});
 	});
 };
@@ -250,7 +248,8 @@ const handleModelPreview = async (data: any) => {
 	amrResponse.header.name = newName;
 
 	// Create output
-	const modelData = await createModelFromOld(amr.value, amrResponse);
+	const modelConfigId = props.node.inputs.find((i) => i.type === 'modelConfigId')?.value?.[0];
+	const modelData = await createModelFromOld(amr.value, amrResponse, modelConfigId);
 	if (!modelData) return;
 	outputAmr.value = modelData;
 
@@ -327,15 +326,7 @@ const getStatesAndParameters = (amrModel: Model) => {
 };
 
 const inputChangeHandler = async () => {
-	const input = props.node.inputs[0];
-	if (!input) return;
-
-	let modelId: string | null = null;
-	if (input.type === 'modelId') {
-		modelId = input.value?.[0];
-	} else if (input.type === 'modelConfigId') {
-		modelId = await getModelIdFromModelConfigurationId(input.value?.[0]);
-	}
+	const modelId = props.node.state.baseModelId;
 	if (!modelId) return;
 
 	amr.value = await getModel(modelId);
@@ -466,7 +457,7 @@ watch(
 
 // Set model, modelNodeOptions
 watch(
-	() => props.node.inputs[0],
+	() => props.node.state.baseModelId,
 	async () => {
 		await inputChangeHandler();
 	},

@@ -147,7 +147,7 @@
 									<label><br />Solver method</label>
 									<Dropdown
 										class="p-inputtext-sm"
-										:options="[CiemssMethodOptions.dopri5, CiemssMethodOptions.euler]"
+										:options="[CiemssMethodOptions.dopri5, CiemssMethodOptions.rk4, CiemssMethodOptions.euler]"
 										v-model="knobs.solverMethod"
 										placeholder="Select"
 									/>
@@ -157,7 +157,7 @@
 									<div>
 										<tera-input-number
 											v-model="knobs.solverStepSize"
-											:disabled="knobs.solverMethod !== CiemssMethodOptions.euler"
+											:disabled="![CiemssMethodOptions.rk4, CiemssMethodOptions.euler].includes(knobs.solverMethod)"
 											:min="0"
 										/>
 									</div>
@@ -490,7 +490,7 @@ import {
 	AssetType
 } from '@/types/Types';
 import { logger } from '@/utils/logger';
-import { getActiveOutput, nodeMetadata } from '@/components/workflow/util';
+import { nodeMetadata } from '@/components/workflow/util';
 import { WorkflowNode } from '@/types/workflow';
 import TeraSliderPanel from '@/components/widgets/tera-slider-panel.vue';
 import TeraNotebookError from '@/components/drilldown/tera-notebook-error.vue';
@@ -523,6 +523,7 @@ import {
 	OptimizationInterventionObjective
 } from './optimize-ciemss-operation';
 import { setQoIData, usePreparedChartInputs } from './optimize-utils';
+import { isInterventionPolicyBlank } from '../intervention-policy/intervention-policy-operation';
 
 const confirm = useConfirm();
 
@@ -544,7 +545,7 @@ interface BasicKnobs {
 	endTime: number;
 	numSamples: number;
 	solverStepSize: number;
-	solverMethod: string;
+	solverMethod: CiemssMethodOptions;
 	maxiter: number;
 	maxfeval: number;
 	preForecastRunId: string;
@@ -607,13 +608,19 @@ const isCriteriaReady = computed(() => {
 	return activeConstraintGroups.length !== 0 && activeConstraintGroups.every((ele) => ele.targetVariable);
 });
 
-const isInterventionReady = computed(() => activePolicyGroups.value.length > 0);
+const selectedInterventionPolicy = ref<InterventionPolicy | null>(null);
+const isInterventionReady = computed(
+	() =>
+		activePolicyGroups.value.length > 0 &&
+		!!selectedInterventionPolicy.value &&
+		!isInterventionPolicyBlank(selectedInterventionPolicy.value)
+);
 
 const isEndTimeValid = computed(() =>
 	activePolicyGroups.value.every((ele) => {
 		if (
 			[OptimizationInterventionObjective.startTime, OptimizationInterventionObjective.paramValueAndStartTime].includes(
-				ele.optimizationType
+				ele.optimizeFunction.type
 			)
 		) {
 			return ele.endTime <= knobs.value.endTime;
@@ -666,7 +673,6 @@ const outputViewOptions = ref([
 ]);
 const runResults = ref<{ [runId: string]: any }>({});
 const runResultsSummary = ref<{ [runId: string]: any }>({});
-const riskResults = ref<{ [runId: string]: any }>({});
 const simulationRawContent = ref<{ [runId: string]: CsvAsset | null }>({});
 const optimizationResult = ref<any>('');
 const optimizeRequestPayload = ref<any>('');
@@ -762,6 +768,7 @@ const initialize = async () => {
 	if (policyId) {
 		// FIXME: This should be done in the node this should not be done in the drill down.
 		getInterventionPolicyById(policyId).then((interventionPolicy) => {
+			selectedInterventionPolicy.value = interventionPolicy;
 			if (interventionPolicy) setInterventionPolicyGroups(interventionPolicy);
 		});
 	}
@@ -824,46 +831,37 @@ const runOptimize = async () => {
 	setOutputSettingDefaults();
 
 	const optimizeInterventions: OptimizeInterventions[] = [];
-	const listBoundsInterventions: number[][] = [];
 
 	activePolicyGroups.value.forEach((ele) => {
-		const paramNames: string[] = [];
-		const paramValues: number[] = [];
-		const startTime: number[] = [];
-		const initialGuess: number[] = [];
-		const relativeImportance: number[] = [];
-
-		// Only allowed to optimize on interventions that arent grouped aka staticInterventions' length is 1
-		paramNames.push(ele.intervention.staticInterventions[0].appliedTo);
-		paramValues.push(ele.intervention.staticInterventions[0].value);
-		startTime.push(ele.intervention.staticInterventions[0].timestep);
-		relativeImportance.push(ele.relativeImportance);
-
-		if (ele.optimizationType === OptimizationInterventionObjective.startTime) {
-			initialGuess.push(ele.startTimeGuess);
-			listBoundsInterventions.push([ele.startTime]);
-			listBoundsInterventions.push([ele.endTime]);
-		} else if (ele.optimizationType === OptimizationInterventionObjective.paramValue) {
-			initialGuess.push(ele.initialGuessValue);
-			listBoundsInterventions.push([ele.lowerBoundValue]);
-			listBoundsInterventions.push([ele.upperBoundValue]);
-		} else if (ele.optimizationType === OptimizationInterventionObjective.paramValueAndStartTime) {
-			initialGuess.push(ele.startTimeGuess);
-			initialGuess.push(ele.initialGuessValue);
-			listBoundsInterventions.push([ele.lowerBoundValue]);
-			listBoundsInterventions.push([ele.upperBoundValue]);
-		} else {
-			console.error(`invalid optimization type used:${ele.optimizationType}`);
-		}
+		// Note: Only allowed to optimize on interventions that arent grouped aka staticInterventions' length is 1
+		const interventionType = ele.optimizeFunction.type;
+		const paramName: string = ele.intervention.staticInterventions[0].appliedTo;
+		const paramValue: number = ele.intervention.staticInterventions[0].value;
+		const startTime: number = ele.intervention.staticInterventions[0].timestep;
+		const timeObjectiveFunction = ele.optimizeFunction.timeObjectiveFunction;
+		const parameterObjectiveFunction = ele.optimizeFunction.parameterObjectiveFunction;
+		const relativeImportance: number = ele.relativeImportance;
+		const startTimeInitialGuess: number = ele.startTimeGuess;
+		const startTimeLowerBound: number = ele.startTime;
+		const startTimeUpperBound: number = ele.endTime;
+		const paramValueInitialGuess: number = ele.initialGuessValue;
+		const parameterValueLowerBound: number = ele.lowerBoundValue;
+		const parameterValueUpperBound: number = ele.upperBoundValue;
 
 		optimizeInterventions.push({
-			interventionType: ele.optimizationType,
-			paramNames,
+			interventionType,
+			paramName,
 			startTime,
-			paramValues,
-			initialGuess,
-			objectiveFunctionOption: ele.objectiveFunctionOption,
-			relativeImportance: ele.relativeImportance
+			paramValue,
+			timeObjectiveFunction,
+			parameterObjectiveFunction,
+			relativeImportance,
+			paramValueInitialGuess,
+			parameterValueLowerBound,
+			parameterValueUpperBound,
+			startTimeInitialGuess,
+			startTimeLowerBound,
+			startTimeUpperBound
 		});
 	});
 
@@ -894,7 +892,6 @@ const runOptimize = async () => {
 		optimizeInterventions,
 		fixedInterventions,
 		qoi: qois,
-		boundsInterventions: listBoundsInterventions,
 		extra: {
 			numSamples: knobs.value.numSamples,
 			maxiter: knobs.value.maxiter,
@@ -959,8 +956,6 @@ const setOutputValues = async () => {
 
 	const preResult = await getRunResultCSV(preForecastRunId, 'result.csv', renameFnGenerator('pre'));
 	const postResult = await getRunResultCSV(postForecastRunId, 'result.csv');
-	const outputState = getActiveOutput(props.node)?.state as OptimizeCiemssOperationState;
-	riskResults.value[knobs.value.postForecastRunId] = setQoIData(postResult, outputState.constraintGroups[0]);
 
 	// FIXME: only show the post optimize data for now...
 	simulationRawContent.value[knobs.value.postForecastRunId] = convertToCsvAsset(
@@ -1003,7 +998,7 @@ const preparedSuccessCriteriaCharts = computed(() => {
 		.filter((ele) => ele.isActive)
 		.map((constraint) =>
 			createSuccessCriteriaChart(
-				riskResults.value[postForecastRunId],
+				setQoIData(runResults.value[postForecastRunId], constraint),
 				constraint.threshold,
 				constraint.isMinimized,
 				constraint.riskTolerance,

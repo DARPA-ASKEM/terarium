@@ -48,9 +48,7 @@ import software.uncharted.terarium.hmiserver.utils.rebac.Schema;
 @Data
 @RequiredArgsConstructor
 @Slf4j
-public abstract class TerariumAssetServiceWithoutSearch<
-	T extends TerariumAsset, R extends PSCrudSoftDeleteRepository<T, UUID>
->
+public abstract class TerariumAssetService<T extends TerariumAsset, R extends PSCrudSoftDeleteRepository<T, UUID>>
 	implements ITerariumAssetService<T> {
 
 	protected final ObjectMapper objectMapper;

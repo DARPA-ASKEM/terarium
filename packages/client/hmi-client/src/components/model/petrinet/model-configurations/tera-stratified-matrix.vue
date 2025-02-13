@@ -87,7 +87,7 @@
 								/>
 								<div class="w-full" :class="{ 'hide-content': editableCellStates[cell.row][cell.col] }">
 									<div
-										class="subdue mb-1 flex align-items-center gap-1 w-full justify-content-between"
+										class="subdue text-sm mb-1 flex align-items-center gap-1 w-full justify-content-between"
 										v-if="stratifiedMatrixType !== StratifiedMatrix.Initials"
 									>
 										{{ cell?.content.id }}
@@ -117,7 +117,7 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted, computed, watch } from 'vue';
 import { isEmpty, isNumber } from 'lodash';
-import { pythonInstance } from '@/python/PyodideController';
+import { pythonInstance } from '@/web-workers/python/PyodideController';
 import InputText from 'primevue/inputtext';
 import Dropdown from 'primevue/dropdown';
 import Button from 'primevue/button';

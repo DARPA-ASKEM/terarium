@@ -29,6 +29,7 @@ export type DataArray = Record<string, any>[];
 
 export enum CiemssMethodOptions {
 	dopri5 = 'dopri5',
+	rk4 = 'rk4',
 	euler = 'euler'
 }
 

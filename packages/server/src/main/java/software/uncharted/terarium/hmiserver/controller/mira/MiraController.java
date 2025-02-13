@@ -45,12 +45,12 @@ import software.uncharted.terarium.hmiserver.security.Roles;
 import software.uncharted.terarium.hmiserver.service.CurrentUserService;
 import software.uncharted.terarium.hmiserver.service.data.ArtifactService;
 import software.uncharted.terarium.hmiserver.service.data.ModelConfigurationService;
+import software.uncharted.terarium.hmiserver.service.data.ModelConfigurationService.ModelConfigurationUpdate;
 import software.uncharted.terarium.hmiserver.service.data.ModelService;
 import software.uncharted.terarium.hmiserver.service.data.ProjectService;
 import software.uncharted.terarium.hmiserver.service.tasks.AMRToMMTResponseHandler;
 import software.uncharted.terarium.hmiserver.service.tasks.CompareModelsConceptsResponseHandler;
 import software.uncharted.terarium.hmiserver.service.tasks.GenerateModelLatexResponseHandler;
-import software.uncharted.terarium.hmiserver.service.tasks.LatexToAMRResponseHandler;
 import software.uncharted.terarium.hmiserver.service.tasks.MdlToStockflowResponseHandler;
 import software.uncharted.terarium.hmiserver.service.tasks.SbmlToPetrinetResponseHandler;
 import software.uncharted.terarium.hmiserver.service.tasks.StellaToStockflowResponseHandler;
@@ -456,8 +456,7 @@ public class MiraController {
 			// create a default configuration
 			final ModelConfiguration modelConfiguration = ModelConfigurationService.modelConfigurationFromAMR(
 				model,
-				null,
-				null
+				new ModelConfigurationUpdate()
 			);
 			modelConfigurationService.createAsset(modelConfiguration, conversionRequest.projectId, permission);
 		} catch (final IOException e) {
@@ -506,7 +505,7 @@ public class MiraController {
 			throw handleMiraFeignException(e, "ODE", "model", "", "mira.ode.bad-model");
 		}
 
-		return new ResponseEntity(response.getBody(), response.getStatusCode());
+		return new ResponseEntity<>(response.getBody(), response.getStatusCode());
 	}
 
 	@PostMapping("/entity-similarity")
@@ -519,7 +518,7 @@ public class MiraController {
 			throw handleMiraFeignException(e, "entity similarities", "curies", "", "mira.similarity.bad-curies");
 		}
 
-		return new ResponseEntity(response.getBody(), response.getStatusCode());
+		return new ResponseEntity<>(response.getBody(), response.getStatusCode());
 	}
 
 	private ResponseStatusException handleMiraFeignException(

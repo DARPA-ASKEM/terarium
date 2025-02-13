@@ -3,7 +3,6 @@ package software.uncharted.terarium.hmiserver.service.data;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.micrometer.observation.annotation.Observed;
 import java.io.IOException;
-import java.util.Map;
 import java.util.UUID;
 import org.apache.http.entity.ContentType;
 import org.springframework.stereotype.Service;
@@ -15,8 +14,7 @@ import software.uncharted.terarium.hmiserver.service.s3.S3ClientService;
 import software.uncharted.terarium.hmiserver.utils.rebac.Schema;
 
 @Service
-public class NotebookSessionService
-	extends TerariumAssetServiceWithoutSearch<NotebookSession, NotebookSessionRepository> {
+public class NotebookSessionService extends TerariumAssetService<NotebookSession, NotebookSessionRepository> {
 
 	public NotebookSessionService(
 		final ObjectMapper objectMapper,

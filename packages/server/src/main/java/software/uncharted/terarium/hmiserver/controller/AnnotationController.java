@@ -1,7 +1,6 @@
 package software.uncharted.terarium.hmiserver.controller;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import jakarta.transaction.Transactional;
 import java.time.Instant;
 import java.util.List;
 import lombok.RequiredArgsConstructor;

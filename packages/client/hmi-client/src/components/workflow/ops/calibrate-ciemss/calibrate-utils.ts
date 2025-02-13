@@ -95,23 +95,29 @@ export function usePreparedChartInputs(
 	props: {
 		node: WorkflowNode<CalibrationOperationStateCiemss>;
 	},
-	runResult: Ref<DataArray>,
-	runResultSummary: Ref<DataArray>,
-	runResultPre: Ref<DataArray>,
-	runResultSummaryPre: Ref<DataArray>
+	runResult: Ref<{
+		result: DataArray;
+		resultPre: DataArray;
+		resultSummary: DataArray;
+		resultSummaryPre: DataArray;
+	} | null>
 ) {
-	const pyciemssMap = computed(() => (!runResult.value.length ? {} : parsePyCiemssMap(runResult.value[0])));
+	const pyciemssMap = computed(() =>
+		!runResult.value?.result?.length ? {} : parsePyCiemssMap(runResult.value.result[0])
+	);
+	const calibrationId = computed(() => props.node.state.calibrationId);
+	const datasetVariables = computed(() => getSelectedOutputMapping(props.node).map((m) => m.datasetVariable));
 
 	return computed(() => {
-		const state = props.node.state;
-		if (!state.calibrationId || _.isEmpty(pyciemssMap.value)) return null;
+		if (!runResult.value) return null;
+		if (!calibrationId.value || _.isEmpty(pyciemssMap.value)) return null;
 
 		// Merge before/after for chart
 		const { result, resultSummary } = mergeResults(
-			runResultPre.value,
-			runResult.value,
-			runResultSummaryPre.value,
-			runResultSummary.value
+			runResult.value.resultPre,
+			runResult.value.result,
+			runResult.value.resultSummaryPre,
+			runResult.value.resultSummary
 		);
 
 		// Build lookup map for calibration, include before/after and dataset (observations)
@@ -120,8 +126,8 @@ export function usePreparedChartInputs(
 			translationMap[`${pyciemssMap.value[key]}_mean`] = `${key} after calibration`;
 			translationMap[`${pyciemssMap.value[key]}_mean:pre`] = `${key} before calibration`;
 		});
-		getSelectedOutputMapping(props.node).forEach((mapObj) => {
-			translationMap[mapObj.datasetVariable] = 'Observations';
+		datasetVariables.value.forEach((variable) => {
+			translationMap[variable] = 'Observations';
 		});
 		return {
 			result,

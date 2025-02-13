@@ -8,7 +8,7 @@ import software.uncharted.terarium.hmiserver.annotations.AMRSchemaType;
 import software.uncharted.terarium.hmiserver.annotations.TSModel;
 import software.uncharted.terarium.hmiserver.annotations.TSOptional;
 import software.uncharted.terarium.hmiserver.models.SupportAdditionalProperties;
-import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.ModelGrounding;
+import software.uncharted.terarium.hmiserver.models.dataservice.Grounding;
 import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.ModelUnit;
 
 @Data
@@ -29,8 +29,18 @@ public class State extends SupportAdditionalProperties implements Serializable, 
 	private String description;
 
 	@TSOptional
-	private ModelGrounding grounding;
+	private Grounding grounding;
 
 	@TSOptional
 	private ModelUnit units;
+
+	@Override
+	public String getConceptReference() {
+		return id;
+	}
+
+	@Override
+	public void setConceptReference(String id) {
+		this.id = id;
+	}
 }

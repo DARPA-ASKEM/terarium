@@ -18,15 +18,19 @@
 				display="chip"
 				@update:model-value="emit('update-self', updatedConfig)"
 				class="common-input-height"
+				filter
 			/>
 		</div>
-		<div class="input-row">
+		<div class="flex flex-column gap-2 mb-4 w-full">
 			<label>Enter a comma separated list of labels for each group.</label>
-			<tera-input-text
+			<Textarea
 				v-model="labels"
+				rows="1"
 				placeholder="e.g., Young, Old"
 				@focusout="emit('update-self', updatedConfig)"
-				class="common-input-height"
+				:autoResize="true"
+				class="w-full"
+				style="min-height: 2.35rem"
 			/>
 		</div>
 		<div class="input-row">
@@ -45,6 +49,7 @@
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue';
 import TeraInputText from '@/components/widgets/tera-input-text.vue';
+import Textarea from 'primevue/textarea';
 import MultiSelect from 'primevue/multiselect';
 import Checkbox from 'primevue/checkbox';
 import { StratifyGroup } from '@/components/workflow/ops/stratify-mira/stratify-mira-operation';

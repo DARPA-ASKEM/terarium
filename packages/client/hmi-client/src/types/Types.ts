@@ -122,18 +122,10 @@ export interface CsvAsset {
     rowCount: number;
 }
 
-export interface CsvColumnStats {
-    bins: number[];
-    minValue: number;
-    maxValue: number;
-    mean: number;
-    median: number;
-    sd: number;
-}
-
 export interface Grounding extends TerariumEntity {
-    identifiers: DKG[];
-    context?: any;
+    identifiers: { [index: string]: string };
+    context?: { [index: string]: string };
+    modifiers?: { [index: string]: string };
 }
 
 export interface PresignedURL {
@@ -189,16 +181,14 @@ export interface Dataset extends TerariumAsset {
     grounding?: Grounding;
 }
 
-export interface DatasetColumn extends TerariumEntity {
-    name: string;
+export interface DatasetColumn extends TerariumEntity, GroundedSemantic {
+    conceptId?: string;
     fileName: string;
     dataType: ColumnType;
     stats?: DatasetColumnStats;
     formatStr?: string;
     annotations: string[];
     metadata?: any;
-    grounding?: Grounding;
-    description?: string;
     dataset?: Dataset;
 }
 
@@ -294,10 +284,12 @@ export interface Author {
 }
 
 export interface State extends GroundedSemantic {
+    id: string;
     units?: ModelUnit;
 }
 
 export interface Transition extends GroundedSemantic {
+    id: string;
     input: string[];
     output: string[];
     expression?: string;
@@ -358,7 +350,7 @@ export interface ProvenanceSearchResult {
 
 export interface RegNetBaseProperties {
     name: string;
-    grounding: ModelGrounding;
+    grounding: Grounding;
     rate_constant: any;
 }
 
@@ -380,11 +372,12 @@ export interface RegNetParameter {
     id: string;
     description?: string;
     value?: number;
-    grounding?: ModelGrounding;
+    grounding?: Grounding;
     distribution?: ModelDistribution;
 }
 
 export interface RegNetVertex extends GroundedSemantic {
+    id: string;
     sign: boolean;
     initial?: any;
     rate_constant?: any;
@@ -590,7 +583,6 @@ export interface OptimizeRequestCiemss {
     fixedInterventions?: Intervention[];
     loggingStepSize?: number;
     qoi: OptimizeQoi[];
-    boundsInterventions: number[][];
     extra: OptimizeExtra;
     engine: string;
     userId: string;
@@ -658,12 +650,18 @@ export interface OptimizeExtra {
 
 export interface OptimizeInterventions {
     interventionType: string;
-    paramNames: string[];
-    paramValues?: number[];
-    startTime?: number[];
-    objectiveFunctionOption: string;
-    initialGuess?: number[];
+    paramName: string;
+    paramValue?: number;
+    startTime?: number;
+    timeObjectiveFunction: string;
+    parameterObjectiveFunction: string;
     relativeImportance: number;
+    paramValueInitialGuess?: number;
+    parameterValueLowerBound: number;
+    parameterValueUpperBound: number;
+    startTimeInitialGuess?: number;
+    startTimeLowerBound: number;
+    startTimeUpperBound: number;
 }
 
 export interface OptimizeQoi {
@@ -762,6 +760,12 @@ export interface Links {
     self: string;
 }
 
+export interface GroundedSemantic {
+    name?: string;
+    description?: string;
+    grounding?: Grounding;
+}
+
 export interface NumericColumnStats {
     mean: number;
     median: number;
@@ -836,27 +840,14 @@ export interface ModelDistribution {
     parameters: { [index: string]: any };
 }
 
-export interface ModelGrounding {
-    identifiers: { [index: string]: any };
-    context?: { [index: string]: any };
-    modifiers?: any;
-}
-
 export interface ModelUnit {
     expression: string;
     expression_mathml: string;
 }
 
-export interface GroundedSemantic {
-    id: string;
-    name?: string;
-    description?: string;
-    grounding?: ModelGrounding;
-}
-
 export interface Properties {
     name: string;
-    grounding?: ModelGrounding;
+    grounding?: Grounding;
     description?: string;
 }
 
@@ -969,12 +960,14 @@ export interface Initial {
 }
 
 export interface ModelParameter extends GroundedSemantic {
+    id: string;
     value?: number;
     distribution?: ModelDistribution;
     units?: ModelUnit;
 }
 
 export interface Observable extends GroundedSemantic {
+    id: string;
     states?: string[];
     units?: ModelUnit;
     expression?: string;
@@ -988,7 +981,6 @@ export interface Variable {
     column: DataColumn[];
     paper: Paper;
     equations: EquationVariable[];
-    dkg_groundings: DKGConcept[];
 }
 
 export interface StatementValue {
@@ -1138,7 +1130,7 @@ export enum ClientEventType {
     TaskGollmCompareModel = "TASK_GOLLM_COMPARE_MODEL",
     TaskGollmConfigureModelFromDataset = "TASK_GOLLM_CONFIGURE_MODEL_FROM_DATASET",
     TaskGollmConfigureModelFromDocument = "TASK_GOLLM_CONFIGURE_MODEL_FROM_DOCUMENT",
-    TaskGollmEnrichAmr = "TASK_GOLLM_ENRICH_AMR",
+    TaskGollmEnrichModel = "TASK_GOLLM_ENRICH_MODEL",
     TaskGollmEnrichDataset = "TASK_GOLLM_ENRICH_DATASET",
     TaskGollmEquationsFromImage = "TASK_GOLLM_EQUATIONS_FROM_IMAGE",
     TaskGollmGenerateSummary = "TASK_GOLLM_GENERATE_SUMMARY",

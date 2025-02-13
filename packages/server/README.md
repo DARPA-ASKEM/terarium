@@ -186,7 +186,7 @@ Error messages sent to the client should be easy to understand and provide meani
 * Use active voice instead of passive (instead of "the service was terminated…" try "We terminated the service…").
 * Avoid software development jargon that users may not understand ("UUID," "curies").
 * Don't introduce backend terms that users never see in the UI. For example, avoid terms like "artifacts" and "assets" if users only see "resources" in the UI.
-* Consider whether it's necessary to name a backend service that users never see. Instead of referencing "SKEMA," determine whether it would be clearer to refer to our "model service."
+* Consider whether it's necessary to name a backend service that users never see. Instead of referencing "MIRA," determine whether it would be clearer to refer to our "model service."
 
 ### Terms
 

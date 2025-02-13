@@ -14,7 +14,7 @@ RUN apt-get update && apt-get install --assume-yes --no-install-recommends \
 	rm -rf /var/lib/apt/lists/*
 
 # Install PyMuPDF
-RUN pip install --no-cache-dir PyMuPDF
+RUN pip install --no-cache-dir PyMuPDF==1.25.2
 
 #^^^^^^^^^^^^^^^^^^^^
 ######################
@@ -40,7 +40,7 @@ RUN apt-get update && apt-get install --assume-yes --no-install-recommends \
 	rm -rf /var/lib/apt/lists/*
 
 # Install PyMuPDF
-RUN pip install --no-cache-dir PyMuPDF
+RUN pip install --no-cache-dir PyMuPDF==1.25.2
 
 # Copy the Spring Boot fat JAR from the builder image
 COPY --from=text_extraction_taskrunner_builder /taskrunner/build/libs/*.jar /taskrunner.jar
