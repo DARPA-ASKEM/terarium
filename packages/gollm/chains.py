@@ -154,8 +154,8 @@ def general_query_chain(llm: LlmToolsInterface, instruction: str) -> str:
     prompt = llm.create_general_query_prompt(instruction)
     return llm.send_to_llm_with_string_output(prompt, None)
 
-def chart_annotation_chain(llm: LlmToolsInterface, preamble: str, instruction: str, chartType: ChartAnnotationType ) -> dict:
-    prompt = llm.create_chart_annotation_prompt(preamble, instruction)
+def chart_annotation_chain(llm: LlmToolsInterface, chartType: ChartAnnotationType, preamble: str, instruction: str) -> dict:
+    prompt = llm.create_chart_annotation_prompt(chartType, preamble, instruction)
     chart_annotation_string = llm.send_to_llm_with_string_output(prompt)
     return unescape_curly_braces(extract_json_object(chart_annotation_string))
 

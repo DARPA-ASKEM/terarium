@@ -1,4 +1,6 @@
-CHART_ANNOTATION_PROMPT = """
+from entities import ChartAnnotationType
+
+CHART_ANNOTATION_PROMPT_BASE = """
 You are an agent who is an expert in Vega-Lite chart specs. Provide a Vega-Lite layer JSON object for the annotation that can be added to an existing chart spec to satisfy the provided user request.
 
 - The Vega-Lite schema version you must use is https://vega.github.io/schema/vega-lite/v5.json.
@@ -180,6 +182,33 @@ Answer:
 }}
 """
 
-# def build_prompt(preamble: str, instruction: str, type: str) -> str:
-#     examples = FORECAST_CHART_ANNOTATION_EXAMPLES
-#     return CHART_ANNOTATION_PROMPT.format(examples=examples, preamble=preamble, instruction=instruction)
+QUANTILE_FORECAST_CHART_ANNOTATION_EXAMPLES="""
+Assuming you are adding the annotations to the following chart spec,
+---- Example Chart Spec Start -----
+{{
+    "data": {{ "url": "data/samples.csv" }},
+    "transform": [
+        {{ "fold": ["price", "cost", "tax", "profit"], "as": ["variableField", "valueField"] }}
+    ],
+    "layer": [
+        {{
+            "mark": "line",
+            "encoding": {{
+                "x": {{ "field": "date", "type": "quantitative", "axis": {{ "title": "Day" }} }},
+                "y": {{ "field": "valueField", "type": "quantitative", "axis": {{ "title": "Dollars" }} }}
+            }}
+        }}
+    ]
+}}
+---- Example Chart Spec End -----
+
+"""
+
+def build_prompt(chartType: ChartAnnotationType, preamble: str, instruction: str) -> str:
+    examples = {
+        ChartAnnotationType.FORECAST_CHART: FORECAST_CHART_ANNOTATION_EXAMPLES,
+        ChartAnnotationType.QUANTILE_FORECAST_CHART: QUANTILE_FORECAST_CHART_ANNOTATION_EXAMPLES
+    }[chartType]
+    prompt = CHART_ANNOTATION_PROMPT_BASE.format(examples=examples, preamble=preamble, instruction=instruction)
+    print(prompt)
+    return prompt

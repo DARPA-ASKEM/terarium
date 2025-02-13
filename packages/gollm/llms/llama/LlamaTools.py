@@ -5,7 +5,7 @@ from typing import List, Optional
 from entities import ChartAnnotationType
 
 from common.LlmToolsInterface import LlmToolsInterface
-from common.prompts.chart_annotation import CHART_ANNOTATION_PROMPT
+from common.prompts.chart_annotation import build_prompt as build_chart_annotation_prompt
 from common.prompts.config_from_dataset import (
     CONFIGURE_FROM_DATASET_PROMPT,
     CONFIGURE_FROM_DATASET_MAPPING_PROMPT,
@@ -324,10 +324,7 @@ class LlamaTools(LlmToolsInterface):
     def create_chart_annotation_prompt(self, chartType: ChartAnnotationType, preamble: str, instruction: str, schema: str) -> str:
         print("Building chart annotation prompt...")
         prompt = LLAMA_START_PROMPT
-        prompt += CHART_ANNOTATION_PROMPT.format(
-            preamble=preamble,
-            instruction=instruction
-        )
+        prompt += build_chart_annotation_prompt(chartType, preamble, instruction)
         prompt += LLAMA_RETURN_INSTRUCTIONS.format(
             schema=schema
         )
