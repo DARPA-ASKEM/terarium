@@ -7,7 +7,6 @@ public enum RoleType {
 	ADMIN,
 	USER,
 	GROUP,
-	TEST,
 	SERVICE,
-	SPECIAL
+	TEST
 }

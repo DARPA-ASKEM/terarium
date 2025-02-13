@@ -7,22 +7,18 @@ import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 public enum KeycloakRole {
-	USER,
-	ADMIN,
-	GROUP,
-	TEST,
-	SERVICE;
+	ADMIN;
 
-	public static KeycloakRole get(final String role) {
+	public static KeycloakRole get(String role) {
 		try {
 			return valueOf(role.toUpperCase());
-		} catch (final IllegalArgumentException e) {
+		} catch (IllegalArgumentException e) {
 			log.debug("Keycloak role {} not found", role);
 			return null;
 		}
 	}
 
-	public static List<KeycloakRole> get(final List<String> roles) {
+	public static List<KeycloakRole> get(List<String> roles) {
 		return roles.stream().map(KeycloakRole::get).filter(Objects::nonNull).collect(Collectors.toList());
 	}
 }

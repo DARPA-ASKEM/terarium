@@ -25,7 +25,7 @@ import org.springframework.stereotype.Service;
 import software.uncharted.terarium.hmiserver.configuration.Config;
 import software.uncharted.terarium.hmiserver.models.ClientEvent;
 import software.uncharted.terarium.hmiserver.models.ClientEventType;
-import software.uncharted.terarium.hmiserver.models.User;
+import software.uncharted.terarium.hmiserver.models.authority.User;
 import software.uncharted.terarium.hmiserver.models.dataservice.simulation.SimulationUpdate;
 import software.uncharted.terarium.hmiserver.models.simulationservice.statusupdates.CiemssCalibrateStatusUpdate;
 import software.uncharted.terarium.hmiserver.models.simulationservice.statusupdates.CiemssOptimizeStatusUpdate;
@@ -98,7 +98,6 @@ public class SimulationEventService {
 			updateAndSendPyciemssMessage(message, update);
 		} else {
 			log.error("message in simulation-status with unknown type: " + updateType);
-			return;
 		}
 	}
 
@@ -159,7 +158,6 @@ public class SimulationEventService {
 				passPyciemssToUser(update);
 			} else {
 				log.error("message in simulation-status with unknown type: " + updateType);
-				return;
 			}
 		} catch (final Exception e) {
 			log.error("Error processing event", e);

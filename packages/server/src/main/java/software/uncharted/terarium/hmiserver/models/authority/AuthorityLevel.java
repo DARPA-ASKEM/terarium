@@ -1,12 +1,13 @@
 package software.uncharted.terarium.hmiserver.models.authority;
 
+import java.io.Serializable;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import software.uncharted.terarium.hmiserver.annotations.TSModel;
 
 @Slf4j
 @TSModel
-public enum AuthorityLevel {
+public enum AuthorityLevel implements Serializable {
 	READ(0),
 	CREATE(1),
 	UPDATE(2),

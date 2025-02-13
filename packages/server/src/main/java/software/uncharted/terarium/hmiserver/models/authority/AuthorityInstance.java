@@ -1,7 +1,13 @@
 package software.uncharted.terarium.hmiserver.models.authority;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import jakarta.persistence.*;
+import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.ManyToOne;
+import java.io.Serializable;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -14,7 +20,7 @@ import software.uncharted.terarium.hmiserver.annotations.TSIgnore;
 @Accessors(chain = true)
 @Entity
 @NoArgsConstructor
-public class AuthorityInstance {
+public class AuthorityInstance implements Serializable {
 
 	@Id
 	@GeneratedValue(strategy = GenerationType.AUTO)
@@ -25,12 +31,12 @@ public class AuthorityInstance {
 	@ManyToOne(fetch = FetchType.EAGER)
 	private Authority authority;
 
-	public AuthorityInstance(final Authority authority, final List<AuthorityLevel> authorityLevels) {
+	public AuthorityInstance(Authority authority, List<AuthorityLevel> authorityLevels) {
 		this.authority = authority;
 		this.mask = authorityLevelsToMask(authorityLevels);
 	}
 
-	private static byte authorityLevelsToMask(final List<AuthorityLevel> authorityLevels) {
+	private static byte authorityLevelsToMask(List<AuthorityLevel> authorityLevels) {
 		return authorityLevels.stream().map(AuthorityLevel::getMask).reduce((l1, l2) -> (byte) (l1 | l2)).orElse((byte) 0);
 	}
 
@@ -49,7 +55,7 @@ public class AuthorityInstance {
 		return Arrays.stream(AuthorityLevel.values()).filter(this::hasAuthorityLevel).collect(Collectors.toList());
 	}
 
-	private boolean hasAuthorityLevel(final AuthorityLevel level) {
+	private boolean hasAuthorityLevel(AuthorityLevel level) {
 		return (mask & (byte) Math.pow(2, level.getId())) != 0;
 	}
 }

@@ -28,7 +28,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 import software.uncharted.terarium.hmiserver.models.ClientEvent;
 import software.uncharted.terarium.hmiserver.models.ClientEventType;
-import software.uncharted.terarium.hmiserver.models.User;
+import software.uncharted.terarium.hmiserver.models.authority.User;
 
 @Service
 @Slf4j

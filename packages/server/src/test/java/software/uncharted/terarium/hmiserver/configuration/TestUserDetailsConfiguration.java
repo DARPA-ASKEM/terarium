@@ -6,7 +6,7 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 import software.uncharted.terarium.hmiserver.annotations.JsonResource;
-import software.uncharted.terarium.hmiserver.models.User;
+import software.uncharted.terarium.hmiserver.models.authority.User;
 
 @Service
 @Primary

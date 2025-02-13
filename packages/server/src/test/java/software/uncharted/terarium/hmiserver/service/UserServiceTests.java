@@ -10,7 +10,7 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.security.test.context.support.WithUserDetails;
 import software.uncharted.terarium.hmiserver.TerariumApplicationTests;
 import software.uncharted.terarium.hmiserver.configuration.MockUser;
-import software.uncharted.terarium.hmiserver.models.User;
+import software.uncharted.terarium.hmiserver.models.authority.User;
 import software.uncharted.terarium.hmiserver.repository.UserRepository;
 
 @ExtendWith(MockitoExtension.class)
