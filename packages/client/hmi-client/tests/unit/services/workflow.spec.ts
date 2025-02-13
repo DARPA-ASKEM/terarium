@@ -197,7 +197,7 @@ describe('get neighbor nodes for drilldown navigation', () => {
 	const n4 = wf.addNode(testOp, { x: 900, y: -200 }, {});
 	const n5 = wf.addNode(testOp, { x: 900, y: 200 }, {});
 
-	const NC = WorkflowPortStatus.NOTCONNECTED;
+	const NC = WorkflowPortStatus.NOT_CONNECTED;
 
 	n1.outputs = [{ id: 'n1o', type: 'number', value: [1], status: NC, isOptional: false }];
 	n2.inputs = [{ id: 'n2i', type: 'number', value: [1], status: NC, isOptional: false }];
