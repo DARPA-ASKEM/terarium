@@ -213,7 +213,11 @@ watch(
 	async ([, newSpec], [, oldSpec]) => {
 		if (_.isEmpty(newSpec)) return;
 		const isEqual = _.isEqual(newSpec, oldSpec);
-		if (isEqual && vegaVisualization.value !== undefined) return;
+		const isAlreadyRendered =
+			interactive.value === false ? imageDataURL.value !== '' : vegaVisualization.value !== undefined;
+		// console.debug(`VegaChart: check spec diff. (interactive: ${interactive.value})`);
+		if (isEqual && isAlreadyRendered) return;
+
 		const spec = deepToRaw(props.visualizationSpec);
 
 		if (interactive.value === false) {
@@ -236,8 +240,7 @@ watch(
 
 			// dispose
 			viz.finalize();
-
-			emit('done-render');
+			// console.debug('VegaChart: render image');
 		} else {
 			// render interactive
 			if (!vegaContainer.value) return;
@@ -246,8 +249,9 @@ watch(
 				actions: props.areEmbedActionsVisible,
 				expandable: !!props.expandable
 			});
-			emit('done-render');
+			// console.debug('VegaChart: render interactive');
 		}
+		emit('done-render');
 	},
 	{ immediate: true }
 );

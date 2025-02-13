@@ -102,14 +102,15 @@ export function usePreparedChartInputs(
 		resultSummaryPre: DataArray;
 	} | null>
 ) {
+	const pyciemssMap = computed(() =>
+		!runResult.value?.result?.length ? {} : parsePyCiemssMap(runResult.value.result[0])
+	);
+	const calibrationId = computed(() => props.node.state.calibrationId);
+	const datasetVariables = computed(() => getSelectedOutputMapping(props.node).map((m) => m.datasetVariable));
+
 	return computed(() => {
 		if (!runResult.value) return null;
-		const pyciemssMap = computed(() =>
-			!runResult.value?.result?.length ? {} : parsePyCiemssMap(runResult.value.result[0])
-		);
-
-		const state = props.node.state;
-		if (!state.calibrationId || _.isEmpty(pyciemssMap.value)) return null;
+		if (!calibrationId.value || _.isEmpty(pyciemssMap.value)) return null;
 
 		// Merge before/after for chart
 		const { result, resultSummary } = mergeResults(
@@ -125,8 +126,8 @@ export function usePreparedChartInputs(
 			translationMap[`${pyciemssMap.value[key]}_mean`] = `${key} after calibration`;
 			translationMap[`${pyciemssMap.value[key]}_mean:pre`] = `${key} before calibration`;
 		});
-		getSelectedOutputMapping(props.node).forEach((mapObj) => {
-			translationMap[mapObj.datasetVariable] = 'Observations';
+		datasetVariables.value.forEach((variable) => {
+			translationMap[variable] = 'Observations';
 		});
 		return {
 			result,
