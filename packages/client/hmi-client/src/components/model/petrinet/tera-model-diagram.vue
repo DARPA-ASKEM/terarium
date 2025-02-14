@@ -130,7 +130,9 @@ const isStratified = computed(() => isStratifiedModel(mmt.value));
 interface ModelSearchItem {
 	id: string;
 	label: string;
+	labelExtra?: string;
 	itemType: string;
+	searchContext: string;
 }
 const searchStr = ref('');
 const searchSuggestions = ref<ModelSearchItem[]>([]);
@@ -142,16 +144,26 @@ const refineSearchSuggestions = (evt: AutoCompleteCompleteEvent) => {
 	} else {
 		const model = props.model.model;
 		model.states.forEach((d: any) => {
-			suggestions.push({ id: d.id, label: d.name, itemType: 'state' });
+			suggestions.push({
+				id: d.id,
+				label: d.name,
+				itemType: 'state',
+				searchContext: `${d.id}::${d.name}`
+			});
 		});
 		model.transitions.forEach((d: any) => {
-			suggestions.push({ id: d.id, label: d.id, itemType: 'transition' });
+			suggestions.push({
+				id: d.id,
+				label: d.id,
+				itemType: 'transition',
+				searchContext: `${d.id}`
+			});
 		});
 	}
 
 	if (evt.query) {
 		const str = evt.query.toLowerCase();
-		suggestions = suggestions.filter((d) => d.id.toLowerCase().includes(str) || d.label.toLowerCase().includes(str));
+		suggestions = suggestions.filter((d) => d.searchContext.toLowerCase().includes(str));
 	}
 	searchSuggestions.value = suggestions;
 };
