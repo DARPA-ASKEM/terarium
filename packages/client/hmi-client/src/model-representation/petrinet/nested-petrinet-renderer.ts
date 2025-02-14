@@ -378,4 +378,38 @@ export class NestedPetrinetRenderer extends PetrinetRenderer {
 			.style('pointer-events', 'none')
 			.text((d) => d.id);
 	}
+
+	// Given a specific id, find top level id
+	resolveChildId(id: string) {
+		// 1. Can we reduce to top-level state
+		let stateStr = id;
+		while (stateStr.length > 0) {
+			if (this.nestedMap![stateStr]) {
+				return stateStr;
+			}
+			stateStr = stateStr.slice(0, -1);
+		}
+
+		// 2. Otherwise, reduce to top-level transition
+		if (this.transitionMatrices) {
+			const keys = Object.keys(this.transitionMatrices);
+			for (let idx = 0; idx < keys.length; idx++) {
+				const key = keys[idx];
+				const matrix = this.transitionMatrices[key];
+
+				for (let rowIdx = 0; rowIdx < matrix.length; rowIdx++) {
+					const row = matrix[rowIdx];
+					for (let colIdx = 0; colIdx < row.length; colIdx++) {
+						const cell = row[colIdx];
+						if (cell.content && cell.content.id === id) {
+							return key;
+						}
+					}
+				}
+			}
+		}
+
+		// 3. Cannot be found, return self
+		return id;
+	}
 }

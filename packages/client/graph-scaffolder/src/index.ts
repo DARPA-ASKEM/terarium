@@ -33,6 +33,6 @@ const graphScaffolder = {
 	simplifyPath
 };
 
-export { INode, IEdge, IGraph, BasicRenderer, DeltaRenderer, Renderer };
+export { INode, IEdge, IGraph, BasicRenderer, DeltaRenderer, Renderer, moveToLabel };
 
 export default graphScaffolder;

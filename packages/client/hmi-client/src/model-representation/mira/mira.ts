@@ -487,7 +487,7 @@ export const convertToIGraph = (
 
 		graph.nodes.push({
 			id: t.name,
-			label: '',
+			label: t.name,
 			x: 0,
 			y: 0,
 			width: 50,

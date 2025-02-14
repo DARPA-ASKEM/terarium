@@ -25,24 +25,17 @@ export const moveTo = <V, E>(G: Renderer<V, E>, node: D3SelectionINode<V>, durat
 	// const node = flatten(G.layout).nodes.find(n => n.id === nodeId);
 	if (!node) return;
 
-	const parentMap = G.parentMap;
-
-	let temp = node.datum() as INode<V>;
+	const temp = node.datum() as INode<V>;
 	const nodeWidth = temp.width;
 	const nodeHeight = temp.height;
-	let globalX = temp.x;
-	let globalY = temp.y;
-
-	while (parentMap.has(temp.id) === true) {
-		temp = parentMap.get(temp.id) as INode<V>;
-		globalX += temp.x;
-		globalY += temp.y;
-	}
+	const globalX = temp.x;
+	const globalY = temp.y;
 
 	const dx = globalX + 0.5 * nodeWidth;
 	const dy = globalY + 0.5 * nodeHeight;
 
 	// fixme div 2 (mult 0.5)
+	const scaleFactor = t.k < 0.25 ? 1.5 : t.k;
 	svg
 		.transition()
 		.duration(duration)
@@ -50,8 +43,8 @@ export const moveTo = <V, E>(G: Renderer<V, E>, node: D3SelectionINode<V>, durat
 			G.zoom?.transform as any,
 			d3.zoomIdentity
 				.translate(0, 0)
-				.scale(t.k)
-				.translate(-dx + (0.5 * widthTransform) / t.k, -dy + (0.5 * heightTransform) / t.k)
+				.scale(scaleFactor)
+				.translate(-dx + (0.5 * widthTransform) / scaleFactor, -dy + (0.5 * heightTransform) / scaleFactor)
 		);
 };
 
