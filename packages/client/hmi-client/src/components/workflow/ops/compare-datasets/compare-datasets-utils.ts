@@ -1,10 +1,8 @@
-import { isEmpty, cloneDeep } from 'lodash';
-import { mean, stddev } from '@/utils/stats';
+import { isEmpty } from 'lodash';
 import { Dataset, InterventionPolicy, ModelConfiguration } from '@/types/Types';
 import { WorkflowNode, WorkflowPortStatus } from '@/types/workflow';
 import { renameFnGenerator } from '@/components/workflow/ops/calibrate-ciemss/calibrate-utils';
 import { Ref } from 'vue';
-import { createRankingInterventionsChart } from '@/services/charts';
 import { DATASET_VAR_NAME_PREFIX, getDatasetResultCSV, mergeResults, getDataset } from '@/services/dataset';
 import {
 	DataArray,
@@ -14,8 +12,8 @@ import {
 } from '@/services/models/simulation-service';
 import { getInterventionPolicyById } from '@/services/intervention-policy';
 import { getModelConfigurationById } from '@/services/model-configurations';
-import { ChartData, getInterventionColorAndScoreMaps } from '@/composables/useCharts';
-import { PlotValue, TimepointOption, RankOption, CompareDatasetsState } from './compare-datasets-operation';
+import { ChartData } from '@/composables/useCharts';
+import { PlotValue, CompareDatasetsState } from './compare-datasets-operation';
 
 interface DataResults {
 	results: DataArray[];
@@ -184,141 +182,6 @@ export function buildChartData(
 	};
 }
 
-export function generateRankingCharts(
-	rankingCriteriaCharts,
-	rankingResultsChart,
-	node: WorkflowNode<CompareDatasetsState>,
-	chartData,
-	datasets: Ref<Dataset[]>,
-	modelConfigurations,
-	interventionPolicies
-) {
-	// Reset charts
-	rankingCriteriaCharts.value = [];
-	rankingResultsChart.value = null;
-
-	const allRankedCriteriaValues: { score: number; policyName: string; configName: string }[][] = [];
-
-	const { interventionNameColorMap, interventionNameScoresMap } = getInterventionColorAndScoreMaps(
-		datasets,
-		modelConfigurations,
-		interventionPolicies
-	);
-
-	node.state.criteriaOfInterestCards.forEach((card) => {
-		if (!chartData.value || !card.selectedVariable) return;
-
-		const variableKey = `${chartData.value.pyciemssMap[card.selectedVariable]}_mean`;
-		let pointOfComparison: Record<string, number> = {};
-
-		if (card.timepoint === TimepointOption.OVERALL) {
-			const resultSummary = cloneDeep(chartData.value.resultSummary); // Must clone to avoid modifying the original data
-
-			// Note that the reduce function here only compares the variable of interest
-			// so only those key/value pairs will be relevant in the pointOfComparison object.
-			// Other keys like timepoint_id (that we aren't using) will be in pointOfComparison
-			// but they won't coincide with the value of the variable of interest.
-			pointOfComparison = resultSummary.reduce((acc, val) =>
-				Object.keys(val).reduce((acc2, key) => {
-					if (key.includes(variableKey)) {
-						acc2[key] = Math.max(acc[key], val[key]);
-					}
-					return acc2;
-				}, acc)
-			);
-		} else if (card.timepoint === TimepointOption.FIRST) {
-			pointOfComparison = chartData.value.resultSummary[0];
-		} else if (card.timepoint === TimepointOption.LAST) {
-			pointOfComparison = chartData.value.resultSummary[chartData.value.resultSummary.length - 1];
-		}
-
-		const rankingCriteriaValues: { score: number; policyName: string; configName: string }[] = [];
-
-		datasets.value.forEach((dataset, index: number) => {
-			const { metadata } = dataset;
-			const modelConfiguration: ModelConfiguration = modelConfigurations.value.find(
-				({ id }) => id === metadata.simulationAttributes?.modelConfigurationId
-			);
-			const policy: InterventionPolicy = interventionPolicies.value.find(
-				({ id }) => id === metadata.simulationAttributes?.interventionPolicyId
-			);
-
-			const policyName = policy?.name ?? 'no policy';
-
-			if (!modelConfiguration?.name) {
-				return;
-			}
-
-			rankingCriteriaValues.push({
-				score: pointOfComparison[`${variableKey}:${index}`] ?? 0,
-				policyName,
-				configName: modelConfiguration.name
-			});
-		});
-
-		const sortedRankingCriteriaValues =
-			card.rank === RankOption.MAXIMUM
-				? rankingCriteriaValues.sort((a, b) => b.score - a.score)
-				: rankingCriteriaValues.sort((a, b) => a.score - b.score);
-
-		rankingCriteriaCharts.value.push(
-			createRankingInterventionsChart(
-				sortedRankingCriteriaValues,
-				interventionNameColorMap,
-				card.name,
-				card.selectedVariable
-			)
-		);
-		allRankedCriteriaValues.push(sortedRankingCriteriaValues);
-	});
-
-	// For each criteria
-	allRankedCriteriaValues.forEach((criteriaValues, index) => {
-		const rankMutliplier = node.state.criteriaOfInterestCards[index].rank === RankOption.MINIMUM ? -1 : 1;
-
-		// Calculate mean and stdev for this criteria
-		const values = criteriaValues.map((val) => val.score);
-		const meanValue = mean(values);
-		let stdevValue = stddev(values);
-		if (stdevValue === 0) stdevValue = 1;
-
-		// For each policy
-		Object.keys(interventionNameScoresMap).forEach((policyName) => {
-			// For each value of the criteria
-			criteriaValues.forEach((criteriaValue) => {
-				if (criteriaValue.policyName !== policyName) return; // Skip criteria values that don't belong to this policy
-				const scoredPolicyCriteria = rankMutliplier * ((criteriaValue.score - meanValue) / stdevValue);
-				interventionNameScoresMap[policyName].push(scoredPolicyCriteria);
-			});
-		});
-	});
-
-	const scoredPolicies = Object.keys(interventionNameScoresMap)
-		.map((policyName) => ({
-			score: mean(interventionNameScoresMap[policyName]),
-			policyName,
-			configName: ''
-		})) // Sort from highest to lowest value
-		.sort((a, b) => b.score - a.score);
-
-	rankingResultsChart.value = createRankingInterventionsChart(scoredPolicies, interventionNameColorMap);
-}
-
-export async function generateImpactCharts(
-	chartData,
-	datasets: Ref<Dataset[]>,
-	datasetResults,
-	baselineDatasetIndex,
-	selectedPlotType
-) {
-	chartData.value = buildChartData(
-		datasets.value,
-		datasetResults.value,
-		baselineDatasetIndex.value,
-		selectedPlotType.value
-	);
-}
-
 // TODO: this should probably be split up into smaller functions but for now it's at least not duplicated in the node and drilldown
 // TODO: Please type the function params in this file for a later pass
 export async function initialize(
@@ -333,15 +196,14 @@ export async function initialize(
 	} | null>,
 	modelConfigIdToInterventionPolicyIdMap: Ref<Record<string, string[]>>,
 	impactChartData: Ref<ChartData | null>,
-	rankingChartData,
-	baselineDatasetIndex,
-	selectedPlotType,
+	rankingChartData: Ref<ChartData | null>,
+	baselineDatasetIndex: Ref<number>,
+	selectedPlotType: Ref<PlotValue>,
 	modelConfigurations: Ref<ModelConfiguration[]>,
-	interventionPolicies: Ref<InterventionPolicy[]>,
-	rankingCriteriaCharts: Ref<any>,
-	rankingResultsChart: Ref<any>
+	interventionPolicies: Ref<InterventionPolicy[]>
 ) {
 	const { inputs } = node;
+	datasets.value = [];
 	const datasetInputs = inputs.filter(
 		(input) => input.type === 'datasetId' && input.status === WorkflowPortStatus.CONNECTED
 	);
@@ -385,7 +247,12 @@ export async function initialize(
 	datasetResults.value = await fetchDatasetResults(datasets.value);
 	isFetchingDatasets.value = false;
 
-	await generateImpactCharts(impactChartData, datasets, datasetResults, baselineDatasetIndex, selectedPlotType);
+	impactChartData.value = buildChartData(
+		datasets.value,
+		datasetResults.value,
+		baselineDatasetIndex.value,
+		selectedPlotType.value
+	);
 
 	const modelConfigurationIds = Object.keys(modelConfigIdToInterventionPolicyIdMap.value);
 	if (isEmpty(modelConfigurationIds)) return;
@@ -408,15 +275,5 @@ export async function initialize(
 		datasetResults.value,
 		baselineDatasetIndex.value,
 		PlotValue.VALUE
-	);
-
-	generateRankingCharts(
-		rankingCriteriaCharts,
-		rankingResultsChart,
-		node,
-		rankingChartData,
-		datasets,
-		modelConfigurations,
-		interventionPolicies
 	);
 }
