@@ -140,7 +140,13 @@ const refineSearchSuggestions = (evt: AutoCompleteCompleteEvent) => {
 	if (!props.model) {
 		suggestions = [];
 	} else {
-		suggestions = props.model.model.states.map((d: any) => ({ id: d.id, label: d.name, itemType: 'state' }));
+		const model = props.model.model;
+		model.states.forEach((d: any) => {
+			suggestions.push({ id: d.id, label: d.name, itemType: 'state' });
+		});
+		model.transitions.forEach((d: any) => {
+			suggestions.push({ id: d.id, label: d.id, itemType: 'transition' });
+		});
 	}
 
 	if (evt.query) {
@@ -150,12 +156,10 @@ const refineSearchSuggestions = (evt: AutoCompleteCompleteEvent) => {
 	searchSuggestions.value = suggestions;
 };
 const selectItem = (item: AutoCompleteItemSelectEvent) => {
-	console.log('selected', item.value);
 	if (renderer) {
 		const resolvedId = renderer.resolveChildId(item.value.id);
 		console.log('hihihi', resolvedId);
 		renderer.zoomTo(resolvedId);
-		// renderer.zoomTo(item.value.id);
 	}
 };
 
