@@ -9,7 +9,7 @@ import { getModelType } from '@/services/model';
 import { AMRSchemaNames } from '@/types/common';
 import { parseCurieToIdentifier } from '@/services/concept';
 import { PetrinetRenderer } from '@/model-representation/petrinet/petrinet-renderer';
-import { layoutInstance } from '@/layout/controller';
+import { layoutInstance } from '@/web-workers/layout/controller';
 import { IGraph } from '@graph-scaffolder/index';
 import { NestedPetrinetRenderer } from './petrinet/nested-petrinet-renderer';
 import { isStratifiedModel, getContext, collapseTemplates } from './mira/mira';

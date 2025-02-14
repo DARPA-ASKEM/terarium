@@ -311,6 +311,7 @@
 						:active-settings="activeChartSettings"
 						:generate-annotation="generateAnnotation"
 						:comparison="activeChartSettings?.type === ChartSettingType.VARIABLE_COMPARISON"
+						:comparison-selected-options="comparisonChartsSettingsSelection"
 						@update-settings="updateActiveChartSettings"
 						@delete-annotation="deleteAnnotation"
 						@close="setActiveChartSettings(null)"
@@ -400,14 +401,16 @@
 							:sensitivity-options="{
 								inputOptions: Object.keys(pyciemssMap).filter((c) => ['parameter'].includes(modelPartTypesMap[c])),
 								selectedInputOptions: selectedSensitivityChartSettings[0]?.selectedInputVariables ?? [],
-								timepoint: selectedSensitivityChartSettings[0]?.timepoint ?? lastTimepoint
+								timepoint: selectedSensitivityChartSettings[0]?.timepoint ?? lastTimepoint,
+								chartType: selectedSensitivityChartSettings[0]?.chartType ?? SensitivityChartType.SCATTER
 							}"
 							@selection-change="
 								(e) =>
 									updateSensitivityChartSettings({
 										selectedVariables: e,
 										selectedInputVariables: selectedSensitivityChartSettings[0]?.selectedInputVariables ?? [],
-										timepoint: selectedSensitivityChartSettings[0]?.timepoint ?? lastTimepoint
+										timepoint: selectedSensitivityChartSettings[0]?.timepoint ?? lastTimepoint,
+										chartType: selectedSensitivityChartSettings[0]?.chartType ?? SensitivityChartType.SCATTER
 									})
 							"
 							@sensitivity-selection-change="
@@ -474,7 +477,7 @@ import {
 	CiemssMethodOptions
 } from '@/services/models/simulation-service';
 import { logger } from '@/utils/logger';
-import { ChartSettingType, CiemssPresetTypes, DrilldownTabs } from '@/types/common';
+import { ChartSettingType, CiemssPresetTypes, DrilldownTabs, SensitivityChartType } from '@/types/common';
 import VegaChart from '@/components/widgets/VegaChart.vue';
 import { KernelSessionManager } from '@/services/jupyter';
 import TeraChartSettings from '@/components/widgets/tera-chart-settings.vue';

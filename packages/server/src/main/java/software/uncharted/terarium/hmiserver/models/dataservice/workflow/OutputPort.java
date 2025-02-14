@@ -29,6 +29,28 @@ public class OutputPort implements Serializable {
 	private JsonNode state;
 	private Timestamp timestamp;
 
+	@Override
+	public OutputPort clone() {
+		final OutputPort clone = new OutputPort();
+		clone.setId(id);
+		clone.setVersion(version);
+		clone.setType(type);
+		clone.setOriginalType(originalType);
+		clone.setStatus(status);
+		clone.setLabel(label);
+		if (value != null) {
+			clone.setValue(value.deepCopy());
+		}
+		clone.setIsOptional(isOptional);
+		clone.setIsSelected(isSelected);
+		clone.setOperatorStatus(operatorStatus);
+		if (state != null) {
+			clone.setState(state.deepCopy());
+		}
+		clone.setTimestamp(timestamp);
+		return clone;
+	}
+
 	// FIXME: backwards compatibility, to be removed
 	private Boolean acceptMultiple;
 }

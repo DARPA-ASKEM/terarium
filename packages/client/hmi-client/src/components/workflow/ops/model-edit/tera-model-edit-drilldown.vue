@@ -275,7 +275,8 @@ function updateCodeState(code: string = codeText.value, hasCodeRun: boolean = tr
 
 const createOutput = async (modelToSave: Model) => {
 	// If it's the original model, use that otherwise create a new one
-	const modelData = isReadyToCreateDefaultOutput.value ? modelToSave : await createModel(modelToSave);
+	const modelConfigId = props.node.inputs.find((d) => d.type === 'modelConfigId')?.value?.[0];
+	const modelData = isReadyToCreateDefaultOutput.value ? modelToSave : await createModel(modelToSave, modelConfigId);
 	if (!modelData) return;
 
 	const modelLabel = isReadyToCreateDefaultOutput.value
