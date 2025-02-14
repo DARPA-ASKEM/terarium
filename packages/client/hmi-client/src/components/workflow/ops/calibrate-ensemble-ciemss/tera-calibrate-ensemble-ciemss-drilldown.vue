@@ -196,12 +196,23 @@
 		<section :tabName="DrilldownTabs.Notebook">
 			<h4>Notebook</h4>
 		</section>
+		<!-- Output Section -->
 		<template #preview>
 			<tera-drilldown-section
 				:is-loading="isRunInProgress"
 				:show-slot-while-loading="true"
 				:loading-progress="node.state.currentProgress"
 			>
+				<template #header-controls-right>
+					<Button
+						label="Save for re-use"
+						severity="secondary"
+						class="mr-3"
+						outlined
+						:disabled="!outputDatasetId"
+						@click="showSaveDataDialog = true"
+					/>
+				</template>
 				<section class="pb-3 px-2">
 					<div class="mx-2" ref="chartWidthDiv"></div>
 					<Accordion multiple :active-index="[0, 1, 2, 3]">
@@ -256,6 +267,7 @@
 				</section>
 			</tera-drilldown-section>
 		</template>
+		<!-- Output Settings Section -->
 		<template #sidebar-right>
 			<tera-slider-panel
 				v-model:is-open="isOutputSettingsPanelOpen"
@@ -324,10 +336,11 @@
 			</tera-slider-panel>
 		</template>
 	</tera-drilldown>
-	<tera-save-dataset-from-simulation
-		:simulation-run-id="props.node.state.postForecastId"
-		:showDialog="showSaveDataDialog"
-		@dialog-hide="showSaveDataDialog = false"
+	<tera-save-simulation-modal
+		:is-visible="showSaveDataDialog"
+		@close-modal="showSaveDataDialog = false"
+		:simulation-id="node.state.postForecastId"
+		:assets="[{ id: outputDatasetId as string, type: AssetType.Dataset }]"
 	/>
 </template>
 
@@ -350,7 +363,6 @@ import Dropdown from 'primevue/dropdown';
 import { setupCsvAsset } from '@/services/calibrate-workflow';
 import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
 import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.vue';
-import TeraSaveDatasetFromSimulation from '@/components/dataset/tera-save-dataset-from-simulation.vue';
 import TeraPyciemssCancelButton from '@/components/pyciemss/tera-pyciemss-cancel-button.vue';
 import TeraSliderPanel from '@/components/widgets/tera-slider-panel.vue';
 import TeraChartSettings from '@/components/widgets/tera-chart-settings.vue';
@@ -369,7 +381,7 @@ import type {
 	Dataset,
 	ClientEvent
 } from '@/types/Types';
-import { ClientEventType } from '@/types/Types';
+import { AssetType, ClientEventType } from '@/types/Types';
 import { WorkflowNode } from '@/types/workflow';
 import { getDataset, getFileName } from '@/services/dataset';
 import { useDrilldownChartSize } from '@/composables/useDrilldownChartSize';
@@ -381,6 +393,7 @@ import { deleteAnnotation, updateChartSettingsBySelectedVariables } from '@/serv
 import { DataArray } from '@/utils/stats';
 import { GroupedDataArray } from '@/services/charts';
 import { parseCsvAsset } from '@/utils/csv';
+import teraSaveSimulationModal from '@/components/project/tera-save-simulation-modal.vue';
 import {
 	CalibrateEnsembleCiemssOperationState,
 	CalibrateEnsembleMappingRow,
@@ -459,11 +472,19 @@ const isRunInProgress = computed(() => Boolean(inProgressCalibrationId.value || 
 
 const datasetId = computed(() => props.node.inputs[0].value?.[0] as string | undefined);
 const currentDatasetFileName = ref<string>();
+const dataset = shallowRef<Dataset | null>(null);
+const csvAsset = shallowRef<CsvAsset | undefined>(undefined);
 const datasetColumnNames = computed(
 	() =>
 		dataset.value?.columns?.filter((col) => col.fileName === currentDatasetFileName.value).map((col) => col.name) ??
 		([] as string[])
 );
+const outputDatasetId = computed(() => {
+	if (!selectedOutputId.value) return '';
+	const output = props.node.outputs.find((o) => o.id === selectedOutputId.value);
+	return output?.value?.[0] ?? '';
+});
+
 // Loss Chart:
 const lossChartRef = ref<InstanceType<typeof VegaChart>>();
 const lossChartSpec = ref();
@@ -487,9 +508,6 @@ const tableHeaders = computed(() => {
 });
 // List of each observible + state for each model.
 const allModelOptions = ref<any[][]>([]);
-
-const dataset = shallowRef<Dataset | null>(null);
-const csvAsset = shallowRef<CsvAsset | undefined>(undefined);
 
 const onSelection = (id: string) => {
 	emit('select-output', id);
