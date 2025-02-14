@@ -68,6 +68,7 @@ import { DATASET_VAR_NAME_PREFIX } from '@/services/dataset';
 import { calculatePercentage } from '@/utils/math';
 import { DistributionType } from '@/services/distribution';
 import { pythonInstance } from '@/web-workers/python/PyodideController';
+import { getChartAnnotationType } from '@/services/chart-annotation';
 import { useChartAnnotations } from './useChartAnnotations';
 
 export interface ChartData {
@@ -320,7 +321,6 @@ const createForecastChartWithAnnotations = (
 	annotations: ChartAnnotation[],
 	groundTruthLayer: ForecastChartLayer | null
 ) => {
-	// TODO: Filter annotation by type after fetching from the server
 	const chartSpec = !setting.showQuantiles
 		? createForecastChart(
 				{
@@ -343,9 +343,7 @@ const createForecastChartWithAnnotations = (
 				setting.quantiles ?? [],
 				options
 			);
-	const chartAnnotationType = setting.showQuantiles
-		? ChartAnnotationType.QuantileForecastChart
-		: ChartAnnotationType.ForecastChart;
+	const chartAnnotationType = getChartAnnotationType(setting);
 	const annotatedSpec = applyForecastChartAnnotations(chartSpec, annotations, chartAnnotationType);
 	return annotatedSpec as VisualizationSpec;
 };

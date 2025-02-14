@@ -4,6 +4,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { b64DecodeUnicode } from '@/utils/binary';
 import { ChartAnnotation, ChartAnnotationType } from '@/types/Types';
 import { ForecastChartOptions } from '@/services/charts';
+import { ChartSetting } from '@/types/common';
 
 export interface LLMGeneratedChartAnnotation {
 	request: string;
@@ -131,4 +132,16 @@ export async function generateChartAnnotation(
 		request,
 		layerSpec
 	};
+}
+
+/**
+ * Get the chart annotation type based on the chart setting.
+ * @param setting - The chart setting.
+ * @returns - The chart annotation type.
+ */
+export function getChartAnnotationType(setting: ChartSetting) {
+	if (setting.showQuantiles) {
+		return ChartAnnotationType.QuantileForecastChart;
+	}
+	return ChartAnnotationType.ForecastChart;
 }
