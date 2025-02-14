@@ -2,7 +2,12 @@ import { onMounted, ref } from 'vue';
 import { ChartAnnotation, ChartAnnotationType, ClientEventType } from '@/types/Types';
 import { ChartSetting } from '@/types/common';
 import { ForecastChartOptions } from '@/services/charts';
-import { fetchAnnotations, generateChartAnnotation, saveAnnotation } from '@/services/chart-annotation';
+import {
+	fetchAnnotations,
+	generateChartAnnotation,
+	getChartAnnotationType,
+	saveAnnotation
+} from '@/services/chart-annotation';
 import { useClientEvent } from './useClientEvent';
 
 /**
@@ -31,9 +36,7 @@ export function useChartAnnotations(nodeId: string) {
 		variables: string[],
 		chartOptions: Partial<ForecastChartOptions>
 	) => {
-		const chartAnnotationType = setting.showQuantiles
-			? ChartAnnotationType.QuantileForecastChart
-			: ChartAnnotationType.ForecastChart;
+		const chartAnnotationType = getChartAnnotationType(setting);
 		const annotationLayerSpec = await generateChartAnnotation(
 			query,
 			chartAnnotationType,
