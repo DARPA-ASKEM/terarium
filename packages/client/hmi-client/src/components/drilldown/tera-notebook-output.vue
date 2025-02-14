@@ -7,7 +7,7 @@
 				<Button rounded text icon="pi pi-times" @click="isHidden = true" />
 			</span>
 		</h6>
-		<code class="code-section">{{ traceback }}</code>
+		<code class="code-section">{{ localTraceback }}</code>
 	</tera-resizable-panel>
 	<div v-if="isHidden" class="container output-panel-closed">
 		<h6>
@@ -29,16 +29,16 @@ const props = defineProps<{
 
 const name = props.name ?? 'Output console';
 const isHidden = ref<boolean>(false);
-const traceback = ref<string | undefined>(props.traceback);
+const localTraceback = ref<string>(props.traceback ?? '');
 
 function clearConsole() {
-	traceback.value = '';
+	localTraceback.value = '';
 }
 
 watch(
 	() => props.traceback,
 	() => {
-		traceback.value = props.traceback;
+		localTraceback.value = props.traceback ?? '';
 	}
 );
 </script>
