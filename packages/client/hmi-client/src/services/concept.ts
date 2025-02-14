@@ -91,33 +91,19 @@ async function getDKGFromGroundingIdentifier(identifier: Object): Promise<DKG> {
 	return dkg;
 }
 
-async function getDKGFromGroundingContext(context: Grounding['context']): Promise<DKG[]> {
-	let dkgList: DKG[] = [];
-	if (!isEmpty(context)) {
-		Object.entries(context).forEach(([key, value]) => {
-			const dkg: DKG = { name: '', curie: '', description: '' };
+async function getDKGFromGroundingModifier(modifiers: Grounding['modifiers']): Promise<DKG[]> {
+	if (isEmpty(modifiers)) return [] as DKG[];
 
-			// Test if the value is a curie or a string
-			if (value.includes(':')) {
-				dkg.curie = value;
-				dkg.name = key;
-			} else {
-				dkg.name = `${key}: ${value}`;
-			}
-			dkgList.push(dkg);
-		});
-
-		// Resolve the name of curies properly
-		dkgList = await Promise.all(
-			dkgList.map(async (dkg) => {
-				if (isEmpty(dkg.curie)) return dkg;
-				const newName = await getNameOfCurieCached(dkg.curie);
+	return Promise.all(
+		Object.entries(modifiers)
+			.filter(([_key, value]) => value.includes(':')) // Test if the value is a curie or a string
+			.map(async ([key, value]) => {
+				const dkg: DKG = { name: key, curie: value, description: '' };
+				const newName = await getNameOfCurieCached(dkg.curie); // Resolve the name of curies properly
 				if (!isEmpty(newName)) dkg.name = newName;
 				return dkg;
 			})
-		);
-	}
-	return dkgList;
+	);
 }
 
 function parseCurieToIdentifier(curie: string | undefined): { [key: string]: string } {
@@ -126,17 +112,17 @@ function parseCurieToIdentifier(curie: string | undefined): { [key: string]: str
 	return { [key]: value };
 }
 
-function parseListDKGToGroundingContext(dkgList: DKG[]): { [index: string]: string } {
-	const context: Grounding['context'] = {};
+function parseListDKGToGroundingModifiers(dkgList: DKG[]): { [index: string]: string } {
+	const modifiers: Grounding['modifiers'] = {};
 	dkgList.forEach((dkg) => {
 		if (dkg.name.includes(':')) {
 			const [key, value] = dkg.name.split(':');
-			context[key] = value;
+			modifiers[key] = value;
 		} else {
-			context[dkg.name] = dkg.curie;
+			modifiers[dkg.name] = dkg.curie;
 		}
 	});
-	return context;
+	return modifiers;
 }
 
 /**
@@ -285,9 +271,9 @@ export {
 	getNameOfCurieCached,
 	getCurieFromGroundingIdentifier,
 	getDKGFromGroundingIdentifier,
-	getDKGFromGroundingContext,
+	getDKGFromGroundingModifier,
 	parseCurieToIdentifier,
-	parseListDKGToGroundingContext,
+	parseListDKGToGroundingModifiers,
 	autoCalibrationMapping,
 	autoMappingGrounding,
 	getCompareModelConcepts,
