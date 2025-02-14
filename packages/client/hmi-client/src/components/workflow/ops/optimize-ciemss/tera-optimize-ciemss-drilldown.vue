@@ -225,7 +225,7 @@
 						severity="secondary"
 						outlined
 						:disabled="!optimizedInterventionPolicy"
-						@click="showSaveInterventionPolicy = true"
+						@click="showSaveDialog = true"
 					/>
 				</template>
 				<tera-operator-output-summary v-if="node.state.summaryId && !showSpinner" :summary-id="node.state.summaryId" />
@@ -436,12 +436,12 @@
 	</tera-drilldown>
 	<tera-save-simulation-modal
 		:initial-name="optimizedInterventionPolicy?.name"
-		:is-visible="showSaveInterventionPolicy"
+		:is-visible="showSaveDialog"
 		:assets="[
 			{ id: optimizedInterventionPolicy?.id ?? '', type: AssetType.InterventionPolicy },
 			{ id: datasetId, type: AssetType.Dataset }
 		]"
-		@close-modal="showSaveInterventionPolicy = false"
+		@close-modal="showSaveDialog = false"
 		@on-save="onSaveForReuse"
 		:simulation-id="node.state.postForecastRunId"
 	/>
@@ -568,7 +568,7 @@ const summaryCheckbox = ref(true);
 
 const successDisplayChartsCheckbox = ref(true);
 
-const showSaveInterventionPolicy = ref<boolean>(false);
+const showSaveDialog = ref<boolean>(false);
 
 const chartWidthDiv = ref(null);
 const chartSize = useDrilldownChartSize(chartWidthDiv);
