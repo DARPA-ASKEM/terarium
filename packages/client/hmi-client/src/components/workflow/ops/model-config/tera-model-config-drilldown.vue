@@ -156,15 +156,6 @@
 						@update-parameters="setParameterDistributions(knobs.transientModelConfig, $event)"
 						@update-source="setParameterSource(knobs.transientModelConfig, $event.id, $event.value)"
 					/>
-					<Accordion :active-index="observableActiveIndicies" v-if="!isEmpty(observablesList)">
-						<AccordionTab header="Observables">
-							<tera-model-part
-								:part-type="PartType.OBSERVABLE"
-								:items="observablesList"
-								:feature-config="{ isPreview: true }"
-							/>
-						</AccordionTab>
-					</Accordion>
 					<!-- vertical spacer at end of page -->
 					<div class="p-5"></div>
 				</template>
