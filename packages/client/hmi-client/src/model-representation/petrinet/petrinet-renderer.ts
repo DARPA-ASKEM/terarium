@@ -501,6 +501,11 @@ export class PetrinetRenderer extends BasicRenderer<NodeData, EdgeData> {
 		}
 	}
 
+	// Given a specific id, find top level id
+	resolveChildId(id: string) {
+		return id;
+	}
+
 	zoomTo(label: string) {
 		moveToLabel(this, label, 1500);
 	}

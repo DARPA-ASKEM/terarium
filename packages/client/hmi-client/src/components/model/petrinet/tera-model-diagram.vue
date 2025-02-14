@@ -130,6 +130,7 @@ const isStratified = computed(() => isStratifiedModel(mmt.value));
 interface ModelSearchItem {
 	id: string;
 	label: string;
+	itemType: string;
 }
 const searchStr = ref('');
 const searchSuggestions = ref<ModelSearchItem[]>([]);
@@ -139,7 +140,7 @@ const refineSearchSuggestions = (evt: AutoCompleteCompleteEvent) => {
 	if (!props.model) {
 		suggestions = [];
 	} else {
-		suggestions = props.model.model.states.map((d: any) => ({ id: d.id, label: d.name }));
+		suggestions = props.model.model.states.map((d: any) => ({ id: d.id, label: d.name, itemType: 'state' }));
 	}
 
 	if (evt.query) {
@@ -151,7 +152,10 @@ const refineSearchSuggestions = (evt: AutoCompleteCompleteEvent) => {
 const selectItem = (item: AutoCompleteItemSelectEvent) => {
 	console.log('selected', item.value);
 	if (renderer) {
-		renderer.zoomTo(item.value.id);
+		const resolvedId = renderer.resolveChildId(item.value.id);
+		console.log('hihihi', resolvedId);
+		renderer.zoomTo(resolvedId);
+		// renderer.zoomTo(item.value.id);
 	}
 };
 
