@@ -9,6 +9,15 @@
 			<Toolbar>
 				<template #start>
 					<span>
+						<AutoComplete
+							v-if="mmt.initials"
+							v-model="searchStr"
+							:option-label="(d) => d.label + ' (' + d.id + ')'"
+							placeholder="Search"
+							:suggestions="searchSuggestions"
+							@complete="refineSearchSuggestions"
+							@item-select="selectItem"
+						/>
 						<Button @click="resetZoom" label="Reset zoom" size="small" severity="secondary" outlined />
 						<span class="how-to-zoom kbd-shortcut-sm"><kbd>Ctrl</kbd>+<kbd>scroll</kbd>&nbsp;to zoom</span>
 					</span>
@@ -68,8 +77,9 @@
 
 <script setup lang="ts">
 import { isEmpty, isEqual, debounce } from 'lodash';
-import { ref, watch, computed, nextTick, onMounted, onUnmounted } from 'vue';
+import { ref, watch, computed, nextTick, onMounted, onUnmounted, render } from 'vue';
 import Button from 'primevue/button';
+import AutoComplete, { AutoCompleteCompleteEvent, AutoCompleteItemSelectEvent } from 'primevue/autocomplete';
 import SelectButton from 'primevue/selectbutton';
 import Toolbar from 'primevue/toolbar';
 import TeraStratifiedMatrixModal from '@/components/model/petrinet/model-configurations/tera-stratified-matrix-modal.vue';
@@ -116,6 +126,34 @@ enum StratifiedView {
 const stratifiedView = ref(StratifiedView.Collapsed);
 const stratifiedViewOptions = ref([{ value: StratifiedView.Expanded }, { value: StratifiedView.Collapsed }]);
 const isStratified = computed(() => isStratifiedModel(mmt.value));
+
+interface ModelSearchItem {
+	id: string;
+	label: string;
+}
+const searchStr = ref('');
+const searchSuggestions = ref<ModelSearchItem[]>([]);
+const refineSearchSuggestions = (evt: AutoCompleteCompleteEvent) => {
+	let suggestions: ModelSearchItem[] = [];
+
+	if (!props.model) {
+		suggestions = [];
+	} else {
+		suggestions = props.model.model.states.map((d: any) => ({ id: d.id, label: d.name }));
+	}
+
+	if (evt.query) {
+		const str = evt.query.toLowerCase();
+		suggestions = suggestions.filter((d) => d.id.toLowerCase().includes(str) || d.label.toLowerCase().includes(str));
+	}
+	searchSuggestions.value = suggestions;
+};
+const selectItem = (item: AutoCompleteItemSelectEvent) => {
+	console.log('selected', item.value);
+	if (renderer) {
+		renderer.zoomTo(item.value.id);
+	}
+};
 
 let renderer: PetrinetRenderer | NestedPetrinetRenderer | null = null;
 
@@ -235,6 +273,7 @@ watch(
 		if (isEqual(newValue, oldValue) || graphElement.value === null) {
 			return;
 		}
+
 		// If no MMT data is provided from the parent component, fetch it from the server
 		const mmtData = props.mmtData ?? (await getMMT(props.model));
 		if (!mmtData) return;
