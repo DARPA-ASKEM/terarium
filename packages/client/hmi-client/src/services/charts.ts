@@ -619,6 +619,11 @@ export function createForecastChart(
 		}
 	};
 
+	let dateExpression;
+	if (options.dateOptions) {
+		dateExpression = formatDateLabelFn(options.dateOptions.startDate, 'datum.value', options.dateOptions.dateFormat);
+	}
+
 	// Helper function to capture common layer structure
 	const newLayer = (layer: ForecastChartLayer, markType: string) => {
 		const selectedFields = layer.variables.concat([layer.timeField]);
@@ -650,10 +655,6 @@ export function createForecastChart(
 			});
 		}
 
-		let dateExpression;
-		if (options.dateOptions) {
-			dateExpression = formatDateLabelFn(options.dateOptions.startDate, 'datum.value', options.dateOptions.dateFormat);
-		}
 		const encodingX: ChartEncoding = {
 			field: layer.timeField,
 			type: 'quantitative',
@@ -844,7 +845,7 @@ export function createForecastChart(
 				type: 'rect',
 				color: '#dddddd',
 				opacity: 0.5,
-				width: 30,
+				width: options?.dateOptions?.startDate ? 80 : 30,
 				height: 20,
 				cornerRadius: 4
 			},
@@ -877,6 +878,29 @@ export function createForecastChart(
 			layerSpec.layer.push(timeLabelBackgroundLayer);
 		}
 
+		const dateTooltipTransform = options.dateOptions
+			? [
+					{
+						calculate: formatDateLabelFn(
+							options.dateOptions.startDate,
+							`datum.${statisticsLayer.timeField}`,
+							options.dateOptions.dateFormat
+						),
+						as: 'tooltipText'
+					}
+				]
+			: [];
+
+		const dateTooltipTextEncoding = options?.dateOptions?.startDate
+			? {
+					field: 'tooltipText',
+					type: 'nominal'
+				}
+			: {
+					field: statisticsLayer.timeField,
+					type: 'quantitative'
+				};
+
 		// Add a label with the current X value (time) for the vertical line
 		const timeLabelLayer = {
 			mark: {
@@ -885,11 +909,9 @@ export function createForecastChart(
 				color: '#111111',
 				dx: 0
 			},
+			transform: dateTooltipTransform,
 			encoding: {
-				text: {
-					field: statisticsLayer.timeField,
-					type: 'quantitative'
-				},
+				text: dateTooltipTextEncoding,
 				x: {
 					field: statisticsLayer.timeField,
 					type: 'quantitative'
@@ -975,11 +997,6 @@ export function createForecastChart(
 				dy: -5
 			},
 			encoding: {
-				text: {
-					field: 'valueField',
-					type: 'quantitative',
-					format: '.3f'
-				},
 				x: {
 					field: statisticsLayer.timeField,
 					type: 'quantitative'

@@ -12,13 +12,14 @@ export function usePreparedChartInputs(
 	runResults: Ref<{ [runId: string]: DataArray }>,
 	runResultsSummary: Ref<{ [runId: string]: DataArray }>
 ) {
+	const preForecastRunId = computed(() => props.node.state.preForecastRunId);
+	const postForecastRunId = computed(() => props.node.state.postForecastRunId);
 	return computed(() => {
-		const { preForecastRunId, postForecastRunId } = props.node.state;
-		if (!postForecastRunId || !preForecastRunId) return null;
-		const preResult = runResults.value[preForecastRunId];
-		const preResultSummary = runResultsSummary.value[preForecastRunId];
-		const postResult = runResults.value[postForecastRunId];
-		const postResultSummary = runResultsSummary.value[postForecastRunId];
+		if (!postForecastRunId.value || !preForecastRunId.value) return null;
+		const preResult = runResults.value[preForecastRunId.value];
+		const preResultSummary = runResultsSummary.value[preForecastRunId.value];
+		const postResult = runResults.value[postForecastRunId.value];
+		const postResultSummary = runResultsSummary.value[postForecastRunId.value];
 
 		if (!postResult || !postResultSummary || !preResultSummary || !preResult) return null;
 		const pyciemssMap = parsePyCiemssMap(postResult[0]);

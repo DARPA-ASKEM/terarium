@@ -25,7 +25,6 @@ import software.uncharted.terarium.hmiserver.models.dataservice.document.Documen
 import software.uncharted.terarium.hmiserver.models.dataservice.model.Model;
 import software.uncharted.terarium.hmiserver.models.dataservice.project.Project;
 import software.uncharted.terarium.hmiserver.service.ExtractionService;
-import software.uncharted.terarium.hmiserver.service.data.CodeService;
 import software.uncharted.terarium.hmiserver.service.data.DatasetService;
 import software.uncharted.terarium.hmiserver.service.data.DocumentAssetService;
 import software.uncharted.terarium.hmiserver.service.data.ModelService;
@@ -51,13 +50,7 @@ public class KnowledgeControllerTests extends TerariumApplicationTests {
 	private ProjectService projectService;
 
 	@Autowired
-	private CodeService codeService;
-
-	@Autowired
 	private ProjectSearchService projectSearchService;
-
-	@Autowired
-	private ExtractionService extractionService;
 
 	Project project;
 

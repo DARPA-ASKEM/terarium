@@ -624,7 +624,7 @@ const presetType = computed(() => {
 const outputDatasetId = computed(() => {
 	if (!selectedOutputId.value) return '';
 	const output = props.node.outputs.find((o) => o.id === selectedOutputId.value);
-	return output?.value?.[0]?.datasetId ?? '';
+	return output!.value?.[0]?.datasetId ?? '';
 });
 
 const speedPreset = Object.freeze({

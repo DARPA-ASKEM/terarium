@@ -17,15 +17,15 @@ import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Map;
+// import java.util.Map;
 import java.util.UUID;
-import java.util.concurrent.CompletableFuture;
+// import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Future;
 import java.util.stream.Collectors;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.codec.digest.DigestUtils;
+// import org.apache.commons.codec.digest.DigestUtils;
 import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
@@ -344,10 +344,10 @@ public class ProjectSearchService {
 		return QueryBuilders.bool(b -> b.must(onlyProjects).must(permissionQuery));
 	}
 
-	private String getEmbeddingSha256(final Map<TerariumAssetEmbeddingType, String> embeddingTexts) {
-		final String concatenatedText = embeddingTexts.values().stream().sorted().reduce((a, b) -> a + " " + b).orElse("");
-		return DigestUtils.sha256Hex(concatenatedText);
-	}
+	// private String getEmbeddingSha256(final Map<TerariumAssetEmbeddingType, String> embeddingTexts) {
+	// 	final String concatenatedText = embeddingTexts.values().stream().sorted().reduce((a, b) -> a + " " + b).orElse("");
+	// 	return DigestUtils.sha256Hex(concatenatedText);
+	// }
 
 	/**
 	 * Generate asset embeddings for a project
