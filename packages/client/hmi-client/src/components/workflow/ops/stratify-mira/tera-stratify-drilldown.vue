@@ -64,6 +64,7 @@
 					class="ace-editor"
 					:options="{ showPrintMargin: false }"
 				/>
+				<tera-notebook-output :traceback="executeResponseTraceback" />
 			</tera-drilldown-section>
 		</div>
 		<template #preview>
@@ -148,6 +149,7 @@ let editor: VAceEditorInstance['_editor'] | null;
 const codeText = ref('');
 const llmQuery = ref('');
 const llmThoughts = ref<any[]>([]);
+const executeResponseTraceback = ref('');
 
 const sampleAgentQuestions = [
 	'Stratify my model by the ages young and old',
@@ -373,7 +375,9 @@ const runCodeStratify = () => {
 				executedCode = data.content.code;
 			})
 			.register('stream', (data) => {
-				console.log('stream', data);
+				if ((data?.content?.name === 'stderr' || data?.content?.name === 'stdout') && data.content.text) {
+					executeResponseTraceback.value = `${executeResponseTraceback.value} ${data.content.text}`;
+				}
 			})
 			.register('model_preview', (data) => {
 				// TODO: https://github.com/DARPA-ASKEM/terarium/issues/2305
