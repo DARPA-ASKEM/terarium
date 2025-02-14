@@ -186,12 +186,6 @@
 							</div>
 						</div>
 					</section>
-					<!-- This used to be in the footer -->
-					<tera-save-dataset-from-simulation
-						:simulation-run-id="knobs.postForecastRunId"
-						:showDialog="showSaveDataDialog"
-						@dialog-hide="showSaveDataDialog = false"
-					/>
 				</template>
 			</tera-slider-panel>
 		</section>
@@ -465,7 +459,6 @@ import TeraSaveSimulationModal from '@/components/project/tera-save-simulation-m
 import TeraDatasetDatatable from '@/components/dataset/tera-dataset-datatable.vue';
 import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
 import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.vue';
-import TeraSaveDatasetFromSimulation from '@/components/dataset/tera-save-dataset-from-simulation.vue';
 import TeraPyciemssCancelButton from '@/components/pyciemss/tera-pyciemss-cancel-button.vue';
 import TeraOperatorOutputSummary from '@/components/operator/tera-operator-output-summary.vue';
 import { getModelByModelConfigurationId, getCalendarSettingsFromModel } from '@/services/model';
@@ -575,7 +568,6 @@ const summaryCheckbox = ref(true);
 
 const successDisplayChartsCheckbox = ref(true);
 
-const showSaveDataDialog = ref<boolean>(false);
 const showSaveInterventionPolicy = ref<boolean>(false);
 
 const chartWidthDiv = ref(null);
