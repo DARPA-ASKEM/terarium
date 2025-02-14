@@ -878,6 +878,29 @@ export function createForecastChart(
 			layerSpec.layer.push(timeLabelBackgroundLayer);
 		}
 
+		const dateTooltipTransform = options.dateOptions
+			? [
+					{
+						calculate: formatDateLabelFn(
+							options.dateOptions.startDate,
+							`datum.${statisticsLayer.timeField}`,
+							options.dateOptions.dateFormat
+						),
+						as: 'tooltipText'
+					}
+				]
+			: [];
+
+		const dateTooltipTextEncoding = options?.dateOptions?.startDate
+			? {
+					field: 'tooltipText',
+					type: 'nominal'
+				}
+			: {
+					field: statisticsLayer.timeField,
+					type: 'quantitative'
+				};
+
 		// Add a label with the current X value (time) for the vertical line
 		const timeLabelLayer = {
 			mark: {
@@ -886,23 +909,9 @@ export function createForecastChart(
 				color: '#111111',
 				dx: 0
 			},
-			transform: [
-				{
-					calculate: options.dateOptions
-						? formatDateLabelFn(
-								options.dateOptions.startDate,
-								`datum.${statisticsLayer.timeField}`,
-								options.dateOptions.dateFormat
-							)
-						: undefined,
-					as: 'tooltipText'
-				}
-			],
+			transform: dateTooltipTransform,
 			encoding: {
-				text: {
-					field: options?.dateOptions?.startDate ? 'tooltipText' : statisticsLayer.timeField,
-					type: options?.dateOptions?.startDate ? 'nominal' : 'quantitative'
-				},
+				text: dateTooltipTextEncoding,
 				x: {
 					field: statisticsLayer.timeField,
 					type: 'quantitative'
@@ -1030,23 +1039,11 @@ export function createForecastChart(
 				dx: 5,
 				dy: -5
 			},
-			transform: [
-				{
-					calculate: options.dateOptions
-						? formatDateLabelFn(
-								options.dateOptions.startDate,
-								`datum.${statisticsLayer.timeField}`,
-								options.dateOptions.dateFormat
-							)
-						: undefined,
-					as: 'tooltipText'
-				}
-			],
 			encoding: {
 				text: {
-					field: options.dateOptions?.startDate ? 'tooltipText' : statisticsLayer.timeField,
-					type: options.dateOptions?.startDate ? 'nominal' : 'quantitative',
-					format: options.dateOptions?.startDate ? undefined : '.3f'
+					field: 'valueField',
+					type: 'quantitative',
+					format: '.3f'
 				},
 				x: {
 					field: statisticsLayer.timeField,
