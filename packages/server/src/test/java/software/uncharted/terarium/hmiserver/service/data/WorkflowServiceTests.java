@@ -3,6 +3,7 @@ package software.uncharted.terarium.hmiserver.service.data;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -12,6 +13,7 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.io.ClassPathResource;
 import org.springframework.security.test.context.support.WithUserDetails;
 import software.uncharted.terarium.hmiserver.TerariumApplicationTests;
 import software.uncharted.terarium.hmiserver.configuration.MockUser;
@@ -90,6 +92,52 @@ public class WorkflowServiceTests extends TerariumApplicationTests {
 		workflow.setPublicAsset(true);
 
 		return workflow;
+	}
+
+	// Full fledged workflow from a file
+	static Workflow createWorkflowFromFile() throws Exception {
+		ObjectMapper mapper = new ObjectMapper();
+		final ClassPathResource resource = new ClassPathResource("workflow/workflow1.json");
+		final String content = new String(Files.readAllBytes(resource.getFile().toPath()));
+		final Workflow wf = mapper.readValue(content, Workflow.class);
+		return wf;
+	}
+
+	@Test
+	@WithUserDetails(MockUser.URSULA)
+	public void testItCanParseWorkflow() throws Exception {
+		final Workflow wf = createWorkflowFromFile();
+		Assertions.assertNotNull(wf.getName());
+	}
+
+	@Test
+	@WithUserDetails(MockUser.URSULA)
+	public void testItCanBranchWorkflow() throws Exception {
+		final Workflow wf1 = createWorkflowFromFile();
+		final WorkflowNode modelConfigNode = wf1
+			.getNodes()
+			.stream()
+			.filter(n -> n.getOperationType().equals("ModelConfiguration"))
+			.findFirst()
+			.orElse(null);
+
+		Assertions.assertNotNull(modelConfigNode);
+		workflowService.branchWorkflow(wf1, modelConfigNode.getId(), null);
+		Assertions.assertEquals(wf1.getNodes().size(), 5);
+		Assertions.assertEquals(wf1.getEdges().size(), 4);
+
+		final Workflow wf2 = createWorkflowFromFile();
+		final WorkflowNode modelNode = wf2
+			.getNodes()
+			.stream()
+			.filter(n -> n.getOperationType().equals("ModelOperation"))
+			.findFirst()
+			.orElse(null);
+
+		Assertions.assertNotNull(modelNode);
+		workflowService.branchWorkflow(wf2, modelNode.getId(), null);
+		Assertions.assertEquals(wf2.getNodes().size(), 6);
+		Assertions.assertEquals(wf2.getEdges().size(), 4);
 	}
 
 	@Test

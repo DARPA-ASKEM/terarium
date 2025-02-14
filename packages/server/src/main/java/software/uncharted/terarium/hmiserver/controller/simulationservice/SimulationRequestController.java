@@ -8,7 +8,6 @@ import java.util.UUID;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.annotation.Secured;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -23,10 +22,8 @@ import software.uncharted.terarium.hmiserver.controller.SnakeCaseController;
 import software.uncharted.terarium.hmiserver.models.dataservice.AssetType;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.configurations.ModelConfiguration;
 import software.uncharted.terarium.hmiserver.models.dataservice.project.Project;
-import software.uncharted.terarium.hmiserver.models.dataservice.simulation.ProgressState;
 import software.uncharted.terarium.hmiserver.models.dataservice.simulation.Simulation;
 import software.uncharted.terarium.hmiserver.models.dataservice.simulation.SimulationEngine;
-import software.uncharted.terarium.hmiserver.models.dataservice.simulation.SimulationType;
 import software.uncharted.terarium.hmiserver.models.simulationservice.CalibrationRequestCiemss;
 import software.uncharted.terarium.hmiserver.models.simulationservice.EnsembleCalibrationCiemssRequest;
 import software.uncharted.terarium.hmiserver.models.simulationservice.EnsembleSimulationCiemssRequest;
@@ -65,8 +62,6 @@ public class SimulationRequestController implements SnakeCaseController {
 
 	private final NotificationService notificationService;
 	private final ClientEventService clientEventService;
-
-	private final ObjectMapper objectMapper;
 
 	@Data
 	private static class SimulationRequestBody<T> {

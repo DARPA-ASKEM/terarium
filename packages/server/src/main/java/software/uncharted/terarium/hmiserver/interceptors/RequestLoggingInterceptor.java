@@ -22,6 +22,7 @@ public class RequestLoggingInterceptor implements OrderedHandlerInterceptor {
 
 	private static final Logger logger = LoggerFactory.getLogger(RequestLoggingInterceptor.class);
 
+	@SuppressWarnings("unused")
 	@Override
 	public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) {
 		if (handler instanceof HandlerMethod) {

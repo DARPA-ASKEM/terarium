@@ -1,8 +1,6 @@
-import { Workflow, WorkflowPort, Operation, WorkflowNode, WorkflowPortStatus } from '@/types/workflow';
+import { WorkflowPort, Operation, WorkflowNode, WorkflowPortStatus } from '@/types/workflow';
 import * as workflowService from '@/services/workflow';
-
 import { describe, expect, it } from 'vitest';
-import _ from 'lodash';
 
 const addOperation: Operation = {
 	name: 'add',
@@ -104,147 +102,15 @@ describe('operator state sync/staleness check', () => {
 });
 
 // Helper
-const sanityCheck = (wf: Workflow) => {
-	const dupe = new Set<string>();
-	for (let i = 0; i < wf.nodes.length; i++) {
-		const id = wf.nodes[i].id;
-		if (dupe.has(id)) return false;
-		dupe.add(id);
-	}
-	return true;
-};
-
-describe('workflow copying branch -< fork', () => {
-	/**
-	 * Pictorially
-	 *                  __ n4
-	 *                 /
-	 *   n1 -- n2 -- n3
-	 *                 \__ n5
-	 *
-	 * */
-	const wf = new workflowService.WorkflowWrapper();
-	const n1 = wf.addNode(testOp, { x: 0, y: 0 }, {});
-	const n2 = wf.addNode(testOp, { x: 300, y: 0 }, {});
-	const n3 = wf.addNode(testOp, { x: 600, y: 0 }, {});
-	const n4 = wf.addNode(testOp, { x: 900, y: -200 }, {});
-	const n5 = wf.addNode(testOp, { x: 900, y: 200 }, {});
-
-	const NC = WorkflowPortStatus.NOT_CONNECTED;
-
-	n1.outputs = [{ id: 'n1o', type: 'number', value: [1], status: NC, isOptional: false }];
-	n2.inputs = [{ id: 'n2i', type: 'number', value: [1], status: NC, isOptional: false }];
-	n2.outputs = [{ id: 'n2o', type: 'number', value: [2], status: NC, isOptional: false }];
-	n3.inputs = [{ id: 'n3i', type: 'number', value: [2], status: NC, isOptional: false }];
-	n3.outputs = [{ id: 'n3o', type: 'number', value: [3], status: NC, isOptional: false }];
-	n4.inputs = [{ id: 'n4i', type: 'number', value: [3], status: NC, isOptional: false }];
-	n4.outputs = [{ id: 'n4o', type: 'number', value: [4], status: NC, isOptional: false }];
-	n5.inputs = [{ id: 'n5i', type: 'number', value: [3], status: NC, isOptional: false }];
-	n5.outputs = [{ id: 'n5o', type: 'number', value: [5], status: NC, isOptional: false }];
-
-	wf.addEdge(n1.id, 'n1o', n2.id, 'n2i', []);
-	wf.addEdge(n2.id, 'n2o', n3.id, 'n3i', []);
-	wf.addEdge(n3.id, 'n3o', n4.id, 'n4i', []);
-	wf.addEdge(n3.id, 'n3o', n5.id, 'n5i', []);
-
-	it('bootstrapped workflow programmatically', () => {
-		expect(wf.getNodes().length).to.eq(5);
-		expect(wf.getEdges().length).to.eq(4);
-		expect(sanityCheck(wf.dump())).to.eq(true);
-	});
-
-	it('duplicate linear flow', () => {
-		const testWf = _.cloneDeep(wf);
-		testWf.branchWorkflow(n1.id);
-		expect(testWf.getNodes().length).to.eq(10);
-		expect(testWf.getEdges().length).to.eq(8);
-		expect(sanityCheck(testWf.dump())).to.eq(true);
-	});
-
-	it('duplicate tail operator', () => {
-		const testWf = _.cloneDeep(wf);
-		testWf.branchWorkflow(n5.id);
-		expect(testWf.getNodes().length).to.eq(6);
-		expect(testWf.getEdges().length).to.eq(5);
-		expect(sanityCheck(testWf.dump())).to.eq(true);
-	});
-
-	it('duplicate at fork', () => {
-		const testWf = _.cloneDeep(wf);
-		testWf.branchWorkflow(n3.id);
-		expect(testWf.getNodes().length).to.eq(8);
-		expect(testWf.getEdges().length).to.eq(7);
-		expect(testWf.getEdges().filter((edge) => edge.source === n2.id).length).to.eq(2);
-		expect(sanityCheck(testWf.dump())).to.eq(true);
-	});
-
-	it('bad duplication', () => {
-		const testWf = _.cloneDeep(wf);
-		testWf.branchWorkflow('does not exist');
-		expect(testWf.getNodes().length).to.eq(5);
-		expect(testWf.getEdges().length).to.eq(4);
-	});
-});
-
-describe('workflow copying branch >- fork', () => {
-	/**
-	 * Pictorially
-	 *
-	 *  n1 _
-	 *      \
-	 *        -- n3 -- n4
-	 *  n2 _/
-	 *
-	 * */
-	const wf = new workflowService.WorkflowWrapper();
-	const n1 = wf.addNode(testOp, { x: 0, y: 800 }, {});
-	const n2 = wf.addNode(testOp, { x: 0, y: 0 }, {});
-	const n3 = wf.addNode(testOp, { x: 300, y: 400 }, {});
-	const n4 = wf.addNode(testOp, { x: 600, y: 40 }, {});
-	const NC = WorkflowPortStatus.NOT_CONNECTED;
-
-	n1.outputs = [{ id: 'n1o', type: 'number', value: [1], status: NC, isOptional: false }];
-	n2.outputs = [{ id: 'n2o', type: 'number', value: [2], status: NC, isOptional: false }];
-	n3.inputs = [
-		{
-			id: 'n3i_1',
-			type: 'number',
-			value: [1],
-			status: NC,
-			isOptional: false
-		},
-		{
-			id: 'n3i_2',
-			type: 'number',
-			value: [2],
-			status: NC,
-			isOptional: false
-		}
-	];
-	n3.outputs = [{ id: 'n3o', type: 'number', value: [3], status: NC, isOptional: false }];
-	n4.inputs = [{ id: 'n4i', type: 'number', value: [3], status: NC, isOptional: false }];
-	n4.outputs = [{ id: 'n4o', type: 'number', value: [4], status: NC, isOptional: false }];
-
-	wf.addEdge(n1.id, 'n1o', n3.id, 'n3i_1', []);
-	wf.addEdge(n2.id, 'n2o', n3.id, 'n3i_2', []);
-	wf.addEdge(n3.id, 'n3o', n4.id, 'n4i', []);
-
-	it('bootstrapped workflow programmatically', () => {
-		expect(wf.getNodes().length).to.eq(4);
-		expect(wf.getEdges().length).to.eq(3);
-		expect(sanityCheck(wf.dump())).to.eq(true);
-	});
-
-	it('duplicate at fork', () => {
-		const testWf = _.cloneDeep(wf);
-		testWf.branchWorkflow(n3.id);
-		expect(testWf.getNodes().length).to.eq(6);
-		expect(testWf.getEdges().length).to.eq(6);
-		expect(testWf.getEdges().filter((edge) => edge.source === n1.id).length).to.eq(2);
-		expect(testWf.getEdges().filter((edge) => edge.source === n2.id).length).to.eq(2);
-		expect(sanityCheck(testWf.dump())).to.eq(true);
-	});
-});
+// const sanityCheck = (wf: Workflow) => {
+// 	const dupe = new Set<string>();
+// 	for (let i = 0; i < wf.nodes.length; i++) {
+// 		const id = wf.nodes[i].id;
+// 		if (dupe.has(id)) return false;
+// 		dupe.add(id);
+// 	}
+// 	return true;
+// };
 
 describe('workflow operator with multiple output types', () => {
 	const commonFields = {
