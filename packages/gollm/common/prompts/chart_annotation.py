@@ -183,25 +183,91 @@ Answer:
 """
 
 QUANTILE_FORECAST_CHART_ANNOTATION_EXAMPLES="""
-Assuming you are adding the annotations to the following chart spec,
+Assuming you are adding the annotations to the following chart spec for quantile confidence intervals,
 ---- Example Chart Spec Start -----
 {{
     "data": {{ "url": "data/samples.csv" }},
-    "transform": [
-        {{ "fold": ["price", "cost", "tax", "profit"], "as": ["variableField", "valueField"] }}
-    ],
     "layer": [
         {{
-            "mark": "line",
+            "mark": "errorband",
             "encoding": {{
-                "x": {{ "field": "date", "type": "quantitative", "axis": {{ "title": "Day" }} }},
-                "y": {{ "field": "valueField", "type": "quantitative", "axis": {{ "title": "Dollars" }} }}
+                "x": {{ "field": "x", "type": "quantitative", "axis": {{ "title": "Day" }} }},
+                "y": {{ "field": "upper", "type": "quantitative", "axis": {{ "title": "Dollars" }} }}
+                "y2": {{ "field": "lower", "type": "quantitative", "axis": {{ "title": "Dollars" }} }}
+                "color": {{ "field": "variable", "type": "nominal" }}
+                "opacity": {{ "field": "quantile", "type": "quantitative" }}
             }}
         }}
     ]
 }}
 ---- Example Chart Spec End -----
+And here are some information about the data for the example chart spec:
+- data is records with following columns: x, upper, lower, variable, quantile
+- When not instructed otherwise, assume that quantile is 0.5 (median) and upper and lower are the same value.
+- Possible values for quantile are from 0.5 to 0.99
+- Possible values for variable are price, cost, tax, profit
 
+Here are some example requests and the answers:
+
+Request:
+At day 200, add a label 'important'
+Answer:
+{{
+  "description": "At day 200, add a label 'important'",
+  "layer": [
+    {{
+      "mark": {{
+        "type": "rule",
+        "strokeDash": [4, 4]
+      }},
+      "encoding": {{
+        "x": {{ "datum": 200, "axis": {{ "title": ""}} }}
+      }}
+    }},
+    {{
+      "mark": {{
+        "type": "text",
+        "align": "left",
+        "dx": 5,
+        "dy": -5
+      }},
+      "encoding": {{
+        "x": {{ "datum": 200, "axis": {{ "title": ""}} }}
+        "text": {{"value": "important"}}
+      }}
+    }}
+  ]
+}}
+
+Request:
+Add a label 'expensive' at price 20
+Answer:
+{{
+  "description": "Add a label 'expensive' at price 20",
+  "layer": [
+    {{
+      "mark": {{
+        "type": "rule",
+        "strokeDash": [4, 4]
+      }},
+      "encoding": {{
+        "y": {{ "datum": 20, "axis": {{ "title": ""}} }}
+      }}
+    }},
+    {{
+      "mark": {{
+        "type": "text",
+        "align": "left",
+        "dx": 5,
+        "dy": -5
+      }},
+      "encoding": {{
+        "y": {{ "datum": 20, "axis": {{ "title": ""}} }},
+        "text": {{"value": "expensive"}}
+      }}
+    }}
+  ]
+}}
 """
 
 def build_prompt(chartType: ChartAnnotationType, preamble: str, instruction: str) -> str:

@@ -1,8 +1,8 @@
 import { onMounted, ref } from 'vue';
-import { ChartAnnotation, ClientEventType } from '@/types/Types';
+import { ChartAnnotation, ChartAnnotationType, ClientEventType } from '@/types/Types';
 import { ChartSetting } from '@/types/common';
 import { ForecastChartOptions } from '@/services/charts';
-import { fetchAnnotations, generateForecastChartAnnotation, saveAnnotation } from '@/services/chart-settings';
+import { fetchAnnotations, generateChartAnnotation, saveAnnotation } from '@/services/chart-annotation';
 import { useClientEvent } from './useClientEvent';
 
 /**
@@ -24,20 +24,29 @@ export function useChartAnnotations(nodeId: string) {
 	const getChartAnnotationsByChartId = (id: string) =>
 		chartAnnotations.value.filter((annotation) => annotation.chartId === id);
 
-	const generateAndSaveForecastChartAnnotation = async (
+	const generateAndSaveChartAnnotation = async (
 		setting: ChartSetting,
 		query: string,
 		timeField: string,
 		variables: string[],
 		chartOptions: Partial<ForecastChartOptions>
 	) => {
-		const annotationLayerSpec = await generateForecastChartAnnotation(query, timeField, variables, chartOptions);
-		const saved = await saveAnnotation(annotationLayerSpec, nodeId, setting.id);
+		const chartAnnotationType = setting.showQuantiles
+			? ChartAnnotationType.QuantileForecastChart
+			: ChartAnnotationType.ForecastChart;
+		const annotationLayerSpec = await generateChartAnnotation(
+			query,
+			chartAnnotationType,
+			timeField,
+			variables,
+			chartOptions
+		);
+		const saved = await saveAnnotation(annotationLayerSpec, nodeId, setting.id, chartAnnotationType);
 		return saved;
 	};
 
 	return {
 		getChartAnnotationsByChartId,
-		generateAndSaveForecastChartAnnotation
+		generateAndSaveChartAnnotation
 	};
 }

@@ -17,7 +17,8 @@ import {
 	ForecastChartOptions,
 	expressionFunctions,
 	GroupedDataArray,
-	createSensitivityRankingChart
+	createSensitivityRankingChart,
+	ForecastChartLayer
 } from '@/services/charts';
 import { flattenInterventionData } from '@/services/intervention-policy';
 import {
@@ -33,7 +34,15 @@ import {
 	ChartSettingSensitivity,
 	ChartSettingType
 } from '@/types/common';
-import { ChartAnnotation, Dataset, Intervention, InterventionPolicy, Model, ModelConfiguration } from '@/types/Types';
+import {
+	ChartAnnotation,
+	ChartAnnotationType,
+	Dataset,
+	Intervention,
+	InterventionPolicy,
+	Model,
+	ModelConfiguration
+} from '@/types/Types';
 import { displayNumber } from '@/utils/number';
 import {
 	getStateVariableStrataEntries,
@@ -302,6 +311,44 @@ function createComparisonChart(
 			);
 	return chart as VisualizationSpec;
 }
+const createForecastChartWithAnnotations = (
+	setting: ChartSetting,
+	{ result, resultSummary, resultGroupByTimepoint }: ChartData,
+	sampleLayerVariables: string[],
+	statLayerVariables: string[],
+	options: ForecastChartOptions,
+	annotations: ChartAnnotation[],
+	groundTruthLayer: ForecastChartLayer | null
+) => {
+	// TODO: Filter annotation by type after fetching from the server
+	const chartSpec = !setting.showQuantiles
+		? createForecastChart(
+				{
+					data: result,
+					variables: sampleLayerVariables,
+					timeField: 'timepoint_id',
+					groupField: 'sample_id'
+				},
+				{
+					data: resultSummary,
+					variables: statLayerVariables,
+					timeField: 'timepoint_id'
+				},
+				groundTruthLayer ?? null,
+				options
+			)
+		: createQuantilesForecastChart(
+				resultGroupByTimepoint ?? [],
+				sampleLayerVariables,
+				setting.quantiles ?? [],
+				options
+			);
+	const chartAnnotationType = setting.showQuantiles
+		? ChartAnnotationType.QuantileForecastChart
+		: ChartAnnotationType.ForecastChart;
+	const annotatedSpec = applyForecastChartAnnotations(chartSpec, annotations, chartAnnotationType);
+	return annotatedSpec as VisualizationSpec;
+};
 
 const buildYAxisTitle = (variables: string[], getUnitFn: (id: string) => string) =>
 	_.uniq(variables.map(getUnitFn).filter((v) => !!v)).join(', ') || '';
@@ -334,7 +381,7 @@ export function useCharts(
 	const isChartReadyToBuild = computed(() => [model, modelConfig, chartData].every(isRefReady));
 
 	// Setup annotations
-	const { getChartAnnotationsByChartId, generateAndSaveForecastChartAnnotation } = useChartAnnotations(nodeId);
+	const { getChartAnnotationsByChartId, generateAndSaveChartAnnotation } = useChartAnnotations(nodeId);
 
 	const getUnit = (paramId: string) => {
 		if (!model?.value) return '';
@@ -533,7 +580,7 @@ export function useCharts(
 				<ModelConfiguration[]>modelConfig?.value ?? []
 			);
 		}
-		return generateAndSaveForecastChartAnnotation(setting, query, 'timepoint_id', statLayerVariables, options);
+		return generateAndSaveChartAnnotation(setting, query, 'timepoint_id', statLayerVariables, options);
 	};
 
 	const groupedInterventionOutputs = computed(() =>
@@ -668,45 +715,29 @@ export function useCharts(
 		const variableCharts = computed(() => {
 			const charts: Record<string, VisualizationSpec> = {};
 			if (!isChartReadyToBuild.value || !isRefReady(groundTruthData)) return charts;
-			const { result, resultSummary } = chartData.value as ChartData;
 			// eslint-disable-next-line
 			chartSettings.value.forEach((settings) => {
 				const variable = settings.selectedVariables[0];
 				const annotations = getChartAnnotationsByChartId(settings.id);
 				const datasetVar = modelVarToDatasetVar(mapping?.value || [], variable);
 				const { sampleLayerVariables, statLayerVariables, options } = createForecastChartOptions(settings);
-
-				const chart = !settings.showQuantiles
-					? applyForecastChartAnnotations(
-							createForecastChart(
-								{
-									data: result,
-									variables: sampleLayerVariables,
-									timeField: 'timepoint_id',
-									groupField: 'sample_id'
-								},
-								{
-									data: resultSummary,
-									variables: statLayerVariables,
-									timeField: 'timepoint_id'
-								},
-								groundTruthData && {
-									data: groundTruthData.value,
-									variables: datasetVar ? [datasetVar] : [],
-									timeField: modelVarToDatasetVar(mapping?.value || [], 'timepoint_id')
-								},
-								options
-							),
-							annotations
-						)
-					: createQuantilesForecastChart(
-							chartData.value?.resultGroupByTimepoint ?? [],
-							sampleLayerVariables,
-							settings.quantiles ?? [],
-							options
-						);
+				const groundTruthLayer = groundTruthData && {
+					data: groundTruthData.value,
+					variables: datasetVar ? [datasetVar] : [],
+					timeField: modelVarToDatasetVar(mapping?.value || [], 'timepoint_id')
+				};
+				const chart = createForecastChartWithAnnotations(
+					settings,
+					chartData.value as ChartData,
+					sampleLayerVariables,
+					statLayerVariables,
+					options,
+					annotations,
+					groundTruthLayer
+				);
 				_.keys(groupedInterventionOutputs.value).forEach((key) => {
 					if (settings.selectedVariables.includes(key)) {
+						// @ts-ignore
 						chart.layer.push(...createInterventionChartMarkers(groupedInterventionOutputs.value[key]));
 					}
 				});

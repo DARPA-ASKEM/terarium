@@ -50,8 +50,8 @@ import {
 	createForecastChartAnnotation,
 	applyForecastChartAnnotations
 } from '@/services/charts';
-import { generateForecastChartAnnotation } from '@/services/chart-settings';
-import { ChartAnnotation } from '@/types/Types';
+import { generateChartAnnotation } from '@/services/chart-annotation';
+import { ChartAnnotation, ChartAnnotationType } from '@/types/Types';
 // import { createLLMSummary, getSummaries } from '@/services/summary-service';
 
 const rand = (v: number) => Math.round(Math.random() * v);
@@ -173,8 +173,9 @@ const generateAndAddAnnotation = async () => {
 	const timeField = 'time';
 	const variables = ['alphaMean', 'betaMean'];
 	const axisTitle = { xAxisTitle: 'Day', yAxisTitle: 'Value' };
-	const { request, layerSpec } = await generateForecastChartAnnotation(
+	const { request, layerSpec } = await generateChartAnnotation(
 		questionString.value,
+		ChartAnnotationType.ForecastChart,
 		timeField,
 		variables,
 		axisTitle
@@ -184,6 +185,7 @@ const generateAndAddAnnotation = async () => {
 		description: request,
 		nodeId: '',
 		outputId: '',
+		chartType: ChartAnnotationType.ForecastChart,
 		chartId: 'forecastchart',
 		layerSpec,
 		llmGenerated: true,

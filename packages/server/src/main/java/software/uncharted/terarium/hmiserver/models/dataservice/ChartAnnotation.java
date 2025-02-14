@@ -23,10 +23,8 @@ import software.uncharted.terarium.hmiserver.models.TerariumAsset;
 public class ChartAnnotation extends TerariumAsset {
 
 	@TSModel
-	public enum ChartType {
-		// @JsonAlias("forecast_chart")
+	public enum ChartAnnotationType {
 		FORECAST_CHART,
-		// @JsonAlias("quantile_forecast_chart")
 		QUANTILE_FORECAST_CHART
 	}
 
@@ -36,7 +34,7 @@ public class ChartAnnotation extends TerariumAsset {
 	private UUID chartId;
 
 	@Enumerated(EnumType.STRING)
-	private ChartType chartType;
+	private ChartAnnotationType chartType;
 
 	@Type(JsonType.class)
 	@Column(columnDefinition = "json")
