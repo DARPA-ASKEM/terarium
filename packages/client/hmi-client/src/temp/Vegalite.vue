@@ -48,7 +48,7 @@ import {
 	createHistogramChart,
 	createErrorChart,
 	createForecastChartAnnotation,
-	applyForecastChartAnnotations
+	applyChartAnnotations
 } from '@/services/charts';
 import { generateChartAnnotation } from '@/services/chart-annotation';
 import { ChartAnnotation, ChartAnnotationType } from '@/types/Types';
@@ -198,7 +198,7 @@ const removeAnnotation = async (id: string) => {
 };
 
 const forecastChartSpec = computed(() =>
-	applyForecastChartAnnotations(
+	applyChartAnnotations(
 		createForecastChart(
 			{
 				data: dataNew.data,

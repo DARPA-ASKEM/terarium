@@ -3,7 +3,7 @@ import { mean, variance } from 'd3';
 import { computed, ComputedRef, ref, Ref, watchEffect } from 'vue';
 import { VisualizationSpec } from 'vega-embed';
 import {
-	applyForecastChartAnnotations,
+	applyChartAnnotations,
 	AUTOSIZE,
 	SENSITIVITY_COLOUR_SCHEME,
 	CATEGORICAL_SCHEME,
@@ -299,7 +299,7 @@ const createForecastChartWithAnnotations = (
 				options
 			);
 	const chartAnnotationType = getChartAnnotationType(setting);
-	const annotatedSpec = applyForecastChartAnnotations(chartSpec, annotations, chartAnnotationType);
+	const annotatedSpec = applyChartAnnotations(chartSpec, annotations, chartAnnotationType);
 	return annotatedSpec as VisualizationSpec;
 };
 

@@ -1459,24 +1459,23 @@ export function createSensitivityRankingChart(data: { parameter: string; score: 
 }
 
 /**
- * Applies annotation layers to a forecast chart. Each annotation is represented as a layer specification object.
- * By default, the annotation layers are added as sub-layers to the second layer (statistics layer) of the forecast chart specification.
+ * Applies annotation layers to a chart. Each annotation is represented as a layer specification object.
  *
- * @param chartSpec - The forecast chart specification.
+ * @param chartSpec - The chart specification.
  * @param annotations - A list of annotations to be applied.
  * @param charType - The type of the chart to which the annotations are applied.
  * @returns The updated chart specification with the applied annotations.
  */
-export function applyForecastChartAnnotations(
+export function applyChartAnnotations(
 	chartSpec: any,
 	annotations: ChartAnnotation[],
 	chartType: ChartAnnotationType = ChartAnnotationType.ForecastChart
 ) {
-	const annotationFiltered = annotations.filter(
+	const annotationForTheType = annotations.filter(
 		(a) => (a.chartType ?? ChartAnnotationType.ForecastChart) === chartType
 	);
-	if (isEmpty(annotationFiltered)) return chartSpec;
-	const annotationLayerSpecs = annotationFiltered.map((a) => a.layerSpec);
+	if (isEmpty(annotationForTheType)) return chartSpec;
+	const annotationLayerSpecs = annotationForTheType.map((a) => a.layerSpec);
 	const targetLayer = {
 		[ChartAnnotationType.ForecastChart]: chartSpec.layer?.[1],
 		[ChartAnnotationType.QuantileForecastChart]: chartSpec.layer?.[0]
