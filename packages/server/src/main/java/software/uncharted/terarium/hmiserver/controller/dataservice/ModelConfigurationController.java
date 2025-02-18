@@ -288,6 +288,43 @@ public class ModelConfigurationController {
 		return byteArrayOutputStream.toByteArray();
 	}
 
+	@GetMapping("/{id}/original-model")
+	@Secured(Roles.USER)
+	@Operation(summary = "Get the original model of which the configuration was created for")
+	@ApiResponses(
+		value = {
+			@ApiResponse(
+				responseCode = "200",
+				description = "Original model",
+				content = @Content(mediaType = "application/json", schema = @Schema(implementation = Model.class))
+			),
+			@ApiResponse(
+				responseCode = "403",
+				description = "User does not have permissions to this model configuration",
+				content = @Content
+			)
+		}
+	)
+	public ResponseEntity<Model> getOriginalModel(
+		@PathVariable("id") final UUID id,
+		@RequestParam(name = "project-id", required = false) final UUID projectId
+	) {
+		final software.uncharted.terarium.hmiserver.utils.rebac.Schema.Permission permission =
+			projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
+
+		try {
+			final Optional<Model> model = modelService.getModelFromModelConfigurationId(id, permission);
+			if (model.isEmpty()) {
+				return ResponseEntity.noContent().build();
+			}
+			return ResponseEntity.ok(model.get());
+		} catch (final Exception e) {
+			final String error = "Unable to get model";
+			log.error(error, e);
+			throw new ResponseStatusException(org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR, error);
+		}
+	}
+
 	/**
 	 * Create a configured model from a model config
 	 *
