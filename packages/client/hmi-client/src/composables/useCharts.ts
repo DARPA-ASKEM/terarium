@@ -525,7 +525,7 @@ export function useCharts(
 	// Generate annotations for a chart
 	const generateAnnotation = async (setting: ChartSetting, query: string) => {
 		if (!chartData.value) return null;
-		const { statLayerVariables, options } = createForecastChartOptions(setting);
+		const { statLayerVariables, sampleLayerVariables, options } = createForecastChartOptions(setting);
 		if (setting.type === ChartSettingType.VARIABLE_ENSEMBLE) {
 			options.translationMap = addModelConfigNameToTranslationMap(
 				options.translationMap ?? {},
@@ -533,7 +533,9 @@ export function useCharts(
 				<ModelConfiguration[]>modelConfig?.value ?? []
 			);
 		}
-		return generateAndSaveChartAnnotation(setting, query, 'timepoint_id', statLayerVariables, options);
+		// In quantile forecast charts, we use sampleLayerVariables instead of statLayerVariables
+		const variables = setting.showQuantiles ? sampleLayerVariables : statLayerVariables;
+		return generateAndSaveChartAnnotation(setting, query, 'timepoint_id', variables, options);
 	};
 
 	const groupedInterventionOutputs = computed(() =>

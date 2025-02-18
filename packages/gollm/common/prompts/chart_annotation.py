@@ -268,6 +268,9 @@ Answer:
     }}
   ]
 }}
+
+For complex instructions, you can use the transform or other valid Vegalite properties in the layer object to achieve the desired result to meet the user's request as closely as possible.
+Do not restrict yourself to the examples provided. You can use any valid Vega-Lite properties to achieve the desired result.
 """
 
 def build_prompt(chartType: ChartAnnotationType, preamble: str, instruction: str) -> str:
@@ -276,5 +279,4 @@ def build_prompt(chartType: ChartAnnotationType, preamble: str, instruction: str
         ChartAnnotationType.QUANTILE_FORECAST_CHART: QUANTILE_FORECAST_CHART_ANNOTATION_EXAMPLES
     }[chartType]
     prompt = CHART_ANNOTATION_PROMPT_BASE.format(examples=examples, preamble=preamble, instruction=instruction)
-    print(prompt)
     return prompt

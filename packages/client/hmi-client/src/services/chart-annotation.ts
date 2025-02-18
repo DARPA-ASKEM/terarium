@@ -118,7 +118,7 @@ export async function generateChartAnnotation(
 	const preamble = buildPromptPreamble({ variables, timeField, axisTitle, translateMap })[chartType];
 	const { data } = await API.post(
 		`/gollm/chart-annotation?mode=SYNC`,
-		{ preamble, instruction: request },
+		{ preamble, instruction: request, chartType },
 		{
 			headers: {
 				'Content-Type': 'application/json'
