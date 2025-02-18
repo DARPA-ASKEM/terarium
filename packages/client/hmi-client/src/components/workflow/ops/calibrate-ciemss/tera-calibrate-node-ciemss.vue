@@ -10,7 +10,11 @@
 				:placeholder="placeholderText"
 				:processing="processingMessage"
 			/>
-			<vega-chart v-if="lossChartSpec" :are-embed-actions-visible="false" :visualization-spec="lossChartSpec" />
+			<vega-chart
+				v-if="lossChartSpec && isLoading"
+				:are-embed-actions-visible="false"
+				:visualization-spec="lossChartSpec"
+			/>
 		</section>
 		<Button v-if="areInputsFilled" label="Open" @click="emit('open-drilldown')" severity="secondary" outlined />
 	</main>
