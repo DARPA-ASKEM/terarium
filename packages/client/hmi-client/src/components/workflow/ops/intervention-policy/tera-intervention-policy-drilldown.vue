@@ -156,22 +156,25 @@
 					</AccordionTab>
 					<AccordionTab header="Charts">
 						<ul class="flex flex-column gap-2">
-							<li v-for="appliedTo in Object.keys(groupedOutputParameters)" :key="appliedTo">
-								<vega-chart
-									expandable
-									:are-embed-actions-visible="false"
-									:visualization-spec="preparedCharts[appliedTo]"
-								/>
-								<span class="flex pb-6">
-									<label class="pr-2 text-sm">Show this chart on node thumbnail</label>
-									<Checkbox
-										v-model="selectedCharts"
-										:input-id="appliedTo"
-										:name="appliedTo"
-										:value="appliedTo"
-										@change="onSelectChartChange"
+							<li v-for="appliedTo in displayedInterventions" :key="appliedTo">
+								<h5>{{ appliedTo }}</h5>
+								<template v-if="preparedCharts[appliedTo]">
+									<vega-chart
+										expandable
+										:are-embed-actions-visible="false"
+										:visualization-spec="preparedCharts[appliedTo]"
 									/>
-								</span>
+									<span class="flex pb-6">
+										<label class="pr-2 text-sm">Show this chart on node thumbnail</label>
+										<Checkbox
+											v-model="selectedCharts"
+											:input-id="appliedTo"
+											:name="appliedTo"
+											:value="appliedTo"
+											@change="onSelectChartChange"
+										/>
+									</span>
+								</template>
 								<ul>
 									<li
 										class="pb-2"
@@ -187,7 +190,7 @@
 												</p>
 											</li>
 										</ul>
-										<p v-else-if="!isEmpty(intervention.dynamicInterventions)">
+										<p v-if="!isEmpty(intervention.dynamicInterventions)">
 											Set {{ intervention.dynamicInterventions[0].type }} {{ appliedTo }} to
 											{{ intervention.dynamicInterventions[0].value }} when the
 											{{ intervention.dynamicInterventions[0].parameter }}
@@ -291,6 +294,20 @@ const confirm = useConfirm();
 interface BasicKnobs {
 	transientInterventionPolicy: InterventionPolicy;
 }
+
+const displayedInterventions = computed(() => {
+	// we want a set of the appliedTo interventions in the drilldown
+	const selectedInterventionSet: Set<string> = new Set();
+	knobs.value.transientInterventionPolicy.interventions.forEach((intervention) => {
+		intervention.staticInterventions.forEach((staticIntervention) => {
+			selectedInterventionSet.add(staticIntervention.appliedTo);
+		});
+		intervention.dynamicInterventions.forEach((dynamicIntervention) => {
+			selectedInterventionSet.add(dynamicIntervention.appliedTo);
+		});
+	});
+	return selectedInterventionSet;
+});
 
 const knobs = ref<BasicKnobs>({
 	transientInterventionPolicy: {
