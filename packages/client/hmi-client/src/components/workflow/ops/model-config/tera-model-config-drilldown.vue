@@ -231,7 +231,6 @@ import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
 import TeraNotebookError from '@/components/drilldown/tera-notebook-error.vue';
 import TeraNotebookJupyterInput from '@/components/llm/tera-notebook-jupyter-input.vue';
 import TeraModelDiagram from '@/components/model/petrinet/tera-model-diagram.vue';
-import TeraModelPart from '@/components/model/model-parts/tera-model-part.vue';
 import TeraInitialTable from '@/components/model/petrinet/tera-initial-table.vue';
 import TeraParameterTable from '@/components/model/petrinet/tera-parameter-table.vue';
 import { downloadDocumentAsset, getDocumentAsset, getDocumentFileAsText } from '@/services/document-assets';
@@ -267,9 +266,7 @@ import { logger } from '@/utils/logger';
 import {
 	isModelMissingMetadata,
 	getParameters as getAmrParameters,
-	getInitials as getAmrInitials,
-	createObservablesList,
-	PartType
+	getInitials as getAmrInitials
 } from '@/model-representation/service';
 import Message from 'primevue/message';
 import TeraColumnarPanel from '@/components/widgets/tera-columnar-panel.vue';
@@ -304,7 +301,6 @@ const isFetchingPDF = ref(false);
 const isDocViewerOpen = ref(true);
 
 const currentActiveIndexes = ref([0, 1, 2]);
-const observableActiveIndicies = ref([0]);
 const pdfData = ref<{ document: any; data: string; isPdf: boolean; name: string }[]>([]);
 const pdfPanelRef = ref();
 
@@ -513,9 +509,6 @@ const datasetIds = computed(() =>
 		.map((input) => input.value?.[0])
 		.filter((id): id is string => id !== undefined)
 );
-
-const observables = computed(() => model.value?.semantics?.ode?.observables ?? []);
-const observablesList = computed(() => createObservablesList(observables.value));
 
 const modelConfigurations = ref<ModelConfiguration[]>([]);
 
