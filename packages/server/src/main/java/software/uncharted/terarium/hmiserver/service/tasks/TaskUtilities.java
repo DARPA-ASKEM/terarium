@@ -218,7 +218,7 @@ public class TaskUtilities {
 					part.setGrounding(curatedGrounding);
 				} else {
 					newGrounding.setIdentifiers(curatedGrounding.getIdentifiers());
-					newGrounding.setContext(curatedGrounding.getContext());
+					newGrounding.setModifiers(curatedGrounding.getModifiers());
 					part.setGrounding(newGrounding);
 				}
 			}
