@@ -20,56 +20,56 @@ interface PromptPreambleInput {
 
 const buildPromptPreamble = ({ variables, timeField, axisTitle, translateMap }: PromptPreambleInput) => ({
 	[ChartAnnotationType.ForecastChart]: `
-	Here is the information of the existing target chart spec where you need to add the annotations:
-	- The existing chart follows a similar pattern as the above Example Chart Spec like:
-			{
-				...
-				"transform": [
-					{
-						"fold": ${JSON.stringify(variables)},
-						"as": ["variableField', "valueField"]
-					}
-				],
-				"layer": [
-					{
-						...
-						"encoding": {
-							"x": {"field": "${timeField}", "type": "quantitative", "axis": {"title": "${axisTitle.x}"}},
-							"y": {"field": "valueField", "type": "quantitative", "axis": {"title": "${axisTitle.y}"}}
-						}
-					}
-					...
-				]
-			}
-	- Assume all unknown variables except the time field are for the y-axis and are renamed to the valueField.
-	- Make sure possible values for 'valueField' are ${JSON.stringify(variables)} and try best to translate the variables mentioned from the request to the variables for the 'valueField'.
-	- Leverage this variable to human readable name mapping: ${JSON.stringify(translateMap)} if needed.
-	`,
+  Here is the information of the existing target chart spec where you need to add the annotations:
+  - The existing chart follows a similar pattern as the above Example Chart Spec like:
+      {
+        ...
+        "transform": [
+          {
+            "fold": ${JSON.stringify(variables)},
+            "as": ["variableField', "valueField"]
+          }
+        ],
+        "layer": [
+          {
+            ...
+            "encoding": {
+              "x": {"field": "${timeField}", "type": "quantitative", "axis": {"title": "${axisTitle.x}"}},
+              "y": {"field": "valueField", "type": "quantitative", "axis": {"title": "${axisTitle.y}"}}
+            }
+          }
+          ...
+        ]
+      }
+  - Assume all unknown variables except the time field are for the y-axis and are renamed to the valueField.
+  - Make sure possible values for 'valueField' are ${JSON.stringify(variables)} and try best to translate the variables mentioned from the request to the variables for the 'valueField'.
+  - Leverage this variable to human readable name mapping: ${JSON.stringify(translateMap)} if needed.
+  `,
 
 	[ChartAnnotationType.QuantileForecastChart]: `
-	Here is the information of the existing target chart spec where you need to add the annotations:
-		{
-			...
-			"layer": [
-				{
-					"mark": "errorband",
-					"encoding": {
-							"x": { "field": "x", "type": "quantitative", "axis": { "title": "${axisTitle.x}" } },
-							"y": { "field": "upper", "type": "quantitative", "axis": { "title": "${axisTitle.y}" } },
-							"y2": { "field": "lower", "type": "quantitative", "axis": { "title": "${axisTitle.y}" } },
-							"color": { "field": "variable", "type": "nominal" },
-							"opacity": { "field": "quantile", "type": "quantitative" }
-					}
-				}
-			]
-		}
-	And here are some information that needs to be considered:
-	- data is records with following columns: x, upper, lower, variable, quantile (x is the time field)
-	- When not instructed otherwise, assume that quantile is 0.5 (median) and upper and lower are the same value.
-	- Possible values for quantile are from 0.5 to 0.99
-	- Possible values for variable are ${JSON.stringify(variables)}
-	- Leverage this variable to human readable name mapping: ${JSON.stringify(translateMap)} for translating the variables mentioned from the request to the variables for the 'variable' field.
-	`
+  Here is the information of the existing target chart spec where you need to add the annotations:
+    {
+      ...
+      "layer": [
+        {
+          "mark": "errorband",
+          "encoding": {
+              "x": { "field": "x", "type": "quantitative", "axis": { "title": "${axisTitle.x}" } },
+              "y": { "field": "upper", "type": "quantitative", "axis": { "title": "${axisTitle.y}" } },
+              "y2": { "field": "lower", "type": "quantitative", "axis": { "title": "${axisTitle.y}" } },
+              "color": { "field": "variable", "type": "nominal" },
+              "opacity": { "field": "quantile", "type": "quantitative" }
+          }
+        }
+      ]
+    }
+  And here are some information that needs to be considered:
+  - data is records with following columns: x, upper, lower, variable, quantile (x is the time field)
+  - When not instructed otherwise, assume that quantile is 0.5 (median) and upper and lower are the same value.
+  - Possible values for quantile are from 0.5 to 0.99
+  - Possible values for variable are ${JSON.stringify(variables)}
+  - Leverage this variable to human readable name mapping: ${JSON.stringify(translateMap)} for translating the variables mentioned from the request to the variables for the 'variable' field.
+  `
 });
 
 export async function saveAnnotation(
