@@ -10,7 +10,7 @@
 		/>
 		<template v-else>
 			<tera-progress-spinner v-if="isFetchingDatasets" :font-size="2" is-centered style="height: 100%">
-				<div>Processing...</div>
+				Processing...
 			</tera-progress-spinner>
 
 			<vega-chart
