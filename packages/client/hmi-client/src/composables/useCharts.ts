@@ -17,7 +17,9 @@ import {
 	ForecastChartOptions,
 	expressionFunctions,
 	GroupedDataArray,
-	createSensitivityRankingChart
+	createSensitivityRankingChart,
+	createRankingInterventionsChart,
+	BaseChartOptions
 } from '@/services/charts';
 import { flattenInterventionData } from '@/services/intervention-policy';
 import {
@@ -54,11 +56,17 @@ import {
 import { SimulateEnsembleMappingRow } from '@/components/workflow/ops/simulate-ensemble-ciemss/simulate-ensemble-ciemss-operation';
 import { getModelConfigName, getParameters } from '@/services/model-configurations';
 import { EnsembleErrorData } from '@/components/workflow/ops/calibrate-ensemble-ciemss/calibrate-ensemble-util';
-import { PlotValue } from '@/components/workflow/ops/compare-datasets/compare-datasets-operation';
+import {
+	CriteriaOfInterestCard,
+	PlotValue,
+	RankOption,
+	TimepointOption
+} from '@/components/workflow/ops/compare-datasets/compare-datasets-operation';
 import { DATASET_VAR_NAME_PREFIX } from '@/services/dataset';
 import { calculatePercentage } from '@/utils/math';
 import { DistributionType } from '@/services/distribution';
 import { pythonInstance } from '@/web-workers/python/PyodideController';
+import { mean as statsMean, stddev } from '@/utils/stats';
 import { useChartAnnotations } from './useChartAnnotations';
 
 export interface ChartData {
@@ -1349,6 +1357,138 @@ export function useCharts(
 		return computed(() => ({ data: sensitivityData.value, loading: sensitivityDataLoading.value }));
 	};
 
+	const useInterventionRankingCharts = (
+		criteriaOfInterestCards: Ref<CriteriaOfInterestCard[]>,
+		datasets: Ref<Dataset[]>,
+		modelConfigurations: Ref<ModelConfiguration[]>,
+		interventionPolicies: Ref<InterventionPolicy[]>
+	) =>
+		computed(() => {
+			// return empty if any of the required data is missing
+			if (!chartData.value || !datasets.value || !modelConfigurations.value || !interventionPolicies.value)
+				return { rankingCriteriaCharts: [], rankingResultsChart: null };
+
+			const rankingCriteriaCharts: VisualizationSpec[] = [];
+			let rankingResultsChart: VisualizationSpec | null = null;
+
+			const allRankedCriteriaValues: { score: number; policyName: string; configName: string }[][] = [];
+
+			const { interventionNameColorMap, interventionNameScoresMap } = getInterventionColorAndScoreMaps(
+				datasets,
+				modelConfigurations,
+				interventionPolicies
+			);
+
+			criteriaOfInterestCards.value.forEach((card) => {
+				if (!chartData.value || !card.selectedVariable) return;
+
+				const variableKey = `${chartData.value.pyciemssMap[card.selectedVariable]}_mean`;
+				let pointOfComparison: Record<string, number> = {};
+
+				if (card.timepoint === TimepointOption.OVERALL) {
+					const resultSummary = cloneDeep(chartData.value.resultSummary); // Must clone to avoid modifying the original data
+
+					// Note that the reduce function here only compares the variable of interest
+					// so only those key/value pairs will be relevant in the pointOfComparison object.
+					// Other keys like timepoint_id (that we aren't using) will be in pointOfComparison
+					// but they won't coincide with the value of the variable of interest.
+					pointOfComparison = resultSummary.reduce((acc, val) =>
+						Object.keys(val).reduce((acc2, key) => {
+							if (key.includes(variableKey)) {
+								acc2[key] = Math.max(acc[key], val[key]);
+							}
+							return acc2;
+						}, acc)
+					);
+				} else if (card.timepoint === TimepointOption.FIRST) {
+					pointOfComparison = chartData.value.resultSummary[0];
+				} else if (card.timepoint === TimepointOption.LAST) {
+					pointOfComparison = chartData.value.resultSummary[chartData.value.resultSummary.length - 1];
+				}
+
+				const rankingCriteriaValues: { score: number; policyName: string; configName: string }[] = [];
+
+				datasets.value.forEach((dataset, index: number) => {
+					const { metadata } = dataset;
+					const modelConfiguration: ModelConfiguration = modelConfigurations.value.find(
+						({ id }) => id === metadata.simulationAttributes?.modelConfigurationId
+					)!;
+					const policy: InterventionPolicy = interventionPolicies.value.find(
+						({ id }) => id === metadata.simulationAttributes?.interventionPolicyId
+					)!;
+
+					const policyName = policy?.name ?? 'no policy';
+
+					if (!modelConfiguration?.name) {
+						return;
+					}
+
+					rankingCriteriaValues.push({
+						score: pointOfComparison[`${variableKey}:${index}`] ?? 0,
+						policyName,
+						configName: modelConfiguration.name
+					});
+				});
+
+				const sortedRankingCriteriaValues =
+					card.rank === RankOption.MAXIMUM
+						? rankingCriteriaValues.sort((a, b) => b.score - a.score)
+						: rankingCriteriaValues.sort((a, b) => a.score - b.score);
+
+				const options: BaseChartOptions = {
+					title: card.name,
+					width: chartSize.value.width,
+					height: chartSize.value.height,
+					xAxisTitle: 'Rank',
+					yAxisTitle: card.selectedVariable
+				};
+				rankingCriteriaCharts.push(
+					createRankingInterventionsChart(sortedRankingCriteriaValues, interventionNameColorMap, options)
+				);
+				allRankedCriteriaValues.push(sortedRankingCriteriaValues);
+			});
+
+			// For each criteria
+			allRankedCriteriaValues.forEach((criteriaValues, index) => {
+				const rankMutliplier = criteriaOfInterestCards.value[index].rank === RankOption.MINIMUM ? -1 : 1;
+
+				// Calculate mean and stdev for this criteria
+				const values = criteriaValues.map((val) => val.score);
+				const meanValue = statsMean(values);
+				let stdevValue = stddev(values);
+				if (stdevValue === 0) stdevValue = 1;
+
+				// For each policy
+				Object.keys(interventionNameScoresMap).forEach((policyName) => {
+					// For each value of the criteria
+					criteriaValues.forEach((criteriaValue) => {
+						if (criteriaValue.policyName !== policyName) return; // Skip criteria values that don't belong to this policy
+						const scoredPolicyCriteria = rankMutliplier * ((criteriaValue.score - meanValue) / stdevValue);
+						interventionNameScoresMap[policyName].push(scoredPolicyCriteria);
+					});
+				});
+			});
+
+			const scoredPolicies = Object.keys(interventionNameScoresMap)
+				.map((policyName) => ({
+					score: statsMean(interventionNameScoresMap[policyName]),
+					policyName,
+					configName: ''
+				})) // Sort from highest to lowest value
+				.sort((a, b) => b.score - a.score);
+
+			const options: BaseChartOptions = {
+				title: '',
+				width: chartSize.value.width,
+				height: chartSize.value.height,
+				xAxisTitle: 'Rank',
+				yAxisTitle: ''
+			};
+			rankingResultsChart = createRankingInterventionsChart(scoredPolicies, interventionNameColorMap, options);
+
+			return { rankingCriteriaCharts, rankingResultsChart };
+		});
+
 	return {
 		generateAnnotation,
 		getChartAnnotationsByChartId,
@@ -1361,7 +1501,8 @@ export function useCharts(
 		useParameterDistributionCharts,
 		useWeightsDistributionCharts,
 		useSimulateSensitivityCharts,
-		useEnsembleErrorCharts
+		useEnsembleErrorCharts,
+		useInterventionRankingCharts
 	};
 }
 
