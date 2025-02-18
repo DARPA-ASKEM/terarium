@@ -754,7 +754,7 @@ export const newOperator = (
 
 export const selectOutput = async (id: string, nodeId: string, outputId: string, projectId?: string) => {
 	console.log('>> workflowService.selectOutput');
-	const response = await API.post(`/workflows/${id}/node/${nodeId}/selected-output/${outputId}`, {
+	const response = await API.post(`/workflows/${id}/node/${nodeId}/output/${outputId}`, {
 		params: { 'project-id': projectId }
 	});
 	return response.data ?? null;
