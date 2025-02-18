@@ -21,10 +21,13 @@ LATEX_STYLE_GUIDE = """
     e) for example, replace "\\varsigma" with "\\sigma"
     f) for example, replace "\\varphi" with "\\phi"
 12) If equations are separated by punctuation (like comma, period, semicolon), do not include the punctuation in the LaTeX code.
-13) Rewrite expressions with negative exponents as explicit fractions
+13) Rewrite divisions to use "\\frac{{ }}{{ }}"
+    a) for example, replace "x ÷ y" with "\\frac{{x}}{{y}}"
+    b) for example, replace "x / y" with "\\frac{{x}}{{y}}"
+14) Rewrite expressions with negative exponents as explicit fractions
     a) for example, replace "N^{{-1}}" with "\\frac{{1}}{{N}}"
-14) Do not use square brackets "[ ]", curly braces "{ }", and angle brackets "< >" when grouping expressions
-15) Always expand expressions surrounded by parentheses using the order of mathematical operations
+15) Do not use square brackets "[ ]", curly braces "{ }", and angle brackets "< >" when grouping expressions
+16) Always expand expressions surrounded by parentheses using the order of mathematical operations
     a) for example, replace "x(t) (\\alpha y(t) + \\beta z(t))" with "\\alpha * x(t) * y(t) + \\beta * x(t) * z(t)"
     b) for example, replace "-(\\alpha + \\beta + \\gamma) x(t)" with "- \\alpha * x(t) - \\beta * x(t) - \\gamma * x(t)"
     c) for example, replace "(x(t) + y(t)) (z(t) + w(t))" with "x(t) * z(t) + x(t) * w(t) + y(t) * z(t) + y(t) * w(t)"
