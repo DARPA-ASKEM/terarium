@@ -48,7 +48,7 @@ export const deleteModelConfiguration = async (id: string) => {
 };
 
 export const getAsConfiguredModel = async (modelConfigurationId: string): Promise<Model> => {
-	const response = await API.get<Model>(`model-configurations/as-configured-model/${modelConfigurationId}`);
+	const response = await API.get<Model>(`model-configurations/${modelConfigurationId}/model`);
 	return response?.data ?? null;
 };
 
