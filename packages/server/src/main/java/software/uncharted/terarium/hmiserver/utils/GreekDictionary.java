@@ -4,13 +4,11 @@ import com.google.common.collect.BiMap;
 import com.google.common.collect.HashBiMap;
 
 /**
- * A class to store the Greek alphabet in a BiMap
- *
- * <p>englishToGreek("beta")); // Output: β greekToEnglish("β")); // Output: beta
+ * A class to store the Greek alphabet in a BiMap for easy translation between English and Greek.
  */
 public class GreekDictionary {
 
-	private static BiMap<String, String> englishGreek = HashBiMap.create();
+	private static final BiMap<String, String> englishGreek = HashBiMap.create();
 
 	static {
 		englishGreek.put("alpha", "α");
