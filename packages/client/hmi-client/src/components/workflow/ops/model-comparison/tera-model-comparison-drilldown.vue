@@ -144,6 +144,7 @@
 					class="ace-editor"
 					:options="{ showPrintMargin: false }"
 				/>
+				<tera-notebook-output :traceback="executeResponseTraceback" />
 			</tera-drilldown-section>
 			<tera-drilldown-preview :is-loading="isLoadingStructuralComparisons && isEmpty(structuralComparisons)">
 				<ul>
@@ -200,6 +201,7 @@ import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
 import { VAceEditor } from 'vue3-ace-editor';
 import { VAceEditorInstance } from 'vue3-ace-editor/types';
 import TeraNotebookJupyterInput from '@/components/llm/tera-notebook-jupyter-input.vue';
+import teraNotebookOutput from '@/components/drilldown/tera-notebook-output.vue';
 import Image from 'primevue/image';
 import { saveCodeToState } from '@/services/notebook';
 import { addImage, deleteImages, getImages } from '@/services/image';
@@ -249,6 +251,7 @@ const overview = ref<string | null>(null);
 const structuralComparisons = ref<string[]>([]);
 const code = ref(props.node.state.notebookHistory?.[0]?.code ?? '');
 const llmThoughts = ref<any[]>([]);
+const executeResponseTraceback = ref('');
 const isKernelReady = ref(false);
 const contextLanguage = ref<string>('python3');
 const comparisonPairs = ref(props.node.state.comparisonPairs);
@@ -346,6 +349,11 @@ function runCode() {
 		.register('error', (data) => {
 			logger.error(`${data.content.ename}: ${data.content.evalue}`);
 			isLoadingStructuralComparisons.value = false;
+		})
+		.register('stream', (data) => {
+			if ((data?.content?.name === 'stderr' || data?.content?.name === 'stdout') && data.content.text) {
+				executeResponseTraceback.value = `${executeResponseTraceback.value} ${data.content.text}`;
+			}
 		});
 }
 

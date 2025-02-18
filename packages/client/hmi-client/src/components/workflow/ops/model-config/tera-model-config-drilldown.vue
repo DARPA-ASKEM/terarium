@@ -187,6 +187,7 @@
 					style="flex-grow: 1; width: 100%"
 					class="ace-editor"
 				/>
+				<tera-notebook-output :traceback="executeResponseTraceback" />
 			</tera-drilldown-section>
 			<tera-drilldown-preview title="Output Preview">
 				<tera-notebook-error
@@ -230,6 +231,7 @@ import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.
 import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
 import TeraNotebookError from '@/components/drilldown/tera-notebook-error.vue';
 import TeraNotebookJupyterInput from '@/components/llm/tera-notebook-jupyter-input.vue';
+import teraNotebookOutput from '@/components/drilldown/tera-notebook-output.vue';
 import TeraModelDiagram from '@/components/model/petrinet/tera-model-diagram.vue';
 import TeraInitialTable from '@/components/model/petrinet/tera-initial-table.vue';
 import TeraParameterTable from '@/components/model/petrinet/tera-parameter-table.vue';
@@ -352,6 +354,7 @@ const buildJupyterContext = () => {
 const codeText = ref('# This environment contains the variable "model_config" to be read and updated');
 const llmQuery = ref('');
 const llmThoughts = ref<any[]>([]);
+const executeResponseTraceback = ref('');
 const notebookResponse = ref();
 const executeResponse = ref({
 	status: OperatorStatus.DEFAULT,
@@ -405,6 +408,9 @@ const runFromCode = () => {
 		})
 		.register('stream', (data) => {
 			notebookResponse.value = data.content.text;
+			if ((data?.content?.name === 'stderr' || data?.content?.name === 'stdout') && data.content.text) {
+				executeResponseTraceback.value = `${executeResponseTraceback.value} ${data.content.text}`;
+			}
 		})
 		.register('model_configuration_preview', (data) => {
 			if (!data.content) return;
