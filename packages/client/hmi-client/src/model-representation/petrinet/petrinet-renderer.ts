@@ -501,7 +501,8 @@ export class PetrinetRenderer extends BasicRenderer<NodeData, EdgeData> {
 		}
 	}
 
-	// Given a specific id, find top level id
+	// Given a specific id, find top level id, here we always have a single level so
+	// the id resolves to itself
 	resolveChildId(id: string) {
 		return id;
 	}

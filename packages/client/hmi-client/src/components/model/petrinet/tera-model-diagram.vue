@@ -170,7 +170,6 @@ const refineSearchSuggestions = (evt: AutoCompleteCompleteEvent) => {
 const selectItem = (item: AutoCompleteItemSelectEvent) => {
 	if (renderer) {
 		const resolvedId = renderer.resolveChildId(item.value.id);
-		console.log('hihihi', resolvedId);
 		renderer.zoomTo(resolvedId);
 	}
 };
