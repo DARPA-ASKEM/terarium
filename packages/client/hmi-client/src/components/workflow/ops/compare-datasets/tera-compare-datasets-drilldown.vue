@@ -13,7 +13,13 @@
 			>
 				<template #content>
 					<tera-drilldown-section class="px-3">
-						<Button class="ml-auto" size="small" label="Run" @click="onRun" />
+						<Button
+							v-if="knobs.selectedCompareOption !== CompareValue.RANK"
+							class="ml-auto"
+							size="small"
+							label="Run"
+							@click="onRun"
+						/>
 						<label>What do you want to compare?</label>
 						<Dropdown
 							v-model="knobs.selectedCompareOption"
@@ -54,7 +60,7 @@
 						<div class="flex flex-column gap-2" v-else-if="knobs.selectedCompareOption === CompareValue.RANK">
 							<label>Specify criteria of interest:</label>
 							<tera-criteria-of-interest-card
-								v-for="(card, i) in node.state.criteriaOfInterestCards"
+								v-for="(card, i) in knobs.criteriaOfInterestCards"
 								:key="i"
 								:card="card"
 								:variables="variableNames"
@@ -206,11 +212,16 @@
 								the scenario outcome meets the criteria of interest more. The dark line (zero) is the mean outcome
 								across all scenarios.
 							</p>
-							<vega-chart :visualization-spec="rankingResultsChart" :are-embed-actions-visible="false" expandable />
+							<vega-chart
+								v-if="rankingCharts.rankingResultsChart"
+								:visualization-spec="rankingCharts.rankingResultsChart"
+								:are-embed-actions-visible="false"
+								expandable
+							/>
 						</AccordionTab>
 						<AccordionTab header="Ranking criteria">
 							<vega-chart
-								v-for="(rankingCriteriaChart, index) in rankingCriteriaCharts"
+								v-for="(rankingCriteriaChart, index) in rankingCharts.rankingCriteriaCharts"
 								:visualization-spec="rankingCriteriaChart"
 								:are-embed-actions-visible="false"
 								:key="index"
@@ -380,7 +391,7 @@ import { WorkflowNode } from '@/types/workflow';
 import TeraSliderPanel from '@/components/widgets/tera-slider-panel.vue';
 import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.vue';
 import { DrilldownTabs, ChartSettingType } from '@/types/common';
-import { onMounted, ref, watch, computed } from 'vue';
+import { onMounted, ref, computed, onBeforeUnmount } from 'vue';
 import Button from 'primevue/button';
 import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
@@ -412,7 +423,7 @@ import {
 	PlotValue,
 	type CompareDatasetsMap
 } from './compare-datasets-operation';
-import { generateRankingCharts, generateImpactCharts, initialize } from './compare-datasets-utils';
+import { initialize, buildChartData } from './compare-datasets-utils';
 
 const props = defineProps<{
 	node: WorkflowNode<CompareDatasetsState>;
@@ -463,23 +474,18 @@ const isFetchingDatasets = ref(false);
 const areSimulationsFromSameModel = ref(true);
 
 const onRun = () => {
-	if (knobs.value.selectedCompareOption === CompareValue.RANK) {
-		generateRankingCharts(
-			rankingCriteriaCharts,
-			rankingResultsChart,
-			props.node,
-			rankingChartData,
-			datasets,
-			modelConfigurations,
-			interventionPolicies
-		);
-	} else if (knobs.value.selectedCompareOption === CompareValue.SCENARIO) {
+	if (knobs.value.selectedCompareOption === CompareValue.SCENARIO) {
 		constructATETable();
 	}
 };
 
 function onChangeImpactComparison() {
-	generateImpactCharts(impactChartData, datasets, datasetResults, baselineDatasetIndex, selectedPlotType);
+	impactChartData.value = buildChartData(
+		datasets.value,
+		datasetResults.value,
+		baselineDatasetIndex.value,
+		selectedPlotType.value
+	);
 }
 
 interface BasicKnobs {
@@ -533,21 +539,21 @@ const chartSize = useDrilldownChartSize(outputPanel);
 
 const impactChartData = ref<ChartData | null>(null);
 const rankingChartData = ref<ChartData | null>(null);
-const rankingResultsChart = ref<any>(null);
-const rankingCriteriaCharts = ref<any>([]);
+
+const chartData = computed(() => {
+	if (knobs.value.selectedCompareOption === CompareValue.RANK) {
+		return rankingChartData.value;
+	}
+	return impactChartData.value;
+});
 
 const variableNames = ref<string[]>([]);
 const mappingOptions = ref<Record<string, string[]>>({});
 
-const { generateAnnotation, getChartAnnotationsByChartId, useCompareDatasetCharts } = useCharts(
-	props.node.id,
-	null,
-	null,
-	impactChartData,
-	chartSize,
-	null,
-	null
-);
+const criteriaOfInterestCards = computed(() => knobs.value.criteriaOfInterestCards);
+
+const { generateAnnotation, getChartAnnotationsByChartId, useCompareDatasetCharts, useInterventionRankingCharts } =
+	useCharts(props.node.id, null, null, chartData, chartSize, null, null);
 const selectedPlotType = computed(() => knobs.value.selectedPlotType);
 const baselineDatasetIndex = computed(() =>
 	datasets.value.findIndex((dataset) => dataset.id === knobs.value.selectedBaselineDatasetId)
@@ -560,6 +566,14 @@ const variableCharts = useCompareDatasetCharts(
 	modelConfigurations,
 	interventionPolicies
 );
+
+const rankingCharts = useInterventionRankingCharts(
+	criteriaOfInterestCards,
+	datasets,
+	modelConfigurations,
+	interventionPolicies
+);
+
 const groundTruthDatasetIndex = computed(() =>
 	datasets.value.findIndex((dataset) => dataset.id === knobs.value.selectedGroundTruthDatasetId)
 );
@@ -772,9 +786,7 @@ onMounted(async () => {
 		baselineDatasetIndex,
 		selectedPlotType,
 		modelConfigurations,
-		interventionPolicies,
-		rankingCriteriaCharts,
-		rankingResultsChart
+		interventionPolicies
 	);
 
 	// Prepare variable dropdowns
@@ -817,20 +829,18 @@ onMounted(async () => {
 	constructWisTable();
 });
 
-watch(
-	() => knobs.value,
-	() => {
-		const state = cloneDeep(props.node.state);
-		state.criteriaOfInterestCards = knobs.value.criteriaOfInterestCards;
-		state.selectedCompareOption = knobs.value.selectedCompareOption;
-		state.selectedBaselineDatasetId = knobs.value.selectedBaselineDatasetId;
-		state.selectedGroundTruthDatasetId = knobs.value.selectedGroundTruthDatasetId;
-		state.selectedPlotType = knobs.value.selectedPlotType;
-		state.mapping = knobs.value.mapping;
-		emit('update-state', state);
-	},
-	{ deep: true }
-);
+onBeforeUnmount(async () => {
+	// flush changes
+	const clonedState = cloneDeep(props.node.state);
+	clonedState.criteriaOfInterestCards = knobs.value.criteriaOfInterestCards;
+	clonedState.selectedCompareOption = knobs.value.selectedCompareOption;
+	clonedState.selectedBaselineDatasetId = knobs.value.selectedBaselineDatasetId;
+	clonedState.selectedGroundTruthDatasetId = knobs.value.selectedGroundTruthDatasetId;
+	clonedState.selectedPlotType = knobs.value.selectedPlotType;
+	clonedState.mapping = knobs.value.mapping;
+
+	emit('update-state', clonedState);
+});
 </script>
 
 <style scoped>

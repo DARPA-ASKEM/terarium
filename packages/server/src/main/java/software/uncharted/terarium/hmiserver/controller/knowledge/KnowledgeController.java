@@ -244,6 +244,9 @@ public class KnowledgeController {
 
 		notificationInterface.sendMessage("AMR extracted via MIRA.");
 
+		modelService.fixGreekLetters(responseAMR);
+		notificationInterface.sendMessage("Greek letters fixed.");
+
 		// If no model id is provided, create a new model asset
 		Model model;
 		if (modelId == null) {
