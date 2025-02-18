@@ -216,7 +216,7 @@ const runCode = () => {
 				executedCode = data.content.code;
 			})
 			.register('stream', (data) => {
-				if (data?.content?.name === 'stderr' || data?.content?.name === 'stdout') {
+				if ((data?.content?.name === 'stderr' || data?.content?.name === 'stdout') && data.content.text) {
 					executeResponseTraceback.value = `${executeResponseTraceback.value} ${data.content.text}`;
 				}
 			})

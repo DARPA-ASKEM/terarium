@@ -43,7 +43,7 @@ export enum AUTOSIZE {
 	NONE = 'none'
 }
 
-interface BaseChartOptions {
+export interface BaseChartOptions {
 	title?: string;
 	width: number;
 	height: number;
@@ -2087,9 +2087,8 @@ export function createFunmanParameterCharts(
 export function createRankingInterventionsChart(
 	values: { score: number; policyName: string; configName: string }[],
 	interventionNameColorMap: Record<string, string>,
-	title: string | null = null,
-	variableName: string | null = null
-) {
+	options: BaseChartOptions
+): VisualizationSpec {
 	return {
 		$schema: VEGALITE_SCHEMA,
 		config: {
@@ -2105,7 +2104,7 @@ export function createRankingInterventionsChart(
 			}
 		},
 		title: {
-			text: title,
+			text: options.title ?? '',
 			anchor: 'start',
 			frame: 'group',
 			offset: 10,
@@ -2120,13 +2119,13 @@ export function createRankingInterventionsChart(
 				field: 'index',
 				type: 'nominal',
 				sort: null,
-				title: 'Rank'
+				title: options.xAxisTitle
 			},
 			y: {
 				field: 'score',
 				type: 'quantitative',
 				// If a specific variable is selected the score should hold its actual value
-				title: variableName || 'Score',
+				title: options.yAxisTitle || 'Score',
 				axis: {
 					gridColor: {
 						condition: { test: 'datum.value === 0', value: 'black' },
@@ -2172,11 +2171,10 @@ export function createRankingInterventionsChart(
 					dy: -20,
 					dx: 5,
 					angle: 90,
-					fill: 'black',
-					padding: 4
+					fill: 'black'
 				},
 				encoding: {
-					text: { field: 'name', type: 'nominal', color: 'black' },
+					text: { field: 'name', type: 'nominal' },
 					y: { value: 0 } // This positions the text at the top of the chart
 				}
 			}
