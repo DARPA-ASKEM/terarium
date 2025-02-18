@@ -3,29 +3,29 @@ services:
 ######################################################
 # Uncomment this to run the gollm taskrunner locally #
 ######################################################
- gollm-taskrunner:
-   build:
-     context: ../..
-     dockerfile: ./packages/gollm/Dockerfile
-     target: gollm_taskrunner_builder
-   container_name: gollm-taskrunner
-   networks:
-     - terarium
-   environment:
-     TERARIUM_MQ_ADDRESSES: "amqp://rabbitmq:5672"
-     TERARIUM_MQ_PASSWORD: "terarium123"
-     TERARIUM_MQ_USERNAME: "terarium"
-     TERARIUM_TASKRUNNER_REQUEST_TYPE: "gollm"
-     OPENAI_API_KEY: "${secret_openai_key}"
-   depends_on:
-     rabbitmq:
-       condition: service_healthy
-   extra_hosts:
-     - "${local_host_name}:host-gateway"
-   volumes:
-     - ../../packages/gollm:/gollm
-     - ../../packages/taskrunner:/taskrunner
-   command: /gollm/dev.sh
+#  gollm-taskrunner:
+#    build:
+#      context: ../..
+#      dockerfile: ./packages/gollm/Dockerfile
+#      target: gollm_taskrunner_builder
+#    container_name: gollm-taskrunner
+#    networks:
+#      - terarium
+#    environment:
+#      TERARIUM_MQ_ADDRESSES: "amqp://rabbitmq:5672"
+#      TERARIUM_MQ_PASSWORD: "terarium123"
+#      TERARIUM_MQ_USERNAME: "terarium"
+#      TERARIUM_TASKRUNNER_REQUEST_TYPE: "gollm"
+#      OPENAI_API_KEY: "${secret_openai_key}"
+#    depends_on:
+#      rabbitmq:
+#        condition: service_healthy
+#    extra_hosts:
+#      - "${local_host_name}:host-gateway"
+#    volumes:
+#      - ../../packages/gollm:/gollm
+#      - ../../packages/taskrunner:/taskrunner
+#    command: /gollm/dev.sh
 
 
 #####################################################
