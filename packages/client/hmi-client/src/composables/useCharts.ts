@@ -19,7 +19,8 @@ import {
 	GroupedDataArray,
 	createSensitivityRankingChart,
 	createRankingInterventionsChart,
-	BaseChartOptions
+	BaseChartOptions,
+	ForecastChartLayer
 } from '@/services/charts';
 import { flattenInterventionData } from '@/services/intervention-policy';
 import {

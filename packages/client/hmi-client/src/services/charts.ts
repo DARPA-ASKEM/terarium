@@ -1519,6 +1519,7 @@ export function createForecastChartAnnotation(axis: 'x' | 'y', datum: number, la
 		id: uuidv4(),
 		nodeId: '',
 		outputId: '',
+		chartType: ChartAnnotationType.ForecastChart,
 		chartId: '',
 		layerSpec,
 		llmGenerated: false,

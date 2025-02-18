@@ -1,5 +1,5 @@
 import { onMounted, ref } from 'vue';
-import { ChartAnnotation, ChartAnnotationType, ClientEventType } from '@/types/Types';
+import { ChartAnnotation, ClientEventType } from '@/types/Types';
 import { ChartSetting } from '@/types/common';
 import { ForecastChartOptions } from '@/services/charts';
 import {
