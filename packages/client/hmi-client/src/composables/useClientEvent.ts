@@ -17,9 +17,6 @@ export function useClientEvent(eventType: ClientEventType | ClientEventType[], t
 
 function createClientEventHandler(taskIds) {
 	return async (event: ClientEvent<TaskResponse>) => {
-		if (!_.isArray(taskIds)) {
-			taskIds = [];
-		}
 		if (!taskIds.value.includes(event.data?.id)) return;
 		if ([TaskStatus.Success, TaskStatus.Cancelled, TaskStatus.Failed].includes(event.data.status)) {
 			taskIds.value = taskIds.value.filter((id) => id !== event.data.id);

@@ -60,9 +60,9 @@ import _ from 'lodash';
 import { blankIntervention, flattenInterventionData } from '@/services/intervention-policy';
 import { createInterventionChart } from '@/services/charts';
 import VegaChart from '@/components/widgets/VegaChart.vue';
-import { useClientEvent } from '@/composables/useClientEvent';
 import TeraOperatorPlaceholder from '@/components/operator/tera-operator-placeholder.vue';
 import { ClientEventType } from '@/types/Types';
+import { useClientEvent } from '@/composables/useClientEvent';
 import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue';
 import { InterventionPolicyState } from './intervention-policy-operation';
 

@@ -28,8 +28,8 @@ import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue'
 import TeraOperatorPlaceholder from '@/components/operator/tera-operator-placeholder.vue';
 import { getModel, getModelConfigurationsForModel } from '@/services/model';
 import { postAsConfiguredModel } from '@/services/model-configurations';
-import { useClientEvent } from '@/composables/useClientEvent';
 import { AssetType, ClientEventType } from '@/types/Types';
+import { useClientEvent } from '@/composables/useClientEvent';
 import { useProjects } from '@/composables/project';
 import { ModelConfigOperation, ModelConfigOperationState } from './model-config-operation';
 
