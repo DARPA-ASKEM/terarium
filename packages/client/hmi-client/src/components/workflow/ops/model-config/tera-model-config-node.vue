@@ -29,8 +29,7 @@ import TeraOperatorPlaceholder from '@/components/operator/tera-operator-placeho
 import { getModel, getModelConfigurationsForModel } from '@/services/model';
 import { postAsConfiguredModel } from '@/services/model-configurations';
 import { useClientEvent } from '@/composables/useClientEvent';
-import type { ClientEvent, TaskResponse } from '@/types/Types';
-import { AssetType, ClientEventType, TaskStatus } from '@/types/Types';
+import { AssetType, ClientEventType } from '@/types/Types';
 import { useProjects } from '@/composables/project';
 import { ModelConfigOperation, ModelConfigOperationState } from './model-config-operation';
 
@@ -39,19 +38,12 @@ const props = defineProps<{
 }>();
 const emit = defineEmits(['open-drilldown', 'append-input-port', 'update-state', 'append-output']);
 
-const modelConfigTaskIds = ref<string[]>([]);
+useClientEvent(
+	[ClientEventType.TaskGollmConfigureModelFromDocument, ClientEventType.TaskGollmConfigureModelFromDataset],
+	props.node.state.modelConfigTaskIds
+);
 
-const configModelEventHandler = async (event: ClientEvent<TaskResponse>) => {
-	if (!modelConfigTaskIds.value.includes(event.data?.id)) return;
-	if ([TaskStatus.Success, TaskStatus.Cancelled, TaskStatus.Failed].includes(event.data.status)) {
-		modelConfigTaskIds.value = modelConfigTaskIds.value.filter((id) => id !== event.data.id);
-	}
-};
-
-useClientEvent(ClientEventType.TaskGollmConfigureModelFromDocument, configModelEventHandler);
-useClientEvent(ClientEventType.TaskGollmConfigureModelFromDataset, configModelEventHandler);
-
-const isLoading = computed(() => modelConfigTaskIds.value.length > 0);
+const isLoading = computed(() => props.node.state.modelConfigTaskIds.length > 0);
 
 const isModelInputConnected = ref(false);
 
@@ -114,13 +106,6 @@ watch(
 		}
 	},
 	{ immediate: true, deep: true }
-);
-
-watch(
-	() => props.node.state.modelConfigTaskIds,
-	() => {
-		modelConfigTaskIds.value = props.node.state.modelConfigTaskIds ?? [];
-	}
 );
 
 watch(
