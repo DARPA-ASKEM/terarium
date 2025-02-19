@@ -491,23 +491,6 @@ public class MiraController {
 		return ResponseEntity.ok().build();
 	}
 
-	// This rebuilds the semantics ODE via MIRA
-	// 1. Send AMR to MIRA => MIRANet
-	// 2. Send MIRANet to MIRA to convert back to AMR Petrinet
-	// 3. Send AMR back
-	@PostMapping("/reconstruct-ode-semantics")
-	@Secured(Roles.USER)
-	public ResponseEntity<JsonNode> reconstructODESemantics(final Object amr) {
-		final ResponseEntity<JsonNode> response;
-		try {
-			response = proxy.reconstructODESemantics(amr);
-		} catch (final FeignException e) {
-			throw handleMiraFeignException(e, "ODE", "model", "", "mira.ode.bad-model");
-		}
-
-		return new ResponseEntity<>(response.getBody(), response.getStatusCode());
-	}
-
 	@PostMapping("/entity-similarity")
 	@Secured(Roles.USER)
 	public ResponseEntity<List<EntitySimilarityResult>> entitySimilarity(@RequestBody final Curies obj) {
