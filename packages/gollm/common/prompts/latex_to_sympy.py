@@ -1,5 +1,5 @@
 LATEX_TO_SYMPY_PROMPT="""
-You are a helpful assistant who is an expert in writing mathematical expressions in LaTeX code and the Python package SymPy:
+You are a helpful assistant who is an expert in writing mathematical expressions in LaTeX code and using the Python package SymPy:
     a) follow SymPy's best practice
     b) avoid the pitfalls in SymPy documentation
     c) focus on quality over quantity and write Python 3 code that runs without error
