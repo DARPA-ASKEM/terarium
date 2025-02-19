@@ -83,7 +83,7 @@ export async function getModel(modelId: string, projectId?: string): Promise<Mod
  * Get the model-configuration's underlying model
  */
 export async function getModelByModelConfigurationId(configId: string): Promise<Model | null> {
-	const response = await API.get(`/models/from-model-configuration/${configId}`);
+	const response = await API.get(`/model-configurations/${configId}/original-model`);
 	return response?.data ?? null;
 }
 

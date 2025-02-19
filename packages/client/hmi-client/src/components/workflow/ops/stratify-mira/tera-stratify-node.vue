@@ -28,8 +28,6 @@ const props = defineProps<{
 	node: WorkflowNode<StratifyOperationStateMira>;
 }>();
 
-// /models/from-model-configuration/:config-id
-
 watch(
 	() => props.node.inputs,
 	async () => {
