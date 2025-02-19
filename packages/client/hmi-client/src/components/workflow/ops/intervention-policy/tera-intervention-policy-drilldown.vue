@@ -295,6 +295,10 @@ interface BasicKnobs {
 	transientInterventionPolicy: InterventionPolicy;
 }
 
+/*
+This is a super-set of prepared charts.  We only display static interventions in the charts right now,
+but we also want the option to display the desciptions of dynamic interventions in the drilldown.
+*/
 const displayedInterventions = computed(() => {
 	// we want a set of the appliedTo interventions in the drilldown
 	const selectedInterventionSet: Set<string> = new Set();
@@ -413,12 +417,12 @@ const stateOptions = computed(() => {
 	}));
 });
 
-const groupedOutputParameters = computed(() =>
-	groupBy(flattenInterventionData(knobs.value.transientInterventionPolicy.interventions), 'appliedTo')
-);
-
-const preparedCharts = computed(() =>
-	_.mapValues(groupedOutputParameters.value, (interventions, key) =>
+const preparedCharts = computed(() => {
+	const groupedOutputParameters = groupBy(
+		flattenInterventionData(knobs.value.transientInterventionPolicy.interventions),
+		'appliedTo'
+	);
+	return _.mapValues(groupedOutputParameters, (interventions, key) =>
 		createInterventionChart(interventions, {
 			title: key,
 			width: 400,
@@ -426,8 +430,8 @@ const preparedCharts = computed(() =>
 			xAxisTitle: 'Time',
 			yAxisTitle: 'Value'
 		})
-	)
-);
+	);
+});
 
 const getInterventionsAppliedTo = (appliedTo: string) =>
 	knobs.value.transientInterventionPolicy.interventions
