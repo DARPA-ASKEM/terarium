@@ -7,23 +7,26 @@ LATEX_STYLE_GUIDE = """
 4) Rewrite superscripts and LaTeX superscripts "^" that denote indices to subscripts using LaTeX "_"
 5) Replace any unicode subscripts with LaTeX subscripts using "_". Ensure that all characters used in the subscript are surrounded by a pair of curly brackets "{{...}}"
 6) Use " * " to denote multiplication
-    a) for example, replace "b S(t) I(t)" with "b * S(t) * I(t)"
-    b) for example, replace "(a b)I(t) with "a * b * I(t)"
+    a) replace "b S(t) I(t)" with "b * S(t) * I(t)"
+    b) replace "b \\ast S(t) \ast I(t)" with "b * S(t)"
+    c) replace "b \\star S(t)" with "b * S(t)"
+    d) replace "(a b)S(t) with "a * b * S(t)"
 7) Avoid capital sigma and pi notations for summation and product
 8) Avoid non-ASCII characters when possible
 9) Avoid using homoglyphs
 10) Avoid words or multi-character names for variables and names. Use camel case to express multi-word or multi-character names
 11) Replace any variant form of Greek letters to their main form when representing a variable or parameter 
-    a) for example, replace "\\varepsilon" with "\\epsilon"
-    b) for example, replace "\\vartheta" with "\\theta"
-    c) for example, replace "\\varpi" with "\\pi"
-    d) for example, replace "\\varrho" with "\\rho"
-    e) for example, replace "\\varsigma" with "\\sigma"
-    f) for example, replace "\\varphi" with "\\phi"
+    a) replace "\\varepsilon" with "\\epsilon"
+    b) replace "\\vartheta" with "\\theta"
+    c) replace "\\varpi" with "\\pi"
+    d) replace "\\varrho" with "\\rho"
+    e) replace "\\varsigma" with "\\sigma"
+    f) replace "\\varphi" with "\\phi"
 12) If equations are separated by punctuation (like comma, period, semicolon), do not include the punctuation in the LaTeX code.
 13) Rewrite divisions to use "\\frac{{ }}{{ }}"
-    a) for example, replace "x ÷ y" with "\\frac{{x}}{{y}}"
-    b) for example, replace "x / y" with "\\frac{{x}}{{y}}"
+    a) replace "x \div y" with "\\frac{{x}}{{y}}"
+    b) replace "x ÷ y" with "\\frac{{x}}{{y}}"
+    c) replace "x / y" with "\\frac{{x}}{{y}}"
 14) Rewrite expressions with negative exponents as explicit fractions
     a) for example, replace "N^{{-1}}" with "\\frac{{1}}{{N}}"
 15) Do not use square brackets "[ ]", curly braces "{ }", and angle brackets "< >" when grouping expressions
