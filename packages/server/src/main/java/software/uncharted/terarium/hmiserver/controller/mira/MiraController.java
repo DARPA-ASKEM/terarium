@@ -474,23 +474,17 @@ public class MiraController {
 		try {
 			response = proxy.entitySimilarity(obj);
 		} catch (final FeignException e) {
-			throw handleMiraFeignException(e, "entity similarities", "curies", "", "mira.similarity.bad-curies");
+			throw handleMiraFeignException(e);
 		}
 
 		return new ResponseEntity<>(response.getBody(), response.getStatusCode());
 	}
 
-	private ResponseStatusException handleMiraFeignException(
-		final FeignException e,
-		final String returnType,
-		final String inputType,
-		final String input,
-		final String errorMessageCode
-	) {
+	private ResponseStatusException handleMiraFeignException(final FeignException e) {
 		final HttpStatus statusCode = HttpStatus.resolve(e.status());
 		if (statusCode != null && statusCode.is4xxClientError()) {
-			log.warn(String.format("MIRA did not return valid %s based on %s: %s", returnType, inputType, input));
-			return new ResponseStatusException(statusCode, messages.get(errorMessageCode));
+			log.warn(String.format("MIRA did not return valid %s based on %s: %s", "entity similarities", "curies", ""));
+			return new ResponseStatusException(statusCode, messages.get("mira.similarity.bad-curies"));
 		} else if (statusCode == HttpStatus.SERVICE_UNAVAILABLE) {
 			log.warn("MIRA is currently unavailable");
 			return new ResponseStatusException(statusCode, messages.get("mira.service-unavailable"));
@@ -498,9 +492,9 @@ public class MiraController {
 			log.error(
 				String.format(
 					"An error occurred while MIRA was trying to determine %s based on %s: %s",
-					returnType,
-					inputType,
-					input
+					"entity similarities",
+					"curies",
+					""
 				)
 			);
 			return new ResponseStatusException(statusCode, messages.get("mira.internal-error"));
@@ -510,9 +504,9 @@ public class MiraController {
 		log.error(
 			String.format(
 				"An unknown error occurred while MIRA was trying to determine %s based on %s: %s",
-				returnType,
-				inputType,
-				input
+				"entity similarities",
+				"curies",
+				""
 			)
 		);
 		return new ResponseStatusException(httpStatus, messages.get("generic.unknown"));
