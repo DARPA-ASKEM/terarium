@@ -436,7 +436,6 @@ const outputs = computed(() => {
 });
 const selectedOutputId = ref<string>();
 const selectedRunId = ref<string>('');
-
 const outputPanel = ref(null);
 
 const onSelection = (id: string) => {

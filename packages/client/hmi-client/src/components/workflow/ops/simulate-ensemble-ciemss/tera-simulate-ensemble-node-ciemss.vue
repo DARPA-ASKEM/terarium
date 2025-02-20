@@ -41,7 +41,6 @@ const props = defineProps<{
 }>();
 const emit = defineEmits(['append-output', 'update-state', 'open-drilldown', 'append-input-port']);
 
-// const runResults = ref<RunResults>({});
 const runResults = ref<{ [runId: string]: DataArray }>({});
 const runResultsSummary = ref<{ [runId: string]: DataArray }>({});
 const pyciemssMap = ref<Record<string, string>>({});
