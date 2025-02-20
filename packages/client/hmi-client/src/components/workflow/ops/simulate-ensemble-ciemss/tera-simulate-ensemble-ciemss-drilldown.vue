@@ -586,20 +586,16 @@ watch(
 	},
 	{ deep: true }
 );
-
-// Should trigger on active so we dont need to have this
-// watch(
-// 	() => props.node.state?.forecastId,
-// 	async () => {
-// 		if (!props.node.state?.forecastId) return;
-
-// 		const response = await getRunResultCiemss(props.node.state?.forecastId, 'result.csv');
-// 		runResults.value = response.runResults;
-// 	}
-// );
 </script>
 
 <style scoped>
+.output-settings-panel {
+	padding: var(--gap-4);
+	display: flex;
+	flex-direction: column;
+	gap: var(--gap-2);
+}
+
 .toolbar {
 	display: flex;
 	align-items: center;
