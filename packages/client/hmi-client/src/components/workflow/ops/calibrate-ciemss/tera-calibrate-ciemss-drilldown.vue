@@ -264,7 +264,7 @@
 					@update:active-index="updateLossTab"
 					class="px-2"
 				>
-					<AccordionTab header="Loss">
+					<AccordionTab v-if="node.state.showLossChart" header="Loss">
 						<!-- Loss chart -->
 						<div ref="lossChartContainer">
 							<vega-chart
@@ -409,6 +409,13 @@
 				</template>
 				<template #content>
 					<div class="output-settings-panel">
+						<h5>Loss</h5>
+						<tera-checkbox
+							label="Show loss chart"
+							:model-value="Boolean(node.state.showLossChart)"
+							@update:model-value="emit('update-state', { ...node.state, showLossChart: $event })"
+						/>
+						<Divider />
 						<!-- Parameter distributions -->
 						<tera-chart-settings
 							:title="'Parameter distributions'"
@@ -573,6 +580,7 @@ import { getCalendarSettingsFromModel } from '@/services/model';
 import { useCharts } from '@/composables/useCharts';
 import { useChartSettings } from '@/composables/useChartSettings';
 import { parseCsvAsset } from '@/utils/csv';
+import teraCheckbox from '@/components/widgets/tera-checkbox.vue';
 import type { CalibrationOperationStateCiemss } from './calibrate-operation';
 import { renameFnGenerator, getErrorData, usePreparedChartInputs, getSelectedOutputMapping } from './calibrate-utils';
 import { isInterventionPolicyBlank } from '../intervention-policy/intervention-policy-operation';
