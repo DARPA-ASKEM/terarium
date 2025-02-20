@@ -122,69 +122,6 @@ export async function getCalibrateBlobURL(runId: string) {
 	return resp.data.url;
 }
 
-// @deprecated - The notion of RunResult is a outdated with introduction of Vegalite charts
-// that use a more barebone setup closer to the raw data
-export async function getRunResultCiemss(runId: string, filename = 'result.csv') {
-	const resultCsv = await getRunResult(runId, filename);
-	const csvData = csvParse(resultCsv);
-
-	const output = {
-		parsedRawData: csvData,
-		runResults: {} as RunResults,
-		runConfigs: {} as { [paramKey: string]: number[] }
-	};
-	const { parsedRawData, runResults, runConfigs } = output;
-
-	const sampleList = new Array(Number(parsedRawData[parsedRawData.length - 1].sample_id) + 1)
-		.fill('0')
-		.map((_x, i) => i.toString());
-
-	// initialize runResults ds
-	for (let i = 0; i < sampleList.length; i++) {
-		runResults[i.toString()] = [];
-	}
-
-	// populate runResults
-	parsedRawData.forEach((inputRow) => {
-		const outputRowRunResults = { timestamp: inputRow.timepoint_id };
-		Object.keys(inputRow).forEach((key) => {
-			if (key.endsWith('_observable_state')) {
-				const newKey = key.replace(/_observable_state$/, '');
-				outputRowRunResults[newKey] = inputRow[key];
-				if (!runConfigs[newKey]) {
-					runConfigs[newKey] = [];
-				}
-				runConfigs[newKey].push(Number(inputRow[key]));
-				return;
-			}
-			if (key.endsWith('_state')) {
-				const newKey = key.replace(/_state$/, '');
-				outputRowRunResults[newKey] = inputRow[key];
-				if (!runConfigs[newKey]) {
-					runConfigs[newKey] = [];
-				}
-				runConfigs[newKey].push(Number(inputRow[key]));
-				return;
-			}
-			if (key.startsWith('persistent_') && key.endsWith('_param')) {
-				const newKey = key.replace(/_param$/, '').replace(/^persistent_/, '');
-				outputRowRunResults[newKey] = inputRow[key];
-				if (!runConfigs[newKey]) {
-					runConfigs[newKey] = [];
-				}
-				runConfigs[newKey].push(Number(inputRow[key]));
-			}
-		});
-		runResults[inputRow.sample_id as string].push(outputRowRunResults as any);
-	});
-
-	Object.keys(runConfigs).forEach((key) => {
-		runConfigs[key] = runConfigs[key].sort();
-	});
-
-	return output;
-}
-
 export async function getSimulation(id: Simulation['id']): Promise<Simulation | null> {
 	try {
 		const response = await API.get(`/simulations/${id}`);

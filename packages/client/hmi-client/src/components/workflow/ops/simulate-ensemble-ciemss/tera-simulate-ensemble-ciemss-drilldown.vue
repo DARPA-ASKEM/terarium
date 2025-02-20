@@ -294,7 +294,6 @@ import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.
 import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
 import TeraPyciemssCancelButton from '@/components/pyciemss/tera-pyciemss-cancel-button.vue';
 import {
-	getRunResultCiemss,
 	makeEnsembleCiemssSimulation,
 	CiemssMethodOptions,
 	getRunResultCSV,
