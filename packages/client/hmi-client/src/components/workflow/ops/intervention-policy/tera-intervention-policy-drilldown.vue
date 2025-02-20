@@ -265,7 +265,7 @@ import { useProjects } from '@/composables/project';
 import { interventionPolicyFromDocument, interventionPolicyFromDataset } from '@/services/goLLM';
 import { downloadDocumentAsset, getDocumentAsset, getDocumentFileAsText } from '@/services/document-assets';
 import TeraPdfPanel from '@/components/widgets/tera-pdf-panel.vue';
-import { useClientEvent } from '@/composables/useClientEvent';
+import { createClientEventHandler, useClientEvent } from '@/composables/useClientEvent';
 import TeraInterventionCard from './tera-intervention-card.vue';
 import {
 	InterventionPolicyOperation,
@@ -646,7 +646,7 @@ const extractInterventionPolicyFromInputs = async () => {
 
 useClientEvent(
 	[ClientEventType.TaskGollmInterventionsFromDocument, ClientEventType.TaskGollmInterventionsFromDataset],
-	props.node.state.taskIds
+	createClientEventHandler(props.node.state.taskIds)
 );
 
 const onSelectChartChange = () => {
