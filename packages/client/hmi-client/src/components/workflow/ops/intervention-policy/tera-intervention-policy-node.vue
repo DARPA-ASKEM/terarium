@@ -58,13 +58,13 @@
 import { computed, ref, watch } from 'vue';
 import { WorkflowNode, WorkflowPortStatus } from '@/types/workflow';
 import Button from 'primevue/button';
-import _ from 'lodash';
+import { cloneDeep, groupBy, mapValues } from 'lodash';
 import { blankIntervention, flattenInterventionData } from '@/services/intervention-policy';
 import { createInterventionChart } from '@/services/charts';
 import VegaChart from '@/components/widgets/VegaChart.vue';
 import TeraOperatorPlaceholder from '@/components/operator/tera-operator-placeholder.vue';
 import { ClientEventType } from '@/types/Types';
-import { createClientEventHandler, useClientEvent } from '@/composables/useClientEvent';
+import { createInProgressClientEventHandler, useClientEvent } from '@/composables/useClientEvent';
 import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue';
 import { InterventionPolicyState } from './intervention-policy-operation';
 
@@ -74,7 +74,7 @@ const props = defineProps<{
 }>();
 useClientEvent(
 	[ClientEventType.TaskGollmInterventionsFromDocument, ClientEventType.TaskGollmInterventionsFromDataset],
-	createClientEventHandler(props.node.state, 'taskIds')
+	createInProgressClientEventHandler(props.node.state, 'taskIds')
 );
 
 const isLoading = computed(() => props.node.state.taskIds.length > 0);
@@ -82,12 +82,12 @@ const isModelInputConnected = ref(false);
 
 const groupedOutputParameters = computed(() =>
 	Object.fromEntries(
-		Object.entries(_.groupBy(flattenInterventionData(props.node.state.interventionPolicy.interventions), 'appliedTo'))
+		Object.entries(groupBy(flattenInterventionData(props.node.state.interventionPolicy.interventions), 'appliedTo'))
 	)
 );
 
 const interventionSummary = computed(() => {
-	const interventions = _.cloneDeep(props.node.state.interventionPolicy.interventions);
+	const interventions = cloneDeep(props.node.state.interventionPolicy.interventions);
 	return interventions;
 });
 
@@ -101,7 +101,7 @@ const selectedOutputParameters = computed(() => {
 });
 
 const preparedCharts = computed(() =>
-	_.mapValues(groupedOutputParameters.value, (interventions, key) =>
+	mapValues(groupedOutputParameters.value, (interventions, key) =>
 		createInterventionChart(interventions, {
 			title: key,
 			width: 180,
@@ -117,7 +117,7 @@ watch(
 	() => props.node.inputs,
 	(inputs) => {
 		const modelId = inputs.find((input) => input.type === 'modelId')?.value?.[0];
-		const state = _.cloneDeep(props.node.state);
+		const state = cloneDeep(props.node.state);
 
 		const modelInputs = inputs.filter((input) => input.type === 'modelId');
 		if (modelInputs[0].status === WorkflowPortStatus.CONNECTED) {
@@ -140,7 +140,7 @@ watch(
 	() => isLoading.value,
 	() => {
 		if (!isLoading.value) {
-			const state = _.cloneDeep(props.node.state);
+			const state = cloneDeep(props.node.state);
 			state.taskIds = [];
 			emit('update-state', state);
 		}
