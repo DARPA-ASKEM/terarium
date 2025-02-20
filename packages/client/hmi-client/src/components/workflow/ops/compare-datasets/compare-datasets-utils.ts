@@ -22,7 +22,7 @@ interface DataResults {
 }
 
 export function isSimulationData(dataset: Dataset) {
-	return Boolean(dataset.metadata.simulationId);
+	return Boolean(dataset.metadata?.simulationId);
 }
 
 /**
