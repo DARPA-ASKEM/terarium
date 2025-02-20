@@ -22,7 +22,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.annotation.Secured;
-import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -35,7 +34,6 @@ import software.uncharted.terarium.hmiserver.models.dataservice.Artifact;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.Model;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.configurations.ModelConfiguration;
 import software.uncharted.terarium.hmiserver.models.mira.Curies;
-import software.uncharted.terarium.hmiserver.models.mira.DKG;
 import software.uncharted.terarium.hmiserver.models.mira.EntitySimilarityResult;
 import software.uncharted.terarium.hmiserver.models.task.TaskRequest;
 import software.uncharted.terarium.hmiserver.models.task.TaskRequest.TaskType;
@@ -214,28 +212,6 @@ public class MiraController {
 		}
 
 		return ResponseEntity.ok().body(comparisonResult);
-	}
-
-	@GetMapping("/geoname-search")
-	@Secured(Roles.USER)
-	public ResponseEntity<DKG> search(@RequestParam("q") final String q) {
-		final DKG finalResponse = new DKG(q);
-		try {
-			for (String s : q.split("_")) {
-				ResponseEntity<List<DKG>> response = proxy.search(q, 1, 0);
-				if (
-					response.getBody() == null &&
-					!response.getBody().isEmpty() &&
-					response.getBody().get(0).getLabels().contains(DKG.GEONAMES)
-				) {
-					finalResponse.getLocations().add(response.getBody().get(0).getCurie());
-				}
-			}
-		} catch (final FeignException e) {
-			throw handleMiraFeignException(e, "concepts", "query", q, "mira.concept.bad-query");
-		}
-
-		return new ResponseEntity<>(finalResponse, HttpStatus.OK);
 	}
 
 	@PostMapping("/amr-to-mmt")
@@ -491,23 +467,6 @@ public class MiraController {
 		return ResponseEntity.ok().build();
 	}
 
-	// This rebuilds the semantics ODE via MIRA
-	// 1. Send AMR to MIRA => MIRANet
-	// 2. Send MIRANet to MIRA to convert back to AMR Petrinet
-	// 3. Send AMR back
-	@PostMapping("/reconstruct-ode-semantics")
-	@Secured(Roles.USER)
-	public ResponseEntity<JsonNode> reconstructODESemantics(final Object amr) {
-		final ResponseEntity<JsonNode> response;
-		try {
-			response = proxy.reconstructODESemantics(amr);
-		} catch (final FeignException e) {
-			throw handleMiraFeignException(e, "ODE", "model", "", "mira.ode.bad-model");
-		}
-
-		return new ResponseEntity<>(response.getBody(), response.getStatusCode());
-	}
-
 	@PostMapping("/entity-similarity")
 	@Secured(Roles.USER)
 	public ResponseEntity<List<EntitySimilarityResult>> entitySimilarity(@RequestBody final Curies obj) {
@@ -515,23 +474,17 @@ public class MiraController {
 		try {
 			response = proxy.entitySimilarity(obj);
 		} catch (final FeignException e) {
-			throw handleMiraFeignException(e, "entity similarities", "curies", "", "mira.similarity.bad-curies");
+			throw handleMiraFeignException(e);
 		}
 
 		return new ResponseEntity<>(response.getBody(), response.getStatusCode());
 	}
 
-	private ResponseStatusException handleMiraFeignException(
-		final FeignException e,
-		final String returnType,
-		final String inputType,
-		final String input,
-		final String errorMessageCode
-	) {
+	private ResponseStatusException handleMiraFeignException(final FeignException e) {
 		final HttpStatus statusCode = HttpStatus.resolve(e.status());
 		if (statusCode != null && statusCode.is4xxClientError()) {
-			log.warn(String.format("MIRA did not return valid %s based on %s: %s", returnType, inputType, input));
-			return new ResponseStatusException(statusCode, messages.get(errorMessageCode));
+			log.warn(String.format("MIRA did not return valid %s based on %s: %s", "entity similarities", "curies", ""));
+			return new ResponseStatusException(statusCode, messages.get("mira.similarity.bad-curies"));
 		} else if (statusCode == HttpStatus.SERVICE_UNAVAILABLE) {
 			log.warn("MIRA is currently unavailable");
 			return new ResponseStatusException(statusCode, messages.get("mira.service-unavailable"));
@@ -539,9 +492,9 @@ public class MiraController {
 			log.error(
 				String.format(
 					"An error occurred while MIRA was trying to determine %s based on %s: %s",
-					returnType,
-					inputType,
-					input
+					"entity similarities",
+					"curies",
+					""
 				)
 			);
 			return new ResponseStatusException(statusCode, messages.get("mira.internal-error"));
@@ -551,9 +504,9 @@ public class MiraController {
 		log.error(
 			String.format(
 				"An unknown error occurred while MIRA was trying to determine %s based on %s: %s",
-				returnType,
-				inputType,
-				input
+				"entity similarities",
+				"curies",
+				""
 			)
 		);
 		return new ResponseStatusException(httpStatus, messages.get("generic.unknown"));
