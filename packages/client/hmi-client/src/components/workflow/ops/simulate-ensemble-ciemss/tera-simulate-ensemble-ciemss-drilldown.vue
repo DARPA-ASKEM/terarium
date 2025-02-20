@@ -300,7 +300,8 @@ import {
 	parseEnsemblePyciemssMap,
 	getEnsembleResultModelConfigMap
 } from '@/services/models/simulation-service';
-import { deleteAnnotation, updateChartSettingsBySelectedVariables } from '@/services/chart-settings';
+import { updateChartSettingsBySelectedVariables } from '@/services/chart-settings';
+import { deleteAnnotation } from '@/services/chart-annotation';
 import { getModelConfigurationById, getObservables, getInitials } from '@/services/model-configurations';
 import { nodeMetadata } from '@/components/workflow/util';
 import type { WorkflowNode } from '@/types/workflow';
