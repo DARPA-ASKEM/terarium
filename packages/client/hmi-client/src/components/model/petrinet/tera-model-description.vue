@@ -45,7 +45,7 @@ const props = defineProps<{
 
 const emit = defineEmits(['update-model']);
 
-const currentActiveIndexes = ref([1, 2, 3]);
+const currentActiveIndexes = ref([0, 1, 2, 3]);
 const relatedTerariumArtifacts = ref<Asset[]>([]);
 const relatedTerariumModels = computed(() => relatedTerariumArtifacts.value.filter((d) => isModel(d)) as Model[]);
 const relatedTerariumDatasets = computed(() => relatedTerariumArtifacts.value.filter((d) => isDataset(d)) as Dataset[]);

@@ -226,12 +226,12 @@
 		</template>
 	</tera-drilldown>
 	<tera-modal v-if="viewAllEquations" class="w-8" @modal-mask-clicked="viewAllEquations = false">
-		<template #header
-			><div class="flex align-items-center">
+		<template #header>
+			<div class="flex align-items-center">
 				<h4>LaTeX</h4>
-				<Button class="p-button-sm ml-auto" severity="secondary" @click="setCopyClipboard(allEquationsCopy)">{{
-					btnCopyLabel
-				}}</Button>
+				<Button class="p-button-sm ml-auto" severity="secondary" @click="setCopyClipboard(allEquationsCopy)">
+					{{ btnCopyLabel }}
+				</Button>
 			</div>
 		</template>
 		<textarea v-model="allEquationsCopy" readonly width="100%" :rows="allEquations.length + 1" />

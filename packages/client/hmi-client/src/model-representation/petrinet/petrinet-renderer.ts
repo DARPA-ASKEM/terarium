@@ -1,6 +1,6 @@
 import * as d3 from 'd3';
 import { isEmpty } from 'lodash';
-import { BasicRenderer, INode, IEdge } from '@graph-scaffolder/index';
+import { BasicRenderer, INode, IEdge, moveToLabel } from '@graph-scaffolder/index';
 import type { D3SelectionINode, D3SelectionIEdge } from '@/services/graph';
 import { NodeType } from '@/services/graph';
 import { pointOnPath, partialPath } from '@/utils/svg';
@@ -499,5 +499,15 @@ export class PetrinetRenderer extends BasicRenderer<NodeData, EdgeData> {
 			default:
 				return { x: node.x, y: node.y };
 		}
+	}
+
+	// Given a specific id, find top level id, here we always have a single level so
+	// the id resolves to itself
+	resolveChildId(id: string) {
+		return id;
+	}
+
+	zoomTo(label: string) {
+		moveToLabel(this, label, 1500);
 	}
 }
