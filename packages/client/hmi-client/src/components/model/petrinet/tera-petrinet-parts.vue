@@ -74,7 +74,6 @@
 				:part-type="PartType.TRANSITION"
 				v-if="!isEmpty(transitions) && !isEmpty(mmt.templates)"
 				:items="transitionsList"
-				:collapsed-items="collapsedTemplates"
 				:feature-config="featureConfig"
 				:filter="transitionsFilter"
 				show-matrix
@@ -108,11 +107,11 @@
 
 <script setup lang="ts">
 import type { Model, Transition, State } from '@/types/Types';
-import { isEmpty } from 'lodash';
+import { isEmpty, isPlainObject } from 'lodash';
 import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
 import { computed, ref, watch } from 'vue';
-import type { MiraModel, MiraTemplateParams } from '@/model-representation/mira/mira-common';
+import type { MiraModel, MiraTemplate, MiraTemplateParams } from '@/model-representation/mira/mira-common';
 import { collapseInitials, collapseParameters, collapseTemplates } from '@/model-representation/mira/mira';
 import TeraModelPart from '@/components/model/model-parts/tera-model-part.vue';
 import type { FeatureConfig } from '@/types/common';
@@ -178,23 +177,39 @@ const transitions = computed<Transition[]>(() =>
 	}))
 );
 
-const collapsedTemplates = (() => {
-	const templateMap = new Map<string, string[]>();
-	const collapsedTemplatesMap = collapseTemplates(props.mmt).matrixMap;
-	Array.from(collapsedTemplatesMap.keys()).forEach((templateId) => {
-		templateMap.set(
-			templateId,
-			Array.from(collapsedTemplatesMap.get(templateId) ?? []).map(({ name }) => name)
-		);
+const createTransitionParts = () => {
+	const extract = (t: MiraTemplate): ModelPartItem => ({
+		id: t.name,
+		name: t.name,
+		input: t.subject.name,
+		output: t.outcome.name,
+		expression: t.rate_law
 	});
-	return templateMap;
-})();
+
+	const templatesMap = collapseTemplates(props.mmt).matrixMap;
+	return Array.from(templatesMap.keys()).map((templateId) => {
+		const children = templatesMap.get(templateId) as MiraTemplate[];
+		if (children.length === 1) {
+			const item = children[0];
+			return {
+				base: extract(item),
+				isParent: false,
+				children: []
+			};
+		}
+		return {
+			base: { id: templateId, name: templateId },
+			isParent: true,
+			children: children.map(extract)
+		};
+	});
+};
 
 const transitionsList: {
 	base: ModelPartItem;
 	children: ModelPartItem[];
 	isParent: boolean;
-}[] = createPartsList(collapsedTemplates, transitions.value, PartType.TRANSITION);
+}[] = createTransitionParts();
 
 const parameterMatrixModalId = ref('');
 const transitionMatrixModalId = ref('');
