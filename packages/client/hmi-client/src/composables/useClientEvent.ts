@@ -15,11 +15,11 @@ export function useClientEvent(eventType: ClientEventType | ClientEventType[], t
 	});
 }
 
-function createClientEventHandler(taskIds) {
+function createClientEventHandler(taskIds: string[]) {
 	return async (event: ClientEvent<TaskResponse>) => {
-		if (!taskIds.value.includes(event.data?.id)) return;
+		if (!taskIds.includes(event.data?.id)) return;
 		if ([TaskStatus.Success, TaskStatus.Cancelled, TaskStatus.Failed].includes(event.data.status)) {
-			taskIds.value = taskIds.value.filter((id) => id !== event.data.id);
+			taskIds = taskIds.filter((id) => id !== event.data.id);
 		}
 	};
 }
