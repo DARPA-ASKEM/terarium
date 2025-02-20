@@ -1,14 +1,14 @@
 <template>
 	<main>
 		<section>
-			<!-- <tera-node-preview
+			<tera-node-preview
 				:node="node"
 				:is-loading="!!inProgressForecastId"
-				:prepared-charts="Object.assign({}, useEnsembleVariableCharts)"
-				:chart-settings="[...ensembleVariableCharts]"
+				:prepared-charts="Object.assign({}, ensembleVariableCharts)"
+				:chart-settings="selectedEnsembleVariableSettings"
 				:are-embed-actions-visible="true"
 				:placeholder="placeholderText"
-			/> -->
+			/>
 		</section>
 		<Button v-if="areInputsFilled" label="Open" @click="emit('open-drilldown')" severity="secondary" outlined />
 	</main>
@@ -66,19 +66,7 @@ const { useEnsembleVariableCharts } = useCharts(
 );
 
 const { selectedEnsembleVariableSettings } = useChartSettings(props, emit);
-
-const ensembleVariableCharts = computed(() => {
-	const charts = useEnsembleVariableCharts(selectedEnsembleVariableSettings, null);
-	const ensembleCharts = selectedEnsembleVariableSettings.value.map((setting) => {
-		// Grab the first chart only since the rest of the charts are for model configurations charts
-		const spec = charts.value[setting.id][0];
-		// Make sure the chart since width of the chart can be too small if charts were small multiple charts.
-		spec.width = chartSize.value.width;
-		spec.height = chartSize.value.height + 100;
-		return spec;
-	});
-	return ensembleCharts;
-});
+const ensembleVariableCharts = useEnsembleVariableCharts(selectedEnsembleVariableSettings, null);
 
 const isChartsEmpty = computed(() => _.isEmpty(ensembleVariableCharts.value));
 
