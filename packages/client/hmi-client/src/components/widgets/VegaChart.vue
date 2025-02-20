@@ -42,6 +42,7 @@ import { expressionFunctions } from '@/services/charts';
 
 // This config is default for all charts, but can be overridden by individual chart spec
 const defaultChartConfig: Partial<Config> = {
+	/* commented out Feb 2025, this is disrupting Vegalite export
 	customFormatTypes: true,
 	numberFormatType: 'chartNumberFormatter',
 	numberFormat: 'chartNumberFormatter',
@@ -49,6 +50,7 @@ const defaultChartConfig: Partial<Config> = {
 		numberFormat: 'tooltipFormatter',
 		numberFormatType: 'tooltipFormatter'
 	},
+	*/
 	axis: {
 		labelFontSize: 12
 	}
