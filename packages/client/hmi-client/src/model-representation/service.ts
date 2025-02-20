@@ -51,14 +51,16 @@ export const getModelRenderer = (
 		// FIXME: Testing, move to mira service
 		const processedSet = new Set<string>();
 		const conceptData: any = [];
+
 		miraModel.templates.forEach((t) => {
 			['subject', 'outcome', 'controller'].forEach((conceptKey) => {
 				if (!t[conceptKey]) return;
 				const conceptName = t[conceptKey].name;
 				if (processedSet.has(conceptName)) return;
+
 				conceptData.push({
 					// FIXME: use reverse-lookup to get root concept
-					base: _.first(conceptName.split('_')),
+					base: isEmpty(t[conceptKey].context) ? conceptName : _.first(conceptName.split('_')),
 					...t[conceptKey].context
 				});
 
