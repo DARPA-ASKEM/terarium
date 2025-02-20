@@ -109,12 +109,13 @@ import { ref, computed } from 'vue';
 import Button from 'primevue/button';
 import RadioButton from 'primevue/radiobutton';
 import { ChartSetting, ChartSettingType, ChartSettingComparison } from '@/types/common';
-import { ChartAnnotation } from '@/types/Types';
+import { ChartAnnotation, ChartAnnotationType } from '@/types/Types';
 import Divider from 'primevue/divider';
 import TeraInputText from '@/components/widgets/tera-input-text.vue';
 import TeraCheckbox from '@/components/widgets/tera-checkbox.vue';
 import TeraChartSettingsItem from '@/components/widgets/tera-chart-settings-item.vue';
 import { getComparisonVariableColors } from '@/services/chart-settings';
+import { getChartAnnotationType } from '@/services/chart-annotation';
 
 const props = defineProps<{
 	activeSettings: ChartSetting | null;
@@ -204,10 +205,15 @@ const onColorChange = (event) => {
 
 // ========== Chart Annotations =========
 const chartAnnotations = computed(() => {
-	if (props.annotations === undefined) {
+	if (props.annotations === undefined || !props.activeSettings) {
 		return undefined;
 	}
-	return props.annotations.filter((annotation) => annotation.chartId === props.activeSettings?.id);
+	const chartAnnotationType = getChartAnnotationType(props.activeSettings);
+	return props.annotations
+		.filter((annotation) => annotation.chartId === props.activeSettings?.id)
+		.filter(
+			(a) => (a.chartType ?? ChartAnnotationType.ForecastChart) /** fallback to default type */ === chartAnnotationType
+		);
 });
 const isGeneratingAnnotation = ref(false);
 const generateAnnotationQuery = ref<string>('');

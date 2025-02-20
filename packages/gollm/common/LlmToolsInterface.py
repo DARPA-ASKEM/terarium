@@ -1,4 +1,5 @@
 from typing import List, Optional
+from entities import ChartAnnotationType
 
 
 class LlmToolsInterface:
@@ -63,7 +64,7 @@ class LlmToolsInterface:
         """Create a prompt that performs a general query"""
         pass
 
-    def create_chart_annotation_prompt(self, preamble: str, instruction: str, schema: str) -> str:
+    def create_chart_annotation_prompt(self, chartType: ChartAnnotationType, preamble: str, instruction: str, schema: str) -> str:
         """Create a prompt that annotates a chart"""
         pass
 

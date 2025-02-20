@@ -111,6 +111,7 @@ export interface ChartAnnotation extends TerariumAsset {
     nodeId: string;
     outputId: string;
     chartId: string;
+    chartType: ChartAnnotationType;
     layerSpec: any;
     llmGenerated: boolean;
     metadata: any;
@@ -1083,6 +1084,11 @@ export enum AssetType {
     InterventionPolicy = "intervention-policy",
     NotebookSession = "notebook-session",
     Project = "project",
+}
+
+export enum ChartAnnotationType {
+    ForecastChart = "FORECAST_CHART",
+    QuantileForecastChart = "QUANTILE_FORECAST_CHART",
 }
 
 export enum EvaluationScenarioStatus {

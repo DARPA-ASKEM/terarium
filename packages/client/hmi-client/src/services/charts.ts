@@ -3,7 +3,7 @@ import { isEmpty, pick } from 'lodash';
 import { percentile } from '@/utils/math';
 import { VisualizationSpec } from 'vega-embed';
 import { v4 as uuidv4 } from 'uuid';
-import type { ChartAnnotation, FunmanInterval } from '@/types/Types';
+import { ChartAnnotation, ChartAnnotationType, FunmanInterval } from '@/types/Types';
 import { CalendarDateType, SensitivityChartType } from '@/types/common';
 import { countDigits, fixPrecisionError } from '@/utils/number';
 import { format } from 'd3';
@@ -1279,8 +1279,8 @@ export function createQuantilesForecastChart(
 						},
 						encoding: {
 							x: { field: 'x', type: 'quantitative', axis: { ...xaxis } },
-							y: { field: 'lower', type: 'quantitative', axis: { ...yaxis }, scale: yScale },
-							y2: { field: 'upper', type: 'quantitative' },
+							y: { field: 'upper', type: 'quantitative', axis: { ...yaxis }, scale: yScale },
+							y2: { field: 'lower', type: 'quantitative' },
 							color: encodingColor(),
 							opacity: {
 								legend: false,
@@ -1459,19 +1459,30 @@ export function createSensitivityRankingChart(data: { parameter: string; score: 
 }
 
 /**
- * Applies annotation layers to a forecast chart. Each annotation is represented as a layer specification object.
- * By default, the annotation layers are added as sub-layers to the second layer (statistics layer) of the forecast chart specification.
+ * Applies annotation layers to a chart. Each annotation is represented as a layer specification object.
  *
- * @param chartSpec - The forecast chart specification.
+ * @param chartSpec - The chart specification.
  * @param annotations - A list of annotations to be applied.
- * @param targetLayerIndex - The index of the target layer to which the annotations will be attached (default is 1).
+ * @param charType - The type of the chart to which the annotations are applied.
  * @returns The updated chart specification with the applied annotations.
  */
-export function applyForecastChartAnnotations(chartSpec: any, annotations: ChartAnnotation[], targetLayerIndex = 1) {
-	if (isEmpty(annotations)) return chartSpec;
-	const layerSpecs = annotations.map((a) => a.layerSpec);
-	if (!chartSpec.layer[targetLayerIndex]) return chartSpec;
-	chartSpec.layer[targetLayerIndex].layer.push(...layerSpecs);
+export function applyChartAnnotations(
+	chartSpec: any,
+	annotations: ChartAnnotation[],
+	chartType: ChartAnnotationType = ChartAnnotationType.ForecastChart
+) {
+	const annotationForTheType = annotations.filter(
+		(a) => (a.chartType ?? ChartAnnotationType.ForecastChart) === chartType
+	);
+	if (isEmpty(annotationForTheType)) return chartSpec;
+	const annotationLayerSpecs = annotationForTheType.map((a) => a.layerSpec);
+	const targetLayer = {
+		[ChartAnnotationType.ForecastChart]: chartSpec.layer?.[1],
+		[ChartAnnotationType.QuantileForecastChart]: chartSpec.layer?.[0]
+	}[chartType];
+	// Check if target layer has sub layer array where annotations can be added
+	if (!targetLayer?.layer) return chartSpec;
+	targetLayer.layer.push(...annotationLayerSpecs);
 	return chartSpec;
 }
 
@@ -1508,6 +1519,7 @@ export function createForecastChartAnnotation(axis: 'x' | 'y', datum: number, la
 		id: uuidv4(),
 		nodeId: '',
 		outputId: '',
+		chartType: ChartAnnotationType.ForecastChart,
 		chartId: '',
 		layerSpec,
 		llmGenerated: false,
