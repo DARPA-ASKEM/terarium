@@ -11,6 +11,7 @@ export interface CalibrationOperationStateCiemss extends BaseState {
 	timestampColName: string;
 	mapping: CalibrateMap[];
 	chartSettings: ChartSetting[] | null; // null indicates that the chart settings have not been set yet
+	showLossChart: boolean;
 	simulationsInProgress: string[];
 
 	currentProgress: number;
@@ -54,6 +55,7 @@ export const CalibrationOperationCiemss: Operation = {
 		const init: CalibrationOperationStateCiemss = {
 			method: CiemssMethodOptions.dopri5,
 			chartSettings: null,
+			showLossChart: true,
 			timestampColName: '',
 			mapping: [{ modelVariable: '', datasetVariable: '' }],
 			simulationsInProgress: [],
