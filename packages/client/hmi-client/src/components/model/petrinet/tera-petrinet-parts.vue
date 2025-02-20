@@ -107,7 +107,7 @@
 
 <script setup lang="ts">
 import type { Model, Transition, State } from '@/types/Types';
-import { isEmpty, isPlainObject } from 'lodash';
+import { isEmpty } from 'lodash';
 import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
 import { computed, ref, watch } from 'vue';
@@ -127,6 +127,12 @@ const props = defineProps<{
 	featureConfig: FeatureConfig;
 }>();
 
+interface ModelPartItemTree {
+	base: ModelPartItem;
+	children: ModelPartItem[];
+	isParent: boolean;
+}
+
 const emit = defineEmits(['update-state', 'update-parameter', 'update-observable', 'update-transition', 'update-time']);
 
 // Keep track of active indexes using ref
@@ -142,11 +148,7 @@ const time = computed(() => (props.model?.semantics?.ode?.time ? [props.model?.s
 
 const collapsedInitials = collapseInitials(props.mmt);
 const states = computed<State[]>(() => props.model?.model?.states ?? []);
-let stateList: {
-	base: ModelPartItem;
-	children: ModelPartItem[];
-	isParent: boolean;
-}[] = createPartsList(collapsedInitials, props.model, PartType.STATE);
+let stateList: ModelPartItemTree[] = createPartsList(collapsedInitials, props.model, PartType.STATE);
 
 watch(
 	() => props.model?.model?.states,
@@ -156,11 +158,7 @@ watch(
 );
 
 const collapsedParameters = collapseParameters(props.mmt, props.mmtParams);
-let parameterList: {
-	base: ModelPartItem;
-	children: ModelPartItem[];
-	isParent: boolean;
-}[] = createPartsList(collapsedParameters, props.model, PartType.PARAMETER);
+let parameterList: ModelPartItemTree[] = createPartsList(collapsedParameters, props.model, PartType.PARAMETER);
 
 watch(
 	() => props.model.semantics?.ode?.parameters,
@@ -205,20 +203,12 @@ const createTransitionParts = () => {
 	});
 };
 
-const transitionsList: {
-	base: ModelPartItem;
-	children: ModelPartItem[];
-	isParent: boolean;
-}[] = createTransitionParts();
+const transitionsList: ModelPartItemTree[] = createTransitionParts();
 
 const parameterMatrixModalId = ref('');
 const transitionMatrixModalId = ref('');
 const observablesList = computed(() => createObservablesList(observables.value));
-const timeList: {
-	base: ModelPartItem;
-	children: ModelPartItem[];
-	isParent: boolean;
-}[] = createTimeList(time.value);
+const timeList: ModelPartItemTree[] = createTimeList(time.value);
 </script>
 
 <style scoped>
