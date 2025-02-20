@@ -214,7 +214,7 @@
 				<tera-notebook-error v-if="!_.isEmpty(node.state?.errorMessage?.traceback)" v-bind="node.state.errorMessage" />
 				<section ref="outputPanel">
 					<div class="mx-2" ref="chartWidthDiv"></div>
-					<Accordion>
+					<Accordion :active-index="0">
 						<template v-if="!isLoading">
 							<AccordionTab v-if="selectedEnsembleVariableSettings.length > 0" header="Ensemble variables over time">
 								<div class="flex flex-row" v-for="setting of selectedEnsembleVariableSettings" :key="setting.id">
@@ -242,17 +242,16 @@
 				content-width="360px"
 			>
 				<template #overlay>
-					<tera-chart-settings-panel
-						:annotations="
-							[ChartSettingType.VARIABLE_ENSEMBLE].includes(activeChartSettings?.type as ChartSettingType)
-								? getChartAnnotationsByChartId(activeChartSettings?.id ?? '')
-								: undefined
-						"
-						:active-settings="activeChartSettings"
-						:generate-annotation="generateAnnotation"
-						@update-settings="updateActiveChartSettings"
-						@delete-annotation="deleteAnnotation"
-						@close="setActiveChartSettings(null)"
+					<tera-chart-settings
+						:title="'Ensemble variables over time'"
+						:settings="chartSettings"
+						:type="ChartSettingType.VARIABLE_ENSEMBLE"
+						:select-options="ensembleVariables"
+						:selected-options="selectedEnsembleVariableSettings.map((s) => s.selectedVariables[0])"
+						@open="setActiveChartSettings($event)"
+						@remove="removeChartSettings"
+						@selection-change="updateChartSettings"
+						@toggle-ensemble-variable-setting-option="updateEnsembleVariableSettingOption"
 					/>
 				</template>
 				<template #content>
@@ -297,7 +296,8 @@ import {
 	makeEnsembleCiemssSimulation,
 	CiemssMethodOptions,
 	getRunResultCSV,
-	parsePyCiemssMap
+	parseEnsemblePyciemssMap,
+	getEnsembleResultModelConfigMap
 } from '@/services/models/simulation-service';
 import { getModelConfigurationById, getObservables, getInitials } from '@/services/model-configurations';
 import { nodeMetadata } from '@/components/workflow/util';
@@ -314,9 +314,7 @@ import { useCharts } from '@/composables/useCharts';
 import { useDrilldownChartSize } from '@/composables/useDrilldownChartSize';
 import { DataArray } from '@/utils/stats';
 import VegaChart from '@/components/widgets/VegaChart.vue';
-import teraChartSettingsPanel from '@/components/widgets/tera-chart-settings-panel.vue';
 import teraChartSettings from '@/components/widgets/tera-chart-settings.vue';
-import { deleteAnnotation, updateChartSettingsBySelectedVariables } from '@/services/chart-settings';
 import {
 	formatSimulateModelConfigurations,
 	getChartEnsembleMapping,
@@ -329,6 +327,7 @@ import {
 	speedValues,
 	normalValues
 } from './simulate-ensemble-ciemss-operation';
+import { setStateToModelConfigMap } from '../calibrate-ensemble-ciemss/calibrate-ensemble-util';
 
 const props = defineProps<{
 	node: WorkflowNode<SimulateEnsembleCiemssOperationState>;
@@ -393,6 +392,9 @@ const chartSize = useDrilldownChartSize(chartWidthDiv);
 const stateToModelConfigMap = ref<{ [key: string]: string[] }>({});
 const selectedOutputMapping = computed(() => getChartEnsembleMapping(props.node, stateToModelConfigMap.value));
 const preparedChartInputs = usePreparedChartInputs(props, runResults, runResultsSummary, pyciemssMap);
+const ensembleVariables = computed(() =>
+	getChartEnsembleMapping(props.node, stateToModelConfigMap.value).map((d) => d.newName)
+);
 
 const {
 	activeChartSettings,
@@ -400,20 +402,20 @@ const {
 	removeChartSettings,
 	updateChartSettings,
 	selectedEnsembleVariableSettings,
-	selectedErrorVariableSettings,
 	updateEnsembleVariableSettingOption,
-	updateQauntilesOptions,
 	updateActiveChartSettings,
 	setActiveChartSettings
 } = useChartSettings(props, emit);
 
-const {
-	generateAnnotation,
-	getChartAnnotationsByChartId,
-	useEnsembleVariableCharts,
-	useWeightsDistributionCharts,
-	useEnsembleErrorCharts
-} = useCharts(props.node.id, null, allModelConfigurations, preparedChartInputs, chartSize, null, selectedOutputMapping);
+const { generateAnnotation, getChartAnnotationsByChartId, useEnsembleVariableCharts } = useCharts(
+	props.node.id,
+	null,
+	allModelConfigurations,
+	preparedChartInputs,
+	chartSize,
+	null,
+	selectedOutputMapping
+);
 
 const ensembleVariableCharts = useEnsembleVariableCharts(selectedEnsembleVariableSettings, null);
 
@@ -511,7 +513,6 @@ const runEnsemble = async () => {
 
 onMounted(async () => {
 	if (!modelConfigurationIds) return;
-	// stateToModelConfigMap.value = await setStateToModelConfigMap(modelConfigurationIds);
 	allModelConfigurations.value = await Promise.all(modelConfigurationIds.map((id) => getModelConfigurationById(id)));
 
 	modelConfigIdToNameMap.value = {};
@@ -559,9 +560,11 @@ watch(
 			getRunResultCSV(forecastId, 'result.csv'),
 			getRunResultCSV(forecastId, 'result_summary.csv')
 		]);
-		pyciemssMap.value = parsePyCiemssMap(result[0]);
-		runResults.value[forecastId] = result;
-		runResultsSummary.value[forecastId] = resultSummary;
+		const ensembleVarModelConfigMap = (await getEnsembleResultModelConfigMap(forecastId)) ?? {};
+		pyciemssMap.value = parseEnsemblePyciemssMap(result[0], ensembleVarModelConfigMap);
+		runResults.value[selectedRunId.value] = result;
+		runResultsSummary.value[selectedRunId.value] = resultSummary;
+		stateToModelConfigMap.value = await setStateToModelConfigMap(modelConfigurationIds);
 	},
 	{ immediate: true }
 );

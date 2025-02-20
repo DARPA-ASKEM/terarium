@@ -53,7 +53,10 @@ import {
 	CalibrateEnsembleMappingRow,
 	isCalibrateEnsembleMappingRow
 } from '@/components/workflow/ops/calibrate-ensemble-ciemss/calibrate-ensemble-ciemss-operation';
-import { SimulateEnsembleMappingRow } from '@/components/workflow/ops/simulate-ensemble-ciemss/simulate-ensemble-ciemss-operation';
+import {
+	isSimulateEnsembleMappingRow,
+	SimulateEnsembleMappingRow
+} from '@/components/workflow/ops/simulate-ensemble-ciemss/simulate-ensemble-ciemss-operation';
 import { getModelConfigName, getParameters } from '@/services/model-configurations';
 import { EnsembleErrorData } from '@/components/workflow/ops/calibrate-ensemble-ciemss/calibrate-ensemble-util';
 import {
@@ -109,6 +112,9 @@ const modelVarToDatasetVar = (mapping: VariableMappings, modelVariable: string) 
 	}
 	if (isCalibrateEnsembleMappingRow(mapping[0])) {
 		return (mapping as CalibrateEnsembleMappingRow[]).find((d) => d.newName === modelVariable)?.datasetMapping ?? '';
+	}
+	if (isSimulateEnsembleMappingRow(mapping[0])) {
+		return (mapping as SimulateEnsembleMappingRow[]).find((d) => d.newName === modelVariable)?.newName ?? '';
 	}
 	return '';
 };
@@ -810,6 +816,7 @@ export function useCharts(
 				const datasetVar = modelVarToDatasetVar(mapping?.value || [], setting.selectedVariables[0]);
 				if (setting.showIndividualModels) {
 					const smallMultiplesCharts = ['', ...modelConfigIds].map((modelConfigId, index) => {
+						console.log(chartData.value?.pyciemssMap);
 						const { sampleLayerVariables, statLayerVariables, options } = createEnsembleVariableChartOptions(
 							setting,
 							modelConfigId,
@@ -852,6 +859,7 @@ export function useCharts(
 					});
 					charts[setting.id] = smallMultiplesCharts;
 				} else {
+					console.log('Not show indiv');
 					// Build a single ensemble chart
 					const { sampleLayerVariables, statLayerVariables, options } = createEnsembleVariableChartOptions(
 						setting,
@@ -891,8 +899,10 @@ export function useCharts(
 					charts[setting.id] = [chart];
 				}
 			});
+			console.log(charts);
 			return charts;
 		});
+		console.log(ensembleVariableCharts);
 		return ensembleVariableCharts;
 	};
 

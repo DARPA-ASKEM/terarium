@@ -1,14 +1,14 @@
 <template>
 	<main>
 		<section>
-			<tera-node-preview
+			<!-- <tera-node-preview
 				:node="node"
 				:is-loading="!!inProgressForecastId"
 				:prepared-charts="Object.assign({}, useEnsembleVariableCharts)"
 				:chart-settings="[...ensembleVariableCharts]"
 				:are-embed-actions-visible="true"
 				:placeholder="placeholderText"
-			/>
+			/> -->
 		</section>
 		<Button v-if="areInputsFilled" label="Open" @click="emit('open-drilldown')" severity="secondary" outlined />
 	</main>
