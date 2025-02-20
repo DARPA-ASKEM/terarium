@@ -17,13 +17,7 @@
 <script setup lang="ts">
 import _ from 'lodash';
 import { ref, computed, watch } from 'vue';
-import {
-	getRunResultCiemss,
-	pollAction,
-	getSimulation,
-	getRunResultCSV,
-	parsePyCiemssMap
-} from '@/services/models/simulation-service';
+import { pollAction, getSimulation, getRunResultCSV, parsePyCiemssMap } from '@/services/models/simulation-service';
 import Button from 'primevue/button';
 import { WorkflowNode, WorkflowPortStatus } from '@/types/workflow';
 import { RunResults } from '@/types/SimulateConfig';
