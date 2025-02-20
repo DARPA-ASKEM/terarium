@@ -667,7 +667,7 @@ const extractInterventionPolicyFromInputs = async () => {
 
 useClientEvent(
 	[ClientEventType.TaskGollmInterventionsFromDocument, ClientEventType.TaskGollmInterventionsFromDataset],
-	createClientEventHandler(props.node.state.taskIds)
+	createClientEventHandler(props.node.state, 'taskIds')
 );
 
 const onSelectChartChange = () => {
