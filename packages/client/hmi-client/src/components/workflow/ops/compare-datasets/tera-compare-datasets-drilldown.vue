@@ -403,7 +403,7 @@ import { Dataset, InterventionPolicy, ModelConfiguration } from '@/types/Types';
 import TeraCheckbox from '@/components/widgets/tera-checkbox.vue';
 import RadioButton from 'primevue/radiobutton';
 import VegaChart from '@/components/widgets/VegaChart.vue';
-import { deleteAnnotation } from '@/services/chart-settings';
+import { deleteAnnotation } from '@/services/chart-annotation';
 import TeraChartSettings from '@/components/widgets/tera-chart-settings.vue';
 import TeraChartSettingsPanel from '@/components/widgets/tera-chart-settings-panel.vue';
 import TeraChartSettingsQuantiles from '@/components/widgets/tera-chart-settings-quantiles.vue';

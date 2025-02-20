@@ -458,7 +458,7 @@ import type {
 } from '@/types/Types';
 import { AssetType } from '@/types/Types';
 import type { WorkflowNode } from '@/types/workflow';
-import { deleteAnnotation } from '@/services/chart-settings';
+import { deleteAnnotation } from '@/services/chart-annotation';
 import { flattenInterventionData, getInterventionPolicyById } from '@/services/intervention-policy';
 import {
 	getModelByModelConfigurationId,
