@@ -1,5 +1,4 @@
 import { onMounted, onUnmounted } from 'vue';
-import _ from 'lodash';
 
 import { subscribe, unsubscribe } from '@/services/ClientEventService';
 import { type ClientEvent, ClientEventType, type TaskResponse, TaskStatus } from '@/types/Types';
