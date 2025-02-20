@@ -152,7 +152,6 @@ watch(
 watch(
 	() => props.node.state.inProgressForecastId,
 	async (id) => {
-		console.log('hitting in progress watcher - todo check why 2 outputs on 1 ');
 		if (!id || id === '') return;
 
 		const response = await pollResult(id);
