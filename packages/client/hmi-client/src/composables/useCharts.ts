@@ -816,7 +816,6 @@ export function useCharts(
 				const datasetVar = modelVarToDatasetVar(mapping?.value || [], setting.selectedVariables[0]);
 				if (setting.showIndividualModels) {
 					const smallMultiplesCharts = ['', ...modelConfigIds].map((modelConfigId, index) => {
-						console.log(chartData.value?.pyciemssMap);
 						const { sampleLayerVariables, statLayerVariables, options } = createEnsembleVariableChartOptions(
 							setting,
 							modelConfigId,
@@ -859,7 +858,6 @@ export function useCharts(
 					});
 					charts[setting.id] = smallMultiplesCharts;
 				} else {
-					console.log('Not show indiv');
 					// Build a single ensemble chart
 					const { sampleLayerVariables, statLayerVariables, options } = createEnsembleVariableChartOptions(
 						setting,
@@ -899,10 +897,8 @@ export function useCharts(
 					charts[setting.id] = [chart];
 				}
 			});
-			console.log(charts);
 			return charts;
 		});
-		console.log(ensembleVariableCharts);
 		return ensembleVariableCharts;
 	};
 
