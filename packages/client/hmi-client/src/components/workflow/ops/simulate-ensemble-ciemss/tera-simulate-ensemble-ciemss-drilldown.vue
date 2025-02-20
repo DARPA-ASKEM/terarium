@@ -216,7 +216,7 @@
 					<div class="mx-2" ref="chartWidthDiv"></div>
 					<Accordion :active-index="0">
 						<template v-if="!isLoading">
-							<AccordionTab v-if="selectedEnsembleVariableSettings.length > 0" header="Ensemble variables over time">
+							<AccordionTab header="Ensemble variables over time">
 								<div class="flex flex-row" v-for="setting of selectedEnsembleVariableSettings" :key="setting.id">
 									<vega-chart
 										v-for="(spec, index) of ensembleVariableCharts[setting.id]"
@@ -242,16 +242,17 @@
 				content-width="360px"
 			>
 				<template #overlay>
-					<tera-chart-settings
-						:title="'Ensemble variables over time'"
-						:settings="chartSettings"
-						:type="ChartSettingType.VARIABLE_ENSEMBLE"
-						:select-options="ensembleVariables"
-						:selected-options="selectedEnsembleVariableSettings.map((s) => s.selectedVariables[0])"
-						@open="setActiveChartSettings($event)"
-						@remove="removeChartSettings"
-						@selection-change="updateChartSettings"
-						@toggle-ensemble-variable-setting-option="updateEnsembleVariableSettingOption"
+					<tera-chart-settings-panel
+						:annotations="
+							[ChartSettingType.VARIABLE_ENSEMBLE].includes(activeChartSettings?.type as ChartSettingType)
+								? getChartAnnotationsByChartId(activeChartSettings?.id ?? '')
+								: undefined
+						"
+						:active-settings="activeChartSettings"
+						:generate-annotation="generateAnnotation"
+						@update-settings="updateActiveChartSettings"
+						@delete-annotation="deleteAnnotation"
+						@close="setActiveChartSettings(null)"
 					/>
 				</template>
 				<template #content>
@@ -260,7 +261,7 @@
 							:title="'Ensemble variables over time'"
 							:settings="chartSettings"
 							:type="ChartSettingType.VARIABLE_ENSEMBLE"
-							:select-options="node.state.mapping.map((ele) => ele.newName)"
+							:select-options="ensembleVariables"
 							:selected-options="selectedEnsembleVariableSettings.map((s) => s.selectedVariables[0])"
 							@open="setActiveChartSettings($event)"
 							@remove="removeChartSettings"
@@ -299,6 +300,7 @@ import {
 	parseEnsemblePyciemssMap,
 	getEnsembleResultModelConfigMap
 } from '@/services/models/simulation-service';
+import { deleteAnnotation, updateChartSettingsBySelectedVariables } from '@/services/chart-settings';
 import { getModelConfigurationById, getObservables, getInitials } from '@/services/model-configurations';
 import { nodeMetadata } from '@/components/workflow/util';
 import type { WorkflowNode } from '@/types/workflow';
@@ -315,6 +317,7 @@ import { useDrilldownChartSize } from '@/composables/useDrilldownChartSize';
 import { DataArray } from '@/utils/stats';
 import VegaChart from '@/components/widgets/VegaChart.vue';
 import teraChartSettings from '@/components/widgets/tera-chart-settings.vue';
+import TeraChartSettingsPanel from '@/components/widgets/tera-chart-settings-panel.vue';
 import {
 	formatSimulateModelConfigurations,
 	getChartEnsembleMapping,
