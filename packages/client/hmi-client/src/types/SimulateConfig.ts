@@ -11,7 +11,3 @@ export type DataseriesConfig = {
 	borderWidth?: number;
 	borderDash?: number[];
 };
-
-export type RunResults = {
-	[runId: string]: { [key: string]: number }[];
-};

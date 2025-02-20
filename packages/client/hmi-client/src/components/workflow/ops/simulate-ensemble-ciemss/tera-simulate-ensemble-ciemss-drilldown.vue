@@ -303,7 +303,6 @@ import { getModelConfigurationById, getObservables, getInitials } from '@/servic
 import { nodeMetadata } from '@/components/workflow/util';
 import type { WorkflowNode } from '@/types/workflow';
 import { AssetType, ModelConfiguration, type EnsembleSimulationCiemssRequest } from '@/types/Types';
-import { RunResults } from '@/types/SimulateConfig';
 import { DrilldownTabs, CiemssPresetTypes, ChartSettingType } from '@/types/common';
 import TeraNotebookError from '@/components/drilldown/tera-notebook-error.vue';
 import TeraSignalBars from '@/components/widgets/tera-signal-bars.vue';

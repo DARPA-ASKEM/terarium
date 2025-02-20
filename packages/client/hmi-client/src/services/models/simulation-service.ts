@@ -17,7 +17,6 @@ import {
 	TerariumAsset,
 	AssetType
 } from '@/types/Types';
-import { RunResults } from '@/types/SimulateConfig';
 import * as EventService from '@/services/event';
 import { useProjects } from '@/composables/project';
 import { subscribe, unsubscribe } from '@/services/ClientEventService';
