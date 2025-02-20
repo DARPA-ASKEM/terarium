@@ -492,6 +492,17 @@ const updateWeights = () => {
 	emit('update-state', state);
 };
 
+function initDefaultChartSettings(state: SimulateEnsembleCiemssOperationState) {
+	const mappedEnsembleVariables = state.mapping.map((ele) => ele.newName);
+	if (_.isEmpty(state.chartSettings)) {
+		state.chartSettings = updateChartSettingsBySelectedVariables(
+			state.chartSettings ?? [],
+			ChartSettingType.VARIABLE_ENSEMBLE,
+			mappedEnsembleVariables
+		);
+	}
+}
+
 const runEnsemble = async () => {
 	const modelConfigs = formatSimulateModelConfigurations(knobs.value.mapping, knobs.value.weights);
 	const params: EnsembleSimulationCiemssRequest = {
@@ -510,7 +521,9 @@ const runEnsemble = async () => {
 	const response = await makeEnsembleCiemssSimulation(params, nodeMetadata(props.node));
 
 	const state = _.cloneDeep(props.node.state);
+	initDefaultChartSettings(state);
 	state.inProgressForecastId = response.simulationId;
+
 	emit('update-state', state);
 };
 
