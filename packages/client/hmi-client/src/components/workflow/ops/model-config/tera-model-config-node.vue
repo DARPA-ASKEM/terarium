@@ -40,7 +40,7 @@ const emit = defineEmits(['open-drilldown', 'append-input-port', 'update-state',
 
 useClientEvent(
 	[ClientEventType.TaskGollmConfigureModelFromDocument, ClientEventType.TaskGollmConfigureModelFromDataset],
-	createClientEventHandler(props.node.state.modelConfigTaskIds)
+	createClientEventHandler(props.node.state, 'modelConfigTaskIds')
 );
 
 const isLoading = computed(() => props.node.state.modelConfigTaskIds.length > 0);
