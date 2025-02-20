@@ -29,7 +29,7 @@ import TeraOperatorPlaceholder from '@/components/operator/tera-operator-placeho
 import { getModel, getModelConfigurationsForModel } from '@/services/model';
 import { postAsConfiguredModel } from '@/services/model-configurations';
 import { AssetType, ClientEventType } from '@/types/Types';
-import { createClientEventHandler, useClientEvent } from '@/composables/useClientEvent';
+import { createInProgressClientEventHandler, useClientEvent } from '@/composables/useClientEvent';
 import { useProjects } from '@/composables/project';
 import { ModelConfigOperation, ModelConfigOperationState } from './model-config-operation';
 
@@ -40,7 +40,7 @@ const emit = defineEmits(['open-drilldown', 'append-input-port', 'update-state',
 
 useClientEvent(
 	[ClientEventType.TaskGollmConfigureModelFromDocument, ClientEventType.TaskGollmConfigureModelFromDataset],
-	createClientEventHandler(props.node.state, 'modelConfigTaskIds')
+	createInProgressClientEventHandler(props.node.state, 'modelConfigTaskIds')
 );
 
 const isLoading = computed(() => props.node.state.modelConfigTaskIds.length > 0);
