@@ -1,5 +1,4 @@
 import _ from 'lodash';
-import type { Model } from '@/types/Types';
 
 /**
  * Note "id" and "base" used for building the compact graph, they should not be used as strata dimensions
@@ -32,26 +31,4 @@ export const extractNestedStratas = (matrixData: any[], stratas: string[]) => {
 	});
 
 	return result;
-};
-
-/**
- * Given an amr, find the unstratified/root parameters.
- *
- * This requires some heuristics go backwards, may not work all the time.
- * This works poorly if the parameter ids starts off with underscores.
- *
- * For example "beta_1_1", "beta_1_2" will collapse into "beta": ["beta_1_1", "beta_1_2"]
- */
-export const getUnstratifiedInitials = (amr: Model) => {
-	const initials = amr.semantics?.ode.initials || [];
-	const map = new Map<string, string[]>();
-	initials.forEach((i) => {
-		const rootName = _.first(i.target.split('_')) as string;
-		if (map.has(rootName)) {
-			map.get(rootName)?.push(i.target);
-		} else {
-			map.set(rootName, [i.target]);
-		}
-	});
-	return map;
 };
