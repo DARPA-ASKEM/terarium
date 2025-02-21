@@ -194,18 +194,18 @@
 				content-width="420px"
 			>
 				<template #content>
-					<div class="mt-3 ml-4 mr-2">Under construction. Use the wizard for now.</div>
+					<div class="mt-3 ml-4 mr-2">Under construction.</div>
 				</template>
 			</tera-slider-panel>
 		</tera-drilldown-section>
-
+		<!-- Output Section -->
 		<template #preview>
 			<tera-drilldown-section
 				title="Simulation output"
 				:options="outputs"
 				v-model:output="selectedOutputId"
 				is-selectable
-				:is-loading="showSpinner"
+				:is-loading="isLoading"
 				@update:selection="onSelection"
 			>
 				<template #header-controls-right>
@@ -213,29 +213,26 @@
 				</template>
 				<tera-notebook-error v-if="!_.isEmpty(node.state?.errorMessage?.traceback)" v-bind="node.state.errorMessage" />
 				<section ref="outputPanel">
-					<tera-simulate-chart
-						v-for="(cfg, index) of node.state.chartConfigs"
-						:key="index"
-						:run-results="runResults"
-						:chartConfig="{ selectedRun: selectedRunId, selectedVariable: cfg }"
-						has-mean-line
-						:size="chartSize"
-						@configuration-change="chartProxy.configurationChange(index, $event)"
-						@remove="chartProxy.removeChart(index)"
-						show-remove-button
-					/>
-					<Button
-						class="add-chart"
-						text
-						:outlined="true"
-						@click="chartProxy.addChart()"
-						label="Add chart"
-						icon="pi pi-plus"
-					/>
+					<div class="mx-2" ref="chartWidthDiv"></div>
+					<Accordion :active-index="0">
+						<template v-if="!isLoading">
+							<AccordionTab header="Ensemble variables over time">
+								<div class="flex flex-row" v-for="setting of selectedEnsembleVariableSettings" :key="setting.id">
+									<vega-chart
+										v-for="(spec, index) of ensembleVariableCharts[setting.id]"
+										:key="index"
+										expandable
+										:are-embed-actions-visible="true"
+										:visualization-spec="spec"
+									/>
+								</div>
+							</AccordionTab>
+						</template>
+					</Accordion>
 				</section>
 			</tera-drilldown-section>
 		</template>
-
+		<!-- Output Settings Section -->
 		<template #sidebar-right>
 			<tera-slider-panel
 				v-model:is-open="isOutputSettingsPanelOpen"
@@ -244,10 +241,35 @@
 				header="Output settings"
 				content-width="360px"
 			>
-				<template #content>
-					<div class="mt-3 ml-4 mr-2">Under construction.</div>
+				<template #overlay>
+					<tera-chart-settings-panel
+						:annotations="
+							[ChartSettingType.VARIABLE_ENSEMBLE].includes(activeChartSettings?.type as ChartSettingType)
+								? getChartAnnotationsByChartId(activeChartSettings?.id ?? '')
+								: undefined
+						"
+						:active-settings="activeChartSettings"
+						:generate-annotation="generateAnnotation"
+						@update-settings="updateActiveChartSettings"
+						@delete-annotation="deleteAnnotation"
+						@close="setActiveChartSettings(null)"
+					/>
 				</template>
-				<!-- TODO Chart options here -->
+				<template #content>
+					<div class="output-settings-panel">
+						<tera-chart-settings
+							:title="'Ensemble variables over time'"
+							:settings="chartSettings"
+							:type="ChartSettingType.VARIABLE_ENSEMBLE"
+							:select-options="ensembleVariables"
+							:selected-options="selectedEnsembleVariableSettings.map((s) => s.selectedVariables[0])"
+							@open="setActiveChartSettings($event)"
+							@remove="removeChartSettings"
+							@selection-change="updateChartSettings"
+							@toggle-ensemble-variable-setting-option="updateEnsembleVariableSettingOption"
+						/>
+					</div>
+				</template>
 			</tera-slider-panel>
 		</template>
 	</tera-drilldown>
@@ -271,23 +293,37 @@ import Dropdown from 'primevue/dropdown';
 import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.vue';
 import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
 import TeraPyciemssCancelButton from '@/components/pyciemss/tera-pyciemss-cancel-button.vue';
-import TeraSimulateChart from '@/components/workflow/tera-simulate-chart.vue';
 import {
-	getRunResultCiemss,
 	makeEnsembleCiemssSimulation,
-	CiemssMethodOptions
+	CiemssMethodOptions,
+	getRunResultCSV,
+	parseEnsemblePyciemssMap,
+	getEnsembleResultModelConfigMap
 } from '@/services/models/simulation-service';
+import { updateChartSettingsBySelectedVariables } from '@/services/chart-settings';
+import { deleteAnnotation } from '@/services/chart-annotation';
 import { getModelConfigurationById, getObservables, getInitials } from '@/services/model-configurations';
-import { chartActionsProxy, drilldownChartSize, nodeMetadata } from '@/components/workflow/util';
+import { nodeMetadata } from '@/components/workflow/util';
 import type { WorkflowNode } from '@/types/workflow';
-import { AssetType, type EnsembleSimulationCiemssRequest } from '@/types/Types';
-import { RunResults } from '@/types/SimulateConfig';
-import { DrilldownTabs, CiemssPresetTypes } from '@/types/common';
+import { AssetType, ModelConfiguration, type EnsembleSimulationCiemssRequest } from '@/types/Types';
+import { DrilldownTabs, CiemssPresetTypes, ChartSettingType } from '@/types/common';
 import TeraNotebookError from '@/components/drilldown/tera-notebook-error.vue';
 import TeraSignalBars from '@/components/widgets/tera-signal-bars.vue';
 import TeraSliderPanel from '@/components/widgets/tera-slider-panel.vue';
 import TeraSaveSimulationModal from '@/components/project/tera-save-simulation-modal.vue';
 import { v4 as uuidv4 } from 'uuid';
+import { useChartSettings } from '@/composables/useChartSettings';
+import { useCharts } from '@/composables/useCharts';
+import { useDrilldownChartSize } from '@/composables/useDrilldownChartSize';
+import { DataArray } from '@/utils/stats';
+import VegaChart from '@/components/widgets/VegaChart.vue';
+import teraChartSettings from '@/components/widgets/tera-chart-settings.vue';
+import TeraChartSettingsPanel from '@/components/widgets/tera-chart-settings-panel.vue';
+import {
+	formatSimulateModelConfigurations,
+	getChartEnsembleMapping,
+	usePreparedChartInputs
+} from './simulate-ensemble-util';
 import {
 	SimulateEnsembleCiemssOperationState,
 	SimulateEnsembleMappingRow,
@@ -295,11 +331,12 @@ import {
 	speedValues,
 	normalValues
 } from './simulate-ensemble-ciemss-operation';
-import { formatSimulateModelConfigurations } from './simulate-ensemble-util';
+import { setStateToModelConfigMap } from '../calibrate-ensemble-ciemss/calibrate-ensemble-util';
 
 const props = defineProps<{
 	node: WorkflowNode<SimulateEnsembleCiemssOperationState>;
 }>();
+
 const emit = defineEmits(['select-output', 'update-state', 'close']);
 
 interface BasicKnobs {
@@ -323,7 +360,7 @@ const knobs = ref<BasicKnobs>({
 const activeAccordionIndicies = ref([0, 1, 2]);
 const isSidebarOpen = ref(true);
 const isOutputSettingsPanelOpen = ref(false);
-const showSpinner = ref(false);
+const isLoading = ref(false);
 const showSaveDataset = ref(false);
 const showAddMappingInput = ref(false);
 const listModelLabels = ref<string[]>([]);
@@ -346,10 +383,46 @@ const presetType = computed(() => {
 const allModelOptions = ref<{ [key: string]: string[] }>({});
 const modelConfigurationIds: string[] = props.node.inputs.map((ele) => ele.value?.[0]).filter(Boolean);
 const modelConfigIdToNameMap = ref<Record<string, string>>({});
+const allModelConfigurations = ref<ModelConfiguration[]>([]);
 
 const newSolutionMappingKey = ref<string>('');
-const runResults = ref<RunResults>({});
+const runResults = ref<{ [runId: string]: DataArray }>({});
+const runResultsSummary = ref<{ [runId: string]: DataArray }>({});
 const cancelRunId = computed(() => props.node.state.inProgressForecastId);
+// -------------- Charts && chart settings ----------------
+const chartWidthDiv = ref(null);
+const pyciemssMap = ref<Record<string, string>>({});
+const chartSize = useDrilldownChartSize(chartWidthDiv);
+const stateToModelConfigMap = ref<{ [key: string]: string[] }>({});
+const selectedOutputMapping = computed(() => getChartEnsembleMapping(props.node, stateToModelConfigMap.value));
+const preparedChartInputs = usePreparedChartInputs(props, runResults, runResultsSummary, pyciemssMap);
+const ensembleVariables = computed(() =>
+	getChartEnsembleMapping(props.node, stateToModelConfigMap.value).map((d) => d.newName)
+);
+
+const {
+	activeChartSettings,
+	chartSettings,
+	removeChartSettings,
+	updateChartSettings,
+	selectedEnsembleVariableSettings,
+	updateEnsembleVariableSettingOption,
+	updateActiveChartSettings,
+	setActiveChartSettings
+} = useChartSettings(props, emit);
+
+const { generateAnnotation, getChartAnnotationsByChartId, useEnsembleVariableCharts } = useCharts(
+	props.node.id,
+	null,
+	allModelConfigurations,
+	preparedChartInputs,
+	chartSize,
+	null,
+	selectedOutputMapping
+);
+
+const ensembleVariableCharts = useEnsembleVariableCharts(selectedEnsembleVariableSettings, null);
+
 // Preview selection
 const outputs = computed(() => {
 	if (!_.isEmpty(props.node.outputs)) {
@@ -364,12 +437,7 @@ const outputs = computed(() => {
 });
 const selectedOutputId = ref<string>();
 const selectedRunId = ref<string>('');
-
 const outputPanel = ref(null);
-const chartSize = computed(() => drilldownChartSize(outputPanel.value));
-const chartProxy = chartActionsProxy(props.node, (state: SimulateEnsembleCiemssOperationState) => {
-	emit('update-state', state);
-});
 
 const onSelection = (id: string) => {
 	emit('select-output', id);
@@ -424,6 +492,17 @@ const updateWeights = () => {
 	emit('update-state', state);
 };
 
+function initDefaultChartSettings(state: SimulateEnsembleCiemssOperationState) {
+	const mappedEnsembleVariables = state.mapping.map((ele) => ele.newName);
+	if (_.isEmpty(state.chartSettings)) {
+		state.chartSettings = updateChartSettingsBySelectedVariables(
+			state.chartSettings ?? [],
+			ChartSettingType.VARIABLE_ENSEMBLE,
+			mappedEnsembleVariables
+		);
+	}
+}
+
 const runEnsemble = async () => {
 	const modelConfigs = formatSimulateModelConfigurations(knobs.value.mapping, knobs.value.weights);
 	const params: EnsembleSimulationCiemssRequest = {
@@ -442,31 +521,33 @@ const runEnsemble = async () => {
 	const response = await makeEnsembleCiemssSimulation(params, nodeMetadata(props.node));
 
 	const state = _.cloneDeep(props.node.state);
+	initDefaultChartSettings(state);
 	state.inProgressForecastId = response.simulationId;
+
 	emit('update-state', state);
 };
 
 onMounted(async () => {
 	if (!modelConfigurationIds) return;
-	const allModelConfigurations = await Promise.all(modelConfigurationIds.map((id) => getModelConfigurationById(id)));
+	allModelConfigurations.value = await Promise.all(modelConfigurationIds.map((id) => getModelConfigurationById(id)));
 
 	modelConfigIdToNameMap.value = {};
-	allModelConfigurations.forEach((config) => {
+	allModelConfigurations.value.forEach((config) => {
 		modelConfigIdToNameMap.value[config.id as string] = config.name as string;
 	});
 
 	allModelOptions.value = {};
-	for (let i = 0; i < allModelConfigurations.length; i++) {
+	for (let i = 0; i < allModelConfigurations.value.length; i++) {
 		const tempList: string[] = [];
-		getInitials(allModelConfigurations[i]).forEach((element) => tempList.push(element.target));
-		getObservables(allModelConfigurations[i]).forEach((element) => tempList.push(element.referenceId));
-		allModelOptions.value[allModelConfigurations[i].id as string] = tempList;
+		getInitials(allModelConfigurations.value[i]).forEach((element) => tempList.push(element.target));
+		getObservables(allModelConfigurations.value[i]).forEach((element) => tempList.push(element.referenceId));
+		allModelOptions.value[allModelConfigurations.value[i].id as string] = tempList;
 	}
-	listModelLabels.value = allModelConfigurations.map((ele) => ele.name ?? '');
+	listModelLabels.value = allModelConfigurations.value.map((ele) => ele.name ?? '');
 
 	// initialze weights
 	if (_.isEmpty(knobs.value.weights)) {
-		allModelConfigurations.forEach((config) => {
+		allModelConfigurations.value.forEach((config) => {
 			knobs.value.weights[config.id as string] = 1;
 		});
 	}
@@ -475,8 +556,8 @@ onMounted(async () => {
 watch(
 	() => props.node.state.inProgressForecastId,
 	(id) => {
-		if (id === '') showSpinner.value = false;
-		else showSpinner.value = true;
+		if (id === '') isLoading.value = false;
+		else isLoading.value = true;
 	}
 );
 
@@ -491,8 +572,15 @@ watch(
 		const forecastId = props.node.state.forecastId;
 		if (!forecastId) return;
 
-		const response = await getRunResultCiemss(forecastId, 'result.csv');
-		runResults.value = response.runResults;
+		const [result, resultSummary] = await Promise.all([
+			getRunResultCSV(forecastId, 'result.csv'),
+			getRunResultCSV(forecastId, 'result_summary.csv')
+		]);
+		const ensembleVarModelConfigMap = (await getEnsembleResultModelConfigMap(forecastId)) ?? {};
+		pyciemssMap.value = parseEnsemblePyciemssMap(result[0], ensembleVarModelConfigMap);
+		runResults.value[selectedRunId.value] = result;
+		runResultsSummary.value[selectedRunId.value] = resultSummary;
+		stateToModelConfigMap.value = await setStateToModelConfigMap(modelConfigurationIds);
 	},
 	{ immediate: true }
 );
@@ -511,19 +599,16 @@ watch(
 	},
 	{ deep: true }
 );
-
-watch(
-	() => props.node.state?.forecastId,
-	async () => {
-		if (!props.node.state?.forecastId) return;
-
-		const response = await getRunResultCiemss(props.node.state?.forecastId, 'result.csv');
-		runResults.value = response.runResults;
-	}
-);
 </script>
 
 <style scoped>
+.output-settings-panel {
+	padding: var(--gap-4);
+	display: flex;
+	flex-direction: column;
+	gap: var(--gap-2);
+}
+
 .toolbar {
 	display: flex;
 	align-items: center;

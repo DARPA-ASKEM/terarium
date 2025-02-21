@@ -1,53 +1,82 @@
 <template>
-	<section v-if="!inProgressForecastId && runResults[selectedRunId]">
-		<tera-simulate-chart
-			v-for="(cfg, index) of node.state.chartConfigs"
-			:key="index"
-			:run-results="runResults[selectedRunId]"
-			:chartConfig="{ selectedRun: selectedRunId, selectedVariable: cfg }"
-			has-mean-line
-			@configuration-change="chartProxy.configurationChange(index, $event)"
-			:size="{ width: 190, height: 120 }"
-		/>
-	</section>
-
-	<Button v-if="node.inputs[0].value" label="Open" @click="emit('open-drilldown')" severity="secondary" outlined />
-	<tera-operator-placeholder v-else :node="node">Connect a model configuration</tera-operator-placeholder>
-	<tera-progress-spinner v-if="inProgressForecastId" :font-size="2" is-centered style="height: 100%" />
+	<main>
+		<section>
+			<tera-node-preview
+				:node="node"
+				:is-loading="!!inProgressForecastId"
+				:prepared-charts="Object.assign({}, ensembleVariableCharts)"
+				:chart-settings="selectedEnsembleVariableSettings"
+				:are-embed-actions-visible="true"
+				:placeholder="placeholderText"
+			/>
+		</section>
+		<Button v-if="areInputsFilled" label="Open" @click="emit('open-drilldown')" severity="secondary" outlined />
+	</main>
 </template>
 
 <script setup lang="ts">
 import _ from 'lodash';
 import { ref, computed, watch } from 'vue';
-import { getRunResultCiemss, pollAction, getSimulation } from '@/services/models/simulation-service';
+import { pollAction, getSimulation, getRunResultCSV, parsePyCiemssMap } from '@/services/models/simulation-service';
 import Button from 'primevue/button';
 import { WorkflowNode, WorkflowPortStatus } from '@/types/workflow';
-import { RunResults } from '@/types/SimulateConfig';
 import { Poller, PollerState } from '@/api/api';
-import TeraSimulateChart from '@/components/workflow/tera-simulate-chart.vue';
-import TeraOperatorPlaceholder from '@/components/operator/tera-operator-placeholder.vue';
-import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue';
 import { logger } from '@/utils/logger';
-import { chartActionsProxy, nodeOutputLabel } from '@/components/workflow/util';
+import { nodeOutputLabel } from '@/components/workflow/util';
 import { useProjects } from '@/composables/project';
 import { createDatasetFromSimulationResult } from '@/services/dataset';
+import { useCharts } from '@/composables/useCharts';
+import { ModelConfiguration } from '@/types/Types';
+import { DataArray } from '@/utils/stats';
+import { useChartSettings } from '@/composables/useChartSettings';
+import { getChartEnsembleMapping, usePreparedChartInputs } from './simulate-ensemble-util';
 import {
 	SimulateEnsembleCiemssOperation,
 	SimulateEnsembleCiemssOperationState
 } from './simulate-ensemble-ciemss-operation';
+import TeraNodePreview from '../tera-node-preview.vue';
 
 const props = defineProps<{
 	node: WorkflowNode<SimulateEnsembleCiemssOperationState>;
 }>();
 const emit = defineEmits(['append-output', 'update-state', 'open-drilldown', 'append-input-port']);
 
-// const runResults = ref<RunResults>({});
-const runResults = ref<{ [runId: string]: RunResults }>({});
+const runResults = ref<{ [runId: string]: DataArray }>({});
+const runResultsSummary = ref<{ [runId: string]: DataArray }>({});
+const pyciemssMap = ref<Record<string, string>>({});
 const inProgressForecastId = computed(() => props.node.state.inProgressForecastId);
 const selectedRunId = ref<string>('');
+const areInputsFilled = computed(() => props.node.inputs.filter((ele) => ele.value).length > 1);
+// -------------- Charts && chart settings ----------------
+const chartSize = ref<{ width: number; height: number }>({ width: 180, height: 120 });
+const allModelConfigurations = ref<ModelConfiguration[]>([]);
+const preparedChartInputs = usePreparedChartInputs(props, runResults, runResultsSummary, pyciemssMap);
+const stateToModelConfigMap = ref<{ [key: string]: string[] }>({});
+const selectedOutputMapping = computed(() => getChartEnsembleMapping(props.node, stateToModelConfigMap.value));
 
-const chartProxy = chartActionsProxy(props.node, (state: SimulateEnsembleCiemssOperationState) => {
-	emit('update-state', state);
+const { useEnsembleVariableCharts } = useCharts(
+	props.node.id,
+	null,
+	allModelConfigurations,
+	preparedChartInputs,
+	chartSize,
+	null,
+	selectedOutputMapping
+);
+
+const { selectedEnsembleVariableSettings } = useChartSettings(props, emit);
+const ensembleVariableCharts = useEnsembleVariableCharts(selectedEnsembleVariableSettings, null);
+
+const isChartsEmpty = computed(() => _.isEmpty(ensembleVariableCharts.value));
+
+const placeholderText = computed(() => {
+	if (!areInputsFilled.value) {
+		return 'Connect a model configuration';
+	}
+	if (isChartsEmpty.value) {
+		return 'No variables selected';
+	}
+	return undefined;
 });
 
 const poller = new Poller();
@@ -83,9 +112,6 @@ const processResult = async () => {
 	state.forecastId = state.inProgressForecastId;
 	state.inProgressForecastId = '';
 	const simulationId = state.forecastId;
-	if (state.chartConfigs.length === 0) {
-		chartProxy.addChart();
-	}
 	const datasetName = `Forecast run ${simulationId}`;
 	const projectId = useProjects().activeProjectId.value;
 	const datasetResult = await createDatasetFromSimulationResult(projectId, simulationId, datasetName, false);
@@ -146,8 +172,13 @@ watch(
 		const forecastId = props.node.state.forecastId;
 		if (!forecastId) return;
 
-		const output = await getRunResultCiemss(forecastId, 'result.csv');
-		runResults.value[selectedRunId.value] = output.runResults;
+		const [result, resultSummary] = await Promise.all([
+			getRunResultCSV(forecastId, 'result.csv'),
+			getRunResultCSV(forecastId, 'result_summary.csv')
+		]);
+		pyciemssMap.value = parsePyCiemssMap(result[0]);
+		runResults.value[forecastId] = result;
+		runResultsSummary.value[forecastId] = resultSummary;
 	},
 	{ immediate: true }
 );
