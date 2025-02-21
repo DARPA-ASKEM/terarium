@@ -7,9 +7,10 @@
 				<tera-input-text v-else placeholder="Add a name" v-model="nameText" />
 			</span>
 			<span class="unit" :class="{ time: isTimePart }">
-				<template v-if="input || output">
-					<span><label>Input:</label> {{ input }}</span>
-					<span><label>Output:</label> {{ output }}</span>
+				<template v-if="subject || outcome">
+					<span><label>Subject:</label> {{ subject }}</span>
+					<span><label>Outcome:</label> {{ outcome }}</span>
+					<span v-if="controllers"><label>Controllers:</label> {{ controllers }}</span>
 				</template>
 				<!--amr_to_mmt doesn't like unit expressions with spaces, removing them here before they are saved to the amr-->
 				<template v-else-if="showUnit">
@@ -79,12 +80,12 @@ const props = defineProps<{
 	description?: string;
 	name?: string;
 	unitExpression?: string;
-	templateId?: string;
 	id?: string;
 	grounding?: any;
 	expression?: string;
-	input?: any;
-	output?: any;
+	subject?: string;
+	outcome?: string;
+	controllers?: string;
 	featureConfig: FeatureConfig;
 	partType: PartType;
 }>();

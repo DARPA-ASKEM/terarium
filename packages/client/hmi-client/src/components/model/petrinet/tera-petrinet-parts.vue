@@ -118,7 +118,7 @@ import type { FeatureConfig } from '@/types/common';
 import TeraInputText from '@/components/widgets/tera-input-text.vue';
 import { createPartsList, createObservablesList, createTimeList, PartType } from '@/model-representation/service';
 import TeraStratifiedMatrixModal from '@/components/model/petrinet/model-configurations/tera-stratified-matrix-modal.vue';
-import { ModelPartItem, StratifiedMatrix } from '@/types/Model';
+import { ModelPartItem, ModelPartItemTree, StratifiedMatrix } from '@/types/Model';
 
 const props = defineProps<{
 	model: Model;
@@ -126,12 +126,6 @@ const props = defineProps<{
 	mmtParams: MiraTemplateParams;
 	featureConfig: FeatureConfig;
 }>();
-
-interface ModelPartItemTree {
-	base: ModelPartItem;
-	children: ModelPartItem[];
-	isParent: boolean;
-}
 
 const emit = defineEmits(['update-state', 'update-parameter', 'update-observable', 'update-transition', 'update-time']);
 
@@ -176,11 +170,22 @@ const transitions = computed<Transition[]>(() =>
 );
 
 const createTransitionParts = () => {
+	const getControlellers = (t: MiraTemplate) => {
+		if (t.controllers) {
+			return t.controllers.map((d) => d.name).join(', ');
+		}
+		if (t.controller) {
+			return t.controller.name;
+		}
+		return '';
+	};
+
 	const extract = (t: MiraTemplate): ModelPartItem => ({
 		id: t.name,
 		name: t.name,
-		input: t.subject.name,
-		output: t.outcome.name,
+		subject: t.subject.name,
+		outcome: t.outcome.name,
+		controllers: getControlellers(t),
 		expression: t.rate_law
 	});
 
