@@ -390,7 +390,7 @@ import TeraConstraintGroupForm from '@/components/workflow/ops/funman/tera-const
 import { ChartSettingType, DrilldownTabs } from '@/types/common';
 import { stringToLatexExpression, getModel, getMMT } from '@/services/model';
 import { toScientificNotation } from '@/utils/number';
-import { removeChartSettingById, updateChartSettingsBySelectedVariables } from '@/services/chart-settings';
+import { updateChartSettingsBySelectedVariables } from '@/services/chart-settings';
 import { nodeOutputLabel } from '@/components/workflow/util';
 import { formatJSON } from '@/services/code';
 import TeraDrilldownPreview from '@/components/drilldown/tera-drilldown-preview.vue';
