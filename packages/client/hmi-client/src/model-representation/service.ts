@@ -354,6 +354,12 @@ export function checkPetrinetAMR(amr: Model) {
 		if (rateSet.has(rate?.target as string)) {
 			results.push({ type: 'error', content: `rate (${rate?.target}) has duplicate` });
 		}
+
+		// Check if the system is closed (constant population)
+		if (transition.input.length !== transition.output.length) {
+			results.push({ type: 'warn', content: `${transition.id} does not conserve input/output` });
+		}
+
 		transitionSet.add(transition.id);
 		rateSet.add(rate?.target as string);
 	});
