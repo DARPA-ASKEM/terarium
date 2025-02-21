@@ -174,8 +174,8 @@ const createTransitionParts = () => {
 	const extract = (t: MiraTemplate): ModelPartItem => ({
 		id: t.name,
 		name: t.name,
-		subject: t.subject.name,
-		outcome: t.outcome.name,
+		subject: t.subject ? t.subject.name : '',
+		outcome: t.outcome ? t.outcome.name : '',
 		controllers: getControllerNames(t).join(', '),
 		expression: t.rate_law
 	});

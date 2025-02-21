@@ -8,9 +8,9 @@
 			</span>
 			<span class="unit" :class="{ time: isTimePart }">
 				<template v-if="subject || outcome">
-					<span><label>Subject:</label> {{ subject }}</span>
-					<span><label>Outcome:</label> {{ outcome }}</span>
-					<span v-if="controllers"><label>Controllers:</label> {{ controllers }}</span>
+					<span><label>Subject:</label> {{ subject !== '' ? subject : 'n/a' }}</span>
+					<span><label>&nbsp;Outcome:</label> {{ outcome !== '' ? outcome : 'n/a' }}</span>
+					<span v-if="controllers"><label>&nbsp;Controllers:</label> {{ controllers }}</span>
 				</template>
 				<!--amr_to_mmt doesn't like unit expressions with spaces, removing them here before they are saved to the amr-->
 				<template v-else-if="showUnit">
