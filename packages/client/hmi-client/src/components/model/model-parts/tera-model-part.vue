@@ -30,7 +30,7 @@
 							/>
 						</template>
 						<Button v-if="showMatrix" label="Open matrix" text size="small" @click="$emit('open-matrix', base.id)" />
-						<template v-if="!featureConfig.isPreview">
+						<template v-if="!featureConfig.isPreview && partType !== PartType.TRANSITION">
 							<Button
 								:disabled="getEditingState(index).isEditingChildrenConcepts"
 								@click="getEditingState(index).isEditingChildrenConcepts = true"

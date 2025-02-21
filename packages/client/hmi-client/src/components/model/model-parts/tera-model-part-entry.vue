@@ -45,7 +45,7 @@
 					:label="showDescription ? 'Hide description' : descriptionText ? 'Show description' : 'Add description'"
 					@click="showDescription = !showDescription"
 				/>
-				<aside class="concept">
+				<aside class="concept" v-if="!isTransitionPart">
 					<tera-concept v-model="grounding" :is-preview="featureConfig.isPreview" />
 				</aside>
 			</template>
@@ -128,6 +128,7 @@ const showUnit = computed(
 );
 
 const isTimePart = props.partType === PartType.TIME;
+const isTransitionPart = props.partType === PartType.TRANSITION;
 </script>
 
 <style scoped>
