@@ -1,5 +1,15 @@
 import { MiraTemplate, MiraMatrix, TemplateSummary, MiraMatrixEntry } from './mira-common';
 
+export const getControllerNames = (t: MiraTemplate) => {
+	if (t.controllers) {
+		return t.controllers.map((d) => d.name);
+	}
+	if (t.controller) {
+		return [t.controller.name];
+	}
+	return [];
+};
+
 export const removeModifiers = (v: string, context: { [key: string]: string }, scrubbingKeys: string[]) => {
 	let result = v;
 	scrubbingKeys.forEach((key) => {
@@ -18,12 +28,9 @@ export const extractConceptNames = (templates: MiraTemplate[], key: string) => {
 	}
 	if (key === 'controllers') {
 		templates.forEach((template) => {
-			if (template.controller) {
-				names.push(template.controller.name);
-			}
-			if (template.controllers && template.controllers.length > 0) {
-				const list = template.controllers.map((d) => d.name).sort();
-				names.push(list.join('-'));
+			const controllerNames = getControllerNames(template).sort();
+			if (controllerNames.length > 0) {
+				names.push(controllerNames.join('-'));
 			}
 		});
 	}

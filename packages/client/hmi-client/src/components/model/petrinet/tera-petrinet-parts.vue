@@ -119,6 +119,7 @@ import TeraInputText from '@/components/widgets/tera-input-text.vue';
 import { createPartsList, createObservablesList, createTimeList, PartType } from '@/model-representation/service';
 import TeraStratifiedMatrixModal from '@/components/model/petrinet/model-configurations/tera-stratified-matrix-modal.vue';
 import { ModelPartItem, ModelPartItemTree, StratifiedMatrix } from '@/types/Model';
+import { getControllerNames } from '@/model-representation/mira/mira-util';
 
 const props = defineProps<{
 	model: Model;
@@ -170,22 +171,12 @@ const transitions = computed<Transition[]>(() =>
 );
 
 const createTransitionParts = () => {
-	const getControlellers = (t: MiraTemplate) => {
-		if (t.controllers) {
-			return t.controllers.map((d) => d.name).join(', ');
-		}
-		if (t.controller) {
-			return t.controller.name;
-		}
-		return '';
-	};
-
 	const extract = (t: MiraTemplate): ModelPartItem => ({
 		id: t.name,
 		name: t.name,
 		subject: t.subject.name,
 		outcome: t.outcome.name,
-		controllers: getControlellers(t),
+		controllers: getControllerNames(t).join(', '),
 		expression: t.rate_law
 	});
 
