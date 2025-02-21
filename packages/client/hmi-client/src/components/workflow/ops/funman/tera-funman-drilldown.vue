@@ -932,6 +932,10 @@ function updateObservableCharts() {
 	);
 }
 
+watch(selectedParameterSettings, () => {
+	updateParameterCharts();
+});
+
 function renderCharts() {
 	updateStateCharts();
 	updateParameterCharts();
