@@ -219,7 +219,7 @@ const pollResult = async (runId: string) => {
 			state = _.cloneDeep(props.node.state);
 			state.inProgressCalibrationId = '';
 			state.errorMessage = {
-				name: runId,
+				name: `Calibration: ${runId} has failed`,
 				value: simulation.status,
 				traceback: simulation.statusMessage
 			};

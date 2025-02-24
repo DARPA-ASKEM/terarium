@@ -162,7 +162,7 @@ const pollResult = async (runId: string) => {
 		if (simulation?.status && simulation?.statusMessage) {
 			state.inProgressCalibrationId = '';
 			state.errorMessage = {
-				name: runId,
+				name: `Calibration: ${runId} has failed`,
 				value: simulation.status,
 				traceback: simulation.statusMessage
 			};
