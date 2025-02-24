@@ -215,11 +215,18 @@ export interface ChartSettingSensitivityOptions {
 	selectedInputVariables: string[];
 	timepoint: number;
 	chartType: SensitivityChartType;
+	method: SensitivityMethod;
 }
 
 export enum SensitivityChartType {
 	SCATTER = 'scatter',
 	HEATMAP = 'heatmap'
+}
+
+export enum SensitivityMethod {
+	TIMEPOINT = 'value at timepoint',
+	PEAK_VALUE = 'peak value',
+	PEAK_TIMEPOINT = 'peak timepoint'
 }
 
 export interface ChartSettingBase {
