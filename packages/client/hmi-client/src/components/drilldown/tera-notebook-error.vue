@@ -55,7 +55,7 @@ watch(
 <style scoped>
 .container {
 	margin: 0 var(--gap-3) var(--gap-3) var(--gap-3);
-	background-color: #ffdcdc;
+	background-color: var(--surface-error);
 	padding: var(--gap-3);
 	border-radius: var(--border-radius);
 }
@@ -70,9 +70,9 @@ h6 {
 }
 
 :deep(.p-accordion-content) {
-	background-color: #ffdcdc;
+	background-color: var(--surface-error);
 }
 :deep(.p-accordion-header-link) {
-	background-color: #ffdcdc;
+	background-color: var(--surface-error);
 }
 </style>
