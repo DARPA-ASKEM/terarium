@@ -1034,14 +1034,14 @@ export function useCharts(
 	 * @param options - Configuration object for slicing data
 	 * @param options.method - Method to determine which records to include:
 	 *                        - TIMEPOINT: Records at a specific timepoint
-	 *                        - MAX: Records where each variable reaches its maximum value
-	 *                        - ARGMAX: Records where each variable reaches its maximum value (using timepoint as sensitivity target)
+	 *                        - PEAK_VALUE: Records where each variable reaches its maximum value
+	 *                        - PEAK_TIMEPOINT: Records where each variable reaches its maximum value (using timepoint as sensitivity target)
 	 * @param options.timepoint - Required for TIMEPOINT method, specifies which timepoint to analyze
 	 * @param options.selectedVariables - Array of variable names to analyze
 	 *
 	 * @returns Map where keys are variable names and values are arrays of relevant records:
 	 *          - For TIMEPOINT: Records at the specified timepoint
-	 *          - For MAX/ARGMAX: Records where each variable reaches its maximum value per sample
+	 *          - For PEAK_VALUE/PEAK_TIMEPOINT: Records where each variable reaches its maximum value per sample
 	 */
 	function getSlicedData(
 		records: Record<string, any>[],
@@ -1050,7 +1050,7 @@ export function useCharts(
 		const slicedRecords: Map<string, Record<string, any>[]> = new Map();
 		// the records of interest we want are at the indicated timepoint
 		if (options.method === SensitivityMethod.TIMEPOINT) {
-			options.selectedVariables?.forEach((selectedVariable) => {
+			options.selectedVariables.forEach((selectedVariable) => {
 				const data = records.filter((d) => d.timepoint_id === options.timepoint);
 				if (!slicedRecords.has(selectedVariable)) {
 					slicedRecords.set(selectedVariable, data);
@@ -1058,17 +1058,20 @@ export function useCharts(
 			});
 
 			// the records of interest we want are the max value of each sample
-		} else if (options.method === SensitivityMethod.MAX || options.method === SensitivityMethod.ARGMAX) {
-			options.selectedVariables?.forEach((selectedVariable) => {
+		} else if (options.method === SensitivityMethod.PEAK_VALUE || options.method === SensitivityMethod.PEAK_TIMEPOINT) {
+			options.selectedVariables.forEach((selectedVariable) => {
+				// get a map of sample_id to the record with the max value for the selected variable
 				const variableMax = records.reduce<Map<number, Record<string, any>>>((acc, record) => {
 					const id = record.sample_id;
 					// loop over all selected variables and get the max value
-					const value = record[selectedVariable];
-					if (!acc.has(id) || value > acc.get(id)?.[selectedVariable]) {
+					const value = record[selectedVariable] as number;
+					if (!acc.has(id) || value > (acc.get(id)![selectedVariable] as number)) {
 						acc.set(id, record);
 					}
 					return acc;
 				}, new Map<number, Record<string, any>>());
+
+				// add the max value records to the sliced records map
 				if (!slicedRecords.has(selectedVariable)) {
 					slicedRecords.set(selectedVariable, [...variableMax.values()]);
 				}
@@ -1175,11 +1178,19 @@ export function useCharts(
 			const { result } = chartData.value as ChartData;
 			// Translate names ahead of time, because we can't seem to customize titles
 			// in vegalite with repeat
-			const translationMap = chartData.value?.translationMap;
-			const dataTranslated = slicedData
-				.entries()
-				.next()
-				.value?.[1].map((obj) => {
+
+			const inputVariables: string[] = chartSettings.value[0].selectedInputVariables ?? [];
+
+			const charts: Record<
+				string,
+				{ lineChart: VisualizationSpec; scatterChart: VisualizationSpec; rankingChart: VisualizationSpec }
+			> = {};
+			// eslint-disable-next-line
+			for (const settings of chartSettings.value) {
+				const translationMap = chartData.value?.translationMap;
+				// We only need to translate the first variable's data slice and use it in the scatter/heatmap charts,
+				// as the rest are the same
+				const dataTranslated = Array.from(slicedData.values())[0]?.map((obj) => {
 					const r = {};
 					Object.keys(obj).forEach((key) => {
 						if (translationMap && translationMap[key]) {
@@ -1192,19 +1203,11 @@ export function useCharts(
 					return r;
 				});
 
-			const inputVariables: string[] = chartSettings.value[0].selectedInputVariables ?? [];
-
-			const charts: Record<
-				string,
-				{ lineChart: VisualizationSpec; scatterChart: VisualizationSpec; rankingChart: VisualizationSpec }
-			> = {};
-			// eslint-disable-next-line
-			for (const settings of chartSettings.value) {
 				const selectedVariable =
 					chartData.value?.pyciemssMap[settings.selectedVariables[0]] || settings.selectedVariables[0];
 				let unit = getUnit(settings.selectedVariables[0]);
 				let sensitivityVariable = selectedVariable;
-				if (method.value === SensitivityMethod.ARGMAX) {
+				if (method.value === SensitivityMethod.PEAK_TIMEPOINT) {
 					unit = 'timepoint';
 					sensitivityVariable = 'timepoint_id';
 				}

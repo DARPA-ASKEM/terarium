@@ -89,7 +89,7 @@ pyodide.runPython(`
 			poi_scores = {}
 			for p, original_p in zip(pois_, pois):
 					outcome = ooi
-					if method == '${SensitivityMethod.ARGMAX}':
+					if method == '${SensitivityMethod.PEAK_TIMEPOINT}':
 						outcome = 'timepoint_id'
 					x, y = df[[p, outcome]].sort_values(by = p).values.transpose()
 					x = (x - y.min()) / ((x.max() - x.min() or 1))

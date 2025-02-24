@@ -225,8 +225,8 @@ export enum SensitivityChartType {
 
 export enum SensitivityMethod {
 	TIMEPOINT = 'value at timepoint',
-	MAX = 'peak value',
-	ARGMAX = 'peak timepoint'
+	PEAK_VALUE = 'peak value',
+	PEAK_TIMEPOINT = 'peak timepoint'
 }
 
 export interface ChartSettingBase {
