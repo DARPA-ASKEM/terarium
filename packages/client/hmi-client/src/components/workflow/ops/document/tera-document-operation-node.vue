@@ -9,23 +9,15 @@
 			<img v-else class="pdf-thumbnail" :src="thumbnail" alt="Pdf's first page" />
 
 			<section class="py-2">
-				<div v-if="isRunning(extractionStatus)" class="progressbar-container">
+				<div v-if="props.node?.state?.taskProgress" class="progressbar-container">
 					<p class="action">
-						<span v-if="extractionStatus?.progress !== undefined && isRunning(extractionStatus)">
-							{{ Math.round(extractionStatus?.progress * 100) }}%</span
+						<span v-if="props.node?.state?.taskProgress">
+							{{ Math.round(props.node?.state?.taskProgress * 100) }}%</span
 						>
 					</p>
-					<ProgressBar
-						v-if="extractionStatus !== null"
-						:value="isRunning(extractionStatus) ? extractionStatus.progress * 100 : 0"
-					/>
-					<div v-else class="done-container">
-						<div class="status-msg ok" v-if="isComplete(extractionStatus)">
-							<i class="pi pi-check-circle" />Completed
-						</div>
-					</div>
+					<ProgressBar :value="props.node?.state?.taskProgress ? props.node?.state?.taskProgress * 100 : 0" />
 				</div>
-				<p v-if="isRunning(extractionStatus)" class="action mx-auto">Processing PDF extractions</p>
+				<p v-if="props.node?.state?.taskProgress" class="action mx-auto">Processing PDF extractions</p>
 			</section>
 			<Button label="Open" @click="emit('open-drilldown')" severity="secondary" outlined />
 		</template>
@@ -43,20 +35,20 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, onUnmounted, ref, watch } from 'vue';
+import { onMounted, ref, watch } from 'vue';
 import { cloneDeep, isEmpty } from 'lodash';
 import Button from 'primevue/button';
 import Dropdown from 'primevue/dropdown';
-import type { ClientEvent, DocumentAsset, DocumentExtraction, ProjectAsset } from '@/types/Types';
-import { AssetType, ExtractionAssetType, ClientEventType, ProgressState } from '@/types/Types';
-import { useProjects } from '@/composables/project';
-import { getDocumentAsset } from '@/services/document-assets';
+import ProgressBar from 'primevue/progressbar';
+
 import { AssetBlock, WorkflowNode } from '@/types/workflow';
+import type { DocumentAsset, DocumentExtraction, ProjectAsset } from '@/types/Types';
+import { AssetType, ExtractionAssetType, ClientEventType } from '@/types/Types';
+import { createTaskProgressClientEventHandler, useClientEvent } from '@/composables/useClientEvent';
+import { useProjects } from '@/composables/project';
 import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue';
 import TeraOperatorPlaceholder from '@/components/operator/tera-operator-placeholder.vue';
-import ProgressBar from 'primevue/progressbar';
-import { subscribe, unsubscribe } from '@/services/ClientEventService';
-import type { ExtractionStatusUpdate } from '@/types/common';
+import { getDocumentAsset } from '@/services/document-assets';
 import { DocumentOperationState } from './document-operation';
 
 const emit = defineEmits(['open-drilldown', 'update-state', 'append-output']);
@@ -68,15 +60,11 @@ const documents = useProjects().getActiveProjectAssets(AssetType.Document);
 const document = ref<DocumentAsset | null>(null);
 const fetchingDocument = ref(false);
 const documentName = ref<DocumentAsset['name']>('');
-const extractionStatus = ref();
 const thumbnail = ref<string | null>(null);
 
-const isRunning = (item) => item?.state === ProgressState.Running;
-const isComplete = (item) => item?.status === ProgressState.Complete;
+useClientEvent(ClientEventType.ExtractionPdf, createTaskProgressClientEventHandler(props.node, 'taskProgress'));
 
 onMounted(async () => {
-	extractionStatus.value = null;
-	await subscribe(ClientEventType.ExtractionPdf, subscribeToExtraction);
 	if (props.node.state.documentId) {
 		// Quick get the name from the project
 		documentName.value = useProjects().getAssetName(props.node.state.documentId) || '';
@@ -162,15 +150,6 @@ watch(
 	},
 	{ immediate: true }
 );
-
-async function subscribeToExtraction(event: ClientEvent<ExtractionStatusUpdate>) {
-	if (!event.data || event.data.data.documentId !== props.node.state.documentId) return;
-	extractionStatus.value = event.data;
-}
-
-onUnmounted(async () => {
-	await unsubscribe(ClientEventType.ExtractionPdf, subscribeToExtraction);
-});
 </script>
 
 <style scoped>
