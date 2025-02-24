@@ -43,58 +43,47 @@
 
 		<!-- Sensitivity analysis settings -->
 		<template v-if="type === ChartSettingType.SENSITIVITY && sensitivityOptions">
-			<div class="mb-2"></div>
 			<!--FIXME: It might be better to move these inside the panel so that they can be controlled at an individual chart settings level -->
-			<label :class="_.isEmpty(selectedOptions) ? 'disabled' : ''">Select parameter(s) of interest</label>
+			<label class="mt-2" :class="{ disabled: _.isEmpty(selectedOptions) }">Select parameter(s) of interest</label>
 			<MultiSelect
 				:disabled="_.isEmpty(selectedOptions)"
 				placeholder="Select parameters"
-				:model-value="sensitivityOptions.selectedInputOptions"
+				:model-value="sensitivityOptions.selectedInputVariables"
 				:options="sensitivityOptions.inputOptions"
-				@change="
-					$emit('sensitivity-selection-change', {
-						selectedInputVariables: $event.value,
-						timepoint: sensitivityOptions.timepoint,
-						chartType: sensitivityOptions.chartType
-					})
-				"
+				@change="onUpdateSensitivitySettings('selectedInputVariables', $event.value, sensitivityOptions)"
 				filter
 			>
 				<template v-slot:value>
-					<template v-for="(variable, index) in sensitivityOptions.selectedInputOptions" :key="index">
+					<template v-for="(variable, index) in sensitivityOptions.selectedInputVariables" :key="index">
 						<template v-if="index > 0">,&nbsp;</template>
 						<span> {{ variable }} </span>
 					</template>
 				</template>
 			</MultiSelect>
 
-			<div class="mb-2"></div>
-			<label :class="{ disabled: isEmpty(selectedOptions) }">Select time slice of interest</label>
-			<tera-input-number
+			<label class="mt-2" :class="{ disabled: isEmpty(selectedOptions) }">Select sensitivity method</label>
+			<Dropdown
 				:disabled="_.isEmpty(selectedOptions)"
-				:model-value="sensitivityOptions.timepoint"
-				@update:model-value="
-					$emit('sensitivity-selection-change', {
-						selectedInputVariables: sensitivityOptions.selectedInputOptions,
-						timepoint: $event,
-						chartType: sensitivityOptions.chartType
-					})
-				"
+				placeholder="Select method"
+				:model-value="sensitivityOptions.method"
+				:options="Object.values(SensitivityMethod)"
+				@change="onUpdateSensitivitySettings('method', $event.value, sensitivityOptions)"
 			/>
-			<div class="mb-1"></div>
-			<div v-for="option in sensitivityChartOptions" class="flex align-items-center gap-2" :key="option.value">
+			<template v-if="sensitivityOptions.method === SensitivityMethod.TIMEPOINT">
+				<label class="mt-2" :class="{ disabled: isEmpty(selectedOptions) }">Select time slice of interest</label>
+				<tera-input-number
+					:disabled="_.isEmpty(selectedOptions)"
+					:model-value="sensitivityOptions.timepoint"
+					@update:model-value="onUpdateSensitivitySettings('timepoint', $event, sensitivityOptions)"
+				/>
+			</template>
+			<div v-for="option in sensitivityChartOptions" class="flex align-items-center gap-2 mt-1" :key="option.value">
 				<RadioButton
 					:disabled="_.isEmpty(selectedOptions)"
 					:model-value="sensitivityOptions.chartType"
 					:value="option.value"
 					name="sensitivityChartTypes"
-					@change="
-						$emit('sensitivity-selection-change', {
-							selectedInputVariables: sensitivityOptions.selectedInputOptions,
-							timepoint: sensitivityOptions.timepoint,
-							chartType: option.value
-						})
-					"
+					@change="onUpdateSensitivitySettings('chartType', option.value, sensitivityOptions)"
 				/>
 				<label :class="{ disabled: isEmpty(selectedOptions) }" :for="option.value">{{ option.label }}</label>
 			</div>
@@ -131,11 +120,12 @@ import TeraChartSettingsItem from '@/components/widgets/tera-chart-settings-item
 import TeraChartSettingsItemComparison from '@/components/widgets/tera-chart-settings-item-comparison.vue';
 import TeraChartControl from '@/components/workflow/tera-chart-control.vue';
 import MultiSelect from 'primevue/multiselect';
-import { ChartSetting, ChartSettingType, SensitivityChartType } from '@/types/common';
+import { ChartSetting, ChartSettingType, SensitivityChartType, SensitivityMethod } from '@/types/common';
 import { computed } from 'vue';
 import { EnsembleVariableChartSettingOption, getEnsembleChartSettingOptions } from '@/services/chart-settings';
 import _, { isEmpty } from 'lodash';
 import RadioButton from 'primevue/radiobutton';
+import Dropdown from 'primevue/dropdown';
 import TeraInputNumber from './tera-input-number.vue';
 
 const props = defineProps<{
@@ -157,9 +147,10 @@ const props = defineProps<{
 	isSimulateEnsembleSettings?: boolean;
 	sensitivityOptions?: {
 		inputOptions: string[];
-		selectedInputOptions: string[];
+		selectedInputVariables: string[];
 		timepoint: number;
 		chartType: SensitivityChartType;
+		method: SensitivityMethod;
 	};
 }>();
 const emits = defineEmits([
@@ -183,6 +174,13 @@ const targetSettings = computed(() => props.settings.filter((s) => s.type === pr
 const ensembleChartOptions = computed(() => getEnsembleChartSettingOptions(targetSettings.value));
 const toggleEnsembleChartOption = (option: EnsembleVariableChartSettingOption, value: boolean) => {
 	emits('toggle-ensemble-variable-setting-option', option, value);
+};
+
+const onUpdateSensitivitySettings = (key: string, value: any, sensitivityOptions: typeof props.sensitivityOptions) => {
+	emits('sensitivity-selection-change', {
+		...sensitivityOptions,
+		[key]: value
+	});
 };
 </script>
 <style scoped>

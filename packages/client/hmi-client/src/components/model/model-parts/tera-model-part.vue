@@ -30,7 +30,7 @@
 							/>
 						</template>
 						<Button v-if="showMatrix" label="Open matrix" text size="small" @click="$emit('open-matrix', base.id)" />
-						<template v-if="!featureConfig.isPreview">
+						<template v-if="!featureConfig.isPreview && partType !== PartType.TRANSITION">
 							<Button
 								:disabled="getEditingState(index).isEditingChildrenConcepts"
 								@click="getEditingState(index).isEditingChildrenConcepts = true"
@@ -123,9 +123,9 @@
 								:name="child.name"
 								:id="child.id"
 								:grounding="child.grounding"
-								:templateId="child.templateId"
-								:input="child.input"
-								:output="child.output"
+								:subject="child.subject"
+								:outcome="child.outcome"
+								:controllers="child.controllers"
 								:unitExpression="child.unitExpression"
 								:expression="child.expression"
 								:feature-config="featureConfig"
@@ -152,9 +152,9 @@
 				:name="base.name"
 				:id="base.id"
 				:grounding="base.grounding"
-				:templateId="base.templateId"
-				:input="base.input"
-				:output="base.output"
+				:subject="base.subject"
+				:outcome="base.outcome"
+				:controllers="base.controllers"
 				:unitExpression="base.unitExpression"
 				:expression="base.expression"
 				:feature-config="featureConfig"
@@ -177,7 +177,7 @@
 <script setup lang="ts">
 import { isEmpty } from 'lodash';
 import { ref, computed } from 'vue';
-import type { ModelPartItem } from '@/types/Model';
+import type { ModelPartItem, ModelPartItemTree } from '@/types/Model';
 import type { DKG } from '@/types/Types';
 import { searchCuriesEntities } from '@/services/concept';
 import TeraModelPartEntry from '@/components/model/model-parts/tera-model-part-entry.vue';
@@ -189,7 +189,7 @@ import Paginator from 'primevue/paginator';
 import { PartType } from '@/model-representation/service';
 
 const props = defineProps<{
-	items: any[];
+	items: ModelPartItemTree[];
 	featureConfig: FeatureConfig;
 	collapsedItems?: Map<string, string[]>;
 	showMatrix?: boolean;
@@ -217,18 +217,28 @@ const firstRow = ref(0);
 const filteredItems = computed(() => {
 	const filterText = props.filter?.toLowerCase() ?? '';
 	if (!filterText) return props.items;
+
+	const matcher = (partItem: ModelPartItem) => {
+		if (partItem.id.toLowerCase().includes(filterText)) return true;
+
+		// For transitions
+		if (partItem.outcome?.toLowerCase().includes(filterText)) return true;
+		if (partItem.subject?.toLowerCase().includes(filterText)) return true;
+		if (partItem.controllers?.toLowerCase().includes(filterText)) return true;
+		if (partItem.expression?.toLowerCase().replace(/\s/g, '').includes(filterText.replace(/\s/g, ''))) return true;
+		return false;
+	};
+
 	return props.items
 		.map(({ base, children, isParent }) => {
-			const filteredChildren = children.filter((child) => child.id.toLowerCase().includes(filterText));
-			const baseMatches =
-				base.id.toLowerCase().includes(filterText) || base.templateId?.toLowerCase().includes(filterText);
-			const childrenMatch = filteredChildren.length > 0;
-			if (baseMatches || childrenMatch) {
+			const filteredChildren = children.filter(matcher);
+			const baseMatches = matcher(base);
+			if (baseMatches || filteredChildren.length > 0) {
 				return { base, children: filteredChildren, isParent };
 			}
 			return null;
 		})
-		.filter(Boolean) as { base: ModelPartItem; children: ModelPartItem[]; isParent: boolean }[];
+		.filter(Boolean) as ModelPartItemTree[];
 });
 
 // Maps filtered indices to original indices
