@@ -396,7 +396,6 @@ export function useCharts(
 		multiVariable = false,
 		showBaseLines = false
 	) => {
-		setting.hideInNode = true;
 		const ensembleVarName = setting.selectedVariables[0];
 		const options: ForecastChartOptions = {
 			title: getModelConfigName(<ModelConfiguration[]>modelConfig?.value ?? [], modelConfigId) || ensembleVarName,
