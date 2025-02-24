@@ -234,14 +234,12 @@ import TeraInputText from '@/components/widgets/tera-input-text.vue';
 import { getInterventionPoliciesForModel, getModel } from '@/services/model';
 import {
 	AssetType,
-	ClientEvent,
 	ClientEventType,
 	Intervention,
 	InterventionPolicy,
 	Model,
 	DynamicIntervention,
 	StaticIntervention,
-	TaskStatus,
 	type TaskResponse,
 	type DocumentAsset
 } from '@/types/Types';
@@ -270,7 +268,7 @@ import { useProjects } from '@/composables/project';
 import { interventionPolicyFromDocument, interventionPolicyFromDataset } from '@/services/goLLM';
 import { downloadDocumentAsset, getDocumentAsset, getDocumentFileAsText } from '@/services/document-assets';
 import TeraPdfPanel from '@/components/widgets/tera-pdf-panel.vue';
-import { useClientEvent } from '@/composables/useClientEvent';
+import { createInProgressClientEventHandler, useClientEvent } from '@/composables/useClientEvent';
 import TeraInterventionCard from './tera-intervention-card.vue';
 import {
 	InterventionPolicyOperation,
@@ -667,21 +665,10 @@ const extractInterventionPolicyFromInputs = async () => {
 	emit('update-state', state);
 };
 
-// Listen for the task completion event
-const interventionEventHandler = async (event: ClientEvent<TaskResponse>) => {
-	const state = cloneDeep(props.node.state);
-	if (!state.taskIds.includes(event.data?.id)) return;
-	isLoading.value = true;
-	if ([TaskStatus.Success, TaskStatus.Cancelled, TaskStatus.Failed].includes(event.data.status)) {
-		state.taskIds = state.taskIds.filter((id) => id !== event.data.id);
-		isLoading.value = false;
-		if (!modelId) return;
-		await fetchInterventionPolicies();
-	}
-};
-
-useClientEvent(ClientEventType.TaskGollmInterventionsFromDocument, interventionEventHandler);
-useClientEvent(ClientEventType.TaskGollmInterventionsFromDataset, interventionEventHandler);
+useClientEvent(
+	[ClientEventType.TaskGollmInterventionsFromDocument, ClientEventType.TaskGollmInterventionsFromDataset],
+	createInProgressClientEventHandler(props.node.state, 'taskIds')
+);
 
 const onSelectChartChange = () => {
 	const state = cloneDeep(props.node.state);

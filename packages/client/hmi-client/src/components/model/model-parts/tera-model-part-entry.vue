@@ -7,9 +7,10 @@
 				<tera-input-text v-else placeholder="Add a name" v-model="nameText" />
 			</span>
 			<span class="unit" :class="{ time: isTimePart }">
-				<template v-if="input || output">
-					<span><label>Input:</label> {{ input }}</span>
-					<span><label>Output:</label> {{ output }}</span>
+				<template v-if="subject || outcome">
+					<span><label>Subject:</label> {{ subject !== '' ? subject : 'n/a' }}</span>
+					<span><label>&nbsp;Outcome:</label> {{ outcome !== '' ? outcome : 'n/a' }}</span>
+					<span v-if="controllers"><label>&nbsp;Controllers:</label> {{ controllers }}</span>
 				</template>
 				<!--amr_to_mmt doesn't like unit expressions with spaces, removing them here before they are saved to the amr-->
 				<template v-else-if="showUnit">
@@ -45,7 +46,7 @@
 					:label="showDescription ? 'Hide description' : descriptionText ? 'Show description' : 'Add description'"
 					@click="showDescription = !showDescription"
 				/>
-				<aside class="concept">
+				<aside class="concept" v-if="!isTransitionPart">
 					<tera-concept v-model="grounding" :is-preview="featureConfig.isPreview" />
 				</aside>
 			</template>
@@ -79,12 +80,12 @@ const props = defineProps<{
 	description?: string;
 	name?: string;
 	unitExpression?: string;
-	templateId?: string;
 	id?: string;
 	grounding?: any;
 	expression?: string;
-	input?: any;
-	output?: any;
+	subject?: string;
+	outcome?: string;
+	controllers?: string;
 	featureConfig: FeatureConfig;
 	partType: PartType;
 }>();
@@ -128,6 +129,7 @@ const showUnit = computed(
 );
 
 const isTimePart = props.partType === PartType.TIME;
+const isTransitionPart = props.partType === PartType.TRANSITION;
 </script>
 
 <style scoped>
