@@ -14,6 +14,7 @@
 				</AccordionTab>
 			</Accordion>
 		</div>
+		<!-- Cannot find Error: so no need for accordion tabs. -->
 		<div v-if="!lastErrorMessage">
 			<p>{{ props.value }}</p>
 			<code>{{ localTraceback }}</code>
