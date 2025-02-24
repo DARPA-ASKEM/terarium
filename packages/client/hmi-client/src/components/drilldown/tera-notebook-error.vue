@@ -44,7 +44,7 @@ watch(
 		if (!props.traceback) return;
 		localTraceback.value = props.traceback;
 		hide.value = false;
-		const splitTraceback = props.traceback.split(', in forward\n');
+		const splitTraceback = props.traceback.split('Error:');
 		if (splitTraceback.length > 1) {
 			lastErrorMessage.value = splitTraceback[splitTraceback.length - 1];
 		}
