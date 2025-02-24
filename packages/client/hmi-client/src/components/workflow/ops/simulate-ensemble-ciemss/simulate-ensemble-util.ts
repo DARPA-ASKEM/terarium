@@ -101,3 +101,30 @@ export function usePreparedChartInputs(
 		} as ChartData;
 	});
 }
+
+// Build chart data by adding variable translation map to the given output data
+export function buildChartData(
+	outputData: {
+		result: DataArray;
+		resultSummary: DataArray;
+		pyciemssMap: Record<string, string>;
+	} | null,
+	mappings: SimulateEnsembleMappingRow[]
+) {
+	if (!outputData) return null;
+	const pyciemssMap = outputData.pyciemssMap;
+	const translationMap = {};
+	Object.keys(outputData.pyciemssMap).forEach((key) => {
+		// pyciemssMap keys are formatted as either '{modelConfigId}/{displayVariableName}' for model variables or '{displayVariableName}' for ensemble variables
+		const tokens = key.split('/');
+		const varName = tokens.length > 1 ? tokens[1] : 'Ensemble';
+		translationMap[`${pyciemssMap[key]}`] = `${varName}`;
+		translationMap[`${pyciemssMap[key]}_mean`] = `${varName}`;
+	});
+	// Add translation map for dataset variables
+	mappings.forEach((mapObj) => {
+		translationMap[mapObj.newName] = 'Observations';
+	});
+	console.log({ ...outputData, translationMap });
+	return { ...outputData, translationMap };
+}
