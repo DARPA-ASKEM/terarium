@@ -1,8 +1,5 @@
 import json
 import os
-from openai import OpenAI
-from typing import List, Optional
-
 from common.LlmToolsInterface import LlmToolsInterface
 from common.prompts.chart_annotation import CHART_ANNOTATION_PROMPT
 from common.prompts.config_from_dataset import (
@@ -37,20 +34,30 @@ from common.utils import (
     escape_curly_braces,
     unescape_curly_braces
 )
+from openai import AzureOpenAI
+from typing import List, Optional
 
-GPT_MODEL = "gpt-4o-2024-08-06"
+API_VERSION = "2024-10-21"
 
 
-class OpenAiTools(LlmToolsInterface):
+class AzureTools(LlmToolsInterface):
 
-    def __init__(self, api_key=None):
+    def __init__(self, api_key=None, azure_endpoint=None, model_name=None):
         self.api_key = api_key
+        self.azure_endpoint = azure_endpoint
+        self.model_name = model_name
+
 
     def send_to_llm_with_json_output(self, prompt: str, schema: str, max_tokens=16384) -> dict:
-        print("Sending request to OpenAI API...")
-        client = OpenAI() if self.api_key is None else OpenAI(api_key=self.api_key)
+        print("Creating AzureOpenAI client...")
+        client = AzureOpenAI(
+            api_key=os.getenv("AZURE_OPENAI_KEY") if self.api_key is None else self.api_key,
+            api_version=API_VERSION,
+            azure_endpoint = os.getenv("AZURE_OPENAI_ENDPOINT") if self.azure_endpoint is None else self.azure_endpoint
+        )
+        print("Sending request to AzureOpenAI API...")
         output = client.chat.completions.create(
-            model=GPT_MODEL,
+            model=os.getenv("AZURE_OPENAI_MODEL") if self.model_name is None else self.model_name,
             top_p=1,
             frequency_penalty=0,
             presence_penalty=0,
@@ -75,9 +82,13 @@ class OpenAiTools(LlmToolsInterface):
 
     def send_to_llm_with_string_output(self, prompt: str, max_tokens=16384) -> str:
         print("Sending request to OpenAI API...")
-        client = OpenAI() if self.api_key is None else OpenAI(api_key=self.api_key)
+        client = AzureOpenAI(
+            api_key=os.getenv("AZURE_OPENAI_KEY") if self.api_key is None else self.api_key,
+            api_version=API_VERSION,
+            azure_endpoint = os.getenv("AZURE_OPENAI_ENDPOINT") if self.azure_endpoint is None else self.azure_endpoint
+        )
         output = client.chat.completions.create(
-            model=GPT_MODEL,
+            model=os.getenv("AZURE_OPENAI_MODEL") if self.model_name is None else self.model_name,
             top_p=1,
             frequency_penalty=0,
             presence_penalty=0,
@@ -93,9 +104,13 @@ class OpenAiTools(LlmToolsInterface):
 
     def send_image_to_llm_with_json_output(self, prompt: str, schema: str, image_url: str, max_tokens=16384) -> dict:
         print("Sending request to OpenAI API...")
-        client = OpenAI() if self.api_key is None else OpenAI(api_key=self.api_key)
+        client = AzureOpenAI(
+            api_key=os.getenv("AZURE_OPENAI_KEY") if self.api_key is None else self.api_key,
+            api_version=API_VERSION,
+            azure_endpoint = os.getenv("AZURE_OPENAI_ENDPOINT") if self.azure_endpoint is None else self.azure_endpoint
+        )
         output = client.chat.completions.create(
-            model=GPT_MODEL,
+            model=os.getenv("AZURE_OPENAI_MODEL") if self.model_name is None else self.model_name,
             top_p=1,
             frequency_penalty=0,
             presence_penalty=0,

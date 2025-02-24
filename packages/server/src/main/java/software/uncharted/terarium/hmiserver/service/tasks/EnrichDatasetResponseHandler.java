@@ -24,7 +24,7 @@ import software.uncharted.terarium.hmiserver.service.data.DatasetService;
 @Component
 @RequiredArgsConstructor
 @Slf4j
-public class EnrichDatasetResponseHandler extends TaskResponseHandler {
+public class EnrichDatasetResponseHandler extends LlmTaskResponseHandler {
 
 	public static final String NAME = "gollm:enrich_dataset";
 
@@ -37,7 +37,7 @@ public class EnrichDatasetResponseHandler extends TaskResponseHandler {
 	}
 
 	@Data
-	public static class Input {
+	public static class Input extends LlmTaskResponseHandler.Input {
 
 		@JsonProperty("document")
 		String document;

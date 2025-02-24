@@ -13,6 +13,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import software.uncharted.terarium.hmiserver.models.dataservice.Grounding;
 import software.uncharted.terarium.hmiserver.models.dataservice.dataset.Dataset;
@@ -26,6 +27,7 @@ import software.uncharted.terarium.hmiserver.service.ContextMatcher;
 import software.uncharted.terarium.hmiserver.service.data.DKGService;
 
 @Slf4j
+@RequiredArgsConstructor
 public class TaskUtilities {
 
 	public static TaskRequest getEnrichModelTaskRequest(
@@ -33,11 +35,13 @@ public class TaskUtilities {
 		DocumentAsset document,
 		Model model,
 		UUID projectId,
-		Boolean overwrite
+		Boolean overwrite,
+		String llm
 	) throws IOException {
 		final ObjectMapper objectMapper = new ObjectMapper();
 
 		final EnrichModelResponseHandler.Input input = new EnrichModelResponseHandler.Input();
+		input.setLlm(llm);
 		if (document != null) {
 			try {
 				input.setDocument(objectMapper.writeValueAsString(document.getExtractions()));
@@ -66,6 +70,7 @@ public class TaskUtilities {
 		props.setProjectId(projectId);
 		if (document != null) props.setDocumentId(document.getId());
 		props.setModelId(model.getId());
+		props.setOverwrite(overwrite);
 		req.setAdditionalProperties(props);
 
 		return req;
@@ -76,11 +81,13 @@ public class TaskUtilities {
 		DocumentAsset document,
 		Dataset dataset,
 		UUID projectId,
-		Boolean overwrite
+		Boolean overwrite,
+		String llm
 	) throws IOException {
 		final ObjectMapper objectMapper = new ObjectMapper();
 
 		final EnrichDatasetResponseHandler.Input input = new EnrichDatasetResponseHandler.Input();
+		input.setLlm(llm);
 		if (document != null) {
 			try {
 				input.setDocument(objectMapper.writeValueAsString(document.getExtractions()));
@@ -130,21 +137,27 @@ public class TaskUtilities {
 		return taskRequest;
 	}
 
-	public static TaskRequest getModelCardTask(String userId, DocumentAsset document, Model model, UUID projectId)
-		throws IOException {
+	public static TaskRequest getModelCardTask(
+		String userId,
+		DocumentAsset document,
+		Model model,
+		UUID projectId,
+		String llm
+	) throws IOException {
 		final ObjectMapper objectMapper = new ObjectMapper();
 
 		final ModelCardResponseHandler.Input input = new ModelCardResponseHandler.Input();
+		input.setLlm(llm);
 		input.setAmr(model.serializeWithoutTerariumFields(null, new String[] { "gollmCard" }));
 
 		if (document != null) {
 			try {
-				input.setResearchPaper(objectMapper.writeValueAsString(document.getExtractions()));
+				input.setDocument(objectMapper.writeValueAsString(document.getExtractions()));
 			} catch (JsonProcessingException e) {
 				throw new IOException("Unable to serialize document text");
 			}
 		} else {
-			input.setResearchPaper("");
+			input.setDocument("");
 		}
 
 		// Create the task

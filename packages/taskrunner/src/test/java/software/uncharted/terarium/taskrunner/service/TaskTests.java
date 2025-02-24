@@ -24,9 +24,8 @@ import software.uncharted.terarium.taskrunner.models.task.TaskStatus;
 @Slf4j
 public class TaskTests extends TaskRunnerApplicationTests {
 
-	private final String TEST_INPUT = "{\"research_paper\":\"Test research paper\"}";
-	private final String TEST_INPUT_WITH_PROGRESS =
-		"{\"research_paper\":\"Test research paper\",\"include_progress\":true}";
+	private final String TEST_INPUT = "{\"document\":\"Test research paper\"}";
+	private final String TEST_INPUT_WITH_PROGRESS = "{\"document\":\"Test research paper\",\"include_progress\":true}";
 	private final String FAILURE_INPUT = "{\"should_fail\":true}";
 	private final String SCRIPT_PATH = getClass().getResource("/echo.py").getPath();
 

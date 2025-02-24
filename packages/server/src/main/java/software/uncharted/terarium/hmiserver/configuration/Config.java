@@ -85,6 +85,11 @@ public class Config {
 	String codePath;
 	String imagePath;
 
+	/**
+	 * The name of the LLM model to use for GoLLM and Beaker
+	 */
+	String llm;
+
 	@Data
 	@Accessors(chain = true)
 	public static class Caching {

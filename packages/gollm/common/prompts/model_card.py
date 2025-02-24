@@ -8,7 +8,7 @@ If you cannot answer the entire query, provide as much information as possible. 
 Use the following document as a reference:
 
 ---DOCUMENT START---
-{research_paper}
+{document}
 ---DOCUMENT END--
 
 Use the following JSON representation of an AMR model as a reference:

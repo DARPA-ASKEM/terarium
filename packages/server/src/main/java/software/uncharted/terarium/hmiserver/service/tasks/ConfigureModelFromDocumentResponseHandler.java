@@ -23,7 +23,7 @@ import software.uncharted.terarium.hmiserver.service.data.ProvenanceService;
 @Component
 @RequiredArgsConstructor
 @Slf4j
-public class ConfigureModelFromDocumentResponseHandler extends TaskResponseHandler {
+public class ConfigureModelFromDocumentResponseHandler extends LlmTaskResponseHandler {
 
 	public static final String NAME = "gollm:configure_model_from_document";
 
@@ -38,10 +38,10 @@ public class ConfigureModelFromDocumentResponseHandler extends TaskResponseHandl
 	}
 
 	@Data
-	public static class Input {
+	public static class Input extends LlmTaskResponseHandler.Input {
 
-		@JsonProperty("research_paper")
-		String researchPaper;
+		@JsonProperty("document")
+		String document;
 
 		@JsonProperty("amr")
 		String amr;

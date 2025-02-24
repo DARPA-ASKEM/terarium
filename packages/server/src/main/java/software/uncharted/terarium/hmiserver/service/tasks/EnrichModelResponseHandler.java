@@ -28,7 +28,7 @@ import software.uncharted.terarium.hmiserver.service.data.ModelService;
 @Component
 @RequiredArgsConstructor
 @Slf4j
-public class EnrichModelResponseHandler extends TaskResponseHandler {
+public class EnrichModelResponseHandler extends LlmTaskResponseHandler {
 
 	public static final String NAME = "gollm:enrich_model";
 
@@ -41,7 +41,7 @@ public class EnrichModelResponseHandler extends TaskResponseHandler {
 	}
 
 	@Data
-	public static class Input {
+	public static class Input extends LlmTaskResponseHandler.Input {
 
 		@JsonProperty("document")
 		String document;

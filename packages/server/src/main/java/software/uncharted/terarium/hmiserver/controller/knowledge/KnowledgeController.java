@@ -28,6 +28,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
+import software.uncharted.terarium.hmiserver.configuration.Config;
 import software.uncharted.terarium.hmiserver.models.ClientEventType;
 import software.uncharted.terarium.hmiserver.models.dataservice.document.DocumentAsset;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.Model;
@@ -57,6 +58,7 @@ import software.uncharted.terarium.hmiserver.utils.rebac.Schema;
 @RequiredArgsConstructor
 public class KnowledgeController {
 
+	private final Config config;
 	private final ObjectMapper mapper;
 
 	private final ModelService modelService;
@@ -445,6 +447,7 @@ public class KnowledgeController {
 
 	private TaskRequest cleanupEquationsTaskRequest(UUID projectId, List<String> equations) {
 		final EquationsCleanupResponseHandler.Input input = new EquationsCleanupResponseHandler.Input();
+		input.setLlm(config.getLlm());
 		input.setEquations(equations);
 
 		// Create the task
@@ -484,6 +487,7 @@ public class KnowledgeController {
 		final TaskRequest latexToSympyRequest = new TaskRequest();
 
 		final LatexToSympyResponseHandler.Input input = new LatexToSympyResponseHandler.Input();
+		input.setLlm(config.getLlm());
 		final List<String> equationList = new ArrayList<>();
 		for (final JsonNode equation : equationsNode) {
 			equationList.add(equation.asText());

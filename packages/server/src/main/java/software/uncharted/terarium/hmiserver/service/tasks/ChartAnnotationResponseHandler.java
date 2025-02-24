@@ -8,7 +8,7 @@ import org.springframework.stereotype.Component;
 @Component
 @RequiredArgsConstructor
 @Slf4j
-public class ChartAnnotationResponseHandler extends TaskResponseHandler {
+public class ChartAnnotationResponseHandler extends LlmTaskResponseHandler {
 
 	public static final String NAME = "gollm:chart_annotation";
 
@@ -18,7 +18,7 @@ public class ChartAnnotationResponseHandler extends TaskResponseHandler {
 	}
 
 	@Data
-	public static class Input {
+	public static class Input extends LlmTaskResponseHandler.Input {
 
 		String preamble;
 		String instruction;

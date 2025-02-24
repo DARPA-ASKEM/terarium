@@ -1,5 +1,6 @@
 package software.uncharted.terarium.hmiserver.service.tasks;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.UUID;
 import lombok.Data;
@@ -13,7 +14,7 @@ import software.uncharted.terarium.hmiserver.service.data.SummaryService;
 @Component
 @RequiredArgsConstructor
 @Slf4j
-public class GenerateSummaryHandler extends TaskResponseHandler {
+public class GenerateSummaryHandler extends LlmTaskResponseHandler {
 
 	public static final String NAME = "gollm:generate_summary";
 
@@ -22,6 +23,13 @@ public class GenerateSummaryHandler extends TaskResponseHandler {
 	@Override
 	public String getName() {
 		return NAME;
+	}
+
+	@Data
+	public static class Input extends LlmTaskResponseHandler.Input {
+
+		@JsonProperty("instruction")
+		String instruction;
 	}
 
 	@Data

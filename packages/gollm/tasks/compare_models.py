@@ -1,9 +1,11 @@
 import sys
 import traceback
-
 from chains import compare_models_chain
 from entities import ModelCompareModel
+from llms.azure.AzureTools import AzureTools
+from llms.llama.LlamaTools import LlamaTools
 from llms.openai.OpenAiTools import OpenAiTools
+
 from taskrunner import TaskRunnerInterface
 
 
@@ -21,11 +23,24 @@ def main():
 
         taskrunner.log("Creating ModelCompareModel from input")
         input_model = ModelCompareModel(**input_dict)
+        taskrunner.log("input model: " + str(input_model))
+        taskrunner.log("input model llm: " + str(input_model.llm))
 
-        taskrunner.log("Sending request to OpenAI API")
-        llm = OpenAiTools()
+        if input_model.llm == "llama":
+            taskrunner.log("Using Llama LLM")
+            llm = LlamaTools()
+        elif input_model.llm == "openai":
+            taskrunner.log("Using OpenAI LLM")
+            llm = OpenAiTools()
+        elif input_model.llm == "azure":
+            taskrunner.log("Using Azure OpenAI LLM")
+            llm = AzureTools()
+        else:
+            taskrunner.log("No LLM specified, Defaulting to Azure OpenAI LLM")
+            llm = AzureTools()
+
         response = compare_models_chain(llm, amrs=input_model.amrs, goal=input_model.goal)
-        taskrunner.log("Received response from OpenAI API")
+        taskrunner.log("Received response from LLM")
 
         taskrunner.write_output_dict_with_timeout({"response": response})
 

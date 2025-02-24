@@ -3,61 +3,53 @@ from datetime import datetime
 from pydantic import BaseModel, root_validator
 from typing import List, Callable, Type, Optional
 
+class GollmModel(BaseModel):
+    llm: Optional[str] = None
 
-class ConfigureModelDocument(BaseModel):
-    research_paper: str
+
+class GeneralQueryModel(GollmModel):
+    instruction: str
+
+
+class ModelAndDocument(GollmModel):
     amr: str  # expects AMR in a stringified JSON object
+    document: Optional[str] = None
 
 
-class InterventionsFromDocument(BaseModel):
-    research_paper: str
+class ModelAndDataset(GollmModel):
     amr: str  # expects AMR in a stringified JSON object
-
-
-class InterventionsFromDataset(BaseModel):
     dataset: List[str]
-    amr: str  # expects AMR in a stringified JSON object
+    matrix: Optional[str] = None
 
 
-class ConfigureModelDataset(BaseModel):
-    dataset: List[str]
-    amr: str  # expects AMR in a stringified JSON object
-    matrix: str = None
-
-
-class DatasetStatistics(BaseModel):
+class DatasetStatistics(GollmModel):
     datasetUrl: str  # expects a URL of a CSV file
 
 
-class DatasetCardModel(BaseModel):
+class DatasetCardModel(GollmModel):
     dataset: str  # expects a stringified JSON object
     document: Optional[str] = None
 
 
-class ModelCardModel(BaseModel):
-    amr: str  # expects AMR in a stringified JSON object
-    document: Optional[str] = None
-
-
-class ModelCompareModel(BaseModel):
+class ModelCompareModel(GollmModel):
     amrs: List[str]  # expects AMRs to be a stringified JSON object
     goal: str = None
 
 
-class EquationsModel(BaseModel):
+class EquationsModel(GollmModel):
     equations: List[str]
 
 
-class EquationsFromImage(BaseModel):
+class EquationsFromImage(GollmModel):
     image: str  # expects a base64 encoded image
 
 
-class ChartAnnotationModel(BaseModel):
+class ChartAnnotationModel(GollmModel):
     preamble: str
     instruction: str
 
 
-class EmbeddingModel(BaseModel):
+class EmbeddingModel(GollmModel):
     text: List[str]
     embedding_model: str
 
@@ -71,7 +63,7 @@ class EmbeddingModel(BaseModel):
         return values
 
 
-class Message(BaseModel):
+class Message(GollmModel):
     message_type: str
     message_content: str
     message_id: int = None
@@ -94,7 +86,7 @@ class Message(BaseModel):
         return values
 
 
-class Action(BaseModel):
+class Action(GollmModel):
     message_id: int
     action_blob: dict
 

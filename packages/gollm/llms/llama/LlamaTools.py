@@ -1,8 +1,6 @@
 import boto3
 import json
 import os
-from typing import List, Optional
-
 from common.LlmToolsInterface import LlmToolsInterface
 from common.prompts.chart_annotation import CHART_ANNOTATION_PROMPT
 from common.prompts.config_from_dataset import (
@@ -38,6 +36,7 @@ from common.utils import (
     unescape_curly_braces
 )
 from llms.llama.prompts.llama_prompts import LLAMA_START_PROMPT, LLAMA_RETURN_INSTRUCTIONS, LLAMA_END_PROMPT
+from typing import List, Optional
 
 GPT_MODEL = "us.meta.llama3-2-90b-instruct-v1:0"
 
@@ -49,9 +48,7 @@ class LlamaTools(LlmToolsInterface):
         self.bedrock_secret_access_key = bedrock_secret_access_key
 
     def send_to_llm_with_json_output(self, prompt: str, schema: str, max_tokens=2048) -> dict:
-        print("Sending request to AWS Bedrock (Llama)...")
-        #send prompt to AWS Bedrock
-
+        print("Creating AWS Bedrock (Llama) client...")
         client = boto3.client(
             "bedrock-runtime",
             region_name="us-west-2",
@@ -66,6 +63,7 @@ class LlamaTools(LlmToolsInterface):
             "top_p": 1,
         })
 
+        print("Sending request to AWS Bedrock (Llama)...")
         response = client.invoke_model(
             modelId=GPT_MODEL,
             body=request,
@@ -74,14 +72,12 @@ class LlamaTools(LlmToolsInterface):
 
         print("Received response from AWS Bedrock (Llama)...")
         model_response = json.loads(response["body"].read())
-        response_text = model_response["generation"]
-        return unescape_curly_braces(response_text)
+        response_json = json.loads(model_response["generation"])
+        return unescape_curly_braces(response_json)
 
 
     def send_to_llm_with_string_output(self, prompt: str, max_tokens=2048) -> str:
-        print("Sending request to AWS Bedrock (Llama)...")
-        #send prompt to AWS Bedrock
-
+        print("Creating AWS Bedrock (Llama) client...")
         client = boto3.client(
             "bedrock-runtime",
             region_name="us-west-2",
@@ -96,6 +92,7 @@ class LlamaTools(LlmToolsInterface):
             "top_p": 1,
         })
 
+        print("Sending request to AWS Bedrock (Llama)...")
         response = client.invoke_model(
             modelId=GPT_MODEL,
             body=request,
@@ -108,9 +105,7 @@ class LlamaTools(LlmToolsInterface):
 
 
     def send_image_to_llm_with_json_output(self, prompt: str, schema: str, image_url: str, max_tokens=2048) -> dict:
-        print("Sending request to AWS Bedrock (Llama)...")
-        #send prompt to AWS Bedrock
-
+        print("Creating AWS Bedrock (Llama) client...")
         client = boto3.client(
             "bedrock-runtime",
             region_name="us-west-2",
@@ -125,6 +120,7 @@ class LlamaTools(LlmToolsInterface):
             "top_p": 1,
         })
 
+        print("Sending request to AWS Bedrock (Llama)...")
         response = client.invoke_model(
             modelId=GPT_MODEL,
             body=request,
@@ -133,8 +129,8 @@ class LlamaTools(LlmToolsInterface):
 
         print("Received response from AWS Bedrock (Llama)...")
         model_response = json.loads(response["body"].read())
-        response_text = model_response["generation"]
-        return unescape_curly_braces(response_text)
+        response_json = json.loads(model_response["generation"])
+        return unescape_curly_braces(response_json)
 
 
     def create_enrich_model_prompt(self, amr: str, document: str, schema: str) -> str:
@@ -186,7 +182,7 @@ class LlamaTools(LlmToolsInterface):
         prompt = LLAMA_START_PROMPT
         prompt += CONFIGURE_FROM_DOCUMENT_PROMPT.format(
             amr=escape_curly_braces(amr),
-            research_paper=escape_curly_braces(document)
+            document=escape_curly_braces(document)
         )
         prompt += LLAMA_RETURN_INSTRUCTIONS.format(
             schema=schema
@@ -204,7 +200,7 @@ class LlamaTools(LlmToolsInterface):
         else:
             print("Building prompt to extract dataset enrichments from a research paper...")
             prompt += DATASET_ENRICH_PROMPT_WITH_DOCUMENT.format(
-                research_paper=escape_curly_braces(document),
+                document=escape_curly_braces(document),
                 dataset=dataset
             )
 
@@ -247,7 +243,7 @@ class LlamaTools(LlmToolsInterface):
         prompt = LLAMA_START_PROMPT
         prompt += INTERVENTIONS_FROM_DOCUMENT_PROMPT.format(
             amr=escape_curly_braces(amr),
-            research_paper=escape_curly_braces(document)
+            document=escape_curly_braces(document)
         )
         prompt += LLAMA_RETURN_INSTRUCTIONS.format(
             schema=schema
@@ -278,7 +274,7 @@ class LlamaTools(LlmToolsInterface):
 
         prompt = LLAMA_START_PROMPT
         prompt += MODEL_CARD_PROMPT.format(
-            research_paper=escape_curly_braces(document),
+            document=escape_curly_braces(document),
             amr=escape_curly_braces(amr)
         )
         prompt += LLAMA_RETURN_INSTRUCTIONS.format(

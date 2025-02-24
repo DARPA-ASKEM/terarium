@@ -13,7 +13,7 @@ Use the following AMR model JSON file as a reference:
 Use the following user-provided text as the research paper to answer the query:
 
 ---START USER-PROVIDED TEXT---
-{research_paper}
+{document}
 ---END USER-PROVIDED TEXT---
 
 Assume that the user-provided text describes multiple intervention policies to apply to the model.
