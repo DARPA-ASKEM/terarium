@@ -400,9 +400,10 @@
 							@remove="removeChartSettings"
 							:sensitivity-options="{
 								inputOptions: Object.keys(pyciemssMap).filter((c) => ['parameter'].includes(modelPartTypesMap[c])),
-								selectedInputOptions: selectedSensitivityChartSettings[0]?.selectedInputVariables ?? [],
+								selectedInputVariables: selectedSensitivityChartSettings[0]?.selectedInputVariables ?? [],
 								timepoint: selectedSensitivityChartSettings[0]?.timepoint ?? lastTimepoint,
-								chartType: selectedSensitivityChartSettings[0]?.chartType ?? SensitivityChartType.SCATTER
+								chartType: selectedSensitivityChartSettings[0]?.chartType ?? SensitivityChartType.SCATTER,
+								method: selectedSensitivityChartSettings[0]?.method ?? SensitivityMethod.TIMEPOINT
 							}"
 							@selection-change="
 								(e) =>
@@ -410,7 +411,8 @@
 										selectedVariables: e,
 										selectedInputVariables: selectedSensitivityChartSettings[0]?.selectedInputVariables ?? [],
 										timepoint: selectedSensitivityChartSettings[0]?.timepoint ?? lastTimepoint,
-										chartType: selectedSensitivityChartSettings[0]?.chartType ?? SensitivityChartType.SCATTER
+										chartType: selectedSensitivityChartSettings[0]?.chartType ?? SensitivityChartType.SCATTER,
+										method: selectedSensitivityChartSettings[0]?.method ?? SensitivityMethod.TIMEPOINT
 									})
 							"
 							@sensitivity-selection-change="
@@ -477,7 +479,13 @@ import {
 	CiemssMethodOptions
 } from '@/services/models/simulation-service';
 import { logger } from '@/utils/logger';
-import { ChartSettingType, CiemssPresetTypes, DrilldownTabs, SensitivityChartType } from '@/types/common';
+import {
+	ChartSettingType,
+	CiemssPresetTypes,
+	DrilldownTabs,
+	SensitivityChartType,
+	SensitivityMethod
+} from '@/types/common';
 import VegaChart from '@/components/widgets/VegaChart.vue';
 import { KernelSessionManager } from '@/services/jupyter';
 import TeraChartSettings from '@/components/widgets/tera-chart-settings.vue';

@@ -15,7 +15,8 @@ import {
 	ChartSettingSensitivity,
 	ChartSettingType,
 	CiemssPresetTypes,
-	SensitivityChartType
+	SensitivityChartType,
+	SensitivityMethod
 } from '@/types/common';
 import { updateChartSettingsBySelectedVariables, updateSensitivityChartSettingOption } from '@/services/chart-settings';
 import { AssetType, ParameterSemantic } from '@/types/Types';
@@ -201,7 +202,8 @@ export class SensitivityAnalysisScenario extends BaseScenario {
 			selectedVariables: this.simulateSpec.ids,
 			selectedInputVariables: this.parameters.map((parameter) => parameter!.referenceId),
 			timepoint: this.simulateSpec.endTime,
-			chartType: SensitivityChartType.SCATTER
+			chartType: SensitivityChartType.SCATTER,
+			method: SensitivityMethod.TIMEPOINT
 		});
 
 		wf.updateNode(simulateNode, {

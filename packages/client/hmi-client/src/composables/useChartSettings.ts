@@ -6,7 +6,8 @@ import {
 	ChartSettingEnsembleVariable,
 	ChartSettingSensitivity,
 	ChartSettingType,
-	SensitivityChartType
+	SensitivityChartType,
+	SensitivityMethod
 } from '@/types/common';
 import {
 	EnsembleVariableChartSettingOption,
@@ -165,6 +166,7 @@ export function useChartSettings(
 		selectedInputVariables: string[];
 		timepoint: number;
 		chartType: SensitivityChartType;
+		method: SensitivityMethod;
 	}) => {
 		emit('update-state', {
 			...props.node.state,

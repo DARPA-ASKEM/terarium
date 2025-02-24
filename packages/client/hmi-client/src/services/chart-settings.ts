@@ -6,7 +6,8 @@ import {
 	ChartSettingComparison,
 	ChartSettingSensitivity,
 	ChartSettingType,
-	SensitivityChartType
+	SensitivityChartType,
+	SensitivityMethod
 } from '@/types/common';
 import { v4 as uuidv4 } from 'uuid';
 import { CATEGORICAL_SCHEME, createVariableColorMap } from './charts';
@@ -162,6 +163,7 @@ export function updateSensitivityChartSettingOption(
 		selectedInputVariables: string[];
 		timepoint: number;
 		chartType: SensitivityChartType;
+		method: SensitivityMethod;
 	}
 ) {
 	// previous settings without the settings of the given type
@@ -175,12 +177,14 @@ export function updateSensitivityChartSettingOption(
 			found.selectedInputVariables = options.selectedInputVariables;
 			found.timepoint = options.timepoint;
 			found.chartType = options.chartType;
+			found.method = options.method;
 			return found;
 		}
 		return createNewChartSetting(variable, ChartSettingType.SENSITIVITY, [variable], {
 			selectedInputVariables: options.selectedInputVariables,
 			timepoint: options.timepoint,
-			chartType: options.chartType
+			chartType: options.chartType,
+			method: options.method
 		});
 	});
 

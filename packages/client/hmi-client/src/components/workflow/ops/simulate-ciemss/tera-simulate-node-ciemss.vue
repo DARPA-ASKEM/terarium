@@ -117,7 +117,8 @@ const processResult = async () => {
 			selectedVariables: selectedSensitivityVariables,
 			selectedInputVariables: firstSensitiveSetting!.selectedInputVariables,
 			timepoint: lastTimepoint,
-			chartType: firstSensitiveSetting!.chartType
+			chartType: firstSensitiveSetting!.chartType,
+			method: firstSensitiveSetting!.method
 		});
 	}
 
