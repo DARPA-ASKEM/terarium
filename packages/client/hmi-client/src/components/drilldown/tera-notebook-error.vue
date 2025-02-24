@@ -4,17 +4,17 @@
 			<span>{{ props.name }}</span>
 			<Button rounded text icon="pi pi-times" @click="hide = true" />
 		</h6>
-		<div v-if="lastForward">
+		<div v-if="lastErrorMessage">
 			<Accordion multiple :active-index="[0]" class="px-2">
-				<AccordionTab header="Last forward">
-					<code>{{ lastForward }}</code>
+				<AccordionTab header="Last Error Message">
+					<code>{{ lastErrorMessage }}</code>
 				</AccordionTab>
 				<AccordionTab header="Full traceback">
 					<code>{{ localTraceback }}</code>
 				</AccordionTab>
 			</Accordion>
 		</div>
-		<div v-if="!lastForward">
+		<div v-if="!lastErrorMessage">
 			<p>{{ props.value }}</p>
 			<code>{{ localTraceback }}</code>
 		</div>
@@ -36,7 +36,7 @@ const props = defineProps<{
 
 const hide = ref(false);
 const localTraceback = ref('');
-const lastForward = ref('');
+const lastErrorMessage = ref('');
 
 watch(
 	() => props.traceback,
@@ -46,7 +46,7 @@ watch(
 		hide.value = false;
 		const splitTraceback = props.traceback.split(', in forward\n');
 		if (splitTraceback.length > 1) {
-			lastForward.value = splitTraceback[splitTraceback.length - 1];
+			lastErrorMessage.value = splitTraceback[splitTraceback.length - 1];
 		}
 	},
 	{ immediate: true }
