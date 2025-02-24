@@ -4,21 +4,14 @@
 			<span>{{ props.name }}</span>
 			<Button rounded text icon="pi pi-times" @click="hide = true" />
 		</h6>
-		<div v-if="lastErrorMessage">
-			<Accordion multiple :active-index="[0]" class="px-2">
-				<AccordionTab header="Last Error Message">
-					<code>{{ lastErrorMessage }}</code>
-				</AccordionTab>
-				<AccordionTab header="Full traceback">
-					<code>{{ localTraceback }}</code>
-				</AccordionTab>
-			</Accordion>
-		</div>
-		<!-- Cannot find Error: so no need for accordion tabs. -->
-		<div v-if="!lastErrorMessage">
-			<p>{{ props.value }}</p>
-			<code>{{ localTraceback }}</code>
-		</div>
+		<Accordion multiple :active-index="currentActiveIndex" class="px-2">
+			<AccordionTab header="Last Error Message">
+				<code>{{ lastErrorMessage }}</code>
+			</AccordionTab>
+			<AccordionTab header="Full traceback">
+				<code>{{ localTraceback }}</code>
+			</AccordionTab>
+		</Accordion>
 	</div>
 </template>
 
@@ -38,6 +31,7 @@ const props = defineProps<{
 const hide = ref(false);
 const localTraceback = ref('');
 const lastErrorMessage = ref('');
+const currentActiveIndex = ref([0]);
 
 watch(
 	() => props.traceback,
@@ -47,7 +41,11 @@ watch(
 		hide.value = false;
 		const splitTraceback = props.traceback.split('Error:');
 		if (splitTraceback.length > 1) {
+			currentActiveIndex.value = [0];
 			lastErrorMessage.value = splitTraceback[splitTraceback.length - 1];
+		} else {
+			// If for some reason we cannot find "Error:" then we will default to open the full trace
+			currentActiveIndex.value = [1];
 		}
 	},
 	{ immediate: true }
