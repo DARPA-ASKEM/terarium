@@ -36,6 +36,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 import software.uncharted.terarium.hmiserver.configuration.Config;
+import software.uncharted.terarium.hmiserver.models.dataservice.ChartAnnotation.ChartAnnotationType;
 import software.uncharted.terarium.hmiserver.models.dataservice.dataset.Dataset;
 import software.uncharted.terarium.hmiserver.models.dataservice.document.DocumentAsset;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.Model;
@@ -1153,6 +1154,7 @@ public class GoLLMController {
 
 		private String preamble = "";
 		private String instruction;
+		private ChartAnnotationType chartType = ChartAnnotationType.FORECAST_CHART;
 	}
 
 	@PostMapping("/chart-annotation")
@@ -1193,6 +1195,7 @@ public class GoLLMController {
 		input.setLlm(config.getLlm());
 		input.setPreamble(body.getPreamble());
 		input.setInstruction(body.getInstruction());
+		input.setChartType(body.getChartType());
 
 		// create the task
 		final TaskRequest req = new TaskRequest();

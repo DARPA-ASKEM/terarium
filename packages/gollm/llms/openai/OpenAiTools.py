@@ -2,9 +2,10 @@ import json
 import os
 from openai import OpenAI
 from typing import List, Optional
+from entities import ChartAnnotationType
 
 from common.LlmToolsInterface import LlmToolsInterface
-from common.prompts.chart_annotation import CHART_ANNOTATION_PROMPT
+from common.prompts.chart_annotation import build_prompt as build_chart_annotation_prompt
 from common.prompts.config_from_dataset import (
     CONFIGURE_FROM_DATASET_PROMPT,
     CONFIGURE_FROM_DATASET_MAPPING_PROMPT,
@@ -231,12 +232,9 @@ class OpenAiTools(LlmToolsInterface):
             instruction=instruction
         )
 
-    def create_chart_annotation_prompt(self, preamble: str, instruction: str, schema=None) -> str:
+    def create_chart_annotation_prompt(self, chartType: ChartAnnotationType, preamble: str, instruction: str, schema=None) -> str:
         print("Building chart annotation prompt...")
-        return CHART_ANNOTATION_PROMPT.format(
-            preamble=preamble,
-            instruction=instruction
-        )
+        return build_chart_annotation_prompt(chartType, preamble, instruction)
 
     def create_latex_to_sympy_prompt(self, equations: List[str], schema=None) -> str:
         print("Building prompt to transform latex equations to sympy...")

@@ -156,15 +156,6 @@
 						@update-parameters="setParameterDistributions(knobs.transientModelConfig, $event)"
 						@update-source="setParameterSource(knobs.transientModelConfig, $event.id, $event.value)"
 					/>
-					<Accordion :active-index="observableActiveIndicies" v-if="!isEmpty(observablesList)">
-						<AccordionTab header="Observables">
-							<tera-model-part
-								:part-type="PartType.OBSERVABLE"
-								:items="observablesList"
-								:feature-config="{ isPreview: true }"
-							/>
-						</AccordionTab>
-					</Accordion>
 					<!-- vertical spacer at end of page -->
 					<div class="p-5"></div>
 				</template>
@@ -196,6 +187,7 @@
 					style="flex-grow: 1; width: 100%"
 					class="ace-editor"
 				/>
+				<tera-notebook-output :traceback="executeResponseTraceback" />
 			</tera-drilldown-section>
 			<tera-drilldown-preview title="Output Preview">
 				<tera-notebook-error
@@ -239,8 +231,8 @@ import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.
 import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
 import TeraNotebookError from '@/components/drilldown/tera-notebook-error.vue';
 import TeraNotebookJupyterInput from '@/components/llm/tera-notebook-jupyter-input.vue';
+import teraNotebookOutput from '@/components/drilldown/tera-notebook-output.vue';
 import TeraModelDiagram from '@/components/model/petrinet/tera-model-diagram.vue';
-import TeraModelPart from '@/components/model/model-parts/tera-model-part.vue';
 import TeraInitialTable from '@/components/model/petrinet/tera-initial-table.vue';
 import TeraParameterTable from '@/components/model/petrinet/tera-parameter-table.vue';
 import { downloadDocumentAsset, getDocumentAsset, getDocumentFileAsText } from '@/services/document-assets';
@@ -276,9 +268,7 @@ import { logger } from '@/utils/logger';
 import {
 	isModelMissingMetadata,
 	getParameters as getAmrParameters,
-	getInitials as getAmrInitials,
-	createObservablesList,
-	PartType
+	getInitials as getAmrInitials
 } from '@/model-representation/service';
 import Message from 'primevue/message';
 import TeraColumnarPanel from '@/components/widgets/tera-columnar-panel.vue';
@@ -313,7 +303,6 @@ const isFetchingPDF = ref(false);
 const isDocViewerOpen = ref(true);
 
 const currentActiveIndexes = ref([0, 1, 2]);
-const observableActiveIndicies = ref([0]);
 const pdfData = ref<{ document: any; data: string; isPdf: boolean; name: string }[]>([]);
 const pdfPanelRef = ref();
 
@@ -365,6 +354,7 @@ const buildJupyterContext = () => {
 const codeText = ref('# This environment contains the variable "model_config" to be read and updated');
 const llmQuery = ref('');
 const llmThoughts = ref<any[]>([]);
+const executeResponseTraceback = ref('');
 const notebookResponse = ref();
 const executeResponse = ref({
 	status: OperatorStatus.DEFAULT,
@@ -418,6 +408,9 @@ const runFromCode = () => {
 		})
 		.register('stream', (data) => {
 			notebookResponse.value = data.content.text;
+			if ((data?.content?.name === 'stderr' || data?.content?.name === 'stdout') && data.content.text) {
+				executeResponseTraceback.value = `${executeResponseTraceback.value} ${data.content.text}`;
+			}
 		})
 		.register('model_configuration_preview', (data) => {
 			if (!data.content) return;
@@ -522,9 +515,6 @@ const datasetIds = computed(() =>
 		.map((input) => input.value?.[0])
 		.filter((id): id is string => id !== undefined)
 );
-
-const observables = computed(() => model.value?.semantics?.ode?.observables ?? []);
-const observablesList = computed(() => createObservablesList(observables.value));
 
 const modelConfigurations = ref<ModelConfiguration[]>([]);
 

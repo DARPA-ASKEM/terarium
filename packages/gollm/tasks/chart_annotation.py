@@ -38,7 +38,7 @@ def main():
             taskrunner.log("No LLM specified, Defaulting to Azure OpenAI LLM")
             llm = AzureTools()
 
-        response = chart_annotation_chain(llm, preamble=input_model.preamble, instruction=input_model.instruction)
+        response = chart_annotation_chain(llm, chartType=input_model.chartType, preamble=input_model.preamble, instruction=input_model.instruction)
         taskrunner.log("Received response from LLM")
 
         taskrunner.write_output_dict_with_timeout({"response": response})

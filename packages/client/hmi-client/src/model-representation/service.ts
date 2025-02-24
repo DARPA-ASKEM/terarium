@@ -51,14 +51,16 @@ export const getModelRenderer = (
 		// FIXME: Testing, move to mira service
 		const processedSet = new Set<string>();
 		const conceptData: any = [];
+
 		miraModel.templates.forEach((t) => {
 			['subject', 'outcome', 'controller'].forEach((conceptKey) => {
 				if (!t[conceptKey]) return;
 				const conceptName = t[conceptKey].name;
 				if (processedSet.has(conceptName)) return;
+
 				conceptData.push({
 					// FIXME: use reverse-lookup to get root concept
-					base: _.first(conceptName.split('_')),
+					base: isEmpty(t[conceptKey].context) ? conceptName : _.first(conceptName.split('_')),
 					...t[conceptKey].context
 				});
 
@@ -352,6 +354,12 @@ export function checkPetrinetAMR(amr: Model) {
 		if (rateSet.has(rate?.target as string)) {
 			results.push({ type: 'error', content: `rate (${rate?.target}) has duplicate` });
 		}
+
+		// Check if the system is closed (constant population)
+		if (transition.input.length !== transition.output.length) {
+			results.push({ type: 'warn', content: `${transition.id} does not conserve input/output` });
+		}
+
 		transitionSet.add(transition.id);
 		rateSet.add(rate?.target as string);
 	});
@@ -369,7 +377,6 @@ export enum PartType {
 
 // FIXME: should refactor so typing is explicit and clear
 // Note "model" is both an AMR model, or it can be a list of transition templates
-// FIXME: Nelson recommended we show subject/outcome/controllers instead of input/output
 export function createPartsList(parts, model, partType) {
 	return Array.from(parts.keys()).map((id) => {
 		const childTargets = parts.get(id) ?? [];
@@ -403,21 +410,12 @@ export function createPartsList(parts, model, partType) {
 				};
 				if (partType === PartType.STATE || partType === PartType.PARAMETER) {
 					returnObj.unitExpression = t.units?.expression;
-				} else if (partType === PartType.TRANSITION) {
-					returnObj.expression = t.expression;
-					returnObj.input = t.input.join(', ');
-					returnObj.output = t.output.join(', ');
 				}
 				return returnObj;
 			})
 			.filter(Boolean) as ModelPartItem[];
 
-		const basePart: any = types.find((t) => {
-			if (partType === PartType.TRANSITION) {
-				return t.id === childTargets[0];
-			}
-			return t.id === id;
-		});
+		const basePart: any = types.find((t) => t.id === id);
 		const base: ModelPartItem =
 			isParent || !basePart
 				? { id: `${id}` }
@@ -428,15 +426,6 @@ export function createPartsList(parts, model, partType) {
 						grounding: basePart.grounding,
 						unitExpression: basePart.units?.expression
 					};
-		if (partType === PartType.TRANSITION) {
-			base.templateId = `${id}`;
-			if (basePart) {
-				base.expression = basePart.expression;
-				base.input = basePart.input.join(', ');
-				base.output = basePart.output.join(', ');
-			}
-		}
-
 		return { base, children, isParent };
 	});
 }

@@ -10,11 +10,18 @@ export type ModelPartItem = {
 	unitExpression?: string;
 	expression?: string;
 	expression_mathml?: string;
+
 	// Transition/rate
-	templateId?: string;
-	input?: string;
-	output?: string;
+	subject?: string;
+	outcome?: string;
+	controllers?: string;
 };
+
+export interface ModelPartItemTree {
+	base: ModelPartItem;
+	children: ModelPartItem[];
+	isParent: boolean;
+}
 
 export enum StratifiedMatrix {
 	Initials = 'initials',

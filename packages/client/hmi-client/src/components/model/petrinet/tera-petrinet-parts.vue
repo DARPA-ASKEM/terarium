@@ -74,7 +74,6 @@
 				:part-type="PartType.TRANSITION"
 				v-if="!isEmpty(transitions) && !isEmpty(mmt.templates)"
 				:items="transitionsList"
-				:collapsed-items="collapsedTemplates"
 				:feature-config="featureConfig"
 				:filter="transitionsFilter"
 				show-matrix
@@ -112,14 +111,15 @@ import { isEmpty } from 'lodash';
 import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
 import { computed, ref, watch } from 'vue';
-import type { MiraModel, MiraTemplateParams } from '@/model-representation/mira/mira-common';
+import type { MiraModel, MiraTemplate, MiraTemplateParams } from '@/model-representation/mira/mira-common';
 import { collapseInitials, collapseParameters, collapseTemplates } from '@/model-representation/mira/mira';
 import TeraModelPart from '@/components/model/model-parts/tera-model-part.vue';
 import type { FeatureConfig } from '@/types/common';
 import TeraInputText from '@/components/widgets/tera-input-text.vue';
 import { createPartsList, createObservablesList, createTimeList, PartType } from '@/model-representation/service';
 import TeraStratifiedMatrixModal from '@/components/model/petrinet/model-configurations/tera-stratified-matrix-modal.vue';
-import { ModelPartItem, StratifiedMatrix } from '@/types/Model';
+import { ModelPartItem, ModelPartItemTree, StratifiedMatrix } from '@/types/Model';
+import { getControllerNames } from '@/model-representation/mira/mira-util';
 
 const props = defineProps<{
 	model: Model;
@@ -143,11 +143,7 @@ const time = computed(() => (props.model?.semantics?.ode?.time ? [props.model?.s
 
 const collapsedInitials = collapseInitials(props.mmt);
 const states = computed<State[]>(() => props.model?.model?.states ?? []);
-let stateList: {
-	base: ModelPartItem;
-	children: ModelPartItem[];
-	isParent: boolean;
-}[] = createPartsList(collapsedInitials, props.model, PartType.STATE);
+let stateList: ModelPartItemTree[] = createPartsList(collapsedInitials, props.model, PartType.STATE);
 
 watch(
 	() => props.model?.model?.states,
@@ -157,11 +153,7 @@ watch(
 );
 
 const collapsedParameters = collapseParameters(props.mmt, props.mmtParams);
-let parameterList: {
-	base: ModelPartItem;
-	children: ModelPartItem[];
-	isParent: boolean;
-}[] = createPartsList(collapsedParameters, props.model, PartType.PARAMETER);
+let parameterList: ModelPartItemTree[] = createPartsList(collapsedParameters, props.model, PartType.PARAMETER);
 
 watch(
 	() => props.model.semantics?.ode?.parameters,
@@ -178,32 +170,41 @@ const transitions = computed<Transition[]>(() =>
 	}))
 );
 
-const collapsedTemplates = (() => {
-	const templateMap = new Map<string, string[]>();
-	const collapsedTemplatesMap = collapseTemplates(props.mmt).matrixMap;
-	Array.from(collapsedTemplatesMap.keys()).forEach((templateId) => {
-		templateMap.set(
-			templateId,
-			Array.from(collapsedTemplatesMap.get(templateId) ?? []).map(({ name }) => name)
-		);
+const createTransitionParts = () => {
+	const extract = (t: MiraTemplate): ModelPartItem => ({
+		id: t.name,
+		name: t.name,
+		subject: t.subject ? t.subject.name : '',
+		outcome: t.outcome ? t.outcome.name : '',
+		controllers: getControllerNames(t).join(', '),
+		expression: t.rate_law
 	});
-	return templateMap;
-})();
 
-const transitionsList: {
-	base: ModelPartItem;
-	children: ModelPartItem[];
-	isParent: boolean;
-}[] = createPartsList(collapsedTemplates, transitions.value, PartType.TRANSITION);
+	const templatesMap = collapseTemplates(props.mmt).matrixMap;
+	return Array.from(templatesMap.keys()).map((templateId) => {
+		const children = templatesMap.get(templateId) as MiraTemplate[];
+		if (children.length === 1) {
+			const item = children[0];
+			return {
+				base: extract(item),
+				isParent: false,
+				children: []
+			};
+		}
+		return {
+			base: { id: templateId, name: templateId },
+			isParent: true,
+			children: children.map(extract)
+		};
+	});
+};
+
+const transitionsList: ModelPartItemTree[] = createTransitionParts();
 
 const parameterMatrixModalId = ref('');
 const transitionMatrixModalId = ref('');
 const observablesList = computed(() => createObservablesList(observables.value));
-const timeList: {
-	base: ModelPartItem;
-	children: ModelPartItem[];
-	isParent: boolean;
-}[] = createTimeList(time.value);
+const timeList: ModelPartItemTree[] = createTimeList(time.value);
 </script>
 
 <style scoped>

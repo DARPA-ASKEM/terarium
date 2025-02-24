@@ -13,11 +13,14 @@ import software.uncharted.terarium.hmiserver.configuration.Config;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.Model;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.ModelDescription;
 import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.ModelMetadata;
+import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.ModelParameter;
 import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.metadata.Annotations;
+import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.semantics.GroundedSemantic;
+import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.semantics.State;
+import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.semantics.Transition;
 import software.uncharted.terarium.hmiserver.repository.data.ModelRepository;
-import software.uncharted.terarium.hmiserver.service.CurrentUserService;
 import software.uncharted.terarium.hmiserver.service.s3.S3ClientService;
-import software.uncharted.terarium.hmiserver.service.tasks.TaskService;
+import software.uncharted.terarium.hmiserver.utils.GreekDictionary;
 import software.uncharted.terarium.hmiserver.utils.rebac.Schema;
 
 @Slf4j
@@ -127,11 +130,44 @@ public class ModelService extends TerariumAssetService<Model, ModelRepository> {
 			asset.setMetadata(metadata);
 		}
 
-		final Optional<Model> updatedOptional = super.updateAsset(asset, projectId, hasWritePermission);
-		if (updatedOptional.isEmpty()) {
-			return Optional.empty();
-		}
+		return super.updateAsset(asset, projectId, hasWritePermission);
+	}
 
-		return updatedOptional;
+	/**
+	 * Fix Greek letters in a Petri Net AMR to be displayed correctly in the name of the variables.
+	 */
+	public void fixGreekLetters(Model model) {
+		// Only edit Petri Net models
+		if (!model.isPetrinet()) return;
+
+		// States
+		model
+			.getStates()
+			.forEach(state -> {
+				final String englishName = state.getName() != null ? state.getName() : state.getId();
+				if (englishName != null) {
+					state.setName(GreekDictionary.englishToGreek(englishName));
+				}
+			});
+
+		// Transitions
+		model
+			.getTransitions()
+			.forEach(transition -> {
+				final String englishName = transition.getName() != null ? transition.getName() : transition.getId();
+				if (englishName != null) {
+					transition.setName(GreekDictionary.englishToGreek(englishName));
+				}
+			});
+
+		// Parameters
+		model
+			.getParameters()
+			.forEach(param -> {
+				final String englishName = param.getName() != null ? param.getName() : param.getId();
+				if (englishName != null) {
+					param.setName(GreekDictionary.englishToGreek(englishName));
+				}
+			});
 	}
 }

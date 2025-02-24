@@ -288,6 +288,43 @@ public class ModelConfigurationController {
 		return byteArrayOutputStream.toByteArray();
 	}
 
+	@GetMapping("/{id}/original-model")
+	@Secured(Roles.USER)
+	@Operation(summary = "Get the original model of which the configuration was created for")
+	@ApiResponses(
+		value = {
+			@ApiResponse(
+				responseCode = "200",
+				description = "Original model",
+				content = @Content(mediaType = "application/json", schema = @Schema(implementation = Model.class))
+			),
+			@ApiResponse(
+				responseCode = "403",
+				description = "User does not have permissions to this model configuration",
+				content = @Content
+			)
+		}
+	)
+	public ResponseEntity<Model> getOriginalModel(
+		@PathVariable("id") final UUID id,
+		@RequestParam(name = "project-id", required = false) final UUID projectId
+	) {
+		final software.uncharted.terarium.hmiserver.utils.rebac.Schema.Permission permission =
+			projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
+
+		try {
+			final Optional<Model> model = modelService.getModelFromModelConfigurationId(id, permission);
+			if (model.isEmpty()) {
+				return ResponseEntity.noContent().build();
+			}
+			return ResponseEntity.ok(model.get());
+		} catch (final Exception e) {
+			final String error = "Unable to get model";
+			log.error(error, e);
+			throw new ResponseStatusException(org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR, error);
+		}
+	}
+
 	/**
 	 * Create a configured model from a model config
 	 *
@@ -295,9 +332,9 @@ public class ModelConfigurationController {
 	 * @param projectId associated project for permissions
 	 * @return configured model
 	 */
-	@GetMapping("/as-configured-model/{id}")
+	@GetMapping("/{id}/model")
 	@Secured(Roles.USER)
-	@Operation(summary = "Gets a specific model configuration by id")
+	@Operation(summary = "Get a model instance as specified by the configuration")
 	@ApiResponses(
 		value = {
 			@ApiResponse(
@@ -388,62 +425,6 @@ public class ModelConfigurationController {
 			return ResponseEntity.status(HttpStatus.CREATED).body(
 				modelConfigurationService.createAsset(modelConfiguration.clone(), projectId, permission)
 			);
-		} catch (final IOException e) {
-			log.error("Unable to get model configuration from postgres db", e);
-			throw new ResponseStatusException(
-				org.springframework.http.HttpStatus.SERVICE_UNAVAILABLE,
-				messages.get("postgres.service-unavailable")
-			);
-		}
-	}
-
-	@PutMapping("/as-configured-model/{id}")
-	@Secured(Roles.USER)
-	@Operation(summary = "Creates a new model configuration based on a configured model")
-	@ApiResponses(
-		value = {
-			@ApiResponse(
-				responseCode = "201",
-				description = "Model configuration created from model.",
-				content = @Content(mediaType = "application/json", schema = @Schema(implementation = ModelConfiguration.class))
-			),
-			@ApiResponse(
-				responseCode = "503",
-				description = "There was an issue creating the configuration",
-				content = @Content
-			)
-		}
-	)
-	public ResponseEntity<ModelConfiguration> updateFromConfiguredModel(
-		@PathVariable("id") final UUID id,
-		@RequestBody final Model configuredModel,
-		@RequestParam(name = "name", required = false) final String name,
-		@RequestParam(name = "description", required = false) final String description,
-		@RequestParam(name = "project-id", required = false) final UUID projectId
-	) {
-		final Permission permission = projectService.checkPermissionCanRead(currentUserService.get().getId(), projectId);
-
-		final ModelConfigurationUpdate options = new ModelConfigurationUpdate();
-		options.setName(name);
-		options.setDescription(description);
-
-		final ModelConfiguration modelConfiguration = ModelConfigurationService.modelConfigurationFromAMR(
-			configuredModel,
-			options
-		);
-
-		modelConfiguration.setId(id);
-
-		try {
-			final Optional<ModelConfiguration> optionalModelConfiguration = modelConfigurationService.updateAsset(
-				modelConfiguration,
-				projectId,
-				permission
-			);
-			if (optionalModelConfiguration.isEmpty()) {
-				throw new ResponseStatusException(HttpStatus.NOT_FOUND, messages.get("modelconfig.not-found"));
-			}
-			return ResponseEntity.status(HttpStatus.CREATED).body(optionalModelConfiguration.get());
 		} catch (final IOException e) {
 			log.error("Unable to get model configuration from postgres db", e);
 			throw new ResponseStatusException(

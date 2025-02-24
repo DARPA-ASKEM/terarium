@@ -2,8 +2,11 @@ package software.uncharted.terarium.hmiserver.service.data;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -18,6 +21,8 @@ import org.springframework.security.test.context.support.WithUserDetails;
 import software.uncharted.terarium.hmiserver.TerariumApplicationTests;
 import software.uncharted.terarium.hmiserver.configuration.MockUser;
 import software.uncharted.terarium.hmiserver.models.dataservice.project.Project;
+import software.uncharted.terarium.hmiserver.models.dataservice.workflow.InputPort;
+import software.uncharted.terarium.hmiserver.models.dataservice.workflow.OutputPort;
 import software.uncharted.terarium.hmiserver.models.dataservice.workflow.Transform;
 import software.uncharted.terarium.hmiserver.models.dataservice.workflow.Workflow;
 import software.uncharted.terarium.hmiserver.models.dataservice.workflow.WorkflowEdge;
@@ -138,6 +143,186 @@ public class WorkflowServiceTests extends TerariumApplicationTests {
 		workflowService.branchWorkflow(wf2, modelNode.getId(), null);
 		Assertions.assertEquals(wf2.getNodes().size(), 6);
 		Assertions.assertEquals(wf2.getEdges().size(), 4);
+	}
+
+	@Test
+	@WithUserDetails(MockUser.URSULA)
+	public void testItCanDeleteEdges() throws Exception {
+		final Workflow wf1 = createWorkflowFromFile();
+
+		final UUID edgeId = UUID.fromString("9f2f5783-8e9a-4081-91cb-063774392321");
+		List<UUID> edgeIds = new ArrayList<UUID>();
+
+		edgeIds.add(edgeId);
+		workflowService.removeEdges(wf1, edgeIds);
+		final long edgeCount = wf1.getEdges().stream().filter(e -> e.getIsDeleted() == false).count();
+		final WorkflowNode simulateNode = wf1
+			.getNodes()
+			.stream()
+			.filter(n -> n.getId().equals(UUID.fromString("1c63929a-5aad-4e15-bbf0-e1e6ab0d5d14")))
+			.findFirst()
+			.orElse(null);
+		final WorkflowNode configNode = wf1
+			.getNodes()
+			.stream()
+			.filter(n -> n.getId().equals(UUID.fromString("e459cf71-b788-4e3b-8161-ac586079fd20")))
+			.findFirst()
+			.orElse(null);
+
+		Assertions.assertEquals(edgeCount, 1);
+		Assertions.assertNotNull(simulateNode);
+		Assertions.assertNotNull(configNode);
+		Assertions.assertEquals(simulateNode.getStatus(), "invalid");
+		Assertions.assertEquals(configNode.getStatus(), "invalid");
+	}
+
+	@Test
+	@WithUserDetails(MockUser.URSULA)
+	public void testItCanHandleInvalidDeleteEdges() throws Exception {
+		final Workflow wf1 = createWorkflowFromFile();
+
+		final UUID edgeId = UUID.randomUUID();
+		List<UUID> edgeIds = new ArrayList<UUID>();
+
+		edgeIds.add(edgeId);
+		workflowService.removeEdges(wf1, edgeIds);
+		final long edgeCount = wf1.getEdges().stream().filter(e -> e.getIsDeleted() == false).count();
+		final WorkflowNode simulateNode = wf1
+			.getNodes()
+			.stream()
+			.filter(n -> n.getId().equals(UUID.fromString("1c63929a-5aad-4e15-bbf0-e1e6ab0d5d14")))
+			.findFirst()
+			.orElse(null);
+		final WorkflowNode configNode = wf1
+			.getNodes()
+			.stream()
+			.filter(n -> n.getId().equals(UUID.fromString("e459cf71-b788-4e3b-8161-ac586079fd20")))
+			.findFirst()
+			.orElse(null);
+
+		Assertions.assertEquals(edgeCount, 2);
+		Assertions.assertNotNull(simulateNode);
+		Assertions.assertNotNull(configNode);
+		Assertions.assertEquals(simulateNode.getStatus(), "success");
+		Assertions.assertEquals(configNode.getStatus(), "success");
+	}
+
+	@Test
+	@WithUserDetails(MockUser.URSULA)
+	public void testItCanHandleValidDisjunctiveTypes() throws Exception {
+		final Workflow wf = new Workflow();
+		final WorkflowNode start = new WorkflowNode();
+		final WorkflowNode end = new WorkflowNode();
+		final OutputPort out = new OutputPort();
+		final InputPort in = new InputPort();
+		final WorkflowEdge edge = new WorkflowEdge();
+
+		wf.setNodes(new ArrayList<WorkflowNode>());
+		wf.setEdges(new ArrayList<WorkflowEdge>());
+
+		start.setInputs(new ArrayList<InputPort>());
+		start.setOutputs(new ArrayList<OutputPort>());
+		start.setUniqueInputs(false);
+
+		end.setInputs(new ArrayList<InputPort>());
+		end.setOutputs(new ArrayList<OutputPort>());
+		end.setUniqueInputs(false);
+
+		start.setId(UUID.randomUUID());
+		start.getOutputs().add(out);
+
+		end.setId(UUID.randomUUID());
+		end.getInputs().add(in);
+
+		out.setId(UUID.randomUUID());
+		out.setStatus("not connected");
+
+		in.setId(UUID.randomUUID());
+		in.setStatus("not connected");
+
+		edge.setId(UUID.randomUUID());
+		edge.setSource(start.getId());
+		edge.setSourcePortId(out.getId());
+		edge.setTarget(end.getId());
+		edge.setTargetPortId(in.getId());
+
+		workflowService.addNode(wf, start);
+		workflowService.addNode(wf, end);
+
+		final ArrayNode arr = mapper.createArrayNode();
+		final ObjectNode val = mapper.createObjectNode();
+		val.put("id", "abcdef");
+		arr.add(val);
+
+		out.setType("model");
+		out.setValue(arr);
+		in.setType("dataset|model");
+
+		workflowService.addEdge(wf, edge);
+
+		final long edgeCount = wf.getEdges().stream().filter(e -> e.getIsDeleted() == false).count();
+		Assertions.assertEquals(edgeCount, 1);
+
+		final ObjectNode inVal = (ObjectNode) in.getValue().get(0);
+		Assertions.assertEquals(inVal.get("id").asText(), "abcdef");
+	}
+
+	@Test
+	@WithUserDetails(MockUser.URSULA)
+	public void testItCanHandleInvalidDisjunctiveTypes() throws Exception {
+		final Workflow wf = new Workflow();
+		final WorkflowNode start = new WorkflowNode();
+		final WorkflowNode end = new WorkflowNode();
+		final OutputPort out = new OutputPort();
+		final InputPort in = new InputPort();
+		final WorkflowEdge edge = new WorkflowEdge();
+
+		wf.setNodes(new ArrayList<WorkflowNode>());
+		wf.setEdges(new ArrayList<WorkflowEdge>());
+
+		start.setInputs(new ArrayList<InputPort>());
+		start.setOutputs(new ArrayList<OutputPort>());
+		start.setUniqueInputs(false);
+
+		end.setInputs(new ArrayList<InputPort>());
+		end.setOutputs(new ArrayList<OutputPort>());
+		end.setUniqueInputs(false);
+
+		start.setId(UUID.randomUUID());
+		start.getOutputs().add(out);
+
+		end.setId(UUID.randomUUID());
+		end.getInputs().add(in);
+
+		out.setId(UUID.randomUUID());
+		out.setStatus("not connected");
+
+		in.setId(UUID.randomUUID());
+		in.setStatus("not connected");
+
+		edge.setId(UUID.randomUUID());
+		edge.setSource(start.getId());
+		edge.setSourcePortId(out.getId());
+		edge.setTarget(end.getId());
+		edge.setTargetPortId(in.getId());
+
+		workflowService.addNode(wf, start);
+		workflowService.addNode(wf, end);
+
+		final ArrayNode arr = mapper.createArrayNode();
+		final ObjectNode val = mapper.createObjectNode();
+		val.put("id", "abcdef");
+		arr.add(val);
+
+		out.setType("not_model");
+		out.setValue(arr);
+		in.setType("dataset|model");
+
+		workflowService.addEdge(wf, edge);
+
+		final long edgeCount = wf.getEdges().stream().filter(e -> e.getIsDeleted() == false).count();
+		Assertions.assertEquals(edgeCount, 0);
+		Assertions.assertEquals(in.getValue(), null);
 	}
 
 	@Test

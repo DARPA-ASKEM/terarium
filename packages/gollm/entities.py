@@ -2,6 +2,7 @@ import inspect
 from datetime import datetime
 from pydantic import BaseModel, root_validator
 from typing import List, Callable, Type, Optional
+from enum import StrEnum
 
 class GollmModel(BaseModel):
     llm: Optional[str] = None
@@ -44,9 +45,15 @@ class EquationsFromImage(GollmModel):
     image: str  # expects a base64 encoded image
 
 
+class ChartAnnotationType(StrEnum):
+    FORECAST_CHART = 'FORECAST_CHART',
+    QUANTILE_FORECAST_CHART = 'QUANTILE_FORECAST_CHART',
+
+
 class ChartAnnotationModel(GollmModel):
     preamble: str
     instruction: str
+    chartType: ChartAnnotationType = ChartAnnotationType.FORECAST_CHART
 
 
 class EmbeddingModel(GollmModel):

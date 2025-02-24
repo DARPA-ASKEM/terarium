@@ -3,7 +3,7 @@ import { mean, variance } from 'd3';
 import { computed, ComputedRef, ref, Ref, watchEffect } from 'vue';
 import { VisualizationSpec } from 'vega-embed';
 import {
-	applyForecastChartAnnotations,
+	applyChartAnnotations,
 	AUTOSIZE,
 	SENSITIVITY_COLOUR_SCHEME,
 	CATEGORICAL_SCHEME,
@@ -17,7 +17,10 @@ import {
 	ForecastChartOptions,
 	expressionFunctions,
 	GroupedDataArray,
-	createSensitivityRankingChart
+	createSensitivityRankingChart,
+	createRankingInterventionsChart,
+	BaseChartOptions,
+	ForecastChartLayer
 } from '@/services/charts';
 import { flattenInterventionData } from '@/services/intervention-policy';
 import {
@@ -54,11 +57,18 @@ import {
 import { SimulateEnsembleMappingRow } from '@/components/workflow/ops/simulate-ensemble-ciemss/simulate-ensemble-ciemss-operation';
 import { getModelConfigName, getParameters } from '@/services/model-configurations';
 import { EnsembleErrorData } from '@/components/workflow/ops/calibrate-ensemble-ciemss/calibrate-ensemble-util';
-import { PlotValue } from '@/components/workflow/ops/compare-datasets/compare-datasets-operation';
+import {
+	CriteriaOfInterestCard,
+	PlotValue,
+	RankOption,
+	TimepointOption
+} from '@/components/workflow/ops/compare-datasets/compare-datasets-operation';
 import { DATASET_VAR_NAME_PREFIX } from '@/services/dataset';
 import { calculatePercentage } from '@/utils/math';
 import { DistributionType } from '@/services/distribution';
 import { pythonInstance } from '@/web-workers/python/PyodideController';
+import { mean as statsMean, stddev } from '@/utils/stats';
+import { getChartAnnotationType } from '@/services/chart-annotation';
 import { useChartAnnotations } from './useChartAnnotations';
 
 export interface ChartData {
@@ -264,35 +274,31 @@ const normalizeStratifiedModelChartData = (setting: ChartSettingComparison, data
 	return { ...data, result, resultSummary };
 };
 
-/** A helper function to create a comparison chart */
-function createComparisonChart(
-	setting: ChartSettingComparison,
-	result: DataArray,
-	resultSummary: DataArray,
-	statLayerVariables: string[],
+/** A helper function to create a forecast chart with annotations */
+const createForecastChartWithAnnotations = (
+	setting: ChartSetting,
+	{ result, resultSummary, resultGroupByTimepoint }: ChartData,
 	sampleLayerVariables: string[],
+	statLayerVariables: string[],
 	options: ForecastChartOptions,
 	annotations: ChartAnnotation[],
-	resultGroupByTimepoint?: GroupedDataArray
-) {
-	const chart = !setting.showQuantiles
-		? applyForecastChartAnnotations(
-				createForecastChart(
-					{
-						data: result,
-						variables: sampleLayerVariables,
-						timeField: 'timepoint_id',
-						groupField: 'sample_id'
-					},
-					{
-						data: resultSummary,
-						variables: statLayerVariables,
-						timeField: 'timepoint_id'
-					},
-					null,
-					options
-				),
-				annotations
+	groundTruthLayer: ForecastChartLayer | null
+) => {
+	const chartSpec = !setting.showQuantiles
+		? createForecastChart(
+				{
+					data: result,
+					variables: sampleLayerVariables,
+					timeField: 'timepoint_id',
+					groupField: 'sample_id'
+				},
+				{
+					data: resultSummary,
+					variables: statLayerVariables,
+					timeField: 'timepoint_id'
+				},
+				groundTruthLayer ?? null,
+				options
 			)
 		: createQuantilesForecastChart(
 				resultGroupByTimepoint ?? [],
@@ -300,8 +306,10 @@ function createComparisonChart(
 				setting.quantiles ?? [],
 				options
 			);
-	return chart as VisualizationSpec;
-}
+	const chartAnnotationType = getChartAnnotationType(setting);
+	const annotatedSpec = applyChartAnnotations(chartSpec, annotations, chartAnnotationType);
+	return annotatedSpec as VisualizationSpec;
+};
 
 const buildYAxisTitle = (variables: string[], getUnitFn: (id: string) => string) =>
 	_.uniq(variables.map(getUnitFn).filter((v) => !!v)).join(', ') || '';
@@ -334,7 +342,7 @@ export function useCharts(
 	const isChartReadyToBuild = computed(() => [model, modelConfig, chartData].every(isRefReady));
 
 	// Setup annotations
-	const { getChartAnnotationsByChartId, generateAndSaveForecastChartAnnotation } = useChartAnnotations(nodeId);
+	const { getChartAnnotationsByChartId, generateAndSaveChartAnnotation } = useChartAnnotations(nodeId);
 
 	const getUnit = (paramId: string) => {
 		if (!model?.value) return '';
@@ -525,7 +533,7 @@ export function useCharts(
 	// Generate annotations for a chart
 	const generateAnnotation = async (setting: ChartSetting, query: string) => {
 		if (!chartData.value) return null;
-		const { statLayerVariables, options } = createForecastChartOptions(setting);
+		const { statLayerVariables, sampleLayerVariables, options } = createForecastChartOptions(setting);
 		if (setting.type === ChartSettingType.VARIABLE_ENSEMBLE) {
 			options.translationMap = addModelConfigNameToTranslationMap(
 				options.translationMap ?? {},
@@ -533,7 +541,9 @@ export function useCharts(
 				<ModelConfiguration[]>modelConfig?.value ?? []
 			);
 		}
-		return generateAndSaveForecastChartAnnotation(setting, query, 'timepoint_id', statLayerVariables, options);
+		// In quantile forecast charts, we use sampleLayerVariables instead of statLayerVariables
+		const variables = setting.showQuantiles ? sampleLayerVariables : statLayerVariables;
+		return generateAndSaveChartAnnotation(setting, query, 'timepoint_id', variables, options);
 	};
 
 	const groupedInterventionOutputs = computed(() =>
@@ -628,31 +638,15 @@ export function useCharts(
 				options.colorscheme = variableColorMap;
 
 				const annotations = getChartAnnotationsByChartId(settings.id);
-				const chart = !settings.showQuantiles
-					? applyForecastChartAnnotations(
-							createForecastChart(
-								{
-									data: chartData.value?.result ?? [],
-									variables: sampleLayerVariables,
-									timeField: 'timepoint_id',
-									groupField: 'sample_id'
-								},
-								{
-									data: chartData.value?.resultSummary ?? [],
-									variables: statLayerVariables,
-									timeField: 'timepoint_id'
-								},
-								null,
-								options
-							),
-							annotations
-						)
-					: createQuantilesForecastChart(
-							chartData.value?.resultGroupByTimepoint ?? [],
-							sampleLayerVariables,
-							settings.quantiles ?? [],
-							options
-						);
+				const chart = createForecastChartWithAnnotations(
+					settings,
+					chartData.value as ChartData,
+					sampleLayerVariables,
+					statLayerVariables,
+					options,
+					annotations,
+					null
+				);
 				charts[settings.id] = chart;
 			});
 			return charts;
@@ -668,45 +662,29 @@ export function useCharts(
 		const variableCharts = computed(() => {
 			const charts: Record<string, VisualizationSpec> = {};
 			if (!isChartReadyToBuild.value || !isRefReady(groundTruthData)) return charts;
-			const { result, resultSummary } = chartData.value as ChartData;
 			// eslint-disable-next-line
 			chartSettings.value.forEach((settings) => {
 				const variable = settings.selectedVariables[0];
 				const annotations = getChartAnnotationsByChartId(settings.id);
 				const datasetVar = modelVarToDatasetVar(mapping?.value || [], variable);
 				const { sampleLayerVariables, statLayerVariables, options } = createForecastChartOptions(settings);
-
-				const chart = !settings.showQuantiles
-					? applyForecastChartAnnotations(
-							createForecastChart(
-								{
-									data: result,
-									variables: sampleLayerVariables,
-									timeField: 'timepoint_id',
-									groupField: 'sample_id'
-								},
-								{
-									data: resultSummary,
-									variables: statLayerVariables,
-									timeField: 'timepoint_id'
-								},
-								groundTruthData && {
-									data: groundTruthData.value,
-									variables: datasetVar ? [datasetVar] : [],
-									timeField: modelVarToDatasetVar(mapping?.value || [], 'timepoint_id')
-								},
-								options
-							),
-							annotations
-						)
-					: createQuantilesForecastChart(
-							chartData.value?.resultGroupByTimepoint ?? [],
-							sampleLayerVariables,
-							settings.quantiles ?? [],
-							options
-						);
+				const groundTruthLayer = groundTruthData && {
+					data: groundTruthData.value,
+					variables: datasetVar ? [datasetVar] : [],
+					timeField: modelVarToDatasetVar(mapping?.value || [], 'timepoint_id')
+				};
+				const chart = createForecastChartWithAnnotations(
+					settings,
+					chartData.value as ChartData,
+					sampleLayerVariables,
+					statLayerVariables,
+					options,
+					annotations,
+					groundTruthLayer
+				);
 				_.keys(groupedInterventionOutputs.value).forEach((key) => {
 					if (settings.selectedVariables.includes(key)) {
+						// @ts-ignore
 						chart.layer.push(...createInterventionChartMarkers(groupedInterventionOutputs.value[key]));
 					}
 				});
@@ -754,15 +732,14 @@ export function useCharts(
 						if (setting.normalize) {
 							options.yAxisTitle = buildYAxisTitle([selectedVar], getUnitForNormalizedStratifiedModelData);
 						}
-						return createComparisonChart(
+						return createForecastChartWithAnnotations(
 							setting,
-							result,
-							resultSummary,
-							statLayerVariables,
+							{ result, resultSummary, resultGroupByTimepoint } as ChartData,
 							sampleLayerVariables,
+							statLayerVariables,
 							options,
 							annotations,
-							resultGroupByTimepoint
+							null
 						);
 					});
 				} else {
@@ -770,15 +747,14 @@ export function useCharts(
 					if (setting.normalize) {
 						options.yAxisTitle = buildYAxisTitle(setting.selectedVariables, getUnitForNormalizedStratifiedModelData);
 					}
-					const chart = createComparisonChart(
+					const chart = createForecastChartWithAnnotations(
 						setting,
-						result,
-						resultSummary,
-						statLayerVariables,
+						{ result, resultSummary, resultGroupByTimepoint } as ChartData,
 						sampleLayerVariables,
+						statLayerVariables,
 						options,
 						annotations,
-						resultGroupByTimepoint
+						null
 					);
 					charts[setting.id] = [chart];
 				}
@@ -795,11 +771,15 @@ export function useCharts(
 		const ensembleVariableCharts = computed(() => {
 			const charts: Record<string, VisualizationSpec[]> = {};
 			if (!isChartReadyToBuild.value || !isRefReady(groundTruthData)) return chartData;
-			const { result, resultSummary } = chartData.value as ChartData;
 			const modelConfigIds = extractModelConfigIdsInOrder(chartData.value?.pyciemssMap ?? {});
 			chartSettings.value.forEach((setting) => {
 				const annotations = getChartAnnotationsByChartId(setting.id);
 				const datasetVar = modelVarToDatasetVar(mapping?.value || [], setting.selectedVariables[0]);
+				const groundTruthLayer = groundTruthData && {
+					data: groundTruthData.value,
+					variables: datasetVar ? [datasetVar] : [],
+					timeField: modelVarToDatasetVar(mapping?.value || [], 'timepoint_id')
+				};
 				if (setting.showIndividualModels) {
 					const smallMultiplesCharts = ['', ...modelConfigIds].map((modelConfigId, index) => {
 						const { sampleLayerVariables, statLayerVariables, options } = createEnsembleVariableChartOptions(
@@ -811,35 +791,15 @@ export function useCharts(
 						options.width = chartSize.value.width / (modelConfigIds.length + 1);
 						options.legendProperties = { direction: 'vertical', columns: 1, labelLimit: options.width };
 						options.colorscheme = [BASE_GREY, CATEGORICAL_SCHEME[index % CATEGORICAL_SCHEME.length]];
-						const smallChart = !setting.showQuantiles
-							? applyForecastChartAnnotations(
-									createForecastChart(
-										{
-											data: result,
-											variables: sampleLayerVariables,
-											timeField: 'timepoint_id',
-											groupField: 'sample_id'
-										},
-										{
-											data: resultSummary,
-											variables: statLayerVariables,
-											timeField: 'timepoint_id'
-										},
-										groundTruthData && {
-											data: groundTruthData.value,
-											variables: datasetVar ? [datasetVar] : [],
-											timeField: modelVarToDatasetVar(mapping?.value || [], 'timepoint_id')
-										},
-										options
-									),
-									annotations
-								)
-							: createQuantilesForecastChart(
-									chartData.value?.resultGroupByTimepoint ?? [],
-									sampleLayerVariables,
-									setting.quantiles ?? [],
-									options
-								);
+						const smallChart = createForecastChartWithAnnotations(
+							setting,
+							chartData.value as ChartData,
+							sampleLayerVariables,
+							statLayerVariables,
+							options,
+							annotations,
+							groundTruthLayer
+						);
 						return smallChart;
 					});
 					charts[setting.id] = smallMultiplesCharts;
@@ -851,35 +811,15 @@ export function useCharts(
 						false,
 						true
 					);
-					const chart = !setting.showQuantiles
-						? applyForecastChartAnnotations(
-								createForecastChart(
-									{
-										data: result,
-										variables: sampleLayerVariables,
-										timeField: 'timepoint_id',
-										groupField: 'sample_id'
-									},
-									{
-										data: resultSummary,
-										variables: statLayerVariables,
-										timeField: 'timepoint_id'
-									},
-									groundTruthData && {
-										data: groundTruthData.value,
-										variables: datasetVar ? [datasetVar] : [],
-										timeField: modelVarToDatasetVar(mapping?.value || [], 'timepoint_id')
-									},
-									options
-								),
-								annotations
-							)
-						: createQuantilesForecastChart(
-								chartData.value?.resultGroupByTimepoint ?? [],
-								sampleLayerVariables,
-								setting.quantiles ?? [],
-								options
-							);
+					const chart = createForecastChartWithAnnotations(
+						setting,
+						chartData.value as ChartData,
+						sampleLayerVariables,
+						statLayerVariables,
+						options,
+						annotations,
+						groundTruthLayer
+					);
 					charts[setting.id] = [chart];
 				}
 			});
@@ -1349,6 +1289,138 @@ export function useCharts(
 		return computed(() => ({ data: sensitivityData.value, loading: sensitivityDataLoading.value }));
 	};
 
+	const useInterventionRankingCharts = (
+		criteriaOfInterestCards: Ref<CriteriaOfInterestCard[]>,
+		datasets: Ref<Dataset[]>,
+		modelConfigurations: Ref<ModelConfiguration[]>,
+		interventionPolicies: Ref<InterventionPolicy[]>
+	) =>
+		computed(() => {
+			// return empty if any of the required data is missing
+			if (!chartData.value || !datasets.value || !modelConfigurations.value || !interventionPolicies.value)
+				return { rankingCriteriaCharts: [], rankingResultsChart: null };
+
+			const rankingCriteriaCharts: VisualizationSpec[] = [];
+			let rankingResultsChart: VisualizationSpec | null = null;
+
+			const allRankedCriteriaValues: { score: number; policyName: string; configName: string }[][] = [];
+
+			const { interventionNameColorMap, interventionNameScoresMap } = getInterventionColorAndScoreMaps(
+				datasets,
+				modelConfigurations,
+				interventionPolicies
+			);
+
+			criteriaOfInterestCards.value.forEach((card) => {
+				if (!chartData.value || !card.selectedVariable) return;
+
+				const variableKey = `${chartData.value.pyciemssMap[card.selectedVariable]}_mean`;
+				let pointOfComparison: Record<string, number> = {};
+
+				if (card.timepoint === TimepointOption.OVERALL) {
+					const resultSummary = cloneDeep(chartData.value.resultSummary); // Must clone to avoid modifying the original data
+
+					// Note that the reduce function here only compares the variable of interest
+					// so only those key/value pairs will be relevant in the pointOfComparison object.
+					// Other keys like timepoint_id (that we aren't using) will be in pointOfComparison
+					// but they won't coincide with the value of the variable of interest.
+					pointOfComparison = resultSummary.reduce((acc, val) =>
+						Object.keys(val).reduce((acc2, key) => {
+							if (key.includes(variableKey)) {
+								acc2[key] = Math.max(acc[key], val[key]);
+							}
+							return acc2;
+						}, acc)
+					);
+				} else if (card.timepoint === TimepointOption.FIRST) {
+					pointOfComparison = chartData.value.resultSummary[0];
+				} else if (card.timepoint === TimepointOption.LAST) {
+					pointOfComparison = chartData.value.resultSummary[chartData.value.resultSummary.length - 1];
+				}
+
+				const rankingCriteriaValues: { score: number; policyName: string; configName: string }[] = [];
+
+				datasets.value.forEach((dataset, index: number) => {
+					const { metadata } = dataset;
+					const modelConfiguration: ModelConfiguration = modelConfigurations.value.find(
+						({ id }) => id === metadata.simulationAttributes?.modelConfigurationId
+					)!;
+					const policy: InterventionPolicy = interventionPolicies.value.find(
+						({ id }) => id === metadata.simulationAttributes?.interventionPolicyId
+					)!;
+
+					const policyName = policy?.name ?? 'no policy';
+
+					if (!modelConfiguration?.name) {
+						return;
+					}
+
+					rankingCriteriaValues.push({
+						score: pointOfComparison[`${variableKey}:${index}`] ?? 0,
+						policyName,
+						configName: modelConfiguration.name
+					});
+				});
+
+				const sortedRankingCriteriaValues =
+					card.rank === RankOption.MAXIMUM
+						? rankingCriteriaValues.sort((a, b) => b.score - a.score)
+						: rankingCriteriaValues.sort((a, b) => a.score - b.score);
+
+				const options: BaseChartOptions = {
+					title: card.name,
+					width: chartSize.value.width,
+					height: chartSize.value.height,
+					xAxisTitle: 'Rank',
+					yAxisTitle: card.selectedVariable
+				};
+				rankingCriteriaCharts.push(
+					createRankingInterventionsChart(sortedRankingCriteriaValues, interventionNameColorMap, options)
+				);
+				allRankedCriteriaValues.push(sortedRankingCriteriaValues);
+			});
+
+			// For each criteria
+			allRankedCriteriaValues.forEach((criteriaValues, index) => {
+				const rankMutliplier = criteriaOfInterestCards.value[index].rank === RankOption.MINIMUM ? -1 : 1;
+
+				// Calculate mean and stdev for this criteria
+				const values = criteriaValues.map((val) => val.score);
+				const meanValue = statsMean(values);
+				let stdevValue = stddev(values);
+				if (stdevValue === 0) stdevValue = 1;
+
+				// For each policy
+				Object.keys(interventionNameScoresMap).forEach((policyName) => {
+					// For each value of the criteria
+					criteriaValues.forEach((criteriaValue) => {
+						if (criteriaValue.policyName !== policyName) return; // Skip criteria values that don't belong to this policy
+						const scoredPolicyCriteria = rankMutliplier * ((criteriaValue.score - meanValue) / stdevValue);
+						interventionNameScoresMap[policyName].push(scoredPolicyCriteria);
+					});
+				});
+			});
+
+			const scoredPolicies = Object.keys(interventionNameScoresMap)
+				.map((policyName) => ({
+					score: statsMean(interventionNameScoresMap[policyName]),
+					policyName,
+					configName: ''
+				})) // Sort from highest to lowest value
+				.sort((a, b) => b.score - a.score);
+
+			const options: BaseChartOptions = {
+				title: '',
+				width: chartSize.value.width,
+				height: chartSize.value.height,
+				xAxisTitle: 'Rank',
+				yAxisTitle: ''
+			};
+			rankingResultsChart = createRankingInterventionsChart(scoredPolicies, interventionNameColorMap, options);
+
+			return { rankingCriteriaCharts, rankingResultsChart };
+		});
+
 	return {
 		generateAnnotation,
 		getChartAnnotationsByChartId,
@@ -1361,7 +1433,8 @@ export function useCharts(
 		useParameterDistributionCharts,
 		useWeightsDistributionCharts,
 		useSimulateSensitivityCharts,
-		useEnsembleErrorCharts
+		useEnsembleErrorCharts,
+		useInterventionRankingCharts
 	};
 }
 
