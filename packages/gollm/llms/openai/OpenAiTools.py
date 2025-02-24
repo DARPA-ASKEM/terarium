@@ -1,9 +1,5 @@
 import json
 import os
-from openai import OpenAI
-from typing import List, Optional
-from entities import ChartAnnotationType
-
 from common.LlmToolsInterface import LlmToolsInterface
 from common.prompts.chart_annotation import build_prompt as build_chart_annotation_prompt
 from common.prompts.config_from_dataset import (
@@ -38,6 +34,9 @@ from common.utils import (
     escape_curly_braces,
     unescape_curly_braces
 )
+from entities import ChartAnnotationType
+from openai import OpenAI
+from typing import List, Optional
 
 GPT_MODEL = "gpt-4o-2024-08-06"
 

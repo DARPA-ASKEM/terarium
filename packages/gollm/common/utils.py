@@ -142,3 +142,117 @@ def extract_json_object(string_with_json: str) -> dict:
         return json.loads(extracted_json)
     else:
         return None  # Return None if no JSON object is found
+
+
+def extract_json_by_schema(schema, text):
+    """
+    Extracts a JSON object from a text that matches the provided JSON schema.
+    """
+    candidate = extract_json_object(text)
+    if not candidate:
+        return None
+
+    # Attempt to parse the candidate substring as JSON.
+    try:
+        # Attempt to parse the candidate substring as JSON.
+        candidate_json = json.loads(candidate)
+    except json.JSONDecodeError:
+        # If parsing fails, return None.
+        return None
+    try:
+        # Validate the parsed JSON object against the schema.
+        jsonschema.validate(instance=candidate_json, schema=schema)
+        # If no exception is raised, this candidate matches the schema.
+        return candidate_json
+    except jsonschema.ValidationError:
+        # Candidate did not match the schema; return None.
+        return None
+
+
+def decode_if_bytes(input_data):
+    """
+    Checks if the input is a byte string. If so, decodes it to a regular string using UTF-8.
+    Otherwise, returns the input unchanged.
+
+    Args:
+        input_data (str or bytes): The input data to check.
+
+    Returns:
+        str: The decoded string if input_data was bytes, otherwise the original string.
+    """
+    if isinstance(input_data, bytes):
+        return input_data.decode('utf-8')
+    return input_data
+
+
+def format_json_to_schema(schema, data):
+    """
+    Recursively format a JSON object to match a given JSON schema.
+    For example, if a value is a string but should be a number per the schema,
+    this function will try to convert the string to a number.
+
+    Args:
+        schema (dict): A JSON schema specifying expected types.
+        data (any): The JSON data (typically a dict) to format.
+
+    Returns:
+        any: The formatted data.
+    """
+    # Helper function to convert a value to an expected type.
+    def convert_value(expected_type, value):
+        if expected_type in ("number", "integer"):
+            if isinstance(value, str):
+                try:
+                    # Convert to int if expected integer, otherwise to float.
+                    return int(value) if expected_type == "integer" else float(value)
+                except ValueError:
+                    return value
+            # You might also want to convert other numeric types (like bool) if needed.
+            return value
+        elif expected_type == "boolean":
+            if isinstance(value, str):
+                low = value.strip().lower()
+                if low in ("true", "yes", "1"):
+                    return True
+                elif low in ("false", "no", "0"):
+                    return False
+                else:
+                    return value
+            return value
+        # For other types like "string", just return the value.
+        return value
+
+    # Recursive function that formats the data according to the schema.
+    def format_value(schema, value):
+        # If the schema defines an object.
+        if schema.get("type") == "object":
+            if not isinstance(value, dict):
+                return value  # If it's not a dict, we can't do much.
+            return format_object(schema, value)
+
+        # If the schema defines an array.
+        if schema.get("type") == "array":
+            if not isinstance(value, list):
+                return value  # Or wrap in list if desired.
+            item_schema = schema.get("items", {})
+            return [format_value(item_schema, item) for item in value]
+
+        # Otherwise, try converting the value.
+        expected_type = schema.get("type")
+        return convert_value(expected_type, value)
+
+    # Function to format an object (dictionary) based on its schema.
+    def format_object(schema, obj):
+        properties = schema.get("properties", {})
+        formatted_obj = {}
+        for key, prop_schema in properties.items():
+            if key in obj:
+                formatted_obj[key] = format_value(prop_schema, obj[key])
+            # Optionally, you can add handling for missing keys or defaults.
+        return formatted_obj
+
+    # Start the formatting from the root.
+    if schema.get("type") == "object" and isinstance(data, dict):
+        return format_object(schema, data)
+    else:
+        return format_value(schema, data)

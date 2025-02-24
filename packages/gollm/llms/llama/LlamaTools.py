@@ -1,8 +1,6 @@
 import boto3
 import json
 import os
-from typing import List, Optional
-from entities import ChartAnnotationType
 from common.LlmToolsInterface import LlmToolsInterface
 from common.prompts.chart_annotation import build_prompt as build_chart_annotation_prompt
 from common.prompts.config_from_dataset import (
@@ -34,11 +32,16 @@ from common.prompts.model_meta_compare import (
     MODEL_METADATA_COMPARE_GOAL_AND_DATA_PROMPT
 )
 from common.utils import (
+    decode_if_bytes,
     escape_curly_braces,
+    extract_json_object,
+    format_json_to_schema,
     unescape_curly_braces
 )
+from entities import ChartAnnotationType
 from llms.llama.prompts.llama_prompts import LLAMA_START_PROMPT, LLAMA_RETURN_INSTRUCTIONS, LLAMA_END_PROMPT
 from typing import List, Optional
+
 
 GPT_MODEL = "us.meta.llama3-2-90b-instruct-v1:0"
 
@@ -49,7 +52,7 @@ class LlamaTools(LlmToolsInterface):
         self.bedrock_access_key = bedrock_access_key
         self.bedrock_secret_access_key = bedrock_secret_access_key
 
-    def send_to_llm_with_json_output(self, prompt: str, schema: str, max_tokens=2048) -> dict:
+    def send_to_llm_with_json_output(self, prompt: str, schema: str, max_tokens=8192) -> dict:
         print("Creating AWS Bedrock (Llama) client...")
         client = boto3.client(
             "bedrock-runtime",
@@ -73,12 +76,26 @@ class LlamaTools(LlmToolsInterface):
         )
 
         print("Received response from AWS Bedrock (Llama)...")
-        model_response = json.loads(response["body"].read())
-        response_json = json.loads(model_response["generation"])
-        return unescape_curly_braces(response_json)
+        raw_response = response["body"].read();
+        string_response = decode_if_bytes(raw_response)
+
+        try:
+            print("Trying to parse response as JSON...")
+            model_response = json.loads(string_response)
+        except json.JSONDecodeError:
+            print("Parsing response as JSON failed, trying to extract JSON object...")
+            model_response = extract_json_object(string_response)
+
+        try:
+            response_json = json.loads(model_response["generation"])
+        except json.JSONDecodeError:
+            print("Parsing response as JSON failed, trying to extract JSON object...")
+            response_json = extract_json_object(model_response["generation"])
+
+        return format_json_to_schema(schema, unescape_curly_braces(response_json))
 
 
-    def send_to_llm_with_string_output(self, prompt: str, max_tokens=2048) -> str:
+    def send_to_llm_with_string_output(self, prompt: str, max_tokens=8192) -> str:
         print("Creating AWS Bedrock (Llama) client...")
         client = boto3.client(
             "bedrock-runtime",
@@ -102,11 +119,20 @@ class LlamaTools(LlmToolsInterface):
         )
 
         print("Received response from AWS Bedrock (Llama)...")
-        model_response = json.loads(response["body"].read())
+        raw_response = response["body"].read();
+        string_response = decode_if_bytes(raw_response)
+
+        try:
+            print("Trying to parse response as JSON...")
+            model_response = json.loads(string_response)
+        except json.JSONDecodeError:
+            print("Parsing response as JSON failed, trying to extract JSON object...")
+            model_response = extract_json_object(string_response)
+
         return model_response["generation"]
 
 
-    def send_image_to_llm_with_json_output(self, prompt: str, schema: str, image_url: str, max_tokens=2048) -> dict:
+    def send_image_to_llm_with_json_output(self, prompt: str, schema: str, image_url: str, max_tokens=8192) -> dict:
         print("Creating AWS Bedrock (Llama) client...")
         client = boto3.client(
             "bedrock-runtime",
@@ -130,9 +156,23 @@ class LlamaTools(LlmToolsInterface):
         )
 
         print("Received response from AWS Bedrock (Llama)...")
-        model_response = json.loads(response["body"].read())
-        response_json = json.loads(model_response["generation"])
-        return unescape_curly_braces(response_json)
+        raw_response = response["body"].read();
+        string_response = decode_if_bytes(raw_response)
+
+        try:
+            print("Trying to parse response as JSON...")
+            model_response = json.loads(string_response)
+        except json.JSONDecodeError:
+            print("Parsing response as JSON failed, trying to extract JSON object...")
+            model_response = extract_json_object(string_response)
+
+        try:
+            response_json = json.loads(model_response["generation"])
+        except json.JSONDecodeError:
+            print("Parsing response as JSON failed, trying to extract JSON object...")
+            response_json = extract_json_object(model_response["generation"])
+
+        return format_json_to_schema(schema, unescape_curly_braces(response_json))
 
 
     def create_enrich_model_prompt(self, amr: str, document: str, schema: str) -> str:
