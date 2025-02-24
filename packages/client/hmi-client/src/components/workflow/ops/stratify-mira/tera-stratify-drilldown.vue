@@ -496,7 +496,7 @@ onUnmounted(() => {
 }
 
 .code-executed-warning {
-	background-color: var(--error-message-background);
+	background-color: var(--surface-error);
 	border-radius: var(--border-radius);
 	color: var(--error-message-color);
 	padding: var(--gap-2-5);
