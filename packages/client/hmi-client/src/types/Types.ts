@@ -792,6 +792,11 @@ export interface DocumentExtraction {
     metadata: { [index: string]: any };
 }
 
+export interface DocumentExtractionStatus {
+	data: TaskResponse,
+	documentId: string
+}
+
 export interface ExtractedDocumentPage {
     pageNumber: number;
     text: string;

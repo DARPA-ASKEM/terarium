@@ -1,7 +1,14 @@
 import { onMounted, onUnmounted } from 'vue';
 
 import { subscribe, unsubscribe } from '@/services/ClientEventService';
-import { type ClientEvent, ClientEventType, type StatusUpdate, type TaskResponse, TaskStatus } from '@/types/Types';
+import {
+	type ClientEvent,
+	ClientEventType,
+	type DocumentExtractionStatus,
+	type StatusUpdate,
+	type TaskResponse,
+	TaskStatus
+} from '@/types/Types';
 
 export function useClientEvent(
 	eventType: ClientEventType | ClientEventType[],
@@ -28,7 +35,7 @@ export function createTaskListClientEventHandler(state, taskIdsKey: string) {
 }
 
 export function createTaskProgressClientEventHandler(state, progressKey: string) {
-	return async (event: ClientEvent<StatusUpdate>) => {
+	return async (event: ClientEvent<StatusUpdate<DocumentExtractionStatus>>) => {
 		if (event.data.data.documentId === state.documentId) {
 			state[progressKey] = event.data?.progress;
 			if ([TaskStatus.Success, TaskStatus.Cancelled, TaskStatus.Failed].includes(event.data.status)) {
