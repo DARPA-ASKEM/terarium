@@ -62,7 +62,7 @@ const pollResult = async (runId: string) => {
 		if (simulation?.status && simulation?.statusMessage) {
 			const state = _.cloneDeep(props.node.state);
 			state.errorMessage = {
-				name: runId,
+				name: `Simulate: ${runId} has failed`,
 				value: simulation.status,
 				traceback: simulation.statusMessage
 			};
