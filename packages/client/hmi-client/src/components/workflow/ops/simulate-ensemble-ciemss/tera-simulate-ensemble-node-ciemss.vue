@@ -50,7 +50,7 @@ const inProgressForecastId = computed(() => props.node.state.inProgressForecastI
 const selectedRunId = ref<string>('');
 const areInputsFilled = computed(() => props.node.inputs.filter((ele) => ele.value).length > 1);
 // -------------- Charts && chart settings ----------------
-const chartSize = { width: 180, height: 120 };
+const chartSize = { width: 180, height: 220 };
 const allModelConfigurations = ref<ModelConfiguration[]>([]);
 const outputData = ref<{
 	result: DataArray;
@@ -80,7 +80,7 @@ const ensembleVariableCharts = computed(() => {
 			const spec = charts.value[setting.id][0];
 			// Make sure the chart since width of the chart can be too small if charts were small multiple charts.
 			spec.width = chartSize.width;
-			spec.height = chartSize.height + 100;
+			spec.height = chartSize.height;
 			return spec;
 		});
 	return ensembleCharts;
