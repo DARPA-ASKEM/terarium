@@ -82,6 +82,10 @@ export function useChartSettings(
 		chartSettings,
 		ChartSettingType.SENSITIVITY
 	);
+	const selectedObservableSettings = createComputedFilteredSettings(
+		chartSettings,
+		ChartSettingType.VARIABLE_OBSERVABLE
+	);
 
 	const comparisonChartsSettingsSelection = computed<{ [settingId: string]: string[] }>(() =>
 		selectedComparisonChartSettings.value.reduce((acc, setting) => {
@@ -207,6 +211,7 @@ export function useChartSettings(
 		selectedInterventionSettings,
 		selectedComparisonChartSettings,
 		selectedSensitivityChartSettings,
+		selectedObservableSettings,
 		setActiveChartSettings,
 		updateActiveChartSettings,
 		removeChartSettings,
