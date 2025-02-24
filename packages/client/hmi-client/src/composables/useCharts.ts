@@ -1050,8 +1050,8 @@ export function useCharts(
 		const slicedRecords: Map<string, Record<string, any>[]> = new Map();
 		// the records of interest we want are at the indicated timepoint
 		if (options.method === SensitivityMethod.TIMEPOINT) {
+			const data = records.filter((d) => d.timepoint_id === options.timepoint);
 			options.selectedVariables.forEach((selectedVariable) => {
-				const data = records.filter((d) => d.timepoint_id === options.timepoint);
 				if (!slicedRecords.has(selectedVariable)) {
 					slicedRecords.set(selectedVariable, data);
 				}
