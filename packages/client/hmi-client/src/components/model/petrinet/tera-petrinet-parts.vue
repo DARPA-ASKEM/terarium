@@ -116,7 +116,13 @@ import { collapseInitials, collapseParameters, collapseTemplates } from '@/model
 import TeraModelPart from '@/components/model/model-parts/tera-model-part.vue';
 import type { FeatureConfig } from '@/types/common';
 import TeraInputText from '@/components/widgets/tera-input-text.vue';
-import { createPartsList, createObservablesList, createTimeList, PartType } from '@/model-representation/service';
+import {
+	createPartsList,
+	createObservablesList,
+	createTimeList,
+	PartType,
+	ModelError
+} from '@/model-representation/service';
 import TeraStratifiedMatrixModal from '@/components/model/petrinet/model-configurations/tera-stratified-matrix-modal.vue';
 import { ModelPartItem, ModelPartItemTree, StratifiedMatrix } from '@/types/Model';
 import { getControllerNames } from '@/model-representation/mira/mira-util';
@@ -125,6 +131,7 @@ const props = defineProps<{
 	model: Model;
 	mmt: MiraModel;
 	mmtParams: MiraTemplateParams;
+	modelErrors: ModelError[];
 	featureConfig: FeatureConfig;
 }>();
 

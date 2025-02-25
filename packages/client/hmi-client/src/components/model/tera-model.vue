@@ -31,6 +31,7 @@
 				:mmt="mmtData.mmt"
 				:mmt-params="mmtData.template_params"
 				:feature-config="{ isPreview: false }"
+				:model-errors="modelErrors"
 				@update-state="(e: any) => onUpdateModelPart('state', e)"
 				@update-parameter="(e: any) => onUpdateModelPart('parameter', e)"
 				@update-observable="(e: any) => onUpdateModelPart('observable', e)"
@@ -68,12 +69,14 @@ import { useProjects } from '@/composables/project';
 import { logger } from '@/utils/logger';
 import { MMT } from '@/model-representation/mira/mira-common';
 import {
+	checkPetrinetAMR,
 	updateState,
 	updateParameter,
 	updateObservable,
 	updateTransition,
 	updateTime
 } from '@/model-representation/service';
+import type { ModelError } from '@/model-representation/service';
 
 const props = defineProps({
 	assetId: {
@@ -100,6 +103,7 @@ const isModelLoading = ref(false);
 const showSaveModal = ref(false);
 const hasChanged = computed(() => !isEqual(model.value, temporaryModel.value));
 const hasEditPermission = useProjects().hasEditPermission();
+const modelErrors = ref<ModelError[]>([]);
 
 // Edit menu
 async function onSave() {
@@ -207,6 +211,8 @@ function onUpdateModelPart(property: 'state' | 'parameter' | 'observable' | 'tra
 async function fetchModel() {
 	model.value = await getModel(props.assetId);
 	temporaryModel.value = cloneDeep(model.value);
+	modelErrors.value = checkPetrinetAMR(model.value as Model);
+
 	await refreshMMT();
 }
 
