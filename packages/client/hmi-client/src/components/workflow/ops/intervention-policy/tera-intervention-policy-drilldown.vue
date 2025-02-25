@@ -78,19 +78,20 @@
 							firstRow,
 							firstRow + MAX_NUMBER_OF_ROWS
 						)"
-						:key="index"
-						@click="selectInterventionPolicy(intervention, index)"
+						:key="firstRow + index"
+						@click="selectInterventionPolicy(intervention, firstRow + index)"
 					>
 						<tera-intervention-card
 							class="intervention"
 							:class="{
-								selected: selectedIntervention?.name === intervention?.name && selectedIntervention?.index === index
+								selected:
+									selectedIntervention?.name === intervention?.name && selectedIntervention?.index === firstRow + index
 							}"
 							:intervention="intervention"
 							:parameterOptions="parameterOptions"
 							:stateOptions="stateOptions"
-							@update="onUpdateInterventionCard($event, index)"
-							@delete="onDeleteIntervention(index)"
+							@update="onUpdateInterventionCard($event, firstRow + index)"
+							@delete="onDeleteIntervention(firstRow + index)"
 						/>
 					</li>
 				</ul>
