@@ -591,6 +591,7 @@ export interface OptimizeRequestCiemss {
 export interface SimulationRequest {
     modelConfigId: string;
     timespan: TimeSpan;
+    loggingStepSize?: number;
     extra: any;
     engine: string;
     policyInterventionId?: string;

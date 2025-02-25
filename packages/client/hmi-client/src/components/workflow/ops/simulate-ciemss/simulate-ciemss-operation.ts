@@ -15,6 +15,8 @@ export interface SimulateCiemssOperationState extends BaseState {
 	numSamples: number;
 	solverStepSize: number;
 	method: CiemssMethodOptions;
+	numberOfTimepoints: number;
+	calculateNumberOfTimepoints: boolean;
 	forecastId: string; // Completed run's Id
 	baseForecastId: string; // Simulation without intervention
 
@@ -48,6 +50,8 @@ export const SimulateCiemssOperation: Operation = {
 			currentTimespan: { start: 0, end: 100 },
 			numSamples: 100,
 			solverStepSize: 0.1,
+			numberOfTimepoints: 100,
+			calculateNumberOfTimepoints: true,
 			method: CiemssMethodOptions.dopri5,
 			forecastId: '',
 			baseForecastId: '',

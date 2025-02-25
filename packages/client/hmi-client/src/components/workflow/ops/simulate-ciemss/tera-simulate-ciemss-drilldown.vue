@@ -63,9 +63,28 @@
 								class="common-input-height"
 							/>
 						</div>
-
 						<!-- Number of Samples & Method -->
 						<div class="input-row mt-3">
+							<div class="label-and-input">
+								<label>Calculate number of timepoints</label>
+								<tera-checkbox
+									label=""
+									:model-value="calculateNumberOfTimepoints"
+									@update:model-value="toggleCalculateNumberOfTimepoints"
+								/>
+							</div>
+							<div class="label-and-input">
+								<label>Number of timepoints</label>
+								<tera-input-number
+									id="logging-step-size"
+									class="common-input-height"
+									:disabled="calculateNumberOfTimepoints"
+									v-model="numberOfTimepoints"
+									inputId="integeronly"
+									:min="1"
+									@update:model-value="updateState"
+								/>
+							</div>
 							<div class="label-and-input">
 								<label for="num-samples">Number of samples</label>
 								<tera-input-number
@@ -503,6 +522,7 @@ import TeraPyciemssCancelButton from '@/components/pyciemss/tera-pyciemss-cancel
 import TeraSaveSimulationModal from '@/components/project/tera-save-simulation-modal.vue';
 import TeraSliderPanel from '@/components/widgets/tera-slider-panel.vue';
 import TeraTimestepCalendar from '@/components/widgets/tera-timestep-calendar.vue';
+import TeraCheckbox from '@/components/widgets/tera-checkbox.vue';
 import { nodeMetadata } from '@/components/workflow/util';
 import { useCharts } from '@/composables/useCharts';
 import { useChartSettings } from '@/composables/useChartSettings';
@@ -583,7 +603,9 @@ const llmQuery = ref('');
 const timespan = ref<TimeSpan>(props.node.state.currentTimespan);
 const numSamples = ref<number>(props.node.state.numSamples);
 const solverStepSize = ref<number>(props.node.state.solverStepSize);
-const method = ref(props.node.state.method);
+const method = ref<CiemssMethodOptions>(props.node.state.method);
+const numberOfTimepoints = ref<number>(props.node.state.numberOfTimepoints);
+const calculateNumberOfTimepoints = ref<boolean>(props.node.state.calculateNumberOfTimepoints);
 
 enum OutputView {
 	Charts = 'Charts',
@@ -724,12 +746,22 @@ const normalizeEquations = computed(() => {
 	return equations;
 });
 
+const toggleCalculateNumberOfTimepoints = () => {
+	calculateNumberOfTimepoints.value = !calculateNumberOfTimepoints.value;
+	updateState();
+};
+
 const updateState = () => {
 	const state = _.cloneDeep(props.node.state);
 	state.currentTimespan = timespan.value;
 	state.numSamples = numSamples.value;
 	state.method = method.value;
 	state.solverStepSize = solverStepSize.value;
+	state.calculateNumberOfTimepoints = calculateNumberOfTimepoints.value;
+	if (calculateNumberOfTimepoints.value) {
+		numberOfTimepoints.value = timespan.value.end - timespan.value.start;
+	}
+	state.numberOfTimepoints = numberOfTimepoints.value;
 	emit('update-state', state);
 };
 
@@ -754,6 +786,7 @@ const makeForecastRequest = async (applyInterventions = true) => {
 			start: timespan.value.start,
 			end: timespan.value.end
 		},
+		loggingStepSize: (timespan.value.end - timespan.value.start) / numberOfTimepoints.value,
 		extra: {
 			solver_method: method.value,
 			solver_step_size: solverStepSize.value,
