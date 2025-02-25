@@ -191,7 +191,6 @@ import { PartType } from '@/model-representation/service';
 const props = defineProps<{
 	items: ModelPartItemTree[];
 	featureConfig: FeatureConfig;
-	collapsedItems?: Map<string, string[]>;
 	showMatrix?: boolean;
 	partType: PartType;
 	filter?: string;
@@ -258,9 +257,10 @@ function getEditingState(filteredIndex: number) {
 }
 
 function updateAllChildren(base: string, key: string, value: string) {
-	if (isEmpty(value) || !props.collapsedItems) return;
-	const ids = props.collapsedItems.get(base);
-	ids?.forEach((id) => emit('update-item', { id, key, value }));
+	if (isEmpty(value)) return;
+
+	const ids = props.items.find((d) => d.base.id === base)!.children.map((d) => d.id);
+	ids.forEach((id) => emit('update-item', { id, key, value }));
 }
 </script>
 
