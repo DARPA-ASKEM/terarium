@@ -9,7 +9,6 @@
 				v-if="!isEmpty(mmt.initials)"
 				:part-type="PartType.STATE"
 				:items="stateList"
-				:collapsed-items="collapsedInitials"
 				:feature-config="featureConfig"
 				:filter="statesFilter"
 				@update-item="emit('update-state', $event)"
@@ -29,7 +28,6 @@
 				v-if="!isEmpty(mmt.parameters)"
 				:part-type="PartType.PARAMETER"
 				:items="parameterList"
-				:collapsed-items="collapsedParameters"
 				:feature-config="featureConfig"
 				show-matrix
 				:filter="parametersFilter"
