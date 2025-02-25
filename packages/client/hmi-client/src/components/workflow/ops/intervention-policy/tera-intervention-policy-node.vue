@@ -74,7 +74,7 @@ const props = defineProps<{
 }>();
 useClientEvent(
 	[ClientEventType.TaskGollmInterventionsFromDocument, ClientEventType.TaskGollmInterventionsFromDataset],
-	createTaskListClientEventHandler(props.node.state, 'taskIds')
+	createTaskListClientEventHandler(props.node, 'taskIds')
 );
 
 const isLoading = computed(() => props.node.state.taskIds.length > 0);

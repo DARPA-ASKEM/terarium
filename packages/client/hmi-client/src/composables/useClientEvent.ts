@@ -24,7 +24,8 @@ export function useClientEvent(
 }
 
 // accepts a state and key to a string[] to update with in progress task ids
-export function createTaskListClientEventHandler(state, taskIdsKey: string) {
+export function createTaskListClientEventHandler(node, taskIdsKey: string) {
+	const { state } = node;
 	const taskIds = state[taskIdsKey];
 	return async (event: ClientEvent<TaskResponse>) => {
 		if (!taskIds?.includes(event.data?.id) || !event.data) return;
@@ -34,7 +35,8 @@ export function createTaskListClientEventHandler(state, taskIdsKey: string) {
 	};
 }
 
-export function createTaskProgressClientEventHandler(state, progressKey: string) {
+export function createTaskProgressClientEventHandler(node, progressKey: string) {
+	const { state } = node;
 	return async (event: ClientEvent<StatusUpdate<DocumentExtractionStatus>>) => {
 		if (event.data.data.documentId === state.documentId) {
 			state[progressKey] = event.data?.progress;
