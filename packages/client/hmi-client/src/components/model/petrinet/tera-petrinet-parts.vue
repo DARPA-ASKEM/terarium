@@ -9,6 +9,7 @@
 				v-if="!isEmpty(mmt.initials)"
 				:part-type="PartType.STATE"
 				:items="stateList"
+				:model-errors="modelErrors.filter((d) => d.type === 'state')"
 				:feature-config="featureConfig"
 				:filter="statesFilter"
 				@update-item="emit('update-state', $event)"
@@ -28,6 +29,7 @@
 				v-if="!isEmpty(mmt.parameters)"
 				:part-type="PartType.PARAMETER"
 				:items="parameterList"
+				:model-errors="[]"
 				:feature-config="featureConfig"
 				show-matrix
 				:filter="parametersFilter"
@@ -58,6 +60,7 @@
 				:part-type="PartType.OBSERVABLE"
 				v-if="!isEmpty(observables)"
 				:items="observablesList"
+				:model-errors="[]"
 				:feature-config="featureConfig"
 				:filter="observablesFilter"
 				@update-item="emit('update-observable', $event)"
@@ -72,6 +75,7 @@
 				:part-type="PartType.TRANSITION"
 				v-if="!isEmpty(transitions) && !isEmpty(mmt.templates)"
 				:items="transitionsList"
+				:model-errors="modelErrors.filter((d) => d.type === 'transition')"
 				:feature-config="featureConfig"
 				:filter="transitionsFilter"
 				show-matrix
@@ -96,6 +100,7 @@
 				v-if="time"
 				:part-type="PartType.TIME"
 				:items="timeList"
+				:model-errors="[]"
 				:feature-config="featureConfig"
 				@update-item="$emit('update-time', $event)"
 			/>

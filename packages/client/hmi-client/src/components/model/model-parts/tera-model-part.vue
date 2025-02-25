@@ -129,6 +129,7 @@
 								:unitExpression="child.unitExpression"
 								:expression="child.expression"
 								:feature-config="featureConfig"
+								:model-errors="modelErrors.filter((d) => d.id === child.id)"
 								@update-item="$emit('update-item', { id: child.id, ...$event })"
 							/>
 						</li>
@@ -158,6 +159,7 @@
 				:unitExpression="base.unitExpression"
 				:expression="base.expression"
 				:feature-config="featureConfig"
+				:model-errors="modelErrors.filter((d) => d.id === base.id)"
 				@update-item="$emit('update-item', { id: base.id, ...$event })"
 			/>
 		</li>
@@ -186,10 +188,11 @@ import Button from 'primevue/button';
 import type { FeatureConfig } from '@/types/common';
 import TeraInputText from '@/components/widgets/tera-input-text.vue';
 import Paginator from 'primevue/paginator';
-import { PartType } from '@/model-representation/service';
+import { PartType, ModelError } from '@/model-representation/service';
 
 const props = defineProps<{
 	items: ModelPartItemTree[];
+	modelErrors: ModelError[];
 	featureConfig: FeatureConfig;
 	showMatrix?: boolean;
 	partType: PartType;
