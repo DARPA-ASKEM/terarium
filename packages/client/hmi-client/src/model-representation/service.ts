@@ -48,7 +48,6 @@ export const getModelRenderer = (
 	const isStratified = isStratifiedModel(miraModel);
 
 	if (useNestedRenderer && isStratified) {
-		// FIXME: Testing, move to mira service
 		const processedSet = new Set<string>();
 		const conceptData: any = [];
 
@@ -269,13 +268,19 @@ export function isModelMissingMetadata(model: Model): boolean {
  * - Check states make sense
  * - Check transitions make sense
  * */
+export interface ModelError {
+	severity: string;
+	type: 'state' | 'transition' | 'model';
+	id: string;
+	content: string;
+}
 export function checkPetrinetAMR(amr: Model) {
 	function isASCII(str: string) {
 		// eslint-disable-next-line
 		return /^[\x00-\x7F]*$/.test(str);
 	}
 
-	const results: { type: string; content: string }[] = [];
+	const results: ModelError[] = [];
 	const model = amr.model;
 	const ode = amr.semantics?.ode;
 
@@ -285,18 +290,18 @@ export function checkPetrinetAMR(amr: Model) {
 	const numRates = ode?.rates?.length || 0;
 
 	if (numStates === 0) {
-		results.push({ type: 'warn', content: 'zero states' });
+		results.push({ severity: 'warn', type: 'model', id: '', content: 'zero states in model' });
 	}
 
 	if (numTransitions === 0) {
-		results.push({ type: 'warn', content: 'zero transitions' });
+		results.push({ severity: 'warn', type: 'model', id: '', content: 'zero transitions in model' });
 	}
 
 	if (numStates !== numInitials) {
-		results.push({ type: 'error', content: 'states need to match initials' });
+		results.push({ severity: 'error', type: 'model', id: '', content: '# states need to match # initials' });
 	}
 	if (numRates !== numTransitions) {
-		results.push({ type: 'error', content: 'transitions need to match rates' });
+		results.push({ severity: 'error', type: 'model', id: '', content: '# transitions need to match # rates' });
 	}
 
 	// Build cache
@@ -316,19 +321,24 @@ export function checkPetrinetAMR(amr: Model) {
 	model.states.forEach((state) => {
 		const initial = initialMap.get(state.id);
 		if (!initial) {
-			results.push({ type: 'error', content: `${state.id} has no initial` });
+			results.push({ severity: 'error', type: 'state', id: state.id, content: `${state.id} has no initial` });
 		}
 		if (_.isEmpty(initial?.expression)) {
-			results.push({ type: 'warn', content: `${state.id} has no initial.expression` });
+			results.push({ severity: 'warn', type: 'state', id: state.id, content: `${state.id} has no initial.expression` });
 		}
 		if (!isASCII(initial?.expression as string)) {
-			results.push({ type: 'warn', content: `${state.id} has non-ascii expression` });
+			results.push({ severity: 'warn', type: 'state', id: state.id, content: `${state.id} has non-ascii expression` });
 		}
 		if (stateSet.has(state.id)) {
-			results.push({ type: 'error', content: `state (${state.id}) has duplicate` });
+			results.push({ severity: 'error', type: 'state', id: state.id, content: `state (${state.id}) has duplicate` });
 		}
 		if (initialSet.has(initial?.target as string)) {
-			results.push({ type: 'error', content: `initial (${initial?.target}) has duplicate` });
+			results.push({
+				severity: 'error',
+				type: 'state',
+				id: state.id,
+				content: `initial (${initial?.target}) has duplicate`
+			});
 		}
 		stateSet.add(state.id);
 		initialSet.add(initial?.target as string);
@@ -339,25 +349,56 @@ export function checkPetrinetAMR(amr: Model) {
 	const rateSet = new Set<string>();
 	model.transitions.forEach((transition) => {
 		const rate = rateMap.get(transition.id);
+
 		if (!rate) {
-			results.push({ type: 'error', content: `${transition.id} has no rate` });
+			results.push({
+				severity: 'error',
+				type: 'transition',
+				id: transition.id,
+				content: `${transition.id} has no rate`
+			});
 		}
 		if (_.isEmpty(rate?.expression)) {
-			results.push({ type: 'warn', content: `${transition.id} has no rate.expression` });
+			results.push({
+				severity: 'warn',
+				type: 'transition',
+				id: transition.id,
+				content: `${transition.id} has no rate.expression`
+			});
 		}
 		if (!isASCII(rate?.expression as string)) {
-			results.push({ type: 'warn', content: `${transition.id} has non-ascii expression` });
+			results.push({
+				severity: 'warn',
+				type: 'transition',
+				id: transition.id,
+				content: `${transition.id} has non-ascii expression`
+			});
 		}
 		if (transitionSet.has(transition.id)) {
-			results.push({ type: 'error', content: `transition (${transition.id}) has duplicate` });
+			results.push({
+				severity: 'error',
+				type: 'transition',
+				id: transition.id,
+				content: `transition (${transition.id}) has duplicate`
+			});
 		}
 		if (rateSet.has(rate?.target as string)) {
-			results.push({ type: 'error', content: `rate (${rate?.target}) has duplicate` });
+			results.push({
+				severity: 'error',
+				type: 'transition',
+				id: transition.id,
+				content: `rate (${rate?.target}) has duplicate`
+			});
 		}
 
 		// Check if the system is closed (constant population)
 		if (transition.input.length !== transition.output.length) {
-			results.push({ type: 'warn', content: `${transition.id} does not conserve input/output` });
+			results.push({
+				severity: 'warn',
+				type: 'transition',
+				id: transition.id,
+				content: `${transition.id} may not conserve input/output`
+			});
 		}
 
 		transitionSet.add(transition.id);
