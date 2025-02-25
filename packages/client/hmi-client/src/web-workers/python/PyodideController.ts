@@ -1,3 +1,5 @@
+import { SensitivityMethod } from '@/types/common';
+
 export default class PyodideController {
 	private _isReady = false;
 
@@ -81,11 +83,21 @@ export default class PyodideController {
 		});
 	}
 
-	async getRankingScores(results: any[], outcomesofInterest: string[], parametersOfInterest: string[]) {
+	async getRankingScores(
+		results: Map<string, Record<string, any>[]>,
+		outcomesofInterest: string[],
+		parametersOfInterest: string[],
+		method: SensitivityMethod
+	) {
 		return new Promise<Map<string, Map<string, number>>>((...promise) => {
 			this.taskQueue.push({
 				action: 'getRankingScores',
-				params: [JSON.stringify(results), JSON.stringify(outcomesofInterest), JSON.stringify(parametersOfInterest)],
+				params: [
+					JSON.stringify(Object.fromEntries(results)),
+					JSON.stringify(outcomesofInterest),
+					JSON.stringify(parametersOfInterest),
+					JSON.stringify(method)
+				],
 				promise
 			});
 			this.queueTask();

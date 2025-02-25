@@ -1,3 +1,4 @@
+import { SensitivityMethod } from '@/types/common';
 import { loadPyodide } from 'pyodide';
 import { PyProxy } from 'pyodide/ffi';
 
@@ -76,19 +77,21 @@ def serialize_expr(expr):
  * 	}
  */
 pyodide.runPython(`
-	def get_ranking_scores(data, outcomesofInterest, parametersOfInterest):
-		d1 = pd.DataFrame(data)
+	def get_ranking_scores(data, outcomesofInterest, parametersOfInterest, method):
 		oois = outcomesofInterest # outcome of interest
 		pois = parametersOfInterest # parameters of interest
-
 		scores_by_ooi = {}
 		for ooi in oois:
+			df = pd.DataFrame(data[ooi])
 			# Column names for parameters
 			pois_ = [f'persistent_{p}_param' for p in pois]
 
 			poi_scores = {}
 			for p, original_p in zip(pois_, pois):
-					x, y = d1[[p, ooi]].sort_values(by = p).values.transpose()
+					outcome = ooi
+					if method == '${SensitivityMethod.PEAK_TIMEPOINT}':
+						outcome = 'timepoint_id'
+					x, y = df[[p, outcome]].sort_values(by = p).values.transpose()
 					x = (x - y.min()) / ((x.max() - x.min() or 1))
 					y = (y - y.min()) / ((y.max() - y.min() or 1))
 					coef = np.polyfit(x, y, 1)
@@ -249,13 +252,18 @@ const runPython = (code: string) => {
 	return result.toJs();
 };
 
-const getRankingScores = (data: any[], outcomesofInterest: string[], parametersOfInterest: string[]) => {
+const getRankingScores = (
+	data: any[],
+	outcomesofInterest: string[],
+	parametersOfInterest: string[],
+	method: string
+) => {
 	data = pyodide.toPy(data);
 	outcomesofInterest = pyodide.toPy(outcomesofInterest);
 	parametersOfInterest = pyodide.toPy(parametersOfInterest);
 
 	const result: PyProxy = pyodide.runPython(`
-		get_ranking_scores(${data}, ${outcomesofInterest}, ${parametersOfInterest})
+		get_ranking_scores(${data}, ${outcomesofInterest}, ${parametersOfInterest}, ${method})
 	`);
 
 	const res = result.get('scores_by_ooi').toJs();
