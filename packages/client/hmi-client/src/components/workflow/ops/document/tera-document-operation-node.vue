@@ -17,7 +17,7 @@
 					</p>
 					<ProgressBar :value="props.node?.state?.taskProgress ? props.node?.state?.taskProgress * 100 : 0" />
 				</div>
-				<p v-if="props.node?.state?.taskProgress" class="action mx-auto">Processing PDF extractions</p>
+				<p v-if="props.node.state?.taskProgress" class="action mx-auto">Processing PDF extractions</p>
 			</section>
 			<Button label="Open" @click="emit('open-drilldown')" severity="secondary" outlined />
 		</template>
