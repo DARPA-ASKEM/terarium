@@ -117,6 +117,25 @@
 									@update:model-value="setPresetValues"
 								/>
 							</div>
+							<div class="label-and-input">
+								<label>Calculate number of timepoints</label>
+								<tera-checkbox
+									label=""
+									:model-value="knobs.calculateNumberOfTimepoints"
+									@update:model-value="toggleCalculateNumberOfTimepoints"
+								/>
+							</div>
+							<div class="label-and-input">
+								<label>Number of timepoints</label>
+								<tera-input-number
+									id="logging-step-size"
+									class="common-input-height"
+									:disabled="knobs.calculateNumberOfTimepoints"
+									v-model="knobs.numberOfTimepoints"
+									inputId="integeronly"
+									:min="1"
+								/>
+							</div>
 						</div>
 						<div>
 							<Button
@@ -547,6 +566,8 @@ interface BasicKnobs {
 	optimizationRunId: string;
 	constraintGroups: Criterion[];
 	interventionPolicyGroups: InterventionPolicyGroupForm[];
+	calculateNumberOfTimepoints: boolean;
+	numberOfTimepoints: number;
 }
 
 const knobs = ref<BasicKnobs>({
@@ -560,7 +581,9 @@ const knobs = ref<BasicKnobs>({
 	postForecastRunId: props.node.state.postForecastRunId ?? '',
 	optimizationRunId: props.node.state.optimizationRunId ?? '',
 	constraintGroups: props.node.state.constraintGroups ?? [],
-	interventionPolicyGroups: props.node.state.interventionPolicyGroups ?? []
+	interventionPolicyGroups: props.node.state.interventionPolicyGroups ?? [],
+	calculateNumberOfTimepoints: props.node.state.calculateNumberOfTimepoints,
+	numberOfTimepoints: props.node.state.numberOfTimepoints
 });
 
 const currentActiveIndicies = ref([0, 1, 2, 3]);
@@ -684,6 +707,10 @@ const simulationChartOptions = computed(() => [
 const modelConfiguration = ref<ModelConfiguration | null>(null);
 
 const showAdditionalOptions = ref(true);
+
+const toggleCalculateNumberOfTimepoints = () => {
+	knobs.value.calculateNumberOfTimepoints = !knobs.value.calculateNumberOfTimepoints;
+};
 
 const onSelection = (id: string) => {
 	emit('select-output', id);
@@ -874,6 +901,7 @@ const runOptimize = async () => {
 
 	// riskTolerance to get alpha and divide by 100 to turn into a percent for pyciemss-service.
 	const alphas: number[] = activeConstraintGroups.map((ele) => ele.riskTolerance / 100);
+	const loggingStepSize = knobs.value.endTime / knobs.value.numberOfTimepoints;
 	const optimizePayload: OptimizeRequestCiemss = {
 		userId: 'no_user_provided',
 		engine: 'ciemss',
@@ -884,6 +912,7 @@ const runOptimize = async () => {
 		},
 		optimizeInterventions,
 		fixedInterventions,
+		loggingStepSize,
 		qoi: qois,
 		extra: {
 			numSamples: knobs.value.numSamples,
@@ -1073,6 +1102,11 @@ watch(
 		state.optimizationRunId = knobs.value.optimizationRunId;
 		state.constraintGroups = knobs.value.constraintGroups;
 		state.interventionPolicyGroups = knobs.value.interventionPolicyGroups;
+		state.calculateNumberOfTimepoints = knobs.value.calculateNumberOfTimepoints;
+		if (knobs.value.calculateNumberOfTimepoints) {
+			knobs.value.numberOfTimepoints = knobs.value.endTime;
+		}
+		state.numberOfTimepoints = knobs.value.numberOfTimepoints;
 		emit('update-state', state);
 	},
 	{ deep: true }
