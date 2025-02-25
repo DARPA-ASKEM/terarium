@@ -25,6 +25,13 @@
 			</aside>
 		</template>
 		<section v-if="temporaryModel && mmtData">
+			<div class="warn" v-if="modelErrors.length > 0">
+				Errors or warnings detected, please check individual sections below.
+			</div>
+			<div v-for="(err, idx) of modelErrors.filter((d) => d.type === 'model')" :key="idx">
+				<div :class="err.severity">{{ err.content }}</div>
+			</div>
+
 			<tera-model-description :model="temporaryModel" :mmt-data="mmtData" @update-model="updateTemporaryModel" />
 			<tera-petrinet-parts
 				:model="temporaryModel"
@@ -255,5 +262,13 @@ watch(
 	align-items: center;
 	gap: var(--gap-2);
 	margin-left: auto;
+}
+
+.warn {
+	background-color: var(--surface-warning);
+}
+
+.error {
+	background-color: var(--surface-error);
 }
 </style>
