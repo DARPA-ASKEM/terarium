@@ -49,7 +49,7 @@
 								label="Start time"
 								:start-date="modelConfiguration.temporalContext"
 								:calendar-settings="getCalendarSettingsFromModel(model)"
-								v-model="timespan.start"
+								:model-value="0"
 								@update:model-value="updateState"
 								class="common-input-height"
 							/>
@@ -58,7 +58,7 @@
 								label="End time"
 								:start-date="modelConfiguration.temporalContext"
 								:calendar-settings="getCalendarSettingsFromModel(model)"
-								v-model="timespan.end"
+								v-model="endTime"
 								@update:model-value="updateState"
 								class="common-input-height"
 							/>
@@ -465,14 +465,7 @@ import Button from 'primevue/button';
 import Dropdown from 'primevue/dropdown';
 import Divider from 'primevue/divider';
 import SelectButton from 'primevue/selectbutton';
-import type {
-	CsvAsset,
-	InterventionPolicy,
-	Model,
-	ModelConfiguration,
-	SimulationRequest,
-	TimeSpan
-} from '@/types/Types';
+import type { CsvAsset, InterventionPolicy, Model, ModelConfiguration, SimulationRequest } from '@/types/Types';
 import { AssetType } from '@/types/Types';
 import type { WorkflowNode } from '@/types/workflow';
 import { deleteAnnotation } from '@/services/chart-annotation';
@@ -596,7 +589,7 @@ const llmThoughts = ref<any[]>([]);
 const llmQuery = ref('');
 
 // input params
-const timespan = ref<TimeSpan>(props.node.state.currentTimespan);
+const endTime = ref<number>(props.node.state.endTime);
 const numSamples = ref<number>(props.node.state.numSamples);
 const solverStepSize = ref<number>(props.node.state.solverStepSize);
 const method = ref<CiemssMethodOptions>(props.node.state.method);
@@ -749,13 +742,13 @@ const toggleIsNumberOfTimepointsManual = () => {
 
 const updateState = () => {
 	const state = _.cloneDeep(props.node.state);
-	state.currentTimespan = timespan.value;
+	state.endTime = endTime.value;
 	state.numSamples = numSamples.value;
 	state.method = method.value;
 	state.solverStepSize = solverStepSize.value;
 	state.isNumberOfTimepointsManual = isNumberOfTimepointsManual.value;
 	if (!isNumberOfTimepointsManual.value) {
-		numberOfTimepoints.value = timespan.value.end - timespan.value.start;
+		numberOfTimepoints.value = endTime.value;
 	}
 	state.numberOfTimepoints = numberOfTimepoints.value;
 	emit('update-state', state);
@@ -779,10 +772,10 @@ const makeForecastRequest = async (applyInterventions = true) => {
 	const payload: SimulationRequest = {
 		modelConfigId,
 		timespan: {
-			start: timespan.value.start,
-			end: timespan.value.end
+			start: 0,
+			end: endTime.value
 		},
-		loggingStepSize: (timespan.value.end - timespan.value.start) / numberOfTimepoints.value,
+		loggingStepSize: endTime.value / numberOfTimepoints.value,
 		extra: {
 			solver_method: method.value,
 			solver_step_size: solverStepSize.value,
@@ -921,7 +914,7 @@ watch(
 		selectedOutputId.value = props.node.active;
 
 		// Update Wizard form fields with current selected output state
-		timespan.value = props.node.state.currentTimespan;
+		endTime.value = props.node.state.endTime;
 		numSamples.value = props.node.state.numSamples;
 		solverStepSize.value = props.node.state.solverStepSize;
 		method.value = props.node.state.method;

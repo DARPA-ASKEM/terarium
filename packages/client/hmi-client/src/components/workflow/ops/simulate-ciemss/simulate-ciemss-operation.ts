@@ -1,6 +1,5 @@
 import { CiemssMethodOptions } from '@/services/models/simulation-service';
 import { ChartSetting } from '@/types/common';
-import type { TimeSpan } from '@/types/Types';
 import { Operation, WorkflowOperationTypes, BaseState } from '@/types/workflow';
 import simulateProbabilistic from '@assets/svg/operator-images/simulate-probabilistic.svg';
 
@@ -11,7 +10,7 @@ export interface SimulateCiemssOperationState extends BaseState {
 	chartSettings: ChartSetting[] | null; // null indicates that the chart settings have not been set yet
 
 	// state specific to individual simulate runs
-	currentTimespan: TimeSpan;
+	endTime: number;
 	numSamples: number;
 	solverStepSize: number;
 	method: CiemssMethodOptions;
@@ -47,10 +46,10 @@ export const SimulateCiemssOperation: Operation = {
 	initState: () => {
 		const init: SimulateCiemssOperationState = {
 			chartSettings: null,
-			currentTimespan: { start: 0, end: 100 },
+			endTime: 90,
 			numSamples: 100,
 			solverStepSize: 0.1,
-			numberOfTimepoints: 100,
+			numberOfTimepoints: 90,
 			isNumberOfTimepointsManual: false,
 			method: CiemssMethodOptions.dopri5,
 			forecastId: '',
