@@ -1097,7 +1097,7 @@ watch(
 		state.constraintGroups = knobs.value.constraintGroups;
 		state.interventionPolicyGroups = knobs.value.interventionPolicyGroups;
 		state.isNumberOfTimepointsManual = knobs.value.isNumberOfTimepointsManual;
-		if (knobs.value.isNumberOfTimepointsManual) {
+		if (!knobs.value.isNumberOfTimepointsManual) {
 			knobs.value.numberOfTimepoints = knobs.value.endTime;
 		}
 		state.numberOfTimepoints = knobs.value.numberOfTimepoints;

@@ -754,7 +754,7 @@ const updateState = () => {
 	state.method = method.value;
 	state.solverStepSize = solverStepSize.value;
 	state.isNumberOfTimepointsManual = isNumberOfTimepointsManual.value;
-	if (isNumberOfTimepointsManual.value) {
+	if (!isNumberOfTimepointsManual.value) {
 		numberOfTimepoints.value = timespan.value.end - timespan.value.start;
 	}
 	state.numberOfTimepoints = numberOfTimepoints.value;

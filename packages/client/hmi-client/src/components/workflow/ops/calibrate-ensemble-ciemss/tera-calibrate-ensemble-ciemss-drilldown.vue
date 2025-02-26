@@ -795,7 +795,7 @@ watch(
 		state.ensembleMapping = knobs.value.ensembleMapping;
 		state.configurationWeights = knobs.value.configurationWeights;
 		state.isNumberOfTimepointsManual = knobs.value.isNumberOfTimepointsManual;
-		if (knobs.value.isNumberOfTimepointsManual) {
+		if (!knobs.value.isNumberOfTimepointsManual) {
 			knobs.value.numberOfTimepoints = knobs.value.extra.endTime;
 		}
 		state.numberOfTimepoints = knobs.value.numberOfTimepoints;

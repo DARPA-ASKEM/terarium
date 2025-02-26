@@ -1126,7 +1126,7 @@ watch(
 		state.numIterations = knobs.value.numIterations;
 		state.learningRate = knobs.value.learningRate;
 		state.isNumberOfTimepointsManual = knobs.value.isNumberOfTimepointsManual;
-		if (knobs.value.isNumberOfTimepointsManual) {
+		if (!knobs.value.isNumberOfTimepointsManual) {
 			knobs.value.numberOfTimepoints = knobs.value.endTime;
 		}
 		state.numberOfTimepoints = knobs.value.numberOfTimepoints;
