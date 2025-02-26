@@ -34,6 +34,7 @@ import software.uncharted.terarium.hmiserver.models.dataservice.model.Model;
 import software.uncharted.terarium.hmiserver.models.task.TaskRequest;
 import software.uncharted.terarium.hmiserver.models.task.TaskRequest.TaskType;
 import software.uncharted.terarium.hmiserver.models.task.TaskResponse;
+import software.uncharted.terarium.hmiserver.models.task.TaskStatus;
 import software.uncharted.terarium.hmiserver.security.Roles;
 import software.uncharted.terarium.hmiserver.service.ClientEventService;
 import software.uncharted.terarium.hmiserver.service.CurrentUserService;
@@ -96,6 +97,10 @@ public class KnowledgeController {
 
 		try {
 			cleanupResp = taskService.runTask(TaskMode.SYNC, cleanupReq);
+			if (cleanupResp.getStatus() != TaskStatus.SUCCESS) {
+				log.error("Task failed", cleanupResp.getStderr());
+				throw new ResponseStatusException(HttpStatus.BAD_REQUEST, cleanupResp.getStderr());
+			}
 			// Get the equations from the cleanup response
 			if (cleanupResp != null && cleanupResp.getOutput() != null) {
 				try {
@@ -186,6 +191,10 @@ public class KnowledgeController {
 		TaskResponse cleanupResp = null;
 		try {
 			cleanupResp = taskService.runTask(TaskMode.SYNC, cleanupReq);
+			if (cleanupResp.getStatus() != TaskStatus.SUCCESS) {
+				log.error("Task failed", cleanupResp.getStderr());
+				throw new ResponseStatusException(HttpStatus.BAD_REQUEST, cleanupResp.getStderr());
+			}
 		} catch (final JsonProcessingException e) {
 			log.warn("Unable to clean-up equations due to a JsonProcessingException. Reverting to original equations.", e);
 		} catch (final TimeoutException e) {
@@ -222,12 +231,21 @@ public class KnowledgeController {
 			latexToSympyRequest = createLatexToSympyTask(equationsReq);
 			latexToSympyResponse = taskService.runTaskSync(latexToSympyRequest);
 
+			if (latexToSympyResponse.getStatus() != TaskStatus.SUCCESS) {
+				log.error("Task Failed", latexToSympyResponse.getStderr());
+				throw new ResponseStatusException(HttpStatus.BAD_REQUEST, latexToSympyResponse.getStderr());
+			}
+
 			// 2. hand off
 			final String code = extractCodeFromLatexToSympy(latexToSympyResponse);
 
 			// 3. sympy code string to amr json
 			sympyToAMRRequest = createSympyToAMRTask(code);
 			sympyToAMRResponse = taskService.runTaskSync(sympyToAMRRequest);
+			if (sympyToAMRResponse.getStatus() != TaskStatus.SUCCESS) {
+				log.error("Task Failed", sympyToAMRResponse.getStderr());
+				throw new ResponseStatusException(HttpStatus.BAD_REQUEST, sympyToAMRResponse.getStderr());
+			}
 
 			final JsonNode taskResponseJSON = mapper.readValue(sympyToAMRResponse.getOutput(), JsonNode.class);
 			final ObjectNode amrNode = taskResponseJSON.get("response").get("amr").deepCopy();
@@ -342,8 +360,15 @@ public class KnowledgeController {
 
 		try {
 			sympyToAMRRequest = createSympyToAMRTask(code.getCode());
-			sympyToAMRResponse = taskService.runTaskSyncDebug(sympyToAMRRequest);
+			sympyToAMRResponse = taskService.runTaskSync(sympyToAMRRequest);
 			response = mapper.readValue(sympyToAMRResponse.getOutput(), JsonNode.class);
+
+			if (sympyToAMRResponse.getStatus() != TaskStatus.SUCCESS) {
+				log.error("Task Failed", sympyToAMRResponse.getStderr());
+				ObjectNode objectNode = mapper.createObjectNode();
+				objectNode.put("error", sympyToAMRResponse.getStderr());
+				return ResponseEntity.ok().body(objectNode);
+			}
 			return ResponseEntity.ok().body(response);
 		} catch (final TimeoutException e) {
 			log.warn("Timeout while waiting for task response", e);
@@ -356,9 +381,7 @@ public class KnowledgeController {
 			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("task.mira.execution-failure"));
 		} catch (final Exception e) {
 			log.error("Unexpected error", e);
-			ObjectNode objectNode = mapper.createObjectNode();
-			objectNode.put("error", sympyToAMRResponse.getStderr());
-			return ResponseEntity.ok().body(objectNode);
+			throw new ResponseStatusException(HttpStatus.BAD_REQUEST, messages.get("generic.io-error.read"));
 		}
 	}
 
@@ -397,6 +420,10 @@ public class KnowledgeController {
 			JsonNode temp = mapper.readValue(latex, JsonNode.class);
 			latexToSympyRequest = createLatexToSympyTask(temp);
 			latexToSympyResponse = taskService.runTaskSync(latexToSympyRequest);
+			if (latexToSympyResponse.getStatus() != TaskStatus.SUCCESS) {
+				log.error("Task Failed", latexToSympyResponse.getStderr());
+				throw new ResponseStatusException(HttpStatus.BAD_REQUEST, latexToSympyResponse.getStderr());
+			}
 			code = extractCodeFromLatexToSympy(latexToSympyResponse);
 		} catch (final TimeoutException e) {
 			log.warn("Timeout while waiting for task response", e);
@@ -427,6 +454,10 @@ public class KnowledgeController {
 		try {
 			sympyToAMRRequest = createSympyToAMRTask(code);
 			sympyToAMRResponse = taskService.runTaskSync(sympyToAMRRequest);
+			if (sympyToAMRResponse.getStatus() != TaskStatus.SUCCESS) {
+				log.error("Task Failed", sympyToAMRResponse.getStderr());
+				throw new ResponseStatusException(HttpStatus.BAD_REQUEST, sympyToAMRResponse.getStderr());
+			}
 			response = mapper.readValue(sympyToAMRResponse.getOutput(), JsonNode.class);
 			return ResponseEntity.ok().body(response);
 		} catch (final TimeoutException e) {

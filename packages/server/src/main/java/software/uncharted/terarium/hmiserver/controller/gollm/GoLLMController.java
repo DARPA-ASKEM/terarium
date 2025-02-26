@@ -45,6 +45,7 @@ import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.Model
 import software.uncharted.terarium.hmiserver.models.task.TaskRequest;
 import software.uncharted.terarium.hmiserver.models.task.TaskRequest.TaskType;
 import software.uncharted.terarium.hmiserver.models.task.TaskResponse;
+import software.uncharted.terarium.hmiserver.models.task.TaskStatus;
 import software.uncharted.terarium.hmiserver.security.Roles;
 import software.uncharted.terarium.hmiserver.service.CurrentUserService;
 import software.uncharted.terarium.hmiserver.service.data.DKGService;
@@ -187,6 +188,10 @@ public class GoLLMController {
 		final TaskResponse resp;
 		try {
 			resp = taskService.runTask(mode, req);
+			if (mode == TaskMode.SYNC && resp.getStatus() != TaskStatus.SUCCESS) {
+				log.error("Task failed", resp.getStderr());
+				throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, resp.getStderr());
+			}
 		} catch (final JsonProcessingException e) {
 			log.error("Unable to serialize input", e);
 			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("task.gollm.json-processing"));
@@ -300,6 +305,10 @@ public class GoLLMController {
 		final TaskResponse resp;
 		try {
 			resp = taskService.runTask(mode, req);
+			if (mode == TaskMode.SYNC && resp.getStatus() != TaskStatus.SUCCESS) {
+				log.error("Task failed", resp.getStderr());
+				throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, resp.getStderr());
+			}
 		} catch (final JsonProcessingException e) {
 			log.error("Unable to serialize input", e);
 			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("task.gollm.json-processing"));
@@ -432,6 +441,10 @@ public class GoLLMController {
 		final TaskResponse resp;
 		try {
 			resp = taskService.runTask(mode, req);
+			if (mode == TaskMode.SYNC && resp.getStatus() != TaskStatus.SUCCESS) {
+				log.error("Task failed", resp.getStderr());
+				throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, resp.getStderr());
+			}
 		} catch (final JsonProcessingException e) {
 			log.error("Unable to serialize input", e);
 			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("task.gollm.json-processing"));
@@ -543,6 +556,10 @@ public class GoLLMController {
 		final TaskResponse resp;
 		try {
 			resp = taskService.runTask(mode, req);
+			if (mode == TaskMode.SYNC && resp.getStatus() != TaskStatus.SUCCESS) {
+				log.error("Task failed", resp.getStderr());
+				throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, resp.getStderr());
+			}
 		} catch (final JsonProcessingException e) {
 			log.error("Unable to serialize input", e);
 			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("task.gollm.json-processing"));
@@ -660,6 +677,10 @@ public class GoLLMController {
 		final TaskResponse resp;
 		try {
 			resp = taskService.runTask(mode, req);
+			if (mode == TaskMode.SYNC && resp.getStatus() != TaskStatus.SUCCESS) {
+				log.error("Task failed", resp.getStderr());
+				throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, resp.getStderr());
+			}
 		} catch (final JsonProcessingException e) {
 			log.error("Unable to serialize input", e);
 			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("task.gollm.json-processing"));
@@ -756,6 +777,10 @@ public class GoLLMController {
 		final TaskResponse resp;
 		try {
 			resp = taskService.runTask(mode, req);
+			if (mode == TaskMode.SYNC && resp.getStatus() != TaskStatus.SUCCESS) {
+				log.error("Task failed", resp.getStderr());
+				throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, resp.getStderr());
+			}
 		} catch (final JsonProcessingException e) {
 			log.error("Unable to serialize input", e);
 			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("task.gollm.json-processing"));
@@ -829,6 +854,10 @@ public class GoLLMController {
 		final TaskResponse resp;
 		try {
 			resp = taskService.runTask(mode, req);
+			if (mode == TaskMode.SYNC && resp.getStatus() != TaskStatus.SUCCESS) {
+				log.error("Task failed", resp.getStderr());
+				throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, resp.getStderr());
+			}
 		} catch (final JsonProcessingException e) {
 			log.error("Unable to serialize input: {}", e.getMessage());
 			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("task.gollm.json-processing"));
@@ -929,6 +958,10 @@ public class GoLLMController {
 		final TaskResponse resp;
 		try {
 			resp = taskService.runTask(mode, req);
+			if (mode == TaskMode.SYNC && resp.getStatus() != TaskStatus.SUCCESS) {
+				log.error("Task failed", resp.getStderr());
+				throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, resp.getStderr());
+			}
 		} catch (final JsonProcessingException e) {
 			log.error("Unable to serialize input", e);
 			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("task.gollm.json-processing"));
@@ -1017,6 +1050,10 @@ public class GoLLMController {
 		final TaskResponse resp;
 		try {
 			resp = taskService.runTask(mode, req);
+			if (mode == TaskMode.SYNC && resp.getStatus() != TaskStatus.SUCCESS) {
+				log.error("Task failed", resp.getStderr());
+				throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, resp.getStderr());
+			}
 		} catch (final JsonProcessingException e) {
 			log.error("Unable to serialize input", e);
 			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("task.gollm.json-processing"));
@@ -1115,6 +1152,10 @@ public class GoLLMController {
 		final TaskResponse resp;
 		try {
 			resp = taskService.runTask(mode, req);
+			if (mode == TaskMode.SYNC && resp.getStatus() != TaskStatus.SUCCESS) {
+				log.error("Task failed", resp.getStderr());
+				throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, resp.getStderr());
+			}
 		} catch (final JsonProcessingException e) {
 			log.error("Unable to serialize input", e);
 			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("task.gollm.json-processing"));
@@ -1197,6 +1238,10 @@ public class GoLLMController {
 		final TaskResponse resp;
 		try {
 			resp = taskService.runTask(mode, req);
+			if (mode == TaskMode.SYNC && resp.getStatus() != TaskStatus.SUCCESS) {
+				log.error("Task failed", resp.getStderr());
+				throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, resp.getStderr());
+			}
 		} catch (final JsonProcessingException e) {
 			log.error("Unable to serialize input: {}", e.getMessage());
 			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("task.gollm.json-processing"));

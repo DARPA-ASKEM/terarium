@@ -43,6 +43,7 @@ import software.uncharted.terarium.hmiserver.models.dataservice.simulation.Progr
 import software.uncharted.terarium.hmiserver.models.task.TaskRequest;
 import software.uncharted.terarium.hmiserver.models.task.TaskRequest.TaskType;
 import software.uncharted.terarium.hmiserver.models.task.TaskResponse;
+import software.uncharted.terarium.hmiserver.models.task.TaskStatus;
 import software.uncharted.terarium.hmiserver.service.data.DocumentAssetService;
 import software.uncharted.terarium.hmiserver.service.notification.NotificationGroupInstance;
 import software.uncharted.terarium.hmiserver.service.notification.NotificationService;
@@ -465,6 +466,9 @@ public class ExtractionService {
 
 		return executor.submit(() -> {
 			final TaskResponse resp = taskService.runTaskSync(req);
+			if (resp.getStatus() != TaskStatus.SUCCESS) {
+				throw new RuntimeException("Equation extraction failed: " + resp.getStderr());
+			}
 
 			final byte[] outputBytes = resp.getOutput();
 			final ExtractEquationsResponseHandler.ResponseOutput output = objectMapper.readValue(
@@ -520,6 +524,9 @@ public class ExtractionService {
 
 		return executor.submit(() -> {
 			final TaskResponse resp = taskService.runTaskSync(req);
+			if (resp.getStatus() != TaskStatus.SUCCESS) {
+				throw new RuntimeException("Text extraction failed: " + resp.getStderr());
+			}
 
 			final byte[] outputBytes = resp.getOutput();
 			final ExtractTextResponseHandler.ResponseOutput output = objectMapper.readValue(
@@ -560,6 +567,9 @@ public class ExtractionService {
 
 		return executor.submit(() -> {
 			final TaskResponse resp = taskService.runTaskSync(req);
+			if (resp.getStatus() != TaskStatus.SUCCESS) {
+				throw new RuntimeException("Table extraction failed: " + resp.getStderr());
+			}
 
 			final byte[] outputBytes = resp.getOutput();
 			final ExtractTablesResponseHandler.ResponseOutput output = objectMapper.readValue(
