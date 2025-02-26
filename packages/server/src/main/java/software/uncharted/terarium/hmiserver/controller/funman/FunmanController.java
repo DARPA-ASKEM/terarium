@@ -109,7 +109,7 @@ public class FunmanController {
 		// Create new simulation object to proxy the funman validation process
 		final Simulation newSimulation;
 		try {
-			newSimulation = simulationService.createAsset(sim, projectId, permission);
+			newSimulation = simulationService.createAsset(sim, projectId);
 		} catch (final Exception e) {
 			log.error("An error occurred while trying to create a simulation asset.", e);
 			throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, messages.get("postgres.service-unavailable"));

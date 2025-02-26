@@ -89,7 +89,7 @@ public class CodeServiceTests extends TerariumApplicationTests {
 	public void testItCanCreateCode() {
 		final Code before = (Code) createCode("0").setId(UUID.randomUUID());
 		try {
-			final Code after = codeService.createAsset(before, project.getId(), ASSUME_WRITE_PERMISSION);
+			final Code after = codeService.createAsset(before, project.getId());
 
 			Assertions.assertEquals(before.getId(), after.getId());
 			Assertions.assertNotNull(after.getId());
@@ -104,8 +104,8 @@ public class CodeServiceTests extends TerariumApplicationTests {
 	public void testItCantCreateDuplicates() {
 		final Code code = (Code) createCode("0").setId(UUID.randomUUID());
 		try {
-			codeService.createAsset(code, project.getId(), ASSUME_WRITE_PERMISSION);
-			codeService.createAsset(code, project.getId(), ASSUME_WRITE_PERMISSION);
+			codeService.createAsset(code, project.getId());
+			codeService.createAsset(code, project.getId());
 			Assertions.fail("Should have thrown an exception");
 		} catch (final Exception e) {
 			Assertions.assertTrue(e.getMessage().contains("already exists"));
@@ -115,9 +115,9 @@ public class CodeServiceTests extends TerariumApplicationTests {
 	@Test
 	@WithUserDetails(MockUser.URSULA)
 	public void testItCanGetCodes() throws IOException {
-		codeService.createAsset(createCode("0"), project.getId(), ASSUME_WRITE_PERMISSION);
-		codeService.createAsset(createCode("1"), project.getId(), ASSUME_WRITE_PERMISSION);
-		codeService.createAsset(createCode("2"), project.getId(), ASSUME_WRITE_PERMISSION);
+		codeService.createAsset(createCode("0"), project.getId());
+		codeService.createAsset(createCode("1"), project.getId());
+		codeService.createAsset(createCode("2"), project.getId());
 
 		final List<Code> sims = codeService.getPublicNotTemporaryAssets(0, 10);
 
@@ -127,8 +127,8 @@ public class CodeServiceTests extends TerariumApplicationTests {
 	@Test
 	@WithUserDetails(MockUser.URSULA)
 	public void testItCanGetCodeById() throws IOException {
-		final Code code = codeService.createAsset(createCode("0"), project.getId(), ASSUME_WRITE_PERMISSION);
-		final Code fetchedCode = codeService.getAsset(code.getId(), ASSUME_WRITE_PERMISSION).get();
+		final Code code = codeService.createAsset(createCode("0"), project.getId());
+		final Code fetchedCode = codeService.getAsset(code.getId()).get();
 
 		Assertions.assertEquals(code, fetchedCode);
 		Assertions.assertEquals(code.getId(), fetchedCode.getId());
@@ -143,10 +143,10 @@ public class CodeServiceTests extends TerariumApplicationTests {
 	@Test
 	@WithUserDetails(MockUser.URSULA)
 	public void testItCanUpdateCode() throws Exception {
-		final Code code = codeService.createAsset(createCode("A"), project.getId(), ASSUME_WRITE_PERMISSION);
+		final Code code = codeService.createAsset(createCode("A"), project.getId());
 		code.setName("new name");
 
-		final Code updatedCode = codeService.updateAsset(code, project.getId(), ASSUME_WRITE_PERMISSION).orElseThrow();
+		final Code updatedCode = codeService.updateAsset(code, project.getId()).orElseThrow();
 
 		Assertions.assertEquals(code, updatedCode);
 		Assertions.assertNotNull(updatedCode.getUpdatedOn());
@@ -155,11 +155,11 @@ public class CodeServiceTests extends TerariumApplicationTests {
 	@Test
 	@WithUserDetails(MockUser.URSULA)
 	public void testItCanDeleteCode() throws Exception {
-		final Code code = codeService.createAsset(createCode("B"), project.getId(), ASSUME_WRITE_PERMISSION);
+		final Code code = codeService.createAsset(createCode("B"), project.getId());
 
-		codeService.deleteAsset(code.getId(), project.getId(), ASSUME_WRITE_PERMISSION);
+		codeService.deleteAsset(code.getId(), project.getId());
 
-		final Optional<Code> deleted = codeService.getAsset(code.getId(), ASSUME_WRITE_PERMISSION);
+		final Optional<Code> deleted = codeService.getAsset(code.getId());
 
 		Assertions.assertTrue(deleted.isEmpty());
 	}
@@ -169,7 +169,7 @@ public class CodeServiceTests extends TerariumApplicationTests {
 	public void testItCanCloneCode() throws Exception {
 		Code code = createCode("A");
 
-		code = codeService.createAsset(code, project.getId(), ASSUME_WRITE_PERMISSION);
+		code = codeService.createAsset(code, project.getId());
 
 		final Code cloned = code.clone();
 

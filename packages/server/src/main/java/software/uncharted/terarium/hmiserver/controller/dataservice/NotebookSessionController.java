@@ -122,10 +122,10 @@ public class NotebookSessionController {
 		);
 
 		try {
-			sessionService.createAsset(session, projectId, permission);
+			sessionService.createAsset(session, projectId);
 
 			final Optional<Project> project = projectService.getProject(projectId);
-			projectAssetService.createProjectAsset(project.get(), AssetType.NOTEBOOK_SESSION, session, permission);
+			projectAssetService.createProjectAsset(project.get(), AssetType.NOTEBOOK_SESSION, session);
 
 			return ResponseEntity.status(HttpStatus.CREATED).body(session);
 		} catch (final IOException e) {
@@ -172,7 +172,7 @@ public class NotebookSessionController {
 		);
 
 		try {
-			final Optional<NotebookSession> session = sessionService.getAsset(id, permission);
+			final Optional<NotebookSession> session = sessionService.getAsset(id);
 			return session.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
 		} catch (final Exception e) {
 			final String error = "Unable to get notebook session";
@@ -217,7 +217,7 @@ public class NotebookSessionController {
 
 		try {
 			session.setId(id);
-			final Optional<NotebookSession> updated = sessionService.updateAsset(session, projectId, permission);
+			final Optional<NotebookSession> updated = sessionService.updateAsset(session, projectId);
 			return updated.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
 		} catch (final IOException e) {
 			final String error = "Unable to update notebook session";
@@ -251,12 +251,12 @@ public class NotebookSessionController {
 			projectId
 		);
 		final NotebookSession session = sessionService
-			.getAsset(id, permission)
+			.getAsset(id)
 			.orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, messages.get("notebook-session.not-found")));
 
 		NotebookSession newNotebookSession;
 		try {
-			newNotebookSession = sessionService.createAsset(session.clone(), projectId, permission);
+			newNotebookSession = sessionService.createAsset(session.clone(), projectId);
 		} catch (final Exception e) {
 			final String error = "Unable to clone notebook session";
 			log.error(error, e);
@@ -267,7 +267,7 @@ public class NotebookSessionController {
 			.getProject(projectId)
 			.orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, messages.get("projects.not-found")));
 
-		projectAssetService.createProjectAsset(project, AssetType.NOTEBOOK_SESSION, newNotebookSession, permission);
+		projectAssetService.createProjectAsset(project, AssetType.NOTEBOOK_SESSION, newNotebookSession);
 
 		return ResponseEntity.status(HttpStatus.OK).body(newNotebookSession);
 	}
@@ -306,7 +306,7 @@ public class NotebookSessionController {
 		);
 
 		try {
-			sessionService.deleteAsset(id, projectId, permission);
+			sessionService.deleteAsset(id, projectId);
 			return ResponseEntity.ok(new ResponseDeleted("NotebookSession", id));
 		} catch (final IOException e) {
 			final String error = "Unable to delete noteboko session";

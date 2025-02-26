@@ -58,8 +58,7 @@ public class ModelConfigurationControllerTests extends TerariumApplicationTests 
 				.setModelId(UUID.randomUUID())
 				.setName("test-framework")
 				.setDescription("test-desc"),
-			project.getId(),
-			ASSUME_WRITE_PERMISSION
+			project.getId()
 		);
 
 		mockMvc
@@ -98,8 +97,7 @@ public class ModelConfigurationControllerTests extends TerariumApplicationTests 
 				.setModelId(UUID.randomUUID())
 				.setDescription("test-desc")
 				.setName("test-framework"),
-			project.getId(),
-			ASSUME_WRITE_PERMISSION
+			project.getId()
 		);
 
 		mockMvc
@@ -129,8 +127,6 @@ public class ModelConfigurationControllerTests extends TerariumApplicationTests 
 			)
 			.andExpect(status().isOk());
 
-		Assertions.assertTrue(
-			modelConfigurationService.getAsset(modelConfiguration.getId(), ASSUME_WRITE_PERMISSION).isEmpty()
-		);
+		Assertions.assertTrue(modelConfigurationService.getAsset(modelConfiguration.getId()).isEmpty());
 	}
 }

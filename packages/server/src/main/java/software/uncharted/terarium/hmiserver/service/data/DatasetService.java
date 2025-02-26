@@ -22,7 +22,6 @@ import software.uncharted.terarium.hmiserver.repository.data.DatasetRepository;
 import software.uncharted.terarium.hmiserver.service.gollm.DatasetStatistics;
 import software.uncharted.terarium.hmiserver.service.s3.S3ClientService;
 import software.uncharted.terarium.hmiserver.service.tasks.TaskService;
-import software.uncharted.terarium.hmiserver.utils.rebac.Schema;
 
 @Slf4j
 @Service
@@ -52,38 +51,30 @@ public class DatasetService extends TerariumAssetService<Dataset, DatasetReposit
 
 	@Override
 	@Observed(name = "function_profile")
-	public Dataset createAsset(final Dataset asset, final UUID projectId, final Schema.Permission hasWritePermission)
-		throws IOException {
+	public Dataset createAsset(final Dataset asset, final UUID projectId) throws IOException {
 		// If the columns are already set, don't add them again (happens when copying a dataset to another project).
 		if (asset.getColumns() == null || asset.getColumns().isEmpty()) {
 			extractColumns(asset);
 		}
 		verifyColumnRelationship(asset);
-		return super.createAsset(asset, projectId, hasWritePermission);
+		return super.createAsset(asset, projectId);
 	}
 
 	@Override
 	@Observed(name = "function_profile")
-	public List<Dataset> createAssets(
-		final List<Dataset> assets,
-		final UUID projectId,
-		final Schema.Permission hasWritePermission
-	) throws IOException {
+	public List<Dataset> createAssets(final List<Dataset> assets, final UUID projectId) throws IOException {
 		for (final Dataset asset : assets) {
 			verifyColumnRelationship(asset);
 		}
-		return super.createAssets(assets, projectId, hasWritePermission);
+		return super.createAssets(assets, projectId);
 	}
 
 	@Override
 	@Observed(name = "function_profile")
-	public Optional<Dataset> updateAsset(
-		final Dataset asset,
-		final UUID projectId,
-		final Schema.Permission hasWritePermission
-	) throws IOException, IllegalArgumentException {
+	public Optional<Dataset> updateAsset(final Dataset asset, final UUID projectId)
+		throws IOException, IllegalArgumentException {
 		verifyColumnRelationship(asset);
-		return super.updateAsset(asset, projectId, hasWritePermission);
+		return super.updateAsset(asset, projectId);
 	}
 
 	// This method throws if it can't get the files

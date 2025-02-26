@@ -94,10 +94,7 @@ public class ChartAnnotationController {
 			projectId
 		);
 
-		final List<ChartAnnotation> chartAnnotations = chartAnnotationService.getAnnotationsByNodeId(
-			body.nodeId,
-			permission
-		);
+		final List<ChartAnnotation> chartAnnotations = chartAnnotationService.getAnnotationsByNodeId(body.nodeId);
 
 		return ResponseEntity.ok(chartAnnotations);
 	}
@@ -133,7 +130,7 @@ public class ChartAnnotationController {
 
 		final ChartAnnotation chartAnnotation;
 		try {
-			chartAnnotation = chartAnnotationService.createAsset(item, projectId, permission);
+			chartAnnotation = chartAnnotationService.createAsset(item, projectId);
 		} catch (final IOException e) {
 			final String error = "Unable to create chart annotation";
 			log.error(error, e);
@@ -197,7 +194,7 @@ public class ChartAnnotationController {
 		);
 
 		try {
-			chartAnnotationService.deleteAsset(id, projectId, permission);
+			chartAnnotationService.deleteAsset(id, projectId);
 		} catch (final Exception e) {
 			final String error = String.format("Failed to delete chart annotation %s", id);
 			log.error(error, e);
