@@ -11,7 +11,6 @@ import software.uncharted.terarium.hmiserver.configuration.Config;
 import software.uncharted.terarium.hmiserver.models.dataservice.document.DocumentAsset;
 import software.uncharted.terarium.hmiserver.repository.data.DocumentRepository;
 import software.uncharted.terarium.hmiserver.service.s3.S3ClientService;
-import software.uncharted.terarium.hmiserver.utils.rebac.Schema;
 
 @Slf4j
 @Service
@@ -36,22 +35,15 @@ public class DocumentAssetService extends TerariumAssetService<DocumentAsset, Do
 
 	@Override
 	@Observed(name = "function_profile")
-	public DocumentAsset createAsset(
-		final DocumentAsset asset,
-		final UUID projectId,
-		final Schema.Permission hasWritePermission
-	) throws IOException {
-		return super.createAsset(asset, projectId, hasWritePermission);
+	public DocumentAsset createAsset(final DocumentAsset asset, final UUID projectId) throws IOException {
+		return super.createAsset(asset, projectId);
 	}
 
 	@Override
 	@Observed(name = "function_profile")
-	public Optional<DocumentAsset> updateAsset(
-		final DocumentAsset asset,
-		final UUID projectId,
-		final Schema.Permission hasWritePermission
-	) throws IOException, IllegalArgumentException {
-		final Optional<DocumentAsset> originalOptional = getAsset(asset.getId(), hasWritePermission);
+	public Optional<DocumentAsset> updateAsset(final DocumentAsset asset, final UUID projectId)
+		throws IOException, IllegalArgumentException {
+		final Optional<DocumentAsset> originalOptional = getAsset(asset.getId());
 		if (originalOptional.isEmpty()) {
 			return Optional.empty();
 		}
@@ -62,11 +54,6 @@ public class DocumentAssetService extends TerariumAssetService<DocumentAsset, Do
 		// awareness of who owned this document.
 		asset.setUserId(original.getUserId());
 
-		final Optional<DocumentAsset> updatedOptional = super.updateAsset(asset, projectId, hasWritePermission);
-		if (updatedOptional.isEmpty()) {
-			return Optional.empty();
-		}
-
-		return updatedOptional;
+		return super.updateAsset(asset, projectId);
 	}
 }

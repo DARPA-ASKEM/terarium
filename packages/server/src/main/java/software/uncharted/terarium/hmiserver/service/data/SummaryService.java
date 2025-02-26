@@ -25,7 +25,7 @@ public class SummaryService extends TerariumAssetService<Summary, SummaryReposit
 		super(objectMapper, config, projectService, projectAssetService, repository, s3ClientService, Summary.class);
 	}
 
-	public List<Summary> getSummaries(final List<UUID> ids, final Schema.Permission hasReadPermission) {
+	public List<Summary> getSummaries(final List<UUID> ids) {
 		return repository.findAllByIdInAndDeletedOnIsNull(ids);
 	}
 

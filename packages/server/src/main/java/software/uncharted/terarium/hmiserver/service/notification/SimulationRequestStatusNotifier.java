@@ -19,7 +19,6 @@ import software.uncharted.terarium.hmiserver.models.dataservice.simulation.Simul
 import software.uncharted.terarium.hmiserver.service.ClientEventService;
 import software.uncharted.terarium.hmiserver.service.CurrentUserService;
 import software.uncharted.terarium.hmiserver.service.data.SimulationService;
-import software.uncharted.terarium.hmiserver.utils.rebac.Schema;
 
 @Accessors(chain = true)
 @Slf4j
@@ -31,7 +30,6 @@ public class SimulationRequestStatusNotifier {
 
 	private final UUID simulationId;
 	private final UUID projectId;
-	private final Schema.Permission permission;
 	private final JsonNode metadata; // Arbitrary metadata to be sent to the client along with the notification event.
 
 	@Setter
@@ -72,7 +70,6 @@ public class SimulationRequestStatusNotifier {
 		final SimulationService simulationService,
 		final UUID simulationId,
 		final UUID projectId,
-		final Schema.Permission permission,
 		final JsonNode metadata
 	) {
 		this.clientEventService = clientEventService;
@@ -81,7 +78,6 @@ public class SimulationRequestStatusNotifier {
 		this.simulationService = simulationService;
 		this.simulationId = simulationId;
 		this.projectId = projectId;
-		this.permission = permission;
 		this.metadata = metadata;
 		this.executor = Executors.newScheduledThreadPool(1);
 	}
@@ -108,7 +104,7 @@ public class SimulationRequestStatusNotifier {
 	}
 
 	public void startPolling() {
-		final Optional<Simulation> simAsset = simulationService.getAsset(this.simulationId, this.permission);
+		final Optional<Simulation> simAsset = simulationService.getAsset(this.simulationId);
 		if (simAsset.isEmpty()) {
 			throw new RuntimeException("Simulation object is empty.");
 		}
@@ -135,7 +131,7 @@ public class SimulationRequestStatusNotifier {
 				if (pollAttempts > this.threshold) {
 					throw new RuntimeException("Timeout while waiting for simulation to complete.");
 				}
-				final Optional<Simulation> result = simulationService.getAsset(this.simulationId, this.permission);
+				final Optional<Simulation> result = simulationService.getAsset(this.simulationId);
 				if (result.isEmpty()) {
 					throw new RuntimeException("Simulation object is empty.");
 				}

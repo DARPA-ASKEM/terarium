@@ -13,15 +13,10 @@ import software.uncharted.terarium.hmiserver.configuration.Config;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.Model;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.ModelDescription;
 import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.ModelMetadata;
-import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.ModelParameter;
 import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.metadata.Annotations;
-import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.semantics.GroundedSemantic;
-import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.semantics.State;
-import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.semantics.Transition;
 import software.uncharted.terarium.hmiserver.repository.data.ModelRepository;
 import software.uncharted.terarium.hmiserver.service.s3.S3ClientService;
 import software.uncharted.terarium.hmiserver.utils.GreekDictionary;
-import software.uncharted.terarium.hmiserver.utils.rebac.Schema;
 
 @Slf4j
 @Service
@@ -39,9 +34,8 @@ public class ModelService extends TerariumAssetService<Model, ModelRepository> {
 	}
 
 	@Observed(name = "function_profile")
-	public Optional<ModelDescription> getDescription(final UUID id, final Schema.Permission hasReadPermission)
-		throws IOException {
-		final Optional<Model> model = getAsset(id, hasReadPermission);
+	public Optional<ModelDescription> getDescription(final UUID id) throws IOException {
+		final Optional<Model> model = getAsset(id);
 		if (model.isPresent()) {
 			final ModelDescription md = ModelDescription.fromModel(model.get());
 			return Optional.of(md);
@@ -57,17 +51,13 @@ public class ModelService extends TerariumAssetService<Model, ModelRepository> {
 	}
 
 	@Observed(name = "function_profile")
-	public Optional<Model> getModelFromModelConfigurationId(
-		final UUID modelConfigurationId,
-		final Schema.Permission hasReadPermission
-	) {
+	public Optional<Model> getModelFromModelConfigurationId(final UUID modelConfigurationId) {
 		return repository.findModelByModelConfigurationId(modelConfigurationId);
 	}
 
 	@Override
 	@Observed(name = "function_profile")
-	public Model createAsset(final Model asset, final UUID projectId, final Schema.Permission hasWritePermission)
-		throws IOException {
+	public Model createAsset(final Model asset, final UUID projectId) throws IOException {
 		// Make sure that the model framework is set to lowercase
 		if (asset.getHeader() != null && asset.getHeader().getSchemaName() != null) asset
 			.getHeader()
@@ -109,16 +99,13 @@ public class ModelService extends TerariumAssetService<Model, ModelRepository> {
 			final ObjectNode timeNode = objectMapper.createObjectNode().put("id", id).set("units", unitsNode);
 			asset.getSemantics().getOde().setTime(timeNode);
 		}
-		return super.createAsset(asset, projectId, hasWritePermission);
+		return super.createAsset(asset, projectId);
 	}
 
 	@Override
 	@Observed(name = "function_profile")
-	public Optional<Model> updateAsset(
-		final Model asset,
-		final UUID projectId,
-		final Schema.Permission hasWritePermission
-	) throws IOException, IllegalArgumentException {
+	public Optional<Model> updateAsset(final Model asset, final UUID projectId)
+		throws IOException, IllegalArgumentException {
 		if (asset.getHeader() != null && asset.getHeader().getName() != null) {
 			asset.setName(asset.getHeader().getName());
 		}
@@ -130,7 +117,7 @@ public class ModelService extends TerariumAssetService<Model, ModelRepository> {
 			asset.setMetadata(metadata);
 		}
 
-		return super.updateAsset(asset, projectId, hasWritePermission);
+		return super.updateAsset(asset, projectId);
 	}
 
 	/**

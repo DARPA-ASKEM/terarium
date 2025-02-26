@@ -9,7 +9,6 @@ import software.uncharted.terarium.hmiserver.configuration.Config;
 import software.uncharted.terarium.hmiserver.models.dataservice.ChartAnnotation;
 import software.uncharted.terarium.hmiserver.repository.data.ChartAnnotationRepository;
 import software.uncharted.terarium.hmiserver.service.s3.S3ClientService;
-import software.uncharted.terarium.hmiserver.utils.rebac.Schema;
 
 @Service
 public class ChartAnnotationService extends TerariumAssetService<ChartAnnotation, ChartAnnotationRepository> {
@@ -33,7 +32,7 @@ public class ChartAnnotationService extends TerariumAssetService<ChartAnnotation
 		);
 	}
 
-	public List<ChartAnnotation> getAnnotationsByNodeId(final UUID nodeId, final Schema.Permission hasReadPermission) {
+	public List<ChartAnnotation> getAnnotationsByNodeId(final UUID nodeId) {
 		return repository.findByNodeIdAndDeletedOnIsNull(nodeId);
 	}
 

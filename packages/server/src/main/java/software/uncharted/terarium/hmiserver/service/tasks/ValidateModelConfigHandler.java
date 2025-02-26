@@ -60,14 +60,11 @@ public class ValidateModelConfigHandler extends TaskResponseHandler {
 
 			final Properties props = resp.getAdditionalProperties(Properties.class);
 			final UUID simulationId = props.getSimulationId();
-			final Optional<Simulation> sim = simulationService.getAsset(
-				simulationId,
-				ASSUME_WRITE_PERMISSION_ON_BEHALF_OF_USER
-			);
+			final Optional<Simulation> sim = simulationService.getAsset(simulationId);
 			if (!sim.isEmpty()) {
 				log.info("simulation=" + simulationId + " progress=" + progress);
 				sim.get().setProgress(progress);
-				simulationService.updateAsset(sim.get(), props.projectId, ASSUME_WRITE_PERMISSION_ON_BEHALF_OF_USER);
+				simulationService.updateAsset(sim.get(), props.projectId);
 			}
 		} catch (final Exception e) {
 			throw new RuntimeException(e);
@@ -81,17 +78,14 @@ public class ValidateModelConfigHandler extends TaskResponseHandler {
 		try {
 			final Properties props = resp.getAdditionalProperties(Properties.class);
 			final UUID simulationId = props.getSimulationId();
-			final Optional<Simulation> sim = simulationService.getAsset(
-				simulationId,
-				ASSUME_WRITE_PERMISSION_ON_BEHALF_OF_USER
-			);
+			final Optional<Simulation> sim = simulationService.getAsset(simulationId);
 			if (sim.isEmpty()) {
 				log.error("Cannot find Simulation " + simulationId + " for task " + resp.getId());
 				throw new Error("Cannot find Simulation " + simulationId + " for task " + resp.getId());
 			}
 			log.error("model validation failed");
 			sim.get().setStatus(ProgressState.ERROR);
-			simulationService.updateAsset(sim.get(), props.projectId, ASSUME_WRITE_PERMISSION_ON_BEHALF_OF_USER);
+			simulationService.updateAsset(sim.get(), props.projectId);
 		} catch (final Exception e) {
 			throw new RuntimeException(e);
 		}
@@ -105,10 +99,7 @@ public class ValidateModelConfigHandler extends TaskResponseHandler {
 			// Parse validation result
 			final Properties props = resp.getAdditionalProperties(Properties.class);
 			final UUID simulationId = props.getSimulationId();
-			final Optional<Simulation> sim = simulationService.getAsset(
-				simulationId,
-				ASSUME_WRITE_PERMISSION_ON_BEHALF_OF_USER
-			);
+			final Optional<Simulation> sim = simulationService.getAsset(simulationId);
 			if (sim.isEmpty()) {
 				log.error("Cannot find Simulation " + simulationId + " for task " + resp.getId());
 				throw new Error("Cannot find Simulation " + simulationId + " for task " + resp.getId());
@@ -138,8 +129,7 @@ public class ValidateModelConfigHandler extends TaskResponseHandler {
 			// Save validated model configuration
 			final ModelConfiguration createdModelConfiguration = modelConfigurationService.createAsset(
 				contractedModelConfiguration,
-				props.projectId,
-				ASSUME_WRITE_PERMISSION_ON_BEHALF_OF_USER
+				props.projectId
 			);
 
 			// Add model configuration id to the response
@@ -160,7 +150,7 @@ public class ValidateModelConfigHandler extends TaskResponseHandler {
 			sim.get().setResultFiles(resultFiles);
 
 			// Save
-			simulationService.updateAsset(sim.get(), props.projectId, ASSUME_WRITE_PERMISSION_ON_BEHALF_OF_USER);
+			simulationService.updateAsset(sim.get(), props.projectId);
 		} catch (final Exception e) {
 			throw new RuntimeException(e);
 		}

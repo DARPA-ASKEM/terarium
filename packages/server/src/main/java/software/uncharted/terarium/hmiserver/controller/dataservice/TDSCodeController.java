@@ -60,12 +60,10 @@ public class TDSCodeController {
 
 	final JsDelivrProxy jsdelivrProxy;
 
-	final GithubProxy githubProxy;
-
 	final CodeService codeService;
 
 	final ProjectService projectService;
-	final ProjectAssetService projectAssetService;
+
 	final CurrentUserService currentUserService;
 
 	/**
@@ -104,7 +102,7 @@ public class TDSCodeController {
 		);
 
 		try {
-			code = codeService.createAsset(code, projectId, permission);
+			code = codeService.createAsset(code, projectId);
 			return ResponseEntity.status(HttpStatus.CREATED).body(code);
 		} catch (final IOException e) {
 			log.error("Unable to create code resource", e);
@@ -153,7 +151,7 @@ public class TDSCodeController {
 		);
 
 		try {
-			final Optional<Code> code = codeService.getAsset(id, permission);
+			final Optional<Code> code = codeService.getAsset(id);
 			return code.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.noContent().build());
 		} catch (final Exception e) {
 			log.error("Unable to get code resource", e);
@@ -204,7 +202,7 @@ public class TDSCodeController {
 
 		try {
 			code.setId(codeId);
-			final Optional<Code> updated = codeService.updateAsset(code, projectId, permission);
+			final Optional<Code> updated = codeService.updateAsset(code, projectId);
 			return updated.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
 		} catch (final NotFoundException e) {
 			log.error("Unable to find code resource", e);
@@ -251,7 +249,7 @@ public class TDSCodeController {
 		);
 
 		try {
-			codeService.deleteAsset(id, projectId, permission);
+			codeService.deleteAsset(id, projectId);
 		} catch (final IOException e) {
 			log.error("Unable to delete code resource", e);
 			throw new ResponseStatusException(
@@ -411,7 +409,7 @@ public class TDSCodeController {
 
 		final byte[] fileAsBytes = input.getBytes();
 		final HttpEntity fileEntity = new ByteArrayEntity(fileAsBytes, ContentType.APPLICATION_OCTET_STREAM);
-		return uploadCodeHelper(codeId, projectId, filename, fileEntity, permission);
+		return uploadCodeHelper(codeId, projectId, filename, fileEntity);
 	}
 
 	/** Downloads a file from GitHub given the path and owner name, then uploads it to the project. */
@@ -452,7 +450,7 @@ public class TDSCodeController {
 			);
 		}
 		final HttpEntity fileEntity = new StringEntity(fileString, ContentType.TEXT_PLAIN);
-		return uploadCodeHelper(codeId, projectId, filename, fileEntity, permission);
+		return uploadCodeHelper(codeId, projectId, filename, fileEntity);
 	}
 
 	/**
@@ -500,7 +498,7 @@ public class TDSCodeController {
 
 			final HttpEntity fileEntity = new ByteArrayEntity(zipBytes, ContentType.APPLICATION_OCTET_STREAM);
 
-			return uploadCodeHelper(codeId, projectId, repoName, fileEntity, permission);
+			return uploadCodeHelper(codeId, projectId, repoName, fileEntity);
 		} catch (final Exception e) {
 			log.error("Unable to GET file as string data", e);
 			throw new ResponseStatusException(
@@ -522,14 +520,13 @@ public class TDSCodeController {
 		final UUID codeId,
 		final UUID projectId,
 		final String fileName,
-		final HttpEntity codeHttpEntity,
-		final Schema.Permission hasWritePermission
+		final HttpEntity codeHttpEntity
 	) {
 		try {
 			// upload file to S3
 			final Integer status = codeService.uploadFile(codeId, fileName, codeHttpEntity);
 
-			final Optional<Code> code = codeService.getAsset(codeId, hasWritePermission);
+			final Optional<Code> code = codeService.getAsset(codeId);
 			if (code.isEmpty()) {
 				throw new ResponseStatusException(
 					org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
@@ -546,7 +543,7 @@ public class TDSCodeController {
 			}
 			fileMap.put(fileName, codeFile);
 			code.get().setFiles(fileMap);
-			codeService.updateAsset(code.get(), projectId, hasWritePermission);
+			codeService.updateAsset(code.get(), projectId);
 
 			code.get().getFileNames().add(fileName);
 

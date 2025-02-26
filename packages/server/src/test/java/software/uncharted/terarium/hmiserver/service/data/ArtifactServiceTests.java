@@ -74,7 +74,7 @@ public class ArtifactServiceTests extends TerariumApplicationTests {
 	public void testItCanCreateArtifact() {
 		final Artifact before = (Artifact) createArtifact("0").setId(UUID.randomUUID());
 		try {
-			final Artifact after = artifactService.createAsset(before, project.getId(), ASSUME_WRITE_PERMISSION);
+			final Artifact after = artifactService.createAsset(before, project.getId());
 
 			Assertions.assertEquals(before.getId(), after.getId());
 			Assertions.assertNotNull(after.getId());
@@ -89,8 +89,8 @@ public class ArtifactServiceTests extends TerariumApplicationTests {
 	public void testItCantCreateDuplicates() {
 		final Artifact artifact = (Artifact) createArtifact("0").setId(UUID.randomUUID());
 		try {
-			artifactService.createAsset(artifact, project.getId(), ASSUME_WRITE_PERMISSION);
-			artifactService.createAsset(artifact, project.getId(), ASSUME_WRITE_PERMISSION);
+			artifactService.createAsset(artifact, project.getId());
+			artifactService.createAsset(artifact, project.getId());
 			Assertions.fail("Should have thrown an exception");
 		} catch (final Exception e) {
 			Assertions.assertTrue(e.getMessage().contains("already exists"));
@@ -100,9 +100,9 @@ public class ArtifactServiceTests extends TerariumApplicationTests {
 	@Test
 	@WithUserDetails(MockUser.URSULA)
 	public void testItCanGetArtifacts() throws IOException {
-		artifactService.createAsset(createArtifact("0"), project.getId(), ASSUME_WRITE_PERMISSION);
-		artifactService.createAsset(createArtifact("1"), project.getId(), ASSUME_WRITE_PERMISSION);
-		artifactService.createAsset(createArtifact("2"), project.getId(), ASSUME_WRITE_PERMISSION);
+		artifactService.createAsset(createArtifact("0"), project.getId());
+		artifactService.createAsset(createArtifact("1"), project.getId());
+		artifactService.createAsset(createArtifact("2"), project.getId());
 
 		final List<Artifact> sims = artifactService.getPublicNotTemporaryAssets(0, 10);
 
@@ -112,12 +112,8 @@ public class ArtifactServiceTests extends TerariumApplicationTests {
 	@Test
 	@WithUserDetails(MockUser.URSULA)
 	public void testItCanGetArtifactById() throws IOException {
-		final Artifact artifact = artifactService.createAsset(
-			createArtifact("0"),
-			project.getId(),
-			ASSUME_WRITE_PERMISSION
-		);
-		final Artifact fetchedArtifact = artifactService.getAsset(artifact.getId(), ASSUME_WRITE_PERMISSION).get();
+		final Artifact artifact = artifactService.createAsset(createArtifact("0"), project.getId());
+		final Artifact fetchedArtifact = artifactService.getAsset(artifact.getId()).get();
 
 		Assertions.assertEquals(artifact, fetchedArtifact);
 		Assertions.assertEquals(artifact.getId(), fetchedArtifact.getId());
@@ -129,16 +125,10 @@ public class ArtifactServiceTests extends TerariumApplicationTests {
 	@Test
 	@WithUserDetails(MockUser.URSULA)
 	public void testItCanUpdateArtifact() throws Exception {
-		final Artifact artifact = artifactService.createAsset(
-			createArtifact("A"),
-			project.getId(),
-			ASSUME_WRITE_PERMISSION
-		);
+		final Artifact artifact = artifactService.createAsset(createArtifact("A"), project.getId());
 		artifact.setName("new name");
 
-		final Artifact updatedArtifact = artifactService
-			.updateAsset(artifact, project.getId(), ASSUME_WRITE_PERMISSION)
-			.orElseThrow();
+		final Artifact updatedArtifact = artifactService.updateAsset(artifact, project.getId()).orElseThrow();
 
 		Assertions.assertEquals(artifact, updatedArtifact);
 		Assertions.assertNotNull(updatedArtifact.getUpdatedOn());
@@ -147,15 +137,11 @@ public class ArtifactServiceTests extends TerariumApplicationTests {
 	@Test
 	@WithUserDetails(MockUser.URSULA)
 	public void testItCanDeleteArtifact() throws Exception {
-		final Artifact artifact = artifactService.createAsset(
-			createArtifact("B"),
-			project.getId(),
-			ASSUME_WRITE_PERMISSION
-		);
+		final Artifact artifact = artifactService.createAsset(createArtifact("B"), project.getId());
 
-		artifactService.deleteAsset(artifact.getId(), project.getId(), ASSUME_WRITE_PERMISSION);
+		artifactService.deleteAsset(artifact.getId(), project.getId());
 
-		final Optional<Artifact> deleted = artifactService.getAsset(artifact.getId(), ASSUME_WRITE_PERMISSION);
+		final Optional<Artifact> deleted = artifactService.getAsset(artifact.getId());
 
 		Assertions.assertTrue(deleted.isEmpty());
 	}
@@ -165,7 +151,7 @@ public class ArtifactServiceTests extends TerariumApplicationTests {
 	public void testItCanCloneArtifact() throws Exception {
 		Artifact artifact = createArtifact("A");
 
-		artifact = artifactService.createAsset(artifact, project.getId(), ASSUME_WRITE_PERMISSION);
+		artifact = artifactService.createAsset(artifact, project.getId());
 
 		final Artifact cloned = artifact.clone();
 
