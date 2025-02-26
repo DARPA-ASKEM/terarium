@@ -287,7 +287,7 @@ public class ProjectController {
 
 		final Optional<Project> project = projectService.getProject(id);
 
-		if (!project.isPresent()) {
+		if (project.isEmpty()) {
 			throw new ResponseStatusException(HttpStatus.NOT_FOUND, messages.get("projects.not-found"));
 		}
 
@@ -486,19 +486,14 @@ public class ProjectController {
 			throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, messages.get("postgres.service-unavailable"));
 		}
 
-		if (!updatedProject.isPresent()) {
+		if (updatedProject.isEmpty()) {
 			log.error("Updated Project is NOT present");
 			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("projects.unable-to-update"));
 		}
 
 		if (originalProject.get().getPublicAsset() != updatedProject.get().getPublicAsset()) {
 			try {
-				projectAssetService.togglePublicForAssets(
-					terariumAssetServices,
-					id,
-					updatedProject.get().getPublicAsset(),
-					Schema.Permission.WRITE
-				);
+				projectAssetService.togglePublicForAssets(terariumAssetServices, id, updatedProject.get().getPublicAsset());
 			} catch (final Exception e) {
 				log.error("Error updating project", e);
 				throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, messages.get("postgres.service-unavailable"));
@@ -548,7 +543,7 @@ public class ProjectController {
 			// re-index the project
 			projectSearchService.indexProject(originalProject.get());
 
-			final List<ProjectAsset> assets = projectAssetService.getProjectAssets(id, permission);
+			final List<ProjectAsset> assets = projectAssetService.getProjectAssets(id);
 
 			for (final ProjectAsset projectAsset : assets) {
 				try {
@@ -556,10 +551,7 @@ public class ProjectController {
 						projectAsset.getAssetType()
 					);
 
-					final Optional<? extends TerariumAsset> asset = terariumAssetService.getAsset(
-						projectAsset.getAssetId(),
-						Schema.Permission.READ
-					);
+					final Optional<? extends TerariumAsset> asset = terariumAssetService.getAsset(projectAsset.getAssetId());
 
 					final Future<Void> future = projectSearchService.generateAndUpsertProjectAssetEmbeddings(id, asset.get());
 					if (future != null) {
@@ -846,7 +838,7 @@ public class ProjectController {
 		final Optional<Project> project;
 		try {
 			project = projectService.getProject(projectId);
-			if (!project.isPresent()) {
+			if (project.isEmpty()) {
 				throw new ResponseStatusException(HttpStatus.NOT_FOUND, messages.get("projects.not-found"));
 			}
 		} catch (final Exception e) {
@@ -861,7 +853,7 @@ public class ProjectController {
 		// check if the asset is already associated with a project, if it is, we should
 		// clone it and create a new asset
 
-		final UUID owningProjectId = projectAssetService.getProjectIdForAsset(assetId, permission);
+		final UUID owningProjectId = projectAssetService.getProjectIdForAsset(assetId);
 		final List<TerariumAsset> assets;
 
 		try {
@@ -872,7 +864,7 @@ public class ProjectController {
 			} else {
 				// TODO: we should probably check asset dependencies and make sure they are part
 				// of the project, and if not clone them
-				final Optional<? extends TerariumAsset> asset = terariumAssetService.getAsset(assetId, permission);
+				final Optional<? extends TerariumAsset> asset = terariumAssetService.getAsset(assetId);
 				if (asset.isEmpty()) {
 					throw new ResponseStatusException(HttpStatus.NOT_FOUND, messages.get("asset.not-found"));
 				}
@@ -888,8 +880,7 @@ public class ProjectController {
 			final Optional<ProjectAsset> projectAsset = projectAssetService.createProjectAsset(
 				project.get(),
 				TerariumAssetServices.getAssetType(asset),
-				asset,
-				permission
+				asset
 			);
 
 			if (projectAsset.isEmpty()) {
@@ -950,7 +941,7 @@ public class ProjectController {
 			projectId
 		);
 
-		final boolean deleted = projectAssetService.deleteByAssetId(projectId, assetType, assetId, permission);
+		final boolean deleted = projectAssetService.deleteByAssetId(projectId, assetType, assetId);
 		if (deleted) {
 			return ResponseEntity.ok(new ResponseDeleted("ProjectAsset " + assetTypeName, assetId));
 		}
@@ -1307,7 +1298,7 @@ public class ProjectController {
 
 			// Update the project and child assets
 			p.get().setPublicAsset(isPublic);
-			projectAssetService.togglePublicForAssets(terariumAssetServices, id, isPublic, Schema.Permission.WRITE);
+			projectAssetService.togglePublicForAssets(terariumAssetServices, id, isPublic);
 			projectService.updateProject(p.get());
 
 			if (isPublic) {
@@ -1376,7 +1367,7 @@ public class ProjectController {
 			// If the user is making the project a sample, make it public as well
 			if (isSample) {
 				project.setPublicAsset(true);
-				projectAssetService.togglePublicForAssets(terariumAssetServices, id, true, Schema.Permission.WRITE);
+				projectAssetService.togglePublicForAssets(terariumAssetServices, id, true);
 			}
 
 			// Update the project

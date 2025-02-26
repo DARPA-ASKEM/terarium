@@ -99,9 +99,7 @@ public class EnrichDatasetResponseHandler extends TaskResponseHandler {
 			final Properties properties = resp.getAdditionalProperties(Properties.class);
 			final Response response = objectMapper.readValue(resp.getOutput(), Response.class);
 
-			final Dataset dataset = datasetService
-				.getAsset(properties.getDatasetId(), ASSUME_WRITE_PERMISSION_ON_BEHALF_OF_USER)
-				.orElseThrow();
+			final Dataset dataset = datasetService.getAsset(properties.getDatasetId()).orElseThrow();
 
 			// Create the metadata for the dataset if it doesn't exist
 			if (dataset.getMetadata() == null) {
@@ -152,7 +150,7 @@ public class EnrichDatasetResponseHandler extends TaskResponseHandler {
 			}
 
 			// Update the dataset
-			datasetService.updateAsset(dataset, dataset.getId(), ASSUME_WRITE_PERMISSION_ON_BEHALF_OF_USER);
+			datasetService.updateAsset(dataset, dataset.getId());
 		} catch (final Exception e) {
 			log.error("Failed to enrich dataset", e);
 			throw new RuntimeException(e);

@@ -78,8 +78,7 @@ public class TDSCodeControllerTests extends TerariumApplicationTests {
 	public void testItCanGetCode() throws Exception {
 		final Code codeAsset = codeAssetService.createAsset(
 			(Code) new Code().setName("test-code-name").setDescription("my description"),
-			project.getId(),
-			ASSUME_WRITE_PERMISSION
+			project.getId()
 		);
 
 		mockMvc
@@ -112,8 +111,7 @@ public class TDSCodeControllerTests extends TerariumApplicationTests {
 				.setFiles(Map.of("test.py", createCodeFile()))
 				.setName("test-code-name")
 				.setDescription("my description"),
-			project.getId(),
-			ASSUME_WRITE_PERMISSION
+			project.getId()
 		);
 
 		mockMvc
@@ -124,7 +122,7 @@ public class TDSCodeControllerTests extends TerariumApplicationTests {
 			)
 			.andExpect(status().isOk());
 
-		Assertions.assertTrue(codeAssetService.getAsset(codeAsset.getId(), ASSUME_WRITE_PERMISSION).isEmpty());
+		Assertions.assertTrue(codeAssetService.getAsset(codeAsset.getId()).isEmpty());
 	}
 
 	@Test
@@ -136,8 +134,7 @@ public class TDSCodeControllerTests extends TerariumApplicationTests {
 				.setFiles(Map.of("test.py", createCodeFile()))
 				.setName("test-code-name")
 				.setDescription("my description"),
-			project.getId(),
-			ASSUME_WRITE_PERMISSION
+			project.getId()
 		);
 
 		// Create a MockMultipartFile object
@@ -170,8 +167,7 @@ public class TDSCodeControllerTests extends TerariumApplicationTests {
 	public void testItCanUploadCodeFromGithub() throws Exception {
 		final Code codeAsset = codeAssetService.createAsset(
 			(Code) new Code().setMetadata(createMetadata()).setName("test-code-name").setDescription("my description"),
-			project.getId(),
-			ASSUME_WRITE_PERMISSION
+			project.getId()
 		);
 
 		mockMvc
@@ -192,8 +188,7 @@ public class TDSCodeControllerTests extends TerariumApplicationTests {
 	public void testItCanUploadCodeFromGithubRepo() throws Exception {
 		final Code codeAsset = codeAssetService.createAsset(
 			(Code) new Code().setMetadata(createMetadata()).setName("test-code-name").setDescription("my description"),
-			project.getId(),
-			ASSUME_WRITE_PERMISSION
+			project.getId()
 		);
 
 		mockMvc
@@ -213,8 +208,7 @@ public class TDSCodeControllerTests extends TerariumApplicationTests {
 	public void testItCanDownloadCodeAsText() throws Exception {
 		final Code codeAsset = codeAssetService.createAsset(
 			(Code) new Code().setMetadata(createMetadata()).setName("test-code-name").setDescription("my description"),
-			project.getId(),
-			ASSUME_WRITE_PERMISSION
+			project.getId()
 		);
 
 		final String content = "this is the file content for the testItCanDownloadCode test";

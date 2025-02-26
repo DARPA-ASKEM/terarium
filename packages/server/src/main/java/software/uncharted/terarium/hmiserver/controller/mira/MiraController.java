@@ -166,7 +166,7 @@ public class MiraController {
 		final List<String> amrs = new ArrayList<>();
 		for (final UUID modelId : request.modelIds) {
 			final Model model = modelService
-				.getAsset(modelId, Schema.Permission.READ)
+				.getAsset(modelId)
 				.orElseThrow(() -> {
 					log.warn("Model {} not found", modelId);
 					return new ResponseStatusException(HttpStatus.NOT_FOUND, messages.get("model.not-found"));
@@ -355,7 +355,7 @@ public class MiraController {
 			conversionRequest.getProjectId()
 		);
 
-		final Optional<Artifact> artifact = artifactService.getAsset(conversionRequest.artifactId, permission);
+		final Optional<Artifact> artifact = artifactService.getAsset(conversionRequest.artifactId);
 		if (artifact.isEmpty()) {
 			log.error(String.format("Unable to find artifact %s.", conversionRequest.artifactId));
 			throw new ResponseStatusException(HttpStatus.NOT_FOUND, messages.get("artifact.not-found"));
@@ -434,7 +434,7 @@ public class MiraController {
 				model,
 				new ModelConfigurationUpdate()
 			);
-			modelConfigurationService.createAsset(modelConfiguration, conversionRequest.projectId, permission);
+			modelConfigurationService.createAsset(modelConfiguration, conversionRequest.projectId);
 		} catch (final IOException e) {
 			log.error("Unable to deserialize output", e);
 			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("generic.io-error.read"));

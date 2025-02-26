@@ -74,11 +74,7 @@ public class SimulationControllerTests extends TerariumApplicationTests {
 		final Simulation tempSim = new Simulation();
 		tempSim.setName("test-simulation-name");
 		tempSim.setDescription("my description");
-		final Simulation simulationAsset = simulationAssetService.createAsset(
-			tempSim,
-			project.getId(),
-			ASSUME_WRITE_PERMISSION
-		);
+		final Simulation simulationAsset = simulationAssetService.createAsset(tempSim, project.getId());
 
 		mockMvc
 			.perform(
@@ -96,11 +92,7 @@ public class SimulationControllerTests extends TerariumApplicationTests {
 		tempSim.setName("test-simulation-name");
 		tempSim.setDescription("my description");
 
-		final Simulation simulationAsset = simulationAssetService.createAsset(
-			tempSim,
-			project.getId(),
-			ASSUME_WRITE_PERMISSION
-		);
+		final Simulation simulationAsset = simulationAssetService.createAsset(tempSim, project.getId());
 
 		mockMvc
 			.perform(
@@ -110,6 +102,6 @@ public class SimulationControllerTests extends TerariumApplicationTests {
 			)
 			.andExpect(status().isOk());
 
-		Assertions.assertTrue(simulationAssetService.getAsset(simulationAsset.getId(), ASSUME_WRITE_PERMISSION).isEmpty());
+		Assertions.assertTrue(simulationAssetService.getAsset(simulationAsset.getId()).isEmpty());
 	}
 }
