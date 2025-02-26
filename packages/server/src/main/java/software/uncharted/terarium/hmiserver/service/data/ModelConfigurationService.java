@@ -27,7 +27,6 @@ import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.seman
 import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.semantics.Observable;
 import software.uncharted.terarium.hmiserver.repository.data.ModelConfigRepository;
 import software.uncharted.terarium.hmiserver.service.s3.S3ClientService;
-import software.uncharted.terarium.hmiserver.utils.rebac.Schema;
 
 @Service
 public class ModelConfigurationService extends TerariumAssetService<ModelConfiguration, ModelConfigRepository> {
@@ -61,37 +60,27 @@ public class ModelConfigurationService extends TerariumAssetService<ModelConfigu
 
 	@Override
 	@Observed(name = "function_profile")
-	public ModelConfiguration createAsset(
-		final ModelConfiguration asset,
-		final UUID projectId,
-		final Schema.Permission hasWritePermission
-	) throws IOException {
+	public ModelConfiguration createAsset(final ModelConfiguration asset, final UUID projectId) throws IOException {
 		setSemanticDBRelationships(asset);
-		return super.createAsset(asset, projectId, hasWritePermission);
+		return super.createAsset(asset, projectId);
 	}
 
 	@Override
 	@Observed(name = "function_profile")
-	public Optional<ModelConfiguration> updateAsset(
-		final ModelConfiguration asset,
-		final UUID projectId,
-		final Schema.Permission hasWritePermission
-	) throws IOException {
+	public Optional<ModelConfiguration> updateAsset(final ModelConfiguration asset, final UUID projectId)
+		throws IOException {
 		setSemanticDBRelationships(asset);
-		return super.updateAsset(asset, projectId, hasWritePermission);
+		return super.updateAsset(asset, projectId);
 	}
 
 	@Override
 	@Observed(name = "function_profile")
-	public List<ModelConfiguration> createAssets(
-		final List<ModelConfiguration> assets,
-		final UUID projectId,
-		final Schema.Permission hasWritePermission
-	) throws IOException {
+	public List<ModelConfiguration> createAssets(final List<ModelConfiguration> assets, final UUID projectId)
+		throws IOException {
 		for (final ModelConfiguration modelConfiguration : assets) {
 			setSemanticDBRelationships(modelConfiguration);
 		}
-		return super.createAssets(assets, projectId, hasWritePermission);
+		return super.createAssets(assets, projectId);
 	}
 
 	@Data

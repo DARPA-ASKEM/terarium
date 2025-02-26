@@ -35,7 +35,6 @@ import software.uncharted.terarium.hmiserver.models.dataservice.FileExport;
 import software.uncharted.terarium.hmiserver.models.dataservice.PresignedURL;
 import software.uncharted.terarium.hmiserver.repository.PSCrudSoftDeleteRepository;
 import software.uncharted.terarium.hmiserver.service.s3.S3ClientService;
-import software.uncharted.terarium.hmiserver.utils.rebac.Schema;
 
 /**
  * Base class for services that manage TerariumAssets without syncing to
@@ -79,7 +78,7 @@ public abstract class TerariumAssetService<T extends TerariumAsset, R extends PS
 	 */
 	@Override
 	@Observed(name = "function_profile")
-	public Optional<T> getAsset(final UUID id, final Schema.Permission hasReadPermission) {
+	public Optional<T> getAsset(final UUID id) {
 		return repository.getByIdAndDeletedOnIsNull(id);
 	}
 
@@ -116,9 +115,8 @@ public abstract class TerariumAssetService<T extends TerariumAsset, R extends PS
 	 */
 	@Override
 	@Observed(name = "function_profile")
-	public Optional<T> deleteAsset(final UUID id, final UUID projectId, final Schema.Permission hasWritePermission)
-		throws IOException {
-		final Optional<T> asset = getAsset(id, hasWritePermission);
+	public Optional<T> deleteAsset(final UUID id, final UUID projectId) throws IOException {
+		final Optional<T> asset = getAsset(id);
 		if (asset.isEmpty()) {
 			return Optional.empty();
 		}
@@ -136,8 +134,7 @@ public abstract class TerariumAssetService<T extends TerariumAsset, R extends PS
 	 */
 	@Override
 	@Observed(name = "function_profile")
-	public T createAsset(final T asset, final UUID projectId, final Schema.Permission hasWritePermission)
-		throws IOException {
+	public T createAsset(final T asset, final UUID projectId) throws IOException {
 		if (assetExists(asset.getId())) {
 			throw new IllegalArgumentException("Asset already exists for id:" + asset.getId());
 		}
@@ -156,8 +153,7 @@ public abstract class TerariumAssetService<T extends TerariumAsset, R extends PS
 	 */
 	@Override
 	@Observed(name = "function_profile")
-	public List<T> createAssets(final List<T> assets, final UUID projectId, final Schema.Permission hasWritePermission)
-		throws IOException {
+	public List<T> createAssets(final List<T> assets, final UUID projectId) throws IOException {
 		final List<UUID> ids = assets.stream().map(TerariumAsset::getId).toList();
 		final List<T> existing = repository.findAllByIdInAndDeletedOnIsNull(ids);
 		if (existing.size() > 0) {
@@ -182,9 +178,8 @@ public abstract class TerariumAssetService<T extends TerariumAsset, R extends PS
 	 */
 	@Override
 	@Observed(name = "function_profile")
-	public Optional<T> updateAsset(final T asset, final UUID projectId, final Schema.Permission hasWritePermission)
-		throws IOException, IllegalArgumentException {
-		final Optional<T> oldAsset = getAsset(asset.getId(), hasWritePermission);
+	public Optional<T> updateAsset(final T asset, final UUID projectId) throws IOException, IllegalArgumentException {
+		final Optional<T> oldAsset = getAsset(asset.getId());
 
 		if (oldAsset.isEmpty()) {
 			throw new NotFoundException("Asset not found for id: " + asset.getId().toString());
@@ -199,7 +194,7 @@ public abstract class TerariumAssetService<T extends TerariumAsset, R extends PS
 		final T updated = repository.save(asset);
 
 		// Update the related ProjectAsset
-		projectAssetService.updateByAsset(updated, hasWritePermission);
+		projectAssetService.updateByAsset(updated);
 
 		return Optional.of(updated);
 	}
@@ -331,8 +326,7 @@ public abstract class TerariumAssetService<T extends TerariumAsset, R extends PS
 	}
 
 	@Observed(name = "function_profile")
-	public void copyAssetFiles(final T newAsset, final T oldAsset, final Schema.Permission hasWritePermission)
-		throws IOException {
+	public void copyAssetFiles(final T newAsset, final T oldAsset) throws IOException {
 		final String bucket = config.getFileStorageS3BucketName();
 		final List<String> validFileNames = new ArrayList<>();
 		if (oldAsset.getFileNames() != null) {
@@ -352,9 +346,8 @@ public abstract class TerariumAssetService<T extends TerariumAsset, R extends PS
 	}
 
 	@Observed(name = "function_profile")
-	public Map<String, FileExport> exportAssetFiles(final UUID assetId, final Schema.Permission hasReadPermission)
-		throws IOException {
-		final T asset = getAsset(assetId, Schema.Permission.WRITE).orElseThrow();
+	public Map<String, FileExport> exportAssetFiles(final UUID assetId) throws IOException {
+		final T asset = getAsset(assetId).orElseThrow();
 		final String bucket = config.getFileStorageS3BucketName();
 
 		final Map<String, FileExport> files = new HashMap<>();

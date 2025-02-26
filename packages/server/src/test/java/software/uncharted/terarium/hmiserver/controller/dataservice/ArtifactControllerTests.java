@@ -73,8 +73,7 @@ public class ArtifactControllerTests extends TerariumApplicationTests {
 	public void testItCanGetArtifact() throws Exception {
 		final Artifact artifact = artifactService.createAsset(
 			(Artifact) new Artifact().setName("test-artifact-name").setDescription("my description"),
-			project.getId(),
-			ASSUME_WRITE_PERMISSION
+			project.getId()
 		);
 
 		mockMvc
@@ -91,8 +90,7 @@ public class ArtifactControllerTests extends TerariumApplicationTests {
 	public void testItCanDeleteArtifact() throws Exception {
 		final Artifact artifact = artifactService.createAsset(
 			(Artifact) new Artifact().setName("test-artifact-name").setDescription("my description"),
-			project.getId(),
-			ASSUME_WRITE_PERMISSION
+			project.getId()
 		);
 
 		mockMvc
@@ -103,7 +101,7 @@ public class ArtifactControllerTests extends TerariumApplicationTests {
 			)
 			.andExpect(status().isOk());
 
-		Assertions.assertTrue(artifactService.getAsset(artifact.getId(), ASSUME_WRITE_PERMISSION).isEmpty());
+		Assertions.assertTrue(artifactService.getAsset(artifact.getId()).isEmpty());
 	}
 
 	@Test
@@ -111,8 +109,7 @@ public class ArtifactControllerTests extends TerariumApplicationTests {
 	public void testItCanUploadArtifact() throws Exception {
 		final Artifact artifact = artifactService.createAsset(
 			(Artifact) new Artifact().setName("test-artifact-name").setDescription("my description"),
-			project.getId(),
-			ASSUME_WRITE_PERMISSION
+			project.getId()
 		);
 
 		// Create a MockMultipartFile object
@@ -144,8 +141,7 @@ public class ArtifactControllerTests extends TerariumApplicationTests {
 	public void testItCanUploadArtifactFromGithub() throws Exception {
 		final Artifact artifact = artifactService.createAsset(
 			(Artifact) new Artifact().setName("test-artifact-name").setDescription("my description"),
-			project.getId(),
-			ASSUME_WRITE_PERMISSION
+			project.getId()
 		);
 
 		mockMvc
@@ -165,8 +161,7 @@ public class ArtifactControllerTests extends TerariumApplicationTests {
 	public void testItCanDownloadArtifact() throws Exception {
 		final Artifact artifact = artifactService.createAsset(
 			(Artifact) new Artifact().setName("test-artifact-name").setDescription("my description"),
-			project.getId(),
-			ASSUME_WRITE_PERMISSION
+			project.getId()
 		);
 
 		final String content = "this is the file content for the testItCanDownloadArtifact test";
@@ -213,8 +208,7 @@ public class ArtifactControllerTests extends TerariumApplicationTests {
 	public void testItCanDownloadArtifactAsText() throws Exception {
 		final Artifact artifact = artifactService.createAsset(
 			(Artifact) new Artifact().setName("test-artifact-name").setDescription("my description"),
-			project.getId(),
-			ASSUME_WRITE_PERMISSION
+			project.getId()
 		);
 
 		final String content = "this is the file content for the testItCanDownloadArtifact test";

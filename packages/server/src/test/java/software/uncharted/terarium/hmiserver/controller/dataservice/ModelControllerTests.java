@@ -87,8 +87,7 @@ public class ModelControllerTests extends TerariumApplicationTests {
 						.setDescription("test-description")
 						.setSchemaName("petrinet")
 				),
-			project.getId(),
-			ASSUME_WRITE_PERMISSION
+			project.getId()
 		);
 
 		mockMvc
@@ -111,8 +110,7 @@ public class ModelControllerTests extends TerariumApplicationTests {
 						.setDescription("test-description")
 						.setSchemaName("petrinet")
 				),
-			project.getId(),
-			ASSUME_WRITE_PERMISSION
+			project.getId()
 		);
 
 		mockMvc
@@ -139,8 +137,7 @@ public class ModelControllerTests extends TerariumApplicationTests {
 						.setDescription("test-description")
 						.setSchemaName("petrinet")
 				),
-			project.getId(),
-			ASSUME_WRITE_PERMISSION
+			project.getId()
 		);
 
 		mockMvc
@@ -151,7 +148,7 @@ public class ModelControllerTests extends TerariumApplicationTests {
 			)
 			.andExpect(status().isOk());
 
-		Assertions.assertTrue(modelService.getAsset(model.getId(), ASSUME_WRITE_PERMISSION).isEmpty());
+		Assertions.assertTrue(modelService.getAsset(model.getId()).isEmpty());
 	}
 
 	@Test
@@ -167,8 +164,7 @@ public class ModelControllerTests extends TerariumApplicationTests {
 						.setDescription("test-description")
 						.setSchemaName("petrinet")
 				),
-			project.getId(),
-			ASSUME_WRITE_PERMISSION
+			project.getId()
 		);
 
 		mockMvc
@@ -217,21 +213,9 @@ public class ModelControllerTests extends TerariumApplicationTests {
 			.setPublicAsset(false)
 			.setTemporary(true);
 
-		final Model createdModel_public_not_temp = modelService.createAsset(
-			model_public_not_temp,
-			project.getId(),
-			ASSUME_WRITE_PERMISSION
-		);
-		final Model createdModel_public_temp = modelService.createAsset(
-			model_public_temp,
-			project.getId(),
-			ASSUME_WRITE_PERMISSION
-		);
-		final Model createdModel_not_public_temp = modelService.createAsset(
-			model_not_public_temp,
-			project.getId(),
-			ASSUME_WRITE_PERMISSION
-		);
+		final Model createdModel_public_not_temp = modelService.createAsset(model_public_not_temp, project.getId());
+		final Model createdModel_public_temp = modelService.createAsset(model_public_temp, project.getId());
+		final Model createdModel_not_public_temp = modelService.createAsset(model_not_public_temp, project.getId());
 
 		mockMvc
 			.perform(MockMvcRequestBuilders.get("/models/" + createdModel_not_public_temp.getId()).with(csrf()))

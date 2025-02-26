@@ -129,7 +129,7 @@ public class WorkflowController {
 			projectId
 		);
 
-		final Optional<Workflow> workflow = workflowService.getAsset(id, permission);
+		final Optional<Workflow> workflow = workflowService.getAsset(id);
 		return workflow.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
 	}
 
@@ -158,9 +158,7 @@ public class WorkflowController {
 			projectId
 		);
 		try {
-			return ResponseEntity.status(HttpStatus.CREATED).body(
-				workflowService.createAsset(workflow, projectId, permission)
-			);
+			return ResponseEntity.status(HttpStatus.CREATED).body(workflowService.createAsset(workflow, projectId));
 		} catch (final IOException e) {
 			final String error = "Unable to create workflow";
 			log.error(error, e);
@@ -197,7 +195,7 @@ public class WorkflowController {
 		final Optional<Workflow> updated;
 
 		try {
-			updated = workflowService.updateAsset(workflow, projectId, permission);
+			updated = workflowService.updateAsset(workflow, projectId);
 		} catch (final IOException e) {
 			log.error("Unable to update workflow", e);
 			throw new ResponseStatusException(
@@ -250,7 +248,7 @@ public class WorkflowController {
 		final RebacProject rebacProject = new RebacProject(projectId, reBACService);
 
 		try {
-			workflowService.deleteAsset(id, projectId, permission);
+			workflowService.deleteAsset(id, projectId);
 		} catch (final Exception e) {
 			final String error = String.format("Failed to delete workflow %s", id);
 			log.error(error, e);
@@ -309,7 +307,7 @@ public class WorkflowController {
 			projectId
 		);
 
-		final Optional<Workflow> workflow = workflowService.getAsset(id, permission);
+		final Optional<Workflow> workflow = workflowService.getAsset(id);
 		final Optional<Workflow> updated;
 		if (workflow.isPresent() == false) {
 			return ResponseEntity.notFound().build();
@@ -317,7 +315,7 @@ public class WorkflowController {
 
 		try {
 			workflowService.selectOutput(workflow.get(), nodeId, outputId);
-			updated = workflowService.updateAsset(workflow.get(), projectId, permission);
+			updated = workflowService.updateAsset(workflow.get(), projectId);
 		} catch (final Exception e) {
 			log.error("Unable to update workflow", e);
 			throw new ResponseStatusException(
@@ -357,7 +355,7 @@ public class WorkflowController {
 			projectId
 		);
 
-		final Optional<Workflow> workflow = workflowService.getAsset(id, permission);
+		final Optional<Workflow> workflow = workflowService.getAsset(id);
 		final Optional<Workflow> updated;
 		if (workflow.isPresent() == false) {
 			return ResponseEntity.notFound().build();
@@ -365,7 +363,7 @@ public class WorkflowController {
 
 		try {
 			workflowService.updatePositions(workflow.get(), payload);
-			updated = workflowService.updateAsset(workflow.get(), projectId, permission);
+			updated = workflowService.updateAsset(workflow.get(), projectId);
 		} catch (final Exception e) {
 			log.error("Unable to update workflow", e);
 			throw new ResponseStatusException(
@@ -405,7 +403,7 @@ public class WorkflowController {
 			projectId
 		);
 
-		final Optional<Workflow> workflow = workflowService.getAsset(id, permission);
+		final Optional<Workflow> workflow = workflowService.getAsset(id);
 		final Optional<Workflow> updated;
 		if (workflow.isPresent() == false) {
 			return ResponseEntity.notFound().build();
@@ -413,7 +411,7 @@ public class WorkflowController {
 
 		try {
 			workflowService.updateNodeState(workflow.get(), payload);
-			updated = workflowService.updateAsset(workflow.get(), projectId, permission);
+			updated = workflowService.updateAsset(workflow.get(), projectId);
 		} catch (final Exception e) {
 			log.error("Unable to update workflow", e);
 			throw new ResponseStatusException(
@@ -453,7 +451,7 @@ public class WorkflowController {
 			projectId
 		);
 
-		final Optional<Workflow> workflow = workflowService.getAsset(id, permission);
+		final Optional<Workflow> workflow = workflowService.getAsset(id);
 		final Optional<Workflow> updated;
 		if (workflow.isPresent() == false) {
 			return ResponseEntity.notFound().build();
@@ -461,7 +459,7 @@ public class WorkflowController {
 
 		try {
 			workflowService.updateNodeStatus(workflow.get(), payload);
-			updated = workflowService.updateAsset(workflow.get(), projectId, permission);
+			updated = workflowService.updateAsset(workflow.get(), projectId);
 		} catch (final Exception e) {
 			log.error("Unable to update workflow", e);
 			throw new ResponseStatusException(
@@ -509,7 +507,7 @@ public class WorkflowController {
 			projectId
 		);
 
-		final Optional<Workflow> workflow = workflowService.getAsset(id, permission);
+		final Optional<Workflow> workflow = workflowService.getAsset(id);
 		final Optional<Workflow> updated;
 		if (workflow.isPresent() == false) {
 			return ResponseEntity.notFound().build();
@@ -517,7 +515,7 @@ public class WorkflowController {
 
 		try {
 			workflowService.appendInput(workflow.get(), nodeId, payload);
-			updated = workflowService.updateAsset(workflow.get(), projectId, permission);
+			updated = workflowService.updateAsset(workflow.get(), projectId);
 		} catch (final Exception e) {
 			log.error("Unable to update workflow", e);
 			throw new ResponseStatusException(
@@ -558,7 +556,7 @@ public class WorkflowController {
 			projectId
 		);
 
-		final Optional<Workflow> workflow = workflowService.getAsset(id, permission);
+		final Optional<Workflow> workflow = workflowService.getAsset(id);
 		final Optional<Workflow> updated;
 		if (workflow.isPresent() == false) {
 			return ResponseEntity.notFound().build();
@@ -566,7 +564,7 @@ public class WorkflowController {
 
 		try {
 			workflowService.appendOutput(workflow.get(), nodeId, payload.getOutput(), payload.getNodeState());
-			updated = workflowService.updateAsset(workflow.get(), projectId, permission);
+			updated = workflowService.updateAsset(workflow.get(), projectId);
 		} catch (final Exception e) {
 			log.error("Unable to update workflow", e);
 			throw new ResponseStatusException(
@@ -606,7 +604,7 @@ public class WorkflowController {
 			projectId
 		);
 
-		final Optional<Workflow> workflow = workflowService.getAsset(id, permission);
+		final Optional<Workflow> workflow = workflowService.getAsset(id);
 		final Optional<Workflow> updated;
 		if (workflow.isPresent() == false) {
 			return ResponseEntity.notFound().build();
@@ -614,7 +612,7 @@ public class WorkflowController {
 
 		try {
 			workflowService.addNode(workflow.get(), node);
-			updated = workflowService.updateAsset(workflow.get(), projectId, permission);
+			updated = workflowService.updateAsset(workflow.get(), projectId);
 		} catch (final Exception e) {
 			log.error("Unable to update workflow", e);
 			throw new ResponseStatusException(
@@ -654,7 +652,7 @@ public class WorkflowController {
 			projectId
 		);
 
-		final Optional<Workflow> workflow = workflowService.getAsset(id, permission);
+		final Optional<Workflow> workflow = workflowService.getAsset(id);
 		final Optional<Workflow> updated;
 		if (workflow.isPresent() == false) {
 			return ResponseEntity.notFound().build();
@@ -662,7 +660,7 @@ public class WorkflowController {
 
 		try {
 			workflowService.removeNodes(workflow.get(), nodes);
-			updated = workflowService.updateAsset(workflow.get(), projectId, permission);
+			updated = workflowService.updateAsset(workflow.get(), projectId);
 		} catch (final Exception e) {
 			log.error("Unable to update workflow", e);
 			throw new ResponseStatusException(
@@ -702,7 +700,7 @@ public class WorkflowController {
 			projectId
 		);
 
-		final Optional<Workflow> workflow = workflowService.getAsset(id, permission);
+		final Optional<Workflow> workflow = workflowService.getAsset(id);
 		final Optional<Workflow> updated;
 		if (workflow.isPresent() == false) {
 			return ResponseEntity.notFound().build();
@@ -710,7 +708,7 @@ public class WorkflowController {
 
 		try {
 			workflowService.addEdge(workflow.get(), edge);
-			updated = workflowService.updateAsset(workflow.get(), projectId, permission);
+			updated = workflowService.updateAsset(workflow.get(), projectId);
 		} catch (final Exception e) {
 			log.error("Unable to update workflow", e);
 			throw new ResponseStatusException(
@@ -750,7 +748,7 @@ public class WorkflowController {
 			projectId
 		);
 
-		final Optional<Workflow> workflow = workflowService.getAsset(id, permission);
+		final Optional<Workflow> workflow = workflowService.getAsset(id);
 		final Optional<Workflow> updated;
 		if (workflow.isPresent() == false) {
 			return ResponseEntity.notFound().build();
@@ -758,7 +756,7 @@ public class WorkflowController {
 
 		try {
 			workflowService.removeEdges(workflow.get(), edges);
-			updated = workflowService.updateAsset(workflow.get(), projectId, permission);
+			updated = workflowService.updateAsset(workflow.get(), projectId);
 		} catch (final Exception e) {
 			log.error("Unable to update workflow", e);
 			throw new ResponseStatusException(
@@ -798,7 +796,7 @@ public class WorkflowController {
 			projectId
 		);
 
-		final Optional<Workflow> workflow = workflowService.getAsset(id, permission);
+		final Optional<Workflow> workflow = workflowService.getAsset(id);
 		final Optional<Workflow> updated;
 		if (workflow.isPresent() == false) {
 			return ResponseEntity.notFound().build();
@@ -806,7 +804,7 @@ public class WorkflowController {
 
 		try {
 			workflowService.branchWorkflow(workflow.get(), nodeId, projectId);
-			updated = workflowService.updateAsset(workflow.get(), projectId, permission);
+			updated = workflowService.updateAsset(workflow.get(), projectId);
 		} catch (final Exception e) {
 			log.error("Unable to update workflow", e);
 			throw new ResponseStatusException(
@@ -846,7 +844,7 @@ public class WorkflowController {
 			projectId
 		);
 
-		final Optional<Workflow> workflow = workflowService.getAsset(id, permission);
+		final Optional<Workflow> workflow = workflowService.getAsset(id);
 		final Optional<Workflow> updated;
 		if (workflow.isPresent() == false) {
 			return ResponseEntity.notFound().build();
@@ -854,7 +852,7 @@ public class WorkflowController {
 
 		try {
 			workflowService.addOrUpdateAnnotation(workflow.get(), annotation);
-			updated = workflowService.updateAsset(workflow.get(), projectId, permission);
+			updated = workflowService.updateAsset(workflow.get(), projectId);
 		} catch (final Exception e) {
 			log.error("Unable to update workflow", e);
 			throw new ResponseStatusException(
@@ -893,7 +891,7 @@ public class WorkflowController {
 			projectId
 		);
 
-		final Optional<Workflow> workflow = workflowService.getAsset(id, permission);
+		final Optional<Workflow> workflow = workflowService.getAsset(id);
 		final Optional<Workflow> updated;
 		if (workflow.isPresent() == false) {
 			return ResponseEntity.notFound().build();
@@ -901,7 +899,7 @@ public class WorkflowController {
 
 		try {
 			workflowService.removeAnnotation(workflow.get(), annotationId);
-			updated = workflowService.updateAsset(workflow.get(), projectId, permission);
+			updated = workflowService.updateAsset(workflow.get(), projectId);
 		} catch (final Exception e) {
 			log.error("Unable to update workflow", e);
 			throw new ResponseStatusException(

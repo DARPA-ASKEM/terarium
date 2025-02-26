@@ -76,7 +76,7 @@ public class InterventionController {
 			projectId
 		);
 
-		final Optional<InterventionPolicy> intervention = interventionService.getAsset(id, permission);
+		final Optional<InterventionPolicy> intervention = interventionService.getAsset(id);
 		return intervention.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.noContent().build());
 	}
 
@@ -120,7 +120,7 @@ public class InterventionController {
 			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage());
 		}
 		try {
-			final InterventionPolicy policy = interventionService.createAsset(item, projectId, permission);
+			final InterventionPolicy policy = interventionService.createAsset(item, projectId);
 			return ResponseEntity.status(HttpStatus.CREATED).body(policy);
 		} catch (final IOException e) {
 			final String error = "Unable to create intervention";
@@ -161,7 +161,7 @@ public class InterventionController {
 		);
 		try {
 			intervention.setId(id);
-			final Optional<InterventionPolicy> updated = interventionService.updateAsset(intervention, projectId, permission);
+			final Optional<InterventionPolicy> updated = interventionService.updateAsset(intervention, projectId);
 			return updated.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
 		} catch (final IOException e) {
 			final String error = "Unable to update intervention";
@@ -206,7 +206,7 @@ public class InterventionController {
 		);
 
 		try {
-			interventionService.deleteAsset(id, projectId, permission);
+			interventionService.deleteAsset(id, projectId);
 			return ResponseEntity.ok(new ResponseDeleted("Intervention", id));
 		} catch (final Exception e) {
 			final String error = String.format("Failed to delete intervention %s", id);
