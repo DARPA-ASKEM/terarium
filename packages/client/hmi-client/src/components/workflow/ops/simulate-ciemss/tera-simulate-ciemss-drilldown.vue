@@ -78,7 +78,7 @@
 							<div class="label-and-input">
 								<tera-checkbox
 									label="Number of timepoints"
-									:model-value="calculateNumberOfTimepoints"
+									:model-value="!calculateNumberOfTimepoints"
 									@update:model-value="toggleCalculateNumberOfTimepoints"
 								/>
 								<tera-input-number
