@@ -29,25 +29,29 @@
 			/>
 			<tera-operator-placeholder :node="node" />
 		</template>
+		<tera-progress-spinner is-centered :font-size="2" v-if="isLoading" />
 	</main>
 </template>
 
 <script setup lang="ts">
-import _ from 'lodash';
 import { onMounted, ref, computed, watch } from 'vue';
-import { getModel } from '@/services/model';
-import { canPropagateResource } from '@/services/workflow';
 import Dropdown from 'primevue/dropdown';
 import SelectButton from 'primevue/selectbutton';
 import Button from 'primevue/button';
-import { AssetType } from '@/types/Types';
-import type { Model, ProjectAsset } from '@/types/Types';
+import _ from 'lodash';
+
+import { getModel } from '@/services/model';
+import { canPropagateResource } from '@/services/workflow';
+
+import { WorkflowNode } from '@/types/workflow';
+import { AssetType, ClientEventType, type Model, type ProjectAsset, TaskStatus } from '@/types/Types';
+
 import TeraModelDiagram from '@/components/model/petrinet/tera-model-diagram.vue';
 import TeraModelEquation from '@/components/model/petrinet/tera-model-equation.vue';
-import { WorkflowNode } from '@/types/workflow';
 import TeraOperatorTitle from '@/components/operator/tera-operator-title.vue';
-import { useProjects } from '@/composables/project';
 import TeraOperatorPlaceholder from '@/components/operator/tera-operator-placeholder.vue';
+import { useProjects } from '@/composables/project';
+import { createEnrichClientEventHandler, useClientEvent } from '@/composables/useClientEvent';
 import { ModelOperationState } from './model-operation';
 
 const props = defineProps<{
@@ -56,6 +60,14 @@ const props = defineProps<{
 
 const emit = defineEmits(['append-output', 'open-drilldown']);
 const models = computed(() => useProjects().getActiveProjectAssets(AssetType.Model));
+
+const taskId = ref<string>('');
+const isLoading = computed(() => taskId.value !== TaskStatus.Failed && taskId.value !== '');
+
+useClientEvent(
+	ClientEventType.TaskGollmEnrichModel,
+	createEnrichClientEventHandler(taskId, props.node.state.modelId, emit)
+);
 
 enum ModelNodeView {
 	Diagram = 'Diagram',

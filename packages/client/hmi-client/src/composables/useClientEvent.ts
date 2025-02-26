@@ -51,7 +51,7 @@ export function createTaskProgressClientEventHandler(node: WorkflowNode<Document
 	};
 }
 
-export function createEnrichClientEventHandler(taskId: Ref, assetId: string | undefined, emit) {
+export function createEnrichClientEventHandler(taskId: Ref, assetId: string | null, emit) {
 	return async (event: ClientEvent<TaskResponse>) => {
 		if (taskId.value !== event.data?.id) return;
 		if (assetId !== event.data.additionalProperties.datasetId && assetId !== event.data.additionalProperties.documentId)
