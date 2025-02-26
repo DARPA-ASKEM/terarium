@@ -120,22 +120,37 @@
 									:start-date="undefined"
 								/>
 							</div>
-
-							<div class="label-and-input">
-								<label> Preset </label>
-								<Dropdown
-									class="flex-1"
-									v-model="presetType"
-									placeholder="Select an option"
-									:options="[CiemssPresetTypes.Fast, CiemssPresetTypes.Normal]"
-									@update:model-value="setPresetValues"
-								/>
-								<label class="mb-1 p-text-secondary text-sm">
-									<i class="pi pi-info-circle" />
-									This impacts solver method, iterations and learning rate.
-								</label>
+							<div class="input-row">
+								<div class="label-and-input">
+									<label> Preset </label>
+									<Dropdown
+										class="flex-1"
+										v-model="presetType"
+										placeholder="Select an option"
+										:options="[CiemssPresetTypes.Fast, CiemssPresetTypes.Normal]"
+										@update:model-value="setPresetValues"
+									/>
+								</div>
+								<div class="label-and-input">
+									<tera-checkbox
+										label="Number of timepoints"
+										:model-value="knobs.calculateNumberOfTimepoints"
+										@update:model-value="toggleCalculateNumberOfTimepoints"
+									/>
+									<tera-input-number
+										id="logging-step-size"
+										class="common-input-height"
+										:disabled="knobs.calculateNumberOfTimepoints"
+										v-model="knobs.numberOfTimepoints"
+										inputId="integeronly"
+										:min="1"
+									/>
+								</div>
 							</div>
-
+							<label class="mb-1 p-text-secondary text-sm">
+								<i class="pi pi-info-circle" />
+								This impacts solver method, iterations and learning rate.
+							</label>
 							<fieldset class="mt-1 additional-settings">
 								<div class="label-and-input">
 									<label>Number of Samples</label>
@@ -170,25 +185,6 @@
 									<div class="label-and-input">
 										<label for="num-iterations">Number of solver iterations</label>
 										<tera-input-number v-model="knobs.extra.numIterations" />
-									</div>
-									<div class="label-and-input">
-										<label>Calculate number of timepoints</label>
-										<tera-checkbox
-											label=""
-											:model-value="knobs.calculateNumberOfTimepoints"
-											@update:model-value="toggleCalculateNumberOfTimepoints"
-										/>
-									</div>
-									<div class="label-and-input">
-										<label>Number of timepoints</label>
-										<tera-input-number
-											id="logging-step-size"
-											class="common-input-height"
-											:disabled="knobs.calculateNumberOfTimepoints"
-											v-model="knobs.numberOfTimepoints"
-											inputId="integeronly"
-											:min="1"
-										/>
 									</div>
 									<div class="label-and-input">
 										<label for="learning-rate">Learning rate</label>

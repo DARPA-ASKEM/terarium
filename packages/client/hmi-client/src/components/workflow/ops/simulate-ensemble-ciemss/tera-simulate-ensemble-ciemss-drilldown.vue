@@ -148,14 +148,31 @@
 									</div>
 								</div>
 								<!-- Presets -->
-								<div class="label-and-input">
-									<label>Preset (optional)</label>
-									<Dropdown
-										v-model="presetType"
-										placeholder="Select an option"
-										:options="[CiemssPresetTypes.Fast, CiemssPresetTypes.Normal]"
-										@update:model-value="setPresetValues"
-									/>
+								<div class="input-row">
+									<div class="label-and-input">
+										<label>Preset (optional)</label>
+										<Dropdown
+											v-model="presetType"
+											placeholder="Select an option"
+											:options="[CiemssPresetTypes.Fast, CiemssPresetTypes.Normal]"
+											@update:model-value="setPresetValues"
+										/>
+									</div>
+									<div class="label-and-input">
+										<tera-checkbox
+											label="Number of timepoints"
+											:model-value="knobs.calculateNumberOfTimepoints"
+											@update:model-value="toggleCalculateNumberOfTimepoints"
+										/>
+										<tera-input-number
+											id="logging-step-size"
+											class="common-input-height"
+											:disabled="knobs.calculateNumberOfTimepoints"
+											v-model="knobs.numberOfTimepoints"
+											inputId="integeronly"
+											:min="1"
+										/>
+									</div>
 								</div>
 								<!-- Number of Samples & Method -->
 								<div class="input-row">
@@ -176,25 +193,6 @@
 											:disabled="![CiemssMethodOptions.rk4, CiemssMethodOptions.euler].includes(knobs.method)"
 											:min="0"
 											v-model="knobs.stepSize"
-										/>
-									</div>
-									<div class="label-and-input">
-										<label>Calculate number of timepoints</label>
-										<tera-checkbox
-											label=""
-											:model-value="knobs.calculateNumberOfTimepoints"
-											@update:model-value="toggleCalculateNumberOfTimepoints"
-										/>
-									</div>
-									<div class="label-and-input">
-										<label>Number of timepoints</label>
-										<tera-input-number
-											id="logging-step-size"
-											class="common-input-height"
-											:disabled="knobs.calculateNumberOfTimepoints"
-											v-model="knobs.numberOfTimepoints"
-											inputId="integeronly"
-											:min="1"
 										/>
 									</div>
 								</div>

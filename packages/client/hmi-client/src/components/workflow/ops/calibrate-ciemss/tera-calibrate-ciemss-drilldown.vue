@@ -130,14 +130,29 @@
 							/>
 						</div>
 						<div class="spacer m-2" />
-						<p class="mb-1">Preset (optional)</p>
-						<div class="label-and-input">
-							<Dropdown
-								v-model="presetType"
-								placeholder="Select an option"
-								:options="[CiemssPresetTypes.Fast, CiemssPresetTypes.Normal]"
-								@update:model-value="setPresetValues"
-							/>
+						<div class="input-row">
+							<div class="label-and-input">
+								<p class="mb-1">Preset (optional)</p>
+								<Dropdown
+									v-model="presetType"
+									placeholder="Select an option"
+									:options="[CiemssPresetTypes.Fast, CiemssPresetTypes.Normal]"
+									@update:model-value="setPresetValues"
+								/>
+							</div>
+							<div class="label-and-input">
+								<tera-checkbox
+									label="Number of timepoints"
+									:model-value="knobs.calculateNumberOfTimepoints"
+									@update:model-value="toggleCalculateNumberOfTimepoints"
+								/>
+								<tera-input-number
+									:disabled="knobs.calculateNumberOfTimepoints"
+									v-model="knobs.numberOfTimepoints"
+									inputId="integeronly"
+									:min="1"
+								/>
+							</div>
 						</div>
 						<label class="p-text-secondary text-sm flex align-items-center gap-2 my-1">
 							<i class="pi pi-info-circle" />
@@ -192,25 +207,6 @@
 								<div class="label-and-input mb-3">
 									<label>Optimizer method</label>
 									<tera-input-text disabled model-value="ADAM" />
-								</div>
-								<div class="label-and-input">
-									<label>Calculate number of timepoints</label>
-									<tera-checkbox
-										label=""
-										:model-value="knobs.calculateNumberOfTimepoints"
-										@update:model-value="toggleCalculateNumberOfTimepoints"
-									/>
-								</div>
-								<div class="label-and-input">
-									<label>Number of timepoints</label>
-									<tera-input-number
-										id="logging-step-size"
-										class="common-input-height"
-										:disabled="knobs.calculateNumberOfTimepoints"
-										v-model="knobs.numberOfTimepoints"
-										inputId="integeronly"
-										:min="1"
-									/>
 								</div>
 							</div>
 						</div>

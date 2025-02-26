@@ -66,26 +66,6 @@
 						<!-- Number of Samples & Method -->
 						<div class="input-row mt-3">
 							<div class="label-and-input">
-								<label>Calculate number of timepoints</label>
-								<tera-checkbox
-									label=""
-									:model-value="calculateNumberOfTimepoints"
-									@update:model-value="toggleCalculateNumberOfTimepoints"
-								/>
-							</div>
-							<div class="label-and-input">
-								<label>Number of timepoints</label>
-								<tera-input-number
-									id="logging-step-size"
-									class="common-input-height"
-									:disabled="calculateNumberOfTimepoints"
-									v-model="numberOfTimepoints"
-									inputId="integeronly"
-									:min="1"
-									@update:model-value="updateState"
-								/>
-							</div>
-							<div class="label-and-input">
 								<label for="num-samples">Number of samples</label>
 								<tera-input-number
 									id="num-samples"
@@ -95,6 +75,22 @@
 									@update:model-value="updateState"
 								/>
 							</div>
+							<div class="label-and-input">
+								<tera-checkbox
+									label="Number of timepoints"
+									:model-value="calculateNumberOfTimepoints"
+									@update:model-value="toggleCalculateNumberOfTimepoints"
+								/>
+								<tera-input-number
+									:disabled="calculateNumberOfTimepoints"
+									v-model="numberOfTimepoints"
+									inputId="integeronly"
+									:min="1"
+									@update:model-value="updateState"
+								/>
+							</div>
+						</div>
+						<div class="input-row mt-3">
 							<div class="label-and-input">
 								<label for="solver-method">Method</label>
 								<Dropdown

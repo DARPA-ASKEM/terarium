@@ -118,18 +118,12 @@
 								/>
 							</div>
 							<div class="label-and-input">
-								<label>Calculate number of timepoints</label>
 								<tera-checkbox
-									label=""
+									label="Number of timepoints"
 									:model-value="knobs.calculateNumberOfTimepoints"
 									@update:model-value="toggleCalculateNumberOfTimepoints"
 								/>
-							</div>
-							<div class="label-and-input">
-								<label>Number of timepoints</label>
 								<tera-input-number
-									id="logging-step-size"
-									class="common-input-height"
 									:disabled="knobs.calculateNumberOfTimepoints"
 									v-model="knobs.numberOfTimepoints"
 									inputId="integeronly"
