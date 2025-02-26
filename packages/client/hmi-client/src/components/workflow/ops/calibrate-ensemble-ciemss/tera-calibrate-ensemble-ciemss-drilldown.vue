@@ -172,6 +172,25 @@
 										<tera-input-number v-model="knobs.extra.numIterations" />
 									</div>
 									<div class="label-and-input">
+										<label>Calculate number of timepoints</label>
+										<tera-checkbox
+											label=""
+											:model-value="knobs.calculateNumberOfTimepoints"
+											@update:model-value="toggleCalculateNumberOfTimepoints"
+										/>
+									</div>
+									<div class="label-and-input">
+										<label>Number of timepoints</label>
+										<tera-input-number
+											id="logging-step-size"
+											class="common-input-height"
+											:disabled="knobs.calculateNumberOfTimepoints"
+											v-model="knobs.numberOfTimepoints"
+											inputId="integeronly"
+											:min="1"
+										/>
+									</div>
+									<div class="label-and-input">
 										<label for="learning-rate">Learning rate</label>
 										<tera-input-number v-model="knobs.extra.learningRate" />
 									</div>
@@ -427,13 +446,17 @@ interface BasicKnobs {
 	configurationWeights: { [key: string]: number }; // Note these are Dirichlet distributions not EXACTLY weights
 	extra: EnsembleCalibrateExtraCiemss;
 	timestampColName: string;
+	calculateNumberOfTimepoints: boolean;
+	numberOfTimepoints: number;
 }
 
 const knobs = ref<BasicKnobs>({
 	ensembleMapping: props.node.state.ensembleMapping ?? [],
 	configurationWeights: props.node.state.configurationWeights ?? {},
 	extra: props.node.state.extra ?? {},
-	timestampColName: props.node.state.timestampColName ?? ''
+	timestampColName: props.node.state.timestampColName ?? '',
+	calculateNumberOfTimepoints: props.node.state.calculateNumberOfTimepoints,
+	numberOfTimepoints: props.node.state.numberOfTimepoints
 });
 
 const currentActiveIndicies = ref([0, 1, 2]);
@@ -539,6 +562,10 @@ function removeMapping(index: number) {
 	state.ensembleMapping = knobs.value.ensembleMapping;
 	emit('update-state', state);
 }
+
+const toggleCalculateNumberOfTimepoints = () => {
+	knobs.value.calculateNumberOfTimepoints = !knobs.value.calculateNumberOfTimepoints;
+};
 
 const messageHandler = (event: ClientEvent<any>) => {
 	const data = { iter: lossValues.value.length, loss: event.data.loss };
@@ -773,6 +800,11 @@ watch(
 		state.extra = knobs.value.extra;
 		state.ensembleMapping = knobs.value.ensembleMapping;
 		state.configurationWeights = knobs.value.configurationWeights;
+		state.calculateNumberOfTimepoints = knobs.value.calculateNumberOfTimepoints;
+		if (knobs.value.calculateNumberOfTimepoints) {
+			knobs.value.numberOfTimepoints = knobs.value.extra.endTime;
+		}
+		state.numberOfTimepoints = knobs.value.numberOfTimepoints;
 		emit('update-state', state);
 	},
 	{ deep: true }

@@ -213,6 +213,7 @@ watch(
 					start: 0,
 					end: state.extra.endTime
 				},
+				loggingStepSize: state.extra.endTime / state.numberOfTimepoints,
 				engine: 'ciemss',
 				extra: {
 					num_samples: props.node.state.extra.numIterations

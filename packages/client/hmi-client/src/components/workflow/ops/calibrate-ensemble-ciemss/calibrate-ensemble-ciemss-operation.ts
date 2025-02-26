@@ -61,6 +61,8 @@ export interface CalibrateEnsembleCiemssOperationState
 	postForecastId: string;
 	preForecastId: string;
 	currentProgress: number;
+	numberOfTimepoints: number;
+	calculateNumberOfTimepoints: boolean;
 }
 
 export const CalibrateEnsembleCiemssOperation: Operation = {
@@ -90,7 +92,7 @@ export const CalibrateEnsembleCiemssOperation: Operation = {
 				solverMethod: qualityPreset.method,
 				numParticles: qualityPreset.numSamples,
 				numIterations: qualityPreset.numIterations,
-				endTime: 100,
+				endTime: 90,
 				stepSize: 1,
 				learningRate: qualityPreset.learningRate
 			},
@@ -101,7 +103,9 @@ export const CalibrateEnsembleCiemssOperation: Operation = {
 			postForecastId: '',
 			preForecastId: '',
 			errorMessage: { name: '', value: '', traceback: '' },
-			currentProgress: 0
+			currentProgress: 0,
+			numberOfTimepoints: 90,
+			calculateNumberOfTimepoints: true
 		};
 		return init;
 	}
