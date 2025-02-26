@@ -55,7 +55,10 @@ import {
 	CalibrateEnsembleMappingRow,
 	isCalibrateEnsembleMappingRow
 } from '@/components/workflow/ops/calibrate-ensemble-ciemss/calibrate-ensemble-ciemss-operation';
-import { SimulateEnsembleMappingRow } from '@/components/workflow/ops/simulate-ensemble-ciemss/simulate-ensemble-ciemss-operation';
+import {
+	isSimulateEnsembleMappingRow,
+	SimulateEnsembleMappingRow
+} from '@/components/workflow/ops/simulate-ensemble-ciemss/simulate-ensemble-ciemss-operation';
 import { getModelConfigName, getParameters } from '@/services/model-configurations';
 import { EnsembleErrorData } from '@/components/workflow/ops/calibrate-ensemble-ciemss/calibrate-ensemble-util';
 import {
@@ -112,6 +115,9 @@ const modelVarToDatasetVar = (mapping: VariableMappings, modelVariable: string) 
 	}
 	if (isCalibrateEnsembleMappingRow(mapping[0])) {
 		return (mapping as CalibrateEnsembleMappingRow[]).find((d) => d.newName === modelVariable)?.datasetMapping ?? '';
+	}
+	if (isSimulateEnsembleMappingRow(mapping[0])) {
+		return (mapping as SimulateEnsembleMappingRow[]).find((d) => d.newName === modelVariable)?.newName ?? '';
 	}
 	return '';
 };
@@ -391,7 +397,6 @@ export function useCharts(
 		multiVariable = false,
 		showBaseLines = false
 	) => {
-		setting.hideInNode = true;
 		const ensembleVarName = setting.selectedVariables[0];
 		const options: ForecastChartOptions = {
 			title: getModelConfigName(<ModelConfiguration[]>modelConfig?.value ?? [], modelConfigId) || ensembleVarName,
