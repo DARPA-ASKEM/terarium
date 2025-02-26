@@ -212,6 +212,18 @@ public class ProjectService {
 	}
 
 	@Observed(name = "function_profile")
+	public boolean hasPermission(final Project project, final User user, final Schema.Permission permission) {
+		try {
+			final RebacUser rebacUser = new RebacUser(user.getId(), reBACService);
+			final RebacProject rebacProject = new RebacProject(project.getId(), reBACService);
+			return rebacUser.can(rebacProject, permission);
+		} catch (final Exception e) {
+			log.error("Error checking project permission", e);
+			throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, messages.get("rebac.service-unavailable"));
+		}
+	}
+
+	@Observed(name = "function_profile")
 	public Schema.Permission checkPermissionCanWrite(final String userId, final UUID projectId)
 		throws ResponseStatusException {
 		try {
