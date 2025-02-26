@@ -467,7 +467,7 @@ public class ExtractionService {
 		return executor.submit(() -> {
 			final TaskResponse resp = taskService.runTaskSync(req);
 			if (resp.getStatus() != TaskStatus.SUCCESS) {
-				throw new RuntimeException("Equation extraction failed" + resp.getStderr());
+				throw new RuntimeException("Equation extraction failed: " + resp.getStderr());
 			}
 
 			final byte[] outputBytes = resp.getOutput();
@@ -525,7 +525,7 @@ public class ExtractionService {
 		return executor.submit(() -> {
 			final TaskResponse resp = taskService.runTaskSync(req);
 			if (resp.getStatus() != TaskStatus.SUCCESS) {
-				throw new RuntimeException("Text extraction failed" + resp.getStderr());
+				throw new RuntimeException("Text extraction failed: " + resp.getStderr());
 			}
 
 			final byte[] outputBytes = resp.getOutput();
@@ -568,7 +568,7 @@ public class ExtractionService {
 		return executor.submit(() -> {
 			final TaskResponse resp = taskService.runTaskSync(req);
 			if (resp.getStatus() != TaskStatus.SUCCESS) {
-				throw new RuntimeException("Table extraction failed" + resp.getStderr());
+				throw new RuntimeException("Table extraction failed: " + resp.getStderr());
 			}
 
 			final byte[] outputBytes = resp.getOutput();
