@@ -529,6 +529,16 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@cortex-js/compute-engine@npm:0.27.0":
+  version: 0.27.0
+  resolution: "@cortex-js/compute-engine@npm:0.27.0"
+  dependencies:
+    complex-esm: "npm:^2.1.1-esm1"
+    decimal.js: "npm:^10.4.3"
+  checksum: 10/18b64e5ec8da057b367171cdce16cb723fd7696c8c1ee6ef774e85d035050aeb2f93bea815c88e7432c9bc6b0431b01718b83cde018f5ff2bd3f3e6f0d176574
+  languageName: node
+  linkType: hard
+
 "@esbuild/aix-ppc64@npm:0.21.5":
   version: 0.21.5
   resolution: "@esbuild/aix-ppc64@npm:0.21.5"
@@ -5222,6 +5232,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"complex-esm@npm:^2.1.1-esm1":
+  version: 2.1.1-esm1
+  resolution: "complex-esm@npm:2.1.1-esm1"
+  checksum: 10/c1d8af14efd2cbadd9fbee61541a0d201b26cc055d9fd8def1e8fde3c4b76966614af285907565a78cff8943a452dba4f0a6c0321f7103504400ca9b8777f861
+  languageName: node
+  linkType: hard
+
 "component-emitter@npm:^1.2.1":
   version: 1.3.1
   resolution: "component-emitter@npm:1.3.1"
@@ -8710,7 +8727,7 @@ __metadata:
     katex: "npm:0.16.21"
     lodash: "npm:4.17.21"
     markdown-it: "npm:14.1.0"
-    mathlive: "npm:0.89.2"
+    mathlive: "npm:0.104.0"
     mathml-to-latex: "npm:1.2.0"
     oidc-spa: "npm:4.6.2"
     papaparse: "npm:5.4.1"
@@ -10996,10 +11013,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"mathlive@npm:0.89.2":
-  version: 0.89.2
-  resolution: "mathlive@npm:0.89.2"
-  checksum: 10/695d1a2157036485aa56b1bd047881b0546e34de70caf0e48c4f11d4eace393d5aebc6d688d76f8e0ea08d08e09386f9b8fc3ff03c4533cd862c581abd8ce571
+"mathlive@npm:0.104.0":
+  version: 0.104.0
+  resolution: "mathlive@npm:0.104.0"
+  dependencies:
+    "@cortex-js/compute-engine": "npm:0.27.0"
+  checksum: 10/7ff8f94435c938bd772bfda6b0d3af9f0a13f541653380ccb83a376ad3b42920765df27dc2a8ae4ec61dd22927ac04b9d7c9281246441c69010cb7d4230b0ae2
   languageName: node
   linkType: hard
 
