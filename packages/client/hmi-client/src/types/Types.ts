@@ -49,6 +49,7 @@ export interface StatusUpdate<T> {
     message: string;
     error: string;
     data: T;
+		status?: TaskStatus;
 }
 
 export interface TerariumAsset extends TerariumEntity {
@@ -792,6 +793,9 @@ export interface DocumentExtraction {
     metadata: { [index: string]: any };
 }
 
+export interface DocumentExtractionStatus {
+	documentId: string;
+}
 export interface ExtractedDocumentPage {
     pageNumber: number;
     text: string;
