@@ -64,7 +64,7 @@ import { createInterventionChart } from '@/services/charts';
 import VegaChart from '@/components/widgets/VegaChart.vue';
 import TeraOperatorPlaceholder from '@/components/operator/tera-operator-placeholder.vue';
 import { ClientEventType } from '@/types/Types';
-import { createInProgressClientEventHandler, useClientEvent } from '@/composables/useClientEvent';
+import { createTaskListClientEventHandler, useClientEvent } from '@/composables/useClientEvent';
 import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue';
 import { InterventionPolicyState } from './intervention-policy-operation';
 
@@ -74,7 +74,7 @@ const props = defineProps<{
 }>();
 useClientEvent(
 	[ClientEventType.TaskGollmInterventionsFromDocument, ClientEventType.TaskGollmInterventionsFromDataset],
-	createInProgressClientEventHandler(props.node.state, 'taskIds')
+	createTaskListClientEventHandler(props.node, 'taskIds')
 );
 
 const isLoading = computed(() => props.node.state.taskIds.length > 0);
