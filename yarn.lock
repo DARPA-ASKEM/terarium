@@ -3369,12 +3369,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/node@npm:18.19.3":
-  version: 18.19.3
-  resolution: "@types/node@npm:18.19.3"
+"@types/node@npm:18.19.76":
+  version: 18.19.76
+  resolution: "@types/node@npm:18.19.76"
   dependencies:
     undici-types: "npm:~5.26.4"
-  checksum: 10/b95d0c0be342275e27d882bb6ca73c0b757d1672a121cae1fc3249eda4f86a8abeb5745e5c5c1150914bcfda323a3fc51526cd34e2097f8355bf7cbf12fa6bcb
+  checksum: 10/844799baffeaecc0951ebd5a3ed5aeef468cbf04aa597d69443dd60e18441efeac6ced94d742ee3369f5f8fd950c5199fbc30811f3e404730f60696d1b8a445a
   languageName: node
   linkType: hard
 
@@ -8686,7 +8686,7 @@ __metadata:
     "@types/d3": "npm:7.4.3"
     "@types/lodash": "npm:4.17.15"
     "@types/markdown-it": "npm:14.1.2"
-    "@types/node": "npm:18.19.3"
+    "@types/node": "npm:18.19.76"
     "@types/papaparse": "npm:5.3.15"
     "@uncharted.software/design-tokens": "npm:1.1.0"
     "@vitejs/plugin-vue": "npm:4.6.2"

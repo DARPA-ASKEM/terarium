@@ -1,6 +1,7 @@
 import { Operation, WorkflowOperationTypes, BaseState } from '@/types/workflow';
 import simulateEnsembleCiemss from '@assets/svg/operator-images/simulate-ensemble-probabilistic.svg';
 import { CiemssMethodOptions } from '@/services/models/simulation-service';
+import { ChartSetting } from '@/types/common';
 
 const DOCUMENTATION_URL = 'https://documentation.terarium.ai/simulation/simulate-ensemble/';
 
@@ -28,7 +29,7 @@ export const normalValues = Object.freeze({
 });
 
 export interface SimulateEnsembleCiemssOperationState extends BaseState {
-	chartConfigs: string[][];
+	chartSettings: ChartSetting[] | null;
 	mapping: SimulateEnsembleMappingRow[];
 	weights: SimulateEnsembleWeights;
 	endTime: number;
@@ -53,7 +54,7 @@ export const SimulateEnsembleCiemssOperation: Operation = {
 
 	initState: () => {
 		const init: SimulateEnsembleCiemssOperationState = {
-			chartConfigs: [],
+			chartSettings: null,
 			mapping: [],
 			weights: {},
 			endTime: 100,

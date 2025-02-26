@@ -34,7 +34,8 @@ import {
 	ChartSettingComparison,
 	ChartSettingEnsembleVariable,
 	ChartSettingSensitivity,
-	ChartSettingType
+	ChartSettingType,
+	SensitivityMethod
 } from '@/types/common';
 import { ChartAnnotation, Dataset, Intervention, InterventionPolicy, Model, ModelConfiguration } from '@/types/Types';
 import { displayNumber } from '@/utils/number';
@@ -54,7 +55,10 @@ import {
 	CalibrateEnsembleMappingRow,
 	isCalibrateEnsembleMappingRow
 } from '@/components/workflow/ops/calibrate-ensemble-ciemss/calibrate-ensemble-ciemss-operation';
-import { SimulateEnsembleMappingRow } from '@/components/workflow/ops/simulate-ensemble-ciemss/simulate-ensemble-ciemss-operation';
+import {
+	isSimulateEnsembleMappingRow,
+	SimulateEnsembleMappingRow
+} from '@/components/workflow/ops/simulate-ensemble-ciemss/simulate-ensemble-ciemss-operation';
 import { getModelConfigName, getParameters } from '@/services/model-configurations';
 import { EnsembleErrorData } from '@/components/workflow/ops/calibrate-ensemble-ciemss/calibrate-ensemble-util';
 import {
@@ -111,6 +115,9 @@ const modelVarToDatasetVar = (mapping: VariableMappings, modelVariable: string) 
 	}
 	if (isCalibrateEnsembleMappingRow(mapping[0])) {
 		return (mapping as CalibrateEnsembleMappingRow[]).find((d) => d.newName === modelVariable)?.datasetMapping ?? '';
+	}
+	if (isSimulateEnsembleMappingRow(mapping[0])) {
+		return (mapping as SimulateEnsembleMappingRow[]).find((d) => d.newName === modelVariable)?.newName ?? '';
 	}
 	return '';
 };
@@ -390,7 +397,6 @@ export function useCharts(
 		multiVariable = false,
 		showBaseLines = false
 	) => {
-		setting.hideInNode = true;
 		const ensembleVarName = setting.selectedVariables[0];
 		const options: ForecastChartOptions = {
 			title:
@@ -1029,13 +1035,68 @@ export function useCharts(
 		return weightsCharts;
 	};
 
+	/**
+	 * Slices simulation data to get relevant records for sensitivity analysis based on the specified method.
+	 *
+	 * @param records - Array of simulation records containing timepoint_id, sample_id, and variable values
+	 * @param options - Configuration object for slicing data
+	 * @param options.method - Method to determine which records to include:
+	 *                        - TIMEPOINT: Records at a specific timepoint
+	 *                        - PEAK_VALUE: Records where each variable reaches its maximum value
+	 *                        - PEAK_TIMEPOINT: Records where each variable reaches its maximum value (using timepoint as sensitivity target)
+	 * @param options.timepoint - Required for TIMEPOINT method, specifies which timepoint to analyze
+	 * @param options.selectedVariables - Array of variable names to analyze
+	 *
+	 * @returns Map where keys are variable names and values are arrays of relevant records:
+	 *          - For TIMEPOINT: Records at the specified timepoint
+	 *          - For PEAK_VALUE/PEAK_TIMEPOINT: Records where each variable reaches its maximum value per sample
+	 */
+	function getSlicedData(
+		records: Record<string, any>[],
+		options: { method: SensitivityMethod; timepoint?: number; selectedVariables: string[] }
+	): Map<string, Record<string, any>[]> {
+		const slicedRecords: Map<string, Record<string, any>[]> = new Map();
+		// the records of interest we want are at the indicated timepoint
+		if (options.method === SensitivityMethod.TIMEPOINT) {
+			const data = records.filter((d) => d.timepoint_id === options.timepoint);
+			options.selectedVariables.forEach((selectedVariable) => {
+				if (!slicedRecords.has(selectedVariable)) {
+					slicedRecords.set(selectedVariable, data);
+				}
+			});
+
+			// the records of interest we want are the max value of each sample
+		} else if (options.method === SensitivityMethod.PEAK_VALUE || options.method === SensitivityMethod.PEAK_TIMEPOINT) {
+			options.selectedVariables.forEach((selectedVariable) => {
+				// get a map of sample_id to the record with the max value for the selected variable
+				const variableMax = records.reduce<Map<number, Record<string, any>>>((acc, record) => {
+					const id = record.sample_id;
+					// loop over all selected variables and get the max value
+					const value = record[selectedVariable] as number;
+					if (!acc.has(id) || value > (acc.get(id)![selectedVariable] as number)) {
+						acc.set(id, record);
+					}
+					return acc;
+				}, new Map<number, Record<string, any>>());
+
+				// add the max value records to the sliced records map
+				if (!slicedRecords.has(selectedVariable)) {
+					slicedRecords.set(selectedVariable, [...variableMax.values()]);
+				}
+			});
+		}
+		return slicedRecords;
+	}
+
 	function createSensitivityBins(
 		records: Record<string, any>[],
 		selectedVariable: string,
-		numBins: number = 7,
-		unit?: string
+		options: {
+			numBins: number;
+			unit?: string;
+		}
 	): Map<string, number[]> {
-		if (numBins < 1) {
+		if (options.numBins < 1) {
 			throw new Error('Number of bins must be at least 1.');
 		}
 
@@ -1059,8 +1120,8 @@ export function useCharts(
 
 		// Calculate the quantile thresholds
 		const thresholds: number[] = [];
-		for (let i = 1; i < numBins; i++) {
-			const quantileIndex = (i / numBins) * (sortedValues.length - 1);
+		for (let i = 1; i < options.numBins; i++) {
+			const quantileIndex = (i / options.numBins) * (sortedValues.length - 1);
 			const lowerIndex = Math.floor(quantileIndex);
 			const upperIndex = Math.ceil(quantileIndex);
 
@@ -1078,13 +1139,13 @@ export function useCharts(
 		let previousThreshold = minValue;
 		thresholds.forEach((threshold) => {
 			labels.push(
-				`[${expressionFunctions.chartNumberFormatter(previousThreshold)}, ${expressionFunctions.chartNumberFormatter(threshold)}] ${unit ? `${unit}` : ''}`
+				`[${expressionFunctions.chartNumberFormatter(previousThreshold)}, ${expressionFunctions.chartNumberFormatter(threshold)}] ${options.unit ? `${options.unit}` : ''}`
 			);
 			previousThreshold = threshold;
 		});
 
 		labels.push(
-			`[${expressionFunctions.chartNumberFormatter(previousThreshold)}, ${expressionFunctions.chartNumberFormatter(maxValue)}] ${unit ? `${unit}` : ''}`
+			`[${expressionFunctions.chartNumberFormatter(previousThreshold)}, ${expressionFunctions.chartNumberFormatter(maxValue)}] ${options.unit ? `${options.unit}` : ''}`
 		);
 
 		// Assign bins to records and create the result map
@@ -1100,7 +1161,7 @@ export function useCharts(
 				}
 			}
 			if (bin === 0) {
-				bin = numBins; // Assign the last bin if the value exceeds all thresholds
+				bin = options.numBins; // Assign the last bin if the value exceeds all thresholds
 			}
 			const label = labels[bin - 1];
 			result.get(label)!.push(sample.id);
@@ -1116,27 +1177,15 @@ export function useCharts(
 		const sensitivityDataLoading = ref(false);
 		const rankingScores = ref<Map<string, Map<string, number>>>(new Map());
 		const timepoint = ref(0);
+		const method = ref(SensitivityMethod.TIMEPOINT);
+		let slicedData: Map<string, Record<string, any>[]> = new Map();
 
 		const fetchSensitivityData = async () => {
 			// pick the first setting's timepoint for now
 			const chartType = chartSettings.value[0].chartType;
 			const { result } = chartData.value as ChartData;
-			const sliceData = result.filter((d) => d.timepoint_id === timepoint.value);
 			// Translate names ahead of time, because we can't seem to customize titles
 			// in vegalite with repeat
-			const translationMap = chartData.value?.translationMap;
-			const sliceDataTranslated = sliceData.map((obj) => {
-				const r = {};
-				Object.keys(obj).forEach((key) => {
-					if (translationMap && translationMap[key]) {
-						const newKey = translationMap[key];
-						r[newKey] = obj[key];
-					} else {
-						r[key] = obj[key];
-					}
-				});
-				return r;
-			});
 
 			const inputVariables: string[] = chartSettings.value[0].selectedInputVariables ?? [];
 
@@ -1146,11 +1195,35 @@ export function useCharts(
 			> = {};
 			// eslint-disable-next-line
 			for (const settings of chartSettings.value) {
+				const translationMap = chartData.value?.translationMap;
+				// We only need to translate the first variable's data slice and use it in the scatter/heatmap charts,
+				// as the rest are the same
+				const dataTranslated = Array.from(slicedData.values())[0]?.map((obj) => {
+					const r = {};
+					Object.keys(obj).forEach((key) => {
+						if (translationMap && translationMap[key]) {
+							const newKey = translationMap[key];
+							r[newKey] = obj[key];
+						} else {
+							r[key] = obj[key];
+						}
+					});
+					return r;
+				});
+
 				const selectedVariable =
 					chartData.value?.pyciemssMap[settings.selectedVariables[0]] || settings.selectedVariables[0];
-				const unit = getUnit(settings.selectedVariables[0]);
+				let unit = getUnit(settings.selectedVariables[0]);
+				let sensitivityVariable = selectedVariable;
+				if (method.value === SensitivityMethod.PEAK_TIMEPOINT) {
+					unit = 'timepoint';
+					sensitivityVariable = 'timepoint_id';
+				}
 				const { options } = createForecastChartOptions(settings);
-				const bins = createSensitivityBins(sliceData, selectedVariable, 7, unit);
+				const bins = createSensitivityBins(slicedData.get(selectedVariable)!, sensitivityVariable, {
+					numBins: 7,
+					unit
+				});
 
 				options.bins = bins;
 				options.colorscheme = SENSITIVITY_COLOUR_SCHEME;
@@ -1233,13 +1306,15 @@ export function useCharts(
 					}
 				}
 
-				// Add sensitivity annotation
-				const annotation = createForecastChartAnnotation('x', timepoint.value, 'Sensitivity analysis', true);
-				lineSpec.layer[0].layer.push(annotation.layerSpec);
+				// Add sensitivity annotation if using timepoint method
+				if (method.value === SensitivityMethod.TIMEPOINT) {
+					const annotation = createForecastChartAnnotation('x', timepoint.value, 'Sensitivity analysis', true);
+					lineSpec.layer[0].layer.push(annotation.layerSpec);
+				}
 
 				const spec = createSimulateSensitivityScatter(
 					{
-						data: sliceDataTranslated,
+						data: dataTranslated ?? [],
 						inputVariables,
 						outputVariable: settings.selectedVariables[0]
 					},
@@ -1276,14 +1351,27 @@ export function useCharts(
 			const hasTimepointChanged = timepoint.value !== chartSettings.value[0].timepoint;
 			timepoint.value = chartSettings.value[0].timepoint;
 
-			if (!hasAllScores || hasTimepointChanged) {
+			const hasMethodChanged = method.value !== chartSettings.value[0].method;
+			method.value = chartSettings.value[0].method;
+
+			if (!hasAllScores || hasTimepointChanged || hasMethodChanged) {
 				// only ranked non-constant parameters
 				const allParameters =
 					getParameters(modelConfig?.value as ModelConfiguration)
 						.filter((p) => p.distribution.type !== DistributionType.Constant)
 						.map((p) => p.referenceId) ?? [];
-				const sliceData = chartData.value.result.filter((d) => d.timepoint_id === timepoint.value);
-				rankingScores.value = await pythonInstance.getRankingScores(sliceData, allSelectedVariables, allParameters);
+				slicedData = getSlicedData(chartData.value.result, {
+					method: method.value,
+					timepoint: timepoint.value,
+					selectedVariables: allSelectedVariables
+				});
+
+				rankingScores.value = await pythonInstance.getRankingScores(
+					slicedData,
+					allSelectedVariables,
+					allParameters,
+					method.value
+				);
 			}
 			fetchSensitivityData();
 			sensitivityDataLoading.value = false;

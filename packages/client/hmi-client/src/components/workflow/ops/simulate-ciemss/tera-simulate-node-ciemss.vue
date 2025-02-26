@@ -117,7 +117,8 @@ const processResult = async () => {
 			selectedVariables: selectedSensitivityVariables,
 			selectedInputVariables: firstSensitiveSetting!.selectedInputVariables,
 			timepoint: lastTimepoint,
-			chartType: firstSensitiveSetting!.chartType
+			chartType: firstSensitiveSetting!.chartType,
+			method: firstSensitiveSetting!.method
 		});
 	}
 
@@ -241,7 +242,7 @@ const pollResult = async (runId: string) => {
 		const simulation = await getSimulation(runId);
 		if (simulation?.status && simulation?.statusMessage) {
 			state.errorMessage = {
-				name: runId,
+				name: `Simulate: ${runId} has failed`,
 				value: simulation.status,
 				traceback: simulation.statusMessage
 			};
