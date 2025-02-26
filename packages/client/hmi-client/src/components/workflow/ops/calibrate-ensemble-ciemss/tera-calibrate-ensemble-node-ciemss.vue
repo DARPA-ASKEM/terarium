@@ -83,7 +83,7 @@ const inProgressCalibrationId = computed(() => props.node.state.inProgressCalibr
 const inProgressForecastId = computed(() => props.node.state.inProgressForecastId);
 const lossValues = ref<{ [key: string]: number }[]>([]);
 const lossChartSpec = ref();
-const chartSize = { width: 180, height: 120 };
+const chartSize = { width: 180, height: 220 };
 
 // Charts setup
 const outputData = ref<{
@@ -106,14 +106,16 @@ const { useEnsembleVariableCharts } = useCharts(
 );
 const ensembleVariableCharts = computed(() => {
 	const charts = useEnsembleVariableCharts(selectedEnsembleVariableSettings, groundTruthData);
-	const ensembleCharts = selectedEnsembleVariableSettings.value.map((setting) => {
-		// Grab the first chart only since the rest of the charts are for model configurations charts
-		const spec = charts.value[setting.id][0];
-		// Make sure the chart since width of the chart can be too small if charts were small multiple charts.
-		spec.width = chartSize.width;
-		spec.height = chartSize.height + 100;
-		return spec;
-	});
+	const ensembleCharts = selectedEnsembleVariableSettings.value
+		.filter((setting) => !setting.hideInNode)
+		.map((setting) => {
+			// Grab the first chart only since the rest of the charts are for model configurations charts
+			const spec = charts.value[setting.id][0];
+			// Make sure the chart since width of the chart can be too small if charts were small multiple charts.
+			spec.width = chartSize.width;
+			spec.height = chartSize.height;
+			return spec;
+		});
 	return ensembleCharts;
 });
 // ----------------------------
