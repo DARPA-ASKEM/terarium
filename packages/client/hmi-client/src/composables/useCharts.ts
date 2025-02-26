@@ -370,13 +370,13 @@ export function useCharts(
 		const variables = setting.selectedVariables;
 		const dateOptions = getVegaDateOptions(model?.value ?? null, <ModelConfiguration>modelConfig?.value || null);
 		const options: ForecastChartOptions = {
-			title: '',
+			title: setting.title || '',
 			legend: true,
 			width: chartSize.value.width,
 			height: chartSize.value.height,
 			translationMap: chartData.value?.translationMap || {},
-			xAxisTitle: getUnit('_time') || 'Time',
-			yAxisTitle: buildYAxisTitle(variables, getUnit),
+			xAxisTitle: setting.xAxisLabel || getUnit('_time') || 'Time',
+			yAxisTitle: setting.yAxisLabel || buildYAxisTitle(variables, getUnit),
 			dateOptions,
 			colorscheme: [BASE_GREY, setting.primaryColor ?? PRIMARY_COLOR],
 			scale: setting.scale
@@ -393,13 +393,16 @@ export function useCharts(
 		setting.hideInNode = true;
 		const ensembleVarName = setting.selectedVariables[0];
 		const options: ForecastChartOptions = {
-			title: getModelConfigName(<ModelConfiguration[]>modelConfig?.value ?? [], modelConfigId) || ensembleVarName,
+			title:
+				setting.title ||
+				getModelConfigName(<ModelConfiguration[]>modelConfig?.value ?? [], modelConfigId) ||
+				ensembleVarName,
 			legend: true,
 			width: chartSize.value.width,
 			height: chartSize.value.height,
 			translationMap: chartData.value?.translationMap || {},
-			xAxisTitle: '',
-			yAxisTitle: '',
+			xAxisTitle: setting.xAxisLabel || '',
+			yAxisTitle: setting.yAxisLabel || '',
 			autosize: AUTOSIZE.FIT,
 			colorscheme: multiVariable ? CATEGORICAL_SCHEME : [BASE_GREY, setting.primaryColor ?? PRIMARY_COLOR],
 			scale: setting.scale

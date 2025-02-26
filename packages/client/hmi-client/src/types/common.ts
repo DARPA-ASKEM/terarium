@@ -234,6 +234,10 @@ export interface ChartSettingBase {
 	shareYAxis?: boolean;
 	showQuantiles?: boolean;
 	quantiles?: number[];
+	title?: string;
+	xAxisLabel?: string;
+	yAxisLabel?: string;
+	fontSize?: number;
 }
 
 export const ProgrammingLanguageVersion: { [key in ProgrammingLanguage]: string } = {
