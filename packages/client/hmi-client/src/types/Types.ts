@@ -572,6 +572,7 @@ export interface EnsembleCalibrationCiemssRequest {
 export interface EnsembleSimulationCiemssRequest {
     modelConfigs: EnsembleModelConfigs[];
     timespan: TimeSpan;
+    loggingStepSize?: number;
     extra: any;
     engine: string;
 }
