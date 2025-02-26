@@ -78,11 +78,11 @@
 							<div class="label-and-input">
 								<tera-checkbox
 									label="Number of timepoints"
-									:model-value="!isNumberOfTimepointsManual"
+									:model-value="isNumberOfTimepointsManual"
 									@update:model-value="toggleIsNumberOfTimepointsManual"
 								/>
 								<tera-input-number
-									:disabled="isNumberOfTimepointsManual"
+									:disabled="!isNumberOfTimepointsManual"
 									v-model="numberOfTimepoints"
 									inputId="integeronly"
 									:min="1"
