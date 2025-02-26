@@ -96,6 +96,23 @@
 								<input type="color" :value="v.primaryColor ?? ''" @change="onComparisonChange(v.name, $event)" />
 							</template>
 						</tera-chart-settings-item>
+						<Divider />
+					</section>
+					<section v-if="isChartLabelsOptionEnabled" class="items-wrapper">
+						<h5>Chart Labels</h5>
+						<div>
+							<label>Title</label>
+							<tera-input-text placeholder="No title" v-model="chartLabelTitle" />
+						</div>
+						<div>
+							<label>X axis</label>
+							<tera-input-text placeholder="No x axis" v-model="chartLabelXAxis" />
+						</div>
+						<div>
+							<label>Y axis</label>
+							<tera-input-text placeholder="No y axis" v-model="chartLabelYAxis" />
+						</div>
+						<Divider />
 					</section>
 				</div>
 			</div>
@@ -105,10 +122,10 @@
 
 <script setup lang="ts">
 import _, { cloneDeep } from 'lodash';
-import { ref, computed } from 'vue';
+import { ref, computed, watch } from 'vue';
 import Button from 'primevue/button';
 import RadioButton from 'primevue/radiobutton';
-import { ChartSetting, ChartSettingType, ChartSettingComparison } from '@/types/common';
+import { ChartSetting, ChartSettingType, ChartSettingComparison, ChartLabelOptions } from '@/types/common';
 import { ChartAnnotation, ChartAnnotationType } from '@/types/Types';
 import Divider from 'primevue/divider';
 import TeraInputText from '@/components/widgets/tera-input-text.vue';
@@ -128,6 +145,11 @@ const props = defineProps<{
 	 * @param query llm query to generate annotation
 	 */
 	generateAnnotation?: (setting: ChartSetting, query: string) => Promise<ChartAnnotation | null>;
+
+	/**
+	 * Getter function to get chart labels for the active setting.
+	 */
+	getChartLabels?: (setting: ChartSetting) => ChartLabelOptions;
 }>();
 
 const emit = defineEmits(['close', 'update-settings', 'delete-annotation', 'create-annotation']);
@@ -202,6 +224,48 @@ const isColorSelectionEnabled = computed(() => {
 const onColorChange = (event) => {
 	emit('update-settings', { primaryColor: event.target?.value });
 };
+
+// ========== Chart Labels =========
+const ChartLabelsSupportedTypes = [
+	ChartSettingType.VARIABLE,
+	ChartSettingType.VARIABLE_OBSERVABLE,
+	ChartSettingType.VARIABLE_COMPARISON,
+	ChartSettingType.VARIABLE_ENSEMBLE,
+	ChartSettingType.DISTRIBUTION_COMPARISON,
+	ChartSettingType.INTERVENTION
+];
+const isChartLabelsOptionEnabled = computed(() => {
+	if (!props.activeSettings) return false;
+	return ChartLabelsSupportedTypes.includes(props.activeSettings.type);
+});
+
+const chartLabelTitle = ref<string>('');
+const chartLabelXAxis = ref<string>('');
+const chartLabelYAxis = ref<string>('');
+
+const chartLabelsFromSettings = computed(() => props.activeSettings && props.getChartLabels?.(props.activeSettings));
+watch(chartLabelsFromSettings, (computedVal) => {
+	if (!computedVal) return;
+	chartLabelTitle.value = computedVal.title ?? '';
+	chartLabelXAxis.value = computedVal.xAxisTitle ?? '';
+	chartLabelYAxis.value = computedVal.yAxisTitle ?? '';
+});
+
+const CHART_LABEL_UPDATE_DELAY = 1000;
+watch(
+	[chartLabelTitle, chartLabelXAxis, chartLabelYAxis],
+	_.debounce(() => {
+		const existing = chartLabelsFromSettings.value;
+		const updated = {
+			title: chartLabelTitle.value,
+			xAxisTitle: chartLabelXAxis.value,
+			yAxisTitle: chartLabelYAxis.value
+		};
+		if (_.isEqual(existing, updated)) return;
+		emit('update-settings', updated);
+	}, CHART_LABEL_UPDATE_DELAY)
+);
+// =================================
 
 // ========== Chart Annotations =========
 const chartAnnotations = computed(() => {

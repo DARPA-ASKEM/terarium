@@ -4,7 +4,7 @@ import { percentile } from '@/utils/math';
 import { VisualizationSpec } from 'vega-embed';
 import { v4 as uuidv4 } from 'uuid';
 import { ChartAnnotation, ChartAnnotationType, FunmanInterval } from '@/types/Types';
-import { CalendarDateType, SensitivityChartType } from '@/types/common';
+import { CalendarDateType, ChartLabelOptions, SensitivityChartType } from '@/types/common';
 import { countDigits, fixPrecisionError } from '@/utils/number';
 import { format } from 'd3';
 import { BinParams } from 'vega-lite/build/src/bin';
@@ -64,12 +64,9 @@ export enum AUTOSIZE {
 	NONE = 'none'
 }
 
-export interface BaseChartOptions {
-	title?: string;
+export interface BaseChartOptions extends ChartLabelOptions {
 	width: number;
 	height: number;
-	xAxisTitle: string;
-	yAxisTitle: string;
 	legend?: boolean;
 	autosize?: AUTOSIZE;
 	dateOptions?: DateOptions;
