@@ -17,7 +17,7 @@ import software.uncharted.terarium.hmiserver.utils.rebac.Schema;
  *  }
  *
  *  The above annotation will check if the current user has access to the project with the id specified in the
- *  {@link software.uncharted.pantera.model.project.Project} object passed to the method.  If the user does not have
+ *  {@link software.uncharted.terarium.hmiserver.models.dataservice.project.Project} object passed to the method.  If the user does not have
  *  access, an exception will be thrown.  It can be considered equivalent to the following code:
  *
  *  public void doSomething(Project project) {
