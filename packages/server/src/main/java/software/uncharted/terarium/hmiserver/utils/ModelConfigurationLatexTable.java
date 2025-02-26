@@ -26,7 +26,7 @@ public class ModelConfigurationLatexTable {
 			latex.append("\\caption{Initial expressions of the model state variables}\n");
 			latex.append("\\begin{tabular}{cccc>{\\small}m{8em}>{\\small}m{4em}}\n");
 			latex.append("\\toprule\n");
-			latex.append("ID & Name & Expression & Units & Description & Source \\\n");
+			latex.append("ID & Name & Expression & Units & Description & Source \\\\\n");
 			latex.append("\\midrule\n");
 
 			for (InitialSemantic initial : modelConfiguration.getInitialSemanticList()) {
@@ -53,9 +53,14 @@ public class ModelConfigurationLatexTable {
 
 				// Add the row to the table
 				latex.append(
-					String.format("$%s$ & %s & %s & %s & %s & %s \\\\\n", id, name, expression, units, description, source)
+					String.format("%s & %s & %s & %s & %s & %s \\\\\n", id, name, expression, units, description, source)
 				);
+				latex.append("\\hline\n");
 			}
+
+			// remove the last \\hline
+			latex.delete(latex.length() - 8, latex.length());
+			latex.append("\n");
 
 			latex.append("\\bottomrule\n");
 			latex.append("\\end{tabular}\n");
@@ -69,7 +74,7 @@ public class ModelConfigurationLatexTable {
 			latex.append("\\caption{Model parameters}\n");
 			latex.append("\\begin{tabular}{cccc>{\\small}m{8em}>{\\small}m{4em}}\n");
 			latex.append("\\toprule\n");
-			latex.append("ID & Name & Value & Units & Description & Source \\\n");
+			latex.append("ID & Name & Value & Units & Description & Source \\\\\n");
 			latex.append("\\midrule\n");
 
 			for (ParameterSemantic param : modelConfiguration.getParameterSemanticList()) {
@@ -94,7 +99,7 @@ public class ModelConfigurationLatexTable {
 					units = escapeLatex(parameter.getUnits().getExpression());
 
 					// Get the value based on the distribution type
-					if (parameter.getDistribution().getParameters() != null) {
+					if (parameter.getDistribution() != null) {
 						final ModelDistribution distribution = parameter.getDistribution();
 
 						if (Objects.equals(distribution.getType(), "Constant")) {
@@ -113,10 +118,13 @@ public class ModelConfigurationLatexTable {
 				}
 
 				// Add the row to the table
-				latex.append(
-					String.format("$%s$ & %s & %s & %s & %s & %s \\\\\n", id, name, value, units, description, source)
-				);
+				latex.append(String.format("%s & %s & %s & %s & %s & %s \\\\\n", id, name, value, units, description, source));
+				latex.append("\\hline\n");
 			}
+
+			// remove the last \\hline\n
+			latex.delete(latex.length() - 8, latex.length());
+			latex.append("\n");
 
 			latex.append("\\bottomrule\n");
 			latex.append("\\end{tabular}\n");
@@ -134,6 +142,9 @@ public class ModelConfigurationLatexTable {
 	 * Escapes special LaTeX characters
 	 */
 	private static String escapeLatex(String input) {
+		if (input == null) {
+			return "";
+		}
 		return input
 			.replace("\\", "\\\\")
 			.replace("_", "\\_")
