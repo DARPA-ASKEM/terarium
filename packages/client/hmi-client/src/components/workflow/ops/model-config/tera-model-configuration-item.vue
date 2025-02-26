@@ -123,7 +123,7 @@ const onDeleteConfiguration = () => {
 
 // Watch for viewLatexTable changes and fetch the latexTable value
 watch(viewLatexTable, async (value) => {
-	if (isEmpty(latexTable.value) && value) {
+	if (value) {
 		latexTable.value = await getModelConfigurationAsLatexTable(props.configuration.id);
 	}
 });
