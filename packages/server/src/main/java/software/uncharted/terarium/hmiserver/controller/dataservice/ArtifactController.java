@@ -1,6 +1,5 @@
 package software.uncharted.terarium.hmiserver.controller.dataservice;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -32,15 +31,14 @@ import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
+import software.uncharted.terarium.hmiserver.annotations.HasProjectAccess;
 import software.uncharted.terarium.hmiserver.configuration.Config;
 import software.uncharted.terarium.hmiserver.models.dataservice.Artifact;
 import software.uncharted.terarium.hmiserver.models.dataservice.PresignedURL;
 import software.uncharted.terarium.hmiserver.models.dataservice.ResponseDeleted;
 import software.uncharted.terarium.hmiserver.proxies.jsdelivr.JsDelivrProxy;
 import software.uncharted.terarium.hmiserver.security.Roles;
-import software.uncharted.terarium.hmiserver.service.CurrentUserService;
 import software.uncharted.terarium.hmiserver.service.data.ArtifactService;
-import software.uncharted.terarium.hmiserver.service.data.ProjectService;
 import software.uncharted.terarium.hmiserver.utils.rebac.Schema;
 
 @RequestMapping("/artifacts")
@@ -55,14 +53,10 @@ public class ArtifactController {
 
 	final JsDelivrProxy gitHubProxy;
 
-	final ObjectMapper objectMapper;
-
-	private final ProjectService projectService;
-	private final CurrentUserService currentUserService;
-
 	@PostMapping
 	@Secured(Roles.USER)
 	@Operation(summary = "Creates a new artifact")
+	@HasProjectAccess(level = Schema.Permission.WRITE)
 	@ApiResponses(
 		value = {
 			@ApiResponse(
@@ -80,10 +74,6 @@ public class ArtifactController {
 		@RequestBody final Artifact artifact,
 		@RequestParam(name = "project-id", required = false) final UUID projectId
 	) {
-		final Schema.Permission permission = projectService.checkPermissionCanWrite(
-			currentUserService.get().getId(),
-			projectId
-		);
 		try {
 			return ResponseEntity.status(HttpStatus.CREATED).body(artifactService.createAsset(artifact, projectId));
 		} catch (final Exception e) {
@@ -96,6 +86,7 @@ public class ArtifactController {
 	@GetMapping("/{id}")
 	@Secured(Roles.USER)
 	@Operation(summary = "Gets an artifact by ID")
+	@HasProjectAccess
 	@ApiResponses(
 		value = {
 			@ApiResponse(
@@ -114,10 +105,6 @@ public class ArtifactController {
 		@PathVariable("id") final UUID artifactId,
 		@RequestParam(name = "project-id", required = false) final UUID projectId
 	) {
-		final Schema.Permission permission = projectService.checkPermissionCanRead(
-			currentUserService.get().getId(),
-			projectId
-		);
 		try {
 			final Optional<Artifact> artifact = artifactService.getAsset(artifactId);
 			return artifact.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
@@ -131,6 +118,7 @@ public class ArtifactController {
 	@PutMapping("/{id}")
 	@Secured(Roles.USER)
 	@Operation(summary = "Updates an artifact")
+	@HasProjectAccess(level = Schema.Permission.WRITE)
 	@ApiResponses(
 		value = {
 			@ApiResponse(
@@ -150,11 +138,6 @@ public class ArtifactController {
 		@RequestBody final Artifact artifact,
 		@RequestParam(name = "project-id", required = false) final UUID projectId
 	) {
-		final Schema.Permission permission = projectService.checkPermissionCanWrite(
-			currentUserService.get().getId(),
-			projectId
-		);
-
 		try {
 			artifact.setId(artifactId);
 			final Optional<Artifact> updated = artifactService.updateAsset(artifact, projectId);
@@ -169,6 +152,7 @@ public class ArtifactController {
 	@DeleteMapping("/{id}")
 	@Secured(Roles.USER)
 	@Operation(summary = "Deletes an artifact")
+	@HasProjectAccess(level = Schema.Permission.WRITE)
 	@ApiResponses(
 		value = {
 			@ApiResponse(
@@ -186,11 +170,6 @@ public class ArtifactController {
 		@PathVariable("id") final UUID artifactId,
 		@RequestParam(name = "project-id", required = false) final UUID projectId
 	) {
-		final Schema.Permission permission = projectService.checkPermissionCanWrite(
-			currentUserService.get().getId(),
-			projectId
-		);
-
 		try {
 			artifactService.deleteAsset(artifactId, projectId);
 			return ResponseEntity.ok(new ResponseDeleted("artifact", artifactId));

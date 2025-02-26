@@ -33,7 +33,7 @@ import software.uncharted.terarium.hmiserver.utils.rebac.Schema;
 @Target({ ElementType.METHOD, ElementType.TYPE })
 @Retention(RetentionPolicy.RUNTIME)
 public @interface HasProjectAccess {
-	String value() default "#id";
+	String value() default "#projectId";
 
 	Schema.Permission level() default Schema.Permission.READ;
 //TODO: Migrate this from Pantera or make decision to use our existing Schema.Permission. Update comment if needed. -dvince
