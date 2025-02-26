@@ -9,6 +9,8 @@ import {
 	type TaskResponse,
 	TaskStatus
 } from '@/types/Types';
+import { BaseState, WorkflowNode } from '@/types/workflow';
+import { DocumentOperationState } from '@/components/workflow/ops/document/document-operation';
 
 export function useClientEvent(
 	eventType: ClientEventType | ClientEventType[],
@@ -24,7 +26,7 @@ export function useClientEvent(
 }
 
 // accepts a state and key to a string[] to update with in progress task ids
-export function createTaskListClientEventHandler(node, taskIdsKey: string) {
+export function createTaskListClientEventHandler(node: WorkflowNode<BaseState>, taskIdsKey: string) {
 	const { state } = node;
 	const taskIds = state[taskIdsKey];
 	return async (event: ClientEvent<TaskResponse>) => {
@@ -35,7 +37,7 @@ export function createTaskListClientEventHandler(node, taskIdsKey: string) {
 	};
 }
 
-export function createTaskProgressClientEventHandler(node, progressKey: string) {
+export function createTaskProgressClientEventHandler(node: WorkflowNode<DocumentOperationState>, progressKey: string) {
 	const { state } = node;
 	return async (event: ClientEvent<StatusUpdate<DocumentExtractionStatus>>) => {
 		if (event.data.data.documentId === state.documentId) {
