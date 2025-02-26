@@ -75,8 +75,7 @@ const enrichEventHandler = async (event: ClientEvent<TaskResponse>) => {
 		emit('finished-job');
 	}
 };
-useClientEvent(ClientEventType.TaskGollmEnrichModel, enrichEventHandler);
-useClientEvent(ClientEventType.TaskGollmEnrichDataset, enrichEventHandler);
+useClientEvent([ClientEventType.TaskGollmEnrichDataset, ClientEventType.TaskGollmEnrichModel], enrichEventHandler);
 
 const selectedResourceId = ref<string>('');
 const relatedDocuments = ref<Array<{ name: string; id: string }>>([]);
