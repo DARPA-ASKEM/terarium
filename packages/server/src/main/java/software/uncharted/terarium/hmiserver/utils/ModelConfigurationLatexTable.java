@@ -97,23 +97,23 @@ public class ModelConfigurationLatexTable {
 					name = escapeLatex(parameter.getName());
 					description = escapeLatex(parameter.getDescription());
 					units = escapeLatex(parameter.getUnits().getExpression());
+				}
 
-					// Get the value based on the distribution type
-					if (parameter.getDistribution() != null) {
-						final ModelDistribution distribution = parameter.getDistribution();
+				// Get the value based on the distribution type
+				if (param.getDistribution() != null) {
+					final ModelDistribution distribution = param.getDistribution();
 
-						if (Objects.equals(distribution.getType(), "Constant")) {
-							value = distribution.getParameters().get("value").toString();
-						}
+					if (Objects.equals(distribution.getType(), "Constant")) {
+						value = distribution.getParameters().get("value").toString();
+					}
 
-						if (Objects.equals(distribution.getType(), "StandardUniform1")) {
-							value =
-								"Uniform(min=" +
-								distribution.getParameters().get("minimum") +
-								", max=" +
-								distribution.getParameters().get("maximum") +
-								")";
-						}
+					if (Objects.equals(distribution.getType(), "StandardUniform1")) {
+						value =
+							"Uniform(min=" +
+							distribution.getParameters().get("minimum") +
+							", max=" +
+							distribution.getParameters().get("maximum") +
+							")";
 					}
 				}
 
