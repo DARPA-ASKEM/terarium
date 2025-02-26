@@ -28,7 +28,7 @@
 
 		<!-- Original chart control for non-comparison charts -->
 		<tera-chart-control
-			v-if="type !== ChartSettingType.VARIABLE_COMPARISON"
+			v-if="type !== ChartSettingType.VARIABLE_COMPARISON && type !== ChartSettingType.SENSITIVITY"
 			:chart-config="{
 				selectedRun: 'fixme',
 				selectedVariable: selectedOptions ?? []
@@ -44,39 +44,53 @@
 		<!-- Sensitivity analysis settings -->
 		<template v-if="type === ChartSettingType.SENSITIVITY && sensitivityOptions">
 			<!--FIXME: It might be better to move these inside the panel so that they can be controlled at an individual chart settings level -->
-			<label class="mt-2" :class="{ disabled: _.isEmpty(selectedOptions) }">Select parameter(s) of interest</label>
-			<MultiSelect
-				:disabled="_.isEmpty(selectedOptions)"
-				placeholder="Select parameters"
-				:model-value="sensitivityOptions.selectedInputVariables"
-				:options="sensitivityOptions.inputOptions"
-				@change="onUpdateSensitivitySettings('selectedInputVariables', $event.value, sensitivityOptions)"
-				filter
-			>
-				<template v-slot:value>
-					<template v-for="(variable, index) in sensitivityOptions.selectedInputVariables" :key="index">
-						<template v-if="index > 0">,&nbsp;</template>
-						<span> {{ variable }} </span>
-					</template>
-				</template>
-			</MultiSelect>
 
-			<label class="mt-2" :class="{ disabled: isEmpty(selectedOptions) }">Select sensitivity method</label>
-			<Dropdown
-				:disabled="_.isEmpty(selectedOptions)"
-				placeholder="Select method"
-				:model-value="sensitivityOptions.method"
-				:options="Object.values(SensitivityMethod)"
-				@change="onUpdateSensitivitySettings('method', $event.value, sensitivityOptions)"
-			/>
-			<template v-if="sensitivityOptions.method === SensitivityMethod.TIMEPOINT">
-				<label class="mt-2" :class="{ disabled: isEmpty(selectedOptions) }">Select time slice of interest</label>
+			<div class="mad-libs-container">
+				Consider how sensitive the
+				<Dropdown
+					:disabled="_.isEmpty(selectedOptions)"
+					placeholder="Select method"
+					:model-value="sensitivityOptions.method"
+					:options="Object.values(SensitivityMethod)"
+					@change="onUpdateSensitivitySettings('method', $event.value, sensitivityOptions)"
+				/>
 				<tera-input-number
+					v-if="sensitivityOptions.method === SensitivityMethod.TIMEPOINT"
 					:disabled="_.isEmpty(selectedOptions)"
 					:model-value="sensitivityOptions.timepoint"
+					auto-width
 					@update:model-value="onUpdateSensitivitySettings('timepoint', $event, sensitivityOptions)"
 				/>
-			</template>
+				of the outcome(s) of interest
+				<tera-chart-control
+					class="overflow-hidden"
+					:chart-config="{
+						selectedRun: 'fixme',
+						selectedVariable: selectedOptions ?? []
+					}"
+					:multi-select="true"
+					:show-remove-button="false"
+					:variables="selectOptions"
+					@configuration-change="$emit('selection-change', $event.selectedVariable, type)"
+				/>
+				is to the model parameter(s)
+				<MultiSelect
+					class="overflow-hidden"
+					:disabled="_.isEmpty(selectedOptions)"
+					placeholder="Select parameters"
+					:model-value="sensitivityOptions.selectedInputVariables"
+					:options="sensitivityOptions.inputOptions"
+					@change="onUpdateSensitivitySettings('selectedInputVariables', $event.value, sensitivityOptions)"
+					filter
+				>
+					<template v-slot:value>
+						<template v-for="(variable, index) in sensitivityOptions.selectedInputVariables" :key="index">
+							<template v-if="index > 0">,&nbsp;</template>
+							<span> {{ variable }} </span>
+						</template>
+					</template>
+				</MultiSelect>
+			</div>
 			<div v-for="option in sensitivityChartOptions" class="flex align-items-center gap-2 mt-1" :key="option.value">
 				<RadioButton
 					:disabled="_.isEmpty(selectedOptions)"
@@ -213,5 +227,30 @@ const onUpdateSensitivitySettings = (key: string, value: any, sensitivityOptions
 .actions {
 	display: flex;
 	gap: var(--gap-2);
+}
+
+.mad-libs-container {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: var(--gap-2);
+	border: 1px solid var(--gray-300);
+	border-radius: var(--border-radius);
+	padding: var(--gap-2);
+	border-left: 4px solid var(--primary-color);
+	background: var(--surface-0);
+	box-shadow: 0 2px 4px -1px rgba(0, 0, 0, 0.08);
+	overflow: hidden;
+}
+
+:deep(.p-multiselect),
+:deep(.p-dropdown) {
+	.p-multiselect-label,
+	.p-dropdown-label {
+		padding: var(--gap-1);
+		white-space: nowrap;
+		overflow: hidden;
+		text-overflow: ellipsis;
+	}
 }
 </style>
