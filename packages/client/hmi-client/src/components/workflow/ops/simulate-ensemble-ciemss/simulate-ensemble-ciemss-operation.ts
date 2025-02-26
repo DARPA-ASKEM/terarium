@@ -37,7 +37,7 @@ export interface SimulateEnsembleCiemssOperationState extends BaseState {
 	method: CiemssMethodOptions;
 	stepSize: number;
 	numberOfTimepoints: number;
-	calculateNumberOfTimepoints: boolean;
+	isNumberOfTimepointsManual: boolean;
 	inProgressForecastId: string;
 	forecastId: string; // Completed run's Id
 	errorMessage: { name: string; value: string; traceback: string };
@@ -64,7 +64,7 @@ export const SimulateEnsembleCiemssOperation: Operation = {
 			method: normalValues.method,
 			stepSize: 1,
 			numberOfTimepoints: 90,
-			calculateNumberOfTimepoints: true,
+			isNumberOfTimepointsManual: false,
 			inProgressForecastId: '',
 			forecastId: '',
 			errorMessage: { name: '', value: '', traceback: '' }

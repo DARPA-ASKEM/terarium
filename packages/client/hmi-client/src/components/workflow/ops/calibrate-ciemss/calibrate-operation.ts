@@ -29,7 +29,7 @@ export interface CalibrationOperationStateCiemss extends BaseState {
 	stepSize: number;
 	learningRate: number;
 	numberOfTimepoints: number;
-	calculateNumberOfTimepoints: boolean;
+	isNumberOfTimepointsManual: boolean;
 }
 
 export const CalibrationOperationCiemss: Operation = {
@@ -75,7 +75,7 @@ export const CalibrationOperationCiemss: Operation = {
 			stepSize: 1,
 			learningRate: 0.03,
 			numberOfTimepoints: 90,
-			calculateNumberOfTimepoints: true
+			isNumberOfTimepointsManual: false
 		};
 		return init;
 	}

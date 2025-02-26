@@ -78,11 +78,11 @@
 							<div class="label-and-input">
 								<tera-checkbox
 									label="Number of timepoints"
-									:model-value="!calculateNumberOfTimepoints"
-									@update:model-value="toggleCalculateNumberOfTimepoints"
+									:model-value="!isNumberOfTimepointsManual"
+									@update:model-value="toggleIsNumberOfTimepointsManual"
 								/>
 								<tera-input-number
-									:disabled="calculateNumberOfTimepoints"
+									:disabled="isNumberOfTimepointsManual"
 									v-model="numberOfTimepoints"
 									inputId="integeronly"
 									:min="1"
@@ -601,7 +601,7 @@ const numSamples = ref<number>(props.node.state.numSamples);
 const solverStepSize = ref<number>(props.node.state.solverStepSize);
 const method = ref<CiemssMethodOptions>(props.node.state.method);
 const numberOfTimepoints = ref<number>(props.node.state.numberOfTimepoints);
-const calculateNumberOfTimepoints = ref<boolean>(props.node.state.calculateNumberOfTimepoints);
+const isNumberOfTimepointsManual = ref<boolean>(props.node.state.isNumberOfTimepointsManual);
 
 enum OutputView {
 	Charts = 'Charts',
@@ -742,8 +742,8 @@ const normalizeEquations = computed(() => {
 	return equations;
 });
 
-const toggleCalculateNumberOfTimepoints = () => {
-	calculateNumberOfTimepoints.value = !calculateNumberOfTimepoints.value;
+const toggleIsNumberOfTimepointsManual = () => {
+	isNumberOfTimepointsManual.value = !isNumberOfTimepointsManual.value;
 	updateState();
 };
 
@@ -753,8 +753,8 @@ const updateState = () => {
 	state.numSamples = numSamples.value;
 	state.method = method.value;
 	state.solverStepSize = solverStepSize.value;
-	state.calculateNumberOfTimepoints = calculateNumberOfTimepoints.value;
-	if (calculateNumberOfTimepoints.value) {
+	state.isNumberOfTimepointsManual = isNumberOfTimepointsManual.value;
+	if (isNumberOfTimepointsManual.value) {
 		numberOfTimepoints.value = timespan.value.end - timespan.value.start;
 	}
 	state.numberOfTimepoints = numberOfTimepoints.value;

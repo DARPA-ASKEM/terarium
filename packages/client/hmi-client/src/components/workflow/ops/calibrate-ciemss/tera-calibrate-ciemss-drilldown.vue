@@ -143,11 +143,11 @@
 							<div class="label-and-input">
 								<tera-checkbox
 									label="Number of timepoints"
-									:model-value="!knobs.calculateNumberOfTimepoints"
-									@update:model-value="toggleCalculateNumberOfTimepoints"
+									:model-value="knobs.isNumberOfTimepointsManual"
+									@update:model-value="toggleIsNumberOfTimepointsManual"
 								/>
 								<tera-input-number
-									:disabled="knobs.calculateNumberOfTimepoints"
+									:disabled="!knobs.isNumberOfTimepointsManual"
 									v-model="knobs.numberOfTimepoints"
 									inputId="integeronly"
 									:min="1"
@@ -608,7 +608,7 @@ interface BasicKnobs {
 	learningRate: number;
 	method: CiemssMethodOptions;
 	timestampColName: string;
-	calculateNumberOfTimepoints: boolean;
+	isNumberOfTimepointsManual: boolean;
 	numberOfTimepoints: number;
 }
 
@@ -620,7 +620,7 @@ const knobs = ref<BasicKnobs>({
 	learningRate: props.node.state.learningRate ?? 0.1,
 	method: props.node.state.method ?? CiemssMethodOptions.dopri5,
 	timestampColName: props.node.state.timestampColName ?? '',
-	calculateNumberOfTimepoints: props.node.state.calculateNumberOfTimepoints,
+	isNumberOfTimepointsManual: props.node.state.isNumberOfTimepointsManual,
 	numberOfTimepoints: props.node.state.numberOfTimepoints
 });
 
@@ -726,8 +726,8 @@ const showOutputSection = computed(
 		selectedOutputId.value
 );
 
-const toggleCalculateNumberOfTimepoints = () => {
-	knobs.value.calculateNumberOfTimepoints = !knobs.value.calculateNumberOfTimepoints;
+const toggleIsNumberOfTimepointsManual = () => {
+	knobs.value.isNumberOfTimepointsManual = !knobs.value.isNumberOfTimepointsManual;
 };
 
 const setPresetValues = (data: CiemssPresetTypes) => {
@@ -1058,7 +1058,7 @@ const initialize = async () => {
 		learningRate: state.learningRate ?? 0.1,
 		method: state.method ?? CiemssMethodOptions.dopri5,
 		timestampColName: state.timestampColName ?? '',
-		calculateNumberOfTimepoints: state.calculateNumberOfTimepoints,
+		isNumberOfTimepointsManual: state.isNumberOfTimepointsManual,
 		numberOfTimepoints: state.numberOfTimepoints
 	};
 
@@ -1125,8 +1125,8 @@ watch(
 		state.method = knobs.value.method;
 		state.numIterations = knobs.value.numIterations;
 		state.learningRate = knobs.value.learningRate;
-		state.calculateNumberOfTimepoints = knobs.value.calculateNumberOfTimepoints;
-		if (knobs.value.calculateNumberOfTimepoints) {
+		state.isNumberOfTimepointsManual = knobs.value.isNumberOfTimepointsManual;
+		if (knobs.value.isNumberOfTimepointsManual) {
 			knobs.value.numberOfTimepoints = knobs.value.endTime;
 		}
 		state.numberOfTimepoints = knobs.value.numberOfTimepoints;

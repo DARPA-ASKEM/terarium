@@ -120,11 +120,11 @@
 							<div class="label-and-input">
 								<tera-checkbox
 									label="Number of timepoints"
-									:model-value="!knobs.calculateNumberOfTimepoints"
-									@update:model-value="toggleCalculateNumberOfTimepoints"
+									:model-value="knobs.isNumberOfTimepointsManual"
+									@update:model-value="toggleIsNumberOfTimepointsManual"
 								/>
 								<tera-input-number
-									:disabled="knobs.calculateNumberOfTimepoints"
+									:disabled="!knobs.isNumberOfTimepointsManual"
 									v-model="knobs.numberOfTimepoints"
 									inputId="integeronly"
 									:min="1"
@@ -560,7 +560,7 @@ interface BasicKnobs {
 	optimizationRunId: string;
 	constraintGroups: Criterion[];
 	interventionPolicyGroups: InterventionPolicyGroupForm[];
-	calculateNumberOfTimepoints: boolean;
+	isNumberOfTimepointsManual: boolean;
 	numberOfTimepoints: number;
 }
 
@@ -576,7 +576,7 @@ const knobs = ref<BasicKnobs>({
 	optimizationRunId: props.node.state.optimizationRunId ?? '',
 	constraintGroups: props.node.state.constraintGroups ?? [],
 	interventionPolicyGroups: props.node.state.interventionPolicyGroups ?? [],
-	calculateNumberOfTimepoints: props.node.state.calculateNumberOfTimepoints,
+	isNumberOfTimepointsManual: props.node.state.isNumberOfTimepointsManual,
 	numberOfTimepoints: props.node.state.numberOfTimepoints
 });
 
@@ -702,8 +702,8 @@ const modelConfiguration = ref<ModelConfiguration | null>(null);
 
 const showAdditionalOptions = ref(true);
 
-const toggleCalculateNumberOfTimepoints = () => {
-	knobs.value.calculateNumberOfTimepoints = !knobs.value.calculateNumberOfTimepoints;
+const toggleIsNumberOfTimepointsManual = () => {
+	knobs.value.isNumberOfTimepointsManual = !knobs.value.isNumberOfTimepointsManual;
 };
 
 const onSelection = (id: string) => {
@@ -1096,8 +1096,8 @@ watch(
 		state.optimizationRunId = knobs.value.optimizationRunId;
 		state.constraintGroups = knobs.value.constraintGroups;
 		state.interventionPolicyGroups = knobs.value.interventionPolicyGroups;
-		state.calculateNumberOfTimepoints = knobs.value.calculateNumberOfTimepoints;
-		if (knobs.value.calculateNumberOfTimepoints) {
+		state.isNumberOfTimepointsManual = knobs.value.isNumberOfTimepointsManual;
+		if (knobs.value.isNumberOfTimepointsManual) {
 			knobs.value.numberOfTimepoints = knobs.value.endTime;
 		}
 		state.numberOfTimepoints = knobs.value.numberOfTimepoints;

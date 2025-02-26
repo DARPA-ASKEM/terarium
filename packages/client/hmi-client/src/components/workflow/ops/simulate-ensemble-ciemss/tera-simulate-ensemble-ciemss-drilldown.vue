@@ -161,13 +161,11 @@
 									<div class="label-and-input">
 										<tera-checkbox
 											label="Number of timepoints"
-											:model-value="!knobs.calculateNumberOfTimepoints"
-											@update:model-value="toggleCalculateNumberOfTimepoints"
+											:model-value="knobs.isNumberOfTimepointsManual"
+											@update:model-value="toggleIsNumberOfTimepointsManual"
 										/>
 										<tera-input-number
-											id="logging-step-size"
-											class="common-input-height"
-											:disabled="knobs.calculateNumberOfTimepoints"
+											:disabled="!knobs.isNumberOfTimepointsManual"
 											v-model="knobs.numberOfTimepoints"
 											inputId="integeronly"
 											:min="1"
@@ -364,7 +362,7 @@ interface BasicKnobs {
 	method: CiemssMethodOptions;
 	stepSize: number;
 	endTime: number;
-	calculateNumberOfTimepoints: boolean;
+	isNumberOfTimepointsManual: boolean;
 	numberOfTimepoints: number;
 }
 
@@ -375,7 +373,7 @@ const knobs = ref<BasicKnobs>({
 	method: props.node.state.method,
 	stepSize: props.node.state.stepSize,
 	endTime: props.node.state.endTime,
-	calculateNumberOfTimepoints: props.node.state.calculateNumberOfTimepoints,
+	isNumberOfTimepointsManual: props.node.state.isNumberOfTimepointsManual,
 	numberOfTimepoints: props.node.state.numberOfTimepoints
 });
 
@@ -477,8 +475,8 @@ const setPresetValues = (data: CiemssPresetTypes) => {
 	}
 };
 
-const toggleCalculateNumberOfTimepoints = () => {
-	knobs.value.calculateNumberOfTimepoints = !knobs.value.calculateNumberOfTimepoints;
+const toggleIsNumberOfTimepointsManual = () => {
+	knobs.value.isNumberOfTimepointsManual = !knobs.value.isNumberOfTimepointsManual;
 };
 
 const addMapping = () => {
@@ -622,8 +620,8 @@ watch(
 		state.numSamples = knobs.value.numSamples;
 		state.method = knobs.value.method;
 		state.stepSize = knobs.value.stepSize;
-		state.calculateNumberOfTimepoints = knobs.value.calculateNumberOfTimepoints;
-		if (knobs.value.calculateNumberOfTimepoints) {
+		state.isNumberOfTimepointsManual = knobs.value.isNumberOfTimepointsManual;
+		if (knobs.value.isNumberOfTimepointsManual) {
 			knobs.value.numberOfTimepoints = knobs.value.endTime;
 		}
 		state.numberOfTimepoints = knobs.value.numberOfTimepoints;

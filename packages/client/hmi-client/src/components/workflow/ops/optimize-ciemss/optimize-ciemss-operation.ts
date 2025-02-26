@@ -62,7 +62,7 @@ export interface OptimizeCiemssOperationState extends BaseState {
 	maxiter: number;
 	maxfeval: number;
 	numberOfTimepoints: number;
-	calculateNumberOfTimepoints: boolean;
+	isNumberOfTimepointsManual: boolean;
 	// Intervention policies
 	interventionPolicyId: string; // Used to determine if we need to reset the InterventionPolicyGroupForm.
 	interventionPolicyGroups: InterventionPolicyGroupForm[];
@@ -150,7 +150,7 @@ export const OptimizeCiemssOperation: Operation = {
 			maxiter: 5,
 			maxfeval: 25,
 			numberOfTimepoints: 90,
-			calculateNumberOfTimepoints: true,
+			isNumberOfTimepointsManual: false,
 			interventionPolicyId: '',
 			interventionPolicyGroups: [],
 			constraintGroups: [defaultCriterion],

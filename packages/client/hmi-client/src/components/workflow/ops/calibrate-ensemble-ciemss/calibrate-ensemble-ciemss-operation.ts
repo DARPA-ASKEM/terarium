@@ -62,7 +62,7 @@ export interface CalibrateEnsembleCiemssOperationState
 	preForecastId: string;
 	currentProgress: number;
 	numberOfTimepoints: number;
-	calculateNumberOfTimepoints: boolean;
+	isNumberOfTimepointsManual: boolean;
 }
 
 export const CalibrateEnsembleCiemssOperation: Operation = {
@@ -105,7 +105,7 @@ export const CalibrateEnsembleCiemssOperation: Operation = {
 			errorMessage: { name: '', value: '', traceback: '' },
 			currentProgress: 0,
 			numberOfTimepoints: 90,
-			calculateNumberOfTimepoints: true
+			isNumberOfTimepointsManual: false
 		};
 		return init;
 	}
