@@ -5,7 +5,7 @@
 			<div style="height: 150px; max-height: 150px; overflow-y: scroll; border: 1px solid #bbb; margin: 0.5rem">
 				<table style="width: 100%">
 					<tr v-for="(log, idx) in errors" :key="idx" style="border: 1px solid #ddd">
-						<td :class="[log.type]" style="width: 6rem">{{ log.type }}</td>
+						<td :class="[log.severity]" style="width: 6rem">{{ log.type }}</td>
 						<td>{{ log.content }}</td>
 					</tr>
 				</table>
