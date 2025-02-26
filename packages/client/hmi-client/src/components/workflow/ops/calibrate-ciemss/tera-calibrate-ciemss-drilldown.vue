@@ -127,6 +127,7 @@
 								:start-date="modelConfig.temporalContext"
 								:calendar-settings="getCalendarSettingsFromModel(model)"
 								v-model="knobs.endTime"
+								@update:model-value="updateState"
 							/>
 						</div>
 						<div class="spacer m-2" />
@@ -168,6 +169,7 @@
 										:disabled="![CiemssMethodOptions.rk4, CiemssMethodOptions.euler].includes(knobs.method)"
 										:min="0"
 										v-model="knobs.stepSize"
+										@update:model-value="updateState"
 									/>
 								</div>
 							</div>
@@ -202,10 +204,29 @@
 									<label>Optimizer method</label>
 									<tera-input-text disabled model-value="ADAM" />
 								</div>
+								<div class="label-and-input">
+									<label>Calculate number of timepoints</label>
+									<tera-checkbox
+										label=""
+										:model-value="knobs.calculateNumberOfTimepoints"
+										@update:model-value="toggleCalculateNumberOfTimepoints"
+									/>
+								</div>
+								<div class="label-and-input">
+									<label>Number of timepoints</label>
+									<tera-input-number
+										id="logging-step-size"
+										class="common-input-height"
+										:disabled="knobs.calculateNumberOfTimepoints"
+										v-model="knobs.numberOfTimepoints"
+										inputId="integeronly"
+										:min="1"
+										@update:model-value="updateState"
+									/>
+								</div>
 							</div>
 						</div>
 					</section>
-
 					<section v-if="interventionPolicy && model" class="form-section">
 						<h5>Intervention Policies</h5>
 						<tera-intervention-summary-card
@@ -603,6 +624,8 @@ interface BasicKnobs {
 	learningRate: number;
 	method: CiemssMethodOptions;
 	timestampColName: string;
+	calculateNumberOfTimepoints: boolean;
+	numberOfTimepoints: number;
 }
 
 const knobs = ref<BasicKnobs>({
@@ -612,7 +635,9 @@ const knobs = ref<BasicKnobs>({
 	stepSize: props.node.state.stepSize ?? 1,
 	learningRate: props.node.state.learningRate ?? 0.1,
 	method: props.node.state.method ?? CiemssMethodOptions.dopri5,
-	timestampColName: props.node.state.timestampColName ?? ''
+	timestampColName: props.node.state.timestampColName ?? '',
+	calculateNumberOfTimepoints: props.node.state.calculateNumberOfTimepoints,
+	numberOfTimepoints: props.node.state.numberOfTimepoints
 });
 
 const presetType = computed(() => {
@@ -717,12 +742,22 @@ const showOutputSection = computed(
 		selectedOutputId.value
 );
 
+const toggleCalculateNumberOfTimepoints = () => {
+	knobs.value.calculateNumberOfTimepoints = !knobs.value.calculateNumberOfTimepoints;
+	updateState();
+};
+
 const updateState = () => {
 	const state = cloneDeep(props.node.state);
 	state.numSamples = knobs.value.numSamples;
 	state.method = knobs.value.method;
 	state.numIterations = knobs.value.numIterations;
 	state.learningRate = knobs.value.learningRate;
+	state.calculateNumberOfTimepoints = knobs.value.calculateNumberOfTimepoints;
+	if (knobs.value.calculateNumberOfTimepoints) {
+		knobs.value.numberOfTimepoints = knobs.value.endTime;
+	}
+	state.numberOfTimepoints = knobs.value.numberOfTimepoints;
 	emit('update-state', state);
 };
 
@@ -1053,7 +1088,9 @@ const initialize = async () => {
 		stepSize: state.stepSize ?? 1,
 		learningRate: state.learningRate ?? 0.1,
 		method: state.method ?? CiemssMethodOptions.dopri5,
-		timestampColName: state.timestampColName ?? ''
+		timestampColName: state.timestampColName ?? '',
+		calculateNumberOfTimepoints: state.calculateNumberOfTimepoints,
+		numberOfTimepoints: state.numberOfTimepoints
 	};
 
 	// Model configuration input
