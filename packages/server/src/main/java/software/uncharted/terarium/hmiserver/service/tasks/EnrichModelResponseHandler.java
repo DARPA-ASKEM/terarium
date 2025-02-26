@@ -104,9 +104,7 @@ public class EnrichModelResponseHandler extends TaskResponseHandler {
 			final JsonNode node = objectMapper.readValue(resp.getOutput(), JsonNode.class);
 			final Response response = objectMapper.treeToValue(node.get("response"), Response.class);
 
-			final Model model = modelService
-				.getAsset(props.getModelId(), ASSUME_WRITE_PERMISSION_ON_BEHALF_OF_USER)
-				.orElseThrow();
+			final Model model = modelService.getAsset(props.getModelId()).orElseThrow();
 
 			// update the model card
 			final JsonNode card = response.modelCard;
@@ -229,7 +227,7 @@ public class EnrichModelResponseHandler extends TaskResponseHandler {
 				model.setTransitions(transitions);
 			}
 
-			modelService.updateAsset(model, model.getId(), ASSUME_WRITE_PERMISSION_ON_BEHALF_OF_USER);
+			modelService.updateAsset(model, model.getId());
 		} catch (final Exception e) {
 			log.error("Failed to enrich amr", e);
 			throw new RuntimeException(e);

@@ -147,7 +147,7 @@ public class GoLLMController {
 		);
 
 		// Grab the model
-		final Optional<Model> model = modelService.getAsset(modelId, permission);
+		final Optional<Model> model = modelService.getAsset(modelId);
 		if (model.isEmpty()) {
 			log.warn(String.format("Model %s not found", modelId));
 			throw new ResponseStatusException(HttpStatus.NOT_FOUND, messages.get("model.not-found"));
@@ -158,7 +158,7 @@ public class GoLLMController {
 			throw new ResponseStatusException(HttpStatus.NOT_FOUND, messages.get("document.not-found"));
 		}
 
-		final Optional<DocumentAsset> documentOpt = documentAssetService.getAsset(documentId, permission);
+		final Optional<DocumentAsset> documentOpt = documentAssetService.getAsset(documentId);
 		if (documentOpt.isEmpty()) {
 			log.warn(String.format("Document %s not found", documentId));
 			throw new ResponseStatusException(HttpStatus.NOT_FOUND, messages.get("document.not-found"));
@@ -240,7 +240,7 @@ public class GoLLMController {
 		);
 
 		// Grab the document
-		final Optional<DocumentAsset> document = documentAssetService.getAsset(documentId, permission);
+		final Optional<DocumentAsset> document = documentAssetService.getAsset(documentId);
 		if (document.isEmpty()) {
 			log.warn(String.format("Document %s not found", documentId));
 			throw new ResponseStatusException(HttpStatus.NOT_FOUND, messages.get("document.not-found"));
@@ -253,7 +253,7 @@ public class GoLLMController {
 		}
 
 		// Grab the model
-		final Optional<Model> model = modelService.getAsset(modelId, permission);
+		final Optional<Model> model = modelService.getAsset(modelId);
 		if (model.isEmpty()) {
 			log.warn(String.format("Model %s not found", modelId));
 			throw new ResponseStatusException(HttpStatus.NOT_FOUND, messages.get("model.not-found"));
@@ -360,7 +360,7 @@ public class GoLLMController {
 		);
 
 		// Grab the model
-		final Optional<Model> model = modelService.getAsset(modelId, permission);
+		final Optional<Model> model = modelService.getAsset(modelId);
 		if (model.isEmpty()) {
 			log.warn(String.format("Model %s not found", modelId));
 			throw new ResponseStatusException(HttpStatus.NOT_FOUND, messages.get("model.not-found"));
@@ -369,7 +369,7 @@ public class GoLLMController {
 		// Grab the dataset
 		final List<String> dataArray = new ArrayList<>();
 
-		final Optional<Dataset> dataset = datasetService.getAsset(datasetId, permission);
+		final Optional<Dataset> dataset = datasetService.getAsset(datasetId);
 		if (dataset.isEmpty()) {
 			log.warn(String.format("Dataset %s not found", datasetId));
 			throw new ResponseStatusException(HttpStatus.NOT_FOUND, messages.get("dataset.not-found"));
@@ -484,7 +484,7 @@ public class GoLLMController {
 		);
 
 		// Grab the document
-		final Optional<DocumentAsset> document = documentAssetService.getAsset(documentId, permission);
+		final Optional<DocumentAsset> document = documentAssetService.getAsset(documentId);
 		if (document.isEmpty()) {
 			log.warn(String.format("Document %s not found", documentId));
 			throw new ResponseStatusException(HttpStatus.NOT_FOUND, messages.get("document.not-found"));
@@ -497,7 +497,7 @@ public class GoLLMController {
 		}
 
 		// Grab the model
-		final Optional<Model> model = modelService.getAsset(modelId, permission);
+		final Optional<Model> model = modelService.getAsset(modelId);
 		if (model.isEmpty()) {
 			log.warn(String.format("Model %s not found", modelId));
 			throw new ResponseStatusException(HttpStatus.NOT_FOUND, messages.get("model.not-found"));
@@ -597,7 +597,7 @@ public class GoLLMController {
 		// Grab the dataset
 		final List<String> dataArray = new ArrayList<>();
 
-		final Optional<Dataset> dataset = datasetService.getAsset(datasetId, permission);
+		final Optional<Dataset> dataset = datasetService.getAsset(datasetId);
 		if (dataset.isEmpty()) {
 			log.warn(String.format("Dataset %s not found", datasetId));
 			throw new ResponseStatusException(HttpStatus.NOT_FOUND);
@@ -623,7 +623,7 @@ public class GoLLMController {
 		}
 
 		// Grab the model
-		final Optional<Model> model = modelService.getAsset(modelId, permission);
+		final Optional<Model> model = modelService.getAsset(modelId);
 		if (model.isEmpty()) {
 			log.warn(String.format("Model %s not found", modelId));
 			throw new ResponseStatusException(HttpStatus.NOT_FOUND, messages.get("model.not-found"));
@@ -714,7 +714,7 @@ public class GoLLMController {
 		final List<String> amrs = new ArrayList<>();
 		for (final UUID modelId : modelIds) {
 			// Grab the model
-			final Optional<Model> model = modelService.getAsset(modelId, permission);
+			final Optional<Model> model = modelService.getAsset(modelId);
 			if (model.isEmpty()) {
 				log.warn(String.format("Model %s not found", modelId));
 				throw new ResponseStatusException(HttpStatus.NOT_FOUND, messages.get("model.not-found"));
@@ -895,7 +895,7 @@ public class GoLLMController {
 		DocumentAsset document = null;
 		if (documentId != null) {
 			document = documentAssetService
-				.getAsset(documentId, permission)
+				.getAsset(documentId)
 				.orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, messages.get("document.not-found")));
 
 			// make sure there is a text in the document
@@ -906,7 +906,7 @@ public class GoLLMController {
 		}
 
 		// Grab the model
-		final Optional<Model> model = modelService.getAsset(modelId, permission);
+		final Optional<Model> model = modelService.getAsset(modelId);
 		if (model.isEmpty()) {
 			log.warn(String.format("Model %s not found", modelId));
 			throw new ResponseStatusException(HttpStatus.NOT_FOUND, messages.get("model.not-found"));
@@ -983,7 +983,7 @@ public class GoLLMController {
 		DocumentAsset document = null;
 		if (documentId != null) {
 			document = documentAssetService
-				.getAsset(documentId, permission)
+				.getAsset(documentId)
 				.orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, messages.get("document.not-found")));
 
 			// make sure there is a text in the document
@@ -994,7 +994,7 @@ public class GoLLMController {
 		}
 
 		// Grab the dataset
-		final Optional<Dataset> dataset = datasetService.getAsset(datasetId, permission);
+		final Optional<Dataset> dataset = datasetService.getAsset(datasetId);
 		if (dataset.isEmpty()) {
 			log.warn(String.format("Model %s not found", datasetId));
 			throw new ResponseStatusException(HttpStatus.NOT_FOUND, messages.get("dataset.not-found"));

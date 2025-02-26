@@ -86,10 +86,7 @@ public class ConfigureModelFromDatasetResponseHandler extends TaskResponseHandle
 				}
 
 				// Fetch the dataset name
-				final Optional<Dataset> dataset = datasetService.getAsset(
-					props.datasetId,
-					ASSUME_WRITE_PERMISSION_ON_BEHALF_OF_USER
-				);
+				final Optional<Dataset> dataset = datasetService.getAsset(props.datasetId);
 				final String source = dataset.map(TerariumAsset::getName).orElse(null);
 
 				// Update the source of the model-configuration with the Dataset name
@@ -98,11 +95,7 @@ public class ConfigureModelFromDatasetResponseHandler extends TaskResponseHandle
 					configuration.getParameterSemanticList().forEach(parameter -> parameter.setSource(source));
 				}
 
-				final ModelConfiguration newConfig = modelConfigurationService.createAsset(
-					configuration,
-					props.projectId,
-					ASSUME_WRITE_PERMISSION_ON_BEHALF_OF_USER
-				);
+				final ModelConfiguration newConfig = modelConfigurationService.createAsset(configuration, props.projectId);
 
 				// add provenance
 				provenanceService.createProvenance(

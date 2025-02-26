@@ -85,9 +85,7 @@ public class ArtifactController {
 			projectId
 		);
 		try {
-			return ResponseEntity.status(HttpStatus.CREATED).body(
-				artifactService.createAsset(artifact, projectId, permission)
-			);
+			return ResponseEntity.status(HttpStatus.CREATED).body(artifactService.createAsset(artifact, projectId));
 		} catch (final Exception e) {
 			final String error = "An error occurred while creating artifact";
 			log.error(error, e);
@@ -121,7 +119,7 @@ public class ArtifactController {
 			projectId
 		);
 		try {
-			final Optional<Artifact> artifact = artifactService.getAsset(artifactId, permission);
+			final Optional<Artifact> artifact = artifactService.getAsset(artifactId);
 			return artifact.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
 		} catch (final Exception e) {
 			final String error = "An error occurred while retrieving artifact";
@@ -159,7 +157,7 @@ public class ArtifactController {
 
 		try {
 			artifact.setId(artifactId);
-			final Optional<Artifact> updated = artifactService.updateAsset(artifact, projectId, permission);
+			final Optional<Artifact> updated = artifactService.updateAsset(artifact, projectId);
 			return updated.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
 		} catch (final Exception e) {
 			final String error = "An error occurred while updating artifact";
@@ -194,7 +192,7 @@ public class ArtifactController {
 		);
 
 		try {
-			artifactService.deleteAsset(artifactId, projectId, permission);
+			artifactService.deleteAsset(artifactId, projectId);
 			return ResponseEntity.ok(new ResponseDeleted("artifact", artifactId));
 		} catch (final Exception e) {
 			final String error = "Unable to delete artifact";

@@ -98,7 +98,7 @@ public class ModelConfigurationController {
 	) {
 		final Permission permission = projectService.checkPermissionCanRead(currentUserService.get().getId(), projectId);
 		try {
-			final Optional<ModelConfiguration> modelConfiguration = modelConfigurationService.getAsset(id, permission);
+			final Optional<ModelConfiguration> modelConfiguration = modelConfigurationService.getAsset(id);
 			if (modelConfiguration.isEmpty()) {
 				throw new ResponseStatusException(HttpStatus.NOT_FOUND, messages.get("modelconfig.not-found"));
 			}
@@ -168,11 +168,11 @@ public class ModelConfigurationController {
 
 			Model model = objectMapper.readValue(ProjectExport.readZipEntry(zipInputStream), Model.class);
 			model = model.clone();
-			final Model created = modelService.createAsset(model, projectId, permission);
+			final Model created = modelService.createAsset(model, projectId);
 
 			modelConfig.setModelId(created.getId());
 			modelConfig = modelConfig.clone();
-			modelConfigurationService.createAsset(modelConfig, projectId, permission);
+			modelConfigurationService.createAsset(modelConfig, projectId);
 
 			return ResponseEntity.status(HttpStatus.CREATED).body(model);
 		} catch (final IOException e) {
@@ -222,12 +222,12 @@ public class ModelConfigurationController {
 		final Optional<Model> model;
 
 		try {
-			modelConfiguration = modelConfigurationService.getAsset(id, permission);
+			modelConfiguration = modelConfigurationService.getAsset(id);
 			if (modelConfiguration.isEmpty()) {
 				throw new ResponseStatusException(HttpStatus.NOT_FOUND, messages.get("modelconfig.not-found"));
 			}
 
-			model = modelService.getAsset(modelConfiguration.get().getModelId(), permission);
+			model = modelService.getAsset(modelConfiguration.get().getModelId());
 			if (model.isEmpty()) {
 				throw new ResponseStatusException(HttpStatus.NOT_FOUND, messages.get("model.not-found"));
 			}
@@ -313,7 +313,7 @@ public class ModelConfigurationController {
 			projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
 
 		try {
-			final Optional<Model> model = modelService.getModelFromModelConfigurationId(id, permission);
+			final Optional<Model> model = modelService.getModelFromModelConfigurationId(id);
 			if (model.isEmpty()) {
 				return ResponseEntity.noContent().build();
 			}
@@ -365,11 +365,11 @@ public class ModelConfigurationController {
 	) {
 		final Permission permission = projectService.checkPermissionCanRead(currentUserService.get().getId(), projectId);
 		try {
-			final Optional<ModelConfiguration> modelConfiguration = modelConfigurationService.getAsset(id, permission);
+			final Optional<ModelConfiguration> modelConfiguration = modelConfigurationService.getAsset(id);
 			if (modelConfiguration.isEmpty()) {
 				throw new ResponseStatusException(HttpStatus.NOT_FOUND, messages.get("modelconfig.not-found"));
 			}
-			final Optional<Model> model = modelService.getAsset(modelConfiguration.get().getModelId(), permission);
+			final Optional<Model> model = modelService.getAsset(modelConfiguration.get().getModelId());
 			if (model.isEmpty()) {
 				throw new ResponseStatusException(HttpStatus.NOT_FOUND, messages.get("model.not-found"));
 			}
@@ -423,7 +423,7 @@ public class ModelConfigurationController {
 
 		try {
 			return ResponseEntity.status(HttpStatus.CREATED).body(
-				modelConfigurationService.createAsset(modelConfiguration.clone(), projectId, permission)
+				modelConfigurationService.createAsset(modelConfiguration.clone(), projectId)
 			);
 		} catch (final IOException e) {
 			log.error("Unable to get model configuration from postgres db", e);
@@ -471,7 +471,7 @@ public class ModelConfigurationController {
 			}
 
 			return ResponseEntity.status(HttpStatus.CREATED).body(
-				modelConfigurationService.createAsset(modelConfiguration.clone(), projectId, permission)
+				modelConfigurationService.createAsset(modelConfiguration.clone(), projectId)
 			);
 		} catch (final IOException e) {
 			log.error("Unable to get model configuration from postgres db", e);
@@ -521,7 +521,7 @@ public class ModelConfigurationController {
 			projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
 		try {
 			config.setId(id);
-			final Optional<ModelConfiguration> updated = modelConfigurationService.updateAsset(config, projectId, permission);
+			final Optional<ModelConfiguration> updated = modelConfigurationService.updateAsset(config, projectId);
 			return updated.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
 		} catch (final IOException e) {
 			log.error("Unable to update model configuration in postgres db", e);
@@ -560,7 +560,7 @@ public class ModelConfigurationController {
 			projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
 
 		try {
-			modelConfigurationService.deleteAsset(id, projectId, permission);
+			modelConfigurationService.deleteAsset(id, projectId);
 			return ResponseEntity.ok(new ResponseDeleted("ModelConfiguration", id));
 		} catch (final IOException e) {
 			log.error("Unable to delete model configuration", e);

@@ -251,7 +251,7 @@ public class KnowledgeController {
 		Model model;
 		if (modelId == null) {
 			try {
-				model = modelService.createAsset(responseAMR, projectId, permission);
+				model = modelService.createAsset(responseAMR, projectId);
 			} catch (final IOException e) {
 				log.error("An error occurred while trying to create a model.", e);
 				throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, messages.get("postgres.service-unavailable"));
@@ -261,9 +261,7 @@ public class KnowledgeController {
 			// If a model id is provided, update the existing model
 		} else {
 			try {
-				model = modelService
-					.updateAsset(responseAMR, projectId, permission)
-					.orElseThrow(() -> new IOException("Model not found"));
+				model = modelService.updateAsset(responseAMR, projectId).orElseThrow(() -> new IOException("Model not found"));
 			} catch (final IOException | IllegalArgumentException e) {
 				log.error("An error occurred while trying to update a model.", e);
 				throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, messages.get("postgres.service-unavailable"));
@@ -303,7 +301,7 @@ public class KnowledgeController {
 			projectId
 		);
 
-		final Future<DocumentAsset> f = extractionService.extractPDFAndApplyToDocument(documentId, projectId, permission);
+		final Future<DocumentAsset> f = extractionService.extractPDFAndApplyToDocument(documentId, projectId);
 		if (mode == TaskMode.SYNC) {
 			try {
 				f.get();
