@@ -127,7 +127,6 @@
 								:start-date="modelConfig.temporalContext"
 								:calendar-settings="getCalendarSettingsFromModel(model)"
 								v-model="knobs.endTime"
-								@update:model-value="updateState"
 							/>
 						</div>
 						<div class="spacer m-2" />
@@ -147,7 +146,7 @@
 						<div class="mt-1 additional-settings">
 							<div class="label-and-input">
 								<label>Number of Samples</label>
-								<tera-input-number inputId="integeronly" v-model="knobs.numSamples" @update:model-value="updateState" />
+								<tera-input-number inputId="integeronly" v-model="knobs.numSamples" />
 							</div>
 							<div class="spacer m-4" />
 
@@ -160,7 +159,6 @@
 										id="5"
 										v-model="knobs.method"
 										:options="[CiemssMethodOptions.dopri5, CiemssMethodOptions.rk4, CiemssMethodOptions.euler]"
-										@update:model-value="updateState"
 									/>
 								</div>
 								<div class="label-and-input">
@@ -169,7 +167,6 @@
 										:disabled="![CiemssMethodOptions.rk4, CiemssMethodOptions.euler].includes(knobs.method)"
 										:min="0"
 										v-model="knobs.stepSize"
-										@update:model-value="updateState"
 									/>
 								</div>
 							</div>
@@ -178,19 +175,11 @@
 							<div class="input-row">
 								<div class="label-and-input">
 									<label for="num-iterations">Number of solver iterations</label>
-									<tera-input-number
-										inputId="integeronly"
-										v-model="knobs.numIterations"
-										@update:model-value="updateState"
-									/>
+									<tera-input-number inputId="integeronly" v-model="knobs.numIterations" />
 								</div>
 								<div class="label-and-input">
 									<label for="learning-rate">Learning rate</label>
-									<tera-input-number
-										inputId="numberonly"
-										v-model="knobs.learningRate"
-										@update:model-value="updateState"
-									/>
+									<tera-input-number inputId="numberonly" v-model="knobs.learningRate" />
 								</div>
 								<div class="label-and-input">
 									<label>Inference algorithm</label>
@@ -221,7 +210,6 @@
 										v-model="knobs.numberOfTimepoints"
 										inputId="integeronly"
 										:min="1"
-										@update:model-value="updateState"
 									/>
 								</div>
 							</div>
@@ -536,7 +524,7 @@
 </template>
 
 <script setup lang="ts">
-import { cloneDeep, groupBy, intersection, isEmpty, isEqual } from 'lodash';
+import { cloneDeep, groupBy, intersection, isEmpty } from 'lodash';
 import * as vega from 'vega';
 import { computed, onMounted, ref, shallowRef, watch } from 'vue';
 import { useConfirm } from 'primevue/useconfirm';
@@ -744,21 +732,6 @@ const showOutputSection = computed(
 
 const toggleCalculateNumberOfTimepoints = () => {
 	knobs.value.calculateNumberOfTimepoints = !knobs.value.calculateNumberOfTimepoints;
-	updateState();
-};
-
-const updateState = () => {
-	const state = cloneDeep(props.node.state);
-	state.numSamples = knobs.value.numSamples;
-	state.method = knobs.value.method;
-	state.numIterations = knobs.value.numIterations;
-	state.learningRate = knobs.value.learningRate;
-	state.calculateNumberOfTimepoints = knobs.value.calculateNumberOfTimepoints;
-	if (knobs.value.calculateNumberOfTimepoints) {
-		knobs.value.numberOfTimepoints = knobs.value.endTime;
-	}
-	state.numberOfTimepoints = knobs.value.numberOfTimepoints;
-	emit('update-state', state);
 };
 
 const setPresetValues = (data: CiemssPresetTypes) => {
@@ -1147,14 +1120,20 @@ onMounted(() => {
 });
 
 watch(
-	() => ({ ...knobs.value }),
-	(newValue, oldValue) => {
-		if (isEqual(newValue, oldValue)) return;
+	() => knobs.value,
+	async () => {
 		const state = cloneDeep(props.node.state);
-		state.numIterations = knobs.value.numIterations;
-		state.numSamples = knobs.value.numSamples;
 		state.endTime = knobs.value.endTime;
-		state.timestampColName = knobs.value.timestampColName;
+		state.stepSize = knobs.value.stepSize;
+		state.numSamples = knobs.value.numSamples;
+		state.method = knobs.value.method;
+		state.numIterations = knobs.value.numIterations;
+		state.learningRate = knobs.value.learningRate;
+		state.calculateNumberOfTimepoints = knobs.value.calculateNumberOfTimepoints;
+		if (knobs.value.calculateNumberOfTimepoints) {
+			knobs.value.numberOfTimepoints = knobs.value.endTime;
+		}
+		state.numberOfTimepoints = knobs.value.numberOfTimepoints;
 		emit('update-state', state);
 	},
 	{ deep: true }
