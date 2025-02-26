@@ -11,7 +11,6 @@ import software.uncharted.terarium.hmiserver.models.dataservice.FileExport;
 import software.uncharted.terarium.hmiserver.models.dataservice.notebooksession.NotebookSession;
 import software.uncharted.terarium.hmiserver.repository.data.NotebookSessionRepository;
 import software.uncharted.terarium.hmiserver.service.s3.S3ClientService;
-import software.uncharted.terarium.hmiserver.utils.rebac.Schema;
 
 @Service
 public class NotebookSessionService extends TerariumAssetService<NotebookSession, NotebookSessionRepository> {
@@ -42,11 +41,7 @@ public class NotebookSessionService extends TerariumAssetService<NotebookSession
 
 	@Override
 	@Observed(name = "function_profile")
-	public void copyAssetFiles(
-		final NotebookSession newAsset,
-		final NotebookSession oldAsset,
-		final Schema.Permission hasWritePermission
-	) throws IOException {
+	public void copyAssetFiles(final NotebookSession newAsset, final NotebookSession oldAsset) throws IOException {
 		throw new UnsupportedOperationException("Unimplemented");
 	}
 

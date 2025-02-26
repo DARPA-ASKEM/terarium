@@ -31,11 +31,6 @@ public class TerariumApplicationTests {
 		mockMvc = MockMvcBuilders.webAppContextSetup(this.context).apply(springSecurity()).build();
 	}
 
-	/**
-	 * To allow the tests to run easily grant write permissions (wihtout chacking
-	 * against the ReBAC service)
-	 */
-	public Schema.Permission ASSUME_WRITE_PERMISSION = Schema.Permission.WRITE;
 	/** To allow calls to Asset and Project Controllers a projectId is required */
 	public UUID PROJECT_ID = UUID.randomUUID();
 }

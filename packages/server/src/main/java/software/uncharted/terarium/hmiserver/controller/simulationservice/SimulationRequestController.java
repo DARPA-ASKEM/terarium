@@ -81,7 +81,7 @@ public class SimulationRequestController implements SnakeCaseController {
 			projectId
 		);
 		try {
-			final Optional<Simulation> sim = simulationService.getAsset(id, permission);
+			final Optional<Simulation> sim = simulationService.getAsset(id);
 			if (sim.isEmpty()) {
 				return ResponseEntity.noContent().build();
 			}
@@ -105,8 +105,7 @@ public class SimulationRequestController implements SnakeCaseController {
 		);
 
 		final Optional<ModelConfiguration> modelConfiguration = modelConfigService.getAsset(
-			request.payload.getModelConfigId(),
-			permission
+			request.payload.getModelConfigId()
 		);
 		if (modelConfiguration.isEmpty()) {
 			return ResponseEntity.notFound().build();
@@ -117,7 +116,7 @@ public class SimulationRequestController implements SnakeCaseController {
 			.makeForecastRun(convertObjectToSnakeCaseJsonNode(request.payload))
 			.getBody();
 
-		final Optional<Simulation> sim = simulationService.getAsset(UUID.fromString(res.getSimulationId()), permission);
+		final Optional<Simulation> sim = simulationService.getAsset(UUID.fromString(res.getSimulationId()));
 		final Optional<Project> project = projectService.getProject(projectId);
 
 		new SimulationRequestStatusNotifier(
@@ -127,7 +126,6 @@ public class SimulationRequestController implements SnakeCaseController {
 			simulationService,
 			sim.get().getId(),
 			projectId,
-			permission,
 			request.metadata
 		)
 			.setInterval(2)
@@ -136,7 +134,7 @@ public class SimulationRequestController implements SnakeCaseController {
 			.startPolling();
 
 		try {
-			projectAssetService.createProjectAsset(project.get(), AssetType.SIMULATION, sim.get(), permission);
+			projectAssetService.createProjectAsset(project.get(), AssetType.SIMULATION, sim.get());
 			return ResponseEntity.ok(sim.get());
 		} catch (final Exception e) {
 			final String error = "Failed to create simulation";
@@ -156,8 +154,7 @@ public class SimulationRequestController implements SnakeCaseController {
 			projectId
 		);
 		final Optional<ModelConfiguration> modelConfiguration = modelConfigService.getAsset(
-			request.payload.getModelConfigId(),
-			permission
+			request.payload.getModelConfigId()
 		);
 		if (modelConfiguration.isEmpty()) {
 			return ResponseEntity.notFound().build();
@@ -174,13 +171,12 @@ public class SimulationRequestController implements SnakeCaseController {
 			simulationService,
 			UUID.fromString(res.getSimulationId()),
 			projectId,
-			permission,
 			request.metadata
 		).startPolling();
 
-		final Optional<Simulation> sim = simulationService.getAsset(UUID.fromString(res.getSimulationId()), permission);
+		final Optional<Simulation> sim = simulationService.getAsset(UUID.fromString(res.getSimulationId()));
 		final Optional<Project> project = projectService.getProject(projectId);
-		projectAssetService.createProjectAsset(project.get(), AssetType.SIMULATION, sim.get(), permission);
+		projectAssetService.createProjectAsset(project.get(), AssetType.SIMULATION, sim.get());
 
 		return ResponseEntity.ok(res);
 	}
@@ -197,8 +193,7 @@ public class SimulationRequestController implements SnakeCaseController {
 		);
 
 		final Optional<ModelConfiguration> modelConfiguration = modelConfigService.getAsset(
-			request.payload.getModelConfigId(),
-			permission
+			request.payload.getModelConfigId()
 		);
 		if (modelConfiguration.isEmpty()) {
 			return ResponseEntity.notFound().build();
@@ -215,13 +210,12 @@ public class SimulationRequestController implements SnakeCaseController {
 			simulationService,
 			UUID.fromString(res.getSimulationId()),
 			projectId,
-			permission,
 			request.metadata
 		).startPolling();
 
-		final Optional<Simulation> sim = simulationService.getAsset(UUID.fromString(res.getSimulationId()), permission);
+		final Optional<Simulation> sim = simulationService.getAsset(UUID.fromString(res.getSimulationId()));
 		final Optional<Project> project = projectService.getProject(projectId);
-		projectAssetService.createProjectAsset(project.get(), AssetType.SIMULATION, sim.get(), permission);
+		projectAssetService.createProjectAsset(project.get(), AssetType.SIMULATION, sim.get());
 
 		return ResponseEntity.ok(res);
 	}
@@ -248,13 +242,12 @@ public class SimulationRequestController implements SnakeCaseController {
 			simulationService,
 			UUID.fromString(res.getSimulationId()),
 			projectId,
-			permission,
 			request.metadata
 		).startPolling();
 
-		final Optional<Simulation> sim = simulationService.getAsset(UUID.fromString(res.getSimulationId()), permission);
+		final Optional<Simulation> sim = simulationService.getAsset(UUID.fromString(res.getSimulationId()));
 		final Optional<Project> project = projectService.getProject(projectId);
-		projectAssetService.createProjectAsset(project.get(), AssetType.SIMULATION, sim.get(), permission);
+		projectAssetService.createProjectAsset(project.get(), AssetType.SIMULATION, sim.get());
 
 		return ResponseEntity.ok(res);
 	}
@@ -281,13 +274,12 @@ public class SimulationRequestController implements SnakeCaseController {
 			simulationService,
 			UUID.fromString(res.getSimulationId()),
 			projectId,
-			permission,
 			request.metadata
 		).startPolling();
 
-		final Optional<Simulation> sim = simulationService.getAsset(UUID.fromString(res.getSimulationId()), permission);
+		final Optional<Simulation> sim = simulationService.getAsset(UUID.fromString(res.getSimulationId()));
 		final Optional<Project> project = projectService.getProject(projectId);
-		projectAssetService.createProjectAsset(project.get(), AssetType.SIMULATION, sim.get(), permission);
+		projectAssetService.createProjectAsset(project.get(), AssetType.SIMULATION, sim.get());
 
 		return ResponseEntity.ok(res);
 	}

@@ -29,11 +29,8 @@ import software.uncharted.terarium.hmiserver.models.dataservice.workflow.Workflo
 import software.uncharted.terarium.hmiserver.models.dataservice.workflow.WorkflowNode;
 import software.uncharted.terarium.hmiserver.models.dataservice.workflow.WorkflowPositions;
 import software.uncharted.terarium.hmiserver.repository.data.WorkflowRepository;
-import software.uncharted.terarium.hmiserver.service.data.NotebookSessionService;
 import software.uncharted.terarium.hmiserver.service.s3.S3ClientService;
-import software.uncharted.terarium.hmiserver.utils.rebac.Schema;
 
-@SuppressWarnings("unused")
 @Service
 @Slf4j
 public class WorkflowService extends TerariumAssetService<Workflow, WorkflowRepository> {
@@ -70,8 +67,7 @@ public class WorkflowService extends TerariumAssetService<Workflow, WorkflowRepo
 
 	@Override
 	@Observed(name = "function_profile")
-	public Workflow createAsset(final Workflow asset, final UUID projectId, final Schema.Permission hasWritePermission)
-		throws IOException, IllegalArgumentException {
+	public Workflow createAsset(final Workflow asset, final UUID projectId) throws IOException, IllegalArgumentException {
 		// ensure the workflow id is set correctly
 		if (asset.getNodes() != null) {
 			for (final WorkflowNode node : asset.getNodes()) {
@@ -103,18 +99,15 @@ public class WorkflowService extends TerariumAssetService<Workflow, WorkflowRepo
 				}
 			}
 		}
-		return super.createAsset(asset, projectId, hasWritePermission);
+		return super.createAsset(asset, projectId);
 	}
 
 	@Override
 	@Observed(name = "function_profile")
-	public Optional<Workflow> updateAsset(
-		final Workflow asset,
-		final UUID projectId,
-		final Schema.Permission hasWritePermission
-	) throws IOException, IllegalArgumentException {
+	public Optional<Workflow> updateAsset(final Workflow asset, final UUID projectId)
+		throws IOException, IllegalArgumentException {
 		// Fetch database copy, we will update into it
-		final Workflow dbWorkflow = getAsset(asset.getId(), hasWritePermission).get();
+		final Workflow dbWorkflow = getAsset(asset.getId()).get();
 
 		List<WorkflowNode> dbWorkflowNodes = dbWorkflow.getNodes();
 		List<WorkflowEdge> dbWorkflowEdges = dbWorkflow.getEdges();
@@ -362,7 +355,7 @@ public class WorkflowService extends TerariumAssetService<Workflow, WorkflowRepo
 			dbWorkflowEdges.add(pair.getValue());
 		}
 
-		final Optional<Workflow> result = super.updateAsset(dbWorkflow, projectId, hasWritePermission);
+		final Optional<Workflow> result = super.updateAsset(dbWorkflow, projectId);
 		return result;
 	}
 
@@ -1007,15 +1000,9 @@ public class WorkflowService extends TerariumAssetService<Workflow, WorkflowRepo
 				if (state.get("notebookSessionId") != null) {
 					UUID sessionId = UUID.fromString(state.get("notebookSessionId").asText());
 
-					final NotebookSession session = notebookSessionService
-						.getAsset(sessionId, Schema.Permission.WRITE)
-						.orElse(null);
+					final NotebookSession session = notebookSessionService.getAsset(sessionId).orElse(null);
 					if (session != null) {
-						final NotebookSession newNotebookSession = notebookSessionService.createAsset(
-							session.clone(),
-							projectId,
-							Schema.Permission.WRITE
-						);
+						final NotebookSession newNotebookSession = notebookSessionService.createAsset(session.clone(), projectId);
 						state.put("notebookSessionId", newNotebookSession.getId().toString());
 					}
 				}
