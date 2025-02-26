@@ -40,7 +40,6 @@ import { useConfirm } from 'primevue/useconfirm';
 import { deleteModelConfiguration, getModelConfigurationAsLatexTable } from '@/services/model-configurations';
 import { createCopyTextToClipboard } from '@/utils/clipboard';
 import TeraModal from '@/components/widgets/tera-modal.vue';
-import { isEmpty } from 'lodash';
 
 const emit = defineEmits(['delete', 'use', 'downloadArchive', 'downloadModel']);
 const props = defineProps<{
