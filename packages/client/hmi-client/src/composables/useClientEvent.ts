@@ -42,7 +42,10 @@ export function createTaskProgressClientEventHandler(node: WorkflowNode<Document
 	return async (event: ClientEvent<StatusUpdate<DocumentExtractionStatus>>) => {
 		if (event.data.data.documentId === state.documentId) {
 			state[progressKey] = event.data?.progress;
-			if ([TaskStatus.Success, TaskStatus.Cancelled, TaskStatus.Failed].includes(event.data.status)) {
+			if (
+				event.data.status &&
+				[TaskStatus.Success, TaskStatus.Cancelled, TaskStatus.Failed].includes(event.data.status)
+			) {
 				state[progressKey] = undefined;
 			}
 		}
