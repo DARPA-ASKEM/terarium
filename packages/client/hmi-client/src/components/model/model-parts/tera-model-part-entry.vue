@@ -1,12 +1,10 @@
 <template>
 	<section class="flex flex-column">
-		<div v-if="modelErrors.length > 0">
-			<ul>
-				<li v-for="err of modelErrors" :key="err.id">
-					<span :class="err.severity">{{ err.content }}</span>
-				</li>
-			</ul>
-		</div>
+		<ul v-if="!isEmpty(modelErrors)">
+			<li v-for="err of modelErrors" :key="err.id">
+				<span :class="err.severity">{{ err.content }}</span>
+			</li>
+		</ul>
 		<div class="top-entry">
 			<h6>{{ id }}</h6>
 			<span v-if="!isTimePart" class="name">
@@ -73,7 +71,7 @@
 
 <script setup lang="ts">
 import { computed, ref } from 'vue';
-import { debounce } from 'lodash';
+import { debounce, isEmpty } from 'lodash';
 import Button from 'primevue/button';
 import Dropdown from 'primevue/dropdown';
 import TeraConcept from '@/components/widgets/tera-concept.vue';
