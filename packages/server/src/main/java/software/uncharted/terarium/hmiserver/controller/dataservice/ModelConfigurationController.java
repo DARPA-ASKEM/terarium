@@ -595,22 +595,17 @@ public class ModelConfigurationController {
 			@ApiResponse(responseCode = "503", description = "There was an issue getting the LaTeX table", content = @Content)
 		}
 	)
-	public ResponseEntity<String> getLatexTable(
-		@PathVariable("id") final UUID id,
-		@RequestParam(name = "project-id", required = false) final UUID projectId
-	) {
+	public ResponseEntity<String> getLatexTable(@PathVariable("id") final UUID id) {
 		try {
-			final Optional<ModelConfiguration> modelConfiguration = modelConfigurationService.getAsset(id);
-			if (modelConfiguration.isEmpty()) {
-				throw new ResponseStatusException(HttpStatus.NOT_FOUND, messages.get("modelconfig.not-found"));
-			}
+			final ModelConfiguration modelConfiguration = modelConfigurationService
+				.getAsset(id)
+				.orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, messages.get("modelconfig.not-found")));
 
-			final Optional<Model> model = modelService.getAsset(modelConfiguration.get().getModelId());
-			if (model.isEmpty()) {
-				throw new ResponseStatusException(HttpStatus.NOT_FOUND, messages.get("model.not-found"));
-			}
+			final Model model = modelService
+				.getAsset(modelConfiguration.getModelId())
+				.orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, messages.get("model.not-found")));
 
-			return ResponseEntity.ok(ModelConfigurationLatexTable.generateLatexTable(model.get(), modelConfiguration.get()));
+			return ResponseEntity.ok(ModelConfigurationLatexTable.generateLatexTable(model, modelConfiguration));
 		} catch (final Exception e) {
 			log.error("Unable to get model configuration from postgres db", e);
 			throw new ResponseStatusException(
