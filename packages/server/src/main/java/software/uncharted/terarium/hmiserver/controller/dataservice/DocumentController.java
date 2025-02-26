@@ -93,7 +93,7 @@ public class DocumentController {
 		);
 
 		try {
-			final DocumentAsset document = documentAssetService.createAsset(documentAsset, projectId, permission);
+			final DocumentAsset document = documentAssetService.createAsset(documentAsset, projectId);
 			return ResponseEntity.status(HttpStatus.CREATED).body(document);
 		} catch (final IOException e) {
 			final String error = "Unable to create document";
@@ -135,7 +135,7 @@ public class DocumentController {
 		}
 
 		try {
-			final Optional<DocumentAsset> updated = documentAssetService.updateAsset(document, projectId, permission);
+			final Optional<DocumentAsset> updated = documentAssetService.updateAsset(document, projectId);
 			return updated.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
 		} catch (final IOException e) {
 			final String error = "Unable to update document";
@@ -174,7 +174,7 @@ public class DocumentController {
 			projectId
 		);
 
-		final Optional<DocumentAsset> document = documentAssetService.getAsset(id, permission);
+		final Optional<DocumentAsset> document = documentAssetService.getAsset(id);
 		if (document.isEmpty()) {
 			return ResponseEntity.notFound().build();
 		}
@@ -307,7 +307,7 @@ public class DocumentController {
 		);
 
 		try {
-			documentAssetService.deleteAsset(id, projectId, permission);
+			documentAssetService.deleteAsset(id, projectId);
 			return ResponseEntity.ok(new ResponseDeleted("Document", id));
 		} catch (final Exception e) {
 			final String error = "Unable to delete document";
@@ -338,7 +338,7 @@ public class DocumentController {
 		try {
 			// upload file to S3
 			final Integer status = documentAssetService.uploadFile(documentId, fileName, fileEntity);
-			final Optional<DocumentAsset> document = documentAssetService.getAsset(documentId, permission);
+			final Optional<DocumentAsset> document = documentAssetService.getAsset(documentId);
 
 			if (document.isPresent()) {
 				Graphics2D g2d = null;
@@ -375,7 +375,7 @@ public class DocumentController {
 					byte[] thumbnailBytes = outputStream.toByteArray();
 					document.get().setThumbnail(thumbnailBytes);
 
-					documentAssetService.updateAsset(document.get(), projectId, permission);
+					documentAssetService.updateAsset(document.get(), projectId);
 				} catch (final Exception e) {
 					final String error = "Unable to create thumbnail";
 					log.error(error, e);
@@ -400,7 +400,7 @@ public class DocumentController {
 				}
 
 				document.get().setText(IOUtils.toString(fileEntity.getContent(), StandardCharsets.UTF_8));
-				documentAssetService.updateAsset(document.get(), projectId, permission);
+				documentAssetService.updateAsset(document.get(), projectId);
 			}
 
 			return ResponseEntity.status(status).build();

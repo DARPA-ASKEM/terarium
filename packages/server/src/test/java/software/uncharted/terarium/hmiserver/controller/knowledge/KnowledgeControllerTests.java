@@ -216,13 +216,13 @@ public class KnowledgeControllerTests extends TerariumApplicationTests {
 			.setName("test-pdf-name")
 			.setDescription("my description");
 
-		documentAsset = documentAssetService.createAsset(documentAsset, project.getId(), ASSUME_WRITE_PERMISSION);
+		documentAsset = documentAssetService.createAsset(documentAsset, project.getId());
 
 		final ClassPathResource resource = new ClassPathResource("knowledge/sir.json");
 		final byte[] content = Files.readAllBytes(resource.getFile().toPath());
 		Model model = objectMapper.readValue(content, Model.class);
 
-		model = modelService.createAsset(model, project.getId(), ASSUME_WRITE_PERMISSION);
+		model = modelService.createAsset(model, project.getId());
 
 		mockMvc
 			.perform(
@@ -233,7 +233,7 @@ public class KnowledgeControllerTests extends TerariumApplicationTests {
 			)
 			.andExpect(status().isOk());
 
-		model = modelService.getAsset(model.getId(), ASSUME_WRITE_PERMISSION).orElseThrow();
+		model = modelService.getAsset(model.getId()).orElseThrow();
 
 		Assertions.assertNotNull(model.getMetadata().getCard());
 	}
@@ -246,8 +246,7 @@ public class KnowledgeControllerTests extends TerariumApplicationTests {
 
 		Dataset dataset = datasetService.createAsset(
 			(Dataset) new Dataset().setName("test-dataset-name").setDescription("my description"),
-			project.getId(),
-			ASSUME_WRITE_PERMISSION
+			project.getId()
 		);
 
 		// Create a MockMultipartFile object
@@ -299,7 +298,7 @@ public class KnowledgeControllerTests extends TerariumApplicationTests {
 			.setName("test-pdf-name")
 			.setDescription("my description");
 
-		documentAsset = documentAssetService.createAsset(documentAsset, project.getId(), ASSUME_WRITE_PERMISSION);
+		documentAsset = documentAssetService.createAsset(documentAsset, project.getId());
 
 		mockMvc
 			.perform(
@@ -310,7 +309,7 @@ public class KnowledgeControllerTests extends TerariumApplicationTests {
 			)
 			.andExpect(status().isOk());
 
-		dataset = datasetService.getAsset(dataset.getId(), ASSUME_WRITE_PERMISSION).orElseThrow();
+		dataset = datasetService.getAsset(dataset.getId()).orElseThrow();
 
 		Assertions.assertNotNull(dataset.getMetadata().get("dataCard"));
 	}

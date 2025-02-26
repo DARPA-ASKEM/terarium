@@ -6,6 +6,10 @@
 	>
 		<tera-columnar-panel>
 			<tera-drilldown-section :is-loading="isFetchingPDF">
+				<div v-if="props.node.state?.taskProgress">
+					Processing...
+					<ProgressBar :value="props.node?.state?.taskProgress * 100" />
+				</div>
 				<tera-pdf-embed v-if="pdfLink" :pdf-link="pdfLink" :title="document?.name || ''" />
 				<tera-text-editor v-else-if="docText" :initial-text="docText" />
 			</tera-drilldown-section>
@@ -14,15 +18,20 @@
 </template>
 
 <script setup lang="ts">
-import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
-import { WorkflowNode } from '@/types/workflow';
-import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.vue';
-import TeraPdfEmbed from '@/components/widgets/tera-pdf-embed.vue';
 import { onMounted, ref } from 'vue';
+import ProgressBar from 'primevue/progressbar';
+
 import type { DocumentAsset } from '@/types/Types';
+import { WorkflowNode } from '@/types/workflow';
+
 import { downloadDocumentAsset, getDocumentAsset, getDocumentFileAsText } from '@/services/document-assets';
+
+import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
 import TeraTextEditor from '@/components/documents/tera-text-editor.vue';
 import TeraColumnarPanel from '@/components/widgets/tera-columnar-panel.vue';
+import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.vue';
+import TeraPdfEmbed from '@/components/widgets/tera-pdf-embed.vue';
+
 import { DocumentOperationState } from './document-operation';
 
 const emit = defineEmits(['close', 'update-state', 'append-output']);

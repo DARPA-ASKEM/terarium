@@ -79,7 +79,7 @@ public class SummaryController {
 			projectId
 		);
 
-		final List<Summary> summaries = summaryService.getSummaries(ids, permission);
+		final List<Summary> summaries = summaryService.getSummaries(ids);
 
 		if (summaries.isEmpty()) {
 			return ResponseEntity.noContent().build();
@@ -123,7 +123,7 @@ public class SummaryController {
 			projectId
 		);
 
-		final Optional<Summary> summary = summaryService.getAsset(id, permission);
+		final Optional<Summary> summary = summaryService.getAsset(id);
 		return summary.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.noContent().build());
 	}
 
@@ -152,7 +152,7 @@ public class SummaryController {
 			projectId
 		);
 		try {
-			return ResponseEntity.status(HttpStatus.CREATED).body(summaryService.createAsset(item, projectId, permission));
+			return ResponseEntity.status(HttpStatus.CREATED).body(summaryService.createAsset(item, projectId));
 		} catch (final IOException e) {
 			final String error = "Unable to create summary";
 			log.error(error, e);
@@ -188,7 +188,7 @@ public class SummaryController {
 		);
 		try {
 			summary.setId(id);
-			final Optional<Summary> updated = summaryService.updateAsset(summary, projectId, permission);
+			final Optional<Summary> updated = summaryService.updateAsset(summary, projectId);
 			return updated.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
 		} catch (final IOException e) {
 			final String error = "Unable to update summary";
@@ -229,7 +229,7 @@ public class SummaryController {
 		);
 
 		try {
-			summaryService.deleteAsset(id, projectId, permission);
+			summaryService.deleteAsset(id, projectId);
 			return ResponseEntity.ok(new ResponseDeleted("Summary", id));
 		} catch (final Exception e) {
 			final String error = String.format("Failed to delete summary %s", id);

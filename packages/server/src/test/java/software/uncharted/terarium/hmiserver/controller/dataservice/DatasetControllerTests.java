@@ -85,8 +85,7 @@ public class DatasetControllerTests extends TerariumApplicationTests {
 	public void testItCanGetDataset() throws Exception {
 		final Dataset dataset = datasetService.createAsset(
 			(Dataset) new Dataset().setName("test-dataset-name").setDescription("my description"),
-			project.getId(),
-			ASSUME_WRITE_PERMISSION
+			project.getId()
 		);
 
 		mockMvc
@@ -103,8 +102,7 @@ public class DatasetControllerTests extends TerariumApplicationTests {
 	public void testItCanDeleteDataset() throws Exception {
 		final Dataset dataset = datasetService.createAsset(
 			(Dataset) new Dataset().setName("test-dataset-name").setDescription("my description"),
-			project.getId(),
-			ASSUME_WRITE_PERMISSION
+			project.getId()
 		);
 
 		mockMvc
@@ -115,7 +113,7 @@ public class DatasetControllerTests extends TerariumApplicationTests {
 			)
 			.andExpect(status().isOk());
 
-		Assertions.assertTrue(datasetService.getAsset(dataset.getId(), ASSUME_WRITE_PERMISSION).isEmpty());
+		Assertions.assertTrue(datasetService.getAsset(dataset.getId()).isEmpty());
 	}
 
 	//@Test
@@ -123,8 +121,7 @@ public class DatasetControllerTests extends TerariumApplicationTests {
 	public void testItCanUploadDatasetCSV() throws Exception {
 		final Dataset dataset = datasetService.createAsset(
 			(Dataset) new Dataset().setName("test-dataset-name").setDescription("my description"),
-			project.getId(),
-			ASSUME_WRITE_PERMISSION
+			project.getId()
 		);
 
 		final String content = "col0,col1,col2,col3\na,b,c,d\n";
@@ -153,7 +150,7 @@ public class DatasetControllerTests extends TerariumApplicationTests {
 			)
 			.andExpect(status().isOk());
 
-		final Dataset updated = datasetService.getAsset(dataset.getId(), ASSUME_WRITE_PERMISSION).get();
+		final Dataset updated = datasetService.getAsset(dataset.getId()).get();
 		Assertions.assertEquals(4, updated.getColumns().size());
 	}
 
@@ -162,8 +159,7 @@ public class DatasetControllerTests extends TerariumApplicationTests {
 	public void testItCanUploadDatasetFromGithub() throws Exception {
 		final Dataset dataset = datasetService.createAsset(
 			(Dataset) new Dataset().setName("test-dataset-name").setDescription("my description"),
-			project.getId(),
-			ASSUME_WRITE_PERMISSION
+			project.getId()
 		);
 
 		mockMvc
@@ -184,8 +180,7 @@ public class DatasetControllerTests extends TerariumApplicationTests {
 	public void testItCanDownloadDatasetCSV() throws Exception {
 		final Dataset dataset = datasetService.createAsset(
 			(Dataset) new Dataset().setName("test-dataset-name").setDescription("my description"),
-			project.getId(),
-			ASSUME_WRITE_PERMISSION
+			project.getId()
 		);
 
 		final String content = "col0,col1,col2,col3\na,b,c,d\n";
@@ -233,8 +228,7 @@ public class DatasetControllerTests extends TerariumApplicationTests {
 	public void testItCanUploadDataset() throws Exception {
 		final Dataset dataset = datasetService.createAsset(
 			(Dataset) new Dataset().setName("test-dataset-name").setDescription("my description"),
-			project.getId(),
-			ASSUME_WRITE_PERMISSION
+			project.getId()
 		);
 
 		final String content = "This is my small test dataset\n";
@@ -269,8 +263,7 @@ public class DatasetControllerTests extends TerariumApplicationTests {
 	public void testItCanDownloadDataset() throws Exception {
 		final Dataset dataset = datasetService.createAsset(
 			(Dataset) new Dataset().setName("test-dataset-name").setDescription("my description"),
-			project.getId(),
-			ASSUME_WRITE_PERMISSION
+			project.getId()
 		);
 
 		final String content = "col0,col1,col2,col3\na,b,c,d\n";
@@ -305,8 +298,7 @@ public class DatasetControllerTests extends TerariumApplicationTests {
 	public void testItCanGetUploadUrl() throws Exception {
 		final Dataset dataset = datasetService.createAsset(
 			(Dataset) new Dataset().setName("test-dataset-name").setDescription("my description"),
-			project.getId(),
-			ASSUME_WRITE_PERMISSION
+			project.getId()
 		);
 
 		// Perform the multipart file upload request
@@ -340,8 +332,7 @@ public class DatasetControllerTests extends TerariumApplicationTests {
 	public void testItCanGetDownloadUrl() throws Exception {
 		final Dataset dataset = datasetService.createAsset(
 			(Dataset) new Dataset().setName("test-document-name").setDescription("my description"),
-			project.getId(),
-			ASSUME_WRITE_PERMISSION
+			project.getId()
 		);
 
 		// Perform the multipart file upload request
@@ -405,21 +396,9 @@ public class DatasetControllerTests extends TerariumApplicationTests {
 			.setPublicAsset(true)
 			.setTemporary(true);
 
-		final Dataset createdDataset_public_not_temp = datasetService.createAsset(
-			dataset_public_not_temp,
-			project.getId(),
-			ASSUME_WRITE_PERMISSION
-		);
-		final Dataset createdDataset_public_temp = datasetService.createAsset(
-			dataset_public_temp,
-			project.getId(),
-			ASSUME_WRITE_PERMISSION
-		);
-		final Dataset createdDataset_not_public_temp = datasetService.createAsset(
-			dataset_not_public_temp,
-			project.getId(),
-			ASSUME_WRITE_PERMISSION
-		);
+		final Dataset createdDataset_public_not_temp = datasetService.createAsset(dataset_public_not_temp, project.getId());
+		final Dataset createdDataset_public_temp = datasetService.createAsset(dataset_public_temp, project.getId());
+		final Dataset createdDataset_not_public_temp = datasetService.createAsset(dataset_not_public_temp, project.getId());
 
 		mockMvc
 			.perform(MockMvcRequestBuilders.get("/datasets/" + createdDataset_public_not_temp.getId()).with(csrf()))

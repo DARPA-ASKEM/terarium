@@ -74,7 +74,7 @@ public class WorkflowControllerTests extends TerariumApplicationTests {
 		Workflow workflow = new Workflow();
 		workflow.setName("test-workflow-name1");
 		workflow.setDescription("test-workflow-description");
-		workflow = workflowService.createAsset(workflow, project.getId(), ASSUME_WRITE_PERMISSION);
+		workflow = workflowService.createAsset(workflow, project.getId());
 
 		mockMvc
 			.perform(
@@ -91,7 +91,7 @@ public class WorkflowControllerTests extends TerariumApplicationTests {
 		Workflow workflow = new Workflow();
 		workflow.setName("test-workflow-name1");
 		workflow.setDescription("test-workflow-description");
-		workflow = workflowService.createAsset(workflow, project.getId(), ASSUME_WRITE_PERMISSION);
+		workflow = workflowService.createAsset(workflow, project.getId());
 
 		mockMvc
 			.perform(
@@ -110,7 +110,7 @@ public class WorkflowControllerTests extends TerariumApplicationTests {
 		Workflow workflow = new Workflow();
 		workflow.setName("test-workflow-name1");
 		workflow.setDescription("test-workflow-description");
-		workflow = workflowService.createAsset(workflow, project.getId(), ASSUME_WRITE_PERMISSION);
+		workflow = workflowService.createAsset(workflow, project.getId());
 
 		mockMvc
 			.perform(
@@ -120,6 +120,6 @@ public class WorkflowControllerTests extends TerariumApplicationTests {
 			)
 			.andExpect(status().isOk());
 
-		Assertions.assertTrue(workflowService.getAsset(workflow.getId(), ASSUME_WRITE_PERMISSION).isEmpty());
+		Assertions.assertTrue(workflowService.getAsset(workflow.getId()).isEmpty());
 	}
 }
