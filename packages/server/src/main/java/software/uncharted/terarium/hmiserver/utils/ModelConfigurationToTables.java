@@ -2,7 +2,6 @@ package software.uncharted.terarium.hmiserver.utils;
 
 import java.util.Map;
 import java.util.Objects;
-import java.util.UUID;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.Model;
@@ -13,9 +12,9 @@ import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.Model
 import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.ModelParameter;
 import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.semantics.State;
 
-public class ModelConfigurationLatexTable {
+public class ModelConfigurationToTables {
 
-	public static String generateLatexTable(Model model, ModelConfiguration modelConfiguration) {
+	public static String generateLatex(Model model, ModelConfiguration modelConfiguration) {
 		StringBuilder latex = new StringBuilder();
 
 		// Start LaTeX table

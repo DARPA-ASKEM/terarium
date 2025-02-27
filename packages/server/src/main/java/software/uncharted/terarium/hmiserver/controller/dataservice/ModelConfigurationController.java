@@ -44,7 +44,7 @@ import software.uncharted.terarium.hmiserver.service.data.ModelConfigurationServ
 import software.uncharted.terarium.hmiserver.service.data.ModelService;
 import software.uncharted.terarium.hmiserver.service.data.ProjectService;
 import software.uncharted.terarium.hmiserver.utils.Messages;
-import software.uncharted.terarium.hmiserver.utils.ModelConfigurationLatexTable;
+import software.uncharted.terarium.hmiserver.utils.ModelConfigurationToTables;
 import software.uncharted.terarium.hmiserver.utils.rebac.Schema.Permission;
 
 @RequestMapping("/model-configurations")
@@ -605,7 +605,7 @@ public class ModelConfigurationController {
 				.getAsset(modelConfiguration.getModelId())
 				.orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, messages.get("model.not-found")));
 
-			return ResponseEntity.ok(ModelConfigurationLatexTable.generateLatexTable(model, modelConfiguration));
+			return ResponseEntity.ok(ModelConfigurationToTables.generateLatex(model, modelConfiguration));
 		} catch (final Exception e) {
 			log.error("Unable to get model configuration from postgres db", e);
 			throw new ResponseStatusException(
