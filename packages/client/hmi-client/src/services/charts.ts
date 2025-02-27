@@ -14,26 +14,27 @@ import type { FunmanBox, FunmanConstraintsResponse } from './models/funman-servi
 const VEGALITE_SCHEMA = 'https://vega.github.io/schema/vega-lite/v5.json';
 const GLOBAL_FONT = 'Figtree';
 
-const DEFAULT_CONFIG_FONT_SIZE = {
-	axis: {
-		labelFontSize: 10,
-		titleFontSize: 11
-	},
-	legend: {
-		labelFontSize: 10,
-		titleFontSize: 11
-	},
-	title: {
-		fontSize: 13
-	},
-	header: {
-		labelFontSize: 10,
-		titleFontSize: 11
-	},
-	tooltip: {
-		fontSize: 12
-	}
-};
+// Vega lite default font sizes for different components
+// const DEFAULT_CONFIG_FONT_SIZE = {
+// 	axis: {
+// 		labelFontSize: 10,
+// 		titleFontSize: 11
+// 	},
+// 	legend: {
+// 		labelFontSize: 10,
+// 		titleFontSize: 11
+// 	},
+// 	title: {
+// 		fontSize: 13
+// 	},
+// 	header: {
+// 		labelFontSize: 10,
+// 		titleFontSize: 11
+// 	},
+// 	tooltip: {
+// 		fontSize: 12
+// 	}
+// };
 
 const NUMBER_FORMAT = '.3~s';
 export const expressionFunctions = {
