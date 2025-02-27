@@ -23,6 +23,7 @@ import software.uncharted.terarium.hmiserver.models.dataservice.dataset.DatasetC
 import software.uncharted.terarium.hmiserver.models.task.TaskRequest;
 import software.uncharted.terarium.hmiserver.models.task.TaskRequest.TaskType;
 import software.uncharted.terarium.hmiserver.models.task.TaskResponse;
+import software.uncharted.terarium.hmiserver.models.task.TaskStatus;
 import software.uncharted.terarium.hmiserver.service.tasks.TaskService;
 import software.uncharted.terarium.hmiserver.utils.Messages;
 
@@ -88,6 +89,9 @@ public class DatasetStatistics {
 
 		// Get the response from the Gollm service
 		final TaskResponse taskResponse = taskService.runTaskSync(taskRequest);
+		if (taskResponse.getStatus() != TaskStatus.SUCCESS) {
+			throw new RuntimeException("Task failed: " + taskResponse.getStderr());
+		}
 		final byte[] outputBytes = taskResponse.getOutput();
 		final JsonNode output = objectMapper.readTree(outputBytes);
 		final DatasetStatisticsResponse response = objectMapper.convertValue(output, DatasetStatisticsResponse.class);
