@@ -296,13 +296,13 @@ const createForecastChartWithAnnotations = (
 				{
 					data: result,
 					variables: sampleLayerVariables,
-					timeField: 'timepoint_id',
+					timeField: 'timepoint_unknown',
 					groupField: 'sample_id'
 				},
 				{
 					data: resultSummary,
 					variables: statLayerVariables,
-					timeField: 'timepoint_id'
+					timeField: 'timepoint_unknown'
 				},
 				groundTruthLayer ?? null,
 				options
@@ -549,7 +549,7 @@ export function useCharts(
 		}
 		// In quantile forecast charts, we use sampleLayerVariables instead of statLayerVariables
 		const variables = setting.showQuantiles ? sampleLayerVariables : statLayerVariables;
-		return generateAndSaveChartAnnotation(setting, query, 'timepoint_id', variables, options);
+		return generateAndSaveChartAnnotation(setting, query, 'timepoint_unknown', variables, options);
 	};
 
 	const groupedInterventionOutputs = computed(() =>
@@ -570,13 +570,13 @@ export function useCharts(
 					{
 						data: showSamples ? result : [],
 						variables: sampleLayerVariables,
-						timeField: 'timepoint_id',
+						timeField: 'timepoint_unknown',
 						groupField: 'sample_id'
 					},
 					{
 						data: resultSummary,
 						variables: statLayerVariables,
-						timeField: 'timepoint_id'
+						timeField: 'timepoint_unknown'
 					},
 					null,
 					options
@@ -677,7 +677,7 @@ export function useCharts(
 				const groundTruthLayer = groundTruthData && {
 					data: groundTruthData.value,
 					variables: datasetVar ? [datasetVar] : [],
-					timeField: modelVarToDatasetVar(mapping?.value || [], 'timepoint_id')
+					timeField: modelVarToDatasetVar(mapping?.value || [], 'timepoint_unknown')
 				};
 				const chart = createForecastChartWithAnnotations(
 					settings,
@@ -784,7 +784,7 @@ export function useCharts(
 				const groundTruthLayer = groundTruthData && {
 					data: groundTruthData.value,
 					variables: datasetVar ? [datasetVar] : [],
-					timeField: modelVarToDatasetVar(mapping?.value || [], 'timepoint_id')
+					timeField: modelVarToDatasetVar(mapping?.value || [], 'timepoint_unknown')
 				};
 				if (setting.showIndividualModels) {
 					const smallMultiplesCharts = ['', ...modelConfigIds].map((modelConfigId, index) => {
