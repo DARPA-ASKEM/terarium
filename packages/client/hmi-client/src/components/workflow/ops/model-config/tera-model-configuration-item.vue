@@ -1,5 +1,5 @@
 <template>
-	<div :class="{ selected: selected }">
+	<main :class="{ selected: selected }">
 		<header>
 			<h6 class="constrain-width">{{ configuration.name }}</h6>
 			<Button text icon="pi pi-ellipsis-v" @click.stop="toggleContextMenu" />
@@ -15,7 +15,19 @@
 		<p class="constrain-width">{{ configuration.description }}</p>
 		<p>{{ formatTimestamp(configuration.createdOn) }}</p>
 		<div v-if="emptyInputCount" class="input-count">{{ emptyInputCount }}</div>
-	</div>
+	</main>
+
+	<tera-modal v-if="viewLatexTable" class="w-8" @modal-mask-clicked="viewLatexTable = false">
+		<template #header>
+			<div class="flex align-items-center">
+				<h4>LaTeX</h4>
+				<Button class="p-button-sm ml-auto" severity="secondary" @click="setCopyClipboard(latexTable)">
+					{{ btnCopyLabel }}
+				</Button>
+			</div>
+		</template>
+		<textarea v-model="latexTable" readonly width="100%" :rows="20" />
+	</tera-modal>
 </template>
 
 <script setup lang="ts">
@@ -23,9 +35,11 @@ import { ModelConfiguration } from '@/types/Types';
 import { formatTimestamp } from '@/utils/date';
 import Button from 'primevue/button';
 import ContextMenu from 'primevue/contextmenu';
-import { ref } from 'vue';
+import { ref, watch } from 'vue';
 import { useConfirm } from 'primevue/useconfirm';
-import { deleteModelConfiguration } from '@/services/model-configurations';
+import { deleteModelConfiguration, getModelConfigurationAsLatexTable } from '@/services/model-configurations';
+import { createCopyTextToClipboard } from '@/utils/clipboard';
+import TeraModal from '@/components/widgets/tera-modal.vue';
 
 const emit = defineEmits(['delete', 'use', 'downloadArchive', 'downloadModel']);
 const props = defineProps<{
@@ -34,6 +48,9 @@ const props = defineProps<{
 	emptyInputCount?: string;
 }>();
 
+const viewLatexTable = ref(false);
+const { btnCopyLabel, setCopyClipboard } = createCopyTextToClipboard();
+const latexTable = ref('');
 const confirm = useConfirm();
 const contextMenuInFocus = ref(false);
 const contextMenu = ref();
@@ -46,17 +63,24 @@ const contextMenuItems = ref([
 		}
 	},
 	{
-		label: 'Download model configuration',
+		label: 'Download',
 		icon: 'pi pi-download',
 		command() {
 			emit('downloadArchive');
 		}
 	},
 	{
-		label: 'Download as Model',
+		label: 'Download as configured model',
 		icon: 'pi pi-download',
 		command() {
 			emit('downloadModel');
+		}
+	},
+	{
+		label: 'LaTeX table',
+		icon: 'pi pi-table',
+		command() {
+			showLatexTable();
 		}
 	},
 	{
@@ -79,6 +103,10 @@ const hideContextMenu = () => {
 	}
 };
 
+const showLatexTable = () => {
+	viewLatexTable.value = true;
+};
+
 const onDeleteConfiguration = () => {
 	confirm.require({
 		message: `Are you sure you want to delete the configuration ${props.configuration.name}?`,
@@ -91,10 +119,17 @@ const onDeleteConfiguration = () => {
 		}
 	});
 };
+
+// Watch for viewLatexTable changes and fetch the latexTable value
+watch(viewLatexTable, async (value) => {
+	if (value) {
+		latexTable.value = await getModelConfigurationAsLatexTable(props.configuration.id);
+	}
+});
 </script>
 
 <style scoped>
-div {
+main {
 	background: var(--surface-0);
 	border-radius: var(--border-radius);
 	border-left: 4px solid var(--surface-300);

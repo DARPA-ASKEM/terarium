@@ -299,3 +299,9 @@ export function getModelConfigName(modelConfigs: ModelConfiguration[], configId:
 	const modelConfig = modelConfigs.find((d) => d.id === configId);
 	return modelConfig?.name ?? '';
 }
+
+// Get the model configuration as a LaTeX table
+export async function getModelConfigurationAsLatexTable(id: ModelConfiguration['id']): Promise<string> {
+	const response = await API.get<string>(`model-configurations/${id}/latex-table`);
+	return response?.data ?? '';
+}
