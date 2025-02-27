@@ -39,6 +39,7 @@ import software.uncharted.terarium.hmiserver.models.mira.EntitySimilarityResult;
 import software.uncharted.terarium.hmiserver.models.task.TaskRequest;
 import software.uncharted.terarium.hmiserver.models.task.TaskRequest.TaskType;
 import software.uncharted.terarium.hmiserver.models.task.TaskResponse;
+import software.uncharted.terarium.hmiserver.models.task.TaskStatus;
 import software.uncharted.terarium.hmiserver.proxies.mira.MIRAProxy;
 import software.uncharted.terarium.hmiserver.security.Roles;
 import software.uncharted.terarium.hmiserver.service.CurrentUserService;
@@ -187,6 +188,10 @@ public class MiraController {
 		final TaskResponse taskResponse;
 		try {
 			taskResponse = taskService.runTaskSync(taskRequest);
+			if (taskResponse.getStatus() != TaskStatus.SUCCESS) {
+				log.error("Task Failed", taskResponse.getStderr());
+				throw new ResponseStatusException(HttpStatus.BAD_REQUEST, taskResponse.getStderr());
+			}
 		} catch (final JsonProcessingException e) {
 			log.error("Unable to serialize input", e);
 			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("task.mira.json-processing"));
@@ -246,6 +251,10 @@ public class MiraController {
 		final TaskResponse resp;
 		try {
 			resp = taskService.runTaskSync(req);
+			if (resp.getStatus() != TaskStatus.SUCCESS) {
+				log.error("Task Failed", resp.getStderr());
+				throw new ResponseStatusException(HttpStatus.BAD_REQUEST, resp.getStderr());
+			}
 		} catch (final JsonProcessingException e) {
 			log.error("Unable to serialize input", e);
 			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("task.mira.json-processing"));
@@ -306,6 +315,10 @@ public class MiraController {
 		final TaskResponse resp;
 		try {
 			resp = taskService.runTaskSync(req);
+			if (resp.getStatus() != TaskStatus.SUCCESS) {
+				log.error("Task Failed", resp.getStderr());
+				throw new ResponseStatusException(HttpStatus.BAD_REQUEST, resp.getStderr());
+			}
 		} catch (final JsonProcessingException e) {
 			log.error("Unable to serialize input", e);
 			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("task.mira.json-processing"));
@@ -348,7 +361,10 @@ public class MiraController {
 			@ApiResponse(responseCode = "500", description = "There was an issue dispatching the request", content = @Content)
 		}
 	)
-	public ResponseEntity<Model> convertAndCreateModel(@RequestBody final ModelConversionRequest conversionRequest) {
+	public ResponseEntity<Model> convertAndCreateModel(
+		@RequestBody final ModelConversionRequest conversionRequest,
+		@RequestParam(name = "project-id", required = false) final UUID projectId
+	) {
 		final Optional<Artifact> artifact = artifactService.getAsset(conversionRequest.artifactId);
 		if (artifact.isEmpty()) {
 			log.error(String.format("Unable to find artifact %s.", conversionRequest.artifactId));
@@ -376,7 +392,7 @@ public class MiraController {
 		}
 
 		final ConversionAdditionalProperties additionalProperties = new ConversionAdditionalProperties();
-		additionalProperties.setProjectId(conversionRequest.projectId);
+		additionalProperties.setProjectId(projectId);
 		additionalProperties.setFileName(filename);
 
 		final TaskRequest req = new TaskRequest();
@@ -406,6 +422,10 @@ public class MiraController {
 		final TaskResponse resp;
 		try {
 			resp = taskService.runTaskSync(req);
+			if (resp.getStatus() != TaskStatus.SUCCESS) {
+				log.error("Task Failed", resp.getStderr());
+				throw new ResponseStatusException(HttpStatus.BAD_REQUEST, resp.getStderr());
+			}
 		} catch (final JsonProcessingException e) {
 			log.error("Unable to serialize input", e);
 			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("task.mira.json-processing"));
@@ -428,7 +448,7 @@ public class MiraController {
 				model,
 				new ModelConfigurationUpdate()
 			);
-			modelConfigurationService.createAsset(modelConfiguration, conversionRequest.projectId);
+			modelConfigurationService.createAsset(modelConfiguration, projectId);
 		} catch (final IOException e) {
 			log.error("Unable to deserialize output", e);
 			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("generic.io-error.read"));

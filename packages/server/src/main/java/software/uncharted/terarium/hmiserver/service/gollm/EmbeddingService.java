@@ -21,6 +21,7 @@ import software.uncharted.terarium.hmiserver.models.TerariumAssetEmbeddings.Embe
 import software.uncharted.terarium.hmiserver.models.task.TaskRequest;
 import software.uncharted.terarium.hmiserver.models.task.TaskRequest.TaskType;
 import software.uncharted.terarium.hmiserver.models.task.TaskResponse;
+import software.uncharted.terarium.hmiserver.models.task.TaskStatus;
 import software.uncharted.terarium.hmiserver.service.CurrentUserService;
 import software.uncharted.terarium.hmiserver.service.tasks.TaskService;
 
@@ -75,6 +76,9 @@ public class EmbeddingService {
 		}
 
 		final TaskResponse resp = taskService.runTaskSync(req);
+		if (resp.getStatus() != TaskStatus.SUCCESS) {
+			throw new RuntimeException("Task failed: " + resp.getStderr());
+		}
 
 		final byte[] outputBytes = resp.getOutput();
 		final JsonNode output = objectMapper.readTree(outputBytes);
@@ -122,6 +126,9 @@ public class EmbeddingService {
 		}
 
 		final TaskResponse resp = taskService.runTaskSync(req);
+		if (resp.getStatus() != TaskStatus.SUCCESS) {
+			throw new RuntimeException("Task failed: " + resp.getStderr());
+		}
 
 		final byte[] outputBytes = resp.getOutput();
 		final JsonNode output = objectMapper.readTree(outputBytes);

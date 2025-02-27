@@ -194,7 +194,7 @@ public class ModelConfigurationService extends TerariumAssetService<ModelConfigu
 		}
 
 		// NOTE: there isn't any difference between Uniform1 and StandardUniform1, so we
-		// are changing it to StandardUniform1 for consistenty sake
+		// are changing it to StandardUniform1 for consistent sake
 		if (distribution.getType().equals("Uniform1")) {
 			distribution.setType("StandardUniform1");
 		}
