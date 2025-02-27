@@ -37,7 +37,7 @@
 				</Button>
 			</div>
 		</template>
-		<textarea v-model="latexTable" readonly width="100%" :rows="20" />
+		<textarea v-model="csvTable" readonly width="100%" :rows="20" />
 	</tera-modal>
 </template>
 
