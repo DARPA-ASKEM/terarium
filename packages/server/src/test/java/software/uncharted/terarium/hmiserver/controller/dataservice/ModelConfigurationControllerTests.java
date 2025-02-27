@@ -64,7 +64,7 @@ public class ModelConfigurationControllerTests extends TerariumApplicationTests 
 		mockMvc
 			.perform(
 				MockMvcRequestBuilders.get("/model-configurations/" + modelConfiguration.getId())
-					.param("project-id", PROJECT_ID.toString())
+					.param("project-id", project.getId().toString())
 					.with(csrf())
 			)
 			.andExpect(status().isOk());
@@ -81,7 +81,7 @@ public class ModelConfigurationControllerTests extends TerariumApplicationTests 
 		mockMvc
 			.perform(
 				MockMvcRequestBuilders.post("/model-configurations")
-					.param("project-id", PROJECT_ID.toString())
+					.param("project-id", project.getId().toString())
 					.with(csrf())
 					.contentType("application/json")
 					.content(objectMapper.writeValueAsString(modelConfiguration))
@@ -103,7 +103,7 @@ public class ModelConfigurationControllerTests extends TerariumApplicationTests 
 		mockMvc
 			.perform(
 				MockMvcRequestBuilders.put("/model-configurations/" + modelConfiguration.getId())
-					.param("project-id", PROJECT_ID.toString())
+					.param("project-id", project.getId().toString())
 					.with(csrf())
 					.contentType("application/json")
 					.content(objectMapper.writeValueAsString(modelConfiguration))
@@ -122,7 +122,7 @@ public class ModelConfigurationControllerTests extends TerariumApplicationTests 
 		mockMvc
 			.perform(
 				MockMvcRequestBuilders.delete("/model-configurations/" + modelConfiguration.getId())
-					.param("project-id", PROJECT_ID.toString())
+					.param("project-id", project.getId().toString())
 					.with(csrf())
 			)
 			.andExpect(status().isOk());

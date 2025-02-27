@@ -58,7 +58,6 @@ public class NotebookSessionController {
 	@GetMapping
 	@Secured(Roles.USER)
 	@Operation(summary = "Gets all sessions")
-	@HasProjectAccess
 	@ApiResponses(
 		value = {
 			@ApiResponse(
