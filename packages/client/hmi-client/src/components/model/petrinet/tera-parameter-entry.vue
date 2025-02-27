@@ -34,8 +34,7 @@
 					:parameter-id="parameterId"
 					:parameter="getParameterDistribution(modelConfiguration, parameterId)"
 					@update-parameter="emit('update-parameter', [$event])"
-				>
-				</tera-distribution-input>
+				/>
 				<section>
 					<Button :label="getSourceLabel(parameterId)" text size="small" @click="isSourceOpen = !isSourceOpen" />
 					<Button :label="getOtherValuesLabel" text size="small" @click="showOtherConfigValueModal = true" />
