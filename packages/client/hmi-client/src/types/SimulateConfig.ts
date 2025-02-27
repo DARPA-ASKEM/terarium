@@ -1,6 +1,6 @@
 export type ChartConfig = {
 	selectedVariable: string[];
-	selectedRun: string;
+	selectedRun?: string;
 };
 
 export type DataseriesConfig = {
