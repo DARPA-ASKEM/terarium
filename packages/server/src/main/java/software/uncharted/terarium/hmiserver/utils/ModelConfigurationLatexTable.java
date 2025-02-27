@@ -1,6 +1,10 @@
 package software.uncharted.terarium.hmiserver.utils;
 
+import java.util.Map;
 import java.util.Objects;
+import java.util.UUID;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.Model;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.configurations.InitialSemantic;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.configurations.ModelConfiguration;
@@ -29,6 +33,11 @@ public class ModelConfigurationLatexTable {
 			latex.append("ID & Name & Expression & Units & Description & Source \\\\\n");
 			latex.append("\\midrule\n");
 
+			final Map<String, State> states = model
+				.getStates()
+				.stream()
+				.collect(Collectors.toMap(State::getId, Function.identity()));
+
 			for (InitialSemantic initial : modelConfiguration.getInitialSemanticList()) {
 				String id = escapeLatex(initial.getTarget());
 				String name = "";
@@ -38,13 +47,7 @@ public class ModelConfigurationLatexTable {
 				String source = escapeLatex(initial.getSource());
 
 				// Get the values from the state
-				final State state = model
-					.getStates()
-					.stream()
-					.filter(s -> s.getId().equals(initial.getTarget()))
-					.findFirst()
-					.orElse(null);
-
+				final State state = states.get(initial.getTarget());
 				if (state != null) {
 					name = escapeLatex(state.getName());
 					description = escapeLatex(state.getDescription());
@@ -77,6 +80,11 @@ public class ModelConfigurationLatexTable {
 			latex.append("ID & Name & Value & Units & Description & Source \\\\\n");
 			latex.append("\\midrule\n");
 
+			final Map<String, ModelParameter> parameters = model
+				.getParameters()
+				.stream()
+				.collect(Collectors.toMap(ModelParameter::getId, Function.identity()));
+
 			for (ParameterSemantic param : modelConfiguration.getParameterSemanticList()) {
 				String id = escapeLatex(param.getReferenceId());
 				String name = "";
@@ -86,13 +94,7 @@ public class ModelConfigurationLatexTable {
 				String source = escapeLatex(param.getSource());
 
 				// Get the values from the Parameter
-				final ModelParameter parameter = model
-					.getParameters()
-					.stream()
-					.filter(s -> s.getId().equals(param.getReferenceId()))
-					.findFirst()
-					.orElse(null);
-
+				final ModelParameter parameter = parameters.get(param.getReferenceId());
 				if (parameter != null) {
 					name = escapeLatex(parameter.getName());
 					description = escapeLatex(parameter.getDescription());
