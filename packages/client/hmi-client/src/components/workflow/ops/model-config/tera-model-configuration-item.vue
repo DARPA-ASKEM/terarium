@@ -28,6 +28,17 @@
 		</template>
 		<textarea v-model="latexTable" readonly width="100%" :rows="20" />
 	</tera-modal>
+	<tera-modal v-if="viewCSVTable" class="w-8" @modal-mask-clicked="viewCSVTable = false">
+		<template #header>
+			<div class="flex align-items-center">
+				<h4>CSV</h4>
+				<Button class="p-button-sm ml-auto" severity="secondary" @click="setCopyClipboard(csvTable)">
+					{{ btnCopyLabel }}
+				</Button>
+			</div>
+		</template>
+		<textarea v-model="latexTable" readonly width="100%" :rows="20" />
+	</tera-modal>
 </template>
 
 <script setup lang="ts">
@@ -37,7 +48,11 @@ import Button from 'primevue/button';
 import ContextMenu from 'primevue/contextmenu';
 import { ref, watch } from 'vue';
 import { useConfirm } from 'primevue/useconfirm';
-import { deleteModelConfiguration, getModelConfigurationAsLatexTable } from '@/services/model-configurations';
+import {
+	deleteModelConfiguration,
+	getModelConfigurationAsCsvTable,
+	getModelConfigurationAsLatexTable
+} from '@/services/model-configurations';
 import { createCopyTextToClipboard } from '@/utils/clipboard';
 import TeraModal from '@/components/widgets/tera-modal.vue';
 
@@ -49,8 +64,10 @@ const props = defineProps<{
 }>();
 
 const viewLatexTable = ref(false);
+const viewCSVTable = ref(false);
 const { btnCopyLabel, setCopyClipboard } = createCopyTextToClipboard();
 const latexTable = ref('');
+const csvTable = ref('');
 const confirm = useConfirm();
 const contextMenuInFocus = ref(false);
 const contextMenu = ref();
@@ -84,6 +101,13 @@ const contextMenuItems = ref([
 		}
 	},
 	{
+		label: 'CSV table',
+		icon: 'pi pi-table',
+		command() {
+			showCSVTable();
+		}
+	},
+	{
 		label: 'Delete',
 		icon: 'pi pi-trash',
 		disabled: true,
@@ -106,6 +130,9 @@ const hideContextMenu = () => {
 const showLatexTable = () => {
 	viewLatexTable.value = true;
 };
+const showCSVTable = () => {
+	viewCSVTable.value = true;
+};
 
 const onDeleteConfiguration = () => {
 	confirm.require({
@@ -124,6 +151,12 @@ const onDeleteConfiguration = () => {
 watch(viewLatexTable, async (value) => {
 	if (value) {
 		latexTable.value = await getModelConfigurationAsLatexTable(props.configuration.id);
+	}
+});
+
+watch(viewCSVTable, async (value) => {
+	if (value) {
+		csvTable.value = await getModelConfigurationAsCsvTable(props.configuration.id);
 	}
 });
 </script>
