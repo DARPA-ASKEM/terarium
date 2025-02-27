@@ -100,18 +100,19 @@
 					</section>
 					<section v-if="isChartLabelsOptionEnabled" class="items-wrapper">
 						<h5>Chart Labels</h5>
-						<div>
-							<label>Title</label>
-							<tera-input-text placeholder="No title" v-model="chartLabelTitle" />
-						</div>
-						<div>
-							<label>X axis</label>
-							<tera-input-text placeholder="No x axis" v-model="chartLabelXAxis" />
-						</div>
-						<div>
-							<label>Y axis</label>
-							<tera-input-text placeholder="No y axis" v-model="chartLabelYAxis" />
-						</div>
+						<tera-input-text class="chart-label-input" label="Title" placeholder="No title" v-model="chartLabelTitle" />
+						<tera-input-text
+							class="chart-label-input"
+							label="X axis"
+							placeholder="No x axis"
+							v-model="chartLabelXAxis"
+						/>
+						<tera-input-text
+							class="chart-label-input"
+							label="Y axis"
+							placeholder="No y axis"
+							v-model="chartLabelYAxis"
+						/>
 						<Divider />
 					</section>
 				</div>
@@ -402,6 +403,13 @@ const cancelGenerateAnnotation = () => {
 			justify-content: center;
 			height: 100%;
 		}
+	}
+	.chart-label-input {
+		display: flex;
+		flex-direction: column;
+	}
+	.chart-label-input :deep(label) {
+		align-self: auto;
 	}
 }
 </style>
