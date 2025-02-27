@@ -81,11 +81,11 @@ public class ModelConfigurationToTables {
 
 					if (Objects.equals(distribution.getType(), "StandardUniform1")) {
 						value =
-							"Uniform(min=" +
+							"\"Uniform(min=" +
 							distribution.getParameters().get("minimum") +
 							", max=" +
 							distribution.getParameters().get("maximum") +
-							")";
+							")\"";
 					}
 				}
 
