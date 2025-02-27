@@ -17,10 +17,11 @@ public class ModelConfigurationToTables {
 	public static String generateCsv(Model model, ModelConfiguration modelConfiguration) {
 		StringBuilder csv = new StringBuilder();
 
+		// Add the header
+		csv.append("ID,Name,Value,Units,Description,Source\n");
+
 		// Generate Initial Values Table
 		if (!modelConfiguration.getInitialSemanticList().isEmpty()) {
-			csv.append("ID,Name,Expression,Units,Description,Source\n");
-
 			final Map<String, State> states = model
 				.getStates()
 				.stream()
@@ -49,8 +50,6 @@ public class ModelConfigurationToTables {
 
 		// Generate Parameter Table
 		if (!modelConfiguration.getParameterSemanticList().isEmpty()) {
-			csv.append("ID,Name,Value,Units,Description,Source\n");
-
 			final Map<String, ModelParameter> parameters = model
 				.getParameters()
 				.stream()
