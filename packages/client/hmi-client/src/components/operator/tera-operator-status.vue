@@ -1,39 +1,47 @@
 <template>
 	<section>
-		<div class="icon-container" :class="`${status}`">
+		<div
+			v-if="props.status !== OperatorStatus.DEFAULT && props.status !== OperatorStatus.SUCCESS"
+			class="icon-container"
+			:class="`${status}`"
+		>
 			<!--TODO: The progress spinner may later need to be specified to show how much is loaded so far-->
-			<tera-progress-spinner v-if="notification.icon === 'spinner'" :font-size="3" />
-			<vue-feather v-else :type="notification.icon" size="1.5rem" />
+			<div v-if="props.status === OperatorStatus.IN_PROGRESS" class="progressbar-container">
+				<div v-if="props.progress">
+					<p class="action">{{ Math.round(props.progress * 100) }}%</p>
+					<ProgressBar :value="props.progress ? props.progress * 100 : 0" />
+				</div>
+				<tera-progress-spinner v-else :font-size="2" />
+			</div>
+			<vue-feather v-else :type="notificationStatusMap[props.status].icon" size="1.5rem" />
+			<div v-if="!hasSlot('default')">
+				{{ notificationStatusMap[props.status].message }}
+			</div>
+			<slot v-else />
 		</div>
-		<slot />
-		<p v-if="!hasSlot('default')">
-			{{ notification.message }}
-		</p>
 	</section>
 </template>
 
 <script setup lang="ts">
-import { PropType, useSlots } from 'vue';
+import { useSlots } from 'vue';
 import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue';
 import { OperatorStatus } from '@/types/workflow';
 
-const props = defineProps({
-	status: {
-		type: String as PropType<OperatorStatus>,
-		default: OperatorStatus.DEFAULT
-	}
-});
+const props = defineProps<{
+	status: OperatorStatus;
+	progress?: number;
+}>();
 
 const slots = useSlots();
 const hasSlot = (name: string) => !!slots[name];
-
-const notifications = {
+// this should be global, maybe notification manager export
+const notificationStatusMap = {
 	[OperatorStatus.SUCCESS]: { icon: 'check', message: 'Success' },
 	[OperatorStatus.IN_PROGRESS]: { icon: 'spinner', message: 'Processing' },
-	[OperatorStatus.ERROR]: { icon: 'alert-octagon', message: 'Error' }
+	[OperatorStatus.ERROR]: { icon: 'alert-octagon', message: 'Error' },
+	[OperatorStatus.INVALID]: { icon: 'alert-octagon', message: 'Invalid' },
+	[OperatorStatus.DEFAULT]: { icon: 'circle', message: '' }
 };
-
-const notification = notifications[props.status] ?? { icon: 'circle', message: '' };
 </script>
 
 <style scoped>
@@ -69,5 +77,22 @@ section {
 	& > i {
 		color: var(--error-color);
 	}
+}
+.progressbar-container {
+	margin-top: var(--gap-2);
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	gap: var(--gap-2);
+}
+
+.p-progressbar {
+	flex-grow: 1;
+}
+
+.action {
+	font-size: var(--font-caption);
+	color: var(--text-color-secondary);
+	text-align: center;
 }
 </style>

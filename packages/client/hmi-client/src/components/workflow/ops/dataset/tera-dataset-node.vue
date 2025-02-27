@@ -15,7 +15,7 @@
 			/>
 			<tera-operator-placeholder :node="node" />
 		</template>
-		<tera-progress-spinner is-centered :font-size="2" v-if="isLoading" />
+		<tera-operator-status v-if="operatorStatus" :status="operatorStatus" />
 	</main>
 </template>
 
@@ -25,13 +25,13 @@ import { isEmpty } from 'lodash';
 import Button from 'primevue/button';
 import Dropdown from 'primevue/dropdown';
 
-import { AssetType, ClientEventType, TaskStatus, type Dataset, type ProjectAsset } from '@/types/Types';
-import { WorkflowNode } from '@/types/workflow';
+import { AssetType, ClientEventType, type Dataset, type ProjectAsset } from '@/types/Types';
+import { OperatorStatus, WorkflowNode } from '@/types/workflow';
 import { getDataset } from '@/services/dataset';
 import { canPropagateResource } from '@/services/workflow';
 import TeraOperatorTitle from '@/components/operator/tera-operator-title.vue';
 import TeraOperatorPlaceholder from '@/components/operator/tera-operator-placeholder.vue';
-import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue';
+import teraOperatorStatus from '@/components/operator/tera-operator-status.vue';
 import TeraShowMoreText from '@/components/widgets/tera-show-more-text.vue';
 import { useProjects } from '@/composables/project';
 import { createEnrichClientEventHandler, useClientEvent } from '@/composables/useClientEvent';
@@ -46,12 +46,11 @@ const emit = defineEmits(['append-output', 'open-drilldown']);
 
 const datasets = computed(() => useProjects().getActiveProjectAssets(AssetType.Dataset));
 const dataset = ref<Dataset | null>(null);
-const taskId = ref<string>('');
-const isLoading = computed(() => taskId.value !== TaskStatus.Failed && taskId.value !== '');
+const operatorStatus = ref<OperatorStatus>();
 
 useClientEvent(
 	ClientEventType.TaskGollmEnrichDataset,
-	createEnrichClientEventHandler(taskId, props.node.state.datasetId, emit)
+	createEnrichClientEventHandler(operatorStatus, props.node.state.datasetId, emit)
 );
 
 async function getDatasetById(id: string) {

@@ -7,18 +7,9 @@
 			</h6>
 			<tera-operator-placeholder v-if="!thumbnail" :node="node" />
 			<img v-else class="pdf-thumbnail" :src="thumbnail" alt="Pdf's first page" />
-
-			<section class="py-2">
-				<div v-if="props.node?.state?.taskProgress" class="progressbar-container">
-					<p class="action">
-						<span v-if="props.node?.state?.taskProgress">
-							{{ Math.round(props.node?.state?.taskProgress * 100) }}%</span
-						>
-					</p>
-					<ProgressBar :value="props.node?.state?.taskProgress ? props.node?.state?.taskProgress * 100 : 0" />
-				</div>
-				<p v-if="props.node.state?.taskProgress" class="action mx-auto">Processing PDF extractions</p>
-			</section>
+			<tera-operator-status v-if="operatorStatus" :status="operatorStatus" :progress="operatorProgress" class="py-2">
+				Processing PDF extractions
+			</tera-operator-status>
 			<Button label="Open" @click="emit('open-drilldown')" severity="secondary" outlined />
 		</template>
 		<template v-else>
@@ -35,19 +26,19 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, ref, watch } from 'vue';
+import { computed, onMounted, ref, watch } from 'vue';
 import { cloneDeep, isEmpty } from 'lodash';
 import Button from 'primevue/button';
 import Dropdown from 'primevue/dropdown';
-import ProgressBar from 'primevue/progressbar';
 
-import { AssetBlock, WorkflowNode } from '@/types/workflow';
+import { AssetBlock, OperatorStatus, WorkflowNode } from '@/types/workflow';
 import type { DocumentAsset, DocumentExtraction, ProjectAsset } from '@/types/Types';
 import { AssetType, ExtractionAssetType, ClientEventType } from '@/types/Types';
 import { createTaskProgressClientEventHandler, useClientEvent } from '@/composables/useClientEvent';
 import { useProjects } from '@/composables/project';
 import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue';
 import TeraOperatorPlaceholder from '@/components/operator/tera-operator-placeholder.vue';
+import TeraOperatorStatus from '@/components/operator/tera-operator-status.vue';
 import { getDocumentAsset } from '@/services/document-assets';
 import { DocumentOperationState } from './document-operation';
 
@@ -61,8 +52,15 @@ const document = ref<DocumentAsset | null>(null);
 const fetchingDocument = ref(false);
 const documentName = ref<DocumentAsset['name']>('');
 const thumbnail = ref<string | null>(null);
+const operatorStatus = ref<OperatorStatus>(OperatorStatus.DEFAULT);
+const operatorProgress = computed(() =>
+	props.node?.state?.taskProgress ? Math.round(props.node.state.taskProgress) : undefined
+);
 
-useClientEvent(ClientEventType.ExtractionPdf, createTaskProgressClientEventHandler(props.node, 'taskProgress'));
+useClientEvent(
+	ClientEventType.ExtractionPdf,
+	createTaskProgressClientEventHandler(props.node, 'taskProgress', 'operatorStatus')
+);
 
 onMounted(async () => {
 	if (props.node.state.documentId) {
@@ -160,24 +158,6 @@ watch(
 	-webkit-line-clamp: 3;
 	-webkit-box-orient: vertical;
 	overflow: hidden;
-}
-
-.progressbar-container {
-	margin-top: var(--gap-2);
-	display: flex;
-	justify-content: space-between;
-	align-items: center;
-	gap: var(--gap-2);
-}
-
-.p-progressbar {
-	flex-grow: 1;
-}
-
-.action {
-	font-size: var(--font-caption);
-	color: var(--text-color-secondary);
-	text-align: center;
 }
 
 .pdf-thumbnail {
