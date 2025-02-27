@@ -14,6 +14,90 @@ import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.seman
 
 public class ModelConfigurationToTables {
 
+	public static String generateCsv(Model model, ModelConfiguration modelConfiguration) {
+		StringBuilder csv = new StringBuilder();
+
+		// Generate Initial Values Table
+		if (!modelConfiguration.getInitialSemanticList().isEmpty()) {
+			csv.append("ID,Name,Expression,Units,Description,Source\n");
+
+			final Map<String, State> states = model
+				.getStates()
+				.stream()
+				.collect(Collectors.toMap(State::getId, Function.identity()));
+
+			for (InitialSemantic initial : modelConfiguration.getInitialSemanticList()) {
+				String id = initial.getTarget();
+				String name = "";
+				String expression = initial.getExpression();
+				String units = "";
+				String description = "";
+				String source = initial.getSource();
+
+				// Get the values from the state
+				final State state = states.get(initial.getTarget());
+				if (state != null) {
+					name = state.getName();
+					description = state.getDescription();
+					units = state.getUnits().getExpression();
+				}
+
+				// Add the row to the table
+				csv.append(String.format("%s,%s,%s,%s,%s,%s\n", id, name, expression, units, description, source));
+			}
+		}
+
+		// Generate Parameter Table
+		if (!modelConfiguration.getParameterSemanticList().isEmpty()) {
+			csv.append("ID,Name,Value,Units,Description,Source\n");
+
+			final Map<String, ModelParameter> parameters = model
+				.getParameters()
+				.stream()
+				.collect(Collectors.toMap(ModelParameter::getId, Function.identity()));
+
+			for (ParameterSemantic param : modelConfiguration.getParameterSemanticList()) {
+				String id = param.getReferenceId();
+				String name = "";
+				String value = "";
+				String units = "";
+				String description = "";
+				String source = param.getSource();
+
+				// Get the values from the Parameter
+				final ModelParameter parameter = parameters.get(param.getReferenceId());
+				if (parameter != null) {
+					name = parameter.getName();
+					description = parameter.getDescription();
+					units = parameter.getUnits().getExpression();
+				}
+
+				// Get the value based on the distribution type
+				if (param.getDistribution() != null) {
+					final ModelDistribution distribution = param.getDistribution();
+
+					if (Objects.equals(distribution.getType(), "Constant")) {
+						value = distribution.getParameters().get("value").toString();
+					}
+
+					if (Objects.equals(distribution.getType(), "StandardUniform1")) {
+						value =
+							"Uniform(min=" +
+							distribution.getParameters().get("minimum") +
+							", max=" +
+							distribution.getParameters().get("maximum") +
+							")";
+					}
+				}
+
+				// Add the row to the table
+				csv.append(String.format("%s,%s,%s,%s,%s,%s\n", id, name, value, units, description, source));
+			}
+		}
+
+		return csv.toString();
+	}
+
 	public static String generateLatex(Model model, ModelConfiguration modelConfiguration) {
 		StringBuilder latex = new StringBuilder();
 
