@@ -18,7 +18,7 @@ public class ModelConfigurationToTables {
 		StringBuilder csv = new StringBuilder();
 
 		// Add the header
-		csv.append("ID,Name,Value,Units,Description,Source\n");
+		csv.append("type,ID,Name,Value,Units,Description,Source\n");
 
 		// Generate Initial Values Table
 		if (!modelConfiguration.getInitialSemanticList().isEmpty()) {
@@ -44,7 +44,9 @@ public class ModelConfigurationToTables {
 				}
 
 				// Add the row to the table
-				csv.append(String.format("%s,%s,%s,%s,%s,%s\n", id, name, expression, units, description, source));
+				csv.append(
+					String.format("initial state,%s,%s,%s,%s,%s,%s\n", id, name, expression, units, description, source)
+				);
 			}
 		}
 
@@ -90,7 +92,7 @@ public class ModelConfigurationToTables {
 				}
 
 				// Add the row to the table
-				csv.append(String.format("%s,%s,%s,%s,%s,%s\n", id, name, value, units, description, source));
+				csv.append(String.format("parameter,%s,%s,%s,%s,%s,%s\n", id, name, value, units, description, source));
 			}
 		}
 
