@@ -33,6 +33,7 @@ import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
+import software.uncharted.terarium.hmiserver.annotations.HasProjectAccess;
 import software.uncharted.terarium.hmiserver.models.dataservice.ResponseDeleted;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.Model;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.configurations.ModelConfiguration;
@@ -69,6 +70,7 @@ public class ModelConfigurationController {
 	@GetMapping("/{id}")
 	@Secured(Roles.USER)
 	@Operation(summary = "Gets a specific model configuration by id")
+	@HasProjectAccess
 	@ApiResponses(
 		value = {
 			@ApiResponse(
@@ -97,7 +99,6 @@ public class ModelConfigurationController {
 		@PathVariable("id") final UUID id,
 		@RequestParam(name = "project-id", required = false) final UUID projectId
 	) {
-		final Permission permission = projectService.checkPermissionCanRead(currentUserService.get().getId(), projectId);
 		try {
 			final Optional<ModelConfiguration> modelConfiguration = modelConfigurationService.getAsset(id);
 			if (modelConfiguration.isEmpty()) {
@@ -117,6 +118,7 @@ public class ModelConfigurationController {
 	@PostMapping(value = "/import-archive", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
 	@Secured(Roles.USER)
 	@Operation(summary = "Imports both a model and its configuration in a single go")
+	@HasProjectAccess(level = software.uncharted.terarium.hmiserver.utils.rebac.Schema.Permission.WRITE)
 	@ApiResponses(
 		value = {
 			@ApiResponse(
@@ -143,8 +145,6 @@ public class ModelConfigurationController {
 		if (input.getContentType() == null || !input.getContentType().equals(MediaType.APPLICATION_OCTET_STREAM_VALUE)) {
 			return ResponseEntity.badRequest().build();
 		}
-
-		final Permission permission = projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
 
 		try {
 			final ObjectMapper objectMapper = new ObjectMapper();
@@ -185,6 +185,7 @@ public class ModelConfigurationController {
 	@GetMapping("/download-archive/{id}")
 	@Secured(Roles.USER)
 	@Operation(summary = "Downloads both a model and its configuration in a single go in a zipped archive")
+	@HasProjectAccess
 	@ApiResponses(
 		value = {
 			@ApiResponse(
@@ -217,8 +218,7 @@ public class ModelConfigurationController {
 	public ResponseEntity<byte[]> downloadModelConfigurationWithModel(
 		@PathVariable("id") final UUID id,
 		@RequestParam(name = "project-id", required = false) final UUID projectId
-	) throws IOException {
-		final Permission permission = projectService.checkPermissionCanRead(currentUserService.get().getId(), projectId);
+	) {
 		final Optional<ModelConfiguration> modelConfiguration;
 		final Optional<Model> model;
 
@@ -292,6 +292,7 @@ public class ModelConfigurationController {
 	@GetMapping("/{id}/original-model")
 	@Secured(Roles.USER)
 	@Operation(summary = "Get the original model of which the configuration was created for")
+	@HasProjectAccess(level = software.uncharted.terarium.hmiserver.utils.rebac.Schema.Permission.WRITE)
 	@ApiResponses(
 		value = {
 			@ApiResponse(
@@ -310,9 +311,6 @@ public class ModelConfigurationController {
 		@PathVariable("id") final UUID id,
 		@RequestParam(name = "project-id", required = false) final UUID projectId
 	) {
-		final software.uncharted.terarium.hmiserver.utils.rebac.Schema.Permission permission =
-			projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
-
 		try {
 			final Optional<Model> model = modelService.getModelFromModelConfigurationId(id);
 			if (model.isEmpty()) {
@@ -336,6 +334,7 @@ public class ModelConfigurationController {
 	@GetMapping("/{id}/model")
 	@Secured(Roles.USER)
 	@Operation(summary = "Get a model instance as specified by the configuration")
+	@HasProjectAccess
 	@ApiResponses(
 		value = {
 			@ApiResponse(
@@ -364,7 +363,6 @@ public class ModelConfigurationController {
 		@PathVariable("id") final UUID id,
 		@RequestParam(name = "project-id", required = false) final UUID projectId
 	) {
-		final Permission permission = projectService.checkPermissionCanRead(currentUserService.get().getId(), projectId);
 		try {
 			final Optional<ModelConfiguration> modelConfiguration = modelConfigurationService.getAsset(id);
 			if (modelConfiguration.isEmpty()) {
@@ -391,6 +389,7 @@ public class ModelConfigurationController {
 	@PostMapping("/as-configured-model/")
 	@Secured(Roles.USER)
 	@Operation(summary = "Creates a new model configuration based on a configured model")
+	@HasProjectAccess
 	@ApiResponses(
 		value = {
 			@ApiResponse(
@@ -411,8 +410,6 @@ public class ModelConfigurationController {
 		@RequestParam(name = "description", required = false) final String description,
 		@RequestParam(name = "project-id", required = false) final UUID projectId
 	) {
-		final Permission permission = projectService.checkPermissionCanRead(currentUserService.get().getId(), projectId);
-
 		final ModelConfigurationUpdate options = new ModelConfigurationUpdate();
 		options.setName(name);
 		options.setDescription(description);
@@ -445,6 +442,7 @@ public class ModelConfigurationController {
 	@PostMapping
 	@Secured(Roles.USER)
 	@Operation(summary = "Create a new model configuration")
+	@HasProjectAccess(level = software.uncharted.terarium.hmiserver.utils.rebac.Schema.Permission.WRITE)
 	@ApiResponses(
 		value = {
 			@ApiResponse(
@@ -463,9 +461,6 @@ public class ModelConfigurationController {
 		@RequestBody final ModelConfiguration modelConfiguration,
 		@RequestParam(name = "project-id", required = false) final UUID projectId
 	) {
-		final software.uncharted.terarium.hmiserver.utils.rebac.Schema.Permission permission =
-			projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
-
 		try {
 			if (modelConfiguration.getId() == null) {
 				modelConfiguration.setId(UUID.randomUUID());
@@ -494,6 +489,7 @@ public class ModelConfigurationController {
 	@PutMapping("/{id}")
 	@Secured(Roles.USER)
 	@Operation(summary = "Create a new model configuration")
+	@HasProjectAccess(level = software.uncharted.terarium.hmiserver.utils.rebac.Schema.Permission.WRITE)
 	@ApiResponses(
 		value = {
 			@ApiResponse(
@@ -518,8 +514,6 @@ public class ModelConfigurationController {
 		@RequestBody final ModelConfiguration config,
 		@RequestParam(name = "project-id", required = false) final UUID projectId
 	) {
-		final software.uncharted.terarium.hmiserver.utils.rebac.Schema.Permission permission =
-			projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
 		try {
 			config.setId(id);
 			final Optional<ModelConfiguration> updated = modelConfigurationService.updateAsset(config, projectId);
@@ -543,6 +537,7 @@ public class ModelConfigurationController {
 	@DeleteMapping("/{id}")
 	@Secured(Roles.USER)
 	@Operation(summary = "Deletes a model configuration")
+	@HasProjectAccess(level = software.uncharted.terarium.hmiserver.utils.rebac.Schema.Permission.WRITE)
 	@ApiResponses(
 		value = {
 			@ApiResponse(
@@ -557,9 +552,6 @@ public class ModelConfigurationController {
 		@PathVariable("id") final UUID id,
 		@RequestParam(name = "project-id", required = false) final UUID projectId
 	) {
-		final software.uncharted.terarium.hmiserver.utils.rebac.Schema.Permission permission =
-			projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
-
 		try {
 			modelConfigurationService.deleteAsset(id, projectId);
 			return ResponseEntity.ok(new ResponseDeleted("ModelConfiguration", id));

@@ -29,6 +29,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
+import software.uncharted.terarium.hmiserver.annotations.HasProjectAccess;
 import software.uncharted.terarium.hmiserver.configuration.Config;
 import software.uncharted.terarium.hmiserver.models.TerariumAsset;
 import software.uncharted.terarium.hmiserver.models.dataservice.AssetType;
@@ -84,6 +85,7 @@ public class SimulationController {
 	@PostMapping
 	@Secured(Roles.USER)
 	@Operation(summary = "Create a new simulation")
+	@HasProjectAccess(level = Schema.Permission.WRITE)
 	@ApiResponses(
 		value = {
 			@ApiResponse(
@@ -101,11 +103,6 @@ public class SimulationController {
 		@RequestBody final Simulation simulation,
 		@RequestParam(name = "project-id", required = false) final UUID projectId
 	) {
-		final Schema.Permission permission = projectService.checkPermissionCanWrite(
-			currentUserService.get().getId(),
-			projectId
-		);
-
 		try {
 			final Simulation sim = simulationService.createAsset(simulation, projectId);
 
@@ -120,6 +117,7 @@ public class SimulationController {
 	@GetMapping("/{id}")
 	@Secured(Roles.USER)
 	@Operation(summary = "Get a simulation by ID")
+	@HasProjectAccess
 	@ApiResponses(
 		value = {
 			@ApiResponse(
@@ -146,11 +144,6 @@ public class SimulationController {
 		@PathVariable("id") final UUID id,
 		@RequestParam(name = "project-id", required = false) final UUID projectId
 	) {
-		final Schema.Permission permission = projectService.checkPermissionCanRead(
-			currentUserService.get().getId(),
-			projectId
-		);
-
 		try {
 			final Optional<Simulation> simulation = simulationService.getAsset(id);
 
@@ -203,6 +196,7 @@ public class SimulationController {
 	@PutMapping("/{id}")
 	@Secured(Roles.USER)
 	@Operation(summary = "Update a simulation by ID")
+	@HasProjectAccess(level = Schema.Permission.WRITE)
 	@ApiResponses(
 		value = {
 			@ApiResponse(
@@ -222,11 +216,6 @@ public class SimulationController {
 		@RequestBody final Simulation simulation,
 		@RequestParam(name = "project-id", required = false) final UUID projectId
 	) {
-		final Schema.Permission permission = projectService.checkPermissionCanWrite(
-			currentUserService.get().getId(),
-			projectId
-		);
-
 		try {
 			simulation.setId(id);
 			final Optional<Simulation> updated = simulationService.updateAsset(simulation, projectId);
@@ -241,6 +230,7 @@ public class SimulationController {
 	@DeleteMapping("/{id}")
 	@Secured(Roles.USER)
 	@Operation(summary = "Delete a simulation by ID")
+	@HasProjectAccess(level = Schema.Permission.WRITE)
 	@ApiResponses(
 		value = {
 			@ApiResponse(
@@ -255,11 +245,6 @@ public class SimulationController {
 		@PathVariable("id") final UUID id,
 		@RequestParam(name = "project-id", required = false) final UUID projectId
 	) {
-		final Schema.Permission permission = projectService.checkPermissionCanWrite(
-			currentUserService.get().getId(),
-			projectId
-		);
-
 		try {
 			simulationService.deleteAsset(id, projectId);
 			return "Simulation deleted";
@@ -323,6 +308,7 @@ public class SimulationController {
 	@PostMapping("/{id}/create-result-as-dataset/{project-id}")
 	@Secured(Roles.USER)
 	@Operation(summary = "Create a new dataset from a simulation result, then add it to a project as a Dataset")
+	@HasProjectAccess(level = Schema.Permission.WRITE)
 	@ApiResponses(
 		value = {
 			@ApiResponse(
@@ -349,11 +335,6 @@ public class SimulationController {
 		@RequestParam(value = "model-configuration-id", required = false) final UUID modelConfigurationId,
 		@RequestParam(value = "intervention-policy-id", required = false) final UUID interventionPolicyId
 	) {
-		final Schema.Permission permission = projectService.checkPermissionCanWrite(
-			currentUserService.get().getId(),
-			projectId
-		);
-
 		try {
 			final Optional<Simulation> sim = simulationService.getAsset(id);
 			if (sim.isEmpty()) {
@@ -380,6 +361,7 @@ public class SimulationController {
 	@PostMapping("/{id}/create-assets-from-simulation")
 	@Secured(Roles.USER)
 	@Operation(summary = "Create assets from a simulation result, then add them to a project")
+	@HasProjectAccess(level = Schema.Permission.WRITE)
 	@ApiResponses(
 		value = {
 			@ApiResponse(
@@ -403,11 +385,6 @@ public class SimulationController {
 		@RequestBody final Map<String, Object> body,
 		@RequestParam("project-id") final UUID projectId
 	) {
-		final Schema.Permission permission = projectService.checkPermissionCanWrite(
-			currentUserService.get().getId(),
-			projectId
-		);
-
 		try {
 			final Optional<Project> project = projectService.getProject(projectId);
 			if (!project.isPresent()) {
