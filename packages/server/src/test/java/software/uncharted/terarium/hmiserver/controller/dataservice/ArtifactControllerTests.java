@@ -60,7 +60,7 @@ public class ArtifactControllerTests extends TerariumApplicationTests {
 		mockMvc
 			.perform(
 				MockMvcRequestBuilders.post("/artifacts")
-					.param("project-id", PROJECT_ID.toString())
+					.param("project-id", project.getId().toString())
 					.with(csrf())
 					.contentType("application/json")
 					.content(objectMapper.writeValueAsString(artifact))
@@ -79,7 +79,7 @@ public class ArtifactControllerTests extends TerariumApplicationTests {
 		mockMvc
 			.perform(
 				MockMvcRequestBuilders.get("/artifacts/" + artifact.getId())
-					.param("project-id", PROJECT_ID.toString())
+					.param("project-id", project.getId().toString())
 					.with(csrf())
 			)
 			.andExpect(status().isOk());
@@ -96,7 +96,7 @@ public class ArtifactControllerTests extends TerariumApplicationTests {
 		mockMvc
 			.perform(
 				MockMvcRequestBuilders.delete("/artifacts/" + artifact.getId())
-					.param("project-id", PROJECT_ID.toString())
+					.param("project-id", project.getId().toString())
 					.with(csrf())
 			)
 			.andExpect(status().isOk());

@@ -130,7 +130,7 @@ public class ProjectControllerTests extends TerariumApplicationTests {
 			.perform(
 				MockMvcRequestBuilders.get("/document-asset/" + documentAsset.getId())
 					.param("types", AssetType.DOCUMENT.name())
-					.param("project-id", PROJECT_ID.toString())
+					.param("project-id", project.getId().toString())
 					.with(csrf())
 			)
 			.andExpect(status().isOk())

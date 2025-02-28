@@ -77,7 +77,7 @@ public class NotebookSessionControllerTests extends TerariumApplicationTests {
 		mockMvc
 			.perform(
 				MockMvcRequestBuilders.get("/sessions/" + notebookSession.getId())
-					.param("project-id", PROJECT_ID.toString())
+					.param("project-id", project.getId().toString())
 					.with(csrf())
 			)
 			.andExpect(status().isOk());
@@ -99,7 +99,10 @@ public class NotebookSessionControllerTests extends TerariumApplicationTests {
 			project.getId()
 		);
 
-		mockMvc.perform(MockMvcRequestBuilders.get("/sessions").with(csrf())).andExpect(status().isOk()).andReturn();
+		mockMvc
+			.perform(MockMvcRequestBuilders.get("/sessions").param("project-id", project.getId().toString()).with(csrf()))
+			.andExpect(status().isOk())
+			.andReturn();
 	}
 
 	@Test
@@ -113,7 +116,7 @@ public class NotebookSessionControllerTests extends TerariumApplicationTests {
 		mockMvc
 			.perform(
 				MockMvcRequestBuilders.delete("/sessions/" + notebookSession.getId())
-					.param("project-id", PROJECT_ID.toString())
+					.param("project-id", project.getId().toString())
 					.with(csrf())
 			)
 			.andExpect(status().isOk());

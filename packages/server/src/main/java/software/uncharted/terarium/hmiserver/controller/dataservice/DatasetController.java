@@ -79,6 +79,7 @@ public class DatasetController {
 	@PostMapping
 	@Secured(Roles.USER)
 	@Operation(summary = "Create a new dataset")
+	@HasProjectAccess(level = Schema.Permission.WRITE)
 	@ApiResponses(
 		value = {
 			@ApiResponse(
@@ -96,11 +97,6 @@ public class DatasetController {
 		@RequestBody final Dataset dataset,
 		@RequestParam(name = "project-id", required = false) final UUID projectId
 	) {
-		final Schema.Permission permission = projectService.checkPermissionCanWrite(
-			currentUserService.get().getId(),
-			projectId
-		);
-
 		try {
 			return ResponseEntity.status(HttpStatus.CREATED).body(datasetService.createAsset(dataset, projectId));
 		} catch (final IOException e) {
@@ -115,6 +111,7 @@ public class DatasetController {
 	@GetMapping("/{id}")
 	@Secured(Roles.USER)
 	@Operation(summary = "Gets dataset by ID")
+	@HasProjectAccess
 	@ApiResponses(
 		value = {
 			@ApiResponse(
@@ -138,18 +135,17 @@ public class DatasetController {
 		@RequestParam(name = "project-id", required = false) final UUID projectId
 	) {
 		final String userId = currentUserService.get().getId();
-		final Schema.Permission permission = projectService.checkPermissionCanReadOrNone(userId, projectId);
 
 		try {
 			Dataset dataset = datasetService
 				.getAsset(id)
 				.orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, messages.get("dataset.not-found")));
 
-			// GETs not associated to a projectId cannot read private or temporary assets
-			if (permission.equals(Schema.Permission.NONE) && (!dataset.getPublicAsset() || dataset.getTemporary())) {
-				throw new ResponseStatusException(HttpStatus.FORBIDDEN, messages.get("rebac.unauthorized-read"));
-			}
-
+			/*
+			TODO: This entire block of code cannot be here. We should not be writing to the database
+			 	in a GET request. Beaker et. al. need to update their code to use the proper PUT/POST
+			 	requests instead of upload URL!!s
+			 */
 			// If the user as write permission, and the stats are not present, calculate them
 			final Schema.Permission permissionCanWrite = projectService.checkPermissionCanWrite(userId, projectId);
 			if (
@@ -196,6 +192,7 @@ public class DatasetController {
 	@DeleteMapping("/{id}")
 	@Secured(Roles.USER)
 	@Operation(summary = "Deletes a dataset")
+	@HasProjectAccess(level = Schema.Permission.WRITE)
 	@ApiResponses(
 		value = {
 			@ApiResponse(
@@ -215,11 +212,6 @@ public class DatasetController {
 		@PathVariable("id") final UUID id,
 		@RequestParam(name = "project-id", required = false) final UUID projectId
 	) {
-		final Schema.Permission permission = projectService.checkPermissionCanWrite(
-			currentUserService.get().getId(),
-			projectId
-		);
-
 		try {
 			datasetService.deleteAsset(id, projectId);
 			return ResponseEntity.ok(new ResponseDeleted("Dataset", id));
@@ -235,6 +227,7 @@ public class DatasetController {
 	@PutMapping("/{id}")
 	@Secured(Roles.USER)
 	@Operation(summary = "Update a dataset")
+	@HasProjectAccess(level = Schema.Permission.WRITE)
 	@ApiResponses(
 		value = {
 			@ApiResponse(
@@ -254,11 +247,6 @@ public class DatasetController {
 		@RequestBody final Dataset dataset,
 		@RequestParam(name = "project-id", required = false) final UUID projectId
 	) {
-		final Schema.Permission permission = projectService.checkPermissionCanWrite(
-			currentUserService.get().getId(),
-			projectId
-		);
-
 		try {
 			dataset.setId(id);
 			final Optional<Dataset> updated = datasetService.updateAsset(dataset, projectId);
@@ -364,6 +352,7 @@ public class DatasetController {
 	@GetMapping("/{id}/download-url")
 	@Secured(Roles.USER)
 	@Operation(summary = "Gets a presigned url to download the dataset file")
+	@HasProjectAccess
 	@ApiResponses(
 		value = {
 			@ApiResponse(
@@ -391,11 +380,6 @@ public class DatasetController {
 		@RequestParam("filename") final String filename,
 		@RequestParam(name = "project-id", required = false) final UUID projectId
 	) {
-		final Schema.Permission permission = projectService.checkPermissionCanRead(
-			currentUserService.get().getId(),
-			projectId
-		);
-
 		final Optional<Dataset> dataset;
 		try {
 			dataset = datasetService.getAsset(id);
@@ -461,6 +445,7 @@ public class DatasetController {
 	@PutMapping("/{id}/upload-csv-from-github")
 	@Secured(Roles.USER)
 	@Operation(summary = "Uploads a CSV file from github to a dataset")
+	@HasProjectAccess(level = Schema.Permission.WRITE)
 	@ApiResponses(
 		value = {
 			@ApiResponse(
@@ -481,11 +466,6 @@ public class DatasetController {
 		@RequestParam("filename") final String filename,
 		@RequestParam(name = "project-id", required = false) final UUID projectId
 	) {
-		final Schema.Permission permission = projectService.checkPermissionCanWrite(
-			currentUserService.get().getId(),
-			projectId
-		);
-
 		log.debug("Uploading CSV file from github to dataset {}", datasetId);
 
 		// download CSV from GitHub
@@ -530,6 +510,7 @@ public class DatasetController {
 	@PutMapping(value = "/{id}/upload-csv", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
 	@Secured(Roles.USER)
 	@Operation(summary = "Uploads a CSV file to a dataset")
+	@HasProjectAccess(level = Schema.Permission.WRITE)
 	@ApiResponses(
 		value = {
 			@ApiResponse(
@@ -549,11 +530,6 @@ public class DatasetController {
 		@RequestPart("file") final MultipartFile input,
 		@RequestParam(name = "project-id", required = false) final UUID projectId
 	) {
-		final Schema.Permission permission = projectService.checkPermissionCanWrite(
-			currentUserService.get().getId(),
-			projectId
-		);
-
 		try {
 			log.debug("Uploading CSV file to dataset {}", datasetId);
 
@@ -582,6 +558,7 @@ public class DatasetController {
 	@PutMapping(value = "/{id}/upload-file", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
 	@Secured(Roles.USER)
 	@Operation(summary = "Uploads an arbitrary file to a dataset")
+	@HasProjectAccess(level = Schema.Permission.WRITE)
 	@ApiResponses(
 		value = {
 			@ApiResponse(
@@ -601,11 +578,6 @@ public class DatasetController {
 		@RequestPart("file") final MultipartFile input,
 		@RequestParam(name = "project-id", required = false) final UUID projectId
 	) {
-		final Schema.Permission permission = projectService.checkPermissionCanWrite(
-			currentUserService.get().getId(),
-			projectId
-		);
-
 		try {
 			log.debug("Uploading file to dataset {}", datasetId);
 

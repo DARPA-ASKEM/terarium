@@ -32,6 +32,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
+import software.uncharted.terarium.hmiserver.annotations.HasProjectAccess;
 import software.uncharted.terarium.hmiserver.models.dataservice.AssetType;
 import software.uncharted.terarium.hmiserver.models.dataservice.ResponseDeleted;
 import software.uncharted.terarium.hmiserver.models.dataservice.document.DocumentAsset;
@@ -47,7 +48,6 @@ import software.uncharted.terarium.hmiserver.models.simulationservice.interventi
 import software.uncharted.terarium.hmiserver.repository.data.InterventionRepository;
 import software.uncharted.terarium.hmiserver.repository.data.ModelConfigRepository;
 import software.uncharted.terarium.hmiserver.security.Roles;
-import software.uncharted.terarium.hmiserver.service.CurrentUserService;
 import software.uncharted.terarium.hmiserver.service.data.DocumentAssetService;
 import software.uncharted.terarium.hmiserver.service.data.ModelConfigurationService;
 import software.uncharted.terarium.hmiserver.service.data.ModelConfigurationService.ModelConfigurationUpdate;
@@ -55,7 +55,6 @@ import software.uncharted.terarium.hmiserver.service.data.ModelService;
 import software.uncharted.terarium.hmiserver.service.data.ProjectAssetService;
 import software.uncharted.terarium.hmiserver.service.data.ProjectService;
 import software.uncharted.terarium.hmiserver.service.data.ProvenanceSearchService;
-import software.uncharted.terarium.hmiserver.utils.Messages;
 import software.uncharted.terarium.hmiserver.utils.rebac.Schema;
 
 @RequestMapping("/models")
@@ -64,10 +63,8 @@ import software.uncharted.terarium.hmiserver.utils.rebac.Schema;
 @RequiredArgsConstructor
 public class ModelController {
 
-	final CurrentUserService currentUserService;
 	final DocumentAssetService documentAssetService;
 	final InterventionRepository interventionRepository;
-	final Messages messages;
 	final ModelConfigRepository modelConfigRepository;
 	final ModelConfigurationService modelConfigurationService;
 	final ModelService modelService;
@@ -79,6 +76,7 @@ public class ModelController {
 	@GetMapping("/{id}/descriptions")
 	@Secured(Roles.USER)
 	@Operation(summary = "Gets a model description by ID")
+	@HasProjectAccess
 	@ApiResponses(
 		value = {
 			@ApiResponse(
@@ -101,11 +99,6 @@ public class ModelController {
 		@PathVariable("id") final UUID id,
 		@RequestParam("project-id") final UUID projectId
 	) {
-		final Schema.Permission permission = projectService.checkPermissionCanRead(
-			currentUserService.get().getId(),
-			projectId
-		);
-
 		try {
 			final Optional<ModelDescription> model = modelService.getDescription(id);
 			return model.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
@@ -119,6 +112,7 @@ public class ModelController {
 	@GetMapping("/{id}")
 	@Secured(Roles.USER)
 	@Operation(summary = "Gets a model by ID")
+	@HasProjectAccess
 	@ApiResponses(
 		value = {
 			@ApiResponse(
@@ -140,20 +134,11 @@ public class ModelController {
 		@PathVariable("id") final UUID id,
 		@RequestParam(name = "project-id", required = false) final UUID projectId
 	) {
-		final Schema.Permission permission = projectService.checkPermissionCanReadOrNone(
-			currentUserService.get().getId(),
-			projectId
-		);
-
 		try {
 			// Fetch the model from the data-service
 			final Optional<Model> model = modelService.getAsset(id);
 			if (model.isEmpty()) {
 				return ResponseEntity.noContent().build();
-			}
-			// GETs not associated to a projectId cannot read private or temporary assets
-			if (permission.equals(Schema.Permission.NONE) && (!model.get().getPublicAsset() || model.get().getTemporary())) {
-				throw new ResponseStatusException(HttpStatus.FORBIDDEN, messages.get("rebac.unauthorized-read"));
 			}
 
 			// Find the Document Assets linked via provenance to the model
@@ -221,6 +206,7 @@ public class ModelController {
 	@PutMapping("/{id}")
 	@Secured(Roles.USER)
 	@Operation(summary = "Update a model")
+	@HasProjectAccess(level = Schema.Permission.WRITE)
 	@ApiResponses(
 		value = {
 			@ApiResponse(
@@ -240,11 +226,6 @@ public class ModelController {
 		@RequestBody final Model model,
 		@RequestParam(name = "project-id", required = false) final UUID projectId
 	) {
-		final Schema.Permission permission = projectService.checkPermissionCanWrite(
-			currentUserService.get().getId(),
-			projectId
-		);
-
 		try {
 			final Optional<Model> originalModel = modelService.getAsset(id);
 			if (originalModel.isEmpty()) {
@@ -272,6 +253,7 @@ public class ModelController {
 	@DeleteMapping("/{id}")
 	@Secured(Roles.USER)
 	@Operation(summary = "Deletes an model")
+	@HasProjectAccess(level = Schema.Permission.WRITE)
 	@ApiResponses(
 		value = {
 			@ApiResponse(
@@ -291,11 +273,6 @@ public class ModelController {
 		@PathVariable("id") final UUID id,
 		@RequestParam(name = "project-id", required = false) final UUID projectId
 	) {
-		final Schema.Permission permission = projectService.checkPermissionCanWrite(
-			currentUserService.get().getId(),
-			projectId
-		);
-
 		try {
 			modelService.deleteAsset(id, projectId);
 			return ResponseEntity.ok(new ResponseDeleted("Model", id));
@@ -309,6 +286,7 @@ public class ModelController {
 	@PostMapping
 	@Secured(Roles.USER)
 	@Operation(summary = "Create a new model")
+	@HasProjectAccess(level = Schema.Permission.WRITE)
 	@ApiResponses(
 		value = {
 			@ApiResponse(
@@ -327,11 +305,6 @@ public class ModelController {
 		@RequestParam(name = "project-id", required = false) final UUID projectId,
 		@RequestParam(name = "model-configuration-id", required = false) final UUID modelConfigId
 	) {
-		final Schema.Permission permission = projectService.checkPermissionCanWrite(
-			currentUserService.get().getId(),
-			projectId
-		);
-
 		try {
 			// Set the model name from the AMR header name.
 			// TerariumAsset have a name field, but it's not used for the model name outside
@@ -381,6 +354,7 @@ public class ModelController {
 	@PostMapping("/new-from-old")
 	@Secured(Roles.USER)
 	@Operation(summary = "Create a new model from an old model")
+	@HasProjectAccess(level = Schema.Permission.WRITE)
 	@ApiResponses(
 		value = {
 			@ApiResponse(
@@ -399,11 +373,6 @@ public class ModelController {
 		@RequestParam(name = "project-id", required = false) final UUID projectId,
 		@RequestParam(name = "model-configuration-id", required = false) final UUID modelConfigId
 	) {
-		final Schema.Permission permission = projectService.checkPermissionCanWrite(
-			currentUserService.get().getId(),
-			projectId
-		);
-
 		try {
 			req.newModel.retainMetadataFields(req.oldModel);
 
@@ -447,6 +416,7 @@ public class ModelController {
 	@GetMapping("/{id}/model-configurations")
 	@Secured(Roles.USER)
 	@Operation(summary = "Gets all model configurations for a model")
+	@HasProjectAccess
 	@ApiResponses(
 		value = {
 			@ApiResponse(
@@ -489,6 +459,7 @@ public class ModelController {
 	@GetMapping("/{id}/intervention-policies")
 	@Secured(Roles.USER)
 	@Operation(summary = "Gets all intervention policies for a model")
+	@HasProjectAccess
 	@ApiResponses(
 		value = {
 			@ApiResponse(

@@ -28,6 +28,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
+import software.uncharted.terarium.hmiserver.annotations.HasProjectAccess;
 import software.uncharted.terarium.hmiserver.models.ClientEventType;
 import software.uncharted.terarium.hmiserver.models.dataservice.document.DocumentAsset;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.Model;
@@ -40,7 +41,6 @@ import software.uncharted.terarium.hmiserver.service.ClientEventService;
 import software.uncharted.terarium.hmiserver.service.CurrentUserService;
 import software.uncharted.terarium.hmiserver.service.ExtractionService;
 import software.uncharted.terarium.hmiserver.service.data.ModelService;
-import software.uncharted.terarium.hmiserver.service.data.ProjectService;
 import software.uncharted.terarium.hmiserver.service.notification.NotificationGroupInstance;
 import software.uncharted.terarium.hmiserver.service.notification.NotificationService;
 import software.uncharted.terarium.hmiserver.service.tasks.EquationsCleanupResponseHandler;
@@ -65,7 +65,6 @@ public class KnowledgeController {
 	private final ExtractionService extractionService;
 	private final TaskService taskService;
 
-	private final ProjectService projectService;
 	private final CurrentUserService currentUserService;
 	private final ClientEventService clientEventService;
 	private final NotificationService notificationService;
@@ -146,15 +145,11 @@ public class KnowledgeController {
 	 */
 	@PostMapping("/equations-to-model")
 	@Secured(Roles.USER)
+	@HasProjectAccess(level = Schema.Permission.WRITE)
 	public ResponseEntity<UUID> equationsToModel(
 		@RequestBody final JsonNode req,
 		@RequestParam(name = "project-id", required = false) final UUID projectId
 	) {
-		final Schema.Permission permission = projectService.checkPermissionCanWrite(
-			currentUserService.get().getId(),
-			projectId
-		);
-
 		// Parse the request
 		UUID documentId = JsonUtil.parseUuidFromRequest(req, "documentId");
 		UUID modelId = JsonUtil.parseUuidFromRequest(req, "modelId");
@@ -303,6 +298,7 @@ public class KnowledgeController {
 	@PostMapping("/pdf-extractions")
 	@Secured(Roles.USER)
 	@Operation(summary = "Extracts information from the first PDF associated with the given document id")
+	@HasProjectAccess(level = Schema.Permission.WRITE)
 	@ApiResponses(
 		value = {
 			@ApiResponse(responseCode = "202", description = "Extraction started on PDF", content = @Content),
@@ -314,11 +310,6 @@ public class KnowledgeController {
 		@RequestParam(name = "project-id", required = false) final UUID projectId,
 		@RequestParam(name = "mode", required = false, defaultValue = "ASYNC") final TaskMode mode
 	) {
-		final Schema.Permission permission = projectService.checkPermissionCanWrite(
-			currentUserService.get().getId(),
-			projectId
-		);
-
 		final Future<DocumentAsset> f = extractionService.extractPDFAndApplyToDocument(documentId, projectId);
 		if (mode == TaskMode.SYNC) {
 			try {

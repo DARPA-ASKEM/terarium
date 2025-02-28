@@ -26,6 +26,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
+import software.uncharted.terarium.hmiserver.annotations.HasProjectAccess;
 import software.uncharted.terarium.hmiserver.models.dataservice.ResponseDeleted;
 import software.uncharted.terarium.hmiserver.models.dataservice.Summary;
 import software.uncharted.terarium.hmiserver.security.Roles;
@@ -52,6 +53,7 @@ public class SummaryController {
 	@PostMapping("/search")
 	@Secured(Roles.USER)
 	@Operation(summary = "Gets a map of summaries by list of IDs")
+	@HasProjectAccess
 	@ApiResponses(
 		value = {
 			@ApiResponse(
@@ -74,11 +76,6 @@ public class SummaryController {
 		@RequestParam(name = "project-id", required = false) final UUID projectId,
 		@RequestBody final List<UUID> ids
 	) {
-		final Schema.Permission permission = projectService.checkPermissionCanRead(
-			currentUserService.get().getId(),
-			projectId
-		);
-
 		final List<Summary> summaries = summaryService.getSummaries(ids);
 
 		if (summaries.isEmpty()) {
@@ -96,6 +93,7 @@ public class SummaryController {
 	@GetMapping("/{id}")
 	@Secured(Roles.USER)
 	@Operation(summary = "Gets summary by ID")
+	@HasProjectAccess
 	@ApiResponses(
 		value = {
 			@ApiResponse(
@@ -118,11 +116,6 @@ public class SummaryController {
 		@PathVariable("id") final UUID id,
 		@RequestParam(name = "project-id", required = false) final UUID projectId
 	) {
-		final Schema.Permission permission = projectService.checkPermissionCanRead(
-			currentUserService.get().getId(),
-			projectId
-		);
-
 		final Optional<Summary> summary = summaryService.getAsset(id);
 		return summary.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.noContent().build());
 	}
@@ -130,6 +123,7 @@ public class SummaryController {
 	@PostMapping
 	@Secured(Roles.USER)
 	@Operation(summary = "Create a new summary")
+	@HasProjectAccess(level = Schema.Permission.WRITE)
 	@ApiResponses(
 		value = {
 			@ApiResponse(
@@ -147,10 +141,6 @@ public class SummaryController {
 		@RequestBody final Summary item,
 		@RequestParam(name = "project-id", required = false) final UUID projectId
 	) {
-		final Schema.Permission permission = projectService.checkPermissionCanWrite(
-			currentUserService.get().getId(),
-			projectId
-		);
 		try {
 			return ResponseEntity.status(HttpStatus.CREATED).body(summaryService.createAsset(item, projectId));
 		} catch (final IOException e) {
@@ -163,6 +153,7 @@ public class SummaryController {
 	@PutMapping("/{id}")
 	@Secured(Roles.USER)
 	@Operation(summary = "Update a summary")
+	@HasProjectAccess(level = Schema.Permission.WRITE)
 	@ApiResponses(
 		value = {
 			@ApiResponse(
@@ -182,10 +173,6 @@ public class SummaryController {
 		@RequestBody final Summary summary,
 		@RequestParam(name = "project-id", required = false) final UUID projectId
 	) {
-		final Schema.Permission permission = projectService.checkPermissionCanWrite(
-			currentUserService.get().getId(),
-			projectId
-		);
 		try {
 			summary.setId(id);
 			final Optional<Summary> updated = summaryService.updateAsset(summary, projectId);
@@ -204,6 +191,7 @@ public class SummaryController {
 	@DeleteMapping("/{id}")
 	@Secured(Roles.USER)
 	@Operation(summary = "Delete a summary by ID")
+	@HasProjectAccess(level = Schema.Permission.WRITE)
 	@ApiResponses(
 		value = {
 			@ApiResponse(
@@ -223,11 +211,6 @@ public class SummaryController {
 		@PathVariable("id") final UUID id,
 		@RequestParam(name = "project-id", required = false) final UUID projectId
 	) {
-		final Schema.Permission permission = projectService.checkPermissionCanWrite(
-			currentUserService.get().getId(),
-			projectId
-		);
-
 		try {
 			summaryService.deleteAsset(id, projectId);
 			return ResponseEntity.ok(new ResponseDeleted("Summary", id));

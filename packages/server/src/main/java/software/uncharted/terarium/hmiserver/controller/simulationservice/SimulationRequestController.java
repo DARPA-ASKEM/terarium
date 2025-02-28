@@ -18,6 +18,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
+import software.uncharted.terarium.hmiserver.annotations.HasProjectAccess;
 import software.uncharted.terarium.hmiserver.controller.SnakeCaseController;
 import software.uncharted.terarium.hmiserver.models.dataservice.AssetType;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.configurations.ModelConfiguration;
@@ -72,14 +73,11 @@ public class SimulationRequestController implements SnakeCaseController {
 
 	@GetMapping("/{id}")
 	@Secured(Roles.USER)
+	@HasProjectAccess
 	public ResponseEntity<Simulation> getSimulation(
 		@PathVariable("id") final UUID id,
 		@RequestParam(name = "project-id", required = false) final UUID projectId
 	) {
-		final Schema.Permission permission = projectService.checkPermissionCanRead(
-			currentUserService.get().getId(),
-			projectId
-		);
 		try {
 			final Optional<Simulation> sim = simulationService.getAsset(id);
 			if (sim.isEmpty()) {
@@ -95,15 +93,11 @@ public class SimulationRequestController implements SnakeCaseController {
 
 	@PostMapping("ciemss/forecast")
 	@Secured(Roles.USER)
+	@HasProjectAccess(level = Schema.Permission.WRITE)
 	public ResponseEntity<Simulation> makeForecastRunCiemss(
 		@RequestBody final SimulationRequestBody<SimulationRequest> request,
 		@RequestParam(name = "project-id", required = false) final UUID projectId
 	) {
-		final Schema.Permission permission = projectService.checkPermissionCanWrite(
-			currentUserService.get().getId(),
-			projectId
-		);
-
 		final Optional<ModelConfiguration> modelConfiguration = modelConfigService.getAsset(
 			request.payload.getModelConfigId()
 		);
@@ -144,15 +138,12 @@ public class SimulationRequestController implements SnakeCaseController {
 	}
 
 	@PostMapping("ciemss/calibrate")
+	@HasProjectAccess(level = Schema.Permission.WRITE)
 	@Secured(Roles.USER)
 	public ResponseEntity<JobResponse> makeCalibrateJobCiemss(
 		@RequestBody final SimulationRequestBody<CalibrationRequestCiemss> request,
 		@RequestParam("project-id") final UUID projectId
 	) {
-		final Schema.Permission permission = projectService.checkPermissionCanWrite(
-			currentUserService.get().getId(),
-			projectId
-		);
 		final Optional<ModelConfiguration> modelConfiguration = modelConfigService.getAsset(
 			request.payload.getModelConfigId()
 		);
@@ -182,16 +173,12 @@ public class SimulationRequestController implements SnakeCaseController {
 	}
 
 	@PostMapping("ciemss/optimize")
+	@HasProjectAccess(level = Schema.Permission.WRITE)
 	@Secured(Roles.USER)
 	public ResponseEntity<JobResponse> makeOptimizeJobCiemss(
 		@RequestBody final SimulationRequestBody<OptimizeRequestCiemss> request,
 		@RequestParam("project-id") final UUID projectId
 	) {
-		final Schema.Permission permission = projectService.checkPermissionCanWrite(
-			currentUserService.get().getId(),
-			projectId
-		);
-
 		final Optional<ModelConfiguration> modelConfiguration = modelConfigService.getAsset(
 			request.payload.getModelConfigId()
 		);
@@ -221,16 +208,12 @@ public class SimulationRequestController implements SnakeCaseController {
 	}
 
 	@PostMapping("ciemss/ensemble-simulate")
+	@HasProjectAccess(level = Schema.Permission.WRITE)
 	@Secured(Roles.USER)
 	public ResponseEntity<JobResponse> makeEnsembleSimulateCiemssJob(
 		@RequestBody final SimulationRequestBody<EnsembleSimulationCiemssRequest> request,
 		@RequestParam("project-id") final UUID projectId
 	) {
-		final Schema.Permission permission = projectService.checkPermissionCanWrite(
-			currentUserService.get().getId(),
-			projectId
-		);
-
 		final JobResponse res = simulationCiemssServiceProxy
 			.makeEnsembleSimulateCiemssJob(convertObjectToSnakeCaseJsonNode(request.payload))
 			.getBody();
@@ -253,16 +236,12 @@ public class SimulationRequestController implements SnakeCaseController {
 	}
 
 	@PostMapping("ciemss/ensemble-calibrate")
+	@HasProjectAccess(level = Schema.Permission.WRITE)
 	@Secured(Roles.USER)
 	public ResponseEntity<JobResponse> makeEnsembleCalibrateCiemssJob(
 		@RequestBody final SimulationRequestBody<EnsembleCalibrationCiemssRequest> request,
 		@RequestParam("project-id") final UUID projectId
 	) {
-		final Schema.Permission permission = projectService.checkPermissionCanWrite(
-			currentUserService.get().getId(),
-			projectId
-		);
-
 		final JobResponse res = simulationCiemssServiceProxy
 			.makeEnsembleCalibrateCiemssJob(convertObjectToSnakeCaseJsonNode(request.payload))
 			.getBody();

@@ -30,6 +30,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
+import software.uncharted.terarium.hmiserver.annotations.HasProjectAccess;
 import software.uncharted.terarium.hmiserver.models.dataservice.Artifact;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.Model;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.configurations.ModelConfiguration;
@@ -46,7 +47,6 @@ import software.uncharted.terarium.hmiserver.service.data.ArtifactService;
 import software.uncharted.terarium.hmiserver.service.data.ModelConfigurationService;
 import software.uncharted.terarium.hmiserver.service.data.ModelConfigurationService.ModelConfigurationUpdate;
 import software.uncharted.terarium.hmiserver.service.data.ModelService;
-import software.uncharted.terarium.hmiserver.service.data.ProjectService;
 import software.uncharted.terarium.hmiserver.service.tasks.AMRToMMTResponseHandler;
 import software.uncharted.terarium.hmiserver.service.tasks.CompareModelsConceptsResponseHandler;
 import software.uncharted.terarium.hmiserver.service.tasks.GenerateModelLatexResponseHandler;
@@ -55,7 +55,6 @@ import software.uncharted.terarium.hmiserver.service.tasks.SbmlToPetrinetRespons
 import software.uncharted.terarium.hmiserver.service.tasks.StellaToStockflowResponseHandler;
 import software.uncharted.terarium.hmiserver.service.tasks.TaskService;
 import software.uncharted.terarium.hmiserver.utils.Messages;
-import software.uncharted.terarium.hmiserver.utils.rebac.Schema;
 
 @RequestMapping("/mira")
 @RestController
@@ -72,7 +71,6 @@ public class MiraController {
 	private final MdlToStockflowResponseHandler mdlToStockflowResponseHandler;
 	private final SbmlToPetrinetResponseHandler sbmlToPetrinetResponseHandler;
 	private final CompareModelsConceptsResponseHandler compareModelsConceptsResponseHandler;
-	private final ProjectService projectService;
 	private final CurrentUserService currentUserService;
 	private final ModelConfigurationService modelConfigurationService;
 
@@ -349,6 +347,7 @@ public class MiraController {
 	@PostMapping("/convert-and-create-model")
 	@Secured(Roles.USER)
 	@Operation(summary = "Dispatch a MIRA conversion task")
+	@HasProjectAccess("#conversionRequest.getProjectId()")
 	@ApiResponses(
 		value = {
 			@ApiResponse(
@@ -366,11 +365,6 @@ public class MiraController {
 		@RequestBody final ModelConversionRequest conversionRequest,
 		@RequestParam(name = "project-id", required = false) final UUID projectId
 	) {
-		final Schema.Permission permission = projectService.checkPermissionCanRead(
-			currentUserService.get().getId(),
-			projectId
-		);
-
 		final Optional<Artifact> artifact = artifactService.getAsset(conversionRequest.artifactId);
 		if (artifact.isEmpty()) {
 			log.error(String.format("Unable to find artifact %s.", conversionRequest.artifactId));
