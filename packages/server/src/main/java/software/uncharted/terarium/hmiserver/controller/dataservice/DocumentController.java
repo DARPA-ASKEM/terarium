@@ -40,6 +40,7 @@ import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
+import software.uncharted.terarium.hmiserver.annotations.HasProjectAccess;
 import software.uncharted.terarium.hmiserver.configuration.Config;
 import software.uncharted.terarium.hmiserver.controller.services.DownloadService;
 import software.uncharted.terarium.hmiserver.models.dataservice.PresignedURL;
@@ -51,7 +52,6 @@ import software.uncharted.terarium.hmiserver.security.Roles;
 import software.uncharted.terarium.hmiserver.service.CurrentUserService;
 import software.uncharted.terarium.hmiserver.service.data.DocumentAssetService;
 import software.uncharted.terarium.hmiserver.service.data.ProjectService;
-import software.uncharted.terarium.hmiserver.utils.Messages;
 import software.uncharted.terarium.hmiserver.utils.rebac.Schema;
 
 @RequestMapping("/document-asset")
@@ -62,7 +62,6 @@ public class DocumentController {
 
 	final Config config;
 	final CurrentUserService currentUserService;
-	final Messages messages;
 	final JsDelivrProxy gitHubProxy;
 	private final ProjectService projectService;
 	final DocumentAssetService documentAssetService;
@@ -70,6 +69,7 @@ public class DocumentController {
 	@PostMapping
 	@Secured(Roles.USER)
 	@Operation(summary = "Create a new document")
+	@HasProjectAccess(level = Schema.Permission.WRITE)
 	@ApiResponses(
 		value = {
 			@ApiResponse(
@@ -87,11 +87,6 @@ public class DocumentController {
 		@RequestBody final DocumentAsset documentAsset,
 		@RequestParam(name = "project-id", required = false) final UUID projectId
 	) {
-		final Schema.Permission permission = projectService.checkPermissionCanWrite(
-			currentUserService.get().getId(),
-			projectId
-		);
-
 		try {
 			final DocumentAsset document = documentAssetService.createAsset(documentAsset, projectId);
 			return ResponseEntity.status(HttpStatus.CREATED).body(document);
@@ -105,6 +100,7 @@ public class DocumentController {
 	@PutMapping("/{id}")
 	@Secured(Roles.USER)
 	@Operation(summary = "Update a document")
+	@HasProjectAccess(level = Schema.Permission.WRITE)
 	@ApiResponses(
 		value = {
 			@ApiResponse(
@@ -124,11 +120,6 @@ public class DocumentController {
 		@RequestBody final DocumentAsset document,
 		@RequestParam(name = "project-id", required = false) final UUID projectId
 	) {
-		final Schema.Permission permission = projectService.checkPermissionCanWrite(
-			currentUserService.get().getId(),
-			projectId
-		);
-
 		// if the document asset does not have an id, set it to the id in the path
 		if (document.getId() == null) {
 			document.setId(id);
@@ -147,6 +138,7 @@ public class DocumentController {
 	@GetMapping("/{id}")
 	@Secured(Roles.USER)
 	@Operation(summary = "Gets document by ID")
+	@HasProjectAccess(level = Schema.Permission.READ)
 	@ApiResponses(
 		value = {
 			@ApiResponse(
@@ -169,20 +161,9 @@ public class DocumentController {
 		@PathVariable("id") final UUID id,
 		@RequestParam(name = "project-id", required = false) final UUID projectId
 	) {
-		final Schema.Permission permission = projectService.checkPermissionCanReadOrNone(
-			currentUserService.get().getId(),
-			projectId
-		);
-
 		final Optional<DocumentAsset> document = documentAssetService.getAsset(id);
 		if (document.isEmpty()) {
 			return ResponseEntity.notFound().build();
-		}
-		// GETs not associated to a projectId cannot read private or temporary assets
-		if (
-			permission.equals(Schema.Permission.NONE) && (!document.get().getPublicAsset() || document.get().getTemporary())
-		) {
-			throw new ResponseStatusException(HttpStatus.FORBIDDEN, messages.get("rebac.unauthorized-read"));
 		}
 
 		// Test if the document as any assets
@@ -282,6 +263,7 @@ public class DocumentController {
 	@DeleteMapping("/{id}")
 	@Secured(Roles.USER)
 	@Operation(summary = "Deletes a document")
+	@HasProjectAccess(level = Schema.Permission.WRITE)
 	@ApiResponses(
 		value = {
 			@ApiResponse(
@@ -301,11 +283,6 @@ public class DocumentController {
 		@PathVariable("id") final UUID id,
 		@RequestParam(name = "project-id", required = false) final UUID projectId
 	) {
-		final Schema.Permission permission = projectService.checkPermissionCanWrite(
-			currentUserService.get().getId(),
-			projectId
-		);
-
 		try {
 			documentAssetService.deleteAsset(id, projectId);
 			return ResponseEntity.ok(new ResponseDeleted("Document", id));
@@ -324,17 +301,13 @@ public class DocumentController {
 	 * @param fileEntity The entity containing the file to upload
 	 * @return A response containing the status of the upload
 	 */
+	@HasProjectAccess(level = Schema.Permission.WRITE)
 	private ResponseEntity<Void> uploadDocumentHelper(
 		final UUID documentId,
 		final String fileName,
 		final HttpEntity fileEntity,
-		@RequestParam(name = "project-id", required = false) final UUID projectId
+		final UUID projectId
 	) {
-		final Schema.Permission permission = projectService.checkPermissionCanWrite(
-			currentUserService.get().getId(),
-			projectId
-		);
-
 		try {
 			// upload file to S3
 			final Integer status = documentAssetService.uploadFile(documentId, fileName, fileEntity);
@@ -415,6 +388,7 @@ public class DocumentController {
 	@PutMapping(value = "/{id}/upload-document", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
 	@Secured(Roles.USER)
 	@Operation(summary = "Uploads a document")
+	@HasProjectAccess(level = Schema.Permission.WRITE)
 	@ApiResponses(
 		value = {
 			@ApiResponse(
@@ -452,6 +426,7 @@ public class DocumentController {
 	@PutMapping("/{documentId}/upload-document-from-github")
 	@Secured(Roles.USER)
 	@Operation(summary = "Uploads a document from github")
+	@HasProjectAccess(level = Schema.Permission.WRITE)
 	@ApiResponses(
 		value = {
 			@ApiResponse(

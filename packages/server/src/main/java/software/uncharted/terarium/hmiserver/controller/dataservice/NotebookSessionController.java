@@ -24,12 +24,12 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
+import software.uncharted.terarium.hmiserver.annotations.HasProjectAccess;
 import software.uncharted.terarium.hmiserver.models.dataservice.AssetType;
 import software.uncharted.terarium.hmiserver.models.dataservice.ResponseDeleted;
 import software.uncharted.terarium.hmiserver.models.dataservice.notebooksession.NotebookSession;
 import software.uncharted.terarium.hmiserver.models.dataservice.project.Project;
 import software.uncharted.terarium.hmiserver.security.Roles;
-import software.uncharted.terarium.hmiserver.service.CurrentUserService;
 import software.uncharted.terarium.hmiserver.service.data.NotebookSessionService;
 import software.uncharted.terarium.hmiserver.service.data.ProjectAssetService;
 import software.uncharted.terarium.hmiserver.service.data.ProjectService;
@@ -47,7 +47,6 @@ public class NotebookSessionController {
 	private final Messages messages;
 	private final ProjectService projectService;
 	private final ProjectAssetService projectAssetService;
-	private final CurrentUserService currentUserService;
 
 	/**
 	 * Retrieve the list of NotebookSessions
@@ -99,6 +98,7 @@ public class NotebookSessionController {
 	@PostMapping
 	@Secured(Roles.USER)
 	@Operation(summary = "Create a new session")
+	@HasProjectAccess(level = Schema.Permission.WRITE)
 	@ApiResponses(
 		value = {
 			@ApiResponse(
@@ -116,11 +116,6 @@ public class NotebookSessionController {
 		@RequestBody final NotebookSession session,
 		@RequestParam(name = "project-id", required = false) final UUID projectId
 	) {
-		final Schema.Permission permission = projectService.checkPermissionCanWrite(
-			currentUserService.get().getId(),
-			projectId
-		);
-
 		try {
 			sessionService.createAsset(session, projectId);
 
@@ -136,7 +131,7 @@ public class NotebookSessionController {
 	}
 
 	/**
-	 * Retrieve an session
+	 * Retrieve a session
 	 *
 	 * @param id session id
 	 * @return NotebookSession
@@ -144,6 +139,7 @@ public class NotebookSessionController {
 	@GetMapping("/{id}")
 	@Secured(Roles.USER)
 	@Operation(summary = "Gets session by ID")
+	@HasProjectAccess
 	@ApiResponses(
 		value = {
 			@ApiResponse(
@@ -166,11 +162,6 @@ public class NotebookSessionController {
 		@PathVariable("id") final UUID id,
 		@RequestParam(name = "project-id", required = false) final UUID projectId
 	) {
-		final Schema.Permission permission = projectService.checkPermissionCanRead(
-			currentUserService.get().getId(),
-			projectId
-		);
-
 		try {
 			final Optional<NotebookSession> session = sessionService.getAsset(id);
 			return session.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
@@ -191,6 +182,7 @@ public class NotebookSessionController {
 	@PutMapping("/{id}")
 	@Secured(Roles.USER)
 	@Operation(summary = "Update a session")
+	@HasProjectAccess(level = Schema.Permission.WRITE)
 	@ApiResponses(
 		value = {
 			@ApiResponse(
@@ -210,11 +202,6 @@ public class NotebookSessionController {
 		@RequestBody final NotebookSession session,
 		@RequestParam(name = "project-id", required = false) final UUID projectId
 	) {
-		final Schema.Permission permission = projectService.checkPermissionCanWrite(
-			currentUserService.get().getId(),
-			projectId
-		);
-
 		try {
 			session.setId(id);
 			final Optional<NotebookSession> updated = sessionService.updateAsset(session, projectId);
@@ -229,6 +216,7 @@ public class NotebookSessionController {
 	@PostMapping("/{id}/clone")
 	@Secured(Roles.USER)
 	@Operation(summary = "Clone a session")
+	@HasProjectAccess
 	@ApiResponses(
 		value = {
 			@ApiResponse(
@@ -246,10 +234,6 @@ public class NotebookSessionController {
 		@PathVariable("id") final UUID id,
 		@RequestParam(name = "project-id", required = false) final UUID projectId
 	) {
-		final Schema.Permission permission = projectService.checkPermissionCanRead(
-			currentUserService.get().getId(),
-			projectId
-		);
 		final NotebookSession session = sessionService
 			.getAsset(id)
 			.orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, messages.get("notebook-session.not-found")));
@@ -281,6 +265,7 @@ public class NotebookSessionController {
 	@DeleteMapping("/{id}")
 	@Secured(Roles.USER)
 	@Operation(summary = "Deletes an session")
+	@HasProjectAccess(level = Schema.Permission.WRITE)
 	@ApiResponses(
 		value = {
 			@ApiResponse(
@@ -300,11 +285,6 @@ public class NotebookSessionController {
 		@PathVariable("id") final UUID id,
 		@RequestParam(name = "project-id", required = false) final UUID projectId
 	) {
-		final Schema.Permission permission = projectService.checkPermissionCanWrite(
-			currentUserService.get().getId(),
-			projectId
-		);
-
 		try {
 			sessionService.deleteAsset(id, projectId);
 			return ResponseEntity.ok(new ResponseDeleted("NotebookSession", id));

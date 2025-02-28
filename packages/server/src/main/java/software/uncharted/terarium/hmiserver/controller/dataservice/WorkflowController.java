@@ -27,10 +27,10 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
+import software.uncharted.terarium.hmiserver.annotations.HasProjectAccess;
 import software.uncharted.terarium.hmiserver.models.ClientEvent;
 import software.uncharted.terarium.hmiserver.models.ClientEventType;
 import software.uncharted.terarium.hmiserver.models.dataservice.ResponseDeleted;
-// import software.uncharted.terarium.hmiserver.models.dataservice.project.Contributor;
 import software.uncharted.terarium.hmiserver.models.dataservice.workflow.InputPort;
 import software.uncharted.terarium.hmiserver.models.dataservice.workflow.OutputPort;
 import software.uncharted.terarium.hmiserver.models.dataservice.workflow.Workflow;
@@ -41,14 +41,9 @@ import software.uncharted.terarium.hmiserver.models.dataservice.workflow.Workflo
 import software.uncharted.terarium.hmiserver.security.Roles;
 import software.uncharted.terarium.hmiserver.service.ClientEventService;
 import software.uncharted.terarium.hmiserver.service.CurrentUserService;
-import software.uncharted.terarium.hmiserver.service.data.ProjectAssetService;
-import software.uncharted.terarium.hmiserver.service.data.ProjectPermissionsService;
-import software.uncharted.terarium.hmiserver.service.data.ProjectService;
 import software.uncharted.terarium.hmiserver.service.data.WorkflowService;
 import software.uncharted.terarium.hmiserver.utils.Messages;
-import software.uncharted.terarium.hmiserver.utils.rebac.ReBACService;
 import software.uncharted.terarium.hmiserver.utils.rebac.Schema;
-import software.uncharted.terarium.hmiserver.utils.rebac.askem.RebacProject;
 
 @RequestMapping("/workflows")
 @RestController
@@ -58,17 +53,9 @@ public class WorkflowController {
 
 	final WorkflowService workflowService;
 
-	final ProjectAssetService projectAssetService;
-
-	final ProjectService projectService;
-
 	final CurrentUserService currentUserService;
 
 	final ClientEventService clientEventService;
-
-	final ProjectPermissionsService projectPermissionsService;
-
-	final ReBACService reBACService;
 
 	final Messages messages;
 
@@ -102,6 +89,7 @@ public class WorkflowController {
 	@GetMapping("/{id}")
 	@Secured(Roles.USER)
 	@Operation(summary = "Gets workflow by ID")
+	@HasProjectAccess
 	@ApiResponses(
 		value = {
 			@ApiResponse(
@@ -124,11 +112,6 @@ public class WorkflowController {
 		@PathVariable("id") final UUID id,
 		@RequestParam(name = "project-id", required = false) final UUID projectId
 	) {
-		final Schema.Permission permission = projectService.checkPermissionCanRead(
-			currentUserService.get().getId(),
-			projectId
-		);
-
 		final Optional<Workflow> workflow = workflowService.getAsset(id);
 		return workflow.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
 	}
@@ -136,6 +119,7 @@ public class WorkflowController {
 	@PostMapping
 	@Secured(Roles.USER)
 	@Operation(summary = "Create a new workflow")
+	@HasProjectAccess(level = Schema.Permission.WRITE)
 	@ApiResponses(
 		value = {
 			@ApiResponse(
@@ -153,10 +137,6 @@ public class WorkflowController {
 		@RequestBody final Workflow workflow,
 		@RequestParam(name = "project-id", required = false) final UUID projectId
 	) {
-		final Schema.Permission permission = projectService.checkPermissionCanWrite(
-			currentUserService.get().getId(),
-			projectId
-		);
 		try {
 			return ResponseEntity.status(HttpStatus.CREATED).body(workflowService.createAsset(workflow, projectId));
 		} catch (final IOException e) {
@@ -169,6 +149,7 @@ public class WorkflowController {
 	@PutMapping("/{id}")
 	@Secured(Roles.USER)
 	@Operation(summary = "Update a workflow")
+	@HasProjectAccess(level = Schema.Permission.WRITE)
 	@ApiResponses(
 		value = {
 			@ApiResponse(
@@ -188,9 +169,6 @@ public class WorkflowController {
 		@RequestBody final Workflow workflow,
 		@RequestParam(name = "project-id", required = false) final UUID projectId
 	) {
-		final String userId = currentUserService.get().getId();
-		final Schema.Permission permission = projectService.checkPermissionCanWrite(userId, projectId);
-
 		workflow.setId(id);
 		final Optional<Workflow> updated;
 
@@ -219,6 +197,7 @@ public class WorkflowController {
 	@DeleteMapping("/{id}")
 	@Secured(Roles.USER)
 	@Operation(summary = "Delete a workflow by ID")
+	@HasProjectAccess(level = Schema.Permission.WRITE)
 	@ApiResponses(
 		value = {
 			@ApiResponse(
@@ -238,15 +217,7 @@ public class WorkflowController {
 		@PathVariable("id") final UUID id,
 		@RequestParam(name = "project-id", required = false) final UUID projectId
 	) {
-		final Schema.Permission permission = projectService.checkPermissionCanWrite(
-			currentUserService.get().getId(),
-			projectId
-		);
-
 		final ClientEvent<Void> event = ClientEvent.<Void>builder().type(ClientEventType.WORKFLOW_UPDATE).build();
-
-		final RebacProject rebacProject = new RebacProject(projectId, reBACService);
-
 		try {
 			workflowService.deleteAsset(id, projectId);
 		} catch (final Exception e) {
@@ -282,6 +253,7 @@ public class WorkflowController {
 	@PostMapping("/{id}/node/{nodeId}/output/{outputId}")
 	@Secured(Roles.USER)
 	@Operation(summary = "Select an operator output to use")
+	@HasProjectAccess(level = Schema.Permission.WRITE)
 	@ApiResponses(
 		value = {
 			@ApiResponse(
@@ -302,11 +274,6 @@ public class WorkflowController {
 		@PathVariable("outputId") final UUID outputId,
 		@RequestParam(name = "project-id", required = false) final UUID projectId
 	) {
-		final Schema.Permission permission = projectService.checkPermissionCanRead(
-			currentUserService.get().getId(),
-			projectId
-		);
-
 		final Optional<Workflow> workflow = workflowService.getAsset(id);
 		final Optional<Workflow> updated;
 		if (workflow.isPresent() == false) {
@@ -331,6 +298,7 @@ public class WorkflowController {
 	@PostMapping("/{id}/update-position")
 	@Secured(Roles.USER)
 	@Operation(summary = "Update node and edge positions")
+	@HasProjectAccess(level = Schema.Permission.WRITE)
 	@ApiResponses(
 		value = {
 			@ApiResponse(
@@ -350,11 +318,6 @@ public class WorkflowController {
 		@RequestBody final WorkflowPositions payload,
 		@RequestParam(name = "project-id", required = false) final UUID projectId
 	) {
-		final Schema.Permission permission = projectService.checkPermissionCanRead(
-			currentUserService.get().getId(),
-			projectId
-		);
-
 		final Optional<Workflow> workflow = workflowService.getAsset(id);
 		final Optional<Workflow> updated;
 		if (workflow.isPresent() == false) {
@@ -379,6 +342,7 @@ public class WorkflowController {
 	@PostMapping("/{id}/update-state")
 	@Secured(Roles.USER)
 	@Operation(summary = "Update operator states")
+	@HasProjectAccess(level = Schema.Permission.WRITE)
 	@ApiResponses(
 		value = {
 			@ApiResponse(
@@ -398,11 +362,6 @@ public class WorkflowController {
 		@RequestBody final Map<UUID, JsonNode> payload,
 		@RequestParam(name = "project-id", required = false) final UUID projectId
 	) {
-		final Schema.Permission permission = projectService.checkPermissionCanRead(
-			currentUserService.get().getId(),
-			projectId
-		);
-
 		final Optional<Workflow> workflow = workflowService.getAsset(id);
 		final Optional<Workflow> updated;
 		if (workflow.isPresent() == false) {
@@ -427,6 +386,7 @@ public class WorkflowController {
 	@PostMapping("/{id}/update-status")
 	@Secured(Roles.USER)
 	@Operation(summary = "Update operator statuses")
+	@HasProjectAccess(level = Schema.Permission.WRITE)
 	@ApiResponses(
 		value = {
 			@ApiResponse(
@@ -446,11 +406,6 @@ public class WorkflowController {
 		@RequestBody final Map<UUID, String> payload,
 		@RequestParam(name = "project-id", required = false) final UUID projectId
 	) {
-		final Schema.Permission permission = projectService.checkPermissionCanRead(
-			currentUserService.get().getId(),
-			projectId
-		);
-
 		final Optional<Workflow> workflow = workflowService.getAsset(id);
 		final Optional<Workflow> updated;
 		if (workflow.isPresent() == false) {
@@ -482,6 +437,7 @@ public class WorkflowController {
 	@PostMapping("/{id}/node/{nodeId}/input")
 	@Secured(Roles.USER)
 	@Operation(summary = "Append an input port to an operator node")
+	@HasProjectAccess(level = Schema.Permission.WRITE)
 	@ApiResponses(
 		value = {
 			@ApiResponse(
@@ -502,11 +458,6 @@ public class WorkflowController {
 		@RequestBody final InputPort payload,
 		@RequestParam(name = "project-id", required = false) final UUID projectId
 	) {
-		final Schema.Permission permission = projectService.checkPermissionCanRead(
-			currentUserService.get().getId(),
-			projectId
-		);
-
 		final Optional<Workflow> workflow = workflowService.getAsset(id);
 		final Optional<Workflow> updated;
 		if (workflow.isPresent() == false) {
@@ -531,6 +482,7 @@ public class WorkflowController {
 	@PostMapping("/{id}/node/{nodeId}/output")
 	@Secured(Roles.USER)
 	@Operation(summary = "Append an output to an operator node")
+	@HasProjectAccess(level = Schema.Permission.WRITE)
 	@ApiResponses(
 		value = {
 			@ApiResponse(
@@ -551,11 +503,6 @@ public class WorkflowController {
 		@RequestBody final AppendOutputPayload payload,
 		@RequestParam(name = "project-id", required = false) final UUID projectId
 	) {
-		final Schema.Permission permission = projectService.checkPermissionCanRead(
-			currentUserService.get().getId(),
-			projectId
-		);
-
 		final Optional<Workflow> workflow = workflowService.getAsset(id);
 		final Optional<Workflow> updated;
 		if (workflow.isPresent() == false) {
@@ -580,6 +527,7 @@ public class WorkflowController {
 	@PostMapping("/{id}/node")
 	@Secured(Roles.USER)
 	@Operation(summary = "Add a node to a workflow")
+	@HasProjectAccess(level = Schema.Permission.WRITE)
 	@ApiResponses(
 		value = {
 			@ApiResponse(
@@ -599,11 +547,6 @@ public class WorkflowController {
 		@RequestBody final WorkflowNode node,
 		@RequestParam(name = "project-id", required = false) final UUID projectId
 	) {
-		final Schema.Permission permission = projectService.checkPermissionCanRead(
-			currentUserService.get().getId(),
-			projectId
-		);
-
 		final Optional<Workflow> workflow = workflowService.getAsset(id);
 		final Optional<Workflow> updated;
 		if (workflow.isPresent() == false) {
@@ -628,6 +571,7 @@ public class WorkflowController {
 	@PostMapping("/{id}/remove-nodes")
 	@Secured(Roles.USER)
 	@Operation(summary = "Remove a node from a workflow")
+	@HasProjectAccess(level = Schema.Permission.WRITE)
 	@ApiResponses(
 		value = {
 			@ApiResponse(
@@ -647,11 +591,6 @@ public class WorkflowController {
 		@RequestBody final List<UUID> nodes,
 		@RequestParam(name = "project-id", required = false) final UUID projectId
 	) {
-		final Schema.Permission permission = projectService.checkPermissionCanRead(
-			currentUserService.get().getId(),
-			projectId
-		);
-
 		final Optional<Workflow> workflow = workflowService.getAsset(id);
 		final Optional<Workflow> updated;
 		if (workflow.isPresent() == false) {
@@ -676,6 +615,7 @@ public class WorkflowController {
 	@PostMapping("/{id}/edge")
 	@Secured(Roles.USER)
 	@Operation(summary = "Add an edge to a workflow")
+	@HasProjectAccess(level = Schema.Permission.WRITE)
 	@ApiResponses(
 		value = {
 			@ApiResponse(
@@ -695,11 +635,6 @@ public class WorkflowController {
 		@RequestBody final WorkflowEdge edge,
 		@RequestParam(name = "project-id", required = false) final UUID projectId
 	) {
-		final Schema.Permission permission = projectService.checkPermissionCanRead(
-			currentUserService.get().getId(),
-			projectId
-		);
-
 		final Optional<Workflow> workflow = workflowService.getAsset(id);
 		final Optional<Workflow> updated;
 		if (workflow.isPresent() == false) {
@@ -724,6 +659,7 @@ public class WorkflowController {
 	@PostMapping("/{id}/remove-edges")
 	@Secured(Roles.USER)
 	@Operation(summary = "Remove an edge from a workflow")
+	@HasProjectAccess(level = Schema.Permission.WRITE)
 	@ApiResponses(
 		value = {
 			@ApiResponse(
@@ -743,11 +679,6 @@ public class WorkflowController {
 		@RequestBody final List<UUID> edges,
 		@RequestParam(name = "project-id", required = false) final UUID projectId
 	) {
-		final Schema.Permission permission = projectService.checkPermissionCanRead(
-			currentUserService.get().getId(),
-			projectId
-		);
-
 		final Optional<Workflow> workflow = workflowService.getAsset(id);
 		final Optional<Workflow> updated;
 		if (workflow.isPresent() == false) {
@@ -772,6 +703,7 @@ public class WorkflowController {
 	@PostMapping("/{id}/branch-from-node/{nodeId}")
 	@Secured(Roles.USER)
 	@Operation(summary = "Branch workflow starting from a given node")
+	@HasProjectAccess(level = Schema.Permission.WRITE)
 	@ApiResponses(
 		value = {
 			@ApiResponse(
@@ -791,11 +723,6 @@ public class WorkflowController {
 		@PathVariable("nodeId") final UUID nodeId,
 		@RequestParam(name = "project-id", required = false) final UUID projectId
 	) {
-		final Schema.Permission permission = projectService.checkPermissionCanRead(
-			currentUserService.get().getId(),
-			projectId
-		);
-
 		final Optional<Workflow> workflow = workflowService.getAsset(id);
 		final Optional<Workflow> updated;
 		if (workflow.isPresent() == false) {
@@ -820,6 +747,7 @@ public class WorkflowController {
 	@PostMapping("/{id}/annotation")
 	@Secured(Roles.USER)
 	@Operation(summary = "Add or update a workflow annotation")
+	@HasProjectAccess(level = Schema.Permission.WRITE)
 	@ApiResponses(
 		value = {
 			@ApiResponse(
@@ -839,11 +767,6 @@ public class WorkflowController {
 		@RequestBody final WorkflowAnnotation annotation,
 		@RequestParam(name = "project-id", required = false) final UUID projectId
 	) {
-		final Schema.Permission permission = projectService.checkPermissionCanRead(
-			currentUserService.get().getId(),
-			projectId
-		);
-
 		final Optional<Workflow> workflow = workflowService.getAsset(id);
 		final Optional<Workflow> updated;
 		if (workflow.isPresent() == false) {
@@ -867,6 +790,7 @@ public class WorkflowController {
 	@DeleteMapping("/{id}/annotation/{annotationId}")
 	@Secured(Roles.USER)
 	@Operation(summary = "Remove a workflow annotation")
+	@HasProjectAccess(level = Schema.Permission.WRITE)
 	@ApiResponses(
 		value = {
 			@ApiResponse(
@@ -886,11 +810,6 @@ public class WorkflowController {
 		@PathVariable("annotationId") final UUID annotationId,
 		@RequestParam(name = "project-id", required = false) final UUID projectId
 	) {
-		final Schema.Permission permission = projectService.checkPermissionCanRead(
-			currentUserService.get().getId(),
-			projectId
-		);
-
 		final Optional<Workflow> workflow = workflowService.getAsset(id);
 		final Optional<Workflow> updated;
 		if (workflow.isPresent() == false) {
