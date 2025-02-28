@@ -113,7 +113,7 @@ def main():
                 odesys[0] += exprs
 
         # Reformat:
-        odesys = "\\begin{align*} \n    " + odesys[0] + "\n\\end{align*}"
+        odesys = "\\begin{align} \n    " + odesys[0] + "\n\\end{align}"
         # =========================================
 
         taskrunner.write_output_dict_with_timeout({"response": odesys})
