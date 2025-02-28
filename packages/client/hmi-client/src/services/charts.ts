@@ -13,34 +13,36 @@ import type { FunmanBox, FunmanConstraintsResponse } from './models/funman-servi
 
 const VEGALITE_SCHEMA = 'https://vega.github.io/schema/vega-lite/v5.json';
 const GLOBAL_FONT = 'Figtree';
-const DEFAULT_FONT_SIZE = 24;
+const DEFAULT_FONT_SIZE = 12;
 
 const getFontConfig = (fontSize = DEFAULT_FONT_SIZE, isCompact = false) => {
 	const BASE_FONT_SIZE = 12;
-	const ratio = (fontSize / BASE_FONT_SIZE) * (isCompact ? 0.7 : 1);
+	const ratio = fontSize / BASE_FONT_SIZE;
+	// First argument is compact mode value, second is the normal value
+	const fv = (compactVal: number, normalVal: number) => (isCompact ? compactVal : normalVal) * ratio;
 	return {
 		font: GLOBAL_FONT,
 		axis: {
-			labelFontSize: 10 * ratio,
-			titleFontSize: 11 * ratio
+			labelFontSize: fv(7, 10),
+			titleFontSize: fv(7, 11)
 		},
 		legend: {
-			symbolSize: 200 * ratio,
-			labelFontSize: 12 * ratio,
-			titleFontSize: 11 * ratio
+			symbolSize: fv(100, 200),
+			labelFontSize: fv(8, 12),
+			titleFontSize: fv(7, 11)
 		},
 		title: {
-			fontSize: 14 * ratio
+			fontSize: fv(10, 14)
 		},
 		header: {
-			labelFontSize: 10 * ratio,
-			titleFontSize: 11 * ratio
+			labelFontSize: fv(7, 10),
+			titleFontSize: fv(7, 11)
 		},
 		tooltip: {
-			fontSize: 12 * ratio
+			fontSize: fv(8, 12)
 		},
 		text: {
-			fontSize: 12 * ratio
+			fontSize: fv(8, 12)
 		}
 	};
 };
