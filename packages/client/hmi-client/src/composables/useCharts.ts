@@ -1214,7 +1214,7 @@ export function useCharts(
 				let sensitivityVariable = selectedVariable;
 				if (method.value === SensitivityMethod.PEAK_TIMEPOINT) {
 					unit = 'timepoint';
-					sensitivityVariable = 'timepoint_id';
+					sensitivityVariable = 'timepoint_unknown';
 				}
 				const { options } = createForecastChartOptions(settings);
 				const bins = createSensitivityBins(slicedData.get(selectedVariable)!, sensitivityVariable, {
@@ -1254,13 +1254,13 @@ export function useCharts(
 					{
 						data: result,
 						variables: [selectedVariable],
-						timeField: 'timepoint_id',
+						timeField: 'timepoint_unknown',
 						groupField: 'sample_id'
 					},
 					{
 						data: result,
 						variables: [selectedVariable],
-						timeField: 'timepoint_id'
+						timeField: 'timepoint_unknown'
 					},
 					null,
 					options
