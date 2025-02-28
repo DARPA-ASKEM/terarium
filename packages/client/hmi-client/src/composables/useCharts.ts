@@ -384,6 +384,7 @@ export function useCharts(
 			translationMap: chartData.value?.translationMap || {},
 			xAxisTitle: getUnit('_time') || 'Time',
 			yAxisTitle: buildYAxisTitle(variables, getUnit),
+			fontSize: setting.fontSize,
 			dateOptions,
 			colorscheme: [BASE_GREY, setting.primaryColor ?? PRIMARY_COLOR],
 			scale: setting.scale
@@ -406,6 +407,7 @@ export function useCharts(
 			translationMap: chartData.value?.translationMap || {},
 			xAxisTitle: '',
 			yAxisTitle: '',
+			fontSize: setting.fontSize,
 			autosize: AUTOSIZE.FIT,
 			colorscheme: multiVariable ? CATEGORICAL_SCHEME : [BASE_GREY, setting.primaryColor ?? PRIMARY_COLOR],
 			scale: setting.scale
@@ -964,6 +966,7 @@ export function useCharts(
 					height: chartSize.value.height,
 					xAxisTitle: `${param}`,
 					yAxisTitle: 'Count',
+					fontSize: setting.fontSize,
 					maxBins: 10,
 					variables: [
 						{ field: beforeFieldName, label: labelBefore, width: 54, color: BASE_GREY },
@@ -1320,6 +1323,7 @@ export function useCharts(
 						height: 150,
 						xAxisTitle: '',
 						yAxisTitle: '',
+						fontSize: settings.fontSize,
 						bins,
 						colorscheme: SENSITIVITY_COLOUR_SCHEME,
 						chartType

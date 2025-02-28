@@ -241,6 +241,7 @@ export interface ChartSettingBase {
 	shareYAxis?: boolean;
 	showQuantiles?: boolean;
 	quantiles?: number[];
+	fontSize?: number;
 }
 
 export const ProgrammingLanguageVersion: { [key in ProgrammingLanguage]: string } = {

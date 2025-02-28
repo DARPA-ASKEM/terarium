@@ -86,6 +86,7 @@ export interface BaseChartOptions {
 	autosize?: AUTOSIZE;
 	dateOptions?: DateOptions;
 	scale?: string;
+	fontSize?: number;
 }
 
 export interface DateOptions {
