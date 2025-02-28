@@ -28,19 +28,21 @@ public class ModelConfigurationToTables {
 				.collect(Collectors.toMap(State::getId, Function.identity()));
 
 			for (InitialSemantic initial : modelConfiguration.getInitialSemanticList()) {
-				String id = initial.getTarget();
+				String id = initial.getTarget() != null ? initial.getTarget() : "";
 				String name = "";
-				String expression = initial.getExpression();
+				String expression = initial.getExpression() != null ? initial.getExpression() : "";
 				String units = "";
 				String description = "";
-				String source = initial.getSource();
+				String source = initial.getSource() != null ? initial.getSource() : "";
 
 				// Get the values from the state
 				final State state = states.get(initial.getTarget());
 				if (state != null) {
-					name = state.getName();
-					description = state.getDescription();
-					units = state.getUnits().getExpression();
+					name = state.getName() != null ? state.getName() : "";
+					description = state.getDescription() != null ? state.getDescription() : "";
+					units = state.getUnits() != null && state.getUnits().getExpression() != null
+						? state.getUnits().getExpression()
+						: "";
 				}
 
 				// Add the row to the table
@@ -58,19 +60,21 @@ public class ModelConfigurationToTables {
 				.collect(Collectors.toMap(ModelParameter::getId, Function.identity()));
 
 			for (ParameterSemantic param : modelConfiguration.getParameterSemanticList()) {
-				String id = param.getReferenceId();
+				String id = param.getReferenceId() != null ? param.getReferenceId() : "";
 				String name = "";
 				String value = "";
 				String units = "";
 				String description = "";
-				String source = param.getSource();
+				String source = param.getSource() != null ? param.getSource() : "";
 
 				// Get the values from the Parameter
 				final ModelParameter parameter = parameters.get(param.getReferenceId());
 				if (parameter != null) {
-					name = parameter.getName();
-					description = parameter.getDescription();
-					units = parameter.getUnits().getExpression();
+					name = parameter.getName() != null ? parameter.getName() : "";
+					description = parameter.getDescription() != null ? parameter.getDescription() : "";
+					units = parameter.getUnits() != null && parameter.getUnits().getExpression() != null
+						? parameter.getUnits().getExpression()
+						: "";
 				}
 
 				// Get the value based on the distribution type
@@ -78,15 +82,18 @@ public class ModelConfigurationToTables {
 					final ModelDistribution distribution = param.getDistribution();
 
 					if (Objects.equals(distribution.getType(), "Constant")) {
-						value = distribution.getParameters().get("value").toString();
+						Object valueObj = distribution.getParameters().get("value");
+						value = valueObj != null ? valueObj.toString() : "";
 					}
 
 					if (Objects.equals(distribution.getType(), "StandardUniform1")) {
+						Object min = distribution.getParameters().get("minimum");
+						Object max = distribution.getParameters().get("maximum");
 						value =
 							"\"Uniform(min=" +
-							distribution.getParameters().get("minimum") +
+							(min != null ? min.toString() : "") +
 							", max=" +
-							distribution.getParameters().get("maximum") +
+							(max != null ? max.toString() : "") +
 							")\"";
 					}
 				}
@@ -135,7 +142,9 @@ public class ModelConfigurationToTables {
 				if (state != null) {
 					name = escapeLatex(state.getName());
 					description = escapeLatex(state.getDescription());
-					units = escapeLatex(state.getUnits().getExpression());
+					if (state.getUnits() != null) {
+						units = escapeLatex(state.getUnits().getExpression());
+					}
 				}
 
 				// Add the row to the table
@@ -182,7 +191,9 @@ public class ModelConfigurationToTables {
 				if (parameter != null) {
 					name = escapeLatex(parameter.getName());
 					description = escapeLatex(parameter.getDescription());
-					units = escapeLatex(parameter.getUnits().getExpression());
+					if (parameter.getUnits() != null) {
+						units = escapeLatex(parameter.getUnits().getExpression());
+					}
 				}
 
 				// Get the value based on the distribution type
@@ -190,15 +201,18 @@ public class ModelConfigurationToTables {
 					final ModelDistribution distribution = param.getDistribution();
 
 					if (Objects.equals(distribution.getType(), "Constant")) {
-						value = distribution.getParameters().get("value").toString();
+						Object valueObj = distribution.getParameters().get("value");
+						value = valueObj != null ? escapeLatex(valueObj.toString()) : "";
 					}
 
 					if (Objects.equals(distribution.getType(), "StandardUniform1")) {
+						Object min = distribution.getParameters().get("minimum");
+						Object max = distribution.getParameters().get("maximum");
 						value =
 							"Uniform(min=" +
-							distribution.getParameters().get("minimum") +
+							(min != null ? escapeLatex(min.toString()) : "") +
 							", max=" +
-							distribution.getParameters().get("maximum") +
+							(max != null ? escapeLatex(max.toString()) : "") +
 							")";
 					}
 				}
