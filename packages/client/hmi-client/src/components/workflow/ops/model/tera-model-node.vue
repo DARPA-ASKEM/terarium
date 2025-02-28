@@ -50,6 +50,7 @@ import TeraModelDiagram from '@/components/model/petrinet/tera-model-diagram.vue
 import TeraModelEquation from '@/components/model/petrinet/tera-model-equation.vue';
 import TeraOperatorTitle from '@/components/operator/tera-operator-title.vue';
 import TeraOperatorPlaceholder from '@/components/operator/tera-operator-placeholder.vue';
+import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue';
 import { useProjects } from '@/composables/project';
 import { createEnrichClientEventHandler, useClientEvent } from '@/composables/useClientEvent';
 import { ModelOperationState } from './model-operation';
