@@ -25,14 +25,21 @@ def main():
 
         odeterms = {var: [] for var in sorted(model.get_concepts_name_map().keys())}
 
+        # ODE terms from template rate laws
         for template in model.templates:
             if hasattr(template, "subject"):
                 var = template.subject.name
-                odeterms[var].append(-template.rate_law.args[0])
+                if template.rate_law is not None:
+                    odeterms[var].append(-template.rate_law.args[0])
+                else:
+                    odeterms[var].append(0)
 
             if hasattr(template, "outcome"):
                 var = template.outcome.name
-                odeterms[var].append(template.rate_law.args[0])
+                if template.rate_law is not None:
+                    odeterms[var].append(template.rate_law.args[0])
+                else:
+                    odeterms[var].append(0)
 
         # Sort the terms such that all negative ones come first
         odeterms = {var: sorted(terms, key = lambda term: str(term)) for var, terms in odeterms.items()}
