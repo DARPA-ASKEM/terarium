@@ -15,23 +15,27 @@
 			/>
 			<tera-operator-placeholder :node="node" />
 		</template>
+		<tera-progress-spinner is-centered :font-size="2" v-if="isLoading" />
 	</main>
 </template>
 
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue';
 import { isEmpty } from 'lodash';
-import { AssetType } from '@/types/Types';
-import type { Dataset, ProjectAsset } from '@/types/Types';
 import Button from 'primevue/button';
 import Dropdown from 'primevue/dropdown';
+
+import { AssetType, ClientEventType, TaskStatus, type Dataset, type ProjectAsset } from '@/types/Types';
+import { WorkflowNode } from '@/types/workflow';
 import { getDataset } from '@/services/dataset';
 import { canPropagateResource } from '@/services/workflow';
-import { WorkflowNode } from '@/types/workflow';
 import TeraOperatorTitle from '@/components/operator/tera-operator-title.vue';
+import TeraOperatorPlaceholder from '@/components/operator/tera-operator-placeholder.vue';
+import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue';
 import TeraShowMoreText from '@/components/widgets/tera-show-more-text.vue';
 import { useProjects } from '@/composables/project';
-import TeraOperatorPlaceholder from '@/components/operator/tera-operator-placeholder.vue';
+import { createEnrichClientEventHandler, useClientEvent } from '@/composables/useClientEvent';
+
 import { DatasetOperationState } from './dataset-operation';
 
 const props = defineProps<{
@@ -42,6 +46,13 @@ const emit = defineEmits(['append-output', 'open-drilldown']);
 
 const datasets = computed(() => useProjects().getActiveProjectAssets(AssetType.Dataset));
 const dataset = ref<Dataset | null>(null);
+const taskId = ref<string>('');
+const isLoading = computed(() => taskId.value !== TaskStatus.Failed && taskId.value !== '');
+
+useClientEvent(
+	ClientEventType.TaskGollmEnrichDataset,
+	createEnrichClientEventHandler(taskId, props.node.state.datasetId, emit)
+);
 
 async function getDatasetById(id: string) {
 	dataset.value = await getDataset(id);

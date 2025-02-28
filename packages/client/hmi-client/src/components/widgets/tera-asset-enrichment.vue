@@ -2,6 +2,8 @@
 	<Button
 		label="Enrich metadata"
 		icon="pi pi-sparkles"
+		:class="isError ? 'error' : ''"
+		:disabled="isLoading"
 		:loading="isLoading"
 		severity="secondary"
 		outlined
@@ -37,10 +39,14 @@
 </template>
 
 <script setup lang="ts">
+import { computed, ref, watch } from 'vue';
+import Button from 'primevue/button';
+import RadioButton from 'primevue/radiobutton';
+
+import { datasetCard, enrichModelMetadata } from '@/services/goLLM';
 import { getRelatedArtifacts, mapAssetTypeToProvenanceType } from '@/services/provenance';
 import {
 	AssetType,
-	ClientEvent,
 	ClientEventType,
 	DocumentAsset,
 	ProjectAsset,
@@ -50,32 +56,25 @@ import {
 	TerariumAsset
 } from '@/types/Types';
 import { isDocumentAsset } from '@/utils/asset';
-import Button from 'primevue/button';
-import RadioButton from 'primevue/radiobutton';
-import { computed, ref, watch } from 'vue';
-import { datasetCard, enrichModelMetadata } from '@/services/goLLM';
 import { useProjects } from '@/composables/project';
 import TeraModal from '@/components/widgets/tera-modal.vue';
-import { useClientEvent } from '@/composables/useClientEvent';
+import { createEnrichClientEventHandler, useClientEvent } from '@/composables/useClientEvent';
 
 const props = defineProps<{
 	assetType: AssetType.Model | AssetType.Dataset;
 	assetId: TerariumAsset['id'];
 }>();
 
-const isLoading = computed(() => taskId.value !== '');
+const isLoading = computed(() => taskId.value !== '' && !isError.value);
+const isError = computed(() => taskId.value === TaskStatus.Failed);
 const isModalVisible = ref(false);
 
 const emit = defineEmits(['finished-job']);
 const taskId = ref<string>('');
-const enrichEventHandler = async (event: ClientEvent<TaskResponse>) => {
-	if (taskId.value !== event.data?.id) return;
-	if ([TaskStatus.Success, TaskStatus.Cancelled, TaskStatus.Failed].includes(event.data.status)) {
-		taskId.value = '';
-		emit('finished-job');
-	}
-};
-useClientEvent([ClientEventType.TaskGollmEnrichDataset, ClientEventType.TaskGollmEnrichModel], enrichEventHandler);
+useClientEvent(
+	[ClientEventType.TaskGollmEnrichDataset, ClientEventType.TaskGollmEnrichModel],
+	createEnrichClientEventHandler(taskId, props.assetId || null, emit)
+);
 
 const selectedResourceId = ref<string>('');
 const relatedDocuments = ref<Array<{ name: string; id: string }>>([]);
@@ -179,5 +178,10 @@ ul {
 	align-items: center;
 	gap: var(--gap-2);
 	margin-left: auto;
+}
+
+.error {
+	border-color: var(--error-border-color);
+	color: var(--error-message-color);
 }
 </style>
