@@ -1,6 +1,5 @@
 import { InterventionPolicy, InterventionSemanticType } from '@/types/Types';
-import type { BaseState, Operation } from '@/types/workflow';
-import { WorkflowOperationTypes } from '@/types/workflow';
+import { BaseState, Operation, OperatorStatus, WorkflowOperationTypes } from '@/types/workflow';
 import { isEqual, omit } from 'lodash';
 
 const DOCUMENTATION_URL = 'https://documentation.terarium.ai/config-and-intervention/create-intervention-policy/';
@@ -9,6 +8,7 @@ export interface InterventionPolicyState extends BaseState {
 	interventionPolicy: InterventionPolicy;
 	taskIds: string[];
 	selectedCharts?: string[];
+	operatorStatus?: OperatorStatus;
 }
 
 export const InterventionPolicyOperation: Operation = {
@@ -31,7 +31,8 @@ export const InterventionPolicyOperation: Operation = {
 				modelId: '',
 				interventions: []
 			},
-			taskIds: []
+			taskIds: [],
+			operatorStatus: OperatorStatus.DEFAULT
 		};
 		return init;
 	}

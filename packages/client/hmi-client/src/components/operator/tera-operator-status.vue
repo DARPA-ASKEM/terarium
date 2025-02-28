@@ -1,11 +1,10 @@
 <template>
 	<section>
 		<div
-			v-if="props.status !== OperatorStatus.DEFAULT && props.status !== OperatorStatus.SUCCESS"
+			v-if="props.status && props.status !== OperatorStatus.DEFAULT && props.status !== OperatorStatus.SUCCESS"
 			class="icon-container"
 			:class="`${status}`"
 		>
-			<!--TODO: The progress spinner may later need to be specified to show how much is loaded so far-->
 			<div v-if="props.status === OperatorStatus.IN_PROGRESS" class="progressbar-container">
 				<div v-if="props.progress">
 					<p class="action">{{ Math.round(props.progress * 100) }}%</p>
@@ -28,7 +27,7 @@ import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue'
 import { OperatorStatus } from '@/types/workflow';
 
 const props = defineProps<{
-	status: OperatorStatus;
+	status: OperatorStatus | undefined;
 	progress?: number;
 }>();
 
@@ -82,7 +81,6 @@ section {
 	margin-top: var(--gap-2);
 	display: flex;
 	justify-content: space-between;
-	align-items: center;
 	gap: var(--gap-2);
 }
 

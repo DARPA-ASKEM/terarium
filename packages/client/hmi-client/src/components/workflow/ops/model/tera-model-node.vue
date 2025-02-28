@@ -59,7 +59,7 @@ const props = defineProps<{
 	node: WorkflowNode<ModelOperationState>;
 }>();
 
-const emit = defineEmits(['append-output', 'open-drilldown']);
+const emit = defineEmits(['append-output', 'open-drilldown', 'finished-job']);
 const models = computed(() => useProjects().getActiveProjectAssets(AssetType.Model));
 
 const taskStatus = ref<OperatorStatus | undefined>();

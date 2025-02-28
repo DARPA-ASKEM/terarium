@@ -7,7 +7,12 @@
 			</h6>
 			<tera-operator-placeholder v-if="!thumbnail" :node="node" />
 			<img v-else class="pdf-thumbnail" :src="thumbnail" alt="Pdf's first page" />
-			<tera-operator-status v-if="operatorStatus" :status="operatorStatus" :progress="operatorProgress" class="py-2">
+			<tera-operator-status
+				v-if="operatorStatus"
+				:status="operatorStatus"
+				:progress="props.node?.state?.taskProgress"
+				class="py-2"
+			>
 				Processing PDF extractions
 			</tera-operator-status>
 			<Button label="Open" @click="emit('open-drilldown')" severity="secondary" outlined />
@@ -26,7 +31,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref, watch } from 'vue';
+import { onMounted, ref, watch } from 'vue';
 import { cloneDeep, isEmpty } from 'lodash';
 import Button from 'primevue/button';
 import Dropdown from 'primevue/dropdown';
@@ -53,9 +58,6 @@ const fetchingDocument = ref(false);
 const documentName = ref<DocumentAsset['name']>('');
 const thumbnail = ref<string | null>(null);
 const operatorStatus = ref<OperatorStatus>(OperatorStatus.DEFAULT);
-const operatorProgress = computed(() =>
-	props.node?.state?.taskProgress ? Math.round(props.node.state.taskProgress) : undefined
-);
 
 useClientEvent(
 	ClientEventType.ExtractionPdf,

@@ -42,7 +42,7 @@
 		<tera-operator-placeholder v-else :node="node">
 			<template v-if="!node.inputs[0].value"> Attach a model</template>
 		</tera-operator-placeholder>
-		<tera-progress-spinner is-centered :font-size="2" v-if="isLoading" />
+		<tera-operator-status :status="props.node.state.operatorStatus" />
 		<Button
 			:label="isModelInputConnected ? 'Open' : 'Attach a model'"
 			@click="emit('open-drilldown')"
@@ -65,7 +65,7 @@ import VegaChart from '@/components/widgets/VegaChart.vue';
 import TeraOperatorPlaceholder from '@/components/operator/tera-operator-placeholder.vue';
 import { ClientEventType } from '@/types/Types';
 import { createTaskListClientEventHandler, useClientEvent } from '@/composables/useClientEvent';
-import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue';
+import TeraOperatorStatus from '@/components/operator/tera-operator-status.vue';
 import { InterventionPolicyState } from './intervention-policy-operation';
 
 const emit = defineEmits(['open-drilldown', 'update-state']);
@@ -74,7 +74,7 @@ const props = defineProps<{
 }>();
 useClientEvent(
 	[ClientEventType.TaskGollmInterventionsFromDocument, ClientEventType.TaskGollmInterventionsFromDataset],
-	createTaskListClientEventHandler(props.node, 'taskIds')
+	createTaskListClientEventHandler(props.node, 'taskIds', 'operatorStatus')
 );
 
 const isLoading = computed(() => props.node.state.taskIds.length > 0);

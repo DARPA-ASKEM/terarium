@@ -31,7 +31,7 @@ import { getDataset } from '@/services/dataset';
 import { canPropagateResource } from '@/services/workflow';
 import TeraOperatorTitle from '@/components/operator/tera-operator-title.vue';
 import TeraOperatorPlaceholder from '@/components/operator/tera-operator-placeholder.vue';
-import teraOperatorStatus from '@/components/operator/tera-operator-status.vue';
+import TeraOperatorStatus from '@/components/operator/tera-operator-status.vue';
 import TeraShowMoreText from '@/components/widgets/tera-show-more-text.vue';
 import { useProjects } from '@/composables/project';
 import { createEnrichClientEventHandler, useClientEvent } from '@/composables/useClientEvent';
@@ -42,7 +42,7 @@ const props = defineProps<{
 	node: WorkflowNode<DatasetOperationState>;
 }>();
 
-const emit = defineEmits(['append-output', 'open-drilldown']);
+const emit = defineEmits(['append-output', 'open-drilldown', 'finished-job']);
 
 const datasets = computed(() => useProjects().getActiveProjectAssets(AssetType.Dataset));
 const dataset = ref<Dataset | null>(null);
