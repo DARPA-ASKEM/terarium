@@ -25,13 +25,17 @@ export function useClientEvent(
 }
 
 // accepts a state and key to a string[] to update with in progress task ids
-export function createTaskListClientEventHandler(node: WorkflowNode<BaseState>, taskIdsKey: string) {
+export function createTaskListClientEventHandler(node: WorkflowNode<BaseState>, taskIdsKey: string, statusKey: string) {
 	const { state } = node;
 	const taskIds = state[taskIdsKey];
 	return async (event: ClientEvent<TaskResponse>) => {
 		if (!taskIds?.includes(event.data?.id) || !event.data) return;
 		if ([TaskStatus.Success, TaskStatus.Cancelled, TaskStatus.Failed].includes(event.data.status)) {
 			state[taskIdsKey] = taskIds.filter((id) => id !== event.data.id);
+			state[statusKey] = OperatorStatus.ERROR;
+		}
+		if (state[taskIdsKey].length > 0) {
+			state[statusKey] = OperatorStatus.IN_PROGRESS;
 		}
 	};
 }
@@ -39,23 +43,22 @@ export function createTaskListClientEventHandler(node: WorkflowNode<BaseState>, 
 export function createTaskProgressClientEventHandler(
 	node: WorkflowNode<DocumentOperationState>,
 	progressKey: string,
-	statusKey: string | undefined
+	statusKey: string
 ) {
 	const { state } = node;
 	return async (event: ClientEvent<TaskResponse> | NotificationEvent) => {
 		if (event.data.data.documentId === state.documentId) {
 			state[progressKey] = event.data?.progress;
 			if (statusKey) {
-				state[statusKey] = event.data.status;
+				state[statusKey] = OperatorStatus.IN_PROGRESS;
 			}
-			if (
-				event.data.status &&
-				[TaskStatus.Success, TaskStatus.Cancelled, TaskStatus.Failed].includes(event.data.status)
-			) {
+			if (event.data.status && [TaskStatus.Success, TaskStatus.Cancelled].includes(event.data.status)) {
 				state[progressKey] = undefined;
 				if (statusKey) {
 					state[statusKey] = undefined;
 				}
+			} else if (event.data.status === TaskStatus.Failed) {
+				state[statusKey] = OperatorStatus.ERROR;
 			}
 		}
 	};
