@@ -68,7 +68,7 @@ public class ModelCardResponseHandler extends LlmTaskResponseHandler {
 
 			log.info("Writing model card to database for model {}", props.getModelId());
 			// Grab the model
-			final Model model = modelService.getAsset(props.modelId, ASSUME_WRITE_PERMISSION_ON_BEHALF_OF_USER).orElseThrow();
+			final Model model = modelService.getAsset(props.modelId).orElseThrow();
 
 			final Response card = objectMapper.readValue(resp.getOutput(), Response.class);
 			if (model.getMetadata() == null) {
@@ -76,7 +76,7 @@ public class ModelCardResponseHandler extends LlmTaskResponseHandler {
 			}
 			model.getMetadata().setGollmCard(card.response);
 			model.getMetadata().setDescription(renderJsonToHTML(card.response).getBytes(StandardCharsets.UTF_8));
-			modelService.updateAsset(model, props.modelId, ASSUME_WRITE_PERMISSION_ON_BEHALF_OF_USER);
+			modelService.updateAsset(model, props.modelId);
 		} catch (final Exception e) {
 			log.error("Failed to write model card to database", e);
 			throw new RuntimeException(e);

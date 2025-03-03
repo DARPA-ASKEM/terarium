@@ -18,6 +18,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
+import software.uncharted.terarium.hmiserver.annotations.HasProjectAccess;
 import software.uncharted.terarium.hmiserver.controller.SnakeCaseController;
 import software.uncharted.terarium.hmiserver.models.dataservice.AssetType;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.configurations.ModelConfiguration;
@@ -72,16 +73,13 @@ public class SimulationRequestController implements SnakeCaseController {
 
 	@GetMapping("/{id}")
 	@Secured(Roles.USER)
+	@HasProjectAccess
 	public ResponseEntity<Simulation> getSimulation(
 		@PathVariable("id") final UUID id,
 		@RequestParam(name = "project-id", required = false) final UUID projectId
 	) {
-		final Schema.Permission permission = projectService.checkPermissionCanRead(
-			currentUserService.get().getId(),
-			projectId
-		);
 		try {
-			final Optional<Simulation> sim = simulationService.getAsset(id, permission);
+			final Optional<Simulation> sim = simulationService.getAsset(id);
 			if (sim.isEmpty()) {
 				return ResponseEntity.noContent().build();
 			}
@@ -95,18 +93,13 @@ public class SimulationRequestController implements SnakeCaseController {
 
 	@PostMapping("ciemss/forecast")
 	@Secured(Roles.USER)
+	@HasProjectAccess(level = Schema.Permission.WRITE)
 	public ResponseEntity<Simulation> makeForecastRunCiemss(
 		@RequestBody final SimulationRequestBody<SimulationRequest> request,
 		@RequestParam(name = "project-id", required = false) final UUID projectId
 	) {
-		final Schema.Permission permission = projectService.checkPermissionCanWrite(
-			currentUserService.get().getId(),
-			projectId
-		);
-
 		final Optional<ModelConfiguration> modelConfiguration = modelConfigService.getAsset(
-			request.payload.getModelConfigId(),
-			permission
+			request.payload.getModelConfigId()
 		);
 		if (modelConfiguration.isEmpty()) {
 			return ResponseEntity.notFound().build();
@@ -117,7 +110,7 @@ public class SimulationRequestController implements SnakeCaseController {
 			.makeForecastRun(convertObjectToSnakeCaseJsonNode(request.payload))
 			.getBody();
 
-		final Optional<Simulation> sim = simulationService.getAsset(UUID.fromString(res.getSimulationId()), permission);
+		final Optional<Simulation> sim = simulationService.getAsset(UUID.fromString(res.getSimulationId()));
 		final Optional<Project> project = projectService.getProject(projectId);
 
 		new SimulationRequestStatusNotifier(
@@ -127,7 +120,6 @@ public class SimulationRequestController implements SnakeCaseController {
 			simulationService,
 			sim.get().getId(),
 			projectId,
-			permission,
 			request.metadata
 		)
 			.setInterval(2)
@@ -136,7 +128,7 @@ public class SimulationRequestController implements SnakeCaseController {
 			.startPolling();
 
 		try {
-			projectAssetService.createProjectAsset(project.get(), AssetType.SIMULATION, sim.get(), permission);
+			projectAssetService.createProjectAsset(project.get(), AssetType.SIMULATION, sim.get());
 			return ResponseEntity.ok(sim.get());
 		} catch (final Exception e) {
 			final String error = "Failed to create simulation";
@@ -146,18 +138,14 @@ public class SimulationRequestController implements SnakeCaseController {
 	}
 
 	@PostMapping("ciemss/calibrate")
+	@HasProjectAccess(level = Schema.Permission.WRITE)
 	@Secured(Roles.USER)
 	public ResponseEntity<JobResponse> makeCalibrateJobCiemss(
 		@RequestBody final SimulationRequestBody<CalibrationRequestCiemss> request,
 		@RequestParam("project-id") final UUID projectId
 	) {
-		final Schema.Permission permission = projectService.checkPermissionCanWrite(
-			currentUserService.get().getId(),
-			projectId
-		);
 		final Optional<ModelConfiguration> modelConfiguration = modelConfigService.getAsset(
-			request.payload.getModelConfigId(),
-			permission
+			request.payload.getModelConfigId()
 		);
 		if (modelConfiguration.isEmpty()) {
 			return ResponseEntity.notFound().build();
@@ -174,31 +162,25 @@ public class SimulationRequestController implements SnakeCaseController {
 			simulationService,
 			UUID.fromString(res.getSimulationId()),
 			projectId,
-			permission,
 			request.metadata
 		).startPolling();
 
-		final Optional<Simulation> sim = simulationService.getAsset(UUID.fromString(res.getSimulationId()), permission);
+		final Optional<Simulation> sim = simulationService.getAsset(UUID.fromString(res.getSimulationId()));
 		final Optional<Project> project = projectService.getProject(projectId);
-		projectAssetService.createProjectAsset(project.get(), AssetType.SIMULATION, sim.get(), permission);
+		projectAssetService.createProjectAsset(project.get(), AssetType.SIMULATION, sim.get());
 
 		return ResponseEntity.ok(res);
 	}
 
 	@PostMapping("ciemss/optimize")
+	@HasProjectAccess(level = Schema.Permission.WRITE)
 	@Secured(Roles.USER)
 	public ResponseEntity<JobResponse> makeOptimizeJobCiemss(
 		@RequestBody final SimulationRequestBody<OptimizeRequestCiemss> request,
 		@RequestParam("project-id") final UUID projectId
 	) {
-		final Schema.Permission permission = projectService.checkPermissionCanWrite(
-			currentUserService.get().getId(),
-			projectId
-		);
-
 		final Optional<ModelConfiguration> modelConfiguration = modelConfigService.getAsset(
-			request.payload.getModelConfigId(),
-			permission
+			request.payload.getModelConfigId()
 		);
 		if (modelConfiguration.isEmpty()) {
 			return ResponseEntity.notFound().build();
@@ -215,28 +197,23 @@ public class SimulationRequestController implements SnakeCaseController {
 			simulationService,
 			UUID.fromString(res.getSimulationId()),
 			projectId,
-			permission,
 			request.metadata
 		).startPolling();
 
-		final Optional<Simulation> sim = simulationService.getAsset(UUID.fromString(res.getSimulationId()), permission);
+		final Optional<Simulation> sim = simulationService.getAsset(UUID.fromString(res.getSimulationId()));
 		final Optional<Project> project = projectService.getProject(projectId);
-		projectAssetService.createProjectAsset(project.get(), AssetType.SIMULATION, sim.get(), permission);
+		projectAssetService.createProjectAsset(project.get(), AssetType.SIMULATION, sim.get());
 
 		return ResponseEntity.ok(res);
 	}
 
 	@PostMapping("ciemss/ensemble-simulate")
+	@HasProjectAccess(level = Schema.Permission.WRITE)
 	@Secured(Roles.USER)
 	public ResponseEntity<JobResponse> makeEnsembleSimulateCiemssJob(
 		@RequestBody final SimulationRequestBody<EnsembleSimulationCiemssRequest> request,
 		@RequestParam("project-id") final UUID projectId
 	) {
-		final Schema.Permission permission = projectService.checkPermissionCanWrite(
-			currentUserService.get().getId(),
-			projectId
-		);
-
 		final JobResponse res = simulationCiemssServiceProxy
 			.makeEnsembleSimulateCiemssJob(convertObjectToSnakeCaseJsonNode(request.payload))
 			.getBody();
@@ -248,28 +225,23 @@ public class SimulationRequestController implements SnakeCaseController {
 			simulationService,
 			UUID.fromString(res.getSimulationId()),
 			projectId,
-			permission,
 			request.metadata
 		).startPolling();
 
-		final Optional<Simulation> sim = simulationService.getAsset(UUID.fromString(res.getSimulationId()), permission);
+		final Optional<Simulation> sim = simulationService.getAsset(UUID.fromString(res.getSimulationId()));
 		final Optional<Project> project = projectService.getProject(projectId);
-		projectAssetService.createProjectAsset(project.get(), AssetType.SIMULATION, sim.get(), permission);
+		projectAssetService.createProjectAsset(project.get(), AssetType.SIMULATION, sim.get());
 
 		return ResponseEntity.ok(res);
 	}
 
 	@PostMapping("ciemss/ensemble-calibrate")
+	@HasProjectAccess(level = Schema.Permission.WRITE)
 	@Secured(Roles.USER)
 	public ResponseEntity<JobResponse> makeEnsembleCalibrateCiemssJob(
 		@RequestBody final SimulationRequestBody<EnsembleCalibrationCiemssRequest> request,
 		@RequestParam("project-id") final UUID projectId
 	) {
-		final Schema.Permission permission = projectService.checkPermissionCanWrite(
-			currentUserService.get().getId(),
-			projectId
-		);
-
 		final JobResponse res = simulationCiemssServiceProxy
 			.makeEnsembleCalibrateCiemssJob(convertObjectToSnakeCaseJsonNode(request.payload))
 			.getBody();
@@ -281,13 +253,12 @@ public class SimulationRequestController implements SnakeCaseController {
 			simulationService,
 			UUID.fromString(res.getSimulationId()),
 			projectId,
-			permission,
 			request.metadata
 		).startPolling();
 
-		final Optional<Simulation> sim = simulationService.getAsset(UUID.fromString(res.getSimulationId()), permission);
+		final Optional<Simulation> sim = simulationService.getAsset(UUID.fromString(res.getSimulationId()));
 		final Optional<Project> project = projectService.getProject(projectId);
-		projectAssetService.createProjectAsset(project.get(), AssetType.SIMULATION, sim.get(), permission);
+		projectAssetService.createProjectAsset(project.get(), AssetType.SIMULATION, sim.get());
 
 		return ResponseEntity.ok(res);
 	}

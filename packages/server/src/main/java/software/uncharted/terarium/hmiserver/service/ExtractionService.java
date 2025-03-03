@@ -43,6 +43,7 @@ import software.uncharted.terarium.hmiserver.models.dataservice.simulation.Progr
 import software.uncharted.terarium.hmiserver.models.task.TaskRequest;
 import software.uncharted.terarium.hmiserver.models.task.TaskRequest.TaskType;
 import software.uncharted.terarium.hmiserver.models.task.TaskResponse;
+import software.uncharted.terarium.hmiserver.models.task.TaskStatus;
 import software.uncharted.terarium.hmiserver.service.data.DocumentAssetService;
 import software.uncharted.terarium.hmiserver.service.notification.NotificationGroupInstance;
 import software.uncharted.terarium.hmiserver.service.notification.NotificationService;
@@ -50,7 +51,6 @@ import software.uncharted.terarium.hmiserver.service.tasks.ExtractEquationsRespo
 import software.uncharted.terarium.hmiserver.service.tasks.ExtractTablesResponseHandler;
 import software.uncharted.terarium.hmiserver.service.tasks.ExtractTextResponseHandler;
 import software.uncharted.terarium.hmiserver.service.tasks.TaskService;
-import software.uncharted.terarium.hmiserver.utils.rebac.Schema;
 
 @Service
 @RequiredArgsConstructor
@@ -242,10 +242,9 @@ public class ExtractionService {
 	public DocumentAsset applyExtractPDFResponse(
 		final UUID documentId,
 		final UUID projectId,
-		final ExtractPDFResponse extractionResponse,
-		final Schema.Permission hasWritePermission
+		final ExtractPDFResponse extractionResponse
 	) throws IOException {
-		final DocumentAsset document = documentService.getAsset(documentId, hasWritePermission).get();
+		final DocumentAsset document = documentService.getAsset(documentId).get();
 
 		if (extractionResponse.textExtraction != null) {
 			document.setText(extractionResponse.textExtraction.documentText);
@@ -299,7 +298,7 @@ public class ExtractionService {
 			}
 		}
 
-		return documentService.updateAsset(document, projectId, hasWritePermission).orElseThrow();
+		return documentService.updateAsset(document, projectId).orElseThrow();
 	}
 
 	private static String sha256(final byte[] input) {
@@ -324,12 +323,8 @@ public class ExtractionService {
 		}
 	}
 
-	public Future<DocumentAsset> extractPDFAndApplyToDocument(
-		final UUID documentId,
-		final UUID projectId,
-		final Schema.Permission hasWritePermission
-	) {
-		final DocumentAsset document = documentService.getAsset(documentId, hasWritePermission).get();
+	public Future<DocumentAsset> extractPDFAndApplyToDocument(final UUID documentId, final UUID projectId) {
+		final DocumentAsset document = documentService.getAsset(documentId).get();
 		if (document.getFileNames().isEmpty()) {
 			throw new RuntimeException("No files found on document");
 		}
@@ -405,12 +400,7 @@ public class ExtractionService {
 
 				notificationInterface.sendMessage("Applying extraction results to document");
 				log.info("Applying extraction results to document {}", documentId);
-				final DocumentAsset doc = applyExtractPDFResponse(
-					documentId,
-					projectId,
-					extractionResponse,
-					hasWritePermission
-				);
+				final DocumentAsset doc = applyExtractPDFResponse(documentId, projectId, extractionResponse);
 
 				notificationInterface.sendMessage("Extractions applied to document. Finalizing response.");
 
@@ -476,6 +466,9 @@ public class ExtractionService {
 
 		return executor.submit(() -> {
 			final TaskResponse resp = taskService.runTaskSync(req);
+			if (resp.getStatus() != TaskStatus.SUCCESS) {
+				throw new RuntimeException("Equation extraction failed: " + resp.getStderr());
+			}
 
 			final byte[] outputBytes = resp.getOutput();
 			final ExtractEquationsResponseHandler.ResponseOutput output = objectMapper.readValue(
@@ -531,6 +524,9 @@ public class ExtractionService {
 
 		return executor.submit(() -> {
 			final TaskResponse resp = taskService.runTaskSync(req);
+			if (resp.getStatus() != TaskStatus.SUCCESS) {
+				throw new RuntimeException("Text extraction failed: " + resp.getStderr());
+			}
 
 			final byte[] outputBytes = resp.getOutput();
 			final ExtractTextResponseHandler.ResponseOutput output = objectMapper.readValue(
@@ -571,6 +567,9 @@ public class ExtractionService {
 
 		return executor.submit(() -> {
 			final TaskResponse resp = taskService.runTaskSync(req);
+			if (resp.getStatus() != TaskStatus.SUCCESS) {
+				throw new RuntimeException("Table extraction failed: " + resp.getStderr());
+			}
 
 			final byte[] outputBytes = resp.getOutput();
 			final ExtractTablesResponseHandler.ResponseOutput output = objectMapper.readValue(

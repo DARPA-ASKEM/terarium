@@ -82,10 +82,7 @@ public class ConfigureModelFromDocumentResponseHandler extends LlmTaskResponseHa
 				}
 
 				// Fetch the document name
-				final Optional<DocumentAsset> document = documentAssetService.getAsset(
-					props.documentId,
-					ASSUME_WRITE_PERMISSION_ON_BEHALF_OF_USER
-				);
+				final Optional<DocumentAsset> document = documentAssetService.getAsset(props.documentId);
 				final String source = document.map(TerariumAsset::getName).orElse(null);
 
 				// Set the extraction document id
@@ -97,11 +94,7 @@ public class ConfigureModelFromDocumentResponseHandler extends LlmTaskResponseHa
 					configuration.getParameterSemanticList().forEach(parameter -> parameter.setSource(source));
 				}
 
-				final ModelConfiguration newConfig = modelConfigurationService.createAsset(
-					configuration,
-					props.projectId,
-					ASSUME_WRITE_PERMISSION_ON_BEHALF_OF_USER
-				);
+				final ModelConfiguration newConfig = modelConfigurationService.createAsset(configuration, props.projectId);
 
 				// add provenance
 				provenanceService.createProvenance(

@@ -28,6 +28,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
+import software.uncharted.terarium.hmiserver.annotations.HasProjectAccess;
 import software.uncharted.terarium.hmiserver.configuration.Config;
 import software.uncharted.terarium.hmiserver.models.ClientEventType;
 import software.uncharted.terarium.hmiserver.models.dataservice.document.DocumentAsset;
@@ -35,12 +36,12 @@ import software.uncharted.terarium.hmiserver.models.dataservice.model.Model;
 import software.uncharted.terarium.hmiserver.models.task.TaskRequest;
 import software.uncharted.terarium.hmiserver.models.task.TaskRequest.TaskType;
 import software.uncharted.terarium.hmiserver.models.task.TaskResponse;
+import software.uncharted.terarium.hmiserver.models.task.TaskStatus;
 import software.uncharted.terarium.hmiserver.security.Roles;
 import software.uncharted.terarium.hmiserver.service.ClientEventService;
 import software.uncharted.terarium.hmiserver.service.CurrentUserService;
 import software.uncharted.terarium.hmiserver.service.ExtractionService;
 import software.uncharted.terarium.hmiserver.service.data.ModelService;
-import software.uncharted.terarium.hmiserver.service.data.ProjectService;
 import software.uncharted.terarium.hmiserver.service.notification.NotificationGroupInstance;
 import software.uncharted.terarium.hmiserver.service.notification.NotificationService;
 import software.uncharted.terarium.hmiserver.service.tasks.EquationsCleanupResponseHandler;
@@ -66,7 +67,6 @@ public class KnowledgeController {
 	private final ExtractionService extractionService;
 	private final TaskService taskService;
 
-	private final ProjectService projectService;
 	private final CurrentUserService currentUserService;
 	private final ClientEventService clientEventService;
 	private final NotificationService notificationService;
@@ -98,6 +98,10 @@ public class KnowledgeController {
 
 		try {
 			cleanupResp = taskService.runTask(TaskMode.SYNC, cleanupReq);
+			if (cleanupResp.getStatus() != TaskStatus.SUCCESS) {
+				log.error("Task failed", cleanupResp.getStderr());
+				throw new ResponseStatusException(HttpStatus.BAD_REQUEST, cleanupResp.getStderr());
+			}
 			// Get the equations from the cleanup response
 			if (cleanupResp != null && cleanupResp.getOutput() != null) {
 				try {
@@ -143,15 +147,11 @@ public class KnowledgeController {
 	 */
 	@PostMapping("/equations-to-model")
 	@Secured(Roles.USER)
+	@HasProjectAccess(level = Schema.Permission.WRITE)
 	public ResponseEntity<UUID> equationsToModel(
 		@RequestBody final JsonNode req,
 		@RequestParam(name = "project-id", required = false) final UUID projectId
 	) {
-		final Schema.Permission permission = projectService.checkPermissionCanWrite(
-			currentUserService.get().getId(),
-			projectId
-		);
-
 		// Parse the request
 		UUID documentId = JsonUtil.parseUuidFromRequest(req, "documentId");
 		UUID modelId = JsonUtil.parseUuidFromRequest(req, "modelId");
@@ -188,6 +188,10 @@ public class KnowledgeController {
 		TaskResponse cleanupResp = null;
 		try {
 			cleanupResp = taskService.runTask(TaskMode.SYNC, cleanupReq);
+			if (cleanupResp.getStatus() != TaskStatus.SUCCESS) {
+				log.error("Task failed", cleanupResp.getStderr());
+				throw new ResponseStatusException(HttpStatus.BAD_REQUEST, cleanupResp.getStderr());
+			}
 		} catch (final JsonProcessingException e) {
 			log.warn("Unable to clean-up equations due to a JsonProcessingException. Reverting to original equations.", e);
 		} catch (final TimeoutException e) {
@@ -224,12 +228,21 @@ public class KnowledgeController {
 			latexToSympyRequest = createLatexToSympyTask(equationsReq);
 			latexToSympyResponse = taskService.runTaskSync(latexToSympyRequest);
 
+			if (latexToSympyResponse.getStatus() != TaskStatus.SUCCESS) {
+				log.error("Task Failed", latexToSympyResponse.getStderr());
+				throw new ResponseStatusException(HttpStatus.BAD_REQUEST, latexToSympyResponse.getStderr());
+			}
+
 			// 2. hand off
 			final String code = extractCodeFromLatexToSympy(latexToSympyResponse);
 
 			// 3. sympy code string to amr json
 			sympyToAMRRequest = createSympyToAMRTask(code);
 			sympyToAMRResponse = taskService.runTaskSync(sympyToAMRRequest);
+			if (sympyToAMRResponse.getStatus() != TaskStatus.SUCCESS) {
+				log.error("Task Failed", sympyToAMRResponse.getStderr());
+				throw new ResponseStatusException(HttpStatus.BAD_REQUEST, sympyToAMRResponse.getStderr());
+			}
 
 			final JsonNode taskResponseJSON = mapper.readValue(sympyToAMRResponse.getOutput(), JsonNode.class);
 			final ObjectNode amrNode = taskResponseJSON.get("response").get("amr").deepCopy();
@@ -253,7 +266,7 @@ public class KnowledgeController {
 		Model model;
 		if (modelId == null) {
 			try {
-				model = modelService.createAsset(responseAMR, projectId, permission);
+				model = modelService.createAsset(responseAMR, projectId);
 			} catch (final IOException e) {
 				log.error("An error occurred while trying to create a model.", e);
 				throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, messages.get("postgres.service-unavailable"));
@@ -263,9 +276,7 @@ public class KnowledgeController {
 			// If a model id is provided, update the existing model
 		} else {
 			try {
-				model = modelService
-					.updateAsset(responseAMR, projectId, permission)
-					.orElseThrow(() -> new IOException("Model not found"));
+				model = modelService.updateAsset(responseAMR, projectId).orElseThrow(() -> new IOException("Model not found"));
 			} catch (final IOException | IllegalArgumentException e) {
 				log.error("An error occurred while trying to update a model.", e);
 				throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, messages.get("postgres.service-unavailable"));
@@ -289,6 +300,7 @@ public class KnowledgeController {
 	@PostMapping("/pdf-extractions")
 	@Secured(Roles.USER)
 	@Operation(summary = "Extracts information from the first PDF associated with the given document id")
+	@HasProjectAccess(level = Schema.Permission.WRITE)
 	@ApiResponses(
 		value = {
 			@ApiResponse(responseCode = "202", description = "Extraction started on PDF", content = @Content),
@@ -300,12 +312,7 @@ public class KnowledgeController {
 		@RequestParam(name = "project-id", required = false) final UUID projectId,
 		@RequestParam(name = "mode", required = false, defaultValue = "ASYNC") final TaskMode mode
 	) {
-		final Schema.Permission permission = projectService.checkPermissionCanWrite(
-			currentUserService.get().getId(),
-			projectId
-		);
-
-		final Future<DocumentAsset> f = extractionService.extractPDFAndApplyToDocument(documentId, projectId, permission);
+		final Future<DocumentAsset> f = extractionService.extractPDFAndApplyToDocument(documentId, projectId);
 		if (mode == TaskMode.SYNC) {
 			try {
 				f.get();
@@ -346,8 +353,15 @@ public class KnowledgeController {
 
 		try {
 			sympyToAMRRequest = createSympyToAMRTask(code.getCode());
-			sympyToAMRResponse = taskService.runTaskSyncDebug(sympyToAMRRequest);
+			sympyToAMRResponse = taskService.runTaskSync(sympyToAMRRequest);
 			response = mapper.readValue(sympyToAMRResponse.getOutput(), JsonNode.class);
+
+			if (sympyToAMRResponse.getStatus() != TaskStatus.SUCCESS) {
+				log.error("Task Failed", sympyToAMRResponse.getStderr());
+				ObjectNode objectNode = mapper.createObjectNode();
+				objectNode.put("error", sympyToAMRResponse.getStderr());
+				return ResponseEntity.ok().body(objectNode);
+			}
 			return ResponseEntity.ok().body(response);
 		} catch (final TimeoutException e) {
 			log.warn("Timeout while waiting for task response", e);
@@ -360,9 +374,7 @@ public class KnowledgeController {
 			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("task.mira.execution-failure"));
 		} catch (final Exception e) {
 			log.error("Unexpected error", e);
-			ObjectNode objectNode = mapper.createObjectNode();
-			objectNode.put("error", sympyToAMRResponse.getStderr());
-			return ResponseEntity.ok().body(objectNode);
+			throw new ResponseStatusException(HttpStatus.BAD_REQUEST, messages.get("generic.io-error.read"));
 		}
 	}
 
@@ -401,6 +413,10 @@ public class KnowledgeController {
 			JsonNode temp = mapper.readValue(latex, JsonNode.class);
 			latexToSympyRequest = createLatexToSympyTask(temp);
 			latexToSympyResponse = taskService.runTaskSync(latexToSympyRequest);
+			if (latexToSympyResponse.getStatus() != TaskStatus.SUCCESS) {
+				log.error("Task Failed", latexToSympyResponse.getStderr());
+				throw new ResponseStatusException(HttpStatus.BAD_REQUEST, latexToSympyResponse.getStderr());
+			}
 			code = extractCodeFromLatexToSympy(latexToSympyResponse);
 		} catch (final TimeoutException e) {
 			log.warn("Timeout while waiting for task response", e);
@@ -431,6 +447,10 @@ public class KnowledgeController {
 		try {
 			sympyToAMRRequest = createSympyToAMRTask(code);
 			sympyToAMRResponse = taskService.runTaskSync(sympyToAMRRequest);
+			if (sympyToAMRResponse.getStatus() != TaskStatus.SUCCESS) {
+				log.error("Task Failed", sympyToAMRResponse.getStderr());
+				throw new ResponseStatusException(HttpStatus.BAD_REQUEST, sympyToAMRResponse.getStderr());
+			}
 			response = mapper.readValue(sympyToAMRResponse.getOutput(), JsonNode.class);
 			return ResponseEntity.ok().body(response);
 		} catch (final TimeoutException e) {

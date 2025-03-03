@@ -30,6 +30,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
+import software.uncharted.terarium.hmiserver.annotations.HasProjectAccess;
 import software.uncharted.terarium.hmiserver.models.dataservice.Artifact;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.Model;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.configurations.ModelConfiguration;
@@ -38,6 +39,7 @@ import software.uncharted.terarium.hmiserver.models.mira.EntitySimilarityResult;
 import software.uncharted.terarium.hmiserver.models.task.TaskRequest;
 import software.uncharted.terarium.hmiserver.models.task.TaskRequest.TaskType;
 import software.uncharted.terarium.hmiserver.models.task.TaskResponse;
+import software.uncharted.terarium.hmiserver.models.task.TaskStatus;
 import software.uncharted.terarium.hmiserver.proxies.mira.MIRAProxy;
 import software.uncharted.terarium.hmiserver.security.Roles;
 import software.uncharted.terarium.hmiserver.service.CurrentUserService;
@@ -45,7 +47,6 @@ import software.uncharted.terarium.hmiserver.service.data.ArtifactService;
 import software.uncharted.terarium.hmiserver.service.data.ModelConfigurationService;
 import software.uncharted.terarium.hmiserver.service.data.ModelConfigurationService.ModelConfigurationUpdate;
 import software.uncharted.terarium.hmiserver.service.data.ModelService;
-import software.uncharted.terarium.hmiserver.service.data.ProjectService;
 import software.uncharted.terarium.hmiserver.service.tasks.AMRToMMTResponseHandler;
 import software.uncharted.terarium.hmiserver.service.tasks.CompareModelsConceptsResponseHandler;
 import software.uncharted.terarium.hmiserver.service.tasks.GenerateModelLatexResponseHandler;
@@ -54,7 +55,6 @@ import software.uncharted.terarium.hmiserver.service.tasks.SbmlToPetrinetRespons
 import software.uncharted.terarium.hmiserver.service.tasks.StellaToStockflowResponseHandler;
 import software.uncharted.terarium.hmiserver.service.tasks.TaskService;
 import software.uncharted.terarium.hmiserver.utils.Messages;
-import software.uncharted.terarium.hmiserver.utils.rebac.Schema;
 
 @RequestMapping("/mira")
 @RestController
@@ -71,7 +71,6 @@ public class MiraController {
 	private final MdlToStockflowResponseHandler mdlToStockflowResponseHandler;
 	private final SbmlToPetrinetResponseHandler sbmlToPetrinetResponseHandler;
 	private final CompareModelsConceptsResponseHandler compareModelsConceptsResponseHandler;
-	private final ProjectService projectService;
 	private final CurrentUserService currentUserService;
 	private final ModelConfigurationService modelConfigurationService;
 
@@ -166,7 +165,7 @@ public class MiraController {
 		final List<String> amrs = new ArrayList<>();
 		for (final UUID modelId : request.modelIds) {
 			final Model model = modelService
-				.getAsset(modelId, Schema.Permission.READ)
+				.getAsset(modelId)
 				.orElseThrow(() -> {
 					log.warn("Model {} not found", modelId);
 					return new ResponseStatusException(HttpStatus.NOT_FOUND, messages.get("model.not-found"));
@@ -189,6 +188,10 @@ public class MiraController {
 		final TaskResponse taskResponse;
 		try {
 			taskResponse = taskService.runTaskSync(taskRequest);
+			if (taskResponse.getStatus() != TaskStatus.SUCCESS) {
+				log.error("Task Failed", taskResponse.getStderr());
+				throw new ResponseStatusException(HttpStatus.BAD_REQUEST, taskResponse.getStderr());
+			}
 		} catch (final JsonProcessingException e) {
 			log.error("Unable to serialize input", e);
 			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("task.mira.json-processing"));
@@ -248,6 +251,10 @@ public class MiraController {
 		final TaskResponse resp;
 		try {
 			resp = taskService.runTaskSync(req);
+			if (resp.getStatus() != TaskStatus.SUCCESS) {
+				log.error("Task Failed", resp.getStderr());
+				throw new ResponseStatusException(HttpStatus.BAD_REQUEST, resp.getStderr());
+			}
 		} catch (final JsonProcessingException e) {
 			log.error("Unable to serialize input", e);
 			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("task.mira.json-processing"));
@@ -308,6 +315,10 @@ public class MiraController {
 		final TaskResponse resp;
 		try {
 			resp = taskService.runTaskSync(req);
+			if (resp.getStatus() != TaskStatus.SUCCESS) {
+				log.error("Task Failed", resp.getStderr());
+				throw new ResponseStatusException(HttpStatus.BAD_REQUEST, resp.getStderr());
+			}
 		} catch (final JsonProcessingException e) {
 			log.error("Unable to serialize input", e);
 			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("task.mira.json-processing"));
@@ -336,6 +347,7 @@ public class MiraController {
 	@PostMapping("/convert-and-create-model")
 	@Secured(Roles.USER)
 	@Operation(summary = "Dispatch a MIRA conversion task")
+	@HasProjectAccess("#conversionRequest.getProjectId()")
 	@ApiResponses(
 		value = {
 			@ApiResponse(
@@ -349,13 +361,11 @@ public class MiraController {
 			@ApiResponse(responseCode = "500", description = "There was an issue dispatching the request", content = @Content)
 		}
 	)
-	public ResponseEntity<Model> convertAndCreateModel(@RequestBody final ModelConversionRequest conversionRequest) {
-		final Schema.Permission permission = projectService.checkPermissionCanRead(
-			currentUserService.get().getId(),
-			conversionRequest.getProjectId()
-		);
-
-		final Optional<Artifact> artifact = artifactService.getAsset(conversionRequest.artifactId, permission);
+	public ResponseEntity<Model> convertAndCreateModel(
+		@RequestBody final ModelConversionRequest conversionRequest,
+		@RequestParam(name = "project-id", required = false) final UUID projectId
+	) {
+		final Optional<Artifact> artifact = artifactService.getAsset(conversionRequest.artifactId);
 		if (artifact.isEmpty()) {
 			log.error(String.format("Unable to find artifact %s.", conversionRequest.artifactId));
 			throw new ResponseStatusException(HttpStatus.NOT_FOUND, messages.get("artifact.not-found"));
@@ -382,7 +392,7 @@ public class MiraController {
 		}
 
 		final ConversionAdditionalProperties additionalProperties = new ConversionAdditionalProperties();
-		additionalProperties.setProjectId(conversionRequest.projectId);
+		additionalProperties.setProjectId(projectId);
 		additionalProperties.setFileName(filename);
 
 		final TaskRequest req = new TaskRequest();
@@ -412,6 +422,10 @@ public class MiraController {
 		final TaskResponse resp;
 		try {
 			resp = taskService.runTaskSync(req);
+			if (resp.getStatus() != TaskStatus.SUCCESS) {
+				log.error("Task Failed", resp.getStderr());
+				throw new ResponseStatusException(HttpStatus.BAD_REQUEST, resp.getStderr());
+			}
 		} catch (final JsonProcessingException e) {
 			log.error("Unable to serialize input", e);
 			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("task.mira.json-processing"));
@@ -434,7 +448,7 @@ public class MiraController {
 				model,
 				new ModelConfigurationUpdate()
 			);
-			modelConfigurationService.createAsset(modelConfiguration, conversionRequest.projectId, permission);
+			modelConfigurationService.createAsset(modelConfiguration, projectId);
 		} catch (final IOException e) {
 			log.error("Unable to deserialize output", e);
 			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("generic.io-error.read"));

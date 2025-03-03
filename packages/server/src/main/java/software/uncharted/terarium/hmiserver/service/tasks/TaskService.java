@@ -763,51 +763,16 @@ public class TaskService {
 		}
 	}
 
-	////////////////////////////////////////////////////////////////////////////////
-	// DC Debug for Feb eval, we need to return the response object when
-	// error happens
-	////////////////////////////////////////////////////////////////////////////////
-	public TaskResponse runTaskSyncDebug(final TaskRequest req)
-		throws JsonProcessingException, TimeoutException, InterruptedException, ExecutionException {
-		// send the request
-		final TaskFuture future = runTaskAsync(req);
-		try {
-			// wait for the response
-			log.info("Waiting for response for task id: {}", future.getId());
-			final TaskResponse resp = future.getFinal(req.getTimeoutMinutes(), TimeUnit.MINUTES);
-			return resp;
-		} catch (final TimeoutException e) {
-			// remove the future
-			futures.remove(future.getId());
-			try {
-				// if the task is still running, or hasn't started yet, lets cancel it
-				cancelTask(req.getType(), future.getId());
-			} catch (final Exception ee) {
-				log.warn("Failed to cancel task: {}", future.getId(), ee);
-			}
-			throw new TimeoutException(
-				"Task " + future.getId().toString() + " did not complete within " + req.getTimeoutMinutes() + " minutes"
-			);
-		}
-	}
-
 	public TaskResponse runTaskSync(final TaskRequest req)
 		throws JsonProcessingException, TimeoutException, InterruptedException, ExecutionException {
 		// send the request
 		final TaskFuture future = runTaskAsync(req);
-
 		try {
 			// wait for the response
 			log.info("Waiting for response for task id: {}", future.getId());
 			final TaskResponse resp = future.getFinal(req.getTimeoutMinutes(), TimeUnit.MINUTES);
 			if (resp.getStatus() == TaskStatus.CANCELLED) {
 				throw new InterruptedException("Task was cancelled");
-			}
-			if (resp.getStatus() == TaskStatus.FAILED) {
-				throw new RuntimeException("Task failed: " + new String(resp.getOutput()));
-			}
-			if (resp.getStatus() != TaskStatus.SUCCESS) {
-				throw new RuntimeException("Task did not complete successfully");
 			}
 			log.info("Future completed for task: {}", future.getId());
 			return resp;

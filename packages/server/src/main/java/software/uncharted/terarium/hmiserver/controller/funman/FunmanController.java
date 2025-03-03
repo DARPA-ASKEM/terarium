@@ -24,6 +24,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
+import software.uncharted.terarium.hmiserver.annotations.HasProjectAccess;
 import software.uncharted.terarium.hmiserver.models.dataservice.simulation.ProgressState;
 import software.uncharted.terarium.hmiserver.models.dataservice.simulation.Simulation;
 import software.uncharted.terarium.hmiserver.models.dataservice.simulation.SimulationType;
@@ -31,7 +32,6 @@ import software.uncharted.terarium.hmiserver.models.task.TaskRequest;
 import software.uncharted.terarium.hmiserver.models.task.TaskRequest.TaskType;
 import software.uncharted.terarium.hmiserver.security.Roles;
 import software.uncharted.terarium.hmiserver.service.CurrentUserService;
-import software.uncharted.terarium.hmiserver.service.data.ProjectService;
 import software.uncharted.terarium.hmiserver.service.data.SimulationService;
 import software.uncharted.terarium.hmiserver.service.tasks.TaskService;
 import software.uncharted.terarium.hmiserver.service.tasks.TaskService.TaskMode;
@@ -48,7 +48,6 @@ public class FunmanController {
 	private final ObjectMapper objectMapper;
 	private final TaskService taskService;
 	private final CurrentUserService currentUserService;
-	private final ProjectService projectService;
 
 	private final ValidateModelConfigHandler validateModelConfigHandler;
 	private final SimulationService simulationService;
@@ -62,6 +61,7 @@ public class FunmanController {
 	@PostMapping
 	@Secured(Roles.USER)
 	@Operation(summary = "Dispatch a model configuration validation task")
+	@HasProjectAccess(level = Schema.Permission.WRITE)
 	@ApiResponses(
 		value = {
 			@ApiResponse(
@@ -82,11 +82,6 @@ public class FunmanController {
 		@RequestParam(name = "new-model-config-name", required = true) final String newModelConfigName,
 		@RequestParam(name = "project-id", required = false) final UUID projectId
 	) {
-		final Schema.Permission permission = projectService.checkPermissionCanWrite(
-			currentUserService.get().getId(),
-			projectId
-		);
-
 		final TaskRequest taskRequest = new TaskRequest();
 		taskRequest.setTimeoutMinutes(45);
 		taskRequest.setType(TaskType.FUNMAN);
@@ -109,7 +104,7 @@ public class FunmanController {
 		// Create new simulation object to proxy the funman validation process
 		final Simulation newSimulation;
 		try {
-			newSimulation = simulationService.createAsset(sim, projectId, permission);
+			newSimulation = simulationService.createAsset(sim, projectId);
 		} catch (final Exception e) {
 			log.error("An error occurred while trying to create a simulation asset.", e);
 			throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, messages.get("postgres.service-unavailable"));

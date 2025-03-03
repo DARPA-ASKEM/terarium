@@ -107,8 +107,7 @@ public class ProjectControllerTests extends TerariumApplicationTests {
 
 		final DocumentAsset documentAsset = documentAssetService.createAsset(
 			(DocumentAsset) new DocumentAsset().setName("test-document-name").setDescription("my description"),
-			project.getId(),
-			ASSUME_WRITE_PERMISSION
+			project.getId()
 		);
 
 		final ProjectAsset projectAsset = new ProjectAsset()
@@ -131,7 +130,7 @@ public class ProjectControllerTests extends TerariumApplicationTests {
 			.perform(
 				MockMvcRequestBuilders.get("/document-asset/" + documentAsset.getId())
 					.param("types", AssetType.DOCUMENT.name())
-					.param("project-id", PROJECT_ID.toString())
+					.param("project-id", project.getId().toString())
 					.with(csrf())
 			)
 			.andExpect(status().isOk())
@@ -149,11 +148,10 @@ public class ProjectControllerTests extends TerariumApplicationTests {
 
 		final DocumentAsset documentAsset = documentAssetService.createAsset(
 			(DocumentAsset) new DocumentAsset().setName("test-document-name").setDescription("my description"),
-			project.getId(),
-			ASSUME_WRITE_PERMISSION
+			project.getId()
 		);
 
-		projectAssetService.createProjectAsset(project, AssetType.DOCUMENT, documentAsset, ASSUME_WRITE_PERMISSION);
+		projectAssetService.createProjectAsset(project, AssetType.DOCUMENT, documentAsset);
 
 		mockMvc
 			.perform(

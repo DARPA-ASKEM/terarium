@@ -23,13 +23,11 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
+import software.uncharted.terarium.hmiserver.annotations.HasProjectAccess;
 import software.uncharted.terarium.hmiserver.models.dataservice.ResponseDeleted;
 import software.uncharted.terarium.hmiserver.models.simulationservice.interventions.InterventionPolicy;
 import software.uncharted.terarium.hmiserver.security.Roles;
-import software.uncharted.terarium.hmiserver.service.CurrentUserService;
 import software.uncharted.terarium.hmiserver.service.data.InterventionService;
-import software.uncharted.terarium.hmiserver.service.data.ProjectAssetService;
-import software.uncharted.terarium.hmiserver.service.data.ProjectService;
 import software.uncharted.terarium.hmiserver.utils.rebac.Schema;
 
 @RequestMapping("/interventions")
@@ -40,15 +38,10 @@ public class InterventionController {
 
 	final InterventionService interventionService;
 
-	final ProjectAssetService projectAssetService;
-
-	final ProjectService projectService;
-
-	final CurrentUserService currentUserService;
-
 	@GetMapping("/{id}")
 	@Secured(Roles.USER)
 	@Operation(summary = "Gets intervention by ID")
+	@HasProjectAccess
 	@ApiResponses(
 		value = {
 			@ApiResponse(
@@ -71,18 +64,14 @@ public class InterventionController {
 		@PathVariable("id") final UUID id,
 		@RequestParam(name = "project-id", required = false) final UUID projectId
 	) {
-		final Schema.Permission permission = projectService.checkPermissionCanRead(
-			currentUserService.get().getId(),
-			projectId
-		);
-
-		final Optional<InterventionPolicy> intervention = interventionService.getAsset(id, permission);
+		final Optional<InterventionPolicy> intervention = interventionService.getAsset(id);
 		return intervention.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.noContent().build());
 	}
 
 	@PostMapping
 	@Secured(Roles.USER)
 	@Operation(summary = "Create a new intervention")
+	@HasProjectAccess(level = Schema.Permission.WRITE)
 	@ApiResponses(
 		value = {
 			@ApiResponse(
@@ -105,13 +94,8 @@ public class InterventionController {
 		@RequestParam(name = "skip-check", required = false, defaultValue = "false") final boolean skipCheck,
 		@RequestParam(name = "project-id", required = false) final UUID projectId
 	) {
-		final Schema.Permission permission = projectService.checkPermissionCanWrite(
-			currentUserService.get().getId(),
-			projectId
-		);
-
 		try {
-			if (skipCheck != true) {
+			if (!skipCheck) {
 				item.validateInterventionPolicy();
 			}
 		} catch (final Exception e) {
@@ -120,7 +104,7 @@ public class InterventionController {
 			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage());
 		}
 		try {
-			final InterventionPolicy policy = interventionService.createAsset(item, projectId, permission);
+			final InterventionPolicy policy = interventionService.createAsset(item, projectId);
 			return ResponseEntity.status(HttpStatus.CREATED).body(policy);
 		} catch (final IOException e) {
 			final String error = "Unable to create intervention";
@@ -132,6 +116,7 @@ public class InterventionController {
 	@PutMapping("/{id}")
 	@Secured(Roles.USER)
 	@Operation(summary = "Update a intervention")
+	@HasProjectAccess(level = Schema.Permission.WRITE)
 	@ApiResponses(
 		value = {
 			@ApiResponse(
@@ -155,13 +140,9 @@ public class InterventionController {
 		@RequestBody final InterventionPolicy intervention,
 		@RequestParam(name = "project-id", required = false) final UUID projectId
 	) {
-		final Schema.Permission permission = projectService.checkPermissionCanWrite(
-			currentUserService.get().getId(),
-			projectId
-		);
 		try {
 			intervention.setId(id);
-			final Optional<InterventionPolicy> updated = interventionService.updateAsset(intervention, projectId, permission);
+			final Optional<InterventionPolicy> updated = interventionService.updateAsset(intervention, projectId);
 			return updated.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
 		} catch (final IOException e) {
 			final String error = "Unable to update intervention";
@@ -177,6 +158,7 @@ public class InterventionController {
 	@DeleteMapping("/{id}")
 	@Secured(Roles.USER)
 	@Operation(summary = "Delete a intervention by ID")
+	@HasProjectAccess(level = Schema.Permission.WRITE)
 	@ApiResponses(
 		value = {
 			@ApiResponse(
@@ -200,13 +182,8 @@ public class InterventionController {
 		@PathVariable("id") final UUID id,
 		@RequestParam(name = "project-id", required = false) final UUID projectId
 	) {
-		final Schema.Permission permission = projectService.checkPermissionCanWrite(
-			currentUserService.get().getId(),
-			projectId
-		);
-
 		try {
-			interventionService.deleteAsset(id, projectId, permission);
+			interventionService.deleteAsset(id, projectId);
 			return ResponseEntity.ok(new ResponseDeleted("Intervention", id));
 		} catch (final Exception e) {
 			final String error = String.format("Failed to delete intervention %s", id);
