@@ -20,11 +20,9 @@
 						:options="OPTIMIZATION_TYPE_MAP"
 						@change="emit('update-self', knobs)"
 					/>
-					<template>
-						for the {{ knobs.individualIntervention.type }}&nbsp;<strong>{{
-							knobs.individualIntervention.appliedTo
-						}}</strong>
-					</template>
+					for the {{ knobs.individualIntervention.type }}&nbsp;<strong>{{
+						knobs.individualIntervention.appliedTo
+					}}</strong>
 				</p>
 				<p v-if="isOptimizationTypeParamValue">
 					at the start time <strong>{{ knobs.individualIntervention.timestep }}</strong>
