@@ -2,9 +2,9 @@ import json
 import sys
 import traceback
 from chains import model_config_from_dataset_chain
-from common.utils import determine_llm
 from entities import ModelAndDataset
 from llms.azure.AzureTools import AzureTools
+from llms.determine_llm import determine_llm
 
 from taskrunner import TaskRunnerInterface
 

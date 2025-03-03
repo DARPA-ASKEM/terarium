@@ -1,9 +1,9 @@
 import sys
 import traceback
 from chains import compare_models_chain
-from common.utils import determine_llm
 from entities import ModelCompareModel
 from llms.azure.AzureTools import AzureTools
+from llms.determine_llm import determine_llm
 
 from taskrunner import TaskRunnerInterface
 

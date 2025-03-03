@@ -2,9 +2,9 @@ import json
 import sys
 import traceback
 from chains import interventions_from_document_chain
-from common.utils import determine_llm
 from entities import ModelAndDocument
 from llms.azure.AzureTools import AzureTools
+from llms.determine_llm import determine_llm
 
 from taskrunner import TaskRunnerInterface
 

@@ -1,9 +1,9 @@
 import sys
 import traceback
 from chains import general_query_chain
-from common.utils import determine_llm
 from entities import GeneralQueryModel
 from llms.azure.AzureTools import AzureTools
+from llms.determine_llm import determine_llm
 
 from taskrunner import TaskRunnerInterface
 

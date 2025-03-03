@@ -85,6 +85,7 @@ class AzureTools(LlmToolsInterface):
         output_json = json.loads(output.choices[0].message.content)
         return unescape_curly_braces(output_json)
 
+
     def send_to_llm_with_string_output(self, prompt: str, max_tokens=16384) -> str:
         print("Sending request to OpenAI API...")
         client = AzureOpenAI(
@@ -106,6 +107,7 @@ class AzureTools(LlmToolsInterface):
         )
         print("Received response from OpenAI API...")
         return output.choices[0].message.content
+
 
     def send_image_to_llm_with_json_output(self, prompt: str, schema: str, image_url: str, max_tokens=16384) -> dict:
         print("Sending request to OpenAI API...")
@@ -144,6 +146,7 @@ class AzureTools(LlmToolsInterface):
         output_json = json.loads(output.choices[0].message.content)
         return output_json
 
+
     def create_enrich_model_prompt(self, amr: str, document: Optional[str], schema=None) -> str:
         if (document is None) or (document == ''):  # If no document is provided
             print("Building prompt to extract model enrichments without a document...")
@@ -173,12 +176,14 @@ class AzureTools(LlmToolsInterface):
         prompt += "Answer:"
         return prompt
 
+
     def create_config_from_document_prompt(self, amr: str, document: str, schema=None) -> str:
         print("Building prompt to extract model configurations from a reasearch paper...")
         return CONFIGURE_FROM_DOCUMENT_PROMPT.format(
             amr=escape_curly_braces(amr),
             document=escape_curly_braces(document)
         )
+
 
     def create_enrich_dataset_prompt(self, dataset: str, document: Optional[str], schema=None) -> str:
         if (document is None) or (document == ''):  # If no document is provided
@@ -191,6 +196,7 @@ class AzureTools(LlmToolsInterface):
                 dataset=dataset
             )
 
+
     def create_cleanup_equations_prompt(self, equations: List[str], schema=None) -> str:
         print("Building prompt to reformat equations...")
         return EQUATIONS_CLEANUP_PROMPT.format(
@@ -198,11 +204,13 @@ class AzureTools(LlmToolsInterface):
             equations="\n".join(equations)
         )
 
+
     def create_equations_from_image_prompt(self, image_url: str, schema=None) -> str:
         print("Building prompt to extract equations an image...")
         return EQUATIONS_FROM_IMAGE_PROMPT.format(
             style_guide=LATEX_STYLE_GUIDE
         )
+
 
     def create_interventions_from_document_prompt(self, amr: str, document: str, schema=None) -> str:
         print("Building prompt to extract interventions from a research paper...")
@@ -211,6 +219,7 @@ class AzureTools(LlmToolsInterface):
             document=escape_curly_braces(document)
         )
 
+
     def create_interventions_from_dataset_prompt(self, amr: str, dataset: List[str], schema=None) -> str:
         print("Building prompt to extract interventions from a dataset...")
         dataset_text = os.linesep.join(dataset)
@@ -218,6 +227,7 @@ class AzureTools(LlmToolsInterface):
             amr=escape_curly_braces(amr),
             dataset=escape_curly_braces(dataset_text)
         )
+
 
     def create_model_card_prompt(self, amr: str, document: str, schema=None) -> str:
         print("Building prompt to produce a model card...")
@@ -228,6 +238,7 @@ class AzureTools(LlmToolsInterface):
             document=escape_curly_braces(document),
             amr=escape_curly_braces(amr)
         )
+
 
     def create_compare_models_prompt(self, amrs: List[str], dataset: str, goal: str, schema=None) -> str:
         print("Building prompt to compare models...")
@@ -245,15 +256,18 @@ class AzureTools(LlmToolsInterface):
         prompt += "Answer:"
         return prompt
 
+
     def create_general_query_prompt(self, instruction: str) -> str:
         print("Building general query prompt...")
         return GENERAL_QUERY_PROMPT.format(
             instruction=instruction
         )
 
+
     def create_chart_annotation_prompt(self, chartType: ChartAnnotationType, preamble: str, instruction: str, schema=None) -> str:
         print("Building chart annotation prompt...")
         return build_chart_annotation_prompt(chartType, preamble, instruction)
+
 
     def create_latex_to_sympy_prompt(self, equations: List[str], schema=None) -> str:
         print("Building prompt to transform latex equations to sympy...")

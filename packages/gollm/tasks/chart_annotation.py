@@ -1,9 +1,9 @@
 import sys
 import traceback
 from chains import chart_annotation_chain
-from common.utils import determine_llm
 from entities import ChartAnnotationModel
 from llms.azure.AzureTools import AzureTools
+from llms.determine_llm import determine_llm
 
 from taskrunner import TaskRunnerInterface
 
