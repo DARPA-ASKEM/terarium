@@ -320,6 +320,7 @@
 						"
 						:active-settings="activeChartSettings"
 						:generate-annotation="generateAnnotation"
+						:get-chart-labels="getChartLabels"
 						@delete-annotation="deleteAnnotation"
 						@update-settings="updateActiveChartSettings"
 						@close="setActiveChartSettings(null)"
@@ -552,8 +553,13 @@ const mappingOptions = ref<Record<string, string[]>>({});
 
 const criteriaOfInterestCards = computed(() => knobs.value.criteriaOfInterestCards);
 
-const { generateAnnotation, getChartAnnotationsByChartId, useCompareDatasetCharts, useInterventionRankingCharts } =
-	useCharts(props.node.id, null, null, chartData, chartSize, null, null);
+const {
+	generateAnnotation,
+	getChartLabels,
+	getChartAnnotationsByChartId,
+	useCompareDatasetCharts,
+	useInterventionRankingCharts
+} = useCharts(props.node.id, null, null, chartData, chartSize, null, null);
 const selectedPlotType = computed(() => knobs.value.selectedPlotType);
 const baselineDatasetIndex = computed(() =>
 	datasets.value.findIndex((dataset) => dataset.id === knobs.value.selectedBaselineDatasetId)
