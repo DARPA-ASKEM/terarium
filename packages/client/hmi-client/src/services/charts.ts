@@ -4,7 +4,7 @@ import { percentile } from '@/utils/math';
 import { VisualizationSpec } from 'vega-embed';
 import { v4 as uuidv4 } from 'uuid';
 import { ChartAnnotation, ChartAnnotationType, FunmanInterval } from '@/types/Types';
-import { CalendarDateType, SensitivityChartType } from '@/types/common';
+import { CalendarDateType, ChartLabelOptions, SensitivityChartType } from '@/types/common';
 import { countDigits, fixPrecisionError } from '@/utils/number';
 import { format } from 'd3';
 import { BinParams } from 'vega-lite/build/src/bin';
@@ -13,6 +13,28 @@ import type { FunmanBox, FunmanConstraintsResponse } from './models/funman-servi
 
 const VEGALITE_SCHEMA = 'https://vega.github.io/schema/vega-lite/v5.json';
 const GLOBAL_FONT = 'Figtree';
+
+// Vega lite default font sizes for different components
+// const DEFAULT_CONFIG_FONT_SIZE = {
+// 	axis: {
+// 		labelFontSize: 10,
+// 		titleFontSize: 11
+// 	},
+// 	legend: {
+// 		labelFontSize: 10,
+// 		titleFontSize: 11
+// 	},
+// 	title: {
+// 		fontSize: 13
+// 	},
+// 	header: {
+// 		labelFontSize: 10,
+// 		titleFontSize: 11
+// 	},
+// 	tooltip: {
+// 		fontSize: 12
+// 	}
+// };
 
 const NUMBER_FORMAT = '.3~s';
 export const expressionFunctions = {
@@ -43,12 +65,9 @@ export enum AUTOSIZE {
 	NONE = 'none'
 }
 
-export interface BaseChartOptions {
-	title?: string;
+export interface BaseChartOptions extends ChartLabelOptions {
 	width: number;
 	height: number;
-	xAxisTitle: string;
-	yAxisTitle: string;
 	legend?: boolean;
 	autosize?: AUTOSIZE;
 	dateOptions?: DateOptions;
