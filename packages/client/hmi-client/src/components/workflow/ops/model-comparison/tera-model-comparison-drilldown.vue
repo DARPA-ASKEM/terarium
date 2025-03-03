@@ -100,7 +100,7 @@
 					<AccordionTab header="Tabular concept comparison" v-if="!isTabularComparisonEmpty">
 						<template v-for="(value, pair) in conceptComparison.tabular_comparison" :key="pair">
 							<h6 class="ml-4">Tabular comparison {{ pair }}</h6>
-							<tera-model-comparison-table :csv-text="value" :table-name="pair" class="mb-4" />
+							<tera-model-comparison-table :csv-text="value" :table-name="pair as string" class="mb-4" />
 						</template>
 					</AccordionTab>
 					<AccordionTab header="Concept graph comparison" v-if="!isGraphComparisonEmpty">
