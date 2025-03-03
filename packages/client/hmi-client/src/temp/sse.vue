@@ -2,8 +2,8 @@
 	<main>
 		<header>
 			<h2>Test SSE</h2>
-			<Button label="Subscribe" @click="listen" />
-			<Button label="Unsubscribe" @click="stop" />
+			<Button label="Subscribe" @click="subscribe(ClientEventType.Notification, getMessageHandler)" />
+			<Button label="Unsubscribe" @click="unsubscribe(ClientEventType.Notification, getMessageHandler)" />
 		</header>
 		<template v-for="message in messages" :key="message.id">
 			<div>{{ message.id }} : {{ message.data }}</div>
@@ -24,14 +24,6 @@ function getMessageHandler(event: ClientEvent<any>) {
 	if (messages.value.length > 10) {
 		messages.value.shift();
 	}
-}
-
-function listen() {
-	subscribe(ClientEventType.Notification, getMessageHandler);
-}
-
-function stop() {
-	unsubscribe(ClientEventType.Notification, getMessageHandler);
 }
 </script>
 

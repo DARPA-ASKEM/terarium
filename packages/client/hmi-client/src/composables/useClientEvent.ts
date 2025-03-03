@@ -1,11 +1,10 @@
-import { onMounted, onUnmounted } from 'vue';
+import { onMounted, onUnmounted, Ref } from 'vue';
 
 import { subscribe, unsubscribe } from '@/services/ClientEventService';
 import {
 	type ClientEvent,
 	ClientEventType,
-	type DocumentExtractionStatus,
-	type StatusUpdate,
+	type NotificationEvent,
 	type TaskResponse,
 	TaskStatus
 } from '@/types/Types';
@@ -39,7 +38,7 @@ export function createTaskListClientEventHandler(node: WorkflowNode<BaseState>, 
 
 export function createTaskProgressClientEventHandler(node: WorkflowNode<DocumentOperationState>, progressKey: string) {
 	const { state } = node;
-	return async (event: ClientEvent<StatusUpdate<DocumentExtractionStatus>>) => {
+	return async (event: ClientEvent<TaskResponse> | NotificationEvent) => {
 		if (event.data.data.documentId === state.documentId) {
 			state[progressKey] = event.data?.progress;
 			if (
@@ -48,6 +47,18 @@ export function createTaskProgressClientEventHandler(node: WorkflowNode<Document
 			) {
 				state[progressKey] = undefined;
 			}
+		}
+	};
+}
+
+export function createEnrichClientEventHandler(taskId: Ref, assetId: string | null, emit) {
+	return async (event: ClientEvent<TaskResponse>) => {
+		if (taskId.value !== event.data?.id) return;
+		if (assetId !== event.data.additionalProperties.datasetId && assetId !== event.data.additionalProperties.documentId)
+			return;
+		if ([TaskStatus.Success, TaskStatus.Cancelled, TaskStatus.Failed].includes(event.data.status)) {
+			taskId.value = event.data.status === TaskStatus.Failed ? TaskStatus.Failed : '';
+			emit('finished-job');
 		}
 	};
 }

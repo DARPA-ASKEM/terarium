@@ -212,6 +212,7 @@
 									class="pl-4"
 									:part-type="PartType.OBSERVABLE"
 									:items="observablesList"
+									:model-errors="[]"
 									:feature-config="{ isPreview: true }"
 								/>
 								<template v-if="!isEmpty(observableCharts)">

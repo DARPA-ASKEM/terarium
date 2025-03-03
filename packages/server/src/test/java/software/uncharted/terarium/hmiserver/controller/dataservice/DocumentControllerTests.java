@@ -63,7 +63,7 @@ public class DocumentControllerTests extends TerariumApplicationTests {
 		mockMvc
 			.perform(
 				MockMvcRequestBuilders.post("/document-asset")
-					.param("project-id", PROJECT_ID.toString())
+					.param("project-id", project.getId().toString())
 					.with(csrf())
 					.contentType("application/json")
 					.content(objectMapper.writeValueAsString(documentAsset))
@@ -76,14 +76,13 @@ public class DocumentControllerTests extends TerariumApplicationTests {
 	public void testItCanGetDocument() throws Exception {
 		final DocumentAsset documentAsset = documentAssetService.createAsset(
 			(DocumentAsset) new DocumentAsset().setName("test-document-name").setDescription("my description"),
-			project.getId(),
-			ASSUME_WRITE_PERMISSION
+			project.getId()
 		);
 
 		mockMvc
 			.perform(
 				MockMvcRequestBuilders.get("/document-asset/" + documentAsset.getId())
-					.param("project-id", PROJECT_ID.toString())
+					.param("project-id", project.getId().toString())
 					.with(csrf())
 			)
 			.andExpect(status().isOk());
@@ -94,19 +93,18 @@ public class DocumentControllerTests extends TerariumApplicationTests {
 	public void testItCanDeleteDocument() throws Exception {
 		final DocumentAsset documentAsset = documentAssetService.createAsset(
 			(DocumentAsset) new DocumentAsset().setName("test-document-name").setDescription("my description"),
-			project.getId(),
-			ASSUME_WRITE_PERMISSION
+			project.getId()
 		);
 
 		mockMvc
 			.perform(
 				MockMvcRequestBuilders.delete("/document-asset/" + documentAsset.getId())
-					.param("project-id", PROJECT_ID.toString())
+					.param("project-id", project.getId().toString())
 					.with(csrf())
 			)
 			.andExpect(status().isOk());
 
-		Assertions.assertTrue(documentAssetService.getAsset(documentAsset.getId(), ASSUME_WRITE_PERMISSION).isEmpty());
+		Assertions.assertTrue(documentAssetService.getAsset(documentAsset.getId()).isEmpty());
 	}
 
 	@Test
@@ -114,8 +112,7 @@ public class DocumentControllerTests extends TerariumApplicationTests {
 	public void testItCanUploadDocument() throws Exception {
 		final DocumentAsset documentAsset = documentAssetService.createAsset(
 			(DocumentAsset) new DocumentAsset().setName("test-document-name").setDescription("my description"),
-			project.getId(),
-			ASSUME_WRITE_PERMISSION
+			project.getId()
 		);
 
 		// Create a MockMultipartFile object
@@ -131,7 +128,7 @@ public class DocumentControllerTests extends TerariumApplicationTests {
 			.perform(
 				MockMvcRequestBuilders.multipart("/document-asset/" + documentAsset.getId() + "/upload-document")
 					.file(file)
-					.param("project-id", PROJECT_ID.toString())
+					.param("project-id", project.getId().toString())
 					.queryParam("filename", "filename.txt")
 					.with(csrf())
 					.contentType(MediaType.MULTIPART_FORM_DATA)
@@ -148,14 +145,13 @@ public class DocumentControllerTests extends TerariumApplicationTests {
 	public void testItCanUploadDocumentFromGithub() throws Exception {
 		final DocumentAsset documentAsset = documentAssetService.createAsset(
 			(DocumentAsset) new DocumentAsset().setName("test-document-name").setDescription("my description"),
-			project.getId(),
-			ASSUME_WRITE_PERMISSION
+			project.getId()
 		);
 
 		mockMvc
 			.perform(
 				MockMvcRequestBuilders.put("/document-asset/" + documentAsset.getId() + "/upload-document-from-github")
-					.param("project-id", PROJECT_ID.toString())
+					.param("project-id", project.getId().toString())
 					.with(csrf())
 					.param("repo-owner-and-name", "unchartedsoftware/torflow")
 					.param("path", "README.md")
@@ -170,8 +166,7 @@ public class DocumentControllerTests extends TerariumApplicationTests {
 	public void testItCanDownloadDocument() throws Exception {
 		final DocumentAsset documentAsset = documentAssetService.createAsset(
 			(DocumentAsset) new DocumentAsset().setName("test-document-name").setDescription("my description"),
-			project.getId(),
-			ASSUME_WRITE_PERMISSION
+			project.getId()
 		);
 
 		final String content = "this is the file content for the testItCanDownloadDocument test";
@@ -189,7 +184,7 @@ public class DocumentControllerTests extends TerariumApplicationTests {
 			.perform(
 				MockMvcRequestBuilders.multipart("/document-asset/" + documentAsset.getId() + "/upload-document")
 					.file(file)
-					.param("project-id", PROJECT_ID.toString())
+					.param("project-id", project.getId().toString())
 					.queryParam("filename", "filename.txt")
 					.with(csrf())
 					.contentType(MediaType.MULTIPART_FORM_DATA)
@@ -219,8 +214,7 @@ public class DocumentControllerTests extends TerariumApplicationTests {
 	public void testItCanDownloadDocumentAsText() throws Exception {
 		final DocumentAsset documentAsset = documentAssetService.createAsset(
 			(DocumentAsset) new DocumentAsset().setName("test-document-name").setDescription("my description"),
-			project.getId(),
-			ASSUME_WRITE_PERMISSION
+			project.getId()
 		);
 
 		final String content = "this is the file content for the testItCanDownloadDocument test";
@@ -238,7 +232,7 @@ public class DocumentControllerTests extends TerariumApplicationTests {
 			.perform(
 				MockMvcRequestBuilders.multipart("/document-asset/" + documentAsset.getId() + "/upload-document")
 					.file(file)
-					.param("project-id", PROJECT_ID.toString())
+					.param("project-id", project.getId().toString())
 					.queryParam("filename", "filename.txt")
 					.with(csrf())
 					.contentType(MediaType.MULTIPART_FORM_DATA)
@@ -271,14 +265,14 @@ public class DocumentControllerTests extends TerariumApplicationTests {
 			.setDescription("my description");
 		documentAsset.setPublicAsset(true);
 
-		final DocumentAsset createdDocumentAsset = documentAssetService.createAsset(
-			documentAsset,
-			project.getId(),
-			ASSUME_WRITE_PERMISSION
-		);
+		final DocumentAsset createdDocumentAsset = documentAssetService.createAsset(documentAsset, project.getId());
 
 		mockMvc
-			.perform(MockMvcRequestBuilders.get("/document-asset/" + createdDocumentAsset.getId()).with(csrf()))
+			.perform(
+				MockMvcRequestBuilders.get("/document-asset/" + createdDocumentAsset.getId())
+					.with(csrf())
+					.param("project-id", project.getId().toString())
+			)
 			.andExpect(status().isOk());
 	}
 
@@ -303,18 +297,15 @@ public class DocumentControllerTests extends TerariumApplicationTests {
 
 		final DocumentAsset createdDocumentAsset_public_temp = documentAssetService.createAsset(
 			documentAsset_public_temp,
-			project.getId(),
-			ASSUME_WRITE_PERMISSION
+			project.getId()
 		);
 		final DocumentAsset createdDocumentAsset_public_not_temp = documentAssetService.createAsset(
 			documentAsset_public_not_temp,
-			project.getId(),
-			ASSUME_WRITE_PERMISSION
+			project.getId()
 		);
 		final DocumentAsset createdDocumentAsset_not_public_temp = documentAssetService.createAsset(
 			documentAsset_not_public_temp,
-			project.getId(),
-			ASSUME_WRITE_PERMISSION
+			project.getId()
 		);
 
 		mockMvc

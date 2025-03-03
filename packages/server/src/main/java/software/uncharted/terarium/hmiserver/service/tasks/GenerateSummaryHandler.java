@@ -46,7 +46,7 @@ public class GenerateSummaryHandler extends TaskResponseHandler {
 			final Summary newSummary = new Summary();
 			newSummary.setId(props.getSummaryId());
 			newSummary.setPreviousSummary(props.getPreviousSummaryId());
-			summaryService.createAsset(newSummary, props.projectId, ASSUME_WRITE_PERMISSION_ON_BEHALF_OF_USER);
+			summaryService.createAsset(newSummary, props.projectId);
 		} catch (final Exception e) {
 			log.error("Failed to create a summary: {}", e.getMessage());
 		}
@@ -57,11 +57,9 @@ public class GenerateSummaryHandler extends TaskResponseHandler {
 	public TaskResponse onFailure(final TaskResponse resp) {
 		try {
 			final Properties props = resp.getAdditionalProperties(Properties.class);
-			final Summary summary = summaryService
-				.getAsset(props.getSummaryId(), ASSUME_WRITE_PERMISSION_ON_BEHALF_OF_USER)
-				.orElseThrow();
+			final Summary summary = summaryService.getAsset(props.getSummaryId()).orElseThrow();
 			summary.setGeneratedSummary("Generating AI summary has failed.");
-			summaryService.updateAsset(summary, props.projectId, ASSUME_WRITE_PERMISSION_ON_BEHALF_OF_USER);
+			summaryService.updateAsset(summary, props.projectId);
 		} catch (final Exception e) {
 			log.error("Failed to update the summary: {}", e.getMessage());
 			throw new RuntimeException(e);
@@ -76,11 +74,9 @@ public class GenerateSummaryHandler extends TaskResponseHandler {
 			final String output = new String(resp.getOutput());
 			final ObjectMapper mapper = new ObjectMapper();
 			final ResponseOutput resOutput = mapper.readValue(output, ResponseOutput.class);
-			final Summary summary = summaryService
-				.getAsset(props.getSummaryId(), ASSUME_WRITE_PERMISSION_ON_BEHALF_OF_USER)
-				.orElseThrow();
+			final Summary summary = summaryService.getAsset(props.getSummaryId()).orElseThrow();
 			summary.setGeneratedSummary(resOutput.response);
-			summaryService.updateAsset(summary, props.projectId, ASSUME_WRITE_PERMISSION_ON_BEHALF_OF_USER);
+			summaryService.updateAsset(summary, props.projectId);
 		} catch (final Exception e) {
 			log.error("Failed to update the summary: ", e.getMessage());
 			throw new RuntimeException(e);

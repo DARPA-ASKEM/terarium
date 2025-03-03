@@ -36,7 +36,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
-import software.uncharted.terarium.hmiserver.annotations.TSModel;
+import software.uncharted.terarium.hmiserver.annotations.HasProjectAccess;
 import software.uncharted.terarium.hmiserver.models.dataservice.ChartAnnotation.ChartAnnotationType;
 import software.uncharted.terarium.hmiserver.models.dataservice.dataset.Dataset;
 import software.uncharted.terarium.hmiserver.models.dataservice.document.DocumentAsset;
@@ -45,13 +45,12 @@ import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.Model
 import software.uncharted.terarium.hmiserver.models.task.TaskRequest;
 import software.uncharted.terarium.hmiserver.models.task.TaskRequest.TaskType;
 import software.uncharted.terarium.hmiserver.models.task.TaskResponse;
+import software.uncharted.terarium.hmiserver.models.task.TaskStatus;
 import software.uncharted.terarium.hmiserver.security.Roles;
 import software.uncharted.terarium.hmiserver.service.CurrentUserService;
-import software.uncharted.terarium.hmiserver.service.data.DKGService;
 import software.uncharted.terarium.hmiserver.service.data.DatasetService;
 import software.uncharted.terarium.hmiserver.service.data.DocumentAssetService;
 import software.uncharted.terarium.hmiserver.service.data.ModelService;
-import software.uncharted.terarium.hmiserver.service.data.ProjectService;
 import software.uncharted.terarium.hmiserver.service.tasks.ChartAnnotationResponseHandler;
 import software.uncharted.terarium.hmiserver.service.tasks.CompareModelsResponseHandler;
 import software.uncharted.terarium.hmiserver.service.tasks.ConfigureModelFromDatasetResponseHandler;
@@ -80,9 +79,7 @@ public class GoLLMController {
 	private final DocumentAssetService documentAssetService;
 	private final DatasetService datasetService;
 	private final ModelService modelService;
-	private final ProjectService projectService;
 	private final CurrentUserService currentUserService;
-	private final DKGService dkgService;
 
 	private final CompareModelsResponseHandler compareModelsResponseHandler;
 	private final ConfigureModelFromDatasetResponseHandler configureModelFromDatasetResponseHandler;
@@ -116,6 +113,7 @@ public class GoLLMController {
 	@PostMapping("/model-card")
 	@Secured(Roles.USER)
 	@Operation(summary = "Dispatch a `GoLLM Model Card` task")
+	@HasProjectAccess
 	@ApiResponses(
 		value = {
 			@ApiResponse(
@@ -141,13 +139,8 @@ public class GoLLMController {
 		@RequestParam(name = "mode", required = false, defaultValue = "ASYNC") final TaskMode mode,
 		@RequestParam(name = "project-id", required = false) final UUID projectId
 	) {
-		final Schema.Permission permission = projectService.checkPermissionCanRead(
-			currentUserService.get().getId(),
-			projectId
-		);
-
 		// Grab the model
-		final Optional<Model> model = modelService.getAsset(modelId, permission);
+		final Optional<Model> model = modelService.getAsset(modelId);
 		if (model.isEmpty()) {
 			log.warn(String.format("Model %s not found", modelId));
 			throw new ResponseStatusException(HttpStatus.NOT_FOUND, messages.get("model.not-found"));
@@ -158,7 +151,7 @@ public class GoLLMController {
 			throw new ResponseStatusException(HttpStatus.NOT_FOUND, messages.get("document.not-found"));
 		}
 
-		final Optional<DocumentAsset> documentOpt = documentAssetService.getAsset(documentId, permission);
+		final Optional<DocumentAsset> documentOpt = documentAssetService.getAsset(documentId);
 		if (documentOpt.isEmpty()) {
 			log.warn(String.format("Document %s not found", documentId));
 			throw new ResponseStatusException(HttpStatus.NOT_FOUND, messages.get("document.not-found"));
@@ -187,6 +180,10 @@ public class GoLLMController {
 		final TaskResponse resp;
 		try {
 			resp = taskService.runTask(mode, req);
+			if (mode == TaskMode.SYNC && resp.getStatus() != TaskStatus.SUCCESS) {
+				log.error("Task failed", resp.getStderr());
+				throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, resp.getStderr());
+			}
 		} catch (final JsonProcessingException e) {
 			log.error("Unable to serialize input", e);
 			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("task.gollm.json-processing"));
@@ -208,6 +205,7 @@ public class GoLLMController {
 	@GetMapping("/configure-model")
 	@Secured(Roles.USER)
 	@Operation(summary = "Dispatch a `GoLLM Configure Model` task")
+	@HasProjectAccess
 	@ApiResponses(
 		value = {
 			@ApiResponse(
@@ -234,13 +232,8 @@ public class GoLLMController {
 		@RequestParam(name = "node-id", required = false) final UUID nodeId,
 		@RequestParam(name = "project-id", required = false) final UUID projectId
 	) {
-		final Schema.Permission permission = projectService.checkPermissionCanRead(
-			currentUserService.get().getId(),
-			projectId
-		);
-
 		// Grab the document
-		final Optional<DocumentAsset> document = documentAssetService.getAsset(documentId, permission);
+		final Optional<DocumentAsset> document = documentAssetService.getAsset(documentId);
 		if (document.isEmpty()) {
 			log.warn(String.format("Document %s not found", documentId));
 			throw new ResponseStatusException(HttpStatus.NOT_FOUND, messages.get("document.not-found"));
@@ -253,7 +246,7 @@ public class GoLLMController {
 		}
 
 		// Grab the model
-		final Optional<Model> model = modelService.getAsset(modelId, permission);
+		final Optional<Model> model = modelService.getAsset(modelId);
 		if (model.isEmpty()) {
 			log.warn(String.format("Model %s not found", modelId));
 			throw new ResponseStatusException(HttpStatus.NOT_FOUND, messages.get("model.not-found"));
@@ -300,6 +293,10 @@ public class GoLLMController {
 		final TaskResponse resp;
 		try {
 			resp = taskService.runTask(mode, req);
+			if (mode == TaskMode.SYNC && resp.getStatus() != TaskStatus.SUCCESS) {
+				log.error("Task failed", resp.getStderr());
+				throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, resp.getStderr());
+			}
 		} catch (final JsonProcessingException e) {
 			log.error("Unable to serialize input", e);
 			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("task.gollm.json-processing"));
@@ -326,6 +323,7 @@ public class GoLLMController {
 	@PostMapping("/configure-from-dataset")
 	@Secured(Roles.USER)
 	@Operation(summary = "Dispatch a `GoLLM Config from Dataset` task")
+	@HasProjectAccess(level = Schema.Permission.WRITE)
 	@ApiResponses(
 		value = {
 			@ApiResponse(
@@ -354,13 +352,8 @@ public class GoLLMController {
 		@RequestParam(name = "project-id", required = false) final UUID projectId,
 		@RequestBody(required = false) final ConfigFromDatasetBody body
 	) {
-		final Schema.Permission permission = projectService.checkPermissionCanRead(
-			currentUserService.get().getId(),
-			projectId
-		);
-
 		// Grab the model
-		final Optional<Model> model = modelService.getAsset(modelId, permission);
+		final Optional<Model> model = modelService.getAsset(modelId);
 		if (model.isEmpty()) {
 			log.warn(String.format("Model %s not found", modelId));
 			throw new ResponseStatusException(HttpStatus.NOT_FOUND, messages.get("model.not-found"));
@@ -369,7 +362,7 @@ public class GoLLMController {
 		// Grab the dataset
 		final List<String> dataArray = new ArrayList<>();
 
-		final Optional<Dataset> dataset = datasetService.getAsset(datasetId, permission);
+		final Optional<Dataset> dataset = datasetService.getAsset(datasetId);
 		if (dataset.isEmpty()) {
 			log.warn(String.format("Dataset %s not found", datasetId));
 			throw new ResponseStatusException(HttpStatus.NOT_FOUND, messages.get("dataset.not-found"));
@@ -432,6 +425,10 @@ public class GoLLMController {
 		final TaskResponse resp;
 		try {
 			resp = taskService.runTask(mode, req);
+			if (mode == TaskMode.SYNC && resp.getStatus() != TaskStatus.SUCCESS) {
+				log.error("Task failed", resp.getStderr());
+				throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, resp.getStderr());
+			}
 		} catch (final JsonProcessingException e) {
 			log.error("Unable to serialize input", e);
 			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("task.gollm.json-processing"));
@@ -452,6 +449,7 @@ public class GoLLMController {
 	@GetMapping("/interventions-from-document")
 	@Secured(Roles.USER)
 	@Operation(summary = "Dispatch a `GoLLM interventions-from-document` task")
+	@HasProjectAccess(level = Schema.Permission.WRITE)
 	@ApiResponses(
 		value = {
 			@ApiResponse(
@@ -478,13 +476,8 @@ public class GoLLMController {
 		@RequestParam(name = "node-id", required = false) final UUID nodeId,
 		@RequestParam(name = "project-id", required = false) final UUID projectId
 	) {
-		final Schema.Permission permission = projectService.checkPermissionCanRead(
-			currentUserService.get().getId(),
-			projectId
-		);
-
 		// Grab the document
-		final Optional<DocumentAsset> document = documentAssetService.getAsset(documentId, permission);
+		final Optional<DocumentAsset> document = documentAssetService.getAsset(documentId);
 		if (document.isEmpty()) {
 			log.warn(String.format("Document %s not found", documentId));
 			throw new ResponseStatusException(HttpStatus.NOT_FOUND, messages.get("document.not-found"));
@@ -497,7 +490,7 @@ public class GoLLMController {
 		}
 
 		// Grab the model
-		final Optional<Model> model = modelService.getAsset(modelId, permission);
+		final Optional<Model> model = modelService.getAsset(modelId);
 		if (model.isEmpty()) {
 			log.warn(String.format("Model %s not found", modelId));
 			throw new ResponseStatusException(HttpStatus.NOT_FOUND, messages.get("model.not-found"));
@@ -543,6 +536,10 @@ public class GoLLMController {
 		final TaskResponse resp;
 		try {
 			resp = taskService.runTask(mode, req);
+			if (mode == TaskMode.SYNC && resp.getStatus() != TaskStatus.SUCCESS) {
+				log.error("Task failed", resp.getStderr());
+				throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, resp.getStderr());
+			}
 		} catch (final JsonProcessingException e) {
 			log.error("Unable to serialize input", e);
 			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("task.gollm.json-processing"));
@@ -563,6 +560,7 @@ public class GoLLMController {
 	@GetMapping("/interventions-from-dataset")
 	@Secured(Roles.USER)
 	@Operation(summary = "Dispatch a `GoLLM interventions-from-dataset` task")
+	@HasProjectAccess(level = Schema.Permission.WRITE)
 	@ApiResponses(
 		value = {
 			@ApiResponse(
@@ -589,15 +587,10 @@ public class GoLLMController {
 		@RequestParam(name = "node-id", required = false) final UUID nodeId,
 		@RequestParam(name = "project-id", required = false) final UUID projectId
 	) {
-		final Schema.Permission permission = projectService.checkPermissionCanRead(
-			currentUserService.get().getId(),
-			projectId
-		);
-
 		// Grab the dataset
 		final List<String> dataArray = new ArrayList<>();
 
-		final Optional<Dataset> dataset = datasetService.getAsset(datasetId, permission);
+		final Optional<Dataset> dataset = datasetService.getAsset(datasetId);
 		if (dataset.isEmpty()) {
 			log.warn(String.format("Dataset %s not found", datasetId));
 			throw new ResponseStatusException(HttpStatus.NOT_FOUND);
@@ -623,7 +616,7 @@ public class GoLLMController {
 		}
 
 		// Grab the model
-		final Optional<Model> model = modelService.getAsset(modelId, permission);
+		final Optional<Model> model = modelService.getAsset(modelId);
 		if (model.isEmpty()) {
 			log.warn(String.format("Model %s not found", modelId));
 			throw new ResponseStatusException(HttpStatus.NOT_FOUND, messages.get("model.not-found"));
@@ -660,6 +653,10 @@ public class GoLLMController {
 		final TaskResponse resp;
 		try {
 			resp = taskService.runTask(mode, req);
+			if (mode == TaskMode.SYNC && resp.getStatus() != TaskStatus.SUCCESS) {
+				log.error("Task failed", resp.getStderr());
+				throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, resp.getStderr());
+			}
 		} catch (final JsonProcessingException e) {
 			log.error("Unable to serialize input", e);
 			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("task.gollm.json-processing"));
@@ -680,6 +677,7 @@ public class GoLLMController {
 	@GetMapping("/compare-models")
 	@Secured(Roles.USER)
 	@Operation(summary = "Dispatch a `GoLLM Compare Models` task")
+	@HasProjectAccess(level = Schema.Permission.WRITE)
 	@ApiResponses(
 		value = {
 			@ApiResponse(
@@ -706,15 +704,10 @@ public class GoLLMController {
 		@RequestParam(name = "node-id", required = false) final UUID nodeId,
 		@RequestParam(name = "project-id", required = false) final UUID projectId
 	) {
-		final Schema.Permission permission = projectService.checkPermissionCanWrite(
-			currentUserService.get().getId(),
-			projectId
-		);
-
 		final List<String> amrs = new ArrayList<>();
 		for (final UUID modelId : modelIds) {
 			// Grab the model
-			final Optional<Model> model = modelService.getAsset(modelId, permission);
+			final Optional<Model> model = modelService.getAsset(modelId);
 			if (model.isEmpty()) {
 				log.warn(String.format("Model %s not found", modelId));
 				throw new ResponseStatusException(HttpStatus.NOT_FOUND, messages.get("model.not-found"));
@@ -756,6 +749,10 @@ public class GoLLMController {
 		final TaskResponse resp;
 		try {
 			resp = taskService.runTask(mode, req);
+			if (mode == TaskMode.SYNC && resp.getStatus() != TaskStatus.SUCCESS) {
+				log.error("Task failed", resp.getStderr());
+				throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, resp.getStderr());
+			}
 		} catch (final JsonProcessingException e) {
 			log.error("Unable to serialize input", e);
 			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("task.gollm.json-processing"));
@@ -829,6 +826,10 @@ public class GoLLMController {
 		final TaskResponse resp;
 		try {
 			resp = taskService.runTask(mode, req);
+			if (mode == TaskMode.SYNC && resp.getStatus() != TaskStatus.SUCCESS) {
+				log.error("Task failed", resp.getStderr());
+				throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, resp.getStderr());
+			}
 		} catch (final JsonProcessingException e) {
 			log.error("Unable to serialize input: {}", e.getMessage());
 			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("task.gollm.json-processing"));
@@ -861,6 +862,7 @@ public class GoLLMController {
 	@GetMapping("/enrich-model-metadata")
 	@Secured(Roles.USER)
 	@Operation(summary = "Dispatch multiple GoLLM tasks to enrich model metadata")
+	@HasProjectAccess
 	@ApiResponses(
 		value = {
 			@ApiResponse(
@@ -886,16 +888,11 @@ public class GoLLMController {
 		@RequestParam(name = "project-id", required = false) final UUID projectId,
 		@RequestParam(name = "overwrite", required = false, defaultValue = "true") final boolean overwrite
 	) {
-		final Schema.Permission permission = projectService.checkPermissionCanRead(
-			currentUserService.get().getId(),
-			projectId
-		);
-
 		// Grab the document
 		DocumentAsset document = null;
 		if (documentId != null) {
 			document = documentAssetService
-				.getAsset(documentId, permission)
+				.getAsset(documentId)
 				.orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, messages.get("document.not-found")));
 
 			// make sure there is a text in the document
@@ -906,7 +903,7 @@ public class GoLLMController {
 		}
 
 		// Grab the model
-		final Optional<Model> model = modelService.getAsset(modelId, permission);
+		final Optional<Model> model = modelService.getAsset(modelId);
 		if (model.isEmpty()) {
 			log.warn(String.format("Model %s not found", modelId));
 			throw new ResponseStatusException(HttpStatus.NOT_FOUND, messages.get("model.not-found"));
@@ -929,6 +926,10 @@ public class GoLLMController {
 		final TaskResponse resp;
 		try {
 			resp = taskService.runTask(mode, req);
+			if (mode == TaskMode.SYNC && resp.getStatus() != TaskStatus.SUCCESS) {
+				log.error("Task failed", resp.getStderr());
+				throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, resp.getStderr());
+			}
 		} catch (final JsonProcessingException e) {
 			log.error("Unable to serialize input", e);
 			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("task.gollm.json-processing"));
@@ -949,6 +950,7 @@ public class GoLLMController {
 	@GetMapping("/enrich-dataset")
 	@Secured(Roles.USER)
 	@Operation(summary = "Dispatch a `GoLLM Enrich Dataset` task")
+	@HasProjectAccess(level = Schema.Permission.WRITE)
 	@ApiResponses(
 		value = {
 			@ApiResponse(
@@ -974,16 +976,11 @@ public class GoLLMController {
 		@RequestParam(name = "project-id", required = false) final UUID projectId,
 		@RequestParam(name = "overwrite", required = false, defaultValue = "true") final boolean overwrite
 	) {
-		final Schema.Permission permission = projectService.checkPermissionCanRead(
-			currentUserService.get().getId(),
-			projectId
-		);
-
 		// Grab the document
 		DocumentAsset document = null;
 		if (documentId != null) {
 			document = documentAssetService
-				.getAsset(documentId, permission)
+				.getAsset(documentId)
 				.orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, messages.get("document.not-found")));
 
 			// make sure there is a text in the document
@@ -994,7 +991,7 @@ public class GoLLMController {
 		}
 
 		// Grab the dataset
-		final Optional<Dataset> dataset = datasetService.getAsset(datasetId, permission);
+		final Optional<Dataset> dataset = datasetService.getAsset(datasetId);
 		if (dataset.isEmpty()) {
 			log.warn(String.format("Model %s not found", datasetId));
 			throw new ResponseStatusException(HttpStatus.NOT_FOUND, messages.get("dataset.not-found"));
@@ -1017,6 +1014,10 @@ public class GoLLMController {
 		final TaskResponse resp;
 		try {
 			resp = taskService.runTask(mode, req);
+			if (mode == TaskMode.SYNC && resp.getStatus() != TaskStatus.SUCCESS) {
+				log.error("Task failed", resp.getStderr());
+				throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, resp.getStderr());
+			}
 		} catch (final JsonProcessingException e) {
 			log.error("Unable to serialize input", e);
 			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("task.gollm.json-processing"));
@@ -1043,6 +1044,7 @@ public class GoLLMController {
 	@PostMapping("/equations-from-image")
 	@Secured(Roles.USER)
 	@Operation(summary = "Dispatch a `GoLLM Equations from image` task")
+	@HasProjectAccess
 	@ApiResponses(
 		value = {
 			@ApiResponse(
@@ -1062,11 +1064,6 @@ public class GoLLMController {
 		@RequestParam(name = "mode", required = false, defaultValue = "ASYNC") final TaskMode mode,
 		@RequestBody final EquationsFromImageBody image
 	) {
-		final Schema.Permission permission = projectService.checkPermissionCanRead(
-			currentUserService.get().getId(),
-			projectId
-		);
-
 		// validate that the string is a base64 encoding
 		byte[] decodedImage;
 		try {
@@ -1115,6 +1112,10 @@ public class GoLLMController {
 		final TaskResponse resp;
 		try {
 			resp = taskService.runTask(mode, req);
+			if (mode == TaskMode.SYNC && resp.getStatus() != TaskStatus.SUCCESS) {
+				log.error("Task failed", resp.getStderr());
+				throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, resp.getStderr());
+			}
 		} catch (final JsonProcessingException e) {
 			log.error("Unable to serialize input", e);
 			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("task.gollm.json-processing"));
@@ -1197,6 +1198,10 @@ public class GoLLMController {
 		final TaskResponse resp;
 		try {
 			resp = taskService.runTask(mode, req);
+			if (mode == TaskMode.SYNC && resp.getStatus() != TaskStatus.SUCCESS) {
+				log.error("Task failed", resp.getStderr());
+				throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, resp.getStderr());
+			}
 		} catch (final JsonProcessingException e) {
 			log.error("Unable to serialize input: {}", e.getMessage());
 			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("task.gollm.json-processing"));

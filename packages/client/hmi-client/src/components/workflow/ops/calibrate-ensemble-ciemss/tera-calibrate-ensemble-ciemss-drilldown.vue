@@ -286,6 +286,7 @@
 						"
 						:active-settings="activeChartSettings"
 						:generate-annotation="generateAnnotation"
+						:get-chart-labels="getChartLabels"
 						@update-settings="updateActiveChartSettings"
 						@delete-annotation="deleteAnnotation"
 						@close="setActiveChartSettings(null)"
@@ -709,6 +710,7 @@ const {
 
 const {
 	generateAnnotation,
+	getChartLabels,
 	getChartAnnotationsByChartId,
 	useEnsembleVariableCharts,
 	useWeightsDistributionCharts,

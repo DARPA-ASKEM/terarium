@@ -66,7 +66,7 @@ public class ModelControllerTests extends TerariumApplicationTests {
 		mockMvc
 			.perform(
 				MockMvcRequestBuilders.post("/models")
-					.param("project-id", PROJECT_ID.toString())
+					.param("project-id", project.getId().toString())
 					.with(csrf())
 					.contentType("application/json")
 					.content(objectMapper.writeValueAsString(model))
@@ -87,13 +87,14 @@ public class ModelControllerTests extends TerariumApplicationTests {
 						.setDescription("test-description")
 						.setSchemaName("petrinet")
 				),
-			project.getId(),
-			ASSUME_WRITE_PERMISSION
+			project.getId()
 		);
 
 		mockMvc
 			.perform(
-				MockMvcRequestBuilders.get("/models/" + model.getId()).param("project-id", PROJECT_ID.toString()).with(csrf())
+				MockMvcRequestBuilders.get("/models/" + model.getId())
+					.param("project-id", project.getId().toString())
+					.with(csrf())
 			)
 			.andExpect(status().isOk());
 	}
@@ -111,14 +112,13 @@ public class ModelControllerTests extends TerariumApplicationTests {
 						.setDescription("test-description")
 						.setSchemaName("petrinet")
 				),
-			project.getId(),
-			ASSUME_WRITE_PERMISSION
+			project.getId()
 		);
 
 		mockMvc
 			.perform(
 				MockMvcRequestBuilders.put("/models/" + model.getId())
-					.param("project-id", PROJECT_ID.toString())
+					.param("project-id", project.getId().toString())
 					.with(csrf())
 					.contentType("application/json")
 					.content(objectMapper.writeValueAsString(model))
@@ -139,19 +139,18 @@ public class ModelControllerTests extends TerariumApplicationTests {
 						.setDescription("test-description")
 						.setSchemaName("petrinet")
 				),
-			project.getId(),
-			ASSUME_WRITE_PERMISSION
+			project.getId()
 		);
 
 		mockMvc
 			.perform(
 				MockMvcRequestBuilders.delete("/models/" + model.getId())
-					.param("project-id", PROJECT_ID.toString())
+					.param("project-id", project.getId().toString())
 					.with(csrf())
 			)
 			.andExpect(status().isOk());
 
-		Assertions.assertTrue(modelService.getAsset(model.getId(), ASSUME_WRITE_PERMISSION).isEmpty());
+		Assertions.assertTrue(modelService.getAsset(model.getId()).isEmpty());
 	}
 
 	@Test
@@ -167,14 +166,13 @@ public class ModelControllerTests extends TerariumApplicationTests {
 						.setDescription("test-description")
 						.setSchemaName("petrinet")
 				),
-			project.getId(),
-			ASSUME_WRITE_PERMISSION
+			project.getId()
 		);
 
 		mockMvc
 			.perform(
 				MockMvcRequestBuilders.get("/models/" + model.getId() + "/descriptions")
-					.param("project-id", PROJECT_ID.toString())
+					.param("project-id", project.getId().toString())
 					.with(csrf())
 			)
 			.andExpect(status().isOk());
@@ -217,21 +215,9 @@ public class ModelControllerTests extends TerariumApplicationTests {
 			.setPublicAsset(false)
 			.setTemporary(true);
 
-		final Model createdModel_public_not_temp = modelService.createAsset(
-			model_public_not_temp,
-			project.getId(),
-			ASSUME_WRITE_PERMISSION
-		);
-		final Model createdModel_public_temp = modelService.createAsset(
-			model_public_temp,
-			project.getId(),
-			ASSUME_WRITE_PERMISSION
-		);
-		final Model createdModel_not_public_temp = modelService.createAsset(
-			model_not_public_temp,
-			project.getId(),
-			ASSUME_WRITE_PERMISSION
-		);
+		final Model createdModel_public_not_temp = modelService.createAsset(model_public_not_temp, project.getId());
+		final Model createdModel_public_temp = modelService.createAsset(model_public_temp, project.getId());
+		final Model createdModel_not_public_temp = modelService.createAsset(model_not_public_temp, project.getId());
 
 		mockMvc
 			.perform(MockMvcRequestBuilders.get("/models/" + createdModel_not_public_temp.getId()).with(csrf()))

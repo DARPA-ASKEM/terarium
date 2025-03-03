@@ -65,13 +65,11 @@ public class ExtractionServiceTests extends TerariumApplicationTests {
 			.setName("test-pdf-name")
 			.setDescription("my description");
 
-		documentAsset = documentAssetService.createAsset(documentAsset, project.getId(), ASSUME_WRITE_PERMISSION);
+		documentAsset = documentAssetService.createAsset(documentAsset, project.getId());
 
 		documentAssetService.uploadFile(documentAsset.getId(), "SIR.pdf", pdfFileEntity);
 
-		documentAsset = extractionService
-			.extractPDFAndApplyToDocument(documentAsset.getId(), null, ASSUME_WRITE_PERMISSION)
-			.get();
+		documentAsset = extractionService.extractPDFAndApplyToDocument(documentAsset.getId(), null).get();
 
 		log.info("" + documentAsset.getExtractions());
 	}

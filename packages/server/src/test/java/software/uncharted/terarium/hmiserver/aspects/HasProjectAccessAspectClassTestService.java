@@ -8,11 +8,11 @@ import software.uncharted.terarium.hmiserver.utils.rebac.Schema;
 @HasProjectAccess
 public class HasProjectAccessAspectClassTestService {
 
-	public void defaultParameterName(String id) {}
+	public void defaultParameterName(String projectId) {}
 
-	@HasProjectAccess("#projectId")
-	public void methodOverride(String projectId) {}
+	@HasProjectAccess("#id")
+	public void methodOverride(String id) {}
 
 	@HasProjectAccess(level = Schema.Permission.WRITE)
-	public void ownerLevel(String id) {}
+	public void ownerLevel(String projectId) {}
 }
