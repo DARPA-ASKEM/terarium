@@ -46,6 +46,11 @@ class OpenAiTools(LlmToolsInterface):
     def __init__(self, api_key=None):
         self.api_key = api_key
 
+
+    def name(self) -> str:
+        return f"OpenAI (gpt-4o 2024-08-06)"
+
+
     def send_to_llm_with_json_output(self, prompt: str, schema: str, max_tokens=16384) -> dict:
         print("Sending request to OpenAI API...")
         client = OpenAI() if self.api_key is None else OpenAI(api_key=self.api_key)

@@ -2,10 +2,9 @@ import json
 import sys
 import traceback
 from chains import model_config_from_document_chain
+from common.utils import determine_llm
 from entities import ModelAndDocument
 from llms.azure.AzureTools import AzureTools
-from llms.llama.LlamaTools import LlamaTools
-from llms.openai.OpenAiTools import OpenAiTools
 
 from taskrunner import TaskRunnerInterface
 
@@ -26,18 +25,12 @@ def main():
         input_model = ModelAndDocument(**input_dict)
         amr = json.dumps(input_model.amr, separators=(",", ":"))
 
-        if input_model.llm == "llama":
-            taskrunner.log("Using Llama LLM")
-            llm = LlamaTools()
-        elif input_model.llm == "openai":
-            taskrunner.log("Using OpenAI LLM")
-            llm = OpenAiTools()
-        elif input_model.llm == "azure":
-            taskrunner.log("Using Azure OpenAI LLM")
+        try:
+            llm = determine_llm(input_model.llm)
+            taskrunner.log(f"Using {llm.name}")
+        except Exception as e:
             llm = AzureTools()
-        else:
-            taskrunner.log("No LLM specified, Defaulting to Azure OpenAI LLM")
-            llm = AzureTools()
+            taskrunner.log(f"WARNING: {e}, defaulting to {llm.name}")
 
         response = model_config_from_document_chain(llm, document=input_model.document, amr=amr)
         taskrunner.log("Received response from LLM")

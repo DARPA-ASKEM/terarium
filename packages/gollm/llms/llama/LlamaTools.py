@@ -53,6 +53,11 @@ class LlamaTools(LlmToolsInterface):
         self.bedrock_access_key = bedrock_access_key
         self.bedrock_secret_access_key = bedrock_secret_access_key
 
+
+    def name(self) -> str:
+        return "AWS Llama (Llama 3.2 90B Instruct)"
+
+
     def send_to_llm_with_json_output(self, prompt: str, schema: str, max_tokens=8192) -> dict:
         print("Creating AWS Bedrock (Llama) client...")
 

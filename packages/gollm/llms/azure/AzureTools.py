@@ -49,6 +49,10 @@ class AzureTools(LlmToolsInterface):
         self.model_name = model_name
 
 
+    def name(self) -> str:
+        return f"Azure OpenAI (gpt-4o 2024-11-20)"
+
+
     def send_to_llm_with_json_output(self, prompt: str, schema: str, max_tokens=16384) -> dict:
         print("Creating AzureOpenAI client...")
         client = AzureOpenAI(

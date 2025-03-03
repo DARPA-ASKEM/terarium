@@ -1,10 +1,9 @@
 import sys
 import traceback
 from chains import general_query_chain
+from common.utils import determine_llm
 from entities import GeneralQueryModel
 from llms.azure.AzureTools import AzureTools
-from llms.llama.LlamaTools import LlamaTools
-from llms.openai.OpenAiTools import OpenAiTools
 
 from taskrunner import TaskRunnerInterface
 
@@ -26,18 +25,12 @@ def main():
 
         taskrunner.log("Generating a response from input")
 
-        if input_model.llm == "llama":
-            taskrunner.log("Using Llama LLM")
-            llm = LlamaTools()
-        elif input_model.llm == "openai":
-            taskrunner.log("Using OpenAI LLM")
-            llm = OpenAiTools()
-        elif input_model.llm == "azure":
-            taskrunner.log("Using Azure OpenAI LLM")
+        try:
+            llm = determine_llm(input_model.llm)
+            taskrunner.log(f"Using {llm.name}")
+        except Exception as e:
             llm = AzureTools()
-        else:
-            taskrunner.log("No LLM specified, Defaulting to Azure OpenAI LLM")
-            llm = AzureTools()
+            taskrunner.log(f"WARNING: {e}, defaulting to {llm.name}")
 
         response = general_query_chain(llm, instruction=input_model.instruction)
         taskrunner.log("Received response from LLM")
