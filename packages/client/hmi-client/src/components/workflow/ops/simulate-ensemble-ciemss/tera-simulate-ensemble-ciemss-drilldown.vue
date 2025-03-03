@@ -250,6 +250,7 @@
 						"
 						:active-settings="activeChartSettings"
 						:generate-annotation="generateAnnotation"
+						:get-chart-labels="getChartLabels"
 						@update-settings="updateActiveChartSettings"
 						@delete-annotation="deleteAnnotation"
 						@close="setActiveChartSettings(null)"
@@ -411,7 +412,7 @@ const {
 	setActiveChartSettings
 } = useChartSettings(props, emit);
 
-const { generateAnnotation, getChartAnnotationsByChartId, useEnsembleVariableCharts } = useCharts(
+const { generateAnnotation, getChartLabels, getChartAnnotationsByChartId, useEnsembleVariableCharts } = useCharts(
 	props.node.id,
 	null,
 	allModelConfigurations,
