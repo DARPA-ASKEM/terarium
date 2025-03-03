@@ -100,7 +100,7 @@
 					<AccordionTab header="Tabular concept comparison" v-if="!isTabularComparisonEmpty">
 						<template v-for="(value, pair) in conceptComparison.tabular_comparison" :key="pair">
 							<h6 class="ml-4">Tabular comparison {{ pair }}</h6>
-							<tera-csv-table :csv-text="value" class="mb-4" />
+							<tera-model-comparison-table :csv-text="value" :table-name="pair" class="mb-4" />
 						</template>
 					</AccordionTab>
 					<AccordionTab header="Concept graph comparison" v-if="!isGraphComparisonEmpty">
@@ -211,6 +211,7 @@ import { useClientEvent } from '@/composables/useClientEvent';
 import Textarea from 'primevue/textarea';
 import { CompareModelsConceptsResponse, getCompareModelConcepts } from '@/services/concept';
 import TeraCsvTable from '@/components/widgets/tera-csv-table.vue';
+import TeraModelComparisonTable from '@/components/widgets/tera-model-comparison-table.vue';
 import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue';
 import { ModelComparisonOperationState } from './model-comparison-operation';
 
