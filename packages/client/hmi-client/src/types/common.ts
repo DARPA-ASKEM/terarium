@@ -229,7 +229,12 @@ export enum SensitivityMethod {
 	PEAK_TIMEPOINT = 'peak timepoint'
 }
 
-export interface ChartSettingBase {
+export interface ChartLabelOptions {
+	title?: string;
+	xAxisTitle?: string;
+	yAxisTitle?: string;
+}
+export interface ChartSettingBase extends ChartLabelOptions {
 	id: string;
 	name: string;
 	selectedVariables: string[];

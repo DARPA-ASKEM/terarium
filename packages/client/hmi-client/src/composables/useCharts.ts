@@ -35,6 +35,7 @@ import {
 	ChartSettingEnsembleVariable,
 	ChartSettingSensitivity,
 	ChartSettingType,
+	ChartLabelOptions,
 	SensitivityMethod
 } from '@/types/common';
 import { ChartAnnotation, Dataset, Intervention, InterventionPolicy, Model, ModelConfiguration } from '@/types/Types';
@@ -369,22 +370,50 @@ export function useCharts(
 	};
 
 	/**
+	 * Get chart labels based on the chart setting.
+	 * @param setting chart setting
+	 * @returns ChartLabelOptions
+	 */
+	const getChartLabels = (setting: ChartSetting): ChartLabelOptions => {
+		const variables = setting.selectedVariables;
+		const { title, xAxisTitle, yAxisTitle } = setting;
+		if (isChartSettingEnsembleVariable(setting)) {
+			return {
+				title: title || variables[0],
+				xAxisTitle: xAxisTitle || '',
+				yAxisTitle: yAxisTitle || ''
+			};
+		}
+		if (setting.type === ChartSettingType.DISTRIBUTION_COMPARISON) {
+			const param = variables[0];
+			return {
+				title: title || `${param}`,
+				xAxisTitle: xAxisTitle || `${param}`,
+				yAxisTitle: yAxisTitle || 'Count'
+			};
+		}
+		// Default chart settings
+		return {
+			title: title || '',
+			xAxisTitle: xAxisTitle || getUnit('_time') || 'Time',
+			yAxisTitle: yAxisTitle || buildYAxisTitle(variables, getUnit)
+		};
+	};
+
+	/**
 	 * Create a base forecast chart options that's common for different types of forecast charts.
 	 * @param setting ChartSetting
 	 * @returns ForecastChartOptions
 	 */
 	const createBaseForecastChartOptions = (setting: ChartSetting) => {
-		const variables = setting.selectedVariables;
 		const dateOptions = getVegaDateOptions(model?.value ?? null, <ModelConfiguration>modelConfig?.value || null);
 		const options: ForecastChartOptions = {
-			title: '',
+			...getChartLabels(setting),
+			fontSize: setting.fontSize,
 			legend: true,
 			width: chartSize.value.width,
 			height: chartSize.value.height,
 			translationMap: chartData.value?.translationMap || {},
-			xAxisTitle: getUnit('_time') || 'Time',
-			yAxisTitle: buildYAxisTitle(variables, getUnit),
-			fontSize: setting.fontSize,
 			dateOptions,
 			colorscheme: [BASE_GREY, setting.primaryColor ?? PRIMARY_COLOR],
 			scale: setting.scale
@@ -400,18 +429,19 @@ export function useCharts(
 	) => {
 		const ensembleVarName = setting.selectedVariables[0];
 		const options: ForecastChartOptions = {
-			title: getModelConfigName(<ModelConfiguration[]>modelConfig?.value ?? [], modelConfigId) || ensembleVarName,
+			...getChartLabels(setting),
+			fontSize: setting.fontSize,
 			legend: true,
 			width: chartSize.value.width,
 			height: chartSize.value.height,
 			translationMap: chartData.value?.translationMap || {},
-			xAxisTitle: '',
-			yAxisTitle: '',
-			fontSize: setting.fontSize,
 			autosize: AUTOSIZE.FIT,
 			colorscheme: multiVariable ? CATEGORICAL_SCHEME : [BASE_GREY, setting.primaryColor ?? PRIMARY_COLOR],
 			scale: setting.scale
 		};
+		// If chart is small multiples for each model configuration, override the title with the model configuration name
+		if (modelConfigId)
+			options.title = getModelConfigName(<ModelConfiguration[]>modelConfig?.value ?? [], modelConfigId);
 
 		const variables: string[] = [];
 		if (multiVariable) {
@@ -961,12 +991,10 @@ export function useCharts(
 				const fieldName = pyciemssMap[param];
 				const beforeFieldName = `${fieldName}:pre`;
 				const histogram = createHistogramChart(data, {
-					title: `${param}`,
+					...getChartLabels(setting),
+					fontSize: setting.fontSize,
 					width: chartSize.value.width,
 					height: chartSize.value.height,
-					xAxisTitle: `${param}`,
-					yAxisTitle: 'Count',
-					fontSize: setting.fontSize,
 					maxBins: 10,
 					variables: [
 						{ field: beforeFieldName, label: labelBefore, width: 54, color: BASE_GREY },
@@ -1514,6 +1542,7 @@ export function useCharts(
 		});
 
 	return {
+		getChartLabels,
 		generateAnnotation,
 		getChartAnnotationsByChartId,
 		useInterventionCharts,
