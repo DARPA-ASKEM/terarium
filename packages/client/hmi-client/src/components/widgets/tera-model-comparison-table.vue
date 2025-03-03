@@ -138,4 +138,13 @@ onMounted(() => {
 :deep(tr:last-of-type td:last-of-type) {
 	border-bottom-right-radius: var(--border-radius);
 }
+
+:deep([role='columnheader']),
+:deep(td) {
+	text-align: center;
+}
+
+:deep(.p-column-title) {
+	width: 100%;
+}
 </style>
