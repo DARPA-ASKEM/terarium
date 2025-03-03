@@ -1,4 +1,4 @@
-import { onMounted, onUnmounted } from 'vue';
+import { onMounted, onUnmounted, Ref } from 'vue';
 
 import { subscribe, unsubscribe } from '@/services/ClientEventService';
 import {
@@ -47,6 +47,18 @@ export function createTaskProgressClientEventHandler(node: WorkflowNode<Document
 			) {
 				state[progressKey] = undefined;
 			}
+		}
+	};
+}
+
+export function createEnrichClientEventHandler(taskId: Ref, assetId: string | null, emit) {
+	return async (event: ClientEvent<TaskResponse>) => {
+		if (taskId.value !== event.data?.id) return;
+		if (assetId !== event.data.additionalProperties.datasetId && assetId !== event.data.additionalProperties.documentId)
+			return;
+		if ([TaskStatus.Success, TaskStatus.Cancelled, TaskStatus.Failed].includes(event.data.status)) {
+			taskId.value = event.data.status === TaskStatus.Failed ? TaskStatus.Failed : '';
+			emit('finished-job');
 		}
 	};
 }
