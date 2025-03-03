@@ -1,5 +1,5 @@
 import * as d3 from 'd3';
-import { isEmpty, pick, merge, get } from 'lodash';
+import { isEmpty, pick, merge } from 'lodash';
 import { percentile } from '@/utils/math';
 import { VisualizationSpec } from 'vega-embed';
 import { v4 as uuidv4 } from 'uuid';
