@@ -3,7 +3,7 @@ import { isEmpty, pick } from 'lodash';
 import { percentile } from '@/utils/math';
 import { VisualizationSpec } from 'vega-embed';
 import { v4 as uuidv4 } from 'uuid';
-import type { ChartAnnotation, FunmanInterval } from '@/types/Types';
+import { ChartAnnotation, ChartAnnotationType, FunmanInterval } from '@/types/Types';
 import { CalendarDateType, SensitivityChartType } from '@/types/common';
 import { countDigits, fixPrecisionError } from '@/utils/number';
 import { format } from 'd3';
@@ -43,7 +43,7 @@ export enum AUTOSIZE {
 	NONE = 'none'
 }
 
-interface BaseChartOptions {
+export interface BaseChartOptions {
 	title?: string;
 	width: number;
 	height: number;
@@ -878,6 +878,29 @@ export function createForecastChart(
 			layerSpec.layer.push(timeLabelBackgroundLayer);
 		}
 
+		const dateTooltipTransform = options.dateOptions
+			? [
+					{
+						calculate: formatDateLabelFn(
+							options.dateOptions.startDate,
+							`datum.${statisticsLayer.timeField}`,
+							options.dateOptions.dateFormat
+						),
+						as: 'tooltipText'
+					}
+				]
+			: [];
+
+		const dateTooltipTextEncoding = options?.dateOptions?.startDate
+			? {
+					field: 'tooltipText',
+					type: 'nominal'
+				}
+			: {
+					field: statisticsLayer.timeField,
+					type: 'quantitative'
+				};
+
 		// Add a label with the current X value (time) for the vertical line
 		const timeLabelLayer = {
 			mark: {
@@ -886,23 +909,9 @@ export function createForecastChart(
 				color: '#111111',
 				dx: 0
 			},
-			transform: [
-				{
-					calculate: options.dateOptions
-						? formatDateLabelFn(
-								options.dateOptions.startDate,
-								`datum.${statisticsLayer.timeField}`,
-								options.dateOptions.dateFormat
-							)
-						: undefined,
-					as: 'tooltipText'
-				}
-			],
+			transform: dateTooltipTransform,
 			encoding: {
-				text: {
-					field: options?.dateOptions?.startDate ? 'tooltipText' : statisticsLayer.timeField,
-					type: options?.dateOptions?.startDate ? 'nominal' : 'quantitative'
-				},
+				text: dateTooltipTextEncoding,
 				x: {
 					field: statisticsLayer.timeField,
 					type: 'quantitative'
@@ -1030,23 +1039,11 @@ export function createForecastChart(
 				dx: 5,
 				dy: -5
 			},
-			transform: [
-				{
-					calculate: options.dateOptions
-						? formatDateLabelFn(
-								options.dateOptions.startDate,
-								`datum.${statisticsLayer.timeField}`,
-								options.dateOptions.dateFormat
-							)
-						: undefined,
-					as: 'tooltipText'
-				}
-			],
 			encoding: {
 				text: {
-					field: options.dateOptions?.startDate ? 'tooltipText' : statisticsLayer.timeField,
-					type: options.dateOptions?.startDate ? 'nominal' : 'quantitative',
-					format: options.dateOptions?.startDate ? undefined : '.3f'
+					field: 'valueField',
+					type: 'quantitative',
+					format: '.3f'
 				},
 				x: {
 					field: statisticsLayer.timeField,
@@ -1282,8 +1279,8 @@ export function createQuantilesForecastChart(
 						},
 						encoding: {
 							x: { field: 'x', type: 'quantitative', axis: { ...xaxis } },
-							y: { field: 'lower', type: 'quantitative', axis: { ...yaxis }, scale: yScale },
-							y2: { field: 'upper', type: 'quantitative' },
+							y: { field: 'upper', type: 'quantitative', axis: { ...yaxis }, scale: yScale },
+							y2: { field: 'lower', type: 'quantitative' },
 							color: encodingColor(),
 							opacity: {
 								legend: false,
@@ -1462,19 +1459,30 @@ export function createSensitivityRankingChart(data: { parameter: string; score: 
 }
 
 /**
- * Applies annotation layers to a forecast chart. Each annotation is represented as a layer specification object.
- * By default, the annotation layers are added as sub-layers to the second layer (statistics layer) of the forecast chart specification.
+ * Applies annotation layers to a chart. Each annotation is represented as a layer specification object.
  *
- * @param chartSpec - The forecast chart specification.
+ * @param chartSpec - The chart specification.
  * @param annotations - A list of annotations to be applied.
- * @param targetLayerIndex - The index of the target layer to which the annotations will be attached (default is 1).
+ * @param charType - The type of the chart to which the annotations are applied.
  * @returns The updated chart specification with the applied annotations.
  */
-export function applyForecastChartAnnotations(chartSpec: any, annotations: ChartAnnotation[], targetLayerIndex = 1) {
-	if (isEmpty(annotations)) return chartSpec;
-	const layerSpecs = annotations.map((a) => a.layerSpec);
-	if (!chartSpec.layer[targetLayerIndex]) return chartSpec;
-	chartSpec.layer[targetLayerIndex].layer.push(...layerSpecs);
+export function applyChartAnnotations(
+	chartSpec: any,
+	annotations: ChartAnnotation[],
+	chartType: ChartAnnotationType = ChartAnnotationType.ForecastChart
+) {
+	const annotationForTheType = annotations.filter(
+		(a) => (a.chartType ?? ChartAnnotationType.ForecastChart) === chartType
+	);
+	if (isEmpty(annotationForTheType)) return chartSpec;
+	const annotationLayerSpecs = annotationForTheType.map((a) => a.layerSpec);
+	const targetLayer = {
+		[ChartAnnotationType.ForecastChart]: chartSpec.layer?.[1],
+		[ChartAnnotationType.QuantileForecastChart]: chartSpec.layer?.[0]
+	}[chartType];
+	// Check if target layer has sub layer array where annotations can be added
+	if (!targetLayer?.layer) return chartSpec;
+	targetLayer.layer.push(...annotationLayerSpecs);
 	return chartSpec;
 }
 
@@ -1511,6 +1519,7 @@ export function createForecastChartAnnotation(axis: 'x' | 'y', datum: number, la
 		id: uuidv4(),
 		nodeId: '',
 		outputId: '',
+		chartType: ChartAnnotationType.ForecastChart,
 		chartId: '',
 		layerSpec,
 		llmGenerated: false,
@@ -2090,9 +2099,8 @@ export function createFunmanParameterCharts(
 export function createRankingInterventionsChart(
 	values: { score: number; policyName: string; configName: string }[],
 	interventionNameColorMap: Record<string, string>,
-	title: string | null = null,
-	variableName: string | null = null
-) {
+	options: BaseChartOptions
+): VisualizationSpec {
 	return {
 		$schema: VEGALITE_SCHEMA,
 		config: {
@@ -2108,7 +2116,7 @@ export function createRankingInterventionsChart(
 			}
 		},
 		title: {
-			text: title,
+			text: options.title ?? '',
 			anchor: 'start',
 			frame: 'group',
 			offset: 10,
@@ -2123,13 +2131,13 @@ export function createRankingInterventionsChart(
 				field: 'index',
 				type: 'nominal',
 				sort: null,
-				title: 'Rank'
+				title: options.xAxisTitle
 			},
 			y: {
 				field: 'score',
 				type: 'quantitative',
 				// If a specific variable is selected the score should hold its actual value
-				title: variableName || 'Score',
+				title: options.yAxisTitle || 'Score',
 				axis: {
 					gridColor: {
 						condition: { test: 'datum.value === 0', value: 'black' },
@@ -2175,11 +2183,10 @@ export function createRankingInterventionsChart(
 					dy: -20,
 					dx: 5,
 					angle: 90,
-					fill: 'black',
-					padding: 4
+					fill: 'black'
 				},
 				encoding: {
-					text: { field: 'name', type: 'nominal', color: 'black' },
+					text: { field: 'name', type: 'nominal' },
 					y: { value: 0 } // This positions the text at the top of the chart
 				}
 			}

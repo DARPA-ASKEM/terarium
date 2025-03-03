@@ -23,11 +23,11 @@ import { computed, ref, watch } from 'vue';
 import AutoComplete, { AutoCompleteCompleteEvent } from 'primevue/autocomplete';
 import type { DKG, Grounding } from '@/types/Types';
 import {
-	getDKGFromGroundingContext,
+	getDKGFromGroundingModifier,
 	getDKGFromGroundingIdentifier,
 	parseCurieToIdentifier,
-	parseListDKGToGroundingContext,
-	searchCuriesEntities
+	searchCuriesEntities,
+	parseListDKGToGroundingModifiers
 } from '@/services/concept';
 
 defineProps<{
@@ -44,18 +44,28 @@ async function searchDKG(event: AutoCompleteCompleteEvent) {
 
 const concepts = ref<DKG[]>([]);
 function saveConcepts() {
-	const newGrounding = { ...(grounding.value as Grounding), identifiers: {}, context: {} };
+	const newGrounding = { ...(grounding.value as Grounding), identifiers: {}, modifiers: {} };
 
 	if (!isEmpty(concepts.value)) {
 		// Split the list of concepts into identifier (first item) and context (rest of the items)
-		const [identifierConcept, ...contextConcepts] = concepts.value;
+		const [identifierConcept, ...modifiersConcepts] = concepts.value;
 
 		if (identifierConcept) {
 			newGrounding.identifiers = parseCurieToIdentifier(identifierConcept.curie);
 		}
 
-		if (!isEmpty(contextConcepts)) {
-			newGrounding.context = parseListDKGToGroundingContext(contextConcepts);
+		if (!isEmpty(modifiersConcepts)) {
+			newGrounding.modifiers = parseListDKGToGroundingModifiers(modifiersConcepts);
+
+			if (grounding.value?.modifiers) {
+				// Remove the curie modifiers from the original list of modifiers
+				const nonCurieModifiers = Object.fromEntries(
+					Object.entries(grounding.value.modifiers).filter(([_key, value]) => !value.includes(':'))
+				);
+
+				// Add the original list of non-curie modifiers to the new modifiers
+				Object.assign(newGrounding.modifiers, nonCurieModifiers);
+			}
 		}
 	}
 
@@ -85,9 +95,9 @@ watch(
 				});
 			}
 
-			// Then add the context concepts
-			if (!isEmpty(newGrounding.context)) {
-				getDKGFromGroundingContext(newGrounding.context).then((dkgList) => {
+			// Then add the modifiers concepts
+			if (!isEmpty(newGrounding.modifiers)) {
+				getDKGFromGroundingModifier(newGrounding.modifiers).then((dkgList) => {
 					concepts.value.push(...dkgList);
 				});
 			}

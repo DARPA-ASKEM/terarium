@@ -29,10 +29,6 @@ Report any issues into GitHub: [open an issue](https://github.com/DARPA-ASKEM/te
 ### 5. Try to create an invalid intervention
 1. Create an intervention that has a negative timestamp within a static intervention.
       Expect to see a toaster error explaining where you have an invalid intervention
-2. Create an intervention that contains two static interventions each with the same parameter and time selected
-      Expect to see a toaster error explaining you have duplicates.
-3. Create two interventions each containing at least one static intervention that has the same parameter and time selected
-      Expect to see a toaster error explaining you have duplicates.
 
 ### 6. Create a dynamic parameter criteria
 1. Click `+ Add intervention`

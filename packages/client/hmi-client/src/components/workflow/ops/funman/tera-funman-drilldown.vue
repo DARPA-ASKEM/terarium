@@ -212,6 +212,7 @@
 									class="pl-4"
 									:part-type="PartType.OBSERVABLE"
 									:items="observablesList"
+									:model-errors="[]"
 									:feature-config="{ isPreview: true }"
 								/>
 								<template v-if="!isEmpty(observableCharts)">
@@ -270,69 +271,39 @@
 			>
 				<template #content>
 					<div class="output-settings-panel">
-						<h5>State variables</h5>
-						<tera-chart-control
-							class="w-full"
-							:chart-config="{
-								selectedRun: 'fixme',
-								selectedVariable: selectedStateSettings.map((s) => s.selectedVariables[0])
-							}"
-							multi-select
-							:show-remove-button="false"
-							:variables="stateOptions"
-							@configuration-change="updateSelectedStates"
+						<tera-chart-settings
+							:title="'State variables'"
+							:settings="chartSettings"
+							:type="ChartSettingType.VARIABLE"
+							:select-options="stateOptions"
+							:selected-options="selectedVariableSettings.map((s) => s.selectedVariables[0])"
+							@open="setActiveChartSettings($event)"
+							@remove="removeChartSettings"
+							@selection-change="updateChartSettings"
 						/>
-						<tera-chart-settings-item
-							v-for="settings of chartSettings.filter((setting) => setting.type === ChartSettingType.VARIABLE)"
-							:key="settings.id"
-							:settings="settings"
-							@open="activeChartSettings = settings"
-							@remove="removeChartSetting"
+						<Divider />
+						<tera-chart-settings
+							:title="'Parameters'"
+							:settings="chartSettings"
+							:type="ChartSettingType.DISTRIBUTION_COMPARISON"
+							:select-options="parameterOptions"
+							:selected-options="selectedParameterSettings.map((s) => s.selectedVariables[0])"
+							@open="setActiveChartSettings($event)"
+							@remove="removeChartSettings"
+							@selection-change="updateChartSettings"
 						/>
-						<hr />
-						<h5>Parameters</h5>
-						<tera-chart-control
-							class="w-full"
-							:chart-config="{
-								selectedRun: 'fixme',
-								selectedVariable: selectedParameterSettings.map((s) => s.selectedVariables[0])
-							}"
-							multi-select
-							:show-remove-button="false"
-							:variables="parameterOptions"
-							@configuration-change="updateSelectedParameters"
+						<Divider />
+						<tera-chart-settings
+							:title="'Observable'"
+							:settings="chartSettings"
+							:type="ChartSettingType.VARIABLE_OBSERVABLE"
+							:select-options="observableOptions"
+							:selected-options="selectedObservableSettings.map((s) => s.selectedVariables[0])"
+							@open="setActiveChartSettings($event)"
+							@remove="removeChartSettings"
+							@selection-change="updateChartSettings"
 						/>
-						<tera-chart-settings-item
-							v-for="settings of chartSettings.filter(
-								(setting) => setting.type === ChartSettingType.DISTRIBUTION_COMPARISON
-							)"
-							:key="settings.id"
-							:settings="settings"
-							@open="activeChartSettings = settings"
-							@remove="removeChartSetting"
-						/>
-						<hr />
-						<h5>Observable</h5>
-						<tera-chart-control
-							class="w-full"
-							:chart-config="{
-								selectedRun: 'fixme',
-								selectedVariable: selectedObservableSettings.map((s) => s.selectedVariables[0])
-							}"
-							multi-select
-							:show-remove-button="false"
-							:variables="observableOptions"
-							@configuration-change="updateSelectedObservables"
-						/>
-						<tera-chart-settings-item
-							v-for="settings of chartSettings.filter(
-								(setting) => setting.type === ChartSettingType.VARIABLE_OBSERVABLE
-							)"
-							:key="settings.id"
-							:settings="settings"
-							@open="activeChartSettings = settings"
-							@remove="removeChartSetting"
-						/>
+						<Divider />
 					</div>
 					<div class="flex align-items-center gap-2 ml-4 mb-3">
 						<Checkbox v-model="onlyShowLatestResults" binary @change="renderCharts" />
@@ -363,6 +334,7 @@ import { isEmpty, cloneDeep, isEqual } from 'lodash';
 import { computed, ref, watch, onMounted } from 'vue';
 import { logger } from '@/utils/logger';
 import { formatShort } from '@/utils/date';
+import Divider from 'primevue/divider';
 import Button from 'primevue/button';
 import TeraInputNumber from '@/components/widgets/tera-input-number.vue';
 import Slider from 'primevue/slider';
@@ -388,8 +360,7 @@ import TeraModelDiagram from '@/components/model/petrinet/tera-model-diagram.vue
 
 import TeraToggleableInput from '@/components/widgets/tera-toggleable-input.vue';
 
-import TeraChartControl from '@/components/workflow/tera-chart-control.vue';
-import TeraChartSettingsItem from '@/components/widgets/tera-chart-settings-item.vue';
+import TeraChartSettings from '@/components/widgets/tera-chart-settings.vue';
 import TeraSaveAssetModal from '@/components/project/tera-save-asset-modal.vue';
 
 import type {
@@ -417,14 +388,15 @@ import { getAsConfiguredModel, getModelConfigurationById } from '@/services/mode
 import { useToastService } from '@/services/toast';
 import { pythonInstance } from '@/web-workers/python/PyodideController';
 import TeraConstraintGroupForm from '@/components/workflow/ops/funman/tera-constraint-group-form.vue';
-import { DrilldownTabs, type ChartSetting, ChartSettingType } from '@/types/common';
+import { ChartSettingType, DrilldownTabs } from '@/types/common';
 import { stringToLatexExpression, getModel, getMMT } from '@/services/model';
 import { toScientificNotation } from '@/utils/number';
-import { removeChartSettingById, updateChartSettingsBySelectedVariables } from '@/services/chart-settings';
+import { updateChartSettingsBySelectedVariables } from '@/services/chart-settings';
 import { nodeOutputLabel } from '@/components/workflow/util';
 import { formatJSON } from '@/services/code';
 import TeraDrilldownPreview from '@/components/drilldown/tera-drilldown-preview.vue';
 import { PartType } from '@/model-representation/service';
+import { useChartSettings } from '@/composables/useChartSettings';
 import { FunmanOperationState, Constraint, ConstraintType, CompartmentalConstraint } from './funman-operation';
 
 const props = defineProps<{
@@ -884,7 +856,7 @@ const observablesList = ref<any[]>([]);
 
 const stateCharts = ref<any>([{}]);
 const selectedStateCharts = computed(() => {
-	const selectedStateIds = selectedStateSettings.value.map((setting) => setting.selectedVariables[0]);
+	const selectedStateIds = selectedVariableSettings.value.map((setting) => setting.selectedVariables[0]);
 	return stateCharts.value.filter((chart) => selectedStateIds.includes(chart.id));
 });
 const parameterCharts = ref<any>({});
@@ -902,17 +874,16 @@ const onlyShowLatestResults = ref(false);
 const focusOnModelChecks = ref(false);
 
 const isOutputSettingsPanelOpen = ref(false);
-const activeChartSettings = ref<ChartSetting | null>(null);
-const chartSettings = computed(() => props.node.state.chartSettings ?? []);
-const selectedStateSettings = computed(() =>
-	chartSettings.value.filter((setting) => setting.type === ChartSettingType.VARIABLE)
-);
-const selectedParameterSettings = computed(() =>
-	chartSettings.value.filter((setting) => setting.type === ChartSettingType.DISTRIBUTION_COMPARISON)
-);
-const selectedObservableSettings = computed(() =>
-	chartSettings.value.filter((setting) => setting.type === ChartSettingType.VARIABLE_OBSERVABLE)
-);
+
+const {
+	chartSettings,
+	selectedVariableSettings,
+	selectedParameterSettings,
+	selectedObservableSettings,
+	removeChartSettings,
+	updateChartSettings,
+	setActiveChartSettings
+} = useChartSettings(props, emit);
 
 let selectedBoxId: number = -1;
 
@@ -928,6 +899,7 @@ function onParameterChartClick(eventData: any) {
 	updateStateCharts();
 }
 
+// TODO: Move chart creation logics into useChart.ts
 function updateStateCharts() {
 	if (isEmpty(processedFunmanResult.value.trajectories)) return;
 	const trajectories = onlyShowLatestResults.value
@@ -961,50 +933,9 @@ function updateObservableCharts() {
 	);
 }
 
-function updateSelectedStates(event) {
-	emit('update-state', {
-		...props.node.state,
-		chartSettings: updateChartSettingsBySelectedVariables(
-			chartSettings.value,
-			ChartSettingType.VARIABLE,
-			event.selectedVariable
-		)
-	});
-}
-
-function updateSelectedParameters(event) {
-	emit('update-state', {
-		...props.node.state,
-		chartSettings: updateChartSettingsBySelectedVariables(
-			chartSettings.value,
-			ChartSettingType.DISTRIBUTION_COMPARISON,
-			event.selectedVariable
-		)
-	});
-	updateParameterCharts(); // Rerender when we remove/add charts since they are all contained in the same visualization
-}
-
-function updateSelectedObservables(event) {
-	emit('update-state', {
-		...props.node.state,
-		chartSettings: updateChartSettingsBySelectedVariables(
-			chartSettings.value,
-			ChartSettingType.VARIABLE_OBSERVABLE,
-			event.selectedVariable
-		)
-	});
-}
-
-function removeChartSetting(chartId: string) {
-	const chartType = chartSettings.value.find((setting) => setting.id === chartId)?.type;
-	emit('update-state', {
-		...props.node.state,
-		chartSettings: removeChartSettingById(chartSettings.value, chartId)
-	});
-	if (chartType === ChartSettingType.DISTRIBUTION_COMPARISON) {
-		updateParameterCharts();
-	}
-}
+watch(selectedParameterSettings, () => {
+	updateParameterCharts();
+});
 
 function renderCharts() {
 	updateStateCharts();

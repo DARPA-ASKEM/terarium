@@ -78,19 +78,20 @@
 							firstRow,
 							firstRow + MAX_NUMBER_OF_ROWS
 						)"
-						:key="index"
-						@click="selectInterventionPolicy(intervention, index)"
+						:key="firstRow + index"
+						@click="selectInterventionPolicy(intervention, firstRow + index)"
 					>
 						<tera-intervention-card
 							class="intervention"
 							:class="{
-								selected: selectedIntervention?.name === intervention?.name && selectedIntervention?.index === index
+								selected:
+									selectedIntervention?.name === intervention?.name && selectedIntervention?.index === firstRow + index
 							}"
 							:intervention="intervention"
 							:parameterOptions="parameterOptions"
 							:stateOptions="stateOptions"
-							@update="onUpdateInterventionCard($event, index)"
-							@delete="onDeleteIntervention(index)"
+							@update="onUpdateInterventionCard($event, firstRow + index)"
+							@delete="onDeleteIntervention(firstRow + index)"
 						/>
 					</li>
 				</ul>
@@ -156,22 +157,25 @@
 					</AccordionTab>
 					<AccordionTab header="Charts">
 						<ul class="flex flex-column gap-2">
-							<li v-for="appliedTo in Object.keys(groupedOutputParameters)" :key="appliedTo">
-								<vega-chart
-									expandable
-									:are-embed-actions-visible="false"
-									:visualization-spec="preparedCharts[appliedTo]"
-								/>
-								<span class="flex pb-6">
-									<label class="pr-2 text-sm">Show this chart on node thumbnail</label>
-									<Checkbox
-										v-model="selectedCharts"
-										:input-id="appliedTo"
-										:name="appliedTo"
-										:value="appliedTo"
-										@change="onSelectChartChange"
+							<li v-for="appliedTo in displayedInterventions" :key="appliedTo">
+								<h5>{{ appliedTo }}</h5>
+								<template v-if="preparedCharts[appliedTo]">
+									<vega-chart
+										expandable
+										:are-embed-actions-visible="false"
+										:visualization-spec="preparedCharts[appliedTo]"
 									/>
-								</span>
+									<span class="flex pb-6">
+										<label class="pr-2 text-sm">Show this chart on node thumbnail</label>
+										<Checkbox
+											v-model="selectedCharts"
+											:input-id="appliedTo"
+											:name="appliedTo"
+											:value="appliedTo"
+											@change="onSelectChartChange"
+										/>
+									</span>
+								</template>
 								<ul>
 									<li
 										class="pb-2"
@@ -187,7 +191,7 @@
 												</p>
 											</li>
 										</ul>
-										<p v-else-if="!isEmpty(intervention.dynamicInterventions)">
+										<p v-if="!isEmpty(intervention.dynamicInterventions)">
 											Set {{ intervention.dynamicInterventions[0].type }} {{ appliedTo }} to
 											{{ intervention.dynamicInterventions[0].value }} when the
 											{{ intervention.dynamicInterventions[0].parameter }}
@@ -231,14 +235,11 @@ import TeraInputText from '@/components/widgets/tera-input-text.vue';
 import { getInterventionPoliciesForModel, getModel } from '@/services/model';
 import {
 	AssetType,
-	ClientEvent,
-	ClientEventType,
 	Intervention,
 	InterventionPolicy,
 	Model,
 	DynamicIntervention,
 	StaticIntervention,
-	TaskStatus,
 	type TaskResponse,
 	type DocumentAsset
 } from '@/types/Types';
@@ -267,7 +268,6 @@ import { useProjects } from '@/composables/project';
 import { interventionPolicyFromDocument, interventionPolicyFromDataset } from '@/services/goLLM';
 import { downloadDocumentAsset, getDocumentAsset, getDocumentFileAsText } from '@/services/document-assets';
 import TeraPdfPanel from '@/components/widgets/tera-pdf-panel.vue';
-import { useClientEvent } from '@/composables/useClientEvent';
 import TeraInterventionCard from './tera-intervention-card.vue';
 import {
 	InterventionPolicyOperation,
@@ -291,6 +291,24 @@ const confirm = useConfirm();
 interface BasicKnobs {
 	transientInterventionPolicy: InterventionPolicy;
 }
+
+/*
+This is a super-set of prepared charts.  We only display static interventions in the charts right now,
+but we also want the option to display the desciptions of dynamic interventions in the drilldown.
+*/
+const displayedInterventions = computed(() => {
+	// we want a set of the appliedTo interventions in the drilldown
+	const selectedInterventionSet: Set<string> = new Set();
+	knobs.value.transientInterventionPolicy.interventions.forEach((intervention) => {
+		intervention.staticInterventions.forEach((staticIntervention) => {
+			selectedInterventionSet.add(staticIntervention.appliedTo);
+		});
+		intervention.dynamicInterventions.forEach((dynamicIntervention) => {
+			selectedInterventionSet.add(dynamicIntervention.appliedTo);
+		});
+	});
+	return selectedInterventionSet;
+});
 
 const knobs = ref<BasicKnobs>({
 	transientInterventionPolicy: {
@@ -396,12 +414,12 @@ const stateOptions = computed(() => {
 	}));
 });
 
-const groupedOutputParameters = computed(() =>
-	groupBy(flattenInterventionData(knobs.value.transientInterventionPolicy.interventions), 'appliedTo')
-);
-
-const preparedCharts = computed(() =>
-	_.mapValues(groupedOutputParameters.value, (interventions, key) =>
+const preparedCharts = computed(() => {
+	const groupedOutputParameters = groupBy(
+		flattenInterventionData(knobs.value.transientInterventionPolicy.interventions),
+		'appliedTo'
+	);
+	return _.mapValues(groupedOutputParameters, (interventions, key) =>
 		createInterventionChart(interventions, {
 			title: key,
 			width: 400,
@@ -409,8 +427,8 @@ const preparedCharts = computed(() =>
 			xAxisTitle: 'Time',
 			yAxisTitle: 'Value'
 		})
-	)
-);
+	);
+});
 
 const getInterventionsAppliedTo = (appliedTo: string) =>
 	knobs.value.transientInterventionPolicy.interventions
@@ -645,22 +663,6 @@ const extractInterventionPolicyFromInputs = async () => {
 	}
 	emit('update-state', state);
 };
-
-// Listen for the task completion event
-const interventionEventHandler = async (event: ClientEvent<TaskResponse>) => {
-	const state = cloneDeep(props.node.state);
-	if (!state.taskIds.includes(event.data?.id)) return;
-	isLoading.value = true;
-	if ([TaskStatus.Success, TaskStatus.Cancelled, TaskStatus.Failed].includes(event.data.status)) {
-		state.taskIds = state.taskIds.filter((id) => id !== event.data.id);
-		isLoading.value = false;
-		if (!modelId) return;
-		await fetchInterventionPolicies();
-	}
-};
-
-useClientEvent(ClientEventType.TaskGollmInterventionsFromDocument, interventionEventHandler);
-useClientEvent(ClientEventType.TaskGollmInterventionsFromDataset, interventionEventHandler);
 
 const onSelectChartChange = () => {
 	const state = cloneDeep(props.node.state);

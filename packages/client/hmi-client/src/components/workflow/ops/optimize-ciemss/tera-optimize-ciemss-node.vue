@@ -188,8 +188,8 @@ watch(
 				state.inProgressPostForecastId = '';
 				state.optimizedInterventionPolicyId = '';
 				state.optimizeErrorMessage = {
-					name: optId,
-					value: 'Failed to create intervention',
+					name: 'Failed to create intervention',
+					value: '',
 					traceback: 'Failed to create the intervention provided from optimize.'
 				};
 				emit('update-state', state);
@@ -197,9 +197,10 @@ watch(
 		} else {
 			// Simulation Failed:
 			const state = _.cloneDeep(props.node.state);
+			console.log(response);
 			if (response?.state && response?.error) {
 				state.optimizeErrorMessage = {
-					name: optId,
+					name: `Optimize: ${optId} has failed`,
 					value: response.state,
 					traceback: response.error
 				};

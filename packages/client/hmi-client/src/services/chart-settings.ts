@@ -1,5 +1,4 @@
 import _ from 'lodash';
-import API from '@/api/api';
 import {
 	ChartSetting,
 	ChartSettingEnsembleVariable,
@@ -7,17 +6,11 @@ import {
 	ChartSettingComparison,
 	ChartSettingSensitivity,
 	ChartSettingType,
-	SensitivityChartType
+	SensitivityChartType,
+	SensitivityMethod
 } from '@/types/common';
 import { v4 as uuidv4 } from 'uuid';
-import { b64DecodeUnicode } from '@/utils/binary';
-import { ChartAnnotation } from '@/types/Types';
-import { CATEGORICAL_SCHEME, createVariableColorMap, ForecastChartOptions } from './charts';
-
-export interface LLMGeneratedChartAnnotation {
-	request: string;
-	layerSpec: any;
-}
+import { CATEGORICAL_SCHEME, createVariableColorMap } from './charts';
 
 export type EnsembleVariableChartSettingOption =
 	| 'showIndividualModels'
@@ -170,6 +163,7 @@ export function updateSensitivityChartSettingOption(
 		selectedInputVariables: string[];
 		timepoint: number;
 		chartType: SensitivityChartType;
+		method: SensitivityMethod;
 	}
 ) {
 	// previous settings without the settings of the given type
@@ -183,12 +177,14 @@ export function updateSensitivityChartSettingOption(
 			found.selectedInputVariables = options.selectedInputVariables;
 			found.timepoint = options.timepoint;
 			found.chartType = options.chartType;
+			found.method = options.method;
 			return found;
 		}
 		return createNewChartSetting(variable, ChartSettingType.SENSITIVITY, [variable], {
 			selectedInputVariables: options.selectedInputVariables,
 			timepoint: options.timepoint,
-			chartType: options.chartType
+			chartType: options.chartType,
+			method: options.method
 		});
 	});
 
@@ -249,95 +245,6 @@ export function filterChartSettingsByVariables(
  */
 export function removeChartSettingById(settings: ChartSetting[], id: string) {
 	return settings.filter((setting) => setting.id !== id);
-}
-
-export async function saveAnnotation(
-	annotationLayerSpec: LLMGeneratedChartAnnotation,
-	nodeId: string,
-	chartId: string
-) {
-	const annotation: ChartAnnotation = {
-		id: uuidv4(),
-		description: annotationLayerSpec.request,
-		nodeId,
-		outputId: '',
-		chartId,
-		layerSpec: annotationLayerSpec.layerSpec,
-		llmGenerated: true,
-		metadata: {}
-	};
-	const { data } = await API.post('/chart-annotations', annotation);
-	return data as ChartAnnotation;
-}
-
-export async function deleteAnnotation(annotationId: string) {
-	const { data } = await API.delete(`/chart-annotations/${annotationId}`);
-	return data;
-}
-
-export async function fetchAnnotations(nodeId: string) {
-	const { data } = await API.post(`/chart-annotations/search`, { nodeId });
-	return data as ChartAnnotation[];
-}
-
-export async function generateForecastChartAnnotation(
-	request: string,
-	timeField: string,
-	variables: string[],
-	options: Partial<ForecastChartOptions>
-): Promise<LLMGeneratedChartAnnotation> {
-	const axisTitle = {
-		x: options.xAxisTitle ?? '',
-		y: options.yAxisTitle ?? ''
-	};
-	const translateMap = _.pick(options.translationMap ?? {}, variables);
-	const preamble = `
-		Here is the information of the existing target chart spec where you need to add the annotations:
-    - The existing chart follows a similar pattern as the above Example Chart Spec like:
-        {{
-          ...
-          "transform": [
-            {{
-              "fold": ${JSON.stringify(variables)},
-              "as": ["variableField', "valueField"]
-            }}
-          ],
-          "layer": [
-            {{
-              ...
-              "encoding": {{
-                "x": {{"field": "${timeField}", "type": "quantitative", "axis": {{"title": "${axisTitle.x}"}}}},
-                "y": {{"field": "valueField", "type": "quantitative", "axis": {{"title": "${axisTitle.y}"}}}}
-              }}
-            }}
-            ...
-          ]
-        }}
-    - Assume all unknown variables except the time field are for the y-axis and are renamed to the valueField.
-    - Make sure possible values for 'valueField' are ${JSON.stringify(variables)} and try best to translate the variables mentioned from the request to the variables for the 'valueField'.
-    - Leverage this variable to human readable name mapping: ${JSON.stringify(translateMap)} if needed.
-	`;
-	const instruction = `
-    Give me the layer object to be added to the existing chart spec based on the following user request.
-
-    ${request}
-	`;
-	const { data } = await API.post(
-		`/gollm/chart-annotation?mode=SYNC`,
-		{ preamble, instruction },
-		{
-			headers: {
-				'Content-Type': 'application/json'
-			}
-		}
-	);
-	const str = b64DecodeUnicode(data.output);
-	const result = JSON.parse(str);
-	const layerSpec = result.response ?? null;
-	return {
-		request,
-		layerSpec
-	};
 }
 
 export function generateComparisonColorScheme(setting: ChartSettingComparison, variableIndex = -1) {

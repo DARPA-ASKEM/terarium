@@ -29,7 +29,6 @@ export enum RoutePath {
 	Unauthorized = '/unauthorized',
 
 	// Playground and experiments, these components are testing-only
-	Ta2Playground = '/ta2-playground',
 	ResponsivePlaygroundPath = '/responsive-playground',
 	EvaluationScenariosPath = '/evaluation-scenarios'
 }

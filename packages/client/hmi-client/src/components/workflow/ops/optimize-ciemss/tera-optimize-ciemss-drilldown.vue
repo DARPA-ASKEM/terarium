@@ -186,12 +186,6 @@
 							</div>
 						</div>
 					</section>
-					<!-- This used to be in the footer -->
-					<tera-save-dataset-from-simulation
-						:simulation-run-id="knobs.postForecastRunId"
-						:showDialog="showSaveDataDialog"
-						@dialog-hide="showSaveDataDialog = false"
-					/>
 				</template>
 			</tera-slider-panel>
 		</section>
@@ -231,7 +225,7 @@
 						severity="secondary"
 						outlined
 						:disabled="!optimizedInterventionPolicy"
-						@click="showSaveInterventionPolicy = true"
+						@click="showSaveDialog = true"
 					/>
 				</template>
 				<tera-operator-output-summary v-if="node.state.summaryId && !showSpinner" :summary-id="node.state.summaryId" />
@@ -442,12 +436,12 @@
 	</tera-drilldown>
 	<tera-save-simulation-modal
 		:initial-name="optimizedInterventionPolicy?.name"
-		:is-visible="showSaveInterventionPolicy"
+		:is-visible="showSaveDialog"
 		:assets="[
 			{ id: optimizedInterventionPolicy?.id ?? '', type: AssetType.InterventionPolicy },
 			{ id: datasetId, type: AssetType.Dataset }
 		]"
-		@close-modal="showSaveInterventionPolicy = false"
+		@close-modal="showSaveDialog = false"
 		@on-save="onSaveForReuse"
 		:simulation-id="node.state.postForecastRunId"
 	/>
@@ -465,7 +459,6 @@ import TeraSaveSimulationModal from '@/components/project/tera-save-simulation-m
 import TeraDatasetDatatable from '@/components/dataset/tera-dataset-datatable.vue';
 import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
 import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.vue';
-import TeraSaveDatasetFromSimulation from '@/components/dataset/tera-save-dataset-from-simulation.vue';
 import TeraPyciemssCancelButton from '@/components/pyciemss/tera-pyciemss-cancel-button.vue';
 import TeraOperatorOutputSummary from '@/components/operator/tera-operator-output-summary.vue';
 import { getModelByModelConfigurationId, getCalendarSettingsFromModel } from '@/services/model';
@@ -508,7 +501,8 @@ import { useConfirm } from 'primevue/useconfirm';
 import TeraChartSettings from '@/components/widgets/tera-chart-settings.vue';
 import TeraChartSettingsPanel from '@/components/widgets/tera-chart-settings-panel.vue';
 import TeraTimestepCalendar from '@/components/widgets/tera-timestep-calendar.vue';
-import { deleteAnnotation, updateChartSettingsBySelectedVariables } from '@/services/chart-settings';
+import { updateChartSettingsBySelectedVariables } from '@/services/chart-settings';
+import { deleteAnnotation } from '@/services/chart-annotation';
 import { useCharts } from '@/composables/useCharts';
 import { useChartSettings } from '@/composables/useChartSettings';
 import teraOptimizeCriterionGroupForm from './tera-optimize-criterion-group-form.vue';
@@ -575,8 +569,7 @@ const summaryCheckbox = ref(true);
 
 const successDisplayChartsCheckbox = ref(true);
 
-const showSaveDataDialog = ref<boolean>(false);
-const showSaveInterventionPolicy = ref<boolean>(false);
+const showSaveDialog = ref<boolean>(false);
 
 const chartWidthDiv = ref(null);
 const chartSize = useDrilldownChartSize(chartWidthDiv);

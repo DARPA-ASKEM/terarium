@@ -8,6 +8,7 @@ export interface DocumentOperationState extends BaseState {
 	equations: AssetBlock<DocumentExtraction>[];
 	tables: AssetBlock<DocumentExtraction>[];
 	figures: AssetBlock<DocumentExtraction>[];
+	taskProgress?: number;
 }
 
 export const DocumentOperation: Operation = {

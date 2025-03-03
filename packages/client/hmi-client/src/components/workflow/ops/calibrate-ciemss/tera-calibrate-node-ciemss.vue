@@ -8,9 +8,13 @@
 				:chart-settings="[...selectedInterventionSettings, ...selectedVariableSettings]"
 				:are-embed-actions-visible="true"
 				:placeholder="placeholderText"
-				:progress="processingMessage"
+				:processing="processingMessage"
 			/>
-			<vega-chart v-if="lossChartSpec" :are-embed-actions-visible="false" :visualization-spec="lossChartSpec" />
+			<vega-chart
+				v-if="lossChartSpec && isLoading"
+				:are-embed-actions-visible="false"
+				:visualization-spec="lossChartSpec"
+			/>
 		</section>
 		<Button v-if="areInputsFilled" label="Open" @click="emit('open-drilldown')" severity="secondary" outlined />
 	</main>
@@ -215,7 +219,7 @@ const pollResult = async (runId: string) => {
 			state = _.cloneDeep(props.node.state);
 			state.inProgressCalibrationId = '';
 			state.errorMessage = {
-				name: runId,
+				name: `Calibration: ${runId} has failed`,
 				value: simulation.status,
 				traceback: simulation.statusMessage
 			};

@@ -48,7 +48,7 @@ export const deleteModelConfiguration = async (id: string) => {
 };
 
 export const getAsConfiguredModel = async (modelConfigurationId: string): Promise<Model> => {
-	const response = await API.get<Model>(`model-configurations/as-configured-model/${modelConfigurationId}`);
+	const response = await API.get<Model>(`model-configurations/${modelConfigurationId}/model`);
 	return response?.data ?? null;
 };
 
@@ -298,4 +298,10 @@ export function getModelInitials(modelConfiguration, source, amrInitials) {
 export function getModelConfigName(modelConfigs: ModelConfiguration[], configId: string) {
 	const modelConfig = modelConfigs.find((d) => d.id === configId);
 	return modelConfig?.name ?? '';
+}
+
+// Get the model configuration as a LaTeX table
+export async function getModelConfigurationAsLatexTable(id: ModelConfiguration['id']): Promise<string> {
+	const response = await API.get<string>(`model-configurations/${id}/latex-table`);
+	return response?.data ?? '';
 }

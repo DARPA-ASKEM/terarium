@@ -158,43 +158,6 @@ export class WorkflowWrapper {
 	}
 
 	// @deprecated
-	removeEdge(id: string) {
-		const edgeToRemove = this.wf.edges.find((d) => d.id === id);
-		if (!edgeToRemove) return;
-
-		// Remove the data reference at the targetPort
-		const targetNode = this.wf.nodes.find((d) => d.id === edgeToRemove.target);
-		if (!targetNode) return;
-
-		const targetPort = targetNode.inputs.find((d) => d.id === edgeToRemove.targetPortId);
-		if (!targetPort) return;
-
-		targetPort.value = null;
-		targetPort.status = WorkflowPortStatus.NOT_CONNECTED;
-		delete targetPort.label;
-
-		// Resets the type to the original type (used when multiple types for a port are allowed)
-		if (targetPort?.originalType) {
-			targetPort.type = targetPort.originalType;
-		}
-
-		// Tombstone
-		const edge = this.wf.edges.find((e) => e.id === id);
-		if (edge) {
-			edge.isDeleted = true;
-		}
-
-		// If there are no more references reset the connected status of the source node
-		if (_.isEmpty(this.getEdges().filter((e) => e.source === edgeToRemove.source))) {
-			const sourceNode = this.wf.nodes.find((d) => d.id === edgeToRemove.source);
-			if (!sourceNode) return;
-			const sourcePort = sourceNode.outputs.find((d) => d.id === edgeToRemove.sourcePortId);
-			if (!sourcePort) return;
-			sourcePort.status = WorkflowPortStatus.NOT_CONNECTED;
-		}
-	}
-
-	// @deprecated
 	addNode(op: Operation, pos: Position, options: { size?: OperatorNodeSize; state?: any }) {
 		let currentUserName: string | undefined = '';
 		try {
@@ -758,7 +721,7 @@ export const newOperator = (
 
 export const selectOutput = async (id: string, nodeId: string, outputId: string, projectId?: string) => {
 	console.log('>> workflowService.selectOutput');
-	const response = await API.post(`/workflows/${id}/node/${nodeId}/selected-output/${outputId}`, {
+	const response = await API.post(`/workflows/${id}/node/${nodeId}/output/${outputId}`, {
 		params: { 'project-id': projectId }
 	});
 	return response.data ?? null;

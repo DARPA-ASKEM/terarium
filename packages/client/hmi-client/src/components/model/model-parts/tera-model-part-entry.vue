@@ -1,5 +1,10 @@
 <template>
 	<section class="flex flex-column">
+		<ul v-if="!isEmpty(modelErrors)">
+			<li v-for="err of modelErrors" :key="err.id">
+				<span :class="err.severity">{{ err.content }}</span>
+			</li>
+		</ul>
 		<div class="top-entry">
 			<h6>{{ id }}</h6>
 			<span v-if="!isTimePart" class="name">
@@ -7,9 +12,10 @@
 				<tera-input-text v-else placeholder="Add a name" v-model="nameText" />
 			</span>
 			<span class="unit" :class="{ time: isTimePart }">
-				<template v-if="input || output">
-					<span><label>Input:</label> {{ input }}</span>
-					<span><label>Output:</label> {{ output }}</span>
+				<template v-if="subject || outcome">
+					<span><label>Subject:</label> {{ subject !== '' ? subject : 'n/a' }}</span>
+					<span><label>&nbsp;Outcome:</label> {{ outcome !== '' ? outcome : 'n/a' }}</span>
+					<span v-if="controllers"><label>&nbsp;Controllers:</label> {{ controllers }}</span>
 				</template>
 				<!--amr_to_mmt doesn't like unit expressions with spaces, removing them here before they are saved to the amr-->
 				<template v-else-if="showUnit">
@@ -45,7 +51,7 @@
 					:label="showDescription ? 'Hide description' : descriptionText ? 'Show description' : 'Add description'"
 					@click="showDescription = !showDescription"
 				/>
-				<aside class="concept">
+				<aside class="concept" v-if="!isTransitionPart">
 					<tera-concept v-model="grounding" :is-preview="featureConfig.isPreview" />
 				</aside>
 			</template>
@@ -65,28 +71,29 @@
 
 <script setup lang="ts">
 import { computed, ref } from 'vue';
-import { debounce } from 'lodash';
+import { debounce, isEmpty } from 'lodash';
 import Button from 'primevue/button';
 import Dropdown from 'primevue/dropdown';
 import TeraConcept from '@/components/widgets/tera-concept.vue';
 import TeraInputText from '@/components/widgets/tera-input-text.vue';
 import type { FeatureConfig } from '@/types/common';
 import { CalendarDateType } from '@/types/common';
-import { PartType } from '@/model-representation/service';
+import { ModelError, PartType } from '@/model-representation/service';
 import { stringToLatexExpression } from '@/services/model';
 
 const props = defineProps<{
 	description?: string;
 	name?: string;
 	unitExpression?: string;
-	templateId?: string;
 	id?: string;
 	grounding?: any;
 	expression?: string;
-	input?: any;
-	output?: any;
+	subject?: string;
+	outcome?: string;
+	controllers?: string;
 	featureConfig: FeatureConfig;
 	partType: PartType;
+	modelErrors: ModelError[];
 }>();
 
 const emit = defineEmits(['update-item']);
@@ -128,6 +135,7 @@ const showUnit = computed(
 );
 
 const isTimePart = props.partType === PartType.TIME;
+const isTransitionPart = props.partType === PartType.TRANSITION;
 </script>
 
 <style scoped>
@@ -192,5 +200,13 @@ h6::after {
 :deep(.unit .tera-input > main > input) {
 	height: 1.25rem;
 	font-size: var(--font-caption);
+}
+
+.warn {
+	background-color: var(--surface-warning);
+}
+
+.error {
+	background-color: var(--surface-error);
 }
 </style>

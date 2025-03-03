@@ -22,6 +22,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
+import software.uncharted.terarium.hmiserver.annotations.HasProjectAccess;
 import software.uncharted.terarium.hmiserver.models.ClientEvent;
 import software.uncharted.terarium.hmiserver.models.ClientEventType;
 import software.uncharted.terarium.hmiserver.models.dataservice.ChartAnnotation;
@@ -29,11 +30,8 @@ import software.uncharted.terarium.hmiserver.models.dataservice.ResponseDeleted;
 import software.uncharted.terarium.hmiserver.models.dataservice.project.Contributor;
 import software.uncharted.terarium.hmiserver.security.Roles;
 import software.uncharted.terarium.hmiserver.service.ClientEventService;
-import software.uncharted.terarium.hmiserver.service.CurrentUserService;
 import software.uncharted.terarium.hmiserver.service.data.ChartAnnotationService;
-import software.uncharted.terarium.hmiserver.service.data.ProjectAssetService;
 import software.uncharted.terarium.hmiserver.service.data.ProjectPermissionsService;
-import software.uncharted.terarium.hmiserver.service.data.ProjectService;
 import software.uncharted.terarium.hmiserver.utils.rebac.ReBACService;
 import software.uncharted.terarium.hmiserver.utils.rebac.Schema;
 import software.uncharted.terarium.hmiserver.utils.rebac.askem.RebacProject;
@@ -46,12 +44,6 @@ import software.uncharted.terarium.hmiserver.utils.rebac.askem.RebacProject;
 public class ChartAnnotationController {
 
 	final ChartAnnotationService chartAnnotationService;
-
-	final ProjectAssetService projectAssetService;
-
-	final ProjectService projectService;
-
-	final CurrentUserService currentUserService;
 
 	final ReBACService reBACService;
 
@@ -67,6 +59,7 @@ public class ChartAnnotationController {
 	@PostMapping("/search")
 	@Secured(Roles.USER)
 	@Operation(summary = "Gets a list of chart annotations by provided node ID")
+	@HasProjectAccess
 	@ApiResponses(
 		value = {
 			@ApiResponse(
@@ -89,22 +82,14 @@ public class ChartAnnotationController {
 		@RequestParam(name = "project-id", required = false) final UUID projectId,
 		@RequestBody final SearchRequestBody body
 	) {
-		final Schema.Permission permission = projectService.checkPermissionCanRead(
-			currentUserService.get().getId(),
-			projectId
-		);
-
-		final List<ChartAnnotation> chartAnnotations = chartAnnotationService.getAnnotationsByNodeId(
-			body.nodeId,
-			permission
-		);
-
+		final List<ChartAnnotation> chartAnnotations = chartAnnotationService.getAnnotationsByNodeId(body.nodeId);
 		return ResponseEntity.ok(chartAnnotations);
 	}
 
 	@PostMapping
 	@Secured(Roles.USER)
 	@Operation(summary = "Create a new annotation")
+	@HasProjectAccess(level = Schema.Permission.WRITE)
 	@ApiResponses(
 		value = {
 			@ApiResponse(
@@ -126,14 +111,9 @@ public class ChartAnnotationController {
 		@RequestBody final ChartAnnotation item,
 		@RequestParam(name = "project-id", required = false) final UUID projectId
 	) {
-		final Schema.Permission permission = projectService.checkPermissionCanWrite(
-			currentUserService.get().getId(),
-			projectId
-		);
-
 		final ChartAnnotation chartAnnotation;
 		try {
-			chartAnnotation = chartAnnotationService.createAsset(item, projectId, permission);
+			chartAnnotation = chartAnnotationService.createAsset(item, projectId);
 		} catch (final IOException e) {
 			final String error = "Unable to create chart annotation";
 			log.error(error, e);
@@ -168,6 +148,7 @@ public class ChartAnnotationController {
 	@DeleteMapping("/{id}")
 	@Secured(Roles.USER)
 	@Operation(summary = "Delete a chart annotation by ID")
+	@HasProjectAccess(level = Schema.Permission.WRITE)
 	@ApiResponses(
 		value = {
 			@ApiResponse(
@@ -191,13 +172,8 @@ public class ChartAnnotationController {
 		@PathVariable("id") final UUID id,
 		@RequestParam(name = "project-id", required = false) final UUID projectId
 	) {
-		final Schema.Permission permission = projectService.checkPermissionCanWrite(
-			currentUserService.get().getId(),
-			projectId
-		);
-
 		try {
-			chartAnnotationService.deleteAsset(id, projectId, permission);
+			chartAnnotationService.deleteAsset(id, projectId);
 		} catch (final Exception e) {
 			final String error = String.format("Failed to delete chart annotation %s", id);
 			log.error(error, e);

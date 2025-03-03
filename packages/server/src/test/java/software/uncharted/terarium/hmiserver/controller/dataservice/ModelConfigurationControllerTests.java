@@ -58,14 +58,13 @@ public class ModelConfigurationControllerTests extends TerariumApplicationTests 
 				.setModelId(UUID.randomUUID())
 				.setName("test-framework")
 				.setDescription("test-desc"),
-			project.getId(),
-			ASSUME_WRITE_PERMISSION
+			project.getId()
 		);
 
 		mockMvc
 			.perform(
 				MockMvcRequestBuilders.get("/model-configurations/" + modelConfiguration.getId())
-					.param("project-id", PROJECT_ID.toString())
+					.param("project-id", project.getId().toString())
 					.with(csrf())
 			)
 			.andExpect(status().isOk());
@@ -82,7 +81,7 @@ public class ModelConfigurationControllerTests extends TerariumApplicationTests 
 		mockMvc
 			.perform(
 				MockMvcRequestBuilders.post("/model-configurations")
-					.param("project-id", PROJECT_ID.toString())
+					.param("project-id", project.getId().toString())
 					.with(csrf())
 					.contentType("application/json")
 					.content(objectMapper.writeValueAsString(modelConfiguration))
@@ -98,14 +97,13 @@ public class ModelConfigurationControllerTests extends TerariumApplicationTests 
 				.setModelId(UUID.randomUUID())
 				.setDescription("test-desc")
 				.setName("test-framework"),
-			project.getId(),
-			ASSUME_WRITE_PERMISSION
+			project.getId()
 		);
 
 		mockMvc
 			.perform(
 				MockMvcRequestBuilders.put("/model-configurations/" + modelConfiguration.getId())
-					.param("project-id", PROJECT_ID.toString())
+					.param("project-id", project.getId().toString())
 					.with(csrf())
 					.contentType("application/json")
 					.content(objectMapper.writeValueAsString(modelConfiguration))
@@ -124,13 +122,11 @@ public class ModelConfigurationControllerTests extends TerariumApplicationTests 
 		mockMvc
 			.perform(
 				MockMvcRequestBuilders.delete("/model-configurations/" + modelConfiguration.getId())
-					.param("project-id", PROJECT_ID.toString())
+					.param("project-id", project.getId().toString())
 					.with(csrf())
 			)
 			.andExpect(status().isOk());
 
-		Assertions.assertTrue(
-			modelConfigurationService.getAsset(modelConfiguration.getId(), ASSUME_WRITE_PERMISSION).isEmpty()
-		);
+		Assertions.assertTrue(modelConfigurationService.getAsset(modelConfiguration.getId()).isEmpty());
 	}
 }

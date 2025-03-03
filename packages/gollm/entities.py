@@ -2,6 +2,7 @@ import inspect
 from datetime import datetime
 from pydantic import BaseModel, root_validator
 from typing import List, Callable, Type, Optional
+from enum import StrEnum
 
 
 class ConfigureModelDocument(BaseModel):
@@ -51,10 +52,13 @@ class EquationsModel(BaseModel):
 class EquationsFromImage(BaseModel):
     image: str  # expects a base64 encoded image
 
-
+class ChartAnnotationType(StrEnum):
+    FORECAST_CHART = 'FORECAST_CHART',
+    QUANTILE_FORECAST_CHART = 'QUANTILE_FORECAST_CHART',
 class ChartAnnotationModel(BaseModel):
     preamble: str
     instruction: str
+    chartType: ChartAnnotationType = ChartAnnotationType.FORECAST_CHART
 
 
 class EmbeddingModel(BaseModel):

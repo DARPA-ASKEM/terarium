@@ -6,7 +6,8 @@ import {
 	ChartSettingEnsembleVariable,
 	ChartSettingSensitivity,
 	ChartSettingType,
-	SensitivityChartType
+	SensitivityChartType,
+	SensitivityMethod
 } from '@/types/common';
 import {
 	EnsembleVariableChartSettingOption,
@@ -81,6 +82,10 @@ export function useChartSettings(
 	const selectedSensitivityChartSettings = createComputedFilteredSettings<ChartSettingSensitivity>(
 		chartSettings,
 		ChartSettingType.SENSITIVITY
+	);
+	const selectedObservableSettings = createComputedFilteredSettings(
+		chartSettings,
+		ChartSettingType.VARIABLE_OBSERVABLE
 	);
 
 	const comparisonChartsSettingsSelection = computed<{ [settingId: string]: string[] }>(() =>
@@ -165,6 +170,7 @@ export function useChartSettings(
 		selectedInputVariables: string[];
 		timepoint: number;
 		chartType: SensitivityChartType;
+		method: SensitivityMethod;
 	}) => {
 		emit('update-state', {
 			...props.node.state,
@@ -207,6 +213,7 @@ export function useChartSettings(
 		selectedInterventionSettings,
 		selectedComparisonChartSettings,
 		selectedSensitivityChartSettings,
+		selectedObservableSettings,
 		setActiveChartSettings,
 		updateActiveChartSettings,
 		removeChartSettings,

@@ -28,9 +28,8 @@
 
 		<!-- Original chart control for non-comparison charts -->
 		<tera-chart-control
-			v-if="type !== ChartSettingType.VARIABLE_COMPARISON"
+			v-if="type !== ChartSettingType.VARIABLE_COMPARISON && type !== ChartSettingType.SENSITIVITY"
 			:chart-config="{
-				selectedRun: 'fixme',
 				selectedVariable: selectedOptions ?? []
 			}"
 			:multi-select="true"
@@ -42,63 +41,15 @@
 		<slot></slot>
 
 		<!-- Sensitivity analysis settings -->
-		<template v-if="type === ChartSettingType.SENSITIVITY && sensitivityOptions">
-			<div class="mb-2"></div>
-			<!--FIXME: It might be better to move these inside the panel so that they can be controlled at an individual chart settings level -->
-			<label :class="_.isEmpty(selectedOptions) ? 'disabled' : ''">Select parameter(s) of interest</label>
-			<MultiSelect
-				:disabled="_.isEmpty(selectedOptions)"
-				placeholder="Select parameters"
-				:model-value="sensitivityOptions.selectedInputOptions"
-				:options="sensitivityOptions.inputOptions"
-				@change="
-					$emit('sensitivity-selection-change', {
-						selectedInputVariables: $event.value,
-						timepoint: sensitivityOptions.timepoint,
-						chartType: sensitivityOptions.chartType
-					})
-				"
-				filter
-			>
-				<template v-slot:value>
-					<template v-for="(variable, index) in sensitivityOptions.selectedInputOptions" :key="index">
-						<template v-if="index > 0">,&nbsp;</template>
-						<span> {{ variable }} </span>
-					</template>
-				</template>
-			</MultiSelect>
-
-			<div class="mb-2"></div>
-			<label :class="{ disabled: isEmpty(selectedOptions) }">Select time slice of interest</label>
-			<tera-input-number
-				:disabled="_.isEmpty(selectedOptions)"
-				:model-value="sensitivityOptions.timepoint"
-				@update:model-value="
-					$emit('sensitivity-selection-change', {
-						selectedInputVariables: sensitivityOptions.selectedInputOptions,
-						timepoint: $event,
-						chartType: sensitivityOptions.chartType
-					})
-				"
-			/>
-			<div class="mb-1"></div>
-			<div v-for="option in sensitivityChartOptions" class="flex align-items-center gap-2" :key="option.value">
-				<RadioButton
-					:disabled="_.isEmpty(selectedOptions)"
-					:model-value="sensitivityOptions.chartType"
-					:value="option.value"
-					name="sensitivityChartTypes"
-					@change="
-						$emit('sensitivity-selection-change', {
-							selectedInputVariables: sensitivityOptions.selectedInputOptions,
-							timepoint: sensitivityOptions.timepoint,
-							chartType: option.value
-						})
-					"
-				/>
-				<label :class="{ disabled: isEmpty(selectedOptions) }" :for="option.value">{{ option.label }}</label>
-			</div>
-		</template>
+		<tera-sensitivity-chart-settings
+			v-if="type === ChartSettingType.SENSITIVITY && sensitivityOptions"
+			:settings="settings"
+			:selectOptions="selectOptions"
+			:selectedOptions="selectedOptions"
+			:sensitivityOptions="sensitivityOptions"
+			@selection-change="$emit('selection-change', $event, type)"
+			@sensitivity-selection-change="$emit('sensitivity-selection-change', $event)"
+		/>
 		<template v-if="type === ChartSettingType.VARIABLE_COMPARISON">
 			<section>
 				<tera-chart-settings-item-comparison
@@ -130,13 +81,11 @@ import TeraCheckbox from '@/components/widgets/tera-checkbox.vue';
 import TeraChartSettingsItem from '@/components/widgets/tera-chart-settings-item.vue';
 import TeraChartSettingsItemComparison from '@/components/widgets/tera-chart-settings-item-comparison.vue';
 import TeraChartControl from '@/components/workflow/tera-chart-control.vue';
-import MultiSelect from 'primevue/multiselect';
-import { ChartSetting, ChartSettingType, SensitivityChartType } from '@/types/common';
+import { ChartSetting, ChartSettingType, SensitivityChartType, SensitivityMethod } from '@/types/common';
 import { computed } from 'vue';
 import { EnsembleVariableChartSettingOption, getEnsembleChartSettingOptions } from '@/services/chart-settings';
-import _, { isEmpty } from 'lodash';
-import RadioButton from 'primevue/radiobutton';
-import TeraInputNumber from './tera-input-number.vue';
+import _ from 'lodash';
+import teraSensitivityChartSettings from './tera-sensitivity-chart-settings.vue';
 
 const props = defineProps<{
 	title?: string; // Optional title for the settings panel
@@ -157,9 +106,10 @@ const props = defineProps<{
 	isSimulateEnsembleSettings?: boolean;
 	sensitivityOptions?: {
 		inputOptions: string[];
-		selectedInputOptions: string[];
+		selectedInputVariables: string[];
 		timepoint: number;
 		chartType: SensitivityChartType;
+		method: SensitivityMethod;
 	};
 }>();
 const emits = defineEmits([
@@ -170,11 +120,6 @@ const emits = defineEmits([
 	'sensitivity-selection-change',
 	'comparison-selection-change'
 ]);
-
-const sensitivityChartOptions = [
-	{ label: 'Scatter', value: SensitivityChartType.SCATTER },
-	{ label: 'Heatmap', value: SensitivityChartType.HEATMAP }
-];
 
 // Settings of the same type that we want to interact with.
 const targetSettings = computed(() => props.settings.filter((s) => s.type === props.type));

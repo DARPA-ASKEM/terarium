@@ -1,12 +1,34 @@
 <template>
 	<section>
 		<tera-node-preview
+			v-if="node.state.selectedCompareOption !== CompareValue.RANK"
 			:node="node"
 			:prepared-charts="comparisonCharts"
 			:is-loading="isFetchingDatasets"
 			:chart-settings="selectedVariableSettings"
 			:placeholder="'Attach datasets/simulation outputs to compare'"
 		/>
+		<template v-else>
+			<tera-progress-spinner v-if="isFetchingDatasets" :font-size="2" is-centered style="height: 100%">
+				Processing...
+			</tera-progress-spinner>
+
+			<vega-chart
+				v-if="rankingCharts.rankingResultsChart"
+				expandable
+				are-embed-actions-visible
+				:visualization-spec="rankingCharts.rankingResultsChart"
+				:interactive="false"
+			/>
+			<vega-chart
+				v-for="(spec, index) in rankingCharts.rankingCriteriaCharts"
+				:key="index"
+				expandable
+				are-embed-actions-visible
+				:visualization-spec="spec"
+				:interactive="false"
+			/>
+		</template>
 		<Button v-if="hasAtLeastTwoInputs" label="Open" @click="emit('open-drilldown')" severity="secondary" outlined />
 	</section>
 </template>
@@ -21,9 +43,11 @@ import { type WorkflowNode, WorkflowPortStatus } from '@/types/workflow';
 
 import { useCharts, type ChartData } from '@/composables/useCharts';
 import { useChartSettings } from '@/composables/useChartSettings';
+import VegaChart from '@/components/widgets/VegaChart.vue';
+import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue';
 import TeraNodePreview from '../tera-node-preview.vue';
 
-import { CompareDatasetsState } from './compare-datasets-operation';
+import { CompareDatasetsState, CompareValue } from './compare-datasets-operation';
 
 import { initialize } from './compare-datasets-utils';
 
@@ -46,16 +70,23 @@ const datasetResults = ref<{
 const modelConfigurations = ref<ModelConfiguration[]>([]);
 const interventionPolicies = ref<InterventionPolicy[]>([]);
 const modelConfigIdToInterventionPolicyIdMap = ref<Record<string, string[]>>({});
-const chartData = ref<ChartData | null>(null);
-const rankingResultsChart = ref<any>(null);
-const rankingCriteriaCharts = ref<any>([]);
+const impactChartData = ref<ChartData | null>(null);
+const rankingChartData = ref<ChartData | null>(null);
+
+const chartData = computed(() => {
+	if (props.node.state.selectedCompareOption === CompareValue.RANK) {
+		return rankingChartData.value;
+	}
+	return impactChartData.value;
+});
 
 const selectedPlotType = computed(() => props.node.state.selectedPlotType);
 const baselineDatasetIndex = computed(() =>
 	datasets.value.findIndex((dataset) => dataset.id === props.node.state.selectedBaselineDatasetId)
 );
 
-const { useCompareDatasetCharts } = useCharts(
+const criteriaOfInterestCards = computed(() => props.node.state.criteriaOfInterestCards);
+const { useCompareDatasetCharts, useInterventionRankingCharts } = useCharts(
 	props.node.id,
 	null,
 	null,
@@ -72,14 +103,12 @@ onMounted(() => {
 		datasets,
 		datasetResults,
 		modelConfigIdToInterventionPolicyIdMap,
-		chartData,
-		null,
+		impactChartData,
+		rankingChartData,
 		baselineDatasetIndex,
 		selectedPlotType,
 		modelConfigurations,
-		interventionPolicies,
-		rankingCriteriaCharts,
-		rankingResultsChart
+		interventionPolicies
 	);
 });
 const comparisonCharts = useCompareDatasetCharts(
@@ -91,28 +120,33 @@ const comparisonCharts = useCompareDatasetCharts(
 	interventionPolicies
 );
 
+const rankingCharts = useInterventionRankingCharts(
+	criteriaOfInterestCards,
+	datasets,
+	modelConfigurations,
+	interventionPolicies
+);
+
 watch(
 	() => props.node.inputs,
 	() => {
 		if (props.node.inputs.every((input) => input.status === WorkflowPortStatus.CONNECTED)) {
 			emit('append-input-port', { type: 'datasetId', label: 'Dataset or Simulation result' });
-			initialize(
-				props.node,
-				null,
-				isFetchingDatasets,
-				datasets,
-				datasetResults,
-				modelConfigIdToInterventionPolicyIdMap,
-				chartData,
-				null,
-				baselineDatasetIndex,
-				selectedPlotType,
-				modelConfigurations,
-				interventionPolicies,
-				rankingCriteriaCharts,
-				rankingResultsChart
-			);
 		}
+		initialize(
+			props.node,
+			null,
+			isFetchingDatasets,
+			datasets,
+			datasetResults,
+			modelConfigIdToInterventionPolicyIdMap,
+			impactChartData,
+			rankingChartData,
+			baselineDatasetIndex,
+			selectedPlotType,
+			modelConfigurations,
+			interventionPolicies
+		);
 	},
 	{ deep: true }
 );
