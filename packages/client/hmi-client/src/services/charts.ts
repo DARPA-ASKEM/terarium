@@ -13,7 +13,7 @@ import type { FunmanBox, FunmanConstraintsResponse } from './models/funman-servi
 
 const VEGALITE_SCHEMA = 'https://vega.github.io/schema/vega-lite/v5.json';
 const GLOBAL_FONT = 'Figtree';
-const DEFAULT_FONT_SIZE = 12;
+export const DEFAULT_FONT_SIZE = 12;
 
 const getFontConfig = (fontSize = DEFAULT_FONT_SIZE, isCompact = false) => {
 	const BASE_FONT_SIZE = 12;
@@ -425,7 +425,7 @@ export function createHistogramChart(dataset: Record<string, any>[], options: Hi
 			values: []
 		},
 		layer: [],
-		config: merge(getFontConfig(), {})
+		config: merge(getFontConfig(options.fontSize), {})
 	};
 
 	const data = dataset.map((d) =>
@@ -610,7 +610,7 @@ export function createForecastChart(
 	};
 
 	const isCompact = options.width < 200;
-	const fontConfig = getFontConfig(DEFAULT_FONT_SIZE, isCompact);
+	const fontConfig = getFontConfig(options.fontSize, isCompact);
 
 	// Estimate total legend width
 	const legendItems = getAllLegendItems();
@@ -1228,7 +1228,7 @@ export function createQuantilesForecastChart(
 	}
 
 	const isCompact = options.width < 200;
-	const fontConfig = getFontConfig(DEFAULT_FONT_SIZE, isCompact);
+	const fontConfig = getFontConfig(options.fontSize, isCompact);
 
 	// Get all unique legend items
 	const legendItems = variables.map((v) => translationMap?.[v] ?? v);
@@ -1366,7 +1366,7 @@ export function createSimulateSensitivityScatter(
 	calculateExpr += '0';
 	const spec: any = {
 		$schema: VEGALITE_SCHEMA,
-		config: merge(getFontConfig(), {}),
+		config: merge(getFontConfig(options.fontSize), {}),
 		description: '',
 		repeat: {
 			row: samplingLayer.inputVariables,
@@ -1438,7 +1438,7 @@ export function createSimulateSensitivityScatter(
 export function createSensitivityRankingChart(data: { parameter: string; score: number }[], options: BaseChartOptions) {
 	const spec: any = {
 		$schema: VEGALITE_SCHEMA,
-		config: merge(getFontConfig(), {
+		config: merge(getFontConfig(options.fontSize), {
 			bar: {
 				discreteBandSize: 8 // Fixed bar width
 			}
@@ -2139,7 +2139,7 @@ export function createRankingInterventionsChart(
 ): VisualizationSpec {
 	return {
 		$schema: VEGALITE_SCHEMA,
-		config: merge(getFontConfig(), {
+		config: merge(getFontConfig(options.fontSize), {
 			bar: {
 				discreteBandSize: 20 // Fixed bar width
 			},
