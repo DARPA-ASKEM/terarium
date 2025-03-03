@@ -7,33 +7,36 @@
 		showGridlines
 		stripedRows
 		removableSort
-		:value="tableData"
+		:value="csvData"
 		:scrollable="true"
 		:scrollHeight="'flex'"
 	>
 		<ColumnGroup type="header">
 			<Row>
-				<Column header="" />
-				<Column :colspan="columnModelHeaders.length" :header="columnModelName" />
+				<Column />
+				<Column :colspan="columns.length" :header="modelNames.columnModel" />
 			</Row>
 			<Row>
-				<Column :header="modelNames.rowModel" />
-				<Column v-for="col in columnModelHeaders" :key="col" :header="col" />
+				<Column
+					v-for="(col, index) in columns"
+					:key="col.field as string"
+					:header="index == 0 ? modelNames.rowModel : col.header"
+				/>
 			</Row>
 		</ColumnGroup>
 
-		<Column field="rowState" header="State" />
-		<Column v-for="col in columnModelHeaders" :key="col" :field="col" />
+		<Column v-for="col in columns" :key="col.field as string" :field="col.field" />
 	</DataTable>
 </template>
 
 <script setup lang="ts">
 import { onMounted, ref, computed } from 'vue';
 import DataTable from 'primevue/datatable';
-import Column from 'primevue/column';
+import Column, { ColumnProps } from 'primevue/column';
 import ColumnGroup from 'primevue/columngroup';
 import Row from 'primevue/row';
 import Papa from 'papaparse';
+import { isEmpty } from 'lodash';
 
 // Define props for the component
 const props = defineProps({
@@ -47,7 +50,8 @@ const props = defineProps({
 	}
 });
 
-const tableData = ref([]);
+const csvData = ref([]);
+const columns = ref<ColumnProps[]>([]);
 const isLoading = ref(true);
 const error = ref(null);
 
@@ -61,59 +65,48 @@ const modelNames = computed(() => {
 	};
 });
 
-const columnModelName = computed(() => modelNames.value.columnModel);
-const columnModelHeaders = ref<string[]>([]);
-
-function parseCSVToGroupedTable(csvText: string) {
-	try {
-		Papa.parse(csvText, {
-			header: true,
-			skipEmptyLines: true,
-			complete: (results) => {
-				// The first column is empty in the CSV, it represents row states
-				// Get all column headers except the first one, which is empty
-				const headers = results.meta.fields?.filter((h) => h !== '');
-				columnModelHeaders.value = headers || [];
-
-				// Build table data with row groups
-				const data: any[] = [];
-
-				results.data.forEach((row: any) => {
-					// Get the row state name (first column, which has an empty header)
-					const rowState = row[''] || '';
-
-					// Skip empty rows
-					if (!rowState) return;
-
-					const rowData: any = {
-						rowModel: modelNames.value.rowModel,
-						rowState
-					};
-
-					// Add values for each column
-					headers?.forEach((header) => {
-						rowData[header] = row[header] === '=' ? '✓' : '';
-					});
-
-					data.push(rowData);
-				});
-
-				tableData.value = data;
-				isLoading.value = false;
-			},
-			error: (err) => {
-				error.value = err.message;
-				isLoading.value = false;
-			}
-		});
-	} catch (err: any) {
-		error.value = err.message;
-		isLoading.value = false;
-	}
+function rowReplaceEmptyKey(row: any) {
+	Object.keys(row).forEach((key) => {
+		if (isEmpty(key)) {
+			row.empty = row[key];
+			delete row[key];
+		}
+	});
+	return row;
 }
 
+function onComplete(results: any) {
+	// If the CSV has an empty header, just use 'empty' as the field name
+	columns.value = results.meta.fields.map((field: string) => ({
+		field: isEmpty(field) ? 'empty' : field,
+		header: field
+	}));
+	csvData.value = results.data.map(rowReplaceEmptyKey);
+	isLoading.value = false;
+}
+
+function onError(err: any) {
+	error.value = err.message;
+	isLoading.value = false;
+}
+
+// Configuration for PapaParse
+// https://www.papaparse.com/docs#config
+const config = {
+	header: true,
+	dynamicTyping: true,
+	skipEmptyLines: true,
+	complete: onComplete,
+	error: onError
+};
+
+// Load CSV when component is mounted
 onMounted(() => {
-	parseCSVToGroupedTable(props.csvText);
+	try {
+		Papa.parse(props.csvText, config);
+	} catch (fetchError) {
+		onError(fetchError);
+	}
 });
 </script>
 
