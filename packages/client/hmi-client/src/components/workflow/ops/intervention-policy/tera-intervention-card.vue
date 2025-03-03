@@ -97,6 +97,19 @@
 							@update:model-value="(val) => onUpdateValue(val, 0)"
 							placeholder="value"
 						/>
+
+						<Button
+							text
+							size="small"
+							label="Other Values"
+							:disabled="intervention.staticInterventions[0].appliedTo === ''"
+							@click="
+								emit('open-modal', {
+									semanticType: intervention.staticInterventions[0].type,
+									id: intervention.staticInterventions[0].appliedTo
+								})
+							"
+						/>
 					</template>
 
 					<ul v-if="intervention.staticInterventions.length > 1" class="w-full">
@@ -140,6 +153,13 @@
 									@click="onRemoveStaticIntervention(index)"
 								/>
 							</div>
+							<Button
+								text
+								size="small"
+								label="Other Values"
+								:disabled="i.appliedTo === ''"
+								@click="emit('open-modal', { semanticType: i.type, id: i.appliedTo })"
+							/>
 						</li>
 					</ul>
 				</template>
@@ -173,6 +193,18 @@
 						placeholder="threshold"
 					/>
 					{{ dynamicInterventionUnits }}.
+					<Button
+						text
+						size="small"
+						label="Other Values"
+						:disabled="intervention.dynamicInterventions[0].appliedTo === ''"
+						@click="
+							emit('open-modal', {
+								semanticType: intervention.dynamicInterventions[0].type,
+								id: intervention.dynamicInterventions[0].appliedTo
+							})
+						"
+					/>
 				</template>
 			</div>
 		</section>
@@ -199,7 +231,7 @@ import Dropdown, { DropdownChangeEvent } from 'primevue/dropdown';
 import TeraInputNumber from '@/components/widgets/tera-input-number.vue';
 import { cloneDeep, debounce, uniqueId } from 'lodash';
 
-const emit = defineEmits(['update', 'delete', 'add']);
+const emit = defineEmits(['update', 'delete', 'add', 'open-modal']);
 const props = defineProps<{
 	intervention: Intervention;
 	parameterOptions: { label: string; value: string; units?: string }[];

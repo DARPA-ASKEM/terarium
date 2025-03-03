@@ -65,7 +65,12 @@
 				</Column>
 			</DataTable>
 
-			<div class="custom-input-section" :class="{ 'custom-selected': !selectedRow }" @click="onCustomSectionClick">
+			<div
+				v-if="!readonly"
+				class="custom-input-section"
+				:class="{ 'custom-selected': !selectedRow }"
+				@click="onCustomSectionClick"
+			>
 				<div class="grid">
 					<div class="col-5">
 						<tera-input-text
@@ -113,7 +118,7 @@
 			</div>
 		</section>
 		<template #footer>
-			<Button label="Apply selected value" @click="applySelectedValue" :disabled="!selection" />
+			<Button v-if="!readonly" label="Apply selected value" @click="applySelectedValue" :disabled="!selection" />
 			<Button label="Cancel" severity="secondary" outlined @click="emit('close-modal')" />
 		</template>
 	</tera-modal>
@@ -137,6 +142,7 @@ import TeraLineGraphic from './tera-line-graphic.vue';
 const props = defineProps<{
 	id: any;
 	otherValueList: SemanticOtherValues[];
+	readonly?: boolean;
 }>();
 
 const otherValueList = ref(props.otherValueList);
