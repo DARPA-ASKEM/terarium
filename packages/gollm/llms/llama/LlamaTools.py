@@ -1,4 +1,5 @@
 import boto3
+import botocore
 import json
 import os
 from common.LlmToolsInterface import LlmToolsInterface
@@ -54,11 +55,19 @@ class LlamaTools(LlmToolsInterface):
 
     def send_to_llm_with_json_output(self, prompt: str, schema: str, max_tokens=8192) -> dict:
         print("Creating AWS Bedrock (Llama) client...")
+
+        config = botocore.config.Config(
+            read_timeout=600,
+            connect_timeout=480,
+            retries={"max_attempts": 0}
+        )
+
         client = boto3.client(
             "bedrock-runtime",
             region_name="us-west-2",
             aws_access_key_id = os.environ.get("BEDROCK_ACCESS_KEY") if self.bedrock_access_key is None else self.bedrock_access_key,
-            aws_secret_access_key = os.environ.get("BEDROCK_SECRET_ACCESS_KEY") if self.bedrock_secret_access_key is None else self.bedrock_secret_access_key
+            aws_secret_access_key = os.environ.get("BEDROCK_SECRET_ACCESS_KEY") if self.bedrock_secret_access_key is None else self.bedrock_secret_access_key,
+            config=config
         )
 
         request = json.dumps({
@@ -97,11 +106,19 @@ class LlamaTools(LlmToolsInterface):
 
     def send_to_llm_with_string_output(self, prompt: str, max_tokens=8192) -> str:
         print("Creating AWS Bedrock (Llama) client...")
+
+        config = botocore.config.Config(
+            read_timeout=600,
+            connect_timeout=480,
+            retries={"max_attempts": 0}
+        )
+
         client = boto3.client(
             "bedrock-runtime",
             region_name="us-west-2",
             aws_access_key_id = os.environ.get("BEDROCK_ACCESS_KEY") if self.bedrock_access_key is None else self.bedrock_access_key,
-            aws_secret_access_key = os.environ.get("BEDROCK_SECRET_ACCESS_KEY") if self.bedrock_secret_access_key is None else self.bedrock_secret_access_key
+            aws_secret_access_key = os.environ.get("BEDROCK_SECRET_ACCESS_KEY") if self.bedrock_secret_access_key is None else self.bedrock_secret_access_key,
+            config=config
         )
 
         request = json.dumps({
@@ -134,11 +151,19 @@ class LlamaTools(LlmToolsInterface):
 
     def send_image_to_llm_with_json_output(self, prompt: str, schema: str, image_url: str, max_tokens=8192) -> dict:
         print("Creating AWS Bedrock (Llama) client...")
+
+        config = botocore.config.Config(
+            read_timeout=600,
+            connect_timeout=480,
+            retries={"max_attempts": 0}
+        )
+
         client = boto3.client(
             "bedrock-runtime",
             region_name="us-west-2",
             aws_access_key_id = os.environ.get("BEDROCK_ACCESS_KEY") if self.bedrock_access_key is None else self.bedrock_access_key,
-            aws_secret_access_key = os.environ.get("BEDROCK_SECRET_ACCESS_KEY") if self.bedrock_secret_access_key is None else self.bedrock_secret_access_key
+            aws_secret_access_key = os.environ.get("BEDROCK_SECRET_ACCESS_KEY") if self.bedrock_secret_access_key is None else self.bedrock_secret_access_key,
+            config=config
         )
 
         request = json.dumps({

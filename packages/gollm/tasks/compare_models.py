@@ -23,8 +23,6 @@ def main():
 
         taskrunner.log("Creating ModelCompareModel from input")
         input_model = ModelCompareModel(**input_dict)
-        taskrunner.log("input model: " + str(input_model))
-        taskrunner.log("input model llm: " + str(input_model.llm))
 
         if input_model.llm == "llama":
             taskrunner.log("Using Llama LLM")
