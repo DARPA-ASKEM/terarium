@@ -57,30 +57,23 @@
 						</h5>
 						<template v-for="(cfg, idx) in knobs.interventionPolicyGroups">
 							<tera-static-intervention-policy-group
-								v-if="
-									cfg.intervention?.staticInterventions &&
-									cfg.intervention?.staticInterventions.length > 0 &&
-									modelConfiguration &&
-									model
-								"
+								v-if="isInterventionStatic(cfg.individualIntervention) && modelConfiguration && model"
 								:model="model"
 								:model-configuration="modelConfiguration"
 								:key="cfg.id || '' + idx"
-								:config="cfg"
+								:config="cfg as StaticInterventionPolicyGroupForm"
+								@update-self="(config) => updateInterventionPolicyGroupForm(idx, config)"
+							/>
+							<tera-dynamic-intervention-policy-group
+								v-if="!isInterventionStatic(cfg.individualIntervention)"
+								:key="idx"
+								:config="cfg as DynamicInterventionPolicyGroupForm"
 								@update-self="(config) => updateInterventionPolicyGroupForm(idx, config)"
 							/>
 						</template>
 						<section class="empty-state" v-if="knobs.interventionPolicyGroups.length === 0">
 							<p class="mt-1">No intervention policies have been added.</p>
 						</section>
-						<template v-for="(cfg, idx) in knobs.interventionPolicyGroups">
-							<tera-dynamic-intervention-policy-group
-								v-if="cfg.intervention?.dynamicInterventions && cfg.intervention?.dynamicInterventions.length > 0"
-								:key="idx"
-								:config="cfg"
-								@update-self="(config) => updateInterventionPolicyGroupForm(idx, config)"
-							/>
-						</template>
 					</section>
 					<section class="form-section">
 						<h5>Optimization settings</h5>
@@ -480,14 +473,19 @@ import {
 	OptimizeInterventions,
 	OptimizeQoi,
 	OptimizeRequestCiemss,
-	AssetType
+	AssetType,
+	StaticIntervention
 } from '@/types/Types';
 import { logger } from '@/utils/logger';
 import { nodeMetadata } from '@/components/workflow/util';
 import { WorkflowNode } from '@/types/workflow';
 import TeraSliderPanel from '@/components/widgets/tera-slider-panel.vue';
 import TeraNotebookError from '@/components/drilldown/tera-notebook-error.vue';
-import { flattenInterventionData, getInterventionPolicyById } from '@/services/intervention-policy';
+import {
+	flattenInterventionData,
+	getInterventionPolicyById,
+	isInterventionStatic
+} from '@/services/intervention-policy';
 import TeraCheckbox from '@/components/widgets/tera-checkbox.vue';
 import Divider from 'primevue/divider';
 import Accordion from 'primevue/accordion';
@@ -506,8 +504,12 @@ import { deleteAnnotation } from '@/services/chart-annotation';
 import { useCharts } from '@/composables/useCharts';
 import { useChartSettings } from '@/composables/useChartSettings';
 import teraOptimizeCriterionGroupForm from './tera-optimize-criterion-group-form.vue';
-import TeraStaticInterventionPolicyGroup from './tera-static-intervention-policy-group.vue';
-import TeraDynamicInterventionPolicyGroup from './tera-dynamic-intervention-policy-group.vue';
+import TeraStaticInterventionPolicyGroup, {
+	StaticInterventionPolicyGroupForm
+} from './tera-static-intervention-policy-group.vue';
+import TeraDynamicInterventionPolicyGroup, {
+	DynamicInterventionPolicyGroupForm
+} from './tera-dynamic-intervention-policy-group.vue';
 import {
 	blankInterventionPolicyGroup,
 	Criterion,
@@ -516,7 +518,7 @@ import {
 	OptimizeCiemssOperationState,
 	OptimizationInterventionObjective
 } from './optimize-ciemss-operation';
-import { setQoIData, usePreparedChartInputs } from './optimize-utils';
+import { policyGroupFormToIntervention, setQoIData, usePreparedChartInputs } from './optimize-utils';
 import { isInterventionPolicyBlank } from '../intervention-policy/intervention-policy-operation';
 
 const confirm = useConfirm();
@@ -801,15 +803,25 @@ const setInterventionPolicyGroups = (interventionPolicy: InterventionPolicy) => 
 
 	knobs.value.interventionPolicyGroups = []; // Reset prior to populating.
 	if (interventionPolicy.interventions && interventionPolicy.interventions.length > 0) {
+		// TODO Update
 		interventionPolicy.interventions.forEach((intervention) => {
-			const isNotActive = intervention.dynamicInterventions?.length > 0 || intervention.staticInterventions?.length > 1;
 			const newIntervention = _.cloneDeep(blankInterventionPolicyGroup);
 			newIntervention.id = interventionPolicy.id;
-			newIntervention.intervention = intervention;
-			newIntervention.relativeImportance = isNotActive ? 0 : 5;
-			newIntervention.startTimeGuess = intervention.staticInterventions[0]?.timestep;
-			newIntervention.initialGuessValue = intervention.staticInterventions[0]?.value;
-			knobs.value.interventionPolicyGroups.push(newIntervention);
+			// Static:
+			intervention.staticInterventions.forEach((staticIntervention) => {
+				newIntervention.relativeImportance = 5;
+				newIntervention.individualIntervention = staticIntervention;
+				newIntervention.startTimeGuess = staticIntervention.timestep;
+				newIntervention.initialGuessValue = staticIntervention.value;
+				knobs.value.interventionPolicyGroups.push(newIntervention);
+			});
+
+			// Dynamic:
+			intervention.dynamicInterventions.forEach((dynamicIntervention) => {
+				newIntervention.relativeImportance = 0;
+				newIntervention.individualIntervention = dynamicIntervention;
+				knobs.value.interventionPolicyGroups.push(newIntervention);
+			});
 		});
 	}
 	emit('update-state', state);
@@ -826,11 +838,11 @@ const runOptimize = async () => {
 	const optimizeInterventions: OptimizeInterventions[] = [];
 
 	activePolicyGroups.value.forEach((ele) => {
-		// Note: Only allowed to optimize on interventions that arent grouped aka staticInterventions' length is 1
+		if (!isInterventionStatic(ele.individualIntervention)) return;
 		const interventionType = ele.optimizeFunction.type;
-		const paramName: string = ele.intervention.staticInterventions[0].appliedTo;
-		const paramValue: number = ele.intervention.staticInterventions[0].value;
-		const startTime: number = ele.intervention.staticInterventions[0].timestep;
+		const paramName: string = ele.individualIntervention.appliedTo;
+		const paramValue: number = ele.individualIntervention.value;
+		const startTime: number = (ele.individualIntervention as StaticIntervention).timestep;
 		const timeObjectiveFunction = ele.optimizeFunction.timeObjectiveFunction;
 		const parameterObjectiveFunction = ele.optimizeFunction.parameterObjectiveFunction;
 		const relativeImportance: number = ele.relativeImportance;
@@ -859,7 +871,9 @@ const runOptimize = async () => {
 	});
 
 	// These are interventions to be considered but not optimized over.
-	const fixedInterventions: Intervention[] = _.cloneDeep(inactivePolicyGroups.value.map((ele) => ele.intervention));
+	const fixedInterventions: Intervention[] = _.cloneDeep(
+		inactivePolicyGroups.value.map((ele) => policyGroupFormToIntervention(ele))
+	);
 
 	const qois: OptimizeQoi[] = [];
 	const activeConstraintGroups = knobs.value.constraintGroups.filter((ele) => ele.isActive);
@@ -914,12 +928,7 @@ const setOutputSettingDefaults = () => {
 	const selectedSimulationVariables: string[] = [];
 
 	activePolicyGroups.value.forEach((ele) => {
-		ele.intervention.staticInterventions.forEach((staticInt) =>
-			selectedInterventionVariables.push(staticInt.appliedTo)
-		);
-		ele.intervention.dynamicInterventions.forEach((dynamicsInt) =>
-			selectedInterventionVariables.push(dynamicsInt.appliedTo)
-		);
+		selectedInterventionVariables.push(ele.individualIntervention.appliedTo);
 	});
 	knobs.value.constraintGroups.forEach((constraint) => {
 		if (constraint.targetVariable) {
@@ -971,10 +980,10 @@ const setOutputValues = async () => {
 const combinedInterventions = computed(() => {
 	// Combine before and after interventions
 	const interventions = [
-		...knobs.value.interventionPolicyGroups.flatMap((group) => group.intervention),
+		...knobs.value.interventionPolicyGroups.flatMap((group) => policyGroupFormToIntervention(group)),
 		...(optimizedInterventionPolicy.value?.interventions || [])
 	];
-	return interventions;
+	return interventions as Intervention[];
 });
 const preProcessedInterventionsData = computed<Dictionary<ReturnType<typeof flattenInterventionData>>>(() =>
 	_.groupBy(flattenInterventionData(combinedInterventions.value), 'appliedTo')
