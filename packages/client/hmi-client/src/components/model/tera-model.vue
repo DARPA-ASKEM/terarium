@@ -177,16 +177,7 @@ async function refreshMMT() {
 }
 
 function updateTemporaryModel(newModel: Model) {
-	let doMmtUpdate = false;
-	// Only update the MMT when the semantics of the model changes
-	if (
-		!isEqual(temporaryModel.value?.model, newModel.model) ||
-		!isEqual(temporaryModel.value?.semantics, newModel.semantics)
-	) {
-		doMmtUpdate = true;
-	}
 	temporaryModel.value = cloneDeep(newModel);
-	if (doMmtUpdate) refreshMMT();
 }
 
 function onUpdateModelPart(property: 'state' | 'parameter' | 'observable' | 'transition' | 'time', event: any) {
