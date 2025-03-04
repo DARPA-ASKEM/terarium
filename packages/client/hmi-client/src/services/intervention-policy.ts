@@ -1,6 +1,6 @@
 import API from '@/api/api';
 import type { DynamicIntervention, Intervention, InterventionPolicy, StaticIntervention } from '@/types/Types';
-import { InterventionSemanticType } from '@/types/Types';
+import { InterventionSemanticType, InterventionValueType } from '@/types/Types';
 import { logger } from '@/utils/logger';
 
 export const blankIntervention: Intervention = {
@@ -10,7 +10,8 @@ export const blankIntervention: Intervention = {
 			timestep: Number.NaN,
 			value: Number.NaN,
 			type: InterventionSemanticType.Parameter,
-			appliedTo: ''
+			appliedTo: '',
+			valueType: InterventionValueType.Value
 		}
 	],
 	dynamicInterventions: []

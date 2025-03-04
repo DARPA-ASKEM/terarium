@@ -305,3 +305,14 @@ export async function getModelConfigurationAsLatexTable(id: ModelConfiguration['
 	const response = await API.get<string>(`model-configurations/${id}/latex-table`);
 	return response?.data ?? '';
 }
+
+export function getParameterDistributionAverage(parameter: ParameterSemantic): number {
+	const distribution = parameter.distribution;
+	if (distribution.type === DistributionType.Constant) {
+		return distribution.parameters.value;
+	}
+	if (distribution.type === DistributionType.Uniform) {
+		return (distribution.parameters.minimum + distribution.parameters.maximum) / 2;
+	}
+	return NaN;
+}

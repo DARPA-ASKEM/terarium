@@ -4,7 +4,8 @@ import {
 	InterventionSemanticType,
 	InterventionPolicy,
 	StaticIntervention,
-	DynamicIntervention
+	DynamicIntervention,
+	InterventionValueType
 } from '@/types/Types';
 import { CiemssMethodOptions, getRunResult, getSimulation } from '@/services/models/simulation-service';
 import { getModelIdFromModelConfigurationId } from '@/services/model-configurations';
@@ -236,7 +237,8 @@ export async function getOptimizedInterventions(optimizeRunId: string) {
 						appliedTo: paramName,
 						type: InterventionSemanticType.Parameter,
 						timestep: newTimestepAsList[0],
-						value: paramValue as number
+						value: paramValue as number,
+						valueType: InterventionValueType.Value
 					}
 				],
 				dynamicInterventions: []
@@ -251,7 +253,8 @@ export async function getOptimizedInterventions(optimizeRunId: string) {
 						timestep: startTime as number,
 						value: valueAsList[0],
 						appliedTo: paramName,
-						type: InterventionSemanticType.Parameter
+						type: InterventionSemanticType.Parameter,
+						valueType: InterventionValueType.Value
 					}
 				],
 				dynamicInterventions: []
@@ -267,7 +270,8 @@ export async function getOptimizedInterventions(optimizeRunId: string) {
 						timestep: timeAndValueAsList[0],
 						value: timeAndValueAsList[1],
 						appliedTo: paramName,
-						type: InterventionSemanticType.Parameter
+						type: InterventionSemanticType.Parameter,
+						valueType: InterventionValueType.Value
 					}
 				],
 				dynamicInterventions: []

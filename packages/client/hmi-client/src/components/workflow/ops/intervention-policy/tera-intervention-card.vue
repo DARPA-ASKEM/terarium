@@ -140,6 +140,13 @@
 							@update:model-value="(val) => onUpdateValue(val, 0)"
 							placeholder="value"
 						/>
+						<SelectButton
+							:model-value="intervention.staticInterventions[0].valueType"
+							:options="interventionValueTypeOptions"
+							option-label="label"
+							option-value="value"
+							@update:model-value="(val) => onValueTypeChange(val, 0)"
+						/>
 
 						<Button
 							text
@@ -187,6 +194,13 @@
 									@update:model-value="(val) => onUpdateValue(val, index)"
 									placeholder="value"
 								/>
+								<SelectButton
+									:model-value="i.valueType"
+									:options="interventionValueTypeOptions"
+									option-label="label"
+									option-value="value"
+									@update:model-value="(val) => onValueTypeChange(val, index)"
+								/>
 								<Button
 									class="ml-auto"
 									icon="pi pi-times"
@@ -227,10 +241,11 @@ import TeraToggleableInput from '@/components/widgets/tera-toggleable-input.vue'
 import Button from 'primevue/button';
 import RadioButton from 'primevue/radiobutton';
 import { computed } from 'vue';
-import { Intervention, InterventionSemanticType } from '@/types/Types';
+import { Intervention, InterventionSemanticType, InterventionValueType } from '@/types/Types';
 import Dropdown, { DropdownChangeEvent } from 'primevue/dropdown';
 import TeraInputNumber from '@/components/widgets/tera-input-number.vue';
 import { cloneDeep, debounce, uniqueId } from 'lodash';
+import SelectButton from 'primevue/selectbutton';
 
 const emit = defineEmits(['update', 'delete', 'add', 'open-modal']);
 const props = defineProps<{
@@ -238,6 +253,17 @@ const props = defineProps<{
 	parameterOptions: { label: string; value: string; units?: string }[];
 	stateOptions: { label: string; value: string; units?: string }[];
 }>();
+
+const interventionValueTypeOptions = [
+	{
+		label: 'Value',
+		value: InterventionValueType.Value
+	},
+	{
+		label: '%',
+		value: InterventionValueType.Percentage
+	}
+];
 
 const interventionSemanticOptions = [
 	{ label: 'Parameter', value: InterventionSemanticType.Parameter },
@@ -323,7 +349,8 @@ const onAddNewStaticIntervention = () => {
 		timestep: intervention.staticInterventions[0].timestep,
 		value: Number.NaN,
 		appliedTo: '',
-		type: InterventionSemanticType.Parameter
+		type: InterventionSemanticType.Parameter,
+		valueType: InterventionValueType.Value
 	});
 	emit('update', intervention);
 };
@@ -336,7 +363,8 @@ const onInterventionTypeChange = (value: string) => {
 				timestep: Number.NaN,
 				value: Number.NaN,
 				appliedTo: '',
-				type: InterventionSemanticType.Parameter
+				type: InterventionSemanticType.Parameter,
+				valueType: InterventionValueType.Value
 			}
 		];
 		intervention.dynamicInterventions = [];
@@ -372,6 +400,17 @@ const onSemanticChange = (event: DropdownChangeEvent, index: number) => {
 	} else {
 		item[index].appliedTo = '';
 	}
+	emit('update', intervention);
+};
+
+const onValueTypeChange = (valueType, index) => {
+	const intervention = cloneDeep(props.intervention);
+	if (interventionType.value === 'static') {
+		intervention.staticInterventions[index].valueType = valueType;
+	}
+	// } else {
+	// 	intervention.dynamicInterventions[index].valueType = valueType;
+	// }
 	emit('update', intervention);
 };
 
@@ -458,5 +497,10 @@ ul {
 	margin-left: -0.5rem;
 }
 
-/* smaller dropdown to match other inputs in this card */
+:deep(.p-selectbutton) {
+	height: fit-content;
+	.p-button {
+		padding: 0;
+	}
+}
 </style>
