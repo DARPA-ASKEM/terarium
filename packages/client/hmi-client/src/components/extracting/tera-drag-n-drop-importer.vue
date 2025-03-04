@@ -74,12 +74,20 @@ const props = defineProps({
 	acceptTypes: {
 		type: Array<AcceptedTypes>,
 		required: true,
-		validator: (value: Array<string>) => Object.values(AcceptedTypes).every((v) => value.includes(v))
+		validator: (value: Array<string>) =>
+			value.every((v) => {
+				const typeString = <string[]>Object.values(AcceptedTypes);
+				return typeString.includes(v);
+			})
 	},
 	acceptExtensions: {
 		type: Array<AcceptedExtensions>,
 		required: true,
-		validator: (value: Array<string>) => Object.values(AcceptedExtensions).every((v) => value.includes(v))
+		validator: (value: Array<string>) =>
+			value.every((v) => {
+				const extensionStrings = <string[]>Object.values(AcceptedExtensions);
+				return extensionStrings.includes(v);
+			})
 	},
 	// custom import action can be passed in as prop
 	importAction: {
