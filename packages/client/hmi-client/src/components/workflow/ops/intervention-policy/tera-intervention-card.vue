@@ -29,19 +29,9 @@
 			</div>
 		</header>
 		<section>
-			<div v-if="interventionType === 'static'" class="card-section pb-2">
-				Starting at day
-				<tera-input-number
-					auto-width
-					invalidate-negative
-					:model-value="intervention.staticInterventions[0].timestep"
-					@update:model-value="(val) => onUpdateThreshold(val, 0)"
-					placeholder="Timestep"
-				/>
-				:
-			</div>
-			<div class="card-setting">
-				<template v-if="interventionType === 'dynamic'">
+			<!-- Dynamic -->
+			<div class="card-setting" v-if="interventionType === 'dynamic'">
+				<div class="flex flex-wrap align-items-center gap-2">
 					Set
 					<section>
 						<Dropdown
@@ -64,9 +54,62 @@
 							autoFilterFocus
 						/>
 					</section>
-				</template>
-				<!-- Static -->
-				<template v-if="interventionType === 'static'">
+					to
+					<tera-input-number
+						auto-width
+						:model-value="intervention.dynamicInterventions[0].value"
+						@update:model-value="(val) => onUpdateValue(val, 0)"
+						placeholder="value"
+					/>
+					when
+					<Dropdown
+						class="applied-to-menu"
+						:model-value="intervention.dynamicInterventions[0].parameter"
+						@change="onTargetParameterChange"
+						:options="stateOptions"
+						option-label="label"
+						option-value="value"
+						placeholder="Select a trigger"
+						:filter="stateOptions.length > 5"
+						autoFilterFocus
+					/>
+					crosses the threshold
+					<tera-input-number
+						auto-width
+						:model-value="intervention.dynamicInterventions[0].threshold"
+						@update:model-value="(val) => onUpdateThreshold(val, 0)"
+						placeholder="threshold"
+					/>
+					{{ dynamicInterventionUnits }}.
+				</div>
+				<Button
+					class="ml-auto"
+					text
+					size="small"
+					label="Other Values"
+					:disabled="intervention.dynamicInterventions[0].appliedTo === ''"
+					@click="
+						emit('open-modal', {
+							semanticType: intervention.dynamicInterventions[0].type,
+							id: intervention.dynamicInterventions[0].appliedTo
+						})
+					"
+				/>
+			</div>
+			<!-- Static -->
+			<template v-if="interventionType === 'static'">
+				<div class="card-section pb-2">
+					Starting at day
+					<tera-input-number
+						auto-width
+						invalidate-negative
+						:model-value="intervention.staticInterventions[0].timestep"
+						@update:model-value="(val) => onUpdateThreshold(val, 0)"
+						placeholder="Timestep"
+					/>
+					:
+				</div>
+				<div class="card-setting">
 					<template v-if="intervention.staticInterventions.length === 1">
 						Set
 						<section>
@@ -104,10 +147,23 @@
 							option-value="value"
 							@update:model-value="(val) => onValueTypeChange(val, 0)"
 						/>
+
+						<Button
+							text
+							size="small"
+							label="Other Values"
+							:disabled="intervention.staticInterventions[0].appliedTo === ''"
+							@click="
+								emit('open-modal', {
+									semanticType: intervention.staticInterventions[0].type,
+									id: intervention.staticInterventions[0].appliedTo
+								})
+							"
+						/>
 					</template>
 
 					<ul v-if="intervention.staticInterventions.length > 1" class="w-full">
-						<li v-for="(i, index) in intervention.staticInterventions" class="flex-1" :key="index">
+						<li v-for="(i, index) in intervention.staticInterventions" class="flex flex-column" :key="index">
 							<div class="flex align-items-center pt-2 pb-2 gap-2">
 								Set
 								<section>
@@ -154,41 +210,18 @@
 									@click="onRemoveStaticIntervention(index)"
 								/>
 							</div>
+							<Button
+								class="ml-auto"
+								text
+								size="small"
+								label="Other Values"
+								:disabled="i.appliedTo === ''"
+								@click="emit('open-modal', { semanticType: i.type, id: i.appliedTo })"
+							/>
 						</li>
 					</ul>
-				</template>
-
-				<!-- Dynamic -->
-				<template v-else>
-					to
-					<tera-input-number
-						auto-width
-						:model-value="intervention.dynamicInterventions[0].value"
-						@update:model-value="(val) => onUpdateValue(val, 0)"
-						placeholder="value"
-					/>
-					when
-					<Dropdown
-						class="applied-to-menu"
-						:model-value="intervention.dynamicInterventions[0].parameter"
-						@change="onTargetParameterChange"
-						:options="stateOptions"
-						option-label="label"
-						option-value="value"
-						placeholder="Select a trigger"
-						:filter="stateOptions.length > 5"
-						autoFilterFocus
-					/>
-					crosses the threshold
-					<tera-input-number
-						auto-width
-						:model-value="intervention.dynamicInterventions[0].threshold"
-						@update:model-value="(val) => onUpdateThreshold(val, 0)"
-						placeholder="threshold"
-					/>
-					{{ dynamicInterventionUnits }}.
-				</template>
-			</div>
+				</div>
+			</template>
 		</section>
 		<footer>
 			<Button
@@ -214,7 +247,7 @@ import TeraInputNumber from '@/components/widgets/tera-input-number.vue';
 import { cloneDeep, debounce, uniqueId } from 'lodash';
 import SelectButton from 'primevue/selectbutton';
 
-const emit = defineEmits(['update', 'delete', 'add']);
+const emit = defineEmits(['update', 'delete', 'add', 'open-modal']);
 const props = defineProps<{
 	intervention: Intervention;
 	parameterOptions: { label: string; value: string; units?: string }[];

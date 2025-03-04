@@ -310,6 +310,7 @@
 						"
 						:active-settings="activeChartSettings"
 						:generate-annotation="generateAnnotation"
+						:get-chart-labels="getChartLabels"
 						:comparison="activeChartSettings?.type === ChartSettingType.VARIABLE_COMPARISON"
 						:comparison-selected-options="comparisonChartsSettingsSelection"
 						@update-settings="updateActiveChartSettings"
@@ -686,6 +687,7 @@ const {
 
 const {
 	generateAnnotation,
+	getChartLabels,
 	getChartAnnotationsByChartId,
 	useInterventionCharts,
 	useVariableCharts,
