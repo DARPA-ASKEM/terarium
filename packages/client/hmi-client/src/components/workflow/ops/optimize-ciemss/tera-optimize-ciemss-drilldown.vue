@@ -806,22 +806,20 @@ const setInterventionPolicyGroups = (interventionPolicy: InterventionPolicy) => 
 	if (interventionPolicy.interventions && interventionPolicy.interventions.length > 0) {
 		interventionPolicy.interventions.forEach((intervention) => {
 			// Static:
+			const newIntervention = _.cloneDeep(blankInterventionPolicyGroup);
+			newIntervention.id = interventionPolicy.id;
 			intervention.staticInterventions.forEach((staticIntervention) => {
-				const newIntervention = _.cloneDeep(blankInterventionPolicyGroup);
-				newIntervention.id = interventionPolicy.id;
 				newIntervention.relativeImportance = 5;
 				newIntervention.individualIntervention = staticIntervention;
 				newIntervention.startTimeGuess = staticIntervention.timestep;
 				newIntervention.initialGuessValue = staticIntervention.value;
-				knobs.value.interventionPolicyGroups.push(newIntervention);
+				knobs.value.interventionPolicyGroups.push(_.cloneDeep(newIntervention));
 			});
 			// Dynamic:
 			intervention.dynamicInterventions.forEach((dynamicIntervention) => {
-				const newIntervention = _.cloneDeep(blankInterventionPolicyGroup);
-				newIntervention.id = interventionPolicy.id;
 				newIntervention.relativeImportance = 0;
 				newIntervention.individualIntervention = dynamicIntervention;
-				knobs.value.interventionPolicyGroups.push(newIntervention);
+				knobs.value.interventionPolicyGroups.push(_.cloneDeep(newIntervention));
 			});
 		});
 	}
