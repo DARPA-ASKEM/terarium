@@ -131,7 +131,7 @@ The following are the key attributes of a simulation/forecasting process for a O
 The input parameters are as follows:
 - samples: ${state.numSamples}
 - method: ${state.method}
-- timespan: ${JSON.stringify(state.currentTimespan)}
+- timespan: {start_time: 0, end_time: ${JSON.stringify(state.endTime)} }
 - interventions: ${JSON.stringify(interventionPolicy.value?.interventions)};
 
 

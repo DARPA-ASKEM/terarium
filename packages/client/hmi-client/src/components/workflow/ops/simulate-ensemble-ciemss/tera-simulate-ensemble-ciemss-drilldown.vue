@@ -148,14 +148,29 @@
 									</div>
 								</div>
 								<!-- Presets -->
-								<div class="label-and-input">
-									<label>Preset (optional)</label>
-									<Dropdown
-										v-model="presetType"
-										placeholder="Select an option"
-										:options="[CiemssPresetTypes.Fast, CiemssPresetTypes.Normal]"
-										@update:model-value="setPresetValues"
-									/>
+								<div class="input-row">
+									<div class="label-and-input">
+										<label>Preset (optional)</label>
+										<Dropdown
+											v-model="presetType"
+											placeholder="Select an option"
+											:options="[CiemssPresetTypes.Fast, CiemssPresetTypes.Normal]"
+											@update:model-value="setPresetValues"
+										/>
+									</div>
+									<div class="label-and-input">
+										<tera-checkbox
+											label="Number of timepoints"
+											:model-value="knobs.isNumberOfTimepointsManual"
+											@update:model-value="toggleIsNumberOfTimepointsManual"
+										/>
+										<tera-input-number
+											:disabled="!knobs.isNumberOfTimepointsManual"
+											v-model="knobs.numberOfTimepoints"
+											inputId="integeronly"
+											:min="1"
+										/>
+									</div>
 								</div>
 								<!-- Number of Samples & Method -->
 								<div class="input-row">
@@ -294,6 +309,7 @@ import Dropdown from 'primevue/dropdown';
 import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.vue';
 import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
 import TeraPyciemssCancelButton from '@/components/pyciemss/tera-pyciemss-cancel-button.vue';
+import teraCheckbox from '@/components/widgets/tera-checkbox.vue';
 import {
 	makeEnsembleCiemssSimulation,
 	CiemssMethodOptions,
@@ -347,6 +363,8 @@ interface BasicKnobs {
 	method: CiemssMethodOptions;
 	stepSize: number;
 	endTime: number;
+	isNumberOfTimepointsManual: boolean;
+	numberOfTimepoints: number;
 }
 
 const knobs = ref<BasicKnobs>({
@@ -355,7 +373,9 @@ const knobs = ref<BasicKnobs>({
 	numSamples: props.node.state.numSamples,
 	method: props.node.state.method,
 	stepSize: props.node.state.stepSize,
-	endTime: props.node.state.endTime
+	endTime: props.node.state.endTime,
+	isNumberOfTimepointsManual: props.node.state.isNumberOfTimepointsManual,
+	numberOfTimepoints: props.node.state.numberOfTimepoints
 });
 
 const activeAccordionIndicies = ref([0, 1, 2]);
@@ -456,6 +476,10 @@ const setPresetValues = (data: CiemssPresetTypes) => {
 	}
 };
 
+const toggleIsNumberOfTimepointsManual = () => {
+	knobs.value.isNumberOfTimepointsManual = !knobs.value.isNumberOfTimepointsManual;
+};
+
 const addMapping = () => {
 	// create empty configuration mappings
 	const configMappings = {};
@@ -512,6 +536,7 @@ const runEnsemble = async () => {
 			start: 0,
 			end: knobs.value.endTime
 		},
+		loggingStepSize: knobs.value.endTime / knobs.value.numberOfTimepoints,
 		engine: 'ciemss',
 		extra: {
 			num_samples: knobs.value.numSamples,
@@ -596,6 +621,11 @@ watch(
 		state.numSamples = knobs.value.numSamples;
 		state.method = knobs.value.method;
 		state.stepSize = knobs.value.stepSize;
+		state.isNumberOfTimepointsManual = knobs.value.isNumberOfTimepointsManual;
+		if (!knobs.value.isNumberOfTimepointsManual) {
+			knobs.value.numberOfTimepoints = knobs.value.endTime;
+		}
+		state.numberOfTimepoints = knobs.value.numberOfTimepoints;
 		emit('update-state', state);
 	},
 	{ deep: true }

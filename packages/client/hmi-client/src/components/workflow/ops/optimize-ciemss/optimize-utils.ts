@@ -58,8 +58,8 @@ export function setQoIData(resultData: DataArray, config: Criterion) {
 	if (config.qoiMethod === ContextMethods.day_average) {
 		// last timepoints
 		// Filter for all values with timepoint = last timepoint
-		const lastTime = max(resultData.map((ele) => ele.timepoint_id));
-		data = resultData.filter((ele) => ele.timepoint_id === lastTime).map((ele) => ele[targetVar]);
+		const lastTimeId = max(resultData.map((ele) => ele.timepoint_id));
+		data = resultData.filter((ele) => ele.timepoint_id === lastTimeId).map((ele) => ele[targetVar]);
 	} else if (config.qoiMethod === ContextMethods.max) {
 		// all timepoints
 		// For each sample grab the min or max value for the given state:

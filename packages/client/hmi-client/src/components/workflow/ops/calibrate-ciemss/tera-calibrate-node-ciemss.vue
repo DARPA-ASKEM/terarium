@@ -257,6 +257,7 @@ watch(
 				start: 0,
 				end: state.endTime
 			},
+			loggingStepSize: state.endTime / state.numberOfTimepoints,
 			extra: {
 				num_samples: state.numSamples,
 				method: 'dopri5'

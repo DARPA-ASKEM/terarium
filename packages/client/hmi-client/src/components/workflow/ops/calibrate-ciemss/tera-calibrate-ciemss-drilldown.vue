@@ -130,14 +130,29 @@
 							/>
 						</div>
 						<div class="spacer m-2" />
-						<p class="mb-1">Preset (optional)</p>
-						<div class="label-and-input">
-							<Dropdown
-								v-model="presetType"
-								placeholder="Select an option"
-								:options="[CiemssPresetTypes.Fast, CiemssPresetTypes.Normal]"
-								@update:model-value="setPresetValues"
-							/>
+						<div class="input-row">
+							<div class="label-and-input">
+								<p class="mb-1">Preset (optional)</p>
+								<Dropdown
+									v-model="presetType"
+									placeholder="Select an option"
+									:options="[CiemssPresetTypes.Fast, CiemssPresetTypes.Normal]"
+									@update:model-value="setPresetValues"
+								/>
+							</div>
+							<div class="label-and-input">
+								<tera-checkbox
+									label="Number of timepoints"
+									:model-value="knobs.isNumberOfTimepointsManual"
+									@update:model-value="toggleIsNumberOfTimepointsManual"
+								/>
+								<tera-input-number
+									:disabled="!knobs.isNumberOfTimepointsManual"
+									v-model="knobs.numberOfTimepoints"
+									inputId="integeronly"
+									:min="1"
+								/>
+							</div>
 						</div>
 						<label class="p-text-secondary text-sm flex align-items-center gap-2 my-1">
 							<i class="pi pi-info-circle" />
@@ -146,7 +161,7 @@
 						<div class="mt-1 additional-settings">
 							<div class="label-and-input">
 								<label>Number of Samples</label>
-								<tera-input-number inputId="integeronly" v-model="knobs.numSamples" @update:model-value="updateState" />
+								<tera-input-number inputId="integeronly" v-model="knobs.numSamples" />
 							</div>
 							<div class="spacer m-4" />
 
@@ -159,7 +174,6 @@
 										id="5"
 										v-model="knobs.method"
 										:options="[CiemssMethodOptions.dopri5, CiemssMethodOptions.rk4, CiemssMethodOptions.euler]"
-										@update:model-value="updateState"
 									/>
 								</div>
 								<div class="label-and-input">
@@ -176,19 +190,11 @@
 							<div class="input-row">
 								<div class="label-and-input">
 									<label for="num-iterations">Number of solver iterations</label>
-									<tera-input-number
-										inputId="integeronly"
-										v-model="knobs.numIterations"
-										@update:model-value="updateState"
-									/>
+									<tera-input-number inputId="integeronly" v-model="knobs.numIterations" />
 								</div>
 								<div class="label-and-input">
 									<label for="learning-rate">Learning rate</label>
-									<tera-input-number
-										inputId="numberonly"
-										v-model="knobs.learningRate"
-										@update:model-value="updateState"
-									/>
+									<tera-input-number inputId="numberonly" v-model="knobs.learningRate" />
 								</div>
 								<div class="label-and-input">
 									<label>Inference algorithm</label>
@@ -205,7 +211,6 @@
 							</div>
 						</div>
 					</section>
-
 					<section v-if="interventionPolicy && model" class="form-section">
 						<h5>Intervention Policies</h5>
 						<tera-intervention-summary-card
@@ -516,7 +521,7 @@
 </template>
 
 <script setup lang="ts">
-import { cloneDeep, groupBy, intersection, isEmpty, isEqual } from 'lodash';
+import { cloneDeep, groupBy, intersection, isEmpty } from 'lodash';
 import * as vega from 'vega';
 import { computed, onMounted, ref, shallowRef, watch } from 'vue';
 import { useConfirm } from 'primevue/useconfirm';
@@ -604,6 +609,8 @@ interface BasicKnobs {
 	learningRate: number;
 	method: CiemssMethodOptions;
 	timestampColName: string;
+	isNumberOfTimepointsManual: boolean;
+	numberOfTimepoints: number;
 }
 
 const knobs = ref<BasicKnobs>({
@@ -613,7 +620,9 @@ const knobs = ref<BasicKnobs>({
 	stepSize: props.node.state.stepSize ?? 1,
 	learningRate: props.node.state.learningRate ?? 0.1,
 	method: props.node.state.method ?? CiemssMethodOptions.dopri5,
-	timestampColName: props.node.state.timestampColName ?? ''
+	timestampColName: props.node.state.timestampColName ?? '',
+	isNumberOfTimepointsManual: props.node.state.isNumberOfTimepointsManual,
+	numberOfTimepoints: props.node.state.numberOfTimepoints
 });
 
 const presetType = computed(() => {
@@ -718,13 +727,8 @@ const showOutputSection = computed(
 		selectedOutputId.value
 );
 
-const updateState = () => {
-	const state = cloneDeep(props.node.state);
-	state.numSamples = knobs.value.numSamples;
-	state.method = knobs.value.method;
-	state.numIterations = knobs.value.numIterations;
-	state.learningRate = knobs.value.learningRate;
-	emit('update-state', state);
+const toggleIsNumberOfTimepointsManual = () => {
+	knobs.value.isNumberOfTimepointsManual = !knobs.value.isNumberOfTimepointsManual;
 };
 
 const setPresetValues = (data: CiemssPresetTypes) => {
@@ -1055,7 +1059,9 @@ const initialize = async () => {
 		stepSize: state.stepSize ?? 1,
 		learningRate: state.learningRate ?? 0.1,
 		method: state.method ?? CiemssMethodOptions.dopri5,
-		timestampColName: state.timestampColName ?? ''
+		timestampColName: state.timestampColName ?? '',
+		isNumberOfTimepointsManual: state.isNumberOfTimepointsManual,
+		numberOfTimepoints: state.numberOfTimepoints
 	};
 
 	// Model configuration input
@@ -1112,14 +1118,20 @@ onMounted(() => {
 });
 
 watch(
-	() => ({ ...knobs.value }),
-	(newValue, oldValue) => {
-		if (isEqual(newValue, oldValue)) return;
+	() => knobs.value,
+	async () => {
 		const state = cloneDeep(props.node.state);
-		state.numIterations = knobs.value.numIterations;
-		state.numSamples = knobs.value.numSamples;
 		state.endTime = knobs.value.endTime;
-		state.timestampColName = knobs.value.timestampColName;
+		state.stepSize = knobs.value.stepSize;
+		state.numSamples = knobs.value.numSamples;
+		state.method = knobs.value.method;
+		state.numIterations = knobs.value.numIterations;
+		state.learningRate = knobs.value.learningRate;
+		state.isNumberOfTimepointsManual = knobs.value.isNumberOfTimepointsManual;
+		if (!knobs.value.isNumberOfTimepointsManual) {
+			knobs.value.numberOfTimepoints = knobs.value.endTime;
+		}
+		state.numberOfTimepoints = knobs.value.numberOfTimepoints;
 		emit('update-state', state);
 	},
 	{ deep: true }
