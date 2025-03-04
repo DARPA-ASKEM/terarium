@@ -44,9 +44,8 @@ public class TaskRunnerServiceTests extends TaskRunnerApplicationTests {
 	ObjectMapper mapper = new ObjectMapper();
 
 	private final long TIMEOUT_SECONDS = 30;
-	private final String TEST_INPUT = "{\"research_paper\":\"Test research paper\"}";
-	private final String TEST_INPUT_WITH_PROGRESS =
-		"{\"research_paper\":\"Test research paper\",\"include_progress\":true}";
+	private final String TEST_INPUT = "{\"document\":\"Test research paper\"}";
+	private final String TEST_INPUT_WITH_PROGRESS = "{\"document\":\"Test research paper\",\"include_progress\":true}";
 	private final String FAILURE_INPUT = "{\"should_fail\":true}";
 	private final String SCRIPT_PATH = getClass().getResource("/echo.py").getPath();
 	private final String TASK_RUNNER_RESPONSE_QUEUE = "terarium-response-queue-test";

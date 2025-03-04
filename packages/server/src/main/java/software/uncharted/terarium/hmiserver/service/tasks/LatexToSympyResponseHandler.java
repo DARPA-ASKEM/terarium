@@ -11,7 +11,7 @@ import software.uncharted.terarium.hmiserver.models.task.TaskResponse;
 @Component
 @RequiredArgsConstructor
 @Slf4j
-public class LatexToSympyResponseHandler extends TaskResponseHandler {
+public class LatexToSympyResponseHandler extends LlmTaskResponseHandler {
 
 	public static final String NAME = "gollm:latex_to_sympy";
 
@@ -21,7 +21,7 @@ public class LatexToSympyResponseHandler extends TaskResponseHandler {
 	}
 
 	@Data
-	public static class Input {
+	public static class Input extends LlmTaskResponseHandler.Input {
 
 		List<String> equations;
 	}

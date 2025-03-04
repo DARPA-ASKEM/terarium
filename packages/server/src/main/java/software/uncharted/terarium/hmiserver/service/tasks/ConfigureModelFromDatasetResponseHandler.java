@@ -24,7 +24,7 @@ import software.uncharted.terarium.hmiserver.service.data.ProvenanceService;
 @Component
 @RequiredArgsConstructor
 @Slf4j
-public class ConfigureModelFromDatasetResponseHandler extends TaskResponseHandler {
+public class ConfigureModelFromDatasetResponseHandler extends LlmTaskResponseHandler {
 
 	public static final String NAME = "gollm:configure_model_from_dataset";
 
@@ -39,7 +39,7 @@ public class ConfigureModelFromDatasetResponseHandler extends TaskResponseHandle
 	}
 
 	@Data
-	public static class Input {
+	public static class Input extends LlmTaskResponseHandler.Input {
 
 		@JsonProperty("dataset")
 		List<String> dataset;

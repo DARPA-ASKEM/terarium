@@ -11,7 +11,7 @@ import software.uncharted.terarium.hmiserver.models.task.TaskResponse;
 @Component
 @RequiredArgsConstructor
 @Slf4j
-public class EquationsFromImageResponseHandler extends TaskResponseHandler {
+public class EquationsFromImageResponseHandler extends LlmTaskResponseHandler {
 
 	public static final String NAME = "gollm:equations_from_image";
 
@@ -21,7 +21,7 @@ public class EquationsFromImageResponseHandler extends TaskResponseHandler {
 	}
 
 	@Data
-	public static class Input {
+	public static class Input extends LlmTaskResponseHandler.Input {
 
 		// base64 encoded image
 		String image;

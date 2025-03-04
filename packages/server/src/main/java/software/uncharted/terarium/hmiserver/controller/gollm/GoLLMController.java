@@ -11,7 +11,6 @@ import jakarta.annotation.PostConstruct;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Base64;
@@ -37,6 +36,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 import software.uncharted.terarium.hmiserver.annotations.HasProjectAccess;
+import software.uncharted.terarium.hmiserver.configuration.Config;
 import software.uncharted.terarium.hmiserver.models.dataservice.ChartAnnotation.ChartAnnotationType;
 import software.uncharted.terarium.hmiserver.models.dataservice.dataset.Dataset;
 import software.uncharted.terarium.hmiserver.models.dataservice.document.DocumentAsset;
@@ -73,6 +73,8 @@ import software.uncharted.terarium.hmiserver.utils.rebac.Schema;
 @Slf4j
 @RequiredArgsConstructor
 public class GoLLMController {
+
+	private final Config config;
 
 	private final ObjectMapper objectMapper;
 	private final TaskService taskService;
@@ -171,7 +173,13 @@ public class GoLLMController {
 
 		final TaskRequest req;
 		try {
-			req = TaskUtilities.getModelCardTask(currentUserService.get().getId(), documentOpt.get(), model.get(), projectId);
+			req = TaskUtilities.getModelCardTask(
+				currentUserService.get().getId(),
+				documentOpt.get(),
+				model.get(),
+				projectId,
+				config.getLlm()
+			);
 		} catch (final IOException e) {
 			log.error("Unable to create Model Card task", e);
 			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("generic.io-error.write"));
@@ -253,9 +261,10 @@ public class GoLLMController {
 		}
 
 		final ConfigureModelFromDocumentResponseHandler.Input input = new ConfigureModelFromDocumentResponseHandler.Input();
+		input.setLlm(config.getLlm());
 
 		try {
-			input.setResearchPaper(objectMapper.writeValueAsString(document.get().getExtractions()));
+			input.setDocument(objectMapper.writeValueAsString(document.get().getExtractions()));
 		} catch (final JsonProcessingException e) {
 			log.error("Unable to serialize document text", e);
 			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("generic.io-error.write"));
@@ -388,6 +397,7 @@ public class GoLLMController {
 		}
 
 		final ConfigureModelFromDatasetResponseHandler.Input input = new ConfigureModelFromDatasetResponseHandler.Input();
+		input.setLlm(config.getLlm());
 		input.setDataset(dataArray);
 		// stripping the metadata from the model before its sent since it can cause
 		// gollm to fail with massive inputs
@@ -497,8 +507,9 @@ public class GoLLMController {
 		}
 
 		final InterventionsFromDocumentResponseHandler.Input input = new InterventionsFromDocumentResponseHandler.Input();
+		input.setLlm(config.getLlm());
 		try {
-			input.setResearchPaper(objectMapper.writeValueAsString(document.get().getExtractions()));
+			input.setDocument(objectMapper.writeValueAsString(document.get().getExtractions()));
 		} catch (final JsonProcessingException e) {
 			log.error("Unable to serialize document text", e);
 			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("generic.io-error.write"));
@@ -623,6 +634,7 @@ public class GoLLMController {
 		}
 
 		final InterventionsFromDatasetResponseHandler.Input input = new InterventionsFromDatasetResponseHandler.Input();
+		input.setLlm(config.getLlm());
 		input.setDataset(dataArray);
 		// stripping the metadata from the model before its sent since it can cause
 		// gollm to fail with massive inputs
@@ -723,6 +735,7 @@ public class GoLLMController {
 		}
 
 		final CompareModelsResponseHandler.Input input = new CompareModelsResponseHandler.Input();
+		input.setLlm(config.getLlm());
 		input.setAmrs(amrs);
 		input.setGoal(goal);
 
@@ -808,10 +821,14 @@ public class GoLLMController {
 		req.setScript(GenerateSummaryHandler.NAME);
 		req.setUserId(currentUserService.get().getId());
 
+		final GenerateSummaryHandler.Input input = new GenerateSummaryHandler.Input();
+		input.setLlm(config.getLlm());
+		input.setInstruction(instruction);
+
 		try {
-			req.setInput(instruction.getBytes(StandardCharsets.UTF_8));
+			req.setInput(objectMapper.writeValueAsBytes(input));
 		} catch (final JsonProcessingException e) {
-			log.error("Unable to serialize input: {}", e.getMessage());
+			log.error("Unable to serialize input", e);
 			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("generic.io-error.write"));
 		}
 
@@ -916,7 +933,8 @@ public class GoLLMController {
 				document,
 				model.get(),
 				projectId,
-				overwrite
+				overwrite,
+				config.getLlm()
 			);
 		} catch (final IOException e) {
 			log.error("Unable to create Enrich Dataset task", e);
@@ -1004,7 +1022,8 @@ public class GoLLMController {
 				document,
 				dataset.get(),
 				projectId,
-				overwrite
+				overwrite,
+				config.getLlm()
 			);
 		} catch (final IOException e) {
 			log.error("Unable to create Enrich Dataset task", e);
@@ -1088,6 +1107,7 @@ public class GoLLMController {
 		}
 
 		final EquationsFromImageResponseHandler.Input input = new EquationsFromImageResponseHandler.Input();
+		input.setLlm(config.getLlm());
 		input.setImage(image.base64ImageStr);
 
 		// Create the task
@@ -1176,6 +1196,7 @@ public class GoLLMController {
 
 		// set task input
 		final ChartAnnotationResponseHandler.Input input = new ChartAnnotationResponseHandler.Input();
+		input.setLlm(config.getLlm());
 		input.setPreamble(body.getPreamble());
 		input.setInstruction(body.getInstruction());
 		input.setChartType(body.getChartType());
