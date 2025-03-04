@@ -114,7 +114,7 @@ watch(isAdobePdfApiReady, () => {
 										[x1, y2, x2, y2],
 										[x2, y2, x2, y1]
 									],
-									strokeColor: '#ff0808',
+									strokeColor: '#007500',
 									strokeWidth: 2,
 									type: 'AdobeAnnoSelector'
 								}
