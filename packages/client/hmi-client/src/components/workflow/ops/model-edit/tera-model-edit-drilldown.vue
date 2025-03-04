@@ -198,7 +198,7 @@ const syncWithMiraModel = (data: any) => {
 const runCode = () => {
 	isUpdatingModel.value = true;
 	outputModel.value = null;
-	kernelManager.sendMessage('reset_request', {}).register('reset_response', () => {
+	kernelManager.sendMessage('reset_mira_request', {}).register('reset_mira_response', () => {
 		const messageContent = {
 			silent: false,
 			store_history: false,
@@ -246,8 +246,8 @@ const resetModel = () => {
 	if (!outputModel.value) return;
 
 	kernelManager
-		.sendMessage('reset_request', {})
-		.register('reset_response', handleResetResponse)
+		.sendMessage('reset_mira_request', {})
+		.register('reset_mira_response', handleResetResponse)
 		.register('model_preview', syncWithMiraModel);
 };
 

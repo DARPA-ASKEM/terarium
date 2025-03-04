@@ -205,8 +205,8 @@ export function getEnsembleErrorData(
 	pyciemssMap: Record<string, string>
 ): EnsembleErrorData {
 	const errorData: EnsembleErrorData = { ensemble: [] };
-	const timestampColName = mapping.find((m) => m.newName === 'timepoint_id')?.datasetMapping ?? '';
-	const mappingWithoutTimeCol = mapping.filter((m) => m.newName !== 'timepoint_id');
+	const timestampColName = mapping.find((m) => m.newName === 'timepoint_unknown')?.datasetMapping ?? '';
+	const mappingWithoutTimeCol = mapping.filter((m) => m.newName !== 'timepoint_unknown');
 	// Error data for the ensemble
 	const calibrateMappings = mappingWithoutTimeCol.map(
 		(m) =>

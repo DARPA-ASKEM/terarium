@@ -35,27 +35,34 @@ from common.utils import (
     unescape_curly_braces
 )
 from entities import ChartAnnotationType
-from openai import OpenAI
+from openai import AzureOpenAI
 from typing import List, Optional
 
-GPT_MODEL = "gpt-4o-2024-08-06"
+API_VERSION = "2024-10-21"
 
 
-class OpenAiTools(LlmToolsInterface):
+class AzureTools(LlmToolsInterface):
 
-    def __init__(self, api_key=None):
+    def __init__(self, api_key=None, azure_endpoint=None, model_name=None):
         self.api_key = api_key
+        self.azure_endpoint = azure_endpoint
+        self.model_name = model_name
 
 
     def name(self) -> str:
-        return f"OpenAI (gpt-4o 2024-08-06)"
+        return f"Azure OpenAI (gpt-4o 2024-11-20)"
 
 
     def send_to_llm_with_json_output(self, prompt: str, schema: str, max_tokens=16384) -> dict:
-        print("Sending request to OpenAI API...")
-        client = OpenAI() if self.api_key is None else OpenAI(api_key=self.api_key)
+        print("Creating AzureOpenAI client...")
+        client = AzureOpenAI(
+            api_key=os.getenv("AZURE_OPENAI_KEY") if self.api_key is None else self.api_key,
+            api_version=API_VERSION,
+            azure_endpoint = os.getenv("AZURE_OPENAI_ENDPOINT") if self.azure_endpoint is None else self.azure_endpoint
+        )
+        print("Sending request to AzureOpenAI API...")
         output = client.chat.completions.create(
-            model=GPT_MODEL,
+            model=os.getenv("AZURE_OPENAI_MODEL") if self.model_name is None else self.model_name,
             top_p=1,
             frequency_penalty=0,
             presence_penalty=0,
@@ -78,11 +85,16 @@ class OpenAiTools(LlmToolsInterface):
         output_json = json.loads(output.choices[0].message.content)
         return unescape_curly_braces(output_json)
 
+
     def send_to_llm_with_string_output(self, prompt: str, max_tokens=16384) -> str:
         print("Sending request to OpenAI API...")
-        client = OpenAI() if self.api_key is None else OpenAI(api_key=self.api_key)
+        client = AzureOpenAI(
+            api_key=os.getenv("AZURE_OPENAI_KEY") if self.api_key is None else self.api_key,
+            api_version=API_VERSION,
+            azure_endpoint = os.getenv("AZURE_OPENAI_ENDPOINT") if self.azure_endpoint is None else self.azure_endpoint
+        )
         output = client.chat.completions.create(
-            model=GPT_MODEL,
+            model=os.getenv("AZURE_OPENAI_MODEL") if self.model_name is None else self.model_name,
             top_p=1,
             frequency_penalty=0,
             presence_penalty=0,
@@ -96,11 +108,16 @@ class OpenAiTools(LlmToolsInterface):
         print("Received response from OpenAI API...")
         return output.choices[0].message.content
 
+
     def send_image_to_llm_with_json_output(self, prompt: str, schema: str, image_url: str, max_tokens=16384) -> dict:
         print("Sending request to OpenAI API...")
-        client = OpenAI() if self.api_key is None else OpenAI(api_key=self.api_key)
+        client = AzureOpenAI(
+            api_key=os.getenv("AZURE_OPENAI_KEY") if self.api_key is None else self.api_key,
+            api_version=API_VERSION,
+            azure_endpoint = os.getenv("AZURE_OPENAI_ENDPOINT") if self.azure_endpoint is None else self.azure_endpoint
+        )
         output = client.chat.completions.create(
-            model=GPT_MODEL,
+            model=os.getenv("AZURE_OPENAI_MODEL") if self.model_name is None else self.model_name,
             top_p=1,
             frequency_penalty=0,
             presence_penalty=0,
@@ -128,6 +145,7 @@ class OpenAiTools(LlmToolsInterface):
         print("Received response from OpenAI API...")
         output_json = json.loads(output.choices[0].message.content)
         return output_json
+
 
     def create_enrich_model_prompt(self, amr: str, document: Optional[str], schema=None) -> str:
         if (document is None) or (document == ''):  # If no document is provided
@@ -158,12 +176,14 @@ class OpenAiTools(LlmToolsInterface):
         prompt += "Answer:"
         return prompt
 
+
     def create_config_from_document_prompt(self, amr: str, document: str, schema=None) -> str:
         print("Building prompt to extract model configurations from a reasearch paper...")
         return CONFIGURE_FROM_DOCUMENT_PROMPT.format(
             amr=escape_curly_braces(amr),
             document=escape_curly_braces(document)
         )
+
 
     def create_enrich_dataset_prompt(self, dataset: str, document: Optional[str], schema=None) -> str:
         if (document is None) or (document == ''):  # If no document is provided
@@ -176,6 +196,7 @@ class OpenAiTools(LlmToolsInterface):
                 dataset=dataset
             )
 
+
     def create_cleanup_equations_prompt(self, equations: List[str], schema=None) -> str:
         print("Building prompt to reformat equations...")
         return EQUATIONS_CLEANUP_PROMPT.format(
@@ -183,11 +204,13 @@ class OpenAiTools(LlmToolsInterface):
             equations="\n".join(equations)
         )
 
+
     def create_equations_from_image_prompt(self, image_url: str, schema=None) -> str:
         print("Building prompt to extract equations an image...")
         return EQUATIONS_FROM_IMAGE_PROMPT.format(
             style_guide=LATEX_STYLE_GUIDE
         )
+
 
     def create_interventions_from_document_prompt(self, amr: str, document: str, schema=None) -> str:
         print("Building prompt to extract interventions from a research paper...")
@@ -196,6 +219,7 @@ class OpenAiTools(LlmToolsInterface):
             document=escape_curly_braces(document)
         )
 
+
     def create_interventions_from_dataset_prompt(self, amr: str, dataset: List[str], schema=None) -> str:
         print("Building prompt to extract interventions from a dataset...")
         dataset_text = os.linesep.join(dataset)
@@ -203,6 +227,7 @@ class OpenAiTools(LlmToolsInterface):
             amr=escape_curly_braces(amr),
             dataset=escape_curly_braces(dataset_text)
         )
+
 
     def create_model_card_prompt(self, amr: str, document: str, schema=None) -> str:
         print("Building prompt to produce a model card...")
@@ -213,6 +238,7 @@ class OpenAiTools(LlmToolsInterface):
             document=escape_curly_braces(document),
             amr=escape_curly_braces(amr)
         )
+
 
     def create_compare_models_prompt(self, amrs: List[str], dataset: str, goal: str, schema=None) -> str:
         print("Building prompt to compare models...")
@@ -230,15 +256,18 @@ class OpenAiTools(LlmToolsInterface):
         prompt += "Answer:"
         return prompt
 
+
     def create_general_query_prompt(self, instruction: str) -> str:
         print("Building general query prompt...")
         return GENERAL_QUERY_PROMPT.format(
             instruction=instruction
         )
 
+
     def create_chart_annotation_prompt(self, chartType: ChartAnnotationType, preamble: str, instruction: str, schema=None) -> str:
         print("Building chart annotation prompt...")
         return build_chart_annotation_prompt(chartType, preamble, instruction)
+
 
     def create_latex_to_sympy_prompt(self, equations: List[str], schema=None) -> str:
         print("Building prompt to transform latex equations to sympy...")

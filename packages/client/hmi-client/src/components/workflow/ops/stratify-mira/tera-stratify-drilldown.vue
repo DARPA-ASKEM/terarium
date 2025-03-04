@@ -177,8 +177,8 @@ const processLLMOutput = (data: any) => {
 const resetModel = () => {
 	if (!amr.value) return;
 	kernelManager
-		.sendMessage('reset_request', {})
-		.register('reset_response', handleResetResponse)
+		.sendMessage('reset_mira_request', {})
+		.register('reset_mira_response', handleResetResponse)
 		.register('model_preview', handleModelPreview);
 };
 
@@ -218,7 +218,7 @@ const stratifyModel = () => {
 		cartesian_control: strataOption.cartesianProduct,
 		structure: strataOption.useStructure ? null : []
 	};
-	kernelManager.sendMessage('reset_request', {}).register('reset_response', () => {
+	kernelManager.sendMessage('reset_mira_request', {}).register('reset_mira_response', () => {
 		kernelManager
 			.sendMessage('stratify_request', messageContent)
 			.register('stratify_response', (data: any) => {
@@ -368,7 +368,7 @@ const runCodeStratify = () => {
 
 	let executedCode = '';
 
-	kernelManager.sendMessage('reset_request', {}).register('reset_response', () => {
+	kernelManager.sendMessage('reset_mira_request', {}).register('reset_mira_response', () => {
 		kernelManager
 			.sendMessage('execute_request', messageContent)
 			.register('execute_input', (data) => {

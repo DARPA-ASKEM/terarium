@@ -4,13 +4,11 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.List;
-import java.util.Optional;
 import java.util.UUID;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
-import software.uncharted.terarium.hmiserver.models.dataservice.dataset.Dataset;
 import software.uncharted.terarium.hmiserver.models.simulationservice.interventions.InterventionPolicy;
 import software.uncharted.terarium.hmiserver.models.task.TaskResponse;
 import software.uncharted.terarium.hmiserver.service.data.DatasetService;
@@ -19,7 +17,7 @@ import software.uncharted.terarium.hmiserver.service.data.InterventionService;
 @Component
 @RequiredArgsConstructor
 @Slf4j
-public class InterventionsFromDatasetResponseHandler extends TaskResponseHandler {
+public class InterventionsFromDatasetResponseHandler extends LlmTaskResponseHandler {
 
 	public static final String NAME = "gollm:interventions_from_dataset";
 
@@ -33,7 +31,7 @@ public class InterventionsFromDatasetResponseHandler extends TaskResponseHandler
 	}
 
 	@Data
-	public static class Input {
+	public static class Input extends LlmTaskResponseHandler.Input {
 
 		@JsonProperty("dataset")
 		List<String> dataset;

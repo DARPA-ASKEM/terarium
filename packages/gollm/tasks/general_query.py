@@ -1,8 +1,10 @@
 import sys
 import traceback
-
 from chains import general_query_chain
-from llms.openai.OpenAiTools import OpenAiTools
+from entities import GeneralQueryModel
+from llms.azure.AzureTools import AzureTools
+from llms.determine_llm import determine_llm
+
 from taskrunner import TaskRunnerInterface
 
 
@@ -16,14 +18,22 @@ def main():
         taskrunner = TaskRunnerInterface(description="Generate Response CLI")
         taskrunner.on_cancellation(cleanup)
 
-        input_str = taskrunner.read_input_str_with_timeout()
+        input_dict = taskrunner.read_input_dict_with_timeout()
+
+        taskrunner.log("Creating EquationsFromImage from input")
+        input_model = GeneralQueryModel(**input_dict)
 
         taskrunner.log("Generating a response from input")
 
-        taskrunner.log("Sending request to OpenAI API")
-        llm = OpenAiTools()
-        response = general_query_chain(llm, instruction=input_str)
-        taskrunner.log("Received response from OpenAI API")
+        try:
+            llm = determine_llm(input_model.llm)
+            taskrunner.log(f"Using {llm.name}")
+        except Exception as e:
+            llm = AzureTools()
+            taskrunner.log(f"WARNING: {e}, defaulting to {llm.name}")
+
+        response = general_query_chain(llm, instruction=input_model.instruction)
+        taskrunner.log("Received response from LLM")
 
         taskrunner.write_output_dict_with_timeout({"response": response})
 

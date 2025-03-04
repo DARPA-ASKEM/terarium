@@ -21,6 +21,10 @@ public class SimulationRequest implements Serializable {
 	@JsonAlias("time_span")
 	private TimeSpan timespan;
 
+	@TSOptional
+	@JsonAlias("logging_step_size")
+	private Double loggingStepSize;
+
 	private JsonNode extra;
 
 	private String engine;

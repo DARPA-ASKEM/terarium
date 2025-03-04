@@ -1,5 +1,11 @@
 import { Operation, WorkflowOperationTypes, BaseState } from '@/types/workflow';
-import { Intervention, InterventionSemanticType, InterventionPolicy } from '@/types/Types';
+import {
+	Intervention,
+	InterventionSemanticType,
+	InterventionPolicy,
+	StaticIntervention,
+	DynamicIntervention
+} from '@/types/Types';
 import { CiemssMethodOptions, getRunResult, getSimulation } from '@/services/models/simulation-service';
 import { getModelIdFromModelConfigurationId } from '@/services/model-configurations';
 import { createInterventionPolicy, blankIntervention } from '@/services/intervention-policy';
@@ -40,7 +46,8 @@ export interface InterventionPolicyGroupForm {
 		timeObjectiveFunction: InterventionObjectiveFunctions;
 		parameterObjectiveFunction: InterventionObjectiveFunctions;
 	};
-	intervention: Intervention;
+	interventionName: string;
+	individualIntervention: StaticIntervention | DynamicIntervention;
 }
 
 export interface Criterion {
@@ -61,6 +68,8 @@ export interface OptimizeCiemssOperationState extends BaseState {
 	solverMethod: CiemssMethodOptions;
 	maxiter: number;
 	maxfeval: number;
+	numberOfTimepoints: number;
+	isNumberOfTimepointsManual: boolean;
 	// Intervention policies
 	interventionPolicyId: string; // Used to determine if we need to reset the InterventionPolicyGroupForm.
 	interventionPolicyGroups: InterventionPolicyGroupForm[];
@@ -110,7 +119,8 @@ export const blankInterventionPolicyGroup: InterventionPolicyGroupForm = {
 		timeObjectiveFunction: InterventionObjectiveFunctions.initialGuess,
 		parameterObjectiveFunction: InterventionObjectiveFunctions.initialGuess
 	},
-	intervention: blankIntervention
+	interventionName: blankIntervention.name,
+	individualIntervention: blankIntervention.staticInterventions[0]
 };
 
 export const defaultCriterion: Criterion = {
@@ -147,6 +157,8 @@ export const OptimizeCiemssOperation: Operation = {
 			solverMethod: CiemssMethodOptions.dopri5,
 			maxiter: 5,
 			maxfeval: 25,
+			numberOfTimepoints: 90,
+			isNumberOfTimepointsManual: false,
 			interventionPolicyId: '',
 			interventionPolicyGroups: [],
 			constraintGroups: [defaultCriterion],

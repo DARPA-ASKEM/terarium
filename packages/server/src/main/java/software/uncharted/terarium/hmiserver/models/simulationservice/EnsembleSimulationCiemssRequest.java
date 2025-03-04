@@ -6,6 +6,7 @@ import java.util.List;
 import lombok.Data;
 import lombok.experimental.Accessors;
 import software.uncharted.terarium.hmiserver.annotations.TSModel;
+import software.uncharted.terarium.hmiserver.annotations.TSOptional;
 import software.uncharted.terarium.hmiserver.models.simulationservice.parts.EnsembleModelConfigs;
 import software.uncharted.terarium.hmiserver.models.simulationservice.parts.TimeSpan;
 
@@ -19,6 +20,10 @@ public class EnsembleSimulationCiemssRequest implements Serializable {
 
 	@JsonAlias("time_span")
 	private TimeSpan timespan;
+
+	@TSOptional
+	@JsonAlias("logging_step_size")
+	private Double loggingStepSize;
 
 	private Object extra;
 

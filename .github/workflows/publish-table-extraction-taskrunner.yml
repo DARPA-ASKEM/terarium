@@ -39,15 +39,17 @@ jobs:
       - name: Checkout the repository
         uses: actions/checkout@v4
 
-      - name: Validate GradleW JAR
-        uses: gradle/actions/wrapper-validation@v3
-
       - name: Setup Java v17
         uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
           java-version: 17
           cache: gradle
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          validate-wrappers: true
 
       - name: Create image and push
         uses: docker/build-push-action@v5
@@ -75,15 +77,17 @@ jobs:
       - name: Checkout the repository
         uses: actions/checkout@v4
 
-      - name: Validate GradleW JAR
-        uses: gradle/actions/wrapper-validation@v3
-
       - name: Setup Java v17
         uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
           java-version: 17
           cache: gradle
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          validate-wrappers: true
 
       - name: Create image and push
         uses: docker/build-push-action@v5

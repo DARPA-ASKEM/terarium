@@ -1,9 +1,10 @@
 import sys
 import traceback
-
 from chains import enrich_model_chain
-from entities import ModelCardModel
-from llms.openai.OpenAiTools import OpenAiTools
+from entities import ModelAndDocument
+from llms.azure.AzureTools import AzureTools
+from llms.determine_llm import determine_llm
+
 from taskrunner import TaskRunnerInterface
 
 
@@ -19,13 +20,18 @@ def main():
 
         input_dict = taskrunner.read_input_dict_with_timeout()
 
-        taskrunner.log("Creating ModelCardModel from input")
-        input_model = ModelCardModel(**input_dict)
+        taskrunner.log("Creating ModelAndDocument from input")
+        input_model = ModelAndDocument(**input_dict)
 
-        taskrunner.log("Sending request to OpenAI API")
-        llm = OpenAiTools()
+        try:
+            llm = determine_llm(input_model.llm)
+            taskrunner.log(f"Using {llm.name}")
+        except Exception as e:
+            llm = AzureTools()
+            taskrunner.log(f"WARNING: {e}, defaulting to {llm.name}")
+
         response = enrich_model_chain(llm, amr=input_model.amr, document=input_model.document)
-        taskrunner.log("Received response from OpenAI API")
+        taskrunner.log("Received response from LLM")
 
         taskrunner.write_output_dict_with_timeout({"response": response})
 

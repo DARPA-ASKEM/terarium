@@ -14,7 +14,7 @@ Use the following JSON formatted mathematical model:
 and the following JSON formatted research paper:
 
 ---START PAPER---
-{research_paper}
+{document}
 ---END PAPER---
 
 Assume that the paper describes multiple conditions to which the model can be applied. Create a model configuration for each condition. (E.g. different countries, intervention policies, or disease severity)

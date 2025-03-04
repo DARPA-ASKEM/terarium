@@ -11,7 +11,7 @@ import { CalibrationOperationStateCiemss } from './calibrate-operation';
  * to differentiate before and after columns in the run results
  * */
 export const renameFnGenerator = (label: string) => (col: string) => {
-	if (col === 'timepoint_id' || col === 'sample_id') return col;
+	if (col === 'timepoint_id' || col === 'sample_id' || col === 'timepoint_unknown') return col;
 	return `${col}:${label}`;
 };
 
@@ -40,7 +40,7 @@ export const mergeResults = (
 	* Utilied in calibration for charts
 	* Assume that simulationData is in the form of pyciemss
 			states end with _State
-			The timestamp column is titled: timepoint_id
+			The timestamp column is titled: timepoint_unknown
 	* Assume that the mapping is in the calibration form:
 			Ground truth will map to datasetVariable
 			Simulation data will map to modelVariable AND not include _State
@@ -71,7 +71,7 @@ export function getErrorData(
 			const newEntries = entries.map((entry) => {
 				// Ensure the simulation data maps to the same as the ground truth:
 				const varName = mapping.find((m) => m.datasetVariable === columnName)?.modelVariable;
-				return { [timestampColName]: entry.timepoint_id, [columnName]: entry[pyciemssMap[varName as string]] };
+				return { [timestampColName]: entry.timepoint_unknown, [columnName]: entry[pyciemssMap[varName as string]] };
 			});
 			const meanAbsoluteError = mae(groundTruth, newEntries, timestampColName, columnName);
 			resultRow[columnName] = meanAbsoluteError;
@@ -87,7 +87,7 @@ export function getSelectedOutputMapping(node: WorkflowNode<CalibrationOperation
 	return [
 		...(wfOutputState?.mapping || []),
 		// special case for timestamp column name mapping
-		{ modelVariable: 'timepoint_id', datasetVariable: wfOutputState?.timestampColName ?? '' }
+		{ modelVariable: 'timepoint_unknown', datasetVariable: wfOutputState?.timestampColName ?? '' }
 	];
 }
 

@@ -39,14 +39,14 @@ def model_config_from_dataset_chain(llm: LlmToolsInterface, amr: str, dataset: L
     return model_config_adapter(output)
 
 
-def model_config_from_document_chain(llm: LlmToolsInterface, research_paper: str, amr: str) -> dict:
+def model_config_from_document_chain(llm: LlmToolsInterface, document: str, amr: str) -> dict:
     print("Uploading and validating model configuration schema...")
     config_path = os.path.join(SCHEMAS_DIR, 'configuration.json')
     with open(config_path, 'r') as config_file:
         response_schema = json.load(config_file)
     validate_schema(response_schema)
 
-    prompt = llm.create_config_from_document_prompt(amr, research_paper, response_schema)
+    prompt = llm.create_config_from_document_prompt(amr, document, response_schema)
     output = llm.send_to_llm_with_json_output(prompt, response_schema)
 
     print("There are ", len(output["conditions"]), "conditions identified from the text.")
@@ -98,14 +98,14 @@ def equations_from_image_chain(llm: LlmToolsInterface, image: str) -> dict:
     return output
 
 
-def interventions_from_document_chain(llm: LlmToolsInterface, research_paper: str, amr: str) -> dict:
+def interventions_from_document_chain(llm: LlmToolsInterface, document: str, amr: str) -> dict:
     print("Uploading and validating intervention policy schema...")
     config_path = os.path.join(SCHEMAS_DIR, 'intervention_policy.json')
     with open(config_path, 'r') as config_file:
         response_schema = json.load(config_file)
     validate_schema(response_schema)
 
-    prompt = llm.create_interventions_from_document_prompt(amr, research_paper, response_schema)
+    prompt = llm.create_interventions_from_document_prompt(amr, document, response_schema)
     output = llm.send_to_llm_with_json_output(prompt, response_schema)
 
     print("There are ", len(output["interventionPolicies"]), "intervention policies identified from the text.")
@@ -128,14 +128,14 @@ def interventions_from_dataset_chain(llm: LlmToolsInterface, dataset: List[str],
     return output
 
 
-def model_card_chain(llm: LlmToolsInterface, amr: str, research_paper: str = None) -> dict:
+def model_card_chain(llm: LlmToolsInterface, amr: str, document: str = None) -> dict:
     print("Uploading and validating model card schema...")
     config_path = os.path.join(SCHEMAS_DIR, 'model_card.json')
     with open(config_path, 'r') as config_file:
         response_schema = json.load(config_file)
     validate_schema(response_schema)
 
-    prompt = llm.create_model_card_prompt(amr, research_paper, response_schema)
+    prompt = llm.create_model_card_prompt(amr, document, response_schema)
     return llm.send_to_llm_with_json_output(prompt, response_schema)
 
 
@@ -146,7 +146,7 @@ def compare_models_chain(llm: LlmToolsInterface, amrs: List[str], goal: str) -> 
         response_schema = json.load(config_file)
     validate_schema(response_schema)
 
-    prompt = llm.create_compare_models_prompt(amrs, goal, response_schema)
+    prompt = llm.create_compare_models_prompt(amrs, None, goal, response_schema)
     return llm.send_to_llm_with_json_output(prompt, response_schema)
 
 

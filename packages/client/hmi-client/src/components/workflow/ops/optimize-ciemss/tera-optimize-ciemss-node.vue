@@ -133,6 +133,7 @@ const startForecast = async (optimizedInterventions?: InterventionPolicy) => {
 			start: 0,
 			end: props.node.state.endTime
 		},
+		loggingStepSize: props.node.state.endTime / props.node.state.numberOfTimepoints,
 		extra: {
 			num_samples: props.node.state.numSamples,
 			method: props.node.state.solverMethod,
