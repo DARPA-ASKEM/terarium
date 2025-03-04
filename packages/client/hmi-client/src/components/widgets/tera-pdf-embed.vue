@@ -91,6 +91,8 @@ watch(isAdobePdfApiReady, () => {
 							y2: 700
 						};
 						const padding = 5;
+						const pageIndex = 0;
+
 						const annotation = {
 							'@context': ['https://www.w3.org/ns/anno.jsonld', 'https://comments.acrobat.com/ns/anno.jsonld'],
 							type: 'Annotation',
@@ -101,7 +103,7 @@ watch(isAdobePdfApiReady, () => {
 								source: pdfFileId,
 								selector: {
 									node: {
-										index: 0
+										index: pageIndex
 									},
 									opacity: 1,
 									subtype: 'shape',
