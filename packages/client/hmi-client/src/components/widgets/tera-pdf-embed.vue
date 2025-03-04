@@ -57,6 +57,7 @@ watch(isAdobePdfApiReady, () => {
 		);
 
 		if (props.pdfLink) {
+			const pdfFileId = 'dummy-id';
 			adobeDCView.value
 				.previewFile(
 					{
@@ -65,21 +66,77 @@ watch(isAdobePdfApiReady, () => {
 								url: props.pdfLink
 							}
 						},
-						metaData: { fileName: props.title }
+						metaData: { id: pdfFileId, fileName: props.title }
 					},
 					{
 						embedMode: 'FULL_WINDOW',
 						showPrintPDF: true,
 						showDownloadPDF: true,
-						showAnnotationTools: false,
+						showAnnotationTools: true, // this must be true to use annotation ui fir public version
+						enableAnnotationAPIs: true,
+						includePDFAnnotations: false,
 						viewMode: 'FIT_WIDTH'
 					}
 				)
-				.then((viewer) =>
+				.then((viewer) => {
 					viewer.getAPIs().then((apis) => {
 						adobeApis.value = apis;
-					})
-				);
+					});
+					/// Experiment
+					viewer.getAnnotationManager().then((annotationManager) => {
+						const { x1, x2, y1, y2 } = {
+							x1: 100,
+							y1: 500,
+							x2: 200,
+							y2: 700
+						};
+						const padding = 5;
+						const annotation = {
+							'@context': ['https://www.w3.org/ns/anno.jsonld', 'https://comments.acrobat.com/ns/anno.jsonld'],
+							type: 'Annotation',
+							id: '079d66a4-5ec2-4703-ae9d-30ccbb1aa84c',
+							bodyValue: "I can't hide this and annotation UI on the left side when using annotation :(",
+							motivation: 'commenting',
+							target: {
+								source: pdfFileId,
+								selector: {
+									node: {
+										index: 0
+									},
+									opacity: 1,
+									subtype: 'shape',
+									boundingBox: [x1 - padding, y1, x2, y2 + padding],
+									inkList: [
+										[x1, y1, x2, y1],
+										[x1, y1, x1, y2],
+										[x1, y2, x2, y2],
+										[x2, y2, x2, y1]
+									],
+									strokeColor: '#ff0808',
+									strokeWidth: 2,
+									type: 'AdobeAnnoSelector'
+								}
+							},
+							creator: {
+								type: 'Person',
+								name: 'Test User'
+							},
+							created: '2018-08-02T14:45:37Z',
+							modified: '2020-01-20T07:54:10Z'
+						};
+						annotationManager
+							.addAnnotations([annotation])
+							.then(() => {
+								console.log('Annotation added successfully.');
+							})
+							.catch((error) => {
+								console.error('Error adding annotation:', error);
+							});
+					});
+				})
+				.catch((error) => {
+					console.error('Error previewing file:', error);
+				});
 		} else if (props.filePromise) {
 			adobeDCView.value
 				.previewFile(
