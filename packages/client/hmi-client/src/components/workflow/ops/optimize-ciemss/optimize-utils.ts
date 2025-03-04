@@ -4,7 +4,7 @@ import { WorkflowNode } from '@/types/workflow';
 import { DataArray, parsePyCiemssMap } from '@/services/models/simulation-service';
 import { DynamicIntervention, Intervention, StaticIntervention } from '@/types/Types';
 import { isInterventionStatic } from '@/services/intervention-policy';
-import { mergeResults } from '../calibrate-ciemss/calibrate-utils';
+import { mergeResults } from '@/services/dataset';
 import {
 	ContextMethods,
 	Criterion,
@@ -33,7 +33,8 @@ export function usePreparedChartInputs(
 		if (_.isEmpty(pyciemssMap)) return null;
 
 		// Merge before/after for chart
-		const { result, resultSummary } = mergeResults(preResult, postResult, preResultSummary, postResultSummary);
+		const result = mergeResults(preResult, postResult);
+		const resultSummary = mergeResults(preResultSummary, postResultSummary);
 
 		const translationMap: Record<string, string> = {};
 		Object.keys(pyciemssMap).forEach((key) => {

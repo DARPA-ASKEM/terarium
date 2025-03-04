@@ -24,7 +24,7 @@ import { computed, ref, toRef, watch } from 'vue';
 import Button from 'primevue/button';
 import { logger } from '@/utils/logger';
 import { updateChartSettingsBySelectedVariables, updateSensitivityChartSettingOption } from '@/services/chart-settings';
-import { createDatasetFromSimulationResult } from '@/services/dataset';
+import { createDatasetFromSimulationResult, mergeResults } from '@/services/dataset';
 import { flattenInterventionData, getInterventionPolicyById } from '@/services/intervention-policy';
 import { getModelByModelConfigurationId, getTypesFromModelParts, getUnitsFromModelParts } from '@/services/model';
 import { getModelConfigurationById } from '@/services/model-configurations';
@@ -50,7 +50,7 @@ import { useProjects } from '@/composables/project';
 import { Poller, PollerState } from '@/api/api';
 import TeraNodePreview from '../tera-node-preview.vue';
 import { SimulateCiemssOperationState, SimulateCiemssOperation } from './simulate-ciemss-operation';
-import { mergeResults, renameFnGenerator } from '../calibrate-ciemss/calibrate-utils';
+import { renameFnGenerator } from '../calibrate-ciemss/calibrate-utils';
 import { usePreparedChartInputs } from './simulate-utils';
 
 const props = defineProps<{
@@ -323,9 +323,8 @@ watch(
 				getRunResultCSV(baseForecastId, 'result.csv', renameFnGenerator('pre')),
 				getRunResultCSV(baseForecastId, 'result_summary.csv', renameFnGenerator('pre'))
 			]);
-			const merged = mergeResults(baseResult, result, baseResultSummary, resultSummary);
-			result = merged.result;
-			resultSummary = merged.resultSummary;
+			result = mergeResults(baseResult, result);
+			resultSummary = mergeResults(baseResultSummary, resultSummary);
 		}
 		runResults.value[selectedRunId.value] = result;
 		runResultsSummary.value[selectedRunId.value] = resultSummary;

@@ -14,12 +14,13 @@ import { WorkflowNode } from '@/types/workflow';
 import { getActiveOutput } from '@/components/workflow/util';
 import { CalibrateMap, setupModelInput } from '@/services/calibrate-workflow';
 import { getAsConfiguredModel } from '@/services/model-configurations';
+import { mergeResults } from '@/services/dataset';
 import {
 	CalibrateEnsembleCiemssOperationState,
 	CalibrateEnsembleMappingRow,
 	CalibrateEnsembleWeights
 } from './calibrate-ensemble-ciemss-operation';
-import { getErrorData, mergeResults, renameFnGenerator } from '../calibrate-ciemss/calibrate-utils';
+import { getErrorData, renameFnGenerator } from '../calibrate-ciemss/calibrate-utils';
 
 export async function getLossValuesFromSimulation(calibrationId: string) {
 	if (!calibrationId) return [];
@@ -130,7 +131,8 @@ export async function fetchOutputData(preForecastId: string, postForecastId: str
 	const pyciemssMap = parseEnsemblePyciemssMap(runResult[0], ensembleVarModelConfigMap);
 
 	// Merge before/after for chart
-	const { result, resultSummary } = mergeResults(runResultPre, runResult, runResultSummaryPre, runResultSummary);
+	const result = mergeResults(runResultPre, runResult);
+	const resultSummary = mergeResults(runResultSummaryPre, runResultSummary);
 
 	const resultGroupByTimepoint = processAndSortSamplesByTimepoint(result);
 	return {
