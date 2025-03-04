@@ -56,4 +56,7 @@ build
 create.sql
 .eslintcache
 
+# Claude assistant configuration - contains project-specific commands and style guidelines
+CLAUDE.md
+
 /docker-compose*.y*ml
