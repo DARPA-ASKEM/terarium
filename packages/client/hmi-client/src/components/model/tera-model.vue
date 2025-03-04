@@ -25,12 +25,20 @@
 			</aside>
 		</template>
 		<section v-if="temporaryModel && mmtData">
+			<div class="warn" v-if="modelErrors.length > 0">
+				Errors or warnings detected, please check individual sections below.
+			</div>
+			<div v-for="(err, idx) of modelErrors.filter((d) => d.type === 'model')" :key="idx">
+				<div :class="err.severity">{{ err.content }}</div>
+			</div>
+
 			<tera-model-description :model="temporaryModel" :mmt-data="mmtData" @update-model="updateTemporaryModel" />
 			<tera-petrinet-parts
 				:model="temporaryModel"
 				:mmt="mmtData.mmt"
 				:mmt-params="mmtData.template_params"
 				:feature-config="{ isPreview: false }"
+				:model-errors="modelErrors"
 				@update-state="(e: any) => onUpdateModelPart('state', e)"
 				@update-parameter="(e: any) => onUpdateModelPart('parameter', e)"
 				@update-observable="(e: any) => onUpdateModelPart('observable', e)"
@@ -68,12 +76,14 @@ import { useProjects } from '@/composables/project';
 import { logger } from '@/utils/logger';
 import { MMT } from '@/model-representation/mira/mira-common';
 import {
+	checkPetrinetAMR,
 	updateState,
 	updateParameter,
 	updateObservable,
 	updateTransition,
 	updateTime
 } from '@/model-representation/service';
+import type { ModelError } from '@/model-representation/service';
 
 const props = defineProps({
 	assetId: {
@@ -100,6 +110,7 @@ const isModelLoading = ref(false);
 const showSaveModal = ref(false);
 const hasChanged = computed(() => !isEqual(model.value, temporaryModel.value));
 const hasEditPermission = useProjects().hasEditPermission();
+const modelErrors = ref<ModelError[]>([]);
 
 // Edit menu
 async function onSave() {
@@ -166,16 +177,7 @@ async function refreshMMT() {
 }
 
 function updateTemporaryModel(newModel: Model) {
-	let doMmtUpdate = false;
-	// Only update the MMT when the semantics of the model changes
-	if (
-		!isEqual(temporaryModel.value?.model, newModel.model) ||
-		!isEqual(temporaryModel.value?.semantics, newModel.semantics)
-	) {
-		doMmtUpdate = true;
-	}
 	temporaryModel.value = cloneDeep(newModel);
-	if (doMmtUpdate) refreshMMT();
 }
 
 function onUpdateModelPart(property: 'state' | 'parameter' | 'observable' | 'transition' | 'time', event: any) {
@@ -207,6 +209,8 @@ function onUpdateModelPart(property: 'state' | 'parameter' | 'observable' | 'tra
 async function fetchModel() {
 	model.value = await getModel(props.assetId);
 	temporaryModel.value = cloneDeep(model.value);
+	modelErrors.value = checkPetrinetAMR(model.value as Model);
+
 	await refreshMMT();
 }
 
@@ -249,5 +253,13 @@ watch(
 	align-items: center;
 	gap: var(--gap-2);
 	margin-left: auto;
+}
+
+.warn {
+	background-color: var(--surface-warning);
+}
+
+.error {
+	background-color: var(--surface-error);
 }
 </style>

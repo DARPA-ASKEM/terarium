@@ -407,6 +407,7 @@
 						"
 						:active-settings="activeChartSettings"
 						:generate-annotation="generateAnnotation"
+						:get-chart-labels="getChartLabels"
 						@delete-annotation="deleteAnnotation"
 						@update-settings="updateActiveChartSettings"
 						@close="setActiveChartSettings(null)"
@@ -832,6 +833,7 @@ const {
 
 const {
 	generateAnnotation,
+	getChartLabels,
 	getChartAnnotationsByChartId,
 	useInterventionCharts,
 	useVariableCharts,

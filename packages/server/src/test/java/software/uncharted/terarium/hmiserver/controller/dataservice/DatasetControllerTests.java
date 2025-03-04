@@ -73,7 +73,7 @@ public class DatasetControllerTests extends TerariumApplicationTests {
 			.perform(
 				MockMvcRequestBuilders.post("/datasets")
 					.with(csrf())
-					.param("project-id", PROJECT_ID.toString())
+					.param("project-id", project.getId().toString())
 					.contentType("application/json")
 					.content(objectMapper.writeValueAsString(dataset))
 			)
@@ -91,7 +91,7 @@ public class DatasetControllerTests extends TerariumApplicationTests {
 		mockMvc
 			.perform(
 				MockMvcRequestBuilders.get("/datasets/" + dataset.getId())
-					.param("project-id", PROJECT_ID.toString())
+					.param("project-id", project.getId().toString())
 					.with(csrf())
 			)
 			.andExpect(status().isOk());
@@ -108,7 +108,7 @@ public class DatasetControllerTests extends TerariumApplicationTests {
 		mockMvc
 			.perform(
 				MockMvcRequestBuilders.delete("/datasets/" + dataset.getId())
-					.param("project-id", PROJECT_ID.toString())
+					.param("project-id", project.getId().toString())
 					.with(csrf())
 			)
 			.andExpect(status().isOk());
@@ -140,7 +140,7 @@ public class DatasetControllerTests extends TerariumApplicationTests {
 				MockMvcRequestBuilders.multipart("/datasets/" + dataset.getId() + "/upload-csv")
 					.file(file)
 					.queryParam("filename", "filename.csv")
-					.param("project-id", PROJECT_ID.toString())
+					.param("project-id", project.getId().toString())
 					.with(csrf())
 					.contentType(MediaType.MULTIPART_FORM_DATA)
 					.with(request -> {
@@ -166,7 +166,7 @@ public class DatasetControllerTests extends TerariumApplicationTests {
 			.perform(
 				MockMvcRequestBuilders.put("/datasets/" + dataset.getId() + "/upload-csv-from-github")
 					.with(csrf())
-					.param("project-id", PROJECT_ID.toString())
+					.param("project-id", project.getId().toString())
 					.param("repo-owner-and-name", "unchartedsoftware/torflow")
 					.param("path", "README.md")
 					.param("filename", "torflow-readme.md")
@@ -199,7 +199,7 @@ public class DatasetControllerTests extends TerariumApplicationTests {
 				MockMvcRequestBuilders.multipart("/datasets/" + dataset.getId() + "/upload-csv")
 					.file(file)
 					.queryParam("filename", "filename.csv")
-					.param("project-id", PROJECT_ID.toString())
+					.param("project-id", project.getId().toString())
 					.with(csrf())
 					.contentType(MediaType.MULTIPART_FORM_DATA)
 					.with(request -> {
@@ -247,7 +247,7 @@ public class DatasetControllerTests extends TerariumApplicationTests {
 				MockMvcRequestBuilders.multipart("/datasets/" + dataset.getId() + "/upload-file")
 					.file(file)
 					.queryParam("filename", "filename.txt")
-					.param("project-id", PROJECT_ID.toString())
+					.param("project-id", project.getId().toString())
 					.with(csrf())
 					.contentType(MediaType.MULTIPART_FORM_DATA)
 					.with(request -> {
@@ -282,7 +282,7 @@ public class DatasetControllerTests extends TerariumApplicationTests {
 				MockMvcRequestBuilders.multipart("/datasets/" + dataset.getId() + "/upload-csv")
 					.file(file)
 					.queryParam("filename", "filename.csv")
-					.param("project-id", PROJECT_ID.toString())
+					.param("project-id", project.getId().toString())
 					.with(csrf())
 					.contentType(MediaType.MULTIPART_FORM_DATA)
 					.with(request -> {
@@ -364,7 +364,7 @@ public class DatasetControllerTests extends TerariumApplicationTests {
 			.perform(
 				MockMvcRequestBuilders.get("/datasets/" + dataset.getId() + "/download-url")
 					.queryParam("filename", "filename.txt")
-					.param("project-id", PROJECT_ID.toString())
+					.param("project-id", project.getId().toString())
 					.with(csrf())
 			)
 			.andExpect(status().isOk())

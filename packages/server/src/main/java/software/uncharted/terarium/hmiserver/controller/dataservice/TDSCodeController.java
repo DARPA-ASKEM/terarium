@@ -36,17 +36,14 @@ import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
+import software.uncharted.terarium.hmiserver.annotations.HasProjectAccess;
 import software.uncharted.terarium.hmiserver.models.dataservice.PresignedURL;
 import software.uncharted.terarium.hmiserver.models.dataservice.ResponseDeleted;
 import software.uncharted.terarium.hmiserver.models.dataservice.code.Code;
 import software.uncharted.terarium.hmiserver.models.dataservice.code.CodeFile;
-import software.uncharted.terarium.hmiserver.proxies.github.GithubProxy;
 import software.uncharted.terarium.hmiserver.proxies.jsdelivr.JsDelivrProxy;
 import software.uncharted.terarium.hmiserver.security.Roles;
-import software.uncharted.terarium.hmiserver.service.CurrentUserService;
 import software.uncharted.terarium.hmiserver.service.data.CodeService;
-import software.uncharted.terarium.hmiserver.service.data.ProjectAssetService;
-import software.uncharted.terarium.hmiserver.service.data.ProjectService;
 import software.uncharted.terarium.hmiserver.utils.Messages;
 import software.uncharted.terarium.hmiserver.utils.rebac.Schema;
 
@@ -62,10 +59,6 @@ public class TDSCodeController {
 
 	final CodeService codeService;
 
-	final ProjectService projectService;
-
-	final CurrentUserService currentUserService;
-
 	/**
 	 * Creates a code.
 	 *
@@ -75,6 +68,7 @@ public class TDSCodeController {
 	@PostMapping
 	@Secured(Roles.USER)
 	@Operation(summary = "Create a new code resource")
+	@HasProjectAccess(level = Schema.Permission.WRITE)
 	@ApiResponses(
 		value = {
 			@ApiResponse(
@@ -96,11 +90,6 @@ public class TDSCodeController {
 		@RequestBody Code code,
 		@RequestParam(name = "project-id", required = false) final UUID projectId
 	) {
-		final Schema.Permission permission = projectService.checkPermissionCanWrite(
-			currentUserService.get().getId(),
-			projectId
-		);
-
 		try {
 			code = codeService.createAsset(code, projectId);
 			return ResponseEntity.status(HttpStatus.CREATED).body(code);
@@ -123,6 +112,7 @@ public class TDSCodeController {
 	@GetMapping("/{id}")
 	@Secured(Roles.USER)
 	@Operation(summary = "Gets code resource by ID")
+	@HasProjectAccess
 	@ApiResponses(
 		value = {
 			@ApiResponse(
@@ -145,11 +135,6 @@ public class TDSCodeController {
 		@PathVariable("id") final UUID id,
 		@RequestParam(name = "project-id", required = false) final UUID projectId
 	) {
-		final Schema.Permission permission = projectService.checkPermissionCanRead(
-			currentUserService.get().getId(),
-			projectId
-		);
-
 		try {
 			final Optional<Code> code = codeService.getAsset(id);
 			return code.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.noContent().build());
@@ -172,6 +157,7 @@ public class TDSCodeController {
 	@PutMapping("/{id}")
 	@Secured(Roles.USER)
 	@Operation(summary = "Update a code resource")
+	@HasProjectAccess(level = Schema.Permission.WRITE)
 	@ApiResponses(
 		value = {
 			@ApiResponse(
@@ -195,11 +181,6 @@ public class TDSCodeController {
 		@RequestBody final Code code,
 		@RequestParam(name = "project-id", required = false) final UUID projectId
 	) {
-		final Schema.Permission permission = projectService.checkPermissionCanWrite(
-			currentUserService.get().getId(),
-			projectId
-		);
-
 		try {
 			code.setId(codeId);
 			final Optional<Code> updated = codeService.updateAsset(code, projectId);
@@ -222,6 +203,7 @@ public class TDSCodeController {
 	@DeleteMapping("/{id}")
 	@Secured(Roles.USER)
 	@Operation(summary = "Delete a code resource by ID")
+	@HasProjectAccess(level = Schema.Permission.WRITE)
 	@ApiResponses(
 		value = {
 			@ApiResponse(
@@ -243,11 +225,6 @@ public class TDSCodeController {
 		@PathVariable("id") final UUID id,
 		@RequestParam(name = "project-id", required = false) final UUID projectId
 	) {
-		final Schema.Permission permission = projectService.checkPermissionCanWrite(
-			currentUserService.get().getId(),
-			projectId
-		);
-
 		try {
 			codeService.deleteAsset(id, projectId);
 		} catch (final IOException e) {
@@ -381,6 +358,7 @@ public class TDSCodeController {
 	@PutMapping(value = "/{id}/upload-code", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
 	@Secured(Roles.USER)
 	@Operation(summary = "Uploads a file to the specified codeId")
+	@HasProjectAccess(level = Schema.Permission.WRITE)
 	@ApiResponses(
 		value = {
 			@ApiResponse(
@@ -400,11 +378,6 @@ public class TDSCodeController {
 		@RequestPart("file") final MultipartFile input,
 		@RequestParam(name = "project-id", required = false) final UUID projectId
 	) throws IOException {
-		final Schema.Permission permission = projectService.checkPermissionCanWrite(
-			currentUserService.get().getId(),
-			projectId
-		);
-
 		log.debug("Uploading code {} to project", codeId);
 
 		final byte[] fileAsBytes = input.getBytes();
@@ -416,6 +389,7 @@ public class TDSCodeController {
 	@PutMapping("/{id}/upload-code-from-github")
 	@Secured(Roles.USER)
 	@Operation(summary = "Uploads a file from GitHub given the path and owner name, then uploads it to the project")
+	@HasProjectAccess(level = Schema.Permission.WRITE)
 	@ApiResponses(
 		value = {
 			@ApiResponse(
@@ -436,10 +410,6 @@ public class TDSCodeController {
 		@RequestParam(name = "project-id", required = false) final UUID projectId
 	) {
 		log.debug("Uploading code file from github to dataset {}", codeId);
-		final Schema.Permission permission = projectService.checkPermissionCanWrite(
-			currentUserService.get().getId(),
-			projectId
-		);
 
 		// download file from GitHub
 		final String fileString = jsdelivrProxy.getGithubCode(repoOwnerAndName, path).getBody();
@@ -464,6 +434,7 @@ public class TDSCodeController {
 	@PutMapping("/{id}/upload-code-from-github-repo")
 	@Secured(Roles.USER)
 	@Operation(summary = "Uploads a file from GitHub given the path and owner name, then uploads it to the project")
+	@HasProjectAccess(level = Schema.Permission.WRITE)
 	@ApiResponses(
 		value = {
 			@ApiResponse(
@@ -483,11 +454,6 @@ public class TDSCodeController {
 		@RequestParam("repo-name") final String repoName,
 		@RequestParam(name = "project-id", required = false) final UUID projectId
 	) {
-		final Schema.Permission permission = projectService.checkPermissionCanWrite(
-			currentUserService.get().getId(),
-			projectId
-		);
-
 		try (final CloseableHttpClient httpClient = HttpClients.custom().build()) {
 			final String githubApiUrl = "https://api.github.com/repos/" + repoOwnerAndName + "/zipball/";
 

@@ -9,25 +9,25 @@ import software.uncharted.terarium.hmiserver.utils.rebac.Schema;
 public class HasProjectAccessAspectMethodTestService {
 
 	@HasProjectAccess
-	public void defaultParameterName(String id) {}
+	public void defaultParameterName(String projectId) {}
 
-	@HasProjectAccess("#projectId")
-	public void customParameterName(String projectId) {}
+	@HasProjectAccess("#id")
+	public void customParameterName(String id) {}
 
 	@HasProjectAccess(level = Schema.Permission.WRITE)
-	public void ownerLevel(String id) {}
+	public void ownerLevel(String projectId) {}
 
-	@HasProjectAccess(level = Schema.Permission.WRITE, value = "#projectId")
-	public void ownerLevelWithCustomParameterName(String projectId) {}
+	@HasProjectAccess(level = Schema.Permission.WRITE, value = "#id")
+	public void ownerLevelWithCustomParameterName(String id) {}
 
 	@HasProjectAccess
-	public void incorrectSpel(String projectId) {}
+	public void incorrectSpel(String id) {}
 
-	@HasProjectAccess("#projectId")
-	public void incorrectSpel2(String id) {}
+	@HasProjectAccess("#id")
+	public void incorrectSpel2(String projectId) {}
 
 	@HasProjectAccess("jladjklsdjkl")
-	public void incorrectSpel3(String id) {}
+	public void incorrectSpel3(String projectId) {}
 
 	@HasProjectAccess("#p.getId()")
 	public void objectSpel(Project p) {}

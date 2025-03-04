@@ -30,7 +30,4 @@ public class TerariumApplicationTests {
 	public void beforeEach() {
 		mockMvc = MockMvcBuilders.webAppContextSetup(this.context).apply(springSecurity()).build();
 	}
-
-	/** To allow calls to Asset and Project Controllers a projectId is required */
-	public UUID PROJECT_ID = UUID.randomUUID();
 }
