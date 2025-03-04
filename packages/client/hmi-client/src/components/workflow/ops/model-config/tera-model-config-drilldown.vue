@@ -53,7 +53,6 @@
 									:configuration="configuration"
 									:selected="selectedConfigId === configuration.id"
 									:empty-input-count="missingInputCount(configuration)"
-									@click="onSelectConfiguration(configuration)"
 									@delete="fetchConfigurations(model.id)"
 									@downloadArchive="downloadZippedModelAndConfig(configuration)"
 									@downloadModel="downloadModel(configuration)"

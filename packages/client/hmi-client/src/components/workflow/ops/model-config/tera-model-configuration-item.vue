@@ -1,5 +1,5 @@
 <template>
-	<main :class="{ selected: selected }">
+	<main :class="{ selected: selected }" @click="emit('use')">
 		<header>
 			<h6 class="constrain-width">{{ configuration.name }}</h6>
 			<Button text icon="pi pi-ellipsis-v" @click.stop="toggleContextMenu" />
