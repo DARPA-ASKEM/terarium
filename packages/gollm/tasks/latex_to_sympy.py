@@ -1,9 +1,10 @@
 import sys
 import traceback
-
 from chains import latex_to_sympy_chain
 from entities import EquationsModel
-from llms.openai.OpenAiTools import OpenAiTools
+from llms.azure.AzureTools import AzureTools
+from llms.determine_llm import determine_llm
+
 from taskrunner import TaskRunnerInterface
 
 
@@ -22,10 +23,15 @@ def main():
         taskrunner.log("Creating EquationsModel from input")
         input_model = EquationsModel(**input_dict)
 
-        taskrunner.log("Sending request to OpenAI API")
-        llm = OpenAiTools()
+        try:
+            llm = determine_llm(input_model.llm)
+            taskrunner.log(f"Using {llm.name}")
+        except Exception as e:
+            llm = AzureTools()
+            taskrunner.log(f"WARNING: {e}, defaulting to {llm.name}")
+
         response = latex_to_sympy_chain(llm, equations=input_model.equations)
-        taskrunner.log("Received response from OpenAI API")
+        taskrunner.log("Received response from LLM")
 
         taskrunner.write_output_dict_with_timeout({"response": response})
 

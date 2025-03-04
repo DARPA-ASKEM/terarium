@@ -11,7 +11,7 @@ import org.springframework.stereotype.Component;
 @Component
 @RequiredArgsConstructor
 @Slf4j
-public class EquationsCleanupResponseHandler extends TaskResponseHandler {
+public class EquationsCleanupResponseHandler extends LlmTaskResponseHandler {
 
 	public static final String NAME = "gollm:equations_cleanup";
 
@@ -21,7 +21,7 @@ public class EquationsCleanupResponseHandler extends TaskResponseHandler {
 	}
 
 	@Data
-	public static class Input {
+	public static class Input extends LlmTaskResponseHandler.Input {
 
 		List<String> equations;
 	}

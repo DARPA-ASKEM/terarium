@@ -15,7 +15,7 @@ import software.uncharted.terarium.hmiserver.service.data.InterventionService;
 @Component
 @RequiredArgsConstructor
 @Slf4j
-public class InterventionsFromDocumentResponseHandler extends TaskResponseHandler {
+public class InterventionsFromDocumentResponseHandler extends LlmTaskResponseHandler {
 
 	public static final String NAME = "gollm:interventions_from_document";
 
@@ -28,10 +28,10 @@ public class InterventionsFromDocumentResponseHandler extends TaskResponseHandle
 	}
 
 	@Data
-	public static class Input {
+	public static class Input extends LlmTaskResponseHandler.Input {
 
-		@JsonProperty("research_paper")
-		String researchPaper;
+		@JsonProperty("document")
+		String document;
 
 		@JsonProperty("amr")
 		String amr;

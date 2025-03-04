@@ -19,7 +19,7 @@ import software.uncharted.terarium.hmiserver.service.data.ModelService;
 @Component
 @RequiredArgsConstructor
 @Slf4j
-public class ModelCardResponseHandler extends TaskResponseHandler {
+public class ModelCardResponseHandler extends LlmTaskResponseHandler {
 
 	public static final String NAME = "gollm:model_card";
 	private final ObjectMapper objectMapper;
@@ -34,13 +34,13 @@ public class ModelCardResponseHandler extends TaskResponseHandler {
 	}
 
 	@Data
-	public static class Input {
+	public static class Input extends LlmTaskResponseHandler.Input {
 
 		@JsonProperty("amr")
 		String amr;
 
-		@JsonProperty("research_paper")
-		String researchPaper;
+		@JsonProperty("document")
+		String document;
 	}
 
 	@Data
