@@ -100,19 +100,27 @@
 					</section>
 					<section v-if="isChartLabelsOptionEnabled" class="items-wrapper">
 						<h5>Chart Labels</h5>
-						<tera-input-text class="chart-label-input" label="Title" placeholder="No title" v-model="chartLabelTitle" />
-						<tera-input-text
-							class="chart-label-input"
-							label="X axis"
-							placeholder="No x axis"
-							v-model="chartLabelXAxis"
-						/>
-						<tera-input-text
-							class="chart-label-input"
-							label="Y axis"
-							placeholder="No y axis"
-							v-model="chartLabelYAxis"
-						/>
+						<template v-if="activeSettings.type !== ChartSettingType.SENSITIVITY">
+							<tera-input-text
+								class="chart-label-input"
+								label="Title"
+								placeholder="No title"
+								v-model="chartLabelTitle"
+							/>
+							<tera-input-text
+								class="chart-label-input"
+								label="X axis"
+								placeholder="No x axis"
+								v-model="chartLabelXAxis"
+							/>
+							<tera-input-text
+								class="chart-label-input"
+								label="Y axis"
+								placeholder="No y axis"
+								v-model="chartLabelYAxis"
+							/>
+						</template>
+						<tera-input-number class="chart-label-input" label="Font size" v-model="chartLabelFontSize" />
 						<Divider />
 					</section>
 				</div>
@@ -130,9 +138,11 @@ import { ChartSetting, ChartSettingType, ChartSettingComparison, ChartLabelOptio
 import { ChartAnnotation, ChartAnnotationType } from '@/types/Types';
 import Divider from 'primevue/divider';
 import TeraInputText from '@/components/widgets/tera-input-text.vue';
+import teraInputNumber from '@/components/widgets/tera-input-number.vue';
 import TeraCheckbox from '@/components/widgets/tera-checkbox.vue';
 import TeraChartSettingsItem from '@/components/widgets/tera-chart-settings-item.vue';
 import { getComparisonVariableColors } from '@/services/chart-settings';
+import { DEFAULT_FONT_SIZE } from '@/services/charts';
 import { getChartAnnotationType } from '@/services/chart-annotation';
 
 const props = defineProps<{
@@ -227,13 +237,15 @@ const onColorChange = (event) => {
 };
 
 // ========== Chart Labels =========
+// Note: Error chart isn't supported for chart labels configuration yet. Some refactoring needed for the error charts to support chart labels.
 const ChartLabelsSupportedTypes = [
 	ChartSettingType.VARIABLE,
 	ChartSettingType.VARIABLE_OBSERVABLE,
 	ChartSettingType.VARIABLE_COMPARISON,
 	ChartSettingType.VARIABLE_ENSEMBLE,
 	ChartSettingType.DISTRIBUTION_COMPARISON,
-	ChartSettingType.INTERVENTION
+	ChartSettingType.INTERVENTION,
+	ChartSettingType.SENSITIVITY
 ];
 const isChartLabelsOptionEnabled = computed(() => {
 	if (!props.activeSettings) return false;
@@ -243,24 +255,34 @@ const isChartLabelsOptionEnabled = computed(() => {
 const chartLabelTitle = ref<string>('');
 const chartLabelXAxis = ref<string>('');
 const chartLabelYAxis = ref<string>('');
+const chartLabelFontSize = ref<number>(DEFAULT_FONT_SIZE);
+const chartLabelsFromSettings = computed(
+	() =>
+		props.activeSettings && { ...props.getChartLabels?.(props.activeSettings), fontSize: props.activeSettings.fontSize }
+);
 
-const chartLabelsFromSettings = computed(() => props.activeSettings && props.getChartLabels?.(props.activeSettings));
-watch(chartLabelsFromSettings, (computedVal) => {
-	if (!computedVal) return;
-	chartLabelTitle.value = computedVal.title ?? '';
-	chartLabelXAxis.value = computedVal.xAxisTitle ?? '';
-	chartLabelYAxis.value = computedVal.yAxisTitle ?? '';
-});
+watch(
+	chartLabelsFromSettings,
+	(labelConfig) => {
+		if (!labelConfig) return;
+		chartLabelTitle.value = labelConfig?.title ?? '';
+		chartLabelXAxis.value = labelConfig?.xAxisTitle ?? '';
+		chartLabelYAxis.value = labelConfig?.yAxisTitle ?? '';
+		chartLabelFontSize.value = labelConfig?.fontSize ?? DEFAULT_FONT_SIZE;
+	},
+	{ immediate: true }
+);
 
 const CHART_LABEL_UPDATE_DELAY = 1000;
 watch(
-	[chartLabelTitle, chartLabelXAxis, chartLabelYAxis],
+	[chartLabelTitle, chartLabelXAxis, chartLabelYAxis, chartLabelFontSize],
 	_.debounce(() => {
 		const existing = chartLabelsFromSettings.value;
 		const updated = {
 			title: chartLabelTitle.value,
 			xAxisTitle: chartLabelXAxis.value,
-			yAxisTitle: chartLabelYAxis.value
+			yAxisTitle: chartLabelYAxis.value,
+			fontSize: chartLabelFontSize.value
 		};
 		if (_.isEqual(existing, updated)) return;
 		emit('update-settings', updated);
