@@ -2,8 +2,15 @@ import _, { groupBy, max, minBy, maxBy, sum } from 'lodash';
 import { computed, Ref } from 'vue';
 import { WorkflowNode } from '@/types/workflow';
 import { DataArray, parsePyCiemssMap } from '@/services/models/simulation-service';
+import { DynamicIntervention, Intervention, StaticIntervention } from '@/types/Types';
+import { isInterventionStatic } from '@/services/intervention-policy';
 import { mergeResults } from '../calibrate-ciemss/calibrate-utils';
-import { ContextMethods, Criterion, OptimizeCiemssOperationState } from './optimize-ciemss-operation';
+import {
+	ContextMethods,
+	Criterion,
+	InterventionPolicyGroupForm,
+	OptimizeCiemssOperationState
+} from './optimize-ciemss-operation';
 
 export function usePreparedChartInputs(
 	props: {
@@ -81,4 +88,18 @@ export function setQoIData(resultData: DataArray, config: Criterion) {
 	}
 
 	return { data, risk: averageRisk };
+}
+
+export function policyGroupFormToIntervention(policyGroupForm: InterventionPolicyGroupForm) {
+	const intervention: Intervention = {
+		name: policyGroupForm.interventionName,
+		staticInterventions: [],
+		dynamicInterventions: []
+	};
+	if (isInterventionStatic(policyGroupForm.individualIntervention)) {
+		intervention.staticInterventions.push(policyGroupForm.individualIntervention as StaticIntervention);
+	} else {
+		intervention.dynamicInterventions.push(policyGroupForm.individualIntervention as DynamicIntervention);
+	}
+	return intervention;
 }
