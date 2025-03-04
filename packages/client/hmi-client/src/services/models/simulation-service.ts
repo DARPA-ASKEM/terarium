@@ -450,3 +450,12 @@ export const processAndSortSamplesByTimepoint = (result: DataArray) => {
 	});
 	return resultGroupByTimepointId;
 };
+
+/**
+ * A rename function generator for getRunResultCSV. Here the idea
+ * to differentiate before and after columns in the run results
+ * */
+export const renameFnGenerator = (label: string) => (col: string) => {
+	if (col === 'timepoint_id' || col === 'sample_id' || col === 'timepoint_unknown') return col;
+	return `${col}:${label}`;
+};
