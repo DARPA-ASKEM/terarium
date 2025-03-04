@@ -34,7 +34,7 @@ public class TaskTests extends TaskRunnerApplicationTests {
 		final TaskRequest req = new TaskRequest();
 		req.setId(UUID.randomUUID());
 		req.setScript(SCRIPT_PATH);
-		req.setInput(new String(TEST_INPUT).getBytes());
+		req.setInput(TEST_INPUT.getBytes());
 
 		final int ONE_MINUTE = 1;
 
@@ -63,7 +63,7 @@ public class TaskTests extends TaskRunnerApplicationTests {
 		final TaskRequest req = new TaskRequest();
 		req.setId(UUID.randomUUID());
 		req.setScript(SCRIPT_PATH);
-		req.setInput(new String(TEST_INPUT_WITH_PROGRESS).getBytes());
+		req.setInput(TEST_INPUT_WITH_PROGRESS.getBytes());
 
 		final int ONE_MINUTE = 1;
 
@@ -139,7 +139,7 @@ public class TaskTests extends TaskRunnerApplicationTests {
 		final TaskRequest req = new TaskRequest();
 		req.setId(UUID.randomUUID());
 		req.setScript(SCRIPT_PATH);
-		req.setInput(new String(FAILURE_INPUT).getBytes());
+		req.setInput(FAILURE_INPUT.getBytes());
 
 		final int ONE_MINUTE = 1;
 
@@ -169,7 +169,7 @@ public class TaskTests extends TaskRunnerApplicationTests {
 		final TaskRequest req = new TaskRequest();
 		req.setId(UUID.randomUUID());
 		req.setScript(SCRIPT_PATH);
-		req.setInput(new String(TEST_INPUT).getBytes());
+		req.setInput(TEST_INPUT.getBytes());
 
 		final int ONE_MINUTE = 1;
 
@@ -209,7 +209,7 @@ public class TaskTests extends TaskRunnerApplicationTests {
 		final TaskRequest req = new TaskRequest();
 		req.setId(UUID.randomUUID());
 		req.setScript(SCRIPT_PATH);
-		req.setInput(new String(TEST_INPUT).getBytes());
+		req.setInput(TEST_INPUT.getBytes());
 
 		final int ONE_MINUTE = 1;
 
@@ -257,7 +257,7 @@ public class TaskTests extends TaskRunnerApplicationTests {
 		final TaskRequest req = new TaskRequest();
 		req.setId(UUID.randomUUID());
 		req.setScript(SCRIPT_PATH);
-		req.setInput(new String(TEST_INPUT).getBytes());
+		req.setInput(TEST_INPUT.getBytes());
 
 		final Task task = new Task(req);
 		try {
@@ -268,7 +268,7 @@ public class TaskTests extends TaskRunnerApplicationTests {
 			task.start();
 
 			// we should not each this code
-			Assertions.assertTrue(false);
+			Assertions.fail();
 		} catch (final InterruptedException e) {
 			// this should happen
 		} finally {
@@ -310,23 +310,23 @@ public class TaskTests extends TaskRunnerApplicationTests {
 					switch (randomNumber) {
 						case 0:
 							// success
-							req.setInput(new String(TEST_INPUT).getBytes());
+							req.setInput(TEST_INPUT.getBytes());
 							expected = TaskStatus.SUCCESS;
 							break;
 						case 1:
 							// failure
-							req.setInput(new String(FAILURE_INPUT).getBytes());
+							req.setInput(FAILURE_INPUT.getBytes());
 							expected = TaskStatus.FAILED;
 							break;
 						case 2:
 							// cancellation
-							req.setInput(new String(TEST_INPUT).getBytes());
+							req.setInput(TEST_INPUT.getBytes());
 							expected = TaskStatus.CANCELLED;
 							shouldCancelBefore = true;
 							break;
 						case 3:
 							// cancellation
-							req.setInput(new String(TEST_INPUT).getBytes());
+							req.setInput(TEST_INPUT.getBytes());
 							expected = TaskStatus.CANCELLED;
 							shouldCancelAfter = true;
 							break;
