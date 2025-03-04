@@ -59,12 +59,8 @@ import { createDatasetFromSimulationResult } from '@/services/dataset';
 import { useProjects } from '@/composables/project';
 import { useChartSettings } from '@/composables/useChartSettings';
 import { useCharts } from '@/composables/useCharts';
-import {
-	OptimizeCiemssOperationState,
-	OptimizeCiemssOperation,
-	createInterventionPolicyFromOptimize
-} from './optimize-ciemss-operation';
-import { usePreparedChartInputs } from './optimize-utils';
+import { OptimizeCiemssOperationState, OptimizeCiemssOperation } from './optimize-ciemss-operation';
+import { usePreparedChartInputs, createInterventionPolicyFromOptimize } from './optimize-utils';
 
 const emit = defineEmits(['open-drilldown', 'append-output', 'update-state']);
 
