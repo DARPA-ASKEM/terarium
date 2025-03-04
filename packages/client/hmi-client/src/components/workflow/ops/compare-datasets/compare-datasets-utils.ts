@@ -31,7 +31,7 @@ export function isSimulationData(dataset: Dataset) {
  * @returns
  */
 const datasetRenameFnGenerator = (label: string) => (col: string) => {
-	if (col === 'timepoint_id' || col === 'sample_id') return col;
+	if (col === 'timepoint_id' || col === 'sample_id' || col === 'timepoint_unknown') return col;
 	return `${DATASET_VAR_NAME_PREFIX}${col}:${label}`;
 };
 

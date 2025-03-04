@@ -1,5 +1,5 @@
 import API from '@/api/api';
-import type { Intervention, InterventionPolicy } from '@/types/Types';
+import type { DynamicIntervention, Intervention, InterventionPolicy, StaticIntervention } from '@/types/Types';
 import { InterventionSemanticType, InterventionValueType } from '@/types/Types';
 import { logger } from '@/utils/logger';
 
@@ -50,6 +50,11 @@ export const updateInterventionPolicy = async (policy: InterventionPolicy): Prom
 	const response = await API.put(`/interventions/${policy.id}`, policy);
 	return response?.data ?? null;
 };
+
+export function isInterventionStatic(individualIntervention: StaticIntervention | DynamicIntervention) {
+	if ((individualIntervention as StaticIntervention).timestep) return true;
+	return false;
+}
 
 // Flatten the intervention data for display in a graph
 export const flattenInterventionData = (
