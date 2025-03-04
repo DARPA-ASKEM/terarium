@@ -36,7 +36,12 @@
 				</Column>
 			</DataTable>
 
-			<div class="custom-input-section" :class="{ 'custom-selected': !selectedRow }" @click="onCustomSectionClick">
+			<div
+				v-if="!readonly"
+				class="custom-input-section"
+				:class="{ 'custom-selected': !selectedRow }"
+				@click="onCustomSectionClick"
+			>
 				<div class="grid">
 					<div class="col-6">
 						<tera-input-text
@@ -61,7 +66,7 @@
 			</div>
 		</section>
 		<template #footer>
-			<Button label="Apply selected value" :disabled="!selection" @click="applySelectedValue" />
+			<Button v-if="!readonly" label="Apply selected value" :disabled="!selection" @click="applySelectedValue" />
 			<Button label="Cancel" severity="secondary" outlined @click="emit('close-modal')" />
 		</template>
 	</tera-modal>
@@ -76,12 +81,11 @@ import TeraInputNumber from '@/components/widgets/tera-input-number.vue';
 import TeraInputText from '@/components/widgets/tera-input-text.vue';
 import TeraModal from '@/components/widgets/tera-modal.vue';
 import { numberToNist } from '@/utils/number';
-import { DistributionType } from '@/services/distribution';
 
 const props = defineProps<{
 	id: string;
 	otherValueList: any[];
-	otherValuesInputTypes: DistributionType;
+	readonly?: boolean;
 }>();
 
 const otherValueList = ref(props.otherValueList);

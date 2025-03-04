@@ -92,6 +92,7 @@
 							:stateOptions="stateOptions"
 							@update="onUpdateInterventionCard($event, firstRow + index)"
 							@delete="onDeleteIntervention(firstRow + index)"
+							@open-modal="onOpenOtherValueModal($event.semanticType, $event.id)"
 						/>
 					</li>
 				</ul>
@@ -219,6 +220,22 @@
 		@on-save="onSaveAsInterventionPolicy"
 		@on-update="onSaveAsInterventionPolicy"
 	/>
+	<tera-parameter-other-value-modal
+		v-if="showOtherParametersValueModal"
+		:id="semanticId"
+		:otherValueList="otherValueList"
+		readonly
+		@modal-mask-clicked="showOtherParametersValueModal = false"
+		@close-modal="showOtherParametersValueModal = false"
+	/>
+	<tera-initial-other-value-modal
+		v-if="showOtherInitialsValueModal"
+		:id="semanticId"
+		:otherValueList="otherValueList"
+		readonly
+		@modal-mask-clicked="showOtherInitialsValueModal = false"
+		@close-modal="showOtherInitialsValueModal = false"
+	/>
 </template>
 
 <script setup lang="ts">
@@ -232,7 +249,7 @@ import TeraColumnarPanel from '@/components/widgets/tera-columnar-panel.vue';
 import Button from 'primevue/button';
 import Paginator from 'primevue/paginator';
 import TeraInputText from '@/components/widgets/tera-input-text.vue';
-import { getInterventionPoliciesForModel, getModel } from '@/services/model';
+import { getInterventionPoliciesForModel, getModel, getModelConfigurationsForModel } from '@/services/model';
 import {
 	AssetType,
 	Intervention,
@@ -241,12 +258,14 @@ import {
 	DynamicIntervention,
 	StaticIntervention,
 	type TaskResponse,
-	type DocumentAsset
+	type DocumentAsset,
+	ModelConfiguration,
+	InterventionSemanticType
 } from '@/types/Types';
 import { logger } from '@/utils/logger';
 import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue';
 import { useConfirm } from 'primevue/useconfirm';
-import { getParameters, getStates } from '@/model-representation/service';
+import { getInitialDescription, getParameter, getParameters, getStates } from '@/model-representation/service';
 import TeraToggleableInput from '@/components/widgets/tera-toggleable-input.vue';
 import {
 	blankIntervention,
@@ -268,6 +287,9 @@ import { useProjects } from '@/composables/project';
 import { interventionPolicyFromDocument, interventionPolicyFromDataset } from '@/services/goLLM';
 import { downloadDocumentAsset, getDocumentAsset, getDocumentFileAsText } from '@/services/document-assets';
 import TeraPdfPanel from '@/components/widgets/tera-pdf-panel.vue';
+import TeraParameterOtherValueModal from '@/components/model/petrinet/tera-parameter-other-value-modal.vue';
+import TeraInitialOtherValueModal from '@/components/model/petrinet/tera-initial-other-value-modal.vue';
+import { getOtherValues, SemanticOtherValues } from '@/services/model-configurations';
 import TeraInterventionCard from './tera-intervention-card.vue';
 import {
 	InterventionPolicyOperation,
@@ -354,6 +376,12 @@ const interventionPoliciesFiltered = computed(() =>
 );
 
 const selectedPolicy = ref<InterventionPolicy | null>(null);
+
+const showOtherParametersValueModal = ref(false);
+const showOtherInitialsValueModal = ref(false);
+const modelConfigurations = ref<ModelConfiguration[]>([]);
+const semanticId = ref('');
+const otherValueList = ref<SemanticOtherValues[]>([]);
 
 const newDescription = ref('');
 const descriptionTextareaRef = ref<ComponentPublicInstance<typeof Textarea> | null>(null);
@@ -706,9 +734,36 @@ watch(
 	}
 );
 
-onMounted(async () => {
-	if (modelId) model.value = await getModel(modelId);
+const onOpenOtherValueModal = (semanticType: InterventionSemanticType, id: string) => {
+	semanticId.value = id;
+	if (semanticType === InterventionSemanticType.Parameter) {
+		const description = model.value ? getParameter(model.value, semanticId.value)?.description : '';
+		otherValueList.value = getOtherValues(
+			modelConfigurations.value,
+			semanticId.value,
+			'referenceId',
+			'parameterSemanticList',
+			description
+		);
+		showOtherParametersValueModal.value = true;
+	} else {
+		const description = model.value ? getInitialDescription(model.value, semanticId.value) : '';
+		otherValueList.value = getOtherValues(
+			modelConfigurations.value,
+			semanticId.value,
+			'target',
+			'initialSemanticList',
+			description
+		);
+		showOtherInitialsValueModal.value = true;
+	}
+};
 
+onMounted(async () => {
+	if (modelId) {
+		model.value = await getModel(modelId);
+		modelConfigurations.value = await getModelConfigurationsForModel(modelId);
+	}
 	if (props.node.active) {
 		// setting true will force overwrite the intervention policy with the current state on the node
 		initialize(true);
