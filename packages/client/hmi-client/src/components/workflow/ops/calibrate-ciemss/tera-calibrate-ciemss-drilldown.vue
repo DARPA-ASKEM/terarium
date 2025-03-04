@@ -568,7 +568,8 @@ import {
 	subscribeToUpdateMessages,
 	unsubscribeToUpdateMessages,
 	DataArray,
-	CiemssMethodOptions
+	CiemssMethodOptions,
+	renameFnGenerator
 } from '@/services/models/simulation-service';
 import { getModelConfigurationById } from '@/services/model-configurations';
 import { WorkflowNode } from '@/types/workflow';
@@ -589,7 +590,7 @@ import { useChartSettings } from '@/composables/useChartSettings';
 import { parseCsvAsset } from '@/utils/csv';
 import teraCheckbox from '@/components/widgets/tera-checkbox.vue';
 import type { CalibrationOperationStateCiemss } from './calibrate-operation';
-import { renameFnGenerator, getErrorData, usePreparedChartInputs, getSelectedOutputMapping } from './calibrate-utils';
+import { getErrorData, usePreparedChartInputs, getSelectedOutputMapping } from './calibrate-utils';
 import { isInterventionPolicyBlank } from '../intervention-policy/intervention-policy-operation';
 
 const isSidebarOpen = ref(true);

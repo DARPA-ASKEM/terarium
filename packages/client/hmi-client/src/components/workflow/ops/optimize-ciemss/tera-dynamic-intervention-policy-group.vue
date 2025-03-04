@@ -22,8 +22,6 @@ defineProps<{
 export interface DynamicInterventionPolicyGroupForm extends InterventionPolicyGroupForm {
 	individualIntervention: DynamicIntervention;
 }
-
-const emit = defineEmits(['update-self']);
 </script>
 <style>
 .form-header {
