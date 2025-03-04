@@ -7,14 +7,6 @@ import { WorkflowNode } from '@/types/workflow';
 import { computed, Ref } from 'vue';
 import { mergeResults } from '@/services/dataset';
 import { CalibrationOperationStateCiemss } from './calibrate-operation';
-/**
- * A rename function generator for getRunResultCSV. Here the idea
- * to differentiate before and after columns in the run results
- * */
-export const renameFnGenerator = (label: string) => (col: string) => {
-	if (col === 'timepoint_id' || col === 'sample_id' || col === 'timepoint_unknown') return col;
-	return `${col}:${label}`;
-};
 
 /**
 	* Get the mean absolute error from a provided source truth and a simulation run.

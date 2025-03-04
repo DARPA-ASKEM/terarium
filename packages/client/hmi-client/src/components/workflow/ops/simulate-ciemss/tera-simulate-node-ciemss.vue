@@ -33,7 +33,8 @@ import {
 	parsePyCiemssMap,
 	pollAction,
 	DataArray,
-	getSimulation
+	getSimulation,
+	renameFnGenerator
 } from '@/services/models/simulation-service';
 import { createLLMSummary } from '@/services/summary-service';
 
@@ -50,7 +51,6 @@ import { useProjects } from '@/composables/project';
 import { Poller, PollerState } from '@/api/api';
 import TeraNodePreview from '../tera-node-preview.vue';
 import { SimulateCiemssOperationState, SimulateCiemssOperation } from './simulate-ciemss-operation';
-import { renameFnGenerator } from '../calibrate-ciemss/calibrate-utils';
 import { usePreparedChartInputs } from './simulate-utils';
 
 const props = defineProps<{

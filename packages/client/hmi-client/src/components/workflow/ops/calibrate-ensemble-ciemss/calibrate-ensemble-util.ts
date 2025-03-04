@@ -7,7 +7,8 @@ import {
 	getRunResultCSV,
 	getSimulation,
 	parseEnsemblePyciemssMap,
-	processAndSortSamplesByTimepoint
+	processAndSortSamplesByTimepoint,
+	renameFnGenerator
 } from '@/services/models/simulation-service';
 import { EnsembleModelConfigs, ModelConfiguration } from '@/types/Types';
 import { WorkflowNode } from '@/types/workflow';
@@ -20,7 +21,7 @@ import {
 	CalibrateEnsembleMappingRow,
 	CalibrateEnsembleWeights
 } from './calibrate-ensemble-ciemss-operation';
-import { getErrorData, renameFnGenerator } from '../calibrate-ciemss/calibrate-utils';
+import { getErrorData } from '../calibrate-ciemss/calibrate-utils';
 
 export async function getLossValuesFromSimulation(calibrationId: string) {
 	if (!calibrationId) return [];
