@@ -45,9 +45,7 @@
 		<tera-initial-other-value-modal
 			v-if="showOtherConfigValueModal"
 			:id="initialId"
-			:updateEvent="'update-expression'"
 			:otherValueList="otherValueList"
-			:otherValuesInputTypes="DistributionType.Constant"
 			@modal-mask-clicked="showOtherConfigValueModal = false"
 			@update-expression="emit('update-expression', $event)"
 			@update-source="emit('update-source', $event)"
@@ -59,7 +57,6 @@
 <script setup lang="ts">
 import { isEmpty } from 'lodash';
 import { computed, ref, onMounted } from 'vue';
-import { DistributionType } from '@/services/distribution';
 import { Model, ModelConfiguration } from '@/types/Types';
 import { getInitialExpression, getInitialSource, getOtherValues } from '@/services/model-configurations';
 import TeraInputText from '@/components/widgets/tera-input-text.vue';
