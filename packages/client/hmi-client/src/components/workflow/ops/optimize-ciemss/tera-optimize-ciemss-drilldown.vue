@@ -469,7 +469,11 @@ import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.
 import TeraPyciemssCancelButton from '@/components/pyciemss/tera-pyciemss-cancel-button.vue';
 import TeraOperatorOutputSummary from '@/components/operator/tera-operator-output-summary.vue';
 import { getModelByModelConfigurationId, getCalendarSettingsFromModel } from '@/services/model';
-import { getModelConfigurationById } from '@/services/model-configurations';
+import {
+	getModelConfigurationById,
+	getParameter,
+	getParameterDistributionAverage
+} from '@/services/model-configurations';
 import {
 	convertToCsvAsset,
 	getRunResult,
@@ -488,7 +492,9 @@ import {
 	OptimizeQoi,
 	OptimizeRequestCiemss,
 	AssetType,
-	StaticIntervention
+	StaticIntervention,
+	InterventionValueType,
+	InterventionSemanticType
 } from '@/types/Types';
 import { logger } from '@/utils/logger';
 import { nodeMetadata } from '@/components/workflow/util';
@@ -833,7 +839,7 @@ const setInterventionPolicyGroups = (interventionPolicy: InterventionPolicy) => 
 				newIntervention.relativeImportance = 5;
 				newIntervention.individualIntervention = staticIntervention;
 				newIntervention.startTimeGuess = staticIntervention.timestep;
-				newIntervention.initialGuessValue = staticIntervention.value;
+				newIntervention.initialGuessValue = getInitialGuessValue(staticIntervention);
 				knobs.value.interventionPolicyGroups.push(_.cloneDeep(newIntervention));
 			});
 			// Dynamic:
@@ -845,6 +851,19 @@ const setInterventionPolicyGroups = (interventionPolicy: InterventionPolicy) => 
 		});
 	}
 	emit('update-state', state);
+};
+
+const getInitialGuessValue = (intervention: StaticIntervention) => {
+	if (intervention.valueType === InterventionValueType.Percentage) {
+		if (intervention.type === InterventionSemanticType.Parameter) {
+			const parameter = getParameter(modelConfiguration.value!, intervention.appliedTo);
+			return getParameterDistributionAverage(parameter!) * (intervention.value / 100);
+		}
+		// FIXME: Setting initial value for state to 0 until I have a clearer answer as to what we want here when the value is a percentage.
+
+		return 0;
+	}
+	return intervention.value;
 };
 
 const runOptimize = async () => {
