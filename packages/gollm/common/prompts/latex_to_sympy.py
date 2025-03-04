@@ -18,7 +18,7 @@ Here is an example input LaTeX
 You should return this output in SymPy:
 ```
 import sympy
-from sympy import _clash
+from sympy.abc import _clash
 
 # Define time variable
 t = sympy.symbols("t")
