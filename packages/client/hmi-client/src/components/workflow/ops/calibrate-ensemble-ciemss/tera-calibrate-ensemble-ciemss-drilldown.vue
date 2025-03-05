@@ -120,22 +120,35 @@
 									:start-date="undefined"
 								/>
 							</div>
-
-							<div class="label-and-input">
-								<label> Preset </label>
-								<Dropdown
-									class="flex-1"
-									v-model="presetType"
-									placeholder="Select an option"
-									:options="[CiemssPresetTypes.Fast, CiemssPresetTypes.Normal]"
-									@update:model-value="setPresetValues"
-								/>
-								<label class="mb-1 p-text-secondary text-sm">
-									<i class="pi pi-info-circle" />
-									This impacts solver method, iterations and learning rate.
-								</label>
+							<div class="input-row">
+								<div class="label-and-input">
+									<label> Preset </label>
+									<Dropdown
+										class="flex-1"
+										v-model="presetType"
+										placeholder="Select an option"
+										:options="[CiemssPresetTypes.Fast, CiemssPresetTypes.Normal]"
+										@update:model-value="setPresetValues"
+									/>
+								</div>
+								<div class="label-and-input">
+									<tera-checkbox
+										label="Number of timepoints"
+										:model-value="knobs.isNumberOfTimepointsManual"
+										@update:model-value="toggleIsNumberOfTimepointsManual"
+									/>
+									<tera-input-number
+										:disabled="!knobs.isNumberOfTimepointsManual"
+										v-model="knobs.numberOfTimepoints"
+										inputId="integeronly"
+										:min="1"
+									/>
+								</div>
 							</div>
-
+							<label class="mb-1 p-text-secondary text-sm">
+								<i class="pi pi-info-circle" />
+								This impacts solver method, iterations and learning rate.
+							</label>
 							<fieldset class="mt-1 additional-settings">
 								<div class="label-and-input">
 									<label>Number of Samples</label>
@@ -428,13 +441,17 @@ interface BasicKnobs {
 	configurationWeights: { [key: string]: number }; // Note these are Dirichlet distributions not EXACTLY weights
 	extra: EnsembleCalibrateExtraCiemss;
 	timestampColName: string;
+	isNumberOfTimepointsManual: boolean;
+	numberOfTimepoints: number;
 }
 
 const knobs = ref<BasicKnobs>({
 	ensembleMapping: props.node.state.ensembleMapping ?? [],
 	configurationWeights: props.node.state.configurationWeights ?? {},
 	extra: props.node.state.extra ?? {},
-	timestampColName: props.node.state.timestampColName ?? ''
+	timestampColName: props.node.state.timestampColName ?? '',
+	isNumberOfTimepointsManual: props.node.state.isNumberOfTimepointsManual,
+	numberOfTimepoints: props.node.state.numberOfTimepoints
 });
 
 const currentActiveIndicies = ref([0, 1, 2]);
@@ -540,6 +557,10 @@ function removeMapping(index: number) {
 	state.ensembleMapping = knobs.value.ensembleMapping;
 	emit('update-state', state);
 }
+
+const toggleIsNumberOfTimepointsManual = () => {
+	knobs.value.isNumberOfTimepointsManual = !knobs.value.isNumberOfTimepointsManual;
+};
 
 const messageHandler = (event: ClientEvent<any>) => {
 	const data = { iter: lossValues.value.length, loss: event.data.loss };
@@ -775,6 +796,11 @@ watch(
 		state.extra = knobs.value.extra;
 		state.ensembleMapping = knobs.value.ensembleMapping;
 		state.configurationWeights = knobs.value.configurationWeights;
+		state.isNumberOfTimepointsManual = knobs.value.isNumberOfTimepointsManual;
+		if (!knobs.value.isNumberOfTimepointsManual) {
+			knobs.value.numberOfTimepoints = knobs.value.extra.endTime;
+		}
+		state.numberOfTimepoints = knobs.value.numberOfTimepoints;
 		emit('update-state', state);
 	},
 	{ deep: true }

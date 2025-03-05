@@ -308,7 +308,7 @@ public class TaskServiceTest extends TerariumApplicationTests {
 		final String documentContent = new String(Files.readAllBytes(documentResource.getFile().toPath()));
 
 		final InterventionsFromDocumentResponseHandler.Input input = new InterventionsFromDocumentResponseHandler.Input();
-		input.setResearchPaper(documentContent);
+		input.setDocument(documentContent);
 		input.setAmr(modelContent);
 
 		final TaskRequest req = new TaskRequest();

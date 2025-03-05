@@ -1,14 +1,14 @@
 import { isEmpty } from 'lodash';
 import { Dataset, InterventionPolicy, ModelConfiguration } from '@/types/Types';
 import { WorkflowNode, WorkflowPortStatus } from '@/types/workflow';
-import { renameFnGenerator } from '@/components/workflow/ops/calibrate-ciemss/calibrate-utils';
 import { Ref } from 'vue';
 import { DATASET_VAR_NAME_PREFIX, getDatasetResultCSV, mergeResults, getDataset } from '@/services/dataset';
 import {
 	DataArray,
 	parsePyCiemssMap,
 	processAndSortSamplesByTimepoint,
-	getRunResultCSV
+	getRunResultCSV,
+	renameFnGenerator
 } from '@/services/models/simulation-service';
 import { getInterventionPolicyById } from '@/services/intervention-policy';
 import { getModelConfigurationById } from '@/services/model-configurations';
@@ -31,7 +31,7 @@ export function isSimulationData(dataset: Dataset) {
  * @returns
  */
 const datasetRenameFnGenerator = (label: string) => (col: string) => {
-	if (col === 'timepoint_id' || col === 'sample_id') return col;
+	if (col === 'timepoint_id' || col === 'sample_id' || col === 'timepoint_unknown') return col;
 	return `${DATASET_VAR_NAME_PREFIX}${col}:${label}`;
 };
 

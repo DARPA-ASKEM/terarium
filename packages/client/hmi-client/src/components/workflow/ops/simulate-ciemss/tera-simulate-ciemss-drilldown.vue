@@ -49,7 +49,7 @@
 								label="Start time"
 								:start-date="modelConfiguration.temporalContext"
 								:calendar-settings="getCalendarSettingsFromModel(model)"
-								v-model="timespan.start"
+								:model-value="0"
 								@update:model-value="updateState"
 								class="common-input-height"
 							/>
@@ -58,12 +58,11 @@
 								label="End time"
 								:start-date="modelConfiguration.temporalContext"
 								:calendar-settings="getCalendarSettingsFromModel(model)"
-								v-model="timespan.end"
+								v-model="endTime"
 								@update:model-value="updateState"
 								class="common-input-height"
 							/>
 						</div>
-
 						<!-- Number of Samples & Method -->
 						<div class="input-row mt-3">
 							<div class="label-and-input">
@@ -76,6 +75,22 @@
 									@update:model-value="updateState"
 								/>
 							</div>
+							<div class="label-and-input">
+								<tera-checkbox
+									label="Number of timepoints"
+									:model-value="isNumberOfTimepointsManual"
+									@update:model-value="toggleIsNumberOfTimepointsManual"
+								/>
+								<tera-input-number
+									:disabled="!isNumberOfTimepointsManual"
+									v-model="numberOfTimepoints"
+									inputId="integeronly"
+									:min="1"
+									@update:model-value="updateState"
+								/>
+							</div>
+						</div>
+						<div class="input-row mt-3">
 							<div class="label-and-input">
 								<label for="solver-method">Method</label>
 								<Dropdown
@@ -451,14 +466,7 @@ import Button from 'primevue/button';
 import Dropdown from 'primevue/dropdown';
 import Divider from 'primevue/divider';
 import SelectButton from 'primevue/selectbutton';
-import type {
-	CsvAsset,
-	InterventionPolicy,
-	Model,
-	ModelConfiguration,
-	SimulationRequest,
-	TimeSpan
-} from '@/types/Types';
+import type { CsvAsset, InterventionPolicy, Model, ModelConfiguration, SimulationRequest } from '@/types/Types';
 import { AssetType } from '@/types/Types';
 import type { WorkflowNode } from '@/types/workflow';
 import { deleteAnnotation } from '@/services/chart-annotation';
@@ -477,7 +485,8 @@ import {
 	makeForecastJobCiemss as makeForecastJob,
 	convertToCsvAsset,
 	DataArray,
-	CiemssMethodOptions
+	CiemssMethodOptions,
+	renameFnGenerator
 } from '@/services/models/simulation-service';
 import { logger } from '@/utils/logger';
 import {
@@ -504,14 +513,15 @@ import TeraPyciemssCancelButton from '@/components/pyciemss/tera-pyciemss-cancel
 import TeraSaveSimulationModal from '@/components/project/tera-save-simulation-modal.vue';
 import TeraSliderPanel from '@/components/widgets/tera-slider-panel.vue';
 import TeraTimestepCalendar from '@/components/widgets/tera-timestep-calendar.vue';
+import TeraCheckbox from '@/components/widgets/tera-checkbox.vue';
 import { nodeMetadata } from '@/components/workflow/util';
 import { useCharts } from '@/composables/useCharts';
 import { useChartSettings } from '@/composables/useChartSettings';
 import { useProjects } from '@/composables/project';
 import { useDrilldownChartSize } from '@/composables/useDrilldownChartSize';
 import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue';
+import { mergeResults } from '@/services/dataset';
 import { SimulateCiemssOperationState } from './simulate-ciemss-operation';
-import { mergeResults, renameFnGenerator } from '../calibrate-ciemss/calibrate-utils';
 import { qualityPreset, speedPreset, usePreparedChartInputs } from './simulate-utils';
 import { isInterventionPolicyBlank } from '../intervention-policy/intervention-policy-operation';
 
@@ -581,10 +591,12 @@ const llmThoughts = ref<any[]>([]);
 const llmQuery = ref('');
 
 // input params
-const timespan = ref<TimeSpan>(props.node.state.currentTimespan);
+const endTime = ref<number>(props.node.state.endTime);
 const numSamples = ref<number>(props.node.state.numSamples);
 const solverStepSize = ref<number>(props.node.state.solverStepSize);
-const method = ref(props.node.state.method);
+const method = ref<CiemssMethodOptions>(props.node.state.method);
+const numberOfTimepoints = ref<number>(props.node.state.numberOfTimepoints);
+const isNumberOfTimepointsManual = ref<boolean>(props.node.state.isNumberOfTimepointsManual);
 
 enum OutputView {
 	Charts = 'Charts',
@@ -726,12 +738,22 @@ const normalizeEquations = computed(() => {
 	return equations;
 });
 
+const toggleIsNumberOfTimepointsManual = () => {
+	isNumberOfTimepointsManual.value = !isNumberOfTimepointsManual.value;
+	updateState();
+};
+
 const updateState = () => {
 	const state = _.cloneDeep(props.node.state);
-	state.currentTimespan = timespan.value;
+	state.endTime = endTime.value;
 	state.numSamples = numSamples.value;
 	state.method = method.value;
 	state.solverStepSize = solverStepSize.value;
+	state.isNumberOfTimepointsManual = isNumberOfTimepointsManual.value;
+	if (!isNumberOfTimepointsManual.value) {
+		numberOfTimepoints.value = endTime.value;
+	}
+	state.numberOfTimepoints = numberOfTimepoints.value;
 	emit('update-state', state);
 };
 
@@ -753,9 +775,10 @@ const makeForecastRequest = async (applyInterventions = true) => {
 	const payload: SimulationRequest = {
 		modelConfigId,
 		timespan: {
-			start: timespan.value.start,
-			end: timespan.value.end
+			start: 0,
+			end: endTime.value
 		},
+		loggingStepSize: endTime.value / numberOfTimepoints.value,
 		extra: {
 			solver_method: method.value,
 			solver_step_size: solverStepSize.value,
@@ -799,9 +822,8 @@ const lazyLoadSimulationData = async (outputRunId: string) => {
 			getRunResultCSV(baseForecastId, 'result.csv', renameFnGenerator('pre')),
 			getRunResultCSV(baseForecastId, 'result_summary.csv', renameFnGenerator('pre'))
 		]);
-		const merged = mergeResults(baseResult, result, baseResultSummary, resultSummary);
-		result = merged.result;
-		resultSummary = merged.resultSummary;
+		result = mergeResults(baseResult, result);
+		resultSummary = mergeResults(baseResultSummary, resultSummary);
 	}
 	runResults.value[outputRunId] = result;
 	runResultsSummary.value[outputRunId] = resultSummary;
@@ -894,7 +916,7 @@ watch(
 		selectedOutputId.value = props.node.active;
 
 		// Update Wizard form fields with current selected output state
-		timespan.value = props.node.state.currentTimespan;
+		endTime.value = props.node.state.endTime;
 		numSamples.value = props.node.state.numSamples;
 		solverStepSize.value = props.node.state.solverStepSize;
 		method.value = props.node.state.method;

@@ -35,7 +35,13 @@ import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue'
 import { WorkflowNode } from '@/types/workflow';
 import Button from 'primevue/button';
 import { Poller, PollerResult, PollerState } from '@/api/api';
-import { pollAction, makeForecastJobCiemss, getRunResult, getRunResultCSV } from '@/services/models/simulation-service';
+import {
+	pollAction,
+	makeForecastJobCiemss,
+	getRunResult,
+	getRunResultCSV,
+	renameFnGenerator
+} from '@/services/models/simulation-service';
 import { nodeMetadata, nodeOutputLabel } from '@/components/workflow/util';
 import {
 	SimulationRequest,
@@ -47,19 +53,14 @@ import {
 } from '@/types/Types';
 import { createLLMSummary } from '@/services/summary-service';
 import VegaChart from '@/components/widgets/VegaChart.vue';
-import { renameFnGenerator } from '@/components/workflow/ops/calibrate-ciemss/calibrate-utils';
 import { getModelByModelConfigurationId, getUnitsFromModelParts } from '@/services/model';
 import { getModelConfigurationById } from '@/services/model-configurations';
 import { createDatasetFromSimulationResult } from '@/services/dataset';
 import { useProjects } from '@/composables/project';
 import { useChartSettings } from '@/composables/useChartSettings';
 import { useCharts } from '@/composables/useCharts';
-import {
-	OptimizeCiemssOperationState,
-	OptimizeCiemssOperation,
-	createInterventionPolicyFromOptimize
-} from './optimize-ciemss-operation';
-import { usePreparedChartInputs } from './optimize-utils';
+import { OptimizeCiemssOperationState, OptimizeCiemssOperation } from './optimize-ciemss-operation';
+import { usePreparedChartInputs, createInterventionPolicyFromOptimize } from './optimize-utils';
 
 const emit = defineEmits(['open-drilldown', 'append-output', 'update-state']);
 
@@ -133,6 +134,7 @@ const startForecast = async (optimizedInterventions?: InterventionPolicy) => {
 			start: 0,
 			end: props.node.state.endTime
 		},
+		loggingStepSize: props.node.state.endTime / props.node.state.numberOfTimepoints,
 		extra: {
 			num_samples: props.node.state.numSamples,
 			method: props.node.state.solverMethod,

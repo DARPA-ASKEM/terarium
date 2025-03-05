@@ -1,9 +1,7 @@
 import boto3
+import botocore
 import json
 import os
-from typing import List, Optional
-from entities import ChartAnnotationType
-
 from common.LlmToolsInterface import LlmToolsInterface
 from common.prompts.chart_annotation import build_prompt as build_chart_annotation_prompt
 from common.prompts.config_from_dataset import (
@@ -35,10 +33,16 @@ from common.prompts.model_meta_compare import (
     MODEL_METADATA_COMPARE_GOAL_AND_DATA_PROMPT
 )
 from common.utils import (
+    decode_if_bytes,
     escape_curly_braces,
+    extract_json_object,
+    format_json_to_schema,
     unescape_curly_braces
 )
+from entities import ChartAnnotationType
 from llms.llama.prompts.llama_prompts import LLAMA_START_PROMPT, LLAMA_RETURN_INSTRUCTIONS, LLAMA_END_PROMPT
+from typing import List, Optional
+
 
 GPT_MODEL = "us.meta.llama3-2-90b-instruct-v1:0"
 
@@ -49,15 +53,26 @@ class LlamaTools(LlmToolsInterface):
         self.bedrock_access_key = bedrock_access_key
         self.bedrock_secret_access_key = bedrock_secret_access_key
 
-    def send_to_llm_with_json_output(self, prompt: str, schema: str, max_tokens=2048) -> dict:
-        print("Sending request to AWS Bedrock (Llama)...")
-        #send prompt to AWS Bedrock
+
+    def name(self) -> str:
+        return "AWS Llama (Llama 3.2 90B Instruct)"
+
+
+    def send_to_llm_with_json_output(self, prompt: str, schema: str, max_tokens=8192) -> dict:
+        print("Creating AWS Bedrock (Llama) client...")
+
+        config = botocore.config.Config(
+            read_timeout=600,
+            connect_timeout=480,
+            retries={"max_attempts": 0}
+        )
 
         client = boto3.client(
             "bedrock-runtime",
             region_name="us-west-2",
             aws_access_key_id = os.environ.get("BEDROCK_ACCESS_KEY") if self.bedrock_access_key is None else self.bedrock_access_key,
-            aws_secret_access_key = os.environ.get("BEDROCK_SECRET_ACCESS_KEY") if self.bedrock_secret_access_key is None else self.bedrock_secret_access_key
+            aws_secret_access_key = os.environ.get("BEDROCK_SECRET_ACCESS_KEY") if self.bedrock_secret_access_key is None else self.bedrock_secret_access_key,
+            config=config
         )
 
         request = json.dumps({
@@ -67,6 +82,7 @@ class LlamaTools(LlmToolsInterface):
             "top_p": 1,
         })
 
+        print("Sending request to AWS Bedrock (Llama)...")
         response = client.invoke_model(
             modelId=GPT_MODEL,
             body=request,
@@ -74,20 +90,40 @@ class LlamaTools(LlmToolsInterface):
         )
 
         print("Received response from AWS Bedrock (Llama)...")
-        model_response = json.loads(response["body"].read())
-        response_text = model_response["generation"]
-        return unescape_curly_braces(response_text)
+        raw_response = response["body"].read();
+        string_response = decode_if_bytes(raw_response)
+
+        try:
+            print("Trying to parse response as JSON...")
+            model_response = json.loads(string_response)
+        except json.JSONDecodeError:
+            print("Parsing response as JSON failed, trying to extract JSON object...")
+            model_response = extract_json_object(string_response)
+
+        try:
+            response_json = json.loads(model_response["generation"])
+        except json.JSONDecodeError:
+            print("Parsing response as JSON failed, trying to extract JSON object...")
+            response_json = extract_json_object(model_response["generation"])
+
+        return format_json_to_schema(schema, unescape_curly_braces(response_json))
 
 
-    def send_to_llm_with_string_output(self, prompt: str, max_tokens=2048) -> str:
-        print("Sending request to AWS Bedrock (Llama)...")
-        #send prompt to AWS Bedrock
+    def send_to_llm_with_string_output(self, prompt: str, max_tokens=8192) -> str:
+        print("Creating AWS Bedrock (Llama) client...")
+
+        config = botocore.config.Config(
+            read_timeout=600,
+            connect_timeout=480,
+            retries={"max_attempts": 0}
+        )
 
         client = boto3.client(
             "bedrock-runtime",
             region_name="us-west-2",
             aws_access_key_id = os.environ.get("BEDROCK_ACCESS_KEY") if self.bedrock_access_key is None else self.bedrock_access_key,
-            aws_secret_access_key = os.environ.get("BEDROCK_SECRET_ACCESS_KEY") if self.bedrock_secret_access_key is None else self.bedrock_secret_access_key
+            aws_secret_access_key = os.environ.get("BEDROCK_SECRET_ACCESS_KEY") if self.bedrock_secret_access_key is None else self.bedrock_secret_access_key,
+            config=config
         )
 
         request = json.dumps({
@@ -97,6 +133,7 @@ class LlamaTools(LlmToolsInterface):
             "top_p": 1,
         })
 
+        print("Sending request to AWS Bedrock (Llama)...")
         response = client.invoke_model(
             modelId=GPT_MODEL,
             body=request,
@@ -104,19 +141,34 @@ class LlamaTools(LlmToolsInterface):
         )
 
         print("Received response from AWS Bedrock (Llama)...")
-        model_response = json.loads(response["body"].read())
+        raw_response = response["body"].read();
+        string_response = decode_if_bytes(raw_response)
+
+        try:
+            print("Trying to parse response as JSON...")
+            model_response = json.loads(string_response)
+        except json.JSONDecodeError:
+            print("Parsing response as JSON failed, trying to extract JSON object...")
+            model_response = extract_json_object(string_response)
+
         return model_response["generation"]
 
 
-    def send_image_to_llm_with_json_output(self, prompt: str, schema: str, image_url: str, max_tokens=2048) -> dict:
-        print("Sending request to AWS Bedrock (Llama)...")
-        #send prompt to AWS Bedrock
+    def send_image_to_llm_with_json_output(self, prompt: str, schema: str, image_url: str, max_tokens=8192) -> dict:
+        print("Creating AWS Bedrock (Llama) client...")
+
+        config = botocore.config.Config(
+            read_timeout=600,
+            connect_timeout=480,
+            retries={"max_attempts": 0}
+        )
 
         client = boto3.client(
             "bedrock-runtime",
             region_name="us-west-2",
             aws_access_key_id = os.environ.get("BEDROCK_ACCESS_KEY") if self.bedrock_access_key is None else self.bedrock_access_key,
-            aws_secret_access_key = os.environ.get("BEDROCK_SECRET_ACCESS_KEY") if self.bedrock_secret_access_key is None else self.bedrock_secret_access_key
+            aws_secret_access_key = os.environ.get("BEDROCK_SECRET_ACCESS_KEY") if self.bedrock_secret_access_key is None else self.bedrock_secret_access_key,
+            config=config
         )
 
         request = json.dumps({
@@ -126,6 +178,7 @@ class LlamaTools(LlmToolsInterface):
             "top_p": 1,
         })
 
+        print("Sending request to AWS Bedrock (Llama)...")
         response = client.invoke_model(
             modelId=GPT_MODEL,
             body=request,
@@ -133,9 +186,23 @@ class LlamaTools(LlmToolsInterface):
         )
 
         print("Received response from AWS Bedrock (Llama)...")
-        model_response = json.loads(response["body"].read())
-        response_text = model_response["generation"]
-        return unescape_curly_braces(response_text)
+        raw_response = response["body"].read();
+        string_response = decode_if_bytes(raw_response)
+
+        try:
+            print("Trying to parse response as JSON...")
+            model_response = json.loads(string_response)
+        except json.JSONDecodeError:
+            print("Parsing response as JSON failed, trying to extract JSON object...")
+            model_response = extract_json_object(string_response)
+
+        try:
+            response_json = json.loads(model_response["generation"])
+        except json.JSONDecodeError:
+            print("Parsing response as JSON failed, trying to extract JSON object...")
+            response_json = extract_json_object(model_response["generation"])
+
+        return format_json_to_schema(schema, unescape_curly_braces(response_json))
 
 
     def create_enrich_model_prompt(self, amr: str, document: str, schema: str) -> str:
@@ -187,7 +254,7 @@ class LlamaTools(LlmToolsInterface):
         prompt = LLAMA_START_PROMPT
         prompt += CONFIGURE_FROM_DOCUMENT_PROMPT.format(
             amr=escape_curly_braces(amr),
-            research_paper=escape_curly_braces(document)
+            document=escape_curly_braces(document)
         )
         prompt += LLAMA_RETURN_INSTRUCTIONS.format(
             schema=schema
@@ -205,7 +272,7 @@ class LlamaTools(LlmToolsInterface):
         else:
             print("Building prompt to extract dataset enrichments from a research paper...")
             prompt += DATASET_ENRICH_PROMPT_WITH_DOCUMENT.format(
-                research_paper=escape_curly_braces(document),
+                document=escape_curly_braces(document),
                 dataset=dataset
             )
 
@@ -248,7 +315,7 @@ class LlamaTools(LlmToolsInterface):
         prompt = LLAMA_START_PROMPT
         prompt += INTERVENTIONS_FROM_DOCUMENT_PROMPT.format(
             amr=escape_curly_braces(amr),
-            research_paper=escape_curly_braces(document)
+            document=escape_curly_braces(document)
         )
         prompt += LLAMA_RETURN_INSTRUCTIONS.format(
             schema=schema
@@ -279,7 +346,7 @@ class LlamaTools(LlmToolsInterface):
 
         prompt = LLAMA_START_PROMPT
         prompt += MODEL_CARD_PROMPT.format(
-            research_paper=escape_curly_braces(document),
+            document=escape_curly_braces(document),
             amr=escape_curly_braces(amr)
         )
         prompt += LLAMA_RETURN_INSTRUCTIONS.format(

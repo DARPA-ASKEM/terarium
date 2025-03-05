@@ -45,7 +45,8 @@ import software.uncharted.terarium.hmiserver.service.data.ModelConfigurationServ
 import software.uncharted.terarium.hmiserver.service.data.ModelService;
 import software.uncharted.terarium.hmiserver.service.data.ProjectService;
 import software.uncharted.terarium.hmiserver.utils.Messages;
-import software.uncharted.terarium.hmiserver.utils.ModelConfigurationLatexTable;
+import software.uncharted.terarium.hmiserver.utils.ModelConfigurationToTables;
+import software.uncharted.terarium.hmiserver.utils.rebac.Schema.Permission;
 
 @RequestMapping("/model-configurations")
 @RestController
@@ -596,7 +597,50 @@ public class ModelConfigurationController {
 				.getAsset(modelConfiguration.getModelId())
 				.orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, messages.get("model.not-found")));
 
-			return ResponseEntity.ok(ModelConfigurationLatexTable.generateLatexTable(model, modelConfiguration));
+			return ResponseEntity.ok(ModelConfigurationToTables.generateLatex(model, modelConfiguration));
+		} catch (final Exception e) {
+			log.error("Unable to get model configuration from postgres db", e);
+			throw new ResponseStatusException(
+				org.springframework.http.HttpStatus.SERVICE_UNAVAILABLE,
+				messages.get("postgres.service-unavailable")
+			);
+		}
+	}
+
+	/**
+	 * Get the CSV table of a model configuration
+	 * @param id UUID of the model configuration
+	 * @return string representation of the CSV table
+	 */
+	@GetMapping("/{id}/csv-table")
+	@Secured(Roles.USER)
+	@Operation(summary = "Get the CSV table of a model configuration")
+	@ApiResponses(
+		value = {
+			@ApiResponse(
+				responseCode = "200",
+				description = "CSV table of the model configuration",
+				content = @Content(mediaType = "application/json")
+			),
+			@ApiResponse(
+				responseCode = "404",
+				description = "There was no model configuration found by this ID",
+				content = @Content
+			),
+			@ApiResponse(responseCode = "503", description = "There was an issue getting the CSV table", content = @Content)
+		}
+	)
+	public ResponseEntity<String> getCsvTable(@PathVariable("id") final UUID id) {
+		try {
+			final ModelConfiguration modelConfiguration = modelConfigurationService
+				.getAsset(id)
+				.orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, messages.get("modelconfig.not-found")));
+
+			final Model model = modelService
+				.getAsset(modelConfiguration.getModelId())
+				.orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, messages.get("model.not-found")));
+
+			return ResponseEntity.ok(ModelConfigurationToTables.generateCsv(model, modelConfiguration));
 		} catch (final Exception e) {
 			log.error("Unable to get model configuration from postgres db", e);
 			throw new ResponseStatusException(

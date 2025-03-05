@@ -305,3 +305,9 @@ export async function getModelConfigurationAsLatexTable(id: ModelConfiguration['
 	const response = await API.get<string>(`model-configurations/${id}/latex-table`);
 	return response?.data ?? '';
 }
+
+// Get the model configuration as a CSV table
+export async function getModelConfigurationAsCsvTable(id: ModelConfiguration['id']): Promise<string> {
+	const response = await API.get<string>(`model-configurations/${id}/csv-table`);
+	return response?.data ?? '';
+}

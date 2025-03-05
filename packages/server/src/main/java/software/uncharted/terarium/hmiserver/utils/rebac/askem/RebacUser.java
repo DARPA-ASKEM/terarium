@@ -32,13 +32,12 @@ public class RebacUser extends RebacObject {
 
 	public boolean isAdmin() {
 		try {
-			return (
-				adminServiceUser ||
-				reBACService.isMemberOf(
-					getSchemaObject(),
-					new RebacGroup(ReBACService.ASKEM_ADMIN_GROUP_ID, reBACService).getSchemaObject()
-				)
+			boolean permission = reBACService.isMemberOf(
+				getSchemaObject(),
+				new RebacGroup(ReBACService.ASKEM_ADMIN_GROUP_ID, reBACService).getSchemaObject()
 			);
+
+			return (adminServiceUser || permission);
 		} catch (final Exception e) {
 			log.error("Error checking if user is admin", e);
 			return false;

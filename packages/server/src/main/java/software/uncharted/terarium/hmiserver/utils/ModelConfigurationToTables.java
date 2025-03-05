@@ -2,7 +2,6 @@ package software.uncharted.terarium.hmiserver.utils;
 
 import java.util.Map;
 import java.util.Objects;
-import java.util.UUID;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.Model;
@@ -13,9 +12,101 @@ import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.Model
 import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.ModelParameter;
 import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.semantics.State;
 
-public class ModelConfigurationLatexTable {
+public class ModelConfigurationToTables {
 
-	public static String generateLatexTable(Model model, ModelConfiguration modelConfiguration) {
+	public static String generateCsv(Model model, ModelConfiguration modelConfiguration) {
+		StringBuilder csv = new StringBuilder();
+
+		// Add the header
+		csv.append("type,ID,Name,Value,Units,Description,Source\n");
+
+		// Generate Initial Values Table
+		if (!modelConfiguration.getInitialSemanticList().isEmpty()) {
+			final Map<String, State> states = model
+				.getStates()
+				.stream()
+				.collect(Collectors.toMap(State::getId, Function.identity()));
+
+			for (InitialSemantic initial : modelConfiguration.getInitialSemanticList()) {
+				String id = initial.getTarget() != null ? initial.getTarget() : "";
+				String name = "";
+				String expression = initial.getExpression() != null ? initial.getExpression() : "";
+				String units = "";
+				String description = "";
+				String source = initial.getSource() != null ? initial.getSource() : "";
+
+				// Get the values from the state
+				final State state = states.get(initial.getTarget());
+				if (state != null) {
+					name = state.getName() != null ? state.getName() : "";
+					description = state.getDescription() != null ? state.getDescription() : "";
+					units = state.getUnits() != null && state.getUnits().getExpression() != null
+						? state.getUnits().getExpression()
+						: "";
+				}
+
+				// Add the row to the table
+				csv.append(
+					String.format("initial state,%s,%s,%s,%s,%s,%s\n", id, name, expression, units, description, source)
+				);
+			}
+		}
+
+		// Generate Parameter Table
+		if (!modelConfiguration.getParameterSemanticList().isEmpty()) {
+			final Map<String, ModelParameter> parameters = model
+				.getParameters()
+				.stream()
+				.collect(Collectors.toMap(ModelParameter::getId, Function.identity()));
+
+			for (ParameterSemantic param : modelConfiguration.getParameterSemanticList()) {
+				String id = param.getReferenceId() != null ? param.getReferenceId() : "";
+				String name = "";
+				String value = "";
+				String units = "";
+				String description = "";
+				String source = param.getSource() != null ? param.getSource() : "";
+
+				// Get the values from the Parameter
+				final ModelParameter parameter = parameters.get(param.getReferenceId());
+				if (parameter != null) {
+					name = parameter.getName() != null ? parameter.getName() : "";
+					description = parameter.getDescription() != null ? parameter.getDescription() : "";
+					units = parameter.getUnits() != null && parameter.getUnits().getExpression() != null
+						? parameter.getUnits().getExpression()
+						: "";
+				}
+
+				// Get the value based on the distribution type
+				if (param.getDistribution() != null) {
+					final ModelDistribution distribution = param.getDistribution();
+
+					if (Objects.equals(distribution.getType(), "Constant")) {
+						Object valueObj = distribution.getParameters().get("value");
+						value = valueObj != null ? valueObj.toString() : "";
+					}
+
+					if (Objects.equals(distribution.getType(), "StandardUniform1")) {
+						Object min = distribution.getParameters().get("minimum");
+						Object max = distribution.getParameters().get("maximum");
+						value =
+							"\"Uniform(min=" +
+							(min != null ? min.toString() : "") +
+							", max=" +
+							(max != null ? max.toString() : "") +
+							")\"";
+					}
+				}
+
+				// Add the row to the table
+				csv.append(String.format("parameter,%s,%s,%s,%s,%s,%s\n", id, name, value, units, description, source));
+			}
+		}
+
+		return csv.toString();
+	}
+
+	public static String generateLatex(Model model, ModelConfiguration modelConfiguration) {
 		StringBuilder latex = new StringBuilder();
 
 		// Start LaTeX table
@@ -51,7 +142,9 @@ public class ModelConfigurationLatexTable {
 				if (state != null) {
 					name = escapeLatex(state.getName());
 					description = escapeLatex(state.getDescription());
-					units = escapeLatex(state.getUnits().getExpression());
+					if (state.getUnits() != null) {
+						units = escapeLatex(state.getUnits().getExpression());
+					}
 				}
 
 				// Add the row to the table
@@ -98,7 +191,9 @@ public class ModelConfigurationLatexTable {
 				if (parameter != null) {
 					name = escapeLatex(parameter.getName());
 					description = escapeLatex(parameter.getDescription());
-					units = escapeLatex(parameter.getUnits().getExpression());
+					if (parameter.getUnits() != null) {
+						units = escapeLatex(parameter.getUnits().getExpression());
+					}
 				}
 
 				// Get the value based on the distribution type
@@ -106,15 +201,18 @@ public class ModelConfigurationLatexTable {
 					final ModelDistribution distribution = param.getDistribution();
 
 					if (Objects.equals(distribution.getType(), "Constant")) {
-						value = distribution.getParameters().get("value").toString();
+						Object valueObj = distribution.getParameters().get("value");
+						value = valueObj != null ? escapeLatex(valueObj.toString()) : "";
 					}
 
 					if (Objects.equals(distribution.getType(), "StandardUniform1")) {
+						Object min = distribution.getParameters().get("minimum");
+						Object max = distribution.getParameters().get("maximum");
 						value =
 							"Uniform(min=" +
-							distribution.getParameters().get("minimum") +
+							(min != null ? escapeLatex(min.toString()) : "") +
 							", max=" +
-							distribution.getParameters().get("maximum") +
+							(max != null ? escapeLatex(max.toString()) : "") +
 							")";
 					}
 				}

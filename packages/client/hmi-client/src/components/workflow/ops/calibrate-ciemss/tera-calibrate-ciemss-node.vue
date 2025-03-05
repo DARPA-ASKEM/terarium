@@ -30,7 +30,8 @@ import {
 	makeForecastJobCiemss,
 	getSimulation,
 	parsePyCiemssMap,
-	DataArray
+	DataArray,
+	renameFnGenerator
 } from '@/services/models/simulation-service';
 import { getModelConfigurationById, createModelConfiguration } from '@/services/model-configurations';
 import { setupCsvAsset } from '@/services/calibrate-workflow';
@@ -65,7 +66,7 @@ import { parseCsvAsset } from '@/utils/csv';
 import TeraNodePreview from '../tera-node-preview.vue';
 import type { CalibrationOperationStateCiemss } from './calibrate-operation';
 import { CalibrationOperationCiemss } from './calibrate-operation';
-import { renameFnGenerator, usePreparedChartInputs, getSelectedOutputMapping } from './calibrate-utils';
+import { usePreparedChartInputs, getSelectedOutputMapping } from './calibrate-utils';
 
 const props = defineProps<{
 	node: WorkflowNode<CalibrationOperationStateCiemss>;
@@ -257,6 +258,7 @@ watch(
 				start: 0,
 				end: state.endTime
 			},
+			loggingStepSize: state.endTime / state.numberOfTimepoints,
 			extra: {
 				num_samples: state.numSamples,
 				method: 'dopri5'

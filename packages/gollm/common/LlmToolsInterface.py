@@ -1,8 +1,13 @@
-from typing import List, Optional
 from entities import ChartAnnotationType
+from typing import List, Optional
 
 
 class LlmToolsInterface:
+
+    def name(self) -> str:
+        """Get the name of the LLM"""
+        pass
+
 
     def send_to_llm_with_json_output(self, prompt: str, schema: str, max_tokens: int) -> dict:
         """Send a request to an LLM API"""
