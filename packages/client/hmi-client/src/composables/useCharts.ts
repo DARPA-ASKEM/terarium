@@ -409,6 +409,7 @@ export function useCharts(
 		const dateOptions = getVegaDateOptions(model?.value ?? null, <ModelConfiguration>modelConfig?.value || null);
 		const options: ForecastChartOptions = {
 			...getChartLabels(setting),
+			fontSize: setting.fontSize,
 			legend: true,
 			width: chartSize.value.width,
 			height: chartSize.value.height,
@@ -429,6 +430,7 @@ export function useCharts(
 		const ensembleVarName = setting.selectedVariables[0];
 		const options: ForecastChartOptions = {
 			...getChartLabels(setting),
+			fontSize: setting.fontSize,
 			legend: true,
 			width: chartSize.value.width,
 			height: chartSize.value.height,
@@ -990,6 +992,7 @@ export function useCharts(
 				const beforeFieldName = `${fieldName}:pre`;
 				const histogram = createHistogramChart(data, {
 					...getChartLabels(setting),
+					fontSize: setting.fontSize,
 					width: chartSize.value.width,
 					height: chartSize.value.height,
 					maxBins: 10,
@@ -1348,6 +1351,7 @@ export function useCharts(
 						height: 150,
 						xAxisTitle: '',
 						yAxisTitle: '',
+						fontSize: settings.fontSize,
 						bins,
 						colorscheme: SENSITIVITY_COLOUR_SCHEME,
 						chartType
