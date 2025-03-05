@@ -7,7 +7,7 @@ import org.springframework.stereotype.Component;
 @Component
 @RequiredArgsConstructor
 @Slf4j
-public class SimplifyMOdelResponseHandler extends TaskResponseHandler {
+public class SimplifyModelResponseHandler extends TaskResponseHandler {
 
 	public static final String NAME = "mira_task:simplify_model";
 
