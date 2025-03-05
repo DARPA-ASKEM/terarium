@@ -188,7 +188,6 @@ export async function initialize(
 	node: WorkflowNode<CompareDatasetsState>,
 	knobs: Ref<any> | null,
 	isFetchingDatasets: Ref<boolean>,
-	datasets: Ref<Dataset[]>,
 	datasetResults: Ref<{
 		results: DataArray[];
 		summaryResults: DataArray[];
@@ -197,9 +196,9 @@ export async function initialize(
 	modelConfigIdToInterventionPolicyIdMap: Ref<Record<string, string[]>>,
 	modelConfigurations: Ref<ModelConfiguration[]>,
 	interventionPolicies: Ref<InterventionPolicy[]>
-) {
+): Promise<Dataset[]> {
 	const { inputs } = node;
-	datasets.value = [];
+	const datasets: Dataset[] = [];
 	const datasetInputs = inputs.filter(
 		(input) => input.type === 'datasetId' && input.status === WorkflowPortStatus.CONNECTED
 	);
@@ -215,7 +214,7 @@ export async function initialize(
 		ds.forEach((dataset) => {
 			// Add dataset
 			if (!dataset) return;
-			datasets.value.push(dataset);
+			datasets.push(dataset);
 
 			// Collect model configuration id and intervention policy id
 			const modelConfigurationId: string | undefined = dataset.metadata?.simulationAttributes?.modelConfigurationId;
@@ -235,25 +234,27 @@ export async function initialize(
 	});
 	// Fallback to the first dataset if no dataset ends up being selected
 	if (knobs) {
-		if (!knobs.value.selectedBaselineDatasetId) knobs.value.selectedBaselineDatasetId = datasets.value[0].id;
-		if (!knobs.value.selectedGroundTruthDatasetId) knobs.value.selectedGroundTruthDatasetId = datasets.value[0].id;
+		if (!knobs.value.selectedBaselineDatasetId) knobs.value.selectedBaselineDatasetId = datasets[0].id;
+		if (!knobs.value.selectedGroundTruthDatasetId) knobs.value.selectedGroundTruthDatasetId = datasets[0].id;
 	}
 
 	// Fetch the results
-	datasetResults.value = await fetchDatasetResults(datasets.value);
+	datasetResults.value = await fetchDatasetResults(datasets);
 	isFetchingDatasets.value = false;
 
 	const modelConfigurationIds = Object.keys(modelConfigIdToInterventionPolicyIdMap.value);
-	if (isEmpty(modelConfigurationIds)) return;
+	if (isEmpty(modelConfigurationIds)) return datasets;
 	const modelConfigurationPromises = modelConfigurationIds.map((id) => getModelConfigurationById(id));
 	await Promise.all(modelConfigurationPromises).then((configs) => {
 		modelConfigurations.value = configs.filter((config) => config !== null);
 	});
 
 	const interventionPolicyIds = Object.values(modelConfigIdToInterventionPolicyIdMap.value).flat();
-	if (isEmpty(interventionPolicyIds)) return;
+	if (isEmpty(interventionPolicyIds)) return datasets;
 	const interventionPolicyPromises = interventionPolicyIds.map((id) => getInterventionPolicyById(`${id}`));
 	await Promise.all(interventionPolicyPromises).then((policies) => {
 		interventionPolicies.value = policies.filter((policy) => policy !== null);
 	});
+
+	return datasets;
 }

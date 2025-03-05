@@ -784,11 +784,10 @@ onMounted(async () => {
 
 	outputPanelBehavior();
 
-	await initialize(
+	datasets.value = await initialize(
 		props.node,
 		knobs,
 		isFetchingDatasets,
-		datasets,
 		datasetResults,
 		modelConfigIdToInterventionPolicyIdMap,
 		modelConfigurations,

@@ -106,12 +106,11 @@ const rankingCharts = useInterventionRankingCharts(
 	interventionPolicies
 );
 
-onMounted(() => {
-	initialize(
+onMounted(async () => {
+	datasets.value = await initialize(
 		props.node,
 		null,
 		isFetchingDatasets,
-		datasets,
 		datasetResults,
 		modelConfigIdToInterventionPolicyIdMap,
 		modelConfigurations,
@@ -121,15 +120,14 @@ onMounted(() => {
 
 watch(
 	() => props.node.inputs,
-	() => {
+	async () => {
 		if (props.node.inputs.every((input) => input.status === WorkflowPortStatus.CONNECTED)) {
 			emit('append-input-port', { type: 'datasetId', label: 'Dataset or Simulation result' });
 		}
-		initialize(
+		datasets.value = await initialize(
 			props.node,
 			null,
 			isFetchingDatasets,
-			datasets,
 			datasetResults,
 			modelConfigIdToInterventionPolicyIdMap,
 			modelConfigurations,
