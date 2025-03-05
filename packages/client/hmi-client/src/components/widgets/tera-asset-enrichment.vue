@@ -69,11 +69,10 @@ const isLoading = computed(() => taskId.value !== '' && !isError.value);
 const isError = computed(() => taskId.value === TaskStatus.Failed);
 const isModalVisible = ref(false);
 
-const emit = defineEmits(['finished-job']);
 const taskId = ref<string>('');
 useClientEvent(
 	[ClientEventType.TaskGollmEnrichDataset, ClientEventType.TaskGollmEnrichModel],
-	createEnrichClientEventHandler(taskId, props.assetId || null, emit)
+	createEnrichClientEventHandler(taskId, props.assetId || null)
 );
 
 const selectedResourceId = ref<string>('');
