@@ -214,13 +214,18 @@ export function getOtherValues(
 	key: string,
 	otherValueList: string,
 	description?: string
-) {
+): SemanticOtherValues[] {
 	let otherValues: SemanticOtherValues[] = [];
 
-	const modelConfigTableData = configs.map((modelConfig) => ({
-		name: modelConfig.name ?? '',
-		list: modelConfig[otherValueList]
-	}));
+	const modelConfigTableData = configs.map((modelConfig) => {
+		const name: string = modelConfig.name ?? '';
+		let semanticList: string = otherValueList;
+		if (semanticList === 'parameterSemanticList' && modelConfig.simulationId !== null) {
+			semanticList = 'inferredParameterList';
+		}
+		const list = modelConfig[semanticList];
+		return { name, list };
+	});
 
 	modelConfigTableData.forEach((modelConfig) => {
 		const config: ParameterSemantic[] | InitialSemantic[] = modelConfig.list.filter((item) => item[key] === id)[0];
