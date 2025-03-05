@@ -221,7 +221,7 @@ export function getOtherValues(
 	const modelConfigTableData = configs.map((modelConfig) => {
 		const name: string = modelConfig.name ?? '';
 		let semanticList: string = otherValueList;
-		if (semanticList === 'parameterSemanticList' && modelConfig.simulationId !== null) {
+		if (semanticList === 'parameterSemanticList' && modelConfig.simulationId) {
 			semanticList = 'inferredParameterList';
 		}
 		const list = modelConfig[semanticList];
