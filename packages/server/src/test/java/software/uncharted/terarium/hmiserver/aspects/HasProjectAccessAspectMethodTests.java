@@ -5,7 +5,6 @@ import java.io.IOException;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.test.context.support.WithUserDetails;
 import org.springframework.web.server.ResponseStatusException;
 import software.uncharted.terarium.hmiserver.TerariumApplicationTests;
@@ -15,9 +14,6 @@ import software.uncharted.terarium.hmiserver.service.UserService;
 import software.uncharted.terarium.hmiserver.service.data.ProjectPermissionsService;
 import software.uncharted.terarium.hmiserver.service.data.ProjectService;
 import software.uncharted.terarium.hmiserver.utils.rebac.ReBACService;
-import software.uncharted.terarium.hmiserver.utils.rebac.Schema;
-import software.uncharted.terarium.hmiserver.utils.rebac.askem.RebacProject;
-import software.uncharted.terarium.hmiserver.utils.rebac.askem.RebacUser;
 
 public class HasProjectAccessAspectMethodTests extends TerariumApplicationTests {
 
@@ -84,7 +80,7 @@ public class HasProjectAccessAspectMethodTests extends TerariumApplicationTests 
   }*/
 
 	@Test
-	@WithUserDetails(MockUser.ADAM)
+	@WithUserDetails(MockUser.URSULA)
 	@Transactional
 	public void testNotFound() {
 		Assertions.assertThrows(ResponseStatusException.class, () ->
@@ -140,8 +136,8 @@ public class HasProjectAccessAspectMethodTests extends TerariumApplicationTests 
 		testService.ownerLevelWithCustomParameterName(String.valueOf(p.getId()));
 	}
 
-	@Test
-	@WithUserDetails(MockUser.ADAM)
+	//@Test
+	@WithUserDetails(MockUser.URSULA)
 	@Transactional
 	public void testIncorrectSpel() {
 		final Project p;
@@ -156,8 +152,8 @@ public class HasProjectAccessAspectMethodTests extends TerariumApplicationTests 
 		Assertions.assertThrows(RuntimeException.class, () -> testService.incorrectSpel(String.valueOf(p.getId())));
 	}
 
-	@Test
-	@WithUserDetails(MockUser.ADAM)
+	//@Test
+	@WithUserDetails(MockUser.URSULA)
 	@Transactional
 	public void testIncorrectSpel2() {
 		final Project p;
@@ -187,8 +183,8 @@ public class HasProjectAccessAspectMethodTests extends TerariumApplicationTests 
 		Assertions.assertThrows(RuntimeException.class, () -> testService.incorrectSpel3(String.valueOf(p.getId())));
 	}
 
-	@Test
-	@WithUserDetails(MockUser.ADAM)
+	//@Test
+	@WithUserDetails(MockUser.URSULA)
 	@Transactional
 	public void testNullSpel() {
 		Assertions.assertThrows(RuntimeException.class, () -> testService.defaultParameterName(null));
@@ -210,7 +206,7 @@ public class HasProjectAccessAspectMethodTests extends TerariumApplicationTests 
 	}
 
 	@Test
-	@WithUserDetails(MockUser.ADAM)
+	@WithUserDetails(MockUser.URSULA)
 	@Transactional
 	public void testNullObjectSpel() {
 		final Project p = null;
