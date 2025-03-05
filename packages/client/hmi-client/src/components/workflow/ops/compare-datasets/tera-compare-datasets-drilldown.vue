@@ -43,7 +43,6 @@
 								option-value="id"
 								:loading="isFetchingDatasets"
 								placeholder="Optional"
-								@change="onChangeImpactComparison"
 							/>
 						</template>
 						<!-- Pascale asked me to omit this timepoint selector, but I'm keeping it here until we are certain it's not needed -->
@@ -353,12 +352,7 @@
 							<div class="plot-options">
 								<p>How do you want to plot the values?</p>
 								<div v-for="option in plotOptions" class="flex align-items-center gap-2" :key="option.value">
-									<RadioButton
-										v-model="knobs.selectedPlotType"
-										:value="option.value"
-										name="plotValues"
-										@change="onChangeImpactComparison"
-									/>
+									<RadioButton v-model="knobs.selectedPlotType" :value="option.value" name="plotValues" />
 									<label :for="option.value">{{ option.label }}</label>
 								</div>
 							</div>
@@ -479,16 +473,6 @@ const onRun = () => {
 		constructATETable();
 	}
 };
-
-function onChangeImpactComparison() {
-	console.log('Todo Tom clean');
-	// impactChartData.value = buildChartData(
-	// 	datasets.value,
-	// 	datasetResults.value,
-	// 	baselineDatasetIndex.value,
-	// 	selectedPlotType.value
-	// );
-}
 
 interface BasicKnobs {
 	selectedCompareOption: CompareValue;
