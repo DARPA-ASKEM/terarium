@@ -46,7 +46,7 @@ import { ModelConfiguration } from '@/types/Types';
 import { formatTimestamp } from '@/utils/date';
 import Button from 'primevue/button';
 import ContextMenu from 'primevue/contextmenu';
-import { ref, watch } from 'vue';
+import { computed, ref, watch } from 'vue';
 import { useConfirm } from 'primevue/useconfirm';
 import {
 	deleteModelConfiguration,
@@ -62,6 +62,8 @@ const props = defineProps<{
 	selected?: boolean;
 	emptyInputCount?: string;
 }>();
+
+const isCalibrated = computed(() => props.configuration.simulationId !== null);
 
 const viewLatexTable = ref(false);
 const viewCSVTable = ref(false);
@@ -96,6 +98,7 @@ const contextMenuItems = ref([
 	{
 		label: 'LaTeX table',
 		icon: 'pi pi-table',
+		disabled: isCalibrated,
 		command() {
 			showLatexTable();
 		}
@@ -103,6 +106,7 @@ const contextMenuItems = ref([
 	{
 		label: 'CSV table',
 		icon: 'pi pi-table',
+		disabled: isCalibrated,
 		command() {
 			showCSVTable();
 		}
