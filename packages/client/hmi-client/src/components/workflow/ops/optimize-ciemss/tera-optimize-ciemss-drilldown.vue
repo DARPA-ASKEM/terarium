@@ -480,7 +480,8 @@ import {
 	getRunResultCSV,
 	makeOptimizeJobCiemss,
 	getSimulation,
-	CiemssMethodOptions
+	CiemssMethodOptions,
+	renameFnGenerator
 } from '@/services/models/simulation-service';
 import {
 	CsvAsset,
@@ -512,7 +513,6 @@ import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
 import { createSuccessCriteriaChart } from '@/services/charts';
 import VegaChart from '@/components/widgets/VegaChart.vue';
-import { renameFnGenerator } from '@/components/workflow/ops/calibrate-ciemss/calibrate-utils';
 import TeraInputNumber from '@/components/widgets/tera-input-number.vue';
 import { ChartSettingType, CiemssPresetTypes, DrilldownTabs } from '@/types/common';
 import { useConfirm } from 'primevue/useconfirm';

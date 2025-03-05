@@ -5,35 +5,8 @@ import { CalibrateMap } from '@/services/calibrate-workflow';
 import { mae } from '@/utils/stats';
 import { WorkflowNode } from '@/types/workflow';
 import { computed, Ref } from 'vue';
+import { mergeResults } from '@/services/dataset';
 import { CalibrationOperationStateCiemss } from './calibrate-operation';
-/**
- * A rename function generator for getRunResultCSV. Here the idea
- * to differentiate before and after columns in the run results
- * */
-export const renameFnGenerator = (label: string) => (col: string) => {
-	if (col === 'timepoint_id' || col === 'sample_id' || col === 'timepoint_unknown') return col;
-	return `${col}:${label}`;
-};
-
-/**
- * Merge before and after run and summary results, assume to be equal length and aligned
- * */
-export const mergeResults = (
-	resultPre: DataArray,
-	resultAfter: DataArray,
-	resultSummaryPre: DataArray,
-	resultSummaryAfter: DataArray
-) => {
-	const result: DataArray = [];
-	const resultSummary: DataArray = [];
-	for (let i = 0; i < resultAfter.length; i++) {
-		result.push(_.assign(resultAfter[i], resultPre[i]));
-	}
-	for (let i = 0; i < resultSummaryAfter.length; i++) {
-		resultSummary.push(_.assign(resultSummaryAfter[i], resultSummaryPre[i]));
-	}
-	return { result, resultSummary };
-};
 
 /**
 	* Get the mean absolute error from a provided source truth and a simulation run.
@@ -113,12 +86,8 @@ export function usePreparedChartInputs(
 		if (!calibrationId.value || _.isEmpty(pyciemssMap.value)) return null;
 
 		// Merge before/after for chart
-		const { result, resultSummary } = mergeResults(
-			runResult.value.resultPre,
-			runResult.value.result,
-			runResult.value.resultSummaryPre,
-			runResult.value.resultSummary
-		);
+		const result = mergeResults(runResult.value.resultPre, runResult.value.result);
+		const resultSummary = mergeResults(runResult.value.resultSummaryPre, runResult.value.resultSummary);
 
 		// Build lookup map for calibration, include before/after and dataset (observations)
 		const translationMap = {};

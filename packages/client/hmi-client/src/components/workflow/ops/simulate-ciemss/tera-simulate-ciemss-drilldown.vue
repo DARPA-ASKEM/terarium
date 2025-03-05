@@ -485,7 +485,8 @@ import {
 	makeForecastJobCiemss as makeForecastJob,
 	convertToCsvAsset,
 	DataArray,
-	CiemssMethodOptions
+	CiemssMethodOptions,
+	renameFnGenerator
 } from '@/services/models/simulation-service';
 import { logger } from '@/utils/logger';
 import {
@@ -519,8 +520,8 @@ import { useChartSettings } from '@/composables/useChartSettings';
 import { useProjects } from '@/composables/project';
 import { useDrilldownChartSize } from '@/composables/useDrilldownChartSize';
 import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue';
+import { mergeResults } from '@/services/dataset';
 import { SimulateCiemssOperationState } from './simulate-ciemss-operation';
-import { mergeResults, renameFnGenerator } from '../calibrate-ciemss/calibrate-utils';
 import { qualityPreset, speedPreset, usePreparedChartInputs } from './simulate-utils';
 import { isInterventionPolicyBlank } from '../intervention-policy/intervention-policy-operation';
 
@@ -821,9 +822,8 @@ const lazyLoadSimulationData = async (outputRunId: string) => {
 			getRunResultCSV(baseForecastId, 'result.csv', renameFnGenerator('pre')),
 			getRunResultCSV(baseForecastId, 'result_summary.csv', renameFnGenerator('pre'))
 		]);
-		const merged = mergeResults(baseResult, result, baseResultSummary, resultSummary);
-		result = merged.result;
-		resultSummary = merged.resultSummary;
+		result = mergeResults(baseResult, result);
+		resultSummary = mergeResults(baseResultSummary, resultSummary);
 	}
 	runResults.value[outputRunId] = result;
 	runResultsSummary.value[outputRunId] = resultSummary;
