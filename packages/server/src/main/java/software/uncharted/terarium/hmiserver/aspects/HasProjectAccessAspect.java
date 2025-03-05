@@ -92,27 +92,26 @@ public class HasProjectAccessAspect {
 			log.error("Unable to parse expression: " + spel);
 			throw e;
 		}
-		if (projectId == null) {
-			throw new RuntimeException("Unable to match function arguments with SpEL: " + spel);
-		}
-
-		// Get the project
-		final Optional<Project> project = projectService.getProject(UUID.fromString(projectId));
-		if (project.isEmpty()) {
-			throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Unable to find project: " + projectId);
-		}
 
 		// Validate we have access
 		final User user = currentUserService.get();
-		if (!projectService.hasPermission(project.get(), user, annotation.level())) {
-			throw new AccessDeniedException(
-				"User " +
-				user.getId() +
-				" does not have permission to access project " +
-				projectId +
-				" at level " +
-				annotation.level()
-			);
+		if (
+			!projectService.hasPermission(projectId == null ? null : UUID.fromString(projectId), user, annotation.level())
+		) {
+			// This diverges from Pantera in that this null check is done after the permission check, as service users
+			// and admins may pass in null project IDs to bypass the permission check.
+			if (projectId == null) {
+				throw new RuntimeException("Unable to match function arguments with SpEL: " + spel);
+			} else {
+				throw new AccessDeniedException(
+					"User " +
+					user.getId() +
+					" does not have permission to access project " +
+					projectId +
+					" at level " +
+					annotation.level()
+				);
+			}
 		}
 
 		return joinPoint.proceed();

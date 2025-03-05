@@ -212,10 +212,10 @@ public class ProjectService {
 	}
 
 	@Observed(name = "function_profile")
-	public boolean hasPermission(final Project project, final User user, final Schema.Permission permission) {
+	public boolean hasPermission(final UUID projectId, final User user, final Schema.Permission permission) {
 		try {
 			final RebacUser rebacUser = new RebacUser(user.getId(), reBACService);
-			final RebacProject rebacProject = new RebacProject(project.getId(), reBACService);
+			final RebacProject rebacProject = new RebacProject(projectId, reBACService);
 			return rebacUser.can(rebacProject, permission);
 		} catch (final Exception e) {
 			log.error("Error checking project permission", e);
