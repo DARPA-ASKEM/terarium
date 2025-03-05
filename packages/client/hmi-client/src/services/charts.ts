@@ -1723,50 +1723,6 @@ export function createInterventionChartMarkers(
 	return [markerSpec, labelSpec];
 }
 
-interface InterventionChartOptions extends Omit<BaseChartOptions, 'legend'> {
-	hideLabels?: boolean;
-}
-
-export function createInterventionChart(
-	interventions: ReturnType<typeof flattenInterventionData>,
-	chartOptions: InterventionChartOptions
-) {
-	const titleObj = chartOptions.title
-		? {
-				text: chartOptions.title,
-				anchor: 'start',
-				subtitle: ' ',
-				subtitlePadding: 4
-			}
-		: null;
-	const spec: any = {
-		$schema: VEGALITE_SCHEMA,
-		width: chartOptions.width,
-		title: titleObj,
-		height: chartOptions.height,
-		autosize: {
-			type: AUTOSIZE.FIT_X
-		},
-		layer: []
-	};
-	if (!isEmpty(interventions)) {
-		// markers
-		createInterventionChartMarkers(interventions, { hideLabels: chartOptions.hideLabels }).forEach((marker) => {
-			spec.layer.push(marker);
-		});
-		// chart
-		spec.layer.push({
-			data: { values: interventions },
-			mark: 'point',
-			encoding: {
-				x: { field: 'time', type: 'quantitative', title: chartOptions.xAxisTitle },
-				y: { field: 'value', type: 'quantitative', title: chartOptions.yAxisTitle }
-			}
-		});
-	}
-	return spec;
-}
-
 /// /////////////////////////////////////////////////////////////////////////////
 // Funman charts
 /// /////////////////////////////////////////////////////////////////////////////
