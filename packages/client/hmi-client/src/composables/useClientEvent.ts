@@ -31,9 +31,8 @@ export function createTaskListClientEventHandler(
 	statusKey: string,
 	emit
 ) {
-	// const { state } = node;
-	const taskIds = node.state[taskIdsKey];
 	return async (event: ClientEvent<TaskResponse>) => {
+		const taskIds = node.state[taskIdsKey];
 		if (!taskIds?.includes(event.data?.id) || !event.data) return;
 		if ([TaskStatus.Success, TaskStatus.Cancelled, TaskStatus.Failed].includes(event.data.status)) {
 			node.state[taskIdsKey] = taskIds.filter((id) => id !== event.data.id);
