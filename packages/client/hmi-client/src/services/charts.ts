@@ -1,5 +1,5 @@
 import * as d3 from 'd3';
-import { isEmpty, pick } from 'lodash';
+import { isEmpty, pick, merge } from 'lodash';
 import { percentile } from '@/utils/math';
 import { VisualizationSpec } from 'vega-embed';
 import { v4 as uuidv4 } from 'uuid';
@@ -13,28 +13,39 @@ import type { FunmanBox, FunmanConstraintsResponse } from './models/funman-servi
 
 const VEGALITE_SCHEMA = 'https://vega.github.io/schema/vega-lite/v5.json';
 const GLOBAL_FONT = 'Figtree';
+export const DEFAULT_FONT_SIZE = 12;
 
-// Vega lite default font sizes for different components
-// const DEFAULT_CONFIG_FONT_SIZE = {
-// 	axis: {
-// 		labelFontSize: 10,
-// 		titleFontSize: 11
-// 	},
-// 	legend: {
-// 		labelFontSize: 10,
-// 		titleFontSize: 11
-// 	},
-// 	title: {
-// 		fontSize: 13
-// 	},
-// 	header: {
-// 		labelFontSize: 10,
-// 		titleFontSize: 11
-// 	},
-// 	tooltip: {
-// 		fontSize: 12
-// 	}
-// };
+const getFontConfig = (fontSize = DEFAULT_FONT_SIZE, isCompact = false) => {
+	const BASE_FONT_SIZE = 12;
+	const ratio = fontSize / BASE_FONT_SIZE;
+	// First argument is compact mode value, second is the normal value
+	const fv = (compactVal: number, normalVal: number) => (isCompact ? compactVal : normalVal) * ratio;
+	return {
+		font: GLOBAL_FONT,
+		axis: {
+			labelFontSize: fv(7, 10),
+			titleFontSize: fv(7, 11)
+		},
+		legend: {
+			symbolSize: fv(100, 200),
+			labelFontSize: fv(8, 12),
+			titleFontSize: fv(7, 11)
+		},
+		title: {
+			fontSize: fv(10, 14)
+		},
+		header: {
+			labelFontSize: fv(7, 10),
+			titleFontSize: fv(7, 11)
+		},
+		tooltip: {
+			fontSize: fv(8, 12)
+		},
+		text: {
+			fontSize: fv(8, 12)
+		}
+	};
+};
 
 const NUMBER_FORMAT = '.3~s';
 export const expressionFunctions = {
@@ -72,6 +83,7 @@ export interface BaseChartOptions extends ChartLabelOptions {
 	autosize?: AUTOSIZE;
 	dateOptions?: DateOptions;
 	scale?: string;
+	fontSize?: number;
 }
 
 export interface DateOptions {
@@ -198,9 +210,8 @@ export function createErrorChart(dataset: Record<string, any>[], options: ErrorC
 				)
 			: [0, 0];
 
-	const config = {
+	const config = merge(getFontConfig(), {
 		facet: { spacing: 2 },
-		font: GLOBAL_FONT,
 		mark: { opacity: 1 },
 		view: { stroke: 'transparent' },
 		axis: {
@@ -233,7 +244,7 @@ export function createErrorChart(dataset: Record<string, any>[], options: ErrorC
 				strokeWidth: 1
 			}
 		}
-	};
+	});
 
 	return {
 		$schema: VEGALITE_SCHEMA,
@@ -378,8 +389,6 @@ export function createHistogramChart(dataset: Record<string, any>[], options: Hi
 		orient: 'top',
 		direction: 'horizontal',
 		symbolStrokeWidth: 4,
-		symbolSize: 200,
-		labelFontSize: 12,
 		labelOffset: 4,
 		...options.legendProperties
 	};
@@ -394,9 +403,7 @@ export function createHistogramChart(dataset: Record<string, any>[], options: Hi
 			values: []
 		},
 		layer: [],
-		config: {
-			font: GLOBAL_FONT
-		}
+		config: merge(getFontConfig(options.fontSize), {})
 	};
 
 	const data = dataset.map((d) =>
@@ -457,21 +464,18 @@ export function createHistogramChart(dataset: Record<string, any>[], options: Hi
 }
 
 /* This function estimates the legend width, because if it's too we will have to draw it with columns since there's no linewrap */
-function estimateLegendWidth(items: string[], fontSize: number) {
-	// Approximate width of each character (assuming monospace-like proportions)
-	const charWidth = fontSize * 0.4;
-
-	// Account for symbol width, padding, and spacing between items
-	const symbolWidth = fontSize * 3; // Symbol + padding
-	const itemSpacing = fontSize * 4; // Space between items
-
-	const totalWidth = items.reduce((acc, item) => {
-		const itemWidth = item.length * charWidth + symbolWidth;
-		return acc + itemWidth + itemSpacing;
-	}, 0);
-
-	const maxItemWidth = Math.max(...items.map((item) => item.length)) * charWidth;
-
+function estimateLegendWidth(items: string[], legendConfig: { labelFontSize: number; symbolSize: number }) {
+	const { labelFontSize, symbolSize } = legendConfig;
+	const itemsPixelWidths = items.map((item) => {
+		const context = document.createElement('canvas').getContext('2d');
+		if (!context) return 0;
+		context.font = `${labelFontSize}px ${GLOBAL_FONT}`;
+		const symbolWidth = Math.sqrt(symbolSize);
+		const gapWidth = 20;
+		return context.measureText(item).width + symbolWidth + gapWidth;
+	});
+	const totalWidth = itemsPixelWidths.reduce((acc, width) => acc + width, 0);
+	const maxItemWidth = Math.max(...itemsPixelWidths);
 	return {
 		totalWidth,
 		maxItemWidth
@@ -484,8 +488,8 @@ function calculateLegendColumns(
 	chartWidth: number,
 	numItems: number | undefined
 ): number | undefined {
-	// account for left-padding from chart width
-	if (!isCompact) chartWidth -= 100;
+	// account for left and right paddings from chart width
+	if (!isCompact) chartWidth -= 220;
 
 	if (isCompact || !numItems) {
 		return isCompact ? 1 : undefined;
@@ -584,11 +588,11 @@ export function createForecastChart(
 	};
 
 	const isCompact = options.width < 200;
-	const legendLabelFontSize = isCompact ? 8 : 12;
+	const fontConfig = getFontConfig(options.fontSize, isCompact);
 
 	// Estimate total legend width
 	const legendItems = getAllLegendItems();
-	const estimatedWidth = estimateLegendWidth(legendItems, legendLabelFontSize);
+	const estimatedWidth = estimateLegendWidth(legendItems, fontConfig.legend);
 
 	const legendProperties = {
 		title: null,
@@ -597,8 +601,6 @@ export function createForecastChart(
 		orient: 'top',
 		direction: isCompact ? 'vertical' : 'horizontal',
 		symbolStrokeWidth: isCompact ? 2 : 4,
-		symbolSize: 200,
-		labelFontSize: legendLabelFontSize,
 		labelOffset: isCompact ? 2 : 4,
 		labelLimit: isCompact ? 120 : 320,
 		columnPadding: 16,
@@ -619,14 +621,13 @@ export function createForecastChart(
 		autosize: {
 			type: options.autosize || AUTOSIZE.FIT_X
 		},
-		config: {
-			font: GLOBAL_FONT,
+		config: merge(fontConfig, {
 			legend: {
 				layout: {
 					anchor: 'start'
 				}
 			}
-		},
+		}),
 
 		// layers
 		layer: [],
@@ -1205,11 +1206,11 @@ export function createQuantilesForecastChart(
 	}
 
 	const isCompact = options.width < 200;
-	const legendLabelFontSize = isCompact ? 8 : 12;
+	const fontConfig = getFontConfig(options.fontSize, isCompact);
 
 	// Get all unique legend items
 	const legendItems = variables.map((v) => translationMap?.[v] ?? v);
-	const estimatedWidth = estimateLegendWidth(legendItems, legendLabelFontSize);
+	const estimatedWidth = estimateLegendWidth(legendItems, fontConfig.legend);
 
 	const legendProperties = {
 		title: null,
@@ -1218,8 +1219,6 @@ export function createQuantilesForecastChart(
 		orient: 'top',
 		direction: isCompact ? 'vertical' : 'horizontal',
 		symbolStrokeWidth: isCompact ? 2 : 4,
-		symbolSize: 200,
-		labelFontSize: legendLabelFontSize,
 		labelOffset: isCompact ? 2 : 4,
 		labelLimit: isCompact ? 120 : 320,
 		columnPadding: 16,
@@ -1259,15 +1258,14 @@ export function createQuantilesForecastChart(
 		autosize: {
 			type: options.autosize || AUTOSIZE.FIT_X
 		},
-		config: {
-			font: GLOBAL_FONT,
+		config: merge(fontConfig, {
 			legend: {
 				layout: {
 					direction: legendProperties.direction,
 					anchor: 'start'
 				}
 			}
-		},
+		}),
 		data: { values: buildQuantileChartData(data, variables, quantiles) },
 		transform: [
 			{
@@ -1346,6 +1344,7 @@ export function createSimulateSensitivityScatter(
 	calculateExpr += '0';
 	const spec: any = {
 		$schema: VEGALITE_SCHEMA,
+		config: merge(getFontConfig(options.fontSize), {}),
 		description: '',
 		repeat: {
 			row: samplingLayer.inputVariables,
@@ -1417,12 +1416,11 @@ export function createSimulateSensitivityScatter(
 export function createSensitivityRankingChart(data: { parameter: string; score: number }[], options: BaseChartOptions) {
 	const spec: any = {
 		$schema: VEGALITE_SCHEMA,
-		config: {
-			font: GLOBAL_FONT,
+		config: merge(getFontConfig(options.fontSize), {
 			bar: {
 				discreteBandSize: 8 // Fixed bar width
 			}
-		},
+		}),
 		title: {
 			text: options.title,
 			anchor: 'start',
@@ -1525,8 +1523,7 @@ export function createForecastChartAnnotation(axis: 'x' | 'y', datum: number, la
 					dx: 16,
 					dy: -16,
 					angle: isVertical ? 90 : 0,
-					baseline: 'top',
-					fontSize: 12
+					baseline: 'top'
 				},
 				encoding: {
 					text: { value: label }
@@ -1840,15 +1837,14 @@ export function createFunmanStateChart(
 	return {
 		$schema: VEGALITE_SCHEMA,
 		id: stateId,
-		config: { font: GLOBAL_FONT },
+		config: merge(getFontConfig()),
 		width: 600,
 		height: 300,
 		title: {
 			text: `${stateId} (persons)`,
 			anchor: 'start',
 			frame: 'group',
-			offset: 10,
-			fontSize: 14
+			offset: 10
 		},
 		params: [
 			{
@@ -1958,10 +1954,9 @@ export function createFunmanParameterCharts(
 
 	return {
 		$schema: VEGALITE_SCHEMA,
-		config: {
-			font: GLOBAL_FONT,
+		config: merge(getFontConfig(), {
 			tick: { thickness: 2 }
-		},
+		}),
 		width: 600,
 		height: 50, // Height per facet
 		data: {
@@ -2122,8 +2117,7 @@ export function createRankingInterventionsChart(
 ): VisualizationSpec {
 	return {
 		$schema: VEGALITE_SCHEMA,
-		config: {
-			font: GLOBAL_FONT,
+		config: merge(getFontConfig(options.fontSize), {
 			bar: {
 				discreteBandSize: 20 // Fixed bar width
 			},
@@ -2133,13 +2127,12 @@ export function createRankingInterventionsChart(
 			axis: {
 				labelAngle: 0
 			}
-		},
+		}),
 		title: {
 			text: options.title ?? '',
 			anchor: 'start',
 			frame: 'group',
-			offset: 10,
-			fontSize: 14
+			offset: 10
 		},
 		width: 600,
 		data: {
