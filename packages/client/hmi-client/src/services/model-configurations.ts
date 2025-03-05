@@ -1,5 +1,6 @@
 import API from '@/api/api';
 import type {
+	InferredParameterSemantic,
 	InitialSemantic,
 	Model,
 	ModelConfiguration,
@@ -228,7 +229,9 @@ export function getOtherValues(
 	});
 
 	modelConfigTableData.forEach((modelConfig) => {
-		const config: ParameterSemantic[] | InitialSemantic[] = modelConfig.list.filter((item) => item[key] === id)[0];
+		const config: ParameterSemantic[] | InitialSemantic[] | InferredParameterSemantic[] = modelConfig.list.filter(
+			(item) => item[key] === id
+		)[0];
 		if (config && modelConfig.name) {
 			const data: SemanticOtherValues = { name: modelConfig.name, ...config };
 			if (description) {
