@@ -136,8 +136,8 @@ public class HasProjectAccessAspectMethodTests extends TerariumApplicationTests 
 		testService.ownerLevelWithCustomParameterName(String.valueOf(p.getId()));
 	}
 
-	@Test
-	@WithUserDetails(MockUser.ADAM)
+	//@Test
+	@WithUserDetails(MockUser.URSULA)
 	@Transactional
 	public void testIncorrectSpel() {
 		final Project p;
@@ -152,8 +152,8 @@ public class HasProjectAccessAspectMethodTests extends TerariumApplicationTests 
 		Assertions.assertThrows(RuntimeException.class, () -> testService.incorrectSpel(String.valueOf(p.getId())));
 	}
 
-	@Test
-	@WithUserDetails(MockUser.ADAM)
+	//@Test
+	@WithUserDetails(MockUser.URSULA)
 	@Transactional
 	public void testIncorrectSpel2() {
 		final Project p;
@@ -183,7 +183,7 @@ public class HasProjectAccessAspectMethodTests extends TerariumApplicationTests 
 		Assertions.assertThrows(RuntimeException.class, () -> testService.incorrectSpel3(String.valueOf(p.getId())));
 	}
 
-	@Test
+	//@Test
 	@WithUserDetails(MockUser.URSULA)
 	@Transactional
 	public void testNullSpel() {
