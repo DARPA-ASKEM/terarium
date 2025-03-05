@@ -93,6 +93,14 @@ public class HasProjectAccessAspect {
 			throw e;
 		}
 
+		if (projectId != null) {
+			// Get the project
+			final Optional<Project> project = projectService.getProject(UUID.fromString(projectId));
+			if (project.isEmpty()) {
+				throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Unable to find project: " + projectId);
+			}
+		}
+
 		// Validate we have access
 		final User user = currentUserService.get();
 		if (
