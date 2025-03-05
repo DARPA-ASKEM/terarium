@@ -16,12 +16,12 @@
 				<tera-progress-spinner v-else :font-size="2" />
 			</div>
 			<vue-feather v-else :type="notificationStatusMap[props.status].icon" size="1.5rem" />
-			<div v-if="!hasSlot('default')">
-				{{ notificationStatusMap[props.status].message }}
-			</div>
-			<slot v-else />
 		</div>
 	</section>
+	<div v-if="!hasSlot('default')" class="action">
+		{{ notificationStatusMap[props.status].message }}
+	</div>
+	<slot v-else />
 </template>
 
 <script setup lang="ts">
