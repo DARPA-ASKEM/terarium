@@ -5,7 +5,10 @@
 			class="icon-container"
 			:class="`${status}`"
 		>
-			<div v-if="props.status === OperatorStatus.IN_PROGRESS" class="progressbar-container">
+			<div
+				v-if="props.status === OperatorStatus.IN_PROGRESS || props.status === ProgressState.Running"
+				class="progressbar-container"
+			>
 				<div v-if="props.progress">
 					<p class="action">{{ Math.round(props.progress * 100) }}%</p>
 					<ProgressBar :value="props.progress ? props.progress * 100 : 0" />
@@ -23,17 +26,18 @@
 
 <script setup lang="ts">
 import { useSlots } from 'vue';
+import ProgressBar from 'primevue/progressbar';
 import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue';
+import { ProgressState } from '@/types/Types';
 import { OperatorStatus } from '@/types/workflow';
 
 const props = defineProps<{
-	status: OperatorStatus | undefined;
+	status: OperatorStatus | ProgressState;
 	progress?: number;
 }>();
 
 const slots = useSlots();
 const hasSlot = (name: string) => !!slots[name];
-// this should be global, maybe notification manager export
 const notificationStatusMap = {
 	[OperatorStatus.SUCCESS]: { icon: 'check', message: 'Success' },
 	[OperatorStatus.IN_PROGRESS]: { icon: 'spinner', message: 'Processing' },
