@@ -108,7 +108,7 @@ public class TaskRunnerService {
 				// send cancellation response and return
 				final TaskResponse resp = req.createResponse(TaskStatus.CANCELLED, "", "");
 				final String cancelJson = mapper.writeValueAsString(resp);
-				rabbitTemplate.convertAndSend(TASK_RUNNER_RESPONSE_EXCHANGE, "", cancelJson);
+				rabbitTemplate.convertAndSend(TASK_RUNNER_RESPONSE_EXCHANGE, resp.getRoutingKey(), cancelJson);
 				return;
 			}
 
@@ -125,7 +125,7 @@ public class TaskRunnerService {
 			// append error
 			failedResp.setOutput(e.getMessage().getBytes());
 			final String failedJson = mapper.writeValueAsString(failedResp);
-			rabbitTemplate.convertAndSend(TASK_RUNNER_RESPONSE_EXCHANGE, "", failedJson);
+			rabbitTemplate.convertAndSend(TASK_RUNNER_RESPONSE_EXCHANGE, failedResp.getRoutingKey(), failedJson);
 			return;
 		}
 
@@ -140,7 +140,7 @@ public class TaskRunnerService {
 			final TaskResponse runningResp = req.createResponse(TaskStatus.RUNNING, "", "");
 
 			final String runningJson = mapper.writeValueAsString(runningResp);
-			rabbitTemplate.convertAndSend(TASK_RUNNER_RESPONSE_EXCHANGE, "", runningJson);
+			rabbitTemplate.convertAndSend(TASK_RUNNER_RESPONSE_EXCHANGE, runningResp.getRoutingKey(), runningJson);
 
 			// write the input to the task
 			task.writeInputWithTimeout(req.getInput(), req.getTimeoutMinutes());
@@ -156,7 +156,7 @@ public class TaskRunnerService {
 				final TaskResponse progressResp = task.createResponse(TaskStatus.RUNNING);
 				progressResp.setOutput(output);
 				final String progressJson = mapper.writeValueAsString(progressResp);
-				rabbitTemplate.convertAndSend(TASK_RUNNER_RESPONSE_EXCHANGE, "", progressJson);
+				rabbitTemplate.convertAndSend(TASK_RUNNER_RESPONSE_EXCHANGE, progressResp.getRoutingKey(), progressJson);
 			}
 
 			// block and wait for output from the task
@@ -168,7 +168,7 @@ public class TaskRunnerService {
 			final TaskResponse successResp = task.createResponse(TaskStatus.SUCCESS);
 			successResp.setOutput(output);
 			final String successJson = mapper.writeValueAsString(successResp);
-			rabbitTemplate.convertAndSend(TASK_RUNNER_RESPONSE_EXCHANGE, "", successJson);
+			rabbitTemplate.convertAndSend(TASK_RUNNER_RESPONSE_EXCHANGE, successResp.getRoutingKey(), successJson);
 		} catch (final Exception e) {
 			if (task.getStatus() == TaskStatus.FAILED) {
 				log.error("Task {} failed", task.getId(), e);
@@ -184,7 +184,7 @@ public class TaskRunnerService {
 				failedResp.setOutput(e.getMessage().getBytes());
 			}
 			final String failedJson = mapper.writeValueAsString(failedResp);
-			rabbitTemplate.convertAndSend(TASK_RUNNER_RESPONSE_EXCHANGE, "", failedJson);
+			rabbitTemplate.convertAndSend(TASK_RUNNER_RESPONSE_EXCHANGE, failedResp.getRoutingKey(), failedJson);
 		} finally {
 			cancellationConsumer.stop();
 			task.cleanup();
@@ -224,7 +224,7 @@ public class TaskRunnerService {
 					// send that we are cancelling
 					final TaskResponse resp = task.createResponse(TaskStatus.CANCELLING);
 					final String cancelJson = mapper.writeValueAsString(resp);
-					rabbitTemplate.convertAndSend(TASK_RUNNER_RESPONSE_EXCHANGE, "", cancelJson);
+					rabbitTemplate.convertAndSend(TASK_RUNNER_RESPONSE_EXCHANGE, resp.getRoutingKey(), cancelJson);
 
 					// then cancel
 					task.cancel();

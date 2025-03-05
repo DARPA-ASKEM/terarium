@@ -1,16 +1,14 @@
 <template>
-	<div :class="{ isPreview: featureConfig?.isPreview }" ref="outputAreaRef" />
+	<div class="output-area" ref="outputAreaRef" />
 </template>
 
 <script setup lang="ts">
 import { JupyterMessage, renderMime } from '@/services/jupyter';
 import { computed, onMounted, ref, watch } from 'vue';
 import { OutputArea, OutputAreaModel } from '@jupyterlab/outputarea';
-import { FeatureConfig } from '@/types/common';
 
 const props = defineProps<{
 	jupyterMessage: JupyterMessage;
-	featureConfig?: FeatureConfig;
 }>();
 
 const outputAreaRef = ref<HTMLDivElement | null>(null);
@@ -49,6 +47,10 @@ const updateOutputs = () => {
 	renderOutputs(outputs);
 };
 
+const clear = () => {
+	renderOutputs([]);
+};
+
 onMounted(() => {
 	updateOutputs();
 });
@@ -61,11 +63,15 @@ watch(
 );
 
 const messageType = computed(() => props.jupyterMessage.header.msg_type);
+
+defineExpose({
+	clear
+});
 </script>
 
 <style scoped>
 div {
-	&.isPreview {
+	&.output-area {
 		&:deep(.lm-Widget.p-Widget.jp-OutputPrompt.jp-OutputArea-prompt) {
 			display: none;
 		}

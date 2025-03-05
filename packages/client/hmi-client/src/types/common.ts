@@ -1,11 +1,4 @@
-import {
-	AssetType,
-	ClientEventType,
-	ModelGrounding,
-	ProgrammingLanguage,
-	ProgressState,
-	StatusUpdate
-} from '@/types/Types';
+import { AssetType, ClientEventType, Grounding, ProgrammingLanguage, ProgressState, StatusUpdate } from '@/types/Types';
 import { ProjectPages } from './Project';
 
 export interface FeatureConfig {
@@ -35,7 +28,7 @@ export interface ModelConfigTableData {
 	name: string;
 	type: ParamType;
 	description: string;
-	concept: ModelGrounding;
+	concept: Grounding;
 	unit?: string;
 	value: any;
 	source: string;
@@ -113,8 +106,7 @@ export enum AcceptedExtensions {
 export enum AMRSchemaNames {
 	PETRINET = 'petrinet',
 	REGNET = 'regnet',
-	STOCKFLOW = 'stockflow',
-	DECAPODES = 'decapodes'
+	STOCKFLOW = 'stockflow'
 }
 
 export interface PDFExtractionResponseType {
@@ -125,10 +117,6 @@ export interface PDFExtractionResponseType {
 export interface Position {
 	x: number;
 	y: number;
-}
-export enum ModelServiceType {
-	TA1 = 'SKEMA-MIT',
-	TA4 = 'GoLLM'
 }
 
 export interface CompareModelsResponseType {
@@ -158,6 +146,8 @@ interface Comparison {
 	conclusion: string;
 }
 
+export type ModelEnrichmentStatusUpdate = StatusUpdate<{ modelId: string; workflowId: string; nodeId: string }>;
+
 export type ExtractionStatusUpdate = StatusUpdate<{ documentId: string }>;
 export type CloneProjectStatusUpdate = StatusUpdate<{ projectId: string }>;
 export interface NotificationItem extends NotificationItemStatus, AssetRoute {
@@ -181,18 +171,82 @@ export interface NotificationItemStatus {
 
 export enum ChartSettingType {
 	VARIABLE = 'variable',
+	VARIABLE_OBSERVABLE = 'variable-observable',
 	VARIABLE_COMPARISON = 'variable-comparison',
 	VARIABLE_ENSEMBLE = 'variable-ensemble',
 	DISTRIBUTION_COMPARISON = 'distribution-comparison',
 	ERROR_DISTRIBUTION = 'error-distribution',
-	INTERVENTION = 'intervention'
+	INTERVENTION = 'intervention',
+	SENSITIVITY = 'sensitivity'
 }
 
-export interface ChartSetting {
+export type ChartSetting =
+	| ChartSettingBase
+	| ChartSettingEnsembleVariable
+	| ChartSettingSensitivity
+	| ChartSettingComparison;
+
+export interface ChartSettingEnsembleVariable extends ChartSettingBase, ChartSettingEnsembleVariableOptions {
+	type: ChartSettingType.VARIABLE_ENSEMBLE;
+}
+
+export interface ChartSettingSensitivity extends ChartSettingBase, ChartSettingSensitivityOptions {
+	type: ChartSettingType.SENSITIVITY;
+}
+
+export interface ChartSettingComparison extends ChartSettingBase {
+	type: ChartSettingType.VARIABLE_COMPARISON;
+	smallMultiples?: boolean;
+	shareYAxis?: boolean;
+	/** If true, also plot the pre-calibration or base simulation (without the intervention) data */
+	showBeforeAfter?: boolean;
+	/** Normalize data by total strata population. Only supported for stratified models */
+	normalize?: boolean;
+	colorScheme?: string[];
+	variableColors?: { [name: string]: string };
+}
+
+export interface ChartSettingEnsembleVariableOptions {
+	showIndividualModels: boolean;
+	relativeToEnsemble: boolean;
+	showIndividualModelsWithWeight?: boolean;
+}
+export interface ChartSettingSensitivityOptions {
+	selectedInputVariables: string[];
+	timepoint: number;
+	chartType: SensitivityChartType;
+	method: SensitivityMethod;
+}
+
+export enum SensitivityChartType {
+	SCATTER = 'scatter',
+	HEATMAP = 'heatmap'
+}
+
+export enum SensitivityMethod {
+	TIMEPOINT = 'value at timepoint',
+	PEAK_VALUE = 'peak value',
+	PEAK_TIMEPOINT = 'peak timepoint'
+}
+
+export interface ChartLabelOptions {
+	title?: string;
+	xAxisTitle?: string;
+	yAxisTitle?: string;
+}
+export interface ChartSettingBase extends ChartLabelOptions {
 	id: string;
 	name: string;
 	selectedVariables: string[];
 	type: ChartSettingType;
+	primaryColor?: string;
+	scale?: string;
+	smallMultiples?: boolean;
+	hideInNode?: boolean;
+	shareYAxis?: boolean;
+	showQuantiles?: boolean;
+	quantiles?: number[];
+	fontSize?: number;
 }
 
 export const ProgrammingLanguageVersion: { [key in ProgrammingLanguage]: string } = {
@@ -208,12 +262,13 @@ export const ProgrammingLanguageVersion: { [key in ProgrammingLanguage]: string 
  * The `Zip` programming language is excluded from the options.
  * @returns {Array} An array of options for programming languages.
  */
-export const programmingLanguageOptions = (): { name: string; value: string }[] =>
+export const programmingLanguageOptions = (): { name: string; value: string; disabled: boolean }[] =>
 	Object.values(ProgrammingLanguage)
 		.filter((lang) => lang !== ProgrammingLanguage.Zip)
 		.map((lang) => ({
 			name: lang && `${lang[0].toUpperCase() + lang.slice(1)} (${ProgrammingLanguageVersion[lang]})`,
-			value: ProgrammingLanguageVersion[lang]
+			value: ProgrammingLanguageVersion[lang],
+			disabled: lang === ProgrammingLanguage.Julia
 		}));
 
 export enum CalendarDateType {

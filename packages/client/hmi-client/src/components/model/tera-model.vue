@@ -1,40 +1,17 @@
 <template>
 	<tera-asset
 		v-bind="$attrs"
-		:feature-config="featureConfig"
 		:id="assetId"
 		:is-loading="isModelLoading"
-		:is-naming-asset="isNaming"
-		:name="temporaryModel?.header.name"
-		@close-preview="emit('close-preview')"
 		:show-table-of-contents="!isWorkflow"
+		:name="temporaryModel?.header.name"
+		@rename="updateModelName"
 	>
-		<template #name-input>
-			<tera-input-text
-				v-if="isNaming"
-				v-model.lazy="newName"
-				@keyup.enter="updateModelName"
-				@keyup.esc="updateModelName"
-				auto-focus
-				class="w-4"
-				placeholder="Title of new model"
-			/>
-			<div v-if="isNaming" class="flex flex-nowrap ml-1 mr-3">
-				<Button
-					icon="pi pi-check"
-					rounded
-					text
-					@click="updateModelName"
-					title="This will rename the model and save all current changes."
-				/>
-			</div>
-		</template>
-		<template #edit-buttons v-if="!featureConfig.isPreview">
+		<template #edit-buttons>
 			<Button icon="pi pi-ellipsis-v" text rounded @click="toggleOptionsMenu" />
 			<ContextMenu ref="optionsMenu" :model="optionsMenuItems" popup :pt="optionsMenuPt" />
 			<aside class="btn-group">
 				<tera-asset-enrichment :asset-type="AssetType.Model" :assetId="assetId" @finished-job="fetchModel" />
-
 				<Button
 					v-if="isSaveForReuse"
 					label="Save for re-use"
@@ -48,17 +25,20 @@
 			</aside>
 		</template>
 		<section v-if="temporaryModel && mmtData">
-			<tera-model-description
-				:feature-config="featureConfig"
-				:model="temporaryModel"
-				:mmt-data="mmtData"
-				@update-model="updateTemporaryModel"
-			/>
+			<div class="warn" v-if="modelErrors.length > 0">
+				Errors or warnings detected, please check individual sections below.
+			</div>
+			<div v-for="(err, idx) of modelErrors.filter((d) => d.type === 'model')" :key="idx">
+				<div :class="err.severity">{{ err.content }}</div>
+			</div>
+
+			<tera-model-description :model="temporaryModel" :mmt-data="mmtData" @update-model="updateTemporaryModel" />
 			<tera-petrinet-parts
 				:model="temporaryModel"
 				:mmt="mmtData.mmt"
 				:mmt-params="mmtData.template_params"
-				:feature-config="featureConfig"
+				:feature-config="{ isPreview: false }"
+				:model-errors="modelErrors"
 				@update-state="(e: any) => onUpdateModelPart('state', e)"
 				@update-parameter="(e: any) => onUpdateModelPart('parameter', e)"
 				@update-observable="(e: any) => onUpdateModelPart('observable', e)"
@@ -81,38 +61,34 @@
 </template>
 
 <script setup lang="ts">
-import { computed, PropType, ref, watch, onMounted } from 'vue';
+import { computed, ref, watch, onMounted } from 'vue';
 import { cloneDeep, isEmpty, isEqual } from 'lodash';
 import Button from 'primevue/button';
 import ContextMenu from 'primevue/contextmenu';
 import TeraAsset from '@/components/asset/tera-asset.vue';
 import TeraAssetEnrichment from '@/components/widgets/tera-asset-enrichment.vue';
-import TeraInputText from '@/components/widgets/tera-input-text.vue';
 import TeraModelDescription from '@/components/model/petrinet/tera-model-description.vue';
 import TeraPetrinetParts from '@/components/model/petrinet/tera-petrinet-parts.vue';
 import TeraSaveAssetModal from '@/components/project/tera-save-asset-modal.vue';
 import { getModel, updateModel, getMMT } from '@/services/model';
-import type { FeatureConfig } from '@/types/common';
 import { AssetType, type Model } from '@/types/Types';
 import { useProjects } from '@/composables/project';
 import { logger } from '@/utils/logger';
 import { MMT } from '@/model-representation/mira/mira-common';
 import {
+	checkPetrinetAMR,
 	updateState,
 	updateParameter,
 	updateObservable,
 	updateTransition,
 	updateTime
 } from '@/model-representation/service';
+import type { ModelError } from '@/model-representation/service';
 
 const props = defineProps({
 	assetId: {
 		type: String,
 		default: ''
-	},
-	featureConfig: {
-		type: Object as PropType<FeatureConfig>,
-		default: { isPreview: false } as FeatureConfig
 	},
 	isWorkflow: {
 		type: Boolean,
@@ -124,19 +100,17 @@ const props = defineProps({
 	}
 });
 
-const emit = defineEmits(['close-preview', 'on-save']);
+const emit = defineEmits(['on-save']);
 
 const model = ref<Model | null>(null);
 const temporaryModel = ref<Model | null>(null);
 const mmtData = ref<MMT | null>(null);
 
-const newName = ref('New Model');
-const isRenaming = ref(false);
 const isModelLoading = ref(false);
 const showSaveModal = ref(false);
-const isNaming = computed(() => isEmpty(props.assetId) || isRenaming.value);
 const hasChanged = computed(() => !isEqual(model.value, temporaryModel.value));
 const hasEditPermission = useProjects().hasEditPermission();
+const modelErrors = ref<ModelError[]>([]);
 
 // Edit menu
 async function onSave() {
@@ -168,14 +142,6 @@ const optionsMenu = ref();
 // TODO: Could be moved into tera-asset.vue
 const optionsMenuItems = ref<any[]>([
 	{
-		icon: 'pi pi-pencil',
-		label: 'Rename',
-		command() {
-			isRenaming.value = true;
-			newName.value = temporaryModel.value?.header.name ?? '';
-		}
-	},
-	{
 		icon: 'pi pi-download',
 		label: 'Download',
 		command: async () => {
@@ -188,7 +154,6 @@ const optionsMenuItems = ref<any[]>([
 				a.click();
 				a.remove();
 			}
-			emit('close-preview');
 		}
 	}
 ]);
@@ -198,11 +163,9 @@ const optionsMenuPt = {
 	}
 };
 
-async function updateModelName() {
-	if (temporaryModel.value && !isEmpty(newName.value)) {
-		temporaryModel.value.header.name = newName.value;
-	}
-	isRenaming.value = false;
+async function updateModelName(name: string) {
+	if (!temporaryModel.value) return;
+	temporaryModel.value.header.name = name;
 	onSave();
 }
 
@@ -214,16 +177,7 @@ async function refreshMMT() {
 }
 
 function updateTemporaryModel(newModel: Model) {
-	let doMmtUpdate = false;
-	// Only update the MMT when the semantics of the model changes
-	if (
-		!isEqual(temporaryModel.value?.model, newModel.model) ||
-		!isEqual(temporaryModel.value?.semantics, newModel.semantics)
-	) {
-		doMmtUpdate = true;
-	}
 	temporaryModel.value = cloneDeep(newModel);
-	if (doMmtUpdate) refreshMMT();
 }
 
 function onUpdateModelPart(property: 'state' | 'parameter' | 'observable' | 'transition' | 'time', event: any) {
@@ -255,6 +209,8 @@ function onUpdateModelPart(property: 'state' | 'parameter' | 'observable' | 'tra
 async function fetchModel() {
 	model.value = await getModel(props.assetId);
 	temporaryModel.value = cloneDeep(model.value);
+	modelErrors.value = checkPetrinetAMR(model.value as Model);
+
 	await refreshMMT();
 }
 
@@ -281,7 +237,6 @@ watch(
 		model.value = null;
 		temporaryModel.value = null;
 		mmtData.value = null;
-		isRenaming.value = false;
 		if (!isEmpty(props.assetId)) {
 			isModelLoading.value = true;
 			await fetchModel();
@@ -298,5 +253,13 @@ watch(
 	align-items: center;
 	gap: var(--gap-2);
 	margin-left: auto;
+}
+
+.warn {
+	background-color: var(--surface-warning);
+}
+
+.error {
+	background-color: var(--surface-error);
 }
 </style>

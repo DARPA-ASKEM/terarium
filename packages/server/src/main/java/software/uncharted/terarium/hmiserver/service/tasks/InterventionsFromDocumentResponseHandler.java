@@ -10,21 +10,17 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import software.uncharted.terarium.hmiserver.models.simulationservice.interventions.InterventionPolicy;
 import software.uncharted.terarium.hmiserver.models.task.TaskResponse;
-import software.uncharted.terarium.hmiserver.service.data.DocumentAssetService;
 import software.uncharted.terarium.hmiserver.service.data.InterventionService;
-import software.uncharted.terarium.hmiserver.service.data.ProvenanceService;
 
 @Component
 @RequiredArgsConstructor
 @Slf4j
-public class InterventionsFromDocumentResponseHandler extends TaskResponseHandler {
+public class InterventionsFromDocumentResponseHandler extends LlmTaskResponseHandler {
 
 	public static final String NAME = "gollm:interventions_from_document";
 
 	private final ObjectMapper objectMapper;
 	private final InterventionService interventionService;
-	private final ProvenanceService provenanceService;
-	private final DocumentAssetService documentAssetService;
 
 	@Override
 	public String getName() {
@@ -32,10 +28,10 @@ public class InterventionsFromDocumentResponseHandler extends TaskResponseHandle
 	}
 
 	@Data
-	public static class Input {
+	public static class Input extends LlmTaskResponseHandler.Input {
 
-		@JsonProperty("research_paper")
-		String researchPaper;
+		@JsonProperty("document")
+		String document;
 
 		@JsonProperty("amr")
 		String amr;
@@ -73,12 +69,6 @@ public class InterventionsFromDocumentResponseHandler extends TaskResponseHandle
 
 				// Set the extraction document id
 				ip.getInterventions().forEach(intervention -> intervention.setExtractionDocumentId(props.documentId));
-
-				final InterventionPolicy newPolicy = interventionService.createAsset(
-					ip,
-					props.projectId,
-					ASSUME_WRITE_PERMISSION_ON_BEHALF_OF_USER
-				);
 			}
 		} catch (final Exception e) {
 			log.error("Failed to extract intervention policy", e);

@@ -99,6 +99,7 @@ aside {
 
 main > section {
 	max-height: 95vh;
+	max-width: 95vw;
 	background-color: #fff;
 	border-radius: var(--modal-border-radius);
 	box-shadow: 0 2px 8px rgba(0, 0, 0, 0.33);
@@ -112,7 +113,7 @@ main > section {
 }
 
 .content {
-	max-height: 80vh;
+	max-height: 70vh;
 	padding: 0 var(--gap-8);
 	overflow-y: auto;
 }

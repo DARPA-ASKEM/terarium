@@ -3,7 +3,6 @@ package software.uncharted.terarium.hmiserver.service.data;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.micrometer.observation.annotation.Observed;
 import java.io.IOException;
-import java.util.Map;
 import java.util.UUID;
 import org.apache.http.entity.ContentType;
 import org.springframework.stereotype.Service;
@@ -12,11 +11,9 @@ import software.uncharted.terarium.hmiserver.models.dataservice.FileExport;
 import software.uncharted.terarium.hmiserver.models.dataservice.notebooksession.NotebookSession;
 import software.uncharted.terarium.hmiserver.repository.data.NotebookSessionRepository;
 import software.uncharted.terarium.hmiserver.service.s3.S3ClientService;
-import software.uncharted.terarium.hmiserver.utils.rebac.Schema;
 
 @Service
-public class NotebookSessionService
-	extends TerariumAssetServiceWithoutSearch<NotebookSession, NotebookSessionRepository> {
+public class NotebookSessionService extends TerariumAssetService<NotebookSession, NotebookSessionRepository> {
 
 	public NotebookSessionService(
 		final ObjectMapper objectMapper,
@@ -44,17 +41,7 @@ public class NotebookSessionService
 
 	@Override
 	@Observed(name = "function_profile")
-	public void copyAssetFiles(
-		final NotebookSession newAsset,
-		final NotebookSession oldAsset,
-		final Schema.Permission hasWritePermission
-	) throws IOException {
-		throw new UnsupportedOperationException("Unimplemented");
-	}
-
-	@Override
-	@Observed(name = "function_profile")
-	public Map<String, FileExport> exportAssetFiles(final UUID assetId, final Schema.Permission hasReadPermission) {
+	public void copyAssetFiles(final NotebookSession newAsset, final NotebookSession oldAsset) throws IOException {
 		throw new UnsupportedOperationException("Unimplemented");
 	}
 

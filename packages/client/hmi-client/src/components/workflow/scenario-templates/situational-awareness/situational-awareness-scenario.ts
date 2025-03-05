@@ -13,7 +13,7 @@ import { updateChartSettingsBySelectedVariables } from '@/services/chart-setting
 export class SituationalAwarenessScenario extends BaseScenario {
 	public static templateId = 'situational-awareness';
 
-	public static templateName = 'Situational Awareness';
+	public static templateName = 'Situational awareness';
 
 	modelSpec: { id: string };
 
@@ -29,7 +29,7 @@ export class SituationalAwarenessScenario extends BaseScenario {
 
 	constructor() {
 		super();
-		this.workflowName = 'Situational Awareness';
+		this.workflowName = '';
 		this.modelSpec = {
 			id: ''
 		};

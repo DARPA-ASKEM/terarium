@@ -1,7 +1,7 @@
 package software.uncharted.terarium.hmiserver.service.data;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import io.micrometer.observation.annotation.Observed;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -26,11 +26,10 @@ import software.uncharted.terarium.hmiserver.repository.data.SimulationRepositor
 import software.uncharted.terarium.hmiserver.repository.data.SimulationUpdateRepository;
 import software.uncharted.terarium.hmiserver.service.s3.S3ClientService;
 import software.uncharted.terarium.hmiserver.service.s3.S3Service;
-import software.uncharted.terarium.hmiserver.utils.rebac.Schema;
 
 @Service
 @Slf4j
-public class SimulationService extends TerariumAssetServiceWithoutSearch<Simulation, SimulationRepository> {
+public class SimulationService extends TerariumAssetService<Simulation, SimulationRepository> {
 
 	private final SimulationUpdateRepository simulationUpdateRepository;
 	private final DatasetService datasetService;
@@ -71,12 +70,8 @@ public class SimulationService extends TerariumAssetServiceWithoutSearch<Simulat
 		return String.join("/", config.getDatasetPath(), datasetId.toString(), filename);
 	}
 
-	public SimulationUpdate appendUpdateToSimulation(
-		final UUID simulationId,
-		final SimulationUpdate update,
-		final Schema.Permission hasReadPermission
-	) {
-		final Simulation simulation = getAsset(simulationId, hasReadPermission).orElseThrow();
+	public SimulationUpdate appendUpdateToSimulation(final UUID simulationId, final SimulationUpdate update) {
+		final Simulation simulation = getAsset(simulationId).orElseThrow();
 
 		update.setSimulation(simulation);
 		final SimulationUpdate created = simulationUpdateRepository.save(update);
@@ -93,26 +88,41 @@ public class SimulationService extends TerariumAssetServiceWithoutSearch<Simulat
 		final String datasetName,
 		final UUID projectId,
 		final boolean addToProject,
-		final Schema.Permission permission
+		final UUID modelConfigurationId,
+		final UUID interventionPolicyId
 	) {
 		try {
-			final Optional<Simulation> sim = this.getAsset(simId, permission);
+			final Optional<Simulation> sim = this.getAsset(simId);
 			final Optional<Project> project = projectService.getProject(projectId);
 			if (sim.isEmpty()) {
 				throw new IllegalArgumentException("Simulation not found");
 			}
 
-			if (!project.isPresent() && addToProject) {
+			if (project.isEmpty() && addToProject) {
 				throw new IllegalArgumentException("Project not found");
 			}
 
-			Dataset dataset = datasetService.createAsset(new Dataset(), projectId, permission);
+			Dataset dataset = datasetService.createAsset(new Dataset(), projectId);
 			dataset.setName(datasetName);
 			dataset.setDescription(sim.get().getDescription());
-			dataset.setMetadata(objectMapper.convertValue(Map.of("simulationId", simId.toString()), JsonNode.class));
 			dataset.setFileNames(sim.get().getResultFiles());
 			dataset.setDataSourceDate(sim.get().getCompletedTime());
 			dataset.setColumns(new ArrayList<>());
+
+			// Set the metadata
+			final ObjectNode metadata = objectMapper.createObjectNode();
+			final ObjectNode simulationAttributes = objectMapper.createObjectNode();
+
+			metadata.put("simulationId", simId.toString());
+			if (modelConfigurationId != null) {
+				simulationAttributes.put("modelConfigurationId", modelConfigurationId.toString());
+			}
+			if (interventionPolicyId != null) {
+				simulationAttributes.put("interventionPolicyId", interventionPolicyId.toString());
+			}
+			metadata.set("simulationAttributes", simulationAttributes);
+
+			dataset.setMetadata(metadata);
 
 			// Attach the user to the dataset
 			if (sim.get().getUserId() != null) {
@@ -124,11 +134,11 @@ public class SimulationService extends TerariumAssetServiceWithoutSearch<Simulat
 
 			// Set column names:
 			dataset = datasetService.extractColumnsFromFiles(dataset);
-			datasetService.updateAsset(dataset, projectId, permission);
+			datasetService.updateAsset(dataset, projectId);
 
 			// Add dataset to project
 			if (addToProject) {
-				projectAssetService.createProjectAsset(project.get(), AssetType.DATASET, dataset, permission);
+				projectAssetService.createProjectAsset(project.get(), AssetType.DATASET, dataset);
 			}
 
 			return dataset;
@@ -154,12 +164,8 @@ public class SimulationService extends TerariumAssetServiceWithoutSearch<Simulat
 	}
 
 	@Observed(name = "function_profile")
-	public void copyAssetFiles(
-		final Simulation newAsset,
-		final Simulation oldAsset,
-		final Schema.Permission hasWritePermission
-	) throws IOException {
-		super.copyAssetFiles(newAsset, oldAsset, hasWritePermission);
+	public void copyAssetFiles(final Simulation newAsset, final Simulation oldAsset) throws IOException {
+		super.copyAssetFiles(newAsset, oldAsset);
 
 		final String bucket = config.getFileStorageS3BucketName();
 		final List<String> validResults = new ArrayList<>();
@@ -172,7 +178,7 @@ public class SimulationService extends TerariumAssetServiceWithoutSearch<Simulat
 					s3ClientService.getS3Service().copyObject(bucket, srcKey, bucket, dstKey);
 					validResults.add(filename);
 				} catch (final NoSuchKeyException e) {
-					log.error("Failed to copy simulation result file {}, no object found, excluding from exported asset", e);
+					log.error("Failed to copy simulation result file, no object found, excluding from exported asset", e);
 					continue;
 				}
 			}
@@ -181,13 +187,12 @@ public class SimulationService extends TerariumAssetServiceWithoutSearch<Simulat
 	}
 
 	@Observed(name = "function_profile")
-	public Map<String, FileExport> exportAssetFiles(final UUID simId, final Schema.Permission hasReadPermission)
-		throws IOException {
-		final Map<String, FileExport> files = super.exportAssetFiles(simId, hasReadPermission);
+	public Map<String, FileExport> exportAssetFiles(final UUID simId) throws IOException {
+		final Map<String, FileExport> files = super.exportAssetFiles(simId);
 
 		// we also need to export the result files
 
-		final Simulation simulation = getAsset(simId, Schema.Permission.WRITE).orElseThrow();
+		final Simulation simulation = getAsset(simId).orElseThrow();
 		if (simulation.getResultFiles() != null) {
 			for (final String resultFile : simulation.getResultFiles()) {
 				final String filename = S3Service.parseFilename(resultFile);
@@ -208,7 +213,7 @@ public class SimulationService extends TerariumAssetServiceWithoutSearch<Simulat
 
 					files.put(resultFile, fileExport);
 				} catch (final NoSuchKeyException e) {
-					log.error("Failed to export simulation result file {}, no object found, excluding from exported asset", e);
+					log.error("Failed to export simulation result file, no object found, excluding from exported asset", e);
 					continue;
 				}
 			}

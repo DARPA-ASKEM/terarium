@@ -167,7 +167,6 @@ const onInputChange = async () => {
 .notebook-toolbar {
 	display: flex;
 	flex-direction: row;
-	margin-top: var(--gap-2);
 	gap: var(--gap-3);
 	justify-content: space-between;
 }

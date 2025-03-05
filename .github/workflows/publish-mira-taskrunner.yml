@@ -6,6 +6,7 @@ name: Build and Publish mira-taskrunner
 
 # yamllint disable-line rule:truthy
 on:
+  workflow_dispatch:
   push:
     paths:
       - 'packages/taskrunner/**'
@@ -39,15 +40,17 @@ jobs:
       - name: Checkout the repository
         uses: actions/checkout@v4
 
-      - name: Validate GradleW JAR
-        uses: gradle/actions/wrapper-validation@v3
-
       - name: Setup Java v17
         uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
           java-version: 17
           cache: gradle
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          validate-wrappers: true
 
       - name: Create image and push
         uses: docker/build-push-action@v5
@@ -58,8 +61,8 @@ jobs:
           push: true
           tags: ${{ needs.image-tag.outputs.tagged-image-name }}--amd64
 
-  arm64-emulation:
-    runs-on: ubuntu-24.04
+  arm64:
+    runs-on: ubuntu-24.04-arm
     needs: image-tag
     permissions:
       contents: read
@@ -72,14 +75,8 @@ jobs:
           username: ${{ github.repository_owner }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@v3
-
       - name: Checkout the repository
         uses: actions/checkout@v4
-
-      - name: Validate GradleW JAR
-        uses: gradle/actions/wrapper-validation@v3
 
       - name: Setup Java v17
         uses: actions/setup-java@v4
@@ -87,6 +84,11 @@ jobs:
           distribution: 'temurin'
           java-version: 17
           cache: gradle
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          validate-wrappers: true
 
       - name: Create image and push
         uses: docker/build-push-action@v5
@@ -102,7 +104,7 @@ jobs:
     needs:
       - image-tag
       - amd64
-      - arm64-emulation
+      - arm64
     uses: ./.github/workflows/merge-images.yml
     with:
       name: ${{ needs.image-tag.outputs.tagged-image-name }}

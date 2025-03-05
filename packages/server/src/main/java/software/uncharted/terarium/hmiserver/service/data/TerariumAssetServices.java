@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.util.Optional;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import software.uncharted.terarium.hmiserver.models.TerariumAsset;
 import software.uncharted.terarium.hmiserver.models.dataservice.Artifact;
@@ -14,12 +15,15 @@ import software.uncharted.terarium.hmiserver.models.dataservice.dataset.Dataset;
 import software.uncharted.terarium.hmiserver.models.dataservice.document.DocumentAsset;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.Model;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.configurations.ModelConfiguration;
+import software.uncharted.terarium.hmiserver.models.dataservice.notebooksession.NotebookSession;
+import software.uncharted.terarium.hmiserver.models.dataservice.project.Project;
+import software.uncharted.terarium.hmiserver.models.dataservice.simulation.Simulation;
 import software.uncharted.terarium.hmiserver.models.dataservice.workflow.Workflow;
 import software.uncharted.terarium.hmiserver.models.simulationservice.interventions.InterventionPolicy;
-import software.uncharted.terarium.hmiserver.utils.rebac.Schema.Permission;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class TerariumAssetServices {
 
 	private final ArtifactService artifactService;
@@ -30,6 +34,9 @@ public class TerariumAssetServices {
 	private final ModelService modelService;
 	private final WorkflowService workflowService;
 	private final InterventionService interventionService;
+	private final SimulationService simulationService;
+	private final NotebookSessionService notebookSessionService;
+	private final ProjectService projectService;
 
 	/**
 	 * Get the service for a given asset type
@@ -48,6 +55,8 @@ public class TerariumAssetServices {
 			case MODEL -> modelService;
 			case WORKFLOW -> workflowService;
 			case INTERVENTION_POLICY -> interventionService;
+			case SIMULATION -> simulationService;
+			case NOTEBOOK_SESSION -> notebookSessionService;
 			default -> throw new IllegalArgumentException("Invalid asset type: " + type);
 		};
 	}
@@ -55,28 +64,87 @@ public class TerariumAssetServices {
 	public Optional<? extends TerariumAsset> updateAsset(
 		final TerariumAsset asset,
 		final UUID projectId,
-		final AssetType type,
-		final Permission permission
+		final AssetType type
 	) throws IOException {
 		switch (type) {
 			case ARTIFACT:
-				return artifactService.updateAsset((Artifact) asset, projectId, permission);
+				return artifactService.updateAsset((Artifact) asset, projectId);
 			case CODE:
-				return codeService.updateAsset((Code) asset, projectId, permission);
+				return codeService.updateAsset((Code) asset, projectId);
 			case DATASET:
-				return datasetService.updateAsset((Dataset) asset, projectId, permission);
+				return datasetService.updateAsset((Dataset) asset, projectId);
 			case DOCUMENT:
-				return documentAssetService.updateAsset((DocumentAsset) asset, projectId, permission);
+				return documentAssetService.updateAsset((DocumentAsset) asset, projectId);
 			case MODEL_CONFIGURATION:
-				return modelConfigurationService.updateAsset((ModelConfiguration) asset, projectId, permission);
+				return modelConfigurationService.updateAsset((ModelConfiguration) asset, projectId);
 			case MODEL:
-				return modelService.updateAsset((Model) asset, projectId, permission);
+				return modelService.updateAsset((Model) asset, projectId);
 			case WORKFLOW:
-				return workflowService.updateAsset((Workflow) asset, projectId, permission);
+				return workflowService.updateAsset((Workflow) asset, projectId);
 			case INTERVENTION_POLICY:
-				return interventionService.updateAsset((InterventionPolicy) asset, projectId, permission);
+				return interventionService.updateAsset((InterventionPolicy) asset, projectId);
+			case SIMULATION:
+				return simulationService.updateAsset((Simulation) asset, projectId);
+			case NOTEBOOK_SESSION:
+				return notebookSessionService.updateAsset((NotebookSession) asset, projectId);
 			default:
 				throw new IllegalArgumentException("Invalid asset type: " + type);
 		}
+	}
+
+	public TerariumAsset getAsset(final UUID assetId, final AssetType type) {
+		return switch (type) {
+			case ARTIFACT -> artifactService.getAsset(assetId).orElse(null);
+			case CODE -> codeService.getAsset(assetId).orElse(null);
+			case DATASET -> datasetService.getAsset(assetId).orElse(null);
+			case DOCUMENT -> documentAssetService.getAsset(assetId).orElse(null);
+			case INTERVENTION_POLICY -> interventionService.getAsset(assetId).orElse(null);
+			case MODEL -> modelService.getAsset(assetId).orElse(null);
+			case MODEL_CONFIGURATION -> modelConfigurationService.getAsset(assetId).orElse(null);
+			case NOTEBOOK_SESSION -> notebookSessionService.getAsset(assetId).orElse(null);
+			case SIMULATION -> simulationService.getAsset(assetId).orElse(null);
+			case WORKFLOW -> workflowService.getAsset(assetId).orElse(null);
+			case PROJECT -> projectService.getProject(assetId).orElse(null);
+			default -> null;
+		};
+	}
+
+	public static AssetType getAssetType(final TerariumAsset asset) {
+		if (asset instanceof Artifact) {
+			return AssetType.ARTIFACT;
+		}
+		if (asset instanceof Code) {
+			return AssetType.CODE;
+		}
+		if (asset instanceof Dataset) {
+			return AssetType.DATASET;
+		}
+		if (asset instanceof DocumentAsset) {
+			return AssetType.DOCUMENT;
+		}
+		if (asset instanceof InterventionPolicy) {
+			return AssetType.INTERVENTION_POLICY;
+		}
+		if (asset instanceof Model) {
+			return AssetType.MODEL;
+		}
+		if (asset instanceof ModelConfiguration) {
+			return AssetType.MODEL_CONFIGURATION;
+		}
+		if (asset instanceof NotebookSession) {
+			return AssetType.NOTEBOOK_SESSION;
+		}
+		if (asset instanceof Simulation) {
+			return AssetType.SIMULATION;
+		}
+		if (asset instanceof Workflow) {
+			return AssetType.WORKFLOW;
+		}
+		if (asset instanceof Project) {
+			return AssetType.PROJECT;
+		}
+
+		log.warn("Unknown asset type: {}", asset.getClass().getName());
+		return null;
 	}
 }

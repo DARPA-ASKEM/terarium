@@ -19,7 +19,8 @@ export const WorkflowOperationTypes = Object.freeze({
 	DOCUMENT: 'Document',
 	MODEL_FROM_EQUATIONS: 'ModelFromEquations',
 	REGRIDDING: 'Regridding',
-	INTERVENTION_POLICY: 'InterventionPolicy'
+	INTERVENTION_POLICY: 'InterventionPolicy',
+	COMPARE_DATASETS: 'CompareDatasets'
 });
 
 export enum OperatorStatus {
@@ -87,6 +88,15 @@ export interface WorkflowOutput<S> extends WorkflowPort {
 export interface BaseState {
 	annotation?: string; // @deprecated
 	summaryId?: string;
+}
+
+export interface WorkflowAnnotation {
+	id: string;
+	type: string;
+	x: number;
+	y: number;
+	textSize: number;
+	content: string;
 }
 
 // Node definition in the workflow
@@ -165,6 +175,7 @@ export interface Workflow {
 	nodes: WorkflowNode<any>[];
 	edges: WorkflowEdge[];
 
+	annotations?: { [key: string]: WorkflowAnnotation };
 	scenario?: any;
 }
 

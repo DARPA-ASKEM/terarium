@@ -8,6 +8,7 @@
 				<Button
 					v-if="!isAddingUncertainty && !featureConfig?.isPreview"
 					label="Add uncertainty"
+					icon="pi pi-question"
 					outlined
 					severity="secondary"
 					size="small"
@@ -28,7 +29,7 @@
 					:options="distributionTypeOptions().filter((type) => type.value !== DistributionType.Constant)"
 				>
 					<template #value>
-						{{ DistributionTypeLabel[uncertaintyType].toLowerCase() }}
+						{{ distributions[uncertaintyType].label.toLowerCase() }}
 					</template>
 					<template #option="{ option }">
 						{{ option.name.toLowerCase() }}
@@ -45,24 +46,49 @@
 					label="Apply"
 					size="small"
 					@click="onUpdateDistributions"
+					class="ml-auto"
 					style="min-width: 5.5rem"
 				/>
-				<Button text rounded small icon="pi pi-times" @click="isAddingUncertainty = false" class="ml-auto" />
+				<Button text rounded small icon="pi pi-times" @click="isAddingUncertainty = false" class="ml-4" />
 			</span>
 
 			<ul class="pl-1">
-				<li
-					v-for="{ baseParameter, childParameters, isVirtual } in parameterList"
-					:key="baseParameter"
-					class="element-card"
-				>
+				<li v-for="{ baseParameter, childParameters, isVirtual } in parameterList" :key="baseParameter">
 					<!-- Stratified -->
-					<section v-if="isVirtual" class="parameter-entry-stratified">
+					<section
+						v-if="isVirtual"
+						class="parameter-entry-stratified"
+						:class="{ warning: hasEmptyParameters({ baseParameter }) }"
+					>
 						<Accordion multiple>
 							<AccordionTab>
 								<template #header>
-									<span>{{ baseParameter }}</span>
-									<Button label="Open matrix" text size="small" @click.stop="matrixModalId = baseParameter" />
+									<div class="flex align-items-center w-full">
+										<span>{{ baseParameter }}</span>
+										<!--- Select all checkbox -->
+										<div
+											v-if="isAddingUncertainty"
+											class="mx-4 flex align-items-center gap-2"
+											@click.stop="updateSelection(childParameters)"
+										>
+											<Checkbox
+												:model-value="getChildrenSelectedState(childParameters).all"
+												:indeterminate="getChildrenSelectedState(childParameters).some"
+												:class="getChildrenSelectedState(childParameters).some ? 'p-checkbox-indeterminate' : ''"
+												binary
+											/>
+											<label class="text-sm font-normal cursor-pointer">
+												{{ getSelectionLabel(childParameters) }}
+											</label>
+										</div>
+										<Button
+											label="Open matrix"
+											text
+											size="small"
+											@click.stop="matrixModalId = baseParameter"
+											class="ml-3"
+										/>
+									</div>
 								</template>
 								<div class="flex">
 									<ul class="ml-1">
@@ -87,7 +113,6 @@
 													@update-source="emit('update-source', $event)"
 												/>
 											</div>
-											<Divider type="solid" />
 										</li>
 									</ul>
 								</div>
@@ -128,16 +153,17 @@
 		:stratified-matrix-type="StratifiedMatrix.Parameters"
 		:open-value-config="!!matrixModalId"
 		@close-modal="matrixModalId = ''"
-		@update-cell-value="
-			emit('update-parameters', [
-				{
-					id: $event.variableName,
+		@update-cell-values="
+			emit(
+				'update-parameters',
+				$event.map((e) => ({
+					id: e.id,
 					distribution: {
 						type: DistributionType.Constant,
-						parameters: { value: $event.newValue }
+						parameters: { value: e.value }
 					}
-				}
-			])
+				}))
+			)
 		"
 	/>
 </template>
@@ -152,13 +178,13 @@ import { MiraModel, MiraTemplateParams } from '@/model-representation/mira/mira-
 import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
 import Button from 'primevue/button';
-import { DistributionType, DistributionTypeLabel, distributionTypeOptions } from '@/services/distribution';
+import { DistributionType, distributions, distributionTypeOptions } from '@/services/distribution';
 import InputNumber from 'primevue/inputnumber';
 import Dropdown from 'primevue/dropdown';
 import Checkbox from 'primevue/checkbox';
 import TeraInputText from '@/components/widgets/tera-input-text.vue';
-import Divider from 'primevue/divider';
 import type { FeatureConfig } from '@/types/common';
+import { calculateUncertaintyRange } from '@/utils/math';
 import TeraParameterEntry from './tera-parameter-entry.vue';
 import TeraStratifiedMatrixModal from './model-configurations/tera-stratified-matrix-modal.vue';
 
@@ -203,6 +229,17 @@ const parameterList = computed<{ baseParameter: string; childParameters: Paramet
 	}
 );
 
+const hasEmptyParameters = computed(() => ({ baseParameter }) => {
+	const parametersForThisGroup = props.modelConfiguration.parameterSemanticList.filter((s) =>
+		s.referenceId.startsWith(`${baseParameter}_`)
+	);
+
+	return parametersForThisGroup.some((p) => {
+		const value = p.distribution?.parameters?.value;
+		return value === null || value === undefined || value === '' || Number.isNaN(value);
+	});
+});
+
 const matrixModalId = ref('');
 
 const onAddUncertainty = () => {
@@ -228,8 +265,7 @@ const onUpdateDistributions = () => {
 			const distribution = getParameterDistribution(props.modelConfiguration, paramId);
 			if (distribution.type !== DistributionType.Constant) return;
 
-			const v = distribution.parameters.value;
-			const delta = (distribution.parameters.value * uncertaintyPercentage.value) / 100;
+			const { min, max } = calculateUncertaintyRange(distribution.parameters.value, uncertaintyPercentage.value);
 
 			const distributionParameterMapping = {
 				id: paramId,
@@ -238,8 +274,8 @@ const onUpdateDistributions = () => {
 					// A way to get around the floating point precision issue is to set a fixed number of decimal places and parse as a float
 					// This will be an issue for adding uncertainty to very small numbers, but I think 8 decimal points should do
 					parameters: {
-						minimum: parseFloat((v - delta).toFixed(8)),
-						maximum: parseFloat((v + delta).toFixed(8))
+						minimum: min,
+						maximum: max
 					}
 				}
 			};
@@ -250,6 +286,43 @@ const onUpdateDistributions = () => {
 	emit('update-parameters', distributionParameterMappings);
 	isAddingUncertainty.value = false;
 };
+
+/* Handle selection */
+const getSelectionLabel = (childParameters: ParameterSemantic[]) => {
+	const { all, some } = getChildrenSelectedState(childParameters);
+	if (all) return 'All selcted';
+	if (some) return 'Some selected';
+	return 'None selected';
+};
+
+const getChildrenSelectedState = (childParameters: ParameterSemantic[]) => {
+	const selectableChildren = childParameters.filter(
+		({ referenceId }) =>
+			getParameterDistribution(props.modelConfiguration, referenceId).type === DistributionType.Constant
+	);
+
+	const all =
+		selectableChildren.length > 0 &&
+		selectableChildren.every(({ referenceId }) => selectedParameters.value.includes(referenceId));
+
+	const some = selectableChildren.some(({ referenceId }) => selectedParameters.value.includes(referenceId)) && !all;
+
+	return { all, some };
+};
+function updateSelection(childParameters: ParameterSemantic[]) {
+	const selectableChildren = childParameters
+		.filter(
+			({ referenceId }) =>
+				getParameterDistribution(props.modelConfiguration, referenceId).type === DistributionType.Constant
+		)
+		.map(({ referenceId }) => referenceId);
+
+	if (getChildrenSelectedState(childParameters).all) {
+		selectedParameters.value = selectedParameters.value.filter((id) => !selectableChildren.includes(id));
+	} else {
+		selectedParameters.value = [...new Set([...selectedParameters.value, ...selectableChildren])];
+	}
+}
 </script>
 
 <style scoped>
@@ -261,34 +334,35 @@ ul {
 	}
 
 	li + li {
-		border-top: 1px solid var(--surface-border-light);
 		margin-top: var(--gap-1-5);
-		padding-top: var(--gap-4);
 	}
 
 	li:last-child {
-		margin-bottom: var(--gap-4);
+		margin-bottom: var(--gap-1);
 	}
-}
-
-.element-card {
-	background-color: var(--surface-0);
-}
-.element-card:hover {
-	background-color: var(--surface-50);
 }
 
 .parameter-entry-stratified {
+	border: 1px solid var(--surface-border-light);
+	border-radius: var(--border-radius);
+	background: var(--surface-0);
+	box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
 	border-left: 4px solid var(--surface-300);
 	padding-left: var(--gap-1);
 }
-
-:deep(.p-divider) {
-	&.p-divider-horizontal {
-		margin-top: var(--gap-2);
-		margin-bottom: var(--gap-2);
-		color: var(--gray-300);
-	}
+.parameter-entry-stratified {
+	border: 1px solid var(--surface-border-light);
+	border-radius: var(--border-radius);
+	background: var(--surface-0);
+	box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+	border-left: 4px solid var(--surface-300);
+	padding-left: var(--gap-1);
+}
+.parameter-entry-stratified.warning {
+	border-left-color: var(--error-color);
+}
+.parameter-entry-stratified.warning:hover {
+	border-left-color: var(--error-color);
 }
 
 .stratified {
@@ -319,9 +393,31 @@ ul {
 	padding-left: 0;
 	margin-bottom: var(--gap-2);
 	font-size: var(--font-caption);
+	border-radius: var(--border-radius);
+	border: 3px solid var(--primary-color);
 }
 
 :deep(.uncertainty-percentage) > input {
 	width: 4rem;
+}
+:deep(.p-accordion-content) {
+	padding-top: 0;
+}
+
+/* Checkbox: Indeterminate hackary */
+:deep(.p-checkbox-indeterminate .p-checkbox-box) {
+	background-color: var(--text-color-secondary);
+	position: relative;
+}
+
+:deep(.p-checkbox-indeterminate .p-checkbox-box)::after {
+	content: '';
+	position: absolute;
+	top: 50%;
+	left: 50%;
+	width: 10px;
+	height: 2px;
+	background-color: white;
+	transform: translate(-50%, -50%);
 }
 </style>

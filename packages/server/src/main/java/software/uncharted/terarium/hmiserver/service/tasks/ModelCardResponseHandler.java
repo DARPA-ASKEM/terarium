@@ -14,17 +14,16 @@ import org.springframework.stereotype.Component;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.Model;
 import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.ModelMetadata;
 import software.uncharted.terarium.hmiserver.models.task.TaskResponse;
-import software.uncharted.terarium.hmiserver.service.data.DocumentAssetService;
 import software.uncharted.terarium.hmiserver.service.data.ModelService;
 
 @Component
 @RequiredArgsConstructor
 @Slf4j
-public class ModelCardResponseHandler extends TaskResponseHandler {
+public class ModelCardResponseHandler extends LlmTaskResponseHandler {
 
 	public static final String NAME = "gollm:model_card";
 	private final ObjectMapper objectMapper;
-	private final DocumentAssetService documentAssetService;
+
 	private final ModelService modelService;
 
 	public static final int MAX_TEXT_SIZE = 600000;
@@ -35,13 +34,13 @@ public class ModelCardResponseHandler extends TaskResponseHandler {
 	}
 
 	@Data
-	public static class Input {
+	public static class Input extends LlmTaskResponseHandler.Input {
 
 		@JsonProperty("amr")
 		String amr;
 
-		@JsonProperty("research_paper")
-		String researchPaper;
+		@JsonProperty("document")
+		String document;
 	}
 
 	@Data
@@ -69,7 +68,7 @@ public class ModelCardResponseHandler extends TaskResponseHandler {
 
 			log.info("Writing model card to database for model {}", props.getModelId());
 			// Grab the model
-			final Model model = modelService.getAsset(props.modelId, ASSUME_WRITE_PERMISSION_ON_BEHALF_OF_USER).orElseThrow();
+			final Model model = modelService.getAsset(props.modelId).orElseThrow();
 
 			final Response card = objectMapper.readValue(resp.getOutput(), Response.class);
 			if (model.getMetadata() == null) {
@@ -77,7 +76,7 @@ public class ModelCardResponseHandler extends TaskResponseHandler {
 			}
 			model.getMetadata().setGollmCard(card.response);
 			model.getMetadata().setDescription(renderJsonToHTML(card.response).getBytes(StandardCharsets.UTF_8));
-			modelService.updateAsset(model, props.modelId, ASSUME_WRITE_PERMISSION_ON_BEHALF_OF_USER);
+			modelService.updateAsset(model, props.modelId);
 		} catch (final Exception e) {
 			log.error("Failed to write model card to database", e);
 			throw new RuntimeException(e);

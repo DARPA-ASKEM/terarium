@@ -1,16 +1,14 @@
 <template>
 	<div class="response-thought-container">
-		<div ref="responseThought" class="thought" :class="{ hide: !props.showThought, show: props.showThought }">
+		<div class="thought" :class="{ hide: !props.showThought, show: props.showThought }">
 			<slot />
 			<Button text rounded icon="pi pi-times" @click="onClickClose" />
 		</div>
 	</div>
 </template>
 <script setup lang="ts">
-import { ref, defineProps, defineEmits } from 'vue';
+import { defineProps, defineEmits } from 'vue';
 import Button from 'primevue/button';
-
-const responseThought = ref(<HTMLElement | null>null);
 
 const props = defineProps<{
 	showThought?: boolean;

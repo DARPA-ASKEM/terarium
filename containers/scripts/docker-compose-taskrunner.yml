@@ -16,6 +16,11 @@ services:
 #      TERARIUM_MQ_PASSWORD: "terarium123"
 #      TERARIUM_MQ_USERNAME: "terarium"
 #      TERARIUM_TASKRUNNER_REQUEST_TYPE: "gollm"
+#      AZURE_OPENAI_KEY: "${secret_azure_openai_key}"
+#      AZURE_OPENAI_ENDPOINT: "${secret_azure_openai_endpoint}"
+#      AZURE_OPENAI_MODEL: "${secret_azure_openai_model}"
+#      BEDROCK_ACCESS_KEY: "${secret_bedrock_access_key}"
+#      BEDROCK_SECRET_ACCESS_KEY: "${secret_bedrock_secret_key}"
 #      OPENAI_API_KEY: "${secret_openai_key}"
 #    depends_on:
 #      rabbitmq:
@@ -44,6 +49,7 @@ services:
 #      TERARIUM_MQ_PASSWORD: "terarium123"
 #      TERARIUM_MQ_USERNAME: "terarium"
 #      TERARIUM_TASKRUNNER_REQUEST_TYPE: "mira"
+#      MIRA_REST_URL: "http://mira-epi-dkg-lb-dc1e19b273dedaa2.elb.us-east-1.amazonaws.com/"
 #    depends_on:
 #      rabbitmq:
 #        condition: service_healthy

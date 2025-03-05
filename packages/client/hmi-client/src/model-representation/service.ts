@@ -1,16 +1,24 @@
 // TODO: it might be best to move all these to getters and setters related to the model to services/model since these all seem to be split up at the moment
 import _, { isEmpty } from 'lodash';
-import { runDagreLayout, rerouteEdges } from '@/services/graph';
+import { rerouteEdges } from '@/services/graph';
 import { MiraModel } from '@/model-representation/mira/mira-common';
+import { ModelPartItem } from '@/types/Model';
 import { extractNestedStratas } from '@/model-representation/petrinet/mira-petri';
-import type { Initial, Model, ModelParameter, State, RegNetVertex, Transition, Rate } from '@/types/Types';
+import type { Initial, Model, ModelParameter, State, RegNetVertex, Transition, Rate, Observable } from '@/types/Types';
 import { getModelType } from '@/services/model';
 import { AMRSchemaNames } from '@/types/common';
-import { parseCurie } from '@/services/concept';
+import { parseCurieToIdentifier } from '@/services/concept';
 import { PetrinetRenderer } from '@/model-representation/petrinet/petrinet-renderer';
+import { layoutInstance } from '@/web-workers/layout/controller';
+import { IGraph } from '@graph-scaffolder/index';
 import { NestedPetrinetRenderer } from './petrinet/nested-petrinet-renderer';
 import { isStratifiedModel, getContext, collapseTemplates } from './mira/mira';
 import { extractTemplateMatrix } from './mira/mira-util';
+
+export const runDagreLayout = async <V, E>(graphData: IGraph<V, E>): Promise<IGraph<V, E>> => {
+	const graphLayout = await layoutInstance.runLayout(graphData);
+	return graphLayout as any;
+};
 
 export const getVariable = (miraModel: MiraModel, variableName: string) => {
 	if (miraModel.initials[variableName]) {
@@ -40,17 +48,18 @@ export const getModelRenderer = (
 	const isStratified = isStratifiedModel(miraModel);
 
 	if (useNestedRenderer && isStratified) {
-		// FIXME: Testing, move to mira service
 		const processedSet = new Set<string>();
 		const conceptData: any = [];
+
 		miraModel.templates.forEach((t) => {
 			['subject', 'outcome', 'controller'].forEach((conceptKey) => {
 				if (!t[conceptKey]) return;
 				const conceptName = t[conceptKey].name;
 				if (processedSet.has(conceptName)) return;
+
 				conceptData.push({
 					// FIXME: use reverse-lookup to get root concept
-					base: _.first(conceptName.split('_')),
+					base: isEmpty(t[conceptKey].context) ? conceptName : _.first(conceptName.split('_')),
 					...t[conceptKey].context
 				});
 
@@ -138,7 +147,7 @@ export function updateModelPartProperty(modelPart: any, key: string, value: any)
 		modelPart.units.expression_mathml = `<ci>${value}</ci>`;
 	} else if (key === 'concept') {
 		if (!modelPart.grounding?.identifiers) modelPart.grounding = { identifiers: {}, modifiers: {} };
-		modelPart.grounding.identifiers = parseCurie(value);
+		modelPart.grounding.identifiers = parseCurieToIdentifier(value);
 	} else {
 		modelPart[key] = value;
 	}
@@ -259,13 +268,19 @@ export function isModelMissingMetadata(model: Model): boolean {
  * - Check states make sense
  * - Check transitions make sense
  * */
+export interface ModelError {
+	severity: string;
+	type: 'state' | 'transition' | 'model';
+	id: string;
+	content: string;
+}
 export function checkPetrinetAMR(amr: Model) {
 	function isASCII(str: string) {
 		// eslint-disable-next-line
 		return /^[\x00-\x7F]*$/.test(str);
 	}
 
-	const results: { type: string; content: string }[] = [];
+	const results: ModelError[] = [];
 	const model = amr.model;
 	const ode = amr.semantics?.ode;
 
@@ -275,18 +290,18 @@ export function checkPetrinetAMR(amr: Model) {
 	const numRates = ode?.rates?.length || 0;
 
 	if (numStates === 0) {
-		results.push({ type: 'warn', content: 'zero states' });
+		results.push({ severity: 'warn', type: 'model', id: '', content: 'zero states in model' });
 	}
 
 	if (numTransitions === 0) {
-		results.push({ type: 'warn', content: 'zero transitions' });
+		results.push({ severity: 'warn', type: 'model', id: '', content: 'zero transitions in model' });
 	}
 
 	if (numStates !== numInitials) {
-		results.push({ type: 'error', content: 'states need to match initials' });
+		results.push({ severity: 'error', type: 'model', id: '', content: '# states need to match # initials' });
 	}
 	if (numRates !== numTransitions) {
-		results.push({ type: 'error', content: 'transitions need to match rates' });
+		results.push({ severity: 'error', type: 'model', id: '', content: '# transitions need to match # rates' });
 	}
 
 	// Build cache
@@ -306,19 +321,24 @@ export function checkPetrinetAMR(amr: Model) {
 	model.states.forEach((state) => {
 		const initial = initialMap.get(state.id);
 		if (!initial) {
-			results.push({ type: 'error', content: `${state.id} has no initial` });
+			results.push({ severity: 'error', type: 'state', id: state.id, content: `${state.id} has no initial` });
 		}
 		if (_.isEmpty(initial?.expression)) {
-			results.push({ type: 'warn', content: `${state.id} has no initial.expression` });
+			results.push({ severity: 'warn', type: 'state', id: state.id, content: `${state.id} has no initial.expression` });
 		}
 		if (!isASCII(initial?.expression as string)) {
-			results.push({ type: 'warn', content: `${state.id} has non-ascii expression` });
+			results.push({ severity: 'warn', type: 'state', id: state.id, content: `${state.id} has non-ascii expression` });
 		}
 		if (stateSet.has(state.id)) {
-			results.push({ type: 'error', content: `state (${state.id}) has duplicate` });
+			results.push({ severity: 'error', type: 'state', id: state.id, content: `state (${state.id}) has duplicate` });
 		}
 		if (initialSet.has(initial?.target as string)) {
-			results.push({ type: 'error', content: `initial (${initial?.target}) has duplicate` });
+			results.push({
+				severity: 'error',
+				type: 'state',
+				id: state.id,
+				content: `initial (${initial?.target}) has duplicate`
+			});
 		}
 		stateSet.add(state.id);
 		initialSet.add(initial?.target as string);
@@ -329,24 +349,152 @@ export function checkPetrinetAMR(amr: Model) {
 	const rateSet = new Set<string>();
 	model.transitions.forEach((transition) => {
 		const rate = rateMap.get(transition.id);
+
 		if (!rate) {
-			results.push({ type: 'error', content: `${transition.id} has no rate` });
+			results.push({
+				severity: 'error',
+				type: 'transition',
+				id: transition.id,
+				content: `${transition.id} has no rate`
+			});
 		}
 		if (_.isEmpty(rate?.expression)) {
-			results.push({ type: 'warn', content: `${transition.id} has no rate.expression` });
+			results.push({
+				severity: 'warn',
+				type: 'transition',
+				id: transition.id,
+				content: `${transition.id} has no rate.expression`
+			});
 		}
 		if (!isASCII(rate?.expression as string)) {
-			results.push({ type: 'warn', content: `${transition.id} has non-ascii expression` });
+			results.push({
+				severity: 'warn',
+				type: 'transition',
+				id: transition.id,
+				content: `${transition.id} has non-ascii expression`
+			});
 		}
 		if (transitionSet.has(transition.id)) {
-			results.push({ type: 'error', content: `transition (${transition.id}) has duplicate` });
+			results.push({
+				severity: 'error',
+				type: 'transition',
+				id: transition.id,
+				content: `transition (${transition.id}) has duplicate`
+			});
 		}
 		if (rateSet.has(rate?.target as string)) {
-			results.push({ type: 'error', content: `rate (${rate?.target}) has duplicate` });
+			results.push({
+				severity: 'error',
+				type: 'transition',
+				id: transition.id,
+				content: `rate (${rate?.target}) has duplicate`
+			});
 		}
+
+		// Check if the system is closed (constant population)
+		if (transition.input.length !== transition.output.length) {
+			results.push({
+				severity: 'warn',
+				type: 'transition',
+				id: transition.id,
+				content: `${transition.id} may not conserve input/output`
+			});
+		}
+
 		transitionSet.add(transition.id);
 		rateSet.add(rate?.target as string);
 	});
 
 	return results;
+}
+
+export enum PartType {
+	STATE = 'STATE',
+	PARAMETER = 'PARAMETER',
+	TRANSITION = 'TRANSITION',
+	OBSERVABLE = 'OBSERVABLE',
+	TIME = 'TIME'
+}
+
+// FIXME: should refactor so typing is explicit and clear
+// Note "model" is both an AMR model, or it can be a list of transition templates
+export function createPartsList(parts, model, partType) {
+	return Array.from(parts.keys()).map((id) => {
+		const childTargets = parts.get(id) ?? [];
+		const isParent = childTargets.length > 1;
+		let types;
+
+		switch (partType) {
+			case PartType.STATE:
+				types = getStates(model);
+				break;
+			case PartType.PARAMETER:
+				types = getParameters(model);
+				break;
+			default:
+				types = model;
+		}
+
+		const children = childTargets
+			.map((childTarget) => {
+				const t = types.find((part) => part.id === childTarget);
+				if (!t) return null;
+				const returnObj = {
+					id: t.id,
+					name: t.name,
+					description: t.description,
+					grounding: t.grounding,
+					unitExpression: null,
+					expression: null,
+					input: null,
+					output: null
+				};
+				if (partType === PartType.STATE || partType === PartType.PARAMETER) {
+					returnObj.unitExpression = t.units?.expression;
+				}
+				return returnObj;
+			})
+			.filter(Boolean) as ModelPartItem[];
+
+		const basePart: any = types.find((t) => t.id === id);
+		const base: ModelPartItem =
+			isParent || !basePart
+				? { id: `${id}` }
+				: {
+						id: basePart.id,
+						name: basePart.name,
+						description: basePart.description,
+						grounding: basePart.grounding,
+						unitExpression: basePart.units?.expression
+					};
+		return { base, children, isParent };
+	});
+}
+
+export function createObservablesList(observables: Observable[]) {
+	return observables.map((observable) => {
+		const { id, name, expression, description, units, grounding } = observable;
+		return {
+			base: {
+				id,
+				name,
+				description,
+				unitExpression: units?.expression,
+				grounding,
+				expression,
+				expression_mathml: observable.expression_mathml
+			},
+			// Observables can't be stratified therefore don't have children
+			children: [],
+			isParent: false
+		};
+	});
+}
+
+export function createTimeList(time) {
+	return time.map(({ id, units }) => ({
+		base: { id, unitExpression: units?.expression },
+		children: [],
+		isParent: false
+	}));
 }

@@ -7,14 +7,24 @@
 			</template>
 
 			<ul>
-				<li v-for="{ baseInitial, childInitials, isVirtual } in initialList" :key="baseInitial" class="element-card">
+				<li v-for="{ baseInitial, childInitials, isVirtual } in initialList" :key="baseInitial">
 					<!-- Stratified -->
-					<section v-if="isVirtual" class="initial-entry-stratified">
+					<section
+						v-if="isVirtual"
+						class="initial-entry-stratified"
+						:class="{ warning: hasEmptyExpressions({ baseInitial }) }"
+					>
 						<Accordion multiple>
 							<AccordionTab>
 								<template #header>
 									<span>{{ baseInitial }}</span>
-									<Button label="Open Matrix" text size="small" @click.stop="matrixModalId = baseInitial" />
+									<Button
+										label="Open matrix"
+										text
+										size="small"
+										@click.stop="matrixModalId = baseInitial"
+										class="ml-3"
+									/>
 								</template>
 								<ul>
 									<li v-for="{ target } in childInitials" :key="target">
@@ -24,7 +34,7 @@
 											:modelConfigurations="modelConfigurations"
 											:feature-config="featureConfig"
 											:initial-id="target"
-											@update-expression="emit('update-expression', $event)"
+											@update-expression="emit('update-expressions', [$event])"
 											@update-source="emit('update-source', $event)"
 										/>
 									</li>
@@ -41,7 +51,7 @@
 						:modelConfigurations="modelConfigurations"
 						:initial-id="baseInitial"
 						:feature-config="featureConfig"
-						@update-expression="emit('update-expression', $event)"
+						@update-expression="emit('update-expressions', [$event])"
 						@update-source="emit('update-source', $event)"
 					/>
 				</li>
@@ -56,7 +66,7 @@
 		:stratified-matrix-type="StratifiedMatrix.Initials"
 		:open-value-config="!!matrixModalId"
 		@close-modal="matrixModalId = ''"
-		@update-cell-value="emit('update-expression', { id: $event.variableName, value: $event.newValue })"
+		@update-cell-values="emit('update-expressions', $event)"
 	/>
 </template>
 
@@ -84,7 +94,7 @@ const props = defineProps<{
 	featureConfig?: FeatureConfig;
 }>();
 
-const emit = defineEmits(['update-expression', 'update-source']);
+const emit = defineEmits(['update-expressions', 'update-source']);
 
 const isStratified = isStratifiedModel(props.mmt);
 const initialList = computed<
@@ -110,6 +120,12 @@ const initialList = computed<
 		.filter(({ baseInitial }) => baseInitial.toLowerCase().includes(filterText.value.toLowerCase()));
 });
 
+const hasEmptyExpressions = computed(() => ({ baseInitial }) => {
+	const semanticsForThisInitial = props.modelConfiguration.initialSemanticList.filter((s) =>
+		s.target.startsWith(`${baseInitial}_`)
+	);
+	return semanticsForThisInitial.some((s) => !s.expression);
+});
 const currentActiveIndicies = ref([0]);
 
 const matrixModalId = ref('');
@@ -125,23 +141,24 @@ ul {
 	padding-left: var(--gap-1);
 
 	& li {
-		border-bottom: 1px solid var(--surface-border-light);
 		list-style: none;
 		margin-bottom: var(--gap-1-5);
-		padding-bottom: var(--gap-1-5);
 	}
 }
 
-.element-card {
-	background-color: var(--surface-0);
-}
-.element-card:hover {
-	background-color: var(--surface-50);
-}
-
 .initial-entry-stratified {
+	border: 1px solid var(--surface-border-light);
+	border-radius: var(--border-radius);
+	background: var(--surface-0);
+	box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
 	border-left: 4px solid var(--surface-300);
 	padding-left: var(--gap-1);
+}
+.initial-entry-stratified.warning {
+	border-left-color: var(--error-color);
+}
+.initial-entry-stratified.warning:hover {
+	border-left-color: var(--error-color);
 }
 
 .artifact-amount {
@@ -149,5 +166,13 @@ ul {
 	color: var(--text-color-subdued);
 	margin-left: var(--gap-1);
 	margin-right: auto;
+}
+
+:deep(.p-accordion-content) {
+	padding-top: 0;
+	background: none;
+}
+:deep(.p-accordion .p-accordion-header .p-accordion-header-link) {
+	background: transparent;
 }
 </style>

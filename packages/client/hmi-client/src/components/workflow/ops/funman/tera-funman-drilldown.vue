@@ -17,6 +17,7 @@
 			<template #content>
 				<div class="top-toolbar">
 					<div class="btn-group">
+						<Button v-if="showSpinner" label="Stop" icon="pi pi-stop" @click="stop" />
 						<Button :loading="showSpinner" label="Run" icon="pi pi-play" @click="run" />
 					</div>
 				</div>
@@ -28,8 +29,8 @@
 								<i class="pi pi-info-circle pl-2" v-tooltip="validateParametersToolTip" />
 							</template>
 							<p class="mb-3 secondary-text">
-								Implement sanity checks on the state space of the model to see how the parameter space of the model is
-								partitioned into satisfiable and unsatisfiable regions separated by decision boundaries.
+								Check the state space of the model to see how the parameter space is partitioned into satisfiable and
+								unsatisfiable regions separated by decision boundaries.
 							</p>
 							<ul>
 								<li>
@@ -41,9 +42,9 @@
 												<InputSwitch class="mr-3" v-model="knobs.compartmentalConstraint.isActive" />
 											</div>
 										</header>
-										<katex-element class="expression-constraint" :expression="expression" />
+										<katex-element class="expression-constraint inset" :expression="expression" />
 										<katex-element
-											class="expression-constraint"
+											class="expression-constraint inset"
 											:expression="stringToLatexExpression(`${stateIds.join('+')} = ${massScientificNotation}`)"
 										/>
 									</section>
@@ -115,11 +116,12 @@
 								<label class="mt-3">Tolerance</label>
 								<div class="input-tolerance fadein animation-ease-in-out animation-duration-350">
 									<tera-input-number v-model="knobs.tolerance" />
-									<Slider v-model="knobs.tolerance" :min="0" :max="1" :step="0.01" class="w-full mr-2" />
+									<Slider v-model="knobs.tolerance" :min="0.01" :max="1" :step="0.01" class="w-full mr-2" />
 								</div>
 							</section>
 						</AccordionTab>
 					</Accordion>
+					<div class="spacer mb-6"></div>
 				</main>
 			</template>
 		</tera-slider-panel>
@@ -156,12 +158,14 @@
 			</template>
 		</tera-slider-panel>
 		<template #preview>
-			<tera-drilldown-preview>
-				<tera-progress-spinner v-if="showSpinner" :font-size="2" is-centered style="height: 100%">
-					{{ props.node.state.currentProgress }}%
-				</tera-progress-spinner>
-				<template v-else-if="!isEmpty(node.state.runId)">
-					<header class="flex align-items-start">
+			<tera-drilldown-preview
+				:is-loading="showSpinner"
+				:loading-progress="props.node.state.currentProgress"
+				:loading-message="message"
+				class="pl-2"
+			>
+				<template v-if="!isEmpty(node.state.runId)">
+					<header class="flex align-items-start p-3">
 						<div>
 							<h4>{{ validatedModelConfiguration?.name }}</h4>
 							<span class="secondary-text">{{ formatShort(validatedModelConfiguration?.createdOn) }}</span>
@@ -202,6 +206,25 @@
 								/>
 								<span class="ml-4" v-else> To view parameter charts select some in the Output settings. </span>
 							</AccordionTab>
+							<AccordionTab header="Observables">
+								<tera-model-part
+									v-if="!isEmpty(observablesList)"
+									class="pl-4"
+									:part-type="PartType.OBSERVABLE"
+									:items="observablesList"
+									:model-errors="[]"
+									:feature-config="{ isPreview: true }"
+								/>
+								<template v-if="!isEmpty(observableCharts)">
+									<vega-chart
+										v-for="(observableChart, index) in selectedObservableCharts"
+										:key="index"
+										:visualization-spec="observableChart"
+										:are-embed-actions-visible="false"
+										expandable
+									/>
+								</template>
+							</AccordionTab>
 							<AccordionTab header="Diagram">
 								<tera-model-diagram v-if="model" :model="model" />
 							</AccordionTab>
@@ -223,17 +246,6 @@
 								:mmt-params="mmtParams"
 								:feature-config="{ isPreview: true }"
 							/>
-							<Accordion :active-index="observableActiveIndex" v-if="!isEmpty(calibratedConfigObservables)">
-								<AccordionTab v-if="!isEmpty(calibratedConfigObservables)" header="Observables">
-									<tera-observables
-										class="pl-4"
-										:model="model"
-										:mmt="configuredMmt"
-										:observables="calibratedConfigObservables"
-										:feature-config="{ isPreview: true }"
-									/>
-								</AccordionTab>
-							</Accordion>
 						</template>
 					</template>
 					<v-ace-editor
@@ -259,48 +271,39 @@
 			>
 				<template #content>
 					<div class="output-settings-panel">
-						<h5>State variables</h5>
-						<tera-chart-control
-							class="w-full"
-							:chart-config="{
-								selectedRun: 'fixme',
-								selectedVariable: selectedStateSettings.map((s) => s.selectedVariables[0])
-							}"
-							multi-select
-							:show-remove-button="false"
-							:variables="stateOptions"
-							@configuration-change="updateSelectedStates"
+						<tera-chart-settings
+							:title="'State variables'"
+							:settings="chartSettings"
+							:type="ChartSettingType.VARIABLE"
+							:select-options="stateOptions"
+							:selected-options="selectedVariableSettings.map((s) => s.selectedVariables[0])"
+							@open="setActiveChartSettings($event)"
+							@remove="removeChartSettings"
+							@selection-change="updateChartSettings"
 						/>
-						<tera-chart-settings-item
-							v-for="settings of chartSettings.filter((setting) => setting.type === ChartSettingType.VARIABLE)"
-							:key="settings.id"
-							:settings="settings"
-							@open="activeChartSettings = settings"
-							@remove="removeChartSetting"
+						<Divider />
+						<tera-chart-settings
+							:title="'Parameters'"
+							:settings="chartSettings"
+							:type="ChartSettingType.DISTRIBUTION_COMPARISON"
+							:select-options="parameterOptions"
+							:selected-options="selectedParameterSettings.map((s) => s.selectedVariables[0])"
+							@open="setActiveChartSettings($event)"
+							@remove="removeChartSettings"
+							@selection-change="updateChartSettings"
 						/>
-						<hr />
-						<h5>Parameters</h5>
-						<tera-chart-control
-							class="w-full"
-							:chart-config="{
-								selectedRun: 'fixme',
-								selectedVariable: selectedParameterSettings.map((s) => s.selectedVariables[0])
-							}"
-							multi-select
-							:show-remove-button="false"
-							:variables="parameterOptions"
-							@configuration-change="updateSelectedParameters"
+						<Divider />
+						<tera-chart-settings
+							:title="'Observable'"
+							:settings="chartSettings"
+							:type="ChartSettingType.VARIABLE_OBSERVABLE"
+							:select-options="observableOptions"
+							:selected-options="selectedObservableSettings.map((s) => s.selectedVariables[0])"
+							@open="setActiveChartSettings($event)"
+							@remove="removeChartSettings"
+							@selection-change="updateChartSettings"
 						/>
-						<tera-chart-settings-item
-							v-for="settings of chartSettings.filter(
-								(setting) => setting.type === ChartSettingType.DISTRIBUTION_COMPARISON
-							)"
-							:key="settings.id"
-							:settings="settings"
-							@open="activeChartSettings = settings"
-							@remove="removeChartSetting"
-						/>
-						<hr />
+						<Divider />
 					</div>
 					<div class="flex align-items-center gap-2 ml-4 mb-3">
 						<Checkbox v-model="onlyShowLatestResults" binary @change="renderCharts" />
@@ -331,6 +334,7 @@ import { isEmpty, cloneDeep, isEqual } from 'lodash';
 import { computed, ref, watch, onMounted } from 'vue';
 import { logger } from '@/utils/logger';
 import { formatShort } from '@/utils/date';
+import Divider from 'primevue/divider';
 import Button from 'primevue/button';
 import TeraInputNumber from '@/components/widgets/tera-input-number.vue';
 import Slider from 'primevue/slider';
@@ -347,19 +351,16 @@ import { VAceEditor } from 'vue3-ace-editor';
 import { saveCodeToState } from '@/services/notebook';
 
 import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
-import TeraDrilldownPreview from '@/components/drilldown/tera-drilldown-preview.vue';
 import TeraOperatorPlaceholder from '@/components/operator/tera-operator-placeholder.vue';
 import TeraSliderPanel from '@/components/widgets/tera-slider-panel.vue';
-import TeraObservables from '@/components/model/model-parts/tera-observables.vue';
+import TeraModelPart from '@/components/model/model-parts/tera-model-part.vue';
 import TeraInitialTable from '@/components/model/petrinet/tera-initial-table.vue';
 import TeraParameterTable from '@/components/model/petrinet/tera-parameter-table.vue';
 import TeraModelDiagram from '@/components/model/petrinet/tera-model-diagram.vue';
 
-import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue';
 import TeraToggleableInput from '@/components/widgets/tera-toggleable-input.vue';
 
-import TeraChartControl from '@/components/workflow/tera-chart-control.vue';
-import TeraChartSettingsItem from '@/components/widgets/tera-chart-settings-item.vue';
+import TeraChartSettings from '@/components/widgets/tera-chart-settings.vue';
 import TeraSaveAssetModal from '@/components/project/tera-save-asset-modal.vue';
 
 import type {
@@ -368,14 +369,14 @@ import type {
 	Model,
 	ModelParameter,
 	TimeSpan,
-	ModelConfiguration,
-	Observable
+	ModelConfiguration
 } from '@/types/Types';
 import { AssetType } from '@/types/Types';
 import {
 	type ProcessedFunmanResult,
 	type FunmanConstraintsResponse,
 	processFunman,
+	cancelQueries,
 	makeQueries
 } from '@/services/models/funman-service';
 import { createFunmanStateChart, createFunmanParameterCharts } from '@/services/charts';
@@ -385,14 +386,17 @@ import type { MiraModel, MiraTemplateParams } from '@/model-representation/mira/
 import { emptyMiraModel, makeConfiguredMMT } from '@/model-representation/mira/mira';
 import { getAsConfiguredModel, getModelConfigurationById } from '@/services/model-configurations';
 import { useToastService } from '@/services/toast';
-import { pythonInstance } from '@/python/PyodideController';
+import { pythonInstance } from '@/web-workers/python/PyodideController';
 import TeraConstraintGroupForm from '@/components/workflow/ops/funman/tera-constraint-group-form.vue';
-import { DrilldownTabs, ChartSetting, ChartSettingType } from '@/types/common';
+import { ChartSettingType, DrilldownTabs } from '@/types/common';
 import { stringToLatexExpression, getModel, getMMT } from '@/services/model';
 import { toScientificNotation } from '@/utils/number';
-import { removeChartSettingById, updateChartSettingsBySelectedVariables } from '@/services/chart-settings';
+import { updateChartSettingsBySelectedVariables } from '@/services/chart-settings';
 import { nodeOutputLabel } from '@/components/workflow/util';
 import { formatJSON } from '@/services/code';
+import TeraDrilldownPreview from '@/components/drilldown/tera-drilldown-preview.vue';
+import { PartType } from '@/model-representation/service';
+import { useChartSettings } from '@/composables/useChartSettings';
 import { FunmanOperationState, Constraint, ConstraintType, CompartmentalConstraint } from './funman-operation';
 
 const props = defineProps<{
@@ -458,12 +462,15 @@ const model = ref<Model | null>();
 let configuredInputModel: Model | null = null;
 
 const toolbarActiveIndicies = ref([0, 1]);
-const parameterAndStateActiveIndicies = ref([0, 1, 2, 3]);
-const observableActiveIndex = ref([0]);
+const parameterAndStateActiveIndicies = ref([0, 1, 2, 3, 4]);
 
 const stateIds = ref<string[]>([]);
 const parameterIds = ref<string[]>([]);
 const observableIds = ref<string[]>([]);
+
+const message = computed(() =>
+	props.node.state.isRequestUnresponsive ? "Process is stuck in Funman, click 'Stop' to cancel." : null
+);
 
 const variablesOfInterest = ref();
 const onToggleVariableOfInterest = (event: any[]) => {
@@ -571,7 +578,7 @@ const request = computed<FunmanPostQueriesRequest | null>(() => {
 		model: configuredInputModel,
 		request: {
 			constraints,
-			parameters: knobs.value.requestParameters.map(({ disabled, ...rest }) => rest), // Remove the disabled property from the request (it's only used for UI)
+			parameters: knobs.value.requestParameters.map(({ disabled: _disabled, ...rest }) => rest), // Remove the disabled property from the request (it's only used for UI)
 			structure_parameters: [
 				{
 					name: 'schedules',
@@ -614,6 +621,15 @@ async function run() {
 	// Setup the in-progress id
 	const state = cloneDeep(props.node.state);
 	state.inProgressId = response.id;
+	emit('update-state', state);
+}
+
+async function stop() {
+	const state = cloneDeep(props.node.state);
+	await cancelQueries(state.inProgressId);
+	showSpinner.value = false;
+	// Clean up the in-progress id
+	state.inProgressId = '';
 	emit('update-state', state);
 }
 
@@ -803,7 +819,7 @@ onMounted(async () => {
 	const modelConfigurationId = props.node.inputs[0].value?.[0];
 	if (!modelConfigurationId) return;
 	const modelConfiguration = await getModelConfigurationById(modelConfigurationId);
-	configuredInputModel = await getAsConfiguredModel(modelConfiguration);
+	configuredInputModel = await getAsConfiguredModel(modelConfigurationId);
 
 	setModelOptions();
 
@@ -829,36 +845,45 @@ onMounted(async () => {
 let constraintsResponse: FunmanConstraintsResponse[] = [];
 let mmt: MiraModel = emptyMiraModel();
 let funmanResult: any = {};
-const processedFunmanResult = ref<ProcessedFunmanResult>({ boxes: [], trajectories: [] });
+const processedFunmanResult = ref<ProcessedFunmanResult>({ boxes: [], trajectories: [], observableTrajectories: [] });
 
 // Model configuration stuff
 const validatedModelConfiguration = ref<ModelConfiguration | null>(null);
 const showSaveModal = ref(false);
 const configuredMmt = ref<MiraModel | null>(null);
 const mmtParams = ref<MiraTemplateParams>({});
-const calibratedConfigObservables = ref<Observable[]>([]);
+const observablesList = ref<any[]>([]);
 
 const stateCharts = ref<any>([{}]);
 const selectedStateCharts = computed(() => {
-	const selectedStateIds = selectedStateSettings.value.map((setting) => setting.selectedVariables[0]);
+	const selectedStateIds = selectedVariableSettings.value.map((setting) => setting.selectedVariables[0]);
 	return stateCharts.value.filter((chart) => selectedStateIds.includes(chart.id));
 });
 const parameterCharts = ref<any>({});
 
+const observableCharts = ref<any>([{}]);
+const selectedObservableCharts = computed(() => {
+	const selectedObservableIds = selectedObservableSettings.value.map((setting) => setting.selectedVariables[0]);
+	return observableCharts.value.filter((chart) => selectedObservableIds.includes(chart.id));
+});
+
 const stateOptions = ref<string[]>([]);
 const parameterOptions = ref<string[]>([]);
+const observableOptions = ref<string[]>([]);
 const onlyShowLatestResults = ref(false);
 const focusOnModelChecks = ref(false);
 
 const isOutputSettingsPanelOpen = ref(false);
-const activeChartSettings = ref<ChartSetting | null>(null);
-const chartSettings = computed(() => props.node.state.chartSettings ?? []);
-const selectedStateSettings = computed(() =>
-	chartSettings.value.filter((setting) => setting.type === ChartSettingType.VARIABLE)
-);
-const selectedParameterSettings = computed(() =>
-	chartSettings.value.filter((setting) => setting.type === ChartSettingType.DISTRIBUTION_COMPARISON)
-);
+
+const {
+	chartSettings,
+	selectedVariableSettings,
+	selectedParameterSettings,
+	selectedObservableSettings,
+	removeChartSettings,
+	updateChartSettings,
+	setActiveChartSettings
+} = useChartSettings(props, emit);
 
 let selectedBoxId: number = -1;
 
@@ -874,6 +899,7 @@ function onParameterChartClick(eventData: any) {
 	updateStateCharts();
 }
 
+// TODO: Move chart creation logics into useChart.ts
 function updateStateCharts() {
 	if (isEmpty(processedFunmanResult.value.trajectories)) return;
 	const trajectories = onlyShowLatestResults.value
@@ -897,43 +923,24 @@ function updateParameterCharts() {
 	parameterCharts.value = createFunmanParameterCharts(distributionParameters, boxes);
 }
 
-function updateSelectedStates(event) {
-	emit('update-state', {
-		...props.node.state,
-		chartSettings: updateChartSettingsBySelectedVariables(
-			chartSettings.value,
-			ChartSettingType.VARIABLE,
-			event.selectedVariable
-		)
-	});
+function updateObservableCharts() {
+	if (isEmpty(processedFunmanResult.value.observableTrajectories)) return;
+	const observableTrajectories = onlyShowLatestResults.value
+		? processedFunmanResult.value.observableTrajectories.filter(({ isAtLatestTimestep }) => isAtLatestTimestep)
+		: processedFunmanResult.value.observableTrajectories;
+	observableCharts.value = funmanResult.model.petrinet.semantics.ode.observables.map(({ id }) =>
+		createFunmanStateChart(observableTrajectories, constraintsResponse, id, focusOnModelChecks.value, selectedBoxId)
+	);
 }
 
-function updateSelectedParameters(event) {
-	emit('update-state', {
-		...props.node.state,
-		chartSettings: updateChartSettingsBySelectedVariables(
-			chartSettings.value,
-			ChartSettingType.DISTRIBUTION_COMPARISON,
-			event.selectedVariable
-		)
-	});
-	updateParameterCharts(); // Rerender when we remove/add charts since they are all contained in the same visualization
-}
-
-function removeChartSetting(chartId: string) {
-	const chartType = chartSettings.value.find((setting) => setting.id === chartId)?.type;
-	emit('update-state', {
-		...props.node.state,
-		chartSettings: removeChartSettingById(chartSettings.value, chartId)
-	});
-	if (chartType === ChartSettingType.DISTRIBUTION_COMPARISON) {
-		updateParameterCharts();
-	}
-}
+watch(selectedParameterSettings, () => {
+	updateParameterCharts();
+});
 
 function renderCharts() {
 	updateStateCharts();
 	updateParameterCharts();
+	updateObservableCharts();
 }
 
 async function prepareOutput() {
@@ -958,12 +965,17 @@ async function prepareOutput() {
 		return;
 	}
 	configuredMmt.value = makeConfiguredMMT(mmt, validatedModelConfiguration.value);
-	calibratedConfigObservables.value = validatedModelConfiguration.value.observableSemanticList.map(
-		({ referenceId, states, expression }) => ({
-			id: referenceId,
-			name: referenceId,
-			states,
-			expression
+	observablesList.value = validatedModelConfiguration.value.observableSemanticList.map(
+		({ referenceId, expression, expressionMathml }) => ({
+			base: {
+				id: referenceId,
+				name: referenceId,
+				expression,
+				expression_mathml: expressionMathml
+			},
+			// Observables can't be stratified therefore don't have children
+			children: [],
+			isParent: false
 		})
 	);
 
@@ -971,6 +983,7 @@ async function prepareOutput() {
 	parameterOptions.value = funmanResult.request.parameters
 		.filter((d: any) => d.interval.lb !== d.interval.ub)
 		.map(({ name }) => name);
+	observableOptions.value = funmanResult.model?.petrinet?.semantics?.ode?.observables.map(({ id }) => id);
 
 	// Initialize default output settings
 	const state = cloneDeep(props.node.state);
@@ -979,6 +992,11 @@ async function prepareOutput() {
 		state.chartSettings,
 		ChartSettingType.DISTRIBUTION_COMPARISON,
 		parameterOptions.value
+	);
+	state.chartSettings = updateChartSettingsBySelectedVariables(
+		state.chartSettings,
+		ChartSettingType.VARIABLE_OBSERVABLE,
+		observableOptions.value
 	);
 	emit('update-state', state);
 
@@ -1006,14 +1024,16 @@ watch(
 </script>
 
 <style scoped>
-.expression-constraint {
+:deep(.expression-constraint) {
 	max-height: 150px;
 	overflow: auto;
 	margin-top: var(--gap-4);
 	margin-bottom: var(--gap-4);
-	padding: var(--gap-1) 0 var(--gap-1) 0;
+	padding: var(--gap-2) var(--gap-3);
 	border: 1px solid var(--surface-border-light);
 	border-radius: var(--border-radius);
+	background: var(--surface-50);
+	box-shadow: inset 0px 0px 4px rgba(0, 0, 0, 0.05);
 }
 
 .top-toolbar {
@@ -1049,7 +1069,7 @@ code {
 	color: var(--text-color-subdued);
 	border-radius: var(--border-radius);
 	border: 1px solid var(--surface-border);
-	padding: var(--gap-2);
+	padding: var(--gap-2) var(--gap-3);
 	overflow-wrap: break-word;
 	font-size: var(--font-caption);
 	max-height: 10rem;
@@ -1057,7 +1077,7 @@ code {
 }
 
 .inset {
-	box-shadow: inset 0px 0px 4px var(--surface-border);
+	box-shadow: inset 0px 0px 4px rgba(0, 0, 0, 0.05);
 }
 
 .timespan {
@@ -1091,7 +1111,7 @@ ul {
 		display: flex;
 		padding: var(--gap-4);
 		flex-direction: column;
-		background: var(--gray-50);
+		background: var(--surface-0);
 		border: 1px solid var(--surface-border-light);
 		border-radius: var(--border-radius);
 	}

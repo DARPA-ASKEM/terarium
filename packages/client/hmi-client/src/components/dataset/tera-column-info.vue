@@ -3,18 +3,14 @@
 		<section class="entries">
 			<span class="name">
 				<h6>{{ column.symbol }}</h6>
-				<template v-if="featureConfig.isPreview">{{ column.name }}</template>
 				<tera-input-text
-					v-else
 					placeholder="Add a name"
 					:model-value="column.name ?? ''"
 					@update:model-value="$emit('update-column', { key: 'name', value: $event })"
 				/>
 			</span>
 			<span class="unit">
-				<template v-if="featureConfig.isPreview"><label>Unit</label>{{ column.unit }}</template>
 				<tera-input-text
-					v-else
 					label="Unit"
 					placeholder="Add a unit"
 					:characters-to-reject="[' ']"
@@ -24,37 +20,16 @@
 			</span>
 			<span class="data-type">
 				<label>Data type</label>
-				<template v-if="featureConfig.isPreview">{{ column.dataType }}</template>
 				<Dropdown
-					v-else
 					placeholder="Select a data type"
 					:model-value="column.dataType ?? ''"
 					@update:model-value="$emit('update-column', { key: 'dataType', value: $event })"
 					:options="Object.values(ColumnType)"
 				/>
 			</span>
-			<span v-if="showConcept" class="concept">
-				<label>Concept</label>
-				<template v-if="featureConfig.isPreview">{{ query }}</template>
-				<AutoComplete
-					v-else
-					size="small"
-					placeholder="Search concepts"
-					v-model="query"
-					:suggestions="results"
-					optionLabel="name"
-					@complete="async () => (results = await searchCuriesEntities(query))"
-					@item-select="
-						$emit('update-column', { key: 'concept', value: { curie: $event.value.curie, name: $event.value.name } })
-					"
-					@keyup.enter="applyValidConcept"
-					@blur="applyValidConcept"
-				/>
-			</span>
+			<tera-concept class="concept" v-model="grounding" />
 			<span class="description">
-				<template v-if="featureConfig.isPreview">{{ column.description }}</template>
 				<tera-input-text
-					v-else
 					placeholder="Add a description"
 					:model-value="column.description ?? ''"
 					@update:model-value="$emit('update-column', { key: 'description', value: $event })"
@@ -63,24 +38,18 @@
 		</section>
 		<tera-boxplot class="flex-1" v-if="column.stats" :stats="column.stats" />
 	</div>
-	<div class="thin-divider">
-		<div class="line"></div>
-	</div>
 </template>
 
 <script setup lang="ts">
-/* Copied the structure of tera-model-parts.vue */
-import { ref, computed, watch } from 'vue';
+import { computed } from 'vue';
+import TeraConcept from '@/components/widgets/tera-concept.vue';
 import TeraInputText from '@/components/widgets/tera-input-text.vue';
 import TeraBoxplot from '@/components/widgets/tera-boxplot.vue';
-import AutoComplete from 'primevue/autocomplete';
 import Dropdown from 'primevue/dropdown';
-import { type DKG, ColumnType, type Grounding } from '@/types/Types';
-import { searchCuriesEntities } from '@/services/concept';
-import type { FeatureConfig } from '@/types/common';
+import { ColumnType, type Grounding } from '@/types/Types';
 
 type ColumnInfo = {
-	symbol: string;
+	symbol?: string;
 	dataType?: ColumnType;
 	description?: string;
 	grounding?: Grounding;
@@ -92,50 +61,30 @@ type ColumnInfo = {
 
 const props = defineProps<{
 	column: ColumnInfo;
-	featureConfig: FeatureConfig;
 }>();
 
 const emit = defineEmits(['update-column']);
 
-const query = ref('');
-const results = ref<DKG[]>([]);
-
-// If we are in preview mode and there is no content, show nothing
-const showConcept = computed(() => !(props.featureConfig.isPreview && !query.value));
-
-// Used if an option isn't selected from the Autocomplete suggestions but is typed in regularly
-function applyValidConcept() {
-	// Allows to empty the concept
-	if (query.value === '') {
-		emit('update-column', { key: 'concept', value: { curie: '', name: '' } });
-	}
-	// If what was typed was one of the results then choose that result
-	else {
-		const concept = results.value.find((result) => result.name === query.value);
-		if (concept) {
-			emit('update-column', { key: 'concept', value: { curie: concept.curie, name: concept.name } });
-		}
-	}
-}
-
-watch(
-	() => props.column.grounding?.identifiers,
-	(identifiers) => {
-		// console.log(identifiers); // FIXME: Multiple identifiers are held in here after enrichment! Designs have to be updated to handle more.
-		query.value = identifiers?.[0].name ?? ''; // Just show first one for now.
-	},
-	{ immediate: true }
-);
+const grounding = computed({
+	get: () => props.column.grounding,
+	set: (newGrounding) => emit('update-column', { key: 'grounding', value: newGrounding })
+});
 </script>
 
 <style scoped>
 .column-info-card {
+	border: 1px solid var(--surface-border-light);
+	border-radius: var(--border-radius);
+	background: var(--surface-0);
 	padding: var(--gap-3) var(--gap-4);
 	border-left: 4px solid var(--surface-300);
 	margin-bottom: var(--gap-2);
+	box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+	transition: all 0.15s;
 }
 .column-info-card:hover {
-	background-color: var(--surface-50);
+	background-color: var(--surface-highlight);
+	border-left-color: var(--primary-color);
 }
 section.entries {
 	display: grid;
@@ -145,7 +94,6 @@ section.entries {
 		'description description description description description';
 	grid-template-columns: auto max-content max-content max-content max-content;
 	grid-auto-flow: dense;
-	overflow: hidden;
 	gap: var(--gap-1) var(--gap-2);
 	align-items: center;
 	font-size: var(--font-caption);
@@ -193,11 +141,6 @@ h6 {
 	margin-right: var(--gap-6);
 }
 
-.expression {
-	grid-area: expression;
-	font-size: var(--font-body-small);
-}
-
 .concept {
 	grid-area: concept;
 }
@@ -210,14 +153,13 @@ h6 {
 	gap: var(--gap-1);
 }
 
-:deep(.p-dropdown > span),
-:deep(.p-autocomplete-input) {
-	padding: var(--gap-1) var(--gap-2);
+:deep(.p-dropdown > span) {
+	height: 1.75rem;
+	font-size: var(--font-caption);
 }
-.thin-divider {
-	margin: var(--gap-2) 0;
-	& > .line {
-		border-top: 1px solid var(--surface-border-light);
-	}
+
+:deep(.unit .tera-input > main > input) {
+	height: 1.25rem;
+	font-size: var(--font-caption);
 }
 </style>

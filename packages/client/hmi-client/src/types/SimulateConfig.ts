@@ -1,6 +1,6 @@
 export type ChartConfig = {
 	selectedVariable: string[];
-	selectedRun: string;
+	selectedRun?: string;
 };
 
 export type DataseriesConfig = {
@@ -10,8 +10,4 @@ export type DataseriesConfig = {
 	borderColor?: string;
 	borderWidth?: number;
 	borderDash?: number[];
-};
-
-export type RunResults = {
-	[runId: string]: { [key: string]: number }[];
 };

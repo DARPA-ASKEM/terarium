@@ -45,11 +45,11 @@ public class StellaToStockflowResponseHandler extends TaskResponseHandler {
 				.getParameters()
 				.forEach(param -> {
 					if (param.getName() == null || param.getName().isEmpty()) {
-						param.setName(param.getId());
+						param.setName(param.getConceptReference());
 					}
 				});
 
-			model = modelService.createAsset(model, props.getProjectId(), ASSUME_WRITE_PERMISSION_ON_BEHALF_OF_USER);
+			model = modelService.createAsset(model, props.getProjectId());
 			resp.setOutput(objectMapper.writeValueAsString(model).getBytes());
 		} catch (final Exception e) {
 			log.error("Failed to create model", e);

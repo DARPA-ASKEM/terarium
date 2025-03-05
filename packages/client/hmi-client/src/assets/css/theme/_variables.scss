@@ -864,12 +864,6 @@ $imagePreviewActionIconHeight: 3rem !default;
 $imagePreviewActionIconFontSize: 1.5rem !default;
 $imagePreviewActionIconBorderRadius: 50% !default;
 
-//petrinet
-$petri-nodeBorder: var(--gray-500);
-$petri-nodeFill: var(--gray-500);
-$petri-lineColor: var(--gray-700);
-$petri-inputBox: var(--surface-0);
-
 :root {
 	--editing-color: rgb(238, 238, 136);
 	--border-radius-small: #{$smallBorderRadius};
@@ -880,7 +874,6 @@ $petri-inputBox: var(--surface-0);
 	--button-color: #{$successButtonBg};
 	--chevron-hover: #1b807332;
 	--content-padding: #{$panelContentPadding};
-	--error-message-background: #{$errorMessageBg};
 	--error-message-color: #{$errorMessageTextColor};
 	--focus-ring: #{$focusShadow};
 	--font-body-large: #{$fontBodyLarge};
@@ -946,8 +939,8 @@ $petri-inputBox: var(--surface-0);
 	--surface-highlight-hover: #bddad6;
 	--surface-warning: #FEC;
 	--warning-color: #FFAB00;
-	--surface-error: #FDDDD3;
-	--error-color: #F35625;
+	--surface-error: #FFDCDC;
+	--error-color: #b61919;
 	--error-background: rgba(243, 215, 208, 0.5);
 	--error-border-color: #F89A7C;
 	--surface-hover: var(--gray-100);
@@ -964,10 +957,6 @@ $petri-inputBox: var(--surface-0);
 	--text-color-danger: #{$dangerTextButton};
 	--constrain-width: 55rem;
 	color-scheme: light;
-	--petri-nodeBorder: var(--gray-300);
-	--petri-nodeFill: var(--gray-300);
-	--petri-lineColor: #{$petri-lineColor};
-	--petri-inputBox: #{$petri-inputBox};
 	--port-base-size: 8px;
 	--overlay-menu-shadow: 0 0 0 1px rgba(0, 0, 0, 0.1), 0 2px 4px 0 rgba(0, 0, 0, 0.2);
 	--overlay-menu-shadow-hover: 0 0 0 1px rgba(0, 0, 0, 0.1), 0 2px 8px 0 rgba(0, 0, 0, 0.3);

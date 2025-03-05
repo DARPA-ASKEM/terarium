@@ -5,7 +5,7 @@
 import API from '@/api/api';
 import DatasetIcon from '@/assets/svg/icons/dataset.svg?component';
 import * as EventService from '@/services/event';
-import { AssetType, EventType, PermissionRelationships, Project, ProjectSearchResponse } from '@/types/Types';
+import { AssetType, EventType, PermissionRelationships, Project, ProjectSearchResult } from '@/types/Types';
 import { logger } from '@/utils/logger';
 import type { Component, Ref } from 'vue';
 
@@ -179,10 +179,7 @@ async function getPermissions(projectId: Project['id']): Promise<PermissionRelat
 async function setPermissions(projectId: Project['id'], userId: string, relationship: string): Promise<boolean> {
 	try {
 		const { status } = await API.post(`projects/${projectId}/permissions/user/${userId}/${relationship}`);
-		if (status !== 200) {
-			return false;
-		}
-		return true;
+		return status === 200;
 	} catch (error) {
 		logger.error(error);
 		return false;
@@ -192,10 +189,7 @@ async function setPermissions(projectId: Project['id'], userId: string, relation
 async function removePermissions(projectId: Project['id'], userId: string, relationship: string): Promise<boolean> {
 	try {
 		const { status } = await API.delete(`projects/${projectId}/permissions/user/${userId}/${relationship}`);
-		if (status !== 200) {
-			return false;
-		}
-		return true;
+		return status === 200;
 	} catch (error) {
 		logger.error(error);
 		return false;
@@ -210,10 +204,7 @@ async function updatePermissions(
 ): Promise<boolean> {
 	try {
 		const { status } = await API.put(`projects/${projectId}/permissions/user/${userId}/${oldRelationship}?to=${to}`);
-		if (status !== 200) {
-			return false;
-		}
-		return true;
+		return status === 200;
 	} catch (error) {
 		logger.error(error);
 		return false;
@@ -273,6 +264,8 @@ const icons = new Map<string | AssetType, string | Component>([
 	[AssetType.Model, 'share-2'],
 	[AssetType.Dataset, DatasetIcon as Component],
 	[AssetType.Simulation, 'settings'],
+	[AssetType.ModelConfiguration, 'settings'],
+	[AssetType.InterventionPolicy, 'settings'],
 	[AssetType.Code, 'code'],
 	[AssetType.Workflow, 'git-merge'],
 	['overview', 'layout']
@@ -291,14 +284,15 @@ interface ProjectSearchOptions {
 	pageSize?: number;
 	limit?: number;
 }
+
 /**
  * Find projects by KNN (k-nearest neighbors) search
  *
  * @param {string} query - the search query
  * @param {ProjectSearchOptions} options - the search options
- * @returns {Array<Project>} - the list of projects
+ * @returns {Array<ProjectSearchResult>} - the list of projects
  */
-async function findProjects(query: string, options?: ProjectSearchOptions): Promise<ProjectSearchResponse[]> {
+async function findProjects(query: string, options?: ProjectSearchOptions): Promise<ProjectSearchResult[]> {
 	try {
 		if (!query) return [];
 		let url = `/projects/knn?text=${query}`;
@@ -312,7 +306,7 @@ async function findProjects(query: string, options?: ProjectSearchOptions): Prom
 		const response = await API.get(url);
 		const { status, data } = response;
 		if (status !== 200 || !data) return [];
-		return (data as ProjectSearchResponse[]) ?? [];
+		return (data as ProjectSearchResult[]) ?? [];
 	} catch (error) {
 		console.error(error);
 		return [];

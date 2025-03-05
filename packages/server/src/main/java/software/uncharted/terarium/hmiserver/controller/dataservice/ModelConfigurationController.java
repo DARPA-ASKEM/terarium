@@ -33,6 +33,7 @@ import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
+import software.uncharted.terarium.hmiserver.annotations.HasProjectAccess;
 import software.uncharted.terarium.hmiserver.models.dataservice.ResponseDeleted;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.Model;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.configurations.ModelConfiguration;
@@ -40,9 +41,11 @@ import software.uncharted.terarium.hmiserver.models.dataservice.project.ProjectE
 import software.uncharted.terarium.hmiserver.security.Roles;
 import software.uncharted.terarium.hmiserver.service.CurrentUserService;
 import software.uncharted.terarium.hmiserver.service.data.ModelConfigurationService;
+import software.uncharted.terarium.hmiserver.service.data.ModelConfigurationService.ModelConfigurationUpdate;
 import software.uncharted.terarium.hmiserver.service.data.ModelService;
 import software.uncharted.terarium.hmiserver.service.data.ProjectService;
 import software.uncharted.terarium.hmiserver.utils.Messages;
+import software.uncharted.terarium.hmiserver.utils.ModelConfigurationToTables;
 import software.uncharted.terarium.hmiserver.utils.rebac.Schema.Permission;
 
 @RequestMapping("/model-configurations")
@@ -67,6 +70,7 @@ public class ModelConfigurationController {
 	@GetMapping("/{id}")
 	@Secured(Roles.USER)
 	@Operation(summary = "Gets a specific model configuration by id")
+	@HasProjectAccess
 	@ApiResponses(
 		value = {
 			@ApiResponse(
@@ -95,9 +99,8 @@ public class ModelConfigurationController {
 		@PathVariable("id") final UUID id,
 		@RequestParam(name = "project-id", required = false) final UUID projectId
 	) {
-		final Permission permission = projectService.checkPermissionCanRead(currentUserService.get().getId(), projectId);
 		try {
-			final Optional<ModelConfiguration> modelConfiguration = modelConfigurationService.getAsset(id, permission);
+			final Optional<ModelConfiguration> modelConfiguration = modelConfigurationService.getAsset(id);
 			if (modelConfiguration.isEmpty()) {
 				throw new ResponseStatusException(HttpStatus.NOT_FOUND, messages.get("modelconfig.not-found"));
 			}
@@ -112,9 +115,10 @@ public class ModelConfigurationController {
 		}
 	}
 
-	@PostMapping(value = "/import", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+	@PostMapping(value = "/import-archive", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
 	@Secured(Roles.USER)
 	@Operation(summary = "Imports both a model and its configuration in a single go")
+	@HasProjectAccess(level = software.uncharted.terarium.hmiserver.utils.rebac.Schema.Permission.WRITE)
 	@ApiResponses(
 		value = {
 			@ApiResponse(
@@ -142,8 +146,6 @@ public class ModelConfigurationController {
 			return ResponseEntity.badRequest().build();
 		}
 
-		final Permission permission = projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
-
 		try {
 			final ObjectMapper objectMapper = new ObjectMapper();
 			final ZipInputStream zipInputStream = new ZipInputStream(input.getInputStream());
@@ -167,11 +169,11 @@ public class ModelConfigurationController {
 
 			Model model = objectMapper.readValue(ProjectExport.readZipEntry(zipInputStream), Model.class);
 			model = model.clone();
-			final Model created = modelService.createAsset(model, projectId, permission);
+			final Model created = modelService.createAsset(model, projectId);
 
 			modelConfig.setModelId(created.getId());
 			modelConfig = modelConfig.clone();
-			modelConfigurationService.createAsset(modelConfig, projectId, permission);
+			modelConfigurationService.createAsset(modelConfig, projectId);
 
 			return ResponseEntity.status(HttpStatus.CREATED).body(model);
 		} catch (final IOException e) {
@@ -180,9 +182,10 @@ public class ModelConfigurationController {
 		}
 	}
 
-	@GetMapping("/download/{id}")
+	@GetMapping("/download-archive/{id}")
 	@Secured(Roles.USER)
-	@Operation(summary = "Imports both a model and its configuration in a single go")
+	@Operation(summary = "Downloads both a model and its configuration in a single go in a zipped archive")
+	@HasProjectAccess
 	@ApiResponses(
 		value = {
 			@ApiResponse(
@@ -215,18 +218,17 @@ public class ModelConfigurationController {
 	public ResponseEntity<byte[]> downloadModelConfigurationWithModel(
 		@PathVariable("id") final UUID id,
 		@RequestParam(name = "project-id", required = false) final UUID projectId
-	) throws IOException {
-		final Permission permission = projectService.checkPermissionCanRead(currentUserService.get().getId(), projectId);
+	) {
 		final Optional<ModelConfiguration> modelConfiguration;
 		final Optional<Model> model;
 
 		try {
-			modelConfiguration = modelConfigurationService.getAsset(id, permission);
+			modelConfiguration = modelConfigurationService.getAsset(id);
 			if (modelConfiguration.isEmpty()) {
 				throw new ResponseStatusException(HttpStatus.NOT_FOUND, messages.get("modelconfig.not-found"));
 			}
 
-			model = modelService.getAsset(modelConfiguration.get().getModelId(), permission);
+			model = modelService.getAsset(modelConfiguration.get().getModelId());
 			if (model.isEmpty()) {
 				throw new ResponseStatusException(HttpStatus.NOT_FOUND, messages.get("model.not-found"));
 			}
@@ -287,6 +289,41 @@ public class ModelConfigurationController {
 		return byteArrayOutputStream.toByteArray();
 	}
 
+	@GetMapping("/{id}/original-model")
+	@Secured(Roles.USER)
+	@Operation(summary = "Get the original model of which the configuration was created for")
+	@HasProjectAccess(level = software.uncharted.terarium.hmiserver.utils.rebac.Schema.Permission.WRITE)
+	@ApiResponses(
+		value = {
+			@ApiResponse(
+				responseCode = "200",
+				description = "Original model",
+				content = @Content(mediaType = "application/json", schema = @Schema(implementation = Model.class))
+			),
+			@ApiResponse(
+				responseCode = "403",
+				description = "User does not have permissions to this model configuration",
+				content = @Content
+			)
+		}
+	)
+	public ResponseEntity<Model> getOriginalModel(
+		@PathVariable("id") final UUID id,
+		@RequestParam(name = "project-id", required = false) final UUID projectId
+	) {
+		try {
+			final Optional<Model> model = modelService.getModelFromModelConfigurationId(id);
+			if (model.isEmpty()) {
+				return ResponseEntity.noContent().build();
+			}
+			return ResponseEntity.ok(model.get());
+		} catch (final Exception e) {
+			final String error = "Unable to get model";
+			log.error(error, e);
+			throw new ResponseStatusException(org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR, error);
+		}
+	}
+
 	/**
 	 * Create a configured model from a model config
 	 *
@@ -294,9 +331,10 @@ public class ModelConfigurationController {
 	 * @param projectId associated project for permissions
 	 * @return configured model
 	 */
-	@GetMapping("/as-configured-model/{id}")
+	@GetMapping("/{id}/model")
 	@Secured(Roles.USER)
-	@Operation(summary = "Gets a specific model configuration by id")
+	@Operation(summary = "Get a model instance as specified by the configuration")
+	@HasProjectAccess
 	@ApiResponses(
 		value = {
 			@ApiResponse(
@@ -325,13 +363,12 @@ public class ModelConfigurationController {
 		@PathVariable("id") final UUID id,
 		@RequestParam(name = "project-id", required = false) final UUID projectId
 	) {
-		final Permission permission = projectService.checkPermissionCanRead(currentUserService.get().getId(), projectId);
 		try {
-			final Optional<ModelConfiguration> modelConfiguration = modelConfigurationService.getAsset(id, permission);
+			final Optional<ModelConfiguration> modelConfiguration = modelConfigurationService.getAsset(id);
 			if (modelConfiguration.isEmpty()) {
 				throw new ResponseStatusException(HttpStatus.NOT_FOUND, messages.get("modelconfig.not-found"));
 			}
-			final Optional<Model> model = modelService.getAsset(modelConfiguration.get().getModelId(), permission);
+			final Optional<Model> model = modelService.getAsset(modelConfiguration.get().getModelId());
 			if (model.isEmpty()) {
 				throw new ResponseStatusException(HttpStatus.NOT_FOUND, messages.get("model.not-found"));
 			}
@@ -352,6 +389,7 @@ public class ModelConfigurationController {
 	@PostMapping("/as-configured-model/")
 	@Secured(Roles.USER)
 	@Operation(summary = "Creates a new model configuration based on a configured model")
+	@HasProjectAccess
 	@ApiResponses(
 		value = {
 			@ApiResponse(
@@ -372,71 +410,19 @@ public class ModelConfigurationController {
 		@RequestParam(name = "description", required = false) final String description,
 		@RequestParam(name = "project-id", required = false) final UUID projectId
 	) {
-		final Permission permission = projectService.checkPermissionCanRead(currentUserService.get().getId(), projectId);
+		final ModelConfigurationUpdate options = new ModelConfigurationUpdate();
+		options.setName(name);
+		options.setDescription(description);
 
 		final ModelConfiguration modelConfiguration = ModelConfigurationService.modelConfigurationFromAMR(
 			configuredModel,
-			name,
-			description
+			options
 		);
 
 		try {
 			return ResponseEntity.status(HttpStatus.CREATED).body(
-				modelConfigurationService.createAsset(modelConfiguration.clone(), projectId, permission)
+				modelConfigurationService.createAsset(modelConfiguration.clone(), projectId)
 			);
-		} catch (final IOException e) {
-			log.error("Unable to get model configuration from postgres db", e);
-			throw new ResponseStatusException(
-				org.springframework.http.HttpStatus.SERVICE_UNAVAILABLE,
-				messages.get("postgres.service-unavailable")
-			);
-		}
-	}
-
-	@PutMapping("/as-configured-model/{id}")
-	@Secured(Roles.USER)
-	@Operation(summary = "Creates a new model configuration based on a configured model")
-	@ApiResponses(
-		value = {
-			@ApiResponse(
-				responseCode = "201",
-				description = "Model configuration created from model.",
-				content = @Content(mediaType = "application/json", schema = @Schema(implementation = ModelConfiguration.class))
-			),
-			@ApiResponse(
-				responseCode = "503",
-				description = "There was an issue creating the configuration",
-				content = @Content
-			)
-		}
-	)
-	public ResponseEntity<ModelConfiguration> updateFromConfiguredModel(
-		@PathVariable("id") final UUID id,
-		@RequestBody final Model configuredModel,
-		@RequestParam(name = "name", required = false) final String name,
-		@RequestParam(name = "description", required = false) final String description,
-		@RequestParam(name = "project-id", required = false) final UUID projectId
-	) {
-		final Permission permission = projectService.checkPermissionCanRead(currentUserService.get().getId(), projectId);
-
-		final ModelConfiguration modelConfiguration = ModelConfigurationService.modelConfigurationFromAMR(
-			configuredModel,
-			name,
-			description
-		);
-
-		modelConfiguration.setId(id);
-
-		try {
-			final Optional<ModelConfiguration> optionalModelConfiguration = modelConfigurationService.updateAsset(
-				modelConfiguration,
-				projectId,
-				permission
-			);
-			if (optionalModelConfiguration.isEmpty()) {
-				throw new ResponseStatusException(HttpStatus.NOT_FOUND, messages.get("modelconfig.not-found"));
-			}
-			return ResponseEntity.status(HttpStatus.CREATED).body(optionalModelConfiguration.get());
 		} catch (final IOException e) {
 			log.error("Unable to get model configuration from postgres db", e);
 			throw new ResponseStatusException(
@@ -456,6 +442,7 @@ public class ModelConfigurationController {
 	@PostMapping
 	@Secured(Roles.USER)
 	@Operation(summary = "Create a new model configuration")
+	@HasProjectAccess(level = software.uncharted.terarium.hmiserver.utils.rebac.Schema.Permission.WRITE)
 	@ApiResponses(
 		value = {
 			@ApiResponse(
@@ -474,16 +461,13 @@ public class ModelConfigurationController {
 		@RequestBody final ModelConfiguration modelConfiguration,
 		@RequestParam(name = "project-id", required = false) final UUID projectId
 	) {
-		final software.uncharted.terarium.hmiserver.utils.rebac.Schema.Permission permission =
-			projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
-
 		try {
 			if (modelConfiguration.getId() == null) {
 				modelConfiguration.setId(UUID.randomUUID());
 			}
 
 			return ResponseEntity.status(HttpStatus.CREATED).body(
-				modelConfigurationService.createAsset(modelConfiguration.clone(), projectId, permission)
+				modelConfigurationService.createAsset(modelConfiguration.clone(), projectId)
 			);
 		} catch (final IOException e) {
 			log.error("Unable to get model configuration from postgres db", e);
@@ -505,6 +489,7 @@ public class ModelConfigurationController {
 	@PutMapping("/{id}")
 	@Secured(Roles.USER)
 	@Operation(summary = "Create a new model configuration")
+	@HasProjectAccess(level = software.uncharted.terarium.hmiserver.utils.rebac.Schema.Permission.WRITE)
 	@ApiResponses(
 		value = {
 			@ApiResponse(
@@ -529,11 +514,9 @@ public class ModelConfigurationController {
 		@RequestBody final ModelConfiguration config,
 		@RequestParam(name = "project-id", required = false) final UUID projectId
 	) {
-		final software.uncharted.terarium.hmiserver.utils.rebac.Schema.Permission permission =
-			projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
 		try {
 			config.setId(id);
-			final Optional<ModelConfiguration> updated = modelConfigurationService.updateAsset(config, projectId, permission);
+			final Optional<ModelConfiguration> updated = modelConfigurationService.updateAsset(config, projectId);
 			return updated.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
 		} catch (final IOException e) {
 			log.error("Unable to update model configuration in postgres db", e);
@@ -554,6 +537,7 @@ public class ModelConfigurationController {
 	@DeleteMapping("/{id}")
 	@Secured(Roles.USER)
 	@Operation(summary = "Deletes a model configuration")
+	@HasProjectAccess(level = software.uncharted.terarium.hmiserver.utils.rebac.Schema.Permission.WRITE)
 	@ApiResponses(
 		value = {
 			@ApiResponse(
@@ -568,14 +552,97 @@ public class ModelConfigurationController {
 		@PathVariable("id") final UUID id,
 		@RequestParam(name = "project-id", required = false) final UUID projectId
 	) {
-		final software.uncharted.terarium.hmiserver.utils.rebac.Schema.Permission permission =
-			projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
-
 		try {
-			modelConfigurationService.deleteAsset(id, projectId, permission);
+			modelConfigurationService.deleteAsset(id, projectId);
 			return ResponseEntity.ok(new ResponseDeleted("ModelConfiguration", id));
 		} catch (final IOException e) {
 			log.error("Unable to delete model configuration", e);
+			throw new ResponseStatusException(
+				org.springframework.http.HttpStatus.SERVICE_UNAVAILABLE,
+				messages.get("postgres.service-unavailable")
+			);
+		}
+	}
+
+	/**
+	 * Get the LaTeX table of a model configuration
+	 * @param id UUID of the model configuration
+	 * @return string representation of the LaTeX table
+	 */
+	@GetMapping("/{id}/latex-table")
+	@Secured(Roles.USER)
+	@Operation(summary = "Get the LaTeX table of a model configuration")
+	@ApiResponses(
+		value = {
+			@ApiResponse(
+				responseCode = "200",
+				description = "LaTeX table of the model configuration",
+				content = @Content(mediaType = "application/json")
+			),
+			@ApiResponse(
+				responseCode = "404",
+				description = "There was no model configuration found by this ID",
+				content = @Content
+			),
+			@ApiResponse(responseCode = "503", description = "There was an issue getting the LaTeX table", content = @Content)
+		}
+	)
+	public ResponseEntity<String> getLatexTable(@PathVariable("id") final UUID id) {
+		try {
+			final ModelConfiguration modelConfiguration = modelConfigurationService
+				.getAsset(id)
+				.orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, messages.get("modelconfig.not-found")));
+
+			final Model model = modelService
+				.getAsset(modelConfiguration.getModelId())
+				.orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, messages.get("model.not-found")));
+
+			return ResponseEntity.ok(ModelConfigurationToTables.generateLatex(model, modelConfiguration));
+		} catch (final Exception e) {
+			log.error("Unable to get model configuration from postgres db", e);
+			throw new ResponseStatusException(
+				org.springframework.http.HttpStatus.SERVICE_UNAVAILABLE,
+				messages.get("postgres.service-unavailable")
+			);
+		}
+	}
+
+	/**
+	 * Get the CSV table of a model configuration
+	 * @param id UUID of the model configuration
+	 * @return string representation of the CSV table
+	 */
+	@GetMapping("/{id}/csv-table")
+	@Secured(Roles.USER)
+	@Operation(summary = "Get the CSV table of a model configuration")
+	@ApiResponses(
+		value = {
+			@ApiResponse(
+				responseCode = "200",
+				description = "CSV table of the model configuration",
+				content = @Content(mediaType = "application/json")
+			),
+			@ApiResponse(
+				responseCode = "404",
+				description = "There was no model configuration found by this ID",
+				content = @Content
+			),
+			@ApiResponse(responseCode = "503", description = "There was an issue getting the CSV table", content = @Content)
+		}
+	)
+	public ResponseEntity<String> getCsvTable(@PathVariable("id") final UUID id) {
+		try {
+			final ModelConfiguration modelConfiguration = modelConfigurationService
+				.getAsset(id)
+				.orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, messages.get("modelconfig.not-found")));
+
+			final Model model = modelService
+				.getAsset(modelConfiguration.getModelId())
+				.orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, messages.get("model.not-found")));
+
+			return ResponseEntity.ok(ModelConfigurationToTables.generateCsv(model, modelConfiguration));
+		} catch (final Exception e) {
+			log.error("Unable to get model configuration from postgres db", e);
 			throw new ResponseStatusException(
 				org.springframework.http.HttpStatus.SERVICE_UNAVAILABLE,
 				messages.get("postgres.service-unavailable")

@@ -13,7 +13,6 @@
 					:asset-id="assetId"
 					@open-asset="openAsset"
 					@remove-asset="removeAsset"
-					@open-new-asset="openNewAsset"
 					@open-new-workflow="openNewWorkflow"
 				/>
 			</template>
@@ -26,12 +25,6 @@
 			<tera-project-overview v-if="pageType === ProjectPages.OVERVIEW" />
 			<tera-workflow v-if="pageType === AssetType.Workflow" :asset-id="assetId" />
 		</section>
-		<tera-save-asset-modal
-			open-on-save
-			:assetType="assetTypeToCreate"
-			:is-visible="showSaveAssetModal"
-			@close-modal="showSaveAssetModal = false"
-		/>
 		<tera-create-workflow-modal v-if="showWorkflowModal" @close-modal="showWorkflowModal = false" />
 	</main>
 </template>
@@ -46,7 +39,6 @@ import TeraDocumentAsset from '@/components/documents/tera-document-asset.vue';
 import TeraModel from '@/components/model/tera-model.vue';
 import TeraProjectOverview from '@/components/project/tera-project-overview.vue';
 import TeraResourceSidebar from '@/components/project/tera-resource-sidebar.vue';
-import TeraSaveAssetModal from '@/components/project/tera-save-asset-modal.vue';
 import TeraSliderPanel from '@/components/widgets/tera-slider-panel.vue';
 import TeraWorkflow from '@/components/workflow/tera-workflow.vue';
 import { useProjects } from '@/composables/project';
@@ -61,9 +53,7 @@ const route = useRoute();
 const router = useRouter();
 
 const isResourcesSliderOpen = ref(true);
-const showSaveAssetModal = ref(false);
 const showWorkflowModal = ref(false);
-const assetTypeToCreate = ref<AssetType>(AssetType.Model);
 
 const pageType = computed(() => (route.params.pageType as ProjectPages | AssetType) ?? '');
 const assetId = computed(() => (route.params.assetId as TerariumAsset['id']) ?? '');
@@ -95,12 +85,6 @@ async function removeAsset(assetRoute: AssetRoute) {
 		}
 	}
 }
-
-// Configures save asset modal to create/open the correct asset type
-const openNewAsset = (assetType: AssetType) => {
-	assetTypeToCreate.value = assetType;
-	showSaveAssetModal.value = true;
-};
 
 const openNewWorkflow = () => {
 	showWorkflowModal.value = true;

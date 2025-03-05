@@ -8,10 +8,6 @@
 			tabindex="0"
 			class="message-container"
 		>
-			<div v-if="showRerunMessage" class="rerun-message" @click="closeRerunMessage">
-				Re-run all the cells to restore the context if you need to make any changes or use them downstream.
-				<Button class="close-mask" icon="pi pi-times" text rounded aria-label="Close" />
-			</div>
 			<tera-jupyter-response
 				@keydown.stop
 				v-for="(msg, index) in filteredNotebookItems"
@@ -30,7 +26,6 @@
 				@delete-prompt="handleDeletePrompt"
 				@re-run-prompt="handleRerunPrompt"
 				@edit-prompt="reRunPrompt"
-				@code-dirty="() => (isRerunMessageRelevant = true)"
 				@click="selectedCellId = msg.query_id"
 				@on-selected="handleUpdateSelectedOutput(msg.query_id)"
 			/>
@@ -66,8 +61,6 @@ const selectedCellId = ref();
 const filteredNotebookItems = computed<INotebookItem[]>(() =>
 	notebookItems.value.filter((item) => !isEmpty(item.messages))
 );
-const hideRerunMessage = ref(false);
-const isRerunMessageRelevant = ref(false);
 
 const emit = defineEmits([
 	'new-message',
@@ -77,8 +70,7 @@ const emit = defineEmits([
 	'new-model-saved',
 	'update-kernel-state',
 	'update-language',
-	'update-selected-outputs',
-	'code-dirty'
+	'update-selected-outputs'
 ]);
 
 const props = defineProps<{
@@ -95,8 +87,6 @@ const props = defineProps<{
 	notebookSession?: NotebookSession;
 	defaultPreview?: string;
 }>();
-
-const showRerunMessage = computed<boolean>(() => !hideRerunMessage.value && isRerunMessageRelevant.value);
 
 const iopubMessageHandler = (_session, message) => {
 	if (message.header.msg_type === 'status') {
@@ -242,6 +232,7 @@ const reRunPrompt = (queryId: string, query?: string) => {
 	notebookItem.messages = [llmRequestMsg];
 	if (query) {
 		llmRequestMsg.content.request = query;
+		notebookItem.query = query;
 	}
 	kernel.sendJupyterMessage(llmRequestMsg);
 	isExecutingCode.value = true;
@@ -406,16 +397,12 @@ const clearOutputs = () => {
 	}
 	for (let i = 0; i < notebookCells.value.length; i++) {
 		const el = notebookCells.value[i];
-		if (el.codeCell) {
-			for (let j = 0; j < el.codeCell.length; j++) {
-				el.codeCell[j].clear();
+		if (el.codeOutputCell) {
+			for (let j = 0; j < el.codeOutputCell.length; j++) {
+				el.codeOutputCell[j].clear();
 			}
 		}
 	}
-};
-
-const closeRerunMessage = () => {
-	hideRerunMessage.value = true;
 };
 
 onUnmounted(() => {
@@ -484,8 +471,7 @@ section {
 	display: flex;
 	flex-direction: column;
 	width: 100%;
-	height: 100%;
-	overflow: hidden;
+	isolation: isolate;
 }
 
 .selected {
@@ -501,15 +487,6 @@ section {
 	text-align: left;
 }
 .message-container {
-	height: calc(100% - 3.5rem);
-	overflow-y: auto;
 	background: var(--surface-100);
-}
-.rerun-message {
-	display: flex;
-	background-color: var(--surface-warning);
-	justify-content: space-between;
-	align-items: center;
-	padding: var(--gap-2);
 }
 </style>

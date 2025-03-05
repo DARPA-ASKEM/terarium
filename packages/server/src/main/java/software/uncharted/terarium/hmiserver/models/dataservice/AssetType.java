@@ -15,6 +15,7 @@ import software.uncharted.terarium.hmiserver.models.dataservice.dataset.Dataset;
 import software.uncharted.terarium.hmiserver.models.dataservice.document.DocumentAsset;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.Model;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.configurations.ModelConfiguration;
+import software.uncharted.terarium.hmiserver.models.dataservice.notebooksession.NotebookSession;
 import software.uncharted.terarium.hmiserver.models.dataservice.project.Project;
 import software.uncharted.terarium.hmiserver.models.dataservice.simulation.Simulation;
 import software.uncharted.terarium.hmiserver.models.dataservice.workflow.Workflow;
@@ -51,6 +52,9 @@ public enum AssetType {
 	@JsonProperty("intervention-policy")
 	INTERVENTION_POLICY,
 
+	@JsonProperty("notebook-session")
+	NOTEBOOK_SESSION,
+
 	@JsonProperty("project")
 	PROJECT;
 
@@ -83,6 +87,8 @@ public enum AssetType {
 			return WORKFLOW;
 		} else if (clazz == InterventionPolicy.class) {
 			return INTERVENTION_POLICY;
+		} else if (clazz == NotebookSession.class) {
+			return NOTEBOOK_SESSION;
 		} else if (clazz == Project.class) {
 			return PROJECT;
 		} else {
@@ -110,6 +116,8 @@ public enum AssetType {
 				return Workflow.class;
 			case INTERVENTION_POLICY:
 				return InterventionPolicy.class;
+			case NOTEBOOK_SESSION:
+				return NotebookSession.class;
 			case PROJECT:
 				return Project.class;
 			default:
@@ -128,7 +136,8 @@ public enum AssetType {
 			SIMULATION,
 			WORKFLOW,
 			PROJECT,
-			INTERVENTION_POLICY
+			INTERVENTION_POLICY,
+			NOTEBOOK_SESSION
 		);
 	}
 

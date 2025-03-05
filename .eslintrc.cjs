@@ -19,6 +19,7 @@ module.exports = {
 		'no-plusplus': 'off',
 		'no-use-before-define': 'off',
 		'@typescript-eslint/no-use-before-define': 'off',
+		'@typescript-eslint/no-unused-vars': ['warn', { 'argsIgnorePattern': '^_' }],
 		'prefer-destructuring': 'off',
 		'vuejs-accessibility/click-events-have-key-events': 'off',
 		'vuejs-accessibility/label-has-for': 'off',

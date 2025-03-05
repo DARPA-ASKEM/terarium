@@ -1,6 +1,6 @@
 package software.uncharted.terarium.hmiserver.models.dataservice;
 
-import com.fasterxml.jackson.annotation.JsonAlias;
+// import com.fasterxml.jackson.annotation.JsonAlias;
 import com.fasterxml.jackson.databind.JsonNode;
 import io.hypersistence.utils.hibernate.type.json.JsonType;
 import jakarta.persistence.Column;
@@ -22,28 +22,19 @@ import software.uncharted.terarium.hmiserver.models.TerariumAsset;
 @Entity
 public class ChartAnnotation extends TerariumAsset {
 
-	// TODO: Add chart type enums once we have the full list of the charts we support
-
-	// @TSModel
-	// public enum ChartType {
-	// 	@JsonAlias("variable")
-	// 	VARIABLE,
-	// 	@JsonAlias("parameter")
-	// 	PARAMETER,
-	// 	@JsonAlias("loss")
-	// 	LOSS,
-	// 	@JsonAlias("error")
-	// 	ERROR
-	// }
+	@TSModel
+	public enum ChartAnnotationType {
+		FORECAST_CHART,
+		QUANTILE_FORECAST_CHART
+	}
 
 	private UUID nodeId;
 	private UUID outputId;
 
 	private UUID chartId;
 
-	// TODO: add chart type to specify which type of chart this annotation is applied to
-	// @Enumerated(EnumType.STRING)
-	// private ChartType chartType;
+	@Enumerated(EnumType.STRING)
+	private ChartAnnotationType chartType;
 
 	@Type(JsonType.class)
 	@Column(columnDefinition = "json")

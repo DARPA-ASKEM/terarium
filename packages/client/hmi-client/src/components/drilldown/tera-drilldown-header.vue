@@ -12,7 +12,7 @@
 			<div class="actions">
 				<slot name="actions" />
 			</div>
-			<a v-if="documentationUrl" :href="documentationUrl" rel="noopener noreferrer">Documentation</a>
+			<a v-if="documentationUrl" :href="documentationUrl" rel="noopener noreferrer">Help</a>
 		</div>
 	</header>
 </template>
@@ -51,6 +51,12 @@ header > * {
 	display: flex;
 	align-items: center;
 	justify-content: space-between;
+}
+
+.title-row {
+	display: flex;
+	align-items: center;
+	gap: var(--gap-3);
 }
 
 .title-row > h4 > i {

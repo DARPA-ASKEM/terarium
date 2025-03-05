@@ -1,12 +1,12 @@
 <template>
-	<div class="parameter-entry flex flex-column flex-1" :class="{ empty: isParameterEmpty }">
+	<div class="parameter-entry flex flex-column flex-1" :class="{ empty: computedIsParameterEmpty }">
 		<header class="gap-1 pt-2 pb-2">
 			<div class="flex">
 				<strong>{{ parameterId }}</strong>
 				<span v-if="name" class="ml-1">{{ '| ' + name }}</span>
 				<template v-if="units">
 					<label class="ml-auto">Unit:</label>
-					<span class="ml-1">{{ units }}</span>
+					<span class="ml-1 mr-3">{{ units }}</span>
 				</template>
 
 				<template v-if="concept">
@@ -20,55 +20,21 @@
 		<div v-if="inferredDistribution" class="inferred-parameter">
 			<span class="type"><label>Type</label> {{ inferredDistribution.type }}</span>
 			<span class="mean">
-				<label>Mean</label> {{ displayNumber(inferredDistribution?.parameters?.mean.toString()) }}
+				<label>Mean</label> {{ displayNumber(inferredDistribution?.parameters?.mean?.toString()) }}
 			</span>
 			<span class="std">
-				<label>STDDEV</label> {{ displayNumber(inferredDistribution?.parameters?.stddev.toString()) }}
+				<label>STDDEV</label> {{ displayNumber(inferredDistribution?.parameters?.stddev?.toString()) }}
 			</span>
 		</div>
 		<template v-else-if="!featureConfig?.isPreview">
-			<main>
-				<span class="flex gap-2">
-					<Dropdown
-						:model-value="getParameterDistribution(modelConfiguration, parameterId).type"
-						@change="
-							emit('update-parameter', {
-								id: parameterId,
-								distribution: formatPayloadFromTypeChange($event.value)
-							})
-						"
-						option-label="name"
-						option-value="value"
-						:options="distributionTypeOptions()"
-						class="mr-3 parameter-input"
-					/>
-					<!-- Constant -->
-					<tera-input-number
-						v-if="getParameterDistribution(modelConfiguration, parameterId).type === DistributionType.Constant"
-						label="Constant"
-						:model-value="getParameterDistribution(modelConfiguration, parameterId, true)?.parameters.value"
-						error-empty
-						@update:model-value="onParameterChange($event, Parameter.value)"
-						class="parameter-input"
-					/>
-					<!-- Uniform Distribution -->
-					<template v-if="getParameterDistribution(modelConfiguration, parameterId).type === DistributionType.Uniform">
-						<tera-input-number
-							label="Min"
-							:model-value="getParameterDistribution(modelConfiguration, parameterId, true)?.parameters.minimum"
-							error-empty
-							@update:model-value="onParameterChange($event, Parameter.minimum)"
-							class="mr-2 parameter-input"
-						/>
-						<tera-input-number
-							label="Max"
-							:model-value="getParameterDistribution(modelConfiguration, parameterId, true)?.parameters.maximum"
-							error-empty
-							@update:model-value="onParameterChange($event, Parameter.maximum)"
-							class="parameter-input"
-						/>
-					</template>
-				</span>
+			<main class="flex flex-wrap gap-2">
+				<tera-distribution-input
+					:model="model"
+					:modelConfiguration="modelConfiguration"
+					:parameter-id="parameterId"
+					:parameter="getParameterDistribution(modelConfiguration, parameterId)"
+					@update-parameter="emit('update-parameter', [$event])"
+				/>
 				<section>
 					<Button :label="getSourceLabel(parameterId)" text size="small" @click="isSourceOpen = !isSourceOpen" />
 					<Button :label="getOtherValuesLabel" text size="small" @click="showOtherConfigValueModal = true" />
@@ -84,14 +50,14 @@
 		</template>
 		<p class="flex gap-4" v-else>
 			<template v-if="getParameterDistribution(modelConfiguration, parameterId).type === DistributionType.Constant">
-				<span><label>Type</label> {{ DistributionTypeLabel.Constant }}</span>
+				<span><label>Type</label> {{ distributions[DistributionType.Constant].label }}</span>
 				<span>
 					<label>Value</label>
 					{{ getParameterDistribution(modelConfiguration, parameterId).parameters.value }}
 				</span>
 			</template>
 			<template v-else-if="getParameterDistribution(modelConfiguration, parameterId).type === DistributionType.Uniform">
-				<span><label>Type</label> {{ DistributionTypeLabel.StandardUniform1 }}</span>
+				<span><label>Type</label> {{ distributions[DistributionType.Uniform].label }}</span>
 				<span>
 					<label>Min</label>
 					{{ getParameterDistribution(modelConfiguration, parameterId).parameters.minimum }}
@@ -115,7 +81,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, onMounted } from 'vue';
+import { computed, ref, onMounted, watch } from 'vue';
 import { Model, ModelConfiguration } from '@/types/Types';
 import {
 	getParameterSource,
@@ -123,11 +89,10 @@ import {
 	isNumberInputEmpty,
 	getOtherValues
 } from '@/services/model-configurations';
+import TeraDistributionInput from '@/components/model/petrinet/tera-distribution-input.vue';
 import TeraInputText from '@/components/widgets/tera-input-text.vue';
-import TeraInputNumber from '@/components/widgets/tera-input-number.vue';
 import Button from 'primevue/button';
-import Dropdown from 'primevue/dropdown';
-import { DistributionType, DistributionTypeLabel, distributionTypeOptions } from '@/services/distribution';
+import { DistributionType, distributions } from '@/services/distribution';
 import { getParameter } from '@/model-representation/service';
 import TeraParameterOtherValueModal from '@/components/model/petrinet/tera-parameter-other-value-modal.vue';
 import { displayNumber } from '@/utils/number';
@@ -158,14 +123,8 @@ const isSourceOpen = ref(false);
 const showOtherConfigValueModal = ref(false);
 const isParameterEmpty = ref(false);
 
-enum Parameter {
-	value = 'value',
-	maximum = 'maximum',
-	minimum = 'minimum'
-}
-
 const otherValueList = computed(() =>
-	getOtherValues(props.modelConfigurations, props.parameterId, 'referenceId', 'parameterSemanticList')
+	getOtherValues(props.modelConfigurations, props.parameterId, 'referenceId', 'parameterSemanticList', description)
 );
 
 function getSourceLabel(initialId) {
@@ -174,27 +133,7 @@ function getSourceLabel(initialId) {
 	return 'Show source';
 }
 
-function formatPayloadFromParameterChange(parameters) {
-	const distribution = getParameterDistribution(props.modelConfiguration, props.parameterId);
-	Object.keys(parameters).forEach((key) => {
-		if (!distribution) return;
-		if (key in distribution.parameters) {
-			distribution.parameters[key] = parameters[key];
-		}
-	});
-
-	return distribution;
-}
-
-function formatPayloadFromTypeChange(type: DistributionType) {
-	const distribution = getParameterDistribution(props.modelConfiguration, props.parameterId);
-
-	distribution.type = type;
-	distribution.parameters = {};
-	return distribution;
-}
-
-const getOtherValuesLabel = computed(() => `Other Values(${otherValueList.value?.length})`);
+const getOtherValuesLabel = computed(() => `Other values (${otherValueList.value?.length})`);
 
 function isParameterInputEmpty(parameter) {
 	if (parameter.type === DistributionType.Constant) {
@@ -203,28 +142,41 @@ function isParameterInputEmpty(parameter) {
 	return isNumberInputEmpty(parameter.parameters.maximum) || isNumberInputEmpty(parameter.parameters.minimum);
 }
 
-function onParameterChange(value, parameter) {
-	isParameterEmpty.value = isNumberInputEmpty(value);
-	if (!isParameterEmpty.value) {
-		emit('update-parameter', {
-			id: props.parameterId,
-			distribution: formatPayloadFromParameterChange({ [parameter]: value })
-		});
-	}
-}
-
 onMounted(async () => {
 	const identifiers = getParameter(props.model, props.parameterId)?.grounding?.identifiers;
 	if (identifiers) concept.value = await getNameOfCurieCached(getCurieFromGroundingIdentifier(identifiers));
 	const parameter = getParameterDistribution(props.modelConfiguration, props.parameterId, true);
-	isParameterEmpty.value = isParameterInputEmpty(parameter);
+	isParameterEmpty.value = inferredDistribution.value ? false : isParameterInputEmpty(parameter);
 });
+
+const computedIsParameterEmpty = computed(() => {
+	const parameter = getParameterDistribution(props.modelConfiguration, props.parameterId);
+	return inferredDistribution.value ? false : isParameterInputEmpty(parameter);
+});
+
+watch(
+	[inferredDistribution, () => getParameterDistribution(props.modelConfiguration, props.parameterId)],
+	([newInferredDist, newParameter]) => {
+		isParameterEmpty.value = newInferredDist ? false : isParameterInputEmpty(newParameter);
+	},
+	{ immediate: true }
+);
 </script>
 
 <style scoped>
 .parameter-entry {
+	background: var(--surface-0);
+	border: 1px solid var(--surface-border-light);
+	border-radius: var(--border-radius);
 	border-left: 4px solid var(--surface-300);
 	padding-left: var(--gap-4);
+	padding-right: var(--gap-4);
+	transition: all 0.15s;
+	box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+}
+.parameter-entry:hover:not(.empty) {
+	border-left: 4px solid var(--primary-color);
+	background: var(--surface-highlight);
 }
 .empty {
 	border-left: 4px solid var(--error-color);
@@ -262,7 +214,7 @@ label {
 	}
 }
 
-.parameter-input {
-	height: 2rem;
+:deep(.parameter-input) {
+	max-height: 2.5rem;
 }
 </style>

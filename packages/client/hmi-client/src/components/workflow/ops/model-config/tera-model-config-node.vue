@@ -1,8 +1,10 @@
 <template>
 	<section>
-		<div v-if="!isEmpty(node.state.transientModelConfig.id)" class="pb-3">
-			<h6 class="pb-1 line-wrap">{{ node.state.transientModelConfig.name }}</h6>
-			<p>{{ node.state.transientModelConfig.description }}</p>
+		<div v-if="!isEmpty(node.state.transientModelConfig.id)" class="configuration-card">
+			<div class="content">
+				<p class="text-sm font-semibold line-wrap">{{ node.state.transientModelConfig.name }}</p>
+				<p class="text-sm">{{ node.state.transientModelConfig.description }}</p>
+			</div>
 		</div>
 		<tera-operator-placeholder v-else :node="node" />
 
@@ -26,9 +28,8 @@ import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue'
 import TeraOperatorPlaceholder from '@/components/operator/tera-operator-placeholder.vue';
 import { getModel, getModelConfigurationsForModel } from '@/services/model';
 import { postAsConfiguredModel } from '@/services/model-configurations';
-import { useClientEvent } from '@/composables/useClientEvent';
-import type { ClientEvent, TaskResponse } from '@/types/Types';
-import { AssetType, ClientEventType, TaskStatus } from '@/types/Types';
+import { AssetType, ClientEventType } from '@/types/Types';
+import { createTaskListClientEventHandler, useClientEvent } from '@/composables/useClientEvent';
 import { useProjects } from '@/composables/project';
 import { ModelConfigOperation, ModelConfigOperationState } from './model-config-operation';
 
@@ -37,22 +38,14 @@ const props = defineProps<{
 }>();
 const emit = defineEmits(['open-drilldown', 'append-input-port', 'update-state', 'append-output']);
 
-const modelConfigTaskIds = ref<string[]>([]);
+useClientEvent(
+	[ClientEventType.TaskGollmConfigureModelFromDocument, ClientEventType.TaskGollmConfigureModelFromDataset],
+	createTaskListClientEventHandler(props.node, 'modelConfigTaskIds')
+);
 
-const configModelEventHandler = async (event: ClientEvent<TaskResponse>) => {
-	if (!modelConfigTaskIds.value.includes(event.data?.id)) return;
-	if ([TaskStatus.Success, TaskStatus.Cancelled, TaskStatus.Failed].includes(event.data.status)) {
-		modelConfigTaskIds.value = modelConfigTaskIds.value.filter((id) => id !== event.data.id);
-	}
-};
+const isLoading = computed(() => props.node.state.modelConfigTaskIds.length > 0);
 
-useClientEvent(ClientEventType.TaskGollmConfigureModelFromDocument, configModelEventHandler);
-useClientEvent(ClientEventType.TaskGollmConfigureModelFromDataset, configModelEventHandler);
-
-const isLoading = computed(() => modelConfigTaskIds.value.length > 0);
-
-const modelInput = props.node.inputs.find((input) => input.type === 'modelId');
-const isModelInputConnected = computed(() => modelInput?.status === WorkflowPortStatus.CONNECTED);
+const isModelInputConnected = ref(false);
 
 // Update the node with the new input ports
 watch(
@@ -64,7 +57,11 @@ watch(
 		const documentInputs = inputs.filter((input) => input.type === 'documentId');
 		const datasetInputs = inputs.filter((input) => input.type === 'datasetId');
 		const modelInputs = inputs.filter((input) => input.type === 'modelId');
-		const modelId = modelInputs?.[0]?.value?.[0];
+		const modelId = modelInputs[0]?.value?.[0];
+
+		if (modelInputs[0].status === WorkflowPortStatus.CONNECTED) {
+			isModelInputConnected.value = true;
+		}
 
 		// If all document inputs are connected, add a new document input port
 		if (documentInputs.every((input) => input.status === WorkflowPortStatus.CONNECTED)) {
@@ -91,27 +88,24 @@ watch(
 		if (configs[0]?.id) {
 			const config = configs[0];
 			state.transientModelConfig = config;
-			emit('update-state', state);
+
 			// Auto append output if and only if there isnt already an output
 			if (!props.node.outputs.at(0)?.value) {
-				emit('append-output', {
-					type: ModelConfigOperation.outputs[0].type,
-					label: config.name,
-					value: config.id,
-					isSelected: false,
-					state: omit(state, ['transientModelConfig'])
-				});
+				emit(
+					'append-output',
+					{
+						type: ModelConfigOperation.outputs[0].type,
+						label: config.name,
+						value: config.id,
+						isSelected: false,
+						state: omit(state, ['transientModelConfig'])
+					},
+					state
+				);
 			}
 		}
 	},
-	{ deep: true }
-);
-
-watch(
-	() => props.node.state.modelConfigTaskIds,
-	() => {
-		modelConfigTaskIds.value = props.node.state.modelConfigTaskIds ?? [];
-	}
+	{ immediate: true, deep: true }
 );
 
 watch(
@@ -126,6 +120,23 @@ watch(
 );
 </script>
 <style scoped>
+.configuration-card {
+	background: var(--surface-section);
+	border: 1px solid var(--surface-border-light);
+	border-radius: var(--border-radius);
+	box-shadow: 0 2px 4px -1px rgba(0, 0, 0, 0.08);
+	overflow: hidden;
+	margin-bottom: var(--gap-1);
+}
+
+.configuration-card .content {
+	padding-top: var(--gap-2);
+	padding-right: var(--gap-2);
+	padding-bottom: var(--gap-3);
+	padding-left: var(--gap-2-5);
+	border-left: 4px solid var(--primary-color);
+}
+
 .line-wrap {
 	white-space: normal;
 	overflow-wrap: break-word;

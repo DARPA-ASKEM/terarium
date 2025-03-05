@@ -32,7 +32,6 @@ import software.uncharted.terarium.hmiserver.models.simulationservice.statusupda
 import software.uncharted.terarium.hmiserver.models.simulationservice.statusupdates.CiemssStatusType;
 import software.uncharted.terarium.hmiserver.models.simulationservice.statusupdates.CiemssStatusUpdate;
 import software.uncharted.terarium.hmiserver.service.data.SimulationService;
-import software.uncharted.terarium.hmiserver.utils.rebac.Schema;
 
 @Service
 @Slf4j
@@ -58,8 +57,6 @@ public class SimulationEventService {
 	private String PYCIEMSS_BROADCAST_EXCHANGE;
 
 	Queue pyciemssQueue;
-
-	final Schema.Permission assumedPermission = Schema.Permission.WRITE;
 
 	@PostConstruct
 	void init() {
@@ -109,11 +106,7 @@ public class SimulationEventService {
 		try {
 			final SimulationUpdate simulationUpdate = new SimulationUpdate();
 			simulationUpdate.setData(update.getDataToPersist());
-			simulationService.appendUpdateToSimulation(
-				UUID.fromString(update.getJobId()),
-				simulationUpdate,
-				assumedPermission
-			);
+			simulationService.appendUpdateToSimulation(UUID.fromString(update.getJobId()), simulationUpdate);
 		} catch (final Exception e) {
 			log.error("Error processing event", e);
 		}

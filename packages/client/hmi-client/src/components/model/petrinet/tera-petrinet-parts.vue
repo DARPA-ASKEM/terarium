@@ -3,42 +3,64 @@
 		<AccordionTab>
 			<template #header>
 				State variables<span class="artifact-amount">({{ states.length }})</span>
-				<tera-input-text class="ml-auto" placeholder="Filter" v-model="statesFilter" />
+				<tera-input-text v-if="!isEmpty(mmt.initials)" class="ml-auto" placeholder="Filter" v-model="statesFilter" />
 			</template>
-			<tera-states
+			<tera-model-part
 				v-if="!isEmpty(mmt.initials)"
-				:model="model"
-				:mmt="mmt"
+				:part-type="PartType.STATE"
+				:items="stateList"
+				:model-errors="modelErrors.filter((d) => d.type === 'state')"
 				:feature-config="featureConfig"
 				:filter="statesFilter"
-				@update-state="emit('update-state', $event)"
+				@update-item="emit('update-state', $event)"
 			/>
 		</AccordionTab>
 		<AccordionTab>
 			<template #header>
 				Parameters<span class="artifact-amount">({{ parameters.length }})</span>
-				<tera-input-text class="ml-auto" placeholder="Filter" v-model="parametersFilter" />
+				<tera-input-text
+					v-if="!isEmpty(mmt.parameters)"
+					class="ml-auto"
+					placeholder="Filter"
+					v-model="parametersFilter"
+				/>
 			</template>
-			<tera-parameters
+			<tera-model-part
 				v-if="!isEmpty(mmt.parameters)"
-				:model="model"
+				:part-type="PartType.PARAMETER"
+				:items="parameterList"
+				:model-errors="[]"
+				:feature-config="featureConfig"
+				show-matrix
+				:filter="parametersFilter"
+				@open-matrix="(id: string) => (parameterMatrixModalId = id)"
+				@update-item="emit('update-parameter', $event)"
+			/>
+			<tera-stratified-matrix-modal
+				v-if="parameterMatrixModalId"
+				:id="parameterMatrixModalId"
 				:mmt="mmt"
 				:mmt-params="mmtParams"
-				:feature-config="featureConfig"
-				:filter="parametersFilter"
-				@update-parameter="emit('update-parameter', $event)"
+				:stratified-matrix-type="StratifiedMatrix.Parameters"
+				is-read-only
+				@close-modal="parameterMatrixModalId = ''"
 			/>
 		</AccordionTab>
 		<AccordionTab>
 			<template #header>
 				Observables <span class="artifact-amount">({{ observables.length }})</span>
-				<tera-input-text class="ml-auto" placeholder="Filter" v-model="observablesFilter" />
+				<tera-input-text
+					v-if="!isEmpty(observables)"
+					class="ml-auto"
+					placeholder="Filter"
+					v-model="observablesFilter"
+				/>
 			</template>
-			<tera-observables
+			<tera-model-part
+				:part-type="PartType.OBSERVABLE"
 				v-if="!isEmpty(observables)"
-				:model="model"
-				:mmt="mmt"
-				:observables="observables"
+				:items="observablesList"
+				:model-errors="[]"
 				:feature-config="featureConfig"
 				:filter="observablesFilter"
 				@update-item="emit('update-observable', $event)"
@@ -49,21 +71,39 @@
 				Transitions<span class="artifact-amount">({{ transitions.length }})</span>
 				<tera-input-text class="ml-auto" placeholder="Filter" v-model="transitionsFilter" />
 			</template>
-			<tera-transitions
+			<tera-model-part
+				:part-type="PartType.TRANSITION"
 				v-if="!isEmpty(transitions) && !isEmpty(mmt.templates)"
-				:mmt="mmt"
-				:mmt-params="mmtParams"
-				:transitions="transitions"
+				:items="transitionsList"
+				:model-errors="modelErrors.filter((d) => d.type === 'transition')"
 				:feature-config="featureConfig"
 				:filter="transitionsFilter"
-				@update-transition="emit('update-transition', $event)"
+				show-matrix
+				@open-matrix="(id: string) => (transitionMatrixModalId = id)"
+				@update-item="$emit('update-transition', $event)"
+			/>
+			<tera-stratified-matrix-modal
+				v-if="transitionMatrixModalId"
+				:id="transitionMatrixModalId"
+				:mmt="mmt"
+				:mmt-params="mmtParams"
+				:stratified-matrix-type="StratifiedMatrix.Rates"
+				is-read-only
+				@close-modal="transitionMatrixModalId = ''"
 			/>
 		</AccordionTab>
 		<AccordionTab>
 			<template #header>
 				Time <span class="artifact-amount">({{ time.length }})</span>
 			</template>
-			<tera-time v-if="time" :time="time" :feature-config="featureConfig" @update-time="emit('update-time', $event)" />
+			<tera-model-part
+				v-if="time"
+				:part-type="PartType.TIME"
+				:items="timeList"
+				:model-errors="[]"
+				:feature-config="featureConfig"
+				@update-item="$emit('update-time', $event)"
+			/>
 		</AccordionTab>
 	</Accordion>
 </template>
@@ -73,20 +113,28 @@ import type { Model, Transition, State } from '@/types/Types';
 import { isEmpty } from 'lodash';
 import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
-import { computed, ref } from 'vue';
-import type { MiraModel, MiraTemplateParams } from '@/model-representation/mira/mira-common';
-import TeraStates from '@/components/model/model-parts/tera-states.vue';
-import TeraParameters from '@/components/model/model-parts/tera-parameters.vue';
-import TeraObservables from '@/components/model/model-parts/tera-observables.vue';
-import TeraTransitions from '@/components/model/model-parts/tera-transitions.vue';
-import TeraTime from '@/components/model/model-parts/tera-time.vue';
+import { computed, ref, watch } from 'vue';
+import type { MiraModel, MiraTemplate, MiraTemplateParams } from '@/model-representation/mira/mira-common';
+import { collapseInitials, collapseParameters, collapseTemplates } from '@/model-representation/mira/mira';
+import TeraModelPart from '@/components/model/model-parts/tera-model-part.vue';
 import type { FeatureConfig } from '@/types/common';
 import TeraInputText from '@/components/widgets/tera-input-text.vue';
+import {
+	createPartsList,
+	createObservablesList,
+	createTimeList,
+	PartType,
+	ModelError
+} from '@/model-representation/service';
+import TeraStratifiedMatrixModal from '@/components/model/petrinet/model-configurations/tera-stratified-matrix-modal.vue';
+import { ModelPartItem, ModelPartItemTree, StratifiedMatrix } from '@/types/Model';
+import { getControllerNames } from '@/model-representation/mira/mira-util';
 
 const props = defineProps<{
 	model: Model;
 	mmt: MiraModel;
 	mmtParams: MiraTemplateParams;
+	modelErrors: ModelError[];
 	featureConfig: FeatureConfig;
 }>();
 
@@ -103,7 +151,27 @@ const parameters = computed(() => props.model?.semantics?.ode.parameters ?? []);
 const observables = computed(() => props.model?.semantics?.ode?.observables ?? []);
 const time = computed(() => (props.model?.semantics?.ode?.time ? [props.model?.semantics.ode.time] : []));
 
+const collapsedInitials = collapseInitials(props.mmt);
 const states = computed<State[]>(() => props.model?.model?.states ?? []);
+let stateList: ModelPartItemTree[] = createPartsList(collapsedInitials, props.model, PartType.STATE);
+
+watch(
+	() => props.model?.model?.states,
+	() => {
+		stateList = createPartsList(collapsedInitials, props.model, PartType.STATE);
+	}
+);
+
+const collapsedParameters = collapseParameters(props.mmt, props.mmtParams);
+let parameterList: ModelPartItemTree[] = createPartsList(collapsedParameters, props.model, PartType.PARAMETER);
+
+watch(
+	() => props.model.semantics?.ode?.parameters,
+	() => {
+		parameterList = createPartsList(collapsedParameters, props.model, PartType.PARAMETER);
+	}
+);
+
 const transitions = computed<Transition[]>(() =>
 	props.model.model.transitions?.map((transition: Transition) => ({
 		...transition,
@@ -111,6 +179,42 @@ const transitions = computed<Transition[]>(() =>
 		expression: props.model?.semantics?.ode?.rates?.find((rate) => rate.target === transition.id)?.expression
 	}))
 );
+
+const createTransitionParts = () => {
+	const extract = (t: MiraTemplate): ModelPartItem => ({
+		id: t.name,
+		name: t.name,
+		subject: t.subject ? t.subject.name : '',
+		outcome: t.outcome ? t.outcome.name : '',
+		controllers: getControllerNames(t).join(', '),
+		expression: t.rate_law
+	});
+
+	const templatesMap = collapseTemplates(props.mmt).matrixMap;
+	return Array.from(templatesMap.keys()).map((templateId) => {
+		const children = templatesMap.get(templateId) as MiraTemplate[];
+		if (children.length === 1) {
+			const item = children[0];
+			return {
+				base: extract(item),
+				isParent: false,
+				children: []
+			};
+		}
+		return {
+			base: { id: templateId, name: templateId },
+			isParent: true,
+			children: children.map(extract)
+		};
+	});
+};
+
+const transitionsList: ModelPartItemTree[] = createTransitionParts();
+
+const parameterMatrixModalId = ref('');
+const transitionMatrixModalId = ref('');
+const observablesList = computed(() => createObservablesList(observables.value));
+const timeList: ModelPartItemTree[] = createTimeList(time.value);
 </script>
 
 <style scoped>

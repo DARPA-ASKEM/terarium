@@ -279,7 +279,7 @@ export class KernelSessionManager {
 		// A bit of a hacky way to wait for the kernel to be setup in order
 		// to send custom messages
 		const interval = 100;
-		const threshold = 50;
+		const threshold = 100;
 		return new Promise((resolve, reject) => {
 			let counter = 0;
 			const id = setInterval(() => {

@@ -41,20 +41,19 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
+import software.uncharted.terarium.hmiserver.annotations.HasProjectAccess;
 import software.uncharted.terarium.hmiserver.configuration.Config;
 import software.uncharted.terarium.hmiserver.models.dataservice.CsvAsset;
-import software.uncharted.terarium.hmiserver.models.dataservice.CsvColumnStats;
 import software.uncharted.terarium.hmiserver.models.dataservice.PresignedURL;
 import software.uncharted.terarium.hmiserver.models.dataservice.ResponseDeleted;
 import software.uncharted.terarium.hmiserver.models.dataservice.ResponseStatus;
 import software.uncharted.terarium.hmiserver.models.dataservice.dataset.Dataset;
-import software.uncharted.terarium.hmiserver.proxies.climatedata.ClimateDataProxy;
 import software.uncharted.terarium.hmiserver.proxies.jsdelivr.JsDelivrProxy;
 import software.uncharted.terarium.hmiserver.security.Roles;
 import software.uncharted.terarium.hmiserver.service.CurrentUserService;
 import software.uncharted.terarium.hmiserver.service.data.DatasetService;
-import software.uncharted.terarium.hmiserver.service.data.ProjectAssetService;
 import software.uncharted.terarium.hmiserver.service.data.ProjectService;
+import software.uncharted.terarium.hmiserver.service.gollm.DatasetStatistics;
 import software.uncharted.terarium.hmiserver.utils.Messages;
 import software.uncharted.terarium.hmiserver.utils.rebac.Schema;
 
@@ -69,18 +68,18 @@ public class DatasetController {
 	final Config config;
 
 	final DatasetService datasetService;
-	final ClimateDataProxy climateDataProxy;
+	final DatasetStatistics datasetStatistics;
 
 	final JsDelivrProxy githubProxy;
 
 	final ProjectService projectService;
-	final ProjectAssetService projectAssetService;
 	final CurrentUserService currentUserService;
 	final Messages messages;
 
 	@PostMapping
 	@Secured(Roles.USER)
 	@Operation(summary = "Create a new dataset")
+	@HasProjectAccess(level = Schema.Permission.WRITE)
 	@ApiResponses(
 		value = {
 			@ApiResponse(
@@ -98,13 +97,8 @@ public class DatasetController {
 		@RequestBody final Dataset dataset,
 		@RequestParam(name = "project-id", required = false) final UUID projectId
 	) {
-		final Schema.Permission permission = projectService.checkPermissionCanWrite(
-			currentUserService.get().getId(),
-			projectId
-		);
-
 		try {
-			return ResponseEntity.status(HttpStatus.CREATED).body(datasetService.createAsset(dataset, projectId, permission));
+			return ResponseEntity.status(HttpStatus.CREATED).body(datasetService.createAsset(dataset, projectId));
 		} catch (final IOException e) {
 			log.error("Unable to create dataset", e);
 			throw new ResponseStatusException(
@@ -117,6 +111,7 @@ public class DatasetController {
 	@GetMapping("/{id}")
 	@Secured(Roles.USER)
 	@Operation(summary = "Gets dataset by ID")
+	@HasProjectAccess
 	@ApiResponses(
 		value = {
 			@ApiResponse(
@@ -139,25 +134,52 @@ public class DatasetController {
 		@PathVariable("id") final UUID id,
 		@RequestParam(name = "project-id", required = false) final UUID projectId
 	) {
-		final Schema.Permission permission = projectService.checkPermissionCanReadOrNone(
-			currentUserService.get().getId(),
-			projectId
-		);
+		final String userId = currentUserService.get().getId();
 
 		try {
-			final Optional<Dataset> dataset = datasetService.getAsset(id, permission);
+			Dataset dataset = datasetService
+				.getAsset(id)
+				.orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, messages.get("dataset.not-found")));
 
-			if (dataset.isEmpty()) {
-				return ResponseEntity.noContent().build();
-			}
-			// GETs not associated to a projectId cannot read private or temporary assets
+			/*
+			TODO: This entire block of code cannot be here. We should not be writing to the database
+			 	in a GET request. Beaker et. al. need to update their code to use the proper PUT/POST
+			 	requests instead of upload URL!!s
+			 */
+			// If the user as write permission, and the stats are not present, calculate them
+			final Schema.Permission permissionCanWrite = projectService.checkPermissionCanWrite(userId, projectId);
 			if (
-				permission.equals(Schema.Permission.NONE) && (!dataset.get().getPublicAsset() || dataset.get().getTemporary())
+				permissionCanWrite.equals(Schema.Permission.WRITE) &&
+				dataset.getColumns().stream().anyMatch(column -> column.getStats() == null)
 			) {
-				throw new ResponseStatusException(HttpStatus.FORBIDDEN, messages.get("rebac.unauthorized-read"));
+				// Calculate the statistics for the columns
+				final Optional<PresignedURL> datasetUrl = datasetService.getDownloadUrl(
+					dataset.getId(),
+					dataset.getFileNames().get(0)
+				);
+
+				if (datasetUrl.isEmpty()) {
+					log.warn("Error calculating statistics for dataset {}", dataset.getId());
+				} else {
+					try {
+						datasetStatistics.add(dataset, datasetUrl.get());
+
+						// Update and fetch updated dataset
+						datasetService.updateAsset(dataset, projectId);
+						Optional<Dataset> updatedDataset = datasetService.getAsset(id);
+
+						if (updatedDataset.isEmpty()) {
+							log.warn("Failed to get dataset after update");
+						} else {
+							dataset = updatedDataset.get();
+						}
+					} catch (final Exception e) {
+						log.error("Error calculating statistics for dataset {}", dataset.getId(), e);
+					}
+				}
 			}
 
-			return dataset.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
+			return ResponseEntity.ok(dataset);
 		} catch (final Exception e) {
 			log.error("Unable to get dataset", e);
 			throw new ResponseStatusException(
@@ -170,6 +192,7 @@ public class DatasetController {
 	@DeleteMapping("/{id}")
 	@Secured(Roles.USER)
 	@Operation(summary = "Deletes a dataset")
+	@HasProjectAccess(level = Schema.Permission.WRITE)
 	@ApiResponses(
 		value = {
 			@ApiResponse(
@@ -189,13 +212,8 @@ public class DatasetController {
 		@PathVariable("id") final UUID id,
 		@RequestParam(name = "project-id", required = false) final UUID projectId
 	) {
-		final Schema.Permission permission = projectService.checkPermissionCanWrite(
-			currentUserService.get().getId(),
-			projectId
-		);
-
 		try {
-			datasetService.deleteAsset(id, projectId, permission);
+			datasetService.deleteAsset(id, projectId);
 			return ResponseEntity.ok(new ResponseDeleted("Dataset", id));
 		} catch (final IOException e) {
 			log.error("Unable to delete dataset", e);
@@ -209,6 +227,7 @@ public class DatasetController {
 	@PutMapping("/{id}")
 	@Secured(Roles.USER)
 	@Operation(summary = "Update a dataset")
+	@HasProjectAccess(level = Schema.Permission.WRITE)
 	@ApiResponses(
 		value = {
 			@ApiResponse(
@@ -228,14 +247,9 @@ public class DatasetController {
 		@RequestBody final Dataset dataset,
 		@RequestParam(name = "project-id", required = false) final UUID projectId
 	) {
-		final Schema.Permission permission = projectService.checkPermissionCanWrite(
-			currentUserService.get().getId(),
-			projectId
-		);
-
 		try {
 			dataset.setId(id);
-			final Optional<Dataset> updated = datasetService.updateAsset(dataset, projectId, permission);
+			final Optional<Dataset> updated = datasetService.updateAsset(dataset, projectId);
 			return updated.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
 		} catch (final IOException e) {
 			log.error("Unable to update a dataset", e);
@@ -289,11 +303,6 @@ public class DatasetController {
 			);
 		}
 
-		// We have a parser over our CSV file. Now for the front end we need to create a matrix of strings
-		// to represent the CSV file up to our limit. Then we need to calculate the column statistics.
-
-		// TODO - this should be done on csv post/push, and in task to handle large files.
-
 		int rowcount = 0;
 		final List<List<String>> csv = new ArrayList<>();
 
@@ -304,14 +313,7 @@ public class DatasetController {
 			rowcount++;
 		}
 
-		final List<CsvColumnStats> csvColumnStats = DatasetService.calculateColumnStatistics(csv);
-
-		final CsvAsset csvAsset = new CsvAsset(
-			csv,
-			csvColumnStats,
-			new ArrayList<>(csvParser.getHeaderMap().keySet()),
-			rowcount
-		);
+		final CsvAsset csvAsset = new CsvAsset(csv, new ArrayList<>(csvParser.getHeaderMap().keySet()), rowcount);
 
 		final CacheControl cacheControl = CacheControl.maxAge(
 			config.getCacheHeadersMaxAge(),
@@ -350,6 +352,7 @@ public class DatasetController {
 	@GetMapping("/{id}/download-url")
 	@Secured(Roles.USER)
 	@Operation(summary = "Gets a presigned url to download the dataset file")
+	@HasProjectAccess
 	@ApiResponses(
 		value = {
 			@ApiResponse(
@@ -377,14 +380,9 @@ public class DatasetController {
 		@RequestParam("filename") final String filename,
 		@RequestParam(name = "project-id", required = false) final UUID projectId
 	) {
-		final Schema.Permission permission = projectService.checkPermissionCanRead(
-			currentUserService.get().getId(),
-			projectId
-		);
-
 		final Optional<Dataset> dataset;
 		try {
-			dataset = datasetService.getAsset(id, permission);
+			dataset = datasetService.getAsset(id);
 			if (dataset.isEmpty()) {
 				throw new ResponseStatusException(
 					org.springframework.http.HttpStatus.NOT_FOUND,
@@ -441,12 +439,13 @@ public class DatasetController {
 	}
 
 	/**
-	 * Uploads a CSV file from github given the path and owner name, then uploads
+	 * Uploads a CSV file from GitHub given the path and owner name, then uploads
 	 * it to the dataset.
 	 */
 	@PutMapping("/{id}/upload-csv-from-github")
 	@Secured(Roles.USER)
 	@Operation(summary = "Uploads a CSV file from github to a dataset")
+	@HasProjectAccess(level = Schema.Permission.WRITE)
 	@ApiResponses(
 		value = {
 			@ApiResponse(
@@ -467,14 +466,9 @@ public class DatasetController {
 		@RequestParam("filename") final String filename,
 		@RequestParam(name = "project-id", required = false) final UUID projectId
 	) {
-		final Schema.Permission permission = projectService.checkPermissionCanWrite(
-			currentUserService.get().getId(),
-			projectId
-		);
-
 		log.debug("Uploading CSV file from github to dataset {}", datasetId);
 
-		// download CSV from github
+		// download CSV from GitHub
 		final String csvString = githubProxy.getGithubCode(repoOwnerAndName, path).getBody();
 
 		if (csvString == null) {
@@ -486,7 +480,7 @@ public class DatasetController {
 			);
 		}
 
-		CSVParser csvParser = null;
+		CSVParser csvParser;
 		try {
 			csvParser = new CSVParser(
 				new StringReader(csvString),
@@ -502,7 +496,7 @@ public class DatasetController {
 
 		List<String> headers = new ArrayList<>(csvParser.getHeaderMap().keySet());
 		final HttpEntity csvEntity = new StringEntity(csvString, ContentType.APPLICATION_OCTET_STREAM);
-		return uploadCSVAndUpdateColumns(datasetId, projectId, filename, csvEntity, headers, permission);
+		return uploadCSVAndUpdateColumns(datasetId, projectId, filename, csvEntity, headers);
 	}
 
 	/**
@@ -516,6 +510,7 @@ public class DatasetController {
 	@PutMapping(value = "/{id}/upload-csv", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
 	@Secured(Roles.USER)
 	@Operation(summary = "Uploads a CSV file to a dataset")
+	@HasProjectAccess(level = Schema.Permission.WRITE)
 	@ApiResponses(
 		value = {
 			@ApiResponse(
@@ -535,11 +530,6 @@ public class DatasetController {
 		@RequestPart("file") final MultipartFile input,
 		@RequestParam(name = "project-id", required = false) final UUID projectId
 	) {
-		final Schema.Permission permission = projectService.checkPermissionCanWrite(
-			currentUserService.get().getId(),
-			projectId
-		);
-
 		try {
 			log.debug("Uploading CSV file to dataset {}", datasetId);
 
@@ -554,7 +544,7 @@ public class DatasetController {
 			);
 			List<String> headers = new ArrayList<>(csvParser.getHeaderMap().keySet());
 
-			return uploadCSVAndUpdateColumns(datasetId, projectId, filename, csvEntity, headers, permission);
+			return uploadCSVAndUpdateColumns(datasetId, projectId, filename, csvEntity, headers);
 		} catch (final IOException e) {
 			final String error = "Unable to upload csv dataset";
 			log.error(error, e);
@@ -568,6 +558,7 @@ public class DatasetController {
 	@PutMapping(value = "/{id}/upload-file", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
 	@Secured(Roles.USER)
 	@Operation(summary = "Uploads an arbitrary file to a dataset")
+	@HasProjectAccess(level = Schema.Permission.WRITE)
 	@ApiResponses(
 		value = {
 			@ApiResponse(
@@ -587,18 +578,13 @@ public class DatasetController {
 		@RequestPart("file") final MultipartFile input,
 		@RequestParam(name = "project-id", required = false) final UUID projectId
 	) {
-		final Schema.Permission permission = projectService.checkPermissionCanWrite(
-			currentUserService.get().getId(),
-			projectId
-		);
-
 		try {
 			log.debug("Uploading file to dataset {}", datasetId);
 
 			final ResponseEntity<Void> res = datasetService.getUploadStream(datasetId, filename, input);
 			if (res.getStatusCode() == HttpStatus.OK) {
 				// add the filename to existing file names
-				Optional<Dataset> updatedDataset = datasetService.getAsset(datasetId, permission);
+				Optional<Dataset> updatedDataset = datasetService.getAsset(datasetId);
 				if (updatedDataset.isEmpty()) {
 					final String error = "Failed to get dataset after upload";
 					log.error(error);
@@ -621,7 +607,7 @@ public class DatasetController {
 					// let it pass.
 				}
 
-				datasetService.updateAsset(updatedDataset.get(), projectId, permission);
+				datasetService.updateAsset(updatedDataset.get(), projectId);
 			}
 
 			return res;
@@ -693,8 +679,7 @@ public class DatasetController {
 		final UUID projectId,
 		final String filename,
 		final HttpEntity csvEntity,
-		final List<String> headers,
-		final Schema.Permission hasWritePermission
+		final List<String> headers
 	) {
 		try {
 			// upload CSV to S3
@@ -704,7 +689,7 @@ public class DatasetController {
 			if (status == HttpStatus.OK.value()) {
 				log.debug("Successfully uploaded CSV file to dataset {}. Now updating with headers", datasetId);
 
-				final Optional<Dataset> updatedDataset = datasetService.getAsset(datasetId, hasWritePermission);
+				final Optional<Dataset> updatedDataset = datasetService.getAsset(datasetId);
 				if (updatedDataset.isEmpty()) {
 					log.error("Failed to get dataset {} after upload", datasetId);
 					return ResponseEntity.internalServerError().build();
@@ -717,7 +702,18 @@ public class DatasetController {
 					updatedDataset.get().getFileNames().add(filename);
 				}
 
-				datasetService.updateAsset(updatedDataset.get(), projectId, hasWritePermission);
+				// Calculate the statistics for the columns
+				try {
+					final PresignedURL datasetUrl = datasetService
+						.getDownloadUrl(updatedDataset.get().getId(), filename)
+						.orElseThrow(() -> new IllegalArgumentException(messages.get("dataset.download.url.not.found")));
+
+					datasetStatistics.add(updatedDataset.get(), datasetUrl);
+				} catch (final Exception e) {
+					log.error("Error calculating statistics for dataset {}", updatedDataset.get().getId(), e);
+				}
+
+				datasetService.updateAsset(updatedDataset.get(), projectId);
 			}
 
 			return ResponseEntity.ok(new ResponseStatus(status));

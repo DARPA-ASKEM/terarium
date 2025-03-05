@@ -1,6 +1,5 @@
 package software.uncharted.terarium.hmiserver.controller;
 
-import co.elastic.clients.elasticsearch.core.search.SourceConfig;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -50,7 +49,8 @@ public class DKGController {
 		@RequestParam final String term
 	) {
 		try {
-			return ResponseEntity.ok(dkgService.searchEpiDKG(page, pageSize, term, null));
+			final List<DKG> result = dkgService.searchEpiDKG(page, pageSize, term, null);
+			return ResponseEntity.ok(result);
 		} catch (Exception e) {
 			log.error("Error searching assets", e);
 			return ResponseEntity.internalServerError().build();
@@ -81,7 +81,7 @@ public class DKGController {
 		@RequestParam final String text
 	) {
 		try {
-			return ResponseEntity.ok(dkgService.knnSearchEpiDKG(page, pageSize, k, text, null));
+			return ResponseEntity.ok(dkgService.knnSearchEpiDKG(page, pageSize, k, List.of(text), null));
 		} catch (Exception e) {
 			log.error("Error searching assets", e);
 			return ResponseEntity.internalServerError().build();

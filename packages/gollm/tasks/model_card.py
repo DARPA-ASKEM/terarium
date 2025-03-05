@@ -1,6 +1,9 @@
 import sys
-from entities import ModelCardModel
-from gollm_openai.tool_utils import model_card_chain
+import traceback
+from chains import model_card_chain
+from entities import ModelAndDocument
+from llms.azure.AzureTools import AzureTools
+from llms.determine_llm import determine_llm
 
 from taskrunner import TaskRunnerInterface
 
@@ -17,17 +20,23 @@ def main():
 
         input_dict = taskrunner.read_input_dict_with_timeout()
 
-        taskrunner.log("Creating ModelCardModel from input")
-        input_model = ModelCardModel(**input_dict)
+        taskrunner.log("Creating ModelAndDocument from input")
+        input_model = ModelAndDocument(**input_dict)
 
-        taskrunner.log("Sending request to OpenAI API")
-        response = model_card_chain(amr=input_model.amr, research_paper=input_model.research_paper)
-        taskrunner.log("Received response from OpenAI API")
+        try:
+            llm = determine_llm(input_model.llm)
+            taskrunner.log(f"Using {llm.name}")
+        except Exception as e:
+            llm = AzureTools()
+            taskrunner.log(f"WARNING: {e}, defaulting to {llm.name}")
+
+        response = model_card_chain(llm, amr=input_model.amr, document=input_model.document)
+        taskrunner.log("Received response from LLM")
 
         taskrunner.write_output_dict_with_timeout({"response": response})
 
     except Exception as e:
-        sys.stderr.write(f"Error: {str(e)}\n")
+        sys.stderr.write(traceback.format_exc())
         sys.stderr.flush()
         exitCode = 1
 

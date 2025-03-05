@@ -1,5 +1,6 @@
 <template>
 	<tera-drilldown
+		v-bind="$attrs"
 		:node="node"
 		@update:selection="onSelection"
 		@on-close-clicked="emit('close')"
@@ -15,13 +16,15 @@
 				<template #header>
 					<div class="flex gap-2 ml-auto">
 						<tera-pyciemss-cancel-button :simulation-run-id="cancelRunId" />
-						<Button
-							:disabled="isRunDisabled"
-							label="Run"
-							icon="pi pi-play"
-							@click="runEnsemble"
-							:loading="!!inProgressCalibrationId || !!inProgressForecastId"
-						/>
+						<div v-tooltip="runButtonMessage">
+							<Button
+								:disabled="isRunDisabled"
+								label="Run"
+								icon="pi pi-play"
+								@click="runEnsemble"
+								:loading="!!inProgressCalibrationId || !!inProgressForecastId"
+							/>
+						</div>
 					</div>
 				</template>
 				<template #content>
@@ -117,22 +120,35 @@
 									:start-date="undefined"
 								/>
 							</div>
-
-							<div class="label-and-input">
-								<label> Preset </label>
-								<Dropdown
-									class="flex-1"
-									v-model="knobs.extra.presetType"
-									placeholder="Select an option"
-									:options="[CiemssPresetTypes.Fast, CiemssPresetTypes.Normal]"
-									@update:model-value="setPresetValues"
-								/>
-								<label class="mb-1 p-text-secondary text-sm">
-									<i class="pi pi-info-circle" />
-									This impacts solver method, iterations and learning rate.
-								</label>
+							<div class="input-row">
+								<div class="label-and-input">
+									<label> Preset </label>
+									<Dropdown
+										class="flex-1"
+										v-model="presetType"
+										placeholder="Select an option"
+										:options="[CiemssPresetTypes.Fast, CiemssPresetTypes.Normal]"
+										@update:model-value="setPresetValues"
+									/>
+								</div>
+								<div class="label-and-input">
+									<tera-checkbox
+										label="Number of timepoints"
+										:model-value="knobs.isNumberOfTimepointsManual"
+										@update:model-value="toggleIsNumberOfTimepointsManual"
+									/>
+									<tera-input-number
+										:disabled="!knobs.isNumberOfTimepointsManual"
+										v-model="knobs.numberOfTimepoints"
+										inputId="integeronly"
+										:min="1"
+									/>
+								</div>
 							</div>
-
+							<label class="mb-1 p-text-secondary text-sm">
+								<i class="pi pi-info-circle" />
+								This impacts solver method, iterations and learning rate.
+							</label>
 							<fieldset class="mt-1 additional-settings">
 								<div class="label-and-input">
 									<label>Number of Samples</label>
@@ -147,12 +163,18 @@
 										<label>Solver method</label>
 										<Dropdown
 											v-model="knobs.extra.solverMethod"
-											:options="[CiemssMethodOptions.dopri5, CiemssMethodOptions.euler]"
+											:options="[CiemssMethodOptions.dopri5, CiemssMethodOptions.rk4, CiemssMethodOptions.euler]"
 										/>
 									</div>
 									<div class="label-and-input">
 										<label for="num-steps">Solver step size</label>
-										<tera-input-number v-model="knobs.extra.stepSize" />
+										<tera-input-number
+											:disabled="
+												![CiemssMethodOptions.rk4, CiemssMethodOptions.euler].includes(knobs.extra.solverMethod)
+											"
+											:min="0"
+											v-model="knobs.extra.stepSize"
+										/>
 									</div>
 								</div>
 								<div class="spacer m-3" />
@@ -188,57 +210,152 @@
 		<section :tabName="DrilldownTabs.Notebook">
 			<h4>Notebook</h4>
 		</section>
+		<!-- Output Section -->
 		<template #preview>
-			<tera-drilldown-section>
-				<!-- Loss chart -->
-				<div ref="lossChartContainer">
-					<vega-chart
-						v-if="!_.isEmpty(lossValues)"
-						expandable
-						ref="lossChartRef"
-						:are-embed-actions-visible="true"
-						:visualization-spec="lossChartSpec"
-					/>
-				</div>
-				<section v-if="!inProgressCalibrationId && !inProgressForecastId" ref="outputPanel">
-					<tera-simulate-chart
-						v-for="(cfg, index) of node.state.chartConfigs"
-						:key="index"
-						:run-results="runResults"
-						:chartConfig="{
-							selectedRun: props.node.state.postForecastId,
-							selectedVariable: cfg
-						}"
-						has-mean-line
-						@configuration-change="chartProxy.configurationChange(index, $event)"
-						@remove="chartProxy.removeChart(index)"
-						show-remove-button
-						:size="chartSize"
-						class="mb-2"
-					/>
+			<tera-drilldown-section
+				:is-loading="isRunInProgress"
+				:show-slot-while-loading="true"
+				:loading-progress="node.state.currentProgress"
+			>
+				<template #header-controls-right>
 					<Button
-						class="p-button-sm p-button-text"
-						@click="chartProxy.addChart()"
-						label="Add chart"
-						icon="pi pi-plus"
+						label="Save for re-use"
+						severity="secondary"
+						class="mr-3"
+						outlined
+						:disabled="!outputDatasetId"
+						@click="showSaveDataDialog = true"
 					/>
+				</template>
+				<section class="pb-3 px-2">
+					<div class="mx-2" ref="chartWidthDiv"></div>
+					<Accordion multiple :active-index="[0, 1, 2, 3]">
+						<!-- <AccordionTab header="Summary">
+						</AccordionTab> -->
+						<AccordionTab v-if="node.state.showLossChart" header="Loss">
+							<vega-chart
+								v-if="!_.isEmpty(lossValues)"
+								expandable
+								ref="lossChartRef"
+								:are-embed-actions-visible="true"
+								:visualization-spec="lossChartSpec"
+							/>
+						</AccordionTab>
+						<template v-if="!isRunInProgress">
+							<AccordionTab v-if="selectedEnsembleVariableSettings.length > 0" header="Ensemble variables over time">
+								<div class="flex flex-row" v-for="setting of selectedEnsembleVariableSettings" :key="setting.id">
+									<vega-chart
+										v-for="(spec, index) of ensembleVariableCharts[setting.id]"
+										:key="index"
+										expandable
+										:are-embed-actions-visible="true"
+										:visualization-spec="spec"
+									/>
+								</div>
+							</AccordionTab>
+							<AccordionTab v-if="selectedErrorVariableSettings.length > 0" header="Error">
+								<div class="flex flex-row">
+									<vega-chart
+										v-for="(spec, index) of errorCharts"
+										:key="index"
+										:expandable="() => onExpandErrorChart(index)"
+										:are-embed-actions-visible="true"
+										:visualization-spec="spec"
+									/>
+								</div>
+							</AccordionTab>
+							<AccordionTab v-if="node.state.showModelWeightsCharts" header="Model weights">
+								<div class="flex flex-row">
+									<vega-chart
+										v-for="(spec, index) of weightsDistributionCharts"
+										:key="index"
+										expandable
+										:are-embed-actions-visible="true"
+										:visualization-spec="spec"
+									/>
+								</div>
+							</AccordionTab>
+						</template>
+					</Accordion>
+					<tera-notebook-error v-bind="node.state.errorMessage" />
 				</section>
-
-				<tera-progress-spinner
-					v-if="inProgressCalibrationId || inProgressForecastId"
-					:font-size="2"
-					is-centered
-					style="height: 100%"
-				>
-					{{ node.state.currentProgress }}%
-				</tera-progress-spinner>
 			</tera-drilldown-section>
 		</template>
+		<!-- Output Settings Section -->
+		<template #sidebar-right>
+			<tera-slider-panel
+				v-model:is-open="isOutputSettingsPanelOpen"
+				direction="right"
+				class="input-config"
+				header="Output settings"
+				content-width="360px"
+			>
+				<template #overlay>
+					<tera-chart-settings-panel
+						:annotations="
+							[ChartSettingType.VARIABLE_ENSEMBLE].includes(activeChartSettings?.type as ChartSettingType)
+								? getChartAnnotationsByChartId(activeChartSettings?.id ?? '')
+								: undefined
+						"
+						:active-settings="activeChartSettings"
+						:generate-annotation="generateAnnotation"
+						:get-chart-labels="getChartLabels"
+						@update-settings="updateActiveChartSettings"
+						@delete-annotation="deleteAnnotation"
+						@close="setActiveChartSettings(null)"
+					/>
+				</template>
+				<template #content>
+					<div class="output-settings-panel">
+						<h5>Loss</h5>
+						<tera-checkbox
+							label="Show loss chart"
+							:model-value="Boolean(node.state.showLossChart)"
+							@update:model-value="emit('update-state', { ...node.state, showLossChart: $event })"
+						/>
+						<Divider />
+						<tera-chart-settings
+							:title="'Ensemble variables over time'"
+							:settings="chartSettings"
+							:type="ChartSettingType.VARIABLE_ENSEMBLE"
+							:select-options="ensembleVariables"
+							:selected-options="selectedEnsembleVariableSettings.map((s) => s.selectedVariables[0])"
+							@open="setActiveChartSettings($event)"
+							@remove="removeChartSettings"
+							@selection-change="updateChartSettings"
+							@toggle-ensemble-variable-setting-option="updateEnsembleVariableSettingOption"
+						/>
+						<Divider />
+						<tera-chart-settings
+							:title="'Error'"
+							:settings="chartSettings"
+							:type="ChartSettingType.ERROR_DISTRIBUTION"
+							:select-options="ensembleVariables"
+							:selected-options="selectedErrorVariableSettings.map((s) => s.selectedVariables[0])"
+							@open="setActiveChartSettings($event)"
+							@remove="removeChartSettings"
+							@selection-change="updateChartSettings"
+						/>
+						<Divider />
+						<h5>Model Weights</h5>
+						<tera-checkbox
+							label="Show distributions in charts"
+							:model-value="Boolean(node.state.showModelWeightsCharts)"
+							@update:model-value="emit('update-state', { ...node.state, showModelWeightsCharts: $event })"
+						/>
+						<Divider />
+						<tera-chart-settings-quantiles :settings="chartSettings" @update-options="updateQauntilesOptions" />
+						<Divider />
+					</div>
+				</template>
+			</tera-slider-panel>
+		</template>
 	</tera-drilldown>
-	<tera-save-dataset-from-simulation
-		:simulation-run-id="props.node.state.postForecastId"
-		:showDialog="showSaveDataDialog"
-		@dialog-hide="showSaveDataDialog = false"
+	<tera-save-simulation-modal
+		:is-visible="showSaveDataDialog"
+		@close-modal="showSaveDataDialog = false"
+		:simulation-id="node.state.postForecastId"
+		:assets="[{ id: outputDatasetId as string, type: AssetType.Dataset }]"
 	/>
 </template>
 
@@ -247,30 +364,31 @@ import _, { isEmpty } from 'lodash';
 import * as vega from 'vega';
 import { ref, shallowRef, computed, watch, onMounted } from 'vue';
 import {
-	getRunResultCiemss,
 	makeEnsembleCiemssCalibration,
 	unsubscribeToUpdateMessages,
 	subscribeToUpdateMessages,
 	CiemssMethodOptions
 } from '@/services/models/simulation-service';
 import Button from 'primevue/button';
+import Divider from 'primevue/divider';
 import TeraInputNumber from '@/components/widgets/tera-input-number.vue';
 import AccordionTab from 'primevue/accordiontab';
 import Accordion from 'primevue/accordion';
-import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue';
 import Dropdown from 'primevue/dropdown';
-import { setupDatasetInput, setupCsvAsset, setupModelInput } from '@/services/calibrate-workflow';
-import TeraSimulateChart from '@/components/workflow/tera-simulate-chart.vue';
+import { setupCsvAsset } from '@/services/calibrate-workflow';
 import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
 import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.vue';
-import TeraSaveDatasetFromSimulation from '@/components/dataset/tera-save-dataset-from-simulation.vue';
 import TeraPyciemssCancelButton from '@/components/pyciemss/tera-pyciemss-cancel-button.vue';
 import TeraSliderPanel from '@/components/widgets/tera-slider-panel.vue';
+import TeraChartSettings from '@/components/widgets/tera-chart-settings.vue';
+import TeraChartSettingsPanel from '@/components/widgets/tera-chart-settings-panel.vue';
+import TeraChartSettingsQuantiles from '@/components/widgets/tera-chart-settings-quantiles.vue';
+import TeraCheckbox from '@/components/widgets/tera-checkbox.vue';
 import TeraInputText from '@/components/widgets/tera-input-text.vue';
 import TeraSignalBars from '@/components/widgets/tera-signal-bars.vue';
 import TeraTimestepCalendar from '@/components/widgets/tera-timestep-calendar.vue';
-
-import { chartActionsProxy, drilldownChartSize, getTimespan, nodeMetadata } from '@/components/workflow/util';
+import TeraNotebookError from '@/components/drilldown/tera-notebook-error.vue';
+import { getTimespan, nodeMetadata } from '@/components/workflow/util';
 import type {
 	CsvAsset,
 	EnsembleCalibrationCiemssRequest,
@@ -278,13 +396,20 @@ import type {
 	Dataset,
 	ClientEvent
 } from '@/types/Types';
-import { ClientEventType } from '@/types/Types';
-import { RunResults } from '@/types/SimulateConfig';
+import { AssetType, ClientEventType } from '@/types/Types';
 import { WorkflowNode } from '@/types/workflow';
-import { getDataset } from '@/services/dataset';
+import { getDataset, getFileName } from '@/services/dataset';
 import { useDrilldownChartSize } from '@/composables/useDrilldownChartSize';
 import VegaChart from '@/components/widgets/VegaChart.vue';
-import { CiemssPresetTypes, DrilldownTabs } from '@/types/common';
+import { ChartSettingType, CiemssPresetTypes, DrilldownTabs } from '@/types/common';
+import { useCharts } from '@/composables/useCharts';
+import { useChartSettings } from '@/composables/useChartSettings';
+import { updateChartSettingsBySelectedVariables } from '@/services/chart-settings';
+import { deleteAnnotation } from '@/services/chart-annotation';
+import { DataArray } from '@/utils/stats';
+import { GroupedDataArray } from '@/services/charts';
+import { parseCsvAsset } from '@/utils/csv';
+import teraSaveSimulationModal from '@/components/project/tera-save-simulation-modal.vue';
 import {
 	CalibrateEnsembleCiemssOperationState,
 	CalibrateEnsembleMappingRow,
@@ -295,7 +420,14 @@ import {
 import {
 	updateLossChartSpec,
 	getLossValuesFromSimulation,
-	formatCalibrateModelConfigurations
+	formatCalibrateModelConfigurations,
+	getChartEnsembleMapping,
+	fetchOutputData,
+	buildChartData,
+	getEnsembleErrorData,
+	EnsembleErrorData,
+	fetchModelConfigurations,
+	setStateToModelConfigMap
 } from './calibrate-ensemble-util';
 
 const props = defineProps<{
@@ -306,41 +438,85 @@ const emit = defineEmits(['update-state', 'close', 'select-output']);
 
 interface BasicKnobs {
 	ensembleMapping: CalibrateEnsembleMappingRow[];
-	configurationWeights: { [key: string]: number };
+	configurationWeights: { [key: string]: number }; // Note these are Dirichlet distributions not EXACTLY weights
 	extra: EnsembleCalibrateExtraCiemss;
 	timestampColName: string;
+	isNumberOfTimepointsManual: boolean;
+	numberOfTimepoints: number;
 }
 
 const knobs = ref<BasicKnobs>({
 	ensembleMapping: props.node.state.ensembleMapping ?? [],
 	configurationWeights: props.node.state.configurationWeights ?? {},
 	extra: props.node.state.extra ?? {},
-	timestampColName: props.node.state.timestampColName ?? ''
+	timestampColName: props.node.state.timestampColName ?? '',
+	isNumberOfTimepointsManual: props.node.state.isNumberOfTimepointsManual,
+	numberOfTimepoints: props.node.state.numberOfTimepoints
 });
 
 const currentActiveIndicies = ref([0, 1, 2]);
 
 const isSidebarOpen = ref(true);
 const selectedOutputId = ref<string>();
-const showSpinner = ref(false);
-const isRunDisabled = computed(() => !knobs.value.ensembleMapping[0] || !datasetId.value);
-const cancelRunId = computed(() => props.node.state.inProgressForecastId || props.node.state.inProgressCalibrationId);
+
+// Checks for disabling run button:
+const isMappingfilled = computed(
+	() =>
+		knobs.value.ensembleMapping.length !== 0 && knobs.value.ensembleMapping[0].newName && knobs.value.timestampColName
+);
+
+const areNodeInputsFilled = computed(() => datasetId.value && allModelConfigurations.value.length >= 2);
+
+const isRunDisabled = computed(() => !isMappingfilled.value || !areNodeInputsFilled.value);
+
+const mappingFilledTooltip = computed(() =>
+	!isMappingfilled.value ? 'Must contain a Timestamp column and at least one mapping. \n' : ''
+);
+const nodeInputsFilledTooltip = computed(() =>
+	!areNodeInputsFilled.value ? 'Must contain one dataset and at least two model configurations.\n' : ''
+);
+
+const runButtonMessage = computed(() =>
+	isRunDisabled.value ? `${mappingFilledTooltip.value} ${nodeInputsFilledTooltip.value}` : ''
+);
+
+const cancelRunId = computed(
+	() =>
+		props.node.state.inProgressForecastId ||
+		props.node.state.inProgressCalibrationId ||
+		props.node.state.inProgressPreForecastId
+);
 const inProgressCalibrationId = computed(() => props.node.state.inProgressCalibrationId);
 const inProgressForecastId = computed(() => props.node.state.inProgressForecastId);
+const isRunInProgress = computed(() => Boolean(inProgressCalibrationId.value || inProgressForecastId.value));
 
 const datasetId = computed(() => props.node.inputs[0].value?.[0] as string | undefined);
 const currentDatasetFileName = ref<string>();
-const datasetColumnNames = ref<string[]>();
+const dataset = shallowRef<Dataset | null>(null);
+const csvAsset = shallowRef<CsvAsset | undefined>(undefined);
+const datasetColumnNames = computed(
+	() =>
+		dataset.value?.columns?.filter((col) => col.fileName === currentDatasetFileName.value).map((col) => col.name) ??
+		([] as string[])
+);
+const outputDatasetId = computed(() => {
+	if (!selectedOutputId.value) return '';
+	const output = props.node.outputs.find((o) => o.id === selectedOutputId.value);
+	return output!.value?.[0] ?? '';
+});
+
 // Loss Chart:
 const lossChartRef = ref<InstanceType<typeof VegaChart>>();
 const lossChartSpec = ref();
 const lossValues = ref<{ [key: string]: number }[]>([]);
-const lossChartContainer = ref(null);
-const lossChartSize = useDrilldownChartSize(lossChartContainer);
 const LOSS_CHART_DATA_SOURCE = 'lossData';
 // Model:
+const modelConfigIds = computed(() =>
+	props.node.inputs.filter((input) => input.type === 'modelConfigId' && input.value).map((input) => input.value?.[0])
+);
 const listModelLabels = ref<string[]>([]);
 const allModelConfigurations = ref<ModelConfiguration[]>([]);
+const stateToModelConfigMap = ref<{ [key: string]: string[] }>({});
 
 const tableHeaders = computed(() => {
 	const headers = ['Ensemble model'];
@@ -352,16 +528,6 @@ const tableHeaders = computed(() => {
 });
 // List of each observible + state for each model.
 const allModelOptions = ref<any[][]>([]);
-
-const runResults = ref<RunResults>({});
-
-const csvAsset = shallowRef<CsvAsset | undefined>(undefined);
-
-const outputPanel = ref(null);
-const chartSize = computed(() => drilldownChartSize(outputPanel.value));
-const chartProxy = chartActionsProxy(props.node, (state: CalibrateEnsembleCiemssOperationState) => {
-	emit('update-state', state);
-});
 
 const onSelection = (id: string) => {
 	emit('select-output', id);
@@ -392,12 +558,37 @@ function removeMapping(index: number) {
 	emit('update-state', state);
 }
 
+const toggleIsNumberOfTimepointsManual = () => {
+	knobs.value.isNumberOfTimepointsManual = !knobs.value.isNumberOfTimepointsManual;
+};
+
 const messageHandler = (event: ClientEvent<any>) => {
 	const data = { iter: lossValues.value.length, loss: event.data.loss };
 	lossValues.value.push(data);
 	if (!lossChartRef.value?.view) return;
 	lossChartRef.value.view.change(LOSS_CHART_DATA_SOURCE, vega.changeset().insert(data)).resize().run();
 };
+
+const presetType = computed(() => {
+	if (
+		knobs.value.extra.numParticles === speedPreset.numSamples &&
+		knobs.value.extra.solverMethod === speedPreset.method &&
+		knobs.value.extra.numIterations === speedPreset.numIterations &&
+		knobs.value.extra.learningRate === speedPreset.learningRate &&
+		knobs.value.extra.stepSize === speedPreset.stepSize
+	) {
+		return CiemssPresetTypes.Fast;
+	}
+	if (
+		knobs.value.extra.numParticles === qualityPreset.numSamples &&
+		knobs.value.extra.solverMethod === qualityPreset.method &&
+		knobs.value.extra.numIterations === qualityPreset.numIterations &&
+		knobs.value.extra.learningRate === qualityPreset.learningRate
+	) {
+		return CiemssPresetTypes.Normal;
+	}
+	return '';
+});
 
 const setPresetValues = (data: CiemssPresetTypes) => {
 	if (data === CiemssPresetTypes.Normal) {
@@ -411,6 +602,23 @@ const setPresetValues = (data: CiemssPresetTypes) => {
 		knobs.value.extra.solverMethod = speedPreset.method;
 		knobs.value.extra.numIterations = speedPreset.numIterations;
 		knobs.value.extra.learningRate = speedPreset.learningRate;
+		knobs.value.extra.stepSize = speedPreset.stepSize;
+	}
+};
+
+const initDefaultChartSettings = (state: CalibrateEnsembleCiemssOperationState) => {
+	const mappedEnsembleVariables = knobs.value.ensembleMapping.map((c) => c.newName);
+	if (_.isEmpty(state.chartSettings)) {
+		state.chartSettings = updateChartSettingsBySelectedVariables(
+			state.chartSettings ?? [],
+			ChartSettingType.VARIABLE_ENSEMBLE,
+			mappedEnsembleVariables
+		);
+		state.chartSettings = updateChartSettingsBySelectedVariables(
+			state.chartSettings,
+			ChartSettingType.ERROR_DISTRIBUTION,
+			mappedEnsembleVariables
+		);
 	}
 };
 
@@ -430,10 +638,11 @@ const runEnsemble = async () => {
 
 	const calibratePayload: EnsembleCalibrationCiemssRequest = {
 		modelConfigs: formatCalibrateModelConfigurations(knobs.value.ensembleMapping, knobs.value.configurationWeights),
-		timespan: getTimespan({
-			dataset: csvAsset.value,
-			timestampColName: knobs.value.timestampColName
-		}),
+		timespan: getTimespan(
+			dataset.value as Dataset,
+			knobs.value.timestampColName,
+			knobs.value.extra.endTime // Default is simulation End Time
+		),
 		dataset: {
 			id: datasetId.value,
 			filename: currentDatasetFileName.value,
@@ -454,36 +663,27 @@ const runEnsemble = async () => {
 		state.currentProgress = 0;
 		state.inProgressCalibrationId = response?.simulationId;
 		state.inProgressForecastId = '';
+		// Add default chart settings based on the ensemble mapping on the first run
+		initDefaultChartSettings(state);
 		emit('update-state', state);
 	}
 };
 
 onMounted(async () => {
-	allModelConfigurations.value = [];
-	const modelConfigurationIds: string[] = [];
-	props.node.inputs.forEach((ele) => {
-		if (ele.value && ele.type === 'modelConfigId') modelConfigurationIds.push(ele.value[0]);
-	});
-	if (!modelConfigurationIds) return;
-
-	// Model configuration input
-	await Promise.all(
-		modelConfigurationIds.map(async (id) => {
-			const { modelConfiguration, modelOptions } = await setupModelInput(id);
-			if (modelConfiguration) allModelConfigurations.value.push(modelConfiguration);
-			if (modelOptions) allModelOptions.value.push(modelOptions);
-		})
-	);
+	stateToModelConfigMap.value = await setStateToModelConfigMap(modelConfigIds.value as string[]);
+	const configs = await fetchModelConfigurations(props.node.inputs);
+	if (!configs) return;
+	allModelConfigurations.value = configs.allModelConfigurations;
+	allModelOptions.value = configs.allModelOptions;
 
 	// dataset input
 	if (datasetId.value) {
 		// Get dataset
-		const dataset: Dataset | null = await getDataset(datasetId.value);
-		if (dataset) {
-			const { filename, datasetOptions } = await setupDatasetInput(dataset);
-			currentDatasetFileName.value = filename;
-			datasetColumnNames.value = datasetOptions?.map((ele) => ele.name);
-			setupCsvAsset(dataset).then((csv) => {
+		dataset.value = await getDataset(datasetId.value);
+		if (dataset.value) {
+			currentDatasetFileName.value = getFileName(dataset.value);
+
+			setupCsvAsset(dataset.value).then((csv) => {
 				csvAsset.value = csv;
 			});
 		}
@@ -499,10 +699,68 @@ onMounted(async () => {
 	// initialze weights
 	if (isEmpty(knobs.value.configurationWeights)) {
 		allModelConfigurations.value.forEach((config) => {
-			knobs.value.configurationWeights[config.id as string] = 5;
+			knobs.value.configurationWeights[config.id as string] = 1;
 		});
 	}
 });
+
+// -------------- Charts && chart settings ----------------
+const chartWidthDiv = ref(null);
+const isOutputSettingsPanelOpen = ref(false);
+const outputData = ref<{
+	result: DataArray;
+	resultSummary: DataArray;
+	pyciemssMap: Record<string, string>;
+	resultGroupByTimepoint: GroupedDataArray;
+} | null>(null);
+const groundTruthData = computed<DataArray>(() => parseCsvAsset(csvAsset.value as CsvAsset));
+const chartSize = useDrilldownChartSize(chartWidthDiv);
+const selectedOutputMapping = computed(() => getChartEnsembleMapping(props.node, stateToModelConfigMap.value));
+const {
+	activeChartSettings,
+	chartSettings,
+	removeChartSettings,
+	updateChartSettings,
+	selectedEnsembleVariableSettings,
+	selectedErrorVariableSettings,
+	updateEnsembleVariableSettingOption,
+	updateQauntilesOptions,
+	updateActiveChartSettings,
+	setActiveChartSettings
+} = useChartSettings(props, emit);
+
+const {
+	generateAnnotation,
+	getChartLabels,
+	getChartAnnotationsByChartId,
+	useEnsembleVariableCharts,
+	useWeightsDistributionCharts,
+	useEnsembleErrorCharts
+} = useCharts(
+	props.node.id,
+	null,
+	allModelConfigurations,
+	computed(() => buildChartData(outputData.value, selectedOutputMapping.value)),
+	chartSize,
+	null,
+	selectedOutputMapping
+);
+const errorData = computed<EnsembleErrorData>(() =>
+	getEnsembleErrorData(
+		groundTruthData.value,
+		outputData.value?.result ?? [],
+		selectedOutputMapping.value,
+		outputData.value?.pyciemssMap ?? {}
+	)
+);
+
+const ensembleVariables = computed(() =>
+	getChartEnsembleMapping(props.node, stateToModelConfigMap.value, false).map((d) => d.newName)
+);
+const ensembleVariableCharts = useEnsembleVariableCharts(selectedEnsembleVariableSettings, groundTruthData);
+const weightsDistributionCharts = useWeightsDistributionCharts();
+const { errorCharts, onExpandErrorChart } = useEnsembleErrorCharts(selectedErrorVariableSettings, errorData);
+// --------------------------------------------------------
 
 watch(
 	() => props.node.active,
@@ -520,10 +778,11 @@ watch(
 				}
 			});
 
-			const output = await getRunResultCiemss(state.postForecastId, 'result.csv');
-			runResults.value = output.runResults;
 			lossValues.value = await getLossValuesFromSimulation(props.node.state.calibrationId);
-			lossChartSpec.value = updateLossChartSpec(lossValues.value, lossChartSize.value);
+			lossChartSpec.value = updateLossChartSpec(lossValues.value, chartSize.value);
+
+			// Fetch output data and prepare chart data
+			outputData.value = await fetchOutputData(state.preForecastId, state.postForecastId);
 		}
 	},
 	{ immediate: true }
@@ -537,20 +796,23 @@ watch(
 		state.extra = knobs.value.extra;
 		state.ensembleMapping = knobs.value.ensembleMapping;
 		state.configurationWeights = knobs.value.configurationWeights;
+		state.isNumberOfTimepointsManual = knobs.value.isNumberOfTimepointsManual;
+		if (!knobs.value.isNumberOfTimepointsManual) {
+			knobs.value.numberOfTimepoints = knobs.value.extra.endTime;
+		}
+		state.numberOfTimepoints = knobs.value.numberOfTimepoints;
 		emit('update-state', state);
 	},
 	{ deep: true }
 );
 
 watch(
-	[() => props.node.state.inProgressCalibrationId, lossChartSize],
+	[() => props.node.state.inProgressCalibrationId, chartSize],
 	([id, size]) => {
 		if (id === '') {
-			showSpinner.value = false;
 			lossChartSpec.value = updateLossChartSpec(lossValues.value, size);
 			unsubscribeToUpdateMessages([id], ClientEventType.SimulationPyciemss, messageHandler);
 		} else {
-			showSpinner.value = true;
 			lossChartSpec.value = updateLossChartSpec(LOSS_CHART_DATA_SOURCE, size);
 			subscribeToUpdateMessages([id], ClientEventType.SimulationPyciemss, messageHandler);
 		}
@@ -634,5 +896,12 @@ td {
 
 .overlay-container:deep(section.scale main) {
 	grid-template-columns: auto 1fr;
+}
+
+.output-settings-panel {
+	padding: var(--gap-4);
+	display: flex;
+	flex-direction: column;
+	gap: var(--gap-2);
 }
 </style>

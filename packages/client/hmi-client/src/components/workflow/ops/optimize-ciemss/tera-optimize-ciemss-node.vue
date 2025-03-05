@@ -21,7 +21,7 @@
 				/>
 			</div>
 			<div class="flex gap-2">
-				<Button @click="emit('open-drilldown')" label="Edit" severity="secondary" outlined class="w-full" />
+				<Button @click="emit('open-drilldown')" label="Open" severity="secondary" outlined class="w-full" />
 			</div>
 		</template>
 	</main>
@@ -35,7 +35,13 @@ import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue'
 import { WorkflowNode } from '@/types/workflow';
 import Button from 'primevue/button';
 import { Poller, PollerResult, PollerState } from '@/api/api';
-import { pollAction, makeForecastJobCiemss, getRunResult, getRunResultCSV } from '@/services/models/simulation-service';
+import {
+	pollAction,
+	makeForecastJobCiemss,
+	getRunResult,
+	getRunResultCSV,
+	renameFnGenerator
+} from '@/services/models/simulation-service';
 import { nodeMetadata, nodeOutputLabel } from '@/components/workflow/util';
 import {
 	SimulationRequest,
@@ -47,19 +53,14 @@ import {
 } from '@/types/Types';
 import { createLLMSummary } from '@/services/summary-service';
 import VegaChart from '@/components/widgets/VegaChart.vue';
-import { renameFnGenerator } from '@/components/workflow/ops/calibrate-ciemss/calibrate-utils';
 import { getModelByModelConfigurationId, getUnitsFromModelParts } from '@/services/model';
 import { getModelConfigurationById } from '@/services/model-configurations';
 import { createDatasetFromSimulationResult } from '@/services/dataset';
 import { useProjects } from '@/composables/project';
 import { useChartSettings } from '@/composables/useChartSettings';
 import { useCharts } from '@/composables/useCharts';
-import {
-	OptimizeCiemssOperationState,
-	OptimizeCiemssOperation,
-	createInterventionPolicyFromOptimize
-} from './optimize-ciemss-operation';
-import { usePreparedChartInputs } from './optimize-utils';
+import { OptimizeCiemssOperationState, OptimizeCiemssOperation } from './optimize-ciemss-operation';
+import { usePreparedChartInputs, createInterventionPolicyFromOptimize } from './optimize-utils';
 
 const emit = defineEmits(['open-drilldown', 'append-output', 'update-state']);
 
@@ -84,9 +85,10 @@ const { useVariableCharts } = useCharts(
 	modelConfiguration,
 	preparedChartInputs,
 	toRef({ width: 180, height: 120 }),
-	undefined
+	null,
+	null
 );
-const variableCharts = useVariableCharts(selectedVariableSettings, null, null);
+const variableCharts = useVariableCharts(selectedVariableSettings, null);
 
 const showSpinner = computed<boolean>(
 	() =>
@@ -98,18 +100,18 @@ const showSpinner = computed<boolean>(
 const poller = new Poller();
 const pollResult = async (runId: string) => {
 	poller
-		.setInterval(5000)
-		.setThreshold(350)
 		.setPollAction(async () => pollAction(runId))
 		.setProgressAction((data: Simulation) => {
 			if (runId === props.node.state.inProgressOptimizeId && data.updates.length > 0) {
-				const checkpointData = _.first(data.updates)?.data as CiemssOptimizeStatusUpdate;
+				data.updates.sort((a, b) => a.data.progress - b.data.progress);
+				const checkpointData = _.last(data.updates)?.data as CiemssOptimizeStatusUpdate;
 				if (checkpointData) {
 					const state = _.cloneDeep(props.node.state);
-					state.currentProgress = +((100 * checkpointData.progress) / checkpointData.totalPossibleIterations).toFixed(
-						2
-					);
-					emit('update-state', state);
+					const newProgress = Math.floor((100 * checkpointData.progress) / checkpointData.totalPossibleIterations);
+					if (newProgress !== state.currentProgress) {
+						state.currentProgress = newProgress;
+						emit('update-state', state);
+					}
 				}
 			}
 		});
@@ -132,9 +134,11 @@ const startForecast = async (optimizedInterventions?: InterventionPolicy) => {
 			start: 0,
 			end: props.node.state.endTime
 		},
+		loggingStepSize: props.node.state.endTime / props.node.state.numberOfTimepoints,
 		extra: {
 			num_samples: props.node.state.numSamples,
-			method: props.node.state.solverMethod
+			method: props.node.state.solverMethod,
+			solver_step_size: props.node.state.solverStepSize
 		},
 		engine: 'ciemss'
 	};
@@ -186,8 +190,8 @@ watch(
 				state.inProgressPostForecastId = '';
 				state.optimizedInterventionPolicyId = '';
 				state.optimizeErrorMessage = {
-					name: optId,
-					value: 'Failed to create intervention',
+					name: 'Failed to create intervention',
+					value: '',
 					traceback: 'Failed to create the intervention provided from optimize.'
 				};
 				emit('update-state', state);
@@ -195,9 +199,10 @@ watch(
 		} else {
 			// Simulation Failed:
 			const state = _.cloneDeep(props.node.state);
+			console.log(response);
 			if (response?.state && response?.error) {
 				state.optimizeErrorMessage = {
-					name: optId,
+					name: `Optimize: ${optId} has failed`,
 					value: response.state,
 					traceback: response.error
 				};
@@ -243,7 +248,6 @@ Provide a consis summary in 100 words or less.
 			state.inProgressPostForecastId = '';
 			state.postForecastRunId = postSimId;
 			state.currentProgress = 0;
-			emit('update-state', state);
 
 			const datasetName = `Forecast run ${state.postForecastRunId}`;
 			const projectId = useProjects().activeProjectId.value;
@@ -254,21 +258,31 @@ Provide a consis summary in 100 words or less.
 				false
 			);
 			if (!datasetResult) {
+				state.simulateErrorMessage = {
+					name: 'Failed to create dataset',
+					value: '',
+					traceback: `Failed to create dataset from simulation result: ${state.postForecastRunId}`
+				};
+				emit('update-state', state);
 				return;
 			}
 
-			emit('append-output', {
-				type: OptimizeCiemssOperation.outputs[0].type,
-				label: nodeOutputLabel(props.node, `Optimize output`),
-				value: [
-					{
-						policyInterventionId: state.optimizedInterventionPolicyId,
-						datasetId: datasetResult.id
-					}
-				],
-				isSelected: false,
+			emit(
+				'append-output',
+				{
+					type: OptimizeCiemssOperation.outputs[0].type,
+					label: nodeOutputLabel(props.node, `Optimize output`),
+					value: [
+						{
+							policyInterventionId: state.optimizedInterventionPolicyId,
+							datasetId: datasetResult.id
+						}
+					],
+					isSelected: false,
+					state: _.omit(state, ['chartSettings'])
+				},
 				state
-			});
+			);
 		} else {
 			// Simulation Failed:
 			const state = _.cloneDeep(props.node.state);

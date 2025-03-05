@@ -9,8 +9,16 @@
 			</div>
 		</header>
 		<main ref="main" @scroll="handleScroll">
-			<slot v-if="!isLoading" />
-			<tera-progress-spinner v-else :font-size="2" is-centered />
+			<slot v-if="!isLoading || showSlotWhileLoading" />
+			<tera-progress-spinner v-if="isLoading" :font-size="2" is-centered>
+				<span v-if="!loadingMessage">Processing... </span>
+				<span v-if="loadingProgress">{{ loadingProgress }}% </span>
+				<span v-if="displayMessage">{{ loadingMessage }}</span>
+			</tera-progress-spinner>
+			<div v-else-if="isBlank" class="empty-state">
+				<Vue3Lottie :animationData="EmptySeed" :height="150" :width="150" loop autoplay />
+				<p>{{ blankMessage }}</p>
+			</div>
 		</main>
 		<footer v-if="slots.footer">
 			<slot name="footer" />
@@ -20,14 +28,22 @@
 
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted, computed, useSlots } from 'vue';
+import { Vue3Lottie } from 'vue3-lottie';
+import EmptySeed from '@/assets/images/lottie-empty-seed.json';
 import TeraProgressSpinner from '../widgets/tera-progress-spinner.vue';
 
-defineProps<{
+const props = defineProps<{
 	isLoading?: boolean;
+	showSlotWhileLoading?: boolean;
+	isBlank?: boolean;
+	blankMessage?: string;
+	loadingMessage?: string;
+	loadingProgress?: number;
 }>();
 
 const slots = useSlots();
 const hasHeaderSlots = computed(() => !!slots['header-controls-left'] || !!slots['header-controls-right']);
+const displayMessage = computed(() => (props.loadingProgress || props.loadingProgress === 0) && props.loadingMessage);
 
 /* This is for adding a shadow to the header if user has scrolled */
 const main = ref<HTMLElement | null>(null);
@@ -92,11 +108,23 @@ main {
 	flex-direction: column;
 	flex-grow: 1;
 	overflow-y: auto;
+
+	.empty-state {
+		width: 100%;
+		height: 100%;
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		justify-content: center;
+		gap: var(--gap-4);
+		text-align: center;
+		pointer-events: none;
+	}
 }
 
 .notebook-section {
 	background-color: var(--surface-disabled);
-	border-right: 1px solid var(--surface-border-dark);
+	border-right: 1px solid var(--surface-border);
 	padding: var(--gap-4);
 }
 </style>

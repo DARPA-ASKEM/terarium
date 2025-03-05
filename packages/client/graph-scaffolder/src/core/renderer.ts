@@ -58,8 +58,8 @@ export abstract class Renderer<V, E> extends EventEmitter {
 	}
 
 	initialize(element: HTMLDivElement): void {
-		this.chartSize.width = element.clientWidth;
-		this.chartSize.height = element.clientHeight;
+		this.chartSize.width = element.clientWidth || parseFloat(element.style.width);
+		this.chartSize.height = element.clientHeight || parseFloat(element.style.height);
 		this.svgEl = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
 		this.svgEl.style.userSelect = 'none';
 		removeChildren(element).appendChild(this.svgEl);
@@ -479,7 +479,10 @@ export abstract class Renderer<V, E> extends EventEmitter {
 			renderer.isDragEnabled = false;
 
 			if (sufficientlyMoved && options.edgeReroutingFn) {
-				options.edgeReroutingFn(nodes, edges);
+				const affectedEdges = edges.filter(
+					(e) => nodeDraggingIds.includes(e.source) || nodeDraggingIds.includes(e.target)
+				);
+				options.edgeReroutingFn(nodes, affectedEdges);
 			}
 
 			updateEdgePoints();

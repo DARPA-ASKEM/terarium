@@ -1,37 +1,27 @@
 <template>
 	<div class="policy-group">
 		<div class="form-header">
-			<h6 class="mr-auto">{{ config.intervention?.name ?? `Intervention` }}</h6>
-			<tera-signal-bars
-				v-if="!!knobs.relativeImportance"
-				v-model="knobs.relativeImportance"
-				@update:model-value="emit('update-self', knobs)"
-				label="Relative importance"
-			/>
+			<h6 class="mr-auto">{{ config.interventionName ?? `Intervention` }}</h6>
 		</div>
 		<p>
-			Set the {{ dynamicInterventions[0].type }}&nbsp; <strong>{{ dynamicInterventions[0].appliedTo }}</strong> to
-			<strong>{{ dynamicInterventions[0].threshold }}</strong> days when it crosses the threshold value
-			<strong>{{ dynamicInterventions[0].value }}</strong> person.
+			Set the {{ config.individualIntervention.type }}&nbsp;
+			<strong>{{ config.individualIntervention.appliedTo }}</strong> to
+			<strong>{{ config.individualIntervention.value }}</strong> when it crosses the threshold value
+			<strong>{{ config.individualIntervention.threshold }}</strong>
 		</p>
 	</div>
 </template>
 <script setup lang="ts">
-import { computed, ref } from 'vue';
 import { DynamicIntervention } from '@/types/Types';
-import { InterventionPolicyGroupForm } from '@/components/workflow/ops/optimize-ciemss/optimize-ciemss-operation';
+import { InterventionPolicyGroupForm } from './optimize-ciemss-operation';
 
-const props = defineProps<{
-	config: InterventionPolicyGroupForm;
+defineProps<{
+	config: DynamicInterventionPolicyGroupForm;
 }>();
 
-const emit = defineEmits(['update-self']);
-
-const dynamicInterventions = computed<DynamicIntervention[]>(() => props.config.intervention.dynamicInterventions);
-
-const knobs = ref({
-	relativeImportance: props.config.relativeImportance
-});
+export interface DynamicInterventionPolicyGroupForm extends InterventionPolicyGroupForm {
+	individualIntervention: DynamicIntervention;
+}
 </script>
 <style>
 .form-header {

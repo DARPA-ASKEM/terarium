@@ -1,12 +1,11 @@
 import { Operation, WorkflowOperationTypes, BaseState } from '@/types/workflow';
-import { Intervention, InterventionSemanticType, InterventionPolicy } from '@/types/Types';
-import { getRunResult, getSimulation } from '@/services/models/simulation-service';
-import { getModelIdFromModelConfigurationId } from '@/services/model-configurations';
-import { createInterventionPolicy, blankIntervention } from '@/services/intervention-policy';
+import { StaticIntervention, DynamicIntervention } from '@/types/Types';
+import { CiemssMethodOptions } from '@/services/models/simulation-service';
+import { blankIntervention } from '@/services/intervention-policy';
 import optimizeModel from '@assets/svg/operator-images/optimize-model.svg';
 import { ChartSetting } from '@/types/common';
 
-const DOCUMENTATION_URL = 'https://github.com/ciemss/pyciemss/blob/main/pyciemss/interfaces.py#L747';
+const DOCUMENTATION_URL = 'https://documentation.terarium.ai/config-and-intervention/optimize-intervention-policy/';
 
 export enum OptimizationInterventionObjective {
 	startTime = 'start_time', // provide a parameter value to get a better start time.
@@ -35,9 +34,13 @@ export interface InterventionPolicyGroupForm {
 	upperBoundValue: number;
 	initialGuessValue: number;
 	relativeImportance: number;
-	optimizationType: OptimizationInterventionObjective;
-	objectiveFunctionOption: InterventionObjectiveFunctions;
-	intervention: Intervention;
+	optimizeFunction: {
+		type: OptimizationInterventionObjective;
+		timeObjectiveFunction: InterventionObjectiveFunctions;
+		parameterObjectiveFunction: InterventionObjectiveFunctions;
+	};
+	interventionName: string;
+	individualIntervention: StaticIntervention | DynamicIntervention;
 }
 
 export interface Criterion {
@@ -54,9 +57,12 @@ export interface OptimizeCiemssOperationState extends BaseState {
 	// Settings
 	endTime: number;
 	numSamples: number;
-	solverMethod: string;
+	solverStepSize: number;
+	solverMethod: CiemssMethodOptions;
 	maxiter: number;
 	maxfeval: number;
+	numberOfTimepoints: number;
+	isNumberOfTimepointsManual: boolean;
 	// Intervention policies
 	interventionPolicyId: string; // Used to determine if we need to reset the InterventionPolicyGroupForm.
 	interventionPolicyGroups: InterventionPolicyGroupForm[];
@@ -101,9 +107,13 @@ export const blankInterventionPolicyGroup: InterventionPolicyGroupForm = {
 	upperBoundValue: 0,
 	initialGuessValue: 0,
 	relativeImportance: 5,
-	optimizationType: OptimizationInterventionObjective.startTime,
-	objectiveFunctionOption: InterventionObjectiveFunctions.initialGuess,
-	intervention: blankIntervention
+	optimizeFunction: {
+		type: OptimizationInterventionObjective.startTime,
+		timeObjectiveFunction: InterventionObjectiveFunctions.initialGuess,
+		parameterObjectiveFunction: InterventionObjectiveFunctions.initialGuess
+	},
+	interventionName: blankIntervention.name,
+	individualIntervention: blankIntervention.staticInterventions[0]
 };
 
 export const defaultCriterion: Criterion = {
@@ -126,7 +136,7 @@ export const OptimizeCiemssOperation: Operation = {
 		{ type: 'modelConfigId', label: 'Model configuration' },
 		{
 			type: 'policyInterventionId',
-			label: 'Intervention Policy'
+			label: 'Intervention policy'
 		}
 	],
 	outputs: [{ type: 'policyInterventionId|datasetId' }],
@@ -136,9 +146,12 @@ export const OptimizeCiemssOperation: Operation = {
 		const init: OptimizeCiemssOperationState = {
 			endTime: 90,
 			numSamples: 100,
-			solverMethod: 'dopri5',
+			solverStepSize: 0.1,
+			solverMethod: CiemssMethodOptions.dopri5,
 			maxiter: 5,
 			maxfeval: 25,
+			numberOfTimepoints: 90,
+			isNumberOfTimepointsManual: false,
 			interventionPolicyId: '',
 			interventionPolicyGroups: [],
 			constraintGroups: [defaultCriterion],
@@ -157,128 +170,3 @@ export const OptimizeCiemssOperation: Operation = {
 		return init;
 	}
 };
-
-// Get the simulation object that ran the optimize.
-// Get the fixed static interventions from this, as well as some details about the optimization interevntions
-// Get the optimization result file
-// Concat the optimization result file with the optimization interventions from simulation object
-export async function getOptimizedInterventions(optimizeRunId: string) {
-	// This is a snake case version of types/Types OptimizeInterventions as we are reading from simulation execution payload
-	interface OptimizeInterventionsSnakeCase {
-		intervention_type: string;
-		param_names: string[];
-		param_values?: number[];
-		start_time?: number[];
-		objective_function_option: string;
-		initial_guess?: number[];
-		relative_importance: number;
-	}
-
-	const allInterventions: Intervention[] = [];
-	// Get the interventionPolicyGroups from the simulation object.
-	// This will prevent any inconsistencies being passed via knobs or state when matching with result file.
-	const simulation = await getSimulation(optimizeRunId);
-
-	const simulationStaticInterventions: any[] = simulation?.executionPayload.fixed_static_parameter_interventions ?? [];
-	const optimizeInterventions: OptimizeInterventionsSnakeCase[] = simulation?.executionPayload?.optimize_interventions;
-
-	// Add any static (not optimized) interventions to allInterventions
-	simulationStaticInterventions.forEach((inter) => {
-		const newIntervetion: Intervention = {
-			dynamicInterventions: inter.dynamic_interventions,
-			name: inter.name,
-			staticInterventions: inter.static_interventions
-		};
-		allInterventions.push(newIntervetion);
-	});
-
-	const policyResults: number[] = await getRunResult(optimizeRunId, 'policy.json');
-
-	optimizeInterventions.forEach((optimizedIntervention) => {
-		const interventionType = optimizedIntervention.intervention_type;
-		const paramNames: string[] = optimizedIntervention.param_names;
-		const paramValues: number[] = optimizedIntervention.param_values ?? [];
-		const startTimes: number[] = optimizedIntervention.start_time ?? [];
-
-		if (interventionType === OptimizationInterventionObjective.startTime) {
-			const newTimestepAsList = policyResults.splice(0, 1);
-			// If we our intervention type is param value our policyResult will provide a timestep.
-			for (let i = 0; i < paramNames.length; i++) {
-				allInterventions.push({
-					name: `Optimized ${paramNames[i]}`,
-					staticInterventions: [
-						{
-							appliedTo: paramNames[i],
-							type: InterventionSemanticType.Parameter,
-							timestep: newTimestepAsList[0],
-							value: paramValues[i]
-						}
-					],
-					dynamicInterventions: []
-				});
-			}
-		} else if (interventionType === OptimizationInterventionObjective.paramValue) {
-			const valueAsList = policyResults.splice(0, 1);
-			// If we our intervention type is start time our policyResult will provide a parameter value.
-			for (let i = 0; i < paramNames.length; i++) {
-				allInterventions.push({
-					name: `Optimized ${paramNames[i]}`,
-					staticInterventions: [
-						{
-							timestep: startTimes[i],
-							value: valueAsList[0],
-							appliedTo: paramNames[i],
-							type: InterventionSemanticType.Parameter
-						}
-					],
-					dynamicInterventions: []
-				});
-			}
-		} else if (interventionType === OptimizationInterventionObjective.paramValueAndStartTime) {
-			// If our intervention type is start_time_param_value our policyResult will contain the timestep value, then the parameter value.
-			// https://github.com/ciemss/pyciemss/blob/main/pyciemss/integration_utils/intervention_builder.py#L66
-			const timeAndValueAsList = policyResults.splice(0, 2);
-			for (let i = 0; i < paramNames.length; i++) {
-				allInterventions.push({
-					name: `Optimized ${paramNames[i]}`,
-					staticInterventions: [
-						{
-							timestep: timeAndValueAsList[0],
-							value: timeAndValueAsList[1],
-							appliedTo: paramNames[i],
-							type: InterventionSemanticType.Parameter
-						}
-					],
-					dynamicInterventions: []
-				});
-			}
-		} else {
-			// Should realistically not be hit unless we change the interface and do not update
-			console.error(`Unable to find the intevention type for optimization run: ${optimizeRunId}`);
-		}
-	});
-	return allInterventions;
-}
-
-/**
- *
- * 1) Get optimize interventions
- *
- *
- */
-export async function createInterventionPolicyFromOptimize(
-	modelConfigId: string,
-	optimizeRunId: string
-): Promise<InterventionPolicy | null> {
-	const modelId = await getModelIdFromModelConfigurationId(modelConfigId);
-	const optimizedInterventions = await getOptimizedInterventions(optimizeRunId);
-
-	const newIntervention: InterventionPolicy = {
-		name: `Optimize run: ${optimizeRunId}`,
-		modelId,
-		temporary: true,
-		interventions: optimizedInterventions
-	};
-	const newInterventionPolicy: InterventionPolicy | null = await createInterventionPolicy(newIntervention);
-	return newInterventionPolicy;
-}

@@ -5,11 +5,13 @@ import java.util.List;
 import java.util.UUID;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 @Component
 @RequiredArgsConstructor
-public class CompareModelsResponseHandler extends TaskResponseHandler {
+@Slf4j
+public class CompareModelsResponseHandler extends LlmTaskResponseHandler {
 
 	public static final String NAME = "gollm:compare_models";
 
@@ -19,9 +21,10 @@ public class CompareModelsResponseHandler extends TaskResponseHandler {
 	}
 
 	@Data
-	public static class Input {
+	public static class Input extends LlmTaskResponseHandler.Input {
 
 		List<String> amrs;
+		String goal;
 	}
 
 	@Data

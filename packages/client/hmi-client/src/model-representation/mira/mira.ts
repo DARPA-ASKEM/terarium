@@ -296,16 +296,17 @@ export const collapseTemplates = (miraModel: MiraModel) => {
 		if (check.has(key)) return;
 
 		uniqueTemplates.push(t);
-		check.set(key, ++keyCounter);
+		check.set(key, keyCounter);
+		keyCounter++;
 	});
 
 	// 3 Rename and sanitize everything
 	uniqueTemplates.forEach((t) => {
 		const key = generateKey(t);
-		t.name = `template-${check.get(key)}`;
+		t.name = `group-${check.get(key)}`;
 	});
 	tempMatrixMap.forEach((value, key) => {
-		const name = `template-${check.get(key)}`;
+		const name = `group-${check.get(key)}`;
 		matrixMap.set(name, value);
 	});
 
@@ -486,7 +487,7 @@ export const convertToIGraph = (
 
 		graph.nodes.push({
 			id: t.name,
-			label: '',
+			label: t.name,
 			x: 0,
 			y: 0,
 			width: 50,
@@ -505,15 +506,6 @@ export const convertToIGraph = (
 				points: [],
 				data: {}
 			});
-
-			t.controllers.forEach((controllerName) => {
-				graph.edges.push({
-					source: controllerName,
-					target: t.name,
-					points: [],
-					data: { isController: true }
-				});
-			});
 		}
 		if (t.outcome !== '') {
 			graph.edges.push({
@@ -522,11 +514,12 @@ export const convertToIGraph = (
 				points: [],
 				data: {}
 			});
-
+		}
+		if (t.controllers && t.controllers.length > 0) {
 			t.controllers.forEach((controllerName) => {
 				graph.edges.push({
-					source: t.name,
-					target: controllerName,
+					source: controllerName,
+					target: t.name,
 					points: [],
 					data: { isController: true }
 				});

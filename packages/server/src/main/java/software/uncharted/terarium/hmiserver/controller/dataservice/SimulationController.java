@@ -29,6 +29,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
+import software.uncharted.terarium.hmiserver.annotations.HasProjectAccess;
 import software.uncharted.terarium.hmiserver.configuration.Config;
 import software.uncharted.terarium.hmiserver.models.TerariumAsset;
 import software.uncharted.terarium.hmiserver.models.dataservice.AssetType;
@@ -84,6 +85,7 @@ public class SimulationController {
 	@PostMapping
 	@Secured(Roles.USER)
 	@Operation(summary = "Create a new simulation")
+	@HasProjectAccess(level = Schema.Permission.WRITE)
 	@ApiResponses(
 		value = {
 			@ApiResponse(
@@ -101,13 +103,8 @@ public class SimulationController {
 		@RequestBody final Simulation simulation,
 		@RequestParam(name = "project-id", required = false) final UUID projectId
 	) {
-		final Schema.Permission permission = projectService.checkPermissionCanWrite(
-			currentUserService.get().getId(),
-			projectId
-		);
-
 		try {
-			final Simulation sim = simulationService.createAsset(simulation, projectId, permission);
+			final Simulation sim = simulationService.createAsset(simulation, projectId);
 
 			return ResponseEntity.status(HttpStatus.CREATED).body(sim);
 		} catch (final Exception e) {
@@ -120,6 +117,7 @@ public class SimulationController {
 	@GetMapping("/{id}")
 	@Secured(Roles.USER)
 	@Operation(summary = "Get a simulation by ID")
+	@HasProjectAccess
 	@ApiResponses(
 		value = {
 			@ApiResponse(
@@ -146,13 +144,8 @@ public class SimulationController {
 		@PathVariable("id") final UUID id,
 		@RequestParam(name = "project-id", required = false) final UUID projectId
 	) {
-		final Schema.Permission permission = projectService.checkPermissionCanRead(
-			currentUserService.get().getId(),
-			projectId
-		);
-
 		try {
-			final Optional<Simulation> simulation = simulationService.getAsset(id, permission);
+			final Optional<Simulation> simulation = simulationService.getAsset(id);
 
 			if (simulation.isPresent()) {
 				final Simulation sim = simulation.get();
@@ -203,6 +196,7 @@ public class SimulationController {
 	@PutMapping("/{id}")
 	@Secured(Roles.USER)
 	@Operation(summary = "Update a simulation by ID")
+	@HasProjectAccess(level = Schema.Permission.WRITE)
 	@ApiResponses(
 		value = {
 			@ApiResponse(
@@ -222,14 +216,9 @@ public class SimulationController {
 		@RequestBody final Simulation simulation,
 		@RequestParam(name = "project-id", required = false) final UUID projectId
 	) {
-		final Schema.Permission permission = projectService.checkPermissionCanWrite(
-			currentUserService.get().getId(),
-			projectId
-		);
-
 		try {
 			simulation.setId(id);
-			final Optional<Simulation> updated = simulationService.updateAsset(simulation, projectId, permission);
+			final Optional<Simulation> updated = simulationService.updateAsset(simulation, projectId);
 			return updated.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
 		} catch (final Exception e) {
 			final String error = String.format("Failed to update simulation %s", id);
@@ -241,6 +230,7 @@ public class SimulationController {
 	@DeleteMapping("/{id}")
 	@Secured(Roles.USER)
 	@Operation(summary = "Delete a simulation by ID")
+	@HasProjectAccess(level = Schema.Permission.WRITE)
 	@ApiResponses(
 		value = {
 			@ApiResponse(
@@ -255,13 +245,8 @@ public class SimulationController {
 		@PathVariable("id") final UUID id,
 		@RequestParam(name = "project-id", required = false) final UUID projectId
 	) {
-		final Schema.Permission permission = projectService.checkPermissionCanWrite(
-			currentUserService.get().getId(),
-			projectId
-		);
-
 		try {
-			simulationService.deleteAsset(id, projectId, permission);
+			simulationService.deleteAsset(id, projectId);
 			return "Simulation deleted";
 		} catch (final Exception e) {
 			final String error = String.format("Failed to delete simulation %s", id);
@@ -323,6 +308,7 @@ public class SimulationController {
 	@PostMapping("/{id}/create-result-as-dataset/{project-id}")
 	@Secured(Roles.USER)
 	@Operation(summary = "Create a new dataset from a simulation result, then add it to a project as a Dataset")
+	@HasProjectAccess(level = Schema.Permission.WRITE)
 	@ApiResponses(
 		value = {
 			@ApiResponse(
@@ -345,15 +331,12 @@ public class SimulationController {
 		@PathVariable("id") final UUID id,
 		@PathVariable("project-id") final UUID projectId,
 		@RequestParam("dataset-name") final String datasetName,
-		@RequestParam("add-to-project") final Boolean addToProject
+		@RequestParam("add-to-project") final Boolean addToProject,
+		@RequestParam(value = "model-configuration-id", required = false) final UUID modelConfigurationId,
+		@RequestParam(value = "intervention-policy-id", required = false) final UUID interventionPolicyId
 	) {
-		final Schema.Permission permission = projectService.checkPermissionCanWrite(
-			currentUserService.get().getId(),
-			projectId
-		);
-
 		try {
-			final Optional<Simulation> sim = simulationService.getAsset(id, permission);
+			final Optional<Simulation> sim = simulationService.getAsset(id);
 			if (sim.isEmpty()) {
 				return ResponseEntity.notFound().build();
 			}
@@ -364,7 +347,8 @@ public class SimulationController {
 				datasetName,
 				projectId,
 				addToProject,
-				permission
+				modelConfigurationId,
+				interventionPolicyId
 			);
 			return ResponseEntity.status(HttpStatus.CREATED).body(dataset);
 		} catch (final Exception e) {
@@ -377,6 +361,7 @@ public class SimulationController {
 	@PostMapping("/{id}/create-assets-from-simulation")
 	@Secured(Roles.USER)
 	@Operation(summary = "Create assets from a simulation result, then add them to a project")
+	@HasProjectAccess(level = Schema.Permission.WRITE)
 	@ApiResponses(
 		value = {
 			@ApiResponse(
@@ -400,11 +385,6 @@ public class SimulationController {
 		@RequestBody final Map<String, Object> body,
 		@RequestParam("project-id") final UUID projectId
 	) {
-		final Schema.Permission permission = projectService.checkPermissionCanWrite(
-			currentUserService.get().getId(),
-			projectId
-		);
-
 		try {
 			final Optional<Project> project = projectService.getProject(projectId);
 			if (!project.isPresent()) {
@@ -422,39 +402,33 @@ public class SimulationController {
 
 				TerariumAsset asset = null;
 				if (assetType == AssetType.INTERVENTION_POLICY) {
-					final Optional<InterventionPolicy> interventionPolicy = interventionPolicyService.getAsset(
-						assetId,
-						permission
-					);
+					final Optional<InterventionPolicy> interventionPolicy = interventionPolicyService.getAsset(assetId);
 					if (interventionPolicy.isPresent()) {
 						interventionPolicy.get().setName(name);
 						interventionPolicy.get().setTemporary(false);
-						interventionPolicyService.updateAsset(interventionPolicy.get(), projectId, permission);
+						interventionPolicyService.updateAsset(interventionPolicy.get(), projectId);
 					}
 
 					asset = interventionPolicy.get();
 				} else if (assetType == AssetType.MODEL_CONFIGURATION) {
-					final Optional<ModelConfiguration> modelConfiguration = modelConfigurationService.getAsset(
-						assetId,
-						permission
-					);
+					final Optional<ModelConfiguration> modelConfiguration = modelConfigurationService.getAsset(assetId);
 					if (modelConfiguration.isPresent()) {
 						modelConfiguration.get().setName(name);
 						modelConfiguration.get().setTemporary(false);
-						modelConfigurationService.updateAsset(modelConfiguration.get(), projectId, permission);
+						modelConfigurationService.updateAsset(modelConfiguration.get(), projectId);
 					}
 					asset = modelConfiguration.get();
 				} else if (assetType == AssetType.DATASET) {
-					final Optional<Dataset> dataset = datasetService.getAsset(assetId, permission);
+					final Optional<Dataset> dataset = datasetService.getAsset(assetId);
 					if (dataset.isPresent()) {
 						dataset.get().setName(name);
-						datasetService.updateAsset(dataset.get(), projectId, permission);
+						datasetService.updateAsset(dataset.get(), projectId);
 					}
 					asset = dataset.get();
 				}
 				// add to project if not already part of it
 				if (!projectAssetService.isPartOfExistingProject(assetId)) {
-					projectAssetService.createProjectAsset(project.get(), assetType, asset, permission);
+					projectAssetService.createProjectAsset(project.get(), assetType, asset);
 				}
 				// add to final response
 				if (asset != null) {

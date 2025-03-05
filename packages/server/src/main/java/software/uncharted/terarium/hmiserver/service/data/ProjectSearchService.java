@@ -17,9 +17,7 @@ import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Map;
 import java.util.UUID;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Future;
 import java.util.stream.Collectors;
 import lombok.Data;
@@ -120,6 +118,8 @@ public class ProjectSearchService {
 
 		@JsonProperty("asset_embeddings")
 		private List<ProjectAssetEmbedding> assetEmbeddings = new ArrayList<>();
+
+		private String embeddingSha256;
 
 		// join field properties
 		private PermissionJoin permissionJoin;
@@ -341,38 +341,62 @@ public class ProjectSearchService {
 		return QueryBuilders.bool(b -> b.must(onlyProjects).must(permissionQuery));
 	}
 
+	// private String getEmbeddingSha256(final Map<TerariumAssetEmbeddingType, String> embeddingTexts) {
+	// 	final String concatenatedText = embeddingTexts.values().stream().sorted().reduce((a, b) -> a + " " + b).orElse("");
+	// 	return DigestUtils.sha256Hex(concatenatedText);
+	// }
+
 	/**
 	 * Generate asset embeddings for a project
 	 *
-	 * @param projectId
-	 * @param asset
-	 * @return
+	 * @param projectId - the project id
+	 * @param asset - the asset to generate embeddings for
+	 * @param force - force the embedding to be generated even if the asset is temporary
+	 * @return - a future that will be completed when the embedding is generated
 	 */
 	public Future<Void> generateAndUpsertProjectAssetEmbeddings(
 		final UUID projectId,
 		final TerariumAsset asset,
 		final boolean force
-	) {
-		if (force || (!isRunningTestProfile() && !asset.getTemporary())) {
+	) throws IOException {
+		//TODO: Temporary fix for performance issue. Disabling embeddings for now. Jan 29 2025
+
+		/*if (force || (!isRunningTestProfile() && !asset.getTemporary())) {
 			final Map<TerariumAssetEmbeddingType, String> embeddingTexts = asset.getEmbeddingsSourceByType();
+			if (embeddingTexts == null) {
+				log.warn("unable to get embedding sources for asset {}", asset.getId());
+				return null;
+			}
+
+			// remove any null values
+			embeddingTexts.values().removeIf(text -> text == null || text.isEmpty());
+
 			if (embeddingTexts.isEmpty()) {
 				log.warn("No embedding sources for asset {}, not indexing anything", asset.getId());
 				return null;
 			}
 
-			log.info("Dispatch async embedding generation for asset {}", asset.getId());
+			// compute the new embedding sha
+			final String newEmbeddingSha256 = getEmbeddingSha256(embeddingTexts);
 
+			final ProjectDocument projectDoc = elasticService.get(getAlias(), projectId.toString(), ProjectDocument.class);
+
+			if (projectDoc == null) {
+				log.warn("Project {} not found, skipping", projectId);
+				return null;
+			}
+
+			if (projectDoc.embeddingSha256 != null && projectDoc.embeddingSha256.equals(newEmbeddingSha256)) {
+				log.info("Embedding for asset {} has not changed, skipping", asset.getId());
+				return null;
+			}
+
+			log.info("Dispatch async embedding generation for asset {}", asset.getId());
 			return CompletableFuture.runAsync(() -> {
 				new Thread(() -> {
 					try {
 						final Map<TerariumAssetEmbeddingType, TerariumAssetEmbeddings> embeddings =
 							embeddingService.generateEmbeddingsBySource(embeddingTexts);
-
-						final ProjectDocument projectDoc = elasticService.get(
-							getAlias(),
-							projectId.toString(),
-							ProjectDocument.class
-						);
 
 						for (final Map.Entry<TerariumAssetEmbeddingType, TerariumAssetEmbeddings> entry : embeddings.entrySet()) {
 							final TerariumAssetEmbeddings embedding = entry.getValue();
@@ -407,6 +431,9 @@ public class ProjectSearchService {
 							}
 						}
 
+						// save the new embedding sha256
+						projectDoc.embeddingSha256 = newEmbeddingSha256;
+
 						final String routing = projectId.toString();
 
 						log.info("Writing asset embedding for project {} for asset {}", projectId, asset.getId());
@@ -418,11 +445,12 @@ public class ProjectSearchService {
 					}
 				}).start();
 			});
-		}
+		}*/
 		return null;
 	}
 
-	public Future<Void> generateAndUpsertProjectAssetEmbeddings(final UUID projectId, final TerariumAsset asset) {
+	public Future<Void> generateAndUpsertProjectAssetEmbeddings(final UUID projectId, final TerariumAsset asset)
+		throws IOException {
 		return generateAndUpsertProjectAssetEmbeddings(projectId, asset, false);
 	}
 
@@ -497,7 +525,8 @@ public class ProjectSearchService {
 				throw new IllegalArgumentException("k must be less than or equal to numCandidates");
 			}
 
-			final TerariumAssetEmbeddings embeddings = embeddingService.generateEmbeddings(text);
+			final String searchText = (text == null) ? "" : text;
+			final TerariumAssetEmbeddings embeddings = embeddingService.generateEmbeddings(searchText);
 
 			final List<Float> vector = Arrays.stream(embeddings.getEmbeddings().get(0).getVector())
 				.mapToObj(d -> (float) d)
@@ -524,7 +553,7 @@ public class ProjectSearchService {
 			final float NAME_BOOST = 0.9f;
 			final float KNN_BOOST = 0.1f;
 
-			final Query titleMatchQuery = QueryBuilders.match(m -> m.field("name").query(text).boost(NAME_BOOST));
+			final Query titleMatchQuery = QueryBuilders.match(m -> m.field("name").query(searchText).boost(NAME_BOOST));
 
 			final KnnQuery knn = new KnnQuery.Builder()
 				.field("asset_embeddings.vector")

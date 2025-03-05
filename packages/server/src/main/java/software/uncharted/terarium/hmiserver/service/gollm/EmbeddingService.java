@@ -17,10 +17,11 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import software.uncharted.terarium.hmiserver.models.TerariumAssetEmbeddingType;
 import software.uncharted.terarium.hmiserver.models.TerariumAssetEmbeddings;
-import software.uncharted.terarium.hmiserver.models.TerariumAssetEmbeddings.Embeddings;
+import software.uncharted.terarium.hmiserver.models.TerariumAssetEmbeddings.Embedding;
 import software.uncharted.terarium.hmiserver.models.task.TaskRequest;
 import software.uncharted.terarium.hmiserver.models.task.TaskRequest.TaskType;
 import software.uncharted.terarium.hmiserver.models.task.TaskResponse;
+import software.uncharted.terarium.hmiserver.models.task.TaskStatus;
 import software.uncharted.terarium.hmiserver.service.CurrentUserService;
 import software.uncharted.terarium.hmiserver.service.tasks.TaskService;
 
@@ -53,9 +54,14 @@ public class EmbeddingService {
 
 	public TerariumAssetEmbeddings generateEmbeddings(final String input)
 		throws TimeoutException, InterruptedException, ExecutionException, IOException {
+		return generateEmbeddings(List.of(input));
+	}
+
+	public TerariumAssetEmbeddings generateEmbeddings(final List<String> input)
+		throws TimeoutException, InterruptedException, ExecutionException, IOException {
 		// create the embedding search request
 		final GoLLMSearchRequest embeddingRequest = new GoLLMSearchRequest();
-		embeddingRequest.setText(List.of(input));
+		embeddingRequest.setText(input);
 		embeddingRequest.setEmbeddingModel(EMBEDDING_MODEL);
 
 		final TaskRequest req = new TaskRequest();
@@ -70,19 +76,26 @@ public class EmbeddingService {
 		}
 
 		final TaskResponse resp = taskService.runTaskSync(req);
+		if (resp.getStatus() != TaskStatus.SUCCESS) {
+			throw new RuntimeException("Task failed: " + resp.getStderr());
+		}
 
 		final byte[] outputBytes = resp.getOutput();
 		final JsonNode output = objectMapper.readTree(outputBytes);
 
 		final EmbeddingsResponse embeddingResp = objectMapper.convertValue(output, EmbeddingsResponse.class);
 
-		final Embeddings embeddingChunk = new Embeddings();
-		embeddingChunk.setVector(embeddingResp.response.get(0));
-		embeddingChunk.setEmbeddingId(UUID.randomUUID().toString());
-		embeddingChunk.setSpan(new long[] { 0, input.length() });
-
 		final TerariumAssetEmbeddings embeddings = new TerariumAssetEmbeddings();
-		embeddings.getEmbeddings().add(embeddingChunk);
+
+		for (int i = 0; i < embeddingResp.response.size(); i++) {
+			double[] response = embeddingResp.response.get(i);
+			String text = input.get(i);
+			final Embedding embeddingChunk = new Embedding();
+			embeddingChunk.setVector(response);
+			embeddingChunk.setEmbeddingId(UUID.randomUUID().toString());
+			embeddingChunk.setSpan(new long[] { 0, text.length() });
+			embeddings.getEmbeddings().add(embeddingChunk);
+		}
 		return embeddings;
 	}
 
@@ -113,6 +126,9 @@ public class EmbeddingService {
 		}
 
 		final TaskResponse resp = taskService.runTaskSync(req);
+		if (resp.getStatus() != TaskStatus.SUCCESS) {
+			throw new RuntimeException("Task failed: " + resp.getStderr());
+		}
 
 		final byte[] outputBytes = resp.getOutput();
 		final JsonNode output = objectMapper.readTree(outputBytes);
@@ -126,7 +142,7 @@ public class EmbeddingService {
 			final TerariumAssetEmbeddingType embeddingType = indices.get(index);
 			final String source = input.get(embeddingType);
 
-			final Embeddings embeddingChunk = new Embeddings();
+			final Embedding embeddingChunk = new Embedding();
 			embeddingChunk.setVector(entry);
 			embeddingChunk.setEmbeddingId(UUID.randomUUID().toString());
 			embeddingChunk.setSpan(new long[] { 0, source.length() });

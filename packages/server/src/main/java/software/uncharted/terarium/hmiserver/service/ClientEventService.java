@@ -7,6 +7,7 @@ import com.rabbitmq.client.Channel;
 import java.io.IOException;
 import java.io.Serial;
 import java.io.Serializable;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
@@ -248,10 +249,10 @@ public class ClientEventService {
 				return null;
 			} catch (final Exception e1) {
 				log.error(
-					"Error decoding message as either {} or {}. Raw message is: {}",
+					"Error decoding message as either {} or {}. Raw message is (up to 10k bytes): {}",
 					clazz.getName(),
 					JsonNode.class.getName(),
-					message.getBody()
+					Arrays.copyOfRange(message.getBody(), 0, 10000)
 				);
 				log.error("", e1);
 				return null;

@@ -9,11 +9,12 @@ import type {
 } from '@/types/Types';
 import { SemanticType } from '@/types/Types';
 import { isEmpty, isNaN, isNumber, keyBy } from 'lodash';
-import { pythonInstance } from '@/python/PyodideController';
+import { pythonInstance } from '@/web-workers/python/PyodideController';
 import { DistributionType } from './distribution';
 
 export interface SemanticOtherValues {
 	name: string;
+	description?: string;
 	target?: string;
 	expression?: string;
 	expressionMathml?: string;
@@ -46,13 +47,13 @@ export const deleteModelConfiguration = async (id: string) => {
 	return response?.data ?? null;
 };
 
-export const getAsConfiguredModel = async (modelConfiguration: ModelConfiguration): Promise<Model> => {
-	const response = await API.get<Model>(`model-configurations/as-configured-model/${modelConfiguration.id}`);
+export const getAsConfiguredModel = async (modelConfigurationId: string): Promise<Model> => {
+	const response = await API.get<Model>(`model-configurations/${modelConfigurationId}/model`);
 	return response?.data ?? null;
 };
 
 export const getArchive = async (modelConfiguration: ModelConfiguration): Promise<any> => {
-	const response = await API.get(`model-configurations/download/${modelConfiguration.id}`, {
+	const response = await API.get(`model-configurations/download-archive/${modelConfiguration.id}`, {
 		responseType: 'arraybuffer'
 	});
 	const blob = new Blob([response?.data], { type: 'application/octet-stream' });
@@ -177,6 +178,17 @@ export async function setInitialExpression(
 	initial.expressionMathml = mathml;
 }
 
+export async function setInitialExpressions(
+	config: ModelConfiguration,
+	initialExpressions: { id: string; value: string }[]
+): Promise<void> {
+	await Promise.all(
+		initialExpressions.map(async (initial) => {
+			await setInitialExpression(config, initial.id, initial.value);
+		})
+	);
+}
+
 export function setInitialSource(config: ModelConfiguration, initialId: string, source: string): void {
 	const initial = getInitial(config, initialId);
 	if (initial) {
@@ -196,7 +208,13 @@ export function getObservables(config: ModelConfiguration): ObservableSemantic[]
 	return config.observableSemanticList ?? [];
 }
 
-export function getOtherValues(configs: ModelConfiguration[], id: string, key: string, otherValueList: string) {
+export function getOtherValues(
+	configs: ModelConfiguration[],
+	id: string,
+	key: string,
+	otherValueList: string,
+	description?: string
+) {
 	let otherValues: SemanticOtherValues[] = [];
 
 	const modelConfigTableData = configs.map((modelConfig) => ({
@@ -208,6 +226,9 @@ export function getOtherValues(configs: ModelConfiguration[], id: string, key: s
 		const config: ParameterSemantic[] | InitialSemantic[] = modelConfig.list.filter((item) => item[key] === id)[0];
 		if (config && modelConfig.name) {
 			const data: SemanticOtherValues = { name: modelConfig.name, ...config };
+			if (description) {
+				data.description = description;
+			}
 			otherValues = [...otherValues, data];
 		}
 	});
@@ -222,7 +243,7 @@ export function isNumberInputEmpty(value: string) {
 export function getMissingInputAmount(modelConfiguration: ModelConfiguration) {
 	let missingInputs = 0;
 	modelConfiguration.initialSemanticList.forEach((initial) => {
-		if (isNumberInputEmpty(initial.expression)) {
+		if (isEmpty(initial.expression)) {
 			missingInputs++;
 		}
 	});
@@ -271,4 +292,22 @@ export function getModelInitials(modelConfiguration, source, amrInitials) {
 			source
 		};
 	});
+}
+
+// Get the model configuration name for the given model configuration id
+export function getModelConfigName(modelConfigs: ModelConfiguration[], configId: string) {
+	const modelConfig = modelConfigs.find((d) => d.id === configId);
+	return modelConfig?.name ?? '';
+}
+
+// Get the model configuration as a LaTeX table
+export async function getModelConfigurationAsLatexTable(id: ModelConfiguration['id']): Promise<string> {
+	const response = await API.get<string>(`model-configurations/${id}/latex-table`);
+	return response?.data ?? '';
+}
+
+// Get the model configuration as a CSV table
+export async function getModelConfigurationAsCsvTable(id: ModelConfiguration['id']): Promise<string> {
+	const response = await API.get<string>(`model-configurations/${id}/csv-table`);
+	return response?.data ?? '';
 }

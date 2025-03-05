@@ -4,7 +4,6 @@ import static org.springframework.security.test.web.servlet.request.SecurityMock
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import jakarta.transaction.Transactional;
 import java.io.IOException;
 import java.util.UUID;
 import org.junit.jupiter.api.AfterEach;
@@ -40,13 +39,11 @@ public class AssetControllerTests extends TerariumApplicationTests {
 	@BeforeEach
 	public void setup() throws IOException {
 		projectSearchService.setupIndexAndAliasAndEnsureEmpty();
-		documentAssetService.setupIndexAndAliasAndEnsureEmpty();
 	}
 
 	@AfterEach
 	public void teardown() throws IOException {
 		projectSearchService.teardownIndexAndAlias();
-		documentAssetService.teardownIndexAndAlias();
 	}
 
 	private static final String TEST_ASSET_NAME_1 = "test-asset-name-1";
@@ -197,8 +194,7 @@ public class AssetControllerTests extends TerariumApplicationTests {
 
 		final DocumentAsset documentAsset = documentAssetService.createAsset(
 			(DocumentAsset) new DocumentAsset().setName(TEST_ASSET_NAME_1).setDescription("my description"),
-			project.getId(),
-			ASSUME_WRITE_PERMISSION
+			project.getId()
 		);
 
 		final ProjectAsset projectAsset = new ProjectAsset()
@@ -221,8 +217,7 @@ public class AssetControllerTests extends TerariumApplicationTests {
 
 		final DocumentAsset documentAsset2 = documentAssetService.createAsset(
 			(DocumentAsset) new DocumentAsset().setName(TEST_ASSET_NAME_2).setDescription("my description"),
-			project.getId(),
-			ASSUME_WRITE_PERMISSION
+			project.getId()
 		);
 
 		final ProjectAsset projectAsset2 = new ProjectAsset()
