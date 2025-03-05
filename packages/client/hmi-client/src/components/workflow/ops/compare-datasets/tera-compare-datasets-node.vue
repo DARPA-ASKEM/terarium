@@ -32,18 +32,14 @@
 <script setup lang="ts">
 import { computed, ref, toRef, watch, onMounted } from 'vue';
 import Button from 'primevue/button';
-
 import { Dataset, InterventionPolicy, ModelConfiguration } from '@/types/Types';
 import { DataArray } from '@/services/models/simulation-service';
 import { type WorkflowNode, WorkflowPortStatus } from '@/types/workflow';
-
 import { useCharts, type ChartData } from '@/composables/useCharts';
 import { useChartSettings } from '@/composables/useChartSettings';
 import VegaChart from '@/components/widgets/VegaChart.vue';
 import TeraNodePreview from '../tera-node-preview.vue';
-
 import { CompareDatasetsState, CompareValue } from './compare-datasets-operation';
-
 import { initialize } from './compare-datasets-utils';
 
 const props = defineProps<{
@@ -90,6 +86,7 @@ const { useCompareDatasetCharts, useInterventionRankingCharts } = useCharts(
 	null,
 	null
 );
+
 onMounted(() => {
 	initialize(
 		props.node,
@@ -106,6 +103,7 @@ onMounted(() => {
 		interventionPolicies
 	);
 });
+
 const comparisonCharts = useCompareDatasetCharts(
 	selectedVariableSettings,
 	selectedPlotType,
@@ -128,6 +126,27 @@ watch(
 		if (props.node.inputs.every((input) => input.status === WorkflowPortStatus.CONNECTED)) {
 			emit('append-input-port', { type: 'datasetId', label: 'Dataset or Simulation result' });
 		}
+		initialize(
+			props.node,
+			null,
+			isFetchingDatasets,
+			datasets,
+			datasetResults,
+			modelConfigIdToInterventionPolicyIdMap,
+			impactChartData,
+			rankingChartData,
+			baselineDatasetIndex,
+			selectedPlotType,
+			modelConfigurations,
+			interventionPolicies
+		);
+	},
+	{ deep: true }
+);
+
+watch(
+	() => props.node.state.chartSettings,
+	() => {
 		initialize(
 			props.node,
 			null,
