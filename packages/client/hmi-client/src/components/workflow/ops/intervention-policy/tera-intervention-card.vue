@@ -141,6 +141,7 @@
 							placeholder="value"
 						/>
 						<SelectButton
+							v-if="intervention.staticInterventions[0].type === InterventionSemanticType.Parameter"
 							:model-value="intervention.staticInterventions[0].valueType"
 							:options="interventionValueTypeOptions"
 							option-label="label"
@@ -195,6 +196,7 @@
 									placeholder="value"
 								/>
 								<SelectButton
+									v-if="i.type === InterventionSemanticType.Parameter"
 									:model-value="i.valueType"
 									:options="interventionValueTypeOptions"
 									option-label="label"

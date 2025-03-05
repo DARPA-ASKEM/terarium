@@ -1,5 +1,6 @@
 import API from '@/api/api';
 import type {
+	InferredParameterSemantic,
 	InitialSemantic,
 	Model,
 	ModelConfiguration,
@@ -94,6 +95,13 @@ export function setParameterDistributions(
 
 export function getParameter(config: ModelConfiguration, parameterId: string): ParameterSemantic | undefined {
 	return config.parameterSemanticList?.find((param) => param.referenceId === parameterId);
+}
+
+export function getInferredParameter(
+	config: ModelConfiguration,
+	parameterId: string
+): InferredParameterSemantic | undefined {
+	return config.inferredParameterList?.find((param) => param.referenceId === parameterId);
 }
 
 export function getParameterDistribution(
@@ -306,13 +314,16 @@ export async function getModelConfigurationAsLatexTable(id: ModelConfiguration['
 	return response?.data ?? '';
 }
 
-export function getParameterDistributionAverage(parameter: ParameterSemantic): number {
+export function getParameterDistributionAverage(parameter: ParameterSemantic | InferredParameterSemantic): number {
 	const distribution = parameter.distribution;
 	if (distribution.type === DistributionType.Constant) {
 		return distribution.parameters.value;
 	}
 	if (distribution.type === DistributionType.Uniform) {
 		return (distribution.parameters.minimum + distribution.parameters.maximum) / 2;
+	}
+	if (distribution.type === 'inferred') {
+		return distribution.parameters.mean;
 	}
 	return NaN;
 }

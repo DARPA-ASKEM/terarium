@@ -470,6 +470,7 @@ import TeraPyciemssCancelButton from '@/components/pyciemss/tera-pyciemss-cancel
 import TeraOperatorOutputSummary from '@/components/operator/tera-operator-output-summary.vue';
 import { getModelByModelConfigurationId, getCalendarSettingsFromModel } from '@/services/model';
 import {
+	getInferredParameter,
 	getModelConfigurationById,
 	getParameter,
 	getParameterDistributionAverage
@@ -854,16 +855,22 @@ const setInterventionPolicyGroups = (interventionPolicy: InterventionPolicy) => 
 };
 
 const getInitialGuessValue = (intervention: StaticIntervention) => {
-	if (intervention.valueType === InterventionValueType.Percentage) {
-		if (intervention.type === InterventionSemanticType.Parameter) {
-			const parameter = getParameter(modelConfiguration.value!, intervention.appliedTo);
-			return getParameterDistributionAverage(parameter!) * (intervention.value / 100);
-		}
-		// FIXME: Setting initial value for state to 0 until I have a clearer answer as to what we want here when the value is a percentage.
-
-		return 0;
+	if (
+		intervention.type !== InterventionSemanticType.Parameter ||
+		intervention.valueType !== InterventionValueType.Percentage
+	) {
+		return intervention.value;
 	}
-	return intervention.value;
+
+	// Get the parameter from the model configuration and return the "average" value of the distribution times the percentage.
+	const parameter =
+		getInferredParameter(modelConfiguration.value!, intervention.appliedTo) ??
+		getParameter(modelConfiguration.value!, intervention.appliedTo);
+	if (!parameter) {
+		logger.error(`Parameter ${intervention.appliedTo} not found in model configuration`);
+		return intervention.value;
+	}
+	return getParameterDistributionAverage(parameter) * (intervention.value / 100);
 };
 
 const runOptimize = async () => {
