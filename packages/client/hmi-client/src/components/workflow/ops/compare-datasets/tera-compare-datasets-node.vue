@@ -39,8 +39,8 @@ import { useCharts, type ChartData } from '@/composables/useCharts';
 import { useChartSettings } from '@/composables/useChartSettings';
 import VegaChart from '@/components/widgets/VegaChart.vue';
 import TeraNodePreview from '../tera-node-preview.vue';
-import { CompareDatasetsState, CompareValue } from './compare-datasets-operation';
-import { initialize } from './compare-datasets-utils';
+import { CompareDatasetsState, CompareValue, PlotValue } from './compare-datasets-operation';
+import { buildChartData, initialize } from './compare-datasets-utils';
 
 const props = defineProps<{
 	node: WorkflowNode<CompareDatasetsState>;
@@ -61,8 +61,12 @@ const datasetResults = ref<{
 const modelConfigurations = ref<ModelConfiguration[]>([]);
 const interventionPolicies = ref<InterventionPolicy[]>([]);
 const modelConfigIdToInterventionPolicyIdMap = ref<Record<string, string[]>>({});
-const impactChartData = ref<ChartData | null>(null);
-const rankingChartData = ref<ChartData | null>(null);
+const impactChartData = computed<ChartData | null>(() =>
+	buildChartData(datasets.value, datasetResults.value, baselineDatasetIndex.value, selectedPlotType.value)
+);
+const rankingChartData = computed<ChartData | null>(() =>
+	buildChartData(datasets.value, datasetResults.value, baselineDatasetIndex.value, PlotValue.VALUE)
+);
 
 const chartData = computed(() => {
 	if (props.node.state.selectedCompareOption === CompareValue.RANK) {
@@ -86,24 +90,6 @@ const { useCompareDatasetCharts, useInterventionRankingCharts } = useCharts(
 	null,
 	null
 );
-
-onMounted(() => {
-	initialize(
-		props.node,
-		null,
-		isFetchingDatasets,
-		datasets,
-		datasetResults,
-		modelConfigIdToInterventionPolicyIdMap,
-		impactChartData,
-		rankingChartData,
-		baselineDatasetIndex,
-		selectedPlotType,
-		modelConfigurations,
-		interventionPolicies
-	);
-});
-
 const comparisonCharts = useCompareDatasetCharts(
 	selectedVariableSettings,
 	selectedPlotType,
@@ -120,6 +106,19 @@ const rankingCharts = useInterventionRankingCharts(
 	interventionPolicies
 );
 
+onMounted(() => {
+	initialize(
+		props.node,
+		null,
+		isFetchingDatasets,
+		datasets,
+		datasetResults,
+		modelConfigIdToInterventionPolicyIdMap,
+		modelConfigurations,
+		interventionPolicies
+	);
+});
+
 watch(
 	() => props.node.inputs,
 	() => {
@@ -133,31 +132,6 @@ watch(
 			datasets,
 			datasetResults,
 			modelConfigIdToInterventionPolicyIdMap,
-			impactChartData,
-			rankingChartData,
-			baselineDatasetIndex,
-			selectedPlotType,
-			modelConfigurations,
-			interventionPolicies
-		);
-	},
-	{ deep: true }
-);
-
-watch(
-	() => props.node.state.chartSettings,
-	() => {
-		initialize(
-			props.node,
-			null,
-			isFetchingDatasets,
-			datasets,
-			datasetResults,
-			modelConfigIdToInterventionPolicyIdMap,
-			impactChartData,
-			rankingChartData,
-			baselineDatasetIndex,
-			selectedPlotType,
 			modelConfigurations,
 			interventionPolicies
 		);

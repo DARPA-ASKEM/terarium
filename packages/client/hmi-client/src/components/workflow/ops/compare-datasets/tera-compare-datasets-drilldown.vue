@@ -481,12 +481,13 @@ const onRun = () => {
 };
 
 function onChangeImpactComparison() {
-	impactChartData.value = buildChartData(
-		datasets.value,
-		datasetResults.value,
-		baselineDatasetIndex.value,
-		selectedPlotType.value
-	);
+	console.log('Todo Tom clean');
+	// impactChartData.value = buildChartData(
+	// 	datasets.value,
+	// 	datasetResults.value,
+	// 	baselineDatasetIndex.value,
+	// 	selectedPlotType.value
+	// );
 }
 
 interface BasicKnobs {
@@ -538,9 +539,12 @@ const selectedVariableNames = computed(() => selectedVariableSettings.value.map(
 const outputPanel = ref(null);
 const chartSize = useDrilldownChartSize(outputPanel);
 
-const impactChartData = ref<ChartData | null>(null);
-const rankingChartData = ref<ChartData | null>(null);
-
+const impactChartData = computed<ChartData | null>(() =>
+	buildChartData(datasets.value, datasetResults.value, baselineDatasetIndex.value, selectedPlotType.value)
+);
+const rankingChartData = computed<ChartData | null>(() =>
+	buildChartData(datasets.value, datasetResults.value, baselineDatasetIndex.value, PlotValue.VALUE)
+);
 const chartData = computed(() => {
 	if (knobs.value.selectedCompareOption === CompareValue.RANK) {
 		return rankingChartData.value;
@@ -787,10 +791,6 @@ onMounted(async () => {
 		datasets,
 		datasetResults,
 		modelConfigIdToInterventionPolicyIdMap,
-		impactChartData,
-		rankingChartData,
-		baselineDatasetIndex,
-		selectedPlotType,
 		modelConfigurations,
 		interventionPolicies
 	);

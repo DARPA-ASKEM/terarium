@@ -195,10 +195,6 @@ export async function initialize(
 		datasetResults: DataArray[];
 	} | null>,
 	modelConfigIdToInterventionPolicyIdMap: Ref<Record<string, string[]>>,
-	impactChartData: Ref<ChartData | null>,
-	rankingChartData: Ref<ChartData | null>,
-	baselineDatasetIndex: Ref<number>,
-	selectedPlotType: Ref<PlotValue>,
 	modelConfigurations: Ref<ModelConfiguration[]>,
 	interventionPolicies: Ref<InterventionPolicy[]>
 ) {
@@ -247,13 +243,6 @@ export async function initialize(
 	datasetResults.value = await fetchDatasetResults(datasets.value);
 	isFetchingDatasets.value = false;
 
-	impactChartData.value = buildChartData(
-		datasets.value,
-		datasetResults.value,
-		baselineDatasetIndex.value,
-		selectedPlotType.value
-	);
-
 	const modelConfigurationIds = Object.keys(modelConfigIdToInterventionPolicyIdMap.value);
 	if (isEmpty(modelConfigurationIds)) return;
 	const modelConfigurationPromises = modelConfigurationIds.map((id) => getModelConfigurationById(id));
@@ -267,13 +256,4 @@ export async function initialize(
 	await Promise.all(interventionPolicyPromises).then((policies) => {
 		interventionPolicies.value = policies.filter((policy) => policy !== null);
 	});
-
-	if (!rankingChartData) return;
-
-	rankingChartData.value = buildChartData(
-		datasets.value,
-		datasetResults.value,
-		baselineDatasetIndex.value,
-		PlotValue.VALUE
-	);
 }
