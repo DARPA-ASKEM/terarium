@@ -9,10 +9,6 @@
 			:placeholder="'Attach datasets/simulation outputs to compare'"
 		/>
 		<template v-else>
-			<tera-progress-spinner v-if="isFetchingDatasets" :font-size="2" is-centered style="height: 100%">
-				Processing...
-			</tera-progress-spinner>
-
 			<vega-chart
 				v-if="rankingCharts.rankingResultsChart"
 				expandable
@@ -44,7 +40,6 @@ import { type WorkflowNode, WorkflowPortStatus } from '@/types/workflow';
 import { useCharts, type ChartData } from '@/composables/useCharts';
 import { useChartSettings } from '@/composables/useChartSettings';
 import VegaChart from '@/components/widgets/VegaChart.vue';
-import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue';
 import TeraNodePreview from '../tera-node-preview.vue';
 
 import { CompareDatasetsState, CompareValue } from './compare-datasets-operation';
