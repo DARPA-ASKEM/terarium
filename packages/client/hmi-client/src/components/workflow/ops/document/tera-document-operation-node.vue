@@ -8,13 +8,15 @@
 			<tera-operator-placeholder v-if="!thumbnail" :node="node" />
 			<img v-else class="pdf-thumbnail" :src="thumbnail" alt="Pdf's first page" />
 			<tera-operator-status
-				v-if="operatorStatus"
-				:status="operatorStatus"
+				v-if="props.node.status"
+				:status="props.node.status"
 				:progress="props.node?.state?.taskProgress"
 				class="py-2"
 			>
 				Processing PDF extractions
 			</tera-operator-status>
+			{{ props.node.state.operationStatus }}
+			{{ props.node.state.taskProgress }}
 			<Button label="Open" @click="emit('open-drilldown')" severity="secondary" outlined />
 		</template>
 		<template v-else>
@@ -36,7 +38,7 @@ import { cloneDeep, isEmpty } from 'lodash';
 import Button from 'primevue/button';
 import Dropdown from 'primevue/dropdown';
 
-import { AssetBlock, OperatorStatus, WorkflowNode } from '@/types/workflow';
+import { AssetBlock, WorkflowNode } from '@/types/workflow';
 import type { DocumentAsset, DocumentExtraction, ProjectAsset } from '@/types/Types';
 import { AssetType, ExtractionAssetType, ClientEventType } from '@/types/Types';
 import { createTaskProgressClientEventHandler, useClientEvent } from '@/composables/useClientEvent';
@@ -57,11 +59,9 @@ const document = ref<DocumentAsset | null>(null);
 const fetchingDocument = ref(false);
 const documentName = ref<DocumentAsset['name']>('');
 const thumbnail = ref<string | null>(null);
-const operatorStatus = ref<OperatorStatus>(OperatorStatus.DEFAULT);
-
 useClientEvent(
 	ClientEventType.ExtractionPdf,
-	createTaskProgressClientEventHandler(props.node, 'taskProgress', 'operatorStatus')
+	createTaskProgressClientEventHandler(props.node, 'taskProgress', 'operationStatus', emit)
 );
 
 onMounted(async () => {

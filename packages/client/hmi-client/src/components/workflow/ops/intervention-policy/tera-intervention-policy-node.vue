@@ -42,7 +42,7 @@
 		<tera-operator-placeholder v-else :node="node">
 			<template v-if="!node.inputs[0].value"> Attach a model</template>
 		</tera-operator-placeholder>
-		<tera-operator-status :status="props.node.state.operatorStatus" />
+		<tera-operator-status :status="props.node.state.operatorStatus || OperatorStatus.DEFAULT" />
 		<Button
 			:label="isModelInputConnected ? 'Open' : 'Attach a model'"
 			@click="emit('open-drilldown')"
@@ -56,7 +56,7 @@
 
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue';
-import { WorkflowNode, WorkflowPortStatus } from '@/types/workflow';
+import { OperatorStatus, WorkflowNode, WorkflowPortStatus } from '@/types/workflow';
 import Button from 'primevue/button';
 import { cloneDeep, groupBy, mapValues } from 'lodash';
 import { blankIntervention, flattenInterventionData } from '@/services/intervention-policy';
@@ -74,7 +74,7 @@ const props = defineProps<{
 }>();
 useClientEvent(
 	[ClientEventType.TaskGollmInterventionsFromDocument, ClientEventType.TaskGollmInterventionsFromDataset],
-	createTaskListClientEventHandler(props.node, 'taskIds', 'operatorStatus')
+	createTaskListClientEventHandler(props.node, 'taskIds', 'operatorStatus', emit)
 );
 
 const isLoading = computed(() => props.node.state.taskIds.length > 0);

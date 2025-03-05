@@ -25,52 +25,79 @@ export function useClientEvent(
 }
 
 // accepts a state and key to a string[] to update with in progress task ids
-export function createTaskListClientEventHandler(node: WorkflowNode<BaseState>, taskIdsKey: string, statusKey: string) {
-	const { state } = node;
-	const taskIds = state[taskIdsKey];
+export function createTaskListClientEventHandler(
+	node: WorkflowNode<BaseState>,
+	taskIdsKey: string,
+	statusKey: string,
+	emit
+) {
+	// const { state } = node;
+	const taskIds = node.state[taskIdsKey];
 	return async (event: ClientEvent<TaskResponse>) => {
 		if (!taskIds?.includes(event.data?.id) || !event.data) return;
 		if ([TaskStatus.Success, TaskStatus.Cancelled, TaskStatus.Failed].includes(event.data.status)) {
-			state[taskIdsKey] = taskIds.filter((id) => id !== event.data.id);
-			state[statusKey] = OperatorStatus.ERROR;
+			node.state[taskIdsKey] = taskIds.filter((id) => id !== event.data.id);
+			switch (event.data.status) {
+				case TaskStatus.Success:
+					node.state[statusKey] = OperatorStatus.SUCCESS;
+					break;
+				case TaskStatus.Failed:
+					node.state[statusKey] = OperatorStatus.ERROR;
+					break;
+				case TaskStatus.Cancelled:
+				default:
+					node.state[statusKey] = OperatorStatus.DEFAULT;
+			}
 		}
-		if (state[taskIdsKey].length > 0) {
-			state[statusKey] = OperatorStatus.IN_PROGRESS;
+		if (node.state[taskIdsKey].length > 0) {
+			node.state[statusKey] = OperatorStatus.IN_PROGRESS;
 		}
+		emit('update-state');
 	};
 }
 
 export function createTaskProgressClientEventHandler(
 	node: WorkflowNode<DocumentOperationState>,
 	progressKey: string,
-	statusKey: string
+	statusKey: string,
+	emit
 ) {
 	const { state } = node;
 	return async (event: ClientEvent<TaskResponse> | NotificationEvent) => {
+		const taskState = event.data.state || event.data.status;
 		if (event.data.data.documentId === state.documentId) {
-			state[progressKey] = event.data?.progress;
-			if (statusKey) {
-				state[statusKey] = OperatorStatus.IN_PROGRESS;
-			}
-			if (event.data.status && [TaskStatus.Success, TaskStatus.Cancelled].includes(event.data.status)) {
-				state[progressKey] = undefined;
-				if (statusKey) {
-					state[statusKey] = undefined;
+			node.state[progressKey] = event.data?.progress;
+			if ([TaskStatus.Success, TaskStatus.Cancelled, TaskStatus.Failed].includes(taskState)) {
+				node.state[progressKey] = undefined;
+				switch (taskState) {
+					case TaskStatus.Success:
+						node.state[statusKey] = OperatorStatus.SUCCESS;
+						break;
+					case TaskStatus.Failed:
+						node.state[statusKey] = OperatorStatus.ERROR;
+						break;
+					case TaskStatus.Cancelled:
+					default:
+						node.state[statusKey] = OperatorStatus.DEFAULT;
 				}
-			} else if (event.data.status === TaskStatus.Failed) {
-				state[statusKey] = OperatorStatus.ERROR;
+			} else if (statusKey) {
+				node.state[statusKey] = OperatorStatus.IN_PROGRESS;
 			}
+			emit('update-state');
 		}
+		console.log('New status for ');
+		console.log(state);
+		console.log(event.data);
+		console.log(taskState);
 	};
 }
 
-export function createEnrichClientEventHandler(taskStatus: Ref, assetId: string | null, emit) {
+export function createEnrichClientEventHandler(taskStatus: Ref, assetId: string | null) {
 	return async (event: ClientEvent<TaskResponse>) => {
 		if (assetId !== event.data.additionalProperties.datasetId && assetId !== event.data.additionalProperties.documentId)
 			return;
 		if ([TaskStatus.Success, TaskStatus.Cancelled, TaskStatus.Failed].includes(event.data.status)) {
 			taskStatus.value = event.data.status === TaskStatus.Failed ? OperatorStatus.ERROR : undefined;
-			emit('finished-job');
 		} else {
 			taskStatus.value = OperatorStatus.IN_PROGRESS;
 		}
