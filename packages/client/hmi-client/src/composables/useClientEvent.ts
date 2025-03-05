@@ -92,14 +92,16 @@ export function createTaskProgressClientEventHandler(
 	};
 }
 
-export function createEnrichClientEventHandler(taskStatus: Ref, assetId: string | null) {
+export function createEnrichClientEventHandler(taskStatus: Ref, assetId: string | null, emit) {
 	return async (event: ClientEvent<TaskResponse>) => {
-		if (assetId !== event.data.additionalProperties.datasetId && assetId !== event.data.additionalProperties.documentId)
-			return;
+		const { datasetId, documentId, modelId } = event.data.additionalProperties;
+		if (assetId !== datasetId && assetId !== documentId && assetId !== modelId) return;
 		if ([TaskStatus.Success, TaskStatus.Cancelled, TaskStatus.Failed].includes(event.data.status)) {
 			taskStatus.value = event.data.status === TaskStatus.Failed ? OperatorStatus.ERROR : undefined;
+			emit('finished-job');
 		} else {
 			taskStatus.value = OperatorStatus.IN_PROGRESS;
+			emit('append-output');
 		}
 	};
 }
