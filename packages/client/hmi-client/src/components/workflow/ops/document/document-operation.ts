@@ -1,6 +1,6 @@
 import type { DocumentExtraction } from '@/types/Types';
 import type { AssetBlock, Operation, BaseState } from '@/types/workflow';
-import { OperatorStatus, WorkflowOperationTypes } from '@/types/workflow';
+import { WorkflowOperationTypes } from '@/types/workflow';
 import document from '@assets/svg/operator-images/document.svg';
 
 export interface DocumentOperationState extends BaseState {
@@ -9,7 +9,6 @@ export interface DocumentOperationState extends BaseState {
 	tables: AssetBlock<DocumentExtraction>[];
 	figures: AssetBlock<DocumentExtraction>[];
 	taskProgress?: number;
-	operationStatus?: OperatorStatus;
 }
 
 export const DocumentOperation: Operation = {

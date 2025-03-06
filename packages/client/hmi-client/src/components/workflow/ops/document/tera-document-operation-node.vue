@@ -7,11 +7,7 @@
 			</h6>
 			<tera-operator-placeholder v-if="!thumbnail" :node="node" />
 			<img v-else class="pdf-thumbnail" :src="thumbnail" alt="Pdf's first page" />
-			<tera-operator-status
-				v-if="props.node?.state?.operationStatus"
-				:status="props.node?.state?.operationStatus"
-				:progress="props.node?.state?.taskProgress"
-			/>
+			<tera-operator-status :status="props.node.status" :progress="props.node?.state?.taskProgress" />
 			<Button label="Open" @click="emit('open-drilldown')" severity="secondary" outlined />
 		</template>
 		<template v-else>
@@ -54,10 +50,7 @@ const document = ref<DocumentAsset | null>(null);
 const fetchingDocument = ref(false);
 const documentName = ref<DocumentAsset['name']>('');
 const thumbnail = ref<string | null>(null);
-useClientEvent(
-	ClientEventType.ExtractionPdf,
-	createTaskProgressClientEventHandler(props.node, 'taskProgress', 'operationStatus', emit)
-);
+useClientEvent(ClientEventType.ExtractionPdf, createTaskProgressClientEventHandler(props.node, 'taskProgress', emit));
 
 onMounted(async () => {
 	if (props.node.state.documentId) {

@@ -25,12 +25,7 @@ export function useClientEvent(
 }
 
 // accepts a state and key to a string[] to update with in progress task ids
-export function createTaskListClientEventHandler(
-	node: WorkflowNode<BaseState>,
-	taskIdsKey: string,
-	statusKey: string,
-	emit
-) {
+export function createTaskListClientEventHandler(node: WorkflowNode<BaseState>, taskIdsKey: string, emit) {
 	return async (event: ClientEvent<TaskResponse>) => {
 		const taskIds = node.state[taskIdsKey];
 		if (!taskIds?.includes(event.data?.id) || !event.data) return;
@@ -38,18 +33,18 @@ export function createTaskListClientEventHandler(
 			node.state[taskIdsKey] = taskIds.filter((id) => id !== event.data.id);
 			switch (event.data.status) {
 				case TaskStatus.Success:
-					node.state[statusKey] = OperatorStatus.SUCCESS;
+					node.status = OperatorStatus.SUCCESS;
 					break;
 				case TaskStatus.Failed:
-					node.state[statusKey] = OperatorStatus.ERROR;
+					node.status = OperatorStatus.ERROR;
 					break;
 				case TaskStatus.Cancelled:
 				default:
-					node.state[statusKey] = OperatorStatus.DEFAULT;
+					node.status = OperatorStatus.DEFAULT;
 			}
 		}
 		if (node.state[taskIdsKey].length > 0) {
-			node.state[statusKey] = OperatorStatus.IN_PROGRESS;
+			node.status = OperatorStatus.IN_PROGRESS;
 		}
 		emit('update-state', node.state);
 	};
@@ -58,7 +53,6 @@ export function createTaskListClientEventHandler(
 export function createTaskProgressClientEventHandler(
 	node: WorkflowNode<DocumentOperationState>,
 	progressKey: string,
-	statusKey: string,
 	emit
 ) {
 	return async (event: ClientEvent<TaskResponse> | NotificationEvent) => {
@@ -70,17 +64,17 @@ export function createTaskProgressClientEventHandler(
 			node.state[progressKey] = undefined;
 			switch (taskState) {
 				case TaskStatus.Success:
-					node.state[statusKey] = OperatorStatus.SUCCESS;
+					node.status = OperatorStatus.SUCCESS;
 					break;
 				case TaskStatus.Failed:
-					node.state[statusKey] = OperatorStatus.ERROR;
+					node.status = OperatorStatus.ERROR;
 					break;
 				case TaskStatus.Cancelled:
 				default:
-					node.state[statusKey] = OperatorStatus.DEFAULT;
+					node.status = OperatorStatus.DEFAULT;
 			}
-		} else if (statusKey) {
-			node.state[statusKey] = OperatorStatus.IN_PROGRESS;
+		} else {
+			node.status = OperatorStatus.IN_PROGRESS;
 		}
 		emit('update-state', node.state);
 	};
@@ -92,10 +86,8 @@ export function createEnrichClientEventHandler(taskStatus: Ref, assetId: string 
 		if (assetId !== datasetId && assetId !== documentId && assetId !== modelId) return;
 		if ([TaskStatus.Success, TaskStatus.Cancelled, TaskStatus.Failed].includes(event.data.status)) {
 			taskStatus.value = event.data.status === TaskStatus.Failed ? OperatorStatus.ERROR : undefined;
-			emit('finished-job');
 		} else {
 			taskStatus.value = OperatorStatus.IN_PROGRESS;
-			emit('append-output');
 		}
 	};
 }

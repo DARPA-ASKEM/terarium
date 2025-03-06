@@ -1,9 +1,6 @@
 <template>
-	<section>
-		<div
-			v-if="props.status && props.status !== OperatorStatus.DEFAULT && props.status !== OperatorStatus.SUCCESS"
-			:class="`${status}`"
-		>
+	<section v-if="props.status !== OperatorStatus.DEFAULT && props.status !== OperatorStatus.SUCCESS">
+		<div :class="`${status}`">
 			<div
 				v-if="props.status === OperatorStatus.IN_PROGRESS || props.status === ProgressState.Running"
 				class="container"
@@ -16,13 +13,13 @@
 			</div>
 			<vue-feather v-else :type="notificationStatusMap[props.status].icon" size="1.5rem" />
 		</div>
-	</section>
-	<div class="container">
-		<div v-if="!hasSlot('default')" class="action">
-			{{ notificationStatusMap[props.status].message }}
+		<div class="container">
+			<div v-if="!hasSlot('default')" class="action">
+				{{ notificationStatusMap[props.status].message }}
+			</div>
+			<slot v-else />
 		</div>
-		<slot v-else />
-	</div>
+	</section>
 </template>
 
 <script setup lang="ts">

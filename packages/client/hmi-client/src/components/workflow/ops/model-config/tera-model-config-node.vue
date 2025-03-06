@@ -8,9 +8,7 @@
 		</div>
 		<tera-operator-placeholder v-else :node="node" />
 
-		<tera-operator-status :status="props.node.state.operatorStatus || TeraOperatorStatus.DEFAULT" />
-		{{ props.node.state.operatorStatus }}
-		{{ props.node.state.modelConfigTaskIds }}
+		<tera-operator-status :status="props.node.status" />
 		<Button
 			:label="isModelInputConnected ? 'Open' : 'Attach a model'"
 			@click="emit('open-drilldown')"
@@ -45,7 +43,7 @@ const emit = defineEmits(['open-drilldown', 'append-input-port', 'update-state',
 
 useClientEvent(
 	[ClientEventType.TaskGollmConfigureModelFromDocument, ClientEventType.TaskGollmConfigureModelFromDataset],
-	createTaskListClientEventHandler(props.node, 'modelConfigTaskIds', 'operatorStatus', emit)
+	createTaskListClientEventHandler(props.node, 'modelConfigTaskIds', emit)
 );
 
 const isModelInputConnected = ref(false);
