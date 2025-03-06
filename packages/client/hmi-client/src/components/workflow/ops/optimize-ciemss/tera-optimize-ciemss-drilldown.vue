@@ -469,12 +469,7 @@ import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.
 import TeraPyciemssCancelButton from '@/components/pyciemss/tera-pyciemss-cancel-button.vue';
 import TeraOperatorOutputSummary from '@/components/operator/tera-operator-output-summary.vue';
 import { getModelByModelConfigurationId, getCalendarSettingsFromModel } from '@/services/model';
-import {
-	getInferredParameter,
-	getModelConfigurationById,
-	getParameter,
-	getParameterDistributionAverage
-} from '@/services/model-configurations';
+import { getModelConfigurationById } from '@/services/model-configurations';
 import {
 	convertToCsvAsset,
 	getRunResult,
@@ -494,9 +489,7 @@ import {
 	OptimizeQoi,
 	OptimizeRequestCiemss,
 	AssetType,
-	StaticIntervention,
-	InterventionValueType,
-	InterventionSemanticType
+	StaticIntervention
 } from '@/types/Types';
 import { logger } from '@/utils/logger';
 import { nodeMetadata } from '@/components/workflow/util';
@@ -539,7 +532,12 @@ import {
 	OptimizeCiemssOperationState,
 	OptimizationInterventionObjective
 } from './optimize-ciemss-operation';
-import { policyGroupFormToIntervention, setQoIData, usePreparedChartInputs } from './optimize-utils';
+import {
+	resolveInterventionValue,
+	policyGroupFormToIntervention,
+	setQoIData,
+	usePreparedChartInputs
+} from './optimize-utils';
 import { isInterventionPolicyBlank } from '../intervention-policy/intervention-policy-operation';
 
 const confirm = useConfirm();
@@ -840,7 +838,7 @@ const setInterventionPolicyGroups = (interventionPolicy: InterventionPolicy) => 
 				newIntervention.relativeImportance = 5;
 				newIntervention.individualIntervention = staticIntervention;
 				newIntervention.startTimeGuess = staticIntervention.timestep;
-				newIntervention.initialGuessValue = getInitialGuessValue(staticIntervention);
+				newIntervention.initialGuessValue = resolveInterventionValue(staticIntervention, modelConfiguration.value!);
 				knobs.value.interventionPolicyGroups.push(_.cloneDeep(newIntervention));
 			});
 			// Dynamic:
@@ -852,25 +850,6 @@ const setInterventionPolicyGroups = (interventionPolicy: InterventionPolicy) => 
 		});
 	}
 	emit('update-state', state);
-};
-
-const getInitialGuessValue = (intervention: StaticIntervention) => {
-	if (
-		intervention.type !== InterventionSemanticType.Parameter ||
-		intervention.valueType !== InterventionValueType.Percentage
-	) {
-		return intervention.value;
-	}
-
-	// Get the parameter from the model configuration and return the "average" value of the distribution times the percentage.
-	const parameter =
-		getInferredParameter(modelConfiguration.value!, intervention.appliedTo) ??
-		getParameter(modelConfiguration.value!, intervention.appliedTo);
-	if (!parameter) {
-		logger.error(`Parameter ${intervention.appliedTo} not found in model configuration`);
-		return intervention.value;
-	}
-	return getParameterDistributionAverage(parameter) * (intervention.value / 100);
 };
 
 const runOptimize = async () => {
@@ -887,7 +866,10 @@ const runOptimize = async () => {
 		if (!isInterventionStatic(ele.individualIntervention)) return;
 		const interventionType = ele.optimizeFunction.type;
 		const paramName: string = ele.individualIntervention.appliedTo;
-		const paramValue: number = ele.individualIntervention.value;
+		const paramValue: number = resolveInterventionValue(
+			ele.individualIntervention as StaticIntervention,
+			modelConfiguration.value!
+		);
 		const startTime: number = (ele.individualIntervention as StaticIntervention).timestep;
 		const timeObjectiveFunction = ele.optimizeFunction.timeObjectiveFunction;
 		const parameterObjectiveFunction = ele.optimizeFunction.parameterObjectiveFunction;

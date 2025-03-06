@@ -8,11 +8,18 @@ import {
 	InterventionPolicy,
 	InterventionSemanticType,
 	InterventionValueType,
+	ModelConfiguration,
 	StaticIntervention
 } from '@/types/Types';
 import { createInterventionPolicy, isInterventionStatic } from '@/services/intervention-policy';
 import { mergeResults } from '@/services/dataset';
-import { getModelIdFromModelConfigurationId } from '@/services/model-configurations';
+import {
+	getInferredParameter,
+	getModelIdFromModelConfigurationId,
+	getParameter,
+	getParameterDistributionAverage
+} from '@/services/model-configurations';
+import { logger } from '@/utils/logger';
 import {
 	ContextMethods,
 	Criterion,
@@ -235,3 +242,23 @@ export async function createInterventionPolicyFromOptimize(
 	const newInterventionPolicy: InterventionPolicy | null = await createInterventionPolicy(newIntervention);
 	return newInterventionPolicy;
 }
+
+// get the value of the intervention, taking into account the distribution if it is a percentage
+export const resolveInterventionValue = (intervention: StaticIntervention, modelConfiguration: ModelConfiguration) => {
+	if (
+		intervention.type !== InterventionSemanticType.Parameter ||
+		intervention.valueType !== InterventionValueType.Percentage
+	) {
+		return intervention.value;
+	}
+
+	// Get the parameter from the model configuration and return the "average" value of the distribution times the percentage.
+	const parameter =
+		getInferredParameter(modelConfiguration, intervention.appliedTo) ??
+		getParameter(modelConfiguration, intervention.appliedTo);
+	if (!parameter) {
+		logger.error(`Parameter ${intervention.appliedTo} not found in model configuration`);
+		return intervention.value;
+	}
+	return getParameterDistributionAverage(parameter) * (intervention.value / 100);
+};
