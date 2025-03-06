@@ -51,7 +51,7 @@ export function createTaskListClientEventHandler(
 		if (node.state[taskIdsKey].length > 0) {
 			node.state[statusKey] = OperatorStatus.IN_PROGRESS;
 		}
-		emit('update-state');
+		emit('update-state', node.state);
 	};
 }
 
@@ -61,33 +61,28 @@ export function createTaskProgressClientEventHandler(
 	statusKey: string,
 	emit
 ) {
-	const { state } = node;
 	return async (event: ClientEvent<TaskResponse> | NotificationEvent) => {
+		if (!node.state) return;
+		if (event.data?.data?.documentId !== node.state?.documentId) return;
 		const taskState = event.data.state || event.data.status;
-		if (event.data.data.documentId === state.documentId) {
-			node.state[progressKey] = event.data?.progress;
-			if ([TaskStatus.Success, TaskStatus.Cancelled, TaskStatus.Failed].includes(taskState)) {
-				node.state[progressKey] = undefined;
-				switch (taskState) {
-					case TaskStatus.Success:
-						node.state[statusKey] = OperatorStatus.SUCCESS;
-						break;
-					case TaskStatus.Failed:
-						node.state[statusKey] = OperatorStatus.ERROR;
-						break;
-					case TaskStatus.Cancelled:
-					default:
-						node.state[statusKey] = OperatorStatus.DEFAULT;
-				}
-			} else if (statusKey) {
-				node.state[statusKey] = OperatorStatus.IN_PROGRESS;
+		node.state[progressKey] = event.data?.progress;
+		if ([TaskStatus.Success, TaskStatus.Cancelled, TaskStatus.Failed].includes(taskState)) {
+			node.state[progressKey] = undefined;
+			switch (taskState) {
+				case TaskStatus.Success:
+					node.state[statusKey] = OperatorStatus.SUCCESS;
+					break;
+				case TaskStatus.Failed:
+					node.state[statusKey] = OperatorStatus.ERROR;
+					break;
+				case TaskStatus.Cancelled:
+				default:
+					node.state[statusKey] = OperatorStatus.DEFAULT;
 			}
-			emit('update-state');
+		} else if (statusKey) {
+			node.state[statusKey] = OperatorStatus.IN_PROGRESS;
 		}
-		console.log('New status for ');
-		console.log(state);
-		console.log(event.data);
-		console.log(taskState);
+		emit('update-state', node.state);
 	};
 }
 

@@ -8,15 +8,10 @@
 			<tera-operator-placeholder v-if="!thumbnail" :node="node" />
 			<img v-else class="pdf-thumbnail" :src="thumbnail" alt="Pdf's first page" />
 			<tera-operator-status
-				v-if="props.node.status"
-				:status="props.node.status"
+				v-if="props.node?.state?.operationStatus"
+				:status="props.node?.state?.operationStatus"
 				:progress="props.node?.state?.taskProgress"
-				class="py-2"
-			>
-				Processing PDF extractions
-			</tera-operator-status>
-			{{ props.node.state.operationStatus }}
-			{{ props.node.state.taskProgress }}
+			/>
 			<Button label="Open" @click="emit('open-drilldown')" severity="secondary" outlined />
 		</template>
 		<template v-else>

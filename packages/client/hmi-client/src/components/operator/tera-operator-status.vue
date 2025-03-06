@@ -2,26 +2,27 @@
 	<section>
 		<div
 			v-if="props.status && props.status !== OperatorStatus.DEFAULT && props.status !== OperatorStatus.SUCCESS"
-			class="icon-container"
 			:class="`${status}`"
 		>
 			<div
 				v-if="props.status === OperatorStatus.IN_PROGRESS || props.status === ProgressState.Running"
-				class="progressbar-container"
+				class="container"
 			>
 				<div v-if="props.progress">
 					<p class="action">{{ Math.round(props.progress * 100) }}%</p>
 					<ProgressBar :value="props.progress ? props.progress * 100 : 0" />
 				</div>
-				<tera-progress-spinner v-else :font-size="2" />
+				<tera-progress-spinner class="icon-container" v-else :font-size="2" />
 			</div>
 			<vue-feather v-else :type="notificationStatusMap[props.status].icon" size="1.5rem" />
 		</div>
 	</section>
-	<div v-if="!hasSlot('default')" class="action">
-		{{ notificationStatusMap[props.status].message }}
+	<div class="container">
+		<div v-if="!hasSlot('default')" class="action">
+			{{ notificationStatusMap[props.status].message }}
+		</div>
+		<slot v-else />
 	</div>
-	<slot v-else />
 </template>
 
 <script setup lang="ts">
@@ -81,10 +82,11 @@ section {
 		color: var(--error-color);
 	}
 }
-.progressbar-container {
+.container {
 	margin-top: var(--gap-2);
 	display: flex;
-	justify-content: space-between;
+	justify-content: center;
+	text-align: center;
 	gap: var(--gap-2);
 }
 
@@ -93,8 +95,10 @@ section {
 }
 
 .action {
+	width: 150px;
 	font-size: var(--font-caption);
 	color: var(--text-color-secondary);
+	justify-content: center;
 	text-align: center;
 }
 </style>
