@@ -72,7 +72,7 @@ const emit = defineEmits(['append-output', 'finished-job']);
 const taskId = ref<string>('');
 useClientEvent(
 	[ClientEventType.TaskGollmEnrichDataset, ClientEventType.TaskGollmEnrichModel],
-	createEnrichClientEventHandler(taskId, props.assetId || null, emit)
+	createEnrichClientEventHandler(taskId, props.assetId || null)
 );
 
 const selectedResourceId = ref<string>('');
