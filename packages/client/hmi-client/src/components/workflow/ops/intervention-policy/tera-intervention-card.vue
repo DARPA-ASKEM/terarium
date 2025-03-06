@@ -151,6 +151,7 @@
 
 						<Button
 							text
+							class="ml-auto"
 							size="small"
 							label="Other Values"
 							:disabled="intervention.staticInterventions[0].appliedTo === ''"
@@ -205,21 +206,14 @@
 								/>
 								<Button
 									class="ml-auto"
-									icon="pi pi-times"
-									size="small"
-									rounded
 									text
-									@click="onRemoveStaticIntervention(index)"
+									size="small"
+									label="Other Values"
+									:disabled="i.appliedTo === ''"
+									@click="emit('open-modal', { semanticType: i.type, id: i.appliedTo })"
 								/>
+								<Button icon="pi pi-times" size="small" rounded text @click="onRemoveStaticIntervention(index)" />
 							</div>
-							<Button
-								class="ml-auto"
-								text
-								size="small"
-								label="Other Values"
-								:disabled="i.appliedTo === ''"
-								@click="emit('open-modal', { semanticType: i.type, id: i.appliedTo })"
-							/>
 						</li>
 					</ul>
 				</div>
