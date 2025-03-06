@@ -43,7 +43,6 @@
 								option-value="id"
 								:loading="isFetchingDatasets"
 								placeholder="Optional"
-								@change="onChangeImpactComparison"
 							/>
 						</template>
 						<!-- Pascale asked me to omit this timepoint selector, but I'm keeping it here until we are certain it's not needed -->
@@ -353,12 +352,7 @@
 							<div class="plot-options">
 								<p>How do you want to plot the values?</p>
 								<div v-for="option in plotOptions" class="flex align-items-center gap-2" :key="option.value">
-									<RadioButton
-										v-model="knobs.selectedPlotType"
-										:value="option.value"
-										name="plotValues"
-										@change="onChangeImpactComparison"
-									/>
+									<RadioButton v-model="knobs.selectedPlotType" :value="option.value" name="plotValues" />
 									<label :for="option.value">{{ option.label }}</label>
 								</div>
 							</div>
@@ -480,15 +474,6 @@ const onRun = () => {
 	}
 };
 
-function onChangeImpactComparison() {
-	impactChartData.value = buildChartData(
-		datasets.value,
-		datasetResults.value,
-		baselineDatasetIndex.value,
-		selectedPlotType.value
-	);
-}
-
 interface BasicKnobs {
 	selectedCompareOption: CompareValue;
 	criteriaOfInterestCards: CriteriaOfInterestCard[];
@@ -538,9 +523,12 @@ const selectedVariableNames = computed(() => selectedVariableSettings.value.map(
 const outputPanel = ref(null);
 const chartSize = useDrilldownChartSize(outputPanel);
 
-const impactChartData = ref<ChartData | null>(null);
-const rankingChartData = ref<ChartData | null>(null);
-
+const impactChartData = computed<ChartData | null>(() =>
+	buildChartData(datasets.value, datasetResults.value, baselineDatasetIndex.value, selectedPlotType.value)
+);
+const rankingChartData = computed<ChartData | null>(() =>
+	buildChartData(datasets.value, datasetResults.value, baselineDatasetIndex.value, PlotValue.VALUE)
+);
 const chartData = computed(() => {
 	if (knobs.value.selectedCompareOption === CompareValue.RANK) {
 		return rankingChartData.value;
@@ -780,17 +768,12 @@ onMounted(async () => {
 
 	outputPanelBehavior();
 
-	await initialize(
+	datasets.value = await initialize(
 		props.node,
 		knobs,
 		isFetchingDatasets,
-		datasets,
 		datasetResults,
 		modelConfigIdToInterventionPolicyIdMap,
-		impactChartData,
-		rankingChartData,
-		baselineDatasetIndex,
-		selectedPlotType,
 		modelConfigurations,
 		interventionPolicies
 	);
