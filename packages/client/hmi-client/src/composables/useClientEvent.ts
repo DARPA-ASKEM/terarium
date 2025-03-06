@@ -80,7 +80,7 @@ export function createTaskProgressClientEventHandler(
 	};
 }
 
-export function createEnrichClientEventHandler(taskStatus: Ref, assetId: string | null, emit) {
+export function createEnrichClientEventHandler(taskStatus: Ref, assetId: string | null) {
 	return async (event: ClientEvent<TaskResponse>) => {
 		const { datasetId, documentId, modelId } = event.data.additionalProperties;
 		if (assetId !== datasetId && assetId !== documentId && assetId !== modelId) return;
