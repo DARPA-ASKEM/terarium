@@ -60,7 +60,7 @@ def main():
                             term = term.subs(atom, sympy.Function(str(atom))(t))
                     terms[i] = term
 
- 
+
         # Construct equations
         num_terms = 5 # Max number of terms per line in LaTeX align
         odesys = []
@@ -69,7 +69,7 @@ def main():
 
             lhs = sympy.diff(sympy.Function(var)(t), t)
             rhs = sum(terms)
-            exprs += sympy.latex(lhs) + " ={}& "
+            exprs += sympy.latex(lhs) + " ={} "
 
             # Few equation terms = no wrapping needed
             if len(terms) < num_terms:
@@ -83,7 +83,7 @@ def main():
 
             if i < (len(odeterms) - 1):
                 exprs += " \\\\ \n"
-            
+
             odesys = [exprs]
 
 
@@ -104,7 +104,7 @@ def main():
             for i, (obs, expr) in enumerate(observables.items()):
                 lhs = sympy.Function(obs)(t)
                 rhs = expr
-                exprs = "     " + sympy.latex(lhs) + " ={}& " + sympy.latex(rhs)
+                exprs = "     " + sympy.latex(lhs) + " ={} " + sympy.latex(rhs)
                 if i == 0:
                     exprs = " \\\\ \n" + exprs
                 if i < (len(observables) - 1):
