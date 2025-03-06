@@ -109,7 +109,15 @@
 						force-fallback
 					>
 						<tera-asset-icon :asset-type="assetItem.pageType as AssetType" />
-						<span class="p-button-label">{{ assetItem.assetName }}</span>
+						<span class="p-button-label">
+							{{ assetItem.assetName }}
+							<tera-progress-spinner
+								v-if="inProgressAssetsIds[type] && inProgressAssetsIds[type].includes(assetItem.assetId)"
+								:font-size="1"
+								is-centered
+								style="float: right"
+							/>
+						</span>
 					</span>
 					<!-- This 'x' only shows while hovering over the row -->
 					<i
@@ -154,28 +162,61 @@
 </template>
 
 <script setup lang="ts">
-import TeraAssetIcon from '@/components/widgets/tera-asset-icon.vue';
-import TeraModal from '@/components/widgets/tera-modal.vue';
-import { useProjects } from '@/composables/project';
-import { useDragEvent } from '@/services/drag-drop';
-import { ProjectPages } from '@/types/Project';
-import { AssetType } from '@/types/Types';
-import { AssetItem, AssetRoute } from '@/types/common';
-import { generateProjectAssetsMap, getNonNullSetOfVisibleItems } from '@/utils/map-project-assets';
-import { capitalize, isEmpty, isEqual } from 'lodash';
+import { computed, ref } from 'vue';
 import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
 import Button from 'primevue/button';
 import InputText from 'primevue/inputtext';
 import Skeleton from 'primevue/skeleton';
-import { computed, ref } from 'vue';
+import { capitalize, isEmpty, isEqual } from 'lodash';
+
 import { getElapsedTimeText } from '@/utils/date';
+import { generateProjectAssetsMap, getNonNullSetOfVisibleItems } from '@/utils/map-project-assets';
+
+import { useClientEvent } from '@/composables/useClientEvent';
+import { useProjects } from '@/composables/project';
+
+import { useDragEvent } from '@/services/drag-drop';
+
 import TeraUploadResourcesModal from '@/components/project/tera-upload-resources-modal.vue';
+import TeraAssetIcon from '@/components/widgets/tera-asset-icon.vue';
+import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue';
+import TeraModal from '@/components/widgets/tera-modal.vue';
+
+import { ProjectPages } from '@/types/Project';
+import { AssetType, ClientEvent, ClientEventType, NotificationEvent, TaskResponse, TaskStatus } from '@/types/Types';
+import { AssetItem, AssetRoute } from '@/types/common';
 
 defineProps<{
 	pageType: ProjectPages | AssetType;
 	assetId: string;
 }>();
+
+const inProgressAssetsIds = ref({
+	[AssetType.Document]: <string[]>[],
+	[AssetType.Dataset]: <string[]>[],
+	[AssetType.Model]: <string[]>[]
+});
+
+function assetTypeProgressHandler(assetType, assetId, status) {
+	if ([TaskStatus.Success, TaskStatus.Cancelled, TaskStatus.Failed].includes(status)) {
+		inProgressAssetsIds.value[assetType] = inProgressAssetsIds.value[assetType].filter((id) => id !== assetId);
+	} else {
+		inProgressAssetsIds.value[assetType].push(assetId);
+	}
+}
+
+useClientEvent(ClientEventType.ExtractionPdf, (event: ClientEvent<TaskResponse> | NotificationEvent) => {
+	assetTypeProgressHandler(AssetType.Document, event.data.data.documentId, event.data.status);
+});
+
+useClientEvent(ClientEventType.TaskGollmEnrichDataset, (event: ClientEvent<TaskResponse> | NotificationEvent) => {
+	assetTypeProgressHandler(AssetType.Dataset, event.data.data.documentId, event.data.status);
+});
+
+useClientEvent(ClientEventType.TaskGollmEnrichModel, (event: ClientEvent<TaskResponse> | NotificationEvent) => {
+	assetTypeProgressHandler(AssetType.Model, event.data.data.documentId, event.data.status);
+});
 
 const emit = defineEmits(['open-asset', 'remove-asset', 'open-new-workflow']);
 
@@ -189,7 +230,11 @@ const searchAsset = ref<string>('');
 const inputFocused = ref(false);
 const isUploadResourcesModalVisible = ref(false);
 
-const assetItemsMap = computed(() => generateProjectAssetsMap(searchAsset.value));
+const assetItemsMap = computed(() => {
+	const aMap = generateProjectAssetsMap(searchAsset.value);
+	console.log(aMap);
+	return aMap;
+});
 const assetItemsKeysNotEmpty = computed(() => getNonNullSetOfVisibleItems(assetItemsMap.value));
 const activeAccordionTabs = ref(
 	new Set(
