@@ -39,11 +39,11 @@ We want to stratified the model by several age groups to simulate how contact ra
    3. All off-diagonal values are `n/a`
    4. Toggle **Evaluate expression** in the top-right corner to numerically evaluate the parameters in the math expressions
    5. Click **OK** to close this view
-10. Confirm that only the `S, E, I` states are expandable in the **State variables** table, ditto for `c` in the **Parameters** table
-   1. In the `Parameters` table, click on `Open matrix` on the right of the parameter `c`
-   2. An expanded view of the `18 x 18` matrix of `c` is shown
+10. Confirm that only the `S, E, I` states are expandable in the **State variables** table, ditto for `fc` in the **Parameters** table
+   1. In the `Parameters` table, click on `Open matrix` on the right of the parameter `fc`
+   2. An expanded view of the `18 x 18` matrix of `fc` is shown
    3. Select `subjectControllers` in the top-left dropdown
-   4. Every entry of the matrix should have a value of type `c_*_*`
+   4. Every entry of the matrix should have a value of type `fc_*_*`
 11. Click on the **Save for reuse** button in the top-right corner to save this stratified model into your project
    1. Confirm that it appears in the **Models** section of the **Resources** panel on the left of the interface
 12. Click **X** in the top-right corner to exit
@@ -113,15 +113,16 @@ Next, let's stratify the model again to introduce the dependency of the infectio
 3. Click **Edit** on the new `Stratify model` operator to specify the stratification action
 4. Apply these settings
    1. Name of strata: _vaccine_
-   2. Select variables and parameters to stratify: _S_vaccinated, v_vaccinated, p_unvaccinated_vaccinated_
+   2. Select variables and parameters to stratify: _S_vaccinated, fv_vaccinated, p_unvaccinated_vaccinated_
    3. Enter a comma-separated list of labels for each group: _pfizer, moderna, jj_
    4. Create new transitions between strata: _False_
    5. Allow existing interactions to involve multiple strata: _False_
 5. Click **Stratify**
 6. Confirm that a new stratified model appears on the right
-   1. The `template-7` transition is now a `1 x 3` matrix, representing the three different possible vaccination processes (from unvaccinated to vaccinated by any of the three vaccines)
+   1. The `group-X` transition is now a `1 x 3` matrix, representing the three different possible vaccination processes (from unvaccinated to vaccinated by any of the three vaccines)
    2. Check that there are now four stratified `S` states: `S_unvaccinated, S_vaccinated_jj, S_vaccinated_moderna, S_vaccinated_pfizer`
-   3. The parameter `v` is a `4 x 1` matrix (in 'subjectOutcome' view) with those values `v_unvaccinated, v_vaccinated`
+   3. The parameter `fv` is a `2 x 1` matrix (in 'subjectOutcome' view)
+   4. The parameter `ffv` is a `3 x 1` matrix (in 'subjectOutcome' view)
 
 ### 6. Confirm Auto-configuration
 
