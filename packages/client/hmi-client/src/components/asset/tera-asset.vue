@@ -23,10 +23,6 @@
 			<i :class="authors.includes(',') ? 'pi pi-users' : 'pi pi-user'" />
 			<span v-html="authors" />
 		</span>
-		<div v-if="doi">
-			DOI:
-			<a :href="`https://doi.org/${doi}`" rel="noreferrer noopener" v-html="doi" />
-		</div>
 		<div v-if="publisher" v-html="publisher" />
 		<div class="header-buttons">
 			<slot name="bottom-header-buttons" />
@@ -82,10 +78,6 @@ const props = defineProps({
 		default: ''
 	},
 	authors: {
-		type: String,
-		default: null
-	},
-	doi: {
 		type: String,
 		default: null
 	},
