@@ -230,11 +230,7 @@ const searchAsset = ref<string>('');
 const inputFocused = ref(false);
 const isUploadResourcesModalVisible = ref(false);
 
-const assetItemsMap = computed(() => {
-	const aMap = generateProjectAssetsMap(searchAsset.value);
-	console.log(aMap);
-	return aMap;
-});
+const assetItemsMap = computed(() => generateProjectAssetsMap(searchAsset.value));
 const assetItemsKeysNotEmpty = computed(() => getNonNullSetOfVisibleItems(assetItemsMap.value));
 const activeAccordionTabs = ref(
 	new Set(
