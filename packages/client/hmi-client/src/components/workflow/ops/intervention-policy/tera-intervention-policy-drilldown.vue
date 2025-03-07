@@ -113,7 +113,7 @@
 								firstRow,
 								firstRow + MAX_NUMBER_OF_ROWS
 							)"
-							:key="firstRow + index"
+							:key="intervention.id"
 							@click="selectInterventionPolicy(intervention, firstRow + index)"
 						>
 							<tera-intervention-card
@@ -214,7 +214,11 @@ import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue'
 import { useConfirm } from 'primevue/useconfirm';
 import { getInitialDescription, getParameter, getParameters, getStates } from '@/model-representation/service';
 import TeraToggleableInput from '@/components/widgets/tera-toggleable-input.vue';
-import { blankIntervention, updateInterventionPolicy, deleteInterventionPolicy } from '@/services/intervention-policy';
+import {
+	updateInterventionPolicy,
+	deleteInterventionPolicy,
+	createBlankIntervention
+} from '@/services/intervention-policy';
 import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
 import Textarea from 'primevue/textarea';
@@ -461,7 +465,7 @@ const onDeleteInterventionPolicy = (policy: InterventionPolicy) => {
 
 const addIntervention = () => {
 	// by default add the first parameter with a static intervention
-	knobs.value.transientInterventionPolicy.interventions.push(blankIntervention);
+	knobs.value.transientInterventionPolicy.interventions.push(createBlankIntervention());
 };
 
 const onDeleteIntervention = (index: number) => {
@@ -540,7 +544,7 @@ const resetToBlankIntervention = () => {
 		value: null,
 		state: {
 			modelId,
-			interventions: [_.cloneDeep(blankIntervention)]
+			interventions: [_.cloneDeep(createBlankIntervention())]
 		}
 	});
 };

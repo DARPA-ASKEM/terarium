@@ -607,6 +607,7 @@ export interface DynamicIntervention {
 }
 
 export interface Intervention {
+    id: string;
     name: string;
     extractionDocumentId?: string;
     extractionDatasetId?: string;
