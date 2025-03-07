@@ -57,7 +57,7 @@ import { computed, ref, watch } from 'vue';
 import { WorkflowNode, WorkflowPortStatus } from '@/types/workflow';
 import Button from 'primevue/button';
 import { cloneDeep } from 'lodash';
-import { blankIntervention } from '@/services/intervention-policy';
+import { createBlankIntervention } from '@/services/intervention-policy';
 import TeraOperatorPlaceholder from '@/components/operator/tera-operator-placeholder.vue';
 import { ClientEventType, InterventionValueType } from '@/types/Types';
 import { createTaskListClientEventHandler, useClientEvent } from '@/composables/useClientEvent';
@@ -97,7 +97,7 @@ watch(
 		// Reset previous model cache
 		state.interventionPolicy = {
 			modelId,
-			interventions: [blankIntervention]
+			interventions: [createBlankIntervention()]
 		};
 		emit('update-state', state);
 	},

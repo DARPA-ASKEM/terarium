@@ -9,7 +9,7 @@ import { operation as SimulateOp } from '@/components/workflow/ops/simulate-ciem
 import { operation as CompareDatasetsOp } from '@/components/workflow/ops/compare-datasets/mod';
 import { OperatorNodeSize } from '@/services/workflow';
 import {
-	blankIntervention,
+	createBlankIntervention,
 	createInterventionPolicy,
 	flattenInterventionData,
 	getInterventionPolicyById
@@ -265,7 +265,7 @@ export class DecisionMakingScenario extends BaseScenario {
 								?.name ?? 'New policy',
 						description: 'This intervention policy was created using the decision making scenario template.',
 						modelId: this.modelSpec.id,
-						interventions: [blankIntervention]
+						interventions: [createBlankIntervention()]
 					},
 					true
 				);
