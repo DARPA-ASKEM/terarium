@@ -11,7 +11,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import software.uncharted.terarium.hmiserver.models.simulationservice.interventions.InterventionPolicy;
 import software.uncharted.terarium.hmiserver.models.task.TaskResponse;
-import software.uncharted.terarium.hmiserver.service.data.DatasetService;
 import software.uncharted.terarium.hmiserver.service.data.InterventionService;
 
 @Component
@@ -23,7 +22,6 @@ public class InterventionsFromDatasetResponseHandler extends LlmTaskResponseHand
 
 	private final ObjectMapper objectMapper;
 	private final InterventionService interventionService;
-	private final DatasetService datasetService;
 
 	@Override
 	public String getName() {
