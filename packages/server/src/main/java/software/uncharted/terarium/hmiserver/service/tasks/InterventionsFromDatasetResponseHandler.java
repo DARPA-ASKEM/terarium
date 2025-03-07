@@ -72,6 +72,8 @@ public class InterventionsFromDatasetResponseHandler extends LlmTaskResponseHand
 
 				// Set the extraction dataset id
 				ip.getInterventions().forEach(intervention -> intervention.setExtractionDatasetId(props.datasetId));
+
+				interventionService.createAsset(ip, props.projectId);
 			}
 		} catch (final Exception e) {
 			log.error("Failed to extract intervention policy", e);
