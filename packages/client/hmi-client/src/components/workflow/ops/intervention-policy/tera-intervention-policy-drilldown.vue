@@ -68,42 +68,77 @@
 		</template>
 		<tera-columnar-panel>
 			<tera-drilldown-section class="intervention-settings-section">
-				<template #header-controls-left> Add and configure intervention settings for this policy. </template>
+				<template #header-controls-left>
+					<tera-toggleable-input
+						:model-value="knobs.transientInterventionPolicy.name ?? 'New intervention policy'"
+						@update:model-value="onChangeName"
+						tag="h4"
+					/>
+				</template>
 				<template #header-controls-right>
 					<Button outlined severity="secondary" label="Reset" @click="onResetPolicy" />
+					<Button label="Save as..." outlined severity="secondary" @click="showSaveModal = true" />
+					<Button class="mr-3" label="Save" @click="onSaveInterventionPolicy" :disabled="isSaveDisabled" />
 				</template>
-				<ul class="flex flex-column gap-2">
-					<li
-						v-for="(intervention, index) in knobs.transientInterventionPolicy.interventions.slice(
-							firstRow,
-							firstRow + MAX_NUMBER_OF_ROWS
-						)"
-						:key="firstRow + index"
-						@click="selectInterventionPolicy(intervention, firstRow + index)"
-					>
-						<tera-intervention-card
-							class="intervention"
-							:class="{
-								selected:
-									selectedIntervention?.name === intervention?.name && selectedIntervention?.index === firstRow + index
-							}"
-							:intervention="intervention"
-							:parameterOptions="parameterOptions"
-							:stateOptions="stateOptions"
-							@update="onUpdateInterventionCard($event, firstRow + index)"
-							@delete="onDeleteIntervention(firstRow + index)"
-							@open-modal="onOpenOtherValueModal($event.semanticType, $event.id)"
-						/>
-					</li>
-				</ul>
-				<Button
-					class="align-self-start mt-2"
-					text
-					label="Add intervention"
-					@click="addIntervention"
-					icon="pi pi-plus"
-					size="small"
-				/>
+				<div class="flex flex-column gap-2">
+					<Accordion v-if="knobs.transientInterventionPolicy" multiple :active-index="currentActiveIndicies">
+						<AccordionTab>
+							<template #header>
+								<Button v-if="!isEditingDescription" class="start-edit" text @click.stop="onEditDescription">
+									<h5 class="btn-content">Description</h5>
+									<i class="pi pi-pencil" />
+								</Button>
+								<span v-else class="confirm-cancel">
+									<span>Description</span>
+									<Button icon="pi pi-times" size="small" text @click.stop="isEditingDescription = false" />
+									<Button icon="pi pi-check" size="small" text @click.stop="onConfirmEditDescription" />
+								</span>
+							</template>
+							<p class="description text" v-if="!isEditingDescription">
+								{{ knobs.transientInterventionPolicy.description }}
+							</p>
+							<Textarea
+								v-else
+								ref="descriptionTextareaRef"
+								class="w-full"
+								placeholder="Enter a description"
+								v-model="newDescription"
+							/>
+						</AccordionTab>
+					</Accordion>
+					Add and configure intervention settings for this policy.
+					<ul class="flex flex-column gap-2">
+						<li
+							v-for="intervention in knobs.transientInterventionPolicy.interventions.slice(
+								firstRow,
+								firstRow + MAX_NUMBER_OF_ROWS
+							)"
+							:key="intervention.id"
+							@click="selectInterventionPolicy(intervention)"
+						>
+							<tera-intervention-card
+								class="intervention"
+								:class="{
+									selected: selectedIntervention?.id === intervention.id
+								}"
+								:intervention="intervention"
+								:parameterOptions="parameterOptions"
+								:stateOptions="stateOptions"
+								@update="onUpdateInterventionCard($event)"
+								@delete="onDeleteIntervention(intervention.id)"
+								@open-modal="onOpenOtherValueModal($event.semanticType, $event.id)"
+							/>
+						</li>
+					</ul>
+					<Button
+						class="align-self-start mt-2"
+						text
+						label="Add intervention"
+						@click="addIntervention"
+						icon="pi pi-plus"
+						size="small"
+					/>
+				</div>
 				<template #footer>
 					<section class="paginator w-full">
 						<Paginator
@@ -118,96 +153,6 @@
 						/>
 					</section>
 				</template>
-			</tera-drilldown-section>
-			<tera-drilldown-section>
-				<template #header-controls-left>
-					<tera-toggleable-input
-						v-if="typeof knobs.transientInterventionPolicy.name === 'string'"
-						:model-value="knobs.transientInterventionPolicy.name"
-						@update:model-value="onChangeName"
-						tag="h4"
-					/>
-				</template>
-				<template #header-controls-right>
-					<Button label="Save as..." outlined severity="secondary" @click="showSaveModal = true" />
-					<Button class="mr-3" label="Save" @click="onSaveInterventionPolicy" :disabled="isSaveDisabled" />
-				</template>
-				<Accordion v-if="knobs.transientInterventionPolicy" multiple :active-index="currentActiveIndicies">
-					<AccordionTab>
-						<template #header>
-							<Button v-if="!isEditingDescription" class="start-edit" text @click.stop="onEditDescription">
-								<h5 class="btn-content">Description</h5>
-								<i class="pi pi-pencil" />
-							</Button>
-							<span v-else class="confirm-cancel">
-								<span>Description</span>
-								<Button icon="pi pi-times" size="small" text @click.stop="isEditingDescription = false" />
-								<Button icon="pi pi-check" size="small" text @click.stop="onConfirmEditDescription" />
-							</span>
-						</template>
-						<p class="description text" v-if="!isEditingDescription">
-							{{ knobs.transientInterventionPolicy.description }}
-						</p>
-						<Textarea
-							v-else
-							ref="descriptionTextareaRef"
-							class="w-full"
-							placeholder="Enter a description"
-							v-model="newDescription"
-						/>
-					</AccordionTab>
-					<AccordionTab header="Charts">
-						<ul class="flex flex-column gap-2">
-							<li v-for="appliedTo in displayedInterventions" :key="appliedTo">
-								<h5>{{ appliedTo }}</h5>
-								<template v-if="preparedCharts[appliedTo]">
-									<vega-chart
-										expandable
-										:are-embed-actions-visible="false"
-										:visualization-spec="preparedCharts[appliedTo]"
-									/>
-									<span class="flex pb-6">
-										<label class="pr-2 text-sm">Show this chart on node thumbnail</label>
-										<Checkbox
-											v-model="selectedCharts"
-											:input-id="appliedTo"
-											:name="appliedTo"
-											:value="appliedTo"
-											@change="onSelectChartChange"
-										/>
-									</span>
-								</template>
-								<ul>
-									<li
-										class="pb-2"
-										v-for="intervention in getInterventionsAppliedTo(appliedTo)"
-										:key="intervention.name"
-									>
-										<h6 class="pb-1">{{ intervention.name }}</h6>
-										<ul v-if="!isEmpty(intervention.staticInterventions)">
-											<li v-for="(staticIntervention, index) in intervention.staticInterventions" :key="index">
-												<p>
-													Set {{ staticIntervention.type }} {{ appliedTo }} to {{ staticIntervention.value }} at time
-													step {{ staticIntervention.timestep }}.
-												</p>
-											</li>
-										</ul>
-										<p v-if="!isEmpty(intervention.dynamicInterventions)">
-											Set {{ intervention.dynamicInterventions[0].type }} {{ appliedTo }} to
-											{{ intervention.dynamicInterventions[0].value }} when the
-											{{ intervention.dynamicInterventions[0].parameter }}
-											when it crosses the threshold value
-											{{ intervention.dynamicInterventions[0].threshold }}.
-										</p>
-									</li>
-								</ul>
-							</li>
-						</ul>
-					</AccordionTab>
-				</Accordion>
-				<div v-else class="flex align-items-center h-full">
-					<Vue3Lottie :animationData="EmptySeed" :height="150" loop autoplay />
-				</div>
 			</tera-drilldown-section>
 		</tera-columnar-panel>
 	</tera-drilldown>
@@ -239,7 +184,7 @@
 </template>
 
 <script setup lang="ts">
-import _, { cloneDeep, groupBy, isEmpty, isEqual, omit } from 'lodash';
+import _, { cloneDeep, isEmpty, isEqual, omit } from 'lodash';
 import { ComponentPublicInstance, computed, nextTick, onMounted, ref, watch } from 'vue';
 import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
 import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.vue';
@@ -255,8 +200,6 @@ import {
 	Intervention,
 	InterventionPolicy,
 	Model,
-	DynamicIntervention,
-	StaticIntervention,
 	type TaskResponse,
 	type DocumentAsset,
 	ModelConfiguration,
@@ -268,20 +211,14 @@ import { useConfirm } from 'primevue/useconfirm';
 import { getInitialDescription, getParameter, getParameters, getStates } from '@/model-representation/service';
 import TeraToggleableInput from '@/components/widgets/tera-toggleable-input.vue';
 import {
-	blankIntervention,
-	flattenInterventionData,
 	updateInterventionPolicy,
-	deleteInterventionPolicy
+	deleteInterventionPolicy,
+	createBlankIntervention
 } from '@/services/intervention-policy';
 import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
-import Checkbox from 'primevue/checkbox';
 import Textarea from 'primevue/textarea';
-import EmptySeed from '@/assets/images/lottie-empty-seed.json';
-import { Vue3Lottie } from 'vue3-lottie';
 import { sortDatesDesc } from '@/utils/date';
-import { createInterventionChart } from '@/services/charts';
-import VegaChart from '@/components/widgets/VegaChart.vue';
 import TeraSaveAssetModal from '@/components/project/tera-save-asset-modal.vue';
 import { useProjects } from '@/composables/project';
 import { interventionPolicyFromDocument, interventionPolicyFromDataset } from '@/services/goLLM';
@@ -314,24 +251,6 @@ interface BasicKnobs {
 	transientInterventionPolicy: InterventionPolicy;
 }
 
-/*
-This is a super-set of prepared charts.  We only display static interventions in the charts right now,
-but we also want the option to display the desciptions of dynamic interventions in the drilldown.
-*/
-const displayedInterventions = computed(() => {
-	// we want a set of the appliedTo interventions in the drilldown
-	const selectedInterventionSet: Set<string> = new Set();
-	knobs.value.transientInterventionPolicy.interventions.forEach((intervention) => {
-		intervention.staticInterventions.forEach((staticIntervention) => {
-			selectedInterventionSet.add(staticIntervention.appliedTo);
-		});
-		intervention.dynamicInterventions.forEach((dynamicIntervention) => {
-			selectedInterventionSet.add(dynamicIntervention.appliedTo);
-		});
-	});
-	return selectedInterventionSet;
-});
-
 const knobs = ref<BasicKnobs>({
 	transientInterventionPolicy: {
 		name: '',
@@ -341,22 +260,13 @@ const knobs = ref<BasicKnobs>({
 	}
 });
 
-interface SelectedIntervention {
-	index: number;
-	name: string;
-	extractionDocumentId?: string;
-	extractionPage?: number;
-	staticInterventions: StaticIntervention[];
-	dynamicInterventions: DynamicIntervention[];
-}
-
 const modelId: string | undefined = props.node.inputs[0].value?.[0];
 const MAX_NUMBER_OF_ROWS = 8;
 const firstRow = ref(0);
 
-const currentActiveIndicies = ref([0, 1]);
+const currentActiveIndicies = ref([0]);
 const pdfPanelRef = ref();
-const selectedIntervention = ref<SelectedIntervention | null>(null);
+const selectedIntervention = ref<Intervention | null>(null);
 
 const isPdfSidebarOpen = ref(true);
 const isFetchingPDF = ref(false);
@@ -442,35 +352,6 @@ const stateOptions = computed(() => {
 	}));
 });
 
-const preparedCharts = computed(() => {
-	const groupedOutputParameters = groupBy(
-		flattenInterventionData(knobs.value.transientInterventionPolicy.interventions),
-		'appliedTo'
-	);
-	return _.mapValues(groupedOutputParameters, (interventions, key) =>
-		createInterventionChart(interventions, {
-			title: key,
-			width: 400,
-			height: 200,
-			xAxisTitle: 'Time',
-			yAxisTitle: 'Value'
-		})
-	);
-});
-
-const getInterventionsAppliedTo = (appliedTo: string) =>
-	knobs.value.transientInterventionPolicy.interventions
-		.map((i) => {
-			const staticInterventions = i.staticInterventions.filter((s) => s.appliedTo === appliedTo);
-			const dynamicInterventions = i.dynamicInterventions.filter((d) => d.appliedTo === appliedTo);
-			return {
-				name: i.name,
-				staticInterventions,
-				dynamicInterventions
-			};
-		})
-		.filter((i) => i.dynamicInterventions.length + i.staticInterventions.length > 0);
-
 const initialize = async (overwriteWithState: boolean = false) => {
 	const state = props.node.state;
 	const selectedOutput = cloneDeep(props.node.outputs.find((o) => o.id === props.node.active));
@@ -523,14 +404,15 @@ const fetchInterventionPolicies = async () => {
 	isFetchingPolicies.value = false;
 };
 
-const selectInterventionPolicy = (intervention: Intervention, index: number) => {
-	selectedIntervention.value = { ...intervention, index };
+const selectInterventionPolicy = (intervention: Intervention) => {
+	selectedIntervention.value = { ...intervention };
 };
 
-const onUpdateInterventionCard = (intervention: Intervention, index: number) => {
+const onUpdateInterventionCard = (intervention: Intervention) => {
 	// Clone the entire interventions array
 	const updatedInterventions = [...knobs.value.transientInterventionPolicy.interventions];
 
+	const index = updatedInterventions.findIndex((i) => i.id === intervention.id);
 	// Replace the intervention at the specified index with a deep clone of the updated intervention
 	updatedInterventions[index] = cloneDeep(intervention);
 
@@ -571,13 +453,13 @@ const onDeleteInterventionPolicy = (policy: InterventionPolicy) => {
 
 const addIntervention = () => {
 	// by default add the first parameter with a static intervention
-	knobs.value.transientInterventionPolicy.interventions.push(blankIntervention);
+	knobs.value.transientInterventionPolicy.interventions.push(createBlankIntervention());
 };
 
-const onDeleteIntervention = (index: number) => {
+const onDeleteIntervention = (id: string) => {
 	// Create a new array excluding the intervention at the specified index
 	const updatedInterventions = knobs.value.transientInterventionPolicy.interventions.filter(
-		(_intervention, i) => i !== index
+		(intervention) => intervention.id !== id
 	);
 
 	// Reassign the updated interventions array back to the transientInterventionPolicy
@@ -595,6 +477,8 @@ const onChangeName = async (name: string) => {
 };
 
 const onEditDescription = async () => {
+	// open the description for editing
+	currentActiveIndicies.value = [0];
 	isEditingDescription.value = true;
 	newDescription.value = knobs.value.transientInterventionPolicy.description ?? '';
 	await nextTick();
@@ -648,7 +532,7 @@ const resetToBlankIntervention = () => {
 		value: null,
 		state: {
 			modelId,
-			interventions: [_.cloneDeep(blankIntervention)]
+			interventions: [_.cloneDeep(createBlankIntervention())]
 		}
 	});
 };
@@ -689,12 +573,6 @@ const extractInterventionPolicyFromInputs = async () => {
 			}
 		});
 	}
-	emit('update-state', state);
-};
-
-const onSelectChartChange = () => {
-	const state = cloneDeep(props.node.state);
-	state.selectedCharts = selectedCharts.value;
 	emit('update-state', state);
 };
 
@@ -798,7 +676,6 @@ onMounted(async () => {
 
 <style scoped>
 .intervention-settings-section {
-	background-color: var(--gray-200);
 	padding: 0 var(--gap-3);
 	gap: var(--gap-1);
 }

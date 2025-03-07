@@ -1,7 +1,7 @@
 import { Operation, WorkflowOperationTypes, BaseState } from '@/types/workflow';
 import { StaticIntervention, DynamicIntervention } from '@/types/Types';
 import { CiemssMethodOptions } from '@/services/models/simulation-service';
-import { blankIntervention } from '@/services/intervention-policy';
+import { createBlankIntervention } from '@/services/intervention-policy';
 import optimizeModel from '@assets/svg/operator-images/optimize-model.svg';
 import { ChartSetting } from '@/types/common';
 
@@ -112,8 +112,8 @@ export const blankInterventionPolicyGroup: InterventionPolicyGroupForm = {
 		timeObjectiveFunction: InterventionObjectiveFunctions.initialGuess,
 		parameterObjectiveFunction: InterventionObjectiveFunctions.initialGuess
 	},
-	interventionName: blankIntervention.name,
-	individualIntervention: blankIntervention.staticInterventions[0]
+	interventionName: createBlankIntervention.name,
+	individualIntervention: createBlankIntervention().staticInterventions[0]
 };
 
 export const defaultCriterion: Criterion = {

@@ -532,7 +532,12 @@ import {
 	OptimizeCiemssOperationState,
 	OptimizationInterventionObjective
 } from './optimize-ciemss-operation';
-import { policyGroupFormToIntervention, setQoIData, usePreparedChartInputs } from './optimize-utils';
+import {
+	resolveInterventionValue,
+	policyGroupFormToIntervention,
+	setQoIData,
+	usePreparedChartInputs
+} from './optimize-utils';
 import { isInterventionPolicyBlank } from '../intervention-policy/intervention-policy-operation';
 
 const confirm = useConfirm();
@@ -833,7 +838,7 @@ const setInterventionPolicyGroups = (interventionPolicy: InterventionPolicy) => 
 				newIntervention.relativeImportance = 5;
 				newIntervention.individualIntervention = staticIntervention;
 				newIntervention.startTimeGuess = staticIntervention.timestep;
-				newIntervention.initialGuessValue = staticIntervention.value;
+				newIntervention.initialGuessValue = resolveInterventionValue(staticIntervention, modelConfiguration.value!);
 				knobs.value.interventionPolicyGroups.push(_.cloneDeep(newIntervention));
 			});
 			// Dynamic:
@@ -861,7 +866,10 @@ const runOptimize = async () => {
 		if (!isInterventionStatic(ele.individualIntervention)) return;
 		const interventionType = ele.optimizeFunction.type;
 		const paramName: string = ele.individualIntervention.appliedTo;
-		const paramValue: number = ele.individualIntervention.value;
+		const paramValue: number = resolveInterventionValue(
+			ele.individualIntervention as StaticIntervention,
+			modelConfiguration.value!
+		);
 		const startTime: number = (ele.individualIntervention as StaticIntervention).timestep;
 		const timeObjectiveFunction = ele.optimizeFunction.timeObjectiveFunction;
 		const parameterObjectiveFunction = ele.optimizeFunction.parameterObjectiveFunction;

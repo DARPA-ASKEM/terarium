@@ -12,7 +12,7 @@ import { ChartSetting, ChartSettingType, CiemssPresetTypes } from '@/types/commo
 import { updateChartSettingsBySelectedVariables } from '@/services/chart-settings';
 import { AssetType, InterventionPolicy, ParameterSemantic } from '@/types/Types';
 import {
-	blankIntervention,
+	createBlankIntervention,
 	createInterventionPolicy,
 	flattenInterventionData,
 	getInterventionPolicyById
@@ -380,7 +380,7 @@ export class ValueOfInformationScenario extends BaseScenario {
 									?.name ?? 'New policy',
 							description: 'This intervention policy was created using the value of information scenario template.',
 							modelId: this.modelSpec.id,
-							interventions: [blankIntervention]
+							interventions: [createBlankIntervention()]
 						},
 						true
 					);

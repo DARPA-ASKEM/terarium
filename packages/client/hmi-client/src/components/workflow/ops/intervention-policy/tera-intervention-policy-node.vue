@@ -1,10 +1,5 @@
 <template>
 	<section class="gap-0">
-		<ul v-if="node.state.interventionPolicy.id">
-			<li v-for="(_interventions, appliedTo) in selectedOutputParameters" :key="appliedTo">
-				<vega-chart expandable :are-embed-actions-visible="false" :visualization-spec="preparedCharts[appliedTo]" />
-			</li>
-		</ul>
 		<div v-if="displayedInterventions.length > 0" class="intervention-summary">
 			<div v-for="(intervention, index) in displayedInterventions" :key="index">
 				<p class="name">{{ intervention.name }}</p>
@@ -19,7 +14,10 @@
 							:key="staticIntervention.type + staticIntervention.appliedTo"
 						>
 							Set {{ staticIntervention.type }} <span class="semi-bold">{{ staticIntervention.appliedTo }}</span> to
-							<span class="semi-bold">{{ staticIntervention.value }}</span>
+							<span class="semi-bold"
+								>{{ staticIntervention.value
+								}}{{ staticIntervention.valueType === InterventionValueType.Percentage ? '%' : '' }}</span
+							>
 						</p>
 					</div>
 				</template>
@@ -58,12 +56,10 @@
 import { computed, ref, watch } from 'vue';
 import { WorkflowNode, WorkflowPortStatus } from '@/types/workflow';
 import Button from 'primevue/button';
-import { cloneDeep, groupBy, mapValues } from 'lodash';
-import { blankIntervention, flattenInterventionData } from '@/services/intervention-policy';
-import { createInterventionChart } from '@/services/charts';
-import VegaChart from '@/components/widgets/VegaChart.vue';
+import { cloneDeep } from 'lodash';
+import { createBlankIntervention } from '@/services/intervention-policy';
 import TeraOperatorPlaceholder from '@/components/operator/tera-operator-placeholder.vue';
-import { ClientEventType } from '@/types/Types';
+import { ClientEventType, InterventionValueType } from '@/types/Types';
 import { createTaskListClientEventHandler, useClientEvent } from '@/composables/useClientEvent';
 import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue';
 import { InterventionPolicyState } from './intervention-policy-operation';
@@ -80,38 +76,10 @@ useClientEvent(
 const isLoading = computed(() => props.node.state.taskIds.length > 0);
 const isModelInputConnected = ref(false);
 
-const groupedOutputParameters = computed(() =>
-	Object.fromEntries(
-		Object.entries(groupBy(flattenInterventionData(props.node.state.interventionPolicy.interventions), 'appliedTo'))
-	)
-);
-
 const interventionSummary = computed(() => {
 	const interventions = cloneDeep(props.node.state.interventionPolicy.interventions);
 	return interventions;
 });
-
-const selectedOutputParameters = computed(() => {
-	const charts = {};
-	props.node.state.selectedCharts?.forEach((chart) => {
-		const paramOutput = groupedOutputParameters.value[chart];
-		if (paramOutput) charts[chart] = paramOutput;
-	});
-	return charts;
-});
-
-const preparedCharts = computed(() =>
-	mapValues(groupedOutputParameters.value, (interventions, key) =>
-		createInterventionChart(interventions, {
-			title: key,
-			width: 180,
-			height: 120,
-			xAxisTitle: 'Time',
-			yAxisTitle: 'Value',
-			hideLabels: false
-		})
-	)
-);
 
 watch(
 	() => props.node.inputs,
@@ -129,7 +97,7 @@ watch(
 		// Reset previous model cache
 		state.interventionPolicy = {
 			modelId,
-			interventions: [blankIntervention]
+			interventions: [createBlankIntervention()]
 		};
 		emit('update-state', state);
 	},

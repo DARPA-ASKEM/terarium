@@ -1,5 +1,6 @@
 import API from '@/api/api';
 import type {
+	InferredParameterSemantic,
 	InitialSemantic,
 	Model,
 	ModelConfiguration,
@@ -94,6 +95,13 @@ export function setParameterDistributions(
 
 export function getParameter(config: ModelConfiguration, parameterId: string): ParameterSemantic | undefined {
 	return config.parameterSemanticList?.find((param) => param.referenceId === parameterId);
+}
+
+export function getInferredParameter(
+	config: ModelConfiguration,
+	parameterId: string
+): InferredParameterSemantic | undefined {
+	return config.inferredParameterList?.find((param) => param.referenceId === parameterId);
 }
 
 export function getParameterDistribution(
@@ -214,16 +222,23 @@ export function getOtherValues(
 	key: string,
 	otherValueList: string,
 	description?: string
-) {
+): SemanticOtherValues[] {
 	let otherValues: SemanticOtherValues[] = [];
 
-	const modelConfigTableData = configs.map((modelConfig) => ({
-		name: modelConfig.name ?? '',
-		list: modelConfig[otherValueList]
-	}));
+	const modelConfigTableData = configs.map((modelConfig) => {
+		const name: string = modelConfig.name ?? '';
+		let semanticList: string = otherValueList;
+		if (semanticList === 'parameterSemanticList' && modelConfig.simulationId) {
+			semanticList = 'inferredParameterList';
+		}
+		const list = modelConfig[semanticList];
+		return { name, list };
+	});
 
 	modelConfigTableData.forEach((modelConfig) => {
-		const config: ParameterSemantic[] | InitialSemantic[] = modelConfig.list.filter((item) => item[key] === id)[0];
+		const config: ParameterSemantic[] | InitialSemantic[] | InferredParameterSemantic[] = modelConfig.list.filter(
+			(item) => item[key] === id
+		)[0];
 		if (config && modelConfig.name) {
 			const data: SemanticOtherValues = { name: modelConfig.name, ...config };
 			if (description) {
@@ -304,6 +319,20 @@ export function getModelConfigName(modelConfigs: ModelConfiguration[], configId:
 export async function getModelConfigurationAsLatexTable(id: ModelConfiguration['id']): Promise<string> {
 	const response = await API.get<string>(`model-configurations/${id}/latex-table`);
 	return response?.data ?? '';
+}
+
+export function getParameterDistributionAverage(parameter: ParameterSemantic | InferredParameterSemantic): number {
+	const distribution = parameter.distribution;
+	if (distribution.type === DistributionType.Constant) {
+		return distribution.parameters.value;
+	}
+	if (distribution.type === DistributionType.Uniform) {
+		return (distribution.parameters.minimum + distribution.parameters.maximum) / 2;
+	}
+	if (distribution.type === 'inferred') {
+		return distribution.parameters.mean;
+	}
+	return NaN;
 }
 
 // Get the model configuration as a CSV table
