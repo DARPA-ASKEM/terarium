@@ -14,7 +14,10 @@
 							:key="staticIntervention.type + staticIntervention.appliedTo"
 						>
 							Set {{ staticIntervention.type }} <span class="semi-bold">{{ staticIntervention.appliedTo }}</span> to
-							<span class="semi-bold">{{ staticIntervention.value }}</span>
+							<span class="semi-bold"
+								>{{ staticIntervention.value
+								}}{{ staticIntervention.valueType === InterventionValueType.Percentage ? '%' : '' }}</span
+							>
 						</p>
 					</div>
 				</template>
@@ -56,7 +59,7 @@ import Button from 'primevue/button';
 import { cloneDeep } from 'lodash';
 import { blankIntervention } from '@/services/intervention-policy';
 import TeraOperatorPlaceholder from '@/components/operator/tera-operator-placeholder.vue';
-import { ClientEventType } from '@/types/Types';
+import { ClientEventType, InterventionValueType } from '@/types/Types';
 import { createTaskListClientEventHandler, useClientEvent } from '@/composables/useClientEvent';
 import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue';
 import { InterventionPolicyState } from './intervention-policy-operation';

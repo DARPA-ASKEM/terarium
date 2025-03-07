@@ -6,7 +6,11 @@
 			<ul class="text-sm">
 				<li v-for="(staticIntervention, index) in intervention.staticInterventions" :key="`static-${index}`">
 					Set {{ staticIntervention.type }} <strong>{{ staticIntervention.appliedTo }}</strong> to
-					<strong>{{ staticIntervention.value }}</strong> starting at
+					<strong
+						>{{ staticIntervention.value
+						}}{{ staticIntervention.valueType === InterventionValueType.Percentage ? '%' : '' }}</strong
+					>
+					starting at
 					<strong>{{
 						getTimePointString(staticIntervention.timestep, {
 							startDate: props.startDate,
@@ -27,7 +31,7 @@
 </template>
 
 <script setup lang="ts">
-import { Intervention, DynamicIntervention, InterventionSemanticType } from '@/types/Types';
+import { Intervention, DynamicIntervention, InterventionSemanticType, InterventionValueType } from '@/types/Types';
 import { CalendarSettings, getTimePointString } from '@/utils/date';
 import { isEmpty } from 'lodash';
 

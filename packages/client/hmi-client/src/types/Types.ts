@@ -625,6 +625,7 @@ export interface StaticIntervention {
     value: number;
     appliedTo: string;
     type: InterventionSemanticType;
+    valueType: InterventionValueType;
 }
 
 export interface DatasetLocation {
@@ -1261,6 +1262,11 @@ export enum SimulationEngine {
 export enum InterventionSemanticType {
     State = "state",
     Parameter = "parameter",
+}
+
+export enum InterventionValueType {
+    Value = "value",
+    Percentage = "percentage",
 }
 
 export enum ExtractionAssetType {

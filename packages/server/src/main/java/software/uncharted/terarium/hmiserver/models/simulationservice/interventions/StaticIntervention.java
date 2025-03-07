@@ -11,6 +11,7 @@ public class StaticIntervention {
 	private Number value;
 	private String appliedTo;
 	private InterventionSemanticType type;
+	private InterventionValueType valueType;
 
 	@Override
 	public StaticIntervention clone() {
@@ -19,6 +20,7 @@ public class StaticIntervention {
 		staticIntervention.value = this.value;
 		staticIntervention.appliedTo = this.appliedTo;
 		staticIntervention.type = this.type;
+		staticIntervention.valueType = this.valueType;
 		return staticIntervention;
 	}
 }
