@@ -97,6 +97,13 @@ export function getParameter(config: ModelConfiguration, parameterId: string): P
 	return config.parameterSemanticList?.find((param) => param.referenceId === parameterId);
 }
 
+export function getInferredParameter(
+	config: ModelConfiguration,
+	parameterId: string
+): InferredParameterSemantic | undefined {
+	return config.inferredParameterList?.find((param) => param.referenceId === parameterId);
+}
+
 export function getParameterDistribution(
 	config: ModelConfiguration,
 	parameterId: string,
@@ -312,6 +319,20 @@ export function getModelConfigName(modelConfigs: ModelConfiguration[], configId:
 export async function getModelConfigurationAsLatexTable(id: ModelConfiguration['id']): Promise<string> {
 	const response = await API.get<string>(`model-configurations/${id}/latex-table`);
 	return response?.data ?? '';
+}
+
+export function getParameterDistributionAverage(parameter: ParameterSemantic | InferredParameterSemantic): number {
+	const distribution = parameter.distribution;
+	if (distribution.type === DistributionType.Constant) {
+		return distribution.parameters.value;
+	}
+	if (distribution.type === DistributionType.Uniform) {
+		return (distribution.parameters.minimum + distribution.parameters.maximum) / 2;
+	}
+	if (distribution.type === 'inferred') {
+		return distribution.parameters.mean;
+	}
+	return NaN;
 }
 
 // Get the model configuration as a CSV table
