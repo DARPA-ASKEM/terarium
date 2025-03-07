@@ -14,7 +14,6 @@ import { AssetType, InterventionPolicy, ParameterSemantic } from '@/types/Types'
 import { DistributionType } from '@/services/distribution';
 import { calculateUncertaintyRange } from '@/utils/math';
 import {
-	blankIntervention,
 	createBlankIntervention,
 	createInterventionPolicy,
 	flattenInterventionData,

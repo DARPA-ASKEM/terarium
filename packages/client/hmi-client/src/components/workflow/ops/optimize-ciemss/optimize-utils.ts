@@ -12,6 +12,7 @@ import {
 import { createInterventionPolicy, isInterventionStatic } from '@/services/intervention-policy';
 import { mergeResults } from '@/services/dataset';
 import { getModelIdFromModelConfigurationId } from '@/services/model-configurations';
+import { v4 as uuidv4 } from 'uuid';
 import {
 	ContextMethods,
 	Criterion,
@@ -101,6 +102,7 @@ export function setQoIData(resultData: DataArray, config: Criterion) {
 
 export function policyGroupFormToIntervention(policyGroupForm: InterventionPolicyGroupForm) {
 	const intervention: Intervention = {
+		id: uuidv4(),
 		name: policyGroupForm.interventionName,
 		staticInterventions: [],
 		dynamicInterventions: []
@@ -146,6 +148,7 @@ export async function getOptimizedInterventions(optimizeRunId: string) {
 	// Add any static (not optimized) interventions to allInterventions
 	simulationStaticInterventions.forEach((inter) => {
 		const newIntervetion: Intervention = {
+			id: uuidv4(),
 			dynamicInterventions: inter.dynamic_interventions,
 			name: inter.name,
 			staticInterventions: inter.static_interventions
@@ -165,6 +168,7 @@ export async function getOptimizedInterventions(optimizeRunId: string) {
 			const newTimestepAsList = policyResults.splice(0, 1);
 			// If we our intervention type is param value our policyResult will provide a timestep.
 			allInterventions.push({
+				id: uuidv4(),
 				name: `Optimized ${paramName}`,
 				staticInterventions: [
 					{
@@ -180,6 +184,7 @@ export async function getOptimizedInterventions(optimizeRunId: string) {
 			const valueAsList = policyResults.splice(0, 1);
 			// If we our intervention type is start time our policyResult will provide a parameter value.
 			allInterventions.push({
+				id: uuidv4(),
 				name: `Optimized ${paramName}`,
 				staticInterventions: [
 					{
@@ -196,6 +201,7 @@ export async function getOptimizedInterventions(optimizeRunId: string) {
 			// https://github.com/ciemss/pyciemss/blob/main/pyciemss/integration_utils/intervention_builder.py#L66
 			const timeAndValueAsList = policyResults.splice(0, 2);
 			allInterventions.push({
+				id: uuidv4(),
 				name: `Optimized ${paramName}`,
 				staticInterventions: [
 					{

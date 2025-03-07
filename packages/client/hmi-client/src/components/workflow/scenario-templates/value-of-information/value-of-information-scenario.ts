@@ -12,7 +12,6 @@ import { ChartSetting, ChartSettingType, CiemssPresetTypes } from '@/types/commo
 import { updateChartSettingsBySelectedVariables } from '@/services/chart-settings';
 import { AssetType, InterventionPolicy, ParameterSemantic } from '@/types/Types';
 import {
-	blankIntervention,
 	createBlankIntervention,
 	createInterventionPolicy,
 	flattenInterventionData,
