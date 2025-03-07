@@ -4,8 +4,8 @@ import { InterventionSemanticType } from '@/types/Types';
 import { logger } from '@/utils/logger';
 import { v4 as uuidv4 } from 'uuid';
 
-export const blankIntervention: Intervention = {
-	id: '',
+export const createBlankIntervention = (): Intervention => ({
+	id: uuidv4(),
 	name: 'New intervention',
 	staticInterventions: [
 		{
@@ -16,9 +16,7 @@ export const blankIntervention: Intervention = {
 		}
 	],
 	dynamicInterventions: []
-};
-
-export const createBlankIntervention = (): Intervention => ({ ...blankIntervention, id: uuidv4() });
+});
 
 export const getInterventionPolicyById = async (policyId: string): Promise<InterventionPolicy | null> => {
 	const response = await API.get<InterventionPolicy>(`/interventions/${policyId}`);
