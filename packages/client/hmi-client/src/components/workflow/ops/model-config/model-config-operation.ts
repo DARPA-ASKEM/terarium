@@ -1,9 +1,8 @@
-import type { BaseState, Operation } from '@/types/workflow';
-import { WorkflowOperationTypes } from '@/types/workflow';
+import { cloneDeep, differenceWith, isEqual, omit } from 'lodash';
+import { BaseState, Operation, OperatorStatus, WorkflowOperationTypes } from '@/types/workflow';
 import type { ModelConfiguration } from '@/types/Types';
 import { NotebookHistory } from '@/services/notebook';
 import configureModel from '@assets/svg/operator-images/configure-model.svg';
-import { cloneDeep, differenceWith, isEqual, omit } from 'lodash';
 
 export const name = 'ModelConfigOperation';
 
@@ -14,6 +13,7 @@ export interface ModelConfigOperationState extends BaseState {
 	notebookHistory: NotebookHistory[];
 	hasCodeRun: boolean;
 	modelConfigTaskIds: string[];
+	operatorStatus?: OperatorStatus;
 }
 
 export const blankModelConfig: ModelConfiguration = {
@@ -47,7 +47,8 @@ export const ModelConfigOperation: Operation = {
 			transientModelConfig: blankModelConfig,
 			notebookHistory: [],
 			hasCodeRun: false,
-			modelConfigTaskIds: []
+			modelConfigTaskIds: [],
+			operatorStatus: OperatorStatus.DEFAULT
 		};
 		return init;
 	}
