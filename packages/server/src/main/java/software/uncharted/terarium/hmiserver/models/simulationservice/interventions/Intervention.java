@@ -11,6 +11,8 @@ import software.uncharted.terarium.hmiserver.annotations.TSOptional;
 @TSModel
 public class Intervention {
 
+	private UUID id;
+
 	private String name;
 
 	@TSOptional
@@ -28,6 +30,7 @@ public class Intervention {
 	@Override
 	public Intervention clone() {
 		Intervention intervention = new Intervention();
+		intervention.setId(UUID.randomUUID());
 		intervention.setName(name);
 		intervention.setExtractionDocumentId(extractionDocumentId);
 		intervention.setExtractionPage(extractionPage);
