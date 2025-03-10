@@ -1,6 +1,5 @@
 import { InterventionPolicy, InterventionSemanticType } from '@/types/Types';
-import type { BaseState, Operation } from '@/types/workflow';
-import { WorkflowOperationTypes } from '@/types/workflow';
+import { BaseState, Operation, WorkflowOperationTypes } from '@/types/workflow';
 import { isEqual, omit } from 'lodash';
 
 const DOCUMENTATION_URL = 'https://documentation.terarium.ai/config-and-intervention/create-intervention-policy/';

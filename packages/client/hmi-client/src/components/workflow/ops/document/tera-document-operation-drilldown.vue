@@ -5,7 +5,7 @@
 		@update-state="(state: any) => emit('update-state', state)"
 	>
 		<tera-columnar-panel>
-			<tera-drilldown-section :is-loading="isFetchingPDF">
+			<tera-drilldown-section :is-loading="props.node.state?.taskProgress != undefined">
 				<div v-if="props.node.state?.taskProgress">
 					Processing...
 					<ProgressBar :value="props.node?.state?.taskProgress * 100" />
@@ -42,11 +42,9 @@ const props = defineProps<{
 const document = ref<DocumentAsset | null>();
 const pdfLink = ref<string | null>();
 const docText = ref<string | null>();
-const isFetchingPDF = ref(false);
 
 onMounted(async () => {
 	if (props.node.state.documentId) {
-		isFetchingPDF.value = true;
 		document.value = await getDocumentAsset(props.node.state.documentId);
 		const filename = document.value?.fileNames?.[0];
 		const isPdf = document.value?.fileNames?.[0]?.endsWith('.pdf');
@@ -57,7 +55,6 @@ onMounted(async () => {
 				docText.value = await getDocumentFileAsText(document.value.id, filename);
 			}
 		}
-		isFetchingPDF.value = false;
 	}
 });
 </script>
