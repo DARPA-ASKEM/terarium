@@ -3,3 +3,4 @@ uvicorn
 pydantic
 python-multipart
 docling==2.25.2
+git+https://github.com/j2whiting/texteller.git

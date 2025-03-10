@@ -11,22 +11,27 @@ from docling.datamodel.base_models import FigureElement, InputFormat, Table
 from docling.datamodel.pipeline_options import PdfPipelineOptions
 from docling.document_converter import DocumentConverter, PdfFormatOption
 
+from texteller.inference_model import InferenceModel
+
 
 app = FastAPI()
-IMAGE_RESOLUTION_SCALE = 2.0
+IMAGE_RESOLUTION_SCALE = 1.0
 pipeline_options = PdfPipelineOptions()
 pipeline_options.images_scale = IMAGE_RESOLUTION_SCALE
 pipeline_options.generate_page_images = True
 pipeline_options.generate_picture_images = False
-pipeline_options.do_code_enrichment = True
+pipeline_options.do_code_enrichment = False
 pipeline_options.do_formula_enrichment = True
-
 
 converter = DocumentConverter(
     format_options={
         InputFormat.PDF: PdfFormatOption(pipeline_options=pipeline_options)
     }
 )
+
+
+# Textteller equation image => latex
+equation_model = InferenceModel()
 
 
 @app.get("/health")
@@ -42,9 +47,21 @@ async def process_and_predict(file: UploadFile = File(...)):
     docstream = DocumentStream(name="test", stream=BytesIO(file_bytes))
     # result = converter.convert(docstream, max_num_pages=100, max_file_size=20971520)
     result = converter.convert(docstream)
-    result_dict = result.document.export_to_dict()
-    return JSONResponse(content=result_dict)
-    # return JSONResponse(content={"status": "TODO"})
+
+    # Do second round
+    for _idx, element in enumerate(result.document.texts):
+        if element.label == "formula":
+            logging.info(f"{element.label} =>  {element.text}")
+            text_img = element.get_image(result.document)
+            logging.info(text_img)
+
+            latex_str = equation_model.predict(text_img)
+            logging.info(f"Second model: {latex_str}")
+
+
+    # result_dict = result.document.export_to_dict()
+    # return JSONResponse(content=result_dict)
+    return JSONResponse(content={"status": "TODO"})
 
 
 if __name__ == "__main__":
