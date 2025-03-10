@@ -62,7 +62,6 @@ def main():
 
 
         # Construct equations
-        num_terms = 5 # Max number of terms per line in LaTeX align
         odesys = []
         exprs = ""
         for i, (var, terms) in enumerate(odeterms.items()):
@@ -72,14 +71,7 @@ def main():
             exprs += sympy.latex(lhs) + " ={} "
 
             # Few equation terms = no wrapping needed
-            if len(terms) < num_terms:
-                exprs += sympy.latex(rhs)
-
-            # otherwise, wrap around
-            else:
-                rhs = [sympy.latex(sum(terms[j:(j + num_terms)])) for j in range(0, len(terms), num_terms)]
-                rhs = [line if (j == 0) | (line[0] == '-') else "+ " + line for j, line in enumerate(rhs)] # Add '+ ' to all lines past the first if not start with '- '
-                exprs += " \\\\ \n    &".join(rhs)
+            exprs += sympy.latex(rhs)
 
             if i < (len(odeterms) - 1):
                 exprs += " \\\\ \n"
