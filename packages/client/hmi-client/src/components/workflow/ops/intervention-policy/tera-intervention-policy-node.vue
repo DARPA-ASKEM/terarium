@@ -27,8 +27,11 @@
 						:key="dynamicIntervention.type + dynamicIntervention.appliedTo"
 					>
 						Set {{ dynamicIntervention.type }} <span class="semi-bold">{{ dynamicIntervention.appliedTo }}</span> to
-						<span class="semi-bold">{{ dynamicIntervention.value }}</span> when
-						<span class="semi-bold">{{ dynamicIntervention.parameter }}</span> crosses threshold
+						<span class="semi-bold"
+							>{{ dynamicIntervention.value
+							}}{{ dynamicIntervention.valueType === InterventionValueType.Percentage ? '%' : '' }}</span
+						>
+						when <span class="semi-bold">{{ dynamicIntervention.parameter }}</span> crosses threshold
 						<span class="semi-bold">{{ dynamicIntervention.threshold }}</span>
 					</p>
 				</div>
