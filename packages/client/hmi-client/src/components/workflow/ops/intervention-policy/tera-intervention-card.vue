@@ -402,6 +402,7 @@ const onSemanticChange = (event: DropdownChangeEvent, index: number) => {
 	item[index].type = event.value;
 	if (event.value === InterventionSemanticType.State) {
 		item[index].appliedTo = '';
+		item[index].valueType = InterventionValueType.Value;
 	} else {
 		item[index].appliedTo = '';
 	}
