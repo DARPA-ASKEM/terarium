@@ -6,6 +6,7 @@ import time
 from taskrunner import TaskRunnerInterface
 from mira.sources.amr import model_from_json
 from mira.modeling.amr.ops import *
+from mira.metamodel.ops import check_simplify_rate_laws
 
 
 def cleanup():
@@ -21,13 +22,18 @@ def main():
 
         data = taskrunner.read_input_str_with_timeout()
         amr = json.loads(data)
+        result = {
+            "amr": amr,
+            "max_controller_decrease": 0
+        }
 
-        amr_simplified = simplify_rate_laws(amr)
+        check_simplify_result = check_simplify_rate_laws(amr)
         end = time.time()
 
-        result = {
-            "amr": amr_simplified
-        }
+        if (check_simplify_result.result == "MEANINGFUL_CHANGE"):
+            result.amr = check_simplify_result.simplified_model
+            result.max_controller_decrease = check_simplify_result.max_controller_decrease
+
         taskrunner.write_output_dict_with_timeout({"response": result})
         taskrunner.log(f"model ratelaw simplification took {(end - start) * 1000} ms")
 
