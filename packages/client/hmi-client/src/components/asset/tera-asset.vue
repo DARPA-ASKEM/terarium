@@ -89,7 +89,6 @@ const props = defineProps({
 		type: Boolean,
 		default: true
 	},
-	// Booleans default to false if not specified
 	showTableOfContents: Boolean,
 	hideIntro: Boolean,
 	isLoading: Boolean,

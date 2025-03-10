@@ -38,6 +38,7 @@ const onRenameProject = (newName: string) => {
 	});
 };
 </script>
+
 <style scoped>
 .overview-description {
 	margin-bottom: var(--gap-1);
