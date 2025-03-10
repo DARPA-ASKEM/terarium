@@ -2,3 +2,4 @@ fastapi
 uvicorn
 pydantic
 python-multipart
+docling==2.25.2
