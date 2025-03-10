@@ -61,6 +61,14 @@
 						@update:model-value="(val) => onUpdateValue(val, 0)"
 						placeholder="value"
 					/>
+					<SelectButton
+						v-if="intervention.dynamicInterventions[0].type === InterventionSemanticType.Parameter"
+						:model-value="intervention.dynamicInterventions[0].valueType"
+						:options="interventionValueTypeOptions"
+						option-label="label"
+						option-value="value"
+						@update:model-value="(val) => onValueTypeChange(val, 0)"
+					/>
 					when
 					<Dropdown
 						class="applied-to-menu"
@@ -372,7 +380,8 @@ const onInterventionTypeChange = (value: string) => {
 				value: Number.NaN,
 				parameter: '',
 				appliedTo: '',
-				type: InterventionSemanticType.Parameter
+				type: InterventionSemanticType.Parameter,
+				valueType: InterventionValueType.Value
 			}
 		];
 	}
@@ -403,10 +412,9 @@ const onValueTypeChange = (valueType, index) => {
 	const intervention = cloneDeep(props.intervention);
 	if (interventionType.value === 'static') {
 		intervention.staticInterventions[index].valueType = valueType;
+	} else {
+		intervention.dynamicInterventions[index].valueType = valueType;
 	}
-	// } else {
-	// 	intervention.dynamicInterventions[index].valueType = valueType;
-	// }
 	emit('update', intervention);
 };
 

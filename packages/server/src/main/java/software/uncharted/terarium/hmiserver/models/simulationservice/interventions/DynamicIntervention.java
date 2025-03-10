@@ -12,6 +12,7 @@ public class DynamicIntervention {
 	private Number value;
 	private String appliedTo;
 	private InterventionSemanticType type;
+	private InterventionValueType valueType;
 
 	@Override
 	public DynamicIntervention clone() {
@@ -21,6 +22,7 @@ public class DynamicIntervention {
 		clone.value = this.value;
 		clone.appliedTo = this.appliedTo;
 		clone.type = this.type;
+		clone.valueType = this.valueType;
 		return clone;
 	}
 }

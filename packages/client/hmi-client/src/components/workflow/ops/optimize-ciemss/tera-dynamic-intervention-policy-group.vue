@@ -6,13 +6,17 @@
 		<p>
 			Set the {{ config.individualIntervention.type }}&nbsp;
 			<strong>{{ config.individualIntervention.appliedTo }}</strong> to
-			<strong>{{ config.individualIntervention.value }}</strong> when it crosses the threshold value
+			<strong
+				>{{ config.individualIntervention.value
+				}}{{ config.individualIntervention.valueType === InterventionValueType.Percentage ? '%' : '' }}</strong
+			>
+			when it crosses the threshold value
 			<strong>{{ config.individualIntervention.threshold }}</strong>
 		</p>
 	</div>
 </template>
 <script setup lang="ts">
-import { DynamicIntervention } from '@/types/Types';
+import { DynamicIntervention, InterventionValueType } from '@/types/Types';
 import { InterventionPolicyGroupForm } from './optimize-ciemss-operation';
 
 defineProps<{

@@ -112,7 +112,7 @@ export const blankInterventionPolicyGroup: InterventionPolicyGroupForm = {
 		timeObjectiveFunction: InterventionObjectiveFunctions.initialGuess,
 		parameterObjectiveFunction: InterventionObjectiveFunctions.initialGuess
 	},
-	interventionName: createBlankIntervention.name,
+	interventionName: createBlankIntervention().name,
 	individualIntervention: createBlankIntervention().staticInterventions[0]
 };
 

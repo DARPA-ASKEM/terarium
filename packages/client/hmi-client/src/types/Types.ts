@@ -604,6 +604,7 @@ export interface DynamicIntervention {
     value: number;
     appliedTo: string;
     type: InterventionSemanticType;
+    valueType: InterventionValueType;
 }
 
 export interface Intervention {
