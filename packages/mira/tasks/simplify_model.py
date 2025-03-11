@@ -26,13 +26,13 @@ def main():
             "amr": amr,
             "max_controller_decrease": 0
         }
-
-        check_simplify_result = check_simplify_rate_laws(amr)
+        template_model = template_model_from_amr_json(amr)
+        check_simplify_result = check_simplify_rate_laws(template_model)
         end = time.time()
 
-        if (check_simplify_result.result == "MEANINGFUL_CHANGE"):
-            result.amr = check_simplify_result.simplified_model
-            result.max_controller_decrease = check_simplify_result.max_controller_decrease
+        if (check_simplify_result["result"] == "MEANINGFUL_CHANGE"):
+            result["amr"]= template_model_to_petrinet_json(check_simplify_result["simplified_model"])
+            result["max_controller_decrease"] = check_simplify_result["max_controller_decrease"]
 
         taskrunner.write_output_dict_with_timeout({"response": result})
         taskrunner.log(f"model ratelaw simplification took {(end - start) * 1000} ms")
