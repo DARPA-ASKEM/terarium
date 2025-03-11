@@ -116,13 +116,13 @@ async def process_and_predict(file: UploadFile = File(...)):
                 "right": prov["bbox"]["r"],
                 "bottom": prov["bbox"]["b"]
             },
-            "span": prov["char_span"]
+            "charspan": prov["charspan"]
         }
 
         if item["label"] == "formula":
             item["text"] = latex_extraction_dict[item["id"]]
         else:
-            item["text"] = item["text"]
+            item["text"] = text["text"]
 
         final_result["texts"].append(item)
 
