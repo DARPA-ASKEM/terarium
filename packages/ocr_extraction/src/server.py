@@ -69,7 +69,6 @@ async def process_and_predict(file: UploadFile = File(...)):
             logging.info(f"Docling model: {element.text}")
             logging.info(f"Textteller model: {latex_str}")
             logging.info("")
-
             latex_extraction_dict[text_ref] = latex_str
 
 
@@ -79,7 +78,7 @@ async def process_and_predict(file: UploadFile = File(...)):
     final_result = {}
     result_dict = result.document.export_to_dict()
 
-    # 1. body
+    # 1. Body
     final_result["body"] = {
         "id": "#/body",
         "children": []
@@ -89,8 +88,8 @@ async def process_and_predict(file: UploadFile = File(...)):
             {"id": child["$ref"]}
         )
 
-    # 2. group
-    final_result["group"] = []
+    # 2. Groups
+    final_result["groups"] = []
     for group in result_dict["groups"]:
         children = []
         for child in group["children"]:
@@ -102,6 +101,31 @@ async def process_and_predict(file: UploadFile = File(...)):
         })
 
     # 3. Text
+    final_result["texts"] = []
+    for text in result_dict["texts"]:
+        item = {}
+        prov = text["prov"][0]
+
+        item["id"] = text["self_ref"]
+        item["label"] = text["label"]
+        item["provenance"] = {
+            "page": prov["page_no"],
+            "bbox": {
+                "left": prov["bbox"]["l"],
+                "top": prov["bbox"]["t"],
+                "right": prov["bbox"]["r"],
+                "bottom": prov["bbox"]["b"]
+            },
+            "span": prov["char_span"]
+        }
+
+        if item["label"] == "formula":
+            item["text"] = latex_extraction_dict[item["id"]]
+        else:
+            item["text"] = item["text"]
+
+        final_result["texts"].append(item)
+
     # 4. Images ... TODO
     # 5. Tables ... TODO
 
