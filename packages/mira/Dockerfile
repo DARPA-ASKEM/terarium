@@ -16,7 +16,7 @@ RUN apt-get update && apt-get install --assume-yes --no-install-recommends \
 COPY ./packages/mira/mira-version.txt /miraVersion.txt
 RUN COMMIT_SHA="$(cat /miraVersion.txt)" && \
 	echo "Using MIRA commit $COMMIT_SHA" && \
-	wget --progress=dot:giga -O mira.tar.gz "https://github.com/gyorilab/mira/archive/${COMMIT_SHA}.tar.gz" && \
+	wget --progress=dot:giga -O mira.tar.gz "https://github.com/DARPA-ASKEM/mira/archive/${COMMIT_SHA}.tar.gz" && \
 	tar -zxvf mira.tar.gz && \
 	rm mira.tar.gz && \
 	mv -v mira-* mira
