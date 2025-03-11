@@ -42,6 +42,11 @@
 				<Checkbox @change="emit('update-self', updatedConfig)" v-model="cartesianProduct" binary />
 				<label>Allow existing interactions to involve multiple strata</label>
 			</div>
+
+			<div class="flex align-items-center gap-2">
+				<Checkbox @change="emit('update-self', updatedConfig)" v-model="useFactoredParameter" binary />
+				<label>Stratify parameter via multiplication factors</label>
+			</div>
 		</div>
 	</div>
 </template>
@@ -68,6 +73,7 @@ const cartesianProduct = ref<boolean>(props.config.cartesianProduct);
 const directed = ref<boolean>(props.config.directed); // Currently not used, assume to be true
 const structure = ref<any>(props.config.structure); // Proxied by "useStructure"
 const useStructure = ref<any>(props.config.useStructure);
+const useFactoredParameter = ref<boolean>(props.config.useFactoredParameter || false);
 
 const updatedConfig = computed<StratifyGroup>(() => ({
 	borderColour: props.config.borderColour,
@@ -77,7 +83,8 @@ const updatedConfig = computed<StratifyGroup>(() => ({
 	cartesianProduct: cartesianProduct.value,
 	directed: directed.value,
 	structure: structure.value,
-	useStructure: useStructure.value
+	useStructure: useStructure.value,
+	useFactoredParameter: useFactoredParameter.value
 }));
 
 watch(
