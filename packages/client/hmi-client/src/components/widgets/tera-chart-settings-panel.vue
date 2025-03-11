@@ -106,21 +106,29 @@
 								label="Title"
 								placeholder="No title"
 								v-model="chartLabelTitle"
+								@blur="() => onChartLabelInputBlur('title')"
 							/>
 							<tera-input-text
 								class="chart-label-input"
 								label="X axis"
 								placeholder="No x axis"
 								v-model="chartLabelXAxis"
+								@blur="() => onChartLabelInputBlur('xAxisTitle')"
 							/>
 							<tera-input-text
 								class="chart-label-input"
 								label="Y axis"
 								placeholder="No y axis"
 								v-model="chartLabelYAxis"
+								@blur="() => onChartLabelInputBlur('yAxisTitle')"
 							/>
 						</template>
-						<tera-input-number class="chart-label-input" label="Font size" v-model="chartLabelFontSize" />
+						<tera-input-number
+							class="chart-label-input"
+							label="Font size"
+							v-model="chartLabelFontSize"
+							@focusout="() => onChartLabelInputBlur('fontSize')"
+						/>
 						<Divider />
 					</section>
 				</div>
@@ -260,34 +268,52 @@ const chartLabelsFromSettings = computed(
 	() =>
 		props.activeSettings && { ...props.getChartLabels?.(props.activeSettings), fontSize: props.activeSettings.fontSize }
 );
-
 watch(
-	chartLabelsFromSettings,
-	(labelConfig) => {
-		if (!labelConfig) return;
-		chartLabelTitle.value = labelConfig?.title ?? '';
-		chartLabelXAxis.value = labelConfig?.xAxisTitle ?? '';
-		chartLabelYAxis.value = labelConfig?.yAxisTitle ?? '';
-		chartLabelFontSize.value = labelConfig?.fontSize ?? DEFAULT_FONT_SIZE;
+	() => props.activeSettings,
+	(newVal, oldVal) => {
+		// If the active setting is the same, do nothing
+		if (newVal?.id === oldVal?.id) return;
+		chartLabelTitle.value = chartLabelsFromSettings.value?.title ?? '';
+		chartLabelXAxis.value = chartLabelsFromSettings.value?.xAxisTitle ?? '';
+		chartLabelYAxis.value = chartLabelsFromSettings.value?.yAxisTitle ?? '';
+		chartLabelFontSize.value = chartLabelsFromSettings.value?.fontSize ?? DEFAULT_FONT_SIZE;
 	},
 	{ immediate: true }
 );
 
 const CHART_LABEL_UPDATE_DELAY = 1000;
-watch(
-	[chartLabelTitle, chartLabelXAxis, chartLabelYAxis, chartLabelFontSize],
-	_.debounce(() => {
-		const existing = chartLabelsFromSettings.value;
-		const updated = {
-			title: chartLabelTitle.value,
-			xAxisTitle: chartLabelXAxis.value,
-			yAxisTitle: chartLabelYAxis.value,
-			fontSize: chartLabelFontSize.value
-		};
-		if (_.isEqual(existing, updated)) return;
-		emit('update-settings', updated);
-	}, CHART_LABEL_UPDATE_DELAY)
-);
+const updateLabelSettings = _.debounce(() => {
+	const existing = chartLabelsFromSettings.value;
+	const updated = {
+		title: chartLabelTitle.value,
+		xAxisTitle: chartLabelXAxis.value,
+		yAxisTitle: chartLabelYAxis.value,
+		fontSize: chartLabelFontSize.value
+	};
+	if (_.isEqual(existing, updated)) return;
+	emit('update-settings', updated);
+}, CHART_LABEL_UPDATE_DELAY);
+
+const onChartLabelInputBlur = (field: 'title' | 'xAxisTitle' | 'yAxisTitle' | 'fontSize') => {
+	const ValRef = {
+		title: chartLabelTitle,
+		xAxisTitle: chartLabelXAxis,
+		yAxisTitle: chartLabelYAxis,
+		fontSize: chartLabelFontSize
+	}[field];
+	if (!ValRef.value) {
+		// Replace empty input with default value on blur
+		const setting = _.clone(props.activeSettings) as ChartSetting;
+		setting[field] = undefined;
+		const defaultValue = field === 'fontSize' ? DEFAULT_FONT_SIZE : props.getChartLabels?.(setting)?.[field];
+		ValRef.value = defaultValue ?? '';
+	}
+	updateLabelSettings();
+};
+
+watch([chartLabelTitle, chartLabelXAxis, chartLabelYAxis, chartLabelFontSize], updateLabelSettings, {
+	immediate: true
+});
 // =================================
 
 // ========== Chart Annotations =========
