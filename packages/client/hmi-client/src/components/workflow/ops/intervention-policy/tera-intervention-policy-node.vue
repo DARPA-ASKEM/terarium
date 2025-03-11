@@ -27,8 +27,11 @@
 						:key="dynamicIntervention.type + dynamicIntervention.appliedTo"
 					>
 						Set {{ dynamicIntervention.type }} <span class="semi-bold">{{ dynamicIntervention.appliedTo }}</span> to
-						<span class="semi-bold">{{ dynamicIntervention.value }}</span> when
-						<span class="semi-bold">{{ dynamicIntervention.parameter }}</span> crosses threshold
+						<span class="semi-bold"
+							>{{ dynamicIntervention.value
+							}}{{ dynamicIntervention.valueType === InterventionValueType.Percentage ? '%' : '' }}</span
+						>
+						when <span class="semi-bold">{{ dynamicIntervention.parameter }}</span> crosses threshold
 						<span class="semi-bold">{{ dynamicIntervention.threshold }}</span>
 					</p>
 				</div>
@@ -40,7 +43,7 @@
 		<tera-operator-placeholder v-else :node="node">
 			<template v-if="!node.inputs[0].value"> Attach a model</template>
 		</tera-operator-placeholder>
-		<tera-progress-spinner is-centered :font-size="2" v-if="isLoading" />
+		<tera-operator-status :status="props.node.status" />
 		<Button
 			:label="isModelInputConnected ? 'Open' : 'Attach a model'"
 			@click="emit('open-drilldown')"
@@ -61,7 +64,7 @@ import { createBlankIntervention } from '@/services/intervention-policy';
 import TeraOperatorPlaceholder from '@/components/operator/tera-operator-placeholder.vue';
 import { ClientEventType, InterventionValueType } from '@/types/Types';
 import { createTaskListClientEventHandler, useClientEvent } from '@/composables/useClientEvent';
-import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue';
+import TeraOperatorStatus from '@/components/operator/tera-operator-status.vue';
 import { InterventionPolicyState } from './intervention-policy-operation';
 
 const emit = defineEmits(['open-drilldown', 'update-state']);
@@ -70,7 +73,7 @@ const props = defineProps<{
 }>();
 useClientEvent(
 	[ClientEventType.TaskGollmInterventionsFromDocument, ClientEventType.TaskGollmInterventionsFromDataset],
-	createTaskListClientEventHandler(props.node, 'taskIds')
+	createTaskListClientEventHandler(props.node, 'taskIds', emit)
 );
 
 const isLoading = computed(() => props.node.state.taskIds.length > 0);
