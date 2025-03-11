@@ -296,18 +296,18 @@ const updateLabelSettings = _.debounce(() => {
 }, CHART_LABEL_UPDATE_DELAY);
 
 const onChartLabelInputBlur = (field: 'title' | 'xAxisTitle' | 'yAxisTitle' | 'fontSize') => {
-	const ValRef = {
+	const valRef = {
 		title: chartLabelTitle,
 		xAxisTitle: chartLabelXAxis,
 		yAxisTitle: chartLabelYAxis,
 		fontSize: chartLabelFontSize
 	}[field];
-	if (!ValRef.value) {
+	if (!valRef.value) {
 		// Replace empty input with default value on blur
 		const setting = _.clone(props.activeSettings) as ChartSetting;
 		setting[field] = undefined;
 		const defaultValue = field === 'fontSize' ? DEFAULT_FONT_SIZE : props.getChartLabels?.(setting)?.[field];
-		ValRef.value = defaultValue ?? '';
+		valRef.value = defaultValue ?? '';
 	}
 	updateLabelSettings();
 };
