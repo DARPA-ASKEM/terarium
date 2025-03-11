@@ -37,6 +37,10 @@
       "type": "object",
       "description": "A set of rules that reset the value of parameters and state variables of a model, grouped by a decision made by policymakers and starting a particular date or timestep.",
       "properties": {
+        "id": {
+          "type": "string",
+          "description": "A random uuid for each intervention such that it can be uniquely identified. Examples: '."
+        },
         "name": {
           "type": "string",
           "description": "A name for the policymaker decision, such as 'Day 4 - closure of schools' or 'Day 12 - serology testing limited to symptomatic individuals'."
@@ -62,6 +66,7 @@
         }
       },
       "required": [
+        "id",
         "name",
         "extractionPage",
         "staticInterventions",
@@ -78,6 +83,13 @@
           "enum": [
             "state",
             "parameter"
+          ]
+        },
+        "valueType": {
+          "type": "string",
+          "enum": [
+            "value",
+            "percentage"
           ]
         },
         "appliedTo": {
@@ -97,7 +109,8 @@
         "timestep",
         "value",
         "appliedTo",
-        "type"
+        "type",
+        "valueType"
       ],
       "additionalProperties": false
     },
@@ -110,6 +123,13 @@
           "enum": [
             "state",
             "parameter"
+          ]
+        },
+        "valueType": {
+          "type": "string",
+          "enum": [
+            "value",
+            "percentage"
           ]
         },
         "appliedTo": {
@@ -134,7 +154,8 @@
         "threshold",
         "value",
         "appliedTo",
-        "type"
+        "type",
+        "valueType"
       ],
       "additionalProperties": false
     }
