@@ -77,7 +77,7 @@ def main():
             previous_end = end
             end = time.time()
             taskrunner.log(f"Concept context comparison — completed — {(end - previous_end) * 1000} ms")
-        
+
         except Exception as e:
             sys.stderr.write(f"Error in concept context comparison: {str(e)}\n")
             sys.stderr.write(traceback.format_exc())
@@ -93,7 +93,7 @@ def main():
                 tabular_comparison[f"{tags[i]} — {tags[j]}"] = table.to_csv(encoding='utf-8')
             previous_end = end
             end = time.time()
-            taskrunner.log("Tabular concept comparison — completed — {(end - previous_end) * 1000} ms")
+            taskrunner.log(f"Tabular concept comparison — completed — {(end - previous_end) * 1000} ms")
         except Exception as e:
             sys.stderr.write(f"Error in tabular concept comparison: {str(e)}\n")
             sys.stderr.write(traceback.format_exc())
@@ -116,7 +116,7 @@ def main():
                 concept_graph_comparison[f"{tags[i]} — {tags[j]}"] = image_base64
             previous_end = end
             end = time.time()
-            taskrunner.log("Concept graph comparison — completed — {(end - previous_end) * 1000} ms")
+            taskrunner.log(f"Concept graph comparison — completed — {(end - previous_end) * 1000} ms")
         except Exception as e:
             sys.stderr.write(f"Error in concept graph comparison: {str(e)}\n")
             sys.stderr.write(traceback.format_exc())

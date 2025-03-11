@@ -43,6 +43,7 @@ import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
+import software.uncharted.terarium.hmiserver.annotations.HasProjectAccess;
 import software.uncharted.terarium.hmiserver.annotations.TSModel;
 import software.uncharted.terarium.hmiserver.annotations.TSOptional;
 import software.uncharted.terarium.hmiserver.models.ClientEventType;
@@ -280,8 +281,8 @@ public class ProjectController {
 	)
 	@GetMapping("/{id}")
 	@Secured(Roles.USER)
+	@HasProjectAccess("#id")
 	public ResponseEntity<Project> getProject(@PathVariable("id") final UUID id) {
-		projectService.checkPermissionCanRead(currentUserService.get().getId(), id);
 		final RebacUser rebacUser = new RebacUser(currentUserService.get().getId(), reBACService);
 		final RebacProject rebacProject = new RebacProject(id, reBACService);
 
@@ -345,10 +346,9 @@ public class ProjectController {
 		}
 	)
 	@DeleteMapping("/{id}")
+	@HasProjectAccess(value = "#id", level = Schema.Permission.ADMINISTRATE)
 	@Secured(Roles.USER)
 	public ResponseEntity<ResponseDeleted> deleteProject(@PathVariable("id") final UUID id) {
-		projectService.checkPermissionCanAdministrate(currentUserService.get().getId(), id);
-
 		try {
 			final boolean deleted = projectService.delete(id);
 			if (deleted) {
@@ -468,10 +468,9 @@ public class ProjectController {
 		}
 	)
 	@PutMapping("/{id}")
+	@HasProjectAccess(value = "#id", level = Schema.Permission.WRITE)
 	@Secured(Roles.USER)
 	public ResponseEntity<Project> updateProject(@PathVariable("id") final UUID id, @RequestBody final Project project) {
-		projectService.checkPermissionCanWrite(currentUserService.get().getId(), id);
-
 		final Optional<Project> originalProject = projectService.getProject(id);
 		if (originalProject.isEmpty()) {
 			throw new ResponseStatusException(HttpStatus.NOT_FOUND, messages.get("projects.not-found"));
@@ -531,9 +530,8 @@ public class ProjectController {
 	)
 	@PostMapping("/reindex-project/{id}")
 	@Secured(Roles.USER)
+	@HasProjectAccess(value = "#id", level = Schema.Permission.WRITE)
 	public ResponseEntity<Project> updateProjectAssets(@PathVariable("id") final UUID id) {
-		final Schema.Permission permission = projectService.checkPermissionCanWrite(currentUserService.get().getId(), id);
-
 		try {
 			final Optional<Project> originalProject = projectService.getProject(id);
 			if (originalProject.isEmpty()) {
@@ -596,10 +594,9 @@ public class ProjectController {
 		}
 	)
 	@PostMapping("/clone/{id}")
+	@HasProjectAccess(value = "#id")
 	@Secured(Roles.USER)
 	public ResponseEntity<Project> copyProject(@PathVariable("id") final UUID id) {
-		projectService.checkPermissionCanRead(currentUserService.get().getId(), id);
-
 		final Future<Project> project;
 		final Project clonedProject;
 
@@ -690,9 +687,9 @@ public class ProjectController {
 		}
 	)
 	@GetMapping("/export/{id}")
+	@HasProjectAccess(value = "#id")
 	@Secured(Roles.USER)
 	public ResponseEntity<byte[]> exportProject(@PathVariable("id") final UUID id) {
-		projectService.checkPermissionCanRead(currentUserService.get().getId(), id);
 		try {
 			final ProjectExport export = cloneService.exportProject(id);
 
@@ -823,6 +820,7 @@ public class ProjectController {
 		}
 	)
 	@PostMapping("/{id}/assets/{asset-type}/{asset-id}")
+	@HasProjectAccess(level = Schema.Permission.WRITE)
 	@Secured(Roles.USER)
 	public ResponseEntity<ProjectAsset> createAsset(
 		@PathVariable("id") final UUID projectId,
@@ -830,10 +828,6 @@ public class ProjectController {
 		@PathVariable("asset-id") final UUID assetId
 	) {
 		final AssetType assetType = AssetType.getAssetType(assetTypeName, objectMapper);
-		final Schema.Permission permission = projectService.checkPermissionCanWrite(
-			currentUserService.get().getId(),
-			projectId
-		);
 
 		final Optional<Project> project;
 		try {
@@ -928,6 +922,7 @@ public class ProjectController {
 		}
 	)
 	@DeleteMapping("/{id}/assets/{asset-type}/{asset-id}")
+	@HasProjectAccess(level = Schema.Permission.WRITE)
 	@Secured(Roles.USER)
 	public ResponseEntity<ResponseDeleted> deleteAsset(
 		@PathVariable("id") final UUID projectId,
@@ -935,11 +930,6 @@ public class ProjectController {
 		@PathVariable("asset-id") final UUID assetId
 	) {
 		final AssetType assetType = AssetType.getAssetType(assetTypeName, objectMapper);
-
-		final Schema.Permission permission = projectService.checkPermissionCanWrite(
-			currentUserService.get().getId(),
-			projectId
-		);
 
 		final boolean deleted = projectAssetService.deleteByAssetId(projectId, assetType, assetId);
 		if (deleted) {
@@ -952,6 +942,7 @@ public class ProjectController {
 	@GetMapping("/{id}/permissions")
 	@Secured(Roles.USER)
 	@Operation(summary = "Gets the permissions for a project")
+	@HasProjectAccess("#id")
 	@ApiResponses(
 		value = {
 			@ApiResponse(
@@ -975,8 +966,6 @@ public class ProjectController {
 		}
 	)
 	public ResponseEntity<PermissionRelationships> getProjectPermissions(@PathVariable("id") final UUID id) {
-		projectService.checkPermissionCanRead(currentUserService.get().getId(), id);
-
 		final RebacProject rebacProject = new RebacProject(id, reBACService);
 
 		final PermissionRelationships permissions = new PermissionRelationships();
@@ -1149,6 +1138,7 @@ public class ProjectController {
 	@PostMapping("/{id}/permissions/group/{group-id}/{relationship}")
 	@Secured({ Roles.USER, Roles.SERVICE })
 	@Operation(summary = "Sets a group's permissions for a project")
+	@HasProjectAccess(level = Schema.Permission.ADMINISTRATE)
 	@ApiResponses(
 		value = {
 			@ApiResponse(
@@ -1169,8 +1159,6 @@ public class ProjectController {
 		@PathVariable("relationship") final String relationship
 	) {
 		try {
-			projectService.checkPermissionCanAdministrate(currentUserService.get().getId(), projectId);
-
 			final RebacProject what = new RebacProject(projectId, reBACService);
 			final RebacGroup who = new RebacGroup(groupId, reBACService);
 			projectPermissionsService.setProjectPermissions(what, who, relationship);
@@ -1184,6 +1172,7 @@ public class ProjectController {
 	@PutMapping("/{id}/permissions/group/{groupId}/{oldRelationship}")
 	@Secured(Roles.USER)
 	@Operation(summary = "Updates a group's permissions for a project")
+	@HasProjectAccess(level = Schema.Permission.ADMINISTRATE)
 	@ApiResponses(
 		value = {
 			@ApiResponse(
@@ -1205,8 +1194,6 @@ public class ProjectController {
 		@RequestParam("to") final String newRelationship
 	) {
 		try {
-			projectService.checkPermissionCanAdministrate(currentUserService.get().getId(), projectId);
-
 			final RebacProject what = new RebacProject(projectId, reBACService);
 			final RebacGroup who = new RebacGroup(groupId, reBACService);
 			return projectPermissionsService.updateProjectPermissions(what, who, oldRelationship, newRelationship);
@@ -1219,6 +1206,7 @@ public class ProjectController {
 	@DeleteMapping("/{id}/permissions/group/{group-id}/{relationship}")
 	@Secured(Roles.USER)
 	@Operation(summary = "Deletes a group's permissions for a project")
+	@HasProjectAccess(level = Schema.Permission.WRITE)
 	@ApiResponses(
 		value = {
 			@ApiResponse(
@@ -1242,8 +1230,6 @@ public class ProjectController {
 			return ResponseEntity.status(HttpStatus.NOT_MODIFIED).build();
 		}
 		try {
-			projectService.checkPermissionCanAdministrate(currentUserService.get().getId(), projectId);
-
 			final RebacProject what = new RebacProject(projectId, reBACService);
 			final RebacGroup who = new RebacGroup(groupId, reBACService);
 			projectPermissionsService.removeProjectPermissions(what, who, relationship);
@@ -1276,14 +1262,13 @@ public class ProjectController {
 		}
 	)
 	@PutMapping("/set-public/{id}/{isPublic}")
+	@HasProjectAccess(value = "#id", level = Schema.Permission.WRITE)
 	@Secured(Roles.USER)
 	public ResponseEntity<JsonNode> makeProjectPublic(
 		@PathVariable("id") final UUID id,
 		@PathVariable("isPublic") final boolean isPublic
 	) {
 		try {
-			projectService.checkPermissionCanWrite(currentUserService.get().getId(), id);
-
 			// Getting the project permissions
 			final RebacProject project = new RebacProject(id, reBACService);
 			// Getting the Public group permissions
@@ -1339,15 +1324,13 @@ public class ProjectController {
 		}
 	)
 	@PutMapping("/set-sample/{id}/{sample}")
+	@HasProjectAccess(value = "#id", level = Schema.Permission.ADMINISTRATE)
 	@Secured(Roles.USER)
 	public ResponseEntity<JsonNode> makeProjectSample(
 		@PathVariable("id") final UUID id,
 		@PathVariable("sample") final boolean isSample
 	) {
 		try {
-			// Only an admin can set a project as a sample project
-			projectService.checkPermissionCanAdministrate(currentUserService.get().getId(), id);
-
 			// Get the project
 			final Project project = projectService
 				.getProject(id)
@@ -1425,6 +1408,7 @@ public class ProjectController {
 	@PostMapping("/{id}/permissions/user/{user-id}/{relationship}")
 	@Secured(Roles.USER)
 	@Operation(summary = "Sets a user's permissions for a project")
+	@HasProjectAccess(level = Schema.Permission.WRITE)
 	@ApiResponses(
 		value = {
 			@ApiResponse(
@@ -1445,8 +1429,6 @@ public class ProjectController {
 		@PathVariable("relationship") final String relationship
 	) {
 		try {
-			projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
-
 			final RebacProject what = new RebacProject(projectId, reBACService);
 			final RebacUser who = new RebacUser(userId, reBACService);
 			projectSearchService.addProjectPermission(projectId, userId);
@@ -1464,6 +1446,7 @@ public class ProjectController {
 	@PutMapping("/{id}/permissions/user/{user-id}/{old-relationship}")
 	@Secured(Roles.USER)
 	@Operation(summary = "Updates a user's permissions for a project")
+	@HasProjectAccess(level = Schema.Permission.ADMINISTRATE)
 	@ApiResponses(
 		value = {
 			@ApiResponse(
@@ -1485,8 +1468,6 @@ public class ProjectController {
 		@RequestParam("to") final String newRelationship
 	) {
 		try {
-			projectService.checkPermissionCanAdministrate(currentUserService.get().getId(), projectId);
-
 			final RebacProject what = new RebacProject(projectId, reBACService);
 			final RebacUser who = new RebacUser(userId, reBACService);
 
@@ -1506,6 +1487,7 @@ public class ProjectController {
 	@DeleteMapping("/{id}/permissions/user/{user-id}/{relationship}")
 	@Secured(Roles.USER)
 	@Operation(summary = "Deletes a user's permissions for a project")
+	@HasProjectAccess(level = Schema.Permission.ADMINISTRATE)
 	@ApiResponses(
 		value = {
 			@ApiResponse(
@@ -1527,8 +1509,6 @@ public class ProjectController {
 		@PathVariable("relationship") final String relationship
 	) {
 		try {
-			projectService.checkPermissionCanAdministrate(currentUserService.get().getId(), projectId);
-
 			final RebacProject what = new RebacProject(projectId, reBACService);
 			final RebacUser who = new RebacUser(userId, reBACService);
 

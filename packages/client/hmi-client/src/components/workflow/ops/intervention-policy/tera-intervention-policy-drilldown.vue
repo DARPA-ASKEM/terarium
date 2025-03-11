@@ -109,25 +109,23 @@
 					Add and configure intervention settings for this policy.
 					<ul class="flex flex-column gap-2">
 						<li
-							v-for="(intervention, index) in knobs.transientInterventionPolicy.interventions.slice(
+							v-for="intervention in knobs.transientInterventionPolicy.interventions.slice(
 								firstRow,
 								firstRow + MAX_NUMBER_OF_ROWS
 							)"
-							:key="firstRow + index"
-							@click="selectInterventionPolicy(intervention, firstRow + index)"
+							:key="intervention.id"
+							@click="selectInterventionPolicy(intervention)"
 						>
 							<tera-intervention-card
 								class="intervention"
 								:class="{
-									selected:
-										selectedIntervention?.name === intervention?.name &&
-										selectedIntervention?.index === firstRow + index
+									selected: selectedIntervention?.id === intervention.id
 								}"
 								:intervention="intervention"
 								:parameterOptions="parameterOptions"
 								:stateOptions="stateOptions"
-								@update="onUpdateInterventionCard($event, firstRow + index)"
-								@delete="onDeleteIntervention(firstRow + index)"
+								@update="onUpdateInterventionCard($event)"
+								@delete="onDeleteIntervention(intervention.id)"
 								@open-modal="onOpenOtherValueModal($event.semanticType, $event.id)"
 							/>
 						</li>
@@ -202,8 +200,6 @@ import {
 	Intervention,
 	InterventionPolicy,
 	Model,
-	DynamicIntervention,
-	StaticIntervention,
 	type TaskResponse,
 	type DocumentAsset,
 	ModelConfiguration,
@@ -214,7 +210,11 @@ import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue'
 import { useConfirm } from 'primevue/useconfirm';
 import { getInitialDescription, getParameter, getParameters, getStates } from '@/model-representation/service';
 import TeraToggleableInput from '@/components/widgets/tera-toggleable-input.vue';
-import { blankIntervention, updateInterventionPolicy, deleteInterventionPolicy } from '@/services/intervention-policy';
+import {
+	updateInterventionPolicy,
+	deleteInterventionPolicy,
+	createBlankIntervention
+} from '@/services/intervention-policy';
 import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
 import Textarea from 'primevue/textarea';
@@ -260,22 +260,13 @@ const knobs = ref<BasicKnobs>({
 	}
 });
 
-interface SelectedIntervention {
-	index: number;
-	name: string;
-	extractionDocumentId?: string;
-	extractionPage?: number;
-	staticInterventions: StaticIntervention[];
-	dynamicInterventions: DynamicIntervention[];
-}
-
 const modelId: string | undefined = props.node.inputs[0].value?.[0];
 const MAX_NUMBER_OF_ROWS = 8;
 const firstRow = ref(0);
 
 const currentActiveIndicies = ref([0]);
 const pdfPanelRef = ref();
-const selectedIntervention = ref<SelectedIntervention | null>(null);
+const selectedIntervention = ref<Intervention | null>(null);
 
 const isPdfSidebarOpen = ref(true);
 const isFetchingPDF = ref(false);
@@ -413,14 +404,15 @@ const fetchInterventionPolicies = async () => {
 	isFetchingPolicies.value = false;
 };
 
-const selectInterventionPolicy = (intervention: Intervention, index: number) => {
-	selectedIntervention.value = { ...intervention, index };
+const selectInterventionPolicy = (intervention: Intervention) => {
+	selectedIntervention.value = { ...intervention };
 };
 
-const onUpdateInterventionCard = (intervention: Intervention, index: number) => {
+const onUpdateInterventionCard = (intervention: Intervention) => {
 	// Clone the entire interventions array
 	const updatedInterventions = [...knobs.value.transientInterventionPolicy.interventions];
 
+	const index = updatedInterventions.findIndex((i) => i.id === intervention.id);
 	// Replace the intervention at the specified index with a deep clone of the updated intervention
 	updatedInterventions[index] = cloneDeep(intervention);
 
@@ -461,13 +453,13 @@ const onDeleteInterventionPolicy = (policy: InterventionPolicy) => {
 
 const addIntervention = () => {
 	// by default add the first parameter with a static intervention
-	knobs.value.transientInterventionPolicy.interventions.push(blankIntervention);
+	knobs.value.transientInterventionPolicy.interventions.push(createBlankIntervention());
 };
 
-const onDeleteIntervention = (index: number) => {
+const onDeleteIntervention = (id: string) => {
 	// Create a new array excluding the intervention at the specified index
 	const updatedInterventions = knobs.value.transientInterventionPolicy.interventions.filter(
-		(_intervention, i) => i !== index
+		(intervention) => intervention.id !== id
 	);
 
 	// Reassign the updated interventions array back to the transientInterventionPolicy
@@ -540,7 +532,7 @@ const resetToBlankIntervention = () => {
 		value: null,
 		state: {
 			modelId,
-			interventions: [_.cloneDeep(blankIntervention)]
+			interventions: [_.cloneDeep(createBlankIntervention())]
 		}
 	});
 };

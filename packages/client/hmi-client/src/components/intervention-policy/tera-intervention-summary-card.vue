@@ -6,7 +6,11 @@
 			<ul class="text-sm">
 				<li v-for="(staticIntervention, index) in intervention.staticInterventions" :key="`static-${index}`">
 					Set {{ staticIntervention.type }} <strong>{{ staticIntervention.appliedTo }}</strong> to
-					<strong>{{ staticIntervention.value }}</strong> starting at
+					<strong
+						>{{ staticIntervention.value
+						}}{{ staticIntervention.valueType === InterventionValueType.Percentage ? '%' : '' }}</strong
+					>
+					starting at
 					<strong>{{
 						getTimePointString(staticIntervention.timestep, {
 							startDate: props.startDate,
@@ -16,8 +20,11 @@
 				</li>
 				<li v-for="(dynamicIntervention, index) in intervention.dynamicInterventions" :key="`dynamic-${index}`">
 					Set {{ dynamicIntervention.type }} <strong>{{ dynamicIntervention.appliedTo }}</strong> to
-					<strong>{{ dynamicIntervention.value }}</strong> when
-					<strong>{{ dynamicIntervention.parameter }}</strong> crosses the threshold&nbsp;<strong
+					<strong
+						>{{ dynamicIntervention.value
+						}}{{ dynamicIntervention.valueType === InterventionValueType.Percentage ? '%' : '' }}</strong
+					>
+					when <strong>{{ dynamicIntervention.parameter }}</strong> crosses the threshold&nbsp;<strong
 						>{{ dynamicIntervention.threshold }} {{ getUnit(dynamicIntervention) }}</strong
 					>.
 				</li>
@@ -27,7 +34,7 @@
 </template>
 
 <script setup lang="ts">
-import { Intervention, DynamicIntervention, InterventionSemanticType } from '@/types/Types';
+import { Intervention, DynamicIntervention, InterventionSemanticType, InterventionValueType } from '@/types/Types';
 import { CalendarSettings, getTimePointString } from '@/utils/date';
 import { isEmpty } from 'lodash';
 

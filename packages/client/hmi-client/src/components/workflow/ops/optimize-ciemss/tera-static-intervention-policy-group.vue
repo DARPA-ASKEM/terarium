@@ -28,7 +28,11 @@
 					at the start time <strong>{{ knobs.individualIntervention.timestep }}</strong>
 				</p>
 				<p v-else-if="isOptimizationTypeStartTime">
-					when the value is <strong>{{ knobs.individualIntervention.value }}</strong>
+					when the value is
+					<strong
+						>{{ knobs.individualIntervention.value
+						}}{{ knobs.individualIntervention.valueType === InterventionValueType.Percentage ? '%' : '' }}</strong
+					>
 				</p>
 			</section>
 			<div>
@@ -118,7 +122,11 @@
 				<li class="list-position-inside">
 					Set the <strong>{{ knobs.individualIntervention.type }}</strong>
 					<strong>{{ knobs.individualIntervention.appliedTo }}</strong> to the value of
-					<strong>{{ knobs.individualIntervention.value }}</strong> day at start time
+					<strong
+						>{{ knobs.individualIntervention.value
+						}}{{ knobs.individualIntervention.valueType === InterventionValueType.Percentage ? '%' : '' }}</strong
+					>
+					day at start time
 					<strong>{{
 						getTimePointString(knobs.individualIntervention.timestep, {
 							startDate: modelConfiguration.temporalContext,
@@ -135,7 +143,7 @@
 import Dropdown from 'primevue/dropdown';
 import TeraInputNumber from '@/components/widgets/tera-input-number.vue';
 import { computed, ref, watch } from 'vue';
-import { Model, ModelConfiguration, StaticIntervention } from '@/types/Types';
+import { InterventionValueType, Model, ModelConfiguration, StaticIntervention } from '@/types/Types';
 import {
 	OptimizationInterventionObjective,
 	OPTIMIZATION_TYPE_MAP,

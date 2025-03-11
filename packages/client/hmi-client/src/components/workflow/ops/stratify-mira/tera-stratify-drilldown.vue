@@ -216,7 +216,8 @@ const stratifyModel = () => {
 		concepts_to_stratify: conceptsToStratify,
 		params_to_stratify: parametersToStratify,
 		cartesian_control: strataOption.cartesianProduct,
-		structure: strataOption.useStructure ? null : []
+		structure: strataOption.useStructure ? null : [],
+		add_param_factor: strataOption.useFactoredParameter || false
 	};
 	kernelManager.sendMessage('reset_mira_request', {}).register('reset_mira_response', () => {
 		kernelManager
