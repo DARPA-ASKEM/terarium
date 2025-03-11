@@ -273,6 +273,7 @@ watch(
 	(newVal, oldVal) => {
 		// If the active setting is the same, do nothing
 		if (newVal?.id === oldVal?.id) return;
+		// Init ref values with the values from the settings when the active setting changes
 		chartLabelTitle.value = chartLabelsFromSettings.value?.title ?? '';
 		chartLabelXAxis.value = chartLabelsFromSettings.value?.xAxisTitle ?? '';
 		chartLabelYAxis.value = chartLabelsFromSettings.value?.yAxisTitle ?? '';
