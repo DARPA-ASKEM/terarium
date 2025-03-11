@@ -69,6 +69,8 @@ public class InterventionsFromDocumentResponseHandler extends LlmTaskResponseHan
 
 				// Set the extraction document id
 				ip.getInterventions().forEach(intervention -> intervention.setExtractionDocumentId(props.documentId));
+
+				interventionService.createAsset(ip, props.projectId);
 			}
 		} catch (final Exception e) {
 			log.error("Failed to extract intervention policy", e);

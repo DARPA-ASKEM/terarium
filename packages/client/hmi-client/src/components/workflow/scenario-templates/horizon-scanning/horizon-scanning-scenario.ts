@@ -14,7 +14,7 @@ import { AssetType, InterventionPolicy, ParameterSemantic } from '@/types/Types'
 import { DistributionType } from '@/services/distribution';
 import { calculateUncertaintyRange } from '@/utils/math';
 import {
-	blankIntervention,
+	createBlankIntervention,
 	createInterventionPolicy,
 	flattenInterventionData,
 	getInterventionPolicyById
@@ -391,7 +391,7 @@ export class HorizonScanningScenario extends BaseScenario {
 									?.name ?? 'New policy',
 							description: 'This intervention policy was created using the horizon scanning scenario template.',
 							modelId: this.modelSpec.id,
-							interventions: [blankIntervention]
+							interventions: [createBlankIntervention()]
 						},
 						true
 					);

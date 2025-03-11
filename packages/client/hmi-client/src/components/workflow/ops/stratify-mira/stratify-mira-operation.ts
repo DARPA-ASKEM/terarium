@@ -15,6 +15,8 @@ export interface StratifyGroup {
 	structure: null | any[];
 
 	useStructure: boolean;
+
+	useFactoredParameter: boolean;
 }
 
 export interface StratifyCode {
@@ -52,7 +54,9 @@ export const blankStratifyGroup: StratifyGroup = {
 	useStructure: true,
 
 	// Always true for now - Feb 2024
-	directed: true
+	directed: true,
+
+	useFactoredParameter: true
 };
 
 export const StratifyMiraOperation: Operation = {
