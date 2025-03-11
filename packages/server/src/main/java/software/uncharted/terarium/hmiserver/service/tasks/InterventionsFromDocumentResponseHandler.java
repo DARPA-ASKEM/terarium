@@ -68,7 +68,12 @@ public class InterventionsFromDocumentResponseHandler extends LlmTaskResponseHan
 				}
 
 				// Set the extraction document id
-				ip.getInterventions().forEach(intervention -> intervention.setExtractionDocumentId(props.documentId));
+				ip
+					.getInterventions()
+					.forEach(intervention -> {
+						intervention.setExtractionDatasetId(props.datasetId);
+						intervention.setId(UUID.randomUUID());
+					});
 
 				interventionService.createAsset(ip, props.projectId);
 			}

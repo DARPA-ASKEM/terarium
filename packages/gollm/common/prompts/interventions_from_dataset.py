@@ -32,5 +32,4 @@ Create an interventionPolicy object. To do this, follow the instructions below:
         ii. `type` should be either "state" or "parameter" depending on what the intervention is applied to.
         iii. For dynamic interventions, `parameter` should be the id of a state that the threshold is applied to.
         iv. `valueType` should be either "value" or "percentage" depending on the type of intervention.
-    d. Set the `id` value to a random UUID in a format like "00000000-0000-0000-0000-000000000000", the characters in the uuid should only be hexidecimal characters hexidecimal characters '0, 1, 2, 3, 4, 5, 6, 7, 8, 9, A, B, C, D, E, F. A, B, C, D, E, F'.
 """
