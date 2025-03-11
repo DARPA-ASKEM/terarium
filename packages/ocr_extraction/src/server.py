@@ -126,7 +126,27 @@ async def process_and_predict(file: UploadFile = File(...)):
 
         final_result["texts"].append(item)
 
-    # 4. Images ... TODO
+    # 4. Images
+    final_result["pictures"] = []
+    for picture in result_dict["pictures"]:
+        item = {}
+        prov = picture["prov"][0]
+        item["id"] = picture["self_ref"]
+        item["label"] = picture["label"]
+        item["provenance"] = {
+            "page": prov["page_no"],
+            "bbox": {
+                "left": prov["bbox"]["l"],
+                "top": prov["bbox"]["t"],
+                "right": prov["bbox"]["r"],
+                "bottom": prov["bbox"]["b"]
+            },
+            "charspan": prov["charspan"]
+        }
+        final_result["pictures"].append(item)
+
+
+
     # 5. Tables ... TODO
 
 
