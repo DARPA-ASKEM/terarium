@@ -3,4 +3,5 @@ uvicorn
 pydantic
 python-multipart
 docling==2.25.2
+augraphy
 git+https://github.com/DARPA-ASKEM/TexTeller.git
