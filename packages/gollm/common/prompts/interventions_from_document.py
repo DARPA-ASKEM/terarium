@@ -31,4 +31,5 @@ For each policy described in the paper, create an interventionPolicy object. To 
         i. `appliedTo` should reference the id of a parameter or state in the AMR Model. If you cannot find a state or parameter in the AMR model that matches, do not create an intervention object.
         ii. `type` should be either "state" or "parameter" depending on what the intervention is applied to.
         iii. For dynamic interventions, `parameter` should be the id of a state that the threshold is applied to.
+        iv. `valueType` should be either "value" or "percentage" depending on the type of intervention.
 """
