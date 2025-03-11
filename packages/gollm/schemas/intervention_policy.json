@@ -80,6 +80,13 @@
             "parameter"
           ]
         },
+        "valueType": {
+          "type": "string",
+          "enum": [
+            "value",
+            "percentage"
+          ]
+        },
         "appliedTo": {
           "type": "string",
           "description": "The ID of the parameter or state variable to which the intervention is applied; for example, school closures cause a reduction in the disease transmission rate, which is represented by a parameter with some ID in the AMR model."
@@ -97,7 +104,8 @@
         "timestep",
         "value",
         "appliedTo",
-        "type"
+        "type",
+        "valueType"
       ],
       "additionalProperties": false
     },
@@ -110,6 +118,13 @@
           "enum": [
             "state",
             "parameter"
+          ]
+        },
+        "valueType": {
+          "type": "string",
+          "enum": [
+            "value",
+            "percentage"
           ]
         },
         "appliedTo": {
@@ -134,7 +149,8 @@
         "threshold",
         "value",
         "appliedTo",
-        "type"
+        "type",
+        "valueType"
       ],
       "additionalProperties": false
     }
