@@ -71,7 +71,7 @@ public class InterventionsFromDocumentResponseHandler extends LlmTaskResponseHan
 				ip
 					.getInterventions()
 					.forEach(intervention -> {
-						intervention.setExtractionDatasetId(props.datasetId);
+						intervention.setExtractionDatasetId(props.documentId);
 						intervention.setId(UUID.randomUUID());
 					});
 
