@@ -51,12 +51,18 @@ async def process_and_predict(file: UploadFile = File(...)):
     # Do second round
     for _idx, element in enumerate(result.document.texts):
         if element.label == "formula":
-            logging.info(f"{element.label} =>  {element.text}")
+            # logging.info(f"{element.label} =>  {element.text}")
             text_img = element.get_image(result.document)
-            logging.info(text_img)
+            # logging.info(text_img)
 
-            latex_str = equation_model.predict(text_img)
-            logging.info(f"Second model: {latex_str}")
+            text_img_byte_arr = BytesIO()
+            text_img.save(text_img_byte_arr, format="PNG")
+
+            latex_str = equation_model.predict(text_img_byte_arr.getvalue())
+
+            logging.info(f"Docling model: {element.text}")
+            logging.info(f"Textteller model: {latex_str}")
+            logging.info("")
 
 
     # result_dict = result.document.export_to_dict()
