@@ -112,7 +112,7 @@
 						<span class="p-button-label">
 							{{ assetItem.assetName }}
 							<tera-progress-spinner
-								v-if="inProgressAssetsIds[type] && inProgressAssetsIds[type].includes(assetItem.assetId)"
+								v-if="inProgressAssetsIds[type] && inProgressAssetsIds[type].has(assetItem.assetId)"
 								:font-size="1"
 								is-centered
 								style="float: right"
@@ -193,16 +193,16 @@ defineProps<{
 }>();
 
 const inProgressAssetsIds = ref({
-	[AssetType.Document]: <string[]>[],
-	[AssetType.Dataset]: <string[]>[],
-	[AssetType.Model]: <string[]>[]
+	[AssetType.Document]: new Set<string>(),
+	[AssetType.Dataset]: new Set<string[]>(),
+	[AssetType.Model]: new Set<string[]>()
 });
 
 function assetTypeProgressHandler(assetType, assetId, status) {
 	if ([TaskStatus.Success, TaskStatus.Cancelled, TaskStatus.Failed].includes(status)) {
-		inProgressAssetsIds.value[assetType] = inProgressAssetsIds.value[assetType].filter((id) => id !== assetId);
+		inProgressAssetsIds.value[assetType].remove(assetId);
 	} else {
-		inProgressAssetsIds.value[assetType].push(assetId);
+		inProgressAssetsIds.value[assetType].add(assetId);
 	}
 }
 
