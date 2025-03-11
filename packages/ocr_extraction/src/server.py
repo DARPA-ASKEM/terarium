@@ -48,26 +48,68 @@ async def process_and_predict(file: UploadFile = File(...)):
     # result = converter.convert(docstream, max_num_pages=100, max_file_size=20971520)
     result = converter.convert(docstream)
 
-    # Do second round
+    ################################################################################
+    # Do second pass
+    # - Extract latext equation using TextTeller
+    ################################################################################
+    logging.info("Starting LaTeX extraction...")
+    latex_extraction_dict = {}
     for _idx, element in enumerate(result.document.texts):
         if element.label == "formula":
             # logging.info(f"{element.label} =>  {element.text}")
+            text_ref = element.self_ref
             text_img = element.get_image(result.document)
-            # logging.info(text_img)
 
             text_img_byte_arr = BytesIO()
             text_img.save(text_img_byte_arr, format="PNG")
 
             latex_str = equation_model.predict(text_img_byte_arr.getvalue())
 
+            logging.info(f"{text_ref}")
             logging.info(f"Docling model: {element.text}")
             logging.info(f"Textteller model: {latex_str}")
             logging.info("")
 
+            latex_extraction_dict[text_ref] = latex_str
+
+
+    ################################################################################
+    # Collect and format result
+    ################################################################################
+    final_result = {}
+    result_dict = result.document.export_to_dict()
+
+    # 1. body
+    final_result["body"] = {
+        "id": "#/body",
+        "children": []
+    }
+    for child in result_dict["body"]["children"]:
+        final_result["body"]["children"].append(
+            {"id": child["$ref"]}
+        )
+
+    # 2. group
+    final_result["group"] = []
+    for group in result_dict["groups"]:
+        children = []
+        for child in group["children"]:
+            children.append(child["$ref"])
+
+        final_result["groups"].append({
+            "id": group["self_ref"],
+            "children": children
+        })
+
+    # 3. Text
+    # 4. Images ... TODO
+    # 5. Tables ... TODO
+
 
     # result_dict = result.document.export_to_dict()
     # return JSONResponse(content=result_dict)
-    return JSONResponse(content={"status": "TODO"})
+    # return JSONResponse(content={"status": "TODO"})
+    return JSONResponse(content=final_result)
 
 
 if __name__ == "__main__":
