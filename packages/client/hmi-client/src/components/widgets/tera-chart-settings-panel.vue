@@ -281,7 +281,7 @@ watch(
 	{ immediate: true }
 );
 
-const CHART_LABEL_UPDATE_DELAY = 1000;
+const CHART_LABEL_UPDATE_DELAY = 1500;
 const updateLabelSettings = _.debounce(() => {
 	const existing = chartLabelsFromSettings.value;
 	const updated = {
