@@ -69,19 +69,37 @@
 		<AccordionTab>
 			<template #header>
 				Transitions<span class="artifact-amount">({{ transitions.length }})</span>
-				<tera-input-text class="ml-auto" placeholder="Filter" v-model="transitionsFilter" />
+				<aside class="ml-auto flex">
+					<Button
+						v-if="hasErrorModelErrors('transition')"
+						size="small"
+						:disabled="transitionsFilterType === 'warn'"
+						:severity="!transitionsFilterType ? 'danger' : 'secondary'"
+						@click.stop="toggleTransitionsFilterType('error')"
+					>
+						{{ !transitionsFilterType ? 'Filter' : 'Unfilter' }} {{ getErrorModelErrors('transition').length }} errors
+					</Button>
+					<Button
+						v-if="hasWarnModelErrors('transition')"
+						size="small"
+						:disabled="transitionsFilterType === 'error'"
+						:severity="!transitionsFilterType ? 'warning' : 'secondary'"
+						@click.stop="toggleTransitionsFilterType('warn')"
+					>
+						{{ !transitionsFilterType ? 'Filter' : 'Unfilter' }} {{ getWarnModelErrors('transition').length }} warnings
+					</Button>
+					<tera-input-text class="ml-2" placeholder="Filter" v-model="transitionsFilter" />
+				</aside>
 			</template>
-			<tera-model-part-error
-				:items="modelErrors.filter((error) => error.type === 'transition')"
-				@filter-item="transitionsFilter = $event"
-			/>
+			<tera-model-part-error :items="getModelErrors('transition')" @filter-item="transitionsFilter = $event" />
 			<tera-model-part
 				:part-type="PartType.TRANSITION"
 				v-if="!isEmpty(transitions) && !isEmpty(mmt.templates)"
 				:items="transitionsList"
-				:model-errors="modelErrors.filter((error) => error.type === 'transition')"
+				:model-errors="getModelErrors('transition')"
 				:feature-config="featureConfig"
 				:filter="transitionsFilter"
+				:filter-type="transitionsFilterType"
 				show-matrix
 				@open-matrix="(id: string) => (transitionMatrixModalId = id)"
 				@update-item="$emit('update-transition', $event)"
@@ -117,6 +135,7 @@ import type { Model, Transition, State } from '@/types/Types';
 import { isEmpty } from 'lodash';
 import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
+import Button from 'primevue/button';
 import { computed, ref, watch } from 'vue';
 import type { MiraModel, MiraTemplate, MiraTemplateParams } from '@/model-representation/mira/mira-common';
 import { collapseInitials, collapseParameters, collapseTemplates } from '@/model-representation/mira/mira';
@@ -220,6 +239,49 @@ const parameterMatrixModalId = ref('');
 const transitionMatrixModalId = ref('');
 const observablesList = computed(() => createObservablesList(observables.value));
 const timeList = computed<ModelPartItemTree[]>(() => createTimeList(time.value));
+
+// Model Errors are filtered by type and severity
+const transitionsFilterType = ref<'warn' | 'error' | null>(null);
+const stateFilterType = ref<'warn' | 'error' | null>(null);
+const parametersFilterType = ref<'warn' | 'error' | null>(null);
+const observablesFilterType = ref<'warn' | 'error' | null>(null);
+
+function toggleTransitionsFilterType(type: 'warn' | 'error') {
+	transitionsFilterType.value = transitionsFilterType.value === type ? null : type;
+}
+function toggleStateFilterType(type: 'warn' | 'error') {
+	stateFilterType.value = stateFilterType.value === type ? null : type;
+}
+function toggleParametersFilterType(type: 'warn' | 'error') {
+	parametersFilterType.value = parametersFilterType.value === type ? null : type;
+}
+function toggleObservablesFilterType(type: 'warn' | 'error') {
+	observablesFilterType.value = observablesFilterType.value === type ? null : type;
+}
+
+function getModelErrors(type: string) {
+	return props.modelErrors.filter(({ type: errorType }) => errorType === type);
+}
+
+function getWarnModelErrors(type: string) {
+	return props.modelErrors.filter(
+		({ type: errorType, severity: errorSeverity }) => errorType === type && errorSeverity === 'warn'
+	);
+}
+
+function getErrorModelErrors(type: string) {
+	return props.modelErrors.filter(
+		({ type: errorType, severity: errorSeverity }) => errorType === type && errorSeverity === 'error'
+	);
+}
+
+function hasWarnModelErrors(type: string) {
+	return getWarnModelErrors(type).length > 0;
+}
+
+function hasErrorModelErrors(type: string) {
+	return getErrorModelErrors(type).length > 0;
+}
 </script>
 
 <style scoped>
@@ -228,9 +290,11 @@ const timeList = computed<ModelPartItemTree[]>(() => createTimeList(time.value))
 	color: var(--text-color-subdued);
 	margin-left: 0.25rem;
 }
+
 :deep(.p-accordion-content) {
 	margin-bottom: var(--gap-3);
 }
+
 :deep(.p-accordion-content:empty::before) {
 	content: 'None';
 	color: var(--text-color-secondary);
