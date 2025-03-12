@@ -300,30 +300,38 @@ ul {
 	background: var(--surface-0);
 	box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
 	transition: all 0.15s;
+
 	&:has(.parent) {
 		padding: var(--gap-2) 0 var(--gap-2) var(--gap-1);
 	}
-}
-/* First set the hover state for the model-part itself */
-.model-part:not(.model-part-error, .model-part-warn):hover {
-	border-left: 4px solid var(--primary-color);
-	background: var(--surface-highlight);
 
-	/* But set a lighter hover state when hovering over child elements */
-	&:has(.stratified > ul > li:hover) {
-		border-left: 4px solid var(--primary-color-light);
-		background: color-mix(in srgb, var(--surface-highlight) 30%, var(--surface-0) 70%);
+	&:hover {
+		background: var(--surface-highlight);
+
+		/* But set a lighter hover state when hovering over child elements */
+		&:has(.stratified > ul > li:hover) {
+			background: color-mix(in srgb, var(--surface-highlight) 30%, var(--surface-0) 70%);
+		}
+	}
+
+	&:not(.model-part-error, .model-part-warn):hover {
+		border-left: 4px solid var(--primary-color);
+
+		/* But set a lighter hover state when hovering over child elements */
+		&:has(.stratified > ul > li:hover) {
+			border-left: 4px solid var(--primary-color-light);
+		}
 	}
 }
 
 /* Differentiate between error and warning */
 .model-part-error {
+	border-color: var(--surface-error);
 	border-left-color: var(--error-border-color);
-	background-color: var(--surface-error);
 }
 .model-part-warn {
+	border-color: var(--surface-warning);
 	border-left-color: var(--warning-color);
-	background-color: var(--surface-warning);
 }
 
 li {
