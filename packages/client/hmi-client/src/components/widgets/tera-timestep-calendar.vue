@@ -11,7 +11,7 @@
 			:model-value="date"
 			showIcon
 			iconDisplay="input"
-			:view="calendarSettings?.view"
+			:view="calendarView"
 			:date-format="calendarSettings?.format"
 			:disabled="disabled"
 			@date-select="onDateSelect($event)"
@@ -43,6 +43,13 @@ const date = computed(() => {
 		props.modelValue,
 		props.calendarSettings?.view ?? CalendarDateType.DATE
 	);
+});
+
+const calendarView = computed(() => {
+	if (props.calendarSettings?.view === CalendarDateType.WEEK) {
+		return CalendarDateType.DATE;
+	}
+	return props.calendarSettings?.view;
 });
 
 const onDateSelect = (newDate: Date) => {
