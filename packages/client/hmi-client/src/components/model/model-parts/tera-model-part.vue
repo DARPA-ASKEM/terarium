@@ -305,14 +305,15 @@ ul {
 	}
 }
 /* First set the hover state for the model-part itself */
-.model-part:hover {
+.model-part:not(.model-part-error, .model-part-warn):hover {
 	border-left: 4px solid var(--primary-color);
 	background: var(--surface-highlight);
-}
-/* But set a lighter hover state when hovering over child elements */
-.model-part:hover:has(.stratified > ul > li:hover) {
-	border-left: 4px solid var(--primary-color-light);
-	background: color-mix(in srgb, var(--surface-highlight) 30%, var(--surface-0) 70%);
+
+	/* But set a lighter hover state when hovering over child elements */
+	&:has(.stratified > ul > li:hover) {
+		border-left: 4px solid var(--primary-color-light);
+		background: color-mix(in srgb, var(--surface-highlight) 30%, var(--surface-0) 70%);
+	}
 }
 
 /* Differentiate between error and warning */
