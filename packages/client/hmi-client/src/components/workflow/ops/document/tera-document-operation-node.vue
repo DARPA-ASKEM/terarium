@@ -29,9 +29,9 @@ import { cloneDeep, isEmpty } from 'lodash';
 import Button from 'primevue/button';
 import Dropdown from 'primevue/dropdown';
 
-import { AssetBlock, WorkflowNode } from '@/types/workflow';
-import type { DocumentAsset, DocumentExtraction, ProjectAsset } from '@/types/Types';
-import { AssetType, ExtractionAssetType, ClientEventType } from '@/types/Types';
+import { WorkflowNode } from '@/types/workflow';
+import type { DocumentAsset, ProjectAsset } from '@/types/Types';
+import { AssetType, ClientEventType } from '@/types/Types';
 import { createTaskProgressClientEventHandler, useClientEvent } from '@/composables/useClientEvent';
 import { useProjects } from '@/composables/project';
 import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue';
