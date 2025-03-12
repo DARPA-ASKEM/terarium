@@ -318,10 +318,7 @@ li {
 			border: 1px solid var(--surface-border-light);
 			border-radius: var(--border-radius);
 			border-left: 4px solid var(--surface-border);
-			padding-left: var(--gap-4);
-			padding-right: var(--gap-2);
-			padding-bottom: var(--gap-2);
-			padding-top: var(--gap-2);
+			padding: var(--gap-2) var(--gap-2) var(--gap-2) var(--gap-4);
 			&:hover {
 				background: var(--surface-highlight);
 				border-left-color: var(--primary-color);
