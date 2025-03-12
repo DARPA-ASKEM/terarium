@@ -1,0 +1,140 @@
+{
+  "id": "4d923048-9566-45d9-9944-5f7f56e3e051",
+  "createdOn": "2024-07-31T20:24:02.337+00:00",
+  "updatedOn": "2024-09-04T19:37:26.261+00:00",
+  "name": "SIR model",
+  "fileNames": [],
+  "temporary": false,
+  "publicAsset": false,
+  "header": {
+    "name": "SIR model",
+    "description": "A configured SIR model.",
+    "schema": "https://github.com/DARPA-ASKEM/Model-Representations/blob/main/petrinet/petrinet_schema.json",
+    "schema_name": "petrinet",
+    "model_version": "0.1"
+  },
+  "model": {
+    "states": [
+      {
+        "id": "I",
+        "name": "I",
+        "description": "Infected population",
+        "grounding": {
+          "identifiers": {
+            "ido": "0000511"
+          },
+          "modifiers": {}
+        }
+      },
+      {
+        "id": "R",
+        "name": "R",
+        "description": "Recovered population",
+        "grounding": {
+          "identifiers": {
+            "apollosv": "00000163"
+          },
+          "modifiers": {}
+        }
+      },
+      {
+        "id": "S",
+        "name": "S",
+        "description": "Susceptible population",
+        "grounding": {
+          "identifiers": {
+            "ido": "0000514"
+          },
+          "modifiers": {}
+        }
+      }
+    ],
+    "transitions": [
+      {
+        "id": "t0",
+        "input": [
+          "I",
+          "R",
+          "S"
+        ],
+        "output": [
+          "I",
+          "I",
+          "R"
+        ]
+      },
+      {
+        "id": "t1",
+        "input": [
+          "I"
+        ],
+        "output": [
+          "R"
+        ]
+      }
+    ]
+  },
+  "semantics": {
+    "ode": {
+      "rates": [
+        {
+          "target": "t0",
+          "expression": "(I + R)*β*S",
+          "expression_mathml": "<apply><times/><ci>I</ci><ci>β</ci><ci>S</ci></apply>"
+        },
+        {
+          "target": "t1",
+          "expression": "γ*I",
+          "expression_mathml": "<apply><times/><ci>γ</ci><ci>I</ci></apply>"
+        }
+      ],
+      "initials": [
+        {
+          "target": "S",
+          "expression": "1000",
+          "expression_mathml": "<math></math>"
+        },
+        {
+          "target": "I",
+          "expression": "2",
+          "expression_mathml": "<math></math>"
+        },
+        {
+          "target": "R",
+          "expression": "0",
+          "expression_mathml": "<math></math>"
+        }
+      ],
+      "parameters": [
+        {
+          "id": "β",
+          "name": "β",
+          "value": 0.6
+        },
+        {
+          "id": "γ",
+          "name": "γ",
+          "value": 0.2
+        }
+      ],
+      "observables": [],
+      "time": null
+    },
+    "typing": null
+  },
+  "metadata": {
+    "annotations": {
+      "authors": [],
+      "references": [],
+      "locations": [],
+      "pathogens": [],
+      "diseases": [],
+      "hosts": [],
+      "model_types": []
+    },
+    "source": null,
+    "gollmCard": null,
+    "gollmExtractions": null,
+    "templateCard": null
+  }
+}
