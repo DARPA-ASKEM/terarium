@@ -4,4 +4,6 @@ pydantic
 python-multipart
 docling==2.25.2
 augraphy
+rapidocr-onnxruntime
+openai
 git+https://github.com/DARPA-ASKEM/TexTeller.git
