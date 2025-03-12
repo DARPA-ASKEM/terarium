@@ -97,7 +97,7 @@ export function setQoIData(resultData: DataArray, config: Criterion) {
 	const amountOfRiskIndexes = Math.ceil(((100 - config.riskTolerance) / 100) * data.length);
 	if (config.isMinimized) {
 		// Get for the top X
-		const topX = data.sort((n1, n2) => n1 - n2).slice(-amountOfRiskIndexes, 99);
+		const topX = data.sort((n1, n2) => n1 - n2).slice(data.length - amountOfRiskIndexes, data.length);
 		averageRisk = sum(topX) / topX.length;
 	} else {
 		// Get bottom X
