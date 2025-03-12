@@ -201,6 +201,7 @@ const props = defineProps<{
 	showMatrix?: boolean;
 	partType: PartType;
 	filter?: string;
+	filterType: 'warn' | 'error' | null;
 }>();
 
 const emit = defineEmits(['update-item', 'open-matrix']);
@@ -222,9 +223,15 @@ const firstRow = ref(0);
 
 const filteredItems = computed(() => {
 	const filterText = props.filter?.toLowerCase() ?? '';
-	if (!filterText) return props.items;
+	if (!filterText && !props.filterType) return props.items;
+
+	console.log('filteredItems', props.items, filterText, props.filterType);
 
 	const matcher = (partItem: ModelPartItem) => {
+		// for filterType
+		if (props.filterType === 'warn' && !hasWarnModelErrors(partItem.id)) return false;
+		if (props.filterType === 'error' && !hasErrorModelErrors(partItem.id)) return false;
+
 		if (partItem.id.toLowerCase().includes(filterText)) return true;
 
 		// For transitions
