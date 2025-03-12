@@ -23,186 +23,221 @@
 			</tera-slider-panel>
 			<tera-slider-panel class="input-config" v-model:is-open="isInputOpen" header="Input" content-width="100%">
 				<template #content>
-					<main class="p-3">
-						<header class="pb-2">
-							<nav class="flex align-items-center mb-2">
-								<p v-if="document">Specify which equations to use for this model.</p>
-								<p v-else>Connect a document or enter equations manually below.</p>
-								<Button class="ml-auto" label="Run" @click="onRun" :disabled="includedEquations.length < 1" />
-							</nav>
-							<section
-								class="input-container"
-								@dragenter.prevent="dragEnterCount++"
-								@dragleave.prevent="dragEnterCount--"
-								@dragover.prevent
-								@drop.prevent.stop="handleDrop"
-							>
-								<div v-if="pastedImage" class="flex gap-3">
-									<div v-if="includedEquations.length == 0" class="flex gap-2 align-items-start">
-										<img
-											:src="'data:image/png;base64,' + pastedImage"
-											alt="Pasted image"
-											height="120"
-											class="pasted-image"
-										/>
+					<TabView>
+						<TabPanel header="Step 1: Specify Equations">
+							<main class="px-3">
+								<header class="pb-2">
+									<nav class="flex align-items-center mb-2">
+										<p v-if="document">Specify which equations to use for this model.</p>
+										<p v-else>Connect a document or enter equations manually below.</p>
 										<Button
-											icon="pi pi-times"
-											rounded
-											text
-											@click="
-												pastedImage = null;
-												multipleEquations = '';
-											"
+											class="ml-auto"
+											label="Create Model"
+											@click="onRun"
+											:disabled="_.isEmpty(clonedState.includedEquations)"
 										/>
-									</div>
-									<div
-										v-if="
-											isEmpty(multipleEquations) &&
-											pastedImage &&
-											includedEquations.length === 0 &&
-											notIncludedEquations.length === 0
-										"
-										class="flex align-items-center gap-2"
+									</nav>
+									<section
+										class="input-container"
+										@dragenter.prevent="dragEnterCount++"
+										@dragleave.prevent="dragEnterCount--"
+										@dragover.prevent
+										@drop.prevent.stop="handleDrop"
 									>
-										<span class="pi pi-spinner pi-spin secondary-text"></span>
-										<span class="secondary-text">Converting to LaTeX</span>
-									</div>
-								</div>
-								<div class="input-group">
-									<!-- Add visual feedback for drag state -->
-									<div v-if="dragEnterCount > 0" class="drag-overlay">Drop image here</div>
-									<Textarea
-										v-model="multipleEquations"
-										autoResize
-										rows="1"
-										placeholder="Add one or more LaTex equations, or paste in a screenshot"
-										class="w-full"
-										:disabled="multipleEquationsDisabled"
-									/>
+										<div v-if="pastedImage" class="flex gap-3">
+											<div v-if="_.isEmpty(clonedState.includedEquations)" class="flex gap-2 align-items-start">
+												<img
+													:src="'data:image/png;base64,' + pastedImage"
+													alt="Pasted image"
+													height="120"
+													class="pasted-image"
+												/>
+												<Button
+													icon="pi pi-times"
+													rounded
+													text
+													@click="
+														pastedImage = null;
+														multipleEquations = '';
+													"
+												/>
+											</div>
+											<div
+												v-if="
+													isEmpty(multipleEquations) &&
+													pastedImage &&
+													_.isEmpty(clonedState.includedEquations) &&
+													_.isEmpty(clonedState.excludedEquations)
+												"
+												class="flex align-items-center gap-2"
+											>
+												<span class="pi pi-spinner pi-spin secondary-text"></span>
+												<span class="secondary-text">Converting to LaTeX</span>
+											</div>
+										</div>
+										<div class="input-group">
+											<!-- Add visual feedback for drag state -->
+											<div v-if="dragEnterCount > 0" class="drag-overlay">Drop image here</div>
+											<Textarea
+												v-model="multipleEquations"
+												autoResize
+												rows="1"
+												placeholder="Add one or more LaTex equations, or paste in a screenshot"
+												class="w-full"
+												:disabled="multipleEquationsDisabled"
+											/>
+											<Button
+												label="Add"
+												icon="pi pi-plus"
+												size="small"
+												@click="getEquations"
+												text
+												class="ml-2"
+												:disabled="isEmpty(multipleEquations)"
+											/>
+										</div>
+									</section>
+								</header>
+								<div class="flex align-items-center">
+									<h6 v-if="!_.isEmpty(clonedState.includedEquations)" class="py-3">
+										Use {{ clonedState.includedEquations.length > 1 ? 'these equations' : 'this equation' }}
+									</h6>
 									<Button
-										label="Add"
-										icon="pi pi-plus"
-										size="small"
-										@click="getEquations"
-										text
-										class="ml-2"
-										:disabled="isEmpty(multipleEquations)"
+										class="p-button-sm p-button-text ml-auto"
+										label="View all"
+										@click="viewAllIncludedEquations = true"
 									/>
 								</div>
-							</section>
-						</header>
-						<div class="flex align-items-center">
-							<h6 v-if="includedEquations.length > 0" class="py-3">
-								Use {{ includedEquations.length > 1 ? 'these equations' : 'this equation' }}
-							</h6>
-							<Button class="p-button-sm p-button-text ml-auto" label="View all" @click="viewAllEquations = true" />
-						</div>
-						<p v-if="isEmpty(includedEquations) && document" class="secondary-text mt-3">No equations selected</p>
-						<ul class="blocks-container">
-							<li v-for="(equation, i) in includedEquations" :key="i" @click.capture="selectItem(equation, $event)">
-								<tera-asset-block
-									:is-toggleable="false"
-									:is-permitted="false"
-									:use-default-style="false"
-									:class="['asset-panel', { selected: selectedItem === equation.name }]"
-								>
-									<template #header>
-										<h6 v-if="equation.asset.pageNumber">Page {{ equation.asset.pageNumber }}</h6>
-										<h6 v-else-if="equation.asset.isEditedByAI">Edited by AI</h6>
-										<h6 v-else>Manually entered</h6>
-									</template>
-									<section>
-										<section class="checkbox-container">
-											<Checkbox
-												v-model="equation.includeInProcess"
-												@update:model-value="onCheckBoxChange(equation)"
-												:binary="true"
+								<p v-if="isEmpty(clonedState.includedEquations) && document" class="secondary-text mt-3">
+									No equations selected
+								</p>
+								<ul class="blocks-container">
+									<li
+										v-for="equation in clonedState.includedEquations"
+										:key="equation.id"
+										@click="selectItem(equation, $event)"
+									>
+										<tera-asset-block
+											:is-toggleable="false"
+											:is-permitted="false"
+											:use-default-style="false"
+											:class="['asset-panel', { selected: selectedItem === equation.id }]"
+										>
+											<template #header>
+												<h6 v-if="equation.asset.pageNumber">Page {{ equation.asset.pageNumber }}</h6>
+												<h6 v-else-if="equation.asset.isEditedByAI">Edited by AI</h6>
+												<h6 v-else>Manually entered</h6>
+												<Checkbox
+													class="ml-auto"
+													:model-value="true"
+													@update:model-value="onCheckBoxChange(equation, 'exclude')"
+													:binary="true"
+												/>
+											</template>
+											<section>
+												<div class="block-container" @click.capture.stop="selectItem(equation, $event)">
+													<tera-math-editor
+														v-if="equation.asset.text"
+														:latex-equation="equation.asset.text"
+														:is-editable="false"
+													/>
+													<div v-if="!equation.asset.text" class="no-extract-equation">
+														{{ getEquationErrorLabel(equation) }}
+													</div>
+												</div>
+											</section>
+											<Textarea
+												v-if="selectedItem === equation.id"
+												v-model="equation.asset.text"
+												autoResize
+												rows="1"
+												placeholder="Add an expression with LaTeX"
+												class="w-full"
 											/>
-										</section>
-										<div class="block-container">
-											<tera-math-editor
-												v-if="equation.asset.text"
-												:latex-equation="equation.asset.text"
-												:is-editable="false"
+											<template #footer v-if="selectedItem === equation.id">
+												<footer class="flex">
+													<Button label="Close" outlined severity="secondary" @click.stop="selectedItem = ''" />
+													<Button class="ml-auto" icon="pi pi-arrow-up" label="Previous" @click.stop="goToPrevious" />
+													<Button
+														class="ml-2"
+														icon="pi pi-arrow-down"
+														icon-pos="right"
+														label="Next"
+														@click.stop="goToNext"
+													/>
+												</footer>
+											</template>
+										</tera-asset-block>
+									</li>
+									<!-- <p v-if="isEmpty(includedEquations) && !pastedImage" class="secondary-text">No equations selected</p> -->
+								</ul>
+								<div class="spacer mb-5" />
+								<h6 v-if="!_.isEmpty(clonedState.excludedEquations)" class="pb-3">
+									Other equations extracted from document
+								</h6>
+								<ul class="blocks-container">
+									<li
+										v-for="equation in clonedState.excludedEquations"
+										:key="equation.id"
+										@click="selectItem(equation, $event)"
+									>
+										<tera-asset-block
+											:is-toggleable="false"
+											:is-permitted="false"
+											:use-default-style="false"
+											:class="['asset-panel', { selected: selectedItem === equation.id }]"
+										>
+											<template #header>
+												<h6 v-if="equation.asset.pageNumber">Page {{ equation.asset.pageNumber }}</h6>
+												<h6 v-else-if="equation.asset.isEditedByAI">Edited by AI</h6>
+												<h6 v-else>Manually entered</h6>
+												<Checkbox
+													class="flex-shrink-0 ml-auto"
+													:model-value="false"
+													@update:model-value="onCheckBoxChange(equation, 'include')"
+													:binary="true"
+												/>
+											</template>
+											<section>
+												<div class="block-container">
+													<tera-math-editor
+														v-if="equation.asset.text"
+														:latex-equation="equation.asset.text"
+														:is-editable="false"
+													/>
+													<div v-if="!equation.asset.text" class="no-extract-equation">
+														{{ getEquationErrorLabel(equation) }}
+													</div>
+												</div>
+											</section>
+											<Textarea
+												v-if="selectedItem === equation.id"
+												v-model="equation.asset.text"
+												autoResize
+												rows="1"
+												placeholder="Add an expression with LaTeX"
+												class="w-full"
 											/>
-											<div v-if="!equation.asset.text" class="no-extract-equation">
-												{{ getEquationErrorLabel(equation) }}
-											</div>
-										</div>
-										<Button
-											v-if="selectedItem !== equation.name"
-											icon="pi pi-pencil"
-											text
-											severity="secondary"
-											size="small"
-											class="ml-auto"
-										/>
-									</section>
-									<Textarea
-										v-if="selectedItem === equation.name"
-										v-model="equation.asset.text"
-										autoResize
-										rows="1"
-										placeholder="Add an expression with LaTeX"
-										class="w-full"
-									/>
-								</tera-asset-block>
-							</li>
-							<!-- <p v-if="isEmpty(includedEquations) && !pastedImage" class="secondary-text">No equations selected</p> -->
-						</ul>
-						<div class="spacer mb-5" />
-						<h6 v-if="notIncludedEquations.length > 0" class="pb-3">Other equations extracted from document</h6>
-						<ul class="blocks-container">
-							<li v-for="(equation, i) in notIncludedEquations" :key="i" @click.capture="selectItem(equation, $event)">
-								<tera-asset-block
-									:is-toggleable="false"
-									:is-permitted="false"
-									:use-default-style="false"
-									:class="['asset-panel', { selected: selectedItem === equation.name }]"
-								>
-									<template #header>
-										<h6 v-if="equation.asset.pageNumber">Page {{ equation.asset.pageNumber }}</h6>
-										<h6 v-else-if="equation.asset.isEditedByAI">Edited by AI</h6>
-										<h6 v-else>Manually entered</h6>
-									</template>
-									<section>
-										<Checkbox
-											class="flex-shrink-0"
-											v-model="equation.includeInProcess"
-											@update:model-value="onCheckBoxChange(equation)"
-											:binary="true"
-										/>
-										<div class="block-container">
-											<tera-math-editor
-												v-if="equation.asset.text"
-												:latex-equation="equation.asset.text"
-												:is-editable="false"
-											/>
-											<div v-if="!equation.asset.text" class="no-extract-equation">
-												{{ getEquationErrorLabel(equation) }}
-											</div>
-										</div>
-										<Button
-											v-if="selectedItem !== equation.name"
-											icon="pi pi-pencil"
-											text
-											severity="secondary"
-											size="small"
-											class="ml-auto"
-										/>
-									</section>
-									<Textarea
-										v-if="selectedItem === equation.name"
-										v-model="equation.asset.text"
-										autoResize
-										rows="1"
-										placeholder="Add an expression with LaTeX"
-										class="w-full"
-									/>
-								</tera-asset-block>
-							</li>
-						</ul>
-					</main>
+											<template #footer v-if="selectedItem === equation.id">
+												<footer class="flex">
+													<Button label="Close" outlined severity="secondary" @click.stop="selectedItem = ''" />
+													<Button class="ml-auto" icon="pi pi-arrow-up" label="Previous" @click.stop="goToPrevious" />
+													<Button
+														class="ml-2"
+														icon="pi pi-arrow-down"
+														icon-pos="right"
+														label="Next"
+														@click.stop="goToNext"
+													/>
+												</footer>
+											</template>
+										</tera-asset-block>
+									</li>
+								</ul>
+							</main>
+						</TabPanel>
+						<!-- TODO: <TabPanel header="Step 2: Review Enhancements" disabled /> -->
+					</TabView>
 				</template>
 			</tera-slider-panel>
 			<tera-slider-panel
@@ -225,16 +260,16 @@
 			</tera-slider-panel>
 		</template>
 	</tera-drilldown>
-	<tera-modal v-if="viewAllEquations" class="w-8" @modal-mask-clicked="viewAllEquations = false">
+	<tera-modal v-if="viewAllIncludedEquations" class="w-8" @modal-mask-clicked="viewAllIncludedEquations = false">
 		<template #header>
 			<div class="flex align-items-center">
 				<h4>LaTeX</h4>
-				<Button class="p-button-sm ml-auto" severity="secondary" @click="setCopyClipboard(allEquationsCopy)">
+				<Button class="p-button-sm ml-auto" severity="secondary" @click="setCopyClipboard(allIncludedEquationsCopy)">
 					{{ btnCopyLabel }}
 				</Button>
 			</div>
 		</template>
-		<textarea v-model="allEquationsCopy" readonly width="100%" :rows="allEquations.length + 1" />
+		<textarea v-model="allIncludedEquationsCopy" readonly width="100%" :rows="allIncludedEquations.length + 1" />
 	</tera-modal>
 </template>
 
@@ -248,7 +283,7 @@ import TeraDrilldownPreview from '@/components/drilldown/tera-drilldown-preview.
 import TeraAssetBlock from '@/components/widgets/tera-asset-block.vue';
 import { computed, onMounted, onBeforeUnmount, ref, watch } from 'vue';
 import type { Card, DocumentAsset, Model } from '@/types/Types';
-import { cloneDeep, isEmpty } from 'lodash';
+import _, { cloneDeep, isEmpty } from 'lodash';
 import { equationsToAMR, getCleanedEquations, type EquationsToAMRRequest } from '@/services/knowledge';
 import { downloadDocumentAsset, getDocumentAsset, getDocumentFileAsText } from '@/services/document-assets';
 import { equationsFromImage } from '@/services/goLLM';
@@ -264,6 +299,9 @@ import TeraTextEditor from '@/components/documents/tera-text-editor.vue';
 import { logger } from '@/utils/logger';
 import TeraModal from '@/components/widgets/tera-modal.vue';
 import { createCopyTextToClipboard } from '@/utils/clipboard';
+import TabPanel from 'primevue/tabpanel';
+import TabView from 'primevue/tabview';
+import { v4 as uuidv4 } from 'uuid';
 import { ModelFromEquationsState, EquationBlock } from './model-from-equations-operation';
 
 const emit = defineEmits(['close', 'update-state', 'append-output', 'select-output']);
@@ -274,25 +312,20 @@ const props = defineProps<{
 const selectedOutputId = ref<string>('');
 
 const clonedState = ref<ModelFromEquationsState>({
-	equations: [],
+	includedEquations: [],
+	excludedEquations: [],
 	text: '',
 	modelFramework: 'petrinet',
 	modelId: null
 });
 
-const includedEquations = computed(() =>
-	clonedState.value.equations.filter((equation) => equation.includeInProcess === true)
-);
-const notIncludedEquations = computed(() =>
-	clonedState.value.equations.filter((equation) => equation.includeInProcess === false)
-);
-
 /**
  * View all equations
  */
-const viewAllEquations = ref(false);
-const allEquations = computed(() => includedEquations.value.map((eq) => eq.asset.text));
-const allEquationsCopy = computed(() => allEquations.value.join('\n'));
+const viewAllIncludedEquations = ref(false);
+const allIncludedEquations = computed(() => clonedState.value.includedEquations.map((eq) => eq.asset.text));
+const allIncludedEquationsCopy = computed(() => allIncludedEquations.value.join('\n'));
+const allEquations = computed(() => [...clonedState.value.includedEquations, ...clonedState.value.excludedEquations]);
 const { btnCopyLabel, setCopyClipboard } = createCopyTextToClipboard();
 /* End Copy all equations */
 
@@ -300,14 +333,14 @@ const pdfViewer = ref();
 
 const selectedItem = ref('');
 
-const selectItem = (equation, event) => {
-	selectedItem.value = equation.name;
-	if (pdfViewer.value) {
+const selectItem = (equation: AssetBlock<EquationBlock>, event?) => {
+	selectedItem.value = equation.id;
+	if (pdfViewer.value && _.isNumber(equation.asset.pageNumber)) {
 		pdfViewer.value.goToPage(equation.asset.pageNumber);
 	}
 
 	// Prevent the child’s click handler from firing
-	event.stopImmediatePropagation();
+	event?.stopImmediatePropagation();
 };
 
 const pdfLink = ref<string | null>();
@@ -361,14 +394,14 @@ onMounted(async () => {
 		}
 		isFetchingPDF.value = false;
 		const state = cloneDeep(props.node.state);
-		if (state.equations.length) return;
+		if (state.excludedEquations.length) return;
 
 		if (document.value?.metadata?.equations) {
 			documentEquations.value = document.value.metadata.equations.flatMap((page, index) =>
 				page.map((equation) => {
 					const asset: AssetBlock<EquationBlock> = {
+						id: uuidv4(),
 						name: 'Equation',
-						includeInProcess: false,
 						asset: {
 							pageNumber: index + 1,
 							text: equation
@@ -379,13 +412,13 @@ onMounted(async () => {
 			);
 		}
 		if (documentEquations.value && documentEquations.value?.length > 0) {
-			clonedState.value.equations = documentEquations.value.map((e, index) => ({
+			clonedState.value.excludedEquations = documentEquations.value.map((e, index) => ({
+				id: uuidv4(),
 				name: `${e.name} ${index}`,
-				includeInProcess: e.includeInProcess,
 				asset: { text: e.asset.text, pageNumber: e.asset.pageNumber }
 			}));
 
-			state.equations = clonedState.value.equations;
+			state.excludedEquations = clonedState.value.excludedEquations;
 		}
 
 		state.text = document.value?.text ?? '';
@@ -461,17 +494,23 @@ const onSelection = (id: string) => {
 	emit('select-output', id);
 };
 
-function onCheckBoxChange(equation) {
-	const index = clonedState.value.equations.findIndex((e) => e.name === equation.name);
-	clonedState.value.equations[index].includeInProcess = equation.includeInProcess;
+function onCheckBoxChange(equation: AssetBlock<EquationBlock>, action: 'include' | 'exclude' = 'include') {
+	const [sourceList, targetList] =
+		action === 'exclude'
+			? [clonedState.value.includedEquations, clonedState.value.excludedEquations]
+			: [clonedState.value.excludedEquations, clonedState.value.includedEquations];
+
+	const index = sourceList.findIndex((e) => e.id === equation.id);
+	if (index > -1) {
+		sourceList.splice(index, 1);
+	}
+	targetList.push(equation);
 }
 
 async function onRun() {
 	isOutputOpen.value = true;
 	isModelLoading.value = true;
-	const equationsText = clonedState.value.equations
-		.filter((e) => e.includeInProcess && !e.asset.extractionError)
-		.map((e) => e.asset.text);
+	const equationsText = clonedState.value.includedEquations.map((e) => e.asset.text);
 	const response = await getCleanedEquations(equationsText);
 	if (!response || isEmpty(response.cleanedEquations)) {
 		logger.error('Error cleaning equations, none were returned.');
@@ -495,17 +534,15 @@ async function onRun() {
 	// If the equations were cleaned that means these cleaned equations should be added to the input list
 	// So uncheck the old ones and check the new cleaned ones
 	if (wasCleaned) {
-		// Uncheck the equations passed to the request
-		clonedState.value.equations.forEach((eq) => {
-			if (equationsText.includes(eq.asset.text)) {
-				eq.includeInProcess = false;
-			}
-		});
+		clonedState.value.excludedEquations.push(...clonedState.value.includedEquations);
+
+		clonedState.value.includedEquations = [];
+
 		// Replace the unchecked equations with the cleaned equations
-		clonedState.value.equations.push(
+		clonedState.value.includedEquations.push(
 			...cleanedEquations.map((equation, index) => ({
-				name: `Equation ${clonedState.value.equations.length + index}`,
-				includeInProcess: true,
+				id: uuidv4(),
+				name: `Equation ${clonedState.value.includedEquations.length + index}`,
 				asset: { text: equation, isEditedByAI: true }
 			}))
 		);
@@ -553,10 +590,10 @@ function getEquations() {
 	const newEquations = multipleEquations.value.split('\n');
 	newEquations.forEach((equation) => {
 		if (!equation.trim().length) return;
-		const index = clonedState.value.equations.length;
-		clonedState.value.equations.push({
+		const index = clonedState.value.includedEquations.length;
+		clonedState.value.includedEquations.push({
+			id: uuidv4(),
 			name: `Equation ${index}`,
-			includeInProcess: true,
 			asset: {
 				text: equation
 			}
@@ -570,6 +607,25 @@ function getEquations() {
 function getEquationErrorLabel(equation) {
 	return equation.asset.extractionError ? "Couldn't extract equation" : '';
 }
+
+const getCurrentIndex = () => {
+	const currentIndex = allEquations.value.findIndex((eq) => eq.id === selectedItem.value);
+	return currentIndex;
+};
+
+const goToNext = () => {
+	const currentIndex = getCurrentIndex();
+	if (currentIndex < allEquations.value.length - 1) {
+		selectItem(allEquations.value[currentIndex + 1]);
+	}
+};
+
+const goToPrevious = () => {
+	const currentIndex = getCurrentIndex();
+	if (currentIndex > 0) {
+		selectItem(allEquations.value[currentIndex - 1]);
+	}
+};
 
 watch(
 	() => props.node.state,
@@ -623,6 +679,9 @@ watch(
 	background: transparent;
 }
 .asset-panel:deep(.p-panel-content) {
+	background: transparent;
+}
+.asset-panel:deep(.p-panel-footer) {
 	background: transparent;
 }
 .asset-panel:hover {
@@ -692,10 +751,6 @@ watch(
 
 .p-panel {
 	box-shadow: none;
-}
-
-.p-panel:deep(.p-panel-footer) {
-	display: none;
 }
 
 :deep(.p-splitbutton .p-button:first-of-type) {
