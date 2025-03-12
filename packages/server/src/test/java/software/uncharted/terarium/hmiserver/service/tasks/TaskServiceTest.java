@@ -339,6 +339,22 @@ public class TaskServiceTest extends TerariumApplicationTests {
 
 	// @Test
 	@WithUserDetails(MockUser.URSULA)
+	public void testItCanSendSimplifyModelRequest() throws Exception {
+		final ClassPathResource resource = new ClassPathResource("mira/SIR_model_modified.json");
+		final String content = new String(Files.readAllBytes(resource.getFile().toPath()));
+
+		final TaskRequest req = new TaskRequest();
+		req.setType(TaskType.MIRA);
+		req.setScript("mira_task:simplify_model");
+		req.setInput(content.getBytes());
+
+		final TaskResponse resp = taskService.runTaskSync(req);
+
+		log.info(new String(resp.getOutput()));
+	}
+
+	// @Test
+	@WithUserDetails(MockUser.URSULA)
 	public void testItCanSendGenerateModelLatexRequest() throws Exception {
 		final ClassPathResource resource = new ClassPathResource("mira/problem.json");
 		final String content = new String(Files.readAllBytes(resource.getFile().toPath()));
