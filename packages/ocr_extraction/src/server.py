@@ -72,6 +72,7 @@ async def process_and_predict(file: UploadFile = File(...)):
             logging.info("")
             latex_extraction_dict[text_ref] = latex_str
 
+    # - Extract tables using GPT model
     logging.info("Starting table extraction using GPT model...")
     table_extraction_dict = extract_tables(result)
 
