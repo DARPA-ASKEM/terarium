@@ -232,7 +232,7 @@
 								</ul>
 							</main>
 						</TabPanel>
-						<TabPanel header="Step 2: Review Enhancements" disabled />
+						<!-- TODO: <TabPanel header="Step 2: Review Enhancements" disabled /> -->
 					</TabView>
 				</template>
 			</tera-slider-panel>
