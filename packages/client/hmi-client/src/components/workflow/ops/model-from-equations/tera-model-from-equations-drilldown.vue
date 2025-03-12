@@ -102,7 +102,11 @@
 									<h6 v-if="!_.isEmpty(clonedState.includedEquations)" class="py-3">
 										Use {{ clonedState.includedEquations.length > 1 ? 'these equations' : 'this equation' }}
 									</h6>
-									<Button class="p-button-sm p-button-text ml-auto" label="View all" @click="viewAllEquations = true" />
+									<Button
+										class="p-button-sm p-button-text ml-auto"
+										label="View all"
+										@click="viewAllIncludedEquations = true"
+									/>
 								</div>
 								<p v-if="isEmpty(clonedState.includedEquations) && document" class="secondary-text mt-3">
 									No equations selected
@@ -256,16 +260,16 @@
 			</tera-slider-panel>
 		</template>
 	</tera-drilldown>
-	<tera-modal v-if="viewAllEquations" class="w-8" @modal-mask-clicked="viewAllEquations = false">
+	<tera-modal v-if="viewAllIncludedEquations" class="w-8" @modal-mask-clicked="viewAllIncludedEquations = false">
 		<template #header>
 			<div class="flex align-items-center">
 				<h4>LaTeX</h4>
-				<Button class="p-button-sm ml-auto" severity="secondary" @click="setCopyClipboard(allEquationsCopy)">
+				<Button class="p-button-sm ml-auto" severity="secondary" @click="setCopyClipboard(allIncludedEquationsCopy)">
 					{{ btnCopyLabel }}
 				</Button>
 			</div>
 		</template>
-		<textarea v-model="allEquationsCopy" readonly width="100%" :rows="allEquations.length + 1" />
+		<textarea v-model="allIncludedEquationsCopy" readonly width="100%" :rows="allIncludedEquations.length + 1" />
 	</tera-modal>
 </template>
 
@@ -318,9 +322,9 @@ const clonedState = ref<ModelFromEquationsState>({
 /**
  * View all equations
  */
-const viewAllEquations = ref(false);
-const allEquations = computed(() => clonedState.value.includedEquations.map((eq) => eq.asset.text));
-const allEquationsCopy = computed(() => allEquations.value.join('\n'));
+const viewAllIncludedEquations = ref(false);
+const allIncludedEquations = computed(() => clonedState.value.includedEquations.map((eq) => eq.asset.text));
+const allIncludedEquationsCopy = computed(() => allIncludedEquations.value.join('\n'));
 const { btnCopyLabel, setCopyClipboard } = createCopyTextToClipboard();
 /* End Copy all equations */
 
@@ -606,26 +610,26 @@ function getEquationErrorLabel(equation) {
 const getAllEquations = () => [...clonedState.value.includedEquations, ...clonedState.value.excludedEquations];
 
 const getCurrentIndex = () => {
-	const allEquationsA = getAllEquations();
-	const currentIndex = allEquationsA.findIndex((eq) => eq.id === selectedItem.value);
+	const allEquations = getAllEquations();
+	const currentIndex = allEquations.findIndex((eq) => eq.id === selectedItem.value);
 	return currentIndex;
 };
 
 const goToNext = () => {
-	const allEquationsA = getAllEquations();
+	const allEquations = getAllEquations();
 	const currentIndex = getCurrentIndex();
 
-	if (currentIndex < allEquationsA.length - 1) {
-		selectItem(allEquationsA[currentIndex + 1]);
+	if (currentIndex < allEquations.length - 1) {
+		selectItem(allEquations[currentIndex + 1]);
 	}
 };
 
 const goToPrevious = () => {
-	const allEquationsA = getAllEquations();
+	const allEquations = getAllEquations();
 	const currentIndex = getCurrentIndex();
 
 	if (currentIndex > 0) {
-		selectItem(allEquationsA[currentIndex - 1]);
+		selectItem(allEquations[currentIndex - 1]);
 	}
 };
 
