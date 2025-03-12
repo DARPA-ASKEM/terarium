@@ -1,21 +1,21 @@
+import logging
+
 from fastapi import FastAPI, File, UploadFile
 from fastapi.responses import JSONResponse
-import logging
 from io import BytesIO
 
-logging.basicConfig(level=logging.DEBUG)
-
-from docling.datamodel.base_models import DocumentStream
-from docling_core.types.doc import ImageRefMode, PictureItem, TableItem, TextItem
-from docling.datamodel.base_models import FigureElement, InputFormat, Table
-from docling.datamodel.pipeline_options import PdfPipelineOptions
+from docling.datamodel.base_models import DocumentStream, InputFormat
+from docling.datamodel.pipeline_options import PdfPipelineOptions, TableFormerMode, RapidOcrOptions
 from docling.document_converter import DocumentConverter, PdfFormatOption
 
 from texteller.inference_model import InferenceModel
 
+from table_extraction import extract_tables
+
+logging.basicConfig(level=logging.INFO)
 
 app = FastAPI()
-IMAGE_RESOLUTION_SCALE = 1.0
+IMAGE_RESOLUTION_SCALE = 2.0
 pipeline_options = PdfPipelineOptions()
 pipeline_options.images_scale = IMAGE_RESOLUTION_SCALE
 pipeline_options.generate_page_images = True
@@ -23,16 +23,19 @@ pipeline_options.generate_picture_images = False
 pipeline_options.do_code_enrichment = False
 pipeline_options.do_formula_enrichment = True
 
+pipeline_options.do_table_structure = True
+pipeline_options.table_structure_options.do_cell_matching = True
+pipeline_options.table_structure_options.mode = TableFormerMode.ACCURATE
+pipeline_options.do_ocr = True
+pipeline_options.ocr_options = RapidOcrOptions(force_full_page_ocr=True)
+
 converter = DocumentConverter(
     format_options={
         InputFormat.PDF: PdfFormatOption(pipeline_options=pipeline_options)
     }
 )
 
-
-# Textteller equation image => latex
 equation_model = InferenceModel()
-
 
 @app.get("/health")
 async def health_check():
@@ -45,7 +48,6 @@ async def process_and_predict(file: UploadFile = File(...)):
     file_bytes = await file.read()
     logging.info(f"Len = {len(file_bytes)}")
     docstream = DocumentStream(name="test", stream=BytesIO(file_bytes))
-    # result = converter.convert(docstream, max_num_pages=100, max_file_size=20971520)
     result = converter.convert(docstream)
 
     ################################################################################
@@ -56,7 +58,6 @@ async def process_and_predict(file: UploadFile = File(...)):
     latex_extraction_dict = {}
     for _idx, element in enumerate(result.document.texts):
         if element.label == "formula":
-            # logging.info(f"{element.label} =>  {element.text}")
             text_ref = element.self_ref
             text_img = element.get_image(result.document)
 
@@ -71,6 +72,8 @@ async def process_and_predict(file: UploadFile = File(...)):
             logging.info("")
             latex_extraction_dict[text_ref] = latex_str
 
+    logging.info("Starting table extraction using GPT model...")
+    table_extraction_dict = extract_tables(result)
 
     ################################################################################
     # Collect and format result
@@ -145,14 +148,28 @@ async def process_and_predict(file: UploadFile = File(...)):
         }
         final_result["pictures"].append(item)
 
+    # 5. Tables
+    final_result["tables"] = []
+    for table in result_dict["tables"]:
+        id = table["self_ref"]
+        item = {}
+        prov = table["prov"][0]
+        item["id"] = id
+        item["label"] = table["label"]
+        item["provenance"] = {
+            "page": prov["page_no"],
+            "bbox": {
+                "left": prov["bbox"]["l"],
+                "top": prov["bbox"]["t"],
+                "right": prov["bbox"]["r"],
+                "bottom": prov["bbox"]["b"]
+            },
+            "charspan": prov["charspan"]
+        }
+        item["text"] = table_extraction_dict[id]["text"]
+        item["data"] = table_extraction_dict[id]["data"]
+        final_result["tables"].append(item)
 
-
-    # 5. Tables ... TODO
-
-
-    # result_dict = result.document.export_to_dict()
-    # return JSONResponse(content=result_dict)
-    # return JSONResponse(content={"status": "TODO"})
     return JSONResponse(content=final_result)
 
 
