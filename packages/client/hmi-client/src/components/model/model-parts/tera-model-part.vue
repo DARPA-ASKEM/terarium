@@ -135,7 +135,6 @@
 								:unitExpression="child.unitExpression"
 								:expression="child.expression"
 								:feature-config="featureConfig"
-								:model-errors="getModelErrors(child.id)"
 								@update-item="$emit('update-item', { id: child.id, ...$event })"
 							/>
 						</li>
@@ -165,7 +164,6 @@
 				:unitExpression="base.unitExpression"
 				:expression="base.expression"
 				:feature-config="featureConfig"
-				:model-errors="getModelErrors(base.id)"
 				@update-item="$emit('update-item', { id: base.id, ...$event })"
 			/>
 		</li>
@@ -273,14 +271,11 @@ function updateAllChildren(base: string, key: string, value: string) {
 }
 
 // Model Errors helpers
-function getModelErrors(id: string) {
-	return props.modelErrors.filter((error) => error.id === id);
+function hasWarnModelErrors(entryId: string) {
+	return props.modelErrors.some(({ id, severity }) => id === entryId && severity === 'warn');
 }
-function hasWarnModelErrors(id: string) {
-	return getModelErrors(id).some((error) => error.severity === 'warn');
-}
-function hasErrorModelErrors(id: string) {
-	return getModelErrors(id).some((error) => error.severity === 'error');
+function hasErrorModelErrors(entryId: string) {
+	return props.modelErrors.some(({ id, severity }) => id === entryId && severity === 'error');
 }
 </script>
 
