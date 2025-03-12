@@ -189,8 +189,8 @@ export interface WorkflowTransformations {
 }
 
 export interface AssetBlock<T> {
+	id: string;
 	name: string;
-	includeInProcess: boolean;
 	isCollapsed?: false;
 	asset: T;
 }

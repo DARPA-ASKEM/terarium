@@ -109,15 +109,15 @@
 								</p>
 								<ul class="blocks-container">
 									<li
-										v-for="(equation, i) in clonedState.includedEquations"
-										:key="i"
+										v-for="equation in clonedState.includedEquations"
+										:key="equation.id"
 										@click="selectItem(equation, $event)"
 									>
 										<tera-asset-block
 											:is-toggleable="false"
 											:is-permitted="false"
 											:use-default-style="false"
-											:class="['asset-panel', { selected: selectedItem === equation.name }]"
+											:class="['asset-panel', { selected: selectedItem === equation.id }]"
 										>
 											<template #header>
 												<h6 v-if="equation.asset.pageNumber">Page {{ equation.asset.pageNumber }}</h6>
@@ -125,8 +125,8 @@
 												<h6 v-else>Manually entered</h6>
 												<Checkbox
 													class="ml-auto"
-													v-model="equation.includeInProcess"
-													@update:model-value="onCheckBoxChange(equation)"
+													:model-value="true"
+													@update:model-value="onCheckBoxChange(equation, 'exclude')"
 													:binary="true"
 												/>
 											</template>
@@ -143,14 +143,14 @@
 												</div>
 											</section>
 											<Textarea
-												v-if="selectedItem === equation.name"
+												v-if="selectedItem === equation.id"
 												v-model="equation.asset.text"
 												autoResize
 												rows="1"
 												placeholder="Add an expression with LaTeX"
 												class="w-full"
 											/>
-											<template #footer v-if="selectedItem === equation.name">
+											<template #footer v-if="selectedItem === equation.id">
 												<footer class="flex">
 													<Button label="Close" outlined severity="secondary" @click.stop="selectedItem = ''" />
 													<Button class="ml-auto" icon="pi pi-arrow-up" label="Previous" @click.stop="goToPrevious" />
@@ -173,15 +173,15 @@
 								</h6>
 								<ul class="blocks-container">
 									<li
-										v-for="(equation, i) in clonedState.excludedEquations"
-										:key="i"
+										v-for="equation in clonedState.excludedEquations"
+										:key="equation.id"
 										@click="selectItem(equation, $event)"
 									>
 										<tera-asset-block
 											:is-toggleable="false"
 											:is-permitted="false"
 											:use-default-style="false"
-											:class="['asset-panel', { selected: selectedItem === equation.name }]"
+											:class="['asset-panel', { selected: selectedItem === equation.id }]"
 										>
 											<template #header>
 												<h6 v-if="equation.asset.pageNumber">Page {{ equation.asset.pageNumber }}</h6>
@@ -189,8 +189,8 @@
 												<h6 v-else>Manually entered</h6>
 												<Checkbox
 													class="flex-shrink-0 ml-auto"
-													v-model="equation.includeInProcess"
-													@update:model-value="onCheckBoxChange(equation)"
+													:model-value="false"
+													@update:model-value="onCheckBoxChange(equation, 'include')"
 													:binary="true"
 												/>
 											</template>
@@ -207,14 +207,14 @@
 												</div>
 											</section>
 											<Textarea
-												v-if="selectedItem === equation.name"
+												v-if="selectedItem === equation.id"
 												v-model="equation.asset.text"
 												autoResize
 												rows="1"
 												placeholder="Add an expression with LaTeX"
 												class="w-full"
 											/>
-											<template #footer v-if="selectedItem === equation.name">
+											<template #footer v-if="selectedItem === equation.id">
 												<footer class="flex">
 													<Button label="Close" outlined severity="secondary" @click.stop="selectedItem = ''" />
 													<Button class="ml-auto" icon="pi pi-arrow-up" label="Previous" @click.stop="goToPrevious" />
@@ -297,6 +297,7 @@ import TeraModal from '@/components/widgets/tera-modal.vue';
 import { createCopyTextToClipboard } from '@/utils/clipboard';
 import TabPanel from 'primevue/tabpanel';
 import TabView from 'primevue/tabview';
+import { v4 as uuidv4 } from 'uuid';
 import { ModelFromEquationsState, EquationBlock } from './model-from-equations-operation';
 
 const emit = defineEmits(['close', 'update-state', 'append-output', 'select-output']);
@@ -327,8 +328,8 @@ const pdfViewer = ref();
 
 const selectedItem = ref('');
 
-const selectItem = (equation, event?) => {
-	selectedItem.value = equation.name;
+const selectItem = (equation: AssetBlock<EquationBlock>, event?) => {
+	selectedItem.value = equation.id;
 	if (pdfViewer.value && _.isNumber(equation.asset.pageNumber)) {
 		pdfViewer.value.goToPage(equation.asset.pageNumber);
 	}
@@ -394,8 +395,8 @@ onMounted(async () => {
 			documentEquations.value = document.value.metadata.equations.flatMap((page, index) =>
 				page.map((equation) => {
 					const asset: AssetBlock<EquationBlock> = {
+						id: uuidv4(),
 						name: 'Equation',
-						includeInProcess: false,
 						asset: {
 							pageNumber: index + 1,
 							text: equation
@@ -407,8 +408,8 @@ onMounted(async () => {
 		}
 		if (documentEquations.value && documentEquations.value?.length > 0) {
 			clonedState.value.excludedEquations = documentEquations.value.map((e, index) => ({
+				id: uuidv4(),
 				name: `${e.name} ${index}`,
-				includeInProcess: e.includeInProcess,
 				asset: { text: e.asset.text, pageNumber: e.asset.pageNumber }
 			}));
 
@@ -488,9 +489,17 @@ const onSelection = (id: string) => {
 	emit('select-output', id);
 };
 
-function onCheckBoxChange(equation) {
-	const index = clonedState.value.includedEquations.findIndex((e) => e.name === equation.name);
-	clonedState.value.includedEquations[index].includeInProcess = equation.includeInProcess;
+function onCheckBoxChange(equation: AssetBlock<EquationBlock>, action: 'include' | 'exclude' = 'include') {
+	const [sourceList, targetList] =
+		action === 'exclude'
+			? [clonedState.value.includedEquations, clonedState.value.excludedEquations]
+			: [clonedState.value.excludedEquations, clonedState.value.includedEquations];
+
+	const index = sourceList.findIndex((e) => e.id === equation.id);
+	if (index > -1) {
+		sourceList.splice(index, 1);
+	}
+	targetList.push(equation);
 }
 
 async function onRun() {
@@ -527,8 +536,8 @@ async function onRun() {
 		// Replace the unchecked equations with the cleaned equations
 		clonedState.value.includedEquations.push(
 			...cleanedEquations.map((equation, index) => ({
+				id: uuidv4(),
 				name: `Equation ${clonedState.value.includedEquations.length + index}`,
-				includeInProcess: true,
 				asset: { text: equation, isEditedByAI: true }
 			}))
 		);
@@ -578,8 +587,8 @@ function getEquations() {
 		if (!equation.trim().length) return;
 		const index = clonedState.value.includedEquations.length;
 		clonedState.value.includedEquations.push({
+			id: uuidv4(),
 			name: `Equation ${index}`,
-			includeInProcess: true,
 			asset: {
 				text: equation
 			}
@@ -598,7 +607,7 @@ const getAllEquations = () => [...clonedState.value.includedEquations, ...cloned
 
 const getCurrentIndex = () => {
 	const allEquationsA = getAllEquations();
-	const currentIndex = allEquationsA.findIndex((eq) => eq.name === selectedItem.value);
+	const currentIndex = allEquationsA.findIndex((eq) => eq.id === selectedItem.value);
 	return currentIndex;
 };
 
