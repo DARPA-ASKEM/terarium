@@ -12,6 +12,7 @@
 				:model-errors="modelErrors.filter((d) => d.type === 'state')"
 				:feature-config="featureConfig"
 				:filter="statesFilter"
+				:filter-type="stateFilterType"
 				@update-item="emit('update-state', $event)"
 			/>
 		</AccordionTab>
@@ -33,6 +34,7 @@
 				:feature-config="featureConfig"
 				show-matrix
 				:filter="parametersFilter"
+				:filter-type="parametersFilterType"
 				@open-matrix="(id: string) => (parameterMatrixModalId = id)"
 				@update-item="emit('update-parameter', $event)"
 			/>
@@ -63,6 +65,7 @@
 				:model-errors="[]"
 				:feature-config="featureConfig"
 				:filter="observablesFilter"
+				:filter-type="observablesFilterType"
 				@update-item="emit('update-observable', $event)"
 			/>
 		</AccordionTab>
@@ -124,6 +127,7 @@
 				:items="timeList"
 				:model-errors="[]"
 				:feature-config="featureConfig"
+				:filter-type="null"
 				@update-item="$emit('update-time', $event)"
 			/>
 		</AccordionTab>
