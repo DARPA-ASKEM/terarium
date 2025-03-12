@@ -71,11 +71,15 @@
 				Transitions<span class="artifact-amount">({{ transitions.length }})</span>
 				<tera-input-text class="ml-auto" placeholder="Filter" v-model="transitionsFilter" />
 			</template>
+			<tera-model-part-error
+				:items="modelErrors.filter((error) => error.type === 'transition')"
+				@filter-item="transitionsFilter = $event"
+			/>
 			<tera-model-part
 				:part-type="PartType.TRANSITION"
 				v-if="!isEmpty(transitions) && !isEmpty(mmt.templates)"
 				:items="transitionsList"
-				:model-errors="modelErrors.filter((d) => d.type === 'transition')"
+				:model-errors="modelErrors.filter((error) => error.type === 'transition')"
 				:feature-config="featureConfig"
 				:filter="transitionsFilter"
 				show-matrix
@@ -129,6 +133,7 @@ import {
 import TeraStratifiedMatrixModal from '@/components/model/petrinet/model-configurations/tera-stratified-matrix-modal.vue';
 import { ModelPartItem, ModelPartItemTree, StratifiedMatrix } from '@/types/Model';
 import { getControllerNames } from '@/model-representation/mira/mira-util';
+import TeraModelPartError from '@/components/model/model-parts/tera-model-part-error.vue';
 
 const props = defineProps<{
 	model: Model;
