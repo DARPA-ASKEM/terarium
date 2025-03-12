@@ -214,7 +214,7 @@ const transitionsList: ModelPartItemTree[] = createTransitionParts();
 const parameterMatrixModalId = ref('');
 const transitionMatrixModalId = ref('');
 const observablesList = computed(() => createObservablesList(observables.value));
-const timeList: ModelPartItemTree[] = createTimeList(time.value);
+const timeList = computed<ModelPartItemTree[]>(() => createTimeList(time.value));
 </script>
 
 <style scoped>
