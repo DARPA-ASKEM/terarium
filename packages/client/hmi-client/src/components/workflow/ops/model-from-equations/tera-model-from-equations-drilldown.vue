@@ -325,6 +325,7 @@ const clonedState = ref<ModelFromEquationsState>({
 const viewAllIncludedEquations = ref(false);
 const allIncludedEquations = computed(() => clonedState.value.includedEquations.map((eq) => eq.asset.text));
 const allIncludedEquationsCopy = computed(() => allIncludedEquations.value.join('\n'));
+const allEquations = computed(() => [...clonedState.value.includedEquations, ...clonedState.value.excludedEquations]);
 const { btnCopyLabel, setCopyClipboard } = createCopyTextToClipboard();
 /* End Copy all equations */
 
@@ -607,29 +608,22 @@ function getEquationErrorLabel(equation) {
 	return equation.asset.extractionError ? "Couldn't extract equation" : '';
 }
 
-const getAllEquations = () => [...clonedState.value.includedEquations, ...clonedState.value.excludedEquations];
-
 const getCurrentIndex = () => {
-	const allEquations = getAllEquations();
-	const currentIndex = allEquations.findIndex((eq) => eq.id === selectedItem.value);
+	const currentIndex = allEquations.value.findIndex((eq) => eq.id === selectedItem.value);
 	return currentIndex;
 };
 
 const goToNext = () => {
-	const allEquations = getAllEquations();
 	const currentIndex = getCurrentIndex();
-
-	if (currentIndex < allEquations.length - 1) {
-		selectItem(allEquations[currentIndex + 1]);
+	if (currentIndex < allEquations.value.length - 1) {
+		selectItem(allEquations.value[currentIndex + 1]);
 	}
 };
 
 const goToPrevious = () => {
-	const allEquations = getAllEquations();
 	const currentIndex = getCurrentIndex();
-
 	if (currentIndex > 0) {
-		selectItem(allEquations[currentIndex - 1]);
+		selectItem(allEquations.value[currentIndex - 1]);
 	}
 };
 
