@@ -150,6 +150,8 @@ function formatDateLabelFn(date: Date, datum: string, type: CalendarDateType): s
 			return `timeFormat(datetime(${date.getFullYear()} + ${datum}, ${date.getMonth()}, ${date.getDate()}), '%Y')`;
 		case CalendarDateType.MONTH:
 			return `timeFormat(datetime(${date.getFullYear()} + floor(${datum} / 12), ${date.getMonth()} + (${datum} % 12) , ${date.getDate()}), '%b %Y')`;
+		case CalendarDateType.WEEK:
+			return `timeFormat(datetime(${date.getFullYear()}, ${date.getMonth()}, ${date.getDate()} + 7 * ${datum}), '%b %d, %Y')`;
 		case CalendarDateType.DATE:
 		default:
 			return `timeFormat(datetime(${date.getFullYear()}, ${date.getMonth()}, ${date.getDate()} + ${datum}), '%b %d, %Y')`;
