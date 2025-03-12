@@ -3,7 +3,13 @@
 		<li
 			v-for="({ base, children, isParent }, index) in filteredItems.slice(firstRow, firstRow + MAX_NUMBER_OF_ROWS)"
 			:key="base.id"
-			class="model-part"
+			:class="[
+				'model-part',
+				{
+					'model-part-error': hasErrorModelErrors(base.id),
+					'model-part-warn': hasWarnModelErrors(base.id)
+				}
+			]"
 		>
 			<template v-if="isParent && !isEmpty(editingState)">
 				<section class="parent">
@@ -129,7 +135,7 @@
 								:unitExpression="child.unitExpression"
 								:expression="child.expression"
 								:feature-config="featureConfig"
-								:model-errors="modelErrors.filter((d) => d.id === child.id)"
+								:model-errors="getModelErrors(child.id)"
 								@update-item="$emit('update-item', { id: child.id, ...$event })"
 							/>
 						</li>
@@ -159,7 +165,7 @@
 				:unitExpression="base.unitExpression"
 				:expression="base.expression"
 				:feature-config="featureConfig"
-				:model-errors="modelErrors.filter((d) => d.id === base.id)"
+				:model-errors="getModelErrors(base.id)"
 				@update-item="$emit('update-item', { id: base.id, ...$event })"
 			/>
 		</li>
@@ -265,6 +271,17 @@ function updateAllChildren(base: string, key: string, value: string) {
 	const ids = props.items.find((d) => d.base.id === base)!.children.map((d) => d.id);
 	ids.forEach((id) => emit('update-item', { id, key, value }));
 }
+
+// Model Errors helpers
+function getModelErrors(id: string) {
+	return props.modelErrors.filter((error) => error.id === id);
+}
+function hasWarnModelErrors(id: string) {
+	return getModelErrors(id).some((error) => error.severity === 'warn');
+}
+function hasErrorModelErrors(id: string) {
+	return getModelErrors(id).some((error) => error.severity === 'error');
+}
 </script>
 
 <style scoped>
@@ -296,6 +313,16 @@ ul {
 .model-part:hover:has(.stratified > ul > li:hover) {
 	border-left: 4px solid var(--primary-color-light);
 	background: color-mix(in srgb, var(--surface-highlight) 30%, var(--surface-0) 70%);
+}
+
+/* Differentiate between error and warning */
+.model-part-error {
+	border-left-color: var(--error-border-color);
+	background-color: var(--surface-error);
+}
+.model-part-warn {
+	border-left-color: var(--warning-color);
+	background-color: var(--surface-warning);
 }
 
 li {
