@@ -10,7 +10,7 @@ from docling.document_converter import DocumentConverter, PdfFormatOption
 
 from texteller.inference_model import InferenceModel
 
-from .table_extraction import extract_tables
+from table_extraction import extract_tables
 
 logging.basicConfig(level=logging.INFO)
 

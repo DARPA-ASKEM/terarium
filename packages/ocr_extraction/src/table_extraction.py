@@ -110,6 +110,7 @@ def extract_tables(result):
             for table_cell in table.data.table_cells:
                 row_idx = table_cell.start_row_offset_idx
                 col_idx = table_cell.start_col_offset_idx
+                cell_id = table_ref + ":" + str(row_idx) + "_" + str(col_idx)
                 cell_val = str(table_grid[row_idx][col_idx])
                 bbox = {
                     "left": table_cell.bbox.l,
@@ -119,6 +120,7 @@ def extract_tables(result):
                     "coord_origin": table_cell.bbox.coord_origin
                 }
                 cell_dict = vars(table_cell)
+                cell_dict["id"] = cell_id # Add table cell id
                 cell_dict["bbox"] = bbox
                 cell_dict["text"] = cell_val
                 table_cells.append(cell_dict)
