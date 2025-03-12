@@ -1,10 +1,5 @@
 <template>
 	<section class="flex flex-column">
-		<ul v-if="!isEmpty(modelErrors)">
-			<li v-for="err of modelErrors" :key="err.id">
-				<span :class="err.severity">{{ err.content }}</span>
-			</li>
-		</ul>
 		<div class="top-entry">
 			<h6>{{ id }}</h6>
 			<span v-if="!isTimePart" class="name">
@@ -71,14 +66,14 @@
 
 <script setup lang="ts">
 import { computed, ref } from 'vue';
-import { debounce, isEmpty } from 'lodash';
+import { debounce } from 'lodash';
 import Button from 'primevue/button';
 import Dropdown from 'primevue/dropdown';
 import TeraConcept from '@/components/widgets/tera-concept.vue';
 import TeraInputText from '@/components/widgets/tera-input-text.vue';
 import type { FeatureConfig } from '@/types/common';
 import { CalendarDateType } from '@/types/common';
-import { ModelError, PartType } from '@/model-representation/service';
+import { PartType } from '@/model-representation/service';
 import { stringToLatexExpression } from '@/services/model';
 
 const props = defineProps<{
@@ -93,7 +88,6 @@ const props = defineProps<{
 	controllers?: string;
 	featureConfig: FeatureConfig;
 	partType: PartType;
-	modelErrors: ModelError[];
 }>();
 
 const emit = defineEmits(['update-item']);
@@ -200,13 +194,5 @@ h6::after {
 :deep(.unit .tera-input > main > input) {
 	height: 1.25rem;
 	font-size: var(--font-caption);
-}
-
-.warn {
-	background-color: var(--surface-warning);
-}
-
-.error {
-	background-color: var(--surface-error);
 }
 </style>
