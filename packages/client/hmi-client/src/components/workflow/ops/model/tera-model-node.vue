@@ -29,7 +29,7 @@
 			/>
 			<tera-operator-placeholder :node="node" />
 		</template>
-		<tera-progress-spinner is-centered :font-size="2" v-if="isLoading" />
+		<tera-operator-status v-if="taskStatus" :status="taskStatus" />
 	</main>
 </template>
 
@@ -43,14 +43,14 @@ import _ from 'lodash';
 import { getModel } from '@/services/model';
 import { canPropagateResource } from '@/services/workflow';
 
-import { WorkflowNode } from '@/types/workflow';
-import { AssetType, ClientEventType, type Model, type ProjectAsset, TaskStatus } from '@/types/Types';
+import { OperatorStatus, WorkflowNode } from '@/types/workflow';
+import { AssetType, ClientEventType, type Model, type ProjectAsset } from '@/types/Types';
 
 import TeraModelDiagram from '@/components/model/petrinet/tera-model-diagram.vue';
 import TeraModelEquation from '@/components/model/petrinet/tera-model-equation.vue';
 import TeraOperatorTitle from '@/components/operator/tera-operator-title.vue';
 import TeraOperatorPlaceholder from '@/components/operator/tera-operator-placeholder.vue';
-import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue';
+import TeraOperatorStatus from '@/components/operator/tera-operator-status.vue';
 import { useProjects } from '@/composables/project';
 import { createEnrichClientEventHandler, useClientEvent } from '@/composables/useClientEvent';
 import { ModelOperationState } from './model-operation';
@@ -59,15 +59,13 @@ const props = defineProps<{
 	node: WorkflowNode<ModelOperationState>;
 }>();
 
-const emit = defineEmits(['append-output', 'open-drilldown']);
+const emit = defineEmits(['append-output', 'open-drilldown', 'finished-job']);
 const models = computed(() => useProjects().getActiveProjectAssets(AssetType.Model));
 
-const taskId = ref<string>('');
-const isLoading = computed(() => taskId.value !== TaskStatus.Failed && taskId.value !== '');
-
+const taskStatus = ref<OperatorStatus | undefined>();
 useClientEvent(
 	ClientEventType.TaskGollmEnrichModel,
-	createEnrichClientEventHandler(taskId, props.node.state.modelId, emit)
+	createEnrichClientEventHandler(taskStatus, props.node.state.modelId)
 );
 
 enum ModelNodeView {

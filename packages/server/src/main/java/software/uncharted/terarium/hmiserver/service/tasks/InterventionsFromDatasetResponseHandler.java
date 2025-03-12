@@ -69,7 +69,12 @@ public class InterventionsFromDatasetResponseHandler extends LlmTaskResponseHand
 				}
 
 				// Set the extraction dataset id
-				ip.getInterventions().forEach(intervention -> intervention.setExtractionDatasetId(props.datasetId));
+				ip
+					.getInterventions()
+					.forEach(intervention -> {
+						intervention.setExtractionDatasetId(props.datasetId);
+						intervention.setId(UUID.randomUUID());
+					});
 
 				interventionService.createAsset(ip, props.projectId);
 			}

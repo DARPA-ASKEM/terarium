@@ -8,7 +8,7 @@
 		</div>
 		<tera-operator-placeholder v-else :node="node" />
 
-		<tera-progress-spinner is-centered :font-size="2" v-if="isLoading" />
+		<tera-operator-status :status="props.node.status" />
 		<Button
 			:label="isModelInputConnected ? 'Open' : 'Attach a model'"
 			@click="emit('open-drilldown')"
@@ -21,16 +21,19 @@
 
 <script setup lang="ts">
 import { cloneDeep, omit, isEmpty } from 'lodash';
-import { computed, watch, ref } from 'vue';
-import { WorkflowNode, WorkflowPortStatus } from '@/types/workflow';
 import Button from 'primevue/button';
-import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue';
-import TeraOperatorPlaceholder from '@/components/operator/tera-operator-placeholder.vue';
+import { watch, ref } from 'vue';
+
+import { AssetType, ClientEventType } from '@/types/Types';
+import { WorkflowNode, WorkflowPortStatus } from '@/types/workflow';
 import { getModel, getModelConfigurationsForModel } from '@/services/model';
 import { postAsConfiguredModel } from '@/services/model-configurations';
-import { AssetType, ClientEventType } from '@/types/Types';
-import { createTaskListClientEventHandler, useClientEvent } from '@/composables/useClientEvent';
+
 import { useProjects } from '@/composables/project';
+import { createTaskListClientEventHandler, useClientEvent } from '@/composables/useClientEvent';
+
+import TeraOperatorPlaceholder from '@/components/operator/tera-operator-placeholder.vue';
+import TeraOperatorStatus from '@/components/operator/tera-operator-status.vue';
 import { ModelConfigOperation, ModelConfigOperationState } from './model-config-operation';
 
 const props = defineProps<{
@@ -40,10 +43,8 @@ const emit = defineEmits(['open-drilldown', 'append-input-port', 'update-state',
 
 useClientEvent(
 	[ClientEventType.TaskGollmConfigureModelFromDocument, ClientEventType.TaskGollmConfigureModelFromDataset],
-	createTaskListClientEventHandler(props.node, 'modelConfigTaskIds')
+	createTaskListClientEventHandler(props.node, 'modelConfigTaskIds', emit)
 );
-
-const isLoading = computed(() => props.node.state.modelConfigTaskIds.length > 0);
 
 const isModelInputConnected = ref(false);
 
@@ -106,17 +107,6 @@ watch(
 		}
 	},
 	{ immediate: true, deep: true }
-);
-
-watch(
-	() => isLoading.value,
-	() => {
-		if (!isLoading.value) {
-			const state = cloneDeep(props.node.state);
-			state.modelConfigTaskIds = [];
-			emit('update-state', state);
-		}
-	}
 );
 </script>
 <style scoped>
