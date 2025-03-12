@@ -321,7 +321,7 @@ export function getTimeUnits(model: Model): CalendarDateType {
 export function getCalendarSettingsFromModel(model: Model): { view: CalendarDateType; format: string } {
 	const units = model?.semantics?.ode?.time?.units?.expression;
 	const view = units;
-	let format;
+	let format = '';
 
 	switch (units) {
 		case CalendarDateType.MONTH:
@@ -331,6 +331,7 @@ export function getCalendarSettingsFromModel(model: Model): { view: CalendarDate
 			format = 'yy';
 			break;
 		case CalendarDateType.DATE:
+		case CalendarDateType.WEEK:
 		default:
 			format = 'MM dd, yy';
 			break;

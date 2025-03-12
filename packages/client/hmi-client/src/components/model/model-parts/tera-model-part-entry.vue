@@ -30,7 +30,8 @@
 						:options="[
 							{ label: 'Days', value: CalendarDateType.DATE },
 							{ label: 'Months', value: CalendarDateType.MONTH },
-							{ label: 'Years', value: CalendarDateType.YEAR }
+							{ label: 'Years', value: CalendarDateType.YEAR },
+							{ label: 'Weeks', value: CalendarDateType.WEEK }
 						]"
 					/>
 					<tera-input-text
