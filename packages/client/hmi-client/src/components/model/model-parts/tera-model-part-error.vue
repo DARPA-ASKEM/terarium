@@ -1,24 +1,20 @@
 <template>
-	<main>
-		<section v-if="hasErrors" class="error">
-			<ul>
-				<li v-for="item in errors" :key="item.id" @click.stop="filterByItem(item.id)">
-					<span>{{ item.id }}</span>
-					{{ item.content }}
-				</li>
-			</ul>
-			<Button severity="danger" @click.stop="filterByType('error')">Show errors</Button>
-		</section>
-		<section v-if="hasWarnings" class="warning">
-			<ul>
-				<li v-for="item in warnings" :key="item.id" @click.stop="filterByItem(item.id)">
-					<span>{{ item.id }}</span>
-					{{ item.content }}
-				</li>
-			</ul>
-			<Button severity="warning" @click.stop="filterByType('warn')">Show warnings</Button>
-		</section>
-	</main>
+	<section v-if="hasErrors" class="error">
+		<Button size="small" severity="danger" @click.stop="filterByType('error')">Show errors</Button>
+		<ul>
+			<li v-for="item in errors" :key="item.id" @click.stop="filterByItem(item.id)">
+				{{ item.content }}
+			</li>
+		</ul>
+	</section>
+	<section v-if="hasWarnings" class="warning">
+		<Button size="small" severity="warning" @click.stop="filterByType('warn')">Show warnings</Button>
+		<ul>
+			<li v-for="item in warnings" :key="item.id" @click.stop="filterByItem(item.id)">
+				{{ item.content }}
+			</li>
+		</ul>
+	</section>
 </template>
 
 <script setup lang="ts">
@@ -33,7 +29,7 @@ const props = defineProps<{
 const emit = defineEmits(['filter-item', 'filter-type']);
 
 const warnings = computed(() => props.items.filter((item) => item.severity === 'warn'));
-const errors = computed(() => props.items.filter((item) => item.severity === 'warn'));
+const errors = computed(() => props.items.filter((item) => item.severity === 'error'));
 
 const hasWarnings = computed(() => warnings.value.length > 0);
 const hasErrors = computed(() => errors.value.length > 0);
@@ -47,23 +43,25 @@ section {
 	border-radius: var(--border-radius);
 	font-size: var(--font-body-small);
 	font-weight: normal;
-	padding: var(--gap-4);
-}
+	margin-bottom: var(--gap-2);
+	padding: var(--gap-2);
+	padding-left: var(--gap-3);
 
-strong {
-	font-weight: var(--font-weight-semibold);
+	& > .p-button {
+		float: right;
+	}
+
+	& + & {
+		margin-top: var(--gap-2);
+	}
 }
 
 ul {
-	list-style-type: none;
+	list-style-type: disc;
 	padding: 0;
 
 	li + li {
 		margin-top: var(--gap-1);
-	}
-
-	li::before {
-		content: '- ';
 	}
 
 	li:hover {
@@ -86,9 +84,5 @@ ul {
 
 .error {
 	background-color: var(--surface-error);
-}
-
-:deep(.p-button-text) {
-	padding: 0;
 }
 </style>
