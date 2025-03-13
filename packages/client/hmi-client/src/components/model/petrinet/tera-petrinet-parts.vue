@@ -25,11 +25,12 @@
 		<AccordionTab>
 			<template #header>
 				Parameters<span class="artifact-amount">({{ parameters.length }})</span>
-				<tera-input-text
+				<tera-model-part-filter
 					v-if="!isEmpty(mmt.parameters)"
 					class="ml-auto"
-					placeholder="Filter"
-					v-model="parametersFilter"
+					:model-errors="[]"
+					v-model:filter="parametersFilter"
+					v-model:filter-type="parametersFilterType"
 				/>
 			</template>
 			<tera-model-part
@@ -57,11 +58,12 @@
 		<AccordionTab>
 			<template #header>
 				Observables <span class="artifact-amount">({{ observables.length }})</span>
-				<tera-input-text
+				<tera-model-part-filter
 					v-if="!isEmpty(observables)"
 					class="ml-auto"
-					placeholder="Filter"
-					v-model="observablesFilter"
+					:model-errors="[]"
+					v-model:filter="observablesFilter"
+					v-model:filter-type="observablesFilterType"
 				/>
 			</template>
 			<tera-model-part
