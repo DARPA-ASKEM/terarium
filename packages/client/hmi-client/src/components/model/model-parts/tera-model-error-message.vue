@@ -1,18 +1,20 @@
 <template>
-	<Message v-if="hasErrors" severity="error">
-		<ul>
-			<li v-for="item in errors" :key="item.id" @click.stop="filterByItem(item.id)">
-				{{ item.content }}
-			</li>
-		</ul>
-	</Message>
-	<Message v-if="hasWarnings" severity="warn">
-		<ul>
-			<li v-for="item in warnings" :key="item.id" @click.stop="filterByItem(item.id)">
-				{{ item.content }}
-			</li>
-		</ul>
-	</Message>
+	<aside>
+		<Message v-if="hasErrors" severity="error">
+			<ul>
+				<li v-for="item in errors" :key="item.id" @click.stop="filterByItem(item.id)">
+					{{ item.content }}
+				</li>
+			</ul>
+		</Message>
+		<Message v-if="hasWarnings" severity="warn">
+			<ul>
+				<li v-for="item in warnings" :key="item.id" @click.stop="filterByItem(item.id)">
+					{{ item.content }}
+				</li>
+			</ul>
+		</Message>
+	</aside>
 </template>
 
 <script setup lang="ts">
@@ -37,12 +39,8 @@ const filterByItem = (id: ModelError['id']) => emit('filter-item', id);
 
 <style scoped>
 ul {
-	list-style-type: disc;
+	list-style-type: none;
 	padding: 0;
-
-	li + li {
-		margin-top: var(--gap-1);
-	}
 
 	li:hover {
 		cursor: pointer;
