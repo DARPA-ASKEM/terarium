@@ -5,7 +5,7 @@
 			size="small"
 			:disabled="filterSeverity === ModelErrorSeverity.WARNING"
 			:severity="!filterSeverity ? 'danger' : 'secondary'"
-			@click.stop="toggleFilterType(ModelErrorSeverity.ERROR)"
+			@click.stop="toggleFilterSeverity(ModelErrorSeverity.ERROR)"
 		>
 			{{ !filterSeverity ? 'Filter' : 'Unfilter' }} {{ getErrors().length }} errors
 		</Button>
@@ -14,7 +14,7 @@
 			size="small"
 			:disabled="filterSeverity === ModelErrorSeverity.ERROR"
 			:severity="!filterSeverity ? 'warning' : 'secondary'"
-			@click.stop="toggleFilterType(ModelErrorSeverity.WARNING)"
+			@click.stop="toggleFilterSeverity(ModelErrorSeverity.WARNING)"
 		>
 			{{ !filterSeverity ? 'Filter' : 'Unfilter' }} {{ getWarnings().length }} warnings
 		</Button>
@@ -35,8 +35,8 @@ const props = defineProps<{
 const filter = defineModel<string>('filter', { required: true });
 const filterSeverity = defineModel<ModelErrorSeverity | null>('filterSeverity', { required: true });
 
-function toggleFilterType(type: ModelErrorSeverity) {
-	filterSeverity.value = filterSeverity.value === type ? null : type;
+function toggleFilterSeverity(severity: ModelErrorSeverity) {
+	filterSeverity.value = filterSeverity.value === severity ? null : severity;
 }
 
 function getWarnings() {
