@@ -21,13 +21,13 @@ import { computed } from 'vue';
 import Message from 'primevue/message';
 
 const props = defineProps<{
-	items: ModelError[];
+	modelErrors: ModelError[];
 }>();
 
 const emit = defineEmits(['filter-item']);
 
-const warnings = computed(() => props.items.filter((item) => item.severity === ModelErrorSeverity.WARNING));
-const errors = computed(() => props.items.filter((item) => item.severity === ModelErrorSeverity.ERROR));
+const warnings = computed(() => props.modelErrors.filter((item) => item.severity === ModelErrorSeverity.WARNING));
+const errors = computed(() => props.modelErrors.filter((item) => item.severity === ModelErrorSeverity.ERROR));
 
 const hasWarnings = computed(() => warnings.value.length > 0);
 const hasErrors = computed(() => errors.value.length > 0);

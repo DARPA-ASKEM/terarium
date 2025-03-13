@@ -47,5 +47,3 @@ function getErrors() {
 	return props.modelErrors.filter(({ severity }) => severity === ModelErrorSeverity.ERROR);
 }
 </script>
-
-<style scoped></style>
