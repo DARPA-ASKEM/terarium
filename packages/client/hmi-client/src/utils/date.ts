@@ -88,6 +88,8 @@ export function getTimestepFromDateRange(startDate: Date, endDate: Date, stepTyp
 			return (endDate.getFullYear() - startDate.getFullYear()) * 12 + (endDate.getMonth() - startDate.getMonth());
 		case 'year':
 			return endDate.getFullYear() - startDate.getFullYear();
+		case 'week':
+			return Math.floor(diffInMilliseconds / (1000 * 60 * 60 * 24 * 7));
 		case 'date':
 		default:
 			return Math.floor(diffInMilliseconds / (1000 * 60 * 60 * 24));
@@ -103,6 +105,9 @@ export function getEndDateFromTimestep(startDate: Date, timestep: number, stepTy
 			break;
 		case 'year':
 			endDate.setFullYear(endDate.getFullYear() + timestep);
+			break;
+		case 'week':
+			endDate.setDate(endDate.getDate() + 7 * timestep);
 			break;
 		case 'date':
 		default:
@@ -127,6 +132,7 @@ export function getTimePointString(
 	const dateOptions: Intl.DateTimeFormatOptions = {
 		year: 'numeric',
 		...(view === CalendarDateType.DATE && { month: 'long', day: 'numeric' }),
+		...(view === CalendarDateType.WEEK && { month: 'long', day: 'numeric' }),
 		...(view === CalendarDateType.MONTH && { month: 'long' })
 	};
 

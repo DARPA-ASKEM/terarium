@@ -116,7 +116,7 @@
 							:model-value="
 								knobs.transientModelConfig.temporalContext ? new Date(knobs.transientModelConfig.temporalContext) : null
 							"
-							:view="calendarSettings?.view"
+							:view="calendarView"
 							:date-format="calendarSettings?.format"
 							showIcon
 							iconDisplay="input"
@@ -280,7 +280,7 @@ import { useProjects } from '@/composables/project';
 import TeraPdfPanel from '@/components/widgets/tera-pdf-panel.vue';
 import Calendar from 'primevue/calendar';
 import { CalendarSettings } from '@/utils/date';
-import { DrilldownTabs } from '@/types/common';
+import { CalendarDateType, DrilldownTabs } from '@/types/common';
 import { formatListWithConjunction } from '@/utils/text';
 import { DistributionType } from '@/services/distribution';
 import {
@@ -556,6 +556,12 @@ const mmtParams = ref<MiraTemplateParams>({});
 const configuredMmt = ref(makeConfiguredMMT(mmt.value, knobs.value.transientModelConfig));
 
 const calendarSettings = ref<CalendarSettings | null>(null);
+const calendarView = computed(() => {
+	if (calendarSettings.value?.view === CalendarDateType.WEEK) {
+		return CalendarDateType.DATE;
+	}
+	return calendarSettings.value?.view;
+});
 
 const downloadZippedModelAndConfig = async (configuration: ModelConfiguration = knobs.value.transientModelConfig) => {
 	const archive = await getArchive(configuration);

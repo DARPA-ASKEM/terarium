@@ -274,5 +274,6 @@ export const programmingLanguageOptions = (): { name: string; value: string; dis
 export enum CalendarDateType {
 	DATE = 'date',
 	MONTH = 'month',
-	YEAR = 'year'
+	YEAR = 'year',
+	WEEK = 'week'
 }

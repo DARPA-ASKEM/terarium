@@ -1,10 +1,7 @@
 <template>
 	<Panel :toggleable="isToggleable" :class="{ 'asset-panel': useDefaultStyle }">
 		<template #header>
-			<section>
-				<slot name="header" />
-				<Button v-if="isEditable" icon="pi pi-pencil" text rounded @click="emit('edit')" />
-			</section>
+			<slot name="header" />
 		</template>
 		<template #icons>
 			<template v-if="isPermitted">
@@ -21,7 +18,7 @@
 			<slot />
 		</main>
 
-		<template #footer>
+		<template v-if="$slots.footer" #footer>
 			<slot name="footer" />
 		</template>
 	</Panel>
@@ -43,9 +40,6 @@ defineProps({
 		default: true
 	},
 	isIncluded: {
-		type: Boolean
-	},
-	isEditable: {
 		type: Boolean
 	},
 	isToggleable: {

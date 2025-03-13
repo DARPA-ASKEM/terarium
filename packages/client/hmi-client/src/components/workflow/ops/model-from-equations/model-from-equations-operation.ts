@@ -1,4 +1,3 @@
-import type { DocumentExtraction } from '@/types/Types';
 import { AssetBlock, Operation, WorkflowOperationTypes } from '@/types/workflow';
 import createModelFromEquations from '@assets/svg/operator-images/create-model-from-equation.svg';
 
@@ -10,19 +9,10 @@ export interface EquationBlock {
 	pageNumber?: number;
 	extractionError?: boolean;
 }
-export interface EquationFromImageBlock extends DocumentExtraction {
-	text: string;
-	extractionError?: boolean;
-}
-
-export function instanceOfEquationFromImageBlock(
-	object: EquationBlock | EquationFromImageBlock
-): object is EquationFromImageBlock {
-	return 'fileName' in object;
-}
 
 export interface ModelFromEquationsState {
-	equations: AssetBlock<EquationBlock>[];
+	includedEquations: AssetBlock<EquationBlock>[];
+	excludedEquations: AssetBlock<EquationBlock>[];
 	text: string;
 	modelFramework: string;
 	modelId: string | null;
@@ -41,7 +31,8 @@ export const ModelFromEquationsOperation: Operation = {
 
 	initState: () => {
 		const init: ModelFromEquationsState = {
-			equations: [],
+			includedEquations: [],
+			excludedEquations: [],
 			text: '',
 			modelFramework: 'petrinet',
 			modelId: null
