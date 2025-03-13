@@ -137,7 +137,6 @@ import type { MiraModel, MiraTemplate, MiraTemplateParams } from '@/model-repres
 import { collapseInitials, collapseParameters, collapseTemplates } from '@/model-representation/mira/mira';
 import TeraModelPart from '@/components/model/model-parts/tera-model-part.vue';
 import type { FeatureConfig } from '@/types/common';
-import TeraInputText from '@/components/widgets/tera-input-text.vue';
 import {
 	createPartsList,
 	createObservablesList,

@@ -5,7 +5,7 @@
 			size="small"
 			:disabled="filterType === 'warn'"
 			:severity="!filterType ? 'danger' : 'secondary'"
-			@click.stop="toggleTransitionsFilterType('error')"
+			@click.stop="toggleFilterType('error')"
 		>
 			{{ !filterType ? 'Filter' : 'Unfilter' }} {{ getErrors().length }} errors
 		</Button>
@@ -14,7 +14,7 @@
 			size="small"
 			:disabled="filterType === 'error'"
 			:severity="!filterType ? 'warning' : 'secondary'"
-			@click.stop="toggleTransitionsFilterType('warn')"
+			@click.stop="toggleFilterType('warn')"
 		>
 			{{ !filterType ? 'Filter' : 'Unfilter' }} {{ getWarnings().length }} warnings
 		</Button>
@@ -35,7 +35,7 @@ const props = defineProps<{
 const filter = defineModel<string>('filter', { required: true });
 const filterType = defineModel<'warn' | 'error' | null>('filterType', { required: true });
 
-function toggleTransitionsFilterType(type: 'warn' | 'error') {
+function toggleFilterType(type: 'warn' | 'error') {
 	filterType.value = filterType.value === type ? null : type;
 }
 
