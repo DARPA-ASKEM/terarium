@@ -266,6 +266,11 @@ watch(
 			engine: 'ciemss'
 		};
 
+		// If we have an intervention add it to both simulation runs:
+		if (policyInterventionId.value) {
+			baseRequestPayload.policyInterventionId = policyInterventionId.value;
+		}
+
 		// Calibration has finished, now kick of two forecast jobs to do comparison
 		// - using the default configuration ()
 		// - using the calibfrated configuration
