@@ -142,7 +142,8 @@ import {
 	createObservablesList,
 	createTimeList,
 	PartType,
-	ModelError
+	ModelError,
+	ModelErrorSeverity
 } from '@/model-representation/service';
 import TeraStratifiedMatrixModal from '@/components/model/petrinet/model-configurations/tera-stratified-matrix-modal.vue';
 import { ModelPartItem, ModelPartItemTree, StratifiedMatrix } from '@/types/Model';
@@ -164,13 +165,13 @@ const emit = defineEmits(['update-state', 'update-parameter', 'update-observable
 const currentActiveIndexes = ref([0, 1, 2, 3, 4]);
 
 const statesFilter = ref('');
-const stateFilterType = ref<'warn' | 'error' | null>(null);
+const stateFilterType = ref<ModelErrorSeverity | null>(null);
 const parametersFilter = ref('');
-const parametersFilterType = ref<'warn' | 'error' | null>(null);
+const parametersFilterType = ref<ModelErrorSeverity | null>(null);
 const observablesFilter = ref('');
-const observablesFilterType = ref<'warn' | 'error' | null>(null);
+const observablesFilterType = ref<ModelErrorSeverity | null>(null);
 const transitionsFilter = ref('');
-const transitionsFilterType = ref<'warn' | 'error' | null>(null);
+const transitionsFilterType = ref<ModelErrorSeverity | null>(null);
 
 const parameters = computed(() => props.model?.semantics?.ode.parameters ?? []);
 const observables = computed(() => props.model?.semantics?.ode?.observables ?? []);
@@ -251,7 +252,7 @@ function getModelErrors(type: string) {
 :deep(.artifact-amount) {
 	font-size: var(--font-caption);
 	color: var(--text-color-subdued);
-	margin-left: 0.25rem;
+	margin-left: var(--gap-1);
 }
 
 :deep(.p-accordion-content) {

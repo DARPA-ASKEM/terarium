@@ -16,7 +16,7 @@
 </template>
 
 <script setup lang="ts">
-import { ModelError } from '@/model-representation/service';
+import { ModelError, ModelErrorSeverity } from '@/model-representation/service';
 import { computed } from 'vue';
 import Message from 'primevue/message';
 
@@ -26,8 +26,8 @@ const props = defineProps<{
 
 const emit = defineEmits(['filter-item']);
 
-const warnings = computed(() => props.items.filter((item) => item.severity === 'warn'));
-const errors = computed(() => props.items.filter((item) => item.severity === 'error'));
+const warnings = computed(() => props.items.filter((item) => item.severity === ModelErrorSeverity.WARNING));
+const errors = computed(() => props.items.filter((item) => item.severity === ModelErrorSeverity.ERROR));
 
 const hasWarnings = computed(() => warnings.value.length > 0);
 const hasErrors = computed(() => errors.value.length > 0);
