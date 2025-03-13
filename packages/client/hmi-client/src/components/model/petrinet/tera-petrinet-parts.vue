@@ -72,27 +72,12 @@
 		<AccordionTab>
 			<template #header>
 				Transitions<span class="artifact-amount">({{ transitions.length }})</span>
-				<aside class="ml-auto flex">
-					<Button
-						v-if="hasErrorModelErrors('transition')"
-						size="small"
-						:disabled="transitionsFilterType === 'warn'"
-						:severity="!transitionsFilterType ? 'danger' : 'secondary'"
-						@click.stop="toggleTransitionsFilterType('error')"
-					>
-						{{ !transitionsFilterType ? 'Filter' : 'Unfilter' }} {{ getErrorModelErrors('transition').length }} errors
-					</Button>
-					<Button
-						v-if="hasWarnModelErrors('transition')"
-						size="small"
-						:disabled="transitionsFilterType === 'error'"
-						:severity="!transitionsFilterType ? 'warning' : 'secondary'"
-						@click.stop="toggleTransitionsFilterType('warn')"
-					>
-						{{ !transitionsFilterType ? 'Filter' : 'Unfilter' }} {{ getWarnModelErrors('transition').length }} warnings
-					</Button>
-					<tera-input-text class="ml-2" placeholder="Filter" v-model="transitionsFilter" />
-				</aside>
+				<tera-model-part-filter
+					class="ml-auto"
+					:model-errors="getModelErrors('transition')"
+					v-model:filter="transitionsFilter"
+					v-model:filter-type="transitionsFilterType"
+				/>
 			</template>
 			<tera-model-error-message :items="getModelErrors('transition')" @filter-item="transitionsFilter = $event" />
 			<tera-model-part
@@ -139,7 +124,6 @@ import type { Model, Transition, State } from '@/types/Types';
 import { isEmpty } from 'lodash';
 import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
-import Button from 'primevue/button';
 import { computed, ref, watch } from 'vue';
 import type { MiraModel, MiraTemplate, MiraTemplateParams } from '@/model-representation/mira/mira-common';
 import { collapseInitials, collapseParameters, collapseTemplates } from '@/model-representation/mira/mira';
@@ -157,6 +141,7 @@ import TeraStratifiedMatrixModal from '@/components/model/petrinet/model-configu
 import { ModelPartItem, ModelPartItemTree, StratifiedMatrix } from '@/types/Model';
 import { getControllerNames } from '@/model-representation/mira/mira-util';
 import TeraModelErrorMessage from '@/components/model/model-parts/tera-model-error-message.vue';
+import TeraModelPartFilter from '@/components/model/model-parts/tera-model-part-filter.vue';
 
 const props = defineProps<{
 	model: Model;
@@ -170,10 +155,15 @@ const emit = defineEmits(['update-state', 'update-parameter', 'update-observable
 
 // Keep track of active indexes using ref
 const currentActiveIndexes = ref([0, 1, 2, 3, 4]);
+
 const statesFilter = ref('');
+const stateFilterType = ref<'warn' | 'error' | null>(null);
 const parametersFilter = ref('');
+const parametersFilterType = ref<'warn' | 'error' | null>(null);
 const observablesFilter = ref('');
+const observablesFilterType = ref<'warn' | 'error' | null>(null);
 const transitionsFilter = ref('');
+const transitionsFilterType = ref<'warn' | 'error' | null>(null);
 
 const parameters = computed(() => props.model?.semantics?.ode.parameters ?? []);
 const observables = computed(() => props.model?.semantics?.ode?.observables ?? []);
@@ -245,45 +235,8 @@ const observablesList = computed(() => createObservablesList(observables.value))
 const timeList = computed<ModelPartItemTree[]>(() => createTimeList(time.value));
 
 // Model Errors are filtered by type and severity
-const transitionsFilterType = ref<'warn' | 'error' | null>(null);
-const stateFilterType = ref<'warn' | 'error' | null>(null);
-const parametersFilterType = ref<'warn' | 'error' | null>(null);
-const observablesFilterType = ref<'warn' | 'error' | null>(null);
-
-function toggleTransitionsFilterType(type: 'warn' | 'error') {
-	transitionsFilterType.value = transitionsFilterType.value === type ? null : type;
-}
-
-function toggleStateFilterType(type: 'warn' | 'error') {
-	stateFilterType.value = stateFilterType.value === type ? null : type;
-}
-
-function toggleParametersFilterType(type: 'warn' | 'error') {
-	parametersFilterType.value = parametersFilterType.value === type ? null : type;
-}
-
-function toggleObservablesFilterType(type: 'warn' | 'error') {
-	observablesFilterType.value = observablesFilterType.value === type ? null : type;
-}
-
 function getModelErrors(type: string) {
 	return props.modelErrors.filter(({ type: errorType }) => errorType === type);
-}
-
-function getWarnModelErrors(type: string) {
-	return getModelErrors(type).filter(({ severity }) => severity === 'warn');
-}
-
-function getErrorModelErrors(type: string) {
-	return getModelErrors(type).filter(({ severity }) => severity === 'error');
-}
-
-function hasWarnModelErrors(type: string) {
-	return getWarnModelErrors(type).length > 0;
-}
-
-function hasErrorModelErrors(type: string) {
-	return getErrorModelErrors(type).length > 0;
 }
 </script>
 
