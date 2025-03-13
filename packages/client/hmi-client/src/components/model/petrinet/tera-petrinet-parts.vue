@@ -6,7 +6,7 @@
 				<tera-model-part-filter
 					v-if="!isEmpty(mmt.initials)"
 					class="ml-auto"
-					:model-errors="getModelErrors('state')"
+					:model-errors="getModelErrors(ModelErrorType.STATE)"
 					v-model:filter="statesFilter"
 					v-model:filter-type="stateFilterType"
 				/>
@@ -15,7 +15,7 @@
 				v-if="!isEmpty(mmt.initials)"
 				:part-type="PartType.STATE"
 				:items="stateList"
-				:model-errors="getModelErrors('state')"
+				:model-errors="getModelErrors(ModelErrorType.STATE)"
 				:feature-config="featureConfig"
 				:filter="statesFilter"
 				:filter-type="stateFilterType"
@@ -82,17 +82,20 @@
 				Transitions<span class="artifact-amount">({{ transitions.length }})</span>
 				<tera-model-part-filter
 					class="ml-auto"
-					:model-errors="getModelErrors('transition')"
+					:model-errors="getModelErrors(ModelErrorType.TRANSITION)"
 					v-model:filter="transitionsFilter"
 					v-model:filter-type="transitionsFilterType"
 				/>
 			</template>
-			<tera-model-error-message :items="getModelErrors('transition')" @filter-item="transitionsFilter = $event" />
+			<tera-model-error-message
+				:modelErrors="getModelErrors(ModelErrorType.TRANSITION)"
+				@filter-item="transitionsFilter = $event"
+			/>
 			<tera-model-part
 				:part-type="PartType.TRANSITION"
 				v-if="!isEmpty(transitions) && !isEmpty(mmt.templates)"
 				:items="transitionsList"
-				:model-errors="getModelErrors('transition')"
+				:model-errors="getModelErrors(ModelErrorType.TRANSITION)"
 				:feature-config="featureConfig"
 				:filter="transitionsFilter"
 				:filter-type="transitionsFilterType"
@@ -143,7 +146,8 @@ import {
 	createTimeList,
 	PartType,
 	ModelError,
-	ModelErrorSeverity
+	ModelErrorSeverity,
+	ModelErrorType
 } from '@/model-representation/service';
 import TeraStratifiedMatrixModal from '@/components/model/petrinet/model-configurations/tera-stratified-matrix-modal.vue';
 import { ModelPartItem, ModelPartItemTree, StratifiedMatrix } from '@/types/Model';
@@ -243,8 +247,8 @@ const observablesList = computed(() => createObservablesList(observables.value))
 const timeList = computed<ModelPartItemTree[]>(() => createTimeList(time.value));
 
 // Model Errors are filtered by type and severity
-function getModelErrors(type: string) {
-	return props.modelErrors.filter(({ type: errorType }) => errorType === type);
+function getModelErrors(getType: ModelErrorType) {
+	return props.modelErrors.filter(({ type }) => type === getType);
 }
 </script>
 
