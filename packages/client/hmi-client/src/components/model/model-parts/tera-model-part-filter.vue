@@ -3,20 +3,20 @@
 		<Button
 			v-if="!isEmpty(getErrors())"
 			size="small"
-			:disabled="filterSeverity === ModelErrorSeverity.WARNING"
-			:severity="!filterSeverity ? 'danger' : 'secondary'"
+			:disabled="isFilterWarning"
+			:severity="!isFilterError ? 'danger' : 'secondary'"
 			@click.stop="toggleFilterSeverity(ModelErrorSeverity.ERROR)"
 		>
-			{{ !filterSeverity ? 'Filter' : 'Unfilter' }} {{ getErrors().length }} errors
+			{{ !isFilterError ? 'Filter' : 'Unfilter' }} {{ getErrors().length }} errors
 		</Button>
 		<Button
 			v-if="!isEmpty(getWarnings())"
 			size="small"
-			:disabled="filterSeverity === ModelErrorSeverity.ERROR"
-			:severity="!filterSeverity ? 'warning' : 'secondary'"
+			:disabled="isFilterError"
+			:severity="!isFilterWarning ? 'warning' : 'secondary'"
 			@click.stop="toggleFilterSeverity(ModelErrorSeverity.WARNING)"
 		>
-			{{ !filterSeverity ? 'Filter' : 'Unfilter' }} {{ getWarnings().length }} warnings
+			{{ !isFilterWarning ? 'Filter' : 'Unfilter' }} {{ getWarnings().length }} warnings
 		</Button>
 		<tera-input-text placeholder="Filter" v-model="filter" />
 	</aside>
@@ -27,6 +27,7 @@ import TeraInputText from '@/components/widgets/tera-input-text.vue';
 import Button from 'primevue/button';
 import { ModelError, ModelErrorSeverity } from '@/model-representation/service';
 import { isEmpty } from 'lodash';
+import { computed } from 'vue';
 
 const props = defineProps<{
 	modelErrors: ModelError[];
@@ -34,6 +35,9 @@ const props = defineProps<{
 
 const filter = defineModel<string>('filter', { required: true });
 const filterSeverity = defineModel<ModelErrorSeverity | null>('filterSeverity', { required: true });
+
+const isFilterWarning = computed(() => filterSeverity.value === ModelErrorSeverity.WARNING);
+const isFilterError = computed(() => filterSeverity.value === ModelErrorSeverity.ERROR);
 
 function toggleFilterSeverity(severity: ModelErrorSeverity) {
 	filterSeverity.value = filterSeverity.value === severity ? null : severity;
