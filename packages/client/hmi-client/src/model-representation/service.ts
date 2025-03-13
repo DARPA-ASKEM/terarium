@@ -272,6 +272,7 @@ export enum ModelErrorSeverity {
 	WARNING = 'warn',
 	ERROR = 'error'
 }
+// This would be great if it was a union type with Part Type
 export enum ModelErrorType {
 	STATE = 'state',
 	PARAMETER = 'parameter',
