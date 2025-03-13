@@ -26,13 +26,13 @@ const props = defineProps<{
 
 const emit = defineEmits(['filter-item']);
 
-const warnings = computed(() => props.modelErrors.filter((item) => item.severity === ModelErrorSeverity.WARNING));
-const errors = computed(() => props.modelErrors.filter((item) => item.severity === ModelErrorSeverity.ERROR));
+const warnings = computed(() => props.modelErrors.filter(({ severity }) => severity === ModelErrorSeverity.WARNING));
+const errors = computed(() => props.modelErrors.filter(({ severity }) => severity === ModelErrorSeverity.ERROR));
 
 const hasWarnings = computed(() => warnings.value.length > 0);
 const hasErrors = computed(() => errors.value.length > 0);
 
-const filterByItem = (id: string) => emit('filter-item', id);
+const filterByItem = (id: ModelError['id']) => emit('filter-item', id);
 </script>
 
 <style scoped>

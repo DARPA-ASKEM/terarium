@@ -3,20 +3,20 @@
 		<Button
 			v-if="!isEmpty(getErrors())"
 			size="small"
-			:disabled="filterType === ModelErrorSeverity.WARNING"
-			:severity="!filterType ? 'danger' : 'secondary'"
+			:disabled="filterSeverity === ModelErrorSeverity.WARNING"
+			:severity="!filterSeverity ? 'danger' : 'secondary'"
 			@click.stop="toggleFilterType(ModelErrorSeverity.ERROR)"
 		>
-			{{ !filterType ? 'Filter' : 'Unfilter' }} {{ getErrors().length }} errors
+			{{ !filterSeverity ? 'Filter' : 'Unfilter' }} {{ getErrors().length }} errors
 		</Button>
 		<Button
 			v-if="!isEmpty(getWarnings())"
 			size="small"
-			:disabled="filterType === ModelErrorSeverity.ERROR"
-			:severity="!filterType ? 'warning' : 'secondary'"
+			:disabled="filterSeverity === ModelErrorSeverity.ERROR"
+			:severity="!filterSeverity ? 'warning' : 'secondary'"
 			@click.stop="toggleFilterType(ModelErrorSeverity.WARNING)"
 		>
-			{{ !filterType ? 'Filter' : 'Unfilter' }} {{ getWarnings().length }} warnings
+			{{ !filterSeverity ? 'Filter' : 'Unfilter' }} {{ getWarnings().length }} warnings
 		</Button>
 		<tera-input-text placeholder="Filter" v-model="filter" />
 	</aside>
@@ -33,10 +33,10 @@ const props = defineProps<{
 }>();
 
 const filter = defineModel<string>('filter', { required: true });
-const filterType = defineModel<ModelErrorSeverity | null>('filterType', { required: true });
+const filterSeverity = defineModel<ModelErrorSeverity | null>('filterSeverity', { required: true });
 
 function toggleFilterType(type: ModelErrorSeverity) {
-	filterType.value = filterType.value === type ? null : type;
+	filterSeverity.value = filterSeverity.value === type ? null : type;
 }
 
 function getWarnings() {

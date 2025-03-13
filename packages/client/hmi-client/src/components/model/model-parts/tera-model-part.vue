@@ -6,8 +6,8 @@
 			:class="[
 				'model-part',
 				{
-					'model-part-error': hasErrorModelErrors(base.id),
-					'model-part-warn': hasWarnModelErrors(base.id)
+					'model-part-error': hasModelErrors(base.id, ModelErrorSeverity.ERROR),
+					'model-part-warn': hasModelErrors(base.id, ModelErrorSeverity.WARNING)
 				}
 			]"
 		>
@@ -182,7 +182,7 @@
 
 <script setup lang="ts">
 import { isEmpty } from 'lodash';
-import { ref, computed } from 'vue';
+import { computed, ref } from 'vue';
 import type { ModelPartItem, ModelPartItemTree } from '@/types/Model';
 import type { DKG } from '@/types/Types';
 import { searchCuriesEntities } from '@/services/concept';
@@ -192,7 +192,7 @@ import Button from 'primevue/button';
 import type { FeatureConfig } from '@/types/common';
 import TeraInputText from '@/components/widgets/tera-input-text.vue';
 import Paginator from 'primevue/paginator';
-import { PartType, ModelError } from '@/model-representation/service';
+import { ModelError, ModelErrorSeverity, PartType } from '@/model-representation/service';
 
 const props = defineProps<{
 	items: ModelPartItemTree[];
@@ -201,7 +201,7 @@ const props = defineProps<{
 	showMatrix?: boolean;
 	partType: PartType;
 	filter?: string;
-	filterType: 'warn' | 'error' | null;
+	filterSeverity: ModelErrorSeverity | null;
 }>();
 
 const emit = defineEmits(['update-item', 'open-matrix']);
@@ -223,14 +223,13 @@ const firstRow = ref(0);
 
 const filteredItems = computed(() => {
 	const filterText = props.filter?.toLowerCase() ?? '';
-	if (!filterText && !props.filterType) return props.items;
-
-	console.log('filteredItems', props.items, filterText, props.filterType);
+	if (!filterText && !props.filterSeverity) return props.items;
 
 	const matcher = (partItem: ModelPartItem) => {
-		// for filterType
-		if (props.filterType === 'warn' && !hasWarnModelErrors(partItem.id)) return false;
-		if (props.filterType === 'error' && !hasErrorModelErrors(partItem.id)) return false;
+		if (props.filterSeverity === ModelErrorSeverity.WARNING && !hasModelErrors(partItem.id, ModelErrorSeverity.WARNING))
+			return false;
+		if (props.filterSeverity === ModelErrorSeverity.ERROR && !hasModelErrors(partItem.id, ModelErrorSeverity.ERROR))
+			return false;
 
 		if (partItem.id.toLowerCase().includes(filterText)) return true;
 
@@ -277,12 +276,8 @@ function updateAllChildren(base: string, key: string, value: string) {
 	ids.forEach((id) => emit('update-item', { id, key, value }));
 }
 
-// Model Errors helpers
-function hasWarnModelErrors(entryId: string) {
-	return props.modelErrors.some(({ id, severity }) => id === entryId && severity === 'warn');
-}
-function hasErrorModelErrors(entryId: string) {
-	return props.modelErrors.some(({ id, severity }) => id === entryId && severity === 'error');
+function hasModelErrors(entryId: ModelError['id'], entrySeverity: ModelErrorSeverity) {
+	return props.modelErrors.some(({ id, severity }) => id === entryId && severity === entrySeverity);
 }
 </script>
 

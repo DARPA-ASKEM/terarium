@@ -8,7 +8,7 @@
 					class="ml-auto"
 					:model-errors="getModelErrors(ModelErrorType.STATE)"
 					v-model:filter="statesFilter"
-					v-model:filter-type="stateFilterType"
+					v-model:filter-severity="stateFilterSeverity"
 				/>
 			</template>
 			<tera-model-part
@@ -18,7 +18,7 @@
 				:model-errors="getModelErrors(ModelErrorType.STATE)"
 				:feature-config="featureConfig"
 				:filter="statesFilter"
-				:filter-type="stateFilterType"
+				:filter-severity="stateFilterSeverity"
 				@update-item="emit('update-state', $event)"
 			/>
 		</AccordionTab>
@@ -30,7 +30,7 @@
 					class="ml-auto"
 					:model-errors="[]"
 					v-model:filter="parametersFilter"
-					v-model:filter-type="parametersFilterType"
+					v-model:filter-severity="parametersFilterSeverity"
 				/>
 			</template>
 			<tera-model-part
@@ -41,7 +41,7 @@
 				:feature-config="featureConfig"
 				show-matrix
 				:filter="parametersFilter"
-				:filter-type="parametersFilterType"
+				:filter-severity="parametersFilterSeverity"
 				@open-matrix="(id: string) => (parameterMatrixModalId = id)"
 				@update-item="emit('update-parameter', $event)"
 			/>
@@ -63,7 +63,7 @@
 					class="ml-auto"
 					:model-errors="[]"
 					v-model:filter="observablesFilter"
-					v-model:filter-type="observablesFilterType"
+					v-model:filter-severity="observablesFilterSeverity"
 				/>
 			</template>
 			<tera-model-part
@@ -73,7 +73,7 @@
 				:model-errors="[]"
 				:feature-config="featureConfig"
 				:filter="observablesFilter"
-				:filter-type="observablesFilterType"
+				:filter-severity="observablesFilterSeverity"
 				@update-item="emit('update-observable', $event)"
 			/>
 		</AccordionTab>
@@ -84,7 +84,7 @@
 					class="ml-auto"
 					:model-errors="getModelErrors(ModelErrorType.TRANSITION)"
 					v-model:filter="transitionsFilter"
-					v-model:filter-type="transitionsFilterType"
+					v-model:filter-severity="transitionsFilterSeverity"
 				/>
 			</template>
 			<tera-model-error-message
@@ -98,7 +98,7 @@
 				:model-errors="getModelErrors(ModelErrorType.TRANSITION)"
 				:feature-config="featureConfig"
 				:filter="transitionsFilter"
-				:filter-type="transitionsFilterType"
+				:filter-severity="transitionsFilterSeverity"
 				show-matrix
 				@open-matrix="(id: string) => (transitionMatrixModalId = id)"
 				@update-item="$emit('update-transition', $event)"
@@ -123,7 +123,7 @@
 				:items="timeList"
 				:model-errors="[]"
 				:feature-config="featureConfig"
-				:filter-type="null"
+				:filter-severity="null"
 				@update-item="$emit('update-time', $event)"
 			/>
 		</AccordionTab>
@@ -169,13 +169,13 @@ const emit = defineEmits(['update-state', 'update-parameter', 'update-observable
 const currentActiveIndexes = ref([0, 1, 2, 3, 4]);
 
 const statesFilter = ref('');
-const stateFilterType = ref<ModelErrorSeverity | null>(null);
+const stateFilterSeverity = ref<ModelErrorSeverity | null>(null);
 const parametersFilter = ref('');
-const parametersFilterType = ref<ModelErrorSeverity | null>(null);
+const parametersFilterSeverity = ref<ModelErrorSeverity | null>(null);
 const observablesFilter = ref('');
-const observablesFilterType = ref<ModelErrorSeverity | null>(null);
+const observablesFilterSeverity = ref<ModelErrorSeverity | null>(null);
 const transitionsFilter = ref('');
-const transitionsFilterType = ref<ModelErrorSeverity | null>(null);
+const transitionsFilterSeverity = ref<ModelErrorSeverity | null>(null);
 
 const parameters = computed(() => props.model?.semantics?.ode.parameters ?? []);
 const observables = computed(() => props.model?.semantics?.ode?.observables ?? []);
