@@ -42,6 +42,18 @@ public class GreekDictionary {
 		englishGreek.put("chi", "χ");
 		englishGreek.put("psi", "ψ");
 		englishGreek.put("omega", "ω");
+		englishGreek.put("Gamma", "Γ");
+		englishGreek.put("Delta", "Δ");
+		englishGreek.put("Theta", "Θ");
+		englishGreek.put("Kappa", "κ");
+		englishGreek.put("Lambda", "Λ");
+		englishGreek.put("Xi", "Ξ");
+		englishGreek.put("Pi", "Π");
+		englishGreek.put("Sigma", "Σ");
+		englishGreek.put("Upsilon", "ϒ");
+		englishGreek.put("Phi", "Φ");
+		englishGreek.put("psi", "Ψ");
+		englishGreek.put("omega", "Ω");
 	}
 
 	public static String englishToGreek(String english) {
