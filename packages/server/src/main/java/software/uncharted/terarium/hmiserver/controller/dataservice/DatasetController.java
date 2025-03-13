@@ -150,7 +150,7 @@ public class DatasetController {
 			final Schema.Permission permissionCanWrite = projectService.checkPermissionCanWrite(userId, projectId);
 			if (
 				permissionCanWrite.equals(Schema.Permission.WRITE) &&
-				dataset.getColumns().stream().anyMatch(column -> column.getStats() == null)
+				dataset.getColumns().stream().allMatch(column -> column.getStats() == null)
 			) {
 				// Calculate the statistics for the columns
 				final Optional<PresignedURL> datasetUrl = datasetService.getDownloadUrl(
