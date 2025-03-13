@@ -24,6 +24,7 @@
 						option-value="value"
 						:options="[
 							{ label: 'Days', value: CalendarDateType.DATE },
+							{ label: 'Weeks', value: CalendarDateType.WEEK },
 							{ label: 'Months', value: CalendarDateType.MONTH },
 							{ label: 'Years', value: CalendarDateType.YEAR }
 						]"

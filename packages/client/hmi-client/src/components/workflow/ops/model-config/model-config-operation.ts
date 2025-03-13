@@ -103,7 +103,13 @@ export const isModelConfigsEqual = (
 	return true;
 };
 
-// check if model config values are equal
+/** Compares the 'critical' values from two ModelConfiguration objects.
+ *  Critical values are any that will affect downstream operations / nodes.
+ *  @param originalConfig - The original model configuration to compare
+ *  @param newConfig 			- The new model configuration to compare against
+ *  @returns boolean 			- True if all critical values are equal or
+ * 													false if not (or if either config is empty).
+ */
 export const isModelConfigValuesEqual = (
 	originalConfig: ModelConfiguration | null,
 	newConfig: ModelConfiguration | null
@@ -129,11 +135,7 @@ export const isModelConfigValuesEqual = (
 	// compare initial values are the same
 	const initialValuesDifferent = originalInitialList.some((originalItem) => {
 		const newItem = initialMap.get(originalItem.target);
-		return (
-			newItem &&
-			(!isEqual(originalItem.expression, newItem.expression) ||
-				!isEqual(originalItem.expressionMathml, newItem.expressionMathml))
-		);
+		return newItem && !isEqual(originalItem.expression, newItem.expression);
 	});
 
 	if (initialValuesDifferent) return false;
@@ -149,11 +151,7 @@ export const isModelConfigValuesEqual = (
 	// compare observable values are the same
 	const observableValuesDifferent = originalObservableList.some((originalItem) => {
 		const newItem = observableMap.get(originalItem.referenceId);
-		return (
-			newItem &&
-			(!isEqual(originalItem.expression, newItem.expression) ||
-				!isEqual(originalItem.expressionMathml, newItem.expressionMathml))
-		);
+		return newItem && !isEqual(originalItem.expression, newItem.expression);
 	});
 
 	if (observableValuesDifferent) return false;

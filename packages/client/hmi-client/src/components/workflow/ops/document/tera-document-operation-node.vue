@@ -29,9 +29,9 @@ import { cloneDeep, isEmpty } from 'lodash';
 import Button from 'primevue/button';
 import Dropdown from 'primevue/dropdown';
 
-import { AssetBlock, WorkflowNode } from '@/types/workflow';
-import type { DocumentAsset, DocumentExtraction, ProjectAsset } from '@/types/Types';
-import { AssetType, ExtractionAssetType, ClientEventType } from '@/types/Types';
+import { WorkflowNode } from '@/types/workflow';
+import type { DocumentAsset, ProjectAsset } from '@/types/Types';
+import { AssetType, ClientEventType } from '@/types/Types';
 import { createTaskProgressClientEventHandler, useClientEvent } from '@/composables/useClientEvent';
 import { useProjects } from '@/composables/project';
 import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue';
@@ -82,36 +82,9 @@ watch(
 	() => document.value,
 	async () => {
 		if (document.value?.id) {
-			const figures: AssetBlock<DocumentExtraction>[] =
-				document.value?.assets
-					?.filter((asset) => asset.assetType === ExtractionAssetType.Figure)
-					.map((asset, i) => ({
-						name: `Figure ${i + 1}`,
-						includeInProcess: false,
-						asset
-					})) || [];
-			const tables: AssetBlock<DocumentExtraction>[] =
-				document.value?.assets
-					?.filter((asset) => asset.assetType === ExtractionAssetType.Table)
-					.map((asset, i) => ({
-						name: `Table ${i + 1}`,
-						includeInProcess: false,
-						asset
-					})) || [];
-			const equations: AssetBlock<DocumentExtraction>[] =
-				document.value?.assets
-					?.filter((asset) => asset.assetType === ExtractionAssetType.Equation)
-					.map((asset, i) => ({
-						name: `Equation ${i + 1}`,
-						includeInProcess: false,
-						asset
-					})) || [];
-
 			const state = cloneDeep(props.node.state);
 			state.documentId = document.value.id;
-			if (isEmpty(state.equations)) state.equations = equations;
-			if (isEmpty(state.figures)) state.figures = figures;
-			if (isEmpty(state.tables)) state.tables = tables;
+
 			emit('update-state', state);
 
 			const outputs = props.node.outputs;
@@ -123,10 +96,7 @@ watch(
 					label: documentName.value,
 					value: [
 						{
-							documentId: document.value.id,
-							figures,
-							tables,
-							equations
+							documentId: document.value.id
 						}
 					]
 				});
