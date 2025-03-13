@@ -253,12 +253,15 @@ const observablesFilterType = ref<'warn' | 'error' | null>(null);
 function toggleTransitionsFilterType(type: 'warn' | 'error') {
 	transitionsFilterType.value = transitionsFilterType.value === type ? null : type;
 }
+
 function toggleStateFilterType(type: 'warn' | 'error') {
 	stateFilterType.value = stateFilterType.value === type ? null : type;
 }
+
 function toggleParametersFilterType(type: 'warn' | 'error') {
 	parametersFilterType.value = parametersFilterType.value === type ? null : type;
 }
+
 function toggleObservablesFilterType(type: 'warn' | 'error') {
 	observablesFilterType.value = observablesFilterType.value === type ? null : type;
 }
@@ -268,15 +271,11 @@ function getModelErrors(type: string) {
 }
 
 function getWarnModelErrors(type: string) {
-	return props.modelErrors.filter(
-		({ type: errorType, severity: errorSeverity }) => errorType === type && errorSeverity === 'warn'
-	);
+	return getModelErrors(type).filter(({ severity }) => severity === 'warn');
 }
 
 function getErrorModelErrors(type: string) {
-	return props.modelErrors.filter(
-		({ type: errorType, severity: errorSeverity }) => errorType === type && errorSeverity === 'error'
-	);
+	return getModelErrors(type).filter(({ severity }) => severity === 'error');
 }
 
 function hasWarnModelErrors(type: string) {
