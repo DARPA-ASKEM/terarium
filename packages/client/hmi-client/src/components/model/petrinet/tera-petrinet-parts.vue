@@ -28,16 +28,20 @@
 				<tera-model-part-filter
 					v-if="!isEmpty(mmt.parameters)"
 					class="ml-auto"
-					:model-errors="[]"
+					:model-errors="getModelErrors(ModelErrorType.PARAMETER)"
 					v-model:filter="parametersFilter"
 					v-model:filter-severity="parametersFilterSeverity"
 				/>
 			</template>
+			<tera-model-error-message
+				:modelErrors="getModelErrors(ModelErrorType.PARAMETER)"
+				@filter-item="transitionsFilter = $event"
+			/>
 			<tera-model-part
 				v-if="!isEmpty(mmt.parameters)"
 				:part-type="PartType.PARAMETER"
 				:items="parameterList"
-				:model-errors="[]"
+				:model-errors="getModelErrors(ModelErrorType.PARAMETER)"
 				:feature-config="featureConfig"
 				show-matrix
 				:filter="parametersFilter"
@@ -61,16 +65,20 @@
 				<tera-model-part-filter
 					v-if="!isEmpty(observables)"
 					class="ml-auto"
-					:model-errors="[]"
+					:model-errors="getModelErrors(ModelErrorType.OBSERVABLE)"
 					v-model:filter="observablesFilter"
 					v-model:filter-severity="observablesFilterSeverity"
 				/>
 			</template>
+			<tera-model-error-message
+				:modelErrors="getModelErrors(ModelErrorType.OBSERVABLE)"
+				@filter-item="transitionsFilter = $event"
+			/>
 			<tera-model-part
 				:part-type="PartType.OBSERVABLE"
 				v-if="!isEmpty(observables)"
 				:items="observablesList"
-				:model-errors="[]"
+				:model-errors="getModelErrors(ModelErrorType.OBSERVABLE)"
 				:feature-config="featureConfig"
 				:filter="observablesFilter"
 				:filter-severity="observablesFilterSeverity"
@@ -117,11 +125,15 @@
 			<template #header>
 				Time <span class="artifact-amount">({{ time.length }})</span>
 			</template>
+			<tera-model-error-message
+				:modelErrors="getModelErrors(ModelErrorType.TIME)"
+				@filter-item="transitionsFilter = $event"
+			/>
 			<tera-model-part
 				v-if="time"
 				:part-type="PartType.TIME"
 				:items="timeList"
-				:model-errors="[]"
+				:model-errors="getModelErrors(ModelErrorType.TIME)"
 				:feature-config="featureConfig"
 				:filter-severity="null"
 				@update-item="$emit('update-time', $event)"
@@ -246,9 +258,9 @@ const transitionMatrixModalId = ref('');
 const observablesList = computed(() => createObservablesList(observables.value));
 const timeList = computed<ModelPartItemTree[]>(() => createTimeList(time.value));
 
-// Model Errors are filtered by type and severity
-function getModelErrors(getType: ModelErrorType) {
-	return props.modelErrors.filter(({ type }) => type === getType);
+// Model Errors are filtered by type
+function getModelErrors(entryType: ModelErrorType) {
+	return props.modelErrors.filter(({ type }) => type === entryType);
 }
 </script>
 

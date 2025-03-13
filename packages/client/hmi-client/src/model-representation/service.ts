@@ -274,7 +274,10 @@ export enum ModelErrorSeverity {
 }
 export enum ModelErrorType {
 	STATE = 'state',
+	PARAMETER = 'parameter',
 	TRANSITION = 'transition',
+	OBSERVABLE = 'observable',
+	TIME = 'time',
 	MODEL = 'model'
 }
 export interface ModelError {
