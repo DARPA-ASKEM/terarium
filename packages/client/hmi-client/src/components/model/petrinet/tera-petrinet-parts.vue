@@ -3,13 +3,19 @@
 		<AccordionTab>
 			<template #header>
 				State variables<span class="artifact-amount">({{ states.length }})</span>
-				<tera-input-text v-if="!isEmpty(mmt.initials)" class="ml-auto" placeholder="Filter" v-model="statesFilter" />
+				<tera-model-part-filter
+					v-if="!isEmpty(mmt.initials)"
+					class="ml-auto"
+					:model-errors="getModelErrors('state')"
+					v-model:filter="statesFilter"
+					v-model:filter-type="stateFilterType"
+				/>
 			</template>
 			<tera-model-part
 				v-if="!isEmpty(mmt.initials)"
 				:part-type="PartType.STATE"
 				:items="stateList"
-				:model-errors="modelErrors.filter((d) => d.type === 'state')"
+				:model-errors="getModelErrors('state')"
 				:feature-config="featureConfig"
 				:filter="statesFilter"
 				:filter-type="stateFilterType"
