@@ -25,12 +25,13 @@
 			</aside>
 		</template>
 		<section v-if="temporaryModel && mmtData">
-			<div class="warn" v-if="modelErrors.length > 0">
-				Errors or warnings detected, please check individual sections below.
-			</div>
-			<div v-for="(err, idx) of modelErrors.filter((d) => d.type === 'model')" :key="idx">
-				<div :class="err.severity">{{ err.content }}</div>
-			</div>
+			<Message class="mx-3" severity="warn" v-if="modelErrors.length > 0">
+				Errors and/or warnings detected, please check individual sections below.
+			</Message>
+			<tera-model-error-message
+				class="mx-3"
+				:modelErrors="modelErrors.filter(({ type }) => type === ModelErrorType.MODEL)"
+			/>
 
 			<tera-model-description :model="temporaryModel" :mmt-data="mmtData" @update-model="updateTemporaryModel" />
 			<tera-petrinet-parts
@@ -65,9 +66,11 @@ import { computed, ref, watch, onMounted } from 'vue';
 import { cloneDeep, isEmpty, isEqual } from 'lodash';
 import Button from 'primevue/button';
 import ContextMenu from 'primevue/contextmenu';
+import Message from 'primevue/message';
 import TeraAsset from '@/components/asset/tera-asset.vue';
 import TeraAssetEnrichment from '@/components/widgets/tera-asset-enrichment.vue';
 import TeraModelDescription from '@/components/model/petrinet/tera-model-description.vue';
+import TeraModelErrorMessage from '@/components/model/model-parts/tera-model-error-message.vue';
 import TeraPetrinetParts from '@/components/model/petrinet/tera-petrinet-parts.vue';
 import TeraSaveAssetModal from '@/components/project/tera-save-asset-modal.vue';
 import { getModel, updateModel, getMMT } from '@/services/model';
@@ -81,7 +84,8 @@ import {
 	updateParameter,
 	updateObservable,
 	updateTransition,
-	updateTime
+	updateTime,
+	ModelErrorType
 } from '@/model-representation/service';
 import type { ModelError } from '@/model-representation/service';
 
