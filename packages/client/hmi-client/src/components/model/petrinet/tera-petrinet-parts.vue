@@ -11,6 +11,10 @@
 					v-model:filter-severity="stateFilterSeverity"
 				/>
 			</template>
+			<tera-model-error-message
+				:modelErrors="getModelErrors(ModelErrorType.STATE)"
+				@filter-item="transitionsFilter = $event"
+			/>
 			<tera-model-part
 				v-if="!isEmpty(mmt.initials)"
 				:part-type="PartType.STATE"
