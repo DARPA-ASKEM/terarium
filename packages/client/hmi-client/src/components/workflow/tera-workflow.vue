@@ -326,7 +326,7 @@ const saveNodeStateHandler = debounce(async () => {
 			wf.value.updateNodeState(node.id, node.state);
 		}
 	});
-}, 250);
+}, 500);
 
 const nodePositionSet: Set<string> = new Set();
 const edgePositionSet: Set<string> = new Set();
