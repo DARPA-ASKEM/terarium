@@ -268,9 +268,22 @@ export function isModelMissingMetadata(model: Model): boolean {
  * - Check states make sense
  * - Check transitions make sense
  * */
+export enum ModelErrorSeverity {
+	WARNING = 'warn',
+	ERROR = 'error'
+}
+// This would be great if it was a union type with Part Type
+export enum ModelErrorType {
+	STATE = 'state',
+	PARAMETER = 'parameter',
+	TRANSITION = 'transition',
+	OBSERVABLE = 'observable',
+	TIME = 'time',
+	MODEL = 'model'
+}
 export interface ModelError {
-	severity: string;
-	type: 'state' | 'transition' | 'model';
+	severity: ModelErrorSeverity;
+	type: ModelErrorType;
 	id: string;
 	content: string;
 }
@@ -290,18 +303,38 @@ export function checkPetrinetAMR(amr: Model) {
 	const numRates = ode?.rates?.length || 0;
 
 	if (numStates === 0) {
-		results.push({ severity: 'warn', type: 'model', id: '', content: 'zero states in model' });
+		results.push({
+			severity: ModelErrorSeverity.WARNING,
+			type: ModelErrorType.MODEL,
+			id: '',
+			content: 'zero states in model'
+		});
 	}
 
 	if (numTransitions === 0) {
-		results.push({ severity: 'warn', type: 'model', id: '', content: 'zero transitions in model' });
+		results.push({
+			severity: ModelErrorSeverity.WARNING,
+			type: ModelErrorType.MODEL,
+			id: '',
+			content: 'zero transitions in model'
+		});
 	}
 
 	if (numStates !== numInitials) {
-		results.push({ severity: 'error', type: 'model', id: '', content: '# states need to match # initials' });
+		results.push({
+			severity: ModelErrorSeverity.ERROR,
+			type: ModelErrorType.MODEL,
+			id: '',
+			content: '# states need to match # initials'
+		});
 	}
 	if (numRates !== numTransitions) {
-		results.push({ severity: 'error', type: 'model', id: '', content: '# transitions need to match # rates' });
+		results.push({
+			severity: ModelErrorSeverity.ERROR,
+			type: ModelErrorType.MODEL,
+			id: '',
+			content: '# transitions need to match # rates'
+		});
 	}
 
 	// Build cache
@@ -321,23 +354,43 @@ export function checkPetrinetAMR(amr: Model) {
 	model.states.forEach((state) => {
 		const initial = initialMap.get(state.id);
 		if (!initial) {
-			results.push({ severity: 'error', type: 'state', id: state.id, content: `${state.id} has no initial` });
+			results.push({
+				severity: ModelErrorSeverity.ERROR,
+				type: ModelErrorType.STATE,
+				id: state.id,
+				content: `${state.id} has no matching initial.`
+			});
 		}
 		if (_.isEmpty(initial?.expression)) {
-			results.push({ severity: 'warn', type: 'state', id: state.id, content: `${state.id} has no initial.expression` });
+			results.push({
+				severity: ModelErrorSeverity.WARNING,
+				type: ModelErrorType.STATE,
+				id: state.id,
+				content: `${state.id} has no initial.expression. Use Model-Edit to add one.`
+			});
 		}
 		if (!isASCII(initial?.expression as string)) {
-			results.push({ severity: 'warn', type: 'state', id: state.id, content: `${state.id} has non-ascii expression` });
+			results.push({
+				severity: ModelErrorSeverity.WARNING,
+				type: ModelErrorType.STATE,
+				id: state.id,
+				content: `${state.id} has non-ascii expression. Use Model-Edit to add one.`
+			});
 		}
 		if (stateSet.has(state.id)) {
-			results.push({ severity: 'error', type: 'state', id: state.id, content: `state (${state.id}) has duplicate` });
+			results.push({
+				severity: ModelErrorSeverity.ERROR,
+				type: ModelErrorType.STATE,
+				id: state.id,
+				content: `state (${state.id}) is duplicated. Fix the model JSON and reimport`
+			});
 		}
 		if (initialSet.has(initial?.target as string)) {
 			results.push({
-				severity: 'error',
-				type: 'state',
+				severity: ModelErrorSeverity.ERROR,
+				type: ModelErrorType.STATE,
 				id: state.id,
-				content: `initial (${initial?.target}) has duplicate`
+				content: `initial (${initial?.target}) is duplicated. Fix the model JSON and reimport`
 			});
 		}
 		stateSet.add(state.id);
@@ -352,52 +405,52 @@ export function checkPetrinetAMR(amr: Model) {
 
 		if (!rate) {
 			results.push({
-				severity: 'error',
-				type: 'transition',
+				severity: ModelErrorSeverity.ERROR,
+				type: ModelErrorType.TRANSITION,
 				id: transition.id,
-				content: `${transition.id} has no rate`
+				content: `${transition.id} has no rate expression. Use Model-Edit to add one.`
 			});
 		}
 		if (_.isEmpty(rate?.expression)) {
 			results.push({
-				severity: 'warn',
-				type: 'transition',
+				severity: ModelErrorSeverity.WARNING,
+				type: ModelErrorType.TRANSITION,
 				id: transition.id,
-				content: `${transition.id} has no rate.expression`
+				content: `${transition.id} has no rate.expression. Use Model-Edit to add one`
 			});
 		}
 		if (!isASCII(rate?.expression as string)) {
 			results.push({
-				severity: 'warn',
-				type: 'transition',
+				severity: ModelErrorSeverity.WARNING,
+				type: ModelErrorType.TRANSITION,
 				id: transition.id,
 				content: `${transition.id} has non-ascii expression`
 			});
 		}
 		if (transitionSet.has(transition.id)) {
 			results.push({
-				severity: 'error',
-				type: 'transition',
+				severity: ModelErrorSeverity.ERROR,
+				type: ModelErrorType.TRANSITION,
 				id: transition.id,
-				content: `transition (${transition.id}) has duplicate`
+				content: `transition (${transition.id}) is duplicated. Fix the model JSON and reimport.`
 			});
 		}
 		if (rateSet.has(rate?.target as string)) {
 			results.push({
-				severity: 'error',
-				type: 'transition',
+				severity: ModelErrorSeverity.ERROR,
+				type: ModelErrorType.TRANSITION,
 				id: transition.id,
-				content: `rate (${rate?.target}) has duplicate`
+				content: `rate (${rate?.target}) is duplicate. Fix the model JSON and reimport.`
 			});
 		}
 
 		// Check if the system is closed (constant population)
 		if (transition.input.length !== transition.output.length) {
 			results.push({
-				severity: 'warn',
-				type: 'transition',
+				severity: ModelErrorSeverity.WARNING,
+				type: ModelErrorType.TRANSITION,
 				id: transition.id,
-				content: `${transition.id} may not conserve input/output`
+				content: `${transition.id} may not conserve input/output, please check these are intended as production/degradation transitions.`
 			});
 		}
 

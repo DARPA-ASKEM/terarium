@@ -356,7 +356,7 @@ main:deep(.p-accordion-content) {
 	padding-bottom: var(--gap-2);
 }
 
-main:deep(.p-accordion-content ul:not(.p-autocomplete-multiple-container)) {
+main:deep(.p-accordion-content > ul:not(.p-autocomplete-multiple-container)) {
 	display: flex;
 	flex-direction: column;
 	gap: var(--gap-2);
