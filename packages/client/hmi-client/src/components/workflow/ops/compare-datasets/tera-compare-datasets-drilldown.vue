@@ -94,7 +94,7 @@
 								<Column
 									v-for="dataset in [
 										datasets[groundTruthDatasetIndex],
-										...datasets.filter((dataset) => dataset.id !== knobs.selectedGroundTruthDatasetId)
+										...datasets.filter(({ id }) => id !== knobs.selectedGroundTruthDatasetId)
 									]"
 									:key="dataset.id"
 									:header="dataset.name"
@@ -299,7 +299,7 @@
 			</div>
 		</tera-drilldown-section>
 
-		<tera-drilldown-section :tabName="DrilldownTabs.Notebook"> </tera-drilldown-section>
+		<tera-drilldown-section :tabName="DrilldownTabs.Notebook" />
 
 		<template #sidebar-right>
 			<tera-slider-panel
@@ -379,14 +379,14 @@
 </template>
 
 <script setup lang="ts">
-import { isEmpty, cloneDeep } from 'lodash';
+import { cloneDeep, isEmpty } from 'lodash';
 import { logger } from '@/utils/logger';
 import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
 import { WorkflowNode } from '@/types/workflow';
 import TeraSliderPanel from '@/components/widgets/tera-slider-panel.vue';
 import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.vue';
-import { DrilldownTabs, ChartSettingType } from '@/types/common';
-import { onMounted, ref, computed, onBeforeUnmount } from 'vue';
+import { ChartSettingType, DrilldownTabs } from '@/types/common';
+import { computed, onBeforeUnmount, onMounted, ref } from 'vue';
 import Button from 'primevue/button';
 import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
@@ -404,21 +404,21 @@ import TeraChartSettingsPanel from '@/components/widgets/tera-chart-settings-pan
 import TeraChartSettingsQuantiles from '@/components/widgets/tera-chart-settings-quantiles.vue';
 import { useChartSettings } from '@/composables/useChartSettings';
 import { useDrilldownChartSize } from '@/composables/useDrilldownChartSize';
-import { useCharts, type ChartData } from '@/composables/useCharts';
+import { type ChartData, useCharts } from '@/composables/useCharts';
 import { DataArray } from '@/services/models/simulation-service';
-import { mean, stddev, computeQuantile, getWeightedIntervalScore } from '@/utils/stats';
+import { computeQuantile, getWeightedIntervalScore, mean, stddev } from '@/utils/stats';
 import { displayNumber } from '@/utils/number';
 import { getFileName } from '@/services/dataset';
 import TeraCriteriaOfInterestCard from './tera-criteria-of-interest-card.vue';
 import {
 	blankCriteriaOfInterest,
+	type CompareDatasetsMap,
 	CompareDatasetsState,
 	CompareValue,
 	CriteriaOfInterestCard,
-	PlotValue,
-	type CompareDatasetsMap
+	PlotValue
 } from './compare-datasets-operation';
-import { initialize, buildChartData } from './compare-datasets-utils';
+import { buildChartData, initialize } from './compare-datasets-utils';
 
 const props = defineProps<{
 	node: WorkflowNode<CompareDatasetsState>;
@@ -696,8 +696,7 @@ function constructWisTable() {
 			) {
 				return;
 			}
-			const observations = computeQuantile(summaryResult, key);
-			observationsMap[key] = observations;
+			observationsMap[key] = computeQuantile(summaryResult, key);
 		});
 	});
 
