@@ -40,6 +40,20 @@ const filterByItem = (id: ModelError['id']) => emit('filter-item', id);
 </script>
 
 <style scoped>
+aside {
+	display: flex;
+	flex-direction: column;
+	gap: var(--gap-2);
+
+	& > div.p-message {
+		margin: 0;
+
+		&:last-of-type {
+			margin-bottom: var(--gap-2);
+		}
+	}
+}
+
 ul {
 	list-style-type: none;
 	padding: 0;
