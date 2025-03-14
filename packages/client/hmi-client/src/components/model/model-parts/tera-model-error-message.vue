@@ -26,7 +26,9 @@ const props = defineProps<{
 	modelErrors: ModelError[];
 }>();
 
-const emit = defineEmits(['filter-item']);
+const emit = defineEmits<{
+	(e: 'filter-item', id: ModelError['id']): void;
+}>();
 
 const warnings = computed(() => props.modelErrors.filter(({ severity }) => severity === ModelErrorSeverity.WARNING));
 const errors = computed(() => props.modelErrors.filter(({ severity }) => severity === ModelErrorSeverity.ERROR));
