@@ -406,7 +406,7 @@ const outputArrowDirection = computed(() => (!isDocViewerOpen.value && !isInputO
 
 const documentEquations = ref<AssetBlock<EquationBlock>[]>();
 
-const exampleEquations = {
+const exampleEquations = Object.freeze({
 	SIR: [
 		'\\frac{d S(t)}{d t} = -\\frac{\\beta * S(t) * I(t)}{N}',
 		'\\frac{d I(t)}{d t} = \\frac{\\beta * S(t) * I(t)}{N} - \\gamma * I(t)',
@@ -438,7 +438,7 @@ const exampleEquations = {
 		'\\frac{d D(t)}{d t} = \\mu * I(t)',
 		'\\frac{d S_{VR}(t)}{dt} = \\eta_R(t) * R(t) + \\eta_V * V(t) - \\beta * S_{VR} * I(t)'
 	].join('\n')
-};
+});
 
 onMounted(async () => {
 	window.addEventListener('paste', handlePasteEvent);
