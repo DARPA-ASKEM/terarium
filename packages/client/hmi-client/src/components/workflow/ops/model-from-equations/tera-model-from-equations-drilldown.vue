@@ -23,10 +23,13 @@
 			</tera-slider-panel>
 			<tera-slider-panel class="input-config" v-model:is-open="isInputOpen" header="Input" content-width="100%">
 				<template #content>
-					<TabView>
+					<TabView v-model:active-index="activeTabIndex">
 						<TabPanel header="Step 1: Specify Equations">
 							<main class="px-3">
 								<header class="pb-2">
+									<div class="warn" v-if="selectedModel">
+										Move to <a @click="activeTabIndex = 1">step two</a> if the model looks correct
+									</div>
 									<nav class="flex align-items-center mb-2">
 										<p v-if="document">Specify which equations to use for this model.</p>
 										<p v-else>Connect a document or enter equations manually below.</p>
@@ -38,6 +41,7 @@
 											:loading="isModelLoading"
 										/>
 									</nav>
+
 									<section
 										class="input-container"
 										@dragenter.prevent="dragEnterCount++"
@@ -284,9 +288,9 @@
 													<p v-else>{{ enrichment.asset.content }}</p>
 												</template>
 												<template v-else-if="enrichment.asset.type === EnrichmentType.CUSTOM">
-													<div class="flex align-items-center gap-2">
+													<div class="flex align-items-center gap-2 w-full">
 														<i class="pi pi-sparkles" />
-														<tera-input-text :model-value="'What does the model describe?'" />
+														<tera-input-text class="w-full" :model-value="'What does the model describe?'" />
 													</div>
 													<p>{{ enrichment.asset.content }}</p>
 												</template>
@@ -411,6 +415,8 @@ const emit = defineEmits(['close', 'update-state', 'append-output', 'select-outp
 const props = defineProps<{
 	node: WorkflowNode<ModelFromEquationsState>;
 }>();
+
+const activeTabIndex = ref(0);
 
 const selectedOutputId = ref<string>('');
 
@@ -951,5 +957,11 @@ watch(
 /* fix patch for document viewer */
 :deep(.document-viewer-header) {
 	width: 3rem !important;
+}
+
+.warn {
+	background-color: var(--surface-warning);
+	padding: var(--gap-3);
+	margin-bottom: var(--gap-2);
 }
 </style>
