@@ -647,7 +647,7 @@ async function onRun() {
 		const enrichResponse = await enrichModelMetadata(modelId, document.value?.id ?? '', false);
 		// clear enrichments when new model is created
 		clonedState.value.enrichments = [];
-		// FIXME: The response can be returned right away and this may not get caught in the node subscriber since the model id populated in time
+		// FIXME: The response can be returned right away and this may not get caught in the node subscriber since the model id isn't populated in time
 		if (enrichResponse.status === TaskStatus.Success) {
 			const { response: parsedEnrichOutput } = JSON.parse(atob(enrichResponse.output));
 			clonedState.value.enrichments = createEnrichmentCards(parsedEnrichOutput);
