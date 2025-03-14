@@ -344,7 +344,7 @@
 							@update:model-value="emit('update-state', { ...node.state, showModelWeightsCharts: $event })"
 						/>
 						<Divider />
-						<tera-chart-settings-quantiles :settings="chartSettings" @update-options="updateQauntilesOptions" />
+						<tera-chart-settings-quantiles :settings="chartSettings" @update-options="updateQuantilesOptions" />
 						<Divider />
 					</div>
 				</template>
@@ -724,7 +724,7 @@ const {
 	selectedEnsembleVariableSettings,
 	selectedErrorVariableSettings,
 	updateEnsembleVariableSettingOption,
-	updateQauntilesOptions,
+	updateQuantilesOptions,
 	updateActiveChartSettings,
 	setActiveChartSettings
 } = useChartSettings(props, emit);

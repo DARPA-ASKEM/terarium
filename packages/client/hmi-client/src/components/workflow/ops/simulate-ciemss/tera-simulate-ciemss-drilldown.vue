@@ -440,7 +440,7 @@
 							"
 						/>
 						<Divider />
-						<tera-chart-settings-quantiles :settings="chartSettings" @update-options="updateQauntilesOptions" />
+						<tera-chart-settings-quantiles :settings="chartSettings" @update-options="updateQuantilesOptions" />
 						<Divider />
 					</div>
 				</template>
@@ -694,7 +694,7 @@ const {
 	setActiveChartSettings,
 	addEmptyComparisonChart,
 	updateComparisonChartSetting,
-	updateQauntilesOptions
+	updateQuantilesOptions
 } = useChartSettings(props, emit);
 
 const {

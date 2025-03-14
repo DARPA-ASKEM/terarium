@@ -359,7 +359,7 @@
 						</tera-chart-settings>
 						<template v-if="knobs.selectedCompareOption === CompareValue.SCENARIO">
 							<Divider />
-							<tera-chart-settings-quantiles :settings="chartSettings" @update-options="updateQauntilesOptions" />
+							<tera-chart-settings-quantiles :settings="chartSettings" @update-options="updateQuantilesOptions" />
 							<Divider />
 							<h5>Impact of intervention metrics</h5>
 							<tera-checkbox v-model="showATETable" label="Average treatment effect (ATE)" />
@@ -515,7 +515,7 @@ const {
 	updateChartSettings,
 	updateActiveChartSettings,
 	setActiveChartSettings,
-	updateQauntilesOptions
+	updateQuantilesOptions
 } = useChartSettings(props, emit);
 
 const selectedVariableNames = computed(() => selectedVariableSettings.value.map((s) => s.selectedVariables[0]));

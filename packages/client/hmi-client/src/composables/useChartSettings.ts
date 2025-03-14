@@ -158,7 +158,7 @@ export function useChartSettings(
 		});
 	};
 
-	const updateQauntilesOptions = (options: { showQuantiles: boolean; quantiles: number[] }) => {
+	const updateQuantilesOptions = (options: { showQuantiles: boolean; quantiles: number[] }) => {
 		emit('update-state', {
 			...props.node.state,
 			chartSettings: updateAllChartSettings(chartSettings.value, options, CHART_SETTING_WITH_QUANTILES_OPTIONS)
@@ -219,7 +219,7 @@ export function useChartSettings(
 		removeChartSettings,
 		updateChartSettings,
 		updateEnsembleVariableSettingOption,
-		updateQauntilesOptions,
+		updateQuantilesOptions,
 		updateSensitivityChartSettings,
 		findAndUpdateChartSettingsById,
 		addEmptyComparisonChart,
