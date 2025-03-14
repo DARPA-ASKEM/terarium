@@ -26,7 +26,9 @@ const props = defineProps<{
 	modelErrors: ModelError[];
 }>();
 
-const emit = defineEmits(['filter-item']);
+const emit = defineEmits<{
+	(e: 'filter-item', id: ModelError['id']): void;
+}>();
 
 const warnings = computed(() => props.modelErrors.filter(({ severity }) => severity === ModelErrorSeverity.WARNING));
 const errors = computed(() => props.modelErrors.filter(({ severity }) => severity === ModelErrorSeverity.ERROR));
@@ -38,6 +40,20 @@ const filterByItem = (id: ModelError['id']) => emit('filter-item', id);
 </script>
 
 <style scoped>
+aside {
+	display: flex;
+	flex-direction: column;
+	gap: var(--gap-2);
+
+	& > div.p-message {
+		margin: 0;
+
+		&:last-of-type {
+			margin-bottom: var(--gap-2);
+		}
+	}
+}
+
 ul {
 	list-style-type: none;
 	padding: 0;

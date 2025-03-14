@@ -3,8 +3,7 @@
 		<Button
 			v-if="!isEmpty(getErrors())"
 			size="small"
-			:disabled="isFilterWarning"
-			:severity="!isFilterError ? 'secondary' : 'danger'"
+			:severity="!isFilteringToErrors ? 'secondary' : 'danger'"
 			@click.stop="toggleFilterSeverity(ModelErrorSeverity.ERROR)"
 		>
 			{{ getErrors().length }} Errors
@@ -12,8 +11,7 @@
 		<Button
 			v-if="!isEmpty(getWarnings())"
 			size="small"
-			:disabled="isFilterError"
-			:severity="!isFilterWarning ? 'secondary' : 'warning'"
+			:severity="!isFilteringToWarnings ? 'secondary' : 'warning'"
 			@click.stop="toggleFilterSeverity(ModelErrorSeverity.WARNING)"
 		>
 			{{ getWarnings().length }} Warnings
@@ -36,8 +34,8 @@ const props = defineProps<{
 const filter = defineModel<string>('filter', { required: true });
 const filterSeverity = defineModel<ModelErrorSeverity | null>('filterSeverity', { required: true });
 
-const isFilterWarning = computed(() => filterSeverity.value === ModelErrorSeverity.WARNING);
-const isFilterError = computed(() => filterSeverity.value === ModelErrorSeverity.ERROR);
+const isFilteringToWarnings = computed(() => filterSeverity.value === ModelErrorSeverity.WARNING);
+const isFilteringToErrors = computed(() => filterSeverity.value === ModelErrorSeverity.ERROR);
 
 function toggleFilterSeverity(severity: ModelErrorSeverity) {
 	filterSeverity.value = filterSeverity.value === severity ? null : severity;
