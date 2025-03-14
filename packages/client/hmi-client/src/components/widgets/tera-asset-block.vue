@@ -4,11 +4,6 @@
 			<slot name="header" />
 		</template>
 		<template #icons>
-			<template v-if="isPermitted">
-				<label>Include in process</label>
-				<InputSwitch :model-value="isIncluded" @update:model-value="emit('update:is-included')" />
-			</template>
-
 			<Button v-if="isDeletable" icon="pi pi-trash" text rounded @click="emit('delete')" />
 		</template>
 		<template #togglericon="{ collapsed }">
@@ -27,17 +22,12 @@
 <script setup lang="ts">
 import Panel from 'primevue/panel';
 import Button from 'primevue/button';
-import InputSwitch from 'primevue/inputswitch';
 
 const emit = defineEmits(['delete', 'edit', 'update:is-included']);
 
 defineProps({
 	isDeletable: {
 		type: Boolean
-	},
-	isPermitted: {
-		type: Boolean,
-		default: true
 	},
 	isIncluded: {
 		type: Boolean

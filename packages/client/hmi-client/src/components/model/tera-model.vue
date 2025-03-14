@@ -11,7 +11,12 @@
 			<Button icon="pi pi-ellipsis-v" text rounded @click="toggleOptionsMenu" />
 			<ContextMenu ref="optionsMenu" :model="optionsMenuItems" popup :pt="optionsMenuPt" />
 			<aside class="btn-group">
-				<tera-asset-enrichment :asset-type="AssetType.Model" :assetId="assetId" @finished-job="fetchModel" />
+				<tera-asset-enrichment
+					v-if="!hideEnrichment"
+					:asset-type="AssetType.Model"
+					:assetId="assetId"
+					@finished-job="fetchModel"
+				/>
 				<Button
 					v-if="isSaveForReuse"
 					label="Save for re-use"
@@ -99,6 +104,10 @@ const props = defineProps({
 		default: false
 	},
 	isSaveForReuse: {
+		type: Boolean,
+		default: false
+	},
+	hideEnrichment: {
 		type: Boolean,
 		default: false
 	}
@@ -249,6 +258,8 @@ watch(
 	},
 	{ immediate: true }
 );
+
+defineExpose({ temporaryModel });
 </script>
 
 <style scoped>

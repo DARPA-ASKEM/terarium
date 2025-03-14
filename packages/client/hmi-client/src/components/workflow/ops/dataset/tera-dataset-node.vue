@@ -50,7 +50,7 @@ const operatorStatus = ref<OperatorStatus>();
 
 useClientEvent(
 	ClientEventType.TaskGollmEnrichDataset,
-	createEnrichClientEventHandler(operatorStatus, props.node.state.datasetId)
+	createEnrichClientEventHandler(operatorStatus, props.node.state.datasetId, emit)
 );
 
 async function getDatasetById(id: string) {

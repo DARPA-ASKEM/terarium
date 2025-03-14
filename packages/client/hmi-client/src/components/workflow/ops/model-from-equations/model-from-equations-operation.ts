@@ -10,12 +10,29 @@ export interface EquationBlock {
 	extractionError?: boolean;
 }
 
+export enum EnrichmentType {
+	DESCRIPTION = 'description',
+	PARAMTER = 'parameter',
+	STATE = 'state',
+	OBSERVABLE = 'observable',
+	TRANSITION = 'transition',
+	CUSTOM = 'custom'
+}
+
+export interface EnrichmentBlock {
+	content: any;
+	path: string[];
+	include: boolean;
+	type: EnrichmentType;
+}
+
 export interface ModelFromEquationsState {
 	includedEquations: AssetBlock<EquationBlock>[];
 	excludedEquations: AssetBlock<EquationBlock>[];
 	text: string;
 	modelFramework: string;
 	modelId: string | null;
+	enrichments: AssetBlock<EnrichmentBlock>[];
 }
 
 export const ModelFromEquationsOperation: Operation = {
@@ -35,7 +52,8 @@ export const ModelFromEquationsOperation: Operation = {
 			excludedEquations: [],
 			text: '',
 			modelFramework: 'petrinet',
-			modelId: null
+			modelId: null,
+			enrichments: []
 		};
 		return init;
 	}

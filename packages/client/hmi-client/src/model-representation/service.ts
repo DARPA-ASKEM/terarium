@@ -551,3 +551,38 @@ export function createTimeList(time) {
 		isParent: false
 	}));
 }
+
+export function createModelMap(model: Model): {
+	states: Map<string, State>;
+	parameters: Map<string, ModelParameter>;
+	transitions: Map<string, Transition>;
+	observables: Map<string, Observable>;
+} {
+	const states = new Map<string, State>();
+	const parameters = new Map<string, ModelParameter>();
+	const transitions = new Map<string, Transition>();
+	const observables = new Map<string, Observable>();
+
+	getStates(model).forEach((state) => {
+		states.set(state.id, state);
+	});
+
+	getParameters(model).forEach((parameter) => {
+		parameters.set(parameter.id, parameter);
+	});
+
+	model.model?.transitions?.forEach((transition) => {
+		transitions.set(transition.id, transition);
+	});
+
+	model.model?.observables?.forEach((observable) => {
+		observables.set(observable.id, observable);
+	});
+
+	return {
+		states,
+		parameters,
+		transitions,
+		observables
+	};
+}

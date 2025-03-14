@@ -118,7 +118,7 @@ const descriptionText = computed({
 		showDescription.value = !!newDescription;
 	}
 });
-const showDescription = ref<boolean>(!!descriptionText.value);
+const showDescription = ref<boolean>(true);
 const grounding = computed({
 	get: () => props.grounding,
 	set: (newGrounding) => groundingDebouncer(newGrounding as string)
