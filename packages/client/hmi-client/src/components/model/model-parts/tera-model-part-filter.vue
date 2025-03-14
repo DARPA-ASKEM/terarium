@@ -4,19 +4,19 @@
 			v-if="!isEmpty(getErrors())"
 			size="small"
 			:disabled="isFilterWarning"
-			:severity="!isFilterError ? 'danger' : 'secondary'"
+			:severity="!isFilterError ? 'secondary' : 'danger'"
 			@click.stop="toggleFilterSeverity(ModelErrorSeverity.ERROR)"
 		>
-			{{ !isFilterError ? 'Filter' : 'Unfilter' }} {{ getErrors().length }} errors
+			{{ getErrors().length }} Errors
 		</Button>
 		<Button
 			v-if="!isEmpty(getWarnings())"
 			size="small"
 			:disabled="isFilterError"
-			:severity="!isFilterWarning ? 'warning' : 'secondary'"
+			:severity="!isFilterWarning ? 'secondary' : 'warning'"
 			@click.stop="toggleFilterSeverity(ModelErrorSeverity.WARNING)"
 		>
-			{{ !isFilterWarning ? 'Filter' : 'Unfilter' }} {{ getWarnings().length }} warnings
+			{{ getWarnings().length }} Warnings
 		</Button>
 		<tera-input-text placeholder="Filter" v-model="filter" />
 	</aside>
