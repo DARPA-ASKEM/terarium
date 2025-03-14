@@ -207,7 +207,7 @@ function assetTypeProgressHandler(assetType, assetId, status) {
 }
 
 useClientEvent(ClientEventType.ExtractionPdf, (event: ClientEvent<TaskResponse> | NotificationEvent) => {
-	assetTypeProgressHandler(AssetType.Document, event.data.data.documentId, event.data.status);
+	assetTypeProgressHandler(AssetType.Document, event.data.data.documentId, event.data.state || event.data.status);
 });
 
 useClientEvent(ClientEventType.TaskGollmEnrichDataset, (event: ClientEvent<TaskResponse> | NotificationEvent) => {
