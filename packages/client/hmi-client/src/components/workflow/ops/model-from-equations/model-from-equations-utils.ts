@@ -54,20 +54,6 @@ export const createEnrichmentCards = (enrichments: any) => {
 	}
 
 	function processModelEnrichment(enrichment: any) {
-		// Process parameters
-		enrichment.parameters?.forEach((param) => {
-			cards.push({
-				id: uuidv4(),
-				name: `Parameter > ${param.id}`,
-				asset: {
-					content: param,
-					path: ['modelEnrichment', 'parameters', param.id],
-					include: false,
-					type: EnrichmentType.PARAMTER
-				}
-			});
-		});
-
 		// Process states
 		enrichment.states?.forEach((state) => {
 			cards.push({
@@ -82,16 +68,16 @@ export const createEnrichmentCards = (enrichments: any) => {
 			});
 		});
 
-		// Process transitions
-		enrichment.transitions?.forEach((transition) => {
+		// Process parameters
+		enrichment.parameters?.forEach((param) => {
 			cards.push({
 				id: uuidv4(),
-				name: `Transition > ${transition.id}`,
+				name: `Parameter > ${param.id}`,
 				asset: {
-					content: transition,
-					path: ['modelEnrichment', 'transitions', transition.id],
+					content: param,
+					path: ['modelEnrichment', 'parameters', param.id],
 					include: false,
-					type: EnrichmentType.TRANSITION
+					type: EnrichmentType.PARAMTER
 				}
 			});
 		});
@@ -106,6 +92,20 @@ export const createEnrichmentCards = (enrichments: any) => {
 					path: ['modelEnrichment', 'observables', observable.id],
 					include: false,
 					type: EnrichmentType.OBSERVABLE
+				}
+			});
+		});
+
+		// Process transitions
+		enrichment.transitions?.forEach((transition) => {
+			cards.push({
+				id: uuidv4(),
+				name: `Transition > ${transition.id}`,
+				asset: {
+					content: transition,
+					path: ['modelEnrichment', 'transitions', transition.id],
+					include: false,
+					type: EnrichmentType.TRANSITION
 				}
 			});
 		});
