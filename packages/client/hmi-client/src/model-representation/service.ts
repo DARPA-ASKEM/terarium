@@ -358,7 +358,7 @@ export function checkPetrinetAMR(amr: Model) {
 				severity: ModelErrorSeverity.ERROR,
 				type: ModelErrorType.STATE,
 				id: state.id,
-				content: `${state.id} has no initial`
+				content: `${state.id} has no matching initial.`
 			});
 		}
 		if (_.isEmpty(initial?.expression)) {
@@ -366,7 +366,7 @@ export function checkPetrinetAMR(amr: Model) {
 				severity: ModelErrorSeverity.WARNING,
 				type: ModelErrorType.STATE,
 				id: state.id,
-				content: `${state.id} has no initial.expression`
+				content: `${state.id} has no initial.expression. Use Model-Edit to add one.`
 			});
 		}
 		if (!isASCII(initial?.expression as string)) {
@@ -374,7 +374,7 @@ export function checkPetrinetAMR(amr: Model) {
 				severity: ModelErrorSeverity.WARNING,
 				type: ModelErrorType.STATE,
 				id: state.id,
-				content: `${state.id} has non-ascii expression`
+				content: `${state.id} has non-ascii expression. Use Model-Edit to add one.`
 			});
 		}
 		if (stateSet.has(state.id)) {
@@ -382,7 +382,7 @@ export function checkPetrinetAMR(amr: Model) {
 				severity: ModelErrorSeverity.ERROR,
 				type: ModelErrorType.STATE,
 				id: state.id,
-				content: `state (${state.id}) has duplicate`
+				content: `state (${state.id}) is duplicated. Fix the model JSON and reimport`
 			});
 		}
 		if (initialSet.has(initial?.target as string)) {
@@ -390,7 +390,7 @@ export function checkPetrinetAMR(amr: Model) {
 				severity: ModelErrorSeverity.ERROR,
 				type: ModelErrorType.STATE,
 				id: state.id,
-				content: `initial (${initial?.target}) has duplicate`
+				content: `initial (${initial?.target}) is duplicated. Fix the model JSON and reimport`
 			});
 		}
 		stateSet.add(state.id);
@@ -408,7 +408,7 @@ export function checkPetrinetAMR(amr: Model) {
 				severity: ModelErrorSeverity.ERROR,
 				type: ModelErrorType.TRANSITION,
 				id: transition.id,
-				content: `${transition.id} has no rate`
+				content: `${transition.id} has no rate expression. Use Model-Edit to add one.`
 			});
 		}
 		if (_.isEmpty(rate?.expression)) {
@@ -416,7 +416,7 @@ export function checkPetrinetAMR(amr: Model) {
 				severity: ModelErrorSeverity.WARNING,
 				type: ModelErrorType.TRANSITION,
 				id: transition.id,
-				content: `${transition.id} has no rate.expression`
+				content: `${transition.id} has no rate.expression. Use Model-Edit to add one`
 			});
 		}
 		if (!isASCII(rate?.expression as string)) {
@@ -432,7 +432,7 @@ export function checkPetrinetAMR(amr: Model) {
 				severity: ModelErrorSeverity.ERROR,
 				type: ModelErrorType.TRANSITION,
 				id: transition.id,
-				content: `transition (${transition.id}) has duplicate`
+				content: `transition (${transition.id}) is duplicated. Fix the model JSON and reimport.`
 			});
 		}
 		if (rateSet.has(rate?.target as string)) {
@@ -440,7 +440,7 @@ export function checkPetrinetAMR(amr: Model) {
 				severity: ModelErrorSeverity.ERROR,
 				type: ModelErrorType.TRANSITION,
 				id: transition.id,
-				content: `rate (${rate?.target}) has duplicate`
+				content: `rate (${rate?.target}) is duplicate. Fix the model JSON and reimport.`
 			});
 		}
 
@@ -450,7 +450,7 @@ export function checkPetrinetAMR(amr: Model) {
 				severity: ModelErrorSeverity.WARNING,
 				type: ModelErrorType.TRANSITION,
 				id: transition.id,
-				content: `${transition.id} may not conserve input/output`
+				content: `${transition.id} may not conserve input/output, please check these are intended as production/degradation transitions.`
 			});
 		}
 
