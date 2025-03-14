@@ -113,7 +113,7 @@ import type { Model, Transition, State } from '@/types/Types';
 import { isEmpty } from 'lodash';
 import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
-import { computed, ref, watch } from 'vue';
+import { computed, ref } from 'vue';
 import type { MiraModel, MiraTemplate, MiraTemplateParams } from '@/model-representation/mira/mira-common';
 import { collapseInitials, collapseParameters, collapseTemplates } from '@/model-representation/mira/mira';
 import TeraModelPart from '@/components/model/model-parts/tera-model-part.vue';
@@ -153,24 +153,11 @@ const time = computed(() => (props.model?.semantics?.ode?.time ? [props.model?.s
 
 const collapsedInitials = collapseInitials(props.mmt);
 const states = computed<State[]>(() => props.model?.model?.states ?? []);
-let stateList: ModelPartItemTree[] = createPartsList(collapsedInitials, props.model, PartType.STATE);
 
-watch(
-	() => props.model?.model?.states,
-	() => {
-		stateList = createPartsList(collapsedInitials, props.model, PartType.STATE);
-	}
-);
+const stateList = computed(() => createPartsList(collapsedInitials, props.model, PartType.STATE));
 
 const collapsedParameters = collapseParameters(props.mmt, props.mmtParams);
-let parameterList: ModelPartItemTree[] = createPartsList(collapsedParameters, props.model, PartType.PARAMETER);
-
-watch(
-	() => props.model.semantics?.ode?.parameters,
-	() => {
-		parameterList = createPartsList(collapsedParameters, props.model, PartType.PARAMETER);
-	}
-);
+const parameterList = computed(() => createPartsList(collapsedParameters, props.model, PartType.PARAMETER));
 
 const transitions = computed<Transition[]>(() =>
 	props.model.model.transitions?.map((transition: Transition) => ({
@@ -209,7 +196,7 @@ const createTransitionParts = () => {
 	});
 };
 
-const transitionsList: ModelPartItemTree[] = createTransitionParts();
+const transitionsList = createTransitionParts();
 
 const parameterMatrixModalId = ref('');
 const transitionMatrixModalId = ref('');

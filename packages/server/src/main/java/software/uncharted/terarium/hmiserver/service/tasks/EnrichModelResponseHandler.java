@@ -106,6 +106,11 @@ public class EnrichModelResponseHandler extends LlmTaskResponseHandler {
 
 			final Model model = modelService.getAsset(props.getModelId()).orElseThrow();
 
+			if (props.overwrite == false) {
+				log.info("Do not enrich model as overwrite is set to false");
+				return resp;
+			}
+
 			// update the model card
 			final JsonNode card = response.modelCard;
 			if (model.getMetadata() == null) {

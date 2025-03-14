@@ -35,6 +35,7 @@
 											label="Create Model"
 											@click="onRun"
 											:disabled="_.isEmpty(clonedState.includedEquations)"
+											:loading="isModelLoading"
 										/>
 									</nav>
 									<section
@@ -183,7 +184,6 @@
 									>
 										<tera-asset-block
 											:is-toggleable="false"
-											:is-permitted="false"
 											:use-default-style="false"
 											:class="['asset-panel', { selected: selectedItem === equation.id }]"
 										>
@@ -199,7 +199,7 @@
 												/>
 											</template>
 											<section>
-												<div class="block-container">
+												<div class="block-container" @click.capture.stop="selectItem(equation, $event)">
 													<tera-math-editor
 														v-if="equation.asset.text"
 														:latex-equation="equation.asset.text"
@@ -236,7 +236,96 @@
 								</ul>
 							</main>
 						</TabPanel>
-						<!-- TODO: <TabPanel header="Step 2: Review Enhancements" disabled /> -->
+						<TabPanel :disabled="isModelLoading || !selectedModel || _.isEmpty(clonedState.enrichments)">
+							<template #header>
+								<div class="flex align-items-center">
+									<i
+										v-if="isModelLoading || (!!selectedModel && _.isEmpty(clonedState.enrichments))"
+										class="pi pi-spin pi-spinner mr-2"
+										:style="{ fontSize: '1rem' }"
+									></i>
+									<span class="p-tabview-title">Step 2: Review enrichments</span>
+								</div>
+							</template>
+							<header class="flex mb-2">
+								<Button class="ml-auto" label="Use all" outlined severity="secondary" @click="onUseAll" />
+								<Button class="ml-2" label="Add prompt" icon="pi pi-plus" @click="addPrompt" />
+							</header>
+							<main>
+								<ul class="blocks-container">
+									<li
+										v-for="enrichment in clonedState.enrichments"
+										:key="enrichment.id"
+										@click="selectEnrichment(enrichment)"
+									>
+										<tera-asset-block
+											:is-toggleable="false"
+											:use-default-style="false"
+											:class="['asset-panel', { selected: selectedEnrichment === enrichment.id }]"
+										>
+											<template #header>
+												<h6>{{ enrichment.name }}</h6>
+												<Checkbox
+													@click.stop
+													class="flex-shrink-0 ml-auto"
+													v-model="enrichment.asset.include"
+													:binary="true"
+													:disabled="enrichment.asset.type === EnrichmentType.CUSTOM"
+													@update:model-value="onEnrichmentChange"
+												/>
+											</template>
+											<section class="flex flex-column gap-2" v-if="selectedEnrichment === enrichment.id">
+												<template v-if="enrichment.asset.type === EnrichmentType.DESCRIPTION">
+													<ul v-if="Array.isArray(enrichment.asset.content)">
+														<li v-for="item in enrichment.asset.content" :key="item">
+															{{ item }}
+														</li>
+													</ul>
+													<p v-else>{{ enrichment.asset.content }}</p>
+												</template>
+												<template v-else-if="enrichment.asset.type === EnrichmentType.CUSTOM">
+													<div class="flex align-items-center gap-2">
+														<i class="pi pi-sparkles" />
+														<tera-input-text :model-value="'What does the model describe?'" />
+													</div>
+													<p>{{ enrichment.asset.content }}</p>
+												</template>
+												<template v-else>
+													<span v-if="enrichment.asset.content.name">
+														<strong>Name:</strong> {{ enrichment.asset.content.name }}
+													</span>
+													<span v-if="enrichment.asset.content.description">
+														<strong>Description:</strong> {{ enrichment.asset.content.description }}
+													</span>
+													<span v-if="enrichment.asset.content.units?.expression">
+														<strong>Unit:</strong> {{ enrichment.asset.content.units?.expression }}
+													</span>
+												</template>
+											</section>
+
+											<template #footer v-if="selectedEnrichment === enrichment.id">
+												<footer class="flex">
+													<Button label="Close" outlined severity="secondary" @click.stop="selectedEnrichment = ''" />
+													<Button
+														class="ml-auto"
+														icon="pi pi-arrow-up"
+														label="Previous"
+														@click.stop="goToPreviousEnrichment"
+													/>
+													<Button
+														class="ml-2"
+														icon="pi pi-arrow-down"
+														icon-pos="right"
+														label="Next"
+														@click.stop="goToNextEnrichment"
+													/>
+												</footer>
+											</template>
+										</tera-asset-block>
+									</li>
+								</ul>
+							</main>
+						</TabPanel>
 					</TabView>
 				</template>
 			</tera-slider-panel>
@@ -250,7 +339,14 @@
 					<!--The isOutputOpen condition enables the model diagram within tera-model to render properly
 						since we need some sort of width available-->
 					<tera-drilldown-preview v-if="isOutputOpen" :is-loading="isModelLoading">
-						<tera-model v-if="selectedModel" is-workflow is-save-for-reuse :asset-id="selectedModel.id" />
+						<tera-model
+							v-if="selectedModel"
+							is-workflow
+							is-save-for-reuse
+							:asset-id="selectedModel.id"
+							hide-enrichment
+							ref="modelRef"
+						/>
 						<tera-operator-placeholder v-else :node="node" class="h-100">
 							<p v-if="isModelLoading">Model is being created...</p>
 							<p v-else>Select equations to create a model</p>
@@ -282,11 +378,11 @@ import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
 import TeraDrilldownPreview from '@/components/drilldown/tera-drilldown-preview.vue';
 import TeraAssetBlock from '@/components/widgets/tera-asset-block.vue';
 import { computed, onMounted, onBeforeUnmount, ref, watch } from 'vue';
-import type { Card, DocumentAsset, Model } from '@/types/Types';
+import { TaskStatus, type Card, type DocumentAsset, type Model } from '@/types/Types';
 import _, { cloneDeep, isEmpty } from 'lodash';
 import { equationsToAMR, getCleanedEquations, type EquationsToAMRRequest } from '@/services/knowledge';
 import { downloadDocumentAsset, getDocumentAsset, getDocumentFileAsText } from '@/services/document-assets';
-import { equationsFromImage } from '@/services/goLLM';
+import { enrichModelMetadata, equationsFromImage } from '@/services/goLLM';
 import { getModel, updateModel } from '@/services/model';
 import { useProjects } from '@/composables/project';
 import TeraOperatorPlaceholder from '@/components/operator/tera-operator-placeholder.vue';
@@ -302,7 +398,14 @@ import { createCopyTextToClipboard } from '@/utils/clipboard';
 import TabPanel from 'primevue/tabpanel';
 import TabView from 'primevue/tabview';
 import { v4 as uuidv4 } from 'uuid';
-import { ModelFromEquationsState, EquationBlock } from './model-from-equations-operation';
+import TeraInputText from '@/components/widgets/tera-input-text.vue';
+import {
+	ModelFromEquationsState,
+	EquationBlock,
+	EnrichmentBlock,
+	EnrichmentType
+} from './model-from-equations-operation';
+import { createEnrichmentCards, updateModelWithEnrichments } from './model-from-equations-utils';
 
 const emit = defineEmits(['close', 'update-state', 'append-output', 'select-output']);
 const props = defineProps<{
@@ -311,12 +414,15 @@ const props = defineProps<{
 
 const selectedOutputId = ref<string>('');
 
+const modelRef = ref();
+
 const clonedState = ref<ModelFromEquationsState>({
 	includedEquations: [],
 	excludedEquations: [],
 	text: '',
 	modelFramework: 'petrinet',
-	modelId: null
+	modelId: null,
+	enrichments: []
 });
 
 /**
@@ -332,6 +438,12 @@ const { btnCopyLabel, setCopyClipboard } = createCopyTextToClipboard();
 const pdfViewer = ref();
 
 const selectedItem = ref('');
+
+const selectedEnrichment = ref('');
+
+const selectEnrichment = (enrichment: AssetBlock<EnrichmentBlock>) => {
+	selectedEnrichment.value = enrichment.id;
+};
 
 const selectItem = (equation: AssetBlock<EquationBlock>, event?) => {
 	selectedItem.value = equation.id;
@@ -368,9 +480,9 @@ const documentEquations = ref<AssetBlock<EquationBlock>[]>();
 onMounted(async () => {
 	window.addEventListener('paste', handlePasteEvent);
 	clonedState.value = cloneDeep(props.node.state);
-	if (selectedOutputId.value) {
-		onSelection(selectedOutputId.value);
-	}
+	// if (selectedOutputId.value) {
+	// 	onSelection(selectedOutputId.value);
+	// }
 
 	const documentId = props.node.inputs?.[0]?.value?.[0]?.documentId;
 
@@ -529,6 +641,14 @@ async function onRun() {
 	// If there isn't a modelId returned at least show the cleaned equations
 	if (modelId) {
 		clonedState.value.modelId = modelId;
+		const enrichResponse = await enrichModelMetadata(modelId, document.value?.id ?? '', false);
+		// clear enrichments when new model is created
+		clonedState.value.enrichments = [];
+		// FIXME: The response can be returned right away and this may not get caught in the node subscriber since the model id populated in time
+		if (enrichResponse.status === TaskStatus.Success) {
+			const { response: parsedEnrichOutput } = JSON.parse(atob(enrichResponse.output));
+			clonedState.value.enrichments = createEnrichmentCards(parsedEnrichOutput);
+		}
 	}
 
 	// If the equations were cleaned that means these cleaned equations should be added to the input list
@@ -547,6 +667,7 @@ async function onRun() {
 			}))
 		);
 	}
+
 	emit('append-output', {
 		label: `Output - ${props.node.outputs.length + 1}`,
 		state: cloneDeep(clonedState.value),
@@ -585,6 +706,21 @@ async function fetchModel() {
 	selectedModel.value = model;
 	isModelLoading.value = false;
 }
+
+const onEnrichmentChange = () => {
+	if (modelRef.value?.temporaryModel) {
+		updateModelWithEnrichments(modelRef.value.temporaryModel, clonedState.value.enrichments);
+	}
+};
+
+const onUseAll = () => {
+	clonedState.value.enrichments.forEach((enrichment) => {
+		enrichment.asset.include = true;
+	});
+	if (modelRef.value?.temporaryModel) {
+		updateModelWithEnrichments(modelRef.value.temporaryModel, clonedState.value.enrichments);
+	}
+};
 
 function getEquations() {
 	const newEquations = multipleEquations.value.split('\n');
@@ -627,6 +763,33 @@ const goToPrevious = () => {
 	}
 };
 
+const goToNextEnrichment = () => {
+	const currentIndex = clonedState.value.enrichments.findIndex((eq) => eq.id === selectedEnrichment.value);
+	if (currentIndex < clonedState.value.enrichments.length - 1) {
+		selectEnrichment(clonedState.value.enrichments[currentIndex + 1]);
+	}
+};
+
+const goToPreviousEnrichment = () => {
+	const currentIndex = clonedState.value.enrichments.findIndex((eq) => eq.id === selectedEnrichment.value);
+	if (currentIndex > 0) {
+		selectEnrichment(clonedState.value.enrichments[currentIndex - 1]);
+	}
+};
+
+const addPrompt = () => {
+	clonedState.value.enrichments.unshift({
+		id: uuidv4(),
+		name: 'Description > Custom prompt',
+		asset: {
+			type: EnrichmentType.CUSTOM,
+			content: 'This model describes...',
+			path: [],
+			include: false
+		}
+	});
+};
+
 watch(
 	() => props.node.state,
 	() => {
@@ -652,9 +815,24 @@ watch(
 	},
 	{ immediate: true }
 );
+
+// This is a hacky way to update the temporary model within the tera-model component.
+// Essentially when the output panel is re-opened or we reopen the drilldown, we need to update the temporary model with the enrichments since that's when the component is rendered
+// which fetches a new model. So anytime we go from having no ref to the temporary model to having one, we need to re-update that temporary model with the enrichments.
+watch(
+	() => !!modelRef.value?.temporaryModel,
+	() => {
+		if (modelRef.value?.temporaryModel) {
+			updateModelWithEnrichments(modelRef.value.temporaryModel, clonedState.value.enrichments);
+		}
+	}
+);
 </script>
 
 <style scoped>
+.ul {
+	list-style-type: none;
+}
 .no-extract-equation {
 	padding: var(--gap-4);
 	background: var(--surface-disabled);

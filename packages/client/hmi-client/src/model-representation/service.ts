@@ -498,3 +498,38 @@ export function createTimeList(time) {
 		isParent: false
 	}));
 }
+
+export function createModelMap(model: Model): {
+	states: Map<string, State & RegNetVertex>;
+	parameters: Map<string, ModelParameter>;
+	transitions: Map<string, any>;
+	observables: Map<string, any>;
+} {
+	const states = new Map<string, State & RegNetVertex>();
+	const parameters = new Map<string, ModelParameter>();
+	const transitions = new Map<string, any>();
+	const observables = new Map<string, any>();
+
+	getStates(model).forEach((state) => {
+		states.set(state.id, state);
+	});
+
+	getParameters(model).forEach((parameter) => {
+		parameters.set(parameter.id, parameter);
+	});
+
+	model.model?.transitions?.forEach((transition) => {
+		transitions.set(transition.id, transition);
+	});
+
+	model.model?.observables?.forEach((observable) => {
+		observables.set(observable.id, observable);
+	});
+
+	return {
+		states,
+		parameters,
+		transitions,
+		observables
+	};
+}
