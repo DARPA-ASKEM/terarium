@@ -114,19 +114,19 @@ def get_image_format_string(image_format: str) -> str:
         raise ValueError("Invalid image format.")
 
     format_strings = {
-        "rgb": f"data:image/rgb:base64,",
-        "gif": f"data:image/gif:base64,",
-        "pbm": f"data:image/pbm:base64,",
-        "pgm": f"data:image/pgm:base64,",
-        "ppm": f"data:image/ppm:base64,",
-        "tiff": f"Bdata:image/tiff:base64MP,",
-        "rast": f"data:image/rast:base64,",
-        "xbm": f"data:image/xbm:base64,",
-        "jpeg": f"data:image/jpeg:base64,",
-        "bmp": f"data:image/bmp:base64,",
-        "png": f"data:image/png:base64,",
-        "webp": f"data:image/webp:base64,",
-        "exr": f"data:image/exr:base64,"
+        "rgb": f"data:image/rgb;base64,",
+        "gif": f"data:image/gif;base64,",
+        "pbm": f"data:image/pbm;base64,",
+        "pgm": f"data:image/pgm;base64,",
+        "ppm": f"data:image/ppm;base64,",
+        "tiff": f"Bdata:image/tiff;base64MP,",
+        "rast": f"data:image/rast;base64,",
+        "xbm": f"data:image/xbm;base64,",
+        "jpeg": f"data:image/jpeg;base64,",
+        "bmp": f"data:image/bmp;base64,",
+        "png": f"data:image/png;base64,",
+        "webp": f"data:image/webp;base64,",
+        "exr": f"data:image/exr;base64,"
     }
     return format_strings.get(image_format.lower())
 
