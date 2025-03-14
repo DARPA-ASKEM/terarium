@@ -56,11 +56,6 @@ export const expressionFunctions = {
 			return countDigits(correctedValue) > 6 ? correctedValue.toExponential(3) : correctedValue.toString();
 		}
 		return format(NUMBER_FORMAT)(correctedValue);
-	},
-	// Just show full value in tooltip
-	tooltipFormatter: (value) => {
-		if (value === undefined) return 'N/A';
-		return fixPrecisionError(value);
 	}
 };
 
