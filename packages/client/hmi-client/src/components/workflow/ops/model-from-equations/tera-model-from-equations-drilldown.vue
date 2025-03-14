@@ -30,7 +30,7 @@
 									<nav class="flex align-items-center mb-2">
 										<p v-if="document">Specify which equations to use for this model.</p>
 										<p v-else>Connect a document or enter equations manually below.</p>
-										<Button
+										<prime-button
 											class="ml-auto"
 											label="Create Model"
 											@click="onRun"
@@ -38,7 +38,7 @@
 										/>
 									</nav>
 									<section
-										class="input-container"
+										class="input-container gap-2"
 										@dragenter.prevent="dragEnterCount++"
 										@dragleave.prevent="dragEnterCount--"
 										@dragover.prevent
@@ -52,7 +52,7 @@
 													height="120"
 													class="pasted-image"
 												/>
-												<Button
+												<prime-button
 													icon="pi pi-times"
 													rounded
 													text
@@ -86,7 +86,7 @@
 												class="w-full"
 												:disabled="multipleEquationsDisabled"
 											/>
-											<Button
+											<prime-button
 												label="Add"
 												icon="pi pi-plus"
 												size="small"
@@ -96,13 +96,40 @@
 												:disabled="isEmpty(multipleEquations)"
 											/>
 										</div>
+										<div class="input-group gap-1">
+											<span>Examples:</span>
+											<prime-button
+												label="SIR"
+												size="small"
+												severity="secondary"
+												@click="multipleEquations = exampleEquations.SIR"
+											/>
+											<prime-button
+												label="SEIHRD"
+												size="small"
+												severity="secondary"
+												@click="multipleEquations = exampleEquations.SEIHRD"
+											/>
+											<prime-button
+												label="SIDARTHE"
+												size="small"
+												severity="secondary"
+												@click="multipleEquations = exampleEquations.SIDARTHE"
+											/>
+											<prime-button
+												label="SVIRD"
+												size="small"
+												severity="secondary"
+												@click="multipleEquations = exampleEquations.SVIRD"
+											/>
+										</div>
 									</section>
 								</header>
 								<div class="flex align-items-center">
 									<h6 v-if="!_.isEmpty(clonedState.includedEquations)" class="py-3">
 										Use {{ clonedState.includedEquations.length > 1 ? 'these equations' : 'this equation' }}
 									</h6>
-									<Button
+									<prime-button
 										class="p-button-sm p-button-text ml-auto"
 										label="View all"
 										@click="viewAllIncludedEquations = true"
@@ -156,9 +183,14 @@
 											/>
 											<template #footer v-if="selectedItem === equation.id">
 												<footer class="flex">
-													<Button label="Close" outlined severity="secondary" @click.stop="selectedItem = ''" />
-													<Button class="ml-auto" icon="pi pi-arrow-up" label="Previous" @click.stop="goToPrevious" />
-													<Button
+													<prime-button label="Close" outlined severity="secondary" @click.stop="selectedItem = ''" />
+													<prime-button
+														class="ml-auto"
+														icon="pi pi-arrow-up"
+														label="Previous"
+														@click.stop="goToPrevious"
+													/>
+													<prime-button
 														class="ml-2"
 														icon="pi pi-arrow-down"
 														icon-pos="right"
@@ -220,9 +252,14 @@
 											/>
 											<template #footer v-if="selectedItem === equation.id">
 												<footer class="flex">
-													<Button label="Close" outlined severity="secondary" @click.stop="selectedItem = ''" />
-													<Button class="ml-auto" icon="pi pi-arrow-up" label="Previous" @click.stop="goToPrevious" />
-													<Button
+													<prime-button label="Close" outlined severity="secondary" @click.stop="selectedItem = ''" />
+													<prime-button
+														class="ml-auto"
+														icon="pi pi-arrow-up"
+														label="Previous"
+														@click.stop="goToPrevious"
+													/>
+													<prime-button
 														class="ml-2"
 														icon="pi pi-arrow-down"
 														icon-pos="right"
@@ -264,9 +301,13 @@
 		<template #header>
 			<div class="flex align-items-center">
 				<h4>LaTeX</h4>
-				<Button class="p-button-sm ml-auto" severity="secondary" @click="setCopyClipboard(allIncludedEquationsCopy)">
+				<prime-button
+					class="p-button-sm ml-auto"
+					severity="secondary"
+					@click="setCopyClipboard(allIncludedEquationsCopy)"
+				>
 					{{ btnCopyLabel }}
-				</Button>
+				</prime-button>
 			</div>
 		</template>
 		<textarea v-model="allIncludedEquationsCopy" readonly width="100%" :rows="allIncludedEquations.length + 1" />
@@ -275,7 +316,7 @@
 
 <script setup lang="ts">
 import { AssetBlock, WorkflowNode } from '@/types/workflow';
-import Button from 'primevue/button';
+import PrimeButton from 'primevue/button';
 import Checkbox from 'primevue/checkbox';
 import Textarea from 'primevue/textarea';
 import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
@@ -364,6 +405,40 @@ const isOutputOpen = ref(true);
 const outputArrowDirection = computed(() => (!isDocViewerOpen.value && !isInputOpen.value ? 'left' : 'right'));
 
 const documentEquations = ref<AssetBlock<EquationBlock>[]>();
+
+const exampleEquations = Object.freeze({
+	SIR: [
+		'\\frac{d S(t)}{d t} = -\\frac{\\beta * S(t) * I(t)}{N}',
+		'\\frac{d I(t)}{d t} = \\frac{\\beta * S(t) * I(t)}{N} - \\gamma * I(t)',
+		'\\frac{d R(t)}{d t} = \\gamma * I(t)'
+	].join('\n'),
+	SEIHRD: [
+		'\\frac{d S(t)}{d t} = - \\frac{\\beta * S(t) * I(t)}{N} - \\mu * S(t)',
+		'\\frac{d E(t)}{d t} = \\frac{\\beta * S(t) * I(t)}{N} - \\sigma * E(t) - \\mu * E(t)',
+		'\\frac{d I(t)}{d t} = \\sigma * E(t) - \\gamma * I(t) - \\mu * I(t)',
+		'\\frac{d H(t)}{d t} = \\phi * \\gamma * I(t) - \\delta * \\kappa * H(t) - (1 - \\delta) * \\kappa * H(t) - \\mu * H(t)',
+		'\\frac{d R(t)}{d t} = (1 - \\phi) * \\gamma * I(t) + (1 - \\delta) * \\kappa * H(t) - \\mu * R(t)',
+		'\\frac{d D(t)}{d t} =  \\delta * \\kappa * H(t) + \\mu * S(t) + \\mu * E(t) + \\mu * I(t) + \\mu * H(t) + \\mu * R(t)'
+	].join('\n'),
+	SIDARTHE: [
+		'\\frac{d S(t)}{d t} = - \\alpha * I(t) * S(t) - \\beta * D(t) * S(t) - \\gamma * A(t) * S(t) - \\delta * R(t) * S(t)',
+		'\\frac{d I(t)}{d t} = \\alpha * I(t) * S(t) + \\beta * D(t) * S(t) + \\gamma * A(t) * S(t) + \\delta * R(t) * S(t) - \\epsilon * I(t) - \\zeta * I(t) - \\lambda * I(t)',
+		'\\frac{d D(t)}{d t} = \\epsilon * I(t) - \\eta * D(t) - \\rho * D(t)',
+		'\\frac{d A(t)}{d t} = \\zeta * I(t) - \\theta * A(t) - \\mu * A(t) - \\kappa * A(t)',
+		'\\frac{d R(t)}{d t} = \\eta * D(t) + \\theta * A(t) - \\nu * R(t) - \\xi * R(t)',
+		'\\frac{d T(t)}{d t} =  \\mu * A(t) + \\nu * R(t) - \\sigma * T(t) - \\tau * T(t)',
+		'\\frac{d H(t)}{d t} = \\lambda * I(t) + \\rho * D(t) + \\kappa * A(t) + \\xi * R(t) + \\sigma * T(t)',
+		'\\frac{d E(t)}{d t} = \\tau * T(t)'
+	].join('\n'),
+	SVIRD: [
+		'\\frac{d S(t)}{d t} = -\\epsilon * \\omega * S(t) - \\beta * S(t) * I(t)',
+		'\\frac{d V(t)}{d t} = \\epsilon * \\omega * S(t) - \\beta_V * V(t) * I(t) - \\eta_V * V(t)',
+		'\\frac{d I(t)}{d t} = \\beta * S(t) * I(t) + \\beta_V * V(t) * I(t) + \\beta * S_{VR} * I(t) - \\gamma * I(t) - \\mu * I(t)',
+		'\\frac{d R(t)}{d t} = \\gamma * I(t) - \\eta_R * R(t)',
+		'\\frac{d D(t)}{d t} = \\mu * I(t)',
+		'\\frac{d S_{VR}(t)}{dt} = \\eta_R(t) * R(t) + \\eta_V * V(t) - \\beta * S_{VR} * I(t)'
+	].join('\n')
+});
 
 onMounted(async () => {
 	window.addEventListener('paste', handlePasteEvent);
