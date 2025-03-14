@@ -51,11 +51,19 @@ function formatListWithConjunction(stringList: string[]) {
 	return formattedString;
 }
 
+function formatTitle(title: string): string {
+	return title
+		.replace(/([A-Z])/g, ' $1')
+		.replace(/^./, (str) => str.toUpperCase())
+		.trim();
+}
+
 export {
 	highlightText as highlight,
 	pascalCaseToCapitalSentence,
 	snakeToCapitalized,
 	snakeToCapitalSentence,
 	formatListWithConjunction,
-	capitalize
+	capitalize,
+	formatTitle
 };

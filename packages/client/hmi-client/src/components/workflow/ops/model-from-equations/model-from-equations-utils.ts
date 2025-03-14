@@ -4,16 +4,20 @@ import { Model } from '@/types/Types';
 import { b64EncodeUnicode } from '@/utils/binary';
 import { createModelMap } from '@/model-representation/service';
 import _ from 'lodash';
+import { formatTitle } from '@/utils/text';
 import { EnrichmentBlock, EnrichmentType } from './model-from-equations-operation';
 
-export function formatTitle(title: string): string {
-	return title
-		.replace(/([A-Z])/g, ' $1')
-		.replace(/^./, (str) => str.toUpperCase())
-		.trim();
+interface ModelEnirchmentResponse {
+	modelCard: any;
+	modelEnrichment: {
+		states: any[];
+		parameters: any[];
+		observables: any[];
+		transitions: any[];
+	};
 }
 
-export const createEnrichmentCards = (enrichments: any) => {
+export const createEnrichmentCards = (enrichments: ModelEnirchmentResponse) => {
 	const cards: AssetBlock<EnrichmentBlock>[] = [];
 
 	function hasNestedObjects(value: any): boolean {
@@ -24,9 +28,7 @@ export const createEnrichmentCards = (enrichments: any) => {
 	}
 
 	function processModelCardSection(content: any, parentPath: string[] = []) {
-		if (typeof content !== 'object' || Array.isArray(content) || content === null) {
-			return;
-		}
+		if (!hasNestedObjects(content)) return;
 
 		Object.entries(content).forEach(([key, value]) => {
 			const currentPath = [...parentPath, key];
@@ -149,7 +151,8 @@ export function updateModelWithEnrichments(model: Model, enrichments: AssetBlock
 		if (enrichment.asset.type === EnrichmentType.STATE) {
 			const foundState = modelMap.states.get(semanticId);
 			if (foundState) {
-				Object.assign(foundState, _.omit(enrichment.asset.content, 'id'));
+				foundState.description = enrichment.asset.content.description;
+				foundState.units = enrichment.asset.content.units;
 			} else {
 				console.error('State not found');
 			}
@@ -163,14 +166,16 @@ export function updateModelWithEnrichments(model: Model, enrichments: AssetBlock
 		} else if (enrichment.asset.type === EnrichmentType.PARAMTER) {
 			const foundParameter = modelMap.parameters.get(semanticId);
 			if (foundParameter) {
-				Object.assign(foundParameter, _.omit(enrichment.asset.content, 'id'));
+				foundParameter.description = enrichment.asset.content.description;
+				foundParameter.units = enrichment.asset.content.units;
 			} else {
 				console.error('Parameter not found');
 			}
 		} else if (enrichment.asset.type === EnrichmentType.OBSERVABLE) {
 			const foundObservable = modelMap.observables.get(semanticId);
 			if (foundObservable) {
-				Object.assign(foundObservable, _.omit(enrichment.asset.content, 'id'));
+				foundObservable.description = enrichment.asset.content.description;
+				foundObservable.units = enrichment.asset.content.units;
 			} else {
 				console.error('Observable not found');
 			}

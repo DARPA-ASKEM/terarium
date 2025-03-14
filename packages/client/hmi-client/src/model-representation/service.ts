@@ -500,15 +500,15 @@ export function createTimeList(time) {
 }
 
 export function createModelMap(model: Model): {
-	states: Map<string, State & RegNetVertex>;
+	states: Map<string, State>;
 	parameters: Map<string, ModelParameter>;
-	transitions: Map<string, any>;
-	observables: Map<string, any>;
+	transitions: Map<string, Transition>;
+	observables: Map<string, Observable>;
 } {
-	const states = new Map<string, State & RegNetVertex>();
+	const states = new Map<string, State>();
 	const parameters = new Map<string, ModelParameter>();
-	const transitions = new Map<string, any>();
-	const observables = new Map<string, any>();
+	const transitions = new Map<string, Transition>();
+	const observables = new Map<string, Observable>();
 
 	getStates(model).forEach((state) => {
 		states.set(state.id, state);
