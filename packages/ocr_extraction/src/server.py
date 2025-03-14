@@ -82,6 +82,19 @@ async def process_and_predict(file: UploadFile = File(...)):
     final_result = {}
     result_dict = result.document.export_to_dict()
 
+
+    # 0. Pages
+    final_result["pages"] = {}
+    for key, value in result_dict["pages"].items():
+        final_result["pages"][key] = {
+            "pageNo": value["page_no"],
+            "size": {
+                "width": value["size"]["width"],
+                "height": value["size"]["height"]
+            }
+        }
+
+
     # 1. Body
     final_result["body"] = {
         "id": "#/body",
