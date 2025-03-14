@@ -52,6 +52,7 @@ import software.uncharted.terarium.hmiserver.service.tasks.CompareModelsConcepts
 import software.uncharted.terarium.hmiserver.service.tasks.GenerateModelLatexResponseHandler;
 import software.uncharted.terarium.hmiserver.service.tasks.MdlToStockflowResponseHandler;
 import software.uncharted.terarium.hmiserver.service.tasks.SbmlToPetrinetResponseHandler;
+import software.uncharted.terarium.hmiserver.service.tasks.SimplifyModelResponseHandler;
 import software.uncharted.terarium.hmiserver.service.tasks.StellaToStockflowResponseHandler;
 import software.uncharted.terarium.hmiserver.service.tasks.TaskService;
 import software.uncharted.terarium.hmiserver.utils.Messages;
@@ -215,6 +216,68 @@ public class MiraController {
 		}
 
 		return ResponseEntity.ok().body(comparisonResult);
+	}
+
+	@PostMapping("/simplify")
+	@Secured(Roles.USER)
+	@Operation(summary = "simlify AMR model")
+	@ApiResponses(
+		value = {
+			@ApiResponse(
+				responseCode = "200",
+				description = "Dispatched successfully",
+				content = @Content(
+					mediaType = "application/json",
+					schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = TaskResponse.class)
+				)
+			),
+			@ApiResponse(responseCode = "500", description = "There was an issue dispatching the request", content = @Content)
+		}
+	)
+	public ResponseEntity<JsonNode> simplifyAMR(@RequestBody final JsonNode model) {
+		final TaskRequest req = new TaskRequest();
+		req.setType(TaskType.MIRA);
+
+		try {
+			req.setInput(objectMapper.treeToValue(model, Model.class).serializeWithoutTerariumFields(null, null).getBytes());
+		} catch (final Exception e) {
+			log.error("Unable to serialize input", e);
+			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("generic.io-error.write"));
+		}
+
+		req.setScript(SimplifyModelResponseHandler.NAME);
+		req.setUserId(currentUserService.get().getId());
+
+		// send the request
+		final TaskResponse resp;
+		try {
+			resp = taskService.runTaskSync(req);
+			if (resp.getStatus() != TaskStatus.SUCCESS) {
+				log.error("Task Failed", resp.getStderr());
+				throw new ResponseStatusException(HttpStatus.BAD_REQUEST, resp.getStderr());
+			}
+		} catch (final JsonProcessingException e) {
+			log.error("Unable to serialize input", e);
+			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("task.mira.json-processing"));
+		} catch (final TimeoutException e) {
+			log.warn("Timeout while waiting for task response", e);
+			throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, messages.get("task.mira.timeout"));
+		} catch (final InterruptedException e) {
+			log.warn("Interrupted while waiting for task response", e);
+			throw new ResponseStatusException(HttpStatus.UNPROCESSABLE_ENTITY, messages.get("task.mira.interrupted"));
+		} catch (final ExecutionException e) {
+			log.error("Error while waiting for task response", e);
+			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("task.mira.execution-failure"));
+		}
+
+		final JsonNode result;
+		try {
+			result = objectMapper.readValue(resp.getOutput(), JsonNode.class);
+		} catch (final IOException e) {
+			log.error("Unable to deserialize output", e);
+			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("generic.io-error.read"));
+		}
+		return ResponseEntity.ok().body(result);
 	}
 
 	@PostMapping("/amr-to-mmt")

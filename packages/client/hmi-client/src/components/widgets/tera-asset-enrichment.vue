@@ -2,7 +2,7 @@
 	<Button
 		label="Enrich metadata"
 		icon="pi pi-sparkles"
-		:class="isError ? 'error' : ''"
+		:class="enrichStatus === OperatorStatus.ERROR ? 'error' : ''"
 		:disabled="isLoading"
 		:loading="isLoading"
 		severity="secondary"
@@ -45,34 +45,26 @@ import RadioButton from 'primevue/radiobutton';
 
 import { datasetCard, enrichModelMetadata } from '@/services/goLLM';
 import { getRelatedArtifacts, mapAssetTypeToProvenanceType } from '@/services/provenance';
-import {
-	AssetType,
-	ClientEventType,
-	DocumentAsset,
-	ProjectAsset,
-	ProvenanceType,
-	TaskResponse,
-	TaskStatus,
-	TerariumAsset
-} from '@/types/Types';
+import { AssetType, ClientEventType, DocumentAsset, ProjectAsset, ProvenanceType, TerariumAsset } from '@/types/Types';
 import { isDocumentAsset } from '@/utils/asset';
 import { useProjects } from '@/composables/project';
 import TeraModal from '@/components/widgets/tera-modal.vue';
 import { createEnrichClientEventHandler, useClientEvent } from '@/composables/useClientEvent';
+import { OperatorStatus } from '@/types/workflow';
+
+const emit = defineEmits(['finished-job']);
 
 const props = defineProps<{
 	assetType: AssetType.Model | AssetType.Dataset;
 	assetId: TerariumAsset['id'];
 }>();
 
-const isLoading = computed(() => taskId.value !== '' && !isError.value);
-const isError = computed(() => taskId.value === TaskStatus.Failed);
+const isLoading = computed(() => enrichStatus.value === OperatorStatus.IN_PROGRESS);
 const isModalVisible = ref(false);
-const emit = defineEmits(['append-output', 'finished-job']);
-const taskId = ref<string>('');
+const enrichStatus = ref<string>('');
 useClientEvent(
 	[ClientEventType.TaskGollmEnrichDataset, ClientEventType.TaskGollmEnrichModel],
-	createEnrichClientEventHandler(taskId, props.assetId || null)
+	createEnrichClientEventHandler(enrichStatus, props.assetId || null, emit)
 );
 
 const selectedResourceId = ref<string>('');
@@ -99,14 +91,13 @@ async function confirm() {
 
 async function sendForEnrichment() {
 	if (props.assetId) {
-		let taskRes: TaskResponse;
 		if (props.assetType === AssetType.Model) {
 			// Build enrichment job ids list (profile asset, align model, etc...)
-			taskRes = await enrichModelMetadata(props.assetId, selectedResourceId.value, true);
+			await enrichModelMetadata(props.assetId, selectedResourceId.value, true);
 		} else {
-			taskRes = await datasetCard(props.assetId, selectedResourceId.value);
+			await datasetCard(props.assetId, selectedResourceId.value);
 		}
-		taskId.value = taskRes.id;
+		enrichStatus.value = OperatorStatus.IN_PROGRESS;
 	}
 }
 

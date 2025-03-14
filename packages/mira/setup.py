@@ -15,6 +15,8 @@ setup(
             "mira_task:generate_model_latex=tasks.generate_model_latex:main",
             "mira_task:model_comparison=tasks.model_comparison:main",
             "mira_task:sympy_to_amr=tasks.sympy_to_amr:main",
+            "mira_task:simplify_model=tasks.simplify_model:main",
+
         ],
     },
     python_requires=">=3.10",
