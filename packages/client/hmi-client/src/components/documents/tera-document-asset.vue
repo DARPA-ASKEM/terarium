@@ -1,7 +1,8 @@
 <template>
 	<tera-asset :id="assetId" :name="document?.name ?? ''" :is-loading="documentLoading" :is-document="true">
 		<p class="pl-3" v-if="documentLoading">Loading...</p>
-		<tera-pdf-embed v-if="pdfLink" :pdf-link="pdfLink" :title="document?.name || ''" />
+		<!-- <tera-pdf-embed v-if="pdfLink" :pdf-link="pdfLink" :title="document?.name || ''" /> -->
+		<tera-pdf-viewer v-if="pdfLink" :pdf-link="pdfLink" :title="document?.name || ''" />
 		<tera-text-editor v-else-if="docText" :initial-text="docText" />
 	</tera-asset>
 </template>
@@ -10,7 +11,8 @@
 import { ref, watch } from 'vue';
 import TeraAsset from '@/components/asset/tera-asset.vue';
 import TeraTextEditor from '@/components/documents/tera-text-editor.vue';
-import TeraPdfEmbed from '@/components/widgets/tera-pdf-embed.vue';
+// import TeraPdfEmbed from '@/components/widgets/tera-pdf-embed.vue';
+import teraPdfViewer from '@/components/widgets/tera-pdf-viewer.vue';
 import { downloadDocumentAsset, getDocumentAsset, getDocumentFileAsText } from '@/services/document-assets';
 import { type DocumentAsset } from '@/types/Types';
 
