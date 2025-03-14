@@ -721,6 +721,9 @@ const onEnrichmentChange = () => {
 
 const onUseAll = () => {
 	clonedState.value.enrichments.forEach((enrichment) => {
+		if (enrichment.asset.type === EnrichmentType.CUSTOM) {
+			return;
+		}
 		enrichment.asset.include = true;
 	});
 	if (modelRef.value?.temporaryModel) {
