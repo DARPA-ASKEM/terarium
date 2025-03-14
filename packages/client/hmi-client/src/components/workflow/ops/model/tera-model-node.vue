@@ -65,7 +65,7 @@ const models = computed(() => useProjects().getActiveProjectAssets(AssetType.Mod
 const taskStatus = ref<OperatorStatus | undefined>();
 useClientEvent(
 	ClientEventType.TaskGollmEnrichModel,
-	createEnrichClientEventHandler(taskStatus, props.node.state.modelId)
+	createEnrichClientEventHandler(taskStatus, props.node.state.modelId, emit)
 );
 
 enum ModelNodeView {
