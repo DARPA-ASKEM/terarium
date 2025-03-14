@@ -486,9 +486,6 @@ const documentEquations = ref<AssetBlock<EquationBlock>[]>();
 onMounted(async () => {
 	window.addEventListener('paste', handlePasteEvent);
 	clonedState.value = cloneDeep(props.node.state);
-	// if (selectedOutputId.value) {
-	// 	onSelection(selectedOutputId.value);
-	// }
 
 	const documentId = props.node.inputs?.[0]?.value?.[0]?.documentId;
 
