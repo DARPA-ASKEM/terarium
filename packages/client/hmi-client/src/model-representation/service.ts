@@ -386,7 +386,7 @@ export async function checkPetrinetAMR(amr: Model) {
 					type: ModelErrorType.STATE,
 					id: state.id,
 					content: `Unknown parameters ${extraSymbols.join(', ')} in initial expression. Use the edit model operator to correct.
-https://documentation.terarium.ai/modeling/edit-model/?h=model+edit
+https://documentation.terarium.ai/modeling/edit-model/?h=model+edit`
 				});
 			}
 		}
