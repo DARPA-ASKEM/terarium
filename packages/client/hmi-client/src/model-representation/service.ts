@@ -375,7 +375,7 @@ export async function checkPetrinetAMR(amr: Model) {
 				type: ModelErrorType.STATE,
 				id: state.id,
 				content: `${state.id} has no initial.expression. Use the edit model operator to add one.
-				https://documentation.staging.terarium.ai/modeling/edit-model/?h=model+edit`
+				https://documentation.terarium.ai/modeling/edit-model/?h=model+edit`
 			});
 		} else {
 			const parsedExpression = await pythonInstance.parseExpression(initial?.expression as string);
@@ -386,7 +386,7 @@ export async function checkPetrinetAMR(amr: Model) {
 					type: ModelErrorType.STATE,
 					id: state.id,
 					content: `Unknown parameters ${extraSymbols.join(', ')} in initial expression. Use the edit model operator to correct.
-https://documentation.staging.terarium.ai/modeling/edit-model/?h=model+edit
+https://documentation.terarium.ai/modeling/edit-model/?h=model+edit
 				});
 			}
 		}
@@ -396,7 +396,7 @@ https://documentation.staging.terarium.ai/modeling/edit-model/?h=model+edit
 				type: ModelErrorType.STATE,
 				id: state.id,
 				content: `${state.id} has a non-ascii expression. Use the edit model operator to correct.
-				https://documentation.staging.terarium.ai/modeling/edit-model/?h=model+edit`
+				https://documentation.terarium.ai/modeling/edit-model/?h=model+edit`
 			});
 		}
 
@@ -432,7 +432,7 @@ https://documentation.staging.terarium.ai/modeling/edit-model/?h=model+edit
 				type: ModelErrorType.TRANSITION,
 				id: transition.id,
 				content: `${transition.id} has no rate expression. Use the edit model operator to add one.
-				https://documentation.staging.terarium.ai/modeling/edit-model/?h=model+edit`
+				https://documentation.terarium.ai/modeling/edit-model/?h=model+edit`
 			});
 		}
 		if (_.isEmpty(rate?.expression)) {
@@ -441,7 +441,7 @@ https://documentation.staging.terarium.ai/modeling/edit-model/?h=model+edit
 				type: ModelErrorType.TRANSITION,
 				id: transition.id,
 				content: `${transition.id} has no rate.expression. Use the edit model operator to add one.
-				https://documentation.staging.terarium.ai/modeling/edit-model/?h=model+edit`
+				https://documentation.terarium.ai/modeling/edit-model/?h=model+edit`
 			});
 		} else {
 			const parsedExpression = await pythonInstance.parseExpression(rate?.expression as string);
@@ -452,7 +452,7 @@ https://documentation.staging.terarium.ai/modeling/edit-model/?h=model+edit
 					type: ModelErrorType.TRANSITION,
 					id: transition.id,
 					content: `Unknown parameters ${extraSymbols.join(', ')} in rate.expression. Use the edit model operator to correct.
-				https://documentation.staging.terarium.ai/modeling/edit-model/?h=model+edit`
+				https://documentation.terarium.ai/modeling/edit-model/?h=model+edit`
 				});
 			}
 		}
@@ -463,7 +463,7 @@ https://documentation.staging.terarium.ai/modeling/edit-model/?h=model+edit
 				type: ModelErrorType.TRANSITION,
 				id: transition.id,
 				content: `${transition.id} has a non-ascii expression. Use the edit model operator to correct.
-				https://documentation.staging.terarium.ai/modeling/edit-model/?h=model+edit`
+				https://documentation.terarium.ai/modeling/edit-model/?h=model+edit`
 			});
 		}
 		if (transitionSet.has(transition.id)) {
