@@ -547,7 +547,7 @@ const {
 	getChartAnnotationsByChartId,
 	useCompareDatasetCharts,
 	useInterventionRankingCharts
-} = useCharts(props.node.id, null, null, chartData, chartSize, null, null);
+} = useCharts(props.node.id, null, modelConfigurations, chartData, chartSize, null, null);
 const selectedPlotType = computed(() => knobs.value.selectedPlotType);
 const baselineDatasetIndex = computed(() =>
 	datasets.value.findIndex((dataset) => dataset.id === knobs.value.selectedBaselineDatasetId)
@@ -557,16 +557,10 @@ const variableCharts = useCompareDatasetCharts(
 	selectedPlotType,
 	baselineDatasetIndex,
 	datasets,
-	modelConfigurations,
 	interventionPolicies
 );
 
-const rankingCharts = useInterventionRankingCharts(
-	criteriaOfInterestCards,
-	datasets,
-	modelConfigurations,
-	interventionPolicies
-);
+const rankingCharts = useInterventionRankingCharts(criteriaOfInterestCards, datasets, interventionPolicies);
 
 const groundTruthDatasetIndex = computed(() =>
 	datasets.value.findIndex((dataset) => dataset.id === knobs.value.selectedGroundTruthDatasetId)

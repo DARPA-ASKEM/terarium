@@ -84,7 +84,7 @@ const criteriaOfInterestCards = computed(() => props.node.state.criteriaOfIntere
 const { useCompareDatasetCharts, useInterventionRankingCharts } = useCharts(
 	props.node.id,
 	null,
-	null,
+	modelConfigurations,
 	chartData,
 	toRef({ width: 180, height: 120 }),
 	null,
@@ -95,16 +95,10 @@ const comparisonCharts = useCompareDatasetCharts(
 	selectedPlotType,
 	baselineDatasetIndex,
 	datasets,
-	modelConfigurations,
 	interventionPolicies
 );
 
-const rankingCharts = useInterventionRankingCharts(
-	criteriaOfInterestCards,
-	datasets,
-	modelConfigurations,
-	interventionPolicies
-);
+const rankingCharts = useInterventionRankingCharts(criteriaOfInterestCards, datasets, interventionPolicies);
 
 onMounted(async () => {
 	datasets.value = await initialize(
