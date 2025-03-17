@@ -508,7 +508,7 @@ export async function checkPetrinetAMR(amr: Model) {
 			severity: ModelErrorSeverity.WARNING,
 			type: ModelErrorType.STATE,
 			id: key,
-			content: `The state ${key} may be a parameter. Use the model edit operaotr to correct the expression.`
+			content: `The state "${key}" appears to be constant over time (i.e. its time derivative is zero).  It might be a parameter that was written with explicit time dependence theta(t) in the source equations. If so, go back to the "Create model from equations" operator, edit out the "(t)"  from all instances of "${key}(t)", and recreate the model`
 		});
 	});
 
