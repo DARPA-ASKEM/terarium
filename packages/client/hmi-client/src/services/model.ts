@@ -205,6 +205,11 @@ export async function getModelEquation(model: Model): Promise<string> {
 	return response?.data?.response ?? '';
 }
 
+export async function getSimplifyModel(model: Model): Promise<string> {
+	const response = await API.post(`/mira/simplify`, model);
+	return response?.data?.response ?? '';
+}
+
 export const getUnitsFromModelParts = (model: Model) => {
 	const unitMapping: { [key: string]: string } = {
 		_time: model?.semantics?.ode?.time?.units?.expression || ''
