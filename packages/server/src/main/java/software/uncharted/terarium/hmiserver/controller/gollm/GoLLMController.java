@@ -136,17 +136,15 @@ public class GoLLMController {
 		}
 	)
 	public ResponseEntity<TaskResponse> createModelCardTask(
-		@RequestParam(name = "model-id", required = true) final UUID modelId,
+		@RequestParam(name = "model-id") final UUID modelId,
 		@RequestParam(name = "document-id", required = false) final UUID documentId,
 		@RequestParam(name = "mode", required = false, defaultValue = "ASYNC") final TaskMode mode,
 		@RequestParam(name = "project-id", required = false) final UUID projectId
 	) {
 		// Grab the model
-		final Optional<Model> model = modelService.getAsset(modelId);
-		if (model.isEmpty()) {
-			log.warn(String.format("Model %s not found", modelId));
-			throw new ResponseStatusException(HttpStatus.NOT_FOUND, messages.get("model.not-found"));
-		}
+		final Model model = modelService
+			.getAsset(modelId)
+			.orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, messages.get("model.not-found")));
 
 		// Grab the document
 		if (documentId != null) {
@@ -176,7 +174,7 @@ public class GoLLMController {
 			req = TaskUtilities.getModelCardTask(
 				currentUserService.get().getId(),
 				documentOpt.get(),
-				model.get(),
+				model,
 				projectId,
 				config.getLlm()
 			);
@@ -920,18 +918,16 @@ public class GoLLMController {
 		}
 
 		// Grab the model
-		final Optional<Model> model = modelService.getAsset(modelId);
-		if (model.isEmpty()) {
-			log.warn(String.format("Model %s not found", modelId));
-			throw new ResponseStatusException(HttpStatus.NOT_FOUND, messages.get("model.not-found"));
-		}
+		final Model model = modelService
+			.getAsset(modelId)
+			.orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, messages.get("model.not-found")));
 
 		final TaskRequest req;
 		try {
 			req = TaskUtilities.getEnrichModelTaskRequest(
 				currentUserService.get().getId(),
 				document,
-				model.get(),
+				model,
 				projectId,
 				overwrite,
 				config.getLlm()
@@ -945,7 +941,7 @@ public class GoLLMController {
 		try {
 			resp = taskService.runTask(mode, req);
 			if (mode == TaskMode.SYNC && resp.getStatus() != TaskStatus.SUCCESS) {
-				log.error("Task failed", resp.getStderr());
+				log.error("Task failed: {}", resp.getStderr());
 				throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, resp.getStderr());
 			}
 		} catch (final JsonProcessingException e) {
