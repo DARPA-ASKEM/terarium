@@ -21,10 +21,7 @@ export const createEnrichmentCards = (enrichments: ModelEnrichmentResponse) => {
 	const cards: AssetBlock<EnrichmentBlock>[] = [];
 
 	function hasNestedObjects(value: any): boolean {
-		if (typeof value !== 'object' || Array.isArray(value) || value === null) {
-			return false;
-		}
-		return true;
+		return !(typeof value !== 'object' || Array.isArray(value) || value === null);
 	}
 
 	function processModelCardSection(content: any, parentPath: string[] = []) {
@@ -49,7 +46,7 @@ export const createEnrichmentCards = (enrichments: ModelEnrichmentResponse) => {
 			}
 
 			// Continue recursion for objects
-			if (typeof value === 'object' && !Array.isArray(value) && value !== null) {
+			if (hasNestedObjects(value)) {
 				processModelCardSection(value, currentPath);
 			}
 		});
