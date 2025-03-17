@@ -17,6 +17,7 @@ from common.prompts.dataset_enrichment import (
     DATASET_ENRICH_PROMPT_WITH_DOCUMENT,
     DATASET_ENRICH_PROMPT_WITHOUT_DOCUMENT
 )
+from common.prompts.document_question import DOCUMENT_QUESTION_PROMPT
 from common.prompts.equations_cleanup import EQUATIONS_CLEANUP_PROMPT
 from common.prompts.equations_from_image import EQUATIONS_FROM_IMAGE_PROMPT
 from common.prompts.general_query import GENERAL_QUERY_PROMPT
@@ -406,6 +407,17 @@ class LlamaTools(LlmToolsInterface):
         )
         prompt += LLAMA_RETURN_INSTRUCTIONS.format(
             schema=schema
+        )
+        prompt += LLAMA_END_PROMPT
+        return prompt
+
+
+    def create_document_question_prompt(self, document: str, question: str) -> str:
+        print("Building prompt to answer a question from a document...")
+        prompt = LLAMA_START_PROMPT
+        prompt += DOCUMENT_QUESTION_PROMPT.format(
+            document=document,
+            question=question
         )
         prompt += LLAMA_END_PROMPT
         return prompt
