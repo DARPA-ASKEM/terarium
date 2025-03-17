@@ -20,7 +20,7 @@ export const createEnrichmentCards = (enrichments: ModelEnrichmentResponse) => {
 	const cards: AssetBlock<EnrichmentBlock>[] = [];
 
 	function hasNestedObjects(value: any): boolean {
-		return !(typeof value !== 'object' || Array.isArray(value) || value === null);
+		return typeof value === 'object' && !Array.isArray(value) && value !== null;
 	}
 
 	function processModelCardSection(content: any, parentPath: string[] = []) {
