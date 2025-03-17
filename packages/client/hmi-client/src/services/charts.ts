@@ -1208,6 +1208,10 @@ export function createQuantilesForecastChart(
 	const yaxis = structuredClone(xaxis);
 	yaxis.title = options.yAxisTitle;
 
+	if (options.dateOptions) {
+		xaxis.labelExpr = formatDateLabelFn(options.dateOptions.startDate, 'datum.value', options.dateOptions.dateFormat);
+	}
+
 	const translationMap = options.translationMap;
 	let labelExpr = '';
 	let varDisplayNameExpr = '';
