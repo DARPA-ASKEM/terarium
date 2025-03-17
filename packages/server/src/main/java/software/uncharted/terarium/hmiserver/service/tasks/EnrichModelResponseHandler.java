@@ -106,12 +106,12 @@ public class EnrichModelResponseHandler extends LlmTaskResponseHandler {
 
 			final Model model = modelService.getAsset(props.getModelId()).orElseThrow();
 
-			if (props.overwrite == false) {
-				log.info("Do not enrich model as overwrite is set to false");
+			if (!props.overwrite) {
+				log.info("Model was enriched as the overwrite option is set to false");
 				return resp;
 			}
 
-			// update the model card
+			// Update the model card
 			final JsonNode card = response.modelCard;
 			if (model.getMetadata() == null) {
 				model.setMetadata(new ModelMetadata());
@@ -119,7 +119,7 @@ public class EnrichModelResponseHandler extends LlmTaskResponseHandler {
 			model.getMetadata().setGollmCard(card);
 			model.getMetadata().setDescription(renderJsonToHTML(card).getBytes(StandardCharsets.UTF_8));
 
-			// update the model with the enriched data
+			// Update the model with the enriched data
 			for (final DescriptionsAndUnits state : response.modelEnrichment.states) {
 				model
 					.getInitials()
@@ -197,18 +197,10 @@ public class EnrichModelResponseHandler extends LlmTaskResponseHandler {
 			}
 
 			// Update State Grounding
-			if (model.isRegnet()) {
-				if (model.getVerticies() != null && !model.getVerticies().isEmpty()) {
-					final List<RegNetVertex> vertices = model.getVerticies();
-					TaskUtilities.getCuratedGrounding(vertices);
-					model.setVerticies(vertices);
-				}
-			} else {
-				if (model.getStates() != null && !model.getStates().isEmpty()) {
-					final List<State> states = model.getStates();
-					TaskUtilities.getCuratedGrounding(states);
-					model.setStates(states);
-				}
+			if (model.getStates() != null && !model.getStates().isEmpty()) {
+				final List<State> states = model.getStates();
+				TaskUtilities.getCuratedGrounding(states);
+				model.setStates(states);
 			}
 
 			// Update Observable Grounding
