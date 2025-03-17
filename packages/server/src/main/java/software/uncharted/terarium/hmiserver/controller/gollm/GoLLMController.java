@@ -61,7 +61,6 @@ import software.uncharted.terarium.hmiserver.service.tasks.EquationsFromImageRes
 import software.uncharted.terarium.hmiserver.service.tasks.GenerateSummaryHandler;
 import software.uncharted.terarium.hmiserver.service.tasks.InterventionsFromDatasetResponseHandler;
 import software.uncharted.terarium.hmiserver.service.tasks.InterventionsFromDocumentResponseHandler;
-import software.uncharted.terarium.hmiserver.service.tasks.ModelCardResponseHandler;
 import software.uncharted.terarium.hmiserver.service.tasks.TaskService;
 import software.uncharted.terarium.hmiserver.service.tasks.TaskService.TaskMode;
 import software.uncharted.terarium.hmiserver.service.tasks.TaskUtilities;
@@ -93,7 +92,6 @@ public class GoLLMController {
 	private final GenerateSummaryHandler generateSummaryHandler;
 	private final InterventionsFromDocumentResponseHandler interventionsFromDocumentResponseHandler;
 	private final InterventionsFromDatasetResponseHandler interventionsFromDatasetResponseHandler;
-	private final ModelCardResponseHandler modelCardResponseHandler;
 
 	private final Messages messages;
 
@@ -109,7 +107,6 @@ public class GoLLMController {
 		taskService.addResponseHandler(generateSummaryHandler);
 		taskService.addResponseHandler(interventionsFromDocumentResponseHandler);
 		taskService.addResponseHandler(interventionsFromDatasetResponseHandler);
-		taskService.addResponseHandler(modelCardResponseHandler);
 	}
 
 	@GetMapping("/configure-model")

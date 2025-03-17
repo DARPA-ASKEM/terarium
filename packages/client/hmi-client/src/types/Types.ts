@@ -1146,7 +1146,6 @@ export enum ClientEventType {
     TaskGollmGenerateSummary = "TASK_GOLLM_GENERATE_SUMMARY",
     TaskGollmInterventionsFromDocument = "TASK_GOLLM_INTERVENTIONS_FROM_DOCUMENT",
     TaskGollmInterventionsFromDataset = "TASK_GOLLM_INTERVENTIONS_FROM_DATASET",
-    TaskGollmModelCard = "TASK_GOLLM_MODEL_CARD",
     TaskGollmDatasetStatistics = "TASK_GOLLM_DATASET_STATISTICS",
     TaskMiraAmrToMmt = "TASK_MIRA_AMR_TO_MMT",
     TaskMiraGenerateModelLatex = "TASK_MIRA_GENERATE_MODEL_LATEX",

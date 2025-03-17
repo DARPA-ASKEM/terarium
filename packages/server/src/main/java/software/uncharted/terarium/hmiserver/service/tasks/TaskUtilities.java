@@ -137,52 +137,6 @@ public class TaskUtilities {
 		return taskRequest;
 	}
 
-	public static TaskRequest getModelCardTask(
-		String userId,
-		DocumentAsset document,
-		Model model,
-		UUID projectId,
-		String llm
-	) throws IOException {
-		final ObjectMapper objectMapper = new ObjectMapper();
-
-		final ModelCardResponseHandler.Input input = new ModelCardResponseHandler.Input();
-		input.setLlm(llm);
-		input.setAmr(model.serializeWithoutTerariumFields(null, new String[] { "gollmCard" }));
-
-		if (document != null) {
-			try {
-				input.setDocument(objectMapper.writeValueAsString(document.getExtractions()));
-			} catch (JsonProcessingException e) {
-				throw new IOException("Unable to serialize document text");
-			}
-		} else {
-			input.setDocument("");
-		}
-
-		// Create the task
-		final TaskRequest req = new TaskRequest();
-		req.setType(TaskRequest.TaskType.GOLLM);
-		req.setScript(ModelCardResponseHandler.NAME);
-		req.setUserId(userId);
-
-		try {
-			req.setInput(objectMapper.writeValueAsBytes(input));
-		} catch (final Exception e) {
-			throw new IOException("Unable to serialize input");
-		}
-
-		req.setProjectId(projectId);
-
-		final ModelCardResponseHandler.Properties props = new ModelCardResponseHandler.Properties();
-		props.setProjectId(projectId);
-		if (document != null) props.setDocumentId(document.getId());
-		props.setModelId(model.getId());
-		req.setAdditionalProperties(props);
-
-		return req;
-	}
-
 	@Deprecated
 	@Observed(name = "function_profile")
 	public static void performDKGSearchAndSetGrounding(DKGService dkgService, List<? extends GroundedSemantic> parts) {
