@@ -214,6 +214,7 @@
 									:items="observablesList"
 									:model-errors="[]"
 									:feature-config="{ isPreview: true }"
+									:filter-severity="null"
 								/>
 								<template v-if="!isEmpty(observableCharts)">
 									<vega-chart

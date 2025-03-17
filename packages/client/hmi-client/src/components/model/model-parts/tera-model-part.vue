@@ -3,7 +3,13 @@
 		<li
 			v-for="({ base, children, isParent }, index) in filteredItems.slice(firstRow, firstRow + MAX_NUMBER_OF_ROWS)"
 			:key="base.id"
-			class="model-part"
+			:class="[
+				'model-part',
+				{
+					'model-part-error': hasModelErrors(base.id, ModelErrorSeverity.ERROR),
+					'model-part-warn': hasModelErrors(base.id, ModelErrorSeverity.WARNING)
+				}
+			]"
 		>
 			<template v-if="isParent && !isEmpty(editingState)">
 				<section class="parent">
@@ -129,7 +135,6 @@
 								:unitExpression="child.unitExpression"
 								:expression="child.expression"
 								:feature-config="featureConfig"
-								:model-errors="modelErrors.filter((d) => d.id === child.id)"
 								@update-item="$emit('update-item', { id: child.id, ...$event })"
 							/>
 						</li>
@@ -159,7 +164,6 @@
 				:unitExpression="base.unitExpression"
 				:expression="base.expression"
 				:feature-config="featureConfig"
-				:model-errors="modelErrors.filter((d) => d.id === base.id)"
 				@update-item="$emit('update-item', { id: base.id, ...$event })"
 			/>
 		</li>
@@ -178,7 +182,7 @@
 
 <script setup lang="ts">
 import { isEmpty } from 'lodash';
-import { ref, computed } from 'vue';
+import { computed, ref } from 'vue';
 import type { ModelPartItem, ModelPartItemTree } from '@/types/Model';
 import type { DKG } from '@/types/Types';
 import { searchCuriesEntities } from '@/services/concept';
@@ -188,7 +192,7 @@ import Button from 'primevue/button';
 import type { FeatureConfig } from '@/types/common';
 import TeraInputText from '@/components/widgets/tera-input-text.vue';
 import Paginator from 'primevue/paginator';
-import { PartType, ModelError } from '@/model-representation/service';
+import { ModelError, ModelErrorSeverity, PartType } from '@/model-representation/service';
 
 const props = defineProps<{
 	items: ModelPartItemTree[];
@@ -197,6 +201,7 @@ const props = defineProps<{
 	showMatrix?: boolean;
 	partType: PartType;
 	filter?: string;
+	filterSeverity: ModelErrorSeverity | null;
 }>();
 
 const emit = defineEmits(['update-item', 'open-matrix']);
@@ -218,9 +223,14 @@ const firstRow = ref(0);
 
 const filteredItems = computed(() => {
 	const filterText = props.filter?.toLowerCase() ?? '';
-	if (!filterText) return props.items;
+	if (!filterText && !props.filterSeverity) return props.items;
 
 	const matcher = (partItem: ModelPartItem) => {
+		if (props.filterSeverity === ModelErrorSeverity.WARNING && !hasModelErrors(partItem.id, ModelErrorSeverity.WARNING))
+			return false;
+		if (props.filterSeverity === ModelErrorSeverity.ERROR && !hasModelErrors(partItem.id, ModelErrorSeverity.ERROR))
+			return false;
+
 		if (partItem.id.toLowerCase().includes(filterText)) return true;
 
 		// For transitions
@@ -265,6 +275,10 @@ function updateAllChildren(base: string, key: string, value: string) {
 	const ids = props.items.find((d) => d.base.id === base)!.children.map((d) => d.id);
 	ids.forEach((id) => emit('update-item', { id, key, value }));
 }
+
+function hasModelErrors(entryId: ModelError['id'], entrySeverity: ModelErrorSeverity) {
+	return props.modelErrors.some(({ id, severity }) => id === entryId && severity === entrySeverity);
+}
 </script>
 
 <style scoped>
@@ -283,19 +297,38 @@ ul {
 	background: var(--surface-0);
 	box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
 	transition: all 0.15s;
+
 	&:has(.parent) {
 		padding: var(--gap-2) 0 var(--gap-2) var(--gap-1);
 	}
+
+	&:hover {
+		background: var(--surface-highlight);
+
+		/* But set a lighter hover state when hovering over child elements */
+		&:has(.stratified > ul > li:hover) {
+			background: color-mix(in srgb, var(--surface-highlight) 30%, var(--surface-0) 70%);
+		}
+	}
+
+	&:not(.model-part-error, .model-part-warn):hover {
+		border-left: 4px solid var(--primary-color);
+
+		/* But set a lighter hover state when hovering over child elements */
+		&:has(.stratified > ul > li:hover) {
+			border-left: 4px solid var(--primary-color-light);
+		}
+	}
 }
-/* First set the hover state for the model-part itself */
-.model-part:hover {
-	border-left: 4px solid var(--primary-color);
-	background: var(--surface-highlight);
+
+/* Differentiate between error and warning */
+.model-part-error {
+	border-color: var(--surface-error);
+	border-left-color: var(--error-border-color);
 }
-/* But set a lighter hover state when hovering over child elements */
-.model-part:hover:has(.stratified > ul > li:hover) {
-	border-left: 4px solid var(--primary-color-light);
-	background: color-mix(in srgb, var(--surface-highlight) 30%, var(--surface-0) 70%);
+.model-part-warn {
+	border-color: var(--surface-warning);
+	border-left-color: var(--warning-color);
 }
 
 li {
@@ -318,10 +351,7 @@ li {
 			border: 1px solid var(--surface-border-light);
 			border-radius: var(--border-radius);
 			border-left: 4px solid var(--surface-border);
-			padding-left: var(--gap-4);
-			padding-right: var(--gap-2);
-			padding-bottom: var(--gap-2);
-			padding-top: var(--gap-2);
+			padding: var(--gap-2) var(--gap-2) var(--gap-2) var(--gap-4);
 			&:hover {
 				background: var(--surface-highlight);
 				border-left-color: var(--primary-color);
