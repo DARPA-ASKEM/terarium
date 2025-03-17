@@ -326,7 +326,7 @@ export async function checkPetrinetAMR(amr: Model) {
 			severity: ModelErrorSeverity.ERROR,
 			type: ModelErrorType.MODEL,
 			id: '',
-			content: '# states need to match # initials'
+			content: 'The number of states must match the number of initial values.'
 		});
 	}
 	if (numRates !== numTransitions) {
@@ -334,7 +334,7 @@ export async function checkPetrinetAMR(amr: Model) {
 			severity: ModelErrorSeverity.ERROR,
 			type: ModelErrorType.MODEL,
 			id: '',
-			content: '# transitions need to match # rates'
+			content: 'The number of transitions must match the number of  rates.'
 		});
 	}
 
@@ -366,7 +366,7 @@ export async function checkPetrinetAMR(amr: Model) {
 				severity: ModelErrorSeverity.ERROR,
 				type: ModelErrorType.STATE,
 				id: state.id,
-				content: `${state.id} has no matching initial.`
+				content: `${state.id} has no matching initial value.`
 			});
 		}
 		if (_.isEmpty(initial?.expression)) {
@@ -374,7 +374,8 @@ export async function checkPetrinetAMR(amr: Model) {
 				severity: ModelErrorSeverity.WARNING,
 				type: ModelErrorType.STATE,
 				id: state.id,
-				content: `${state.id} has no initial.expression. Use Model-Edit to add one.`
+				content: `${state.id} has no initial.expression. Use the edit model operator to add one.
+				https://documentation.staging.terarium.ai/modeling/edit-model/?h=model+edit`
 			});
 		} else {
 			const parsedExpression = await pythonInstance.parseExpression(initial?.expression as string);
@@ -384,7 +385,8 @@ export async function checkPetrinetAMR(amr: Model) {
 					severity: ModelErrorSeverity.ERROR,
 					type: ModelErrorType.STATE,
 					id: state.id,
-					content: `Unknown parameters ${extraSymbols.join(', ')} in initial expression. Use Model-Edit to add one.`
+					content: `Unknown parameters ${extraSymbols.join(', ')} in initial expression. Use the edit model operator to correct.
+https://documentation.staging.terarium.ai/modeling/edit-model/?h=model+edit
 				});
 			}
 		}
@@ -393,7 +395,8 @@ export async function checkPetrinetAMR(amr: Model) {
 				severity: ModelErrorSeverity.WARNING,
 				type: ModelErrorType.STATE,
 				id: state.id,
-				content: `${state.id} has non-ascii expression. Use Model-Edit to add one.`
+				content: `${state.id} has a non-ascii expression. Use the edit model operator to correct.
+				https://documentation.staging.terarium.ai/modeling/edit-model/?h=model+edit`
 			});
 		}
 
@@ -428,7 +431,8 @@ export async function checkPetrinetAMR(amr: Model) {
 				severity: ModelErrorSeverity.ERROR,
 				type: ModelErrorType.TRANSITION,
 				id: transition.id,
-				content: `${transition.id} has no rate expression. Use Model-Edit to add one.`
+				content: `${transition.id} has no rate expression. Use the edit model operator to add one.
+				https://documentation.staging.terarium.ai/modeling/edit-model/?h=model+edit`
 			});
 		}
 		if (_.isEmpty(rate?.expression)) {
@@ -436,7 +440,8 @@ export async function checkPetrinetAMR(amr: Model) {
 				severity: ModelErrorSeverity.WARNING,
 				type: ModelErrorType.TRANSITION,
 				id: transition.id,
-				content: `${transition.id} has no rate.expression. Use Model-Edit to add one`
+				content: `${transition.id} has no rate.expression. Use the edit model operator to add one.
+				https://documentation.staging.terarium.ai/modeling/edit-model/?h=model+edit`
 			});
 		} else {
 			const parsedExpression = await pythonInstance.parseExpression(rate?.expression as string);
@@ -446,7 +451,8 @@ export async function checkPetrinetAMR(amr: Model) {
 					severity: ModelErrorSeverity.ERROR,
 					type: ModelErrorType.TRANSITION,
 					id: transition.id,
-					content: `Unknown parameters ${extraSymbols.join(', ')} in rate.expression. Use Model-Edit to add one`
+					content: `Unknown parameters ${extraSymbols.join(', ')} in rate.expression. Use the edit model operator to correct.
+				https://documentation.staging.terarium.ai/modeling/edit-model/?h=model+edit`
 				});
 			}
 		}
@@ -456,7 +462,8 @@ export async function checkPetrinetAMR(amr: Model) {
 				severity: ModelErrorSeverity.WARNING,
 				type: ModelErrorType.TRANSITION,
 				id: transition.id,
-				content: `${transition.id} has non-ascii expression`
+				content: `${transition.id} has a non-ascii expression. Use the edit model operator to correct.
+				https://documentation.staging.terarium.ai/modeling/edit-model/?h=model+edit`
 			});
 		}
 		if (transitionSet.has(transition.id)) {
@@ -472,7 +479,7 @@ export async function checkPetrinetAMR(amr: Model) {
 				severity: ModelErrorSeverity.ERROR,
 				type: ModelErrorType.TRANSITION,
 				id: transition.id,
-				content: `rate (${rate?.target}) is duplicate. Fix the model JSON and reimport.`
+				content: `rate (${rate?.target}) is duplicated. Fix the model JSON and reimport.`
 			});
 		}
 
