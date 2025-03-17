@@ -12,6 +12,7 @@ import { PetrinetRenderer } from '@/model-representation/petrinet/petrinet-rende
 import { layoutInstance } from '@/web-workers/layout/controller';
 import { IGraph } from '@graph-scaffolder/index';
 import { pythonInstance } from '@/web-workers/python/PyodideController';
+import { FramebufferSystem } from 'pixi.js';
 import { NestedPetrinetRenderer } from './petrinet/nested-petrinet-renderer';
 import { collapseTemplates, getContext, isStratifiedModel } from './mira/mira';
 import { extractTemplateMatrix } from './mira/mira-util';
@@ -354,12 +355,16 @@ export async function checkPetrinetAMR(amr: Model) {
 	model.states.forEach((s: any) => {
 		symbolList.push(s.id);
 	});
+	symbolList.push(ode?.time.id);
 
 	// Check state
 	const stateSet = new Set<string>();
 	const initialSet = new Set<string>();
-	model.states.forEach(async (state) => {
+
+	for (let i = 0; i < model.states.length; i++) {
+		const state: any = model.states[i];
 		const initial = initialMap.get(state.id);
+
 		if (!initial) {
 			results.push({
 				severity: ModelErrorSeverity.ERROR,
@@ -376,6 +381,7 @@ export async function checkPetrinetAMR(amr: Model) {
 				content: `${state.id} has no initial.expression. Use the edit model operator to add one.`
 			});
 		} else {
+			// eslint-disable-next-line no-await-in-loop
 			const parsedExpression = await pythonInstance.parseExpression(initial?.expression as string);
 			const extraSymbols = _.difference(parsedExpression.freeSymbols, symbolList);
 			if (extraSymbols.length > 0) {
@@ -414,12 +420,13 @@ export async function checkPetrinetAMR(amr: Model) {
 		}
 		stateSet.add(state.id);
 		initialSet.add(initial?.target as string);
-	});
+	}
 
 	// Check transitions
 	const transitionSet = new Set<string>();
 	const rateSet = new Set<string>();
-	model.transitions.forEach(async (transition) => {
+	for (let i = 0; i < model.transitions.length; i++) {
+		const transition: any = model.transitions[i];
 		const rate = rateMap.get(transition.id);
 
 		if (!rate) {
@@ -438,9 +445,11 @@ export async function checkPetrinetAMR(amr: Model) {
 				content: `${transition.id} has no rate.expression. Use the edit model operator to add one.`
 			});
 		} else {
+			// eslint-disable-next-line no-await-in-loop
 			const parsedExpression = await pythonInstance.parseExpression(rate?.expression as string);
 			const extraSymbols = _.difference(parsedExpression.freeSymbols, symbolList);
 			if (extraSymbols.length > 0) {
+				console.log('>>', parsedExpression.freeSymbols, symbolList);
 				results.push({
 					severity: ModelErrorSeverity.ERROR,
 					type: ModelErrorType.TRANSITION,
@@ -487,6 +496,25 @@ export async function checkPetrinetAMR(amr: Model) {
 
 		transitionSet.add(transition.id);
 		rateSet.add(rate?.target as string);
+	}
+
+	// Check for bad classification, eg state becomes a parameter
+	const nonControllerSet: Set<string> = new Set();
+	model.transitions.forEach((transition) => {
+		const diffs = _.xor(transition.input as string[], transition.output as string[]);
+		diffs.forEach((key) => {
+			nonControllerSet.add(key);
+		});
+	});
+
+	const misidentifiedStates = _.difference([...stateSet.values()], [...nonControllerSet.values()]);
+	misidentifiedStates.forEach((key) => {
+		results.push({
+			severity: ModelErrorSeverity.WARNING,
+			type: ModelErrorType.STATE,
+			id: key,
+			content: `The state ${key} may be a parameter. Use the model edit operaotr to correct the expression.`
+		});
 	});
 
 	return results;
