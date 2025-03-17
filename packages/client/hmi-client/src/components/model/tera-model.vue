@@ -30,6 +30,9 @@
 			</aside>
 		</template>
 		<section v-if="temporaryModel && mmtData">
+			<Message class="mx-3" severity="warn" v-if="modelErrors.length > 0">
+				Errors and/or warnings detected, please check individual sections below.
+			</Message>
 			<Message v-if="canModelBeSimplified" class="mx-3" severity="info">
 				This model appears to have complex rate laws. It can lead to an combinatorial explosion if it is stratified.
 				This can be simplified reducing the number of controllers by {{ numberOfControllersSimplifyReduces }}.
@@ -40,9 +43,6 @@
 					class="save-simplified-button"
 					@click="saveSimplifiedModel()"
 				/>
-			</Message>
-			<Message class="mx-3" severity="warn" v-if="modelErrors.length > 0">
-				Errors and/or warnings detected, please check individual sections below.
 			</Message>
 			<tera-model-error-message
 				class="mx-3"
