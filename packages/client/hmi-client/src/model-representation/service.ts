@@ -4,7 +4,7 @@ import { rerouteEdges } from '@/services/graph';
 import { MiraModel } from '@/model-representation/mira/mira-common';
 import { ModelPartItem } from '@/types/Model';
 import { extractNestedStratas } from '@/model-representation/petrinet/mira-petri';
-import type { Initial, Model, ModelParameter, State, RegNetVertex, Transition, Rate, Observable } from '@/types/Types';
+import type { Initial, Model, ModelParameter, Observable, Rate, RegNetVertex, State, Transition } from '@/types/Types';
 import { getModelType } from '@/services/model';
 import { AMRSchemaNames } from '@/types/common';
 import { parseCurieToIdentifier } from '@/services/concept';
@@ -13,7 +13,7 @@ import { layoutInstance } from '@/web-workers/layout/controller';
 import { IGraph } from '@graph-scaffolder/index';
 import { pythonInstance } from '@/web-workers/python/PyodideController';
 import { NestedPetrinetRenderer } from './petrinet/nested-petrinet-renderer';
-import { isStratifiedModel, getContext, collapseTemplates } from './mira/mira';
+import { collapseTemplates, getContext, isStratifiedModel } from './mira/mira';
 import { extractTemplateMatrix } from './mira/mira-util';
 
 export const runDagreLayout = async <V, E>(graphData: IGraph<V, E>): Promise<IGraph<V, E>> => {
@@ -77,7 +77,7 @@ export const getModelRenderer = (
 		});
 
 		const nestedMap = extractNestedStratas(conceptData, dims);
-		const nestedRenderer = new NestedPetrinetRenderer({
+		return new NestedPetrinetRenderer({
 			el: graphElement,
 			edgeReroutingFn: rerouteEdges,
 			useStableZoomPan: true,
@@ -88,7 +88,6 @@ export const getModelRenderer = (
 			nestedMap,
 			transitionMatrices: transitionMatrixMap
 		});
-		return nestedRenderer;
 	}
 
 	return new PetrinetRenderer({
@@ -374,8 +373,7 @@ export async function checkPetrinetAMR(amr: Model) {
 				severity: ModelErrorSeverity.WARNING,
 				type: ModelErrorType.STATE,
 				id: state.id,
-				content: `${state.id} has no initial.expression. Use the edit model operator to add one.
-				https://documentation.terarium.ai/modeling/edit-model/?h=model+edit`
+				content: `${state.id} has no initial.expression. Use the edit model operator to add one.`
 			});
 		} else {
 			const parsedExpression = await pythonInstance.parseExpression(initial?.expression as string);
@@ -385,8 +383,7 @@ export async function checkPetrinetAMR(amr: Model) {
 					severity: ModelErrorSeverity.ERROR,
 					type: ModelErrorType.STATE,
 					id: state.id,
-					content: `Unknown parameters ${extraSymbols.join(', ')} in initial expression. Use the edit model operator to correct.
-https://documentation.terarium.ai/modeling/edit-model/?h=model+edit`
+					content: `Unknown parameters ${extraSymbols.join(', ')} in initial expression. Use the edit model operator to correct.`
 				});
 			}
 		}
@@ -395,8 +392,7 @@ https://documentation.terarium.ai/modeling/edit-model/?h=model+edit`
 				severity: ModelErrorSeverity.WARNING,
 				type: ModelErrorType.STATE,
 				id: state.id,
-				content: `${state.id} has a non-ascii expression. Use the edit model operator to correct.
-				https://documentation.terarium.ai/modeling/edit-model/?h=model+edit`
+				content: `${state.id} has a non-ascii expression. Use the edit model operator to correct.`
 			});
 		}
 
@@ -431,8 +427,7 @@ https://documentation.terarium.ai/modeling/edit-model/?h=model+edit`
 				severity: ModelErrorSeverity.ERROR,
 				type: ModelErrorType.TRANSITION,
 				id: transition.id,
-				content: `${transition.id} has no rate expression. Use the edit model operator to add one.
-				https://documentation.terarium.ai/modeling/edit-model/?h=model+edit`
+				content: `${transition.id} has no rate expression. Use the edit model operator to add one.`
 			});
 		}
 		if (_.isEmpty(rate?.expression)) {
@@ -440,8 +435,7 @@ https://documentation.terarium.ai/modeling/edit-model/?h=model+edit`
 				severity: ModelErrorSeverity.WARNING,
 				type: ModelErrorType.TRANSITION,
 				id: transition.id,
-				content: `${transition.id} has no rate.expression. Use the edit model operator to add one.
-				https://documentation.terarium.ai/modeling/edit-model/?h=model+edit`
+				content: `${transition.id} has no rate.expression. Use the edit model operator to add one.`
 			});
 		} else {
 			const parsedExpression = await pythonInstance.parseExpression(rate?.expression as string);
@@ -451,8 +445,7 @@ https://documentation.terarium.ai/modeling/edit-model/?h=model+edit`
 					severity: ModelErrorSeverity.ERROR,
 					type: ModelErrorType.TRANSITION,
 					id: transition.id,
-					content: `Unknown parameters ${extraSymbols.join(', ')} in rate.expression. Use the edit model operator to correct.
-				https://documentation.terarium.ai/modeling/edit-model/?h=model+edit`
+					content: `Unknown parameters ${extraSymbols.join(', ')} in rate.expression. Use the edit model operator to correct.`
 				});
 			}
 		}
@@ -462,8 +455,7 @@ https://documentation.terarium.ai/modeling/edit-model/?h=model+edit`
 				severity: ModelErrorSeverity.WARNING,
 				type: ModelErrorType.TRANSITION,
 				id: transition.id,
-				content: `${transition.id} has a non-ascii expression. Use the edit model operator to correct.
-				https://documentation.terarium.ai/modeling/edit-model/?h=model+edit`
+				content: `${transition.id} has a non-ascii expression. Use the edit model operator to correct.`
 			});
 		}
 		if (transitionSet.has(transition.id)) {
