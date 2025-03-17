@@ -345,8 +345,11 @@ export function useCharts(
 	interventions: Ref<Intervention[]> | null,
 	mapping: Ref<VariableMappings> | null
 ) {
-	// Check if references of the core dependencies are ready to build the chart to prevent multiple re-renders especially
-	// on initial page load where data are fetched asynchronously and assigned to the references in different times.
+	/**
+	 * Check if references of the core dependencies are ready to build the chart to prevent multiple re-renders especially
+	 * on initial page load where data are fetched asynchronously and assigned to the references in different times.
+	 * This checks for model, modelConfig, and chartData references.
+	 */
 	const isChartReadyToBuild = computed(() => [model, modelConfig, chartData].every(isRefReady));
 
 	// Setup annotations
@@ -406,7 +409,9 @@ export function useCharts(
 	 * @returns ForecastChartOptions
 	 */
 	const createBaseForecastChartOptions = (setting: ChartSetting) => {
-		const dateOptions = getVegaDateOptions(model?.value ?? null, <ModelConfiguration>modelConfig?.value || null);
+		// If there are multiple model configurations, use the first one to get the date options
+		const mConfig = Array.isArray(modelConfig?.value) ? modelConfig?.value[0] : modelConfig?.value;
+		const dateOptions = getVegaDateOptions(model?.value ?? null, <ModelConfiguration>mConfig || null);
 		const options: ForecastChartOptions = {
 			...getChartLabels(setting),
 			fontSize: setting.fontSize,
@@ -631,7 +636,6 @@ export function useCharts(
 		selectedPlotType: ComputedRef<PlotValue>,
 		baselineIndex: ComputedRef<number>,
 		datasets: Ref<Dataset[]>,
-		modelConfigurations: Ref<ModelConfiguration[]>,
 		interventionPolicies: Ref<InterventionPolicy[]>
 	) => {
 		const compareDatasetCharts = computed(() => {
@@ -648,7 +652,7 @@ export function useCharts(
 				// TODO: create the color map outside of this function and pass `interventionNameColorMap` as parameter
 				const { interventionNameColorMap } = getInterventionColorAndScoreMaps(
 					datasets,
-					modelConfigurations,
+					modelConfig as Ref<ModelConfiguration[]>,
 					interventionPolicies
 				);
 
@@ -1412,12 +1416,11 @@ export function useCharts(
 	const useInterventionRankingCharts = (
 		criteriaOfInterestCards: Ref<CriteriaOfInterestCard[]>,
 		datasets: Ref<Dataset[]>,
-		modelConfigurations: Ref<ModelConfiguration[]>,
 		interventionPolicies: Ref<InterventionPolicy[]>
 	) =>
 		computed(() => {
 			// return empty if any of the required data is missing
-			if (!chartData.value || !datasets.value || !modelConfigurations.value || !interventionPolicies.value)
+			if (!isChartReadyToBuild.value || !datasets.value || !interventionPolicies.value)
 				return { rankingCriteriaCharts: [], rankingResultsChart: null };
 
 			const rankingCriteriaCharts: VisualizationSpec[] = [];
@@ -1427,7 +1430,7 @@ export function useCharts(
 
 			const { interventionNameColorMap, interventionNameScoresMap } = getInterventionColorAndScoreMaps(
 				datasets,
-				modelConfigurations,
+				modelConfig as Ref<ModelConfiguration[]>,
 				interventionPolicies
 			);
 
@@ -1462,7 +1465,7 @@ export function useCharts(
 
 				datasets.value.forEach((dataset, index: number) => {
 					const { metadata } = dataset;
-					const modelConfiguration: ModelConfiguration = modelConfigurations.value.find(
+					const modelConfiguration: ModelConfiguration = (modelConfig as Ref<ModelConfiguration[]>).value.find(
 						({ id }) => id === metadata.simulationAttributes?.modelConfigurationId
 					)!;
 					const policy: InterventionPolicy = interventionPolicies.value.find(
