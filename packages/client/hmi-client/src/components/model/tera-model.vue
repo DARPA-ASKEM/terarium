@@ -297,7 +297,6 @@ defineExpose({ temporaryModel });
 
 <style scoped>
 .save-simplified-button {
-	/* color: blue; */
 	display: contents;
 }
 .btn-group {
