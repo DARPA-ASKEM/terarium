@@ -359,9 +359,7 @@ export async function checkPetrinetAMR(amr: Model) {
 	// Check state
 	const stateSet = new Set<string>();
 	const initialSet = new Set<string>();
-
-	for (let i = 0; i < model.states.length; i++) {
-		const state: any = model.states[i];
+	async function stateCheck(state: any) {
 		const initial = initialMap.get(state.id);
 
 		if (!initial) {
@@ -380,7 +378,6 @@ export async function checkPetrinetAMR(amr: Model) {
 				content: `${state.id} has no initial.expression. Use the edit model operator to add one.`
 			});
 		} else {
-			// eslint-disable-next-line no-await-in-loop
 			const parsedExpression = await pythonInstance.parseExpression(initial?.expression as string);
 			const extraSymbols = _.difference(parsedExpression.freeSymbols, symbolList);
 			if (extraSymbols.length > 0) {
@@ -420,12 +417,12 @@ export async function checkPetrinetAMR(amr: Model) {
 		stateSet.add(state.id);
 		initialSet.add(initial?.target as string);
 	}
+	await Promise.all(model.states.map(stateCheck));
 
 	// Check transitions
 	const transitionSet = new Set<string>();
 	const rateSet = new Set<string>();
-	for (let i = 0; i < model.transitions.length; i++) {
-		const transition: any = model.transitions[i];
+	async function transitionCheck(transition: any) {
 		const rate = rateMap.get(transition.id);
 
 		if (!rate) {
@@ -444,7 +441,6 @@ export async function checkPetrinetAMR(amr: Model) {
 				content: `${transition.id} has no rate.expression. Use the edit model operator to add one.`
 			});
 		} else {
-			// eslint-disable-next-line no-await-in-loop
 			const parsedExpression = await pythonInstance.parseExpression(rate?.expression as string);
 			const extraSymbols = _.difference(parsedExpression.freeSymbols, symbolList);
 			if (extraSymbols.length > 0) {
@@ -495,6 +491,7 @@ export async function checkPetrinetAMR(amr: Model) {
 		transitionSet.add(transition.id);
 		rateSet.add(rate?.target as string);
 	}
+	await Promise.all(model.transitions.map(transitionCheck));
 
 	// Check for bad classification, eg state becomes a parameter
 	const nonControllerSet: Set<string> = new Set();
