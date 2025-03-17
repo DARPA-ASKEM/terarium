@@ -11,6 +11,7 @@ import { parseCurieToIdentifier } from '@/services/concept';
 import { PetrinetRenderer } from '@/model-representation/petrinet/petrinet-renderer';
 import { layoutInstance } from '@/web-workers/layout/controller';
 import { IGraph } from '@graph-scaffolder/index';
+import { pythonInstance } from '@/web-workers/python/PyodideController';
 import { NestedPetrinetRenderer } from './petrinet/nested-petrinet-renderer';
 import { isStratifiedModel, getContext, collapseTemplates } from './mira/mira';
 import { extractTemplateMatrix } from './mira/mira-util';
@@ -287,7 +288,7 @@ export interface ModelError {
 	id: string;
 	content: string;
 }
-export function checkPetrinetAMR(amr: Model) {
+export async function checkPetrinetAMR(amr: Model) {
 	function isASCII(str: string) {
 		// eslint-disable-next-line
 		return /^[\x00-\x7F]*$/.test(str);
@@ -340,6 +341,7 @@ export function checkPetrinetAMR(amr: Model) {
 	// Build cache
 	const initialMap: Map<string, Initial> = new Map();
 	const rateMap: Map<string, Rate> = new Map();
+	const symbolList: string[] = [];
 
 	ode?.initials?.forEach((initial) => {
 		initialMap.set(initial.target, initial);
@@ -347,11 +349,17 @@ export function checkPetrinetAMR(amr: Model) {
 	ode?.rates?.forEach((rate) => {
 		rateMap.set(rate.target, rate);
 	});
+	ode?.parameters?.forEach((p) => {
+		symbolList.push(p.id);
+	});
+	model.states.forEach((s: any) => {
+		symbolList.push(s.id);
+	});
 
 	// Check state
 	const stateSet = new Set<string>();
 	const initialSet = new Set<string>();
-	model.states.forEach((state) => {
+	model.states.forEach(async (state) => {
 		const initial = initialMap.get(state.id);
 		if (!initial) {
 			results.push({
@@ -368,6 +376,17 @@ export function checkPetrinetAMR(amr: Model) {
 				id: state.id,
 				content: `${state.id} has no initial.expression. Use Model-Edit to add one.`
 			});
+		} else {
+			const parsedExpression = await pythonInstance.parseExpression(initial?.expression as string);
+			const extraSymbols = _.difference(parsedExpression.freeSymbols, symbolList);
+			if (extraSymbols.length > 0) {
+				results.push({
+					severity: ModelErrorSeverity.ERROR,
+					type: ModelErrorType.STATE,
+					id: state.id,
+					content: `Unknown parameters ${extraSymbols.join(', ')} in initial expression. Use Model-Edit to add one.`
+				});
+			}
 		}
 		if (!isASCII(initial?.expression as string)) {
 			results.push({
@@ -377,6 +396,7 @@ export function checkPetrinetAMR(amr: Model) {
 				content: `${state.id} has non-ascii expression. Use Model-Edit to add one.`
 			});
 		}
+
 		if (stateSet.has(state.id)) {
 			results.push({
 				severity: ModelErrorSeverity.ERROR,
@@ -400,7 +420,7 @@ export function checkPetrinetAMR(amr: Model) {
 	// Check transitions
 	const transitionSet = new Set<string>();
 	const rateSet = new Set<string>();
-	model.transitions.forEach((transition) => {
+	model.transitions.forEach(async (transition) => {
 		const rate = rateMap.get(transition.id);
 
 		if (!rate) {
@@ -418,7 +438,19 @@ export function checkPetrinetAMR(amr: Model) {
 				id: transition.id,
 				content: `${transition.id} has no rate.expression. Use Model-Edit to add one`
 			});
+		} else {
+			const parsedExpression = await pythonInstance.parseExpression(rate?.expression as string);
+			const extraSymbols = _.difference(parsedExpression.freeSymbols, symbolList);
+			if (extraSymbols.length > 0) {
+				results.push({
+					severity: ModelErrorSeverity.ERROR,
+					type: ModelErrorType.TRANSITION,
+					id: transition.id,
+					content: `Unknown parameters ${extraSymbols.join(', ')} in rate.expression. Use Model-Edit to add one`
+				});
+			}
 		}
+
 		if (!isASCII(rate?.expression as string)) {
 			results.push({
 				severity: ModelErrorSeverity.WARNING,

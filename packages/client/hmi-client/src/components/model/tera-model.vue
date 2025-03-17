@@ -222,7 +222,7 @@ function onUpdateModelPart(property: 'state' | 'parameter' | 'observable' | 'tra
 async function fetchModel() {
 	model.value = await getModel(props.assetId);
 	temporaryModel.value = cloneDeep(model.value);
-	modelErrors.value = checkPetrinetAMR(model.value as Model);
+	modelErrors.value = await checkPetrinetAMR(model.value as Model);
 
 	await refreshMMT();
 }
