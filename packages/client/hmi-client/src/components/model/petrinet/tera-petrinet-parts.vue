@@ -11,10 +11,7 @@
 					v-model:filter-severity="stateFilterSeverity"
 				/>
 			</template>
-			<tera-model-error-message
-				:modelErrors="getModelErrors(ModelErrorType.STATE)"
-				@filter-item="transitionsFilter = $event"
-			/>
+			<tera-model-error-message :modelErrors="getModelErrors(ModelErrorType.STATE)" />
 			<tera-model-part
 				v-if="!isEmpty(mmt.initials)"
 				:part-type="PartType.STATE"
@@ -37,10 +34,7 @@
 					v-model:filter-severity="parametersFilterSeverity"
 				/>
 			</template>
-			<tera-model-error-message
-				:modelErrors="getModelErrors(ModelErrorType.PARAMETER)"
-				@filter-item="transitionsFilter = $event"
-			/>
+			<tera-model-error-message :modelErrors="getModelErrors(ModelErrorType.PARAMETER)" />
 			<tera-model-part
 				v-if="!isEmpty(mmt.parameters)"
 				:part-type="PartType.PARAMETER"
@@ -74,10 +68,7 @@
 					v-model:filter-severity="observablesFilterSeverity"
 				/>
 			</template>
-			<tera-model-error-message
-				:modelErrors="getModelErrors(ModelErrorType.OBSERVABLE)"
-				@filter-item="transitionsFilter = $event"
-			/>
+			<tera-model-error-message :modelErrors="getModelErrors(ModelErrorType.OBSERVABLE)" />
 			<tera-model-part
 				:part-type="PartType.OBSERVABLE"
 				v-if="!isEmpty(observables)"
@@ -99,10 +90,7 @@
 					v-model:filter-severity="transitionsFilterSeverity"
 				/>
 			</template>
-			<tera-model-error-message
-				:modelErrors="getModelErrors(ModelErrorType.TRANSITION)"
-				@filter-item="transitionsFilter = $event"
-			/>
+			<tera-model-error-message :modelErrors="getModelErrors(ModelErrorType.TRANSITION)" />
 			<tera-model-part
 				:part-type="PartType.TRANSITION"
 				v-if="!isEmpty(transitions) && !isEmpty(mmt.templates)"
@@ -129,10 +117,7 @@
 			<template #header>
 				Time <span class="artifact-amount">({{ time.length }})</span>
 			</template>
-			<tera-model-error-message
-				:modelErrors="getModelErrors(ModelErrorType.TIME)"
-				@filter-item="transitionsFilter = $event"
-			/>
+			<tera-model-error-message :modelErrors="getModelErrors(ModelErrorType.TIME)" />
 			<tera-model-part
 				v-if="time"
 				:part-type="PartType.TIME"
