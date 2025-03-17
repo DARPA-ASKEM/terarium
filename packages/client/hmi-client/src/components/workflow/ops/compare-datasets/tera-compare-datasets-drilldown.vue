@@ -394,7 +394,7 @@ import Dropdown from 'primevue/dropdown';
 import Divider from 'primevue/divider';
 import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
-import { Dataset, InterventionPolicy, ModelConfiguration } from '@/types/Types';
+import { Dataset, InterventionPolicy, Model, ModelConfiguration } from '@/types/Types';
 import TeraCheckbox from '@/components/widgets/tera-checkbox.vue';
 import RadioButton from 'primevue/radiobutton';
 import VegaChart from '@/components/widgets/VegaChart.vue';
@@ -439,6 +439,7 @@ const datasetResults = ref<{
 	summaryResults: DataArray[];
 	datasetResults: DataArray[];
 } | null>(null);
+const models = ref<Model[]>([]);
 const modelConfigurations = ref<ModelConfiguration[]>([]);
 const interventionPolicies = ref<InterventionPolicy[]>([]);
 const modelConfigIdToInterventionPolicyIdMap = ref<Record<string, string[]>>({});
@@ -547,7 +548,15 @@ const {
 	getChartAnnotationsByChartId,
 	useCompareDatasetCharts,
 	useInterventionRankingCharts
-} = useCharts(props.node.id, null, null, chartData, chartSize, null, null);
+} = useCharts(
+	props.node.id,
+	computed(() => models.value[0]),
+	modelConfigurations,
+	chartData,
+	chartSize,
+	null,
+	null
+);
 const selectedPlotType = computed(() => knobs.value.selectedPlotType);
 const baselineDatasetIndex = computed(() =>
 	datasets.value.findIndex((dataset) => dataset.id === knobs.value.selectedBaselineDatasetId)
@@ -557,16 +566,10 @@ const variableCharts = useCompareDatasetCharts(
 	selectedPlotType,
 	baselineDatasetIndex,
 	datasets,
-	modelConfigurations,
 	interventionPolicies
 );
 
-const rankingCharts = useInterventionRankingCharts(
-	criteriaOfInterestCards,
-	datasets,
-	modelConfigurations,
-	interventionPolicies
-);
+const rankingCharts = useInterventionRankingCharts(criteriaOfInterestCards, datasets, interventionPolicies);
 
 const groundTruthDatasetIndex = computed(() =>
 	datasets.value.findIndex((dataset) => dataset.id === knobs.value.selectedGroundTruthDatasetId)
@@ -775,7 +778,8 @@ onMounted(async () => {
 		datasetResults,
 		modelConfigIdToInterventionPolicyIdMap,
 		modelConfigurations,
-		interventionPolicies
+		interventionPolicies,
+		models
 	);
 
 	// Prepare variable dropdowns

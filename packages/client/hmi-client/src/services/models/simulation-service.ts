@@ -426,15 +426,15 @@ export function extractModelConfigIdsInOrder(ensemblePyciemssMap: Record<string,
 }
 
 /**
- * Group values for each variable by timepoint_id and sort them. This precomputed data will be used to calculate the quantiles on the fly.
+ * Group values for each variable by timepoint_unknown and sort them. This precomputed data will be used to calculate the quantiles on the fly.
  * @param result Pyciemss result data
  * @returns Array of objects where each object has variable names as keys and sorted values as values.
  * e.g. [{variable1: [1, 2, 3], variable2: [4, 5, 6]}, ...] where each item in the variable array is a sample value.
  */
 export const processAndSortSamplesByTimepoint = (result: DataArray) => {
-	// Sort sample values for each variable grouped by timepoint_id (this precomputed data will be used to calculate the quantiles on the fly)
+	// Sort sample values for each variable grouped by timepoint_unknown (this precomputed data will be used to calculate the quantiles on the fly)
 	// If this becomes a performance bottleneck, we can consider using web workers or chunked sorting with setTimeout to avoid blocking the main thread.
-	const grouped = _.groupBy(result, 'timepoint_id');
+	const grouped = _.groupBy(result, 'timepoint_unknown');
 	const resultGroupByTimepointId: GroupedDataArray = [];
 	Object.entries(grouped).forEach(([timepointId, samples]) => {
 		const obj: Record<string, number[]> = {};
