@@ -7,7 +7,7 @@ import _ from 'lodash';
 import { formatTitle } from '@/utils/text';
 import { EnrichmentBlock, EnrichmentType } from './model-from-equations-operation';
 
-interface ModelEnirchmentResponse {
+interface ModelEnrichmentResponse {
 	modelCard: any;
 	modelEnrichment: {
 		states: any[];
@@ -17,7 +17,7 @@ interface ModelEnirchmentResponse {
 	};
 }
 
-export const createEnrichmentCards = (enrichments: ModelEnirchmentResponse) => {
+export const createEnrichmentCards = (enrichments: ModelEnrichmentResponse) => {
 	const cards: AssetBlock<EnrichmentBlock>[] = [];
 
 	function hasNestedObjects(value: any): boolean {
@@ -55,7 +55,7 @@ export const createEnrichmentCards = (enrichments: ModelEnirchmentResponse) => {
 		});
 	}
 
-	function processModelEnrichment(enrichment: any) {
+	function processModelEnrichment(enrichment: ModelEnrichmentResponse['modelEnrichment']) {
 		// Process states
 		enrichment.states?.forEach((state) => {
 			cards.push({
