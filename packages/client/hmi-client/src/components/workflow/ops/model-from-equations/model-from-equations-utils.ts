@@ -3,7 +3,6 @@ import { v4 as uuidv4 } from 'uuid';
 import { Model } from '@/types/Types';
 import { b64EncodeUnicode } from '@/utils/binary';
 import { createModelMap } from '@/model-representation/service';
-import _ from 'lodash';
 import { formatTitle } from '@/utils/text';
 import { EnrichmentBlock, EnrichmentType } from './model-from-equations-operation';
 

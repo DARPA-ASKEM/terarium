@@ -45,7 +45,7 @@ public class GreekDictionary {
 		englishGreek.put("Gamma", "Γ");
 		englishGreek.put("Delta", "Δ");
 		englishGreek.put("Theta", "Θ");
-		englishGreek.put("Kappa", "κ");
+		englishGreek.put("Kappa", "Κ");
 		englishGreek.put("Lambda", "Λ");
 		englishGreek.put("Xi", "Ξ");
 		englishGreek.put("Pi", "Π");

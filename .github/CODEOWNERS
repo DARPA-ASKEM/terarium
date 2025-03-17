@@ -10,14 +10,14 @@
 * @dgauldie @mwdchang @YohannParis
 
 # Client code owners
-/packages/client/ @YohannParis @mwdchang @jryu01 @Tom-Szendrey @blanchco @mloppie
+/packages/client/ @YohannParis @mwdchang @jryu01 @Tom-Szendrey @blanchco @mloppie @DSheffield
 
 # Backend services owners
-/packages/server/ @dgauldie @dvince2 @YohannParis
+/packages/server/ @dgauldie @dvince2 @YohannParis @DSheffield
 /packages/taskrunner/ @dgauldie @YohannParis
 
 # Documentation owners
-docs/*  @dgauldie @pascaleproulx @YohannParis @dvince2
+docs/*  @dgauldie @YohannParis @dvince2
 
 
 # Generated Types - removing generated types from codeowners to reduce client owners spam.
