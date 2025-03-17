@@ -3,7 +3,14 @@ import API from '@/api/api';
 import { useProjects } from '@/composables/project';
 import type { MMT } from '@/model-representation/mira/mira-common';
 import * as EventService from '@/services/event';
-import type { Initial, InterventionPolicy, Model, ModelConfiguration, ModelParameter } from '@/types/Types';
+import type {
+	Initial,
+	InterventionPolicy,
+	Model,
+	ModelConfiguration,
+	ModelParameter,
+	SimplifyModelResponse
+} from '@/types/Types';
 import { Artifact, EventType } from '@/types/Types';
 import { AMRSchemaNames, CalendarDateType } from '@/types/common';
 import { fileToJson } from '@/utils/file';
@@ -205,7 +212,7 @@ export async function getModelEquation(model: Model): Promise<string> {
 	return response?.data?.response ?? '';
 }
 
-export async function getSimplifyModel(model: Model): Promise<string> {
+export async function getSimplifyModel(model: Model): Promise<SimplifyModelResponse> {
 	const response = await API.post(`/mira/simplify`, model);
 	return response?.data?.response ?? '';
 }
