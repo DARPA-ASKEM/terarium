@@ -220,11 +220,13 @@ function onUpdateModelPart(property: 'state' | 'parameter' | 'observable' | 'tra
 }
 
 async function fetchModel() {
-	model.value = await getModel(props.assetId);
-	temporaryModel.value = cloneDeep(model.value);
-	modelErrors.value = await checkPetrinetAMR(model.value as Model);
-
-	await refreshMMT();
+	const fetchedModel = await getModel(props.assetId);
+	if (fetchedModel) {
+		model.value = fetchedModel;
+		updateTemporaryModel(fetchedModel);
+		modelErrors.value = await checkPetrinetAMR(fetchedModel);
+		await refreshMMT();
+	}
 }
 
 onMounted(async () => {
@@ -268,13 +270,5 @@ defineExpose({ temporaryModel });
 	align-items: center;
 	gap: var(--gap-2);
 	margin-left: auto;
-}
-
-.warn {
-	background-color: var(--surface-warning);
-}
-
-.error {
-	background-color: var(--surface-error);
 }
 </style>
