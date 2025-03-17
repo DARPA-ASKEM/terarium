@@ -133,7 +133,7 @@ function getSourceLabel(initialId) {
 	return 'Show source';
 }
 
-const getOtherValuesLabel = computed(() => `Other values (${otherValueList.value?.length})`);
+const getOtherValuesLabel = computed(() => `Configuration values (${otherValueList.value?.length})`);
 
 function isParameterInputEmpty(parameter) {
 	if (parameter.type === DistributionType.Constant) {

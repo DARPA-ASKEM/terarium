@@ -43,7 +43,7 @@ onMounted(async () => {
 		() => [jsonStr.value, isCollapsed.value],
 		async () => {
 			const jsonData = JSON.parse(jsonStr.value);
-			errors.value = checkPetrinetAMR(jsonData);
+			errors.value = await checkPetrinetAMR(jsonData);
 
 			const mmtR = await getMMT(jsonData);
 			if (!mmtR) return;
