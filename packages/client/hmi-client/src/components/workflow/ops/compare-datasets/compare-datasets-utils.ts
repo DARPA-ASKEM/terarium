@@ -1,5 +1,5 @@
 import { isEmpty } from 'lodash';
-import { Dataset, InterventionPolicy, ModelConfiguration } from '@/types/Types';
+import { Dataset, InterventionPolicy, Model, ModelConfiguration } from '@/types/Types';
 import { WorkflowNode, WorkflowPortStatus } from '@/types/workflow';
 import { Ref } from 'vue';
 import { DATASET_VAR_NAME_PREFIX, getDatasetResultCSV, mergeResults, getDataset } from '@/services/dataset';
@@ -13,6 +13,7 @@ import {
 import { getInterventionPolicyById } from '@/services/intervention-policy';
 import { getModelConfigurationById } from '@/services/model-configurations';
 import { ChartData } from '@/composables/useCharts';
+import { getModelByModelConfigurationId } from '@/services/model';
 import { PlotValue, CompareDatasetsState } from './compare-datasets-operation';
 
 interface DataResults {
@@ -195,7 +196,8 @@ export async function initialize(
 	} | null>,
 	modelConfigIdToInterventionPolicyIdMap: Ref<Record<string, string[]>>,
 	modelConfigurations: Ref<ModelConfiguration[]>,
-	interventionPolicies: Ref<InterventionPolicy[]>
+	interventionPolicies: Ref<InterventionPolicy[]>,
+	models: Ref<Model[]>
 ): Promise<Dataset[]> {
 	const { inputs } = node;
 	const datasets: Dataset[] = [];
@@ -245,16 +247,15 @@ export async function initialize(
 	const modelConfigurationIds = Object.keys(modelConfigIdToInterventionPolicyIdMap.value);
 	if (isEmpty(modelConfigurationIds)) return datasets;
 	const modelConfigurationPromises = modelConfigurationIds.map((id) => getModelConfigurationById(id));
-	await Promise.all(modelConfigurationPromises).then((configs) => {
-		modelConfigurations.value = configs.filter((config) => config !== null);
-	});
+	modelConfigurations.value = (await Promise.all(modelConfigurationPromises)) as ModelConfiguration[];
+
+	const modelPromises = modelConfigurationIds.map((id) => getModelByModelConfigurationId(id));
+	models.value = (await Promise.all(modelPromises)) as Model[];
 
 	const interventionPolicyIds = Object.values(modelConfigIdToInterventionPolicyIdMap.value).flat();
 	if (isEmpty(interventionPolicyIds)) return datasets;
 	const interventionPolicyPromises = interventionPolicyIds.map((id) => getInterventionPolicyById(`${id}`));
-	await Promise.all(interventionPolicyPromises).then((policies) => {
-		interventionPolicies.value = policies.filter((policy) => policy !== null);
-	});
+	interventionPolicies.value = (await Promise.all(interventionPolicyPromises)) as InterventionPolicy[];
 
 	return datasets;
 }

@@ -409,7 +409,9 @@ export function useCharts(
 	 * @returns ForecastChartOptions
 	 */
 	const createBaseForecastChartOptions = (setting: ChartSetting) => {
-		const dateOptions = getVegaDateOptions(model?.value ?? null, <ModelConfiguration>modelConfig?.value || null);
+		// If there are multiple model configurations, use the first one to get the date options
+		const mConfig = Array.isArray(modelConfig?.value) ? modelConfig?.value[0] : modelConfig?.value;
+		const dateOptions = getVegaDateOptions(model?.value ?? null, <ModelConfiguration>mConfig || null);
 		const options: ForecastChartOptions = {
 			...getChartLabels(setting),
 			fontSize: setting.fontSize,
