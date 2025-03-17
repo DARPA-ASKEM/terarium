@@ -12,7 +12,6 @@ import { PetrinetRenderer } from '@/model-representation/petrinet/petrinet-rende
 import { layoutInstance } from '@/web-workers/layout/controller';
 import { IGraph } from '@graph-scaffolder/index';
 import { pythonInstance } from '@/web-workers/python/PyodideController';
-import { FramebufferSystem } from 'pixi.js';
 import { NestedPetrinetRenderer } from './petrinet/nested-petrinet-renderer';
 import { collapseTemplates, getContext, isStratifiedModel } from './mira/mira';
 import { extractTemplateMatrix } from './mira/mira-util';
@@ -449,7 +448,6 @@ export async function checkPetrinetAMR(amr: Model) {
 			const parsedExpression = await pythonInstance.parseExpression(rate?.expression as string);
 			const extraSymbols = _.difference(parsedExpression.freeSymbols, symbolList);
 			if (extraSymbols.length > 0) {
-				console.log('>>', parsedExpression.freeSymbols, symbolList);
 				results.push({
 					severity: ModelErrorSeverity.ERROR,
 					type: ModelErrorType.TRANSITION,
