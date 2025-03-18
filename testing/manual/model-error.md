@@ -20,3 +20,6 @@ Import `sir-bad-initials.json`, once done goto its model page. You should see a 
 
 ### 4. Model whose parameter is misinterpreted as a state
 Impport `param-state.json`. Once this is compplete, goto the model page. Under the "State variables" section you should see a warning that `theta` may have been misclassified as a state, along with instructions to address this warning.
+
+### 5. Model which contains grouped controllers can be simplified
+Import `SIR Modified need simplification.json`. Once this is complete go to a model page (model asset, model drilldown, model edit, stratify) and ensure you see a warning bar suggesting that this model can be simplified. Click the link to create a new asset that is simplified and ensure that this new model has been added to your project.
