@@ -6,8 +6,8 @@
 			:class="[
 				'model-part',
 				{
-					'model-part-error': hasModelErrors(base.id, ModelErrorSeverity.ERROR),
-					'model-part-warn': hasModelErrors(base.id, ModelErrorSeverity.WARNING)
+					'model-part-error': hasModelErrors(ModelErrorSeverity.ERROR, base, children),
+					'model-part-warn': hasModelErrors(ModelErrorSeverity.WARNING, base, children)
 				}
 			]"
 		>
@@ -122,6 +122,13 @@
 								getEditingState(index).firstRow + MAX_NUMBER_OF_ROWS
 							)"
 							:key="child.id"
+							:class="[
+								'model-part',
+								{
+									'model-part-error': hasModelErrors(ModelErrorSeverity.ERROR, child),
+									'model-part-warn': hasModelErrors(ModelErrorSeverity.WARNING, child)
+								}
+							]"
 						>
 							<tera-model-part-entry
 								:part-type="partType"
@@ -226,9 +233,9 @@ const filteredItems = computed(() => {
 	if (!filterText && !props.filterSeverity) return props.items;
 
 	const matcher = (partItem: ModelPartItem) => {
-		if (props.filterSeverity === ModelErrorSeverity.WARNING && !hasModelErrors(partItem.id, ModelErrorSeverity.WARNING))
+		if (props.filterSeverity === ModelErrorSeverity.WARNING && !hasModelErrors(ModelErrorSeverity.WARNING, partItem))
 			return false;
-		if (props.filterSeverity === ModelErrorSeverity.ERROR && !hasModelErrors(partItem.id, ModelErrorSeverity.ERROR))
+		if (props.filterSeverity === ModelErrorSeverity.ERROR && !hasModelErrors(ModelErrorSeverity.ERROR, partItem))
 			return false;
 
 		if (partItem.id.toLowerCase().includes(filterText)) return true;
@@ -276,8 +283,10 @@ function updateAllChildren(base: string, key: string, value: string) {
 	ids.forEach((id) => emit('update-item', { id, key, value }));
 }
 
-function hasModelErrors(entryId: ModelError['id'], entrySeverity: ModelErrorSeverity) {
-	return props.modelErrors.some(({ id, severity }) => id === entryId && severity === entrySeverity);
+function hasModelErrors(entrySeverity: ModelErrorSeverity, entry: ModelPartItem, entryChildren: ModelPartItem[] = []) {
+	const check = (itemId: ModelPartItem['id']) =>
+		props.modelErrors.some(({ id, severity }) => id === itemId && severity === entrySeverity);
+	return check(entry.id) || entryChildren.some((child) => check(child.id));
 }
 </script>
 
@@ -321,16 +330,6 @@ ul {
 	}
 }
 
-/* Differentiate between error and warning */
-.model-part-error {
-	border-color: var(--surface-error);
-	border-left-color: var(--error-border-color);
-}
-.model-part-warn {
-	border-color: var(--surface-warning);
-	border-left-color: var(--warning-color);
-}
-
 li {
 	padding-bottom: var(--gap-2);
 	border-bottom: 1px solid var(--surface-border-light);
@@ -344,20 +343,30 @@ li {
 }
 
 .stratified {
-	margin: var(--gap-2) var(--gap-3) 0 var(--gap-3);
-	& > ul {
-		& > li {
-			background: var(--surface-0);
-			border: 1px solid var(--surface-border-light);
-			border-radius: var(--border-radius);
-			border-left: 4px solid var(--surface-border);
-			padding: var(--gap-2) var(--gap-2) var(--gap-2) var(--gap-4);
-			&:hover {
-				background: var(--surface-highlight);
-				border-left-color: var(--primary-color);
-			}
+	margin: var(--gap-2) var(--gap-2) 0 var(--gap-2);
+
+	.model-part {
+		background: var(--surface-0);
+		border: 1px solid var(--surface-border-light);
+		border-radius: var(--border-radius);
+		border-left: 4px solid var(--surface-border);
+		padding: var(--gap-2) var(--gap-2) var(--gap-2) var(--gap-4);
+
+		&:hover {
+			background: var(--surface-highlight);
+			border-left-color: var(--primary-color);
 		}
 	}
+}
+
+/* Differentiate between error and warning */
+.model-part.model-part-error {
+	border-color: var(--surface-error);
+	border-left-color: var(--error-border-color);
+}
+.model-part.model-part-warn {
+	border-color: var(--surface-warning);
+	border-left-color: var(--warning-color);
 }
 
 .concept {

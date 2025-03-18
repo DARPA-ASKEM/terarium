@@ -184,7 +184,7 @@
 												autoResize
 												rows="1"
 												placeholder="Add an expression with LaTeX"
-												class="w-full"
+												class="w-full overflow-y-scroll"
 											/>
 											<template #footer v-if="selectedItem === equation.id">
 												<footer class="flex">
@@ -247,7 +247,7 @@
 												autoResize
 												rows="1"
 												placeholder="Add an expression with LaTeX"
-												class="w-full"
+												class="w-full overflow-y-scroll"
 											/>
 											<template #footer v-if="selectedItem === equation.id">
 												<footer class="flex">
@@ -274,7 +274,7 @@
 										v-if="isModelLoading || (!!selectedModel && _.isEmpty(clonedState.enrichments))"
 										class="pi pi-spin pi-spinner mr-2"
 										:style="{ fontSize: '1rem' }"
-									></i>
+									/>
 									<span class="p-tabview-title">Step 2: Review enrichments</span>
 								</div>
 							</template>

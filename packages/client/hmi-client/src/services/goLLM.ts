@@ -3,24 +3,6 @@ import type { TaskResponse } from '@/types/Types';
 import { logger } from '@/utils/logger';
 
 /**
- * Fetches model card data from the server and wait for task to finish.
- * @param {string} modelId - The model ID.
- * @param {string} documentId - The document ID.
- */
-export async function modelCard(modelId: string, documentId?: string): Promise<void> {
-	try {
-		await API.post<TaskResponse>('/gollm/model-card', null, {
-			params: {
-				'model-id': modelId,
-				'document-id': documentId
-			}
-		});
-	} catch (err) {
-		logger.error(err);
-	}
-}
-
-/**
  * Fetches dataset card data from the server and wait for task to finish.
  * @param {string} datasetId - The model ID.
  * @param {string} documentId - The document ID.
