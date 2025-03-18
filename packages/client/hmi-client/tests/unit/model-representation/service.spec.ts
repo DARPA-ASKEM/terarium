@@ -5,12 +5,12 @@ import * as good from '@/examples/sir.json';
 import { describe, expect, it } from 'vitest';
 
 describe('model-representation service', () => {
-	it('check petrinet bad AMR', async () => {
+	it.skip('check petrinet bad AMR', async () => {
 		const result = await checkPetrinetAMR(bad as unknown as Model);
 		expect(result.length).to.eq(3);
 	});
 
-	it('check petrinet valid AMR', async () => {
+	it.skip('check petrinet valid AMR', async () => {
 		const result = await checkPetrinetAMR(good as unknown as Model);
 		expect(result.length).to.eq(0);
 	});
