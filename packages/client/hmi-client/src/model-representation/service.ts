@@ -354,12 +354,14 @@ export async function checkPetrinetAMR(amr: Model) {
 	model.states.forEach((s: any) => {
 		symbolList.push(s.id);
 	});
+	symbolList.push(ode?.time.id);
 
 	// Check state
 	const stateSet = new Set<string>();
 	const initialSet = new Set<string>();
-	model.states.forEach(async (state) => {
+	async function stateCheck(state: any) {
 		const initial = initialMap.get(state.id);
+
 		if (!initial) {
 			results.push({
 				severity: ModelErrorSeverity.ERROR,
@@ -414,12 +416,13 @@ export async function checkPetrinetAMR(amr: Model) {
 		}
 		stateSet.add(state.id);
 		initialSet.add(initial?.target as string);
-	});
+	}
+	await Promise.all(model.states.map(stateCheck));
 
 	// Check transitions
 	const transitionSet = new Set<string>();
 	const rateSet = new Set<string>();
-	model.transitions.forEach(async (transition) => {
+	async function transitionCheck(transition: any) {
 		const rate = rateMap.get(transition.id);
 
 		if (!rate) {
@@ -487,6 +490,26 @@ export async function checkPetrinetAMR(amr: Model) {
 
 		transitionSet.add(transition.id);
 		rateSet.add(rate?.target as string);
+	}
+	await Promise.all(model.transitions.map(transitionCheck));
+
+	// Check for bad classification, eg state becomes a parameter
+	const nonControllerSet: Set<string> = new Set();
+	model.transitions.forEach((transition) => {
+		const diffs = _.xor(transition.input as string[], transition.output as string[]);
+		diffs.forEach((key) => {
+			nonControllerSet.add(key);
+		});
+	});
+
+	const misidentifiedStates = _.difference([...stateSet.values()], [...nonControllerSet.values()]);
+	misidentifiedStates.forEach((key) => {
+		results.push({
+			severity: ModelErrorSeverity.WARNING,
+			type: ModelErrorType.STATE,
+			id: key,
+			content: `The state "${key}" appears to be constant over time (i.e. its time derivative is zero).  It might be a parameter that was written with explicit time dependence theta(t) in the source equations. If so, go back to the "Create model from equations" operator, edit out the "(t)"  from all instances of "${key}(t)", and recreate the model`
+		});
 	});
 
 	return results;
