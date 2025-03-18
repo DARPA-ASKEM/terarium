@@ -123,6 +123,36 @@ onMounted(() => {
 				pageNo: 7,
 				bbox: normalizeBBox(
 					{
+						l: 85.97999576804322,
+						t: 210.4079999999999,
+						r: 136.64899327410257,
+						b: 223.692,
+						coord_origin: 'TOPLEFT'
+					},
+					{ width: 595, height: 842 }
+				),
+				color: 'yellow',
+				isHighlight: true
+			},
+			{
+				pageNo: 7,
+				bbox: normalizeBBox(
+					{
+						l: 78.41999614014829,
+						t: 230.71799999999996,
+						r: 146.3279927976998,
+						b: 247.90800000000002,
+						coord_origin: 'TOPLEFT'
+					},
+					{ width: 595, height: 842 }
+				),
+				color: 'yellow',
+				isHighlight: true
+			},
+			{
+				pageNo: 7,
+				bbox: normalizeBBox(
+					{
 						l: 70.85999651225335,
 						t: 445.412,
 						r: 558.8759724919855,
