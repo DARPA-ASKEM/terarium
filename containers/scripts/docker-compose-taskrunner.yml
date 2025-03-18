@@ -176,28 +176,26 @@ services:
 #################################################################
 # Uncomment this to run the ocr extraction taskrunner locally #
 #################################################################
-   ocr_extraction-taskrunner:
-     build:
-       context: ../..
-       dockerfile: ./packages/ocr_extraction/Dockerfile
-       target: ocr_extraction_taskrunner_builder
-     container_name: ocr_extraction-taskrunner
-     networks:
-       - terarium
-     ports:
-       - "8002:8002"
-     environment:
-       TERARIUM_MQ_ADDRESSES: "amqp://rabbitmq:5672"
-       TERARIUM_MQ_PASSWORD: "terarium123"
-       TERARIUM_MQ_USERNAME: "terarium"
-       TERARIUM_TASKRUNNER_REQUEST_TYPE: "ocr_extraction"
-       ASKEM_DOC_AI_API_KEY: "${secret_openai_key}"
-     depends_on:
-       rabbitmq:
-         condition: service_healthy
-     extra_hosts:
-       - "${local_host_name}:host-gateway"
-     volumes:
-       - ../../packages/ocr_extraction:/ocr_extraction
-       - ../../packages/taskrunner:/taskrunner
-     command: /ocr_extraction/dev.sh
+#   ocr_extraction-taskrunner:
+#     build:
+#       context: ../..
+#       dockerfile: ./packages/ocr_extraction/Dockerfile
+#       target: ocr_extraction_taskrunner_builder
+#     container_name: ocr_extraction-taskrunner
+#     networks:
+#       - terarium
+#     environment:
+#       TERARIUM_MQ_ADDRESSES: "amqp://rabbitmq:5672"
+#       TERARIUM_MQ_PASSWORD: "terarium123"
+#       TERARIUM_MQ_USERNAME: "terarium"
+#       TERARIUM_TASKRUNNER_REQUEST_TYPE: "ocr_extraction"
+#       ASKEM_DOC_AI_API_KEY: "${secret_openai_key}"
+#     depends_on:
+#       rabbitmq:
+#         condition: service_healthy
+#     extra_hosts:
+#       - "${local_host_name}:host-gateway"
+#     volumes:
+#       - ../../packages/ocr_extraction:/ocr_extraction
+#       - ../../packages/taskrunner:/taskrunner
+#     command: /ocr_extraction/dev.sh
