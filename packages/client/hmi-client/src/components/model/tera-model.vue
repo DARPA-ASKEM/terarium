@@ -33,7 +33,7 @@
 			<Message class="mx-3" severity="warn" v-if="modelErrors.length > 0">
 				Errors and/or warnings detected, please check individual sections below.
 			</Message>
-			<Message v-if="canModelBeSimplified" class="mx-3" severity="warning">
+			<Message v-if="canModelBeSimplified" class="mx-3" severity="warn">
 				This model appears to have complex rate laws. It can lead to an combinatorial explosion if it is stratified.
 				This can be simplified reducing the number of controllers by {{ numberOfControllersSimplifyReduces }}.
 				<Button
