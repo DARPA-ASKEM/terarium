@@ -17,3 +17,6 @@ Import `no-mass.json`, once done goto its model page. You should see warnings ab
 ### 2. Model-level error/warning
 Import `sir-bad-initials.json`, once done goto its model page. You should see a model-level error about mismatching states.
 
+
+### 4. Model whose parameter is misinterpreted as a state
+Impport `param-state.json`. Once this is compplete, goto the model page. Under the "State variables" section you should see a warning that `theta` may have been misclassified as a state, along with instructions to address this warning.
