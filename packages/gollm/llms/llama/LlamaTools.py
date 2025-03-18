@@ -339,23 +339,6 @@ class LlamaTools(LlmToolsInterface):
         return prompt
 
 
-    def create_model_card_prompt(self, amr: str, document: str, schema: str) -> str:
-        print("Building prompt to produce a model card...")
-        if not document:
-            document = "NO RESEARCH PAPER PROVIDED"
-
-        prompt = LLAMA_START_PROMPT
-        prompt += MODEL_CARD_PROMPT.format(
-            document=escape_curly_braces(document),
-            amr=escape_curly_braces(amr)
-        )
-        prompt += LLAMA_RETURN_INSTRUCTIONS.format(
-            schema=schema
-        )
-        prompt += LLAMA_END_PROMPT
-        return prompt
-
-
     def create_compare_models_prompt(self, amrs: List[str], dataset: str, goal: str, schema: str) -> str:
         print("Building prompt to compare models...")
         joined_escaped_amrs = "\n\n------\n\n".join([escape_curly_braces(amr) for amr in amrs])
