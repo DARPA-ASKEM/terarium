@@ -61,7 +61,6 @@ import software.uncharted.terarium.hmiserver.service.tasks.EquationsFromImageRes
 import software.uncharted.terarium.hmiserver.service.tasks.GenerateSummaryHandler;
 import software.uncharted.terarium.hmiserver.service.tasks.InterventionsFromDatasetResponseHandler;
 import software.uncharted.terarium.hmiserver.service.tasks.InterventionsFromDocumentResponseHandler;
-import software.uncharted.terarium.hmiserver.service.tasks.ModelCardResponseHandler;
 import software.uncharted.terarium.hmiserver.service.tasks.TaskService;
 import software.uncharted.terarium.hmiserver.service.tasks.TaskService.TaskMode;
 import software.uncharted.terarium.hmiserver.service.tasks.TaskUtilities;
@@ -93,7 +92,6 @@ public class GoLLMController {
 	private final GenerateSummaryHandler generateSummaryHandler;
 	private final InterventionsFromDocumentResponseHandler interventionsFromDocumentResponseHandler;
 	private final InterventionsFromDatasetResponseHandler interventionsFromDatasetResponseHandler;
-	private final ModelCardResponseHandler modelCardResponseHandler;
 
 	private final Messages messages;
 
@@ -109,103 +107,6 @@ public class GoLLMController {
 		taskService.addResponseHandler(generateSummaryHandler);
 		taskService.addResponseHandler(interventionsFromDocumentResponseHandler);
 		taskService.addResponseHandler(interventionsFromDatasetResponseHandler);
-		taskService.addResponseHandler(modelCardResponseHandler);
-	}
-
-	@PostMapping("/model-card")
-	@Secured(Roles.USER)
-	@Operation(summary = "Dispatch a `GoLLM Model Card` task")
-	@HasProjectAccess
-	@ApiResponses(
-		value = {
-			@ApiResponse(
-				responseCode = "200",
-				description = "Dispatched successfully",
-				content = @Content(
-					mediaType = "application/json",
-					schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = TaskResponse.class)
-				)
-			),
-			@ApiResponse(responseCode = "400", description = "The provided document text is too long", content = @Content),
-			@ApiResponse(
-				responseCode = "404",
-				description = "The provided model or document arguments are not found",
-				content = @Content
-			),
-			@ApiResponse(responseCode = "500", description = "There was an issue dispatching the request", content = @Content)
-		}
-	)
-	public ResponseEntity<TaskResponse> createModelCardTask(
-		@RequestParam(name = "model-id") final UUID modelId,
-		@RequestParam(name = "document-id", required = false) final UUID documentId,
-		@RequestParam(name = "mode", required = false, defaultValue = "ASYNC") final TaskMode mode,
-		@RequestParam(name = "project-id", required = false) final UUID projectId
-	) {
-		// Grab the model
-		final Model model = modelService
-			.getAsset(modelId)
-			.orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, messages.get("model.not-found")));
-
-		// Grab the document
-		if (documentId != null) {
-			throw new ResponseStatusException(HttpStatus.NOT_FOUND, messages.get("document.not-found"));
-		}
-
-		final Optional<DocumentAsset> documentOpt = documentAssetService.getAsset(documentId);
-		if (documentOpt.isEmpty()) {
-			log.warn(String.format("Document %s not found", documentId));
-			throw new ResponseStatusException(HttpStatus.NOT_FOUND, messages.get("document.not-found"));
-		}
-
-		// make sure there is text in the document
-		if (documentOpt.get().getText() == null || documentOpt.get().getText().isEmpty()) {
-			log.warn(String.format("Document %s has no text to send", documentId));
-			throw new ResponseStatusException(HttpStatus.NOT_FOUND, messages.get("document.extraction.not-done"));
-		}
-
-		// check for input length
-		if (documentOpt.get().getText().length() > ModelCardResponseHandler.MAX_TEXT_SIZE) {
-			log.warn(String.format("Document %s text too long for GoLLM model card task", documentId));
-			throw new ResponseStatusException(HttpStatus.BAD_REQUEST, messages.get("document.text-length-exceeded"));
-		}
-
-		final TaskRequest req;
-		try {
-			req = TaskUtilities.getModelCardTask(
-				currentUserService.get().getId(),
-				documentOpt.get(),
-				model,
-				projectId,
-				config.getLlm()
-			);
-		} catch (final IOException e) {
-			log.error("Unable to create Model Card task", e);
-			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("generic.io-error.write"));
-		}
-
-		final TaskResponse resp;
-		try {
-			resp = taskService.runTask(mode, req);
-			if (mode == TaskMode.SYNC && resp.getStatus() != TaskStatus.SUCCESS) {
-				log.error("Task failed", resp.getStderr());
-				throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, resp.getStderr());
-			}
-		} catch (final JsonProcessingException e) {
-			log.error("Unable to serialize input", e);
-			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("task.gollm.json-processing"));
-		} catch (final TimeoutException e) {
-			log.warn("Timeout while waiting for task response", e);
-			throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, messages.get("task.gollm.timeout"));
-		} catch (final InterruptedException e) {
-			log.warn("Interrupted while waiting for task response", e);
-			throw new ResponseStatusException(HttpStatus.UNPROCESSABLE_ENTITY, messages.get("task.gollm.interrupted"));
-		} catch (final ExecutionException e) {
-			log.error("Error while waiting for task response", e);
-			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("task.gollm.execution-failure"));
-		}
-
-		// send the response
-		return ResponseEntity.ok().body(resp);
 	}
 
 	@GetMapping("/configure-model")
