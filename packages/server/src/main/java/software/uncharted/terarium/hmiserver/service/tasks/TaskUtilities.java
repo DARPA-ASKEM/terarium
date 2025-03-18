@@ -184,8 +184,8 @@ public class TaskUtilities {
 				if (newGrounding == null) {
 					part.setGrounding(curatedGrounding);
 				} else {
-					newGrounding.setIdentifiers(curatedGrounding.getIdentifiers());
-					newGrounding.setModifiers(curatedGrounding.getModifiers());
+					newGrounding.getIdentifiers().putAll(curatedGrounding.getIdentifiers());
+					newGrounding.getModifiers().putAll(curatedGrounding.getModifiers());
 					part.setGrounding(newGrounding);
 				}
 			}

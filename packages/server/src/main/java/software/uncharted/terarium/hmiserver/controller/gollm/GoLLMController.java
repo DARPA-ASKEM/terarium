@@ -819,18 +819,16 @@ public class GoLLMController {
 		}
 
 		// Grab the model
-		final Optional<Model> model = modelService.getAsset(modelId);
-		if (model.isEmpty()) {
-			log.warn(String.format("Model %s not found", modelId));
-			throw new ResponseStatusException(HttpStatus.NOT_FOUND, messages.get("model.not-found"));
-		}
+		final Model model = modelService
+			.getAsset(modelId)
+			.orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, messages.get("model.not-found")));
 
 		final TaskRequest req;
 		try {
 			req = TaskUtilities.getEnrichModelTaskRequest(
 				currentUserService.get().getId(),
 				document,
-				model.get(),
+				model,
 				projectId,
 				overwrite,
 				config.getLlm()
@@ -844,7 +842,7 @@ public class GoLLMController {
 		try {
 			resp = taskService.runTask(mode, req);
 			if (mode == TaskMode.SYNC && resp.getStatus() != TaskStatus.SUCCESS) {
-				log.error("Task failed", resp.getStderr());
+				log.error("Task failed: {}", resp.getStderr());
 				throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, resp.getStderr());
 			}
 		} catch (final JsonProcessingException e) {

@@ -6,7 +6,7 @@ import { createModelMap } from '@/model-representation/service';
 import { formatTitle } from '@/utils/text';
 import { EnrichmentBlock, EnrichmentType } from './model-from-equations-operation';
 
-interface ModelEnirchmentResponse {
+interface ModelEnrichmentResponse {
 	modelCard: any;
 	modelEnrichment: {
 		states: any[];
@@ -16,14 +16,11 @@ interface ModelEnirchmentResponse {
 	};
 }
 
-export const createEnrichmentCards = (enrichments: ModelEnirchmentResponse) => {
+export const createEnrichmentCards = (enrichments: ModelEnrichmentResponse) => {
 	const cards: AssetBlock<EnrichmentBlock>[] = [];
 
 	function hasNestedObjects(value: any): boolean {
-		if (typeof value !== 'object' || Array.isArray(value) || value === null) {
-			return false;
-		}
-		return true;
+		return typeof value === 'object' && !Array.isArray(value) && value !== null;
 	}
 
 	function processModelCardSection(content: any, parentPath: string[] = []) {
@@ -32,7 +29,7 @@ export const createEnrichmentCards = (enrichments: ModelEnirchmentResponse) => {
 		Object.entries(content).forEach(([key, value]) => {
 			const currentPath = [...parentPath, key];
 
-			// Only create a card if this is a leaf object (no nested objects)
+			// Only create a card if this is a leaf object (no nested objects),
 			// or if it's not an object at all
 			if (!hasNestedObjects(value)) {
 				cards.push({
@@ -48,13 +45,13 @@ export const createEnrichmentCards = (enrichments: ModelEnirchmentResponse) => {
 			}
 
 			// Continue recursion for objects
-			if (typeof value === 'object' && !Array.isArray(value) && value !== null) {
+			if (hasNestedObjects(value)) {
 				processModelCardSection(value, currentPath);
 			}
 		});
 	}
 
-	function processModelEnrichment(enrichment: any) {
+	function processModelEnrichment(enrichment: ModelEnrichmentResponse['modelEnrichment']) {
 		// Process states
 		enrichment.states?.forEach((state) => {
 			cards.push({

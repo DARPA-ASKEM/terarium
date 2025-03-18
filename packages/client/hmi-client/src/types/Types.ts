@@ -43,6 +43,11 @@ export interface ClientLog {
     args?: string[];
 }
 
+export interface SimplifyModelResponse {
+    amr: Model;
+    max_controller_decrease: number;
+}
+
 export interface StatusUpdate<T> {
     progress: number;
     state: ProgressState;
