@@ -18,11 +18,10 @@ RUN apt-get update && apt-get install --assume-yes --no-install-recommends \
 	rm -rf /var/lib/apt/lists/*
 
 # Install ocr-extraction
-COPY ./packages/ocr_extraction/requirements.txt /ocr_extraction/requirements.txt
-COPY ./packages/ocr_extraction/src /ocr_extraction/src
+COPY ./packages/ocr_extraction/requirements.txt requirements.txt
 COPY ./packages/ocr_extraction/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 
-WORKDIR /ocr_extraction
+WORKDIR /
 RUN pip3 install --no-cache-dir --requirement requirements.txt
 
 #Install uvicorn and supervisord
@@ -65,8 +64,7 @@ COPY ./packages/ocr_extraction/supervisord.conf /etc/supervisor/conf.d/superviso
 COPY --from=ocr_extraction_taskrunner_builder /taskrunner/build/libs/*.jar /taskrunner.jar
 
 # Install table-extraction
-COPY --from=ocr_extraction_taskrunner_builder /ocr_extraction /ocr_extraction
-
+COPY ./packages/ocr_extraction /ocr_extraction
 
 WORKDIR /ocr_extraction
 RUN pip install --no-cache-dir --requirement requirements.txt
