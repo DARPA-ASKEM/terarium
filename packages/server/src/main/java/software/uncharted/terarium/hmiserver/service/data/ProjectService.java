@@ -173,10 +173,7 @@ public class ProjectService {
 	@Observed(name = "function_profile")
 	public boolean isProjectPublic(final UUID id) {
 		final Optional<Boolean> isPublic = projectRepository.findPublicAssetByIdNative(id);
-		if (isPublic.isEmpty()) {
-			return false;
-		}
-		return isPublic.get();
+		return isPublic.orElse(false);
 	}
 
 	@Observed(name = "function_profile")
@@ -189,21 +186,5 @@ public class ProjectService {
 			log.error("Error checking project permission", e);
 			throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, messages.get("rebac.service-unavailable"));
 		}
-	}
-
-	@Observed(name = "function_profile")
-	public Schema.Permission checkPermissionCanWrite(final String userId, final UUID projectId)
-		throws ResponseStatusException {
-		try {
-			final RebacUser rebacUser = new RebacUser(userId, reBACService);
-			final RebacProject rebacProject = new RebacProject(projectId, reBACService);
-			if (rebacUser.can(rebacProject, Schema.Permission.WRITE)) {
-				return Schema.Permission.WRITE;
-			}
-		} catch (final Exception e) {
-			log.error("Error check project permission", e);
-			throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, messages.get("rebac.service-unavailable"));
-		}
-		throw new ResponseStatusException(HttpStatus.FORBIDDEN, messages.get("rebac.unauthorized-update"));
 	}
 }

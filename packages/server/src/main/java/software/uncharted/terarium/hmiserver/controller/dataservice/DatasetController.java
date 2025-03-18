@@ -134,8 +134,6 @@ public class DatasetController {
 		@PathVariable("id") final UUID id,
 		@RequestParam(name = "project-id", required = false) final UUID projectId
 	) {
-		final String userId = currentUserService.get().getId();
-
 		try {
 			Dataset dataset = datasetService
 				.getAsset(id)
@@ -147,11 +145,12 @@ public class DatasetController {
 			 	requests instead of upload URL!!s
 			 */
 			// If the user as write permission, and the stats are not present, calculate them
-			final Schema.Permission permissionCanWrite = projectService.checkPermissionCanWrite(userId, projectId);
-			if (
-				permissionCanWrite.equals(Schema.Permission.WRITE) &&
-				dataset.getColumns().stream().allMatch(column -> column.getStats() == null)
-			) {
+			final boolean permissionCanWrite = projectService.hasPermission(
+				projectId,
+				currentUserService.get(),
+				Schema.Permission.WRITE
+			);
+			if (permissionCanWrite && dataset.getColumns().stream().allMatch(column -> column.getStats() == null)) {
 				// Calculate the statistics for the columns
 				final Optional<PresignedURL> datasetUrl = datasetService.getDownloadUrl(
 					dataset.getId(),
