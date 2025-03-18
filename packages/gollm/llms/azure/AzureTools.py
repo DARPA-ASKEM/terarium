@@ -22,7 +22,6 @@ from common.prompts.interventions_from_dataset import INTERVENTIONS_FROM_DATASET
 from common.prompts.interventions_from_document import INTERVENTIONS_FROM_DOCUMENT_PROMPT
 from common.prompts.latex_style_guide import LATEX_STYLE_GUIDE
 from common.prompts.latex_to_sympy import LATEX_TO_SYMPY_PROMPT
-from common.prompts.model_card import MODEL_CARD_PROMPT
 from common.prompts.model_enrichment import (MODEL_ENRICH_PROMPT_WITH_DOCUMENT, MODEL_ENRICH_PROMPT_WITHOUT_DOCUMENT)
 from common.prompts.model_meta_compare import (
     MODEL_METADATA_COMPARE_PROMPT,
