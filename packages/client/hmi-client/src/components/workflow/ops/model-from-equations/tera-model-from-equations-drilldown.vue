@@ -23,10 +23,13 @@
 			</tera-slider-panel>
 			<tera-slider-panel class="input-config" v-model:is-open="isInputOpen" header="Input" content-width="100%">
 				<template #content>
-					<TabView>
+					<TabView v-model:active-index="activeTabIndex">
 						<TabPanel header="Step 1: Specify Equations">
 							<main class="px-3">
 								<header class="pb-2">
+									<div class="warn" v-if="selectedModel">
+										Move to <a @click="activeTabIndex = 1">step two</a> if the model looks correct
+									</div>
 									<nav class="flex align-items-center mb-2">
 										<p v-if="document">Specify which equations to use for this model.</p>
 										<p v-else>Connect a document or enter equations manually below.</p>
@@ -35,10 +38,12 @@
 											label="Create Model"
 											@click="onRun"
 											:disabled="_.isEmpty(clonedState.includedEquations)"
+											:loading="isModelLoading"
 										/>
 									</nav>
+
 									<section
-										class="input-container"
+										class="input-container gap-2"
 										@dragenter.prevent="dragEnterCount++"
 										@dragleave.prevent="dragEnterCount--"
 										@dragover.prevent
@@ -94,6 +99,33 @@
 												text
 												class="ml-2"
 												:disabled="isEmpty(multipleEquations)"
+											/>
+										</div>
+										<div class="input-group gap-1">
+											<span>Examples:</span>
+											<Button
+												label="SIR"
+												size="small"
+												severity="secondary"
+												@click="multipleEquations = exampleEquations.SIR"
+											/>
+											<Button
+												label="SEIHRD"
+												size="small"
+												severity="secondary"
+												@click="multipleEquations = exampleEquations.SEIHRD"
+											/>
+											<Button
+												label="SIDARTHE"
+												size="small"
+												severity="secondary"
+												@click="multipleEquations = exampleEquations.SIDARTHE"
+											/>
+											<Button
+												label="SVIRD"
+												size="small"
+												severity="secondary"
+												@click="multipleEquations = exampleEquations.SVIRD"
 											/>
 										</div>
 									</section>
@@ -183,7 +215,6 @@
 									>
 										<tera-asset-block
 											:is-toggleable="false"
-											:is-permitted="false"
 											:use-default-style="false"
 											:class="['asset-panel', { selected: selectedItem === equation.id }]"
 										>
@@ -199,7 +230,7 @@
 												/>
 											</template>
 											<section>
-												<div class="block-container">
+												<div class="block-container" @click.capture.stop="selectItem(equation, $event)">
 													<tera-math-editor
 														v-if="equation.asset.text"
 														:latex-equation="equation.asset.text"
@@ -236,7 +267,96 @@
 								</ul>
 							</main>
 						</TabPanel>
-						<!-- TODO: <TabPanel header="Step 2: Review Enhancements" disabled /> -->
+						<TabPanel :disabled="isModelLoading || !selectedModel || _.isEmpty(clonedState.enrichments)">
+							<template #header>
+								<div class="flex align-items-center">
+									<i
+										v-if="isModelLoading || (!!selectedModel && _.isEmpty(clonedState.enrichments))"
+										class="pi pi-spin pi-spinner mr-2"
+										:style="{ fontSize: '1rem' }"
+									></i>
+									<span class="p-tabview-title">Step 2: Review enrichments</span>
+								</div>
+							</template>
+							<header class="flex mb-2">
+								<Button class="ml-auto" label="Use all" outlined severity="secondary" @click="onUseAll" />
+								<Button class="ml-2" label="Add prompt" icon="pi pi-plus" @click="addPrompt" />
+							</header>
+							<main>
+								<ul class="blocks-container">
+									<li
+										v-for="enrichment in clonedState.enrichments"
+										:key="enrichment.id"
+										@click="selectEnrichment(enrichment)"
+									>
+										<tera-asset-block
+											:is-toggleable="false"
+											:use-default-style="false"
+											:class="['asset-panel', { selected: selectedEnrichment === enrichment.id }]"
+										>
+											<template #header>
+												<h6>{{ enrichment.name }}</h6>
+												<Checkbox
+													@click.stop
+													class="flex-shrink-0 ml-auto"
+													v-model="enrichment.asset.include"
+													:binary="true"
+													:disabled="enrichment.asset.type === EnrichmentType.CUSTOM"
+													@update:model-value="onEnrichmentChange"
+												/>
+											</template>
+											<section class="flex flex-column gap-2" v-if="selectedEnrichment === enrichment.id">
+												<template v-if="enrichment.asset.type === EnrichmentType.DESCRIPTION">
+													<ul v-if="Array.isArray(enrichment.asset.content)">
+														<li v-for="item in enrichment.asset.content" :key="item">
+															{{ item }}
+														</li>
+													</ul>
+													<p v-else>{{ enrichment.asset.content }}</p>
+												</template>
+												<template v-else-if="enrichment.asset.type === EnrichmentType.CUSTOM">
+													<div class="flex align-items-center gap-2 w-full">
+														<i class="pi pi-sparkles" />
+														<tera-input-text class="w-full" :model-value="'What does the model describe?'" />
+													</div>
+													<p>{{ enrichment.asset.content }}</p>
+												</template>
+												<template v-else>
+													<span v-if="enrichment.asset.content.name">
+														<strong>Name:</strong> {{ enrichment.asset.content.name }}
+													</span>
+													<span v-if="enrichment.asset.content.description">
+														<strong>Description:</strong> {{ enrichment.asset.content.description }}
+													</span>
+													<span v-if="enrichment.asset.content.units?.expression">
+														<strong>Unit:</strong> {{ enrichment.asset.content.units?.expression }}
+													</span>
+												</template>
+											</section>
+
+											<template #footer v-if="selectedEnrichment === enrichment.id">
+												<footer class="flex">
+													<Button label="Close" outlined severity="secondary" @click.stop="selectedEnrichment = ''" />
+													<Button
+														class="ml-auto"
+														icon="pi pi-arrow-up"
+														label="Previous"
+														@click.stop="goToPreviousEnrichment"
+													/>
+													<Button
+														class="ml-2"
+														icon="pi pi-arrow-down"
+														icon-pos="right"
+														label="Next"
+														@click.stop="goToNextEnrichment"
+													/>
+												</footer>
+											</template>
+										</tera-asset-block>
+									</li>
+								</ul>
+							</main>
+						</TabPanel>
 					</TabView>
 				</template>
 			</tera-slider-panel>
@@ -250,7 +370,14 @@
 					<!--The isOutputOpen condition enables the model diagram within tera-model to render properly
 						since we need some sort of width available-->
 					<tera-drilldown-preview v-if="isOutputOpen" :is-loading="isModelLoading">
-						<tera-model v-if="selectedModel" is-workflow is-save-for-reuse :asset-id="selectedModel.id" />
+						<tera-model
+							v-if="selectedModel"
+							is-workflow
+							is-save-for-reuse
+							:asset-id="selectedModel.id"
+							hide-enrichment
+							ref="modelRef"
+						/>
 						<tera-operator-placeholder v-else :node="node" class="h-100">
 							<p v-if="isModelLoading">Model is being created...</p>
 							<p v-else>Select equations to create a model</p>
@@ -282,11 +409,11 @@ import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
 import TeraDrilldownPreview from '@/components/drilldown/tera-drilldown-preview.vue';
 import TeraAssetBlock from '@/components/widgets/tera-asset-block.vue';
 import { computed, onMounted, onBeforeUnmount, ref, watch } from 'vue';
-import type { Card, DocumentAsset, Model } from '@/types/Types';
+import { TaskStatus, type Card, type DocumentAsset, type Model } from '@/types/Types';
 import _, { cloneDeep, isEmpty } from 'lodash';
 import { equationsToAMR, getCleanedEquations, type EquationsToAMRRequest } from '@/services/knowledge';
 import { downloadDocumentAsset, getDocumentAsset, getDocumentFileAsText } from '@/services/document-assets';
-import { equationsFromImage } from '@/services/goLLM';
+import { enrichModelMetadata, equationsFromImage } from '@/services/goLLM';
 import { getModel, updateModel } from '@/services/model';
 import { useProjects } from '@/composables/project';
 import TeraOperatorPlaceholder from '@/components/operator/tera-operator-placeholder.vue';
@@ -302,21 +429,33 @@ import { createCopyTextToClipboard } from '@/utils/clipboard';
 import TabPanel from 'primevue/tabpanel';
 import TabView from 'primevue/tabview';
 import { v4 as uuidv4 } from 'uuid';
-import { ModelFromEquationsState, EquationBlock } from './model-from-equations-operation';
+import TeraInputText from '@/components/widgets/tera-input-text.vue';
+import {
+	ModelFromEquationsState,
+	EquationBlock,
+	EnrichmentBlock,
+	EnrichmentType
+} from './model-from-equations-operation';
+import { createEnrichmentCards, updateModelWithEnrichments } from './model-from-equations-utils';
 
 const emit = defineEmits(['close', 'update-state', 'append-output', 'select-output']);
 const props = defineProps<{
 	node: WorkflowNode<ModelFromEquationsState>;
 }>();
 
+const activeTabIndex = ref(0);
+
 const selectedOutputId = ref<string>('');
+
+const modelRef = ref();
 
 const clonedState = ref<ModelFromEquationsState>({
 	includedEquations: [],
 	excludedEquations: [],
 	text: '',
 	modelFramework: 'petrinet',
-	modelId: null
+	modelId: null,
+	enrichments: []
 });
 
 /**
@@ -332,6 +471,12 @@ const { btnCopyLabel, setCopyClipboard } = createCopyTextToClipboard();
 const pdfViewer = ref();
 
 const selectedItem = ref('');
+
+const selectedEnrichment = ref('');
+
+const selectEnrichment = (enrichment: AssetBlock<EnrichmentBlock>) => {
+	selectedEnrichment.value = enrichment.id;
+};
 
 const selectItem = (equation: AssetBlock<EquationBlock>, event?) => {
 	selectedItem.value = equation.id;
@@ -365,12 +510,43 @@ const outputArrowDirection = computed(() => (!isDocViewerOpen.value && !isInputO
 
 const documentEquations = ref<AssetBlock<EquationBlock>[]>();
 
+const exampleEquations = Object.freeze({
+	SIR: [
+		'\\frac{d S(t)}{d t} = -\\frac{\\beta * S(t) * I(t)}{N}',
+		'\\frac{d I(t)}{d t} = \\frac{\\beta * S(t) * I(t)}{N} - \\gamma * I(t)',
+		'\\frac{d R(t)}{d t} = \\gamma * I(t)'
+	].join('\n'),
+	SEIHRD: [
+		'\\frac{d S(t)}{d t} = - \\frac{\\beta * S(t) * I(t)}{N} - \\mu * S(t)',
+		'\\frac{d E(t)}{d t} = \\frac{\\beta * S(t) * I(t)}{N} - \\sigma * E(t) - \\mu * E(t)',
+		'\\frac{d I(t)}{d t} = \\sigma * E(t) - \\gamma * I(t) - \\mu * I(t)',
+		'\\frac{d H(t)}{d t} = \\phi * \\gamma * I(t) - \\delta * \\kappa * H(t) - (1 - \\delta) * \\kappa * H(t) - \\mu * H(t)',
+		'\\frac{d R(t)}{d t} = (1 - \\phi) * \\gamma * I(t) + (1 - \\delta) * \\kappa * H(t) - \\mu * R(t)',
+		'\\frac{d D(t)}{d t} =  \\delta * \\kappa * H(t) + \\mu * S(t) + \\mu * E(t) + \\mu * I(t) + \\mu * H(t) + \\mu * R(t)'
+	].join('\n'),
+	SIDARTHE: [
+		'\\frac{d S(t)}{d t} = - \\alpha * I(t) * S(t) - \\beta * D(t) * S(t) - \\gamma * A(t) * S(t) - \\delta * R(t) * S(t)',
+		'\\frac{d I(t)}{d t} = \\alpha * I(t) * S(t) + \\beta * D(t) * S(t) + \\gamma * A(t) * S(t) + \\delta * R(t) * S(t) - \\epsilon * I(t) - \\zeta * I(t) - \\lambda * I(t)',
+		'\\frac{d D(t)}{d t} = \\epsilon * I(t) - \\eta * D(t) - \\rho * D(t)',
+		'\\frac{d A(t)}{d t} = \\zeta * I(t) - \\theta * A(t) - \\mu * A(t) - \\kappa * A(t)',
+		'\\frac{d R(t)}{d t} = \\eta * D(t) + \\theta * A(t) - \\nu * R(t) - \\xi * R(t)',
+		'\\frac{d T(t)}{d t} =  \\mu * A(t) + \\nu * R(t) - \\sigma * T(t) - \\tau * T(t)',
+		'\\frac{d H(t)}{d t} = \\lambda * I(t) + \\rho * D(t) + \\kappa * A(t) + \\xi * R(t) + \\sigma * T(t)',
+		'\\frac{d E(t)}{d t} = \\tau * T(t)'
+	].join('\n'),
+	SVIRD: [
+		'\\frac{d S(t)}{d t} = -\\epsilon * \\omega * S(t) - \\beta * S(t) * I(t)',
+		'\\frac{d V(t)}{d t} = \\epsilon * \\omega * S(t) - \\beta_V * V(t) * I(t) - \\eta_V * V(t)',
+		'\\frac{d I(t)}{d t} = \\beta * S(t) * I(t) + \\beta_V * V(t) * I(t) + \\beta * S_{VR} * I(t) - \\gamma * I(t) - \\mu * I(t)',
+		'\\frac{d R(t)}{d t} = \\gamma * I(t) - \\eta_R * R(t)',
+		'\\frac{d D(t)}{d t} = \\mu * I(t)',
+		'\\frac{d S_{VR}(t)}{dt} = \\eta_R(t) * R(t) + \\eta_V * V(t) - \\beta * S_{VR} * I(t)'
+	].join('\n')
+});
+
 onMounted(async () => {
 	window.addEventListener('paste', handlePasteEvent);
 	clonedState.value = cloneDeep(props.node.state);
-	if (selectedOutputId.value) {
-		onSelection(selectedOutputId.value);
-	}
 
 	const documentId = props.node.inputs?.[0]?.value?.[0]?.documentId;
 
@@ -529,6 +705,14 @@ async function onRun() {
 	// If there isn't a modelId returned at least show the cleaned equations
 	if (modelId) {
 		clonedState.value.modelId = modelId;
+		const enrichResponse = await enrichModelMetadata(modelId, document.value?.id ?? '', false);
+		// clear enrichments when new model is created
+		clonedState.value.enrichments = [];
+		// FIXME: The response can be returned right away and this may not get caught in the node subscriber since the model id isn't populated in time
+		if (enrichResponse.status === TaskStatus.Success) {
+			const { response: parsedEnrichOutput } = JSON.parse(atob(enrichResponse.output));
+			clonedState.value.enrichments = createEnrichmentCards(parsedEnrichOutput);
+		}
 	}
 
 	// If the equations were cleaned that means these cleaned equations should be added to the input list
@@ -547,6 +731,7 @@ async function onRun() {
 			}))
 		);
 	}
+
 	emit('append-output', {
 		label: `Output - ${props.node.outputs.length + 1}`,
 		state: cloneDeep(clonedState.value),
@@ -585,6 +770,24 @@ async function fetchModel() {
 	selectedModel.value = model;
 	isModelLoading.value = false;
 }
+
+const onEnrichmentChange = () => {
+	if (modelRef.value?.temporaryModel) {
+		updateModelWithEnrichments(modelRef.value.temporaryModel, clonedState.value.enrichments);
+	}
+};
+
+const onUseAll = () => {
+	clonedState.value.enrichments.forEach((enrichment) => {
+		if (enrichment.asset.type === EnrichmentType.CUSTOM) {
+			return;
+		}
+		enrichment.asset.include = true;
+	});
+	if (modelRef.value?.temporaryModel) {
+		updateModelWithEnrichments(modelRef.value.temporaryModel, clonedState.value.enrichments);
+	}
+};
 
 function getEquations() {
 	const newEquations = multipleEquations.value.split('\n');
@@ -627,6 +830,33 @@ const goToPrevious = () => {
 	}
 };
 
+const goToNextEnrichment = () => {
+	const currentIndex = clonedState.value.enrichments.findIndex((eq) => eq.id === selectedEnrichment.value);
+	if (currentIndex < clonedState.value.enrichments.length - 1) {
+		selectEnrichment(clonedState.value.enrichments[currentIndex + 1]);
+	}
+};
+
+const goToPreviousEnrichment = () => {
+	const currentIndex = clonedState.value.enrichments.findIndex((eq) => eq.id === selectedEnrichment.value);
+	if (currentIndex > 0) {
+		selectEnrichment(clonedState.value.enrichments[currentIndex - 1]);
+	}
+};
+
+const addPrompt = () => {
+	clonedState.value.enrichments.unshift({
+		id: uuidv4(),
+		name: 'Description > Custom prompt',
+		asset: {
+			type: EnrichmentType.CUSTOM,
+			content: 'This model describes...',
+			path: [],
+			include: false
+		}
+	});
+};
+
 watch(
 	() => props.node.state,
 	() => {
@@ -652,9 +882,24 @@ watch(
 	},
 	{ immediate: true }
 );
+
+// This is a hacky way to update the temporary model within the tera-model component.
+// Essentially when the output panel is re-opened or we reopen the drilldown, we need to update the temporary model with the enrichments since that's when the component is rendered
+// which fetches a new model. So anytime we go from having no ref to the temporary model to having one, we need to re-update that temporary model with the enrichments.
+watch(
+	() => !!modelRef.value?.temporaryModel,
+	() => {
+		if (modelRef.value?.temporaryModel) {
+			updateModelWithEnrichments(modelRef.value.temporaryModel, clonedState.value.enrichments);
+		}
+	}
+);
 </script>
 
 <style scoped>
+.ul {
+	list-style-type: none;
+}
 .no-extract-equation {
 	padding: var(--gap-4);
 	background: var(--surface-disabled);
@@ -773,5 +1018,11 @@ watch(
 /* fix patch for document viewer */
 :deep(.document-viewer-header) {
 	width: 3rem !important;
+}
+
+.warn {
+	background-color: var(--surface-warning);
+	padding: var(--gap-3);
+	margin-bottom: var(--gap-2);
 }
 </style>

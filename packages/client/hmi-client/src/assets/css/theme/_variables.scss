@@ -622,14 +622,14 @@ $successMessageTextColor: var(--primary-color-dark) !default;
 $successMessageIconColor: var(--primary-color-dark) !default;
 
 $warningMessageBg: var(--surface-warning) !default;
-$warningMessageBorder: 1px solid #7f6003 !default;
-$warningMessageTextColor: #7f6003 !default;
-$warningMessageIconColor: #7f6003 !default;
+$warningMessageBorder: 1px solid var(--warning-color) !default;
+$warningMessageTextColor: var(--warning-color) !default;
+$warningMessageIconColor: var(--warning-color) !default;
 
-$errorMessageBg: #FDF1ED !default;
-$errorMessageBorder: solid 1px #C2451E !default;
-$errorMessageTextColor: #C2451E !default;
-$errorMessageIconColor: #C2451E !default;
+$errorMessageBg: var(--surface-error) !default;
+$errorMessageBorder: solid 1px var(--error-color) !default;
+$errorMessageTextColor: var(--error-color) !default;
+$errorMessageIconColor: var(--error-color) !default;
 
 //overlays
 $overlayContentBorder: 0 none !default;

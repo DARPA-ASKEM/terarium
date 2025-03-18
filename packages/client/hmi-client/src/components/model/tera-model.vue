@@ -11,7 +11,12 @@
 			<Button icon="pi pi-ellipsis-v" text rounded @click="toggleOptionsMenu" />
 			<ContextMenu ref="optionsMenu" :model="optionsMenuItems" popup :pt="optionsMenuPt" />
 			<aside class="btn-group">
-				<tera-asset-enrichment :asset-type="AssetType.Model" :assetId="assetId" @finished-job="fetchModel" />
+				<tera-asset-enrichment
+					v-if="!hideEnrichment"
+					:asset-type="AssetType.Model"
+					:assetId="assetId"
+					@finished-job="fetchModel"
+				/>
 				<Button
 					v-if="isSaveForReuse"
 					label="Save for re-use"
@@ -25,12 +30,24 @@
 			</aside>
 		</template>
 		<section v-if="temporaryModel && mmtData">
-			<div class="warn" v-if="modelErrors.length > 0">
-				Errors or warnings detected, please check individual sections below.
-			</div>
-			<div v-for="(err, idx) of modelErrors.filter((d) => d.type === 'model')" :key="idx">
-				<div :class="err.severity">{{ err.content }}</div>
-			</div>
+			<Message class="mx-3" severity="warn" v-if="modelErrors.length > 0">
+				Errors and/or warnings detected, please check individual sections below.
+			</Message>
+			<Message v-if="canModelBeSimplified" class="mx-3" severity="warn">
+				This model appears to have complex rate laws. It can lead to an combinatorial explosion if it is stratified.
+				This can be simplified reducing the number of controllers by {{ numberOfControllersSimplifyReduces }}.
+				<Button
+					label="Save this simplified version as a new model."
+					text
+					size="small"
+					class="save-simplified-button"
+					@click="saveSimplifiedModel()"
+				/>
+			</Message>
+			<tera-model-error-message
+				class="mx-3"
+				:modelErrors="modelErrors.filter(({ type }) => type === ModelErrorType.MODEL)"
+			/>
 
 			<tera-model-description :model="temporaryModel" :mmt-data="mmtData" @update-model="updateTemporaryModel" />
 			<tera-petrinet-parts
@@ -65,12 +82,14 @@ import { computed, ref, watch, onMounted } from 'vue';
 import { cloneDeep, isEmpty, isEqual } from 'lodash';
 import Button from 'primevue/button';
 import ContextMenu from 'primevue/contextmenu';
+import Message from 'primevue/message';
 import TeraAsset from '@/components/asset/tera-asset.vue';
 import TeraAssetEnrichment from '@/components/widgets/tera-asset-enrichment.vue';
 import TeraModelDescription from '@/components/model/petrinet/tera-model-description.vue';
+import TeraModelErrorMessage from '@/components/model/model-parts/tera-model-error-message.vue';
 import TeraPetrinetParts from '@/components/model/petrinet/tera-petrinet-parts.vue';
 import TeraSaveAssetModal from '@/components/project/tera-save-asset-modal.vue';
-import { getModel, updateModel, getMMT } from '@/services/model';
+import { getModel, updateModel, getMMT, getSimplifyModel } from '@/services/model';
 import { AssetType, type Model } from '@/types/Types';
 import { useProjects } from '@/composables/project';
 import { logger } from '@/utils/logger';
@@ -81,9 +100,11 @@ import {
 	updateParameter,
 	updateObservable,
 	updateTransition,
-	updateTime
+	updateTime,
+	ModelErrorType
 } from '@/model-representation/service';
 import type { ModelError } from '@/model-representation/service';
+import * as saveAssetService from '@/services/save-asset';
 
 const props = defineProps({
 	assetId: {
@@ -95,6 +116,10 @@ const props = defineProps({
 		default: false
 	},
 	isSaveForReuse: {
+		type: Boolean,
+		default: false
+	},
+	hideEnrichment: {
 		type: Boolean,
 		default: false
 	}
@@ -111,6 +136,8 @@ const showSaveModal = ref(false);
 const hasChanged = computed(() => !isEqual(model.value, temporaryModel.value));
 const hasEditPermission = useProjects().hasEditPermission();
 const modelErrors = ref<ModelError[]>([]);
+const numberOfControllersSimplifyReduces = ref<number>(0);
+const canModelBeSimplified = computed(() => numberOfControllersSimplifyReduces.value > 0);
 
 // Edit menu
 async function onSave() {
@@ -125,6 +152,22 @@ function onSaveAs() {
 }
 function onSaveForReUse() {
 	showSaveModal.value = true;
+}
+
+async function checkSimplifyModel() {
+	if (!model.value) return;
+	const simplifyModelResponse = await getSimplifyModel(model.value);
+	numberOfControllersSimplifyReduces.value = simplifyModelResponse.max_controller_decrease;
+}
+
+async function saveSimplifiedModel() {
+	if (!model.value) return;
+	// Note that this is cached so theres no need to save the entire amr as a ref or anything to save 1 call.
+	const simplifyModelResponse = await getSimplifyModel(model.value);
+	const newModel = simplifyModelResponse.amr;
+	const newName = `${newModel.header.name} simplified`;
+	newModel.header.name = newName;
+	saveAssetService.saveAs(newModel, AssetType.Model);
 }
 
 // Save modal
@@ -207,11 +250,13 @@ function onUpdateModelPart(property: 'state' | 'parameter' | 'observable' | 'tra
 }
 
 async function fetchModel() {
-	model.value = await getModel(props.assetId);
-	temporaryModel.value = cloneDeep(model.value);
-	modelErrors.value = checkPetrinetAMR(model.value as Model);
-
-	await refreshMMT();
+	const fetchedModel = await getModel(props.assetId);
+	if (fetchedModel) {
+		model.value = fetchedModel;
+		updateTemporaryModel(fetchedModel);
+		modelErrors.value = await checkPetrinetAMR(fetchedModel);
+		await refreshMMT();
+	}
 }
 
 onMounted(async () => {
@@ -242,24 +287,23 @@ watch(
 			await fetchModel();
 			isModelLoading.value = false;
 		}
+		checkSimplifyModel();
 	},
 	{ immediate: true }
 );
+
+defineExpose({ temporaryModel });
 </script>
 
 <style scoped>
+.save-simplified-button {
+	color: blue;
+	display: contents;
+}
 .btn-group {
 	display: flex;
 	align-items: center;
 	gap: var(--gap-2);
 	margin-left: auto;
-}
-
-.warn {
-	background-color: var(--surface-warning);
-}
-
-.error {
-	background-color: var(--surface-error);
 }
 </style>

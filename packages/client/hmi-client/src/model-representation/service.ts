@@ -4,16 +4,17 @@ import { rerouteEdges } from '@/services/graph';
 import { MiraModel } from '@/model-representation/mira/mira-common';
 import { ModelPartItem } from '@/types/Model';
 import { extractNestedStratas } from '@/model-representation/petrinet/mira-petri';
-import type { Initial, Model, ModelParameter, State, RegNetVertex, Transition, Rate, Observable } from '@/types/Types';
+import type { Initial, Model, ModelParameter, Observable, Rate, RegNetVertex, State, Transition } from '@/types/Types';
 import { getModelType } from '@/services/model';
 import { AMRSchemaNames } from '@/types/common';
 import { parseCurieToIdentifier } from '@/services/concept';
 import { PetrinetRenderer } from '@/model-representation/petrinet/petrinet-renderer';
 import { layoutInstance } from '@/web-workers/layout/controller';
 import { IGraph } from '@graph-scaffolder/index';
+import { pythonInstance } from '@/web-workers/python/PyodideController';
 import { NestedPetrinetRenderer } from './petrinet/nested-petrinet-renderer';
-import { isStratifiedModel, getContext, collapseTemplates } from './mira/mira';
-import { extractTemplateMatrix } from './mira/mira-util';
+import { collapseTemplates, getContext, isStratifiedModel } from './mira/mira';
+import { extractTemplateMatrix, removeModifiers } from './mira/mira-util';
 
 export const runDagreLayout = async <V, E>(graphData: IGraph<V, E>): Promise<IGraph<V, E>> => {
 	const graphLayout = await layoutInstance.runLayout(graphData);
@@ -50,6 +51,7 @@ export const getModelRenderer = (
 	if (useNestedRenderer && isStratified) {
 		const processedSet = new Set<string>();
 		const conceptData: any = [];
+		const dims = getContext(miraModel).keys;
 
 		miraModel.templates.forEach((t) => {
 			['subject', 'outcome', 'controller'].forEach((conceptKey) => {
@@ -58,15 +60,15 @@ export const getModelRenderer = (
 				if (processedSet.has(conceptName)) return;
 
 				conceptData.push({
-					// FIXME: use reverse-lookup to get root concept
-					base: isEmpty(t[conceptKey].context) ? conceptName : _.first(conceptName.split('_')),
+					base: isEmpty(t[conceptKey].context)
+						? conceptName
+						: removeModifiers(conceptName, t[conceptKey].context, dims),
 					...t[conceptKey].context
 				});
 
 				processedSet.add(conceptName);
 			});
 		});
-		const dims = getContext(miraModel).keys;
 		dims.unshift('base');
 
 		const { matrixMap } = collapseTemplates(miraModel);
@@ -76,7 +78,7 @@ export const getModelRenderer = (
 		});
 
 		const nestedMap = extractNestedStratas(conceptData, dims);
-		const nestedRenderer = new NestedPetrinetRenderer({
+		return new NestedPetrinetRenderer({
 			el: graphElement,
 			edgeReroutingFn: rerouteEdges,
 			useStableZoomPan: true,
@@ -87,7 +89,6 @@ export const getModelRenderer = (
 			nestedMap,
 			transitionMatrices: transitionMatrixMap
 		});
-		return nestedRenderer;
 	}
 
 	return new PetrinetRenderer({
@@ -268,13 +269,26 @@ export function isModelMissingMetadata(model: Model): boolean {
  * - Check states make sense
  * - Check transitions make sense
  * */
+export enum ModelErrorSeverity {
+	WARNING = 'warn',
+	ERROR = 'error'
+}
+// This would be great if it was a union type with Part Type
+export enum ModelErrorType {
+	STATE = 'state',
+	PARAMETER = 'parameter',
+	TRANSITION = 'transition',
+	OBSERVABLE = 'observable',
+	TIME = 'time',
+	MODEL = 'model'
+}
 export interface ModelError {
-	severity: string;
-	type: 'state' | 'transition' | 'model';
+	severity: ModelErrorSeverity;
+	type: ModelErrorType;
 	id: string;
 	content: string;
 }
-export function checkPetrinetAMR(amr: Model) {
+export async function checkPetrinetAMR(amr: Model) {
 	function isASCII(str: string) {
 		// eslint-disable-next-line
 		return /^[\x00-\x7F]*$/.test(str);
@@ -290,23 +304,44 @@ export function checkPetrinetAMR(amr: Model) {
 	const numRates = ode?.rates?.length || 0;
 
 	if (numStates === 0) {
-		results.push({ severity: 'warn', type: 'model', id: '', content: 'zero states in model' });
+		results.push({
+			severity: ModelErrorSeverity.WARNING,
+			type: ModelErrorType.MODEL,
+			id: '',
+			content: 'zero states in model'
+		});
 	}
 
 	if (numTransitions === 0) {
-		results.push({ severity: 'warn', type: 'model', id: '', content: 'zero transitions in model' });
+		results.push({
+			severity: ModelErrorSeverity.WARNING,
+			type: ModelErrorType.MODEL,
+			id: '',
+			content: 'zero transitions in model'
+		});
 	}
 
 	if (numStates !== numInitials) {
-		results.push({ severity: 'error', type: 'model', id: '', content: '# states need to match # initials' });
+		results.push({
+			severity: ModelErrorSeverity.ERROR,
+			type: ModelErrorType.MODEL,
+			id: '',
+			content: 'The number of states must match the number of initial values.'
+		});
 	}
 	if (numRates !== numTransitions) {
-		results.push({ severity: 'error', type: 'model', id: '', content: '# transitions need to match # rates' });
+		results.push({
+			severity: ModelErrorSeverity.ERROR,
+			type: ModelErrorType.MODEL,
+			id: '',
+			content: 'The number of transitions must match the number of  rates.'
+		});
 	}
 
 	// Build cache
 	const initialMap: Map<string, Initial> = new Map();
 	const rateMap: Map<string, Rate> = new Map();
+	const symbolList: string[] = [];
 
 	ode?.initials?.forEach((initial) => {
 		initialMap.set(initial.target, initial);
@@ -314,95 +349,168 @@ export function checkPetrinetAMR(amr: Model) {
 	ode?.rates?.forEach((rate) => {
 		rateMap.set(rate.target, rate);
 	});
+	ode?.parameters?.forEach((p) => {
+		symbolList.push(p.id);
+	});
+	model.states.forEach((s: any) => {
+		symbolList.push(s.id);
+	});
+	symbolList.push(ode?.time.id);
 
 	// Check state
 	const stateSet = new Set<string>();
 	const initialSet = new Set<string>();
-	model.states.forEach((state) => {
+	async function stateCheck(state: any) {
 		const initial = initialMap.get(state.id);
+
 		if (!initial) {
-			results.push({ severity: 'error', type: 'state', id: state.id, content: `${state.id} has no initial` });
+			results.push({
+				severity: ModelErrorSeverity.ERROR,
+				type: ModelErrorType.STATE,
+				id: state.id,
+				content: `${state.id} has no matching initial value.`
+			});
 		}
 		if (_.isEmpty(initial?.expression)) {
-			results.push({ severity: 'warn', type: 'state', id: state.id, content: `${state.id} has no initial.expression` });
+			results.push({
+				severity: ModelErrorSeverity.WARNING,
+				type: ModelErrorType.STATE,
+				id: state.id,
+				content: `${state.id} has no initial.expression. Use the edit model operator to add one.`
+			});
+		} else {
+			const parsedExpression = await pythonInstance.parseExpression(initial?.expression as string);
+			const extraSymbols = _.difference(parsedExpression.freeSymbols, symbolList);
+			if (extraSymbols.length > 0) {
+				results.push({
+					severity: ModelErrorSeverity.ERROR,
+					type: ModelErrorType.STATE,
+					id: state.id,
+					content: `Unknown parameters ${extraSymbols.join(', ')} in initial expression. Use the edit model operator to correct.`
+				});
+			}
 		}
 		if (!isASCII(initial?.expression as string)) {
-			results.push({ severity: 'warn', type: 'state', id: state.id, content: `${state.id} has non-ascii expression` });
+			results.push({
+				severity: ModelErrorSeverity.WARNING,
+				type: ModelErrorType.STATE,
+				id: state.id,
+				content: `${state.id} has a non-ascii expression. Use the edit model operator to correct.`
+			});
 		}
+
 		if (stateSet.has(state.id)) {
-			results.push({ severity: 'error', type: 'state', id: state.id, content: `state (${state.id}) has duplicate` });
+			results.push({
+				severity: ModelErrorSeverity.ERROR,
+				type: ModelErrorType.STATE,
+				id: state.id,
+				content: `state (${state.id}) is duplicated. Fix the model JSON and reimport`
+			});
 		}
 		if (initialSet.has(initial?.target as string)) {
 			results.push({
-				severity: 'error',
-				type: 'state',
+				severity: ModelErrorSeverity.ERROR,
+				type: ModelErrorType.STATE,
 				id: state.id,
-				content: `initial (${initial?.target}) has duplicate`
+				content: `initial (${initial?.target}) is duplicated. Fix the model JSON and reimport`
 			});
 		}
 		stateSet.add(state.id);
 		initialSet.add(initial?.target as string);
-	});
+	}
+	await Promise.all(model.states.map(stateCheck));
 
 	// Check transitions
 	const transitionSet = new Set<string>();
 	const rateSet = new Set<string>();
-	model.transitions.forEach((transition) => {
+	async function transitionCheck(transition: any) {
 		const rate = rateMap.get(transition.id);
 
 		if (!rate) {
 			results.push({
-				severity: 'error',
-				type: 'transition',
+				severity: ModelErrorSeverity.ERROR,
+				type: ModelErrorType.TRANSITION,
 				id: transition.id,
-				content: `${transition.id} has no rate`
+				content: `${transition.id} has no rate expression. Use the edit model operator to add one.`
 			});
 		}
 		if (_.isEmpty(rate?.expression)) {
 			results.push({
-				severity: 'warn',
-				type: 'transition',
+				severity: ModelErrorSeverity.WARNING,
+				type: ModelErrorType.TRANSITION,
 				id: transition.id,
-				content: `${transition.id} has no rate.expression`
+				content: `${transition.id} has no rate.expression. Use the edit model operator to add one.`
 			});
+		} else {
+			const parsedExpression = await pythonInstance.parseExpression(rate?.expression as string);
+			const extraSymbols = _.difference(parsedExpression.freeSymbols, symbolList);
+			if (extraSymbols.length > 0) {
+				results.push({
+					severity: ModelErrorSeverity.ERROR,
+					type: ModelErrorType.TRANSITION,
+					id: transition.id,
+					content: `Unknown parameters ${extraSymbols.join(', ')} in rate.expression. Use the edit model operator to correct.`
+				});
+			}
 		}
+
 		if (!isASCII(rate?.expression as string)) {
 			results.push({
-				severity: 'warn',
-				type: 'transition',
+				severity: ModelErrorSeverity.WARNING,
+				type: ModelErrorType.TRANSITION,
 				id: transition.id,
-				content: `${transition.id} has non-ascii expression`
+				content: `${transition.id} has a non-ascii expression. Use the edit model operator to correct.`
 			});
 		}
 		if (transitionSet.has(transition.id)) {
 			results.push({
-				severity: 'error',
-				type: 'transition',
+				severity: ModelErrorSeverity.ERROR,
+				type: ModelErrorType.TRANSITION,
 				id: transition.id,
-				content: `transition (${transition.id}) has duplicate`
+				content: `transition (${transition.id}) is duplicated. Fix the model JSON and reimport.`
 			});
 		}
 		if (rateSet.has(rate?.target as string)) {
 			results.push({
-				severity: 'error',
-				type: 'transition',
+				severity: ModelErrorSeverity.ERROR,
+				type: ModelErrorType.TRANSITION,
 				id: transition.id,
-				content: `rate (${rate?.target}) has duplicate`
+				content: `rate (${rate?.target}) is duplicated. Fix the model JSON and reimport.`
 			});
 		}
 
 		// Check if the system is closed (constant population)
 		if (transition.input.length !== transition.output.length) {
 			results.push({
-				severity: 'warn',
-				type: 'transition',
+				severity: ModelErrorSeverity.WARNING,
+				type: ModelErrorType.TRANSITION,
 				id: transition.id,
-				content: `${transition.id} may not conserve input/output`
+				content: `${transition.id} may not conserve input/output, please check these are intended as production/degradation transitions.`
 			});
 		}
 
 		transitionSet.add(transition.id);
 		rateSet.add(rate?.target as string);
+	}
+	await Promise.all(model.transitions.map(transitionCheck));
+
+	// Check for bad classification, eg state becomes a parameter
+	const nonControllerSet: Set<string> = new Set();
+	model.transitions.forEach((transition) => {
+		const diffs = _.xor(transition.input as string[], transition.output as string[]);
+		diffs.forEach((key) => {
+			nonControllerSet.add(key);
+		});
+	});
+
+	const misidentifiedStates = _.difference([...stateSet.values()], [...nonControllerSet.values()]);
+	misidentifiedStates.forEach((key) => {
+		results.push({
+			severity: ModelErrorSeverity.WARNING,
+			type: ModelErrorType.STATE,
+			id: key,
+			content: `The state "${key}" appears to be constant over time (i.e. its time derivative is zero).  It might be a parameter that was written with explicit time dependence theta(t) in the source equations. If so, go back to the "Create model from equations" operator, edit out the "(t)"  from all instances of "${key}(t)", and recreate the model`
+		});
 	});
 
 	return results;
@@ -497,4 +605,39 @@ export function createTimeList(time) {
 		children: [],
 		isParent: false
 	}));
+}
+
+export function createModelMap(model: Model): {
+	states: Map<string, State>;
+	parameters: Map<string, ModelParameter>;
+	transitions: Map<string, Transition>;
+	observables: Map<string, Observable>;
+} {
+	const states = new Map<string, State>();
+	const parameters = new Map<string, ModelParameter>();
+	const transitions = new Map<string, Transition>();
+	const observables = new Map<string, Observable>();
+
+	getStates(model).forEach((state) => {
+		states.set(state.id, state);
+	});
+
+	getParameters(model).forEach((parameter) => {
+		parameters.set(parameter.id, parameter);
+	});
+
+	model.model?.transitions?.forEach((transition) => {
+		transitions.set(transition.id, transition);
+	});
+
+	model.model?.observables?.forEach((observable) => {
+		observables.set(observable.id, observable);
+	});
+
+	return {
+		states,
+		parameters,
+		transitions,
+		observables
+	};
 }

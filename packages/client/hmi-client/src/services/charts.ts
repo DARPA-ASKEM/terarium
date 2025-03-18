@@ -5,7 +5,7 @@ import { VisualizationSpec } from 'vega-embed';
 import { v4 as uuidv4 } from 'uuid';
 import { ChartAnnotation, ChartAnnotationType, FunmanInterval } from '@/types/Types';
 import { CalendarDateType, ChartLabelOptions, SensitivityChartType } from '@/types/common';
-import { countDigits, fixPrecisionError } from '@/utils/number';
+import { countDigits, displayNumber, fixPrecisionError } from '@/utils/number';
 import { format } from 'd3';
 import { BinParams } from 'vega-lite/build/src/bin';
 import { flattenInterventionData } from './intervention-policy';
@@ -56,11 +56,6 @@ export const expressionFunctions = {
 			return countDigits(correctedValue) > 6 ? correctedValue.toExponential(3) : correctedValue.toString();
 		}
 		return format(NUMBER_FORMAT)(correctedValue);
-	},
-	// Just show full value in tooltip
-	tooltipFormatter: (value) => {
-		if (value === undefined) return 'N/A';
-		return fixPrecisionError(value);
 	}
 };
 
@@ -777,6 +772,22 @@ export function createForecastChart(
 		const layerSpec = newLayer(statisticsLayer, 'line');
 		const lineSubLayer = layerSpec.layer[0];
 
+		// Add formatted fields as to the data for display values
+		if (Array.isArray(layerSpec.data.values)) {
+			const formattedSuffix = '_formatted';
+			layerSpec.data.values.forEach((d) => {
+				Object.keys(d).forEach((variable) => {
+					const displayValue = displayNumber(d[variable]);
+					d[`${variable}${formattedSuffix}`] = displayValue;
+				});
+			});
+			layerSpec.transform.push({
+				// @ts-ignore
+				calculate: `datum[datum.variableField + '${formattedSuffix}']`,
+				as: ['displayValueField']
+			});
+		}
+
 		// Add interactive legend params, keeping original name
 		lineSubLayer.params = [
 			{
@@ -1063,9 +1074,7 @@ export function createForecastChart(
 			},
 			encoding: {
 				text: {
-					field: 'valueField',
-					type: 'quantitative',
-					format: '.3f'
+					field: 'displayValueField'
 				},
 				x: {
 					field: statisticsLayer.timeField,
@@ -1140,6 +1149,8 @@ const buildQuantileChartData = (data: GroupedDataArray, selectVariables: string[
 	const result: {
 		x: number;
 		lower: number;
+		lowerDisplay: string;
+		upperDisplay: string;
 		upper: number;
 		variable: string;
 		quantile: number;
@@ -1150,10 +1161,14 @@ const buildQuantileChartData = (data: GroupedDataArray, selectVariables: string[
 			[...quantiles]
 				.sort((a, b) => b - a) // Sort in descending order so that data with higher quantiles are drawn first
 				.forEach((q) => {
+					const lower = d3.quantile(values, 1 - q) ?? NaN;
+					const upper = d3.quantile(values, q) ?? NaN;
 					result.push({
 						x: index,
-						lower: d3.quantile(values, 1 - q) ?? NaN,
-						upper: d3.quantile(values, q) ?? NaN,
+						lower,
+						upper,
+						lowerDisplay: displayNumber(lower),
+						upperDisplay: displayNumber(upper),
 						variable,
 						quantile: q
 					});
@@ -1192,6 +1207,10 @@ export function createQuantilesForecastChart(
 	};
 	const yaxis = structuredClone(xaxis);
 	yaxis.title = options.yAxisTitle;
+
+	if (options.dateOptions) {
+		xaxis.labelExpr = formatDateLabelFn(options.dateOptions.startDate, 'datum.value', options.dateOptions.dateFormat);
+	}
 
 	const translationMap = options.translationMap;
 	let labelExpr = '';
@@ -1315,8 +1334,8 @@ export function createQuantilesForecastChart(
 							tooltip: [
 								{ field: 'varDisplayName', title: ' ' },
 								{ field: 'quantile', title: 'Quantile', format: '.0%' },
-								{ field: 'lower', title: 'Lower Bound' },
-								{ field: 'upper', title: 'Upper Bound' }
+								{ field: 'lowerDisplay', title: 'Lower Bound' },
+								{ field: 'upperDisplay', title: 'Upper Bound' }
 							]
 						}
 					}

@@ -3,36 +3,47 @@
 		<AccordionTab>
 			<template #header>
 				State variables<span class="artifact-amount">({{ states.length }})</span>
-				<tera-input-text v-if="!isEmpty(mmt.initials)" class="ml-auto" placeholder="Filter" v-model="statesFilter" />
+				<tera-model-part-filter
+					v-if="!isEmpty(mmt.initials)"
+					class="ml-auto"
+					:model-errors="getModelErrors(ModelErrorType.STATE)"
+					v-model:filter="statesFilter"
+					v-model:filter-severity="stateFilterSeverity"
+				/>
 			</template>
+			<tera-model-error-message :modelErrors="getModelErrors(ModelErrorType.STATE)" />
 			<tera-model-part
 				v-if="!isEmpty(mmt.initials)"
 				:part-type="PartType.STATE"
 				:items="stateList"
-				:model-errors="modelErrors.filter((d) => d.type === 'state')"
+				:model-errors="getModelErrors(ModelErrorType.STATE)"
 				:feature-config="featureConfig"
 				:filter="statesFilter"
+				:filter-severity="stateFilterSeverity"
 				@update-item="emit('update-state', $event)"
 			/>
 		</AccordionTab>
 		<AccordionTab>
 			<template #header>
 				Parameters<span class="artifact-amount">({{ parameters.length }})</span>
-				<tera-input-text
+				<tera-model-part-filter
 					v-if="!isEmpty(mmt.parameters)"
 					class="ml-auto"
-					placeholder="Filter"
-					v-model="parametersFilter"
+					:model-errors="getModelErrors(ModelErrorType.PARAMETER)"
+					v-model:filter="parametersFilter"
+					v-model:filter-severity="parametersFilterSeverity"
 				/>
 			</template>
+			<tera-model-error-message :modelErrors="getModelErrors(ModelErrorType.PARAMETER)" />
 			<tera-model-part
 				v-if="!isEmpty(mmt.parameters)"
 				:part-type="PartType.PARAMETER"
 				:items="parameterList"
-				:model-errors="[]"
+				:model-errors="getModelErrors(ModelErrorType.PARAMETER)"
 				:feature-config="featureConfig"
 				show-matrix
 				:filter="parametersFilter"
+				:filter-severity="parametersFilterSeverity"
 				@open-matrix="(id: string) => (parameterMatrixModalId = id)"
 				@update-item="emit('update-parameter', $event)"
 			/>
@@ -49,35 +60,45 @@
 		<AccordionTab>
 			<template #header>
 				Observables <span class="artifact-amount">({{ observables.length }})</span>
-				<tera-input-text
+				<tera-model-part-filter
 					v-if="!isEmpty(observables)"
 					class="ml-auto"
-					placeholder="Filter"
-					v-model="observablesFilter"
+					:model-errors="getModelErrors(ModelErrorType.OBSERVABLE)"
+					v-model:filter="observablesFilter"
+					v-model:filter-severity="observablesFilterSeverity"
 				/>
 			</template>
+			<tera-model-error-message :modelErrors="getModelErrors(ModelErrorType.OBSERVABLE)" />
 			<tera-model-part
 				:part-type="PartType.OBSERVABLE"
 				v-if="!isEmpty(observables)"
 				:items="observablesList"
-				:model-errors="[]"
+				:model-errors="getModelErrors(ModelErrorType.OBSERVABLE)"
 				:feature-config="featureConfig"
 				:filter="observablesFilter"
+				:filter-severity="observablesFilterSeverity"
 				@update-item="emit('update-observable', $event)"
 			/>
 		</AccordionTab>
 		<AccordionTab>
 			<template #header>
 				Transitions<span class="artifact-amount">({{ transitions.length }})</span>
-				<tera-input-text class="ml-auto" placeholder="Filter" v-model="transitionsFilter" />
+				<tera-model-part-filter
+					class="ml-auto"
+					:model-errors="getModelErrors(ModelErrorType.TRANSITION)"
+					v-model:filter="transitionsFilter"
+					v-model:filter-severity="transitionsFilterSeverity"
+				/>
 			</template>
+			<tera-model-error-message :modelErrors="getModelErrors(ModelErrorType.TRANSITION)" />
 			<tera-model-part
 				:part-type="PartType.TRANSITION"
 				v-if="!isEmpty(transitions) && !isEmpty(mmt.templates)"
 				:items="transitionsList"
-				:model-errors="modelErrors.filter((d) => d.type === 'transition')"
+				:model-errors="getModelErrors(ModelErrorType.TRANSITION)"
 				:feature-config="featureConfig"
 				:filter="transitionsFilter"
+				:filter-severity="transitionsFilterSeverity"
 				show-matrix
 				@open-matrix="(id: string) => (transitionMatrixModalId = id)"
 				@update-item="$emit('update-transition', $event)"
@@ -96,12 +117,14 @@
 			<template #header>
 				Time <span class="artifact-amount">({{ time.length }})</span>
 			</template>
+			<tera-model-error-message :modelErrors="getModelErrors(ModelErrorType.TIME)" />
 			<tera-model-part
 				v-if="time"
 				:part-type="PartType.TIME"
 				:items="timeList"
-				:model-errors="[]"
+				:model-errors="getModelErrors(ModelErrorType.TIME)"
 				:feature-config="featureConfig"
+				:filter-severity="null"
 				@update-item="$emit('update-time', $event)"
 			/>
 		</AccordionTab>
@@ -113,22 +136,25 @@ import type { Model, Transition, State } from '@/types/Types';
 import { isEmpty } from 'lodash';
 import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
-import { computed, ref, watch } from 'vue';
+import { computed, ref } from 'vue';
 import type { MiraModel, MiraTemplate, MiraTemplateParams } from '@/model-representation/mira/mira-common';
 import { collapseInitials, collapseParameters, collapseTemplates } from '@/model-representation/mira/mira';
 import TeraModelPart from '@/components/model/model-parts/tera-model-part.vue';
 import type { FeatureConfig } from '@/types/common';
-import TeraInputText from '@/components/widgets/tera-input-text.vue';
 import {
 	createPartsList,
 	createObservablesList,
 	createTimeList,
 	PartType,
-	ModelError
+	ModelError,
+	ModelErrorSeverity,
+	ModelErrorType
 } from '@/model-representation/service';
 import TeraStratifiedMatrixModal from '@/components/model/petrinet/model-configurations/tera-stratified-matrix-modal.vue';
 import { ModelPartItem, ModelPartItemTree, StratifiedMatrix } from '@/types/Model';
 import { getControllerNames } from '@/model-representation/mira/mira-util';
+import TeraModelErrorMessage from '@/components/model/model-parts/tera-model-error-message.vue';
+import TeraModelPartFilter from '@/components/model/model-parts/tera-model-part-filter.vue';
 
 const props = defineProps<{
 	model: Model;
@@ -142,10 +168,15 @@ const emit = defineEmits(['update-state', 'update-parameter', 'update-observable
 
 // Keep track of active indexes using ref
 const currentActiveIndexes = ref([0, 1, 2, 3, 4]);
+
 const statesFilter = ref('');
+const stateFilterSeverity = ref<ModelErrorSeverity | null>(null);
 const parametersFilter = ref('');
+const parametersFilterSeverity = ref<ModelErrorSeverity | null>(null);
 const observablesFilter = ref('');
+const observablesFilterSeverity = ref<ModelErrorSeverity | null>(null);
 const transitionsFilter = ref('');
+const transitionsFilterSeverity = ref<ModelErrorSeverity | null>(null);
 
 const parameters = computed(() => props.model?.semantics?.ode.parameters ?? []);
 const observables = computed(() => props.model?.semantics?.ode?.observables ?? []);
@@ -153,24 +184,11 @@ const time = computed(() => (props.model?.semantics?.ode?.time ? [props.model?.s
 
 const collapsedInitials = collapseInitials(props.mmt);
 const states = computed<State[]>(() => props.model?.model?.states ?? []);
-let stateList: ModelPartItemTree[] = createPartsList(collapsedInitials, props.model, PartType.STATE);
 
-watch(
-	() => props.model?.model?.states,
-	() => {
-		stateList = createPartsList(collapsedInitials, props.model, PartType.STATE);
-	}
-);
+const stateList = computed(() => createPartsList(collapsedInitials, props.model, PartType.STATE));
 
 const collapsedParameters = collapseParameters(props.mmt, props.mmtParams);
-let parameterList: ModelPartItemTree[] = createPartsList(collapsedParameters, props.model, PartType.PARAMETER);
-
-watch(
-	() => props.model.semantics?.ode?.parameters,
-	() => {
-		parameterList = createPartsList(collapsedParameters, props.model, PartType.PARAMETER);
-	}
-);
+const parameterList = computed(() => createPartsList(collapsedParameters, props.model, PartType.PARAMETER));
 
 const transitions = computed<Transition[]>(() =>
 	props.model.model.transitions?.map((transition: Transition) => ({
@@ -209,23 +227,30 @@ const createTransitionParts = () => {
 	});
 };
 
-const transitionsList: ModelPartItemTree[] = createTransitionParts();
+const transitionsList = createTransitionParts();
 
 const parameterMatrixModalId = ref('');
 const transitionMatrixModalId = ref('');
 const observablesList = computed(() => createObservablesList(observables.value));
 const timeList = computed<ModelPartItemTree[]>(() => createTimeList(time.value));
+
+// Model Errors are filtered by type
+function getModelErrors(entryType: ModelErrorType) {
+	return props.modelErrors.filter(({ type }) => type === entryType);
+}
 </script>
 
 <style scoped>
 :deep(.artifact-amount) {
 	font-size: var(--font-caption);
 	color: var(--text-color-subdued);
-	margin-left: 0.25rem;
+	margin-left: var(--gap-1);
 }
+
 :deep(.p-accordion-content) {
 	margin-bottom: var(--gap-3);
 }
+
 :deep(.p-accordion-content:empty::before) {
 	content: 'None';
 	color: var(--text-color-secondary);
