@@ -14,7 +14,7 @@ import { IGraph } from '@graph-scaffolder/index';
 import { pythonInstance } from '@/web-workers/python/PyodideController';
 import { NestedPetrinetRenderer } from './petrinet/nested-petrinet-renderer';
 import { collapseTemplates, getContext, isStratifiedModel } from './mira/mira';
-import { extractTemplateMatrix } from './mira/mira-util';
+import { extractTemplateMatrix, removeModifiers } from './mira/mira-util';
 
 export const runDagreLayout = async <V, E>(graphData: IGraph<V, E>): Promise<IGraph<V, E>> => {
 	const graphLayout = await layoutInstance.runLayout(graphData);
@@ -51,6 +51,7 @@ export const getModelRenderer = (
 	if (useNestedRenderer && isStratified) {
 		const processedSet = new Set<string>();
 		const conceptData: any = [];
+		const dims = getContext(miraModel).keys;
 
 		miraModel.templates.forEach((t) => {
 			['subject', 'outcome', 'controller'].forEach((conceptKey) => {
@@ -59,15 +60,15 @@ export const getModelRenderer = (
 				if (processedSet.has(conceptName)) return;
 
 				conceptData.push({
-					// FIXME: use reverse-lookup to get root concept
-					base: isEmpty(t[conceptKey].context) ? conceptName : _.first(conceptName.split('_')),
+					base: isEmpty(t[conceptKey].context)
+						? conceptName
+						: removeModifiers(conceptName, t[conceptKey].context, dims),
 					...t[conceptKey].context
 				});
 
 				processedSet.add(conceptName);
 			});
 		});
-		const dims = getContext(miraModel).keys;
 		dims.unshift('base');
 
 		const { matrixMap } = collapseTemplates(miraModel);
