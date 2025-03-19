@@ -1295,7 +1295,8 @@ export function useCharts(
 					{
 						data: result,
 						variables: [selectedVariable],
-						timeField: 'timepoint_unknown'
+						timeField: 'timepoint_unknown',
+						groupField: 'sample_id'
 					},
 					null,
 					options
