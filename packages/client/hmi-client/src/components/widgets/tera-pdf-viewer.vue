@@ -21,7 +21,7 @@
 <script setup lang="ts">
 import '@tato30/vue-pdf/style.css';
 import { groupBy } from 'lodash';
-import { computed, ref, watch, useTemplateRef, onMounted } from 'vue';
+import { computed, ref, watch, useTemplateRef } from 'vue';
 import { VuePDF, usePDF } from '@tato30/vue-pdf';
 
 const DEFAULT_SCALE = 2;
