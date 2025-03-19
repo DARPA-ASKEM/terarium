@@ -184,7 +184,7 @@ import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue'
 import TeraModal from '@/components/widgets/tera-modal.vue';
 
 import { ProjectPages } from '@/types/Project';
-import { AssetType, ClientEvent, ClientEventType, NotificationEvent, TaskResponse, TaskStatus } from '@/types/Types';
+import { AssetType, ClientEvent, ClientEventType, NotificationEvent, TaskResponse, ProgressState } from '@/types/Types';
 import { AssetItem, AssetRoute } from '@/types/common';
 
 defineProps<{
@@ -199,7 +199,7 @@ const inProgressAssetsIds = ref({
 });
 
 function assetTypeProgressHandler(assetType, assetId, status) {
-	if ([TaskStatus.Success, TaskStatus.Cancelled, TaskStatus.Failed].includes(status)) {
+	if ([ProgressState.Complete, ProgressState.Cancelled, ProgressState.Failed].includes(status)) {
 		inProgressAssetsIds.value[assetType].remove(assetId);
 	} else {
 		inProgressAssetsIds.value[assetType].add(assetId);
