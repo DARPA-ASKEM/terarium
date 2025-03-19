@@ -1466,13 +1466,11 @@ export function useCharts(
 					});
 				} else if (card.timepoint === TimepointOption.AVERAGE) {
 					// Get the average value for each relevant key.
-					// Note that as the dataset's length do not have to match we will
-					// Check each key's length individually.
+					// Note that as the dataset's length do not have to match we will check each key's length individually.
 					let runningSum = 0;
 					relevantKeys.forEach((key) => {
 						resultSummary.forEach((record) => {
 							if (record[key]) {
-								// This key may not exist for every timestep if dataset's end time does not match.
 								runningSum += record[key];
 							}
 						});
