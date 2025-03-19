@@ -36,7 +36,7 @@ export interface PdfAnnotation {
 }
 
 const props = defineProps<{
-	pdfLink?: string;
+	pdfLink: string;
 	// title?: string;
 	// filePromise?: Promise<ArrayBuffer | null>;
 	fitToWidth?: boolean;
