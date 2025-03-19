@@ -91,7 +91,7 @@ const sourceOpen = ref(false);
 const showOtherConfigValueModal = ref(false);
 const expression = ref('');
 
-const getOtherValuesLabel = computed(() => `Other values (${otherValueList.value?.length})`);
+const getOtherValuesLabel = computed(() => `Configuration values (${otherValueList.value?.length})`);
 
 function onExpressionChange(value) {
 	emit('update-expression', { id: props.initialId, value });

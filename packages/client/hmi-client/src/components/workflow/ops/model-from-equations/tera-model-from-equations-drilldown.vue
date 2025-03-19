@@ -33,7 +33,7 @@
 									<nav class="flex align-items-center mb-2">
 										<p v-if="document">Specify which equations to use for this model.</p>
 										<p v-else>Connect a document or enter equations manually below.</p>
-										<prime-button
+										<Button
 											class="ml-auto"
 											label="Create Model"
 											@click="onRun"
@@ -57,7 +57,7 @@
 													height="120"
 													class="pasted-image"
 												/>
-												<prime-button
+												<Button
 													icon="pi pi-times"
 													rounded
 													text
@@ -91,7 +91,7 @@
 												class="w-full"
 												:disabled="multipleEquationsDisabled"
 											/>
-											<prime-button
+											<Button
 												label="Add"
 												icon="pi pi-plus"
 												size="small"
@@ -103,25 +103,25 @@
 										</div>
 										<div class="input-group gap-1">
 											<span>Examples:</span>
-											<prime-button
+											<Button
 												label="SIR"
 												size="small"
 												severity="secondary"
 												@click="multipleEquations = exampleEquations.SIR"
 											/>
-											<prime-button
+											<Button
 												label="SEIHRD"
 												size="small"
 												severity="secondary"
 												@click="multipleEquations = exampleEquations.SEIHRD"
 											/>
-											<prime-button
+											<Button
 												label="SIDARTHE"
 												size="small"
 												severity="secondary"
 												@click="multipleEquations = exampleEquations.SIDARTHE"
 											/>
-											<prime-button
+											<Button
 												label="SVIRD"
 												size="small"
 												severity="secondary"
@@ -134,7 +134,7 @@
 									<h6 v-if="!_.isEmpty(clonedState.includedEquations)" class="py-3">
 										Use {{ clonedState.includedEquations.length > 1 ? 'these equations' : 'this equation' }}
 									</h6>
-									<prime-button
+									<Button
 										class="p-button-sm p-button-text ml-auto"
 										label="View all"
 										@click="viewAllIncludedEquations = true"
@@ -184,18 +184,13 @@
 												autoResize
 												rows="1"
 												placeholder="Add an expression with LaTeX"
-												class="w-full"
+												class="w-full overflow-y-scroll"
 											/>
 											<template #footer v-if="selectedItem === equation.id">
 												<footer class="flex">
-													<prime-button label="Close" outlined severity="secondary" @click.stop="selectedItem = ''" />
-													<prime-button
-														class="ml-auto"
-														icon="pi pi-arrow-up"
-														label="Previous"
-														@click.stop="goToPrevious"
-													/>
-													<prime-button
+													<Button label="Close" outlined severity="secondary" @click.stop="selectedItem = ''" />
+													<Button class="ml-auto" icon="pi pi-arrow-up" label="Previous" @click.stop="goToPrevious" />
+													<Button
 														class="ml-2"
 														icon="pi pi-arrow-down"
 														icon-pos="right"
@@ -252,18 +247,13 @@
 												autoResize
 												rows="1"
 												placeholder="Add an expression with LaTeX"
-												class="w-full"
+												class="w-full overflow-y-scroll"
 											/>
 											<template #footer v-if="selectedItem === equation.id">
 												<footer class="flex">
-													<prime-button label="Close" outlined severity="secondary" @click.stop="selectedItem = ''" />
-													<prime-button
-														class="ml-auto"
-														icon="pi pi-arrow-up"
-														label="Previous"
-														@click.stop="goToPrevious"
-													/>
-													<prime-button
+													<Button label="Close" outlined severity="secondary" @click.stop="selectedItem = ''" />
+													<Button class="ml-auto" icon="pi pi-arrow-up" label="Previous" @click.stop="goToPrevious" />
+													<Button
 														class="ml-2"
 														icon="pi pi-arrow-down"
 														icon-pos="right"
@@ -284,7 +274,7 @@
 										v-if="isModelLoading || (!!selectedModel && _.isEmpty(clonedState.enrichments))"
 										class="pi pi-spin pi-spinner mr-2"
 										:style="{ fontSize: '1rem' }"
-									></i>
+									/>
 									<span class="p-tabview-title">Step 2: Review enrichments</span>
 								</div>
 							</template>
@@ -401,13 +391,9 @@
 		<template #header>
 			<div class="flex align-items-center">
 				<h4>LaTeX</h4>
-				<prime-button
-					class="p-button-sm ml-auto"
-					severity="secondary"
-					@click="setCopyClipboard(allIncludedEquationsCopy)"
-				>
+				<Button class="p-button-sm ml-auto" severity="secondary" @click="setCopyClipboard(allIncludedEquationsCopy)">
 					{{ btnCopyLabel }}
-				</prime-button>
+				</Button>
 			</div>
 		</template>
 		<textarea v-model="allIncludedEquationsCopy" readonly width="100%" :rows="allIncludedEquations.length + 1" />
@@ -416,7 +402,7 @@
 
 <script setup lang="ts">
 import { AssetBlock, WorkflowNode } from '@/types/workflow';
-import PrimeButton from 'primevue/button';
+import Button from 'primevue/button';
 import Checkbox from 'primevue/checkbox';
 import Textarea from 'primevue/textarea';
 import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';

@@ -94,7 +94,7 @@
 					class="ml-auto"
 					text
 					size="small"
-					label="Other Values"
+					label="Configuration Values"
 					:disabled="intervention.dynamicInterventions[0].appliedTo === ''"
 					@click="
 						emit('open-modal', {
@@ -161,7 +161,7 @@
 							text
 							class="ml-auto"
 							size="small"
-							label="Other Values"
+							label="Configuration Values"
 							:disabled="intervention.staticInterventions[0].appliedTo === ''"
 							@click="
 								emit('open-modal', {
@@ -216,7 +216,7 @@
 									class="ml-auto"
 									text
 									size="small"
-									label="Other Values"
+									label="Configuration Values"
 									:disabled="i.appliedTo === ''"
 									@click="emit('open-modal', { semanticType: i.type, id: i.appliedTo })"
 								/>

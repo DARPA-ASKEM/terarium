@@ -230,12 +230,7 @@ export const rawTemplatesSummary = (miraModel: MiraModel) => {
 	return allTemplates;
 };
 
-const generateKey = (t: TemplateSummary) => {
-	if (t.name.split('_').length > 1) {
-		return `${t.name.split('_')[0]}:${t.subject}:${t.outcome}:${t.controllers.join('-')}`;
-	}
-	return `${t.subject}:${t.outcome}:${t.controllers.join('-')}`;
-};
+const generateKey = (t: TemplateSummary) => `${t.subject}:${t.outcome}:${t.controllers.join('-')}`;
 export const collapseTemplates = (miraModel: MiraModel) => {
 	const allTemplates: TemplateSummary[] = [];
 	const uniqueTemplates: TemplateSummary[] = [];

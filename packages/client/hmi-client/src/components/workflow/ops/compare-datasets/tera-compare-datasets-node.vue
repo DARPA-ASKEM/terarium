@@ -32,7 +32,7 @@
 <script setup lang="ts">
 import { computed, ref, toRef, watch, onMounted } from 'vue';
 import Button from 'primevue/button';
-import { Dataset, InterventionPolicy, ModelConfiguration } from '@/types/Types';
+import { Dataset, InterventionPolicy, Model, ModelConfiguration } from '@/types/Types';
 import { DataArray } from '@/services/models/simulation-service';
 import { type WorkflowNode, WorkflowPortStatus } from '@/types/workflow';
 import { useCharts, type ChartData } from '@/composables/useCharts';
@@ -58,6 +58,7 @@ const datasetResults = ref<{
 	summaryResults: DataArray[];
 	datasetResults: DataArray[];
 } | null>(null);
+const models = ref<Model[]>([]);
 const modelConfigurations = ref<ModelConfiguration[]>([]);
 const interventionPolicies = ref<InterventionPolicy[]>([]);
 const modelConfigIdToInterventionPolicyIdMap = ref<Record<string, string[]>>({});
@@ -83,8 +84,8 @@ const baselineDatasetIndex = computed(() =>
 const criteriaOfInterestCards = computed(() => props.node.state.criteriaOfInterestCards);
 const { useCompareDatasetCharts, useInterventionRankingCharts } = useCharts(
 	props.node.id,
-	null,
-	null,
+	computed(() => models.value[0]),
+	modelConfigurations,
 	chartData,
 	toRef({ width: 180, height: 120 }),
 	null,
@@ -95,16 +96,10 @@ const comparisonCharts = useCompareDatasetCharts(
 	selectedPlotType,
 	baselineDatasetIndex,
 	datasets,
-	modelConfigurations,
 	interventionPolicies
 );
 
-const rankingCharts = useInterventionRankingCharts(
-	criteriaOfInterestCards,
-	datasets,
-	modelConfigurations,
-	interventionPolicies
-);
+const rankingCharts = useInterventionRankingCharts(criteriaOfInterestCards, datasets, interventionPolicies);
 
 onMounted(async () => {
 	datasets.value = await initialize(
@@ -114,7 +109,8 @@ onMounted(async () => {
 		datasetResults,
 		modelConfigIdToInterventionPolicyIdMap,
 		modelConfigurations,
-		interventionPolicies
+		interventionPolicies,
+		models
 	);
 });
 
@@ -131,7 +127,8 @@ watch(
 			datasetResults,
 			modelConfigIdToInterventionPolicyIdMap,
 			modelConfigurations,
-			interventionPolicies
+			interventionPolicies,
+			models
 		);
 	},
 	{ deep: true }
