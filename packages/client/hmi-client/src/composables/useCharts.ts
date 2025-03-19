@@ -1440,7 +1440,7 @@ export function useCharts(
 				const variableKey = `${chartData.value.pyciemssMap[card.selectedVariable]}_mean`;
 				let pointOfComparison: Record<string, number> = {};
 
-				if (card.timepoint === TimepointOption.OVERALL) {
+				if (card.timepoint === TimepointOption.PEAK) {
 					const resultSummary = cloneDeep(chartData.value.resultSummary); // Must clone to avoid modifying the original data
 
 					// Note that the reduce function here only compares the variable of interest
