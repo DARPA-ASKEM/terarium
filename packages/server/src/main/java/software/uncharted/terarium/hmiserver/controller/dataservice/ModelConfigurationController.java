@@ -292,7 +292,7 @@ public class ModelConfigurationController {
 	@GetMapping("/{id}/original-model")
 	@Secured(Roles.USER)
 	@Operation(summary = "Get the original model of which the configuration was created for")
-	@HasProjectAccess(level = software.uncharted.terarium.hmiserver.utils.rebac.Schema.Permission.WRITE)
+	@HasProjectAccess
 	@ApiResponses(
 		value = {
 			@ApiResponse(
