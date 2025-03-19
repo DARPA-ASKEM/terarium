@@ -11,6 +11,7 @@ from taskrunner import TaskRunnerInterface
 def cleanup():
     pass
 
+
 def main():
     global taskrunner
     exit_code = 0
@@ -22,7 +23,7 @@ def main():
         input_dict = taskrunner.read_input_dict_with_timeout()
 
         taskrunner.log("Creating DatasetCardModel from input")
-        inputs = DatasetCardModel(**input_dict)
+        input_model = DatasetCardModel(**input_dict)
 
         try:
             llm = determine_llm(input_model.llm)
@@ -31,7 +32,7 @@ def main():
             llm = AzureTools()
             taskrunner.log(f"WARNING: {e}, defaulting to {llm.name}")
 
-        response = enrich_dataset_chain(llm, dataset=inputs.dataset, document=inputs.document)
+        response = enrich_dataset_chain(llm, dataset=input_model.dataset, document=input_model.document)
         taskrunner.log("Received response from LLM")
 
         taskrunner.write_output_dict_with_timeout({"response": response})
@@ -44,6 +45,7 @@ def main():
     taskrunner.log("Shutting down")
     taskrunner.shutdown()
     sys.exit(exit_code)
+
 
 if __name__ == "__main__":
     main()
