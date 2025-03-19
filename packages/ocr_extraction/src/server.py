@@ -11,6 +11,7 @@ from docling.document_converter import DocumentConverter, PdfFormatOption
 from texteller.inference_model import InferenceModel
 
 from table_extraction import extract_tables
+from llm_tools import get_llm_tools
 
 logging.basicConfig(level=logging.INFO)
 
@@ -50,6 +51,8 @@ async def process_and_predict(file: UploadFile = File(...)):
     docstream = DocumentStream(name="test", stream=BytesIO(file_bytes))
     result = converter.convert(docstream)
 
+    llm_tools = get_llm_tools("openai")
+
     ################################################################################
     # Do second pass
     # - Extract latext equation using TextTeller
@@ -73,8 +76,9 @@ async def process_and_predict(file: UploadFile = File(...)):
             latex_extraction_dict[text_ref] = latex_str
 
     # - Extract tables using GPT model
-    logging.info("Starting table extraction using GPT model...")
-    table_extraction_dict = extract_tables(result)
+    logging.info(f"Starting table extraction...")
+    logging.info(f"LLM model set to {llm_tools.name()}")
+    table_extraction_dict = extract_tables(result, llm_tools)
 
     ################################################################################
     # Collect and format result
