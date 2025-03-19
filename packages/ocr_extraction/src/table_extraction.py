@@ -22,6 +22,7 @@ You will structure your response as a JSON object with the following schema:
 Begin:
 """
 
+
 def convert_table_to_grid(html_table):
     soup = BeautifulSoup(html_table, 'html.parser')
     table = soup.find('table')
@@ -51,6 +52,7 @@ def convert_table_to_grid(html_table):
 
     return grid
 
+
 def image_to_base64_string(img: Image.Image) -> str:
     format = 'PNG'
     buffered = BytesIO()
@@ -58,14 +60,15 @@ def image_to_base64_string(img: Image.Image) -> str:
     img_base64 = base64.b64encode(buffered.getvalue()).decode("utf-8")
     return f"data:image/{format.lower()};base64,{img_base64}"  # Return Data URI
 
+
 def process_table_image(image_uri, table_html):
-    openai_api_key = os.getenv("OPEN_AI_API_KEY")
+    openai_api_key = os.getenv("ASKEM_DOC_AI_API_KEY")
     if (openai_api_key is None):
-        raise ValueError("OPEN_AI_API_KEY not found in environment variables. Please set 'OPEN_AI_API_KEY'.")
+        raise ValueError("ASKEM_DOC_AI_API_KEY not found in environment variables. Please set 'ASKEM_DOC_AI_API_KEY'.")
 
     client = OpenAI(api_key=openai_api_key)
 
-    logging.info(f"Processing table image with GPT...")
+    logging.info("Processing table image with GPT...")
     response = client.chat.completions.create(
         model="gpt-4o-2024-08-06",
         messages=[
@@ -88,6 +91,7 @@ def process_table_image(image_uri, table_html):
     )
     message_content = json.loads(response.choices[0].message.content)
     return message_content
+
 
 def extract_tables(result):
     table_extraction_dict = {}
@@ -120,7 +124,7 @@ def extract_tables(result):
                     "coord_origin": table_cell.bbox.coord_origin
                 }
                 cell_dict = vars(table_cell)
-                cell_dict["id"] = cell_id # Add table cell id
+                cell_dict["id"] = cell_id  # Add table cell id
                 cell_dict["bbox"] = bbox
                 cell_dict["text"] = cell_val
                 table_cells.append(cell_dict)
