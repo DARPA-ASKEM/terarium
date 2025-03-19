@@ -643,7 +643,7 @@ export function createForecastChart(
 
 	// Helper function to capture common layer structure
 	const newLayer = (layer: ForecastChartLayer, markType: string, layerName: string = '') => {
-		const selectedFields = layer.variables.concat([layer.timeField, 'sample_id']);
+		const selectedFields = layer.variables.concat([layer.timeField]);
 		if (layer.groupField) selectedFields.push(layer.groupField);
 
 		const data = Array.isArray(layer.data) ? { values: layer.data.map((d) => pick(d, selectedFields)) } : layer.data;
