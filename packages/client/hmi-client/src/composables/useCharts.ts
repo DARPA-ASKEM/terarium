@@ -1438,7 +1438,7 @@ export function useCharts(
 				if (!chartData.value || !card.selectedVariable) return;
 
 				const variableKey = `${chartData.value.pyciemssMap[card.selectedVariable]}_mean`;
-				let pointOfComparison: Record<string, number> = {};
+				const pointOfComparison: Record<string, number> = {};
 				const resultSummary = cloneDeep(chartData.value.resultSummary); // Must clone to avoid modifying the original data
 				const relevantKeys = Object.keys(resultSummary[0]).filter((key) => key.includes(variableKey));
 
@@ -1455,9 +1455,15 @@ export function useCharts(
 						currentMax = 0;
 					});
 				} else if (card.timepoint === TimepointOption.FIRST) {
-					pointOfComparison = resultSummary[0];
+					relevantKeys.forEach((key) => {
+						pointOfComparison[key] = resultSummary[0][key];
+					});
 				} else if (card.timepoint === TimepointOption.LAST) {
-					pointOfComparison = resultSummary[resultSummary.length - 1];
+					// Note that the datasets lengths do not have to match so we will find the last value for each key individually.
+					relevantKeys.forEach((key) => {
+						const lastTimepoint = resultSummary.filter((record) => record[key]).length - 1;
+						pointOfComparison[key] = resultSummary[lastTimepoint][key];
+					});
 				} else if (card.timepoint === TimepointOption.AVERAGE) {
 					// Get the average value for each relevant key.
 					// Note that as the dataset's length do not have to match we will
