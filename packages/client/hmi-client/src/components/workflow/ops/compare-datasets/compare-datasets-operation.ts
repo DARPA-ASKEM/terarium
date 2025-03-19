@@ -7,7 +7,8 @@ const DOCUMENTATION_URL = 'https://documentation.terarium.ai/datasets/compare-da
 export enum TimepointOption {
 	LAST = 'at the last timepoint',
 	FIRST = 'at the first timepoint',
-	PEAK = 'at its peak'
+	PEAK = 'at its peak',
+	AVERAGE = 'over all timepoints'
 }
 
 export enum RankOption {

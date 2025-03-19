@@ -1439,10 +1439,10 @@ export function useCharts(
 
 				const variableKey = `${chartData.value.pyciemssMap[card.selectedVariable]}_mean`;
 				let pointOfComparison: Record<string, number> = {};
+				const resultSummary = cloneDeep(chartData.value.resultSummary); // Must clone to avoid modifying the original data
+				const relevantKeys = Object.keys(resultSummary[0]).filter((key) => key.includes(variableKey));
 
 				if (card.timepoint === TimepointOption.PEAK) {
-					const resultSummary = cloneDeep(chartData.value.resultSummary); // Must clone to avoid modifying the original data
-
 					// Note that the reduce function here only compares the variable of interest
 					// so only those key/value pairs will be relevant in the pointOfComparison object.
 					// Other keys like timepoint_id (that we aren't using) will be in pointOfComparison
@@ -1456,11 +1456,27 @@ export function useCharts(
 						}, acc)
 					);
 				} else if (card.timepoint === TimepointOption.FIRST) {
-					pointOfComparison = chartData.value.resultSummary[0];
+					pointOfComparison = resultSummary[0];
 				} else if (card.timepoint === TimepointOption.LAST) {
-					pointOfComparison = chartData.value.resultSummary[chartData.value.resultSummary.length - 1];
+					pointOfComparison = resultSummary[resultSummary.length - 1];
+				} else if (card.timepoint === TimepointOption.AVERAGE) {
+					// Get the average value for each relevant key.
+					// Note that as the dataset's length do not have to match we will
+					// Check each key's length individually.
+					let runningSum = 0;
+					relevantKeys.forEach((key) => {
+						resultSummary.forEach((record) => {
+							if (record[key]) {
+								// This key may not exist for every timestep if dataset's end time does not match.
+								runningSum += record[key];
+							}
+						});
+						// Get the length of records that actually have this key.
+						const length = resultSummary.filter((record) => record[key]).length;
+						pointOfComparison[key] = runningSum / length; // Set the average
+						runningSum = 0;
+					});
 				}
-
 				const rankingCriteriaValues: { score: number; policyName: string; configName: string }[] = [];
 
 				datasets.value.forEach((dataset, index: number) => {
