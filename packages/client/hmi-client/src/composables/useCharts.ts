@@ -1443,18 +1443,17 @@ export function useCharts(
 				const relevantKeys = Object.keys(resultSummary[0]).filter((key) => key.includes(variableKey));
 
 				if (card.timepoint === TimepointOption.PEAK) {
-					// Note that the reduce function here only compares the variable of interest
-					// so only those key/value pairs will be relevant in the pointOfComparison object.
-					// Other keys like timepoint_id (that we aren't using) will be in pointOfComparison
-					// but they won't coincide with the value of the variable of interest.
-					pointOfComparison = resultSummary.reduce((acc, val) =>
-						Object.keys(val).reduce((acc2, key) => {
-							if (key.includes(variableKey)) {
-								acc2[key] = Math.max(acc[key], val[key]);
+					// For each relevant key find the maximum value independently.
+					let currentMax = 0;
+					relevantKeys.forEach((key) => {
+						resultSummary.forEach((record) => {
+							if (record[key] && record[key] > currentMax) {
+								currentMax = record[key];
 							}
-							return acc2;
-						}, acc)
-					);
+						});
+						pointOfComparison[key] = currentMax;
+						currentMax = 0;
+					});
 				} else if (card.timepoint === TimepointOption.FIRST) {
 					pointOfComparison = resultSummary[0];
 				} else if (card.timepoint === TimepointOption.LAST) {
