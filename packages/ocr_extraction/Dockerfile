@@ -77,7 +77,7 @@ RUN pip install --no-cache-dir --editable .
 
 # Install document_intelligence tasks
 COPY ./packages/ocr_extraction/tasks /ocr_extraction/tasks
-WORKDIR /ocr_extraction/tasks
+WORKDIR /ocr_extraction
 RUN pip install --no-cache-dir --editable .
 
 #Install uvicorn and supervisord
