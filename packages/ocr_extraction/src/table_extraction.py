@@ -208,6 +208,6 @@ def extract_tables(result, llmTools: LlmToolsInterface):
         }
         logging.info("Docling initial result: ")
         logging.info(docling_table_html)
-        logging.info("GPT post processed result: ")
+        logging.info("LLM enhanced result: ")
         logging.info(html_table)
     return table_extraction_dict

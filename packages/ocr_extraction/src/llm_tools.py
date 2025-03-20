@@ -1,7 +1,12 @@
+
 import os
 import json
+import boto3
+import botocore
 import logging
 from openai import OpenAI, AzureOpenAI
+from botocore.exceptions import ClientError
+
 
 TABLE_EXTRACTION_ENHANCE_PROMPT = """Here is the extracted table in html from the provided image.
 
@@ -69,6 +74,69 @@ class OpenAiTools(LlmToolsInterface):
         )
         message_content = json.loads(response.choices[0].message.content)
         return message_content
+
+
+
+
+class LlamaTools(LlmToolsInterface):
+
+    GPT_MODEL = "us.meta.llama3-2-90b-instruct-v1:0"
+
+    def __init__(self, bedrock_access_key=None, bedrock_secret_access_key=None):
+        self.bedrock_access_key = os.environ.get("BEDROCK_ACCESS_KEY") if bedrock_access_key is None else bedrock_access_key,
+        self.bedrock_secret_access_key = os.environ.get("BEDROCK_SECRET_ACCESS_KEY") if bedrock_secret_access_key is None else bedrock_secret_access_key,
+
+        if self.bedrock_access_key is None:
+            raise ValueError("BEDROCK_ACCESS_KEY not found in environment variables or provided as an argument. Please set 'BEDROCK_ACCESS_KEY'.")
+        if self.bedrock_secret_access_key is None:
+            raise ValueError("BEDROCK_SECRET_ACCESS_KEY not found in environment variables or provided as an argument. Please set 'BEDROCK_SECRET_ACCESS_KEY'.")
+
+        self.boto_config = botocore.config.Config(
+            read_timeout=600,
+            connect_timeout=480,
+            retries={"max_attempts": 0}
+        )
+
+    def name(self) -> str:
+        return "AWS Llama (Llama 3.2 90B Instruct)"
+
+
+    def enhance_table_extraction(self, table_image_uri: str, table_html: str) -> dict:
+        prompt = TABLE_EXTRACTION_ENHANCE_PROMPT + f"\nImage URL: {table_image_uri}\nTable HTML: {table_html}"
+        schema = """
+        {
+            "table_text": "string",
+            "score": "number"
+        }
+        """
+
+        client = boto3.client(
+            "bedrock-runtime",
+            region_name="us-west-2",
+            aws_access_key_id = self.bedrock_access_key,
+            aws_secret_access_key = self.bedrock_secret_access_key,
+            config=self.boto_config
+        )
+
+        request = json.dumps({
+            "prompt": prompt,
+            "temperature": 0,
+        })
+
+        print("Sending request to AWS Bedrock (Llama)...")
+        try:
+            # Invoke the model with the request.
+            # contentType="application/json"
+            response = client.invoke_model(modelId=self.GPT_MODEL, body=request)
+
+        except (ClientError, Exception) as e:
+            print(f"ERROR: Can't invoke '{self.GPT_MODEL}'. Reason: {e}")
+            exit(1)
+
+        # Decode the response body.
+        model_response = json.loads(response["body"].read())
+
+        return model_response
 
 
 class AzureTools(LlmToolsInterface):

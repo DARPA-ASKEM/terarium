@@ -44,14 +44,15 @@ async def health_check():
 
 
 @app.post("/predict")
-async def process_and_predict(file: UploadFile = File(...)):
+async def process_and_predict(file: UploadFile = File(...), llm_model: str = "azure"):
+    llm_tools = get_llm_tools(llm_model)
+    logging.info(f"LLM model set to {llm_tools.name()}")
     logging.info("In predict")
     file_bytes = await file.read()
     logging.info(f"Len = {len(file_bytes)}")
     docstream = DocumentStream(name="test", stream=BytesIO(file_bytes))
     result = converter.convert(docstream)
 
-    llm_tools = get_llm_tools("openai")
 
     ################################################################################
     # Do second pass
@@ -77,7 +78,6 @@ async def process_and_predict(file: UploadFile = File(...)):
 
     # - Extract tables using GPT model
     logging.info(f"Starting table extraction...")
-    logging.info(f"LLM model set to {llm_tools.name()}")
     table_extraction_dict = extract_tables(result, llm_tools)
 
     ################################################################################
