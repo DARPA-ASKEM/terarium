@@ -15,6 +15,8 @@ from table_extraction import extract_tables
 
 logging.basicConfig(level=logging.INFO)
 
+extractor = "docling"
+
 app = FastAPI()
 IMAGE_RESOLUTION_SCALE = 2.0
 pipeline_options = PdfPipelineOptions()
@@ -48,7 +50,7 @@ async def health_check():
 async def process_and_predict(file: UploadFile = File(...)):
     logging.info("In predict")
     file_bytes = await file.read()
-    logging.info(f"Len = {len(file_bytes)}")
+    logging.info(f"File length = {len(file_bytes)}")
     docstream = DocumentStream(name="test", stream=BytesIO(file_bytes))
     result = converter.convert(docstream)
 
@@ -68,10 +70,10 @@ async def process_and_predict(file: UploadFile = File(...)):
 
             latex_str = equation_model.predict(text_img_byte_arr.getvalue())
 
-            logging.info(f"{text_ref}")
-            logging.info(f"Docling model: {element.text}")
-            logging.info(f"Textteller model: {latex_str}")
-            logging.info("")
+            # logging.info(f"{text_ref}")
+            # logging.info(f"Docling model: {element.text}")
+            # logging.info(f"Textteller model: {latex_str}")
+            # logging.info("")
             latex_extraction_dict[text_ref] = latex_str
 
     # - Extract tables using GPT model
@@ -82,6 +84,7 @@ async def process_and_predict(file: UploadFile = File(...)):
     # Collect and format result
     ################################################################################
     final_result = {}
+    final_result["extractedBy"] = extractor
     result_dict = result.document.export_to_dict()
 
 
@@ -131,7 +134,7 @@ async def process_and_predict(file: UploadFile = File(...)):
         item["id"] = text["self_ref"]
         item["type"] = "text"
         item["subType"] = text["label"]
-        item["extractedBy"] = "docling"
+        item["extractedBy"] = extractor
 
 
         item["page"] = prov["page_no"]
@@ -161,7 +164,7 @@ async def process_and_predict(file: UploadFile = File(...)):
         item["id"] = picture["self_ref"]
         item["type"] = "picture"
         item["subType"] = picture["label"]
-        item["extractedBy"] = "docling"
+        item["extractedBy"] = extractor
 
         item["page"] = prov["page_no"]
         item["pageWidth"] = pages[str(item["page"])]["size"]["width"]
@@ -183,7 +186,7 @@ async def process_and_predict(file: UploadFile = File(...)):
         item["id"] = id
         item["type"] = "table"
         item["subType"] = table["label"]
-        item["extractedBy"] = "docling"
+        item["extractedBy"] = extractor
 
         item["page"] = prov["page_no"]
         item["pageWidth"] = pages[str(item["page"])]["size"]["width"]

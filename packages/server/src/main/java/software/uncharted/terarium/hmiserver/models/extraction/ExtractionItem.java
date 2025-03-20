@@ -9,7 +9,6 @@ import software.uncharted.terarium.hmiserver.annotations.TSModel;
 
 @Slf4j
 @Data
-@TSModel
 public class ExtractionItem {
 
 	// Identifying fields:

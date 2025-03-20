@@ -8,11 +8,10 @@ import lombok.extern.slf4j.Slf4j;
 import software.uncharted.terarium.hmiserver.annotations.TSModel;
 
 @Slf4j
-@TSModel
 @Data
+@TSModel
 public class Extraction {
 
-	private String id;
 	private String extractedBy;
 
 	// Layout infomration, not used, type these out later - Mar 20
