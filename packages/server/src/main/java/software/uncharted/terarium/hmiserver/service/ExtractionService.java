@@ -669,7 +669,9 @@ public class ExtractionService {
 				Future<Extraction> extractionFuture = ocrExtraction(notificationInterface, userId, documentContents);
 				Extraction extraction = extractionFuture.get();
 
-				// FIXME: Update document-asset with extraction data
+				// FIXME: Update various document-asset attributes
+				document.setExtraction(extraction);
+				documentService.updateAsset(document, projectId);
 
 				return document;
 			} catch (final Exception e) {

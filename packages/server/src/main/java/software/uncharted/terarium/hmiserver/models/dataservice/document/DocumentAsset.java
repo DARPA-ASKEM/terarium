@@ -29,6 +29,7 @@ import software.uncharted.terarium.hmiserver.annotations.TSModel;
 import software.uncharted.terarium.hmiserver.annotations.TSOptional;
 import software.uncharted.terarium.hmiserver.models.TerariumAsset;
 import software.uncharted.terarium.hmiserver.models.dataservice.Grounding;
+import software.uncharted.terarium.hmiserver.models.extraction.Extraction;
 
 @EqualsAndHashCode(callSuper = true)
 @Data
@@ -83,12 +84,18 @@ public class DocumentAsset extends TerariumAsset {
 	@TSOptional
 	@Type(JsonType.class)
 	@Column(columnDefinition = "json")
+	@Deprecated
 	private List<ExtractedDocumentPage> extractions = new ArrayList<>();
 
 	@TSOptional
 	@Lob
 	@JdbcTypeCode(Types.BINARY)
 	private byte[] thumbnail;
+
+	@TSOptional
+	@Type(JsonType.class)
+	@Column(columnDefinition = "json")
+	private Extraction extraction;
 
 	public List<ExtractedDocumentPage> getExtractions() {
 		if (
