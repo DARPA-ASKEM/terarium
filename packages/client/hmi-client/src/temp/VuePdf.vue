@@ -7,6 +7,10 @@
 			:current-page="currentPage"
 			fit-to-width
 		/>
+		<div>
+			<button @click="annotate1">Annotation1</button>
+			<button @click="annotate2">Annotation2</button>
+		</div>
 	</div>
 </template>
 
@@ -51,123 +55,240 @@ const normalizeBBox = (
 };
 const annotations = ref<PdfAnnotation[]>([
 	// BBox from extracted items from SIR paper 1.pdf
-	{
-		pageNo: 2,
-		bbox: normalizeBBox(
-			{
-				l: 70.6014404296875,
-				t: 758.4515838623047,
-				r: 534.968078613281,
-				b: 125.94757080078125
-			},
-			{ width: 595, height: 842 }
-		),
-		color: 'red',
-		isHighlight: false
-	},
-	{
-		pageNo: 7,
-		bbox: normalizeBBox(
-			{
-				l: 70.77977752685547,
-				t: 799.7110977172852,
-				r: 539.089172363281,
-				b: 529.6114196777344
-			},
-			{ width: 595, height: 842 }
-		),
-		color: 'red',
-		isHighlight: false
-	}
+	// {
+	// 	pageNo: 2,
+	// 	bbox: normalizeBBox(
+	// 		{
+	// 			l: 70.6014404296875,
+	// 			t: 758.4515838623047,
+	// 			r: 534.968078613281,
+	// 			b: 125.94757080078125
+	// 		},
+	// 		{ width: 595, height: 842 }
+	// 	),
+	// 	color: 'red',
+	// 	isHighlight: false
+	// },
+	// {
+	// 	pageNo: 7,
+	// 	bbox: normalizeBBox(
+	// 		{
+	// 			l: 70.77977752685547,
+	// 			t: 799.7110977172852,
+	// 			r: 539.089172363281,
+	// 			b: 529.6114196777344
+	// 		},
+	// 		{ width: 595, height: 842 }
+	// 	),
+	// 	color: 'red',
+	// 	isHighlight: false
+	// }
 ]);
 
-onMounted(() => {
-	// Go to page after 2 seconds
-	setTimeout(() => {
-		currentPage.value = 2;
-	}, 2000);
-	// update annotations after 5 seconds
-	setTimeout(() => {
-		annotations.value = [
+const annotate1 = () => {
+	annotations.value =
+		// BBox from extracted items from SIR paper 1.pdf
+		[
 			{
-				pageNo: 7,
+				pageNo: 2,
 				bbox: normalizeBBox(
 					{
-						l: 70.77977752685547,
-						t: 799.7110977172852,
-						r: 539.0891723632812,
-						b: 529.6114196777344,
-						coord_origin: 'BOTTOMLEFT'
+						l: 70.6014404296875,
+						t: 758.4515838623047,
+						r: 534.968078613281,
+						b: 125.94757080078125
 					},
 					{ width: 595, height: 842 }
 				),
-				color: 'green',
+				color: 'red',
 				isHighlight: false
 			},
 			{
 				pageNo: 7,
 				bbox: normalizeBBox(
 					{
-						l: 89.6999955849439,
-						t: 43.42800000000011,
-						r: 136.03199330447148,
-						b: 56.71199999999999,
-						coord_origin: 'TOPLEFT'
+						l: 70.77977752685547,
+						t: 799.7110977172852,
+						r: 539.089172363281,
+						b: 529.6114196777344
 					},
 					{ width: 595, height: 842 }
 				),
-				color: 'yellow',
-				isHighlight: true
-			},
-			{
-				pageNo: 7,
-				bbox: normalizeBBox(
-					{
-						l: 85.97999576804322,
-						t: 210.4079999999999,
-						r: 136.64899327410257,
-						b: 223.692,
-						coord_origin: 'TOPLEFT'
-					},
-					{ width: 595, height: 842 }
-				),
-				color: 'yellow',
-				isHighlight: true
-			},
-			{
-				pageNo: 7,
-				bbox: normalizeBBox(
-					{
-						l: 78.41999614014829,
-						t: 230.71799999999996,
-						r: 146.3279927976998,
-						b: 247.90800000000002,
-						coord_origin: 'TOPLEFT'
-					},
-					{ width: 595, height: 842 }
-				),
-				color: 'yellow',
-				isHighlight: true
-			},
-			{
-				pageNo: 7,
-				bbox: normalizeBBox(
-					{
-						l: 70.85999651225335,
-						t: 445.412,
-						r: 558.8759724919855,
-						b: 370.028,
-						coord_origin: 'BOTTOMLEFT'
-					},
-					{ width: 595, height: 842 }
-				),
-				color: 'lightpink',
-				isHighlight: true
+				color: 'red',
+				isHighlight: false
 			}
 		];
-		currentPage.value = 7;
-	}, 5000);
-});
+	currentPage.value = 2;
+};
+
+const annotate2 = () => {
+	annotations.value = [
+		{
+			pageNo: 7,
+			bbox: normalizeBBox(
+				{
+					l: 70.77977752685547,
+					t: 799.7110977172852,
+					r: 539.0891723632812,
+					b: 529.6114196777344,
+					coord_origin: 'BOTTOMLEFT'
+				},
+				{ width: 595, height: 842 }
+			),
+			color: 'green',
+			isHighlight: false
+		},
+		{
+			pageNo: 7,
+			bbox: normalizeBBox(
+				{
+					l: 89.6999955849439,
+					t: 43.42800000000011,
+					r: 136.03199330447148,
+					b: 56.71199999999999,
+					coord_origin: 'TOPLEFT'
+				},
+				{ width: 595, height: 842 }
+			),
+			color: 'yellow',
+			isHighlight: true
+		},
+		{
+			pageNo: 7,
+			bbox: normalizeBBox(
+				{
+					l: 85.97999576804322,
+					t: 210.4079999999999,
+					r: 136.64899327410257,
+					b: 223.692,
+					coord_origin: 'TOPLEFT'
+				},
+				{ width: 595, height: 842 }
+			),
+			color: 'yellow',
+			isHighlight: true
+		},
+		{
+			pageNo: 7,
+			bbox: normalizeBBox(
+				{
+					l: 78.41999614014829,
+					t: 230.71799999999996,
+					r: 146.3279927976998,
+					b: 247.90800000000002,
+					coord_origin: 'TOPLEFT'
+				},
+				{ width: 595, height: 842 }
+			),
+			color: 'yellow',
+			isHighlight: true
+		},
+		{
+			pageNo: 7,
+			bbox: normalizeBBox(
+				{
+					l: 70.85999651225335,
+					t: 445.412,
+					r: 558.8759724919855,
+					b: 370.028,
+					coord_origin: 'BOTTOMLEFT'
+				},
+				{ width: 595, height: 842 }
+			),
+			color: 'lightpink',
+			isHighlight: true
+		}
+	];
+	currentPage.value = 7;
+};
+
+// onMounted(() => {
+// 	// Go to page after 2 seconds
+// 	setTimeout(() => {
+// 		currentPage.value = 2;
+// 	}, 2000);
+// 	// update annotations after 5 seconds
+// 	setTimeout(() => {
+// 		annotations.value = [
+// 			{
+// 				pageNo: 7,
+// 				bbox: normalizeBBox(
+// 					{
+// 						l: 70.77977752685547,
+// 						t: 799.7110977172852,
+// 						r: 539.0891723632812,
+// 						b: 529.6114196777344,
+// 						coord_origin: 'BOTTOMLEFT'
+// 					},
+// 					{ width: 595, height: 842 }
+// 				),
+// 				color: 'green',
+// 				isHighlight: false
+// 			},
+// 			{
+// 				pageNo: 7,
+// 				bbox: normalizeBBox(
+// 					{
+// 						l: 89.6999955849439,
+// 						t: 43.42800000000011,
+// 						r: 136.03199330447148,
+// 						b: 56.71199999999999,
+// 						coord_origin: 'TOPLEFT'
+// 					},
+// 					{ width: 595, height: 842 }
+// 				),
+// 				color: 'yellow',
+// 				isHighlight: true
+// 			},
+// 			{
+// 				pageNo: 7,
+// 				bbox: normalizeBBox(
+// 					{
+// 						l: 85.97999576804322,
+// 						t: 210.4079999999999,
+// 						r: 136.64899327410257,
+// 						b: 223.692,
+// 						coord_origin: 'TOPLEFT'
+// 					},
+// 					{ width: 595, height: 842 }
+// 				),
+// 				color: 'yellow',
+// 				isHighlight: true
+// 			},
+// 			{
+// 				pageNo: 7,
+// 				bbox: normalizeBBox(
+// 					{
+// 						l: 78.41999614014829,
+// 						t: 230.71799999999996,
+// 						r: 146.3279927976998,
+// 						b: 247.90800000000002,
+// 						coord_origin: 'TOPLEFT'
+// 					},
+// 					{ width: 595, height: 842 }
+// 				),
+// 				color: 'yellow',
+// 				isHighlight: true
+// 			},
+// 			{
+// 				pageNo: 7,
+// 				bbox: normalizeBBox(
+// 					{
+// 						l: 70.85999651225335,
+// 						t: 445.412,
+// 						r: 558.8759724919855,
+// 						b: 370.028,
+// 						coord_origin: 'BOTTOMLEFT'
+// 					},
+// 					{ width: 595, height: 842 }
+// 				),
+// 				color: 'lightpink',
+// 				isHighlight: true
+// 			}
+// 		];
+// 		currentPage.value = 7;
+// 	}, 5000);
+// });
 </script>
 
 <style scoped>
