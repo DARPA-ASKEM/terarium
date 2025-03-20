@@ -53,6 +53,7 @@ public class DocumentAsset extends TerariumAsset {
 	@TSOptional
 	@Type(JsonType.class)
 	@Column(columnDefinition = "json")
+	@Deprecated
 	private Map<String, JsonNode> metadata;
 
 	@TSOptional
