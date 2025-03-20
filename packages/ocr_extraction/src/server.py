@@ -1,4 +1,5 @@
 import logging
+import sys
 
 from fastapi import FastAPI, File, UploadFile
 from fastapi.responses import JSONResponse
@@ -36,6 +37,7 @@ converter = DocumentConverter(
 )
 
 equation_model = InferenceModel()
+
 
 @app.get("/health")
 async def health_check():
@@ -117,6 +119,9 @@ async def process_and_predict(file: UploadFile = File(...)):
             "children": children
         })
 
+
+    pages = final_result["pages"]
+
     # 3. Text
     final_result["extractions"] = []
     for text in result_dict["texts"]:
@@ -128,9 +133,10 @@ async def process_and_predict(file: UploadFile = File(...)):
         item["subType"] = text["label"]
         item["extractedBy"] = "docling"
 
+
         item["page"] = prov["page_no"]
-        item["pageWidth"] = final_result["pages"][item["page"]]["size"]["width"]
-        item["pageHeight"] = final_result["pages"][item["page"]]["size"]["height"]
+        item["pageWidth"] = pages[str(item["page"])]["size"]["width"]
+        item["pageHeight"] = pages[str(item["page"])]["size"]["height"]
         item["bbox"] = {
             "left": prov["bbox"]["l"],
             "top": prov["bbox"]["t"],
@@ -140,8 +146,10 @@ async def process_and_predict(file: UploadFile = File(...)):
         item["charspan"] = prov["charspan"]
 
         if item["subType"] == "formula":
+            item["rawText"] = latex_extraction_dict[item["id"]]
             item["text"] = latex_extraction_dict[item["id"]]
         else:
+            item["rawText"] = text["text"]
             item["text"] = text["text"]
 
         final_result["extractions"].append(item)
@@ -156,8 +164,8 @@ async def process_and_predict(file: UploadFile = File(...)):
         item["extractedBy"] = "docling"
 
         item["page"] = prov["page_no"]
-        item["pageWidth"] = final_result["pages"][item["page"]]["size"]["width"]
-        item["pageHeight"] = final_result["pages"][item["page"]]["size"]["height"]
+        item["pageWidth"] = pages[str(item["page"])]["size"]["width"]
+        item["pageHeight"] = pages[str(item["page"])]["size"]["height"]
         item["bbox"] = {
             "left": prov["bbox"]["l"],
             "top": prov["bbox"]["t"],
@@ -178,8 +186,8 @@ async def process_and_predict(file: UploadFile = File(...)):
         item["extractedBy"] = "docling"
 
         item["page"] = prov["page_no"]
-        item["pageWidth"] = final_result["pages"][item["page"]]["size"]["width"]
-        item["pageHeight"] = final_result["pages"][item["page"]]["size"]["height"]
+        item["pageWidth"] = pages[str(item["page"])]["size"]["width"]
+        item["pageHeight"] = pages[str(item["page"])]["size"]["height"]
         item["bbox"] = {
             "left": prov["bbox"]["l"],
             "top": prov["bbox"]["t"],
@@ -187,6 +195,7 @@ async def process_and_predict(file: UploadFile = File(...)):
             "bottom": prov["bbox"]["b"]
         }
         item["charspan"] = prov["charspan"]
+        item["rawText"] = table["text"]
         item["text"] = table_extraction_dict[id]["text"]
         item["data"] = table_extraction_dict[id]["data"]
         final_result["extractions"].append(item)
