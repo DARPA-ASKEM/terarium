@@ -34,6 +34,7 @@
 		"@lumino/commands": "2.1.3",
 		"@lumino/coreutils": "2.1.2",
 		"@lumino/widgets": "2.1.0",
+		"@tato30/vue-pdf": "^1.11.3",
 		"@uncharted.software/design-tokens": "1.1.0",
 		"@vue/runtime-dom": "3.4.38",
 		"@vueup/vue-quill": "1.2.0",
