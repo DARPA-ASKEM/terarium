@@ -87,7 +87,7 @@ async def process_and_predict(file: UploadFile = File(...)):
     final_result["pages"] = {}
     for key, value in result_dict["pages"].items():
         final_result["pages"][key] = {
-            "pageNo": value["page_no"],
+            "page": value["page_no"],
             "size": {
                 "width": value["size"]["width"],
                 "height": value["size"]["height"]
@@ -118,71 +118,78 @@ async def process_and_predict(file: UploadFile = File(...)):
         })
 
     # 3. Text
-    final_result["texts"] = []
+    final_result["extractions"] = []
     for text in result_dict["texts"]:
         item = {}
         prov = text["prov"][0]
 
         item["id"] = text["self_ref"]
-        item["label"] = text["label"]
-        item["provenance"] = {
-            "page": prov["page_no"],
-            "bbox": {
-                "left": prov["bbox"]["l"],
-                "top": prov["bbox"]["t"],
-                "right": prov["bbox"]["r"],
-                "bottom": prov["bbox"]["b"]
-            },
-            "charspan": prov["charspan"]
-        }
+        item["type"] = "text"
+        item["subType"] = text["label"]
+        item["extractedBy"] = "docling"
 
-        if item["label"] == "formula":
+        item["page"] = prov["page_no"]
+        item["pageWidth"] = final_result["pages"][item["page"]]["size"]["width"]
+        item["pageHeight"] = final_result["pages"][item["page"]]["size"]["height"]
+        item["bbox"] = {
+            "left": prov["bbox"]["l"],
+            "top": prov["bbox"]["t"],
+            "right": prov["bbox"]["r"],
+            "bottom": prov["bbox"]["b"]
+        }
+        item["charspan"] = prov["charspan"]
+
+        if item["subType"] == "formula":
             item["text"] = latex_extraction_dict[item["id"]]
         else:
             item["text"] = text["text"]
 
-        final_result["texts"].append(item)
+        final_result["extractions"].append(item)
 
     # 4. Images
-    final_result["pictures"] = []
     for picture in result_dict["pictures"]:
         item = {}
         prov = picture["prov"][0]
         item["id"] = picture["self_ref"]
-        item["label"] = picture["label"]
-        item["provenance"] = {
-            "page": prov["page_no"],
-            "bbox": {
-                "left": prov["bbox"]["l"],
-                "top": prov["bbox"]["t"],
-                "right": prov["bbox"]["r"],
-                "bottom": prov["bbox"]["b"]
-            },
-            "charspan": prov["charspan"]
+        item["type"] = "picture"
+        item["subType"] = picture["label"]
+        item["extractedBy"] = "docling"
+
+        item["page"] = prov["page_no"]
+        item["pageWidth"] = final_result["pages"][item["page"]]["size"]["width"]
+        item["pageHeight"] = final_result["pages"][item["page"]]["size"]["height"]
+        item["bbox"] = {
+            "left": prov["bbox"]["l"],
+            "top": prov["bbox"]["t"],
+            "right": prov["bbox"]["r"],
+            "bottom": prov["bbox"]["b"]
         }
-        final_result["pictures"].append(item)
+        item["charspan"] = prov["charspan"]
+        final_result["extractions"].append(item)
 
     # 5. Tables
-    final_result["tables"] = []
     for table in result_dict["tables"]:
         id = table["self_ref"]
         item = {}
         prov = table["prov"][0]
         item["id"] = id
-        item["label"] = table["label"]
-        item["provenance"] = {
-            "page": prov["page_no"],
-            "bbox": {
-                "left": prov["bbox"]["l"],
-                "top": prov["bbox"]["t"],
-                "right": prov["bbox"]["r"],
-                "bottom": prov["bbox"]["b"]
-            },
-            "charspan": prov["charspan"]
+        item["type"] = "table"
+        item["subType"] = table["label"]
+        item["extractedBy"] = "docling"
+
+        item["page"] = prov["page_no"]
+        item["pageWidth"] = final_result["pages"][item["page"]]["size"]["width"]
+        item["pageHeight"] = final_result["pages"][item["page"]]["size"]["height"]
+        item["bbox"] = {
+            "left": prov["bbox"]["l"],
+            "top": prov["bbox"]["t"],
+            "right": prov["bbox"]["r"],
+            "bottom": prov["bbox"]["b"]
         }
+        item["charspan"] = prov["charspan"]
         item["text"] = table_extraction_dict[id]["text"]
         item["data"] = table_extraction_dict[id]["data"]
-        final_result["tables"].append(item)
+        final_result["extractions"].append(item)
 
     return JSONResponse(content=final_result)
 
