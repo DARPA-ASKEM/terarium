@@ -7,7 +7,8 @@ const DOCUMENTATION_URL = 'https://documentation.terarium.ai/datasets/compare-da
 export enum TimepointOption {
 	LAST = 'at the last timepoint',
 	FIRST = 'at the first timepoint',
-	OVERALL = 'at its peak'
+	PEAK = 'at its peak',
+	AVERAGE = 'over all timepoints'
 }
 
 export enum RankOption {
@@ -32,7 +33,7 @@ export const blankCriteriaOfInterest = {
 	selectedConfigurationId: null,
 	selectedVariable: null,
 	rank: RankOption.MINIMUM,
-	timepoint: TimepointOption.OVERALL
+	timepoint: TimepointOption.PEAK
 };
 
 // Map groundTruth dataset variable to the other dataset variables
