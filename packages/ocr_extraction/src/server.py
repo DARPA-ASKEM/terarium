@@ -1,6 +1,6 @@
 import logging
 
-from fastapi import FastAPI, File, UploadFile
+from fastapi import FastAPI, File, UploadFile, Form
 from fastapi.responses import JSONResponse
 from io import BytesIO
 
@@ -10,8 +10,8 @@ from docling.document_converter import DocumentConverter, PdfFormatOption
 
 from texteller.inference_model import InferenceModel
 
-from table_extraction import extract_tables
-from llm_tools import get_llm_tools
+from src.table_extraction import extract_tables
+from src.llm_tools import get_llm_tools
 
 logging.basicConfig(level=logging.INFO)
 
@@ -44,7 +44,7 @@ async def health_check():
 
 
 @app.post("/predict")
-async def process_and_predict(file: UploadFile = File(...), llm_model: str = "azure"):
+async def process_and_predict(file: UploadFile = File(...), llm_model: str = Form('azure')):
     llm_tools = get_llm_tools(llm_model)
     logging.info(f"LLM model set to {llm_tools.name()}")
     logging.info("In predict")
