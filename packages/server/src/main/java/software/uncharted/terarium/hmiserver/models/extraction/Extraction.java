@@ -8,25 +8,17 @@ import lombok.extern.slf4j.Slf4j;
 import software.uncharted.terarium.hmiserver.annotations.TSModel;
 
 @Slf4j
-@Data
 @TSModel
-public class ExtractionItem {
+@Data
+public class Extraction {
 
-	// Identifying fields:
 	private String id;
-	private String type;
-	private String subType;
 	private String extractedBy;
 
-	// Provenance fields
-	private Long page;
-	private Double pageWidth;
-	private Double pageHeight;
-	private BBox bbox;
-	private List<Long> charspan;
+	// Layout infomration, not used, type these out later - Mar 20
+	private JsonNode pages;
+	private JsonNode body;
+	private JsonNode groups;
 
-	// Data fiels
-	private String rawText;
-	private String text;
-	private JsonNode data;
+	private List<ExtractionItem> extractions;
 }
