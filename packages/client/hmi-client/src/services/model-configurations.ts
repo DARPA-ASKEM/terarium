@@ -255,6 +255,13 @@ export function isNumberInputEmpty(value: string) {
 	return isNaN(number) || !isNumber(number);
 }
 
+export function isParameterInputEmpty(parameter: ModelDistribution) {
+	if (parameter.type === DistributionType.Constant) {
+		return isNumberInputEmpty(parameter.parameters.value);
+	}
+	return isNumberInputEmpty(parameter.parameters.maximum) || isNumberInputEmpty(parameter.parameters.minimum);
+}
+
 export function getMissingInputAmount(modelConfiguration: ModelConfiguration) {
 	let missingInputs = 0;
 	modelConfiguration.initialSemanticList.forEach((initial) => {
