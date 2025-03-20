@@ -52,7 +52,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue';
+import { ref, computed, watch } from 'vue';
 import TeraInputText from '@/components/widgets/tera-input-text.vue';
 import Textarea from 'primevue/textarea';
 import MultiSelect from 'primevue/multiselect';
@@ -86,6 +86,18 @@ const updatedConfig = computed<StratifyGroup>(() => ({
 	useStructure: useStructure.value,
 	useFactoredParameter: useFactoredParameter.value
 }));
+
+watch(
+	() => props.config,
+	() => {
+		strataName.value = props.config.name;
+		selectedVariables.value = props.config.selectedVariables;
+		labels.value = props.config.groupLabels;
+		cartesianProduct.value = props.config.cartesianProduct;
+		structure.value = props.config.structure;
+		useStructure.value = props.config.useStructure;
+	}
+);
 </script>
 
 <style scoped>
