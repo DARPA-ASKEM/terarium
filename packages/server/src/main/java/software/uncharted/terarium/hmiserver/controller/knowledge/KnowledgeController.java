@@ -312,7 +312,8 @@ public class KnowledgeController {
 		@RequestParam(name = "project-id", required = false) final UUID projectId,
 		@RequestParam(name = "mode", required = false, defaultValue = "ASYNC") final TaskMode mode
 	) {
-		final Future<DocumentAsset> f = extractionService.extractPDFAndApplyToDocument(documentId, projectId);
+		// final Future<DocumentAsset> f = extractionService.extractPDFAndApplyToDocument(documentId, projectId);
+		final Future<DocumentAsset> f = extractionService.extractPDFAndApplyToDocumentNew(documentId, projectId);
 		if (mode == TaskMode.SYNC) {
 			try {
 				f.get();

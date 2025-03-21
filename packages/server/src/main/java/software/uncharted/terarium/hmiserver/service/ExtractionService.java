@@ -622,6 +622,12 @@ public class ExtractionService {
 	/**
 	 * All-in one document extraction with provenance
 	 **/
+	@Data
+	private static class ExtractionProxy {
+
+		private Extraction response;
+	}
+
 	public Future<Extraction> ocrExtraction(
 		final NotificationGroupInstance<Properties> notificationInterface,
 		final String userId,
@@ -641,8 +647,15 @@ public class ExtractionService {
 				throw new RuntimeException("OCR extraction failed: " + resp.getStderr());
 			}
 			final byte[] outputBytes = resp.getOutput();
-			final Extraction output = objectMapper.readValue(outputBytes, Extraction.class);
-			return output;
+
+			// System.out.println("");
+			// System.out.println(outputBytes.length);
+			// final JsonNode test = objectMapper.readValue(outputBytes, JsonNode.class);
+			// System.out.println(test);
+			// System.out.println("");
+
+			final ExtractionProxy output = objectMapper.readValue(outputBytes, ExtractionProxy.class);
+			return output.getResponse();
 		});
 	}
 
