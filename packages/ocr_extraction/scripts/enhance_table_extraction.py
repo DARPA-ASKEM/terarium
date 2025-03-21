@@ -6,6 +6,7 @@ from PIL import Image
 logging.basicConfig(level=logging.INFO)
 
 # This is the test script to test llm tools without running the entire docling pipeline
+# To run the script, from the package root, ocr_extraction/ run `python3 -m scripts.enhance_table_extraction`
 
 llm_tools = get_llm_tools('llama')
 # llm_tools = get_llm_tools('openai')
