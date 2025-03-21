@@ -170,7 +170,7 @@
 
 <script setup lang="ts">
 import { Model, ModelConfiguration, ModelDistribution, ParameterSemantic } from '@/types/Types';
-import { getParameterDistribution, getParameters } from '@/services/model-configurations';
+import { getParameterDistribution, getParameters, isParameterInputEmpty } from '@/services/model-configurations';
 import { StratifiedMatrix } from '@/types/Model';
 import { computed, ref } from 'vue';
 import { collapseParameters, isStratifiedModel } from '@/model-representation/mira/mira';
@@ -234,10 +234,7 @@ const hasEmptyParameters = computed(() => ({ baseParameter }) => {
 		s.referenceId.startsWith(`${baseParameter}_`)
 	);
 
-	return parametersForThisGroup.some((p) => {
-		const value = p.distribution?.parameters?.value;
-		return value === null || value === undefined || value === '' || Number.isNaN(value);
-	});
+	return parametersForThisGroup.some((p) => isParameterInputEmpty(p.distribution));
 });
 
 const matrixModalId = ref('');

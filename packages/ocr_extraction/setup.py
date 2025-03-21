@@ -7,6 +7,7 @@ setup(
     install_requires=[],
     entry_points={
         "console_scripts": [
+            "ocr_extraction_task:ocr_extraction=tasks.ocr_extraction:main",
         ],
     },
     python_requires=">=3.11",
