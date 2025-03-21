@@ -43,7 +43,7 @@ class OpenAiTools(LlmToolsInterface):
     def name(self) -> str:
         return f"OpenAI ({self.GPT_MODEL})"
 
-    def enhance_table_extraction(self, table_image_uri: str, table_html: str, max_token=8192) -> dict:
+    def enhance_table_extraction(self, table_image_uri: str, table_html: str, max_tokens=8192) -> dict:
         client = OpenAI(api_key=self.api_key)
 
         logging.info(f"Enhancing table extraction using {self.GPT_MODEL} model...")
@@ -65,6 +65,7 @@ class OpenAiTools(LlmToolsInterface):
                     ],
                 }
             ],
+            max_tokens=max_tokens,
             response_format={"type": "json_object"}
         )
         message_content = json.loads(response.choices[0].message.content)
@@ -96,7 +97,7 @@ class LlamaTools(LlmToolsInterface):
         return "AWS Llama (Llama 3.2 90B Instruct)"
 
 
-    def enhance_table_extraction(self, table_image_uri: str, table_html: str, max_token=8192) -> dict:
+    def enhance_table_extraction(self, table_image_uri: str, table_html: str, max_tokens=8192) -> dict:
         # Note: this model doesn't seem to support attaching images to the prompt. Set to empty string and ignore the image URL.
         table_image_uri = ""
         prompt = f"Image URL: {table_image_uri}\nTable HTML: {table_html}\n" + TABLE_EXTRACTION_ENHANCE_PROMPT + "\n Do not include any other information other than the json response."
@@ -112,7 +113,7 @@ class LlamaTools(LlmToolsInterface):
         request = json.dumps({
             "prompt": prompt,
             "temperature": 0,
-            "max_gen_len": max_token,
+            "max_gen_len": max_tokens,
         })
 
         logging.info(f"Enhancing table extraction using {self.GPT_MODEL} model...")
@@ -149,7 +150,7 @@ class AzureTools(LlmToolsInterface):
     def name(self) -> str:
         return f"Azure OpenAI (gpt-4o 2024-11-20)"
 
-    def enhance_table_extraction(self, table_image_uri: str, table_html: str, max_token=8192) -> dict:
+    def enhance_table_extraction(self, table_image_uri: str, table_html: str, max_tokens=8192) -> dict:
 
         client = AzureOpenAI(
             api_key=self.api_key,
@@ -176,6 +177,7 @@ class AzureTools(LlmToolsInterface):
                     ],
                 }
             ],
+            max_tokens=max_tokens,
             response_format={"type": "json_object"},
         )
         message_content = json.loads(response.choices[0].message.content)
