@@ -207,9 +207,6 @@
 				</template>
 			</tera-slider-panel>
 		</section>
-		<section :tabName="DrilldownTabs.Notebook">
-			<h4>Notebook</h4>
-		</section>
 		<!-- Output Section -->
 		<template #preview>
 			<tera-drilldown-section
