@@ -7,9 +7,9 @@ logging.basicConfig(level=logging.INFO)
 
 # This is the test script to test llm tools without running the entire docling pipeline
 
-# llm_tools = get_llm_tools('llama')
+llm_tools = get_llm_tools('llama')
 # llm_tools = get_llm_tools('openai')
-llm_tools = get_llm_tools('azure')
+# llm_tools = get_llm_tools('azure')
 
 with open('scripts/test_table_initial_extract.html', 'rb') as table_html:
     docling_table_html = table_html.read().decode('utf-8')

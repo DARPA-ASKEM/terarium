@@ -2,8 +2,11 @@
 import os
 import json
 import boto3
+import base64
 import botocore
 import logging
+from PIL import Image
+from io import BytesIO
 from openai import OpenAI, AzureOpenAI
 from botocore.exceptions import ClientError
 
@@ -96,11 +99,30 @@ class LlamaTools(LlmToolsInterface):
     def name(self) -> str:
         return "AWS Llama (Llama 3.2 90B Instruct)"
 
+    def resize_image(self, image_base64: str, size=(1120, 1120)) -> str:
+        img = Image.open(BytesIO(base64.b64decode(image_base64)))
+        img = img.resize(size) # max image size for the model
+        buffered = BytesIO()
+        img.save(buffered, format="PNG")
+        img_base64 = base64.b64encode(buffered.getvalue()).decode("utf-8")
+        return img_base64
 
     def enhance_table_extraction(self, table_image_uri: str, table_html: str, max_tokens=8192) -> dict:
-        # Note: this model doesn't seem to support attaching images to the prompt. Set to empty string and ignore the image URL.
-        table_image_uri = ""
-        prompt = f"Image URL: {table_image_uri}\nTable HTML: {table_html}\n" + TABLE_EXTRACTION_ENHANCE_PROMPT + "\n Do not include any other information other than the json response."
+
+        # Convert the table image to base64 and resize it
+        table_image_base64 = table_image_uri.split(",", 1)[-1]  # Take only the Base64 part
+        # Llama model only supports images with a maximum size of 1120x1120
+        img_base64 = self.resize_image(table_image_base64, (1120, 1120))
+
+        prompt = f"\nTable HTML: {table_html}\n {TABLE_EXTRACTION_ENHANCE_PROMPT}\n"
+
+        # More details on the prompt template: https://www.llama.com/docs/model-cards-and-prompt-formats/llama3_2/
+        formatted_prompt = f"""
+        <|begin_of_text|><|start_header_id|>user<|end_header_id|><|image|>
+        {prompt}
+        <|eot_id|>
+        <|start_header_id|>assistant<|end_header_id|>
+        """
 
         client = boto3.client(
             "bedrock-runtime",
@@ -111,9 +133,10 @@ class LlamaTools(LlmToolsInterface):
         )
 
         request = json.dumps({
-            "prompt": prompt,
+            "prompt": formatted_prompt,
             "temperature": 0,
             "max_gen_len": max_tokens,
+            "images": [img_base64],
         })
 
         logging.info(f"Enhancing table extraction using {self.GPT_MODEL} model...")
