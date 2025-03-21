@@ -225,12 +225,6 @@
 				</template>
 			</tera-slider-panel>
 		</section>
-
-		<!-- Notebook section -->
-		<section :tabName="DrilldownTabs.Notebook" class="notebook-section">
-			<p class="m-3">The notebook is under construction.</p>
-		</section>
-
 		<!-- Output section -->
 		<template #preview>
 			<tera-drilldown-section
