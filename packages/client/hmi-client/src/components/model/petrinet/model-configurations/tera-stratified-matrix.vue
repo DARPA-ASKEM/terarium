@@ -91,16 +91,6 @@
 										v-if="stratifiedMatrixType !== StratifiedMatrix.Initials"
 									>
 										{{ cell?.content.id }}
-										<!--
-											<span
-												v-if="cell?.content?.controllers"
-												class="pi pi-info-circle"
-												v-tooltip.top="{
-													value: `Controllers:\n ${cell?.content?.controllers}`,
-													pt: 'grid col'
-												}"
-											/>
-											-->
 									</div>
 									<div class="mathml-container" v-html="expressionMap[cell.row + ':' + cell.col] ?? '...'" />
 								</div>
@@ -183,7 +173,7 @@ const updateByMatrixBulk = (matrixToUpdate: MiraMatrix, text: string) => {
 			if (match) {
 				updateList.push({
 					id: matrixEntry.content.id,
-					// Number types should be passed if its a parameter matrix otherwise they should be strings
+					// Number types should be passed if it's a parameter matrix otherwise they should be strings
 					value: props.stratifiedMatrixType === StratifiedMatrix.Parameters ? match.value : match.value.toString()
 				});
 			}
@@ -413,7 +403,6 @@ watch(
 
 .p-datatable .p-datatable-tbody > tr > td.is-editing {
 	padding: 0;
-	padding-bottom: 0;
 }
 
 .editable-cell {
@@ -428,7 +417,7 @@ watch(
 
 .hide-content {
 	visibility: hidden;
-	height: 0px;
+	height: 0;
 	padding-left: 2rem;
 }
 
