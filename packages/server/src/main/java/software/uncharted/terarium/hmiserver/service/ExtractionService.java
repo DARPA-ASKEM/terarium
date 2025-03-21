@@ -648,12 +648,6 @@ public class ExtractionService {
 			}
 			final byte[] outputBytes = resp.getOutput();
 
-			// System.out.println("");
-			// System.out.println(outputBytes.length);
-			// final JsonNode test = objectMapper.readValue(outputBytes, JsonNode.class);
-			// System.out.println(test);
-			// System.out.println("");
-
 			final ExtractionProxy output = objectMapper.readValue(outputBytes, ExtractionProxy.class);
 			return output.getResponse();
 		});
