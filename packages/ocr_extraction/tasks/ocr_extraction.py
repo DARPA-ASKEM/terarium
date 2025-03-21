@@ -21,7 +21,7 @@ def main():
 
         bs = taskrunner.read_input_bytes_with_timeout()
 
-        files = {"file": ("uploaded_file.pdf", io.BytesIO(b""), "application/pdf")}
+        files = {"file": ("uploaded_file.pdf", io.BytesIO(bs), "application/pdf")}
         #TODO: get `llm_model' from the taskrunner input`
         response = requests.post(url, files=files, data={"llm_model": "azure"})
 
