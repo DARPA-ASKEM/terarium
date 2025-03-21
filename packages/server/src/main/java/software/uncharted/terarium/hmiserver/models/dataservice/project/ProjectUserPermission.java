@@ -22,7 +22,7 @@ public class ProjectUserPermission implements Serializable {
 
 	@Id
 	@TSIgnore
-	private String id = UUID.randomUUID().toString();
+	private UUID id = UUID.randomUUID();
 
 	@ManyToOne
 	private User user;
