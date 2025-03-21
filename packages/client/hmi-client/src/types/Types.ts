@@ -428,7 +428,6 @@ export interface Extraction {
     body: any;
     groups: any;
     extractions: ExtractionItem[];
-    documentText: string;
 }
 
 export interface ExtractionResponse {
