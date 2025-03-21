@@ -20,4 +20,9 @@ public class Extraction {
 	private JsonNode groups;
 
 	private List<ExtractionItem> extractions;
+
+	// Collect overall document text
+	public String getDocumentText() {
+		return "";
+	}
 }
