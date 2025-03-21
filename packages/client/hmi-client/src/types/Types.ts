@@ -205,6 +205,9 @@ export interface DatasetColumnStats {
 export interface DocumentAsset extends TerariumAsset {
     userId?: string;
     documentUrl?: string;
+    /**
+     * @deprecated
+     */
     metadata?: { [index: string]: any };
     source?: string;
     text?: string;
@@ -219,6 +222,7 @@ export interface DocumentAsset extends TerariumAsset {
     assets?: DocumentExtraction[];
     extractions?: ExtractedDocumentPage[];
     thumbnail?: any;
+    extraction?: Extraction;
 }
 
 export interface ExternalPublication extends TerariumAsset {

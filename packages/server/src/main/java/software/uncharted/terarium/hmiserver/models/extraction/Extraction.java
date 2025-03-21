@@ -1,5 +1,6 @@
 package software.uncharted.terarium.hmiserver.models.extraction;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.databind.JsonNode;
 import java.util.List;
 import lombok.Data;
@@ -20,4 +21,10 @@ public class Extraction {
 	private JsonNode groups;
 
 	private List<ExtractionItem> extractions;
+
+	// Collect overall document text
+	@JsonIgnore
+	public String getDocumentText() {
+		return "";
+	}
 }
