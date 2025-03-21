@@ -28,7 +28,7 @@ class LlmToolsInterface:
         """Get the name of the LLM"""
         pass
 
-    def enhance_table_extraction(self, table_image_uri: str, table_html: str, max_token=int) -> dict:
+    def enhance_table_extraction(self, table_image_uri: str, table_html: str, max_tokens=int) -> dict:
         """Enhance table extraction using an LLM model"""
         pass
 
