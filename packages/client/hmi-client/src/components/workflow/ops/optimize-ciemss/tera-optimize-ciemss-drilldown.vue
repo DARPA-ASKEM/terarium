@@ -196,18 +196,6 @@
 			</tera-slider-panel>
 		</section>
 
-		<!-- Notebook tab -->
-		<section :tabName="DrilldownTabs.Notebook" class="notebook-section">
-			<p>Under construction. Use the wizard for now.</p>
-			<div class="result-message-grid">
-				<p class="mb-2">For debugging:</p>
-				<div v-for="(value, key) in optimizeRequestPayload" :key="key" class="result-message-row">
-					<div class="label">{{ key }}:</div>
-					<div class="value">{{ formatJsonValue(value) }}</div>
-				</div>
-			</div>
-		</section>
-
 		<!-- Preview tab -->
 		<template #preview>
 			<tera-drilldown-section

@@ -200,19 +200,6 @@
 				</template>
 			</tera-slider-panel>
 		</tera-drilldown-section>
-
-		<tera-drilldown-section :tabName="DrilldownTabs.Notebook" class="input-config">
-			<tera-slider-panel
-				class="input-config"
-				v-model:is-open="isSidebarOpen"
-				header="Simulation ensemble settings"
-				content-width="420px"
-			>
-				<template #content>
-					<div class="mt-3 ml-4 mr-2">Under construction.</div>
-				</template>
-			</tera-slider-panel>
-		</tera-drilldown-section>
 		<!-- Output Section -->
 		<template #preview>
 			<tera-drilldown-section
