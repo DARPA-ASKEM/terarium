@@ -18,6 +18,7 @@ import VegaliteTest from '@/temp/Vegalite.vue';
 import EquationsTest from '@/temp/Equations.vue';
 import SymPyAMRTest from '@/temp/SympyAMR.vue';
 import FunmanDebugger from '@/temp/FunmanDebugger.vue';
+import VuePdf from '@/temp/VuePdf.vue';
 import { RouteName } from './routes';
 
 export enum RoutePath {
@@ -62,6 +63,7 @@ const routes = [
 	{ path: '/custom-input-test', component: CustomInputTest },
 	{ path: '/clipboard', component: ClipboardTest },
 	{ path: '/vegalite', component: VegaliteTest },
+	{ path: '/pdfviewer', component: VuePdf },
 	{ path: '/funman-debugger', component: FunmanDebugger },
 	{ path: '/equations', component: EquationsTest },
 	{ path: '/sympy-to-amr', component: SymPyAMRTest }
