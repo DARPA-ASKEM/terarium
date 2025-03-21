@@ -1,7 +1,7 @@
 import logging
 import sys
 
-from fastapi import FastAPI, File, UploadFile
+from fastapi import FastAPI, File, UploadFile, Form
 from fastapi.responses import JSONResponse
 from io import BytesIO
 
@@ -11,7 +11,8 @@ from docling.document_converter import DocumentConverter, PdfFormatOption
 
 from texteller.inference_model import InferenceModel
 
-from table_extraction import extract_tables
+from src.table_extraction import extract_tables
+from src.llm_tools import get_llm_tools
 
 logging.basicConfig(level=logging.INFO)
 
@@ -47,12 +48,15 @@ async def health_check():
 
 
 @app.post("/predict")
-async def process_and_predict(file: UploadFile = File(...)):
+async def process_and_predict(file: UploadFile = File(...), llm_model: str = Form('azure')):
+    llm_tools = get_llm_tools(llm_model)
+    logging.info(f"LLM model set to {llm_tools.name()}")
     logging.info("In predict")
     file_bytes = await file.read()
     logging.info(f"File length = {len(file_bytes)}")
     docstream = DocumentStream(name="test", stream=BytesIO(file_bytes))
     result = converter.convert(docstream)
+
 
     ################################################################################
     # Do second pass
@@ -77,8 +81,8 @@ async def process_and_predict(file: UploadFile = File(...)):
             latex_extraction_dict[text_ref] = latex_str
 
     # - Extract tables using GPT model
-    logging.info("Starting table extraction using GPT model...")
-    table_extraction_dict = extract_tables(result)
+    logging.info(f"Starting table extraction...")
+    table_extraction_dict = extract_tables(result, llm_tools)
 
     ################################################################################
     # Collect and format result
