@@ -150,7 +150,7 @@ const matrix = ref<MiraMatrix>([]);
 const filteredRowNames = ref<string[]>([]);
 const filteredColumnNames = ref<string[]>([]);
 
-const currentMatrixtype = ref(props.matrixType || '');
+const currentMatrixType = ref(props.matrixType || '');
 
 const valueToEdit = ref('');
 const editableCellStates = ref<boolean[][]>([]);
@@ -261,9 +261,9 @@ function generateMatrix() {
 		};
 
 		// Find a default
-		if (currentMatrixtype.value) {
-			matrix.value = matrixMap.value[currentMatrixtype.value];
-			matrixType.value = currentMatrixtype.value;
+		if (currentMatrixType.value) {
+			matrix.value = matrixMap.value[currentMatrixType.value];
+			matrixType.value = currentMatrixType.value;
 			return;
 		}
 
@@ -293,7 +293,7 @@ async function updateCellValue(variableName: string, rowIdx: number, colIdx: num
 	const newValue = valueToEdit.value;
 	const mathml = (await pythonInstance.parseExpression(newValue)).mathml;
 
-	currentMatrixtype.value = matrixType.value;
+	currentMatrixType.value = matrixType.value;
 	emit('update-cell-values', [{ id: variableName, value: newValue, mathml }]);
 }
 
