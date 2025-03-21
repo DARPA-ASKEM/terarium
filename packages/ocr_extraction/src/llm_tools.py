@@ -145,11 +145,7 @@ class LlamaTools(LlmToolsInterface):
 
         # Decode the response body.
         model_response = json.loads(response["body"].read())
-        with open("model_response2.json", "w") as f:
-            json.dump(model_response, f, indent=4)
-
         result = json.loads(model_response["generation"])
-
         return result
 
 
