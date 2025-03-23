@@ -1175,6 +1175,7 @@ export enum ClientEventType {
     TaskGollmCompareModel = "TASK_GOLLM_COMPARE_MODEL",
     TaskGollmConfigureModelFromDataset = "TASK_GOLLM_CONFIGURE_MODEL_FROM_DATASET",
     TaskGollmConfigureModelFromDocument = "TASK_GOLLM_CONFIGURE_MODEL_FROM_DOCUMENT",
+    TaskGollmDocumentQuestion = "TASK_GOLLM_DOCUMENT_QUESTION",
     TaskGollmEnrichModel = "TASK_GOLLM_ENRICH_MODEL",
     TaskGollmEnrichDataset = "TASK_GOLLM_ENRICH_DATASET",
     TaskGollmEquationsFromImage = "TASK_GOLLM_EQUATIONS_FROM_IMAGE",
