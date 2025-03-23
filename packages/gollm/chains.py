@@ -128,17 +128,6 @@ def interventions_from_dataset_chain(llm: LlmToolsInterface, dataset: List[str],
     return output
 
 
-def model_card_chain(llm: LlmToolsInterface, amr: str, document: str = None) -> dict:
-    print("Uploading and validating model card schema...")
-    config_path = os.path.join(SCHEMAS_DIR, 'model_card.json')
-    with open(config_path, 'r') as config_file:
-        response_schema = json.load(config_file)
-    validate_schema(response_schema)
-
-    prompt = llm.create_model_card_prompt(amr, document, response_schema)
-    return llm.send_to_llm_with_json_output(prompt, response_schema)
-
-
 def compare_models_chain(llm: LlmToolsInterface, amrs: List[str], goal: str) -> dict:
     print("Uploading and validating compare models schema...")
     config_path = os.path.join(SCHEMAS_DIR, 'compare_models.json')

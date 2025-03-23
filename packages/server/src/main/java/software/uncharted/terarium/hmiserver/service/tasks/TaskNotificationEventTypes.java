@@ -24,7 +24,6 @@ public class TaskNotificationEventTypes {
 		Map.entry(ExtractTablesResponseHandler.NAME, ClientEventType.TASK_EXTRACT_TABLE_PDF),
 		Map.entry(ExtractTextResponseHandler.NAME, ClientEventType.TASK_EXTRACT_TEXT_PDF),
 		Map.entry(GenerateSummaryHandler.NAME, ClientEventType.TASK_GOLLM_GENERATE_SUMMARY),
-		Map.entry(ModelCardResponseHandler.NAME, ClientEventType.TASK_GOLLM_MODEL_CARD),
 		Map.entry(ValidateModelConfigHandler.NAME, ClientEventType.TASK_FUNMAN_VALIDATION)
 	);
 

@@ -91,21 +91,10 @@
 										v-if="stratifiedMatrixType !== StratifiedMatrix.Initials"
 									>
 										{{ cell?.content.id }}
-										<!--
-											<span
-												v-if="cell?.content?.controllers"
-												class="pi pi-info-circle"
-												v-tooltip.top="{
-													value: `Controllers:\n ${cell?.content?.controllers}`,
-													pt: 'grid col'
-												}"
-											/>
-											-->
 									</div>
 									<div class="mathml-container" v-html="expressionMap[cell.row + ':' + cell.col] ?? '...'" />
 								</div>
 							</section>
-							<span v-else class="subdue">n/a</span>
 						</td>
 					</tr>
 				</tbody>
@@ -151,7 +140,7 @@ const matrix = ref<MiraMatrix>([]);
 const filteredRowNames = ref<string[]>([]);
 const filteredColumnNames = ref<string[]>([]);
 
-const currentMatrixtype = ref(props.matrixType || '');
+const currentMatrixType = ref(props.matrixType || '');
 
 const valueToEdit = ref('');
 const editableCellStates = ref<boolean[][]>([]);
@@ -184,7 +173,7 @@ const updateByMatrixBulk = (matrixToUpdate: MiraMatrix, text: string) => {
 			if (match) {
 				updateList.push({
 					id: matrixEntry.content.id,
-					// Number types should be passed if its a parameter matrix otherwise they should be strings
+					// Number types should be passed if it's a parameter matrix otherwise they should be strings
 					value: props.stratifiedMatrixType === StratifiedMatrix.Parameters ? match.value : match.value.toString()
 				});
 			}
@@ -262,9 +251,9 @@ function generateMatrix() {
 		};
 
 		// Find a default
-		if (currentMatrixtype.value) {
-			matrix.value = matrixMap.value[currentMatrixtype.value];
-			matrixType.value = currentMatrixtype.value;
+		if (currentMatrixType.value) {
+			matrix.value = matrixMap.value[currentMatrixType.value];
+			matrixType.value = currentMatrixType.value;
 			return;
 		}
 
@@ -294,7 +283,7 @@ async function updateCellValue(variableName: string, rowIdx: number, colIdx: num
 	const newValue = valueToEdit.value;
 	const mathml = (await pythonInstance.parseExpression(newValue)).mathml;
 
-	currentMatrixtype.value = matrixType.value;
+	currentMatrixType.value = matrixType.value;
 	emit('update-cell-values', [{ id: variableName, value: newValue, mathml }]);
 }
 
@@ -414,7 +403,6 @@ watch(
 
 .p-datatable .p-datatable-tbody > tr > td.is-editing {
 	padding: 0;
-	padding-bottom: 0;
 }
 
 .editable-cell {
@@ -429,7 +417,7 @@ watch(
 
 .hide-content {
 	visibility: hidden;
-	height: 0px;
+	height: 0;
 	padding-left: 2rem;
 }
 

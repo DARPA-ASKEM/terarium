@@ -57,10 +57,6 @@ class LlmToolsInterface:
         """Create a prompt to extract interventions from a dataset"""
         pass
 
-    def create_model_card_prompt(self, amr: str, document: str, schema: str) -> str:
-        """Create a prompt that produces a model card"""
-        pass
-
     def create_compare_models_prompt(self, amrs: List[str], dataset: str, goal: str, schema: str) -> str:
         """Create a prompt that compares models"""
         pass

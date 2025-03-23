@@ -25,7 +25,6 @@ from common.prompts.interventions_from_dataset import INTERVENTIONS_FROM_DATASET
 from common.prompts.interventions_from_document import INTERVENTIONS_FROM_DOCUMENT_PROMPT
 from common.prompts.latex_style_guide import LATEX_STYLE_GUIDE
 from common.prompts.latex_to_sympy import LATEX_TO_SYMPY_PROMPT
-from common.prompts.model_card import MODEL_CARD_PROMPT
 from common.prompts.model_enrichment import (MODEL_ENRICH_PROMPT_WITH_DOCUMENT, MODEL_ENRICH_PROMPT_WITHOUT_DOCUMENT)
 from common.prompts.model_meta_compare import (
     MODEL_METADATA_COMPARE_PROMPT,
@@ -332,23 +331,6 @@ class LlamaTools(LlmToolsInterface):
         prompt += INTERVENTIONS_FROM_DATASET_PROMPT.format(
             amr=escape_curly_braces(amr),
             dataset=escape_curly_braces(dataset_text)
-        )
-        prompt += LLAMA_RETURN_INSTRUCTIONS.format(
-            schema=schema
-        )
-        prompt += LLAMA_END_PROMPT
-        return prompt
-
-
-    def create_model_card_prompt(self, amr: str, document: str, schema: str) -> str:
-        print("Building prompt to produce a model card...")
-        if not document:
-            document = "NO RESEARCH PAPER PROVIDED"
-
-        prompt = LLAMA_START_PROMPT
-        prompt += MODEL_CARD_PROMPT.format(
-            document=escape_curly_braces(document),
-            amr=escape_curly_braces(amr)
         )
         prompt += LLAMA_RETURN_INSTRUCTIONS.format(
             schema=schema

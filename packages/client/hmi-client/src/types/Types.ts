@@ -418,6 +418,14 @@ export interface EvaluationScenarioSummary {
     timestampMillis: number;
 }
 
+export interface Extraction {
+    extractedBy: string;
+    pages: any;
+    body: any;
+    groups: any;
+    extractions: ExtractionItem[];
+}
+
 export interface ExtractionResponse {
     id: string;
     status: string;
@@ -873,6 +881,21 @@ export interface ProvenanceEdge {
     right: ProvenanceNode;
 }
 
+export interface ExtractionItem {
+    id: string;
+    type: string;
+    subType: string;
+    extractedBy: string;
+    page: number;
+    pageWidth: number;
+    pageHeight: number;
+    bbox: BBox;
+    charspan: number[];
+    rawText: string;
+    text: string;
+    data: any;
+}
+
 export interface PermissionRole {
     id: string;
     name: string;
@@ -947,6 +970,13 @@ export interface VariableStatement {
     value?: StatementValue;
     metadata?: VariableStatementMetadata[];
     provenance?: ProvenanceInfo;
+}
+
+export interface BBox {
+    left: number;
+    top: number;
+    right: number;
+    bottom: number;
 }
 
 export interface Authority {
@@ -1151,7 +1181,6 @@ export enum ClientEventType {
     TaskGollmGenerateSummary = "TASK_GOLLM_GENERATE_SUMMARY",
     TaskGollmInterventionsFromDocument = "TASK_GOLLM_INTERVENTIONS_FROM_DOCUMENT",
     TaskGollmInterventionsFromDataset = "TASK_GOLLM_INTERVENTIONS_FROM_DATASET",
-    TaskGollmModelCard = "TASK_GOLLM_MODEL_CARD",
     TaskGollmDatasetStatistics = "TASK_GOLLM_DATASET_STATISTICS",
     TaskMiraAmrToMmt = "TASK_MIRA_AMR_TO_MMT",
     TaskMiraGenerateModelLatex = "TASK_MIRA_GENERATE_MODEL_LATEX",

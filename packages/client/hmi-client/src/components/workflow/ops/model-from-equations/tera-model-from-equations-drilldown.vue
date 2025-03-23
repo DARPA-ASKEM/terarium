@@ -27,9 +27,9 @@
 						<TabPanel header="Step 1: Specify Equations">
 							<main class="px-3">
 								<header class="pb-2">
-									<div class="warn" v-if="selectedModel">
+									<Message severity="info" class="mt-0" v-if="selectedModel">
 										Move to <a @click="activeTabIndex = 1">step two</a> if the model looks correct
-									</div>
+									</Message>
 									<nav class="flex align-items-center mb-2">
 										<p v-if="document">Specify which equations to use for this model.</p>
 										<p v-else>Connect a document or enter equations manually below.</p>
@@ -184,7 +184,7 @@
 												autoResize
 												rows="1"
 												placeholder="Add an expression with LaTeX"
-												class="w-full"
+												class="w-full overflow-y-scroll"
 											/>
 											<template #footer v-if="selectedItem === equation.id">
 												<footer class="flex">
@@ -247,7 +247,7 @@
 												autoResize
 												rows="1"
 												placeholder="Add an expression with LaTeX"
-												class="w-full"
+												class="w-full overflow-y-scroll"
 											/>
 											<template #footer v-if="selectedItem === equation.id">
 												<footer class="flex">
@@ -274,7 +274,7 @@
 										v-if="isModelLoading || (!!selectedModel && _.isEmpty(clonedState.enrichments))"
 										class="pi pi-spin pi-spinner mr-2"
 										:style="{ fontSize: '1rem' }"
-									></i>
+									/>
 									<span class="p-tabview-title">Step 2: Review enrichments</span>
 								</div>
 							</template>
@@ -405,6 +405,7 @@ import { AssetBlock, WorkflowNode } from '@/types/workflow';
 import Button from 'primevue/button';
 import Checkbox from 'primevue/checkbox';
 import Textarea from 'primevue/textarea';
+import Message from 'primevue/message';
 import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
 import TeraDrilldownPreview from '@/components/drilldown/tera-drilldown-preview.vue';
 import TeraAssetBlock from '@/components/widgets/tera-asset-block.vue';
