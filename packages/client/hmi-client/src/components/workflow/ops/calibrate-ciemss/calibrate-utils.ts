@@ -1,5 +1,5 @@
 import _ from 'lodash';
-import { DataArray, parsePyCiemssMap } from '@/services/models/simulation-service';
+import { DataArray, parsePyCiemssMap, processAndSortSamplesByTimepoint } from '@/services/models/simulation-service';
 import { getActiveOutput } from '@/components/workflow/util';
 import { CalibrateMap } from '@/services/calibrate-workflow';
 import { mae } from '@/utils/stats';
@@ -88,6 +88,7 @@ export function usePreparedChartInputs(
 		// Merge before/after for chart
 		const result = mergeResults(runResult.value.resultPre, runResult.value.result);
 		const resultSummary = mergeResults(runResult.value.resultSummaryPre, runResult.value.resultSummary);
+		const resultGroupByTimepoint = processAndSortSamplesByTimepoint(result);
 
 		// Build lookup map for calibration, include before/after and dataset (observations)
 		const translationMap = {};
@@ -101,6 +102,7 @@ export function usePreparedChartInputs(
 		return {
 			result,
 			resultSummary,
+			resultGroupByTimepoint,
 			pyciemssMap: pyciemssMap.value,
 			translationMap
 		};
