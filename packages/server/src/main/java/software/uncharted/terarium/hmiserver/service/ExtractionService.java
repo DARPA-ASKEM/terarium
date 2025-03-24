@@ -633,7 +633,7 @@ public class ExtractionService {
 		final String userId,
 		final byte[] pdf
 	) throws TimeoutException, InterruptedException, ExecutionException, IOException {
-		final int REQUEST_TIMEOUT_MINUTES = 20;
+		final int REQUEST_TIMEOUT_MINUTES = 30;
 		final TaskRequest req = new TaskRequest();
 		req.setTimeoutMinutes(REQUEST_TIMEOUT_MINUTES);
 		req.setInput(pdf);
