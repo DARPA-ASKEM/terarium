@@ -166,28 +166,6 @@ public class DocumentController {
 			return ResponseEntity.notFound().build();
 		}
 
-		// Test if the document as any assets
-		if (document.get().getAssets() == null) {
-			return ResponseEntity.ok(document.get());
-		}
-
-		document
-			.get()
-			.getAssets()
-			.forEach(asset -> {
-				try {
-					// Add the S3 bucket url to each asset metadata
-					final Optional<PresignedURL> url = documentAssetService.getDownloadUrl(id, asset.getFileName());
-					if (url.isEmpty()) {
-						return;
-					}
-					final PresignedURL presignedURL = url.get();
-					asset.getMetadata().put("url", presignedURL.getUrl());
-				} catch (final Exception e) {
-					log.error("Unable to extract S3 url for assets or extract equations", e);
-				}
-			});
-
 		// Return the updated document
 		return ResponseEntity.ok(document.get());
 	}
