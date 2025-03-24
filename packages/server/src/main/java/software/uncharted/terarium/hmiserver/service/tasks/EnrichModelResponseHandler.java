@@ -69,10 +69,10 @@ public class EnrichModelResponseHandler extends LlmTaskResponseHandler {
 	}
 
 	@Data
-	private static class ContentAndSources {
+	private static class ContentAndExtractionItems {
 
 		JsonNode content;
-		String[] sources;
+		String[] extractionItemIds;
 	}
 
 	@Data
@@ -86,10 +86,10 @@ public class EnrichModelResponseHandler extends LlmTaskResponseHandler {
 	public static class Response {
 
 		JsonNode modelCard;
-		List<ContentAndSources> states;
-		List<ContentAndSources> parameters;
-		List<ContentAndSources> observables;
-		List<ContentAndSources> transitions;
+		List<ContentAndExtractionItems> states;
+		List<ContentAndExtractionItems> parameters;
+		List<ContentAndExtractionItems> observables;
+		List<ContentAndExtractionItems> transitions;
 	}
 
 	@Data
@@ -118,7 +118,7 @@ public class EnrichModelResponseHandler extends LlmTaskResponseHandler {
 				enrichment.setContent(modelCard.get(key).get("content"));
 				if (props.documentId != null) {
 					enrichment.setExtractionAssetId(props.documentId);
-					JsonNode sourcesNode = modelCard.get(key).get("sources");
+					JsonNode sourcesNode = modelCard.get(key).get("extractionItemids");
 					if (sourcesNode != null && sourcesNode.isArray()) {
 						String[] sources = new ObjectMapper().convertValue(sourcesNode, String[].class);
 						enrichment.setExtractionItemIds(sources);
@@ -129,7 +129,7 @@ public class EnrichModelResponseHandler extends LlmTaskResponseHandler {
 			});
 
 		// add states enrichments to map
-		for (final ContentAndSources state : response.states) {
+		for (final ContentAndExtractionItems state : response.states) {
 			final Enrichment enrichment = new Enrichment();
 			enrichment.setId(UUID.randomUUID());
 			enrichment.setLabel(state.getContent().get("id").asText());
@@ -137,14 +137,14 @@ public class EnrichModelResponseHandler extends LlmTaskResponseHandler {
 			enrichment.setContent(state.getContent());
 			if (props.documentId != null) {
 				enrichment.setExtractionAssetId(props.documentId);
-				enrichment.setExtractionItemIds(state.getSources());
+				enrichment.setExtractionItemIds(state.getExtractionItemIds());
 			}
 			enrichment.setIncluded(false);
 			enrichments.add(enrichment);
 		}
 
 		// add parameters enrichments to map
-		for (final ContentAndSources parameter : response.parameters) {
+		for (final ContentAndExtractionItems parameter : response.parameters) {
 			final Enrichment enrichment = new Enrichment();
 			enrichment.setId(UUID.randomUUID());
 			enrichment.setLabel(parameter.getContent().get("id").asText());
@@ -152,14 +152,14 @@ public class EnrichModelResponseHandler extends LlmTaskResponseHandler {
 			enrichment.setContent(parameter.getContent());
 			if (props.documentId != null) {
 				enrichment.setExtractionAssetId(props.documentId);
-				enrichment.setExtractionItemIds(parameter.getSources());
+				enrichment.setExtractionItemIds(parameter.getExtractionItemIds());
 			}
 			enrichment.setIncluded(false);
 			enrichments.add(enrichment);
 		}
 
 		// add observables enrichments to map
-		for (final ContentAndSources observable : response.observables) {
+		for (final ContentAndExtractionItems observable : response.observables) {
 			final Enrichment enrichment = new Enrichment();
 			enrichment.setId(UUID.randomUUID());
 			enrichment.setLabel(observable.getContent().get("id").asText());
@@ -167,14 +167,14 @@ public class EnrichModelResponseHandler extends LlmTaskResponseHandler {
 			enrichment.setContent(observable.getContent());
 			if (props.documentId != null) {
 				enrichment.setExtractionAssetId(props.documentId);
-				enrichment.setExtractionItemIds(observable.getSources());
+				enrichment.setExtractionItemIds(observable.getExtractionItemIds());
 			}
 			enrichment.setIncluded(false);
 			enrichments.add(enrichment);
 		}
 
 		// add transitions enrichments to map
-		for (final ContentAndSources transition : response.transitions) {
+		for (final ContentAndExtractionItems transition : response.transitions) {
 			final Enrichment enrichment = new Enrichment();
 			enrichment.setId(UUID.randomUUID());
 			enrichment.setLabel(transition.getContent().get("id").asText());
@@ -182,7 +182,7 @@ public class EnrichModelResponseHandler extends LlmTaskResponseHandler {
 			enrichment.setContent(transition.getContent());
 			if (props.documentId != null) {
 				enrichment.setExtractionAssetId(props.documentId);
-				enrichment.setExtractionItemIds(transition.getSources());
+				enrichment.setExtractionItemIds(transition.getExtractionItemIds());
 			}
 			enrichment.setIncluded(false);
 			enrichments.add(enrichment);
@@ -223,7 +223,7 @@ public class EnrichModelResponseHandler extends LlmTaskResponseHandler {
 			model.getMetadata().setDescription(renderJsonToHTML(card).getBytes(StandardCharsets.UTF_8));
 
 			// Update the model with the enriched data
-			for (final ContentAndSources state : response.states) {
+			for (final ContentAndExtractionItems state : response.states) {
 				final String id = state.content.get("id").asText();
 				final String description = state.content.get("description").asText();
 				final JsonNode units = state.content.get("units");
@@ -251,7 +251,7 @@ public class EnrichModelResponseHandler extends LlmTaskResponseHandler {
 					});
 			}
 
-			for (final ContentAndSources parameter : response.parameters) {
+			for (final ContentAndExtractionItems parameter : response.parameters) {
 				final String id = parameter.content.get("id").asText();
 				final String description = parameter.content.get("description").asText();
 				final JsonNode units = parameter.content.get("units");
@@ -272,7 +272,7 @@ public class EnrichModelResponseHandler extends LlmTaskResponseHandler {
 					});
 			}
 
-			for (final ContentAndSources observable : response.observables) {
+			for (final ContentAndExtractionItems observable : response.observables) {
 				final String id = observable.content.get("id").asText();
 				final String description = observable.content.get("description").asText();
 				final JsonNode units = observable.content.get("units");
@@ -293,7 +293,7 @@ public class EnrichModelResponseHandler extends LlmTaskResponseHandler {
 					});
 			}
 
-			for (final ContentAndSources transition : response.transitions) {
+			for (final ContentAndExtractionItems transition : response.transitions) {
 				final String id = transition.content.get("id").asText();
 				final String description = transition.content.get("description").asText();
 				model
