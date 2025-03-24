@@ -24,7 +24,7 @@
 							:disabled="isEmpty(node.outputs[0].value)"
 						/>
 						<span class="flex gap-2">
-							<tera-pyciemss-cancel-button class="mr-auto" :simulation-run-id="cancelRunId" />
+							<tera-pyciemss-cancel-button class="mr-auto" :simulation-run-id="cancelRunIds" />
 							<span v-tooltip="runButtonMessage">
 								<Button label="Run" icon="pi pi-play" @click="runCalibrate" :disabled="isRunDisabled" />
 							</span>
@@ -683,11 +683,12 @@ const datasetId = computed<string | undefined>(() => props.node.inputs[1]?.value
 const policyInterventionId = computed(() => props.node.inputs[2].value?.[0]);
 const interventionPolicy = ref<InterventionPolicy | null>(null);
 
-const cancelRunId = computed(
-	() =>
-		props.node.state.inProgressForecastId ||
-		props.node.state.inProgressCalibrationId ||
-		props.node.state.inProgressPreForecastId
+const cancelRunIds = computed(() =>
+	[
+		props.node.state.inProgressForecastId,
+		props.node.state.inProgressPreForecastId,
+		props.node.state.inProgressCalibrationId
+	].filter((id) => Boolean(id))
 );
 const currentDatasetFileName = ref<string>();
 
