@@ -15,7 +15,7 @@
 			>
 				<template #header>
 					<div class="flex gap-2 ml-auto">
-						<tera-pyciemss-cancel-button :simulation-run-id="cancelRunId" />
+						<tera-pyciemss-cancel-button :simulation-run-id="cancelRunIds" />
 						<div v-tooltip="runButtonMessage">
 							<Button
 								:disabled="isRunDisabled"
@@ -477,12 +477,14 @@ const runButtonMessage = computed(() =>
 	isRunDisabled.value ? `${mappingFilledTooltip.value} ${nodeInputsFilledTooltip.value}` : ''
 );
 
-const cancelRunId = computed(
-	() =>
-		props.node.state.inProgressForecastId ||
-		props.node.state.inProgressCalibrationId ||
-		props.node.state.inProgressPreForecastId
+const cancelRunIds = computed(() =>
+	[
+		props.node.state.inProgressPreForecastId,
+		props.node.state.inProgressForecastId,
+		props.node.state.inProgressCalibrationId
+	].filter((id) => Boolean(id))
 );
+
 const inProgressCalibrationId = computed(() => props.node.state.inProgressCalibrationId);
 const inProgressForecastId = computed(() => props.node.state.inProgressForecastId);
 const isRunInProgress = computed(() => Boolean(inProgressCalibrationId.value || inProgressForecastId.value));
