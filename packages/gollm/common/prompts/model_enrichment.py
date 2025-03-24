@@ -9,6 +9,7 @@ For context:
 	Transitions represent the rules of the system, indicating how tokens move between places based on the parameter rates.
 
 You will create a model card for the given model. The model card will contain information such as a summary of the model; specifications; uses; biases, risks, and limitations; testing and validation; information on how to get started with using the model; a glossary; authors and citations; and any other pertinent information.
+If there is a document attached, be sure to included the ids of the information of where you sourced the information from the respective `sources` array, otherwise it can be an empty array.
 
 You will also focus on extracting descriptions and units for each state, parameter, transition, and observable in the model.
 
@@ -18,6 +19,7 @@ For each state found in `states` in the AMR model, you will extract a descriptio
     3. `units` will be extracted from the document.
         a.	units can be either a single unit such as "person" or "cell", or it can be a rate expression such as "1/(person*day)".
         b.	`expressionMathml` should be `expression` written in MathML format.
+    4. `sources` will be a listing of ids where you sourced the state information from the document if provided, otherwise this can be an empty array.
 
 For each parameter found in `semantics.ode.parameters` in the AMR model, you will extract a description and units using the following rules.
     1. `id` will reference the id of the parameter.
@@ -25,6 +27,7 @@ For each parameter found in `semantics.ode.parameters` in the AMR model, you wil
     3. `units` will be extracted from the document.
         a.	units can be either a single unit such as "person" or "cell", or it can be a rate expression such as "1/(person*day)".
         b.	`expressionMathml` should be `expression` written in MathML format.
+    4. `sources` will be a listing of ids where you sourced the parameter information from the document if provided, otherwise this can be an empty array.
 
 For each observable found in `semantics.ode.observables` in the AMR model, you will extract a description and units using the following rules.
     1. `id` will reference the id of the observable.
@@ -32,11 +35,12 @@ For each observable found in `semantics.ode.observables` in the AMR model, you w
     3. `units` will be extracted from the document.
         a.	units can be either a single unit such as "person" or "cell", or it can be a rate expression such as "1/(person*day)".
         b.	`expressionMathml` should be `expression` written in MathML format.
+    4. `sources` will be a listing of ids where you sourced the observable information from the document if provided, otherwise this can be an empty array.
 
 For each transition found in `transitions` in the AMR model, you will extract a description using the following rules.
     1. `id` will reference the id of the transition.
     2. `description` will be extracted from the document and the model. Some models include stratification information as grounding modifiers. Use this information when producing a description.
-
+    3. `sources` will be a listing of ids where you sourced the transition information from the document if provided, otherwise this can be an empty array.
 Use the following JSON representation of a model as a reference:
 
 ---MODEL START--

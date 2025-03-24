@@ -6,74 +6,131 @@
       "type": "object",
       "properties": {
         "summary": {
-          "type": "string",
-          "description": "A detailed description of the model and how it was used. Summarize all the information extracted from the paper. Mention if it can likely be represented in Petri Net format."
-        },
-        "specs": {
           "type": "object",
           "properties": {
-            "domain": {
-              "type": "array",
-              "description": "List of domains the model can be used for.",
-              "items": {
-                "type": "string"
-              }
-            },
-            "type": {
+            "content": {
               "type": "string",
-              "description": "Mathematical Model / Graphical Model / Other"
+              "description": "A detailed description of the model and how it was used. Summarize all the information extracted from the paper. Mention if it can likely be represented in Petri Net format."
             },
-            "specification": {
-              "type": "string",
-              "description": "Provide as much detail as possible about the model's structure and complexity. This can include information such as the number of places, transitions, parameter count, and arcs."
-            },
-            "states": {
+             "sources": {
               "type": "array",
-              "description": "A list of state descriptions.",
+              "description": "A list of source ids for which the information for the summary was sourced from.",
               "items": {
                 "type": "string",
-                "description": "A short paragraph describing and summarizing the model state. The paragraph should start with the state name, then a colon, then a description of the state including what units to use for it, and how this state can transition to other states."
-              }
-            },
-            "parameters": {
-              "type": "array",
-              "description": "A list of parameter descriptions.",
-              "items": {
-                "type": "string",
-                "description": "A short paragraph describing and summarizing the model parameter. The paragraph should start with the parameter name, then a colon, then a description of the parameter including what units to use for it."
+                "description": "An id of where the information for the transition was sourced from."
               }
             }
           },
           "required": [
-            "domain",
-            "type",
-            "specification",
-            "states",
-            "parameters"
+            "content",
+            "sources"
+          ],
+          "additionalProperties": false
+        },
+        "specs": {
+          "type": "object",
+          "properties": {
+            "content": {
+              "type": "object",
+              "properties": {
+                "domain": {
+                  "type": "array",
+                  "description": "List of domains the model can be used for.",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "type": {
+                  "type": "string",
+                  "description": "Mathematical Model / Graphical Model / Other"
+                },
+                "specification": {
+                  "type": "string",
+                  "description": "Provide as much detail as possible about the model's structure and complexity. This can include information such as the number of places, transitions, parameter count, and arcs."
+                },
+                "states": {
+                  "type": "array",
+                  "description": "A list of state descriptions.",
+                  "items": {
+                    "type": "string",
+                    "description": "A short paragraph describing and summarizing the model state. The paragraph should start with the state name, then a colon, then a description of the state including what units to use for it, and how this state can transition to other states."
+                  }
+                },
+                "parameters": {
+                  "type": "array",
+                  "description": "A list of parameter descriptions.",
+                  "items": {
+                    "type": "string",
+                    "description": "A short paragraph describing and summarizing the model parameter. The paragraph should start with the parameter name, then a colon, then a description of the parameter including what units to use for it."
+                  }
+                }
+              },
+              "required": [
+                "domain",
+                "type",
+                "specification",
+                "states",
+                "parameters"
+              ],
+              "additionalProperties": false
+            },
+            "sources": {
+              "type": "array",
+              "description": "A list of source ids for which the spec information for the model was sourced from.",
+              "items": {
+                "type": "string",
+                "description": "An id of where the spec information for the model was sourced from."
+              }
+            }
+          },
+          "required": [
+            "content",
+            "sources"
           ],
           "additionalProperties": false
         },
         "uses": {
           "type": "object",
           "properties": {
-            "directUse": {
-              "type": "string",
-              "description": "Explain how the model can be used to analyze or simulate specific systems or processes."
+            "content": {
+              "type": "object",
+              "properties": {
+                "directUse": {
+                  "type": "string",
+                  "description": "Explain how the model can be used to analyze or simulate specific systems or processes."
+                },
+                "outOfScopeUse": {
+                  "type": "string",
+                  "description": "Describe scenarios where using the model would be inappropriate or misleading."
+                }
+              },
+              "required": [
+                "directUse",
+                "outOfScopeUse"
+              ],
+              "additionalProperties": false
             },
-            "outOfScopeUse": {
-              "type": "string",
-              "description": "Describe scenarios where using the model would be inappropriate or misleading."
+            "sources": {
+              "type": "array",
+              "description": "A list of source ids for which the information for the uses of the model was sourced from.",
+              "items": {
+                "type": "string",
+                "description": "An id of where the information for the uses of the model was sourced from."
+              }
             }
           },
           "required": [
-            "directUse",
-            "outOfScopeUse"
+            "content",
+            "sources"
           ],
           "additionalProperties": false
         },
         "biasRisksLimitations": {
           "type": "object",
           "properties": {
+            "content": {
+              "type": "object",
+              "properties": {
             "biases": {
               "type": "string",
               "description": "Describe sources of bias and how these biases can affect simulation results of this model."
@@ -86,78 +143,176 @@
               "type": "string",
               "description": "Describe sources of limitations and how these limitations can affect simulation results of this model."
             }
+              },
+              "required": [
+                "biases",
+                "risks",
+                "limitations"
+              ],
+              "additionalProperties": false
+            },
+            "sources": {
+              "type": "array",
+              "description": "A list of source ids for which the information for the bias, risks, and limitations of the model was sourced from.",
+              "items": {
+                "type": "string",
+                "description": "An id of where the information for the bias, risks, and limitations of the model was sourced from."
+              }
+            }
           },
           "required": [
-            "biases",
-            "risks",
-            "limitations"
+            "content",
+            "sources"
           ],
           "additionalProperties": false
         },
         "testing": {
           "type": "object",
           "properties": {
-            "validation": {
-              "type": "string",
-              "description": "Describe how the model was validated, e.g., through simulation, comparison with real-world data, etc."
+            "content": {
+              "type": "object",
+              "properties": {
+                "validation": {
+                  "type": "string",
+                  "description": "Describe how the model was validated, e.g., through simulation, comparison with real-world data, etc."
+                },
+                "metrics": {
+                  "type": "string",
+                  "description": "Describe the metrics used to evaluate the model."
+                }
+              },
+              "required": [
+                "validation",
+                "metrics"
+              ],
+              "additionalProperties": false
             },
-            "metrics": {
-              "type": "string",
-              "description": "Describe the metrics used to evaluate the model."
+            "sources": {
+              "type": "array",
+              "description": "A list of source ids for which the information for the testing of the model was sourced from.",
+              "items": {
+                "type": "string",
+                "description": "An id of where the information for the testing of the model was sourced from."
+              }
             }
           },
           "required": [
-            "validation",
-            "metrics"
+            "content",
+            "sources"
           ],
           "additionalProperties": false
         },
         "gettingStarted": {
           "type": "object",
           "properties": {
-            "steps": {
-              "type": "array",
-              "description": "a list of steps to use this model or a list of steps to get started with the model.",
-              "items": {
-                "type": "string"
-              }
+            "content": {
+              "type": "object",
+              "properties": {
+                "steps": {
+                  "type": "array",
+                  "description": "a list of steps to use this model or a list of steps to get started with the model.",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "examples": {
+                  "type": "array",
+                  "description": "List of examples used in the paper to help users get started with the model.",
+                  "items": {
+                    "type": "string"
+                  }
+                }
+              },
+              "required": [
+                "steps",
+                "examples"
+              ],
+              "additionalProperties": false
             },
-            "examples": {
+            "sources": {
               "type": "array",
-              "description": "List of examples used in the paper to help users get started with the model.",
+              "description": "A list of source ids for which the information for the getting started of the model was sourced from.",
               "items": {
-                "type": "string"
+                "type": "string",
+                "description": "An id of where the information for the getting started of the model was sourced from."
               }
             }
           },
           "required": [
-            "steps",
-            "examples"
+            "content",
+            "sources"
           ],
           "additionalProperties": false
         },
         "glossary": {
+    "type": "object",
+    "description": "List of terms used in the paper and their definitions.",
+    "properties": {
+      "content": {
+        "type": "array",
+        "description": "List of terms used in the paper and their definitions.",
+        "items": {
+          "type": "string"
+        }
+      },
+      "sources": {
+        "type": "array",
+        "description": "A list of source ids for which the information for the glossary of the model was sourced from.",
+        "items": {
+          "type": "string",
+          "description": "An id of where the information for the glossary of the model was sourced from."
+        }
+      }
+    },
+      "required": ["content", "sources"],
+      "additionalProperties": false
+    },
+    "authors": {
+      "type": "object",
+      "properties": {
+        "content": {
           "type": "array",
-          "description": "List of terms used in the paper and their definitions.",
           "items": {
             "type": "string"
-          }
+          },
+          "description": "List of authors of the paper."
         },
-        "authors": {
+        "sources": {
           "type": "array",
-          "description": "List of authors of the paper.",
           "items": {
             "type": "string"
-          }
-        },
-        "citations": {
+          },
+          "description": "A list of source ids for the authors information"
+        }
+      },
+      "required": ["content", "sources"],
+      "additionalProperties": false
+    },
+    "citations": {
+      "type": "object",
+      "properties": {
+        "content": {
           "type": "array",
-          "description": "List of citations used in the paper.",
           "items": {
             "type": "string"
-          }
+          },
+          "description": "List of citations used in the paper."
         },
-        "moreInformation": {
+        "sources": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "A list of source ids for citations"
+        }
+      },
+      "required": ["content", "sources"],
+      "additionalProperties": false
+    },
+    "moreInformation": {
+      "type": "object",
+      "properties": {
+        "content": {
           "type": "object",
           "properties": {
             "fundedBy": {
@@ -166,19 +321,28 @@
             },
             "links": {
               "type": "array",
-              "description": "List of links to additional information about the model.",
               "items": {
                 "type": "string"
-              }
+              },
+              "description": "List of links to additional information about the model."
             }
           },
-          "required": [
-            "fundedBy",
-            "links"
-          ],
+          "required": ["fundedBy", "links"],
           "additionalProperties": false
+        },
+        "sources": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "A list of source ids for additional information"
         }
       },
+      "required": ["content", "sources"],
+      "additionalProperties": false
+    }
+  },
+
       "required": [
         "summary",
         "specs",
@@ -193,171 +357,234 @@
       ],
       "additionalProperties": false
     },
-    "modelEnrichment": {
-      "type": "object",
-      "properties": {
-        "states": {
+    "states": {
           "type": "array",
           "description": "A list of descriptions and units for states defined in an AMR model.",
           "items": {
             "type": "object",
             "description": "The description and units for a state defined in an AMR model.",
             "properties": {
-              "id": {
-                "type": "string",
-                "description": "The id of the state in the AMR model."
-              },
-              "description": {
-                "type": "string",
-                "description": "A brief description of the state."
-              },
-              "units": {
+              "content": {
                 "type": "object",
                 "properties": {
-                  "expression": {
+                  "id": {
                     "type": "string",
-                    "description": "A string representation of the units. Units can be either a single unit or a rate expression."
+                    "description": "The id of the state in the AMR model."
                   },
-                  "expressionMathml": {
+                  "description": {
                     "type": "string",
-                    "description": "A MathML representation of expression."
+                    "description": "A brief description of the state."
+                  },
+                  "units": {
+                    "type": "object",
+                    "properties": {
+                      "expression": {
+                        "type": "string",
+                        "description": "A string representation of the units. Units can be either a single unit or a rate expression."
+                      },
+                      "expressionMathml": {
+                        "type": "string",
+                        "description": "A MathML representation of expression."
+                      }
+                    },
+                    "required": [
+                      "expression",
+                      "expressionMathml"
+                    ],
+                    "additionalProperties": false
                   }
                 },
                 "required": [
-                  "expression",
-                  "expressionMathml"
+                  "id",
+                  "description",
+                  "units"
                 ],
                 "additionalProperties": false
+              },
+              "sources": {
+                "type": "array",
+                "description": "A list of source ids for which the information for the state was sourced from.",
+                "items": {
+                  "type": "string",
+                  "description": "An id of where the information for the state was sourced from."
+                }
               }
             },
             "required": [
-              "id",
-              "description",
-              "units"
+              "content",
+              "sources"
+            ],
+            "additionalProperties": false
+          }
+    },
+    "parameters": {
+      "type": "array",
+      "description": "A list of descriptions and units for parameters defined in an AMR model.",
+      "items": {
+        "type": "object",
+        "description": "The description and units for a parameter defined in an AMR model.",
+        "properties": {
+          "content": {
+            "type": "object",
+            "properties": {
+          "id": {
+            "type": "string",
+            "description": "The id of the parameter in the AMR model."
+          },
+          "description": {
+            "type": "string",
+            "description": "A brief description of the parameter."
+          },
+          "units": {
+            "type": "object",
+            "properties": {
+              "expression": {
+                "type": "string",
+                "description": "A string representation of the units. Units can be either a single unit or a rate expression."
+              },
+              "expressionMathml": {
+                "type": "string",
+                "description": "A MathML representation of expression."
+              }
+            },
+            "required": [
+              "expression",
+              "expressionMathml"
             ],
             "additionalProperties": false
           }
         },
-        "parameters": {
-          "type": "array",
-          "description": "A list of descriptions and units for parameters defined in an AMR model.",
-          "items": {
-            "type": "object",
-            "description": "The description and units for a parameter defined in an AMR model.",
-            "properties": {
-              "id": {
-                "type": "string",
-                "description": "The id of the parameter in the AMR model."
-              },
-              "description": {
-                "type": "string",
-                "description": "A brief description of the parameter."
-              },
-              "units": {
-                "type": "object",
-                "properties": {
-                  "expression": {
-                    "type": "string",
-                    "description": "A string representation of the units. Units can be either a single unit or a rate expression."
-                  },
-                  "expressionMathml": {
-                    "type": "string",
-                    "description": "A MathML representation of expression."
-                  }
-                },
-                "required": [
-                  "expression",
-                  "expressionMathml"
-                ],
-                "additionalProperties": false
-              }
-            },
-            "required": [
-              "id",
-              "description",
-              "units"
-            ],
-            "additionalProperties": false
-          }
-        },
-        "observables": {
-          "type": "array",
-          "description": "A list of descriptions and units for observables defined in an AMR model.",
-          "items": {
-            "type": "object",
-            "description": "The description and units for an observable defined in an AMR model.",
-            "properties": {
-              "id": {
-                "type": "string",
-                "description": "The id of the observable in the AMR model."
-              },
-              "description": {
-                "type": "string",
-                "description": "A brief description of the observable."
-              },
-              "units": {
-                "type": "object",
-                "properties": {
-                  "expression": {
-                    "type": "string",
-                    "description": "A string representation of the units. Units can be either a single unit or a rate expression."
-                  },
-                  "expressionMathml": {
-                    "type": "string",
-                    "description": "A MathML representation of expression."
-                  }
-                },
-                "required": [
-                  "expression",
-                  "expressionMathml"
-                ],
-                "additionalProperties": false
-              }
-            },
-            "required": [
-              "id",
-              "description",
-              "units"
-            ],
-            "additionalProperties": false
-          }
-        },
-        "transitions": {
-          "type": "array",
-          "description": "A list of descriptions for transitions defined in an AMR model.",
-          "items": {
-            "type": "object",
-            "description": "The description for a transition defined in an AMR model.",
-            "properties": {
-              "id": {
-                "type": "string",
-                "description": "The id of the observable in the AMR model."
-              },
-              "description": {
-                "type": "string",
-                "description": "A brief description of the transition."
-              }
-            },
-            "required": [
-              "id",
-              "description"
-            ],
-            "additionalProperties": false
-          }
-        }
+        "required": [
+          "id",
+          "description",
+          "units"
+        ],
+        "additionalProperties": false
       },
-      "required": [
-        "states",
-        "parameters",
-        "observables",
-        "transitions"
-      ],
-      "additionalProperties": false
+          "sources": {
+            "type": "array",
+            "description": "A list of source ids for which the information for the parameter was sourced from.",
+            "items": {
+              "type": "string",
+              "description": "An id of where the information for the state was parameter from."
+            }
+          }
+        },
+        "required": [
+          "content",
+          "sources"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "observables": {
+      "type": "array",
+      "description": "A list of descriptions and units for observables defined in an AMR model.",
+      "items": {
+        "type": "object",
+        "description": "The description and units for an observable defined in an AMR model.",
+        "properties": {
+          "content": {
+            "type": "object",
+            "properties": {
+          "id": {
+            "type": "string",
+            "description": "The id of the observable in the AMR model."
+          },
+          "description": {
+            "type": "string",
+            "description": "A brief description of the observable."
+          },
+          "units": {
+            "type": "object",
+            "properties": {
+              "expression": {
+                "type": "string",
+                "description": "A string representation of the units. Units can be either a single unit or a rate expression."
+              },
+              "expressionMathml": {
+                "type": "string",
+                "description": "A MathML representation of expression."
+              }
+            },
+            "required": [
+              "expression",
+              "expressionMathml"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "id",
+          "description",
+          "units"
+        ],
+        "additionalProperties": false
+      },
+          "sources": {
+            "type": "array",
+            "description": "A list of source ids for which the information for the observable was sourced from.",
+            "items": {
+              "type": "string",
+              "description": "An id of where the information for the observable was sourced from."
+            }
+          }
+        },
+        "required": [
+          "content",
+          "sources"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "transitions": {
+      "type": "array",
+      "description": "A list of descriptions for transitions defined in an AMR model.",
+      "items": {
+        "type": "object",
+        "description": "The description for a transition defined in an AMR model.",
+        "properties": {
+          "content": {
+            "type": "object",
+            "properties": {
+          "id": {
+            "type": "string",
+            "description": "The id of the observable in the AMR model."
+          },
+          "description": {
+            "type": "string",
+            "description": "A brief description of the transition."
+          }
+        },
+        "required": [
+          "id",
+          "description"
+        ],
+        "additionalProperties": false
+      },
+          "sources": {
+            "type": "array",
+            "description": "A list of source ids for which the information for the transition was sourced from.",
+            "items": {
+              "type": "string",
+              "description": "An id of where the information for the transition was sourced from."
+            }
+          }
+        },
+        "required": [
+          "content",
+          "sources"
+        ],
+        "additionalProperties": false
+      }
     }
   },
   "required": [
     "modelCard",
-    "modelEnrichment"
+    "states",
+    "parameters",
+    "observables",
+    "transitions"
   ],
   "additionalProperties": false
 }
