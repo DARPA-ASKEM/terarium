@@ -12,7 +12,7 @@
               "type": "string",
               "description": "A detailed description of the model and how it was used. Summarize all the information extracted from the paper. Mention if it can likely be represented in Petri Net format."
             },
-             "sources": {
+             "extractionItemIds": {
               "type": "array",
               "description": "A list of source ids for which the information for the summary was sourced from.",
               "items": {
@@ -23,7 +23,7 @@
           },
           "required": [
             "content",
-            "sources"
+            "extractionItemIds"
           ],
           "additionalProperties": false
         },
@@ -74,7 +74,7 @@
               ],
               "additionalProperties": false
             },
-            "sources": {
+            "extractionItemIds": {
               "type": "array",
               "description": "A list of source ids for which the spec information for the model was sourced from.",
               "items": {
@@ -85,7 +85,7 @@
           },
           "required": [
             "content",
-            "sources"
+            "extractionItemIds"
           ],
           "additionalProperties": false
         },
@@ -110,7 +110,7 @@
               ],
               "additionalProperties": false
             },
-            "sources": {
+            "extractionItemIds": {
               "type": "array",
               "description": "A list of source ids for which the information for the uses of the model was sourced from.",
               "items": {
@@ -121,7 +121,7 @@
           },
           "required": [
             "content",
-            "sources"
+            "extractionItemIds"
           ],
           "additionalProperties": false
         },
@@ -151,7 +151,7 @@
               ],
               "additionalProperties": false
             },
-            "sources": {
+            "extractionItemIds": {
               "type": "array",
               "description": "A list of source ids for which the information for the bias, risks, and limitations of the model was sourced from.",
               "items": {
@@ -162,7 +162,7 @@
           },
           "required": [
             "content",
-            "sources"
+            "extractionItemIds"
           ],
           "additionalProperties": false
         },
@@ -187,7 +187,7 @@
               ],
               "additionalProperties": false
             },
-            "sources": {
+            "extractionItemIds": {
               "type": "array",
               "description": "A list of source ids for which the information for the testing of the model was sourced from.",
               "items": {
@@ -198,7 +198,7 @@
           },
           "required": [
             "content",
-            "sources"
+            "extractionItemIds"
           ],
           "additionalProperties": false
         },
@@ -229,7 +229,7 @@
               ],
               "additionalProperties": false
             },
-            "sources": {
+            "extractionItemIds": {
               "type": "array",
               "description": "A list of source ids for which the information for the getting started of the model was sourced from.",
               "items": {
@@ -240,7 +240,7 @@
           },
           "required": [
             "content",
-            "sources"
+            "extractionItemIds"
           ],
           "additionalProperties": false
         },
@@ -255,7 +255,7 @@
           "type": "string"
         }
       },
-      "sources": {
+      "extractionItemIds": {
         "type": "array",
         "description": "A list of source ids for which the information for the glossary of the model was sourced from.",
         "items": {
@@ -264,7 +264,7 @@
         }
       }
     },
-      "required": ["content", "sources"],
+      "required": ["content", "extractionItemIds"],
       "additionalProperties": false
     },
     "authors": {
@@ -277,7 +277,7 @@
           },
           "description": "List of authors of the paper."
         },
-        "sources": {
+        "extractionItemIds": {
           "type": "array",
           "items": {
             "type": "string"
@@ -285,7 +285,7 @@
           "description": "A list of source ids for the authors information"
         }
       },
-      "required": ["content", "sources"],
+      "required": ["content", "extractionItemIds"],
       "additionalProperties": false
     },
     "citations": {
@@ -298,7 +298,7 @@
           },
           "description": "List of citations used in the paper."
         },
-        "sources": {
+        "extractionItemIds": {
           "type": "array",
           "items": {
             "type": "string"
@@ -306,7 +306,7 @@
           "description": "A list of source ids for citations"
         }
       },
-      "required": ["content", "sources"],
+      "required": ["content", "extractionItemIds"],
       "additionalProperties": false
     },
     "moreInformation": {
@@ -330,7 +330,7 @@
           "required": ["fundedBy", "links"],
           "additionalProperties": false
         },
-        "sources": {
+        "extractionItemIds": {
           "type": "array",
           "items": {
             "type": "string"
@@ -338,7 +338,7 @@
           "description": "A list of source ids for additional information"
         }
       },
-      "required": ["content", "sources"],
+      "required": ["content", "extractionItemIds"],
       "additionalProperties": false
     }
   },
@@ -401,7 +401,7 @@
                 ],
                 "additionalProperties": false
               },
-              "sources": {
+              "extractionItemIds": {
                 "type": "array",
                 "description": "A list of source ids for which the information for the state was sourced from.",
                 "items": {
@@ -412,7 +412,7 @@
             },
             "required": [
               "content",
-              "sources"
+              "extractionItemIds"
             ],
             "additionalProperties": false
           }
@@ -461,7 +461,7 @@
         ],
         "additionalProperties": false
       },
-          "sources": {
+          "extractionItemIds": {
             "type": "array",
             "description": "A list of source ids for which the information for the parameter was sourced from.",
             "items": {
@@ -472,7 +472,7 @@
         },
         "required": [
           "content",
-          "sources"
+          "extractionItemIds"
         ],
         "additionalProperties": false
       }
@@ -521,7 +521,7 @@
         ],
         "additionalProperties": false
       },
-          "sources": {
+          "extractionItemIds": {
             "type": "array",
             "description": "A list of source ids for which the information for the observable was sourced from.",
             "items": {
@@ -532,7 +532,7 @@
         },
         "required": [
           "content",
-          "sources"
+          "extractionItemIds"
         ],
         "additionalProperties": false
       }
@@ -562,7 +562,7 @@
         ],
         "additionalProperties": false
       },
-          "sources": {
+          "extractionItemIds": {
             "type": "array",
             "description": "A list of source ids for which the information for the transition was sourced from.",
             "items": {
@@ -573,7 +573,7 @@
         },
         "required": [
           "content",
-          "sources"
+          "extractionItemIds"
         ],
         "additionalProperties": false
       }
