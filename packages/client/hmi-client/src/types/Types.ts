@@ -424,10 +424,15 @@ export interface EvaluationScenarioSummary {
 
 export interface Extraction {
     extractedBy: string;
-    pages: any;
-    body: any;
-    groups: any;
+    pages: { [index: string]: ExtractionPage };
+    body: ExtractionBody;
+    groups: ExtractionGroup[];
     extractions: ExtractionItem[];
+}
+
+export interface ExtractionBody {
+    id: string;
+    children: ExtractionRef[];
 }
 
 export interface ExtractionResponse {
@@ -885,6 +890,16 @@ export interface ProvenanceEdge {
     right: ProvenanceNode;
 }
 
+export interface ExtractionPage {
+    page: number;
+    size: PageSize;
+}
+
+export interface ExtractionGroup {
+    id: string;
+    children: ExtractionRef[];
+}
+
 export interface ExtractionItem {
     id: string;
     type: string;
@@ -898,6 +913,10 @@ export interface ExtractionItem {
     rawText: string;
     text: string;
     data: any;
+}
+
+export interface ExtractionRef {
+    id: string;
 }
 
 export interface PermissionRole {
@@ -974,6 +993,11 @@ export interface VariableStatement {
     value?: StatementValue;
     metadata?: VariableStatementMetadata[];
     provenance?: ProvenanceInfo;
+}
+
+export interface PageSize {
+    width: number;
+    height: number;
 }
 
 export interface BBox {
