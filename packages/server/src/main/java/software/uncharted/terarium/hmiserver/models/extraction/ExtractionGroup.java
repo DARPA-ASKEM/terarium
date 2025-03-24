@@ -1,13 +1,12 @@
 package software.uncharted.terarium.hmiserver.models.extraction;
 
+import java.util.List;
 import lombok.Data;
 import lombok.experimental.Accessors;
 
 @Data
-public class BBox {
+public class ExtractionGroup {
 
-	public Float left;
-	public Float top;
-	public Float right;
-	public Float bottom;
+	private String id;
+	private List<ExtractionRef> children;
 }

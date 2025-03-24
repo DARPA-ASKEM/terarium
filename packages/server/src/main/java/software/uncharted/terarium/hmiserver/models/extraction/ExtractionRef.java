@@ -4,10 +4,7 @@ import lombok.Data;
 import lombok.experimental.Accessors;
 
 @Data
-public class BBox {
+public class ExtractionRef {
 
-	public Float left;
-	public Float top;
-	public Float right;
-	public Float bottom;
+	private String id;
 }
