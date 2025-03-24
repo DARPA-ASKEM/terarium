@@ -216,10 +216,6 @@ export interface DocumentAsset extends TerariumAsset {
      * @deprecated
      */
     documentAbstract?: string;
-    /**
-     * @deprecated
-     */
-    assets?: DocumentExtraction[];
     extractions?: ExtractedDocumentPage[];
     thumbnail?: any;
     extraction?: Extraction;
@@ -818,12 +814,6 @@ export interface NonNumericColumnStats {
     missing_values: number;
 }
 
-export interface DocumentExtraction {
-    fileName: string;
-    assetType: ExtractionAssetType;
-    metadata: { [index: string]: any };
-}
-
 export interface ExtractedDocumentPage {
     pageNumber: number;
     text: string;
@@ -1327,10 +1317,4 @@ export enum InterventionSemanticType {
 export enum InterventionValueType {
     Value = "value",
     Percentage = "percentage",
-}
-
-export enum ExtractionAssetType {
-    Figure = "FIGURE",
-    Table = "TABLE",
-    Equation = "EQUATION",
 }
