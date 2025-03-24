@@ -62,10 +62,6 @@ public class DocumentServiceTests extends TerariumApplicationTests {
 		return grounding;
 	}
 
-	static DocumentExtraction createDocExtraction() {
-		return new DocumentExtraction().setFileName("Hello World.pdf").setAssetType(ExtractionAssetType.FIGURE);
-	}
-
 	static DocumentAsset createDocument() throws Exception {
 		return createDocument("A");
 	}
@@ -81,8 +77,6 @@ public class DocumentServiceTests extends TerariumApplicationTests {
 		documentAsset.setMetadata(new HashMap<>());
 		documentAsset.getMetadata().put("hello", JsonNodeFactory.instance.textNode("world-" + key));
 		documentAsset.setPublicAsset(true);
-		documentAsset.setAssets(new ArrayList<>());
-		documentAsset.getAssets().add(createDocExtraction());
 		return documentAsset;
 	}
 
