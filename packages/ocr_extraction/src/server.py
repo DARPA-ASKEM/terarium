@@ -202,7 +202,7 @@ async def process_and_predict(file: UploadFile = File(...), llm_model: str = For
             "bottom": prov["bbox"]["b"]
         }
         item["charspan"] = prov["charspan"]
-        item["rawText"] = table["text"]
+        item["rawText"] = ""
         item["text"] = table_extraction_dict[id]["text"]
         item["data"] = table_extraction_dict[id]["data"]
         final_result["extractions"].append(item)
