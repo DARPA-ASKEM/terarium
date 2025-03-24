@@ -205,6 +205,9 @@ export interface DatasetColumnStats {
 export interface DocumentAsset extends TerariumAsset {
     userId?: string;
     documentUrl?: string;
+    /**
+     * @deprecated
+     */
     metadata?: { [index: string]: any };
     source?: string;
     text?: string;
@@ -219,6 +222,7 @@ export interface DocumentAsset extends TerariumAsset {
     assets?: DocumentExtraction[];
     extractions?: ExtractedDocumentPage[];
     thumbnail?: any;
+    extraction?: Extraction;
 }
 
 export interface ExternalPublication extends TerariumAsset {
@@ -416,6 +420,14 @@ export interface EvaluationScenarioSummary {
     notes: string;
     multipleUsers: boolean;
     timestampMillis: number;
+}
+
+export interface Extraction {
+    extractedBy: string;
+    pages: any;
+    body: any;
+    groups: any;
+    extractions: ExtractionItem[];
 }
 
 export interface ExtractionResponse {
@@ -873,6 +885,21 @@ export interface ProvenanceEdge {
     right: ProvenanceNode;
 }
 
+export interface ExtractionItem {
+    id: string;
+    type: string;
+    subType: string;
+    extractedBy: string;
+    page: number;
+    pageWidth: number;
+    pageHeight: number;
+    bbox: BBox;
+    charspan: number[];
+    rawText: string;
+    text: string;
+    data: any;
+}
+
 export interface PermissionRole {
     id: string;
     name: string;
@@ -947,6 +974,13 @@ export interface VariableStatement {
     value?: StatementValue;
     metadata?: VariableStatementMetadata[];
     provenance?: ProvenanceInfo;
+}
+
+export interface BBox {
+    left: number;
+    top: number;
+    right: number;
+    bottom: number;
 }
 
 export interface Authority {
