@@ -57,6 +57,7 @@ import software.uncharted.terarium.hmiserver.service.tasks.ExtractTablesResponse
 import software.uncharted.terarium.hmiserver.service.tasks.ExtractTextResponseHandler;
 import software.uncharted.terarium.hmiserver.service.tasks.OCRExtractionResponseHandler;
 import software.uncharted.terarium.hmiserver.service.tasks.TaskService;
+import software.uncharted.terarium.hmiserver.service.tasks.TaskService.TaskMode;
 
 @Service
 @RequiredArgsConstructor
@@ -684,8 +685,6 @@ public class ExtractionService {
 				Future<Extraction> extractionFuture = ocrExtraction(notificationInterface, userId, documentContents);
 				Extraction extraction = extractionFuture.get();
 
-				// FIXME: Update various document-asset attributes - DCDC
-
 				// Post process: Clean latex equations
 				List<ExtractionItem> formulaItems = new ArrayList();
 				for (final ExtractionItem item : extraction.getExtractions()) {
@@ -699,12 +698,22 @@ public class ExtractionService {
 				input.setLlm(config.getLlm());
 				input.setEquations(formulaStrings);
 
-				// Create the task
-				final TaskRequest req = new TaskRequest();
-				req.setType(TaskType.GOLLM);
-				req.setScript(EquationsCleanupResponseHandler.NAME);
-				req.setUserId(currentUserService.get().getId());
-				req.setInput(objectMapper.writeValueAsBytes(input));
+				final TaskRequest cleanupReq = new TaskRequest();
+				cleanupReq.setType(TaskType.GOLLM);
+				cleanupReq.setScript(EquationsCleanupResponseHandler.NAME);
+				cleanupReq.setUserId(currentUserService.get().getId());
+				cleanupReq.setInput(objectMapper.writeValueAsBytes(input));
+				cleanupReq.setProjectId(projectId);
+
+				TaskResponse cleanupResp = taskService.runTask(TaskMode.SYNC, cleanupReq);
+				JsonNode output = objectMapper.readValue(cleanupResp.getOutput(), JsonNode.class);
+				if (cleanupResp != null && cleanupResp.getOutput() != null) {
+					int counter = 0;
+					for (JsonNode eq : output.get("response").get("equations")) {
+						formulaItems.get(counter).setText(eq.asText().trim());
+						counter++;
+					}
+				}
 
 				// Save extraction result
 				document.setExtraction(extraction);
