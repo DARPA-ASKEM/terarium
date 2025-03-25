@@ -33,7 +33,9 @@ public class TaskRequest implements Serializable {
 		@JsonAlias("text_extraction")
 		TEXT_EXTRACTION("text_extraction"),
 		@JsonAlias("table_extraction")
-		TABLE_EXTRACTION("table_extraction");
+		TABLE_EXTRACTION("table_extraction"),
+		@JsonAlias("ocr_extraction")
+		OCR_EXTRACTION("ocr_extraction");
 
 		private final String value;
 
