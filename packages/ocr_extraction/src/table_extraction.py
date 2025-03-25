@@ -48,17 +48,17 @@ def normalize_bbox(bbox, page_size: tuple[float, float]):
     (width, height) = page_size
     if bbox["coord_origin"] == "TOPLEFT":
         return {
-            "left": bbox["l"] / width,
-            "top": bbox["t"] / height,
-            "right": bbox["r"] / width,
-            "bottom": bbox["b"] / height
+            "left": bbox["left"] / width,
+            "top": bbox["top"] / height,
+            "right": bbox["right"] / width,
+            "bottom": bbox["bottom"] / height
         }
     # Else, BottomLeft
     return {
-        "left": bbox["l"] / width,
-        "top": 1 - bbox["t"] / height,
-        "right": bbox["r"] / width,
-        "bottom": 1 - bbox["b"] / height
+        "left": bbox["left"] / width,
+        "top": 1 - bbox["top"] / height,
+        "right": bbox["right"] / width,
+        "bottom": 1 - bbox["bottom"] / height
     }
 
 

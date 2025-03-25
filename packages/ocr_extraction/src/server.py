@@ -19,7 +19,7 @@ logging.basicConfig(level=logging.INFO)
 extractor = "docling"
 
 app = FastAPI()
-IMAGE_RESOLUTION_SCALE = 2.0
+IMAGE_RESOLUTION_SCALE = 1.0
 pipeline_options = PdfPipelineOptions()
 pipeline_options.images_scale = IMAGE_RESOLUTION_SCALE
 pipeline_options.generate_page_images = True
