@@ -14,6 +14,7 @@ public class TaskNotificationEventTypes {
 		Map.entry(CompareModelsResponseHandler.NAME, ClientEventType.TASK_GOLLM_COMPARE_MODEL),
 		Map.entry(ConfigureModelFromDatasetResponseHandler.NAME, ClientEventType.TASK_GOLLM_CONFIGURE_MODEL_FROM_DATASET),
 		Map.entry(ConfigureModelFromDocumentResponseHandler.NAME, ClientEventType.TASK_GOLLM_CONFIGURE_MODEL_FROM_DOCUMENT),
+		Map.entry(DocumentQuestionHandler.NAME, ClientEventType.TASK_GOLLM_DOCUMENT_QUESTION),
 		Map.entry(EnrichModelResponseHandler.NAME, ClientEventType.TASK_GOLLM_ENRICH_MODEL),
 		Map.entry(EnrichDatasetResponseHandler.NAME, ClientEventType.TASK_GOLLM_ENRICH_DATASET),
 		Map.entry(EquationsFromImageResponseHandler.NAME, ClientEventType.TASK_GOLLM_EQUATIONS_FROM_IMAGE),

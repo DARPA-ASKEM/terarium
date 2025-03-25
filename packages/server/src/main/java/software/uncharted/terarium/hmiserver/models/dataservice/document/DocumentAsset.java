@@ -29,6 +29,7 @@ import software.uncharted.terarium.hmiserver.annotations.TSModel;
 import software.uncharted.terarium.hmiserver.annotations.TSOptional;
 import software.uncharted.terarium.hmiserver.models.TerariumAsset;
 import software.uncharted.terarium.hmiserver.models.dataservice.Grounding;
+import software.uncharted.terarium.hmiserver.models.extraction.Extraction;
 
 @EqualsAndHashCode(callSuper = true)
 @Data
@@ -53,6 +54,7 @@ public class DocumentAsset extends TerariumAsset {
 	@TSOptional
 	@Type(JsonType.class)
 	@Column(columnDefinition = "json")
+	@Deprecated
 	private Map<String, JsonNode> metadata;
 
 	@TSOptional
@@ -77,17 +79,17 @@ public class DocumentAsset extends TerariumAsset {
 	@Type(JsonType.class)
 	@Column(columnDefinition = "json")
 	@Deprecated
-	private List<DocumentExtraction> assets;
-
-	@TSOptional
-	@Type(JsonType.class)
-	@Column(columnDefinition = "json")
 	private List<ExtractedDocumentPage> extractions = new ArrayList<>();
 
 	@TSOptional
 	@Lob
 	@JdbcTypeCode(Types.BINARY)
 	private byte[] thumbnail;
+
+	@TSOptional
+	@Type(JsonType.class)
+	@Column(columnDefinition = "json")
+	private Extraction extraction;
 
 	public List<ExtractedDocumentPage> getExtractions() {
 		if (
@@ -105,15 +107,6 @@ public class DocumentAsset extends TerariumAsset {
 	public List<String> getFileNames() {
 		if (this.fileNames == null) {
 			this.fileNames = new ArrayList<>();
-		}
-
-		// ensure these are included in filenames
-		if (this.assets != null) {
-			for (final DocumentExtraction asset : assets) {
-				if (!this.fileNames.contains(asset.getFileName())) {
-					this.fileNames.add(asset.getFileName());
-				}
-			}
 		}
 		return this.fileNames;
 	}
@@ -143,14 +136,6 @@ public class DocumentAsset extends TerariumAsset {
 		if (this.grounding != null) {
 			clone.grounding = this.grounding.clone();
 		}
-
-		if (this.assets != null) {
-			clone.assets = new ArrayList<>();
-			for (final DocumentExtraction asset : this.assets) {
-				clone.assets.add(asset.clone());
-			}
-		}
-
 		return clone;
 	}
 

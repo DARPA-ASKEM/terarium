@@ -101,25 +101,25 @@ const poller = new Poller();
 const pollResult = async (runId: string) => {
 	poller.setPollAction(async () => pollAction(runId));
 	const pollerResults = await poller.start();
-
+	const state = _.cloneDeep(props.node.state);
 	if (pollerResults.state === PollerState.Cancelled) {
+		state.inProgressForecastId = '';
 		poller.stop();
 	} else if (pollerResults.state !== PollerState.Done || !pollerResults.data) {
 		const simulation = await getSimulation(runId);
 		if (simulation?.status && simulation?.statusMessage) {
-			const state = _.cloneDeep(props.node.state);
 			state.errorMessage = {
 				name: `Simulate: ${runId} has failed`,
 				value: simulation.status,
 				traceback: simulation.statusMessage
 			};
-			emit('update-state', state);
 		}
 		// throw if there are any failed runs for now
 		logger.error(`Simulate: ${runId} has failed`, {
 			toastTitle: 'Error - Pyciemss'
 		});
 	}
+	emit('update-state', state);
 	return pollerResults;
 };
 
