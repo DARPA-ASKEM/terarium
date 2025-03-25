@@ -43,6 +43,14 @@ export interface ClientLog {
     args?: string[];
 }
 
+export interface Group {
+    id: string;
+    name: string;
+    createdAtMs: number;
+    description: string;
+    roles: Role[];
+}
+
 export interface SimplifyModelResponse {
     amr: Model;
     max_controller_decrease: number;
@@ -324,6 +332,16 @@ export interface ProjectAsset extends TerariumAsset {
     assetName: string;
     externalRef?: string;
     project: Project;
+}
+
+export interface ProjectPermission {
+    projectId: string;
+    userPermissions: ProjectUserPermission[];
+    groupPermissions: ProjectGroupPermission[];
+}
+
+export interface ProjectUserPermissionDisplayModel extends IProjectUserPermissionDisplayModel {
+    inheritedPermissionLevel: Permission;
 }
 
 export interface Provenance extends TerariumAsset {
@@ -868,6 +886,28 @@ export interface Properties {
     description?: string;
 }
 
+export interface ProjectUserPermission {
+    user: User;
+    project: Project;
+    permissionLevel: ProjectPermissionLevel;
+}
+
+export interface ProjectGroupPermission {
+    group: Group;
+    project: Project;
+    permissionLevel: ProjectPermissionLevel;
+}
+
+export interface IProjectUserPermissionDisplayModel {
+    user: User;
+    email: string;
+    username: string;
+    permissionLevel: Permission;
+    givenName: string;
+    id: string;
+    familyName: string;
+}
+
 export interface ProvenanceNode {
     id: string;
     type: ProvenanceType;
@@ -1264,6 +1304,14 @@ export enum SemanticType {
     Inferred = "inferredParameter",
 }
 
+export enum Permission {
+    None = "NONE",
+    Read = "READ",
+    Write = "WRITE",
+    Membership = "MEMBERSHIP",
+    Administrate = "ADMINISTRATE",
+}
+
 export enum ProvenanceRelationType {
     BeginsAt = "BEGINS_AT",
     Cites = "CITES",
@@ -1322,4 +1370,12 @@ export enum InterventionSemanticType {
 export enum InterventionValueType {
     Value = "value",
     Percentage = "percentage",
+}
+
+export enum ProjectPermissionLevel {
+    None = "NONE",
+    Read = "READ",
+    Write = "WRITE",
+    Admin = "ADMIN",
+    Owner = "OWNER",
 }
