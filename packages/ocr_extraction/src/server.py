@@ -115,7 +115,9 @@ async def process_and_predict(file: UploadFile = File(...)):
     for group in result_dict["groups"]:
         children = []
         for child in group["children"]:
-            children.append(child["$ref"])
+            children.append(
+                { "id": child["$ref"] }
+            )
 
         final_result["groups"].append({
             "id": group["self_ref"],
