@@ -25,7 +25,7 @@
 								severity="secondary"
 								:disabled="_.isEmpty(node.outputs[0].value)"
 							/>
-							<tera-pyciemss-cancel-button class="mr-auto" :simulation-run-id="cancelRunId" />
+							<tera-pyciemss-cancel-button class="mr-auto" :simulation-run-ids="cancelRunIds" />
 							<div v-tooltip="runButtonMessage">
 								<Button :disabled="isRunDisabled" label="Run" icon="pi pi-play" @click="runOptimize" />
 							</div>
@@ -586,8 +586,13 @@ const showSaveDialog = ref<boolean>(false);
 
 const chartWidthDiv = ref(null);
 const chartSize = useDrilldownChartSize(chartWidthDiv);
-const cancelRunId = computed(() => props.node.state.inProgressPostForecastId || props.node.state.inProgressOptimizeId);
-
+const cancelRunIds = computed(() =>
+	[
+		props.node.state.inProgressPreForecastId,
+		props.node.state.inProgressPostForecastId,
+		props.node.state.inProgressOptimizeId
+	].filter((id) => Boolean(id))
+);
 const activePolicyGroups = computed(() =>
 	knobs.value.interventionPolicyGroups.filter((ele) => !!ele.relativeImportance)
 );

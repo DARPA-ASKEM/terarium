@@ -207,6 +207,7 @@ const pollResult = async (runId: string) => {
 	state.errorMessage = { name: '', value: '', traceback: '' };
 
 	if (pollerResults.state === PollerState.Cancelled) {
+		state.inProgressPreForecastId = '';
 		state.inProgressForecastId = '';
 		state.inProgressCalibrationId = '';
 		poller.stop();
