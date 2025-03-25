@@ -1253,7 +1253,7 @@ export enum EnrichmentTarget {
 }
 
 export enum EnrichmentSource {
-    System = "SYSTEM",
+    Gollm = "GOLLM",
     Custom = "CUSTOM",
 }
 

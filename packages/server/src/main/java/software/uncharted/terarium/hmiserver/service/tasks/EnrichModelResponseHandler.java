@@ -115,7 +115,7 @@ public class EnrichModelResponseHandler extends LlmTaskResponseHandler {
 				final Enrichment enrichment = new Enrichment();
 				enrichment.setId(UUID.randomUUID());
 				enrichment.setLabel(JsonToHTML.formatTitle(key));
-				enrichment.setSource(EnrichmentSource.SYSTEM);
+				enrichment.setSource(EnrichmentSource.GOLLM);
 				enrichment.setTarget(EnrichmentTarget.MODEL_CARD);
 				enrichment.setContent(modelCard.get(key).get("content"));
 				if (props.documentId != null) {
@@ -135,7 +135,7 @@ public class EnrichModelResponseHandler extends LlmTaskResponseHandler {
 			final Enrichment enrichment = new Enrichment();
 			enrichment.setId(UUID.randomUUID());
 			enrichment.setLabel(state.getContent().get("id").asText());
-			enrichment.setSource(EnrichmentSource.SYSTEM);
+			enrichment.setSource(EnrichmentSource.GOLLM);
 			enrichment.setTarget(EnrichmentTarget.STATE);
 			enrichment.setContent(state.getContent());
 			if (props.documentId != null) {
@@ -151,7 +151,7 @@ public class EnrichModelResponseHandler extends LlmTaskResponseHandler {
 			final Enrichment enrichment = new Enrichment();
 			enrichment.setId(UUID.randomUUID());
 			enrichment.setLabel(parameter.getContent().get("id").asText());
-			enrichment.setSource(EnrichmentSource.SYSTEM);
+			enrichment.setSource(EnrichmentSource.GOLLM);
 			enrichment.setTarget(EnrichmentTarget.PARAMETER);
 			enrichment.setContent(parameter.getContent());
 			if (props.documentId != null) {
@@ -167,7 +167,7 @@ public class EnrichModelResponseHandler extends LlmTaskResponseHandler {
 			final Enrichment enrichment = new Enrichment();
 			enrichment.setId(UUID.randomUUID());
 			enrichment.setLabel(observable.getContent().get("id").asText());
-			enrichment.setSource(EnrichmentSource.SYSTEM);
+			enrichment.setSource(EnrichmentSource.GOLLM);
 			enrichment.setTarget(EnrichmentTarget.OBSERVABLE);
 			enrichment.setContent(observable.getContent());
 			if (props.documentId != null) {
@@ -183,7 +183,7 @@ public class EnrichModelResponseHandler extends LlmTaskResponseHandler {
 			final Enrichment enrichment = new Enrichment();
 			enrichment.setId(UUID.randomUUID());
 			enrichment.setLabel(transition.getContent().get("id").asText());
-			enrichment.setSource(EnrichmentSource.SYSTEM);
+			enrichment.setSource(EnrichmentSource.GOLLM);
 			enrichment.setTarget(EnrichmentTarget.TRANSITION);
 			enrichment.setContent(transition.getContent());
 			if (props.documentId != null) {
