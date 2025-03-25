@@ -914,10 +914,10 @@ export interface IProjectUserPermissionDisplayModel {
     user: User;
     email: string;
     username: string;
-    permissionLevel: Permission;
     givenName: string;
     id: string;
     familyName: string;
+    permissionLevel: Permission;
 }
 
 export interface ProvenanceNode {
