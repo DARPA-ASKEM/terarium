@@ -43,20 +43,6 @@ public class Extraction {
 		StringBuffer buffer = new StringBuffer();
 		extractTextToBuffer(buffer, textCache, groupCache, this.body.getChildren());
 
-		// TODO groups
-		/*
-		this.body.getChildren()
-			.stream()
-			.forEach(ref -> {
-				final String id = ref.getId();
-				final String text = textCache.get(id);
-				if (text != null) {
-					buffer.append(text);
-					buffer.append("\n");
-				}
-			});
-		*/
-
 		return buffer.toString();
 	}
 

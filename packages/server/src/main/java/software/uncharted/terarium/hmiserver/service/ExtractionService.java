@@ -682,10 +682,13 @@ public class ExtractionService {
 				final String filename = document.getFileNames().get(0);
 				final byte[] documentContents = documentService.fetchFileAsBytes(documentId, filename).get();
 
+				log.info("OCR extraction: starting");
 				Future<Extraction> extractionFuture = ocrExtraction(notificationInterface, userId, documentContents);
 				Extraction extraction = extractionFuture.get();
+				log.info("OCR extraction: done");
 
 				// Post process: Clean latex equations
+				log.info("OCR extraction equation post processing: starting ");
 				List<ExtractionItem> formulaItems = new ArrayList();
 				for (final ExtractionItem item : extraction.getExtractions()) {
 					if (item.getType().equalsIgnoreCase("text") && item.getSubType().equalsIgnoreCase("formula")) {
@@ -714,10 +717,13 @@ public class ExtractionService {
 						counter++;
 					}
 				}
+				log.info("OCR extraction equation post processing: done");
 
 				// Save extraction result
+				log.info("OCR extraction: saving to storage: starting");
 				document.setExtraction(extraction);
 				documentService.updateAsset(document, projectId);
+				log.info("OCR extraction: saving to storage: done");
 
 				return document;
 			} catch (final Exception e) {
