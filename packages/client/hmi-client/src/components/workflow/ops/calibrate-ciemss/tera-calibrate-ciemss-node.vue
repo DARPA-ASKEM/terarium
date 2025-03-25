@@ -396,6 +396,7 @@ watch(
 				parameterSemanticList: _.cloneDeep(baseConfig.parameterSemanticList),
 				initialSemanticList: _.cloneDeep(baseConfig.initialSemanticList),
 				inferredParameterList: inferredParameters,
+				temporalContext: baseConfig.temporalContext,
 				temporary: true
 			};
 
