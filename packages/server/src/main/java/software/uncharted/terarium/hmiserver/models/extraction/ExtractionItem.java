@@ -3,7 +3,6 @@ package software.uncharted.terarium.hmiserver.models.extraction;
 import com.fasterxml.jackson.databind.JsonNode;
 import java.util.List;
 import lombok.Data;
-import lombok.experimental.Accessors;
 
 @Data
 public class ExtractionItem {

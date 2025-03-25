@@ -1,7 +1,6 @@
 package software.uncharted.terarium.hmiserver.models.extraction;
 
 import lombok.Data;
-import lombok.experimental.Accessors;
 
 @Data
 class PageSize {
