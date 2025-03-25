@@ -24,7 +24,7 @@
 							:disabled="isEmpty(node.outputs[0].value)"
 						/>
 						<span class="flex gap-2">
-							<tera-pyciemss-cancel-button class="mr-auto" :simulation-run-id="cancelRunIds" />
+							<tera-pyciemss-cancel-button class="mr-auto" :simulation-run-ids="cancelRunIds" />
 							<span v-tooltip="runButtonMessage">
 								<Button label="Run" icon="pi pi-play" @click="runCalibrate" :disabled="isRunDisabled" />
 							</span>

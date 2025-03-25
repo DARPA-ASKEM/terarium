@@ -15,7 +15,7 @@
 			>
 				<template #header>
 					<div class="flex gap-2 ml-auto">
-						<tera-pyciemss-cancel-button :simulation-run-id="cancelRunIds" />
+						<tera-pyciemss-cancel-button :simulation-run-ids="cancelRunIds" />
 						<div v-tooltip="runButtonMessage">
 							<Button
 								:disabled="isRunDisabled"

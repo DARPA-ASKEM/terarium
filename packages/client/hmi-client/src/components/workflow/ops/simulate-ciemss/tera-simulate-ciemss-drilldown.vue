@@ -19,7 +19,7 @@
 					<div class="flex align-items-center justify-content-between px-3">
 						<p>{{ blankMessage }}.</p>
 						<span class="flex gap-2">
-							<tera-pyciemss-cancel-button :simulation-run-id="cancelRunIds" />
+							<tera-pyciemss-cancel-button :simulation-run-ids="cancelRunIds" />
 							<Button
 								label="Run"
 								icon="pi pi-play"

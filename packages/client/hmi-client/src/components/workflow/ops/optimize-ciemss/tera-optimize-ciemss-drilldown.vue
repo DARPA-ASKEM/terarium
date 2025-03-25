@@ -25,7 +25,7 @@
 								severity="secondary"
 								:disabled="_.isEmpty(node.outputs[0].value)"
 							/>
-							<tera-pyciemss-cancel-button class="mr-auto" :simulation-run-id="cancelRunIds" />
+							<tera-pyciemss-cancel-button class="mr-auto" :simulation-run-ids="cancelRunIds" />
 							<div v-tooltip="runButtonMessage">
 								<Button :disabled="isRunDisabled" label="Run" icon="pi pi-play" @click="runOptimize" />
 							</div>
