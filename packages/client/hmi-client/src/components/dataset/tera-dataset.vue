@@ -28,11 +28,30 @@
 				<Editor v-model="editorContent" />
 			</AccordionTab>
 			<AccordionTab header="Column information">
-				<tera-column-info
-					v-for="(column, index) in columnInformation"
-					:key="index"
-					:column="column"
-					@update-column="updateColumn(index, $event.key, $event.value)"
+				<ul>
+					<li
+						v-for="(column, index) in columnInformation.slice(
+							columnInfoFirstRow,
+							columnInfoFirstRow + MAX_NUMBER_OF_ROWS
+						)"
+						:key="column.name"
+					>
+						<tera-column-info
+							:key="columnInfoFirstRow + index"
+							:column="column"
+							@update-column="updateColumn(columnInfoFirstRow + index, $event.key, $event.value)"
+						/>
+					</li>
+				</ul>
+				<Paginator
+					v-if="columnInformation.length > MAX_NUMBER_OF_ROWS"
+					:rows="MAX_NUMBER_OF_ROWS"
+					:first="columnInfoFirstRow"
+					:total-records="columnInformation.length"
+					:template="{
+						default: 'FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink JumpToPageDropdown'
+					}"
+					@page="columnInfoFirstRow = $event.first"
 				/>
 			</AccordionTab>
 			<AccordionTab header="Data" v-if="!isEmpty(dataset?.fileNames)">
@@ -68,6 +87,7 @@ import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue'
 import TeraDatasetDatatable from '@/components/dataset/tera-dataset-datatable.vue';
 import TeraColumnInfo from '@/components/dataset/tera-column-info.vue';
 import { b64DecodeUnicode, b64EncodeUnicode } from '@/utils/binary';
+import Paginator from 'primevue/paginator';
 
 const props = defineProps({
 	assetId: {
@@ -87,6 +107,8 @@ const showSaveModal = ref(false);
 const rawContent = ref<CsvAsset | null>(null);
 const isDatasetLoading = ref(false);
 const selectedTabIndex = ref(0);
+const columnInfoFirstRow = ref(0);
+const MAX_NUMBER_OF_ROWS = 5;
 
 const optionsMenu = ref();
 const optionsMenuPt = {
