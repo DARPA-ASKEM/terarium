@@ -45,7 +45,7 @@ public class TaskUtilities {
 		input.setLlm(llm);
 		if (document != null) {
 			try {
-				input.setDocument(objectMapper.writeValueAsString(document.getExtraction().getSimplifiedExtractions()));
+				input.setDocument(objectMapper.writeValueAsString(document.getExtraction().getExtractions()));
 			} catch (JsonProcessingException e) {
 				throw new IOException("Unable to serialize document text");
 			}
