@@ -1210,8 +1210,8 @@ public class GoLLMController {
 			.getAsset(documentId)
 			.orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, messages.get("document.not-found")));
 
-		// make sure there is a text in the document
-		if (document.getText() == null || document.getText().isBlank()) {
+		// make sure there are document extractions available
+		if (document.getExtractions() == null || document.getExtractions().isEmpty()) {
 			log.warn(String.format("Document %s has no extracted text", documentId));
 			throw new ResponseStatusException(HttpStatus.NOT_FOUND, messages.get("document.extraction.not-done"));
 		}
