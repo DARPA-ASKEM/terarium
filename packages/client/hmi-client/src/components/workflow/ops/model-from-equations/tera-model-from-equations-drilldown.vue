@@ -291,7 +291,7 @@
 											:class="['asset-panel', { selected: selectedEnrichment === enrichment.id }]"
 										>
 											<template #header>
-												<h6>{{ enrichment.target + ' > ' + enrichment.label }}</h6>
+												<h6>{{ enrichmentTargetTypeToLabel(enrichment.target) + ' > ' + enrichment.label }}</h6>
 												<Checkbox
 													@click.stop
 													class="flex-shrink-0 ml-auto"
@@ -458,7 +458,7 @@ import TeraInputText from '@/components/widgets/tera-input-text.vue';
 import { useClientEvent } from '@/composables/useClientEvent';
 import { formatTitle } from '@/utils/text';
 import { ModelFromEquationsState, EquationBlock } from './model-from-equations-operation';
-import { updateModelWithEnrichments } from './model-from-equations-utils';
+import { updateModelWithEnrichments, enrichmentTargetTypeToLabel } from './model-from-equations-utils';
 
 const emit = defineEmits(['close', 'update-state', 'append-output', 'select-output']);
 const props = defineProps<{

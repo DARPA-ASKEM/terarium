@@ -21,7 +21,6 @@ import software.uncharted.terarium.hmiserver.models.dataservice.dataset.DatasetC
 import software.uncharted.terarium.hmiserver.models.dataservice.document.DocumentAsset;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.Model;
 import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.semantics.GroundedSemantic;
-import software.uncharted.terarium.hmiserver.models.extraction.ExtractionItem;
 import software.uncharted.terarium.hmiserver.models.mira.DKG;
 import software.uncharted.terarium.hmiserver.models.task.TaskRequest;
 import software.uncharted.terarium.hmiserver.service.ContextMatcher;
@@ -45,7 +44,7 @@ public class TaskUtilities {
 		input.setLlm(llm);
 		if (document != null) {
 			try {
-				input.setDocument(objectMapper.writeValueAsString(document.getExtraction().getExtractions()));
+				input.setDocument(objectMapper.writeValueAsString(document.getExtraction().getLightweightExtractions()));
 			} catch (JsonProcessingException e) {
 				throw new IOException("Unable to serialize document text");
 			}

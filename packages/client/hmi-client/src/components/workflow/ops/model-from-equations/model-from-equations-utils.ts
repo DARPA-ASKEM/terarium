@@ -83,3 +83,20 @@ export function updateModelWithEnrichments(model: Model, enrichments: Enrichment
 		}
 	});
 }
+
+export function enrichmentTargetTypeToLabel(target: EnrichmentTarget): string {
+	switch (target) {
+		case EnrichmentTarget.ModelCard:
+			return 'Description';
+		case EnrichmentTarget.State:
+			return 'State';
+		case EnrichmentTarget.Parameter:
+			return 'Parameter';
+		case EnrichmentTarget.Transition:
+			return 'Transition';
+		case EnrichmentTarget.Observable:
+			return 'Observable';
+		default:
+			return 'Unknown';
+	}
+}
