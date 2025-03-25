@@ -93,10 +93,30 @@ def process_table_image(image_uri, table_html):
     return message_content
 
 
+def normalize_bbox(bbox, page_size: tuple[float, float]):
+    (width, height) = page_size
+    if bbox["coord_origin"] == "TOPLEFT":
+        return {
+            "left": bbox["l"] / width,
+            "top": bbox["t"] / height,
+            "right": bbox["r"] / width,
+            "bottom": bbox["b"] / height
+        }
+    # Else, BottomLeft
+    return {
+        "left": bbox["l"] / width,
+        "top": 1 - bbox["t"] / height,
+        "right": bbox["r"] / width,
+        "bottom": 1 - bbox["b"] / height
+    }
+
+
 def extract_tables(result):
     table_extraction_dict = {}
     for _idx, table in enumerate(result.document.tables):
         table_ref = table.self_ref
+        # Page information
+        page_size = result.document.pages[table.prov[0].page_no].size
         # Get the table image
         table_img = table.get_image(result.document)
         table_img = table_img.resize((table_img.width * 2, table_img.height * 2))
@@ -116,13 +136,13 @@ def extract_tables(result):
                 col_idx = table_cell.start_col_offset_idx
                 cell_id = table_ref + ":" + str(row_idx) + "_" + str(col_idx)
                 cell_val = str(table_grid[row_idx][col_idx])
-                bbox = {
+                bbox = normalize_bbox({
                     "left": table_cell.bbox.l,
                     "top": table_cell.bbox.t,
                     "right": table_cell.bbox.r,
                     "bottom": table_cell.bbox.b,
                     "coord_origin": table_cell.bbox.coord_origin
-                }
+                }, (page_size.width, page_size.height))
                 cell_dict = vars(table_cell)
                 cell_dict["id"] = cell_id  # Add table cell id
                 cell_dict["bbox"] = bbox

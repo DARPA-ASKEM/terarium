@@ -11,7 +11,7 @@ from docling.document_converter import DocumentConverter, PdfFormatOption
 
 from texteller.inference_model import InferenceModel
 
-from table_extraction import extract_tables
+from table_extraction import extract_tables, normalize_bbox
 
 logging.basicConfig(level=logging.INFO)
 
@@ -140,12 +140,14 @@ async def process_and_predict(file: UploadFile = File(...)):
         item["page"] = prov["page_no"]
         item["pageWidth"] = pages[str(item["page"])]["size"]["width"]
         item["pageHeight"] = pages[str(item["page"])]["size"]["height"]
-        item["bbox"] = {
+        page_size = (pages[str(item["page"])]["size"]["width"], pages[str(item["page"])]["size"]["height"])
+        item["bbox"] = normalize_bbox({
             "left": prov["bbox"]["l"],
             "top": prov["bbox"]["t"],
             "right": prov["bbox"]["r"],
-            "bottom": prov["bbox"]["b"]
-        }
+            "bottom": prov["bbox"]["b"],
+            "coord_origin": prov["bbox"]["coord_origin"]
+        }, page_size)
         item["charspan"] = prov["charspan"]
 
         if item["subType"] == "formula":
@@ -169,12 +171,14 @@ async def process_and_predict(file: UploadFile = File(...)):
         item["page"] = prov["page_no"]
         item["pageWidth"] = pages[str(item["page"])]["size"]["width"]
         item["pageHeight"] = pages[str(item["page"])]["size"]["height"]
-        item["bbox"] = {
+        page_size = (pages[str(item["page"])]["size"]["width"], pages[str(item["page"])]["size"]["height"])
+        item["bbox"] = normalize_bbox({
             "left": prov["bbox"]["l"],
             "top": prov["bbox"]["t"],
             "right": prov["bbox"]["r"],
-            "bottom": prov["bbox"]["b"]
-        }
+            "bottom": prov["bbox"]["b"],
+            "coord_origin": prov["bbox"]["coord_origin"]
+        }, page_size)
         item["charspan"] = prov["charspan"]
         final_result["extractions"].append(item)
 
@@ -191,12 +195,14 @@ async def process_and_predict(file: UploadFile = File(...)):
         item["page"] = prov["page_no"]
         item["pageWidth"] = pages[str(item["page"])]["size"]["width"]
         item["pageHeight"] = pages[str(item["page"])]["size"]["height"]
-        item["bbox"] = {
+        page_size = (pages[str(item["page"])]["size"]["width"], pages[str(item["page"])]["size"]["height"])
+        item["bbox"] = normalize_bbox({
             "left": prov["bbox"]["l"],
             "top": prov["bbox"]["t"],
             "right": prov["bbox"]["r"],
-            "bottom": prov["bbox"]["b"]
-        }
+            "bottom": prov["bbox"]["b"],
+            "coord_origin": prov["bbox"]["coord_origin"]
+        }, page_size)
         item["charspan"] = prov["charspan"]
         item["rawText"] = ""
         item["text"] = table_extraction_dict[id]["text"]
