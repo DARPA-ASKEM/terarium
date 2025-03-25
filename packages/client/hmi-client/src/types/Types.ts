@@ -911,13 +911,13 @@ export interface ProjectGroupPermission {
 }
 
 export interface IProjectUserPermissionDisplayModel {
+    user: User;
     username: string;
     email: string;
-    givenName: string;
-    familyName: string;
-    user: User;
     permissionLevel: Permission;
+    givenName: string;
     id: string;
+    familyName: string;
 }
 
 export interface ProvenanceNode {
