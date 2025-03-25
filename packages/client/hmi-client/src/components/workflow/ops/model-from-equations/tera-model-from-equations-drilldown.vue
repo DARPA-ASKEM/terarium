@@ -291,18 +291,23 @@
 											:class="['asset-panel', { selected: selectedEnrichment === enrichment.id }]"
 										>
 											<template #header>
-												<h6>{{ enrichment.type + ' > ' + enrichment.label }}</h6>
+												<h6>{{ enrichment.target + ' > ' + enrichment.label }}</h6>
 												<Checkbox
 													@click.stop
 													class="flex-shrink-0 ml-auto"
 													v-model="enrichment.included"
 													:binary="true"
-													:disabled="enrichment.type === EnrichmentType.Custom"
+													:disabled="enrichment.source === EnrichmentSource.Custom"
 													@update:model-value="onEnrichmentChange"
 												/>
 											</template>
 											<section class="flex flex-column gap-2" v-if="selectedEnrichment === enrichment.id">
-												<template v-if="enrichment.type === EnrichmentType.Description">
+												<template
+													v-if="
+														enrichment.target === EnrichmentTarget.ModelCard &&
+														enrichment.source !== EnrichmentSource.Custom
+													"
+												>
 													<!-- If array -->
 													<ul v-if="Array.isArray(enrichment.content)">
 														<li v-for="item in enrichment.content" :key="item">
@@ -322,7 +327,7 @@
 													<!-- If string -->
 													<p v-else>{{ enrichment.content }}</p>
 												</template>
-												<template v-else-if="enrichment.type === EnrichmentType.Custom">
+												<template v-else-if="enrichment.source === EnrichmentSource.Custom">
 													<div class="flex align-items-center gap-2 w-full">
 														<i class="pi pi-sparkles" />
 														<tera-input-text class="w-full" :model-value="'What does the model describe?'" />
@@ -422,7 +427,8 @@ import {
 	ClientEvent,
 	ClientEventType,
 	Enrichment,
-	EnrichmentType,
+	EnrichmentSource,
+	EnrichmentTarget,
 	TaskResponse,
 	TaskStatus,
 	type Card,
@@ -801,7 +807,7 @@ const onEnrichmentChange = () => {
 
 const onUseAll = () => {
 	enrichments.value.forEach((enrichment) => {
-		if (enrichment.type === EnrichmentType.Custom) {
+		if (enrichment.source === EnrichmentSource.Custom) {
 			return;
 		}
 		enrichment.included = true;
@@ -870,7 +876,8 @@ const addPrompt = () => {
 	selectedModel.value?.metadata?.enrichments?.unshift({
 		id: uuidv4(),
 		label: 'Custom prompt',
-		type: EnrichmentType.Custom,
+		source: EnrichmentSource.Custom,
+		target: EnrichmentTarget.ModelCard,
 		content: 'What does the model describe?',
 		included: false,
 		extractionAssetId: '',

@@ -16,7 +16,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import software.uncharted.terarium.hmiserver.models.dataservice.enrichment.Enrichment;
-import software.uncharted.terarium.hmiserver.models.dataservice.enrichment.EnrichmentType;
+import software.uncharted.terarium.hmiserver.models.dataservice.enrichment.EnrichmentSource;
+import software.uncharted.terarium.hmiserver.models.dataservice.enrichment.EnrichmentTarget;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.Model;
 import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.ModelMetadata;
 import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.ModelParameter;
@@ -114,7 +115,8 @@ public class EnrichModelResponseHandler extends LlmTaskResponseHandler {
 				final Enrichment enrichment = new Enrichment();
 				enrichment.setId(UUID.randomUUID());
 				enrichment.setLabel(JsonToHTML.formatTitle(key));
-				enrichment.setType(EnrichmentType.DESCRIPTION);
+				enrichment.setSource(EnrichmentSource.SYSTEM);
+				enrichment.setTarget(EnrichmentTarget.MODEL_CARD);
 				enrichment.setContent(modelCard.get(key).get("content"));
 				if (props.documentId != null) {
 					enrichment.setExtractionAssetId(props.documentId);
@@ -133,7 +135,8 @@ public class EnrichModelResponseHandler extends LlmTaskResponseHandler {
 			final Enrichment enrichment = new Enrichment();
 			enrichment.setId(UUID.randomUUID());
 			enrichment.setLabel(state.getContent().get("id").asText());
-			enrichment.setType(EnrichmentType.STATE);
+			enrichment.setSource(EnrichmentSource.SYSTEM);
+			enrichment.setTarget(EnrichmentTarget.STATE);
 			enrichment.setContent(state.getContent());
 			if (props.documentId != null) {
 				enrichment.setExtractionAssetId(props.documentId);
@@ -148,7 +151,8 @@ public class EnrichModelResponseHandler extends LlmTaskResponseHandler {
 			final Enrichment enrichment = new Enrichment();
 			enrichment.setId(UUID.randomUUID());
 			enrichment.setLabel(parameter.getContent().get("id").asText());
-			enrichment.setType(EnrichmentType.PARAMETER);
+			enrichment.setSource(EnrichmentSource.SYSTEM);
+			enrichment.setTarget(EnrichmentTarget.PARAMETER);
 			enrichment.setContent(parameter.getContent());
 			if (props.documentId != null) {
 				enrichment.setExtractionAssetId(props.documentId);
@@ -163,7 +167,8 @@ public class EnrichModelResponseHandler extends LlmTaskResponseHandler {
 			final Enrichment enrichment = new Enrichment();
 			enrichment.setId(UUID.randomUUID());
 			enrichment.setLabel(observable.getContent().get("id").asText());
-			enrichment.setType(EnrichmentType.OBSERVABLE);
+			enrichment.setSource(EnrichmentSource.SYSTEM);
+			enrichment.setTarget(EnrichmentTarget.OBSERVABLE);
 			enrichment.setContent(observable.getContent());
 			if (props.documentId != null) {
 				enrichment.setExtractionAssetId(props.documentId);
@@ -178,7 +183,8 @@ public class EnrichModelResponseHandler extends LlmTaskResponseHandler {
 			final Enrichment enrichment = new Enrichment();
 			enrichment.setId(UUID.randomUUID());
 			enrichment.setLabel(transition.getContent().get("id").asText());
-			enrichment.setType(EnrichmentType.TRANSITION);
+			enrichment.setSource(EnrichmentSource.SYSTEM);
+			enrichment.setTarget(EnrichmentTarget.TRANSITION);
 			enrichment.setContent(transition.getContent());
 			if (props.documentId != null) {
 				enrichment.setExtractionAssetId(props.documentId);

@@ -11,7 +11,9 @@ public class Enrichment {
 
 	private UUID id;
 	private String label;
-	private EnrichmentType type;
+
+	private EnrichmentTarget target; // Where to apply (STATE, PARAMETER, TRANSITION, etc.)
+	private EnrichmentSource source; // How it was created (SYSTEM, CUSTOM)
 	private JsonNode content;
 	private UUID extractionAssetId;
 	private String[] extractionItemIds;

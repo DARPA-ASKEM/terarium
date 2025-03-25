@@ -1,4 +1,4 @@
-import { Enrichment, EnrichmentType, Model } from '@/types/Types';
+import { Enrichment, EnrichmentTarget, Model } from '@/types/Types';
 import { b64EncodeUnicode } from '@/utils/binary';
 import { createModelMap } from '@/model-representation/service';
 import { formatTitle } from '@/utils/text';
@@ -6,7 +6,7 @@ import { formatTitle } from '@/utils/text';
 function buildHTMLDescriptionFromEnrichments(enrichments: Enrichment[]): string {
 	let description = '';
 	enrichments
-		.filter((e) => e.type === EnrichmentType.Description)
+		.filter((e) => e.target === EnrichmentTarget.ModelCard)
 		.forEach((enrichment) => {
 			description += `<h3>${formatTitle(enrichment.label)}</h3>\n`;
 			if (typeof enrichment.content === 'string') {
@@ -49,7 +49,7 @@ export function updateModelWithEnrichments(model: Model, enrichments: Enrichment
 	includedEnrichments.forEach((enrichment) => {
 		const semanticId = enrichment.content.id;
 
-		if (enrichment.type === EnrichmentType.State) {
+		if (enrichment.target === EnrichmentTarget.State) {
 			const foundState = modelMap.states.get(semanticId);
 			if (foundState) {
 				foundState.description = enrichment.content.description;
@@ -57,14 +57,14 @@ export function updateModelWithEnrichments(model: Model, enrichments: Enrichment
 			} else {
 				console.error('State not found');
 			}
-		} else if (enrichment.type === EnrichmentType.Transition) {
+		} else if (enrichment.target === EnrichmentTarget.Transition) {
 			const foundTransition = modelMap.transitions.get(semanticId);
 			if (foundTransition) {
 				foundTransition.description = enrichment.content.description;
 			} else {
 				console.error('Transition not found');
 			}
-		} else if (enrichment.type === EnrichmentType.Parameter) {
+		} else if (enrichment.target === EnrichmentTarget.Parameter) {
 			const foundParameter = modelMap.parameters.get(semanticId);
 			if (foundParameter) {
 				foundParameter.description = enrichment.content.description;
@@ -72,7 +72,7 @@ export function updateModelWithEnrichments(model: Model, enrichments: Enrichment
 			} else {
 				console.error('Parameter not found');
 			}
-		} else if (enrichment.type === EnrichmentType.Observable) {
+		} else if (enrichment.target === EnrichmentTarget.Observable) {
 			const foundObservable = modelMap.observables.get(semanticId);
 			if (foundObservable) {
 				foundObservable.description = enrichment.content.description;

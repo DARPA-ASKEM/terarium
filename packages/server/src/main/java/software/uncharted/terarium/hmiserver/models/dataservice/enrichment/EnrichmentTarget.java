@@ -1,10 +1,9 @@
 package software.uncharted.terarium.hmiserver.models.dataservice.enrichment;
 
-public enum EnrichmentType {
-	DESCRIPTION,
-	CUSTOM,
+public enum EnrichmentTarget {
 	STATE,
 	PARAMETER,
 	TRANSITION,
-	OBSERVABLE
+	OBSERVABLE,
+	MODEL_CARD
 }

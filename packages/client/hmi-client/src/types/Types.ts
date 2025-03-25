@@ -224,7 +224,8 @@ export interface DocumentAsset extends TerariumAsset {
 export interface Enrichment {
     id: string;
     label: string;
-    type: EnrichmentType;
+    target: EnrichmentTarget;
+    source: EnrichmentSource;
     content: any;
     extractionAssetId: string;
     extractionItemIds: string[];
@@ -1243,13 +1244,17 @@ export enum ColumnType {
     Time = "TIME",
 }
 
-export enum EnrichmentType {
-    Description = "DESCRIPTION",
-    Custom = "CUSTOM",
+export enum EnrichmentTarget {
     State = "STATE",
     Parameter = "PARAMETER",
     Transition = "TRANSITION",
     Observable = "OBSERVABLE",
+    ModelCard = "MODEL_CARD",
+}
+
+export enum EnrichmentSource {
+    System = "SYSTEM",
+    Custom = "CUSTOM",
 }
 
 export enum SemanticType {
