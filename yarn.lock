@@ -4515,14 +4515,14 @@ __metadata:
   languageName: node
   linkType: hard
 
-"axios@npm:1.8.2":
-  version: 1.8.2
-  resolution: "axios@npm:1.8.2"
+"axios@npm:1.8.4":
+  version: 1.8.4
+  resolution: "axios@npm:1.8.4"
   dependencies:
     follow-redirects: "npm:^1.15.6"
     form-data: "npm:^4.0.0"
     proxy-from-env: "npm:^1.1.0"
-  checksum: 10/d4328758128d0602cc809a8e7627622cb7839b379eae5e4d6b9d603dd4d5fb89159985630243ec107cf5c675cd8825dba737a319dff9499f3b7688d9a69ec9ed
+  checksum: 10/a10f0dd836613924e48cf03dc2eff3fd21b14f764807aedaee4880a70c0f142aaebdb21da7ce27104d4c16ca00d0e452a20a20851f60e385a8d5bad1ae909d46
   languageName: node
   linkType: hard
 
@@ -8847,7 +8847,7 @@ __metadata:
     "@vue/runtime-dom": "npm:3.4.38"
     "@vueup/vue-quill": "npm:1.2.0"
     ace-builds: "npm:1.32.9"
-    axios: "npm:1.8.2"
+    axios: "npm:1.8.4"
     chart.js: "npm:4.4.8"
     chartjs-plugin-annotation: "npm:3.0.1"
     chartjs-plugin-datalabels: "npm:2.2.0"
@@ -8881,7 +8881,7 @@ __metadata:
     vega: "npm:5.30.0"
     vega-embed: "npm:6.25.0"
     vega-lite: "npm:5.19.0"
-    vite: "npm:5.4.14"
+    vite: "npm:5.4.15"
     vite-svg-loader: "npm:4.0.0"
     vitest: "npm:0.24.5"
     vue: "npm:3.5.12"
@@ -15289,9 +15289,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"vite@npm:5.4.14":
-  version: 5.4.14
-  resolution: "vite@npm:5.4.14"
+"vite@npm:5.4.15":
+  version: 5.4.15
+  resolution: "vite@npm:5.4.15"
   dependencies:
     esbuild: "npm:^0.21.3"
     fsevents: "npm:~2.3.3"
@@ -15328,7 +15328,7 @@ __metadata:
       optional: true
   bin:
     vite: bin/vite.js
-  checksum: 10/ce382f4059eb6c939823b8f62163794752243755d84c71a4b73ad0f7d4d9f4c7a557a6ef4c78e0640f4bcf5ae5ec6b20c7ee4816419af3c81ba275f478b73468
+  checksum: 10/ddc4e7b874ebc0dc5bff53568e7d90f6c622747912fdda7f4ce533e15293009aaabb677ca29b5f108b18c5d60c0c32a7c0156f802bc94df355ca36915a4ae293
   languageName: node
   linkType: hard
 

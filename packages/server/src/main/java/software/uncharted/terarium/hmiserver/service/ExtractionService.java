@@ -668,13 +668,14 @@ public class ExtractionService {
 			throw new RuntimeException("No files found on document");
 		}
 		final String userId = currentUserService.get().getId();
+
 		final NotificationGroupInstance<Properties> notificationInterface = new NotificationGroupInstance<>(
 			clientEventService,
 			notificationService,
 			ClientEventType.EXTRACTION_PDF,
 			projectId,
 			new Properties(documentId),
-			currentUserService.get().getId()
+			userId
 		);
 
 		return executor.submit(() -> {
@@ -704,7 +705,7 @@ public class ExtractionService {
 				final TaskRequest cleanupReq = new TaskRequest();
 				cleanupReq.setType(TaskType.GOLLM);
 				cleanupReq.setScript(EquationsCleanupResponseHandler.NAME);
-				cleanupReq.setUserId(currentUserService.get().getId());
+				cleanupReq.setUserId(userId);
 				cleanupReq.setInput(objectMapper.writeValueAsBytes(input));
 				cleanupReq.setProjectId(projectId);
 
