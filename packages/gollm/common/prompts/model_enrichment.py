@@ -60,90 +60,170 @@ DO_NOT_HALLUCINATE = """
 Do not hallucinate. Do not make up information. Only use the information provided in the model and the document.
 """
 
-EXTRACTION_ITEM_IDS_EXAMPLE_PROMPT = """"
-For the model card section here's an example of how to properly source information and fill extractionItemIds:
-Given extractions:
+EXTRACTION_ITEM_IDS_EXAMPLE_PROMPT = """
+Here are several examples showing how to properly use extractionItemIds:
+
+Example 1 - Basic SIR Model:
+Input extractions:
 [
     {{
         "id": "ext_1",
-        "rawText": "This SIR model describes the spread of influenza in a closed population."
+        "rawText": "This SIR model describes influenza spread in a university population."
     }},
     {{
         "id": "ext_2",
-        "rawText": "The model was validated using data from the 2009 H1N1 outbreak in a university setting."
+        "rawText": "The model assumes closed population dynamics."
     }},
     {{
         "id": "ext_3",
-        "rawText": "The model assumes homogeneous mixing and may not accurately represent populations with strong social clustering."
+        "rawText": "Model validation used 2009 H1N1 outbreak data."
     }},
     {{
         "id": "ext_4",
-        "rawText": "Authors: Jane Smith, John Doe"
+        "rawText": "Validation metrics included R0 estimation and case count predictions."
     }}
 ]
 
-Example model card sections:
-
+Output:
 {{
-    "summary": {{
-        "content": "This SIR model describes the spread of influenza in a closed population",
-        "extractionItemIds": ["ext_1"]
-    }},
-    "testing": {{
-        "content": {{
-            "validation": "The model was validated using data from the 2009 H1N1 outbreak in a university setting",
-            "metrics": "Model predictions were compared against actual case counts"
+    "modelCard": {{
+        "summary": {{
+            "content": "This SIR model describes influenza spread in a university population with closed population dynamics",
+            "extractionItemIds": ["ext_1", "ext_2"]
         }},
-        "extractionItemIds": ["ext_2"]
-    }},
-    "biasRisksLimitations": {{
-        "content": {{
-            "biases": "The model assumes homogeneous mixing which may not reflect reality",
-            "risks": "May underestimate disease spread in clustered populations",
-            "limitations": "Does not account for social clustering effects"
-        }},
-        "extractionItemIds": ["ext_3"]
-    }},
-    "authors": {{
-        "content": ["Jane Smith", "John Doe"],
-        "extractionItemIds": ["ext_4"]
+        "testing": {{
+            "content": {{
+                "validation": "Model validation used 2009 H1N1 outbreak data",
+                "metrics": "Validation included R0 estimation and case count predictions"
+            }},
+            "extractionItemIds": ["ext_3", "ext_4"]
+        }}
     }}
 }}
 
-Here's an example of how to properly source information and fill extractionItemIds for the model components:
-
-Given extractions:
+Example 2 - COVID-19 Model:
+Input extractions:
 [
     {{
-        "id": "ext_9",
-        "rawText": "The infection rate β determines how quickly susceptible individuals become infected."
+        "id": "ext_10",
+        "rawText": "The transmission rate β varies by age group."
     }},
     {{
-        "id": "ext_10",
-        "rawText": "Infected individuals I are measured in persons."
+        "id": "ext_11",
+        "rawText": "β is measured as contacts per person per day."
+    }},
+    {{
+        "id": "ext_12",
+        "rawText": "Contact rates were derived from survey data."
+    }},
+    {{
+        "id": "ext_13",
+        "rawText": "Each compartment tracks individuals by age: young (<18), adult (18-65), elderly (>65)."
+    }},
+    {{
+        "id": "ext_14",
+        "rawText": "Population counts are measured in persons."
     }}
 ]
 
-Example output for a parameter:
+Output:
 {{
-    "id": "beta",
-    "description": "The infection rate β determines how quickly susceptible individuals become infected",
-    "units": {{
-        "expression": "1/(person*day)",
-        "expressionMathml": "<math><mfrac><mn>1</mn><mrow><mi>person</mi><mo>⋅</mo><mi>day</mi></mrow></mfrac></math>"
-    }},
-    "extractionItemIds": ["ext_9"]
+    "parameters": [
+        {{
+            "id": "beta",
+            "description": "Age-stratified transmission rate derived from survey data, varying by age group",
+            "units": {{
+                "expression": "1/(person*day)",
+                "expressionMathml": "<math><mfrac><mn>1</mn><mrow><mi>person</mi><mo>⋅</mo><mi>day</mi></mrow></mfrac></math>"
+            }},
+            "extractionItemIds": ["ext_10", "ext_11", "ext_12"]
+        }}
+    ],
+    "states": [
+        {{
+            "id": "S_young",
+            "description": "Susceptible individuals under 18 years of age",
+            "units": {{
+                "expression": "person",
+                "expressionMathml": "<math><mi>person</mi></math>"
+            }},
+            "extractionItemIds": ["ext_13", "ext_14"]
+        }},
+        {{
+            "id": "S_adult",
+            "description": "Susceptible individuals between 18-65 years of age",
+            "units": {{
+                "expression": "person",
+                "expressionMathml": "<math><mi>person</mi></math>"
+            }},
+            "extractionItemIds": ["ext_13", "ext_14"]
+        }}
+    ]
 }}
 
-Example output for a state:
-{{
-    "id": "I",
-    "description": "Infected individuals in the population",
-    "units": {{
-        "expression": "person",
-        "expressionMathml": "<math><mi>person</mi></math>"
+Example 3 - Vector-borne Disease Model:
+Input extractions:
+[
+    {{
+        "id": "ext_20",
+        "rawText": "Model limitations include simplified mosquito population dynamics."
     }},
-    "extractionItemIds": ["ext_10"]
+    {{
+        "id": "ext_21",
+        "rawText": "Weather effects on transmission are not considered."
+    }},
+    {{
+        "id": "ext_22",
+        "rawText": "The model may underestimate seasonal variation."
+    }},
+    {{
+        "id": "ext_23",
+        "rawText": "M represents the total mosquito population."
+    }},
+    {{
+        "id": "ext_24",
+        "rawText": "Mosquito counts are measured in thousands."
+    }},
+    {{
+        "id": "ext_25",
+        "rawText": "Daily mosquito birth rate μ is temperature-dependent."
+    }}
+]
+
+Output:
+{{
+    "modelCard": {{
+        "biasRisksLimitations": {{
+            "content": {{
+                "biases": "Weather effects on transmission are not considered",
+                "risks": "The model may underestimate seasonal variation",
+                "limitations": "Simplified mosquito population dynamics affect model accuracy"
+            }},
+            "extractionItemIds": ["ext_20", "ext_21", "ext_22"]
+        }}
+    }},
+    "states": [
+        {{
+            "id": "M",
+            "description": "Total mosquito population size",
+            "units": {{
+                "expression": "thousand mosquitos",
+                "expressionMathml": "<math><mi>thousand</mi><mo>⋅</mo><mi>mosquitos</mi></math>"
+            }},
+            "extractionItemIds": ["ext_23", "ext_24"]
+        }}
+    ],
+    "parameters": [
+        {{
+            "id": "mu",
+            "description": "Temperature-dependent daily mosquito birth rate",
+            "units": {{
+                "expression": "1/day",
+                "expressionMathml": "<math><mfrac><mn>1</mn><mi>day</mi></mfrac></math>"
+            }},
+            "extractionItemIds": ["ext_25"]
+        }}
+    ]
 }}
 """
 
