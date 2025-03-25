@@ -26,6 +26,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.stream.Collectors;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -36,11 +37,13 @@ import org.springframework.core.env.Environment;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
+import software.uncharted.terarium.hmiserver.configuration.Config;
 import software.uncharted.terarium.hmiserver.models.ClientEventType;
 import software.uncharted.terarium.hmiserver.models.dataservice.document.DocumentAsset;
 import software.uncharted.terarium.hmiserver.models.dataservice.document.ExtractedDocumentPage;
 import software.uncharted.terarium.hmiserver.models.dataservice.simulation.ProgressState;
 import software.uncharted.terarium.hmiserver.models.extraction.Extraction;
+import software.uncharted.terarium.hmiserver.models.extraction.ExtractionItem;
 import software.uncharted.terarium.hmiserver.models.task.TaskRequest;
 import software.uncharted.terarium.hmiserver.models.task.TaskRequest.TaskType;
 import software.uncharted.terarium.hmiserver.models.task.TaskResponse;
@@ -48,6 +51,7 @@ import software.uncharted.terarium.hmiserver.models.task.TaskStatus;
 import software.uncharted.terarium.hmiserver.service.data.DocumentAssetService;
 import software.uncharted.terarium.hmiserver.service.notification.NotificationGroupInstance;
 import software.uncharted.terarium.hmiserver.service.notification.NotificationService;
+import software.uncharted.terarium.hmiserver.service.tasks.EquationsCleanupResponseHandler;
 import software.uncharted.terarium.hmiserver.service.tasks.ExtractEquationsResponseHandler;
 import software.uncharted.terarium.hmiserver.service.tasks.ExtractTablesResponseHandler;
 import software.uncharted.terarium.hmiserver.service.tasks.ExtractTextResponseHandler;
@@ -59,6 +63,7 @@ import software.uncharted.terarium.hmiserver.service.tasks.TaskService;
 @Slf4j
 public class ExtractionService {
 
+	private final Config config;
 	private final DocumentAssetService documentService;
 	private final ObjectMapper objectMapper;
 	private final ClientEventService clientEventService;
@@ -653,6 +658,9 @@ public class ExtractionService {
 		});
 	}
 
+	/**
+	 * New PDF extraction process, March 2025
+	 **/
 	public Future<DocumentAsset> extractPDFAndApplyToDocumentNew(final UUID documentId, final UUID projectId) {
 		final DocumentAsset document = documentService.getAsset(documentId).get();
 		if (document.getFileNames().isEmpty()) {
@@ -676,7 +684,29 @@ public class ExtractionService {
 				Future<Extraction> extractionFuture = ocrExtraction(notificationInterface, userId, documentContents);
 				Extraction extraction = extractionFuture.get();
 
-				// FIXME: Update various document-asset attributes
+				// FIXME: Update various document-asset attributes - DCDC
+
+				// Post process: Clean latex equations
+				List<ExtractionItem> formulaItems = new ArrayList();
+				for (final ExtractionItem item : extraction.getExtractions()) {
+					if (item.getType().equalsIgnoreCase("text") && item.getSubType().equalsIgnoreCase("formula")) {
+						formulaItems.add(item);
+					}
+				}
+				List<String> formulaStrings = formulaItems.stream().map(item -> item.getRawText()).collect(Collectors.toList());
+
+				final EquationsCleanupResponseHandler.Input input = new EquationsCleanupResponseHandler.Input();
+				input.setLlm(config.getLlm());
+				input.setEquations(formulaStrings);
+
+				// Create the task
+				final TaskRequest req = new TaskRequest();
+				req.setType(TaskType.GOLLM);
+				req.setScript(EquationsCleanupResponseHandler.NAME);
+				req.setUserId(currentUserService.get().getId());
+				req.setInput(objectMapper.writeValueAsBytes(input));
+
+				// Save extraction result
 				document.setExtraction(extraction);
 				documentService.updateAsset(document, projectId);
 
