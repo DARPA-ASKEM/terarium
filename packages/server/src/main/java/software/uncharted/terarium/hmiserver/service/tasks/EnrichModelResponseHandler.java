@@ -118,7 +118,7 @@ public class EnrichModelResponseHandler extends LlmTaskResponseHandler {
 				enrichment.setContent(modelCard.get(key).get("content"));
 				if (props.documentId != null) {
 					enrichment.setExtractionAssetId(props.documentId);
-					JsonNode sourcesNode = modelCard.get(key).get("extractionItemids");
+					JsonNode sourcesNode = modelCard.get(key).get("extractionItemIds");
 					if (sourcesNode != null && sourcesNode.isArray()) {
 						String[] sources = new ObjectMapper().convertValue(sourcesNode, String[].class);
 						enrichment.setExtractionItemIds(sources);
