@@ -15,6 +15,7 @@ from common.prompts.dataset_enrichment import (
     DATASET_ENRICH_PROMPT_WITH_DOCUMENT,
     DATASET_ENRICH_PROMPT_WITHOUT_DOCUMENT
 )
+from common.prompts.document_question import DOCUMENT_QUESTION_PROMPT
 from common.prompts.equations_cleanup import EQUATIONS_CLEANUP_PROMPT
 from common.prompts.equations_from_image import EQUATIONS_FROM_IMAGE_PROMPT
 from common.prompts.general_query import GENERAL_QUERY_PROMPT
@@ -234,4 +235,11 @@ class OpenAiTools(LlmToolsInterface):
         print("Building prompt to transform latex equations to sympy...")
         return LATEX_TO_SYMPY_PROMPT.format(
             latex_equations="\n".join(equations)
+        )
+
+    def create_document_question_prompt(self, document: str, question: str) -> str:
+        print("Building prompt to answer a question from a document...")
+        return DOCUMENT_QUESTION_PROMPT.format(
+            document=document,
+            question=question
         )
