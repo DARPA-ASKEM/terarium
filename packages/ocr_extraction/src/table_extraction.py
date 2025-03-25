@@ -44,21 +44,21 @@ def image_to_base64_string(img: Image.Image) -> str:
     return f"data:image/{format.lower()};base64,{img_base64}"  # Return Data URI
 
 
-def normalize_bbox(bbox, page_size: tuple[float, float]):
+def normalize_bbox(bbox: dict, page_size: tuple[float, float]):
     (width, height) = page_size
     if bbox["coord_origin"] == "TOPLEFT":
         return {
-            "left": bbox["left"] / width,
-            "top": bbox["top"] / height,
-            "right": bbox["right"] / width,
-            "bottom": bbox["bottom"] / height
+            "left": bbox["l"] / width,
+            "top": bbox["t"] / height,
+            "right": bbox["r"] / width,
+            "bottom": bbox["b"] / height
         }
     # Else, BottomLeft
     return {
-        "left": bbox["left"] / width,
-        "top": 1 - bbox["top"] / height,
-        "right": bbox["right"] / width,
-        "bottom": 1 - bbox["bottom"] / height
+        "left": bbox["l"] / width,
+        "top": 1 - bbox["t"] / height,
+        "right": bbox["r"] / width,
+        "bottom": 1 - bbox["b"] / height
     }
 
 
@@ -88,10 +88,10 @@ def extract_tables(result, llmTools: LlmToolsInterface):
                 cell_id = table_ref + ":" + str(row_idx) + "_" + str(col_idx)
                 cell_val = str(table_grid[row_idx][col_idx])
                 bbox = normalize_bbox({
-                    "left": table_cell.bbox.l,
-                    "top": table_cell.bbox.t,
-                    "right": table_cell.bbox.r,
-                    "bottom": table_cell.bbox.b,
+                    "l": table_cell.bbox.l,
+                    "t": table_cell.bbox.t,
+                    "r": table_cell.bbox.r,
+                    "b": table_cell.bbox.b,
                     "coord_origin": table_cell.bbox.coord_origin
                 }, (page_size.width, page_size.height))
                 cell_dict = vars(table_cell)

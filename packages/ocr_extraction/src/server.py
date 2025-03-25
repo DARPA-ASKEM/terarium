@@ -19,7 +19,7 @@ logging.basicConfig(level=logging.INFO)
 extractor = "docling"
 
 app = FastAPI()
-IMAGE_RESOLUTION_SCALE = 1.0
+IMAGE_RESOLUTION_SCALE = 2.0
 pipeline_options = PdfPipelineOptions()
 pipeline_options.images_scale = IMAGE_RESOLUTION_SCALE
 pipeline_options.generate_page_images = True
@@ -146,14 +146,7 @@ async def process_and_predict(file: UploadFile = File(...), llm_model: str = For
         item["page"] = prov["page_no"]
         item["pageWidth"] = pages[str(item["page"])]["size"]["width"]
         item["pageHeight"] = pages[str(item["page"])]["size"]["height"]
-        page_size = (pages[str(item["page"])]["size"]["width"], pages[str(item["page"])]["size"]["height"])
-        item["bbox"] = normalize_bbox({
-            "left": prov["bbox"]["l"],
-            "top": prov["bbox"]["t"],
-            "right": prov["bbox"]["r"],
-            "bottom": prov["bbox"]["b"],
-            "coord_origin": prov["bbox"]["coord_origin"]
-        }, page_size)
+        item["bbox"] = normalize_bbox(prov["bbox"], (item["pageWidth"], item["pageHeight"]))
         item["charspan"] = prov["charspan"]
 
         if item["subType"] == "formula":
@@ -177,14 +170,7 @@ async def process_and_predict(file: UploadFile = File(...), llm_model: str = For
         item["page"] = prov["page_no"]
         item["pageWidth"] = pages[str(item["page"])]["size"]["width"]
         item["pageHeight"] = pages[str(item["page"])]["size"]["height"]
-        page_size = (pages[str(item["page"])]["size"]["width"], pages[str(item["page"])]["size"]["height"])
-        item["bbox"] = normalize_bbox({
-            "left": prov["bbox"]["l"],
-            "top": prov["bbox"]["t"],
-            "right": prov["bbox"]["r"],
-            "bottom": prov["bbox"]["b"],
-            "coord_origin": prov["bbox"]["coord_origin"]
-        }, page_size)
+        item["bbox"] = normalize_bbox(prov["bbox"], (item["pageWidth"], item["pageHeight"]))
         item["charspan"] = prov["charspan"]
         final_result["extractions"].append(item)
 
@@ -201,14 +187,7 @@ async def process_and_predict(file: UploadFile = File(...), llm_model: str = For
         item["page"] = prov["page_no"]
         item["pageWidth"] = pages[str(item["page"])]["size"]["width"]
         item["pageHeight"] = pages[str(item["page"])]["size"]["height"]
-        page_size = (pages[str(item["page"])]["size"]["width"], pages[str(item["page"])]["size"]["height"])
-        item["bbox"] = normalize_bbox({
-            "left": prov["bbox"]["l"],
-            "top": prov["bbox"]["t"],
-            "right": prov["bbox"]["r"],
-            "bottom": prov["bbox"]["b"],
-            "coord_origin": prov["bbox"]["coord_origin"]
-        }, page_size)
+        item["bbox"] = normalize_bbox(prov["bbox"], (item["pageWidth"], item["pageHeight"]))
         item["charspan"] = prov["charspan"]
         item["rawText"] = ""
         item["text"] = table_extraction_dict[id]["text"]
