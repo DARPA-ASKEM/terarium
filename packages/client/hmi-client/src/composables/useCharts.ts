@@ -1305,6 +1305,10 @@ export function useCharts(
 				// Get the statistical layer
 				const statsLayer = lineSpec.layer[1];
 				if (statsLayer?.layer) {
+					// We don't want the stats line layer to display in this case,
+					// so remove the condition that sets it's opacity
+					statsLayer.layer[0].encoding.opacity = { value: 0 };
+
 					// Remove any unwanted legends
 					statsLayer.layer.forEach((sublayer) => {
 						if (sublayer.encoding?.color?.legend) {
