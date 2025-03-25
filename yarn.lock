@@ -3018,7 +3018,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@tato30/vue-pdf@npm:^1.11.3":
+"@tato30/vue-pdf@npm:1.11.3":
   version: 1.11.3
   resolution: "@tato30/vue-pdf@npm:1.11.3"
   dependencies:
@@ -8835,7 +8835,7 @@ __metadata:
     "@playwright/experimental-ct-vue": "npm:1.31.2"
     "@playwright/test": "npm:1.31.2"
     "@rushstack/eslint-patch": "npm:1.10.5"
-    "@tato30/vue-pdf": "npm:^1.11.3"
+    "@tato30/vue-pdf": "npm:1.11.3"
     "@types/d3": "npm:7.4.3"
     "@types/lodash": "npm:4.17.16"
     "@types/markdown-it": "npm:14.1.2"

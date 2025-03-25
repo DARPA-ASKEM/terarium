@@ -1312,7 +1312,6 @@ export function createQuantilesForecastChart(
 					{
 						mark: {
 							type: 'errorband',
-							extent: 'ci',
 							borders: true
 						},
 						encoding: {
