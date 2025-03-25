@@ -27,5 +27,5 @@ public class ProjectGroupPermission implements Serializable {
 	private Project project;
 
 	@Enumerated(EnumType.STRING)
-	private Schema.Permission permissionLevel = Schema.Permission.READ;
+	private ProjectPermissionLevel permissionLevel = ProjectPermissionLevel.READ;
 }

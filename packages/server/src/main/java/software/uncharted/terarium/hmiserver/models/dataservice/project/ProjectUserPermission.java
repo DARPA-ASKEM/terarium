@@ -31,5 +31,5 @@ public class ProjectUserPermission implements Serializable {
 	private Project project;
 
 	@Enumerated(EnumType.STRING)
-	private Schema.Permission permissionLevel = Schema.Permission.NONE;
+	private ProjectPermissionLevel permissionLevel = ProjectPermissionLevel.NONE;
 }
