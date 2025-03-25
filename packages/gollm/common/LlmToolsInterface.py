@@ -72,3 +72,7 @@ class LlmToolsInterface:
     def create_latex_to_sympy_prompt(self, equations: List[str], schema: str) -> str:
         """Create a prompt that converts latex to sympy"""
         pass
+
+    def create_document_question_prompt(self, document: str, question: str) -> str:
+        """Create a prompt that answers questions from a document"""
+        pass
