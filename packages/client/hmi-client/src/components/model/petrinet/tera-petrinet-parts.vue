@@ -205,7 +205,8 @@ const createTransitionParts = () => {
 		subject: t.subject ? t.subject.name : '',
 		outcome: t.outcome ? t.outcome.name : '',
 		controllers: getControllerNames(t).join(', '),
-		expression: t.rate_law
+		expression: t.rate_law,
+		description: t.subject.description ? t.subject.description : ''
 	});
 
 	const templatesMap = collapseTemplates(props.mmt).matrixMap;
