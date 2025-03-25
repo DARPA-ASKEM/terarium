@@ -129,7 +129,6 @@ class LlamaTools(LlmToolsInterface):
         })
 
         logging.info(f"Enhancing table extraction using {self.GPT_MODEL} model...")
-        logging.info(f"Providing the table image data uri isn't supported by the model. Ignoring the image URL.")
         response = client.invoke_model(modelId=self.GPT_MODEL, body=request)
 
         # Decode the response body.
