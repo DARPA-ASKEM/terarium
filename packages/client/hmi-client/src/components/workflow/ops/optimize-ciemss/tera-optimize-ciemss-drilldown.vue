@@ -424,6 +424,8 @@
 							/>
 						</div>
 						<Divider />
+						<tera-chart-settings-quantiles :settings="chartSettings" @update-options="updateQauntilesOptions" />
+						<Divider />
 					</div>
 				</template>
 			</tera-slider-panel>
@@ -500,6 +502,7 @@ import { ChartSettingType, CiemssPresetTypes, DrilldownTabs } from '@/types/comm
 import { useConfirm } from 'primevue/useconfirm';
 import TeraChartSettings from '@/components/widgets/tera-chart-settings.vue';
 import TeraChartSettingsPanel from '@/components/widgets/tera-chart-settings-panel.vue';
+import TeraChartSettingsQuantiles from '@/components/widgets/tera-chart-settings-quantiles.vue';
 import TeraTimestepCalendar from '@/components/widgets/tera-timestep-calendar.vue';
 import { updateChartSettingsBySelectedVariables } from '@/services/chart-settings';
 import { deleteAnnotation } from '@/services/chart-annotation';
@@ -1053,7 +1056,8 @@ const {
 	updateActiveChartSettings,
 	setActiveChartSettings,
 	addEmptyComparisonChart,
-	updateComparisonChartSetting
+	updateComparisonChartSetting,
+	updateQauntilesOptions
 } = useChartSettings(props, emit);
 
 const {
