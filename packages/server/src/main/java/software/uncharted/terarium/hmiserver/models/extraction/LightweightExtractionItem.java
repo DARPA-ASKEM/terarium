@@ -7,5 +7,5 @@ import lombok.Data;
 public class LightweightExtractionItem {
 
 	String id;
-	String rawText;
+	String text;
 }

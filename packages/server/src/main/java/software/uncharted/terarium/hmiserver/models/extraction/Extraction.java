@@ -78,7 +78,7 @@ public class Extraction {
 			.map(item -> {
 				LightweightExtractionItem lightweight = new LightweightExtractionItem();
 				lightweight.setId(item.getId());
-				lightweight.setRawText(item.getRawText());
+				lightweight.setText(item.getText());
 				return lightweight;
 			})
 			.collect(Collectors.toList());
