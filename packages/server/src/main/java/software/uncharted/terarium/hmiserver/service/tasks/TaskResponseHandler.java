@@ -36,12 +36,11 @@ public abstract class TaskResponseHandler {
 				return onQueued(response);
 			case RUNNING:
 				return onRunning(response);
-			case SUCCESS:
+			case COMPLETE:
 				return onCancelling(response);
 			case CANCELLED:
-			case CANCELLING:
 				return onCancelled(response);
-			case FAILED:
+			case ERROR:
 				return onFailure(response);
 		}
 		throw new IllegalArgumentException("Unknown status: " + response.getStatus());
