@@ -10,6 +10,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
@@ -66,10 +67,12 @@ public class ModelMetadata extends SupportAdditionalProperties implements Serial
 	private JsonNode gollmExtractions;
 
 	@TSOptional
+	@Deprecated
 	private List<String> provenance;
 
 	@TSOptional
 	@JsonProperty("templateCard")
+	@Deprecated
 	private JsonNode templateCard;
 
 	@TSOptional
@@ -83,6 +86,9 @@ public class ModelMetadata extends SupportAdditionalProperties implements Serial
 	@Lob
 	@JdbcTypeCode(Types.BINARY)
 	private byte[] description;
+
+	@TSOptional
+	private Map<UUID, List<String>> modelProvenance;
 
 	public void retainMetadataFields(final ModelMetadata other) {
 		if (description == null) {

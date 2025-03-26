@@ -11,7 +11,9 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import jakarta.annotation.PostConstruct;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
@@ -138,6 +140,111 @@ public class KnowledgeController {
 		private UUID documentId;
 		private UUID workflowId;
 		private UUID nodeId;
+	}
+
+	/**
+	 {
+    modleId: ????
+    nodeId,
+    workflowId,
+
+    equationsWithSource: {
+      [documentId]: [
+        { id, equationStr },
+        { id, equationStr },
+        { id, equationStr }
+      ],
+      [documentId]: [
+        { id, equationStr },
+        { id, equationStr },
+      ]
+    },
+    equations: [
+       str1,
+       str2
+    ]
+  }
+	**/
+
+	@Data
+	class EquationRef {
+
+		private String id;
+		private String equationStr;
+	}
+
+	@Data
+	class EquationToModelInput {
+
+		private UUID nodeId;
+		private UUID workflowId;
+		private Map<UUID, List<EquationRef>> equationsWithSource;
+		private List<String> equations;
+	}
+
+	@PostMapping("/equations-to-model-new")
+	@Secured(Roles.USER)
+	@HasProjectAccess(level = Schema.Permission.WRITE)
+	public ResponseEntity<UUID> equationsToModelNew(
+		@RequestBody final EquationToModelInput req,
+		@RequestParam(name = "project-id", required = false) final UUID projectId
+	) {
+		// Collect equations
+		List<String> equations = new ArrayList();
+		Map<UUID, List<String>> modelProvenance = new HashMap();
+
+		for (var entry : req.getEquationsWithSource().entrySet()) {
+			List<String> refs = new ArrayList();
+			for (var equationRef : entry.getValue()) {
+				equations.add(equationRef.getEquationStr());
+				refs.add(equationRef.getId());
+			}
+			modelProvenance.put(entry.getKey(), refs);
+		}
+		for (var equationStr : req.getEquations()) {
+			equations.add(equationStr);
+		}
+
+		final TaskRequest latexToSympyRequest;
+		final TaskResponse latexToSympyResponse;
+		final TaskRequest sympyToAMRRequest;
+		final TaskResponse sympyToAMRResponse;
+		final Model responseAMR;
+
+		try {
+			// 1. LaTeX to sympy code
+			latexToSympyRequest = createLatexToSympyTask(mapper.valueToTree(equations));
+			latexToSympyResponse = taskService.runTaskSync(latexToSympyRequest);
+
+			if (latexToSympyResponse.getStatus() != TaskStatus.SUCCESS) {
+				log.error("Task Failed", latexToSympyResponse.getStderr());
+				throw new ResponseStatusException(HttpStatus.BAD_REQUEST, latexToSympyResponse.getStderr());
+			}
+
+			// 2. hand off
+			final String code = extractCodeFromLatexToSympy(latexToSympyResponse);
+
+			// 3. sympy code string to amr json
+			sympyToAMRRequest = createSympyToAMRTask(code);
+			sympyToAMRResponse = taskService.runTaskSync(sympyToAMRRequest);
+			if (sympyToAMRResponse.getStatus() != TaskStatus.SUCCESS) {
+				log.error("Task Failed", sympyToAMRResponse.getStderr());
+				throw new ResponseStatusException(HttpStatus.BAD_REQUEST, sympyToAMRResponse.getStderr());
+			}
+
+			final JsonNode taskResponseJSON = mapper.readValue(sympyToAMRResponse.getOutput(), JsonNode.class);
+			final ObjectNode amrNode = taskResponseJSON.get("response").get("amr").deepCopy();
+			responseAMR = mapper.convertValue(amrNode, Model.class);
+		} catch (final Exception e) {
+			log.error(messages.get("task.mira.internal-error"), e);
+			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("task.mira.internal-error"));
+		}
+
+		// Inject provenance information into metadata and save model
+		if (responseAMR != null) {}
+
+		// Save model
+		return ResponseEntity.ok(UUID.randomUUID());
 	}
 
 	/**
