@@ -33,7 +33,7 @@
 				option-label="name"
 				option-value="id"
 				placeholder="Select an intervention for this model"
-				@update:model-value="props.scenario.setInterventionPolicyId($event)"
+				@update:model-value="props.scenario.setInterventionPolicyId($event, modelConfiguration)"
 				class="mb-3"
 				:loading="isFetchingModelData"
 			/>
@@ -67,7 +67,7 @@
 				@click="props.scenario.addOptimizeCriterionGroupForm()"
 			/>
 			<Label>Intervention policy </Label>
-			<section v-for="(cfg, idx) in props.scenario.getOptimizeState().interventionPolicyGroups" :key="idx">
+			<section v-for="(cfg, idx) in interventionPolicyGroups" :key="idx">
 				<tera-static-intervention-policy-group
 					v-if="isInterventionStatic(cfg.individualIntervention) && modelConfiguration && model"
 					:model="model"
@@ -83,7 +83,7 @@
 					@update-self="(config) => props.scenario.updateInterventionPolicyGroupForm(idx, config)"
 				/>
 			</section>
-			<section v-if="props.scenario.getOptimizeState().interventionPolicyGroups.length === 0">
+			<section v-if="interventionPolicyGroups.length === 0">
 				<p class="mt-1">No intervention policies have been added.</p>
 			</section>
 		</template>
@@ -131,6 +131,7 @@ const allModelOptions = computed(() => useProjects().getActiveProjectAssets(Asse
 const allDatasetOptions = computed(() => useProjects().getActiveProjectAssets(AssetType.Dataset));
 const selectedModelId = computed(() => props.scenario.getModelId());
 const selectedModelConfigurationId = computed(() => props.scenario.getModelConfigId());
+const interventionPolicyGroups = computed(() => props.scenario.getOptimizeState().interventionPolicyGroups);
 const isModelSelected = computed(() => !_.isEmpty(selectedModelId.value));
 const model = ref<Model | null>(null);
 const modelConfiguration = ref<ModelConfiguration>();

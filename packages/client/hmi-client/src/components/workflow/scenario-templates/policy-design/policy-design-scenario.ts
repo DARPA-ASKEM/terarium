@@ -10,12 +10,14 @@ import { OperatorNodeSize } from '@/services/workflow';
 import _ from 'lodash';
 import { getModelConfigurationById } from '@/services/model-configurations';
 import { getInterventionPolicyById } from '@/services/intervention-policy';
+import { ModelConfiguration } from '@/types/Types';
 import {
 	Criterion,
 	defaultCriterion,
 	InterventionPolicyGroupForm,
 	OptimizeCiemssOperationState
 } from '../../ops/optimize-ciemss/optimize-ciemss-operation';
+import { setInterventionPolicyGroups } from '../../ops/optimize-ciemss/optimize-utils';
 
 export class PolicyDesignScenario extends BaseScenario {
 	public static templateId = 'policy-design';
@@ -81,9 +83,21 @@ export class PolicyDesignScenario extends BaseScenario {
 		return this.interventionPolicyId;
 	}
 
-	setInterventionPolicyId(interventionPolicyId: string) {
+	async setInterventionPolicyId(interventionPolicyId: string, modelConfiguration?: ModelConfiguration) {
 		this.interventionPolicyId = interventionPolicyId;
-		// this.optimizeState.interventionPolicyGroups
+		// Update optimize state if able:
+		if (modelConfiguration) {
+			const state = this.optimizeState;
+			const interventionPolicy = await getInterventionPolicyById(interventionPolicyId);
+			if (interventionPolicy) {
+				console.log('Updating optimize state;');
+				this.optimizeState.interventionPolicyGroups = setInterventionPolicyGroups(
+					state,
+					interventionPolicy,
+					modelConfiguration
+				).interventionPolicyGroups;
+			}
+		}
 	}
 
 	getDatasetId() {
