@@ -142,30 +142,6 @@ public class KnowledgeController {
 		private UUID nodeId;
 	}
 
-	/**
-	 {
-    modleId: ????
-    nodeId,
-    workflowId,
-
-    equationsWithSource: {
-      [documentId]: [
-        { id, equationStr },
-        { id, equationStr },
-        { id, equationStr }
-      ],
-      [documentId]: [
-        { id, equationStr },
-        { id, equationStr },
-      ]
-    },
-    equations: [
-       str1,
-       str2
-    ]
-  }
-	**/
-
 	@Data
 	class EquationRef {
 
@@ -241,9 +217,19 @@ public class KnowledgeController {
 		}
 
 		// Inject provenance information into metadata and save model
-		if (responseAMR != null) {}
+		if (responseAMR != null) {
+			responseAMR.getMetadata().setModelProvenance(modelProvenance);
+		}
 
 		// Save model
+		final Model model;
+		try {
+			model = modelService.createAsset(responseAMR, projectId);
+		} catch (final IOException e) {
+			log.error("An error occurred while trying to create a model.", e);
+			throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, messages.get("postgres.service-unavailable"));
+		}
+
 		return ResponseEntity.ok(UUID.randomUUID());
 	}
 

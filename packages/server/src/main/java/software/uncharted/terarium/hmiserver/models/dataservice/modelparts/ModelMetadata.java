@@ -63,14 +63,6 @@ public class ModelMetadata extends SupportAdditionalProperties implements Serial
 	private JsonNode gollmCard;
 
 	@TSOptional
-	@JsonProperty("gollmExtractions")
-	private JsonNode gollmExtractions;
-
-	@TSOptional
-	@Deprecated
-	private List<String> provenance;
-
-	@TSOptional
 	@JsonProperty("templateCard")
 	@Deprecated
 	private JsonNode templateCard;
@@ -96,12 +88,6 @@ public class ModelMetadata extends SupportAdditionalProperties implements Serial
 		}
 		if (gollmCard == null) {
 			gollmCard = other.gollmCard;
-		}
-		if (gollmExtractions == null) {
-			gollmExtractions = other.gollmExtractions;
-		}
-		if (provenance == null) {
-			provenance = other.provenance;
 		}
 		if (templateCard == null) {
 			templateCard = other.templateCard;
@@ -132,6 +118,9 @@ public class ModelMetadata extends SupportAdditionalProperties implements Serial
 		}
 		if (card == null) {
 			card = other.card;
+		}
+		if (modelProvenance == null) {
+			modelProvenance = other.modelProvenance;
 		}
 	}
 
@@ -175,10 +164,6 @@ public class ModelMetadata extends SupportAdditionalProperties implements Serial
 
 		if (gollmCard != null) {
 			clone.gollmCard = this.gollmCard.deepCopy();
-		}
-
-		if (gollmExtractions != null) {
-			clone.gollmExtractions = this.gollmExtractions.deepCopy();
 		}
 
 		if (provenance != null) {
