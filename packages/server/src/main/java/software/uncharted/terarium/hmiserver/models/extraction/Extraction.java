@@ -70,11 +70,19 @@ public class Extraction {
 			});
 	}
 
+	@Data
+	private class LightweightExtractionItem {
+
+		private String id;
+		private String text;
+	}
+
 	// Collect simplified extraction items, used when sending for an LLM request to save tokens
 	@JsonIgnore
 	public List<LightweightExtractionItem> getLightweightExtractions() {
 		return extractions
 			.stream()
+			.filter(item -> !"picture".equalsIgnoreCase(item.getType()))
 			.map(item -> {
 				LightweightExtractionItem lightweight = new LightweightExtractionItem();
 				lightweight.setId(item.getId());
