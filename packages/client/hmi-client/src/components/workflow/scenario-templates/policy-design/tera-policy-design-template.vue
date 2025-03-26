@@ -4,11 +4,22 @@
 			<label>Select a model</label>
 			<Dropdown
 				:model-value="selectedModelId"
-				:options="models"
+				:options="allModelOptions"
 				option-label="assetName"
 				option-value="assetId"
 				placeholder="Select a model"
 				@update:model-value="selectedModelId = $event"
+				class="mb-3"
+			/>
+
+			<label>Select a model configuration</label>
+			<Dropdown
+				:model-value="props.scenario.getModelConfigId()"
+				:options="allModelConfigOptions.map((ele) => ele?.name ?? 'blank name')"
+				option-label="assetName"
+				option-value="assetId"
+				placeholder="Select a model"
+				@update:model-value="props.scenario.setModelConfigId($event)"
 				class="mb-3"
 			/>
 		</template>
@@ -17,12 +28,17 @@
 
 <script setup lang="ts">
 import Dropdown from 'primevue/dropdown';
-import { computed, ref } from 'vue';
+import { computed, ref, watch } from 'vue';
 import { useProjects } from '@/composables/project';
-import { AssetType } from '@/types/Types';
+import { AssetType, ModelConfiguration } from '@/types/Types';
+import { getModelConfigurationsForModel } from '@/services/model';
 import { PolicyDesignScenario } from './policy-design-scenario';
 import { ScenarioHeader } from '../base-scenario';
 import TeraScenarioTemplate from '../tera-scenario-template.vue';
+
+const props = defineProps<{
+	scenario: PolicyDesignScenario;
+}>();
 
 const header: ScenarioHeader = Object.freeze({
 	title: 'Policy design template',
@@ -35,12 +51,23 @@ const header: ScenarioHeader = Object.freeze({
 		'How much would property taxes need to lower to increase investment by %5 in one year?'
 	]
 });
-const props = defineProps<{
-	scenario: PolicyDesignScenario;
-}>();
 
-const models = computed(() => useProjects().getActiveProjectAssets(AssetType.Model));
-const selectedModelId = ref<string>();
+const allModelOptions = computed(() => useProjects().getActiveProjectAssets(AssetType.Model));
+const selectedModelId = ref<string>('');
+const allModelConfigOptions = ref<ModelConfiguration[]>([]);
+
+watch(
+	() => selectedModelId,
+	async () => {
+		if (selectedModelId.value) {
+			allModelConfigOptions.value = await getModelConfigurationsForModel(selectedModelId.value);
+			console.log(allModelConfigOptions.value);
+			const test: string[] = allModelConfigOptions.value.map((ele) => ele?.name ?? 'blank name');
+			console.log(test);
+		}
+	},
+	{ deep: true }
+);
 
 const emit = defineEmits(['save-workflow']);
 </script>
