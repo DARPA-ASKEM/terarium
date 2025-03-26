@@ -373,13 +373,13 @@ public class Task {
 					log.info("Process exited with code {} for task {}", exitCode, req.getId());
 					lock.lock(() -> {
 						if (exitCode != 0) {
-							if (status == TaskStatus.CANCELLING) {
+							if (status == TaskStatus.CANCELLED) {
 								status = TaskStatus.CANCELLED;
 							} else {
-								status = TaskStatus.FAILED;
+								status = TaskStatus.ERROR;
 							}
 						} else {
-							status = TaskStatus.SUCCESS;
+							status = TaskStatus.COMPLETE;
 						}
 					});
 					log.info("Finalized process status for task {}", exitCode, req.getId());
@@ -387,7 +387,7 @@ public class Task {
 				} catch (final InterruptedException e) {
 					log.warn("Process failed to exit cleanly for task {}: {}", req.getId(), e);
 					lock.lock(() -> {
-						status = TaskStatus.FAILED;
+						status = TaskStatus.ERROR;
 					});
 					processFuture.completeExceptionally(e);
 				}
@@ -421,7 +421,7 @@ public class Task {
 			}).start();
 		} catch (final Exception e) {
 			if (status != TaskStatus.CANCELLED) {
-				status = TaskStatus.FAILED;
+				status = TaskStatus.ERROR;
 			}
 			throw e;
 		} finally {
@@ -460,7 +460,7 @@ public class Task {
 				return false;
 			}
 
-			status = TaskStatus.CANCELLING;
+			status = TaskStatus.CANCELLED;
 			return true;
 		});
 	}
@@ -468,7 +468,7 @@ public class Task {
 	public boolean cancel() {
 		flagAsCancelling();
 
-		if (getStatus() != TaskStatus.CANCELLING) {
+		if (getStatus() != TaskStatus.CANCELLED) {
 			return false;
 		}
 

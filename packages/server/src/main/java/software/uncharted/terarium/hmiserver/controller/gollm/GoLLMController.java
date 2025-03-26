@@ -201,7 +201,7 @@ public class GoLLMController {
 		final TaskResponse resp;
 		try {
 			resp = taskService.runTask(mode, req);
-			if (mode == TaskMode.SYNC && resp.getStatus() != TaskStatus.SUCCESS) {
+			if (mode == TaskMode.SYNC && resp.getStatus() != TaskStatus.COMPLETE) {
 				log.error("Task failed", resp.getStderr());
 				throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, resp.getStderr());
 			}
@@ -334,7 +334,7 @@ public class GoLLMController {
 		final TaskResponse resp;
 		try {
 			resp = taskService.runTask(mode, req);
-			if (mode == TaskMode.SYNC && resp.getStatus() != TaskStatus.SUCCESS) {
+			if (mode == TaskMode.SYNC && resp.getStatus() != TaskStatus.COMPLETE) {
 				log.error("Task failed", resp.getStderr());
 				throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, resp.getStderr());
 			}
@@ -446,7 +446,7 @@ public class GoLLMController {
 		final TaskResponse resp;
 		try {
 			resp = taskService.runTask(mode, req);
-			if (mode == TaskMode.SYNC && resp.getStatus() != TaskStatus.SUCCESS) {
+			if (mode == TaskMode.SYNC && resp.getStatus() != TaskStatus.COMPLETE) {
 				log.error("Task failed", resp.getStderr());
 				throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, resp.getStderr());
 			}
@@ -564,7 +564,7 @@ public class GoLLMController {
 		final TaskResponse resp;
 		try {
 			resp = taskService.runTask(mode, req);
-			if (mode == TaskMode.SYNC && resp.getStatus() != TaskStatus.SUCCESS) {
+			if (mode == TaskMode.SYNC && resp.getStatus() != TaskStatus.COMPLETE) {
 				log.error("Task failed", resp.getStderr());
 				throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, resp.getStderr());
 			}
@@ -661,7 +661,7 @@ public class GoLLMController {
 		final TaskResponse resp;
 		try {
 			resp = taskService.runTask(mode, req);
-			if (mode == TaskMode.SYNC && resp.getStatus() != TaskStatus.SUCCESS) {
+			if (mode == TaskMode.SYNC && resp.getStatus() != TaskStatus.COMPLETE) {
 				log.error("Task failed", resp.getStderr());
 				throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, resp.getStderr());
 			}
@@ -742,7 +742,7 @@ public class GoLLMController {
 		final TaskResponse resp;
 		try {
 			resp = taskService.runTask(mode, req);
-			if (mode == TaskMode.SYNC && resp.getStatus() != TaskStatus.SUCCESS) {
+			if (mode == TaskMode.SYNC && resp.getStatus() != TaskStatus.COMPLETE) {
 				log.error("Task failed", resp.getStderr());
 				throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, resp.getStderr());
 			}
@@ -841,7 +841,7 @@ public class GoLLMController {
 		final TaskResponse resp;
 		try {
 			resp = taskService.runTask(mode, req);
-			if (mode == TaskMode.SYNC && resp.getStatus() != TaskStatus.SUCCESS) {
+			if (mode == TaskMode.SYNC && resp.getStatus() != TaskStatus.COMPLETE) {
 				log.error("Task failed: {}", resp.getStderr());
 				throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, resp.getStderr());
 			}
@@ -930,7 +930,7 @@ public class GoLLMController {
 		final TaskResponse resp;
 		try {
 			resp = taskService.runTask(mode, req);
-			if (mode == TaskMode.SYNC && resp.getStatus() != TaskStatus.SUCCESS) {
+			if (mode == TaskMode.SYNC && resp.getStatus() != TaskStatus.COMPLETE) {
 				log.error("Task failed", resp.getStderr());
 				throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, resp.getStderr());
 			}
@@ -1029,7 +1029,7 @@ public class GoLLMController {
 		final TaskResponse resp;
 		try {
 			resp = taskService.runTask(mode, req);
-			if (mode == TaskMode.SYNC && resp.getStatus() != TaskStatus.SUCCESS) {
+			if (mode == TaskMode.SYNC && resp.getStatus() != TaskStatus.COMPLETE) {
 				log.error("Task failed", resp.getStderr());
 				throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, resp.getStderr());
 			}
@@ -1116,7 +1116,7 @@ public class GoLLMController {
 		final TaskResponse resp;
 		try {
 			resp = taskService.runTask(mode, req);
-			if (mode == TaskMode.SYNC && resp.getStatus() != TaskStatus.SUCCESS) {
+			if (mode == TaskMode.SYNC && resp.getStatus() != TaskStatus.COMPLETE) {
 				log.error("Task failed", resp.getStderr());
 				throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, resp.getStderr());
 			}

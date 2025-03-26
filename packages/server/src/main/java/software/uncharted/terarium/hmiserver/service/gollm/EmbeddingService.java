@@ -76,7 +76,7 @@ public class EmbeddingService {
 		}
 
 		final TaskResponse resp = taskService.runTaskSync(req);
-		if (resp.getStatus() != TaskStatus.SUCCESS) {
+		if (resp.getStatus() != TaskStatus.COMPLETE) {
 			throw new RuntimeException("Task failed: " + resp.getStderr());
 		}
 
@@ -126,7 +126,7 @@ public class EmbeddingService {
 		}
 
 		final TaskResponse resp = taskService.runTaskSync(req);
-		if (resp.getStatus() != TaskStatus.SUCCESS) {
+		if (resp.getStatus() != TaskStatus.COMPLETE) {
 			throw new RuntimeException("Task failed: " + resp.getStderr());
 		}
 

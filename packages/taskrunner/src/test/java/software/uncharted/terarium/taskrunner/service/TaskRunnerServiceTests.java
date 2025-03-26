@@ -77,8 +77,8 @@ public class TaskRunnerServiceTests extends TaskRunnerApplicationTests {
 				final TaskResponse resp = queue.poll(TIMEOUT_SECONDS, TimeUnit.SECONDS);
 				responses.add(resp);
 				if (
-					resp.getStatus() == TaskStatus.SUCCESS ||
-					resp.getStatus() == TaskStatus.FAILED ||
+					resp.getStatus() == TaskStatus.COMPLETE ||
+					resp.getStatus() == TaskStatus.ERROR ||
 					resp.getStatus() == TaskStatus.CANCELLED
 				) {
 					break;
@@ -107,8 +107,8 @@ public class TaskRunnerServiceTests extends TaskRunnerApplicationTests {
 				queue.put(resp);
 
 				if (
-					resp.getStatus() == TaskStatus.SUCCESS ||
-					resp.getStatus() == TaskStatus.FAILED ||
+					resp.getStatus() == TaskStatus.COMPLETE ||
+					resp.getStatus() == TaskStatus.ERROR ||
 					resp.getStatus() == TaskStatus.CANCELLED
 				) {
 					// signal we are done
@@ -157,7 +157,7 @@ public class TaskRunnerServiceTests extends TaskRunnerApplicationTests {
 		Assertions.assertEquals(TaskStatus.RUNNING, responses.get(3).getStatus());
 		Assertions.assertEquals(TaskStatus.RUNNING, responses.get(4).getStatus());
 		Assertions.assertEquals(TaskStatus.RUNNING, responses.get(5).getStatus());
-		Assertions.assertEquals(TaskStatus.SUCCESS, responses.get(6).getStatus());
+		Assertions.assertEquals(TaskStatus.COMPLETE, responses.get(6).getStatus());
 	}
 
 	@Test
@@ -176,7 +176,7 @@ public class TaskRunnerServiceTests extends TaskRunnerApplicationTests {
 
 		Assertions.assertEquals(2, responses.size());
 		Assertions.assertEquals(TaskStatus.RUNNING, responses.get(0).getStatus());
-		Assertions.assertEquals(TaskStatus.FAILED, responses.get(1).getStatus());
+		Assertions.assertEquals(TaskStatus.ERROR, responses.get(1).getStatus());
 	}
 
 	@Test
@@ -208,8 +208,7 @@ public class TaskRunnerServiceTests extends TaskRunnerApplicationTests {
 
 		Assertions.assertEquals(3, responses.size());
 		Assertions.assertEquals(TaskStatus.RUNNING, responses.get(0).getStatus());
-		Assertions.assertEquals(TaskStatus.CANCELLING, responses.get(1).getStatus());
-		Assertions.assertEquals(TaskStatus.CANCELLED, responses.get(2).getStatus());
+		Assertions.assertEquals(TaskStatus.CANCELLED, responses.get(1).getStatus());
 	}
 
 	@Test
@@ -270,9 +269,9 @@ public class TaskRunnerServiceTests extends TaskRunnerApplicationTests {
 				responsesPerReq.get(resp.getId()).add(resp);
 
 				if (
-					resp.getStatus() == TaskStatus.SUCCESS ||
+					resp.getStatus() == TaskStatus.COMPLETE ||
 					resp.getStatus() == TaskStatus.CANCELLED ||
-					resp.getStatus() == TaskStatus.FAILED
+					resp.getStatus() == TaskStatus.ERROR
 				) {
 					responseFutures.get(resp.getId()).complete(null);
 				}
@@ -315,12 +314,12 @@ public class TaskRunnerServiceTests extends TaskRunnerApplicationTests {
 						case 0:
 							// success
 							req.setInput(TEST_INPUT.getBytes());
-							expectedResponses.put(req.getId(), List.of(List.of(TaskStatus.RUNNING, TaskStatus.SUCCESS)));
+							expectedResponses.put(req.getId(), List.of(List.of(TaskStatus.RUNNING, TaskStatus.COMPLETE)));
 							break;
 						case 1:
 							// failure
 							req.setInput(FAILURE_INPUT.getBytes());
-							expectedResponses.put(req.getId(), List.of(List.of(TaskStatus.RUNNING, TaskStatus.FAILED)));
+							expectedResponses.put(req.getId(), List.of(List.of(TaskStatus.RUNNING, TaskStatus.ERROR)));
 							break;
 						case 2:
 							// cancellation
@@ -341,10 +340,10 @@ public class TaskRunnerServiceTests extends TaskRunnerApplicationTests {
 								req.getId(),
 								List.of(
 									List.of(TaskStatus.CANCELLED), // cancelled before request processed
-									List.of(TaskStatus.RUNNING, TaskStatus.CANCELLING, TaskStatus.CANCELLED), // cancelled
+									List.of(TaskStatus.RUNNING, TaskStatus.CANCELLED), // cancelled
 									// during
 									// processing
-									List.of(TaskStatus.RUNNING, TaskStatus.SUCCESS) // cancelled after processing
+									List.of(TaskStatus.RUNNING, TaskStatus.COMPLETE) // cancelled after processing
 								)
 							);
 							break;

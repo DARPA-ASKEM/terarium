@@ -413,12 +413,12 @@ public class TaskServiceTest extends TerariumApplicationTests {
 		req.setInput(input);
 
 		final TaskFuture future1 = taskService.runTaskAsync(req);
-		Assertions.assertEquals(TaskStatus.SUCCESS, future1.getFinal(TIMEOUT_SECONDS, TimeUnit.SECONDS).getStatus());
+		Assertions.assertEquals(TaskStatus.COMPLETE, future1.getFinal(TIMEOUT_SECONDS, TimeUnit.SECONDS).getStatus());
 
 		// next request should pull the successful response from cache
 		final long start = System.currentTimeMillis();
 		final TaskFuture future2 = taskService.runTaskAsync(req);
-		Assertions.assertEquals(TaskStatus.SUCCESS, future2.getFinal(TIMEOUT_SECONDS, TimeUnit.SECONDS).getStatus());
+		Assertions.assertEquals(TaskStatus.COMPLETE, future2.getFinal(TIMEOUT_SECONDS, TimeUnit.SECONDS).getStatus());
 
 		Assertions.assertTrue(System.currentTimeMillis() - start < 1000);
 	}
@@ -441,12 +441,12 @@ public class TaskServiceTest extends TerariumApplicationTests {
 
 		// next request should not pull the cancelled response from cache
 		final TaskFuture future2 = taskService.runTaskAsync(req);
-		Assertions.assertEquals(TaskStatus.SUCCESS, future2.getFinal(TIMEOUT_SECONDS, TimeUnit.SECONDS).getStatus());
+		Assertions.assertEquals(TaskStatus.COMPLETE, future2.getFinal(TIMEOUT_SECONDS, TimeUnit.SECONDS).getStatus());
 		Assertions.assertNotEquals(future1.getId(), future2.getId());
 
 		// next request should pull the successful response from cache
 		final TaskFuture future3 = taskService.runTaskAsync(req);
-		Assertions.assertEquals(TaskStatus.SUCCESS, future3.getFinal(TIMEOUT_SECONDS, TimeUnit.SECONDS).getStatus());
+		Assertions.assertEquals(TaskStatus.COMPLETE, future3.getFinal(TIMEOUT_SECONDS, TimeUnit.SECONDS).getStatus());
 		Assertions.assertEquals(future2.getId(), future3.getId());
 	}
 }

@@ -2,10 +2,9 @@ package software.uncharted.terarium.taskrunner.models.task;
 
 // @TSModel
 public enum TaskStatus {
+	CANCELLED,
+	COMPLETE,
+	ERROR,
 	QUEUED,
-	RUNNING,
-	SUCCESS,
-	FAILED,
-	CANCELLING,
-	CANCELLED
+	RUNNING
 }

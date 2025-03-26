@@ -89,7 +89,7 @@ public class DatasetStatistics {
 
 		// Get the response from the Gollm service
 		final TaskResponse taskResponse = taskService.runTaskSync(taskRequest);
-		if (taskResponse.getStatus() != TaskStatus.SUCCESS) {
+		if (taskResponse.getStatus() != TaskStatus.COMPLETE) {
 			throw new RuntimeException("Task failed: " + taskResponse.getStderr());
 		}
 		final byte[] outputBytes = taskResponse.getOutput();

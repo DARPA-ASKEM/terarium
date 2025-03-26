@@ -50,7 +50,7 @@ public class TaskTests extends TaskRunnerApplicationTests {
 			Assertions.assertArrayEquals(req.getInput(), output);
 
 			task.waitFor(ONE_MINUTE);
-			Assertions.assertEquals(TaskStatus.SUCCESS, task.getStatus());
+			Assertions.assertEquals(TaskStatus.COMPLETE, task.getStatus());
 		} catch (final Exception e) {
 			throw e;
 		} finally {
@@ -92,7 +92,7 @@ public class TaskTests extends TaskRunnerApplicationTests {
 			Assertions.assertArrayEquals(req.getInput(), output);
 
 			task.waitFor(ONE_MINUTE);
-			Assertions.assertEquals(TaskStatus.SUCCESS, task.getStatus());
+			Assertions.assertEquals(TaskStatus.COMPLETE, task.getStatus());
 		} catch (final Exception e) {
 			throw e;
 		} finally {
@@ -126,7 +126,7 @@ public class TaskTests extends TaskRunnerApplicationTests {
 			Assertions.assertArrayEquals(input.getBytes(), output);
 
 			task.waitFor(ONE_MINUTE);
-			Assertions.assertEquals(TaskStatus.SUCCESS, task.getStatus());
+			Assertions.assertEquals(TaskStatus.COMPLETE, task.getStatus());
 		} catch (final Exception e) {
 			throw e;
 		} finally {
@@ -161,7 +161,7 @@ public class TaskTests extends TaskRunnerApplicationTests {
 			task.cleanup();
 		}
 
-		Assertions.assertEquals(TaskStatus.FAILED, task.getStatus());
+		Assertions.assertEquals(TaskStatus.ERROR, task.getStatus());
 	}
 
 	@Test
@@ -311,12 +311,12 @@ public class TaskTests extends TaskRunnerApplicationTests {
 						case 0:
 							// success
 							req.setInput(TEST_INPUT.getBytes());
-							expected = TaskStatus.SUCCESS;
+							expected = TaskStatus.COMPLETE;
 							break;
 						case 1:
 							// failure
 							req.setInput(FAILURE_INPUT.getBytes());
-							expected = TaskStatus.FAILED;
+							expected = TaskStatus.ERROR;
 							break;
 						case 2:
 							// cancellation
@@ -383,13 +383,13 @@ public class TaskTests extends TaskRunnerApplicationTests {
 
 						task.waitFor(ONE_MINUTE);
 
-						responses.put(req.getId(), TaskStatus.SUCCESS);
+						responses.put(req.getId(), TaskStatus.COMPLETE);
 					} catch (TimeoutException | InterruptedException e) {
 						if (expected == TaskStatus.CANCELLED) {
 							responses.put(req.getId(), TaskStatus.CANCELLED);
-						} else if (expected == TaskStatus.FAILED) {
+						} else if (expected == TaskStatus.ERROR) {
 							// this should happen
-							responses.put(req.getId(), TaskStatus.FAILED);
+							responses.put(req.getId(), TaskStatus.ERROR);
 						} else {
 							throw e;
 						}

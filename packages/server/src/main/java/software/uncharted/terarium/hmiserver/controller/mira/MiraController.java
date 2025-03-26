@@ -189,7 +189,7 @@ public class MiraController {
 		final TaskResponse taskResponse;
 		try {
 			taskResponse = taskService.runTaskSync(taskRequest);
-			if (taskResponse.getStatus() != TaskStatus.SUCCESS) {
+			if (taskResponse.getStatus() != TaskStatus.COMPLETE) {
 				log.error("Task Failed", taskResponse.getStderr());
 				throw new ResponseStatusException(HttpStatus.BAD_REQUEST, taskResponse.getStderr());
 			}
@@ -252,7 +252,7 @@ public class MiraController {
 		final TaskResponse resp;
 		try {
 			resp = taskService.runTaskSync(req);
-			if (resp.getStatus() != TaskStatus.SUCCESS) {
+			if (resp.getStatus() != TaskStatus.COMPLETE) {
 				log.error("Task Failed", resp.getStderr());
 				throw new ResponseStatusException(HttpStatus.BAD_REQUEST, resp.getStderr());
 			}
@@ -314,7 +314,7 @@ public class MiraController {
 		final TaskResponse resp;
 		try {
 			resp = taskService.runTaskSync(req);
-			if (resp.getStatus() != TaskStatus.SUCCESS) {
+			if (resp.getStatus() != TaskStatus.COMPLETE) {
 				log.error("Task Failed", resp.getStderr());
 				throw new ResponseStatusException(HttpStatus.BAD_REQUEST, resp.getStderr());
 			}
@@ -378,7 +378,7 @@ public class MiraController {
 		final TaskResponse resp;
 		try {
 			resp = taskService.runTaskSync(req);
-			if (resp.getStatus() != TaskStatus.SUCCESS) {
+			if (resp.getStatus() != TaskStatus.COMPLETE) {
 				log.error("Task Failed", resp.getStderr());
 				throw new ResponseStatusException(HttpStatus.BAD_REQUEST, resp.getStderr());
 			}
@@ -485,7 +485,7 @@ public class MiraController {
 		final TaskResponse resp;
 		try {
 			resp = taskService.runTaskSync(req);
-			if (resp.getStatus() != TaskStatus.SUCCESS) {
+			if (resp.getStatus() != TaskStatus.COMPLETE) {
 				log.error("Task Failed", resp.getStderr());
 				throw new ResponseStatusException(HttpStatus.BAD_REQUEST, resp.getStderr());
 			}

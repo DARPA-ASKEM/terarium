@@ -345,9 +345,9 @@ public class TaskService {
 			log.info("Received response status {} for task {}", resp.getStatus(), resp.getId());
 
 			if (
-				resp.getStatus() == TaskStatus.SUCCESS ||
+				resp.getStatus() == TaskStatus.COMPLETE ||
 				resp.getStatus() == TaskStatus.CANCELLED ||
-				resp.getStatus() == TaskStatus.FAILED
+				resp.getStatus() == TaskStatus.ERROR
 			) {
 				final CompletableTaskFuture future = futures.remove(resp.getId());
 				if (future != null) {
@@ -474,11 +474,11 @@ public class TaskService {
 				log.error("Error occured while executing response handler for task {}", resp.getId(), e);
 
 				// if the handler fails processing a success, convert it to a failure
-				resp.setStatus(TaskStatus.FAILED);
+				resp.setStatus(TaskStatus.ERROR);
 				resp.setOutput(e.getMessage().getBytes());
 			}
 
-			if (resp.getStatus() == TaskStatus.SUCCESS && resp.isUseCache()) {
+			if (resp.getStatus() == TaskStatus.COMPLETE && resp.isUseCache()) {
 				try {
 					// add to the response cache
 					log.info(
@@ -529,7 +529,7 @@ public class TaskService {
 			}
 
 			// if the task failed, log to stdout / stderr
-			if (resp.getStatus() == TaskStatus.FAILED) {
+			if (resp.getStatus() == TaskStatus.ERROR) {
 				if (resp.getStdout() != null && resp.getStdout().length() > 0) {
 					log.error("Task {} failed, logging stdout", resp.getId());
 					System.out.print(resp.getStdout());
@@ -578,7 +578,7 @@ public class TaskService {
 			log.error("Error occured while executing response handler for task {}", resp.getId(), e);
 
 			// if the handler fails processing a success, convert it to a failure
-			resp.setStatus(TaskStatus.FAILED);
+			resp.setStatus(TaskStatus.ERROR);
 			resp.setOutput(e.getMessage().getBytes());
 		}
 
