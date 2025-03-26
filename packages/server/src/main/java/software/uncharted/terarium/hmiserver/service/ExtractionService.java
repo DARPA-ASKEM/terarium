@@ -649,7 +649,7 @@ public class ExtractionService {
 
 		return executor.submit(() -> {
 			final TaskResponse resp = taskService.runTaskSync(req);
-			if (resp.getStatus() != TaskStatus.SUCCESS) {
+			if (resp.getStatus() != TaskStatus.COMPLETE) {
 				throw new RuntimeException("OCR extraction failed: " + resp.getStderr());
 			}
 			final byte[] outputBytes = resp.getOutput();
