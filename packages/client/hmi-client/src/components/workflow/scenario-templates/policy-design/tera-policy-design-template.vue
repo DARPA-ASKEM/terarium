@@ -1,13 +1,28 @@
 <template>
-	<tera-scenario-template :header="header" :scenario-instance="scenario" @save-workflow="emit('save-workflow')" />
-	<img :src="blankCanvas" alt="Blank canvas template" />
+	<tera-scenario-template :header="header" :scenario-instance="scenario" @save-workflow="emit('save-workflow')">
+		<template #inputs>
+			<label>Select a model</label>
+			<Dropdown
+				:model-value="selectedModelId"
+				:options="models"
+				option-label="assetName"
+				option-value="assetId"
+				placeholder="Select a model"
+				@update:model-value="selectedModelId = $event"
+				class="mb-3"
+			/>
+		</template>
+	</tera-scenario-template>
 </template>
 
 <script setup lang="ts">
-import blankCanvas from '@/assets/svg/template-images/blank-canvas-thumbnail.svg';
-import TeraScenarioTemplate from '../tera-scenario-template.vue';
-import { ScenarioHeader } from '../base-scenario';
+import Dropdown from 'primevue/dropdown';
+import { computed, ref } from 'vue';
+import { useProjects } from '@/composables/project';
+import { AssetType } from '@/types/Types';
 import { PolicyDesignScenario } from './policy-design-scenario';
+import { ScenarioHeader } from '../base-scenario';
+import TeraScenarioTemplate from '../tera-scenario-template.vue';
 
 const header: ScenarioHeader = Object.freeze({
 	title: 'Policy design template',
@@ -20,8 +35,12 @@ const header: ScenarioHeader = Object.freeze({
 		'How much would property taxes need to lower to increase investment by %5 in one year?'
 	]
 });
-defineProps<{
+const props = defineProps<{
 	scenario: PolicyDesignScenario;
 }>();
+
+const models = computed(() => useProjects().getActiveProjectAssets(AssetType.Model));
+const selectedModelId = ref<string>();
+
 const emit = defineEmits(['save-workflow']);
 </script>

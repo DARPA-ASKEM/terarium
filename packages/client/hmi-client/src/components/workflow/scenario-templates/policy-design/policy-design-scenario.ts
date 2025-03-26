@@ -30,4 +30,12 @@ export class PolicyDesignScenario extends BaseScenario {
 		wf.setWorkflowScenario(this.toJSON()); // TOM: How does this work?
 		return wf.dump();
 	}
+
+	getModelConfigId() {
+		return this.modelConfigId;
+	}
+
+	setModelConfigId(modelConfigId) {
+		this.modelConfigId = modelConfigId;
+	}
 }
