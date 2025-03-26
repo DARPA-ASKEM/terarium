@@ -166,11 +166,6 @@ public class ModelMetadata extends SupportAdditionalProperties implements Serial
 			clone.gollmCard = this.gollmCard.deepCopy();
 		}
 
-		if (provenance != null) {
-			clone.provenance = new ArrayList<>();
-			clone.provenance.addAll(provenance);
-		}
-
 		if (templateCard != null) {
 			clone.templateCard = this.templateCard.deepCopy();
 		}
