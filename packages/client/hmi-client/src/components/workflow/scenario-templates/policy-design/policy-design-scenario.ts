@@ -10,11 +10,9 @@ export class PolicyDesignScenario extends BaseScenario {
 
 	private interventionId;
 
-	constructor(modelConfigId, interventionId) {
+	constructor() {
 		super();
 		this.workflowName = PolicyDesignScenario.templateName;
-		this.modelConfigId = modelConfigId;
-		this.interventionId = interventionId;
 	}
 
 	toJSON() {
