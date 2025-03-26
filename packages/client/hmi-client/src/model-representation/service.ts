@@ -211,6 +211,16 @@ export function getStates(model: Model): (State & RegNetVertex)[] {
 	}
 }
 
+export function getTransitions(model: Model): Transition[] {
+	const modelType = getModelType(model);
+	switch (modelType) {
+		case AMRSchemaNames.PETRINET:
+			return model.model?.transitions ?? [];
+		default:
+			return [];
+	}
+}
+
 /**
  * Retrieves the metadata for a specific initial in the model.
  * @param {Model} model - The model object.
@@ -538,6 +548,9 @@ export function createPartsList(parts, model, partType) {
 				break;
 			case PartType.PARAMETER:
 				types = getParameters(model);
+				break;
+			case PartType.TRANSITION:
+				types = getTransitions(model);
 				break;
 			default:
 				types = model;
