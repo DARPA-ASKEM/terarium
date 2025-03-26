@@ -8,11 +8,15 @@ import { operation as DatasetOp } from '@/components/workflow/ops/dataset/mod';
 import { operation as CalibrateOp } from '@/components/workflow/ops/calibrate-ciemss/mod';
 import { OperatorNodeSize } from '@/services/workflow';
 import _ from 'lodash';
+import { getModelConfigurationById } from '@/services/model-configurations';
+import { getInterventionPolicyById } from '@/services/intervention-policy';
 
 export class PolicyDesignScenario extends BaseScenario {
 	public static templateId = 'policy-design';
 
 	public static templateName = 'Policy Design';
+
+	private modelId;
 
 	private modelConfigId;
 
@@ -39,9 +43,17 @@ export class PolicyDesignScenario extends BaseScenario {
 		let wf = new workflowService.WorkflowWrapper();
 		wf.setWorkflowName(this.workflowName);
 		wf.setWorkflowScenario(this.toJSON()); // TOM: How does this work?
-		wf = this.addAllNodes(wf);
+		wf = await this.addAllNodes(wf);
 		wf.runDagreLayout();
 		return wf.dump();
+	}
+
+	getModelId() {
+		return this.modelId;
+	}
+
+	setModelId(modelId: string) {
+		this.modelId = modelId;
 	}
 
 	getModelConfigId() {
@@ -68,10 +80,12 @@ export class PolicyDesignScenario extends BaseScenario {
 		this.datasetId = datasetId;
 	}
 
-	addAllNodes(wf: workflowService.WorkflowWrapper): workflowService.WorkflowWrapper {
+	private async addAllNodes(wf: workflowService.WorkflowWrapper): Promise<workflowService.WorkflowWrapper> {
 		// Add Default Nodes (not calibrate + dataset):
 		const POSITION = { x: 0, y: 0 };
 		const SIZE = { size: OperatorNodeSize.medium };
+		const modelConfig = await getModelConfigurationById(this.modelConfigId);
+		const interventionPolicy = await getInterventionPolicyById(this.interventionPolicyId);
 
 		const modelNode = wf.addNode(ModelOp, POSITION, SIZE);
 
@@ -92,6 +106,45 @@ export class PolicyDesignScenario extends BaseScenario {
 			{ x: 0, y: 0 },
 			{ x: 0, y: 0 }
 		]);
+
+		// Optimize Dataset:
+		wf.addEdge(interventionNode.id, interventionNode.outputs[0].id, optimizeNode.id, optimizeNode.inputs[1].id, [
+			{ x: 0, y: 0 },
+			{ x: 0, y: 0 }
+		]);
+
+		// Manage States:
+		// Model:
+		wf.updateNode(modelNode, {
+			state: {
+				modelId: this.modelId
+			},
+			output: {
+				value: [this.modelId]
+			}
+		});
+
+		// Model Config:
+		wf.updateNode(modelConfigNode, {
+			state: {
+				transientModelConfig: modelConfig
+			},
+			output: {
+				value: [this.modelConfigId],
+				state: _.omit(modelConfigNode.state, ['transientModelConfig'])
+			}
+		});
+
+		// Intervention:
+		wf.updateNode(interventionNode, {
+			state: {
+				interventionPolicy
+			},
+			output: {
+				value: [this.interventionPolicyId],
+				state: interventionNode.state
+			}
+		});
 
 		// If a dataset is provided we will create the dataset node as well as the calibrate node.
 		if (!_.isEmpty(this.datasetId)) {
@@ -115,6 +168,16 @@ export class PolicyDesignScenario extends BaseScenario {
 				{ x: 0, y: 0 },
 				{ x: 0, y: 0 }
 			]);
+
+			// Dataset state:
+			wf.updateNode(datasetNode, {
+				state: {
+					datasetId: this.datasetId
+				},
+				output: {
+					value: [this.datasetId]
+				}
+			});
 		} else {
 			// Optimize Model Config
 			wf.addEdge(modelConfigNode.id, modelConfigNode.outputs[0].id, optimizeNode.id, optimizeNode.inputs[0].id, [
@@ -122,15 +185,6 @@ export class PolicyDesignScenario extends BaseScenario {
 				{ x: 0, y: 0 }
 			]);
 		}
-
-		// Optimize Dataset:
-		wf.addEdge(interventionNode.id, interventionNode.outputs[0].id, optimizeNode.id, optimizeNode.inputs[1].id, [
-			{ x: 0, y: 0 },
-			{ x: 0, y: 0 }
-		]);
-
-		// Manage States:
-
 		return wf;
 	}
 }

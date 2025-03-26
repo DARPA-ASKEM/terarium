@@ -3,12 +3,12 @@
 		<template #inputs>
 			<label>Select a model</label>
 			<Dropdown
-				:model-value="selectedModelId"
+				:model-value="props.scenario.getModelId()"
 				:options="allModelOptions"
 				option-label="assetName"
 				option-value="assetId"
 				placeholder="Select a model"
-				@update:model-value="selectedModelId = $event"
+				@update:model-value="props.scenario.setModelId($event)"
 				class="mb-3"
 			/>
 
@@ -79,7 +79,7 @@ const header: ScenarioHeader = Object.freeze({
 
 const allModelOptions = computed(() => useProjects().getActiveProjectAssets(AssetType.Model));
 const allDatasetOptions = computed(() => useProjects().getActiveProjectAssets(AssetType.Dataset));
-const selectedModelId = ref<string>('');
+const selectedModelId = computed(() => props.scenario.getModelId());
 const isModelSelected = computed(() => !_.isEmpty(selectedModelId.value));
 const allModelConfigOptions = ref<ModelConfiguration[]>([]);
 const allInterventionPolicyOptions = ref<InterventionPolicy[]>([]);
