@@ -213,12 +213,10 @@ export function getStates(model: Model): (State & RegNetVertex)[] {
 
 export function getTransitions(model: Model): Transition[] {
 	const modelType = getModelType(model);
-	switch (modelType) {
-		case AMRSchemaNames.PETRINET:
-			return model.model?.transitions ?? [];
-		default:
-			return [];
+	if (modelType === AMRSchemaNames.PETRINET) {
+		return model.model?.transitions ?? [];
 	}
+	return [];
 }
 
 /**
