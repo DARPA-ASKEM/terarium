@@ -110,7 +110,7 @@ public class WorkflowController {
 	)
 	public ResponseEntity<Workflow> getWorkflow(
 		@PathVariable("id") final UUID id,
-		@RequestParam(name = "project-id", required = false) final UUID projectId
+		@RequestParam(name = "project-id") final UUID projectId
 	) {
 		final Optional<Workflow> workflow = workflowService.getAsset(id);
 		return workflow.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
