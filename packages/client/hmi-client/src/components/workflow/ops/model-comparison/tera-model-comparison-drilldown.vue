@@ -193,7 +193,7 @@ import TeraModelDiagram from '@/components/model/petrinet/tera-model-diagram.vue
 import { compareModels } from '@/services/goLLM';
 import { KernelSessionManager } from '@/services/jupyter';
 import { getModel } from '@/services/model';
-import { ClientEvent, ClientEventType, type Model, TaskResponse, TaskStatus } from '@/types/Types';
+import { ClientEvent, ClientEventType, type Model, TaskResponse, ProgressState } from '@/types/Types';
 import { OperatorStatus, WorkflowNode, WorkflowPortStatus } from '@/types/workflow';
 import { logger } from '@/utils/logger';
 import Button from 'primevue/button';
@@ -557,7 +557,7 @@ const processCompareModels = async () => {
 	const taskRes = await compareModels(modelIds.value, request, props.node.workflowId, props.node.id);
 	compareModelsTaskId = taskRes.id;
 
-	if (taskRes.status === TaskStatus.Success) {
+	if (taskRes.status === ProgressState.Complete) {
 		generateOverview(taskRes.output);
 	}
 
@@ -601,12 +601,12 @@ function processConceptComparison() {
 useClientEvent(ClientEventType.TaskGollmCompareModel, (event: ClientEvent<TaskResponse>) => {
 	if (!event.data || event.data.id !== compareModelsTaskId) return;
 
-	if ([TaskStatus.Queued, TaskStatus.Running, TaskStatus.Cancelling].includes(event.data.status)) {
+	if ([ProgressState.Queued, ProgressState.Running].includes(event.data.status)) {
 		isProcessingComparison.value = true;
-	} else if (event.data.status === TaskStatus.Success) {
+	} else if (event.data.status === ProgressState.Complete) {
 		generateOverview(event.data.output);
 		isProcessingComparison.value = false;
-	} else if ([TaskStatus.Failed, TaskStatus.Cancelled].includes(event.data.status)) {
+	} else if ([ProgressState.Error, ProgressState.Cancelled].includes(event.data.status)) {
 		isProcessingComparison.value = false;
 	}
 });

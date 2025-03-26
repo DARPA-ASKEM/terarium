@@ -15,8 +15,7 @@ import {
 	SimulationEngine,
 	SimulationNotificationData,
 	StatusUpdate,
-	TaskResponse,
-	TaskStatus
+	TaskResponse
 } from '@/types/Types';
 import { logger } from '@/utils/logger';
 import { snakeToCapitalSentence } from '@/utils/text';
@@ -26,19 +25,6 @@ import { getDocumentAsset } from './document-assets';
 import { getWorkflow } from './workflow';
 
 type NotificationEventData = TaskResponse | StatusUpdate<unknown>;
-/**
- * We use ProgressState to represent the status of the notification for a task/job.
- * Since the task status from the task runners response (TaskResponse) is represented by TaskStatus, we need to map TaskStatus to ProgressState.
- */
-const taskStatusToProgressState = {
-	[TaskStatus.Queued]: ProgressState.Queued,
-	[TaskStatus.Running]: ProgressState.Running,
-	[TaskStatus.Success]: ProgressState.Complete,
-	[TaskStatus.Failed]: ProgressState.Failed,
-	[TaskStatus.Cancelled]: ProgressState.Cancelled,
-	[TaskStatus.Cancelling]: ProgressState.Cancelling
-};
-const getStatusFromTaskResponse = (data: TaskResponse) => taskStatusToProgressState[data.status];
 
 const isTaskResponse = (data: any): data is TaskResponse =>
 	data.id !== undefined && data.script !== undefined && data.status;
@@ -51,14 +37,14 @@ const toastTitle = {
 };
 
 const logStatusMessage = (eventType: ClientEventType, status: ProgressState, msg: string, error: string) => {
-	if (![ProgressState.Complete, ProgressState.Failed, ProgressState.Cancelled].includes(status)) return;
+	if (![ProgressState.Complete, ProgressState.Error, ProgressState.Cancelled].includes(status)) return;
 
 	if (status === ProgressState.Complete)
 		logger.success(msg, {
 			showToast: true,
 			toastTitle: toastTitle[eventType]?.success ?? `${snakeToCapitalSentence(eventType)} Completed`
 		});
-	if (status === ProgressState.Failed)
+	if (status === ProgressState.Error)
 		logger.error(error, {
 			showToast: true,
 			toastTitle: toastTitle[eventType]?.error ?? `${snakeToCapitalSentence(eventType)} Failed`
@@ -71,11 +57,10 @@ const logStatusMessage = (eventType: ClientEventType, status: ProgressState, msg
 };
 
 const updateStatusFromTaskResponse = (event: ClientEvent<TaskResponse>): NotificationItemStatus => {
-	const status = getStatusFromTaskResponse(event.data);
-	const error = status === ProgressState.Failed ? event.data.stderr : '';
+	const status = event.data.status;
+	const error = status === ProgressState.Error ? event.data.stderr : '';
 	const statusMsg = {
 		[ProgressState.Running]: 'in progress...',
-		[ProgressState.Cancelling]: 'is cancelling...',
 		[ProgressState.Cancelled]: 'was cancelled.',
 		[ProgressState.Complete]: 'completed.'
 	};

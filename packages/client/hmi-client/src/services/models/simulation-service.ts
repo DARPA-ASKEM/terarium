@@ -238,7 +238,7 @@ export async function pollAction(id: string) {
 		return { data: null, progress: simResponse, error: null };
 	}
 
-	if ([ProgressState.Error, ProgressState.Failed].includes(simResponse.status)) {
+	if ([ProgressState.Error, ProgressState.Error].includes(simResponse.status)) {
 		const errorMessage: string = simResponse.statusMessage || `Failed running simulation ${id}`;
 		return { data: null, progress: null, error: errorMessage };
 	}

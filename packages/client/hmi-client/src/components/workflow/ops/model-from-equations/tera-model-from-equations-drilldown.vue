@@ -410,7 +410,7 @@ import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
 import TeraDrilldownPreview from '@/components/drilldown/tera-drilldown-preview.vue';
 import TeraAssetBlock from '@/components/widgets/tera-asset-block.vue';
 import { computed, onMounted, onBeforeUnmount, ref, watch } from 'vue';
-import { TaskStatus, type Card, type DocumentAsset, type Model } from '@/types/Types';
+import { ProgressState, type Card, type DocumentAsset, type Model } from '@/types/Types';
 import _, { cloneDeep, isEmpty } from 'lodash';
 import { equationsToAMR, getCleanedEquations, type EquationsToAMRRequest } from '@/services/knowledge';
 import { downloadDocumentAsset, getDocumentAsset, getDocumentFileAsText } from '@/services/document-assets';
@@ -710,7 +710,7 @@ async function onRun() {
 		// clear enrichments when new model is created
 		clonedState.value.enrichments = [];
 		// FIXME: The response can be returned right away and this may not get caught in the node subscriber since the model id isn't populated in time
-		if (enrichResponse.status === TaskStatus.Success) {
+		if (enrichResponse.status === ProgressState.Complete) {
 			const { response: parsedEnrichOutput } = JSON.parse(atob(enrichResponse.output));
 			clonedState.value.enrichments = createEnrichmentCards(parsedEnrichOutput);
 		}

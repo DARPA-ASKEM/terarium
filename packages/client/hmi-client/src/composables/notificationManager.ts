@@ -12,7 +12,7 @@ import { ProgressState } from '@/types/Types';
 let initialized = false;
 
 const isFinished = (item: NotificationItem) =>
-	[ProgressState.Complete, ProgressState.Failed, ProgressState.Cancelled, ProgressState.Error].includes(item.status);
+	[ProgressState.Complete, ProgressState.Error, ProgressState.Cancelled, ProgressState.Error].includes(item.status);
 
 // Items stores the notifications for all projects
 const notificationItems = ref<NotificationItem[]>([]);

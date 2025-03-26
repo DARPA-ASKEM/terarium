@@ -199,7 +199,7 @@ const inProgressAssetsIds = ref({
 });
 
 function assetTypeProgressHandler(assetType, assetId, status) {
-	if ([ProgressState.Complete, ProgressState.Cancelled, ProgressState.Failed].includes(status)) {
+	if ([ProgressState.Complete, ProgressState.Cancelled, ProgressState.Error].includes(status)) {
 		inProgressAssetsIds.value[assetType].remove(assetId);
 	} else {
 		inProgressAssetsIds.value[assetType].add(assetId);
