@@ -8,7 +8,6 @@ import lombok.NoArgsConstructor;
 import lombok.experimental.Accessors;
 import software.uncharted.terarium.hmiserver.annotations.TSIgnore;
 import software.uncharted.terarium.hmiserver.models.Group;
-import software.uncharted.terarium.hmiserver.utils.rebac.Schema;
 
 @NoArgsConstructor
 @Data
