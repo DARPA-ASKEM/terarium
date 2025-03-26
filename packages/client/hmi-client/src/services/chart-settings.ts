@@ -78,7 +78,7 @@ export function getEnsembleChartSettingOptions(
 }
 
 /**
- * Get existing qauntile chart setting options from the chart settings with the assumed that all applicable settings have the same options.
+ * Get existing quantile chart setting options from the chart settings with the assumed that all applicable settings have the same options.
  * @param chartSettings - The array of chart settings.
  * @returns - The quantile chart setting options.
  */
@@ -105,7 +105,9 @@ export function createNewChartSetting(
 		selectedVariables,
 		type,
 		scale: '',
-		primaryColor: CATEGORICAL_SCHEME[0]
+		primaryColor: CATEGORICAL_SCHEME[0],
+		shareYAxis: true,
+		smallMultiples: true
 	};
 	if (isChartSettingEnsembleVariable(setting)) {
 		// Default options for ensemble variable chart
@@ -114,7 +116,7 @@ export function createNewChartSetting(
 	}
 	if (CHART_SETTING_WITH_QUANTILES_OPTIONS.includes(type)) {
 		// Default options for quantile chart
-		setting.showQuantiles = false;
+		setting.showQuantiles = true;
 		setting.quantiles = [0.95, 0.5];
 	}
 	// Apply and override defaults with the provided options.
