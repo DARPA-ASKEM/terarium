@@ -10,6 +10,8 @@ export class PolicyDesignScenario extends BaseScenario {
 
 	private interventionPolicyId;
 
+	private datasetId;
+
 	constructor() {
 		super();
 		this.workflowName = PolicyDesignScenario.templateName;
@@ -20,7 +22,8 @@ export class PolicyDesignScenario extends BaseScenario {
 			templateId: PolicyDesignScenario.templateId,
 			workflowName: this.workflowName,
 			modelConfigId: this.modelConfigId,
-			interventionPolicyId: this.interventionPolicyId
+			interventionPolicyId: this.interventionPolicyId,
+			datasetId: this.datasetId
 		};
 	}
 
@@ -45,5 +48,13 @@ export class PolicyDesignScenario extends BaseScenario {
 
 	setInterventionPolicyId(interventionPolicyId: string) {
 		this.interventionPolicyId = interventionPolicyId;
+	}
+
+	getDatasetId() {
+		return this.datasetId;
+	}
+
+	setDatasetId(datasetId: string) {
+		this.datasetId = datasetId;
 	}
 }

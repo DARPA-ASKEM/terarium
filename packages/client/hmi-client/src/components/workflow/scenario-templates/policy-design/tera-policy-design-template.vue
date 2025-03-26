@@ -14,6 +14,7 @@
 
 			<label>Select a model configuration</label>
 			<Dropdown
+				:disabled="!isModelSelected"
 				:model-value="props.scenario.getModelConfigId()"
 				:options="allModelConfigOptions"
 				option-label="name"
@@ -25,12 +26,24 @@
 
 			<label>Select an intervention</label>
 			<Dropdown
+				:disabled="!isModelSelected"
 				:model-value="props.scenario.getInterventionPolicyId()"
 				:options="allInterventionPolicyOptions"
 				option-label="name"
 				option-value="id"
 				placeholder="Select an intervention for this model"
 				@update:model-value="props.scenario.setInterventionPolicyId($event)"
+				class="mb-3"
+			/>
+
+			<label>Select a dataset (optional)</label>
+			<Dropdown
+				:model-value="props.scenario.getDatasetId()"
+				:options="allDatasetOptions"
+				option-label="assetName"
+				option-value="assetId"
+				placeholder="Select a dataset (optional)"
+				@update:model-value="props.scenario.setDatasetId($event)"
 				class="mb-3"
 			/>
 		</template>
@@ -43,6 +56,7 @@ import { computed, ref, watch } from 'vue';
 import { useProjects } from '@/composables/project';
 import { AssetType, ModelConfiguration, InterventionPolicy } from '@/types/Types';
 import { getInterventionPoliciesForModel, getModelConfigurationsForModel } from '@/services/model';
+import _ from 'lodash';
 import { PolicyDesignScenario } from './policy-design-scenario';
 import { ScenarioHeader } from '../base-scenario';
 import TeraScenarioTemplate from '../tera-scenario-template.vue';
@@ -64,7 +78,9 @@ const header: ScenarioHeader = Object.freeze({
 });
 
 const allModelOptions = computed(() => useProjects().getActiveProjectAssets(AssetType.Model));
+const allDatasetOptions = computed(() => useProjects().getActiveProjectAssets(AssetType.Dataset));
 const selectedModelId = ref<string>('');
+const isModelSelected = computed(() => !_.isEmpty(selectedModelId.value));
 const allModelConfigOptions = ref<ModelConfiguration[]>([]);
 const allInterventionPolicyOptions = ref<InterventionPolicy[]>([]);
 
