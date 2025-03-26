@@ -148,7 +148,8 @@ import {
 	PartType,
 	ModelError,
 	ModelErrorSeverity,
-	ModelErrorType
+	ModelErrorType,
+	getTransitions
 } from '@/model-representation/service';
 import TeraStratifiedMatrixModal from '@/components/model/petrinet/model-configurations/tera-stratified-matrix-modal.vue';
 import { ModelPartItem, ModelPartItemTree, StratifiedMatrix } from '@/types/Model';
@@ -205,10 +206,15 @@ const createTransitionParts = () => {
 		subject: t.subject ? t.subject.name : '',
 		outcome: t.outcome ? t.outcome.name : '',
 		controllers: getControllerNames(t).join(', '),
-		expression: t.rate_law
+		expression: t.rate_law,
+		description: transitionsMap.get(t.name)?.description ?? ''
 	});
 
-	const templatesMap = collapseTemplates(props.mmt).matrixMap;
+	const allTransitions = getTransitions(props.model); // Note this is from model
+	const transitionsMap = new Map<string, Transition>();
+	allTransitions.forEach((ele) => transitionsMap.set(ele.id, ele));
+	const templatesMap = collapseTemplates(props.mmt).matrixMap; // Note this is from mmt.
+
 	return Array.from(templatesMap.keys()).map((templateId) => {
 		const children = templatesMap.get(templateId) as MiraTemplate[];
 		if (children.length === 1) {
@@ -227,7 +233,7 @@ const createTransitionParts = () => {
 	});
 };
 
-const transitionsList = createTransitionParts();
+const transitionsList = computed(() => createTransitionParts());
 
 const parameterMatrixModalId = ref('');
 const transitionMatrixModalId = ref('');
