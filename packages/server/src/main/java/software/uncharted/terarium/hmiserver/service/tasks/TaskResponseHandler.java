@@ -1,7 +1,6 @@
 package software.uncharted.terarium.hmiserver.service.tasks;
 
 import software.uncharted.terarium.hmiserver.models.task.TaskResponse;
-import software.uncharted.terarium.hmiserver.utils.rebac.Schema;
 
 public abstract class TaskResponseHandler {
 
@@ -37,12 +36,11 @@ public abstract class TaskResponseHandler {
 				return onQueued(response);
 			case RUNNING:
 				return onRunning(response);
-			case CANCELLING:
+			case SUCCESS:
 				return onCancelling(response);
 			case CANCELLED:
+			case CANCELLING:
 				return onCancelled(response);
-			case SUCCESS:
-				return onSuccess(response);
 			case FAILED:
 				return onFailure(response);
 		}

@@ -10,9 +10,9 @@ import lombok.Data;
 import lombok.Setter;
 import lombok.experimental.Accessors;
 import lombok.extern.slf4j.Slf4j;
+import software.uncharted.terarium.hmiserver.ProgressState;
 import software.uncharted.terarium.hmiserver.annotations.TSModel;
 import software.uncharted.terarium.hmiserver.models.ClientEventType;
-import software.uncharted.terarium.hmiserver.models.dataservice.simulation.ProgressState;
 import software.uncharted.terarium.hmiserver.models.dataservice.simulation.Simulation;
 import software.uncharted.terarium.hmiserver.models.dataservice.simulation.SimulationEngine;
 import software.uncharted.terarium.hmiserver.models.dataservice.simulation.SimulationType;
@@ -88,7 +88,7 @@ public class SimulationRequestStatusNotifier {
 	) {
 		final String statusMessage = simulation.getStatusMessage() != null ? simulation.getStatusMessage() : "";
 		final ProgressState status = simulation.getStatus();
-		if (status.equals(ProgressState.FAILED) || status.equals(ProgressState.ERROR)) {
+		if (status.equals(ProgressState.ERROR) || status.equals(ProgressState.ERROR)) {
 			throw new RuntimeException("Failed running simulation " + simulation.getId() + "\n" + statusMessage);
 		} else if (status.equals(ProgressState.CANCELLED)) {
 			notificationInterface.sendFinalMessage("Simulation has been cancelled.", ProgressState.CANCELLED);
@@ -144,7 +144,7 @@ public class SimulationRequestStatusNotifier {
 					pollAttempts
 				);
 			} catch (final Exception e) {
-				notificationInterface.sendFinalMessage(e.getMessage(), ProgressState.FAILED);
+				notificationInterface.sendFinalMessage(e.getMessage(), ProgressState.ERROR);
 				this.executor.shutdown();
 				log.error("Error occurred while polling for simulation {}\n{}", this.simulationId, e.getMessage());
 			}
