@@ -12,13 +12,10 @@ import Button from 'primevue/button';
 import { WorkflowNode } from '@/types/workflow';
 import TeraOperatorPlaceholder from '@/components/operator/tera-operator-placeholder.vue';
 import { getModel } from '@/services/model';
-import { ClientEvent, ClientEventType, Model, TaskResponse, ProgressState } from '@/types/Types';
+import { Model } from '@/types/Types';
 import TeraOperatorModelPreview from '@/components/operator/tera-operator-model-preview.vue';
 import { getActiveOutput } from '@/components/workflow/util';
-import { useClientEvent } from '@/composables/useClientEvent';
-import _ from 'lodash';
 import { ModelFromEquationsState } from '@/components/workflow/ops/model-from-equations/model-from-equations-operation';
-import { createEnrichmentCards } from './model-from-equations-utils';
 
 const props = defineProps<{
 	node: WorkflowNode<ModelFromEquationsState>;
@@ -33,17 +30,6 @@ const updateModel = async () => {
 		model.value = await getModel(modelId);
 	}
 };
-
-useClientEvent([ClientEventType.TaskGollmEnrichModel], async (event: ClientEvent<TaskResponse>) => {
-	const { modelId } = event.data.additionalProperties;
-	if (props.node.state.modelId !== modelId) return;
-	if ([ProgressState.Complete, ProgressState.Cancelled, ProgressState.Error].includes(event.data.status)) {
-		const { response } = JSON.parse(atob(event.data.output));
-		const clonedState = _.cloneDeep(props.node.state);
-		clonedState.enrichments = createEnrichmentCards(response);
-		emit('update-state', clonedState);
-	}
-});
 
 watch(
 	() => props.node.active,

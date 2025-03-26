@@ -267,11 +267,11 @@
 								</ul>
 							</main>
 						</TabPanel>
-						<TabPanel :disabled="isModelLoading || !selectedModel || _.isEmpty(clonedState.enrichments)">
+						<TabPanel :disabled="isModelLoading || !selectedModel || _.isEmpty(enrichments)">
 							<template #header>
 								<div class="flex align-items-center">
 									<i
-										v-if="isModelLoading || (!!selectedModel && _.isEmpty(clonedState.enrichments))"
+										v-if="isModelLoading || (!!selectedModel && _.isEmpty(enrichments))"
 										class="pi pi-spin pi-spinner mr-2"
 										:style="{ fontSize: '1rem' }"
 									/>
@@ -283,53 +283,66 @@
 								<Button class="ml-2" label="Add prompt" icon="pi pi-plus" @click="addPrompt" />
 							</header>
 							<main>
-								<ul class="blocks-container">
-									<li
-										v-for="enrichment in clonedState.enrichments"
-										:key="enrichment.id"
-										@click="selectEnrichment(enrichment)"
-									>
+								<ul class="blocks-container" v-if="selectedModel?.metadata?.enrichments">
+									<li v-for="enrichment in enrichments" :key="enrichment.id" @click="selectEnrichment(enrichment)">
 										<tera-asset-block
 											:is-toggleable="false"
 											:use-default-style="false"
 											:class="['asset-panel', { selected: selectedEnrichment === enrichment.id }]"
 										>
 											<template #header>
-												<h6>{{ enrichment.name }}</h6>
+												<h6>{{ enrichmentTargetTypeToLabel(enrichment.target) + ' > ' + enrichment.label }}</h6>
 												<Checkbox
 													@click.stop
 													class="flex-shrink-0 ml-auto"
-													v-model="enrichment.asset.include"
+													v-model="enrichment.included"
 													:binary="true"
-													:disabled="enrichment.asset.type === EnrichmentType.CUSTOM"
+													:disabled="enrichment.source === EnrichmentSource.Custom"
 													@update:model-value="onEnrichmentChange"
 												/>
 											</template>
 											<section class="flex flex-column gap-2" v-if="selectedEnrichment === enrichment.id">
-												<template v-if="enrichment.asset.type === EnrichmentType.DESCRIPTION">
-													<ul v-if="Array.isArray(enrichment.asset.content)">
-														<li v-for="item in enrichment.asset.content" :key="item">
+												<template
+													v-if="
+														enrichment.target === EnrichmentTarget.Description &&
+														enrichment.source !== EnrichmentSource.Custom
+													"
+												>
+													<!-- If array -->
+													<ul v-if="Array.isArray(enrichment.content)">
+														<li v-for="item in enrichment.content" :key="item">
 															{{ item }}
 														</li>
 													</ul>
-													<p v-else>{{ enrichment.asset.content }}</p>
+													<!-- If object-->
+													<ul v-else-if="typeof enrichment.content === 'object'" class="list-none">
+														<li v-for="(value, key) in enrichment.content" :key="key">
+															<h6>{{ formatTitle(key.toString()) }}:</h6>
+															<ul v-if="Array.isArray(value)">
+																<li v-for="item in value" :key="item">{{ item }}</li>
+															</ul>
+															<p v-else>{{ value }}</p>
+														</li>
+													</ul>
+													<!-- If string -->
+													<p v-else>{{ enrichment.content }}</p>
 												</template>
-												<template v-else-if="enrichment.asset.type === EnrichmentType.CUSTOM">
+												<template v-else-if="enrichment.source === EnrichmentSource.Custom">
 													<div class="flex align-items-center gap-2 w-full">
 														<i class="pi pi-sparkles" />
 														<tera-input-text class="w-full" :model-value="'What does the model describe?'" />
 													</div>
-													<p>{{ enrichment.asset.content }}</p>
+													<p>{{ enrichment.content }}</p>
 												</template>
 												<template v-else>
-													<span v-if="enrichment.asset.content.name">
-														<strong>Name:</strong> {{ enrichment.asset.content.name }}
+													<span v-if="enrichment.content.name">
+														<strong>Name:</strong> {{ enrichment.content.name }}
 													</span>
-													<span v-if="enrichment.asset.content.description">
-														<strong>Description:</strong> {{ enrichment.asset.content.description }}
+													<span v-if="enrichment.content.description">
+														<strong>Description:</strong> {{ enrichment.content.description }}
 													</span>
-													<span v-if="enrichment.asset.content.units?.expression">
-														<strong>Unit:</strong> {{ enrichment.asset.content.units?.expression }}
+													<span v-if="enrichment.content.units?.expression">
+														<strong>Unit:</strong> {{ enrichment.content.units?.expression }}
 													</span>
 												</template>
 											</section>
@@ -410,7 +423,18 @@ import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
 import TeraDrilldownPreview from '@/components/drilldown/tera-drilldown-preview.vue';
 import TeraAssetBlock from '@/components/widgets/tera-asset-block.vue';
 import { computed, onMounted, onBeforeUnmount, ref, watch } from 'vue';
-import { ProgressState, type Card, type DocumentAsset, type Model } from '@/types/Types';
+import {
+	ClientEvent,
+	ClientEventType,
+	Enrichment,
+	EnrichmentSource,
+	EnrichmentTarget,
+	TaskResponse,
+	ProgressState,
+	type Card,
+	type DocumentAsset,
+	type Model
+} from '@/types/Types';
 import _, { cloneDeep, isEmpty } from 'lodash';
 import { equationsToAMR, getCleanedEquations, type EquationsToAMRRequest } from '@/services/knowledge';
 import { downloadDocumentAsset, getDocumentAsset, getDocumentFileAsText } from '@/services/document-assets';
@@ -431,13 +455,10 @@ import TabPanel from 'primevue/tabpanel';
 import TabView from 'primevue/tabview';
 import { v4 as uuidv4 } from 'uuid';
 import TeraInputText from '@/components/widgets/tera-input-text.vue';
-import {
-	ModelFromEquationsState,
-	EquationBlock,
-	EnrichmentBlock,
-	EnrichmentType
-} from './model-from-equations-operation';
-import { createEnrichmentCards, updateModelWithEnrichments } from './model-from-equations-utils';
+import { useClientEvent } from '@/composables/useClientEvent';
+import { formatTitle } from '@/utils/text';
+import { ModelFromEquationsState, EquationBlock } from './model-from-equations-operation';
+import { updateModelWithEnrichments, enrichmentTargetTypeToLabel } from './model-from-equations-utils';
 
 const emit = defineEmits(['close', 'update-state', 'append-output', 'select-output']);
 const props = defineProps<{
@@ -455,8 +476,15 @@ const clonedState = ref<ModelFromEquationsState>({
 	excludedEquations: [],
 	text: '',
 	modelFramework: 'petrinet',
-	modelId: null,
-	enrichments: []
+	modelId: null
+});
+
+useClientEvent([ClientEventType.TaskGollmEnrichModel], async (event: ClientEvent<TaskResponse>) => {
+	const { modelId } = event.data.additionalProperties;
+	if (selectedModel.value?.id !== modelId) return;
+	if ([ProgressState.Complete, ProgressState.Cancelled, ProgressState.Error].includes(event.data.status)) {
+		fetchModel();
+	}
 });
 
 /**
@@ -475,7 +503,7 @@ const selectedItem = ref('');
 
 const selectedEnrichment = ref('');
 
-const selectEnrichment = (enrichment: AssetBlock<EnrichmentBlock>) => {
+const selectEnrichment = (enrichment: Enrichment) => {
 	selectedEnrichment.value = enrichment.id;
 };
 
@@ -506,6 +534,8 @@ const multipleEquationsDisabled = ref(false);
 const isDocViewerOpen = ref(true);
 const isInputOpen = ref(true);
 const isOutputOpen = ref(true);
+
+const enrichments = computed(() => selectedModel.value?.metadata?.enrichments ?? []);
 
 const outputArrowDirection = computed(() => (!isDocViewerOpen.value && !isInputOpen.value ? 'left' : 'right'));
 
@@ -707,12 +737,9 @@ async function onRun() {
 	if (modelId) {
 		clonedState.value.modelId = modelId;
 		const enrichResponse = await enrichModelMetadata(modelId, document.value?.id ?? '', false);
-		// clear enrichments when new model is created
-		clonedState.value.enrichments = [];
 		// FIXME: The response can be returned right away and this may not get caught in the node subscriber since the model id isn't populated in time
 		if (enrichResponse.status === ProgressState.Complete) {
-			const { response: parsedEnrichOutput } = JSON.parse(atob(enrichResponse.output));
-			clonedState.value.enrichments = createEnrichmentCards(parsedEnrichOutput);
+			fetchModel();
 		}
 	}
 
@@ -774,19 +801,19 @@ async function fetchModel() {
 
 const onEnrichmentChange = () => {
 	if (modelRef.value?.temporaryModel) {
-		updateModelWithEnrichments(modelRef.value.temporaryModel, clonedState.value.enrichments);
+		updateModelWithEnrichments(modelRef.value.temporaryModel, enrichments.value);
 	}
 };
 
 const onUseAll = () => {
-	clonedState.value.enrichments.forEach((enrichment) => {
-		if (enrichment.asset.type === EnrichmentType.CUSTOM) {
+	enrichments.value.forEach((enrichment) => {
+		if (enrichment.source === EnrichmentSource.Custom) {
 			return;
 		}
-		enrichment.asset.include = true;
+		enrichment.included = true;
 	});
 	if (modelRef.value?.temporaryModel) {
-		updateModelWithEnrichments(modelRef.value.temporaryModel, clonedState.value.enrichments);
+		updateModelWithEnrichments(modelRef.value.temporaryModel, enrichments.value);
 	}
 };
 
@@ -832,29 +859,29 @@ const goToPrevious = () => {
 };
 
 const goToNextEnrichment = () => {
-	const currentIndex = clonedState.value.enrichments.findIndex((eq) => eq.id === selectedEnrichment.value);
-	if (currentIndex < clonedState.value.enrichments.length - 1) {
-		selectEnrichment(clonedState.value.enrichments[currentIndex + 1]);
+	const currentIndex = enrichments.value.findIndex((eq) => eq.id === selectedEnrichment.value);
+	if (currentIndex < enrichments.value.length - 1) {
+		selectEnrichment(enrichments.value[currentIndex + 1]);
 	}
 };
 
 const goToPreviousEnrichment = () => {
-	const currentIndex = clonedState.value.enrichments.findIndex((eq) => eq.id === selectedEnrichment.value);
+	const currentIndex = enrichments.value.findIndex((eq) => eq.id === selectedEnrichment.value);
 	if (currentIndex > 0) {
-		selectEnrichment(clonedState.value.enrichments[currentIndex - 1]);
+		selectEnrichment(enrichments.value[currentIndex - 1]);
 	}
 };
 
 const addPrompt = () => {
-	clonedState.value.enrichments.unshift({
+	selectedModel.value?.metadata?.enrichments?.unshift({
 		id: uuidv4(),
-		name: 'Description > Custom prompt',
-		asset: {
-			type: EnrichmentType.CUSTOM,
-			content: 'This model describes...',
-			path: [],
-			include: false
-		}
+		label: 'Custom prompt',
+		source: EnrichmentSource.Custom,
+		target: EnrichmentTarget.Description,
+		content: 'What does the model describe?',
+		included: false,
+		extractionAssetId: '',
+		extractionItemIds: []
 	});
 };
 
@@ -891,7 +918,7 @@ watch(
 	() => !!modelRef.value?.temporaryModel,
 	() => {
 		if (modelRef.value?.temporaryModel) {
-			updateModelWithEnrichments(modelRef.value.temporaryModel, clonedState.value.enrichments);
+			updateModelWithEnrichments(modelRef.value.temporaryModel, enrichments.value);
 		}
 	}
 );

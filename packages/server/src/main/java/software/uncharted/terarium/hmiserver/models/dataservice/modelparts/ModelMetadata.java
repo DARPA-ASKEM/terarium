@@ -17,6 +17,7 @@ import org.hibernate.annotations.JdbcTypeCode;
 import software.uncharted.terarium.hmiserver.annotations.AMRSchemaType;
 import software.uncharted.terarium.hmiserver.annotations.TSOptional;
 import software.uncharted.terarium.hmiserver.models.SupportAdditionalProperties;
+import software.uncharted.terarium.hmiserver.models.dataservice.enrichment.Enrichment;
 import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.metadata.Annotations;
 import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.metadata.Card;
 import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.metadata.VariableStatement;
@@ -78,6 +79,9 @@ public class ModelMetadata extends SupportAdditionalProperties implements Serial
 
 	@TSOptional
 	JsonNode source;
+
+	@TSOptional
+	private List<Enrichment> enrichments;
 
 	@TSOptional
 	@Lob

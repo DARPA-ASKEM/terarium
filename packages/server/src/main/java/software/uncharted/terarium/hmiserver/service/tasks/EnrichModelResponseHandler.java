@@ -7,6 +7,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.StreamSupport;
@@ -14,6 +15,9 @@ import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
+import software.uncharted.terarium.hmiserver.models.dataservice.enrichment.Enrichment;
+import software.uncharted.terarium.hmiserver.models.dataservice.enrichment.EnrichmentSource;
+import software.uncharted.terarium.hmiserver.models.dataservice.enrichment.EnrichmentTarget;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.Model;
 import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.ModelMetadata;
 import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.ModelParameter;
@@ -21,9 +25,9 @@ import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.Model
 import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.semantics.Observable;
 import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.semantics.State;
 import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.semantics.Transition;
-import software.uncharted.terarium.hmiserver.models.dataservice.regnet.RegNetVertex;
 import software.uncharted.terarium.hmiserver.models.task.TaskResponse;
 import software.uncharted.terarium.hmiserver.service.data.ModelService;
+import software.uncharted.terarium.hmiserver.utils.JsonToHTML;
 
 @Component
 @RequiredArgsConstructor
@@ -66,6 +70,13 @@ public class EnrichModelResponseHandler extends LlmTaskResponseHandler {
 	}
 
 	@Data
+	private static class ContentAndExtractionItems {
+
+		JsonNode content;
+		String[] extractionItemIds;
+	}
+
+	@Data
 	private static class Descriptions {
 
 		String id;
@@ -73,19 +84,13 @@ public class EnrichModelResponseHandler extends LlmTaskResponseHandler {
 	}
 
 	@Data
-	private static class Enrichment {
-
-		List<DescriptionsAndUnits> states;
-		List<DescriptionsAndUnits> parameters;
-		List<DescriptionsAndUnits> observables;
-		List<Descriptions> transitions;
-	}
-
-	@Data
 	public static class Response {
 
 		JsonNode modelCard;
-		Enrichment modelEnrichment;
+		List<ContentAndExtractionItems> states;
+		List<ContentAndExtractionItems> parameters;
+		List<ContentAndExtractionItems> observables;
+		List<ContentAndExtractionItems> transitions;
 	}
 
 	@Data
@@ -95,6 +100,101 @@ public class EnrichModelResponseHandler extends LlmTaskResponseHandler {
 		UUID documentId;
 		UUID modelId;
 		Boolean overwrite;
+	}
+
+	private List<Enrichment> modelEnrichmentJSONToEnrichmentsList(final Response response, final Properties props) {
+		final List<Enrichment> enrichments = new ArrayList<>();
+
+		// add model card enrichments to map
+
+		final JsonNode modelCard = response.modelCard;
+		// loop through keys of modelcard and add to enrichment map
+		modelCard
+			.fieldNames()
+			.forEachRemaining(key -> {
+				final Enrichment enrichment = new Enrichment();
+				enrichment.setId(UUID.randomUUID());
+				enrichment.setLabel(JsonToHTML.formatTitle(key));
+				enrichment.setSource(EnrichmentSource.GOLLM);
+				enrichment.setTarget(EnrichmentTarget.DESCRIPTION);
+				enrichment.setContent(modelCard.get(key).get("content"));
+				if (props.documentId != null) {
+					enrichment.setExtractionAssetId(props.documentId);
+					JsonNode sourcesNode = modelCard.get(key).get("extractionItemIds");
+					if (sourcesNode != null && sourcesNode.isArray()) {
+						String[] sources = new ObjectMapper().convertValue(sourcesNode, String[].class);
+						enrichment.setExtractionItemIds(sources);
+					}
+				}
+				enrichment.setIncluded(false);
+				enrichments.add(enrichment);
+			});
+
+		// add states enrichments to map
+		for (final ContentAndExtractionItems state : response.states) {
+			final Enrichment enrichment = new Enrichment();
+			enrichment.setId(UUID.randomUUID());
+			enrichment.setLabel(state.getContent().get("id").asText());
+			enrichment.setSource(EnrichmentSource.GOLLM);
+			enrichment.setTarget(EnrichmentTarget.STATE);
+			enrichment.setContent(state.getContent());
+			if (props.documentId != null) {
+				enrichment.setExtractionAssetId(props.documentId);
+				enrichment.setExtractionItemIds(state.getExtractionItemIds());
+			}
+			enrichment.setIncluded(false);
+			enrichments.add(enrichment);
+		}
+
+		// add parameters enrichments to map
+		for (final ContentAndExtractionItems parameter : response.parameters) {
+			final Enrichment enrichment = new Enrichment();
+			enrichment.setId(UUID.randomUUID());
+			enrichment.setLabel(parameter.getContent().get("id").asText());
+			enrichment.setSource(EnrichmentSource.GOLLM);
+			enrichment.setTarget(EnrichmentTarget.PARAMETER);
+			enrichment.setContent(parameter.getContent());
+			if (props.documentId != null) {
+				enrichment.setExtractionAssetId(props.documentId);
+				enrichment.setExtractionItemIds(parameter.getExtractionItemIds());
+			}
+			enrichment.setIncluded(false);
+			enrichments.add(enrichment);
+		}
+
+		// add observables enrichments to map
+		for (final ContentAndExtractionItems observable : response.observables) {
+			final Enrichment enrichment = new Enrichment();
+			enrichment.setId(UUID.randomUUID());
+			enrichment.setLabel(observable.getContent().get("id").asText());
+			enrichment.setSource(EnrichmentSource.GOLLM);
+			enrichment.setTarget(EnrichmentTarget.OBSERVABLE);
+			enrichment.setContent(observable.getContent());
+			if (props.documentId != null) {
+				enrichment.setExtractionAssetId(props.documentId);
+				enrichment.setExtractionItemIds(observable.getExtractionItemIds());
+			}
+			enrichment.setIncluded(false);
+			enrichments.add(enrichment);
+		}
+
+		// add transitions enrichments to map
+		for (final ContentAndExtractionItems transition : response.transitions) {
+			final Enrichment enrichment = new Enrichment();
+			enrichment.setId(UUID.randomUUID());
+			enrichment.setLabel(transition.getContent().get("id").asText());
+			enrichment.setSource(EnrichmentSource.GOLLM);
+			enrichment.setTarget(EnrichmentTarget.TRANSITION);
+			enrichment.setContent(transition.getContent());
+			if (props.documentId != null) {
+				enrichment.setExtractionAssetId(props.documentId);
+				enrichment.setExtractionItemIds(transition.getExtractionItemIds());
+			}
+			enrichment.setIncluded(false);
+			enrichments.add(enrichment);
+		}
+
+		return enrichments;
 	}
 
 	@Override
@@ -107,10 +207,19 @@ public class EnrichModelResponseHandler extends LlmTaskResponseHandler {
 			final Model model = modelService.getAsset(props.getModelId()).orElseThrow();
 
 			if (!props.overwrite) {
-				log.info("Model was enriched as the overwrite option is set to false");
+				final List<Enrichment> enrichments = modelEnrichmentJSONToEnrichmentsList(response, props);
+				final ModelMetadata metadata = model.getMetadata();
+				if (metadata == null) {
+					model.setMetadata(new ModelMetadata());
+					model.getMetadata().setEnrichments(enrichments);
+				} else {
+					metadata.setEnrichments(enrichments);
+				}
+				modelService.updateAsset(model, model.getId());
 				return resp;
 			}
 
+			// FIXME: Updating the entire model maybe going away, so everything below this comment may be removed
 			// Update the model card
 			final JsonNode card = response.modelCard;
 			if (model.getMetadata() == null) {
@@ -120,78 +229,92 @@ public class EnrichModelResponseHandler extends LlmTaskResponseHandler {
 			model.getMetadata().setDescription(renderJsonToHTML(card).getBytes(StandardCharsets.UTF_8));
 
 			// Update the model with the enriched data
-			for (final DescriptionsAndUnits state : response.modelEnrichment.states) {
+			for (final ContentAndExtractionItems state : response.states) {
+				final String id = state.content.get("id").asText();
+				final String description = state.content.get("description").asText();
+				final JsonNode units = state.content.get("units");
 				model
 					.getInitials()
 					.stream()
-					.filter(initial -> initial.getTarget().equalsIgnoreCase(state.id))
+					.filter(initial -> initial.getTarget().equalsIgnoreCase(id))
 					.findFirst()
 					.ifPresent(initial -> {
-						initial.setDescription(state.description);
+						initial.setDescription(description);
 						StreamSupport.stream(model.getModel().get("states").spliterator(), false)
-							.filter(stateNode -> stateNode.path("id").asText().equals(state.id))
+							.filter(stateNode -> stateNode.path("id").asText().equals(id))
 							.findFirst()
 							.ifPresent(stateNode -> {
-								((ObjectNode) stateNode).put("description", state.description);
-								if (state.units != null) {
+								((ObjectNode) stateNode).put("description", description);
+								if (units != null) {
 									((ObjectNode) stateNode).put("units", objectMapper.createObjectNode());
-									((ObjectNode) stateNode.get("units")).put("expression", state.units.expression);
-									((ObjectNode) stateNode.get("units")).put("expression_mathml", state.units.expressionMathml);
+									((ObjectNode) stateNode.get("units")).put("expression", units.get("expression").asText());
+									((ObjectNode) stateNode.get("units")).put(
+											"expression_mathml",
+											units.get("expressionMathml").asText()
+										);
 								}
 							});
 					});
 			}
 
-			for (final DescriptionsAndUnits parameter : response.modelEnrichment.parameters) {
+			for (final ContentAndExtractionItems parameter : response.parameters) {
+				final String id = parameter.content.get("id").asText();
+				final String description = parameter.content.get("description").asText();
+				final JsonNode units = parameter.content.get("units");
 				model
 					.getParameters()
 					.stream()
-					.filter(param -> param.getConceptReference().equalsIgnoreCase(parameter.id))
+					.filter(param -> param.getConceptReference().equalsIgnoreCase(id))
 					.findFirst()
 					.ifPresent(param -> {
-						param.setDescription(parameter.description);
-						if (parameter.units != null) {
+						param.setDescription(description);
+						if (units != null) {
 							param.setUnits(
 								new ModelUnit()
-									.setExpression(parameter.units.expression)
-									.setExpressionMathml(parameter.units.expressionMathml)
+									.setExpression(units.get("expression").asText())
+									.setExpressionMathml(units.get("expressionMathml").asText())
 							);
 						}
 					});
 			}
 
-			for (final DescriptionsAndUnits observable : response.modelEnrichment.observables) {
+			for (final ContentAndExtractionItems observable : response.observables) {
+				final String id = observable.content.get("id").asText();
+				final String description = observable.content.get("description").asText();
+				final JsonNode units = observable.content.get("units");
 				model
 					.getObservables()
 					.stream()
-					.filter(observe -> observe.getConceptReference().equalsIgnoreCase(observable.id))
+					.filter(observe -> observe.getConceptReference().equalsIgnoreCase(id))
 					.findFirst()
 					.ifPresent(observe -> {
-						observe.setDescription(observable.description);
-						if (observable.units != null) {
+						observe.setDescription(description);
+						if (units != null) {
 							observe.setUnits(
 								new ModelUnit()
-									.setExpression(observable.units.expression)
-									.setExpressionMathml(observable.units.expressionMathml)
+									.setExpression(units.get("expression").asText())
+									.setExpressionMathml(units.get("expressionMathml").asText())
 							);
 						}
 					});
 			}
 
-			for (final Descriptions transition : response.modelEnrichment.transitions) {
+			for (final ContentAndExtractionItems transition : response.transitions) {
+				final String id = transition.content.get("id").asText();
+				final String description = transition.content.get("description").asText();
 				model
 					.getRates()
 					.stream()
-					.filter(rate -> rate.getTarget().equalsIgnoreCase(transition.id))
+					.filter(rate -> rate.getTarget().equalsIgnoreCase(id))
 					.findFirst()
 					.ifPresent(trans -> {
-						trans.setDescription(transition.description);
+						trans.setDescription(description);
 
 						StreamSupport.stream(model.getModel().get("transitions").spliterator(), false)
-							.filter(transitionNode -> transitionNode.path("id").asText().equals(transition.id))
+							.filter(transitionNode -> transitionNode.path("id").asText().equals(id))
 							.findFirst()
 							.ifPresent(transitionNode -> {
-								((ObjectNode) transitionNode).put("description", transition.description);
+								((ObjectNode) transitionNode).put("description", description);
 							});
 					});
 			}

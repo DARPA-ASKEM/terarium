@@ -229,6 +229,17 @@ export interface DocumentAsset extends TerariumAsset {
     extraction?: Extraction;
 }
 
+export interface Enrichment {
+    id: string;
+    label: string;
+    target: EnrichmentTarget;
+    source: EnrichmentSource;
+    content: any;
+    extractionAssetId: string;
+    extractionItemIds: string[];
+    included: boolean;
+}
+
 export interface ExternalPublication extends TerariumAsset {
     title: string;
     xdd_uri: string;
@@ -857,6 +868,7 @@ export interface ModelMetadata {
     card?: Card;
     provenance?: string[];
     source?: any;
+    enrichments?: Enrichment[];
     description?: any;
     processed_at?: number;
     processed_by?: string;
@@ -1283,6 +1295,19 @@ export enum ColumnType {
     Datetime = "DATETIME",
     Date = "DATE",
     Time = "TIME",
+}
+
+export enum EnrichmentTarget {
+    State = "STATE",
+    Parameter = "PARAMETER",
+    Transition = "TRANSITION",
+    Observable = "OBSERVABLE",
+    Description = "DESCRIPTION",
+}
+
+export enum EnrichmentSource {
+    Gollm = "GOLLM",
+    Custom = "CUSTOM",
 }
 
 export enum SemanticType {
