@@ -38,7 +38,7 @@ export function updateModelWithEnrichments(model: Model, enrichments: Enrichment
 	const modelMap = createModelMap(model);
 	const includedEnrichments = enrichments.filter((enrichment) => enrichment.included);
 	// update enrichments in model enrichments map
-	if (model.metadata && model.metadata.enrichments) {
+	if (model.metadata) {
 		model.metadata.enrichments = enrichments;
 	}
 	const description = buildHTMLDescriptionFromEnrichments(includedEnrichments);
