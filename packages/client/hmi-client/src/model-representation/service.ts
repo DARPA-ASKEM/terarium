@@ -549,9 +549,6 @@ export function createPartsList(parts, model, partType) {
 			case PartType.PARAMETER:
 				types = getParameters(model);
 				break;
-			case PartType.TRANSITION:
-				types = getTransitions(model);
-				break;
 			default:
 				types = model;
 		}
