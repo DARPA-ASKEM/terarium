@@ -29,13 +29,7 @@
 			</AccordionTab>
 			<AccordionTab header="Column information">
 				<ul>
-					<li
-						v-for="(column, index) in columnInformation.slice(
-							columnInfoFirstRow,
-							columnInfoFirstRow + MAX_NUMBER_OF_ROWS
-						)"
-						:key="column.name"
-					>
+					<li v-for="(column, index) in columnsToDisplay" :key="column.name">
 						<tera-column-info
 							:key="columnInfoFirstRow + index"
 							:column="column"
@@ -109,6 +103,9 @@ const isDatasetLoading = ref(false);
 const selectedTabIndex = ref(0);
 const columnInfoFirstRow = ref(0);
 const MAX_NUMBER_OF_ROWS = 5;
+const columnsToDisplay = computed(() =>
+	columnInformation.value.slice(columnInfoFirstRow.value, columnInfoFirstRow.value + MAX_NUMBER_OF_ROWS)
+);
 
 const optionsMenu = ref();
 const optionsMenuPt = {
