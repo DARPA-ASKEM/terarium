@@ -6,7 +6,7 @@ import { formatTitle } from '@/utils/text';
 function buildHTMLDescriptionFromEnrichments(enrichments: Enrichment[]): string {
 	let description = '';
 	enrichments
-		.filter((e) => e.target === EnrichmentTarget.ModelCard)
+		.filter((e) => e.target === EnrichmentTarget.Description)
 		.forEach((enrichment) => {
 			description += `<h3>${formatTitle(enrichment.label)}</h3>\n`;
 			if (typeof enrichment.content === 'string') {
@@ -86,7 +86,7 @@ export function updateModelWithEnrichments(model: Model, enrichments: Enrichment
 
 export function enrichmentTargetTypeToLabel(target: EnrichmentTarget): string {
 	switch (target) {
-		case EnrichmentTarget.ModelCard:
+		case EnrichmentTarget.Description:
 			return 'Description';
 		case EnrichmentTarget.State:
 			return 'State';

@@ -1314,7 +1314,7 @@ export enum EnrichmentTarget {
     Parameter = "PARAMETER",
     Transition = "TRANSITION",
     Observable = "OBSERVABLE",
-    ModelCard = "MODEL_CARD",
+    Description = "DESCRIPTION",
 }
 
 export enum EnrichmentSource {

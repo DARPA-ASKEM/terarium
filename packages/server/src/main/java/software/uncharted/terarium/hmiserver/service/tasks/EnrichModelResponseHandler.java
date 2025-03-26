@@ -116,7 +116,7 @@ public class EnrichModelResponseHandler extends LlmTaskResponseHandler {
 				enrichment.setId(UUID.randomUUID());
 				enrichment.setLabel(JsonToHTML.formatTitle(key));
 				enrichment.setSource(EnrichmentSource.GOLLM);
-				enrichment.setTarget(EnrichmentTarget.MODEL_CARD);
+				enrichment.setTarget(EnrichmentTarget.DESCRIPTION);
 				enrichment.setContent(modelCard.get(key).get("content"));
 				if (props.documentId != null) {
 					enrichment.setExtractionAssetId(props.documentId);

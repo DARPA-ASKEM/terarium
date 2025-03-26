@@ -304,7 +304,7 @@
 											<section class="flex flex-column gap-2" v-if="selectedEnrichment === enrichment.id">
 												<template
 													v-if="
-														enrichment.target === EnrichmentTarget.ModelCard &&
+														enrichment.target === EnrichmentTarget.Description &&
 														enrichment.source !== EnrichmentSource.Custom
 													"
 												>
@@ -877,7 +877,7 @@ const addPrompt = () => {
 		id: uuidv4(),
 		label: 'Custom prompt',
 		source: EnrichmentSource.Custom,
-		target: EnrichmentTarget.ModelCard,
+		target: EnrichmentTarget.Description,
 		content: 'What does the model describe?',
 		included: false,
 		extractionAssetId: '',

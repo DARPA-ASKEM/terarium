@@ -5,5 +5,5 @@ public enum EnrichmentTarget {
 	PARAMETER,
 	TRANSITION,
 	OBSERVABLE,
-	MODEL_CARD
+	DESCRIPTION
 }
