@@ -68,19 +68,19 @@ Input extractions:
 [
     {{
         "id": "ext_1",
-        "rawText": "This SIR model describes influenza spread in a university population."
+        "text": "This SIR model describes influenza spread in a university population."
     }},
     {{
         "id": "ext_2",
-        "rawText": "The model assumes closed population dynamics."
+        "text": "The model assumes closed population dynamics."
     }},
     {{
         "id": "ext_3",
-        "rawText": "Model validation used 2009 H1N1 outbreak data."
+        "text": "Model validation used 2009 H1N1 outbreak data."
     }},
     {{
         "id": "ext_4",
-        "rawText": "Validation metrics included R0 estimation and case count predictions."
+        "text": "Validation metrics included R0 estimation and case count predictions."
     }}
 ]
 
@@ -106,23 +106,23 @@ Input extractions:
 [
     {{
         "id": "ext_10",
-        "rawText": "The transmission rate β varies by age group."
+        "text": "The transmission rate β varies by age group."
     }},
     {{
         "id": "ext_11",
-        "rawText": "β is measured as contacts per person per day."
+        "text": "β is measured as contacts per person per day."
     }},
     {{
         "id": "ext_12",
-        "rawText": "Contact rates were derived from survey data."
+        "text": "Contact rates were derived from survey data."
     }},
     {{
         "id": "ext_13",
-        "rawText": "Each compartment tracks individuals by age: young (<18), adult (18-65), elderly (>65)."
+        "text": "Each compartment tracks individuals by age: young (<18), adult (18-65), elderly (>65)."
     }},
     {{
         "id": "ext_14",
-        "rawText": "Population counts are measured in persons."
+        "text": "Population counts are measured in persons."
     }}
 ]
 
@@ -166,27 +166,27 @@ Input extractions:
 [
     {{
         "id": "ext_20",
-        "rawText": "Model limitations include simplified mosquito population dynamics."
+        "text": "Model limitations include simplified mosquito population dynamics."
     }},
     {{
         "id": "ext_21",
-        "rawText": "Weather effects on transmission are not considered."
+        "text": "Weather effects on transmission are not considered."
     }},
     {{
         "id": "ext_22",
-        "rawText": "The model may underestimate seasonal variation."
+        "text": "The model may underestimate seasonal variation."
     }},
     {{
         "id": "ext_23",
-        "rawText": "M represents the total mosquito population."
+        "text": "M represents the total mosquito population."
     }},
     {{
         "id": "ext_24",
-        "rawText": "Mosquito counts are measured in thousands."
+        "text": "Mosquito counts are measured in thousands."
     }},
     {{
         "id": "ext_25",
-        "rawText": "Daily mosquito birth rate μ is temperature-dependent."
+        "text": "Daily mosquito birth rate μ is temperature-dependent."
     }}
 ]
 
