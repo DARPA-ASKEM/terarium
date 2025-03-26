@@ -735,7 +735,7 @@ export interface CiemssStatusUpdate {
 export interface TaskResponse {
     id: string;
     script: string;
-    status: TaskStatus;
+    status: ProgressState;
     output: any;
     userId: string;
     projectId: string;
@@ -1205,14 +1205,6 @@ export enum EvaluationScenarioStatus {
 export enum CiemssStatusType {
     Optimize = "optimize",
     Calibrate = "calibrate",
-}
-
-export enum TaskStatus {
-    Cancelled = "CANCELLED",
-    Complete = "COMPLETE",
-    Error = "ERROR",
-    Queued = "QUEUED",
-    Running = "RUNNING",
 }
 
 export enum TerariumAssetEmbeddingType {
