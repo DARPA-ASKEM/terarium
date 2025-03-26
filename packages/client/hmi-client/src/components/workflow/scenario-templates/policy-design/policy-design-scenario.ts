@@ -39,6 +39,10 @@ export class PolicyDesignScenario extends BaseScenario {
 		};
 	}
 
+	isValid(): boolean {
+		return !!this.workflowName && !!this.modelId && !!this.modelConfigId && !!this.interventionPolicyId;
+	}
+
 	async createWorkflow() {
 		let wf = new workflowService.WorkflowWrapper();
 		wf.setWorkflowName(this.workflowName);
