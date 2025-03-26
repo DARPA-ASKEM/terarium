@@ -15,6 +15,7 @@ import org.redisson.api.RedissonClient;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.security.test.context.support.WithUserDetails;
+import software.uncharted.terarium.hmiserver.ProgressState;
 import software.uncharted.terarium.hmiserver.TerariumApplicationTests;
 import software.uncharted.terarium.hmiserver.configuration.MockUser;
 import software.uncharted.terarium.hmiserver.controller.mira.MiraController.ConversionAdditionalProperties;
@@ -22,7 +23,6 @@ import software.uncharted.terarium.hmiserver.models.task.TaskFuture;
 import software.uncharted.terarium.hmiserver.models.task.TaskRequest;
 import software.uncharted.terarium.hmiserver.models.task.TaskRequest.TaskType;
 import software.uncharted.terarium.hmiserver.models.task.TaskResponse;
-import software.uncharted.terarium.hmiserver.models.task.TaskStatus;
 
 @Slf4j
 public class TaskServiceTest extends TerariumApplicationTests {
@@ -413,12 +413,12 @@ public class TaskServiceTest extends TerariumApplicationTests {
 		req.setInput(input);
 
 		final TaskFuture future1 = taskService.runTaskAsync(req);
-		Assertions.assertEquals(TaskStatus.COMPLETE, future1.getFinal(TIMEOUT_SECONDS, TimeUnit.SECONDS).getStatus());
+		Assertions.assertEquals(ProgressState.COMPLETE, future1.getFinal(TIMEOUT_SECONDS, TimeUnit.SECONDS).getStatus());
 
 		// next request should pull the successful response from cache
 		final long start = System.currentTimeMillis();
 		final TaskFuture future2 = taskService.runTaskAsync(req);
-		Assertions.assertEquals(TaskStatus.COMPLETE, future2.getFinal(TIMEOUT_SECONDS, TimeUnit.SECONDS).getStatus());
+		Assertions.assertEquals(ProgressState.COMPLETE, future2.getFinal(TIMEOUT_SECONDS, TimeUnit.SECONDS).getStatus());
 
 		Assertions.assertTrue(System.currentTimeMillis() - start < 1000);
 	}
@@ -437,16 +437,16 @@ public class TaskServiceTest extends TerariumApplicationTests {
 
 		final TaskFuture future1 = taskService.runTaskAsync(req);
 		taskService.cancelTask(req.getType(), future1.getId());
-		Assertions.assertEquals(TaskStatus.CANCELLED, future1.getFinal(TIMEOUT_SECONDS, TimeUnit.SECONDS).getStatus());
+		Assertions.assertEquals(ProgressState.CANCELLED, future1.getFinal(TIMEOUT_SECONDS, TimeUnit.SECONDS).getStatus());
 
 		// next request should not pull the cancelled response from cache
 		final TaskFuture future2 = taskService.runTaskAsync(req);
-		Assertions.assertEquals(TaskStatus.COMPLETE, future2.getFinal(TIMEOUT_SECONDS, TimeUnit.SECONDS).getStatus());
+		Assertions.assertEquals(ProgressState.COMPLETE, future2.getFinal(TIMEOUT_SECONDS, TimeUnit.SECONDS).getStatus());
 		Assertions.assertNotEquals(future1.getId(), future2.getId());
 
 		// next request should pull the successful response from cache
 		final TaskFuture future3 = taskService.runTaskAsync(req);
-		Assertions.assertEquals(TaskStatus.COMPLETE, future3.getFinal(TIMEOUT_SECONDS, TimeUnit.SECONDS).getStatus());
+		Assertions.assertEquals(ProgressState.COMPLETE, future3.getFinal(TIMEOUT_SECONDS, TimeUnit.SECONDS).getStatus());
 		Assertions.assertEquals(future2.getId(), future3.getId());
 	}
 }

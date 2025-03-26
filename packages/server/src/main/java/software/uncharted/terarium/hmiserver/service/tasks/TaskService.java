@@ -36,6 +36,7 @@ import org.springframework.amqp.rabbit.listener.DirectMessageListenerContainer;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Service;
+import software.uncharted.terarium.hmiserver.ProgressState;
 import software.uncharted.terarium.hmiserver.configuration.Config;
 import software.uncharted.terarium.hmiserver.configuration.TaskRunnerConfiguration;
 import software.uncharted.terarium.hmiserver.configuration.TaskRunnerConfiguration.RabbitConfig;
@@ -48,7 +49,6 @@ import software.uncharted.terarium.hmiserver.models.task.TaskFuture;
 import software.uncharted.terarium.hmiserver.models.task.TaskRequest;
 import software.uncharted.terarium.hmiserver.models.task.TaskRequest.TaskType;
 import software.uncharted.terarium.hmiserver.models.task.TaskResponse;
-import software.uncharted.terarium.hmiserver.models.task.TaskStatus;
 import software.uncharted.terarium.hmiserver.service.ClientEventService;
 import software.uncharted.terarium.hmiserver.service.notification.NotificationService;
 
@@ -98,7 +98,7 @@ public class TaskService {
 			useCache = req.isUseCache();
 		}
 
-		public TaskResponse createResponse(final TaskStatus status, final String stdout, final String stderr) {
+		public TaskResponse createResponse(final ProgressState status, final String stdout, final String stderr) {
 			return new TaskResponse()
 				.setId(id)
 				.setStatus(status)
@@ -345,9 +345,9 @@ public class TaskService {
 			log.info("Received response status {} for task {}", resp.getStatus(), resp.getId());
 
 			if (
-				resp.getStatus() == TaskStatus.COMPLETE ||
-				resp.getStatus() == TaskStatus.CANCELLED ||
-				resp.getStatus() == TaskStatus.ERROR
+				resp.getStatus() == ProgressState.COMPLETE ||
+				resp.getStatus() == ProgressState.CANCELLED ||
+				resp.getStatus() == ProgressState.ERROR
 			) {
 				final CompletableTaskFuture future = futures.remove(resp.getId());
 				if (future != null) {
@@ -474,11 +474,11 @@ public class TaskService {
 				log.error("Error occured while executing response handler for task {}", resp.getId(), e);
 
 				// if the handler fails processing a success, convert it to a failure
-				resp.setStatus(TaskStatus.ERROR);
+				resp.setStatus(ProgressState.ERROR);
 				resp.setOutput(e.getMessage().getBytes());
 			}
 
-			if (resp.getStatus() == TaskStatus.COMPLETE && resp.isUseCache()) {
+			if (resp.getStatus() == ProgressState.COMPLETE && resp.isUseCache()) {
 				try {
 					// add to the response cache
 					log.info(
@@ -529,7 +529,7 @@ public class TaskService {
 			}
 
 			// if the task failed, log to stdout / stderr
-			if (resp.getStatus() == TaskStatus.ERROR) {
+			if (resp.getStatus() == ProgressState.ERROR) {
 				if (resp.getStdout() != null && resp.getStdout().length() > 0) {
 					log.error("Task {} failed, logging stdout", resp.getId());
 					System.out.print(resp.getStdout());
@@ -578,7 +578,7 @@ public class TaskService {
 			log.error("Error occured while executing response handler for task {}", resp.getId(), e);
 
 			// if the handler fails processing a success, convert it to a failure
-			resp.setStatus(TaskStatus.ERROR);
+			resp.setStatus(ProgressState.ERROR);
 			resp.setOutput(e.getMessage().getBytes());
 		}
 
@@ -746,7 +746,7 @@ public class TaskService {
 			convertAndSendToDefaultExchange(r.getType(), requestQueue, jsonStr);
 
 			// publish the queued task response
-			final TaskResponse queuedResponse = req.createResponse(TaskStatus.QUEUED, "", "");
+			final TaskResponse queuedResponse = req.createResponse(ProgressState.QUEUED, "", "");
 			final String respJsonStr = objectMapper.writeValueAsString(queuedResponse);
 			convertAndSend(r.getType(), TASK_RUNNER_RESPONSE_EXCHANGE, req.getRoutingKey(), respJsonStr);
 
@@ -771,7 +771,7 @@ public class TaskService {
 			// wait for the response
 			log.info("Waiting for response for task id: {}", future.getId());
 			final TaskResponse resp = future.getFinal(req.getTimeoutMinutes(), TimeUnit.MINUTES);
-			if (resp.getStatus() == TaskStatus.CANCELLED) {
+			if (resp.getStatus() == ProgressState.CANCELLED) {
 				throw new InterruptedException("Task was cancelled");
 			}
 			log.info("Future completed for task: {}", future.getId());

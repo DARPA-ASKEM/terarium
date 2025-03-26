@@ -2,7 +2,7 @@ package software.uncharted.terarium.taskrunner.models.task;
 
 import com.fasterxml.jackson.annotation.JsonAlias;
 
-// TODO delete and use software.uncharted.terarium.hmiserver.ProgressState
+// TODO delete and reuse software.uncharted.terarium.hmiserver.ProgressState
 public enum ProgressState {
 	@JsonAlias("CANCELLED")
 	CANCELLED,

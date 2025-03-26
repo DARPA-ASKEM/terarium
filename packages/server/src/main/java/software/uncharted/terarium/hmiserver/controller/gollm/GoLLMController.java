@@ -35,6 +35,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
+import software.uncharted.terarium.hmiserver.ProgressState;
 import software.uncharted.terarium.hmiserver.annotations.HasProjectAccess;
 import software.uncharted.terarium.hmiserver.configuration.Config;
 import software.uncharted.terarium.hmiserver.models.dataservice.ChartAnnotation.ChartAnnotationType;
@@ -45,7 +46,6 @@ import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.Model
 import software.uncharted.terarium.hmiserver.models.task.TaskRequest;
 import software.uncharted.terarium.hmiserver.models.task.TaskRequest.TaskType;
 import software.uncharted.terarium.hmiserver.models.task.TaskResponse;
-import software.uncharted.terarium.hmiserver.models.task.TaskStatus;
 import software.uncharted.terarium.hmiserver.security.Roles;
 import software.uncharted.terarium.hmiserver.service.CurrentUserService;
 import software.uncharted.terarium.hmiserver.service.data.DatasetService;
@@ -204,7 +204,7 @@ public class GoLLMController {
 		final TaskResponse resp;
 		try {
 			resp = taskService.runTask(mode, req);
-			if (mode == TaskMode.SYNC && resp.getStatus() != TaskStatus.COMPLETE) {
+			if (mode == TaskMode.SYNC && resp.getStatus() != ProgressState.COMPLETE) {
 				log.error("Task failed", resp.getStderr());
 				throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, resp.getStderr());
 			}
@@ -337,7 +337,7 @@ public class GoLLMController {
 		final TaskResponse resp;
 		try {
 			resp = taskService.runTask(mode, req);
-			if (mode == TaskMode.SYNC && resp.getStatus() != TaskStatus.COMPLETE) {
+			if (mode == TaskMode.SYNC && resp.getStatus() != ProgressState.COMPLETE) {
 				log.error("Task failed", resp.getStderr());
 				throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, resp.getStderr());
 			}
@@ -449,7 +449,7 @@ public class GoLLMController {
 		final TaskResponse resp;
 		try {
 			resp = taskService.runTask(mode, req);
-			if (mode == TaskMode.SYNC && resp.getStatus() != TaskStatus.COMPLETE) {
+			if (mode == TaskMode.SYNC && resp.getStatus() != ProgressState.COMPLETE) {
 				log.error("Task failed", resp.getStderr());
 				throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, resp.getStderr());
 			}
@@ -567,7 +567,7 @@ public class GoLLMController {
 		final TaskResponse resp;
 		try {
 			resp = taskService.runTask(mode, req);
-			if (mode == TaskMode.SYNC && resp.getStatus() != TaskStatus.COMPLETE) {
+			if (mode == TaskMode.SYNC && resp.getStatus() != ProgressState.COMPLETE) {
 				log.error("Task failed", resp.getStderr());
 				throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, resp.getStderr());
 			}
@@ -664,7 +664,7 @@ public class GoLLMController {
 		final TaskResponse resp;
 		try {
 			resp = taskService.runTask(mode, req);
-			if (mode == TaskMode.SYNC && resp.getStatus() != TaskStatus.COMPLETE) {
+			if (mode == TaskMode.SYNC && resp.getStatus() != ProgressState.COMPLETE) {
 				log.error("Task failed", resp.getStderr());
 				throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, resp.getStderr());
 			}
@@ -745,7 +745,7 @@ public class GoLLMController {
 		final TaskResponse resp;
 		try {
 			resp = taskService.runTask(mode, req);
-			if (mode == TaskMode.SYNC && resp.getStatus() != TaskStatus.COMPLETE) {
+			if (mode == TaskMode.SYNC && resp.getStatus() != ProgressState.COMPLETE) {
 				log.error("Task failed", resp.getStderr());
 				throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, resp.getStderr());
 			}
@@ -844,7 +844,7 @@ public class GoLLMController {
 		final TaskResponse resp;
 		try {
 			resp = taskService.runTask(mode, req);
-			if (mode == TaskMode.SYNC && resp.getStatus() != TaskStatus.COMPLETE) {
+			if (mode == TaskMode.SYNC && resp.getStatus() != ProgressState.COMPLETE) {
 				log.error("Task failed: {}", resp.getStderr());
 				throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, resp.getStderr());
 			}
@@ -933,7 +933,7 @@ public class GoLLMController {
 		final TaskResponse resp;
 		try {
 			resp = taskService.runTask(mode, req);
-			if (mode == TaskMode.SYNC && resp.getStatus() != TaskStatus.COMPLETE) {
+			if (mode == TaskMode.SYNC && resp.getStatus() != ProgressState.COMPLETE) {
 				log.error("Task failed", resp.getStderr());
 				throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, resp.getStderr());
 			}
@@ -1032,7 +1032,7 @@ public class GoLLMController {
 		final TaskResponse resp;
 		try {
 			resp = taskService.runTask(mode, req);
-			if (mode == TaskMode.SYNC && resp.getStatus() != TaskStatus.COMPLETE) {
+			if (mode == TaskMode.SYNC && resp.getStatus() != ProgressState.COMPLETE) {
 				log.error("Task failed", resp.getStderr());
 				throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, resp.getStderr());
 			}
@@ -1119,7 +1119,7 @@ public class GoLLMController {
 		final TaskResponse resp;
 		try {
 			resp = taskService.runTask(mode, req);
-			if (mode == TaskMode.SYNC && resp.getStatus() != TaskStatus.COMPLETE) {
+			if (mode == TaskMode.SYNC && resp.getStatus() != ProgressState.COMPLETE) {
 				log.error("Task failed", resp.getStderr());
 				throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, resp.getStderr());
 			}
@@ -1239,7 +1239,7 @@ public class GoLLMController {
 		final TaskResponse resp;
 		try {
 			resp = taskService.runTask(mode, req);
-			if (mode == TaskMode.SYNC && resp.getStatus() != TaskStatus.COMPLETE) {
+			if (mode == TaskMode.SYNC && resp.getStatus() != ProgressState.COMPLETE) {
 				log.error("Task failed", resp.getStderr());
 				throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, resp.getStderr());
 			}

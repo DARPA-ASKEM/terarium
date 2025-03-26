@@ -20,9 +20,9 @@ import org.springframework.amqp.rabbit.listener.DirectMessageListenerContainer;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import software.uncharted.terarium.taskrunner.configuration.Config;
+import software.uncharted.terarium.taskrunner.models.task.ProgressState;
 import software.uncharted.terarium.taskrunner.models.task.TaskRequest;
 import software.uncharted.terarium.taskrunner.models.task.TaskResponse;
-import software.uncharted.terarium.taskrunner.models.task.TaskStatus;
 
 @Service
 @Slf4j
@@ -106,7 +106,7 @@ public class TaskRunnerService {
 			final boolean wasCancelled = checkForCancellation(req);
 			if (wasCancelled) {
 				// send cancellation response and return
-				final TaskResponse resp = req.createResponse(TaskStatus.CANCELLED, "", "");
+				final TaskResponse resp = req.createResponse(ProgressState.CANCELLED, "", "");
 				final String cancelJson = mapper.writeValueAsString(resp);
 				rabbitTemplate.convertAndSend(TASK_RUNNER_RESPONSE_EXCHANGE, resp.getRoutingKey(), cancelJson);
 				return;
@@ -121,7 +121,7 @@ public class TaskRunnerService {
 			log.error("Unable to setup task", e);
 
 			// send failure and return
-			final TaskResponse failedResp = req.createResponse(TaskStatus.ERROR, "", "");
+			final TaskResponse failedResp = req.createResponse(ProgressState.ERROR, "", "");
 			// append error
 			failedResp.setOutput(e.getMessage().getBytes());
 			final String failedJson = mapper.writeValueAsString(failedResp);
@@ -137,7 +137,7 @@ public class TaskRunnerService {
 			task.start();
 
 			// send that we have started the task
-			final TaskResponse runningResp = req.createResponse(TaskStatus.RUNNING, "", "");
+			final TaskResponse runningResp = req.createResponse(ProgressState.RUNNING, "", "");
 
 			final String runningJson = mapper.writeValueAsString(runningResp);
 			rabbitTemplate.convertAndSend(TASK_RUNNER_RESPONSE_EXCHANGE, runningResp.getRoutingKey(), runningJson);
@@ -153,7 +153,7 @@ public class TaskRunnerService {
 					break;
 				}
 
-				final TaskResponse progressResp = task.createResponse(TaskStatus.RUNNING);
+				final TaskResponse progressResp = task.createResponse(ProgressState.RUNNING);
 				progressResp.setOutput(output);
 				final String progressJson = mapper.writeValueAsString(progressResp);
 				rabbitTemplate.convertAndSend(TASK_RUNNER_RESPONSE_EXCHANGE, progressResp.getRoutingKey(), progressJson);
@@ -165,21 +165,21 @@ public class TaskRunnerService {
 			// wait for the process to finish
 			task.waitFor(req.getTimeoutMinutes());
 
-			final TaskResponse successResp = task.createResponse(TaskStatus.COMPLETE);
+			final TaskResponse successResp = task.createResponse(ProgressState.COMPLETE);
 			successResp.setOutput(output);
 			final String successJson = mapper.writeValueAsString(successResp);
 			rabbitTemplate.convertAndSend(TASK_RUNNER_RESPONSE_EXCHANGE, successResp.getRoutingKey(), successJson);
 		} catch (final Exception e) {
-			if (task.getStatus() == TaskStatus.ERROR) {
+			if (task.getStatus() == ProgressState.ERROR) {
 				log.error("Task {} failed", task.getId(), e);
-			} else if (task.getStatus() != TaskStatus.CANCELLED) {
+			} else if (task.getStatus() != ProgressState.CANCELLED) {
 				log.error("Unexpected failure for task {}", task.getId(), e);
 			}
 
 			final TaskResponse failedResp = task.createResponse(
-				task.getStatus() == TaskStatus.CANCELLED ? TaskStatus.CANCELLED : TaskStatus.ERROR
+				task.getStatus() == ProgressState.CANCELLED ? ProgressState.CANCELLED : ProgressState.ERROR
 			);
-			if (task.getStatus() == TaskStatus.ERROR) {
+			if (task.getStatus() == ProgressState.ERROR) {
 				// append error
 				failedResp.setOutput(e.getMessage().getBytes());
 			}
@@ -222,7 +222,7 @@ public class TaskRunnerService {
 				log.info("Received cancellation for task {}", task.getId());
 				if (task.flagAsCancelling()) {
 					// send that we are cancelling
-					final TaskResponse resp = task.createResponse(TaskStatus.CANCELLED);
+					final TaskResponse resp = task.createResponse(ProgressState.CANCELLED);
 					final String cancelJson = mapper.writeValueAsString(resp);
 					rabbitTemplate.convertAndSend(TASK_RUNNER_RESPONSE_EXCHANGE, resp.getRoutingKey(), cancelJson);
 

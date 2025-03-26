@@ -18,8 +18,8 @@ import org.junit.jupiter.api.Test;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.util.FileCopyUtils;
 import software.uncharted.terarium.taskrunner.TaskRunnerApplicationTests;
+import software.uncharted.terarium.taskrunner.models.task.ProgressState;
 import software.uncharted.terarium.taskrunner.models.task.TaskRequest;
-import software.uncharted.terarium.taskrunner.models.task.TaskStatus;
 
 @Slf4j
 public class TaskTests extends TaskRunnerApplicationTests {
@@ -40,17 +40,17 @@ public class TaskTests extends TaskRunnerApplicationTests {
 
 		final Task task = new Task(req);
 		try {
-			Assertions.assertEquals(TaskStatus.QUEUED, task.getStatus());
+			Assertions.assertEquals(ProgressState.QUEUED, task.getStatus());
 			task.start();
 
-			Assertions.assertEquals(TaskStatus.RUNNING, task.getStatus());
+			Assertions.assertEquals(ProgressState.RUNNING, task.getStatus());
 			task.writeInputWithTimeout(req.getInput(), ONE_MINUTE);
 
 			final byte[] output = task.readOutputWithTimeout(ONE_MINUTE);
 			Assertions.assertArrayEquals(req.getInput(), output);
 
 			task.waitFor(ONE_MINUTE);
-			Assertions.assertEquals(TaskStatus.COMPLETE, task.getStatus());
+			Assertions.assertEquals(ProgressState.COMPLETE, task.getStatus());
 		} catch (final Exception e) {
 			throw e;
 		} finally {
@@ -69,10 +69,10 @@ public class TaskTests extends TaskRunnerApplicationTests {
 
 		final Task task = new Task(req);
 		try {
-			Assertions.assertEquals(TaskStatus.QUEUED, task.getStatus());
+			Assertions.assertEquals(ProgressState.QUEUED, task.getStatus());
 			task.start();
 
-			Assertions.assertEquals(TaskStatus.RUNNING, task.getStatus());
+			Assertions.assertEquals(ProgressState.RUNNING, task.getStatus());
 			task.writeInputWithTimeout(req.getInput(), ONE_MINUTE);
 
 			int progressCount = 0;
@@ -92,7 +92,7 @@ public class TaskTests extends TaskRunnerApplicationTests {
 			Assertions.assertArrayEquals(req.getInput(), output);
 
 			task.waitFor(ONE_MINUTE);
-			Assertions.assertEquals(TaskStatus.COMPLETE, task.getStatus());
+			Assertions.assertEquals(ProgressState.COMPLETE, task.getStatus());
 		} catch (final Exception e) {
 			throw e;
 		} finally {
@@ -114,10 +114,10 @@ public class TaskTests extends TaskRunnerApplicationTests {
 
 		final Task task = new Task(req);
 		try {
-			Assertions.assertEquals(TaskStatus.QUEUED, task.getStatus());
+			Assertions.assertEquals(ProgressState.QUEUED, task.getStatus());
 			task.start();
 
-			Assertions.assertEquals(TaskStatus.RUNNING, task.getStatus());
+			Assertions.assertEquals(ProgressState.RUNNING, task.getStatus());
 			task.writeInputWithTimeout(req.getInput(), ONE_MINUTE);
 
 			final byte[] output = task.readOutputWithTimeout(ONE_MINUTE);
@@ -126,7 +126,7 @@ public class TaskTests extends TaskRunnerApplicationTests {
 			Assertions.assertArrayEquals(input.getBytes(), output);
 
 			task.waitFor(ONE_MINUTE);
-			Assertions.assertEquals(TaskStatus.COMPLETE, task.getStatus());
+			Assertions.assertEquals(ProgressState.COMPLETE, task.getStatus());
 		} catch (final Exception e) {
 			throw e;
 		} finally {
@@ -145,10 +145,10 @@ public class TaskTests extends TaskRunnerApplicationTests {
 
 		final Task task = new Task(req);
 		try {
-			Assertions.assertEquals(TaskStatus.QUEUED, task.getStatus());
+			Assertions.assertEquals(ProgressState.QUEUED, task.getStatus());
 			task.start();
 
-			Assertions.assertEquals(TaskStatus.RUNNING, task.getStatus());
+			Assertions.assertEquals(ProgressState.RUNNING, task.getStatus());
 			task.writeInputWithTimeout(req.getInput(), ONE_MINUTE);
 
 			final byte[] output = task.readOutputWithTimeout(ONE_MINUTE);
@@ -161,7 +161,7 @@ public class TaskTests extends TaskRunnerApplicationTests {
 			task.cleanup();
 		}
 
-		Assertions.assertEquals(TaskStatus.ERROR, task.getStatus());
+		Assertions.assertEquals(ProgressState.ERROR, task.getStatus());
 	}
 
 	@Test
@@ -175,10 +175,10 @@ public class TaskTests extends TaskRunnerApplicationTests {
 
 		final Task task = new Task(req);
 		try {
-			Assertions.assertEquals(TaskStatus.QUEUED, task.getStatus());
+			Assertions.assertEquals(ProgressState.QUEUED, task.getStatus());
 			task.start();
 
-			Assertions.assertEquals(TaskStatus.RUNNING, task.getStatus());
+			Assertions.assertEquals(ProgressState.RUNNING, task.getStatus());
 			task.writeInputWithTimeout(req.getInput(), ONE_MINUTE);
 
 			new Thread(() -> {
@@ -201,7 +201,7 @@ public class TaskTests extends TaskRunnerApplicationTests {
 			task.cleanup();
 		}
 
-		Assertions.assertEquals(TaskStatus.CANCELLED, task.getStatus());
+		Assertions.assertEquals(ProgressState.CANCELLED, task.getStatus());
 	}
 
 	@Test
@@ -215,10 +215,10 @@ public class TaskTests extends TaskRunnerApplicationTests {
 
 		final Task task = new Task(req);
 		try {
-			Assertions.assertEquals(TaskStatus.QUEUED, task.getStatus());
+			Assertions.assertEquals(ProgressState.QUEUED, task.getStatus());
 			task.start();
 
-			Assertions.assertEquals(TaskStatus.RUNNING, task.getStatus());
+			Assertions.assertEquals(ProgressState.RUNNING, task.getStatus());
 			task.writeInputWithTimeout(req.getInput(), ONE_MINUTE);
 
 			new Thread(() -> {
@@ -249,7 +249,7 @@ public class TaskTests extends TaskRunnerApplicationTests {
 			task.cleanup();
 		}
 
-		Assertions.assertEquals(TaskStatus.CANCELLED, task.getStatus());
+		Assertions.assertEquals(ProgressState.CANCELLED, task.getStatus());
 	}
 
 	@Test
@@ -261,10 +261,10 @@ public class TaskTests extends TaskRunnerApplicationTests {
 
 		final Task task = new Task(req);
 		try {
-			Assertions.assertEquals(TaskStatus.QUEUED, task.getStatus());
+			Assertions.assertEquals(ProgressState.QUEUED, task.getStatus());
 			task.cancel();
 
-			Assertions.assertEquals(TaskStatus.CANCELLED, task.getStatus());
+			Assertions.assertEquals(ProgressState.CANCELLED, task.getStatus());
 			task.start();
 
 			// we should not each this code
@@ -275,7 +275,7 @@ public class TaskTests extends TaskRunnerApplicationTests {
 			task.cleanup();
 		}
 
-		Assertions.assertEquals(TaskStatus.CANCELLED, task.getStatus());
+		Assertions.assertEquals(ProgressState.CANCELLED, task.getStatus());
 	}
 
 	@Test
@@ -287,8 +287,8 @@ public class TaskTests extends TaskRunnerApplicationTests {
 
 		final ExecutorService executor = Executors.newFixedThreadPool(NUM_THREADS);
 
-		final ConcurrentHashMap<UUID, TaskStatus> responses = new ConcurrentHashMap<>();
-		final ConcurrentHashMap<UUID, TaskStatus> expectedResponses = new ConcurrentHashMap<>();
+		final ConcurrentHashMap<UUID, ProgressState> responses = new ConcurrentHashMap<>();
+		final ConcurrentHashMap<UUID, ProgressState> expectedResponses = new ConcurrentHashMap<>();
 		final List<Future<?>> futures = new ArrayList<>();
 
 		final Random rand = new Random();
@@ -304,30 +304,30 @@ public class TaskTests extends TaskRunnerApplicationTests {
 
 					boolean shouldCancelBefore = false;
 					boolean shouldCancelAfter = false;
-					TaskStatus expected = null;
+					ProgressState expected = null;
 
 					final int randomNumber = rand.nextInt(4);
 					switch (randomNumber) {
 						case 0:
 							// success
 							req.setInput(TEST_INPUT.getBytes());
-							expected = TaskStatus.COMPLETE;
+							expected = ProgressState.COMPLETE;
 							break;
 						case 1:
 							// failure
 							req.setInput(FAILURE_INPUT.getBytes());
-							expected = TaskStatus.ERROR;
+							expected = ProgressState.ERROR;
 							break;
 						case 2:
 							// cancellation
 							req.setInput(TEST_INPUT.getBytes());
-							expected = TaskStatus.CANCELLED;
+							expected = ProgressState.CANCELLED;
 							shouldCancelBefore = true;
 							break;
 						case 3:
 							// cancellation
 							req.setInput(TEST_INPUT.getBytes());
-							expected = TaskStatus.CANCELLED;
+							expected = ProgressState.CANCELLED;
 							shouldCancelAfter = true;
 							break;
 						default:
@@ -336,7 +336,7 @@ public class TaskTests extends TaskRunnerApplicationTests {
 					expectedResponses.put(req.getId(), expected);
 
 					final Task task = new Task(req);
-					Assertions.assertEquals(TaskStatus.QUEUED, task.getStatus());
+					Assertions.assertEquals(ProgressState.QUEUED, task.getStatus());
 
 					if (shouldCancelBefore) {
 						// dispatch the cancellation
@@ -383,13 +383,13 @@ public class TaskTests extends TaskRunnerApplicationTests {
 
 						task.waitFor(ONE_MINUTE);
 
-						responses.put(req.getId(), TaskStatus.COMPLETE);
+						responses.put(req.getId(), ProgressState.COMPLETE);
 					} catch (TimeoutException | InterruptedException e) {
-						if (expected == TaskStatus.CANCELLED) {
-							responses.put(req.getId(), TaskStatus.CANCELLED);
-						} else if (expected == TaskStatus.ERROR) {
+						if (expected == ProgressState.CANCELLED) {
+							responses.put(req.getId(), ProgressState.CANCELLED);
+						} else if (expected == ProgressState.ERROR) {
 							// this should happen
-							responses.put(req.getId(), TaskStatus.ERROR);
+							responses.put(req.getId(), ProgressState.ERROR);
 						} else {
 							throw e;
 						}
@@ -408,9 +408,9 @@ public class TaskTests extends TaskRunnerApplicationTests {
 		}
 
 		// check that the responses are valid
-		for (final Map.Entry<UUID, TaskStatus> response : responses.entrySet()) {
+		for (final Map.Entry<UUID, ProgressState> response : responses.entrySet()) {
 			final UUID id = response.getKey();
-			final TaskStatus expected = expectedResponses.get(id);
+			final ProgressState expected = expectedResponses.get(id);
 
 			Assertions.assertEquals(expected, response.getValue());
 		}

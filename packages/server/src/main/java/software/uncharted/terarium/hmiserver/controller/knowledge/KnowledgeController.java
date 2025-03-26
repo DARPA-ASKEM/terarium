@@ -28,6 +28,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
+import software.uncharted.terarium.hmiserver.ProgressState;
 import software.uncharted.terarium.hmiserver.annotations.HasProjectAccess;
 import software.uncharted.terarium.hmiserver.configuration.Config;
 import software.uncharted.terarium.hmiserver.models.ClientEventType;
@@ -36,7 +37,6 @@ import software.uncharted.terarium.hmiserver.models.dataservice.model.Model;
 import software.uncharted.terarium.hmiserver.models.task.TaskRequest;
 import software.uncharted.terarium.hmiserver.models.task.TaskRequest.TaskType;
 import software.uncharted.terarium.hmiserver.models.task.TaskResponse;
-import software.uncharted.terarium.hmiserver.models.task.TaskStatus;
 import software.uncharted.terarium.hmiserver.security.Roles;
 import software.uncharted.terarium.hmiserver.service.ClientEventService;
 import software.uncharted.terarium.hmiserver.service.CurrentUserService;
@@ -98,7 +98,7 @@ public class KnowledgeController {
 
 		try {
 			cleanupResp = taskService.runTask(TaskMode.SYNC, cleanupReq);
-			if (cleanupResp.getStatus() != TaskStatus.COMPLETE) {
+			if (cleanupResp.getStatus() != ProgressState.COMPLETE) {
 				log.error("Task failed", cleanupResp.getStderr());
 				throw new ResponseStatusException(HttpStatus.BAD_REQUEST, cleanupResp.getStderr());
 			}
@@ -188,7 +188,7 @@ public class KnowledgeController {
 		TaskResponse cleanupResp = null;
 		try {
 			cleanupResp = taskService.runTask(TaskMode.SYNC, cleanupReq);
-			if (cleanupResp.getStatus() != TaskStatus.COMPLETE) {
+			if (cleanupResp.getStatus() != ProgressState.COMPLETE) {
 				log.error("Task failed", cleanupResp.getStderr());
 				throw new ResponseStatusException(HttpStatus.BAD_REQUEST, cleanupResp.getStderr());
 			}
@@ -228,7 +228,7 @@ public class KnowledgeController {
 			latexToSympyRequest = createLatexToSympyTask(equationsReq);
 			latexToSympyResponse = taskService.runTaskSync(latexToSympyRequest);
 
-			if (latexToSympyResponse.getStatus() != TaskStatus.COMPLETE) {
+			if (latexToSympyResponse.getStatus() != ProgressState.COMPLETE) {
 				log.error("Task Failed", latexToSympyResponse.getStderr());
 				throw new ResponseStatusException(HttpStatus.BAD_REQUEST, latexToSympyResponse.getStderr());
 			}
@@ -239,7 +239,7 @@ public class KnowledgeController {
 			// 3. sympy code string to amr json
 			sympyToAMRRequest = createSympyToAMRTask(code);
 			sympyToAMRResponse = taskService.runTaskSync(sympyToAMRRequest);
-			if (sympyToAMRResponse.getStatus() != TaskStatus.COMPLETE) {
+			if (sympyToAMRResponse.getStatus() != ProgressState.COMPLETE) {
 				log.error("Task Failed", sympyToAMRResponse.getStderr());
 				throw new ResponseStatusException(HttpStatus.BAD_REQUEST, sympyToAMRResponse.getStderr());
 			}
@@ -365,7 +365,7 @@ public class KnowledgeController {
 			sympyToAMRResponse = taskService.runTaskSync(sympyToAMRRequest);
 			response = mapper.readValue(sympyToAMRResponse.getOutput(), JsonNode.class);
 
-			if (sympyToAMRResponse.getStatus() != TaskStatus.COMPLETE) {
+			if (sympyToAMRResponse.getStatus() != ProgressState.COMPLETE) {
 				log.error("Task Failed", sympyToAMRResponse.getStderr());
 				ObjectNode objectNode = mapper.createObjectNode();
 				objectNode.put("error", sympyToAMRResponse.getStderr());
@@ -422,7 +422,7 @@ public class KnowledgeController {
 			JsonNode temp = mapper.readValue(latex, JsonNode.class);
 			latexToSympyRequest = createLatexToSympyTask(temp);
 			latexToSympyResponse = taskService.runTaskSync(latexToSympyRequest);
-			if (latexToSympyResponse.getStatus() != TaskStatus.COMPLETE) {
+			if (latexToSympyResponse.getStatus() != ProgressState.COMPLETE) {
 				log.error("Task Failed", latexToSympyResponse.getStderr());
 				throw new ResponseStatusException(HttpStatus.BAD_REQUEST, latexToSympyResponse.getStderr());
 			}
@@ -456,7 +456,7 @@ public class KnowledgeController {
 		try {
 			sympyToAMRRequest = createSympyToAMRTask(code);
 			sympyToAMRResponse = taskService.runTaskSync(sympyToAMRRequest);
-			if (sympyToAMRResponse.getStatus() != TaskStatus.COMPLETE) {
+			if (sympyToAMRResponse.getStatus() != ProgressState.COMPLETE) {
 				log.error("Task Failed", sympyToAMRResponse.getStderr());
 				throw new ResponseStatusException(HttpStatus.BAD_REQUEST, sympyToAMRResponse.getStderr());
 			}
@@ -549,7 +549,10 @@ public class KnowledgeController {
 
 	private static class EquationCleanupResponse {
 
+		@SuppressWarnings("unused")
 		public List<String> cleanedEquations;
+
+		@SuppressWarnings("unused")
 		public boolean wasCleaned;
 
 		public EquationCleanupResponse(List<String> cleanedEquations, boolean wasCleaned) {

@@ -15,6 +15,7 @@ import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import software.uncharted.terarium.hmiserver.ProgressState;
 import software.uncharted.terarium.hmiserver.models.dataservice.PresignedURL;
 import software.uncharted.terarium.hmiserver.models.dataservice.dataset.Dataset;
 import software.uncharted.terarium.hmiserver.models.dataservice.dataset.DatasetColumnStats;
@@ -23,7 +24,6 @@ import software.uncharted.terarium.hmiserver.models.dataservice.dataset.DatasetC
 import software.uncharted.terarium.hmiserver.models.task.TaskRequest;
 import software.uncharted.terarium.hmiserver.models.task.TaskRequest.TaskType;
 import software.uncharted.terarium.hmiserver.models.task.TaskResponse;
-import software.uncharted.terarium.hmiserver.models.task.TaskStatus;
 import software.uncharted.terarium.hmiserver.service.tasks.TaskService;
 import software.uncharted.terarium.hmiserver.utils.Messages;
 
@@ -89,7 +89,7 @@ public class DatasetStatistics {
 
 		// Get the response from the Gollm service
 		final TaskResponse taskResponse = taskService.runTaskSync(taskRequest);
-		if (taskResponse.getStatus() != TaskStatus.COMPLETE) {
+		if (taskResponse.getStatus() != ProgressState.COMPLETE) {
 			throw new RuntimeException("Task failed: " + taskResponse.getStderr());
 		}
 		final byte[] outputBytes = taskResponse.getOutput();

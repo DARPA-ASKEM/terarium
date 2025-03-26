@@ -24,7 +24,7 @@ public class TaskRequest implements Serializable {
 	protected String routingKey;
 	protected boolean useCache = true;
 
-	public TaskResponse createResponse(final TaskStatus status, final String stdout, final String stderr) {
+	public TaskResponse createResponse(final ProgressState status, final String stdout, final String stderr) {
 		return new TaskResponse()
 			.setId(id)
 			.setStatus(status)

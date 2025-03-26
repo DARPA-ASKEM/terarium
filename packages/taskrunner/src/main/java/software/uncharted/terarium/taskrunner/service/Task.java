@@ -20,9 +20,9 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
+import software.uncharted.terarium.taskrunner.models.task.ProgressState;
 import software.uncharted.terarium.taskrunner.models.task.TaskRequest;
 import software.uncharted.terarium.taskrunner.models.task.TaskResponse;
-import software.uncharted.terarium.taskrunner.models.task.TaskStatus;
 import software.uncharted.terarium.taskrunner.util.ScopedLock;
 import software.uncharted.terarium.taskrunner.util.TimeFormatter;
 
@@ -38,7 +38,7 @@ public class Task {
 	private String inputPipeName;
 	private String progressPipeName;
 	private String outputPipeName;
-	private TaskStatus status = TaskStatus.QUEUED;
+	private ProgressState status = ProgressState.QUEUED;
 	private ScopedLock lock = new ScopedLock();
 	private StringBuilder stdout = new StringBuilder();
 	private StringBuilder stderr = new StringBuilder();
@@ -69,7 +69,7 @@ public class Task {
 		return req.getId();
 	}
 
-	public TaskResponse createResponse(final TaskStatus status) {
+	public TaskResponse createResponse(final ProgressState status) {
 		return req.createResponse(status, stdout.toString(), stderr.toString());
 	}
 
@@ -196,7 +196,7 @@ public class Task {
 		}
 		if (result instanceof Integer) {
 			// process has exited early
-			if (getStatus() == TaskStatus.CANCELLED) {
+			if (getStatus() == ProgressState.CANCELLED) {
 				throw new InterruptedException("Process for task " + req.getId() + " has been cancelled");
 			}
 			throw new InterruptedException("Process for task " + req.getId() + " exited early with code " + result);
@@ -244,7 +244,7 @@ public class Task {
 		}
 		if (result instanceof Integer) {
 			// process has exited early
-			if (getStatus() == TaskStatus.CANCELLED) {
+			if (getStatus() == ProgressState.CANCELLED) {
 				throw new InterruptedException("Process for task " + req.getId() + " has been cancelled");
 			}
 			throw new InterruptedException("Process for task " + req.getId() + " exited early with code " + result);
@@ -302,7 +302,7 @@ public class Task {
 		}
 		if (result instanceof Integer) {
 			// process has exited early
-			if (getStatus() == TaskStatus.CANCELLED) {
+			if (getStatus() == ProgressState.CANCELLED) {
 				throw new InterruptedException("Process for task " + req.getId() + " has been cancelled");
 			}
 			throw new InterruptedException("Process for task " + req.getId() + " exited early with code " + result);
@@ -340,12 +340,12 @@ public class Task {
 	public void start() throws IOException, InterruptedException {
 		lock.lock();
 		try {
-			if (status == TaskStatus.CANCELLED) {
+			if (status == ProgressState.CANCELLED) {
 				// don't run if we already cancelled
 				throw new InterruptedException("Task " + req.getId() + "has already been cancelled");
 			}
 
-			if (status != TaskStatus.QUEUED) {
+			if (status != ProgressState.QUEUED) {
 				// has to be in a queued state to be valid to run
 				throw new RuntimeException("Task " + req.getId() + " has already been started");
 			}
@@ -354,7 +354,7 @@ public class Task {
 			process = processBuilder.start();
 
 			// flag as running if the process starts
-			status = TaskStatus.RUNNING;
+			status = ProgressState.RUNNING;
 
 			// Add a shutdown hook to kill the process if the JVM exits
 			Runtime.getRuntime()
@@ -373,13 +373,13 @@ public class Task {
 					log.info("Process exited with code {} for task {}", exitCode, req.getId());
 					lock.lock(() -> {
 						if (exitCode != 0) {
-							if (status == TaskStatus.CANCELLED) {
-								status = TaskStatus.CANCELLED;
+							if (status == ProgressState.CANCELLED) {
+								status = ProgressState.CANCELLED;
 							} else {
-								status = TaskStatus.ERROR;
+								status = ProgressState.ERROR;
 							}
 						} else {
-							status = TaskStatus.COMPLETE;
+							status = ProgressState.COMPLETE;
 						}
 					});
 					log.info("Finalized process status for task {}", exitCode, req.getId());
@@ -387,7 +387,7 @@ public class Task {
 				} catch (final InterruptedException e) {
 					log.warn("Process failed to exit cleanly for task {}: {}", req.getId(), e);
 					lock.lock(() -> {
-						status = TaskStatus.ERROR;
+						status = ProgressState.ERROR;
 					});
 					processFuture.completeExceptionally(e);
 				}
@@ -420,8 +420,8 @@ public class Task {
 				}
 			}).start();
 		} catch (final Exception e) {
-			if (status != TaskStatus.CANCELLED) {
-				status = TaskStatus.ERROR;
+			if (status != ProgressState.CANCELLED) {
+				status = ProgressState.ERROR;
 			}
 			throw e;
 		} finally {
@@ -449,18 +449,18 @@ public class Task {
 		// request, response that we are cancelling, and then process it.
 
 		return lock.lock(() -> {
-			if (status == TaskStatus.QUEUED) {
+			if (status == ProgressState.QUEUED) {
 				// if we havaen't started yet, flag it as cancelled
 				log.info("Cancelled task {} before starting it", req.getId());
-				status = TaskStatus.CANCELLED;
+				status = ProgressState.CANCELLED;
 				return false;
 			}
-			if (status != TaskStatus.RUNNING) {
+			if (status != ProgressState.RUNNING) {
 				// can't cancel a process if it isn't in a running state
 				return false;
 			}
 
-			status = TaskStatus.CANCELLED;
+			status = ProgressState.CANCELLED;
 			return true;
 		});
 	}
@@ -468,7 +468,7 @@ public class Task {
 	public boolean cancel() {
 		flagAsCancelling();
 
-		if (getStatus() != TaskStatus.CANCELLED) {
+		if (getStatus() != ProgressState.CANCELLED) {
 			return false;
 		}
 
@@ -504,7 +504,7 @@ public class Task {
 		return true;
 	}
 
-	TaskStatus getStatus() {
+	ProgressState getStatus() {
 		return lock.lock(() -> {
 			return status;
 		});

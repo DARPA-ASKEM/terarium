@@ -30,6 +30,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
+import software.uncharted.terarium.hmiserver.ProgressState;
 import software.uncharted.terarium.hmiserver.annotations.HasProjectAccess;
 import software.uncharted.terarium.hmiserver.models.dataservice.Artifact;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.Model;
@@ -39,7 +40,6 @@ import software.uncharted.terarium.hmiserver.models.mira.EntitySimilarityResult;
 import software.uncharted.terarium.hmiserver.models.task.TaskRequest;
 import software.uncharted.terarium.hmiserver.models.task.TaskRequest.TaskType;
 import software.uncharted.terarium.hmiserver.models.task.TaskResponse;
-import software.uncharted.terarium.hmiserver.models.task.TaskStatus;
 import software.uncharted.terarium.hmiserver.proxies.mira.MIRAProxy;
 import software.uncharted.terarium.hmiserver.security.Roles;
 import software.uncharted.terarium.hmiserver.service.CurrentUserService;
@@ -189,7 +189,7 @@ public class MiraController {
 		final TaskResponse taskResponse;
 		try {
 			taskResponse = taskService.runTaskSync(taskRequest);
-			if (taskResponse.getStatus() != TaskStatus.COMPLETE) {
+			if (taskResponse.getStatus() != ProgressState.COMPLETE) {
 				log.error("Task Failed", taskResponse.getStderr());
 				throw new ResponseStatusException(HttpStatus.BAD_REQUEST, taskResponse.getStderr());
 			}
@@ -252,7 +252,7 @@ public class MiraController {
 		final TaskResponse resp;
 		try {
 			resp = taskService.runTaskSync(req);
-			if (resp.getStatus() != TaskStatus.COMPLETE) {
+			if (resp.getStatus() != ProgressState.COMPLETE) {
 				log.error("Task Failed", resp.getStderr());
 				throw new ResponseStatusException(HttpStatus.BAD_REQUEST, resp.getStderr());
 			}
@@ -314,7 +314,7 @@ public class MiraController {
 		final TaskResponse resp;
 		try {
 			resp = taskService.runTaskSync(req);
-			if (resp.getStatus() != TaskStatus.COMPLETE) {
+			if (resp.getStatus() != ProgressState.COMPLETE) {
 				log.error("Task Failed", resp.getStderr());
 				throw new ResponseStatusException(HttpStatus.BAD_REQUEST, resp.getStderr());
 			}
@@ -378,7 +378,7 @@ public class MiraController {
 		final TaskResponse resp;
 		try {
 			resp = taskService.runTaskSync(req);
-			if (resp.getStatus() != TaskStatus.COMPLETE) {
+			if (resp.getStatus() != ProgressState.COMPLETE) {
 				log.error("Task Failed", resp.getStderr());
 				throw new ResponseStatusException(HttpStatus.BAD_REQUEST, resp.getStderr());
 			}
@@ -485,7 +485,7 @@ public class MiraController {
 		final TaskResponse resp;
 		try {
 			resp = taskService.runTaskSync(req);
-			if (resp.getStatus() != TaskStatus.COMPLETE) {
+			if (resp.getStatus() != ProgressState.COMPLETE) {
 				log.error("Task Failed", resp.getStderr());
 				throw new ResponseStatusException(HttpStatus.BAD_REQUEST, resp.getStderr());
 			}

@@ -7,6 +7,7 @@ import java.util.UUID;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.experimental.Accessors;
+import software.uncharted.terarium.hmiserver.ProgressState;
 import software.uncharted.terarium.hmiserver.annotations.TSModel;
 
 @Accessors(chain = true)
@@ -17,7 +18,7 @@ public class TaskResponse implements Serializable {
 
 	private UUID id;
 	private String script;
-	private TaskStatus status;
+	private ProgressState status;
 	private byte[] output;
 	protected String userId;
 

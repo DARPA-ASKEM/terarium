@@ -15,13 +15,13 @@ import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import software.uncharted.terarium.hmiserver.ProgressState;
 import software.uncharted.terarium.hmiserver.models.TerariumAssetEmbeddingType;
 import software.uncharted.terarium.hmiserver.models.TerariumAssetEmbeddings;
 import software.uncharted.terarium.hmiserver.models.TerariumAssetEmbeddings.Embedding;
 import software.uncharted.terarium.hmiserver.models.task.TaskRequest;
 import software.uncharted.terarium.hmiserver.models.task.TaskRequest.TaskType;
 import software.uncharted.terarium.hmiserver.models.task.TaskResponse;
-import software.uncharted.terarium.hmiserver.models.task.TaskStatus;
 import software.uncharted.terarium.hmiserver.service.CurrentUserService;
 import software.uncharted.terarium.hmiserver.service.tasks.TaskService;
 
@@ -76,7 +76,7 @@ public class EmbeddingService {
 		}
 
 		final TaskResponse resp = taskService.runTaskSync(req);
-		if (resp.getStatus() != TaskStatus.COMPLETE) {
+		if (resp.getStatus() != ProgressState.COMPLETE) {
 			throw new RuntimeException("Task failed: " + resp.getStderr());
 		}
 
@@ -126,7 +126,7 @@ public class EmbeddingService {
 		}
 
 		final TaskResponse resp = taskService.runTaskSync(req);
-		if (resp.getStatus() != TaskStatus.COMPLETE) {
+		if (resp.getStatus() != ProgressState.COMPLETE) {
 			throw new RuntimeException("Task failed: " + resp.getStderr());
 		}
 
