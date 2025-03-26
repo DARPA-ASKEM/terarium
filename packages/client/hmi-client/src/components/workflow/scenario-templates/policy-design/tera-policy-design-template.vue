@@ -15,11 +15,22 @@
 			<label>Select a model configuration</label>
 			<Dropdown
 				:model-value="props.scenario.getModelConfigId()"
-				:options="allModelConfigOptions.map((ele) => ele?.name ?? 'blank name')"
-				option-label="assetName"
-				option-value="assetId"
-				placeholder="Select a model"
+				:options="allModelConfigOptions"
+				option-label="name"
+				option-value="id"
+				placeholder="Select a model configuration"
 				@update:model-value="props.scenario.setModelConfigId($event)"
+				class="mb-3"
+			/>
+
+			<label>Select an intervention</label>
+			<Dropdown
+				:model-value="props.scenario.getInterventionPolicyId()"
+				:options="allInterventionPolicyOptions"
+				option-label="name"
+				option-value="id"
+				placeholder="Select an intervention for this model"
+				@update:model-value="props.scenario.setInterventionPolicyId($event)"
 				class="mb-3"
 			/>
 		</template>
@@ -30,8 +41,8 @@
 import Dropdown from 'primevue/dropdown';
 import { computed, ref, watch } from 'vue';
 import { useProjects } from '@/composables/project';
-import { AssetType, ModelConfiguration } from '@/types/Types';
-import { getModelConfigurationsForModel } from '@/services/model';
+import { AssetType, ModelConfiguration, InterventionPolicy } from '@/types/Types';
+import { getInterventionPoliciesForModel, getModelConfigurationsForModel } from '@/services/model';
 import { PolicyDesignScenario } from './policy-design-scenario';
 import { ScenarioHeader } from '../base-scenario';
 import TeraScenarioTemplate from '../tera-scenario-template.vue';
@@ -55,15 +66,15 @@ const header: ScenarioHeader = Object.freeze({
 const allModelOptions = computed(() => useProjects().getActiveProjectAssets(AssetType.Model));
 const selectedModelId = ref<string>('');
 const allModelConfigOptions = ref<ModelConfiguration[]>([]);
+const allInterventionPolicyOptions = ref<InterventionPolicy[]>([]);
 
 watch(
 	() => selectedModelId,
 	async () => {
 		if (selectedModelId.value) {
 			allModelConfigOptions.value = await getModelConfigurationsForModel(selectedModelId.value);
-			console.log(allModelConfigOptions.value);
-			const test: string[] = allModelConfigOptions.value.map((ele) => ele?.name ?? 'blank name');
-			console.log(test);
+			allInterventionPolicyOptions.value = await getInterventionPoliciesForModel(selectedModelId.value);
+			console.log(allInterventionPolicyOptions.value);
 		}
 	},
 	{ deep: true }

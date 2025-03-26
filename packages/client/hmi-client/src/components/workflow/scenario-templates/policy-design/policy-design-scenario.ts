@@ -8,7 +8,7 @@ export class PolicyDesignScenario extends BaseScenario {
 
 	private modelConfigId;
 
-	private interventionId;
+	private interventionPolicyId;
 
 	constructor() {
 		super();
@@ -20,7 +20,7 @@ export class PolicyDesignScenario extends BaseScenario {
 			templateId: PolicyDesignScenario.templateId,
 			workflowName: this.workflowName,
 			modelConfigId: this.modelConfigId,
-			interventionId: this.interventionId
+			interventionPolicyId: this.interventionPolicyId
 		};
 	}
 
@@ -35,7 +35,15 @@ export class PolicyDesignScenario extends BaseScenario {
 		return this.modelConfigId;
 	}
 
-	setModelConfigId(modelConfigId) {
+	setModelConfigId(modelConfigId: string) {
 		this.modelConfigId = modelConfigId;
+	}
+
+	getInterventionPolicyId() {
+		return this.interventionPolicyId;
+	}
+
+	setInterventionPolicyId(interventionPolicyId: string) {
+		this.interventionPolicyId = interventionPolicyId;
 	}
 }
