@@ -143,14 +143,14 @@ public class KnowledgeController {
 	}
 
 	@Data
-	class EquationRef {
+	static class EquationRef {
 
 		private String id;
 		private String equationStr;
 	}
 
 	@Data
-	class EquationToModelInput {
+	static class EquationToModelInput {
 
 		private UUID nodeId;
 		private UUID workflowId;
@@ -169,16 +169,20 @@ public class KnowledgeController {
 		List<String> equations = new ArrayList();
 		Map<UUID, List<String>> modelProvenance = new HashMap();
 
-		for (var entry : req.getEquationsWithSource().entrySet()) {
-			List<String> refs = new ArrayList();
-			for (var equationRef : entry.getValue()) {
-				equations.add(equationRef.getEquationStr());
-				refs.add(equationRef.getId());
+		if (req.getEquationsWithSource() != null) {
+			for (var entry : req.getEquationsWithSource().entrySet()) {
+				List<String> refs = new ArrayList();
+				for (var equationRef : entry.getValue()) {
+					equations.add(equationRef.getEquationStr());
+					refs.add(equationRef.getId());
+				}
+				modelProvenance.put(entry.getKey(), refs);
 			}
-			modelProvenance.put(entry.getKey(), refs);
 		}
-		for (var equationStr : req.getEquations()) {
-			equations.add(equationStr);
+		if (req.getEquations() != null) {
+			for (var equationStr : req.getEquations()) {
+				equations.add(equationStr);
+			}
 		}
 
 		final TaskRequest latexToSympyRequest;
@@ -230,7 +234,7 @@ public class KnowledgeController {
 			throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, messages.get("postgres.service-unavailable"));
 		}
 
-		return ResponseEntity.ok(UUID.randomUUID());
+		return ResponseEntity.ok(model.getId());
 	}
 
 	/**
