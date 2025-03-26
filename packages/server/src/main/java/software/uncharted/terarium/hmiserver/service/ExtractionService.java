@@ -26,6 +26,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.stream.Collectors;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -37,9 +38,12 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 import software.uncharted.terarium.hmiserver.ProgressState;
+import software.uncharted.terarium.hmiserver.configuration.Config;
 import software.uncharted.terarium.hmiserver.models.ClientEventType;
 import software.uncharted.terarium.hmiserver.models.dataservice.document.DocumentAsset;
 import software.uncharted.terarium.hmiserver.models.dataservice.document.ExtractedDocumentPage;
+import software.uncharted.terarium.hmiserver.models.extraction.Extraction;
+import software.uncharted.terarium.hmiserver.models.extraction.ExtractionItem;
 import software.uncharted.terarium.hmiserver.models.task.TaskRequest;
 import software.uncharted.terarium.hmiserver.models.task.TaskRequest.TaskType;
 import software.uncharted.terarium.hmiserver.models.task.TaskResponse;
@@ -47,16 +51,20 @@ import software.uncharted.terarium.hmiserver.models.task.TaskStatus;
 import software.uncharted.terarium.hmiserver.service.data.DocumentAssetService;
 import software.uncharted.terarium.hmiserver.service.notification.NotificationGroupInstance;
 import software.uncharted.terarium.hmiserver.service.notification.NotificationService;
+import software.uncharted.terarium.hmiserver.service.tasks.EquationsCleanupResponseHandler;
 import software.uncharted.terarium.hmiserver.service.tasks.ExtractEquationsResponseHandler;
 import software.uncharted.terarium.hmiserver.service.tasks.ExtractTablesResponseHandler;
 import software.uncharted.terarium.hmiserver.service.tasks.ExtractTextResponseHandler;
+import software.uncharted.terarium.hmiserver.service.tasks.OCRExtractionResponseHandler;
 import software.uncharted.terarium.hmiserver.service.tasks.TaskService;
+import software.uncharted.terarium.hmiserver.service.tasks.TaskService.TaskMode;
 
 @Service
 @RequiredArgsConstructor
 @Slf4j
 public class ExtractionService {
 
+	private final Config config;
 	private final DocumentAssetService documentService;
 	private final ObjectMapper objectMapper;
 	private final ClientEventService clientEventService;
@@ -614,6 +622,115 @@ public class ExtractionService {
 			}
 
 			return extraction;
+		});
+	}
+
+	/**
+	 * All-in one document extraction with provenance
+	 **/
+	@Data
+	private static class ExtractionProxy {
+
+		private Extraction response;
+	}
+
+	public Future<Extraction> ocrExtraction(
+		final NotificationGroupInstance<Properties> notificationInterface,
+		final String userId,
+		final byte[] pdf
+	) throws TimeoutException, InterruptedException, ExecutionException, IOException {
+		final int REQUEST_TIMEOUT_MINUTES = 30;
+		final TaskRequest req = new TaskRequest();
+		req.setTimeoutMinutes(REQUEST_TIMEOUT_MINUTES);
+		req.setInput(pdf);
+		req.setScript(OCRExtractionResponseHandler.NAME);
+		req.setUserId(userId);
+		req.setType(TaskType.OCR_EXTRACTION);
+
+		return executor.submit(() -> {
+			final TaskResponse resp = taskService.runTaskSync(req);
+			if (resp.getStatus() != TaskStatus.SUCCESS) {
+				throw new RuntimeException("OCR extraction failed: " + resp.getStderr());
+			}
+			final byte[] outputBytes = resp.getOutput();
+
+			final ExtractionProxy output = objectMapper.readValue(outputBytes, ExtractionProxy.class);
+			return output.getResponse();
+		});
+	}
+
+	/**
+	 * New PDF extraction process, March 2025
+	 **/
+	public Future<DocumentAsset> extractPDFAndApplyToDocumentNew(final UUID documentId, final UUID projectId) {
+		final DocumentAsset document = documentService.getAsset(documentId).get();
+		if (document.getFileNames().isEmpty()) {
+			throw new RuntimeException("No files found on document");
+		}
+		final String userId = currentUserService.get().getId();
+
+		final NotificationGroupInstance<Properties> notificationInterface = new NotificationGroupInstance<>(
+			clientEventService,
+			notificationService,
+			ClientEventType.EXTRACTION_PDF,
+			projectId,
+			new Properties(documentId),
+			userId
+		);
+
+		return executor.submit(() -> {
+			try {
+				final String filename = document.getFileNames().get(0);
+				final byte[] documentContents = documentService.fetchFileAsBytes(documentId, filename).get();
+
+				log.info("OCR extraction: starting");
+				Future<Extraction> extractionFuture = ocrExtraction(notificationInterface, userId, documentContents);
+				Extraction extraction = extractionFuture.get();
+				log.info("OCR extraction: done");
+
+				// Post process: Clean latex equations
+				log.info("OCR extraction equation post processing: starting ");
+				List<ExtractionItem> formulaItems = new ArrayList();
+				for (final ExtractionItem item : extraction.getExtractions()) {
+					if (item.getType().equalsIgnoreCase("text") && item.getSubType().equalsIgnoreCase("formula")) {
+						formulaItems.add(item);
+					}
+				}
+				List<String> formulaStrings = formulaItems.stream().map(item -> item.getRawText()).collect(Collectors.toList());
+
+				final EquationsCleanupResponseHandler.Input input = new EquationsCleanupResponseHandler.Input();
+				input.setLlm(config.getLlm());
+				input.setEquations(formulaStrings);
+
+				final TaskRequest cleanupReq = new TaskRequest();
+				cleanupReq.setType(TaskType.GOLLM);
+				cleanupReq.setScript(EquationsCleanupResponseHandler.NAME);
+				cleanupReq.setUserId(userId);
+				cleanupReq.setInput(objectMapper.writeValueAsBytes(input));
+				cleanupReq.setProjectId(projectId);
+
+				TaskResponse cleanupResp = taskService.runTask(TaskMode.SYNC, cleanupReq);
+				JsonNode output = objectMapper.readValue(cleanupResp.getOutput(), JsonNode.class);
+				if (cleanupResp != null && cleanupResp.getOutput() != null) {
+					int counter = 0;
+					for (JsonNode eq : output.get("response").get("equations")) {
+						formulaItems.get(counter).setText(eq.asText().trim());
+						counter++;
+					}
+				}
+				log.info("OCR extraction equation post processing: done");
+
+				// Save extraction result
+				log.info("OCR extraction: saving to storage: starting");
+				document.setExtraction(extraction);
+				documentService.updateAsset(document, projectId);
+				log.info("OCR extraction: saving to storage: done");
+
+				return document;
+			} catch (final Exception e) {
+				e.printStackTrace();
+				throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage());
+			}
 		});
 	}
 }

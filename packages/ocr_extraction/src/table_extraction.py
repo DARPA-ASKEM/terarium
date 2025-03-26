@@ -1,26 +1,10 @@
-import os
-import json
 import base64
 import logging
 from io import BytesIO
 from bs4 import BeautifulSoup
 from PIL import Image
-from openai import OpenAI
+from src.llm_tools import LlmToolsInterface
 
-TABLE_EXTRACTION_PROMPT = """Here is the extracted table in html from the provided image.
-
-The extracted result isn't perfect, but it's a good start. You know that the structure of the table is correct, but the extracted content of the each cells may not be accurate or be missing.
-
-Your job is to verify the extracted table content with the provided image and correct any inaccuracies or missing data. Do not alter the structure, colspan, or rowspan of the table, only replace the cell text value with the correct data. Some cells may span multiple columns or rows which is normal and should be preserved. Also it's normal to have multiple header rows or columns. Do not remove any rows or columns from the table, just correct the cell text values. Number of rows and columns should be preserved.
-Ensure that symbols, subscripts, superscripts, and greek characters are preserved, "α" should not be swapped to "a". Make sure symbols, greek characters, and mathematical expressions are preserved and represented correctly.
-
-You will structure your response as a JSON object with the following schema:
-
-'table_text': a XHTML formatted table string.
-'score': A score from 0 to 10 indicating the quality of the corrected table. 0 indicates that the image does not contain a table, 10 indicates a high-quality extraction.
-
-Begin:
-"""
 
 def convert_table_to_grid(html_table):
     soup = BeautifulSoup(html_table, 'html.parser')
@@ -51,6 +35,7 @@ def convert_table_to_grid(html_table):
 
     return grid
 
+
 def image_to_base64_string(img: Image.Image) -> str:
     format = 'PNG'
     buffered = BytesIO()
@@ -58,38 +43,8 @@ def image_to_base64_string(img: Image.Image) -> str:
     img_base64 = base64.b64encode(buffered.getvalue()).decode("utf-8")
     return f"data:image/{format.lower()};base64,{img_base64}"  # Return Data URI
 
-def process_table_image(image_uri, table_html):
-    openai_api_key = os.getenv("OPEN_AI_API_KEY")
-    if (openai_api_key is None):
-        raise ValueError("OPEN_AI_API_KEY not found in environment variables. Please set 'OPEN_AI_API_KEY'.")
 
-    client = OpenAI(api_key=openai_api_key)
-
-    logging.info(f"Processing table image with GPT...")
-    response = client.chat.completions.create(
-        model="gpt-4o-2024-08-06",
-        messages=[
-            {
-                "role": "user",
-                "content": [
-                    {
-                        "type": "image_url",
-                        "image_url": {"url": image_uri},
-                    },
-                    {
-                        "type": "text",
-                        "text": table_html,
-                    },
-                    {"type": "text", "text": TABLE_EXTRACTION_PROMPT},
-                ],
-            }
-        ],
-        response_format={"type": "json_object"},
-    )
-    message_content = json.loads(response.choices[0].message.content)
-    return message_content
-
-def extract_tables(result):
+def extract_tables(result, llmTools: LlmToolsInterface):
     table_extraction_dict = {}
     for _idx, table in enumerate(result.document.tables):
         table_ref = table.self_ref
@@ -97,7 +52,7 @@ def extract_tables(result):
         table_img = table.get_image(result.document)
         table_img = table_img.resize((table_img.width * 2, table_img.height * 2))
         docling_table_html = table.export_to_html()
-        table_image_extract = process_table_image(image_to_base64_string(table_img), docling_table_html)
+        table_image_extract = llmTools.enhance_table_extraction(image_to_base64_string(table_img), docling_table_html)
         html_table = table_image_extract["table_text"]
 
         num_rows = table.data.num_rows
@@ -120,7 +75,7 @@ def extract_tables(result):
                     "coord_origin": table_cell.bbox.coord_origin
                 }
                 cell_dict = vars(table_cell)
-                cell_dict["id"] = cell_id # Add table cell id
+                cell_dict["id"] = cell_id  # Add table cell id
                 cell_dict["bbox"] = bbox
                 cell_dict["text"] = cell_val
                 table_cells.append(cell_dict)
@@ -135,6 +90,6 @@ def extract_tables(result):
         }
         logging.info("Docling initial result: ")
         logging.info(docling_table_html)
-        logging.info("GPT post processed result: ")
+        logging.info("LLM enhanced result: ")
         logging.info(html_table)
     return table_extraction_dict

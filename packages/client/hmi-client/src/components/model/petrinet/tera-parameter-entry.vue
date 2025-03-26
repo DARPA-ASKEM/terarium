@@ -86,8 +86,8 @@ import { Model, ModelConfiguration } from '@/types/Types';
 import {
 	getParameterSource,
 	getParameterDistribution,
-	isNumberInputEmpty,
-	getOtherValues
+	getOtherValues,
+	isParameterInputEmpty
 } from '@/services/model-configurations';
 import TeraDistributionInput from '@/components/model/petrinet/tera-distribution-input.vue';
 import TeraInputText from '@/components/widgets/tera-input-text.vue';
@@ -134,13 +134,6 @@ function getSourceLabel(initialId) {
 }
 
 const getOtherValuesLabel = computed(() => `Configuration values (${otherValueList.value?.length})`);
-
-function isParameterInputEmpty(parameter) {
-	if (parameter.type === DistributionType.Constant) {
-		return isNumberInputEmpty(parameter.parameters.value);
-	}
-	return isNumberInputEmpty(parameter.parameters.maximum) || isNumberInputEmpty(parameter.parameters.minimum);
-}
 
 onMounted(async () => {
 	const identifiers = getParameter(props.model, props.parameterId)?.grounding?.identifiers;

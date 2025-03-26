@@ -278,13 +278,6 @@ export const parsePyCiemssMap = (obj: Record<string, any>) => {
 	return result;
 };
 
-/**
- * FIXME: This overlaps somewhat with services/dataset#createCsvAssetFromRunResults,
- *
- * This is a simpler version
- * - without dealing with a list/set of runResults, which is now depreated.
- * - no column stats, which are not used
- * */
 export const convertToCsvAsset = (data: Record<string, any>[], keys: string[]) => {
 	const csvData: CsvAsset = {
 		headers: keys,
@@ -294,7 +287,7 @@ export const convertToCsvAsset = (data: Record<string, any>[], keys: string[]) =
 	data.forEach((datum) => {
 		const row: any[] = [];
 		keys.forEach((k) => {
-			row.push(datum[k] || '');
+			row.push(_.has(datum, k) ? datum[k] : '');
 		});
 		csvData.csv.push(row);
 	});

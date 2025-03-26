@@ -74,7 +74,7 @@ const saveCopy = async () => {
 	isCopyDialogVisible.value = false;
 	router.push(RoutePath.Home);
 
-	const copiedProject = await useProjects().clone(project.value.id);
+	const copiedProject = await useProjects().clone(project.value ? project.value.id : menuProject?.value?.id);
 	if (!copiedProject) return;
 	copiedProject.name = projectName.value;
 	useProjects().update(copiedProject);
@@ -96,7 +96,8 @@ watch(
 	() => isCopyDialogVisible.value,
 	async () => {
 		if (isCopyDialogVisible.value) {
-			const name = await useProjects().getActiveProjectName();
+			project.value = useProjects().activeProject.value;
+			const name = useProjects().getActiveProjectName();
 			projectName.value = isEmpty(name) ? 'Enter new project name' : `Copy of ${name}`;
 		}
 	}

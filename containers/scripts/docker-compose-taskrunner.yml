@@ -171,3 +171,36 @@ services:
 #       - ../../packages/table_extraction:/table_extraction_task
 #       - ../../packages/taskrunner:/taskrunner
 #     command: /table_extraction_task/dev.sh
+
+
+#################################################################
+# Uncomment this to run the ocr extraction taskrunner locally #
+#################################################################
+#   ocr_extraction-taskrunner:
+#     build:
+#       context: ../..
+#       dockerfile: ./packages/ocr_extraction/Dockerfile
+#       target: ocr_extraction_taskrunner_builder
+#     container_name: ocr_extraction-taskrunner
+#     networks:
+#       - terarium
+#     environment:
+#       TERARIUM_MQ_ADDRESSES: "amqp://rabbitmq:5672"
+#       TERARIUM_MQ_PASSWORD: "terarium123"
+#       TERARIUM_MQ_USERNAME: "terarium"
+#       TERARIUM_TASKRUNNER_REQUEST_TYPE: "ocr_extraction"
+#       ASKEM_DOC_AI_API_KEY: "${secret_openai_key}"
+#       AZURE_OPENAI_KEY: "${secret_azure_openai_key}"
+#       AZURE_OPENAI_ENDPOINT: "${secret_azure_openai_endpoint}"
+#       AZURE_OPENAI_MODEL: "${secret_azure_openai_model}"
+#       BEDROCK_ACCESS_KEY: "${secret_bedrock_access_key}"
+#       BEDROCK_SECRET_ACCESS_KEY: "${secret_bedrock_secret_key}"
+#     depends_on:
+#       rabbitmq:
+#         condition: service_healthy
+#     extra_hosts:
+#       - "${local_host_name}:host-gateway"
+#     volumes:
+#       - ../../packages/ocr_extraction:/ocr_extraction
+#       - ../../packages/taskrunner:/taskrunner
+#     command: /ocr_extraction/dev.sh

@@ -3,11 +3,11 @@ import imghdr
 import json
 import os
 from typing import List, Optional
-from entities import ChartAnnotationType
 
 from common import LlmToolsInterface
 from common.utils import validate_schema, model_config_adapter, get_image_format_string, extract_json_object, \
     unescape_curly_braces
+from entities import ChartAnnotationType
 
 # define a constant for the absolute path of the schemas directory
 SCHEMAS_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'schemas')
@@ -159,3 +159,8 @@ def latex_to_sympy_chain(llm: LlmToolsInterface, equations: List[str]) -> dict:
 
     prompt = llm.create_latex_to_sympy_prompt(equations, response_schema)
     return llm.send_to_llm_with_json_output(prompt, response_schema)
+
+
+def document_question_chain(llm: LlmToolsInterface, document: str, question: str) -> str:
+    prompt = llm.create_document_question_prompt(document, question)
+    return llm.send_to_llm_with_string_output(prompt, None)

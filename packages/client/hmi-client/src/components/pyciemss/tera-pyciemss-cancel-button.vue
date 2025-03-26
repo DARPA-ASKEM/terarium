@@ -10,17 +10,16 @@ import { cancelCiemssJob } from '@/services/models/simulation-service';
 import { logger } from '@/utils/logger';
 
 const props = defineProps<{
-	simulationRunId?: string | string[];
+	simulationRunIds?: string[];
 }>();
 
 const isCancelling = ref(false);
-const disabled = computed(() => _.isEmpty(props.simulationRunId) || isCancelling.value);
+const disabled = computed(() => _.isEmpty(props.simulationRunIds) || isCancelling.value);
 
 const cancelSimulation = async () => {
-	if (!props.simulationRunId) return;
+	if (!props.simulationRunIds) return;
 	isCancelling.value = true;
-	const cancelIds = Array.isArray(props.simulationRunId) ? props.simulationRunId : [props.simulationRunId];
-	cancelIds.forEach(async (id) => {
+	props.simulationRunIds.forEach(async (id) => {
 		if (!id) return;
 		await cancelCiemssJob(id);
 		logger.success(`Simulation ${id} has been cancelled.`);

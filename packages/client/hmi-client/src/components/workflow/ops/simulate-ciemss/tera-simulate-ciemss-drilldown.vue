@@ -19,7 +19,7 @@
 					<div class="flex align-items-center justify-content-between px-3">
 						<p>{{ blankMessage }}.</p>
 						<span class="flex gap-2">
-							<tera-pyciemss-cancel-button :simulation-run-id="cancelRunIds" />
+							<tera-pyciemss-cancel-button :simulation-run-ids="cancelRunIds" />
 							<Button
 								label="Run"
 								icon="pi pi-play"
@@ -126,30 +126,6 @@
 				</template>
 			</tera-slider-panel>
 		</tera-drilldown-section>
-
-		<!-- Notebook -->
-		<tera-drilldown-section :tabName="DrilldownTabs.Notebook" class="notebook-section">
-			<tera-notebook-jupyter-input
-				:kernel-manager="kernelManager"
-				:context-language="'python3'"
-				@llm-output="(data: any) => processLLMOutput(data)"
-				@llm-thought-output="(data: any) => llmThoughts.push(data)"
-				@question-asked="updateLlmQuery"
-			>
-				<template #toolbar-right-side>
-					<Button label="Run" size="small" icon="pi pi-play" @click="runCode" :disabled="isEmpty(codeText)" />
-				</template>
-			</tera-notebook-jupyter-input>
-			<v-ace-editor
-				v-model:value="codeText"
-				@init="initializeAceEditor"
-				lang="python"
-				theme="chrome"
-				style="flex-grow: 1; width: 100%"
-				class="ace-editor"
-			/>
-		</tera-drilldown-section>
-
 		<!-- Preview -->
 		<template #preview>
 			<tera-drilldown-section
@@ -457,9 +433,7 @@
 
 <script setup lang="ts">
 import _, { isEmpty } from 'lodash';
-import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
-import { VAceEditor } from 'vue3-ace-editor';
-import { VAceEditorInstance } from 'vue3-ace-editor/types';
+import { computed, ref, watch } from 'vue';
 import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
 import Button from 'primevue/button';
@@ -488,7 +462,6 @@ import {
 	CiemssMethodOptions,
 	renameFnGenerator
 } from '@/services/models/simulation-service';
-import { logger } from '@/utils/logger';
 import {
 	ChartSettingType,
 	CiemssPresetTypes,
@@ -497,7 +470,6 @@ import {
 	SensitivityMethod
 } from '@/types/common';
 import VegaChart from '@/components/widgets/VegaChart.vue';
-import { KernelSessionManager } from '@/services/jupyter';
 import TeraChartSettings from '@/components/widgets/tera-chart-settings.vue';
 import TeraChartSettingsPanel from '@/components/widgets/tera-chart-settings-panel.vue';
 import TeraChartSettingsQuantiles from '@/components/widgets/tera-chart-settings-quantiles.vue';
@@ -507,7 +479,6 @@ import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.
 import TeraInputNumber from '@/components/widgets/tera-input-number.vue';
 import TeraInterventionSummaryCard from '@/components/intervention-policy/tera-intervention-summary-card.vue';
 import TeraNotebookError from '@/components/drilldown/tera-notebook-error.vue';
-import TeraNotebookJupyterInput from '@/components/llm/tera-notebook-jupyter-input.vue';
 import TeraOperatorOutputSummary from '@/components/operator/tera-operator-output-summary.vue';
 import TeraPyciemssCancelButton from '@/components/pyciemss/tera-pyciemss-cancel-button.vue';
 import TeraSaveSimulationModal from '@/components/project/tera-save-simulation-modal.vue';
@@ -517,7 +488,6 @@ import TeraCheckbox from '@/components/widgets/tera-checkbox.vue';
 import { nodeMetadata } from '@/components/workflow/util';
 import { useCharts } from '@/composables/useCharts';
 import { useChartSettings } from '@/composables/useChartSettings';
-import { useProjects } from '@/composables/project';
 import { useDrilldownChartSize } from '@/composables/useDrilldownChartSize';
 import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue';
 import { mergeResults } from '@/services/dataset';
@@ -533,13 +503,9 @@ const emit = defineEmits(['update-state', 'select-output', 'close']);
 const isSidebarOpen = ref(true);
 const isOutputSettingsPanelOpen = ref(false);
 const blankMessage = "Click 'Run' to start the simulation";
-
 const currentActiveIndicies = ref([0, 1, 2, 3]);
 
 const modelVarUnits = ref<{ [key: string]: string }>({});
-let editor: VAceEditorInstance['_editor'] | null;
-const codeText = ref('');
-
 const modelConfiguration = ref<ModelConfiguration | null>(null);
 const model = ref<Model | null>(null);
 
@@ -587,9 +553,6 @@ const selectedOutputLabel = computed(() => {
 	return selectedOutput ? selectedOutput.label : '';
 });
 
-const llmThoughts = ref<any[]>([]);
-const llmQuery = ref('');
-
 // input params
 const endTime = ref<number>(props.node.state.endTime);
 const numSamples = ref<number>(props.node.state.numSamples);
@@ -602,15 +565,6 @@ enum OutputView {
 	Charts = 'Charts',
 	Data = 'Data'
 }
-
-const updateLlmQuery = (query: string) => {
-	llmThoughts.value = [];
-	llmQuery.value = query;
-};
-
-const processLLMOutput = (data: any) => {
-	codeText.value = data.content.code;
-};
 
 const view = ref(OutputView.Charts);
 const viewOptions = ref([
@@ -626,8 +580,6 @@ const runResultsSummary = ref<{ [runId: string]: DataArray }>({});
 const rawContent = ref<{ [runId: string]: CsvAsset }>({});
 
 const pyciemssMap = ref<Record<string, string>>({});
-
-const kernelManager = new KernelSessionManager();
 
 const presetType = computed(() => {
 	if (
@@ -834,67 +786,6 @@ const onSelection = (id: string) => {
 	emit('select-output', id);
 };
 
-const buildJupyterContext = async () => {
-	const modelConfigId = props.node.inputs[0].value?.[0];
-	if (!modelConfigId) return;
-	try {
-		const jupyterContext = {
-			context: 'pyciemss',
-			language: 'python3',
-			context_info: {
-				model_config_id: modelConfigId
-			}
-		};
-		if (jupyterContext) {
-			if (kernelManager.jupyterSession !== null) {
-				kernelManager.shutdown();
-			}
-			await kernelManager.init('beaker_kernel', 'Beaker Kernel', jupyterContext);
-			kernelManager.sendMessage('get_simulate_request', {}).register('any_get_simulate_reply', (data) => {
-				codeText.value = data.msg.content.return;
-			});
-		}
-	} catch (error) {
-		logger.error(`Error initializing Jupyter session: ${error}`);
-	}
-};
-
-const runCode = () => {
-	const code = editor?.getValue();
-	if (!code) return;
-
-	const messageContent = {
-		silent: false,
-		store_history: false,
-		user_expressions: {},
-		allow_stdin: true,
-		stop_on_error: false,
-		code
-	};
-
-	// TODO: Utilize the output of this request.
-	kernelManager
-		.sendMessage('execute_request', { messageContent })
-		.register('execute_input', (data) => {
-			console.log(data.content.code);
-		})
-		.register('stream', (data) => {
-			console.log('stream', data);
-		})
-		.register('any_execute_reply', (data) => {
-			console.log(data);
-			// FIXME: save isnt working...but the idea is to save the simulation results to the HMI with this action
-			kernelManager
-				.sendMessage('save_results_to_hmi_request', { project_id: useProjects().activeProjectId })
-				.register('code_cell', (d) => {
-					console.log(d);
-				});
-		});
-};
-const initializeAceEditor = (editorInstance: any) => {
-	editor = editorInstance;
-};
-
 watch(
 	() => props.node.inputs[0].value,
 	async () => {
@@ -949,12 +840,6 @@ watch(
 	},
 	{ immediate: true }
 );
-
-onMounted(() => {
-	buildJupyterContext();
-});
-
-onUnmounted(() => kernelManager.shutdown());
 </script>
 
 <style scoped>

@@ -1438,29 +1438,48 @@ export function useCharts(
 				if (!chartData.value || !card.selectedVariable) return;
 
 				const variableKey = `${chartData.value.pyciemssMap[card.selectedVariable]}_mean`;
-				let pointOfComparison: Record<string, number> = {};
+				const pointOfComparison: Record<string, number> = {};
+				const resultSummary = cloneDeep(chartData.value.resultSummary); // Must clone to avoid modifying the original data
+				const relevantKeys = Object.keys(resultSummary[0]).filter((key) => key.includes(variableKey));
 
-				if (card.timepoint === TimepointOption.OVERALL) {
-					const resultSummary = cloneDeep(chartData.value.resultSummary); // Must clone to avoid modifying the original data
-
-					// Note that the reduce function here only compares the variable of interest
-					// so only those key/value pairs will be relevant in the pointOfComparison object.
-					// Other keys like timepoint_id (that we aren't using) will be in pointOfComparison
-					// but they won't coincide with the value of the variable of interest.
-					pointOfComparison = resultSummary.reduce((acc, val) =>
-						Object.keys(val).reduce((acc2, key) => {
-							if (key.includes(variableKey)) {
-								acc2[key] = Math.max(acc[key], val[key]);
+				if (card.timepoint === TimepointOption.PEAK) {
+					// For each relevant key find the maximum value independently.
+					let currentMax = 0;
+					relevantKeys.forEach((key) => {
+						resultSummary.forEach((record) => {
+							if (record[key] && record[key] > currentMax) {
+								currentMax = record[key];
 							}
-							return acc2;
-						}, acc)
-					);
+						});
+						pointOfComparison[key] = currentMax;
+						currentMax = 0;
+					});
 				} else if (card.timepoint === TimepointOption.FIRST) {
-					pointOfComparison = chartData.value.resultSummary[0];
+					relevantKeys.forEach((key) => {
+						pointOfComparison[key] = resultSummary[0][key];
+					});
 				} else if (card.timepoint === TimepointOption.LAST) {
-					pointOfComparison = chartData.value.resultSummary[chartData.value.resultSummary.length - 1];
+					// Note that the datasets lengths do not have to match so we will find the last value for each key individually.
+					relevantKeys.forEach((key) => {
+						const lastTimepoint = resultSummary.filter((record) => record[key]).length - 1;
+						pointOfComparison[key] = resultSummary[lastTimepoint][key];
+					});
+				} else if (card.timepoint === TimepointOption.AVERAGE) {
+					// Get the average value for each relevant key.
+					// Note that as the dataset's length do not have to match we will check each key's length individually.
+					let runningSum = 0;
+					relevantKeys.forEach((key) => {
+						resultSummary.forEach((record) => {
+							if (record[key]) {
+								runningSum += record[key];
+							}
+						});
+						// Get the length of records that actually have this key.
+						const length = resultSummary.filter((record) => record[key]).length;
+						pointOfComparison[key] = runningSum / length; // Set the average
+						runningSum = 0;
+					});
 				}
-
 				const rankingCriteriaValues: { score: number; policyName: string; configName: string }[] = [];
 
 				datasets.value.forEach((dataset, index: number) => {

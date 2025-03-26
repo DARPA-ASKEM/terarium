@@ -1,6 +1,7 @@
 import logging
+import sys
 
-from fastapi import FastAPI, File, UploadFile
+from fastapi import FastAPI, File, UploadFile, Form
 from fastapi.responses import JSONResponse
 from io import BytesIO
 
@@ -10,9 +11,12 @@ from docling.document_converter import DocumentConverter, PdfFormatOption
 
 from texteller.inference_model import InferenceModel
 
-from table_extraction import extract_tables
+from src.table_extraction import extract_tables
+from src.llm_tools import get_llm_tools
 
 logging.basicConfig(level=logging.INFO)
+
+extractor = "docling"
 
 app = FastAPI()
 IMAGE_RESOLUTION_SCALE = 2.0
@@ -37,18 +41,22 @@ converter = DocumentConverter(
 
 equation_model = InferenceModel()
 
+
 @app.get("/health")
 async def health_check():
     return JSONResponse(content={"status": "OK"}, status_code=200)
 
 
 @app.post("/predict")
-async def process_and_predict(file: UploadFile = File(...)):
+async def process_and_predict(file: UploadFile = File(...), llm_model: str = Form('azure')):
+    llm_tools = get_llm_tools(llm_model)
+    logging.info(f"LLM model set to {llm_tools.name()}")
     logging.info("In predict")
     file_bytes = await file.read()
-    logging.info(f"Len = {len(file_bytes)}")
+    logging.info(f"File length = {len(file_bytes)}")
     docstream = DocumentStream(name="test", stream=BytesIO(file_bytes))
     result = converter.convert(docstream)
+
 
     ################################################################################
     # Do second pass
@@ -66,20 +74,21 @@ async def process_and_predict(file: UploadFile = File(...)):
 
             latex_str = equation_model.predict(text_img_byte_arr.getvalue())
 
-            logging.info(f"{text_ref}")
-            logging.info(f"Docling model: {element.text}")
-            logging.info(f"Textteller model: {latex_str}")
-            logging.info("")
+            # logging.info(f"{text_ref}")
+            # logging.info(f"Docling model: {element.text}")
+            # logging.info(f"Textteller model: {latex_str}")
+            # logging.info("")
             latex_extraction_dict[text_ref] = latex_str
 
     # - Extract tables using GPT model
-    logging.info("Starting table extraction using GPT model...")
-    table_extraction_dict = extract_tables(result)
+    logging.info(f"Starting table extraction...")
+    table_extraction_dict = extract_tables(result, llm_tools)
 
     ################################################################################
     # Collect and format result
     ################################################################################
     final_result = {}
+    final_result["extractedBy"] = extractor
     result_dict = result.document.export_to_dict()
 
 
@@ -87,7 +96,7 @@ async def process_and_predict(file: UploadFile = File(...)):
     final_result["pages"] = {}
     for key, value in result_dict["pages"].items():
         final_result["pages"][key] = {
-            "pageNo": value["page_no"],
+            "page": value["page_no"],
             "size": {
                 "width": value["size"]["width"],
                 "height": value["size"]["height"]
@@ -110,79 +119,95 @@ async def process_and_predict(file: UploadFile = File(...)):
     for group in result_dict["groups"]:
         children = []
         for child in group["children"]:
-            children.append(child["$ref"])
+            children.append(
+                { "id": child["$ref"] }
+            )
 
         final_result["groups"].append({
             "id": group["self_ref"],
             "children": children
         })
 
+
+    pages = final_result["pages"]
+
     # 3. Text
-    final_result["texts"] = []
+    final_result["extractions"] = []
     for text in result_dict["texts"]:
         item = {}
         prov = text["prov"][0]
 
         item["id"] = text["self_ref"]
-        item["label"] = text["label"]
-        item["provenance"] = {
-            "page": prov["page_no"],
-            "bbox": {
-                "left": prov["bbox"]["l"],
-                "top": prov["bbox"]["t"],
-                "right": prov["bbox"]["r"],
-                "bottom": prov["bbox"]["b"]
-            },
-            "charspan": prov["charspan"]
-        }
+        item["type"] = "text"
+        item["subType"] = text["label"]
+        item["extractedBy"] = extractor
 
-        if item["label"] == "formula":
+
+        item["page"] = prov["page_no"]
+        item["pageWidth"] = pages[str(item["page"])]["size"]["width"]
+        item["pageHeight"] = pages[str(item["page"])]["size"]["height"]
+        item["bbox"] = {
+            "left": prov["bbox"]["l"],
+            "top": prov["bbox"]["t"],
+            "right": prov["bbox"]["r"],
+            "bottom": prov["bbox"]["b"]
+        }
+        item["charspan"] = prov["charspan"]
+
+        if item["subType"] == "formula":
+            item["rawText"] = latex_extraction_dict[item["id"]]
             item["text"] = latex_extraction_dict[item["id"]]
         else:
+            item["rawText"] = text["text"]
             item["text"] = text["text"]
 
-        final_result["texts"].append(item)
+        final_result["extractions"].append(item)
 
     # 4. Images
-    final_result["pictures"] = []
     for picture in result_dict["pictures"]:
         item = {}
         prov = picture["prov"][0]
         item["id"] = picture["self_ref"]
-        item["label"] = picture["label"]
-        item["provenance"] = {
-            "page": prov["page_no"],
-            "bbox": {
-                "left": prov["bbox"]["l"],
-                "top": prov["bbox"]["t"],
-                "right": prov["bbox"]["r"],
-                "bottom": prov["bbox"]["b"]
-            },
-            "charspan": prov["charspan"]
+        item["type"] = "picture"
+        item["subType"] = picture["label"]
+        item["extractedBy"] = extractor
+
+        item["page"] = prov["page_no"]
+        item["pageWidth"] = pages[str(item["page"])]["size"]["width"]
+        item["pageHeight"] = pages[str(item["page"])]["size"]["height"]
+        item["bbox"] = {
+            "left": prov["bbox"]["l"],
+            "top": prov["bbox"]["t"],
+            "right": prov["bbox"]["r"],
+            "bottom": prov["bbox"]["b"]
         }
-        final_result["pictures"].append(item)
+        item["charspan"] = prov["charspan"]
+        final_result["extractions"].append(item)
 
     # 5. Tables
-    final_result["tables"] = []
     for table in result_dict["tables"]:
         id = table["self_ref"]
         item = {}
         prov = table["prov"][0]
         item["id"] = id
-        item["label"] = table["label"]
-        item["provenance"] = {
-            "page": prov["page_no"],
-            "bbox": {
-                "left": prov["bbox"]["l"],
-                "top": prov["bbox"]["t"],
-                "right": prov["bbox"]["r"],
-                "bottom": prov["bbox"]["b"]
-            },
-            "charspan": prov["charspan"]
+        item["type"] = "table"
+        item["subType"] = table["label"]
+        item["extractedBy"] = extractor
+
+        item["page"] = prov["page_no"]
+        item["pageWidth"] = pages[str(item["page"])]["size"]["width"]
+        item["pageHeight"] = pages[str(item["page"])]["size"]["height"]
+        item["bbox"] = {
+            "left": prov["bbox"]["l"],
+            "top": prov["bbox"]["t"],
+            "right": prov["bbox"]["r"],
+            "bottom": prov["bbox"]["b"]
         }
+        item["charspan"] = prov["charspan"]
+        item["rawText"] = ""
         item["text"] = table_extraction_dict[id]["text"]
         item["data"] = table_extraction_dict[id]["data"]
-        final_result["tables"].append(item)
+        final_result["extractions"].append(item)
 
     return JSONResponse(content=final_result)
 

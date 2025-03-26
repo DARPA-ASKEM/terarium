@@ -36,6 +36,10 @@ class ModelCompareModel(GollmModel):
     amrs: List[str]  # expects AMRs to be a stringified JSON object
     goal: str = None
 
+class DocumentQuestionModel(GollmModel):
+    document: str  # expects a stringified JSON object
+    question: str
+
 
 class EquationsModel(GollmModel):
     equations: List[str]
