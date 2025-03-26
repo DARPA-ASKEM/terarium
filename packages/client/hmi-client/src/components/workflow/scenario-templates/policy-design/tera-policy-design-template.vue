@@ -22,6 +22,7 @@
 				placeholder="Select a model configuration"
 				@update:model-value="props.scenario.setModelConfigId($event)"
 				class="mb-3"
+				:loading="isFetchingModelData"
 			/>
 
 			<label>Select an intervention</label>
@@ -34,6 +35,7 @@
 				placeholder="Select an intervention for this model"
 				@update:model-value="props.scenario.setInterventionPolicyId($event)"
 				class="mb-3"
+				:loading="isFetchingModelData"
 			/>
 
 			<label>Select a dataset (optional)</label>
@@ -47,19 +49,67 @@
 				class="mb-3"
 			/>
 		</template>
+		<template #outputs>
+			<label>Select Success Criteria: </label>
+			<tera-optimize-criterion-group-form
+				v-for="(cfg, index) in props.scenario.getOptimizeState().constraintGroups"
+				:key="index"
+				:index="index"
+				:criterion="cfg"
+				:model-state-and-obs-options="modelStateAndObsOptions"
+				@update-self="(config) => props.scenario.setOptimizeCriteriaForm(index, config)"
+				@delete-self="() => props.scenario.deleteOptimizeCriterionGroupForm(index)"
+			/>
+			<Button
+				icon="pi pi-plus"
+				class="p-button-sm p-button-text w-max"
+				label="Add new criterion"
+				@click="props.scenario.addOptimizeCriterionGroupForm()"
+			/>
+			<Label>Intervention policy </Label>
+			<section v-for="(cfg, idx) in props.scenario.getOptimizeState().interventionPolicyGroups" :key="idx">
+				<tera-static-intervention-policy-group
+					v-if="isInterventionStatic(cfg.individualIntervention) && modelConfiguration && model"
+					:model="model"
+					:model-configuration="modelConfiguration"
+					:key="cfg.id || '' + idx"
+					:config="cfg as StaticInterventionPolicyGroupForm"
+					@update-self="(config) => props.scenario.updateInterventionPolicyGroupForm(idx, config)"
+				/>
+				<tera-dynamic-intervention-policy-group
+					v-if="!isInterventionStatic(cfg.individualIntervention)"
+					:key="idx"
+					:config="cfg as DynamicInterventionPolicyGroupForm"
+					@update-self="(config) => props.scenario.updateInterventionPolicyGroupForm(idx, config)"
+				/>
+			</section>
+			<section v-if="props.scenario.getOptimizeState().interventionPolicyGroups.length === 0">
+				<p class="mt-1">No intervention policies have been added.</p>
+			</section>
+		</template>
 	</tera-scenario-template>
 </template>
 
 <script setup lang="ts">
 import Dropdown from 'primevue/dropdown';
+import Button from 'primevue/button';
 import { computed, ref, watch } from 'vue';
 import { useProjects } from '@/composables/project';
-import { AssetType, ModelConfiguration, InterventionPolicy } from '@/types/Types';
-import { getInterventionPoliciesForModel, getModelConfigurationsForModel } from '@/services/model';
+import { AssetType, ModelConfiguration, InterventionPolicy, Model } from '@/types/Types';
+import { getInterventionPoliciesForModel, getModel, getModelConfigurationsForModel } from '@/services/model';
 import _ from 'lodash';
-import { PolicyDesignScenario } from './policy-design-scenario';
-import { ScenarioHeader } from '../base-scenario';
+import teraOptimizeCriterionGroupForm from '@/components/workflow/ops/optimize-ciemss/tera-optimize-criterion-group-form.vue';
+import teraStaticInterventionPolicyGroup, {
+	StaticInterventionPolicyGroupForm
+} from '@/components/workflow/ops/optimize-ciemss/tera-static-intervention-policy-group.vue';
+import teraDynamicInterventionPolicyGroup, {
+	DynamicInterventionPolicyGroupForm
+} from '@/components/workflow/ops/optimize-ciemss/tera-dynamic-intervention-policy-group.vue';
+import { isInterventionStatic } from '@/services/intervention-policy';
+import { getModelConfigurationById } from '@/services/model-configurations';
 import TeraScenarioTemplate from '../tera-scenario-template.vue';
+import { ScenarioHeader } from '../base-scenario';
+import { PolicyDesignScenario } from './policy-design-scenario';
 
 const props = defineProps<{
 	scenario: PolicyDesignScenario;
@@ -80,17 +130,57 @@ const header: ScenarioHeader = Object.freeze({
 const allModelOptions = computed(() => useProjects().getActiveProjectAssets(AssetType.Model));
 const allDatasetOptions = computed(() => useProjects().getActiveProjectAssets(AssetType.Dataset));
 const selectedModelId = computed(() => props.scenario.getModelId());
+const selectedModelConfigurationId = computed(() => props.scenario.getModelConfigId());
 const isModelSelected = computed(() => !_.isEmpty(selectedModelId.value));
+const model = ref<Model | null>(null);
+const modelConfiguration = ref<ModelConfiguration>();
 const allModelConfigOptions = ref<ModelConfiguration[]>([]);
 const allInterventionPolicyOptions = ref<InterventionPolicy[]>([]);
+const isFetchingModelData = ref<boolean>(false);
+const modelStateAndObsOptions = ref<{ label: string; value: string }[]>([]);
 
 watch(
 	() => selectedModelId,
 	async () => {
 		if (selectedModelId.value) {
+			isFetchingModelData.value = true;
+			model.value = await getModel(selectedModelId.value);
 			allModelConfigOptions.value = await getModelConfigurationsForModel(selectedModelId.value);
 			allInterventionPolicyOptions.value = await getInterventionPoliciesForModel(selectedModelId.value);
+
+			// Set model state and obs:
+			if (model.value) {
+				const modelStates = model.value.model.states;
+				modelStateAndObsOptions.value = modelStates.map((state: any) => ({
+					label: state.id,
+					value: `${state.id}_state`
+				}));
+
+				// Add obs:
+				const modelObs = model.value.semantics?.ode.observables;
+				if (modelObs) {
+					modelStateAndObsOptions.value.push(
+						...modelObs.map((observable: any) => ({
+							label: observable.id,
+							value: `${observable.id}_observable`
+						}))
+					);
+				}
+			}
+
 			console.log(allInterventionPolicyOptions.value);
+		}
+
+		isFetchingModelData.value = false;
+	},
+	{ deep: true }
+);
+
+watch(
+	() => selectedModelConfigurationId,
+	async () => {
+		if (selectedModelConfigurationId.value) {
+			modelConfiguration.value = await getModelConfigurationById(selectedModelConfigurationId.value);
 		}
 	},
 	{ deep: true }

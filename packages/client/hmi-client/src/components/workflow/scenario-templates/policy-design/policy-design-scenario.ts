@@ -10,6 +10,12 @@ import { OperatorNodeSize } from '@/services/workflow';
 import _ from 'lodash';
 import { getModelConfigurationById } from '@/services/model-configurations';
 import { getInterventionPolicyById } from '@/services/intervention-policy';
+import {
+	Criterion,
+	defaultCriterion,
+	InterventionPolicyGroupForm,
+	OptimizeCiemssOperationState
+} from '../../ops/optimize-ciemss/optimize-ciemss-operation';
 
 export class PolicyDesignScenario extends BaseScenario {
 	public static templateId = 'policy-design';
@@ -24,9 +30,12 @@ export class PolicyDesignScenario extends BaseScenario {
 
 	private datasetId;
 
+	private optimizeState: OptimizeCiemssOperationState;
+
 	constructor() {
 		super();
 		this.workflowName = PolicyDesignScenario.templateName;
+		this.optimizeState = OptimizeOp.initState();
 	}
 
 	toJSON() {
@@ -74,6 +83,7 @@ export class PolicyDesignScenario extends BaseScenario {
 
 	setInterventionPolicyId(interventionPolicyId: string) {
 		this.interventionPolicyId = interventionPolicyId;
+		// this.optimizeState.interventionPolicyGroups
 	}
 
 	getDatasetId() {
@@ -82,6 +92,30 @@ export class PolicyDesignScenario extends BaseScenario {
 
 	setDatasetId(datasetId: string) {
 		this.datasetId = datasetId;
+	}
+
+	getOptimizeState() {
+		return this.optimizeState;
+	}
+
+	setOptimizeState(optimizeState: OptimizeCiemssOperationState) {
+		this.optimizeState = optimizeState;
+	}
+
+	setOptimizeCriteriaForm(index: number, optimizeCriteriaForm: Criterion) {
+		this.optimizeState.constraintGroups[index] = optimizeCriteriaForm;
+	}
+
+	deleteOptimizeCriterionGroupForm(index: number) {
+		this.optimizeState.constraintGroups.splice(index, 1);
+	}
+
+	addOptimizeCriterionGroupForm() {
+		this.optimizeState.constraintGroups.push(defaultCriterion);
+	}
+
+	updateInterventionPolicyGroupForm(index: number, config: InterventionPolicyGroupForm) {
+		this.optimizeState.interventionPolicyGroups[index] = config;
 	}
 
 	private async addAllNodes(wf: workflowService.WorkflowWrapper): Promise<workflowService.WorkflowWrapper> {
@@ -189,6 +223,11 @@ export class PolicyDesignScenario extends BaseScenario {
 				{ x: 0, y: 0 }
 			]);
 		}
+
+		wf.updateNode(optimizeNode, {
+			state: this.optimizeState
+		});
+
 		return wf;
 	}
 }
