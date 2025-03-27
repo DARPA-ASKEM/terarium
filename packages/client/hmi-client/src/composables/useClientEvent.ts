@@ -33,18 +33,18 @@ export function createTaskListClientEventHandler(node: WorkflowNode<BaseState>, 
 			node.state[taskIdsKey] = taskIds.filter((id) => id !== event.data.id);
 			switch (event.data.status) {
 				case ProgressState.Complete:
-					node.status = OperatorStatus.SUCCESS;
+					node.status = ProgressState.Complete;
 					break;
 				case ProgressState.Error:
-					node.status = OperatorStatus.ERROR;
+					node.status = ProgressState.Error;
 					break;
 				case ProgressState.Cancelled:
 				default:
-					node.status = OperatorStatus.DEFAULT;
+					node.status = ProgressState.Complete;
 			}
 		}
 		if (node.state[taskIdsKey].length > 0) {
-			node.status = OperatorStatus.IN_PROGRESS;
+			node.status = ProgressState.Running;
 		}
 		emit('update-state', node.state);
 	};
@@ -62,17 +62,7 @@ export function createTaskProgressClientEventHandler(
 		node.state[progressKey] = event.data?.progress;
 		if ([ProgressState.Complete, ProgressState.Cancelled, ProgressState.Error].includes(taskState)) {
 			node.state[progressKey] = undefined;
-			switch (taskState) {
-				case ProgressState.Complete:
-					node.status = OperatorStatus.SUCCESS;
-					break;
-				case ProgressState.Error:
-					node.status = OperatorStatus.ERROR;
-					break;
-				case ProgressState.Cancelled:
-				default:
-					node.status = OperatorStatus.DEFAULT;
-			}
+			node.status = taskState;
 		} else {
 			node.status = OperatorStatus.IN_PROGRESS;
 		}
@@ -84,15 +74,11 @@ export function createEnrichClientEventHandler(taskStatus: Ref, assetId: string 
 	return async (event: ClientEvent<TaskResponse>) => {
 		const { datasetId, documentId, modelId } = event.data.additionalProperties;
 		if (assetId !== datasetId && assetId !== documentId && assetId !== modelId) return;
-		if (ProgressState.Error === event.data.status) {
-			taskStatus.value = OperatorStatus.ERROR;
-		} else if (ProgressState.Complete === event.data.status) {
+		if (ProgressState.Complete === event.data.status) {
 			taskStatus.value = OperatorStatus.SUCCESS;
 			emit('finished-job');
-		} else if (ProgressState.Cancelled === event.data.status) {
-			taskStatus.value = OperatorStatus.DEFAULT;
 		} else {
-			taskStatus.value = OperatorStatus.IN_PROGRESS;
+			taskStatus.value = event.data.status;
 		}
 	};
 }
