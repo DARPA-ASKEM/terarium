@@ -5,7 +5,7 @@ from PIL import Image
 
 def convert_table_to_grid(html_table: str):
     """
-    Convert an HTML table to a 2D grid of strings.
+    Convert a HTML string of a table to a 2D grid of string value of the cells.
     """
     soup = BeautifulSoup(html_table, 'html.parser')
     table = soup.find('table')
@@ -36,12 +36,12 @@ def convert_table_to_grid(html_table: str):
     return grid
 
 
-def resize_image(image_base64: str, size=(1120, 1120)) -> str:
+def resize_image(image_base64: str, target_size=(1120, 1120)) -> str:
     """
     Resize an image in base64 format to a given size.
     """
     img = Image.open(BytesIO(base64.b64decode(image_base64)))
-    img = img.resize(size) # max image size for the model
+    img = img.resize(target_size) # max image size for the model
     buffered = BytesIO()
     img.save(buffered, format="PNG")
     img_base64 = base64.b64encode(buffered.getvalue()).decode("utf-8")
