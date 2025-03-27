@@ -56,7 +56,7 @@ async def health_check():
 
 
 @app.post("/predict")
-async def process_and_predict(file: UploadFile = File(...), llm_model: str = Form('openai')):
+async def process_and_predict(file: UploadFile = File(...), llm_model: str = Form('azure')):
     llm_tools = get_llm_tools(llm_model)
     logging.info(f"LLM model set to {llm_tools.name()}")
     logging.info("In predict")
