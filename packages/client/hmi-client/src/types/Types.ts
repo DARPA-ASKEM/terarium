@@ -914,10 +914,9 @@ export interface ProjectGroupPermission {
 
 export interface IProjectUserPermissionDisplayModel {
     user: User;
-    username: string;
     email: string;
-    permissionLevel: Permission;
     givenName: string;
+    username: string;
     id: string;
     familyName: string;
 }

@@ -56,6 +56,8 @@ public class StringMultipartFile implements MultipartFile {
 
 	@Override
 	public void transferTo(final File dest) throws IOException, IllegalStateException {
-		new FileOutputStream(dest).write(content);
+		FileOutputStream stream = new FileOutputStream(dest);
+		stream.write(content);
+		stream.close();
 	}
 }

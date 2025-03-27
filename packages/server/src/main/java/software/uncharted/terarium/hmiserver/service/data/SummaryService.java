@@ -9,7 +9,6 @@ import software.uncharted.terarium.hmiserver.configuration.Config;
 import software.uncharted.terarium.hmiserver.models.dataservice.Summary;
 import software.uncharted.terarium.hmiserver.repository.data.SummaryRepository;
 import software.uncharted.terarium.hmiserver.service.s3.S3ClientService;
-import software.uncharted.terarium.hmiserver.utils.rebac.Schema;
 
 @Service
 public class SummaryService extends TerariumAssetService<Summary, SummaryRepository> {
