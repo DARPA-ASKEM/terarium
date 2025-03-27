@@ -8,12 +8,15 @@ from docling.datamodel.base_models import DocumentStream, InputFormat
 from docling.datamodel.pipeline_options import PdfPipelineOptions, TableFormerMode, RapidOcrOptions, AcceleratorDevice, AcceleratorOptions
 from docling.document_converter import DocumentConverter, PdfFormatOption
 
+from docling.datamodel.settings import settings
+settings.debug.profile_pipeline_timings = True
+
 from texteller.inference_model import InferenceModel
 
 from src.table_extraction import extract_tables, normalize_bbox
 from src.llm_tools import get_llm_tools
 
-logging.basicConfig(level=logging.DEBUG)
+logging.basicConfig(level=logging.INFO)
 
 extractor = "docling"
 
@@ -53,7 +56,7 @@ async def health_check():
 
 
 @app.post("/predict")
-async def process_and_predict(file: UploadFile = File(...), llm_model: str = Form('azure')):
+async def process_and_predict(file: UploadFile = File(...), llm_model: str = Form('openai')):
     llm_tools = get_llm_tools(llm_model)
     logging.info(f"LLM model set to {llm_tools.name()}")
     logging.info("In predict")

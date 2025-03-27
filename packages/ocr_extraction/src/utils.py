@@ -3,6 +3,7 @@ from io import BytesIO
 from bs4 import BeautifulSoup
 from PIL import Image
 
+
 def convert_table_to_grid(html_table: str):
     """
     Convert a HTML string of a table to a 2D grid of string value of the cells.
@@ -41,7 +42,7 @@ def resize_image(image_base64: str, target_size=(1120, 1120)) -> str:
     Resize an image in base64 format to a given size.
     """
     img = Image.open(BytesIO(base64.b64decode(image_base64)))
-    img = img.resize(target_size) # max image size for the model
+    img = img.resize(target_size)  # max image size for the model
     buffered = BytesIO()
     img.save(buffered, format="PNG")
     img_base64 = base64.b64encode(buffered.getvalue()).decode("utf-8")
