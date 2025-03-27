@@ -15,7 +15,16 @@
 					@click="prevPage"
 					:disabled="currentPage <= 1"
 				/>
-				<span class="w-6rem text-center">Page {{ currentPage }} / {{ pages }}</span>
+				<span class="w-6rem text-center">
+					<InputNumber
+						type="number"
+						v-model.number="currentPage"
+						:min="1"
+						:max="pages"
+						@keydown.enter="goToPage(currentPage)"
+					/>
+					/ {{ pages }}
+				</span>
 				<Button
 					icon="pi pi-arrow-right"
 					size="small"
@@ -23,13 +32,6 @@
 					severity="secondary"
 					@click="nextPage"
 					:disabled="currentPage >= pages"
-				/>
-				<InputNumber
-					type="number"
-					v-model.number="currentPage"
-					:min="1"
-					:max="pages"
-					@keydown.enter="goToPage(currentPage)"
 				/>
 			</div>
 			<div class="search-controls">
