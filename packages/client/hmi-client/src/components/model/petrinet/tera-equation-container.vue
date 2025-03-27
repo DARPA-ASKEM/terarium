@@ -76,6 +76,6 @@ main.is-editing {
 	border: 4px solid transparent;
 	border-radius: var(--border-radius);
 	position: relative;
-	top: 0rem;
+	top: 0;
 }
 </style>

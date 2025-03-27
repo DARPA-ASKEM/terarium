@@ -7,7 +7,7 @@ export interface EquationBlock {
 	text: string;
 	provenance?: {
 		documentId: string;
-		extractionAssetId: string;
+		extractionItemId: string;
 	};
 }
 

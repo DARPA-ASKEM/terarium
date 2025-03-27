@@ -186,7 +186,7 @@
 													class="w-full overflow-y-scroll"
 												/>
 												<span class="mt-3" v-if="equation.asset.provenance"
-													>Page {{ documentExtractionMap.get(equation.asset.provenance.extractionAssetId)?.page }}</span
+													>Page {{ documentExtractionMap.get(equation.asset.provenance.extractionItemId)?.page }}</span
 												>
 											</template>
 											<template #footer v-if="selectedItem === equation.id">
@@ -252,7 +252,7 @@
 													class="w-full overflow-y-scroll"
 												/>
 												<span class="mt-3" v-if="equation.asset.provenance"
-													>Page {{ documentExtractionMap.get(equation.asset.provenance.extractionAssetId)?.page }}</span
+													>Page {{ documentExtractionMap.get(equation.asset.provenance.extractionItemId)?.page }}</span
 												>
 											</template>
 											<template #footer v-if="selectedItem === equation.id">
@@ -516,7 +516,7 @@ const selectEnrichment = (enrichment: Enrichment) => {
 const selectItem = (equation: AssetBlock<EquationBlock>, event?) => {
 	selectedItem.value = equation.id;
 	if (pdfViewer.value && !!equation.asset.provenance) {
-		const pageNumber = documentExtractionMap.value.get(equation.asset.provenance.extractionAssetId)?.page;
+		const pageNumber = documentExtractionMap.value.get(equation.asset.provenance.extractionItemId)?.page;
 		pdfViewer.value.goToPage(pageNumber);
 	}
 
@@ -625,7 +625,7 @@ onMounted(async () => {
 							text: eq.text,
 							provenance: {
 								documentId: document.value!.id!,
-								extractionAssetId: eq.id
+								extractionItemId: eq.id
 							}
 						}
 					};
@@ -737,14 +737,14 @@ async function onRun() {
 			if (!equationsWithSourceMap.has(equation.asset.provenance!.documentId)) {
 				equationsWithSourceMap.set(equation.asset.provenance!.documentId, [
 					{
-						id: equation.asset.provenance!.extractionAssetId,
+						id: equation.asset.provenance!.extractionItemId,
 						equationStr: equation.asset.text
 					}
 				]);
 			} else {
 				const existingEquations = equationsWithSourceMap.get(equation.asset.provenance!.documentId);
 				existingEquations?.push({
-					id: equation.asset.provenance!.extractionAssetId,
+					id: equation.asset.provenance!.extractionItemId,
 					equationStr: equation.asset.text
 				});
 			}
