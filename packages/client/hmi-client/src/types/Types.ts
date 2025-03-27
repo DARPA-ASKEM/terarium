@@ -913,11 +913,11 @@ export interface ProjectGroupPermission {
 }
 
 export interface IProjectUserPermissionDisplayModel {
+    permissionLevel: Permission;
     user: User;
+    givenName: string;
     username: string;
     email: string;
-    permissionLevel: Permission;
-    givenName: string;
     id: string;
     familyName: string;
 }
