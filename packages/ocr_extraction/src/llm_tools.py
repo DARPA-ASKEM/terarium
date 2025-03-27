@@ -2,13 +2,10 @@
 import os
 import json
 import boto3
-import base64
 import botocore
 import logging
-from PIL import Image
-from io import BytesIO
 from openai import OpenAI, AzureOpenAI
-from botocore.exceptions import ClientError
+from src.utils import resize_image
 
 
 TABLE_EXTRACTION_ENHANCE_PROMPT = """Here is the extracted table in html from the provided image.
@@ -99,20 +96,12 @@ class LlamaTools(LlmToolsInterface):
     def name(self) -> str:
         return "AWS Llama (Llama 3.2 90B Instruct)"
 
-    def resize_image(self, image_base64: str, size=(1120, 1120)) -> str:
-        img = Image.open(BytesIO(base64.b64decode(image_base64)))
-        img = img.resize(size) # max image size for the model
-        buffered = BytesIO()
-        img.save(buffered, format="PNG")
-        img_base64 = base64.b64encode(buffered.getvalue()).decode("utf-8")
-        return img_base64
-
     def enhance_table_extraction(self, table_image_uri: str, table_html: str, max_tokens=8192) -> dict:
 
         # Convert the table image to base64 and resize it
         table_image_base64 = table_image_uri.split(",", 1)[-1]  # Take only the Base64 part
         # Llama model only supports images with a maximum size of 1120x1120
-        img_base64 = self.resize_image(table_image_base64, (1120, 1120))
+        img_base64 = resize_image(table_image_base64, (1120, 1120))
 
         prompt = f"\nTable HTML: {table_html}\n {TABLE_EXTRACTION_ENHANCE_PROMPT}\n"
 
@@ -140,7 +129,6 @@ class LlamaTools(LlmToolsInterface):
         })
 
         logging.info(f"Enhancing table extraction using {self.GPT_MODEL} model...")
-        logging.info(f"Providing the table image data uri isn't supported by the model. Ignoring the image URL.")
         response = client.invoke_model(modelId=self.GPT_MODEL, body=request)
 
         # Decode the response body.
