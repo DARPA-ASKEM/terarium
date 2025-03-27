@@ -1,0 +1,79 @@
+---
+services:
+  keycloak:
+    container_name: keycloak
+    image: keycloak/keycloak:26.1
+    networks:
+      - terarium
+    ports:
+      - "8081:8081"
+    restart: always
+    healthcheck:
+      # Keycloak no longer has curl, https://stackoverflow.com/questions/58168955/testing-minimal-docker-containers-with-healthcheck/76790330#76790330
+      test:
+        [
+          "CMD-SHELL",
+          "exec 3<>/dev/tcp/127.0.0.1/8081;echo -e \"GET /health/ready HTTP/1.1\r
+
+            host: http://localhost\r
+
+            Connection: close\r
+
+            \r
+
+            \" >&3;grep \"HTTP/1.1 200 OK\" <&3"
+        ]
+      interval: '3s'
+      timeout: '3s'
+      retries: 30
+    command: [ 'start-dev', '--http-port=8081' ]
+    environment:
+      KC_DB: 'postgres'
+      KC_DB_URL: 'jdbc:postgresql://postgres/postgres'
+      KC_DB_URL_HOST: 'postgres'
+      KC_DB_USERNAME: 'postgres'
+      KC_DB_PASSWORD: 'postgres'
+      KC_PROXY_HEADERS: 'xforwarded'
+      KC_BOOTSTRAP_ADMIN_USERNAME: 'admin'
+      KC_BOOTSTRAP_ADMIN_PASSWORD: 'admin123'
+      KC_HOSTNAME: 'keycloak'
+      KC_HOSTNAME_PORT: '8081'
+      KC_HOSTNAME_ADMIN_URL: 'http://${local_host_name}:8081'
+      KC_HTTP_ENABLED: 'true'
+      KC_HOSTNAME_STRICT: 'false'
+      KC_HOSTNAME_STRICT_HTTPS: 'false'
+    depends_on:
+      keycloak-init:
+        condition: service_completed_successfully
+      postgres:
+        condition: service_healthy
+    volumes:
+      - ./realm/:/data/
+    extra_hosts:
+      - "${local_host_name}:host-gateway"
+
+  keycloak-init:
+    container_name: keycloak-init
+    image: keycloak/keycloak:26.1
+    networks:
+      - terarium
+    command: [ 'import', '--dir', '/data', '--override', 'true' ]
+    volumes:
+      - ./realm:/data
+    environment:
+      KC_DB: 'postgres'
+      KC_DB_URL: 'jdbc:postgresql://postgres/postgres'
+      KC_DB_USERNAME: 'postgres'
+      KC_DB_PASSWORD: 'postgres'
+      KC_PROXY_HEADERS: 'xforwarded'
+      KC_BOOTSTRAP_ADMIN_USERNAME: 'admin'
+      KC_BOOTSTRAP_ADMIN_PASSWORD: 'admin123'
+      KC_HOSTNAME: 'keycloak'
+      KC_HOSTNAME_PORT: '8081'
+      KC_HOSTNAME_ADMIN_URL: 'http://keycloak:8081'
+      KC_HTTP_ENABLED: 'true'
+      KC_HOSTNAME_STRICT: 'false'
+      KC_HOSTNAME_STRICT_HTTPS: 'false'
+    depends_on:
+      postgres:
+        condition: service_healthy
