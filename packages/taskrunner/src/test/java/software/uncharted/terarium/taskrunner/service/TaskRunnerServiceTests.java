@@ -208,7 +208,7 @@ public class TaskRunnerServiceTests extends TaskRunnerApplicationTests {
 
 		Assertions.assertEquals(3, responses.size());
 		Assertions.assertEquals(ProgressState.RUNNING, responses.get(0).getStatus());
-		Assertions.assertEquals(ProgressState.CANCELLED, responses.get(1).getStatus());
+		Assertions.assertEquals(ProgressState.CANCELLED, responses.get(2).getStatus());
 	}
 
 	@Test
