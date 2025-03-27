@@ -52,3 +52,4 @@ Note: sampling combinations in PyCIEMSS can result in numerical instability, whe
   -It should be clear that the optimize did not meet the success criteria. 
   -A value of ~0.0003 is what we expect to see as our result. This will be trending towards 0.0002 if we provide it more iterations. (lowest allowed)
   -The success criteria chart should clearly show the average of the worst 5% is higher than 20,000
+  Note: If we run a simulation setting the value to `.0002` at `118` (lowest possible) this will still fail to keep the worst %5 under 20,000
