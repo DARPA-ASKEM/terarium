@@ -182,7 +182,7 @@
 													v-model="equation.asset.text"
 													autoResize
 													rows="1"
-													placeholder="Add an expression with LaTeX"
+													placeholder="Add LaTeX expression"
 													class="w-full overflow-y-scroll"
 												/>
 												<span class="mt-3" v-if="equation.asset.provenance"
@@ -248,7 +248,7 @@
 													v-model="equation.asset.text"
 													autoResize
 													rows="1"
-													placeholder="Add an expression with LaTeX"
+													placeholder="Add LaTeX expression"
 													class="w-full overflow-y-scroll"
 												/>
 												<span class="mt-3" v-if="equation.asset.provenance"
