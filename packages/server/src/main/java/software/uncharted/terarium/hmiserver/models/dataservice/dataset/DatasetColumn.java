@@ -31,7 +31,6 @@ import software.uncharted.terarium.hmiserver.utils.JsonUtil;
 /** Represents a column in a dataset */
 @Data
 @EqualsAndHashCode(callSuper = true)
-@Accessors
 @TSModel
 @Entity
 public class DatasetColumn extends TerariumEntity implements GroundedSemantic {
