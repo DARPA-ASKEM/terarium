@@ -1,6 +1,6 @@
 ## OCR Extraction
 
-These environment vars needs to be defined using specific platforms:
+These environment vars need to be defined when using specific services:
 
 Azure 
 ```
