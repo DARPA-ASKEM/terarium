@@ -12,8 +12,6 @@ import { getModelConfigurationById } from '@/services/model-configurations';
 import { getInterventionPolicyById } from '@/services/intervention-policy';
 import { ModelConfiguration } from '@/types/Types';
 import {
-	Criterion,
-	defaultCriterion,
 	InterventionPolicyGroupForm,
 	OptimizeCiemssOperationState
 } from '../../ops/optimize-ciemss/optimize-ciemss-operation';
@@ -113,18 +111,6 @@ export class PolicyDesignScenario extends BaseScenario {
 
 	setOptimizeState(optimizeState: OptimizeCiemssOperationState) {
 		this.optimizeState = optimizeState;
-	}
-
-	setOptimizeCriteriaForm(index: number, optimizeCriteriaForm: Criterion) {
-		this.optimizeState.constraintGroups[index] = optimizeCriteriaForm;
-	}
-
-	deleteOptimizeCriterionGroupForm(index: number) {
-		this.optimizeState.constraintGroups.splice(index, 1);
-	}
-
-	addOptimizeCriterionGroupForm() {
-		this.optimizeState.constraintGroups.push(defaultCriterion);
 	}
 
 	updateInterventionPolicyGroupForm(index: number, config: InterventionPolicyGroupForm) {
