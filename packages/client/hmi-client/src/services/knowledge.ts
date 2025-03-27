@@ -51,7 +51,7 @@ export const equationsToAMR = async (request: EquationsToAMRRequest): Promise<st
 		equationsWithSource: request.equationsWithSource ? Object.fromEntries(request.equationsWithSource) : {}
 	};
 	try {
-		const response: AxiosResponse<string> = await API.post(`/knowledge/equations-to-model-new`, payload);
+		const response: AxiosResponse<string> = await API.post(`/knowledge/equations-to-model`, payload);
 		return response.data;
 	} catch (error: unknown) {
 		logger.error(error, { showToast: false });
