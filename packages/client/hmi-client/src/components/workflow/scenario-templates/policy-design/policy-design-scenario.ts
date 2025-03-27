@@ -37,7 +37,7 @@ export class PolicyDesignScenario extends BaseScenario {
 	constructor() {
 		super();
 		this.workflowName = PolicyDesignScenario.templateName;
-		this.optimizeState = OptimizeOp.initState();
+		this.optimizeState = OptimizeOp.initState!();
 	}
 
 	toJSON() {
@@ -90,7 +90,6 @@ export class PolicyDesignScenario extends BaseScenario {
 			const state = this.optimizeState;
 			const interventionPolicy = await getInterventionPolicyById(interventionPolicyId);
 			if (interventionPolicy) {
-				console.log('Updating optimize state;');
 				this.optimizeState.interventionPolicyGroups = setInterventionPolicyGroups(
 					state,
 					interventionPolicy,

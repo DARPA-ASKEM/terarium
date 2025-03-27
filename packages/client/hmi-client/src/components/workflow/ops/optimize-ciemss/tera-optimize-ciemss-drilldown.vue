@@ -788,11 +788,7 @@ const initialize = async () => {
 		getInterventionPolicyById(policyId).then((interventionPolicy) => {
 			selectedInterventionPolicy.value = interventionPolicy;
 			if (interventionPolicy && modelConfiguration.value) {
-				const state = setInterventionPolicyGroups(
-					_.cloneDeep(props.node.state),
-					interventionPolicy,
-					modelConfiguration.value
-				);
+				const state = setInterventionPolicyGroups(props.node.state, interventionPolicy, modelConfiguration.value);
 				emit('update-state', state);
 			}
 		});

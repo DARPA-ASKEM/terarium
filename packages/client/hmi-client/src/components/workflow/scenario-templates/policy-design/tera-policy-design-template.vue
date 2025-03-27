@@ -151,13 +151,13 @@ watch(
 
 			// Set model state and obs:
 			if (model.value) {
+				// States:
 				const modelStates = model.value.model.states;
 				modelStateAndObsOptions.value = modelStates.map((state: any) => ({
 					label: state.id,
 					value: `${state.id}_state`
 				}));
-
-				// Add obs:
+				// Obs:
 				const modelObs = model.value.semantics?.ode.observables;
 				if (modelObs) {
 					modelStateAndObsOptions.value.push(
@@ -168,8 +168,6 @@ watch(
 					);
 				}
 			}
-
-			console.log(allInterventionPolicyOptions.value);
 		}
 
 		isFetchingModelData.value = false;

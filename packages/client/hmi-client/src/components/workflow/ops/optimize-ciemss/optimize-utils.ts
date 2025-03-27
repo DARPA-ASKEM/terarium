@@ -279,10 +279,11 @@ export const resolveInterventionValue = (intervention: StaticIntervention, model
 };
 
 export function setInterventionPolicyGroups(
-	state: OptimizeCiemssOperationState,
+	providedState: OptimizeCiemssOperationState,
 	interventionPolicy: InterventionPolicy,
 	modelConfiguration: ModelConfiguration
-) {
+): OptimizeCiemssOperationState {
+	const state = _.cloneDeep(providedState);
 	// If already set + not changed since set, do not reset.
 	if (state.interventionPolicyGroups.length > 0 && state.interventionPolicyGroups[0].id === interventionPolicy.id) {
 		return state;
