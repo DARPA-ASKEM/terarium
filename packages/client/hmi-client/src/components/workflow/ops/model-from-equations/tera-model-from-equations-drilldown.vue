@@ -156,8 +156,7 @@
 											:class="['asset-panel', { selected: selectedItem === equation.id }]"
 										>
 											<template #header>
-												<h6 v-if="equation.asset.pageNumber">Page {{ equation.asset.pageNumber }}</h6>
-												<h6 v-else-if="equation.asset.isEditedByAI">Edited by AI</h6>
+												<h6 v-if="equation.asset.provenance">Edited by AI</h6>
 												<h6 v-else>Manually entered</h6>
 												<Checkbox
 													class="ml-auto"
@@ -178,14 +177,18 @@
 													</div>
 												</div>
 											</section>
-											<Textarea
-												v-if="selectedItem === equation.id"
-												v-model="equation.asset.text"
-												autoResize
-												rows="1"
-												placeholder="Add an expression with LaTeX"
-												class="w-full overflow-y-scroll"
-											/>
+											<template v-if="selectedItem === equation.id">
+												<Textarea
+													v-model="equation.asset.text"
+													autoResize
+													rows="1"
+													placeholder="Add an expression with LaTeX"
+													class="w-full overflow-y-scroll"
+												/>
+												<span class="mt-3" v-if="equation.asset.provenance"
+													>Page {{ documentExtractionMap.get(equation.asset.provenance.extractionAssetId)?.page }}</span
+												>
+											</template>
 											<template #footer v-if="selectedItem === equation.id">
 												<footer class="flex">
 													<Button label="Close" outlined severity="secondary" @click.stop="selectedItem = ''" />
@@ -219,8 +222,7 @@
 											:class="['asset-panel', { selected: selectedItem === equation.id }]"
 										>
 											<template #header>
-												<h6 v-if="equation.asset.pageNumber">Page {{ equation.asset.pageNumber }}</h6>
-												<h6 v-else-if="equation.asset.isEditedByAI">Edited by AI</h6>
+												<h6 v-if="equation.asset.provenance">Edited by AI</h6>
 												<h6 v-else>Manually entered</h6>
 												<Checkbox
 													class="flex-shrink-0 ml-auto"
@@ -241,14 +243,18 @@
 													</div>
 												</div>
 											</section>
-											<Textarea
-												v-if="selectedItem === equation.id"
-												v-model="equation.asset.text"
-												autoResize
-												rows="1"
-												placeholder="Add an expression with LaTeX"
-												class="w-full overflow-y-scroll"
-											/>
+											<template v-if="selectedItem === equation.id">
+												<Textarea
+													v-model="equation.asset.text"
+													autoResize
+													rows="1"
+													placeholder="Add an expression with LaTeX"
+													class="w-full overflow-y-scroll"
+												/>
+												<span class="mt-3" v-if="equation.asset.provenance"
+													>Page {{ documentExtractionMap.get(equation.asset.provenance.extractionAssetId)?.page }}</span
+												>
+											</template>
 											<template #footer v-if="selectedItem === equation.id">
 												<footer class="flex">
 													<Button label="Close" outlined severity="secondary" @click.stop="selectedItem = ''" />
@@ -429,6 +435,7 @@ import {
 	Enrichment,
 	EnrichmentSource,
 	EnrichmentTarget,
+	ExtractionItem,
 	TaskResponse,
 	TaskStatus,
 	type Card,
@@ -436,7 +443,7 @@ import {
 	type Model
 } from '@/types/Types';
 import _, { cloneDeep, isEmpty } from 'lodash';
-import { equationsToAMR, getCleanedEquations, type EquationsToAMRRequest } from '@/services/knowledge';
+import { equationsToAMR, type EquationsToAMRRequest } from '@/services/knowledge';
 import { downloadDocumentAsset, getDocumentAsset, getDocumentFileAsText } from '@/services/document-assets';
 import { enrichModelMetadata, equationsFromImage } from '@/services/goLLM';
 import { getModel, updateModel } from '@/services/model';
@@ -448,7 +455,6 @@ import TeraSliderPanel from '@/components/widgets/tera-slider-panel.vue';
 import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.vue';
 import TeraPdfEmbed from '@/components/widgets/tera-pdf-embed.vue';
 import TeraTextEditor from '@/components/documents/tera-text-editor.vue';
-import { logger } from '@/utils/logger';
 import TeraModal from '@/components/widgets/tera-modal.vue';
 import { createCopyTextToClipboard } from '@/utils/clipboard';
 import TabPanel from 'primevue/tabpanel';
@@ -509,8 +515,9 @@ const selectEnrichment = (enrichment: Enrichment) => {
 
 const selectItem = (equation: AssetBlock<EquationBlock>, event?) => {
 	selectedItem.value = equation.id;
-	if (pdfViewer.value && _.isNumber(equation.asset.pageNumber)) {
-		pdfViewer.value.goToPage(equation.asset.pageNumber);
+	if (pdfViewer.value && !!equation.asset.provenance) {
+		const pageNumber = documentExtractionMap.value.get(equation.asset.provenance.extractionAssetId)?.page;
+		pdfViewer.value.goToPage(pageNumber);
 	}
 
 	// Prevent the child’s click handler from firing
@@ -539,7 +546,11 @@ const enrichments = computed(() => selectedModel.value?.metadata?.enrichments ??
 
 const outputArrowDirection = computed(() => (!isDocViewerOpen.value && !isInputOpen.value ? 'left' : 'right'));
 
-const documentEquations = ref<AssetBlock<EquationBlock>[]>();
+const documentExtractionMap = computed(() =>
+	document.value
+		? new Map(document.value.extraction?.extractions.map((ex) => [ex.id, ex]))
+		: new Map<string, ExtractionItem>()
+);
 
 const exampleEquations = Object.freeze({
 	SIR: [
@@ -601,30 +612,25 @@ onMounted(async () => {
 		}
 		isFetchingPDF.value = false;
 		const state = cloneDeep(props.node.state);
-		if (state.excludedEquations.length) return;
+		if (!_.isEmpty(allEquations.value)) return;
 
-		if (document.value?.metadata?.equations) {
-			documentEquations.value = document.value.metadata.equations.flatMap((page, index) =>
-				page.map((equation) => {
-					const asset: AssetBlock<EquationBlock> = {
+		if (document.value?.extraction) {
+			clonedState.value.excludedEquations = document.value.extraction.extractions
+				.filter((ex) => ex.subType === 'formula')
+				.map((eq, index) => {
+					const equationBlock: AssetBlock<EquationBlock> = {
 						id: uuidv4(),
-						name: 'Equation',
+						name: `Equation ${index}`,
 						asset: {
-							pageNumber: index + 1,
-							text: equation
+							text: eq.text,
+							provenance: {
+								documentId: document.value!.id!,
+								extractionAssetId: eq.id
+							}
 						}
 					};
-					return asset;
-				})
-			);
-		}
-		if (documentEquations.value && documentEquations.value?.length > 0) {
-			clonedState.value.excludedEquations = documentEquations.value.map((e, index) => ({
-				id: uuidv4(),
-				name: `${e.name} ${index}`,
-				asset: { text: e.asset.text, pageNumber: e.asset.pageNumber }
-			}));
-
+					return equationBlock;
+				});
 			state.excludedEquations = clonedState.value.excludedEquations;
 		}
 
@@ -717,47 +723,52 @@ function onCheckBoxChange(equation: AssetBlock<EquationBlock>, action: 'include'
 async function onRun() {
 	isOutputOpen.value = true;
 	isModelLoading.value = true;
-	const equationsText = clonedState.value.includedEquations.map((e) => e.asset.text);
-	const response = await getCleanedEquations(equationsText);
-	if (!response || isEmpty(response.cleanedEquations)) {
-		logger.error('Error cleaning equations, none were returned.');
-		return;
-	}
-	const { cleanedEquations, wasCleaned } = response;
+
+	// Use only equations without provenance (those created manually)
+	const equationsText = clonedState.value.includedEquations
+		.filter((eq) => !eq.asset.provenance)
+		.map((e) => e.asset.text);
+
+	// Use only equations with provenance (those created from a document)
+	const equationsWithSourceMap: EquationsToAMRRequest['equationsWithSource'] = new Map();
+	clonedState.value.includedEquations
+		.filter((eq) => !!eq.asset.provenance)
+		.forEach((equation) => {
+			if (!equationsWithSourceMap.has(equation.asset.provenance!.documentId)) {
+				equationsWithSourceMap.set(equation.asset.provenance!.documentId, [
+					{
+						id: equation.asset.provenance!.extractionAssetId,
+						equationStr: equation.asset.text
+					}
+				]);
+			} else {
+				const existingEquations = equationsWithSourceMap.get(equation.asset.provenance!.documentId);
+				existingEquations?.push({
+					id: equation.asset.provenance!.extractionAssetId,
+					equationStr: equation.asset.text
+				});
+			}
+		});
 
 	const request: EquationsToAMRRequest = {
-		equations: cleanedEquations,
+		equations: equationsText,
+		equationsWithSource: equationsWithSourceMap,
 		documentId: document.value?.id,
 		workflowId: props.node.workflowId,
 		nodeId: props.node.id
 	};
 
 	const modelId = await equationsToAMR(request);
-	// If there isn't a modelId returned at least show the cleaned equations
-	if (modelId) {
-		clonedState.value.modelId = modelId;
-		const enrichResponse = await enrichModelMetadata(modelId, document.value?.id ?? '', false);
-		// FIXME: The response can be returned right away and this may not get caught in the node subscriber since the model id isn't populated in time
-		if (enrichResponse.status === TaskStatus.Success) {
-			fetchModel();
-		}
+	if (!modelId) {
+		isModelLoading.value = false;
+		return;
 	}
 
-	// If the equations were cleaned that means these cleaned equations should be added to the input list
-	// So uncheck the old ones and check the new cleaned ones
-	if (wasCleaned) {
-		clonedState.value.excludedEquations.push(...clonedState.value.includedEquations);
-
-		clonedState.value.includedEquations = [];
-
-		// Replace the unchecked equations with the cleaned equations
-		clonedState.value.includedEquations.push(
-			...cleanedEquations.map((equation, index) => ({
-				id: uuidv4(),
-				name: `Equation ${clonedState.value.includedEquations.length + index}`,
-				asset: { text: equation, isEditedByAI: true }
-			}))
-		);
+	clonedState.value.modelId = modelId;
+	const enrichResponse = await enrichModelMetadata(modelId, document.value?.id ?? '', false);
+	// FIXME: The response can be returned right away and this may not get caught in the node subscriber since the model id isn't populated in time
+	if (enrichResponse.status === TaskStatus.Success) {
+		fetchModel();
 	}
 
 	emit('append-output', {

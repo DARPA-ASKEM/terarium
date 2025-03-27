@@ -5,9 +5,10 @@ const DOCUMENTATION_URL = 'https://documentation.terarium.ai/modeling/create-mod
 
 export interface EquationBlock {
 	text: string;
-	isEditedByAI?: boolean;
-	pageNumber?: number;
-	extractionError?: boolean;
+	provenance?: {
+		documentId: string;
+		extractionAssetId: string;
+	};
 }
 
 export interface ModelFromEquationsState {
