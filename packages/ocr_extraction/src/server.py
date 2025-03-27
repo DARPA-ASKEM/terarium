@@ -1,12 +1,11 @@
 import logging
-import sys
-
+import json
 from fastapi import FastAPI, File, UploadFile, Form
 from fastapi.responses import JSONResponse
 from io import BytesIO
 
 from docling.datamodel.base_models import DocumentStream, InputFormat
-from docling.datamodel.pipeline_options import PdfPipelineOptions, TableFormerMode, RapidOcrOptions
+from docling.datamodel.pipeline_options import PdfPipelineOptions, TableFormerMode, RapidOcrOptions, AcceleratorDevice, AcceleratorOptions
 from docling.document_converter import DocumentConverter, PdfFormatOption
 
 from texteller.inference_model import InferenceModel
@@ -14,7 +13,7 @@ from texteller.inference_model import InferenceModel
 from src.table_extraction import extract_tables, normalize_bbox
 from src.llm_tools import get_llm_tools
 
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(level=logging.DEBUG)
 
 extractor = "docling"
 
@@ -32,6 +31,12 @@ pipeline_options.table_structure_options.do_cell_matching = True
 pipeline_options.table_structure_options.mode = TableFormerMode.ACCURATE
 pipeline_options.do_ocr = True
 pipeline_options.ocr_options = RapidOcrOptions(force_full_page_ocr=True)
+
+accelerator_options = AcceleratorOptions(
+    num_threads=8, device=AcceleratorDevice.AUTO
+)
+pipeline_options.accelerator_options = accelerator_options
+
 
 converter = DocumentConverter(
     format_options={
@@ -57,6 +62,15 @@ async def process_and_predict(file: UploadFile = File(...), llm_model: str = For
     docstream = DocumentStream(name="test", stream=BytesIO(file_bytes))
     result = converter.convert(docstream)
 
+    logging.info("Done docling extraction")
+    logging.info("Docling extraction metrics")
+    for key, value in result.timings.items():
+        try:
+            logging.info(f"{key}: {json.dumps(value)}")
+        except Exception:
+            logging.info(f"{key}={value.scope} avg={value.avg()}")
+    logging.info("")
+
 
     ################################################################################
     # Do second pass
@@ -81,7 +95,7 @@ async def process_and_predict(file: UploadFile = File(...), llm_model: str = For
             latex_extraction_dict[text_ref] = latex_str
 
     # - Extract tables using GPT model
-    logging.info(f"Starting table extraction...")
+    logging.info("Starting table extraction...")
     table_extraction_dict = extract_tables(result, llm_tools)
 
     ################################################################################
