@@ -8,7 +8,7 @@
 			<tera-model-diagram :model="model" :mmt-data="mmtData" />
 		</AccordionTab>
 		<AccordionTab header="Model equations">
-			<tera-model-equation :model="model" :is-editable="false" @model-updated="emit('update-model')" />
+			<tera-model-equation :model="model" @model-updated="emit('update-model')" />
 		</AccordionTab>
 		<AccordionTab v-if="!isEmpty(relatedTerariumArtifacts)" header="Associated resources">
 			<DataTable :value="relatedTerariumModels">

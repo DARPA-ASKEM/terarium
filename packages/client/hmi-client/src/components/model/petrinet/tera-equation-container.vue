@@ -1,22 +1,5 @@
 <template>
 	<main :class="isEditingStyle">
-		<section v-if="isEditable" class="controls">
-			<Button v-if="isEditing" class="p-button-sm p-button-outlined" @click="emit('cancel-edit')" label="Cancel" />
-			<Button
-				v-if="isEditing"
-				class="p-button-sm"
-				:disabled="disableSave"
-				@click="emit('update-model-from-equation')"
-				label="Save"
-			/>
-			<Button
-				v-else
-				class="p-button-sm p-button-outlined"
-				@click="emit('start-editing')"
-				:loading="!!isUpdating"
-				label="Edit"
-			/>
-		</section>
 		<section class="math-editor-container">
 			<slot name="math-editor" />
 			<Button
@@ -37,17 +20,15 @@ import Button from 'primevue/button';
 
 const props = defineProps<{
 	isEditing: boolean;
-	isEditable: boolean;
 	disableSave?: boolean;
 	equationType?: string;
 	isUpdating?: boolean;
 }>();
 
-const emit = defineEmits(['cancel-edit', 'add-equation', 'start-editing', 'update-model-from-equation']);
+const emit = defineEmits(['cancel-edit', 'add-equation', 'start-editing']);
 
 const equationType = computed(() => props.equationType ?? 'equation');
 const isEditingStyle = computed(() => (props.isEditing ? 'is-editing' : ''));
-const mathContainerStyle = computed(() => (props.isEditable ? '-1rem' : '0rem'));
 </script>
 
 <style scoped>
@@ -95,6 +76,6 @@ main.is-editing {
 	border: 4px solid transparent;
 	border-radius: var(--border-radius);
 	position: relative;
-	top: v-bind('mathContainerStyle');
+	top: 0;
 }
 </style>
