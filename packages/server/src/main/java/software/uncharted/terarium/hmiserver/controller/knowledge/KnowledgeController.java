@@ -11,7 +11,9 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import jakarta.annotation.PostConstruct;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
@@ -138,6 +140,101 @@ public class KnowledgeController {
 		private UUID documentId;
 		private UUID workflowId;
 		private UUID nodeId;
+	}
+
+	@Data
+	static class EquationRef {
+
+		private String id;
+		private String equationStr;
+	}
+
+	@Data
+	static class EquationToModelInput {
+
+		private UUID nodeId;
+		private UUID workflowId;
+		private Map<UUID, List<EquationRef>> equationsWithSource;
+		private List<String> equations;
+	}
+
+	@PostMapping("/equations-to-model-new")
+	@Secured(Roles.USER)
+	@HasProjectAccess(level = Schema.Permission.WRITE)
+	public ResponseEntity<UUID> equationsToModelNew(
+		@RequestBody final EquationToModelInput req,
+		@RequestParam(name = "project-id", required = false) final UUID projectId
+	) {
+		// Collect equations
+		List<String> equations = new ArrayList();
+		Map<UUID, List<String>> modelProvenance = new HashMap();
+
+		if (req.getEquationsWithSource() != null) {
+			for (var entry : req.getEquationsWithSource().entrySet()) {
+				List<String> refs = new ArrayList();
+				for (var equationRef : entry.getValue()) {
+					equations.add(equationRef.getEquationStr());
+					refs.add(equationRef.getId());
+				}
+				modelProvenance.put(entry.getKey(), refs);
+			}
+		}
+		if (req.getEquations() != null) {
+			for (var equationStr : req.getEquations()) {
+				equations.add(equationStr);
+			}
+		}
+
+		final TaskRequest latexToSympyRequest;
+		final TaskResponse latexToSympyResponse;
+		final TaskRequest sympyToAMRRequest;
+		final TaskResponse sympyToAMRResponse;
+		final Model responseAMR;
+
+		try {
+			// 1. LaTeX to sympy code
+			latexToSympyRequest = createLatexToSympyTask(mapper.valueToTree(equations));
+			latexToSympyResponse = taskService.runTaskSync(latexToSympyRequest);
+
+			if (latexToSympyResponse.getStatus() != TaskStatus.SUCCESS) {
+				log.error("Task Failed", latexToSympyResponse.getStderr());
+				throw new ResponseStatusException(HttpStatus.BAD_REQUEST, latexToSympyResponse.getStderr());
+			}
+
+			// 2. hand off
+			final String code = extractCodeFromLatexToSympy(latexToSympyResponse);
+
+			// 3. sympy code string to amr json
+			sympyToAMRRequest = createSympyToAMRTask(code);
+			sympyToAMRResponse = taskService.runTaskSync(sympyToAMRRequest);
+			if (sympyToAMRResponse.getStatus() != TaskStatus.SUCCESS) {
+				log.error("Task Failed", sympyToAMRResponse.getStderr());
+				throw new ResponseStatusException(HttpStatus.BAD_REQUEST, sympyToAMRResponse.getStderr());
+			}
+
+			final JsonNode taskResponseJSON = mapper.readValue(sympyToAMRResponse.getOutput(), JsonNode.class);
+			final ObjectNode amrNode = taskResponseJSON.get("response").get("amr").deepCopy();
+			responseAMR = mapper.convertValue(amrNode, Model.class);
+		} catch (final Exception e) {
+			log.error(messages.get("task.mira.internal-error"), e);
+			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("task.mira.internal-error"));
+		}
+
+		// Inject provenance information into metadata and save model
+		if (responseAMR != null) {
+			responseAMR.getMetadata().setModelProvenance(modelProvenance);
+		}
+
+		// Save model
+		final Model model;
+		try {
+			model = modelService.createAsset(responseAMR, projectId);
+		} catch (final IOException e) {
+			log.error("An error occurred while trying to create a model.", e);
+			throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, messages.get("postgres.service-unavailable"));
+		}
+
+		return ResponseEntity.ok(model.getId());
 	}
 
 	/**
@@ -312,13 +409,22 @@ public class KnowledgeController {
 		@RequestParam(name = "project-id", required = false) final UUID projectId,
 		@RequestParam(name = "mode", required = false, defaultValue = "ASYNC") final TaskMode mode
 	) {
+		// FIXME: Running both new and old extractions for now. Swtich over to new-version once all
+		// enrichment points are moved over
 		final Future<DocumentAsset> f = extractionService.extractPDFAndApplyToDocument(documentId, projectId);
+		final Future<DocumentAsset> newF = extractionService.extractPDFAndApplyToDocumentNew(documentId, projectId);
 		if (mode == TaskMode.SYNC) {
 			try {
 				f.get();
 			} catch (InterruptedException | ExecutionException e) {
 				log.error("Error extracting PDF", e);
 				throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("document.extraction.failed"));
+			}
+
+			try {
+				newF.get();
+			} catch (Exception e) {
+				e.printStackTrace();
 			}
 		}
 		return ResponseEntity.accepted().build();

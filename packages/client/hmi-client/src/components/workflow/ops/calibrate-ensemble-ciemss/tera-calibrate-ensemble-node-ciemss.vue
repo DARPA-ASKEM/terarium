@@ -152,6 +152,7 @@ const pollResult = async (runId: string) => {
 
 	if (pollerResults.state === PollerState.Cancelled) {
 		state.currentProgress = 0;
+		state.inProgressPreForecastId = '';
 		state.inProgressForecastId = '';
 		state.inProgressCalibrationId = '';
 		poller.stop();

@@ -211,6 +211,14 @@ export function getStates(model: Model): (State & RegNetVertex)[] {
 	}
 }
 
+export function getTransitions(model: Model): Transition[] {
+	const modelType = getModelType(model);
+	if (modelType === AMRSchemaNames.PETRINET) {
+		return model.model?.transitions ?? [];
+	}
+	return [];
+}
+
 /**
  * Retrieves the metadata for a specific initial in the model.
  * @param {Model} model - The model object.

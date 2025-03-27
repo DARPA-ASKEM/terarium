@@ -1,7 +1,13 @@
 import _, { groupBy, max, minBy, maxBy, sum } from 'lodash';
 import { computed, Ref } from 'vue';
 import { WorkflowNode } from '@/types/workflow';
-import { DataArray, getRunResult, getSimulation, parsePyCiemssMap } from '@/services/models/simulation-service';
+import {
+	DataArray,
+	getRunResult,
+	getSimulation,
+	parsePyCiemssMap,
+	processAndSortSamplesByTimepoint
+} from '@/services/models/simulation-service';
 import {
 	DynamicIntervention,
 	Intervention,
@@ -52,6 +58,7 @@ export function usePreparedChartInputs(
 		// Merge before/after for chart
 		const result = mergeResults(preResult, postResult);
 		const resultSummary = mergeResults(preResultSummary, postResultSummary);
+		const resultGroupByTimepoint = processAndSortSamplesByTimepoint(result);
 
 		const translationMap: Record<string, string> = {};
 		Object.keys(pyciemssMap).forEach((key) => {
@@ -62,6 +69,7 @@ export function usePreparedChartInputs(
 		return {
 			result,
 			resultSummary,
+			resultGroupByTimepoint,
 			translationMap,
 			pyciemssMap
 		};

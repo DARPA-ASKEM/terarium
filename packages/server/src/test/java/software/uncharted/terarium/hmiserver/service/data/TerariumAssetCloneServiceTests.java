@@ -79,10 +79,6 @@ public class TerariumAssetCloneServiceTests extends TerariumApplicationTests {
 		return grounding;
 	}
 
-	static DocumentExtraction createDocExtraction() {
-		return new DocumentExtraction().setFileName("Hello World.pdf").setAssetType(ExtractionAssetType.FIGURE);
-	}
-
 	static DocumentAsset createDocument(final String key) throws Exception {
 		final DocumentAsset documentAsset = new DocumentAsset();
 		documentAsset.setName("test-document-name-" + key);
@@ -94,8 +90,6 @@ public class TerariumAssetCloneServiceTests extends TerariumApplicationTests {
 		documentAsset.setMetadata(new HashMap<>());
 		documentAsset.getMetadata().put("hello", objectMapper.readTree("{\"hello\": \"world-" + key + "\"}"));
 		documentAsset.setPublicAsset(true);
-		documentAsset.setAssets(new ArrayList<>());
-		documentAsset.getAssets().add(createDocExtraction());
 		return documentAsset;
 	}
 

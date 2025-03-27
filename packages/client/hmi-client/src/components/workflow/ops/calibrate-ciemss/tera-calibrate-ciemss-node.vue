@@ -207,6 +207,7 @@ const pollResult = async (runId: string) => {
 	state.errorMessage = { name: '', value: '', traceback: '' };
 
 	if (pollerResults.state === PollerState.Cancelled) {
+		state.inProgressPreForecastId = '';
 		state.inProgressForecastId = '';
 		state.inProgressCalibrationId = '';
 		poller.stop();
@@ -395,6 +396,7 @@ watch(
 				parameterSemanticList: _.cloneDeep(baseConfig.parameterSemanticList),
 				initialSemanticList: _.cloneDeep(baseConfig.initialSemanticList),
 				inferredParameterList: inferredParameters,
+				temporalContext: baseConfig.temporalContext,
 				temporary: true
 			};
 

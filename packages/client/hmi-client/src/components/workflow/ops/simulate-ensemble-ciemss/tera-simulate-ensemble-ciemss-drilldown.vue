@@ -18,7 +18,7 @@
 					<div class="toolbar">
 						<p>Click Run to start the simulation.</p>
 						<span class="flex gap-2">
-							<tera-pyciemss-cancel-button class="mr-auto" :simulation-run-id="cancelRunId" />
+							<tera-pyciemss-cancel-button class="mr-auto" :simulation-run-ids="cancelRunIds" />
 							<Button label="Run" icon="pi pi-play" @click="runEnsemble" :disabled="false" />
 						</span>
 					</div>
@@ -197,19 +197,6 @@
 							</div>
 						</AccordionTab>
 					</Accordion>
-				</template>
-			</tera-slider-panel>
-		</tera-drilldown-section>
-
-		<tera-drilldown-section :tabName="DrilldownTabs.Notebook" class="input-config">
-			<tera-slider-panel
-				class="input-config"
-				v-model:is-open="isSidebarOpen"
-				header="Simulation ensemble settings"
-				content-width="420px"
-			>
-				<template #content>
-					<div class="mt-3 ml-4 mr-2">Under construction.</div>
 				</template>
 			</tera-slider-panel>
 		</tera-drilldown-section>
@@ -409,7 +396,9 @@ const allModelConfigurations = ref<ModelConfiguration[]>([]);
 const newSolutionMappingKey = ref<string>('');
 const runResults = ref<{ [runId: string]: DataArray }>({});
 const runResultsSummary = ref<{ [runId: string]: DataArray }>({});
-const cancelRunId = computed(() => props.node.state.inProgressForecastId);
+const cancelRunIds = computed(() =>
+	!_.isEmpty(props.node.state.inProgressForecastId) ? [props.node.state.inProgressForecastId] : []
+);
 // -------------- Charts && chart settings ----------------
 const chartWidthDiv = ref(null);
 const pyciemssMap = ref<Record<string, string>>({});
