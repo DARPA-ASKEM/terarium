@@ -914,12 +914,12 @@ export interface ProjectGroupPermission {
 
 export interface IProjectUserPermissionDisplayModel {
     user: User;
-    email: string;
+    permissionLevel: Permission;
     username: string;
+    email: string;
     givenName: string;
     id: string;
     familyName: string;
-    permissionLevel: Permission;
 }
 
 export interface ProvenanceNode {
