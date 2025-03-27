@@ -866,15 +866,17 @@ export interface ModelMetadata {
     initials?: { [index: string]: any };
     parameters?: { [index: string]: any };
     card?: Card;
-    provenance?: string[];
     source?: any;
     enrichments?: Enrichment[];
     description?: any;
+    modelProvenance?: { [index: string]: string[] };
     processed_at?: number;
     processed_by?: string;
     variable_statements?: VariableStatement[];
     gollmCard?: any;
-    gollmExtractions?: any;
+    /**
+     * @deprecated
+     */
     templateCard?: any;
     code_id?: string;
 }
@@ -912,12 +914,12 @@ export interface ProjectGroupPermission {
 
 export interface IProjectUserPermissionDisplayModel {
     user: User;
-    username: string;
     email: string;
+    username: string;
     givenName: string;
     id: string;
-    permissionLevel: Permission;
     familyName: string;
+    permissionLevel: Permission;
 }
 
 export interface ProvenanceNode {
