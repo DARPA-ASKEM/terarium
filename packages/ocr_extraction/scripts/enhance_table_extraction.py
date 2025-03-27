@@ -1,6 +1,6 @@
 import logging
 from src.llm_tools import get_llm_tools
-from src.table_extraction import image_to_base64_string
+from src.utils import image_to_base64_string
 from PIL import Image
 
 logging.basicConfig(level=logging.INFO)
