@@ -6,7 +6,6 @@ import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
-import software.uncharted.terarium.hmiserver.service.data.SummaryService;
 
 @Component
 @RequiredArgsConstructor
@@ -14,8 +13,6 @@ import software.uncharted.terarium.hmiserver.service.data.SummaryService;
 public class DocumentQuestionHandler extends LlmTaskResponseHandler {
 
 	public static final String NAME = "gollm:document_question";
-
-	private final SummaryService summaryService;
 
 	@Override
 	public String getName() {

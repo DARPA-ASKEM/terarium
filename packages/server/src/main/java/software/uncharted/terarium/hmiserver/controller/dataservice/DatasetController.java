@@ -485,6 +485,10 @@ public class DatasetController {
 				new StringReader(csvString),
 				CSVFormat.Builder.create(CSVFormat.DEFAULT).setHeader().setSkipHeaderRecord(false).build()
 			);
+			List<String> headers = new ArrayList<>(csvParser.getHeaderMap().keySet());
+			csvParser.close();
+			final HttpEntity csvEntity = new StringEntity(csvString, ContentType.APPLICATION_OCTET_STREAM);
+			return uploadCSVAndUpdateColumns(datasetId, projectId, filename, csvEntity, headers);
 		} catch (IOException e) {
 			log.error("Unable to parse csv from github", e);
 			throw new ResponseStatusException(
@@ -492,10 +496,6 @@ public class DatasetController {
 				messages.get("dataset.parse-error")
 			);
 		}
-
-		List<String> headers = new ArrayList<>(csvParser.getHeaderMap().keySet());
-		final HttpEntity csvEntity = new StringEntity(csvString, ContentType.APPLICATION_OCTET_STREAM);
-		return uploadCSVAndUpdateColumns(datasetId, projectId, filename, csvEntity, headers);
 	}
 
 	/**
@@ -542,6 +542,7 @@ public class DatasetController {
 				CSVFormat.Builder.create(CSVFormat.DEFAULT).setHeader().setSkipHeaderRecord(false).build()
 			);
 			List<String> headers = new ArrayList<>(csvParser.getHeaderMap().keySet());
+			csvParser.close();
 
 			return uploadCSVAndUpdateColumns(datasetId, projectId, filename, csvEntity, headers);
 		} catch (final IOException e) {
