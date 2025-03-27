@@ -57,7 +57,7 @@ export class PolicyDesignScenario extends BaseScenario {
 	async createWorkflow() {
 		let wf = new workflowService.WorkflowWrapper();
 		wf.setWorkflowName(this.workflowName);
-		wf.setWorkflowScenario(this.toJSON()); // TOM: How does this work?
+		wf.setWorkflowScenario(this.toJSON());
 		wf = await this.addAllNodes(wf);
 		wf.runDagreLayout();
 		return wf.dump();
