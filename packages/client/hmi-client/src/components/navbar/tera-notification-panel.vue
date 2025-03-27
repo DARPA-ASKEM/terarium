@@ -27,13 +27,10 @@
 				<div v-if="isRunning(item) || isQueued(item)" class="progressbar-container">
 					<p class="action">
 						{{ getActionText(item) }}
-						<span v-if="item.progress !== undefined && isRunning(item)"> {{ Math.round(item.progress * 100) }}%</span>
+						<span v-if="item.progress && isRunning(item)"> {{ Math.round(item.progress * 100) }}%</span>
 					</p>
 
-					<ProgressBar
-						v-if="isRunning(item) && item.progress !== undefined"
-						:value="isRunning(item) ? item.progress * 100 : 0"
-					/>
+					<ProgressBar v-if="item.progress && isRunning(item)" :value="isRunning(item) ? item.progress * 100 : 0" />
 					<ProgressBar v-else mode="indeterminate" />
 					<Button
 						v-if="item.supportCancel"
