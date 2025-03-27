@@ -196,7 +196,7 @@ public class KnowledgeController {
 			latexToSympyRequest = createLatexToSympyTask(mapper.valueToTree(equations));
 			latexToSympyResponse = taskService.runTaskSync(latexToSympyRequest);
 
-			if (latexToSympyResponse.getStatus() != TaskStatus.SUCCESS) {
+			if (latexToSympyResponse.getStatus() != ProgressState.COMPLETE) {
 				log.error("Task Failed", latexToSympyResponse.getStderr());
 				throw new ResponseStatusException(HttpStatus.BAD_REQUEST, latexToSympyResponse.getStderr());
 			}
@@ -207,7 +207,7 @@ public class KnowledgeController {
 			// 3. sympy code string to amr json
 			sympyToAMRRequest = createSympyToAMRTask(code);
 			sympyToAMRResponse = taskService.runTaskSync(sympyToAMRRequest);
-			if (sympyToAMRResponse.getStatus() != TaskStatus.SUCCESS) {
+			if (sympyToAMRResponse.getStatus() != ProgressState.COMPLETE) {
 				log.error("Task Failed", sympyToAMRResponse.getStderr());
 				throw new ResponseStatusException(HttpStatus.BAD_REQUEST, sympyToAMRResponse.getStderr());
 			}
