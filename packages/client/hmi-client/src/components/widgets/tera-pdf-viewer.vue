@@ -1,5 +1,41 @@
 <template>
 	<div class="pdf-viewer-container">
+		<div class="controls">
+			<div class="zoom-controls">
+				<Button icon="pi pi-search-minus" size="small" outlined severity="secondary" @click="zoomOut" />
+				<span class="w-3rem text-center">{{ Math.round(scale * 100) }}%</span>
+				<Button icon="pi pi-search-plus" size="small" outlined severity="secondary" @click="zoomIn" />
+			</div>
+			<div class="page-navigation">
+				<Button
+					icon="pi pi-arrow-left"
+					size="small"
+					outlined
+					severity="secondary"
+					@click="prevPage"
+					:disabled="currentPage <= 1"
+				/>
+				<span class="w-6rem text-center">Page {{ currentPage }} / {{ pages }}</span>
+				<Button
+					icon="pi pi-arrow-right"
+					size="small"
+					outlined
+					severity="secondary"
+					@click="nextPage"
+					:disabled="currentPage >= pages"
+				/>
+				<InputNumber
+					type="number"
+					v-model.number="currentPage"
+					:min="1"
+					:max="pages"
+					@keydown.enter="goToPage(currentPage)"
+				/>
+			</div>
+			<div class="search-controls">
+				<InputText type="text" v-model="searchText" placeholder="Search text" />
+			</div>
+		</div>
 		<div class="pages-container">
 			<template v-for="page in pages" :key="page">
 				<VuePDF
@@ -10,11 +46,11 @@
 					:fit-parent="fitToWidth"
 					:scale="scale"
 					text-layer
+					:highlight-text="searchText"
 					@loaded="(data) => onPageLoaded(data, page)"
 				/>
 			</template>
 		</div>
-		<div class="controls"></div>
 	</div>
 </template>
 
@@ -23,9 +59,16 @@ import '@tato30/vue-pdf/style.css';
 import { groupBy } from 'lodash';
 import { computed, ref, watch, useTemplateRef } from 'vue';
 import { VuePDF, usePDF } from '@tato30/vue-pdf';
+import Button from 'primevue/button';
+import InputText from 'primevue/inputtext';
+import InputNumber from 'primevue/inputnumber';
 
-const DEFAULT_SCALE = 2;
-const HIGHLIGHT_DEFAULT_COLOR = 'rgba(255, 255, 0, 0.5)'; // Yellow with 50% opacity
+const DEFAULT_SCALE = 1.5;
+const SCALE_INCREMENT = 0.25;
+const MIN_SCALE = 0.5;
+const MAX_SCALE = 4;
+const DEFAULT_CURRENT_PAGE = 1;
+const HIGHLIGHT_DEFAULT_COLOR = 'rgba(255, 255, 0, 0.5)';
 const BBOX_DEFAULT_COLOR = 'green';
 
 export interface PdfAnnotation {
@@ -37,26 +80,50 @@ export interface PdfAnnotation {
 
 const props = defineProps<{
 	pdfLink: string;
-	// title?: string;
-	// filePromise?: Promise<ArrayBuffer | null>;
 	fitToWidth?: boolean;
 	currentPage?: number;
 	annotations?: PdfAnnotation[];
 }>();
 
-const vuePdfs = useTemplateRef('vuePdfs');
+const vuePdfs = useTemplateRef<InstanceType<typeof VuePDF>[] | null>('vuePdfs');
 const annotationsByPage = computed(() => groupBy(props.annotations ?? [], 'pageNo'));
-
 const { pdf, pages } = usePDF(computed(() => props.pdfLink));
 
+const currentPage = ref(props.currentPage ?? DEFAULT_CURRENT_PAGE);
+watch(
+	() => props.currentPage,
+	(newVal) => {
+		if (newVal && newVal !== currentPage.value) {
+			currentPage.value = newVal;
+		}
+	}
+);
+
 const getPdfPage = (pageNumber: number) => {
-	if (!vuePdfs.value?.[pageNumber - 1] || pageNumber < 1 || pageNumber > vuePdfs.value.length) return null;
+	if (!vuePdfs.value?.[pageNumber - 1] || pageNumber < 1 || pageNumber > pages.value) return null;
 	return vuePdfs.value[pageNumber - 1];
 };
 
-const goToPage = (pageNumber) => {
-	const targetPage = getPdfPage(pageNumber)?.$el;
-	targetPage?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+const goToPage = (pageNumber: number) => {
+	if (pageNumber >= 1 && pageNumber <= pages.value) {
+		currentPage.value = pageNumber;
+		const targetPage = getPdfPage(pageNumber)?.$el;
+		targetPage?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+	}
+};
+
+const prevPage = () => {
+	if (currentPage.value > 1) {
+		currentPage.value--;
+		goToPage(currentPage.value);
+	}
+};
+
+const nextPage = () => {
+	if (currentPage.value < pages.value) {
+		currentPage.value++;
+		goToPage(currentPage.value);
+	}
 };
 
 const applyAnnotations = (annotations: PdfAnnotation[]) => {
@@ -104,20 +171,26 @@ const drawBbox = (
 	context.restore();
 };
 
-// Update based on the props changes
-watch(() => props.currentPage, goToPage);
 watch(
 	() => props.annotations,
 	(annotations, oldAnnotations) => {
-		// Get the pages that needs to be updated
 		const pageNumbers = [...(annotations ?? []), ...(oldAnnotations ?? [])].map((annotation) => annotation.pageNo);
 		const uniquePages = Array.from(new Set(pageNumbers));
-		// Reloads the pages to redraw the annotations
 		uniquePages.forEach((page) => getPdfPage(page)?.reload());
 	}
 );
 
 const scale = ref(DEFAULT_SCALE);
+
+const zoomIn = () => {
+	scale.value = Math.min(MAX_SCALE, scale.value + SCALE_INCREMENT);
+};
+
+const zoomOut = () => {
+	scale.value = Math.max(MIN_SCALE, scale.value - SCALE_INCREMENT);
+};
+
+const searchText = ref('');
 
 defineExpose({
 	goToPage
@@ -132,6 +205,27 @@ defineExpose({
 	display: flex;
 	flex-direction: column;
 }
+
+.controls {
+	display: flex;
+	padding: 10px;
+	gap: 20px;
+	align-items: center;
+	border-bottom: 1px solid #ccc;
+}
+
+.zoom-controls,
+.page-navigation,
+.search-controls {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+}
+
+.page-navigation input {
+	width: 50px;
+}
+
 .pages-container {
 	flex-grow: 1;
 	width: 100%;
@@ -139,5 +233,11 @@ defineExpose({
 	flex-direction: column;
 	overflow: auto;
 	align-items: center;
+	padding: 20px;
+}
+
+.page {
+	margin-bottom: 20px;
+	box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
 }
 </style>
