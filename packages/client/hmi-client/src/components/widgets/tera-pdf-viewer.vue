@@ -74,7 +74,9 @@
 					@highlight="onSearchTextHighlight"
 					@loaded="(data) => onPageLoaded(data, page)"
 				>
-					Loading...
+					<div class="flex justify-content-center align-items-center h-full">
+						<i class="loading-spinner pi pi-spin pi-spinner" />
+					</div>
 				</VuePDF>
 			</template>
 		</div>
@@ -403,6 +405,7 @@ defineExpose({
 }
 
 .search-popover-content {
+	padding: 10px;
 	display: flex;
 	flex-direction: row;
 	gap: var(--gap-2);
@@ -430,5 +433,10 @@ defineExpose({
 :deep(.highlight-focus span) {
 	/* Focused highlight color */
 	background-color: rgb(230, 80, 0, 0.4) !important;
+}
+
+.loading-spinner {
+	color: var(--primary-color);
+	font-size: 4rem;
 }
 </style>
