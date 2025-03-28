@@ -291,7 +291,7 @@ export function setInterventionPolicyGroups(
 	state.interventionPolicyId = interventionPolicy.id ?? '';
 
 	state.interventionPolicyGroups = []; // Reset prior to populating.
-	if (interventionPolicy.interventions && interventionPolicy.interventions.length > 0) {
+	if (!_.isEmpty(interventionPolicy.interventions)) {
 		interventionPolicy.interventions.forEach((intervention) => {
 			// Static:
 			const newIntervention = _.cloneDeep(blankInterventionPolicyGroup);
