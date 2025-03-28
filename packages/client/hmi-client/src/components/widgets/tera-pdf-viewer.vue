@@ -74,8 +74,9 @@
 					@highlight="onSearchTextHighlight"
 					@loaded="(data) => onPageLoaded(data, page)"
 				>
-					<div class="flex justify-content-center align-items-center h-full">
-						<i class="loading-spinner pi pi-spin pi-spinner" />
+					<div class="flex justify-content-center align-items-center h-full relative">
+						<div class="page-loading-backdrop" />
+						<i class="page-loading-spinner pi pi-spin pi-spinner" />
 					</div>
 				</VuePDF>
 			</template>
@@ -435,8 +436,18 @@ defineExpose({
 	background-color: rgb(230, 80, 0, 0.4) !important;
 }
 
-.loading-spinner {
+.page-loading-backdrop {
+	background-color: rgba(0, 0, 0, 0.2);
+	position: absolute;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
+	z-index: 1;
+}
+.page-loading-spinner {
 	color: var(--primary-color);
-	font-size: 4rem;
+	font-size: 2rem;
+	z-index: 2;
 }
 </style>
