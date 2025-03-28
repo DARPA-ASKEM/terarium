@@ -638,15 +638,23 @@ public class ExtractionService {
 		private Extraction response;
 	}
 
+	@Data
+	private static class ExtractionInput {
+
+		private byte[] bytes;
+		private String filename;
+		private String llm;
+	}
+
 	public Future<Extraction> ocrExtraction(
 		final NotificationGroupInstance<Properties> notificationInterface,
 		final String userId,
-		final byte[] pdf
+		final ExtractionInput input
 	) throws TimeoutException, InterruptedException, ExecutionException, IOException {
 		final int REQUEST_TIMEOUT_MINUTES = 30;
 		final TaskRequest req = new TaskRequest();
 		req.setTimeoutMinutes(REQUEST_TIMEOUT_MINUTES);
-		req.setInput(pdf);
+		req.setInput(objectMapper.writeValueAsBytes(input));
 		req.setScript(OCRExtractionResponseHandler.NAME);
 		req.setUserId(userId);
 		req.setType(TaskType.OCR_EXTRACTION);
@@ -688,7 +696,11 @@ public class ExtractionService {
 				final byte[] documentContents = documentService.fetchFileAsBytes(documentId, filename).get();
 
 				log.info("OCR extraction: starting");
-				Future<Extraction> extractionFuture = ocrExtraction(notificationInterface, userId, documentContents);
+				ExtractionInput extractionInput = new ExtractionInput();
+				extractionInput.setBytes(documentContents);
+				extractionInput.setFilename(filename);
+
+				Future<Extraction> extractionFuture = ocrExtraction(notificationInterface, userId, extractionInput);
 				Extraction extraction = extractionFuture.get();
 				log.info("OCR extraction: done");
 
