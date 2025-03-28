@@ -10,7 +10,7 @@
 					Processing...
 					<ProgressBar :value="props.node?.state?.taskProgress * 100" />
 				</div>
-				<tera-pdf-embed v-if="pdfLink" :pdf-link="pdfLink" :title="document?.name || ''" />
+				<tera-pdf-viewer v-if="pdfLink" :pdf-link="pdfLink" :title="document?.name || ''" />
 				<tera-text-editor v-else-if="docText" :initial-text="docText" />
 			</tera-drilldown-section>
 		</tera-columnar-panel>
@@ -30,7 +30,7 @@ import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
 import TeraTextEditor from '@/components/documents/tera-text-editor.vue';
 import TeraColumnarPanel from '@/components/widgets/tera-columnar-panel.vue';
 import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.vue';
-import TeraPdfEmbed from '@/components/widgets/tera-pdf-embed.vue';
+import TeraPdfViewer from '@/components/widgets/tera-pdf-viewer.vue';
 
 import { DocumentOperationState } from './document-operation';
 

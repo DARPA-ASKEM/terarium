@@ -6,7 +6,7 @@
 		:class="pdfs?.length < 2 ? 'hide-tab-selectors' : ''"
 	>
 		<TabPanel :header="pdf.name" v-for="pdf in pdfs" :key="pdf.name">
-			<tera-pdf-embed v-if="pdf.isPdf" ref="pdfRef" :pdf-link="pdf.data" :title="pdf.name || ''" />
+			<tera-pdf-viewer v-if="pdf.isPdf" ref="pdfRef" :pdf-link="pdf.data" :title="pdf.name || ''" />
 			<tera-text-editor v-else :initial-text="pdf.data" />
 		</TabPanel>
 	</TabView>
@@ -19,7 +19,7 @@ import { keyBy } from 'lodash';
 import TabView from 'primevue/tabview';
 import TabPanel from 'primevue/tabpanel';
 
-import TeraPdfEmbed from '@/components/widgets/tera-pdf-embed.vue';
+import TeraPdfViewer from '@/components/widgets/tera-pdf-viewer.vue';
 import TeraTextEditor from '@/components/documents/tera-text-editor.vue';
 import type { DocumentAsset } from '@/types/Types';
 
@@ -67,21 +67,20 @@ defineExpose({ pdfRef, selectPdf });
 	display: flex;
 	flex-direction: column;
 	flex: 1;
+	height: 100%;
 }
 
-:deep(.p-tabview) {
-	display: flex;
-	flex-direction: column;
-	flex: 1;
-}
 :deep(.p-tabview-panels) {
 	display: flex;
 	flex-direction: column;
 	flex: 1;
 	padding-top: 0;
+	height: 100%;
 }
+
 :deep(.p-tabview-panel) {
 	flex: 1;
+	height: 100%;
 }
 
 :deep(.p-tabview-header) {

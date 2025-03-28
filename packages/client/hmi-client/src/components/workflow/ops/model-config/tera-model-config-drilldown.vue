@@ -1001,6 +1001,7 @@ button.start-edit {
 	padding: var(--gap-4);
 }
 :deep(.content-wrapper) {
+	height: 100%;
 	& > section {
 		& > main {
 			overflow: hidden;

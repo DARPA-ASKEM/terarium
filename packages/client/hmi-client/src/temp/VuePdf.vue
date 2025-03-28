@@ -1,13 +1,7 @@
 <template>
 	<div class="container">
-		<tera-pdf-viewer
-			v-if="pdfLink"
-			:pdf-link="pdfLink"
-			:annotations="annotations"
-			:current-page="currentPage"
-			fit-to-width
-		/>
-		<div>
+		<tera-pdf-viewer v-if="pdfLink" :pdf-link="pdfLink" :annotations="annotations" :current-page="currentPage" />
+		<div class="annotation-buttons">
 			<button @click="annotate1">Annotation1</button>
 			<button @click="annotate2">Annotation2</button>
 		</div>
@@ -32,62 +26,33 @@ onMounted(async () => {
 	pdfLink.value = (await downloadDocumentAsset(pdfAssetId, filename)) ?? null;
 });
 
-// TODO: bbox should dome with normalized from from the backend.
-const normalizeBBox = (
-	bbox: { l: number; t: number; r: number; b: number; coord_origin?: string },
-	page: { width: number; height: number }
-) => {
-	if (bbox.coord_origin === 'TOPLEFT') {
-		return {
-			l: bbox.l / page.width,
-			t: bbox.t / page.height,
-			r: bbox.r / page.width,
-			b: bbox.b / page.height
-		};
-	}
-	// Else, BottomLeft
-	return {
-		l: bbox.l / page.width,
-		t: 1 - bbox.t / page.height,
-		r: bbox.r / page.width,
-		b: 1 - bbox.b / page.height
-	};
-};
 const annotations = ref<PdfAnnotation[]>([]);
 
 const annotate1 = () => {
-	annotations.value =
-		// BBox from extracted items from SIR paper 1.pdf
-		[
-			{
-				pageNo: 2,
-				bbox: normalizeBBox(
-					{
-						l: 70.6014404296875,
-						t: 758.4515838623047,
-						r: 534.968078613281,
-						b: 125.94757080078125
-					},
-					{ width: 595, height: 842 }
-				),
-				color: 'red',
-				isHighlight: false
+	annotations.value = [
+		{
+			pageNo: 2,
+			bbox: {
+				left: 0.11865788307510504,
+				top: 0.09922614743194214,
+				right: 0.8991060144761026,
+				bottom: 0.8504185619943215
 			},
-			{
-				pageNo: 7,
-				bbox: normalizeBBox(
-					{
-						l: 70.77977752685547,
-						t: 799.7110977172852,
-						r: 539.089172363281,
-						b: 529.6114196777344
-					},
-					{ width: 595, height: 842 }
-				),
-				color: 'red',
-				isHighlight: false
-			}
-		];
+			color: 'red',
+			isHighlight: false
+		},
+		{
+			pageNo: 7,
+			bbox: {
+				left: 0.11895760928883273,
+				top: 0.0502243495044119,
+				right: 0.9060322224592958,
+				bottom: 0.37100781510957914
+			},
+			color: 'red',
+			isHighlight: false
+		}
+	];
 	currentPage.value = 2;
 };
 
@@ -95,80 +60,61 @@ const annotate2 = () => {
 	annotations.value = [
 		{
 			pageNo: 7,
-			bbox: normalizeBBox(
-				{
-					l: 70.77977752685547,
-					t: 799.7110977172852,
-					r: 539.0891723632812,
-					b: 529.6114196777344,
-					coord_origin: 'BOTTOMLEFT'
-				},
-				{ width: 595, height: 842 }
-			),
+			bbox: {
+				left: 0.11895760928883273,
+				top: 0.0502243495044119,
+				right: 0.9060322224592963,
+				bottom: 0.37100781510957914
+			},
 			color: 'green',
 			isHighlight: false
 		},
 		{
 			pageNo: 7,
-			bbox: normalizeBBox(
-				{
-					l: 89.6999955849439,
-					t: 43.42800000000011,
-					r: 136.03199330447148,
-					b: 56.71199999999999,
-					coord_origin: 'TOPLEFT'
-				},
-				{ width: 595, height: 842 }
-			),
+			bbox: {
+				left: 0.15075629510074606,
+				top: 0.05157719714964384,
+				right: 0.2286251988310445,
+				bottom: 0.06735391923990497
+			},
 			color: 'yellow',
 			isHighlight: true
 		},
 		{
 			pageNo: 7,
-			bbox: normalizeBBox(
-				{
-					l: 85.97999576804322,
-					t: 210.4079999999999,
-					r: 136.64899327410257,
-					b: 223.692,
-					coord_origin: 'TOPLEFT'
-				},
-				{ width: 595, height: 842 }
-			),
+			bbox: {
+				left: 0.14450419456813987,
+				top: 0.24989073634204265,
+				right: 0.22966217356992027,
+				bottom: 0.26566745843230405
+			},
 			color: 'yellow',
 			isHighlight: true
 		},
 		{
 			pageNo: 7,
-			bbox: normalizeBBox(
-				{
-					l: 78.41999614014829,
-					t: 230.71799999999996,
-					r: 146.3279927976998,
-					b: 247.90800000000002,
-					coord_origin: 'TOPLEFT'
-				},
-				{ width: 595, height: 842 }
-			),
+			bbox: {
+				left: 0.13179831284058535,
+				top: 0.27401187648456055,
+				right: 0.2459293996599997,
+				bottom: 0.29442755344418053
+			},
 			color: 'yellow',
 			isHighlight: true
 		},
 		{
 			pageNo: 7,
-			bbox: normalizeBBox(
-				{
-					l: 70.85999651225335,
-					t: 445.412,
-					r: 558.8759724919855,
-					b: 370.028,
-					coord_origin: 'BOTTOMLEFT'
-				},
-				{ width: 595, height: 842 }
-			),
+			bbox: {
+				left: 0.11909243111303083,
+				top: 0.47100712589073634,
+				right: 0.939287348726026,
+				bottom: 0.5605368171021378
+			},
 			color: 'lightpink',
 			isHighlight: true
 		}
 	];
+
 	currentPage.value = 7;
 };
 </script>
@@ -176,8 +122,12 @@ const annotate2 = () => {
 <style scoped>
 .container {
 	height: 100%;
-	width: 50%;
-	max-width: 800px;
+	width: 100%;
+	max-width: 1200px;
 	margin: auto;
+}
+.annotation-buttons {
+	position: absolute;
+	top: 50px;
 }
 </style>
