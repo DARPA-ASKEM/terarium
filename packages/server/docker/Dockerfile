@@ -1,4 +1,4 @@
-FROM eclipse-temurin:21.0.5_11-jdk-noble AS builder
+FROM eclipse-temurin:21.0.6_7-jdk-noble AS builder
 
 WORKDIR /app
 COPY /packages/server .
@@ -12,7 +12,7 @@ RUN mkdir -p ./layers \
 WORKDIR /app/layers
 RUN java -Djarmode=layertools -jar ./*-SNAPSHOT.jar extract
 
-FROM eclipse-temurin:21.0.5_11-jre-noble
+FROM eclipse-temurin:21.0.6_7-jre-noble
 
 WORKDIR /app
 
