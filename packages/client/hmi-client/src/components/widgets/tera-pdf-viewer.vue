@@ -6,6 +6,7 @@
 				<span class="w-3rem text-center">{{ Math.round(scale * 100) }}%</span>
 				<Button icon="pi pi-search-plus" size="small" outlined severity="secondary" @click="zoomIn" />
 			</div>
+			<Divider layout="vertical" />
 			<div class="page-navigation">
 				<Button
 					icon="pi pi-arrow-left"
@@ -34,6 +35,7 @@
 					:disabled="currentPage >= pages"
 				/>
 			</div>
+			<Divider layout="vertical" />
 			<div class="search-controls">
 				<Button icon="pi pi-search" size="small" outlined severity="secondary" @click="toggleSearchPopover" />
 				<OverlayPanel class="pdf-viewer-search-text-overlay" ref="searchPopover" :showCloseIcon="false">
@@ -93,6 +95,7 @@ import Button from 'primevue/button';
 import InputText from 'primevue/inputtext';
 import InputNumber from 'primevue/inputnumber';
 import OverlayPanel from 'primevue/overlaypanel';
+import Divider from 'primevue/divider';
 
 const DEFAULT_SCALE = 1.5;
 const SCALE_INCREMENT = 0.25;
@@ -373,7 +376,6 @@ defineExpose({
 .controls {
 	display: flex;
 	padding: 0.5rem;
-	gap: var(--gap-5);
 	align-items: center;
 	border-bottom: 1px solid #ccc;
 }
