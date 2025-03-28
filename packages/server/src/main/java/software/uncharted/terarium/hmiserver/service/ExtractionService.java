@@ -729,6 +729,7 @@ public class ExtractionService {
 				document.setExtraction(extraction);
 				documentService.updateAsset(document, projectId);
 				log.info("OCR extraction: saving to storage: done");
+				notificationInterface.sendFinalMessage("Extraction complete");
 
 				return document;
 			} catch (final Exception e) {
