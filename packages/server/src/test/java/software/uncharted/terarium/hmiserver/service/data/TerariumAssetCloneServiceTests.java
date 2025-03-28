@@ -20,8 +20,6 @@ import software.uncharted.terarium.hmiserver.models.TerariumAsset;
 import software.uncharted.terarium.hmiserver.models.dataservice.AssetType;
 import software.uncharted.terarium.hmiserver.models.dataservice.Grounding;
 import software.uncharted.terarium.hmiserver.models.dataservice.document.DocumentAsset;
-import software.uncharted.terarium.hmiserver.models.dataservice.document.DocumentExtraction;
-import software.uncharted.terarium.hmiserver.models.dataservice.document.ExtractionAssetType;
 import software.uncharted.terarium.hmiserver.models.dataservice.project.Project;
 import software.uncharted.terarium.hmiserver.models.dataservice.project.ProjectAsset;
 import software.uncharted.terarium.hmiserver.models.dataservice.project.ProjectExport;
@@ -79,10 +77,6 @@ public class TerariumAssetCloneServiceTests extends TerariumApplicationTests {
 		return grounding;
 	}
 
-	static DocumentExtraction createDocExtraction() {
-		return new DocumentExtraction().setFileName("Hello World.pdf").setAssetType(ExtractionAssetType.FIGURE);
-	}
-
 	static DocumentAsset createDocument(final String key) throws Exception {
 		final DocumentAsset documentAsset = new DocumentAsset();
 		documentAsset.setName("test-document-name-" + key);
@@ -94,8 +88,6 @@ public class TerariumAssetCloneServiceTests extends TerariumApplicationTests {
 		documentAsset.setMetadata(new HashMap<>());
 		documentAsset.getMetadata().put("hello", objectMapper.readTree("{\"hello\": \"world-" + key + "\"}"));
 		documentAsset.setPublicAsset(true);
-		documentAsset.setAssets(new ArrayList<>());
-		documentAsset.getAssets().add(createDocExtraction());
 		return documentAsset;
 	}
 

@@ -51,7 +51,6 @@ import software.uncharted.terarium.hmiserver.proxies.jsdelivr.JsDelivrProxy;
 import software.uncharted.terarium.hmiserver.security.Roles;
 import software.uncharted.terarium.hmiserver.service.CurrentUserService;
 import software.uncharted.terarium.hmiserver.service.data.DocumentAssetService;
-import software.uncharted.terarium.hmiserver.service.data.ProjectService;
 import software.uncharted.terarium.hmiserver.utils.rebac.Schema;
 
 @RequestMapping("/document-asset")
@@ -63,7 +62,6 @@ public class DocumentController {
 	final Config config;
 	final CurrentUserService currentUserService;
 	final JsDelivrProxy gitHubProxy;
-	private final ProjectService projectService;
 	final DocumentAssetService documentAssetService;
 
 	@PostMapping
@@ -165,28 +163,6 @@ public class DocumentController {
 		if (document.isEmpty()) {
 			return ResponseEntity.notFound().build();
 		}
-
-		// Test if the document as any assets
-		if (document.get().getAssets() == null) {
-			return ResponseEntity.ok(document.get());
-		}
-
-		document
-			.get()
-			.getAssets()
-			.forEach(asset -> {
-				try {
-					// Add the S3 bucket url to each asset metadata
-					final Optional<PresignedURL> url = documentAssetService.getDownloadUrl(id, asset.getFileName());
-					if (url.isEmpty()) {
-						return;
-					}
-					final PresignedURL presignedURL = url.get();
-					asset.getMetadata().put("url", presignedURL.getUrl());
-				} catch (final Exception e) {
-					log.error("Unable to extract S3 url for assets or extract equations", e);
-				}
-			});
 
 		// Return the updated document
 		return ResponseEntity.ok(document.get());

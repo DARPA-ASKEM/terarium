@@ -57,7 +57,7 @@ public class JsonToHTML {
 	}
 
 	// Helper to capitalize the first letter of a string
-	private static String formatTitle(String input) {
+	public static String formatTitle(String input) {
 		if (input == null || input.isEmpty()) {
 			return input;
 		}

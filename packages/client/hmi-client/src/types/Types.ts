@@ -43,6 +43,14 @@ export interface ClientLog {
     args?: string[];
 }
 
+export interface Group {
+    id: string;
+    name: string;
+    createdAtMs: number;
+    description: string;
+    roles: Role[];
+}
+
 export interface SimplifyModelResponse {
     amr: Model;
     max_controller_decrease: number;
@@ -216,13 +224,20 @@ export interface DocumentAsset extends TerariumAsset {
      * @deprecated
      */
     documentAbstract?: string;
-    /**
-     * @deprecated
-     */
-    assets?: DocumentExtraction[];
     extractions?: ExtractedDocumentPage[];
     thumbnail?: any;
     extraction?: Extraction;
+}
+
+export interface Enrichment {
+    id: string;
+    label: string;
+    target: EnrichmentTarget;
+    source: EnrichmentSource;
+    content: any;
+    extractionAssetId: string;
+    extractionItemIds: string[];
+    included: boolean;
 }
 
 export interface ExternalPublication extends TerariumAsset {
@@ -330,6 +345,16 @@ export interface ProjectAsset extends TerariumAsset {
     project: Project;
 }
 
+export interface ProjectPermission {
+    projectId: string;
+    userPermissions: ProjectUserPermission[];
+    groupPermissions: ProjectGroupPermission[];
+}
+
+export interface ProjectUserPermissionDisplayModel extends IProjectUserPermissionDisplayModel {
+    inheritedPermissionLevel: Permission;
+}
+
 export interface Provenance extends TerariumAsset {
     concept: string;
     relationType: ProvenanceRelationType;
@@ -424,10 +449,15 @@ export interface EvaluationScenarioSummary {
 
 export interface Extraction {
     extractedBy: string;
-    pages: any;
-    body: any;
-    groups: any;
+    pages: { [index: string]: ExtractionPage };
+    body: ExtractionBody;
+    groups: ExtractionGroup[];
     extractions: ExtractionItem[];
+}
+
+export interface ExtractionBody {
+    id: string;
+    children: ExtractionRef[];
 }
 
 export interface ExtractionResponse {
@@ -808,12 +838,6 @@ export interface NonNumericColumnStats {
     missing_values: number;
 }
 
-export interface DocumentExtraction {
-    fileName: string;
-    assetType: ExtractionAssetType;
-    metadata: { [index: string]: any };
-}
-
 export interface ExtractedDocumentPage {
     pageNumber: number;
     text: string;
@@ -842,14 +866,17 @@ export interface ModelMetadata {
     initials?: { [index: string]: any };
     parameters?: { [index: string]: any };
     card?: Card;
-    provenance?: string[];
     source?: any;
+    enrichments?: Enrichment[];
     description?: any;
+    modelProvenance?: { [index: string]: string[] };
     processed_at?: number;
     processed_by?: string;
     variable_statements?: VariableStatement[];
     gollmCard?: any;
-    gollmExtractions?: any;
+    /**
+     * @deprecated
+     */
     templateCard?: any;
     code_id?: string;
 }
@@ -873,6 +900,28 @@ export interface Properties {
     description?: string;
 }
 
+export interface ProjectUserPermission {
+    user: User;
+    project: Project;
+    permissionLevel: ProjectPermissionLevel;
+}
+
+export interface ProjectGroupPermission {
+    group: Group;
+    project: Project;
+    permissionLevel: ProjectPermissionLevel;
+}
+
+export interface IProjectUserPermissionDisplayModel {
+    user: User;
+    email: string;
+    username: string;
+    givenName: string;
+    id: string;
+    familyName: string;
+    permissionLevel: Permission;
+}
+
 export interface ProvenanceNode {
     id: string;
     type: ProvenanceType;
@@ -883,6 +932,16 @@ export interface ProvenanceEdge {
     relationType: ProvenanceRelationType;
     left: ProvenanceNode;
     right: ProvenanceNode;
+}
+
+export interface ExtractionPage {
+    page: number;
+    size: PageSize;
+}
+
+export interface ExtractionGroup {
+    id: string;
+    children: ExtractionRef[];
 }
 
 export interface ExtractionItem {
@@ -898,6 +957,10 @@ export interface ExtractionItem {
     rawText: string;
     text: string;
     data: any;
+}
+
+export interface ExtractionRef {
+    id: string;
 }
 
 export interface PermissionRole {
@@ -974,6 +1037,11 @@ export interface VariableStatement {
     value?: StatementValue;
     metadata?: VariableStatementMetadata[];
     provenance?: ProvenanceInfo;
+}
+
+export interface PageSize {
+    width: number;
+    height: number;
 }
 
 export interface BBox {
@@ -1179,6 +1247,7 @@ export enum ClientEventType {
     TaskGollmCompareModel = "TASK_GOLLM_COMPARE_MODEL",
     TaskGollmConfigureModelFromDataset = "TASK_GOLLM_CONFIGURE_MODEL_FROM_DATASET",
     TaskGollmConfigureModelFromDocument = "TASK_GOLLM_CONFIGURE_MODEL_FROM_DOCUMENT",
+    TaskGollmDocumentQuestion = "TASK_GOLLM_DOCUMENT_QUESTION",
     TaskGollmEnrichModel = "TASK_GOLLM_ENRICH_MODEL",
     TaskGollmEnrichDataset = "TASK_GOLLM_ENRICH_DATASET",
     TaskGollmEquationsFromImage = "TASK_GOLLM_EQUATIONS_FROM_IMAGE",
@@ -1242,11 +1311,32 @@ export enum ColumnType {
     Time = "TIME",
 }
 
+export enum EnrichmentTarget {
+    State = "STATE",
+    Parameter = "PARAMETER",
+    Transition = "TRANSITION",
+    Observable = "OBSERVABLE",
+    Description = "DESCRIPTION",
+}
+
+export enum EnrichmentSource {
+    Gollm = "GOLLM",
+    Custom = "CUSTOM",
+}
+
 export enum SemanticType {
     Initial = "initial",
     Parameter = "parameter",
     Observable = "observable",
     Inferred = "inferredParameter",
+}
+
+export enum Permission {
+    None = "NONE",
+    Read = "READ",
+    Write = "WRITE",
+    Membership = "MEMBERSHIP",
+    Administrate = "ADMINISTRATE",
 }
 
 export enum ProvenanceRelationType {
@@ -1309,8 +1399,10 @@ export enum InterventionValueType {
     Percentage = "percentage",
 }
 
-export enum ExtractionAssetType {
-    Figure = "FIGURE",
-    Table = "TABLE",
-    Equation = "EQUATION",
+export enum ProjectPermissionLevel {
+    None = "NONE",
+    Read = "READ",
+    Write = "WRITE",
+    Admin = "ADMIN",
+    Owner = "OWNER",
 }

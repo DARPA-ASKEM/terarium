@@ -10,24 +10,12 @@ import org.springframework.web.server.ResponseStatusException;
 import software.uncharted.terarium.hmiserver.TerariumApplicationTests;
 import software.uncharted.terarium.hmiserver.configuration.MockUser;
 import software.uncharted.terarium.hmiserver.models.dataservice.project.Project;
-import software.uncharted.terarium.hmiserver.service.UserService;
-import software.uncharted.terarium.hmiserver.service.data.ProjectPermissionsService;
 import software.uncharted.terarium.hmiserver.service.data.ProjectService;
-import software.uncharted.terarium.hmiserver.utils.rebac.ReBACService;
 
 public class HasProjectAccessAspectMethodTests extends TerariumApplicationTests {
 
 	@Autowired
 	private ProjectService projectService;
-
-	@Autowired
-	private ProjectPermissionsService projectPermissionsService;
-
-	@Autowired
-	private ReBACService reBACService;
-
-	@Autowired
-	private UserService userService;
 
 	@Autowired
 	private HasProjectAccessAspectMethodTestService testService;

@@ -24,7 +24,7 @@
 							:disabled="isEmpty(node.outputs[0].value)"
 						/>
 						<span class="flex gap-2">
-							<tera-pyciemss-cancel-button class="mr-auto" :simulation-run-id="cancelRunId" />
+							<tera-pyciemss-cancel-button class="mr-auto" :simulation-run-ids="cancelRunIds" />
 							<span v-tooltip="runButtonMessage">
 								<Button label="Run" icon="pi pi-play" @click="runCalibrate" :disabled="isRunDisabled" />
 							</span>
@@ -496,6 +496,8 @@
 							/>
 						</div>
 						<Divider />
+						<tera-chart-settings-quantiles :settings="chartSettings" @update-options="updateQauntilesOptions" />
+						<Divider />
 					</div>
 				</template>
 			</tera-slider-panel>
@@ -536,6 +538,7 @@ import TeraNotebookError from '@/components/drilldown/tera-notebook-error.vue';
 import TeraOperatorOutputSummary from '@/components/operator/tera-operator-output-summary.vue';
 import TeraSliderPanel from '@/components/widgets/tera-slider-panel.vue';
 import TeraChartSettings from '@/components/widgets/tera-chart-settings.vue';
+import TeraChartSettingsQuantiles from '@/components/widgets/tera-chart-settings-quantiles.vue';
 import TeraChartSettingsPanel from '@/components/widgets/tera-chart-settings-panel.vue';
 import {
 	CalibrationRequestCiemss,
@@ -683,11 +686,12 @@ const datasetId = computed<string | undefined>(() => props.node.inputs[1]?.value
 const policyInterventionId = computed(() => props.node.inputs[2].value?.[0]);
 const interventionPolicy = ref<InterventionPolicy | null>(null);
 
-const cancelRunId = computed(
-	() =>
-		props.node.state.inProgressForecastId ||
-		props.node.state.inProgressCalibrationId ||
-		props.node.state.inProgressPreForecastId
+const cancelRunIds = computed(() =>
+	[
+		props.node.state.inProgressForecastId,
+		props.node.state.inProgressPreForecastId,
+		props.node.state.inProgressCalibrationId
+	].filter((id) => Boolean(id))
 );
 const currentDatasetFileName = ref<string>();
 
@@ -823,7 +827,8 @@ const {
 	updateActiveChartSettings,
 	setActiveChartSettings,
 	addEmptyComparisonChart,
-	updateComparisonChartSetting
+	updateComparisonChartSetting,
+	updateQauntilesOptions
 } = useChartSettings(props, emit);
 
 const {

@@ -19,8 +19,6 @@ import software.uncharted.terarium.hmiserver.TerariumApplicationTests;
 import software.uncharted.terarium.hmiserver.configuration.MockUser;
 import software.uncharted.terarium.hmiserver.models.dataservice.Grounding;
 import software.uncharted.terarium.hmiserver.models.dataservice.document.DocumentAsset;
-import software.uncharted.terarium.hmiserver.models.dataservice.document.DocumentExtraction;
-import software.uncharted.terarium.hmiserver.models.dataservice.document.ExtractionAssetType;
 import software.uncharted.terarium.hmiserver.models.dataservice.project.Project;
 import software.uncharted.terarium.hmiserver.models.mira.DKG;
 
@@ -62,10 +60,6 @@ public class DocumentServiceTests extends TerariumApplicationTests {
 		return grounding;
 	}
 
-	static DocumentExtraction createDocExtraction() {
-		return new DocumentExtraction().setFileName("Hello World.pdf").setAssetType(ExtractionAssetType.FIGURE);
-	}
-
 	static DocumentAsset createDocument() throws Exception {
 		return createDocument("A");
 	}
@@ -81,8 +75,6 @@ public class DocumentServiceTests extends TerariumApplicationTests {
 		documentAsset.setMetadata(new HashMap<>());
 		documentAsset.getMetadata().put("hello", JsonNodeFactory.instance.textNode("world-" + key));
 		documentAsset.setPublicAsset(true);
-		documentAsset.setAssets(new ArrayList<>());
-		documentAsset.getAssets().add(createDocExtraction());
 		return documentAsset;
 	}
 
@@ -95,7 +87,6 @@ public class DocumentServiceTests extends TerariumApplicationTests {
 		Assertions.assertEquals(before.getId(), after.getId());
 		Assertions.assertNotNull(after.getId());
 		Assertions.assertNotNull(after.getCreatedOn());
-		Assertions.assertEquals(3, after.getFileNames().size());
 
 		Assertions.assertNotNull(after.getGrounding());
 		Assertions.assertNotNull(after.getGrounding().getId());

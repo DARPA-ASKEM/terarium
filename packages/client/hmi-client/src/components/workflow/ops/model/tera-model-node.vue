@@ -15,7 +15,7 @@
 					:key="model.id"
 					:feature-config="{ isPreview: true }"
 				/>
-				<tera-model-equation v-else-if="view === ModelNodeView.Equation" :model="model" :is-editable="false" />
+				<tera-model-equation v-else-if="view === ModelNodeView.Equation" :model="model" />
 			</div>
 			<Button label="Open" @click="emit('open-drilldown')" severity="secondary" outlined />
 		</template>

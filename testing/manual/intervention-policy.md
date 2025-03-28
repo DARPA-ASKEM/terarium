@@ -23,8 +23,7 @@ Report any issues into GitHub: [open an issue](https://github.com/DARPA-ASKEM/te
 2. Edit the default intervention card, name it `Static Parameters` and leave it as _Static_.
 3. Set Parameter `beta` to value `0.0001` starting at timestep `20`.
 4. Click `+ Add`.
-5. Set the Parameter gamma to `0.5`
-6. Check that the charts reflect the intervention
+5. Set the Parameter gamma to `0.5`.
 
 ### 5. Try to create an invalid intervention
 1. Create an intervention that has a negative timestamp within a static intervention.
