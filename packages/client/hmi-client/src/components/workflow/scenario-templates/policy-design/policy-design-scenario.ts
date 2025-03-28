@@ -24,13 +24,13 @@ export class PolicyDesignScenario extends BaseScenario {
 
 	public static templateName = 'Policy Design';
 
-	private modelId;
+	private modelId: string;
 
-	private modelConfigId;
+	private modelConfigId: string;
 
-	private interventionPolicyId;
+	private interventionPolicyId: string;
 
-	private datasetId;
+	private datasetId: string;
 
 	private optimizeState: OptimizeCiemssOperationState;
 
@@ -38,6 +38,10 @@ export class PolicyDesignScenario extends BaseScenario {
 		super();
 		this.workflowName = PolicyDesignScenario.templateName;
 		this.optimizeState = OptimizeOp.initState!();
+		this.modelId = '';
+		this.modelConfigId = '';
+		this.interventionPolicyId = '';
+		this.datasetId = '';
 	}
 
 	toJSON() {
