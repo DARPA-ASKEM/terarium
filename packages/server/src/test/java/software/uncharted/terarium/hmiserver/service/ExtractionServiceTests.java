@@ -68,8 +68,8 @@ public class ExtractionServiceTests extends TerariumApplicationTests {
 
 		documentAssetService.uploadFile(documentAsset.getId(), "SIR.pdf", pdfFileEntity);
 
-		documentAsset = extractionService.extractPDFAndApplyToDocument(documentAsset.getId(), null).get();
+		documentAsset = extractionService.extractPDFAndApplyToDocumentNew(documentAsset.getId(), null).get();
 
-		log.info("" + documentAsset.getExtractions());
+		log.info("" + documentAsset.getExtraction());
 	}
 }

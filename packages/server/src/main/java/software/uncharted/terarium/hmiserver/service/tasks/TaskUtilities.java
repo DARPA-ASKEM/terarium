@@ -90,7 +90,8 @@ public class TaskUtilities {
 		input.setLlm(llm);
 		if (document != null) {
 			try {
-				input.setDocument(objectMapper.writeValueAsString(document.getExtractions()));
+				// FIXME: Specialization for dataset enrichment?
+				input.setDocument(objectMapper.writeValueAsString(document.getExtraction().getDocumentText()));
 			} catch (JsonProcessingException e) {
 				throw new IOException("Unable to serialize document text");
 			}

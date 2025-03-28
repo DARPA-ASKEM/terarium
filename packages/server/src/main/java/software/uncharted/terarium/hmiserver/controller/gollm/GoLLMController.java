@@ -166,7 +166,8 @@ public class GoLLMController {
 		input.setLlm(config.getLlm());
 
 		try {
-			input.setDocument(objectMapper.writeValueAsString(document.get().getExtractions()));
+			// FIXME: Prompt, craft specific payload
+			input.setDocument(objectMapper.writeValueAsString(document.get().getExtraction().getLightweightExtractions()));
 		} catch (final JsonProcessingException e) {
 			log.error("Unable to serialize document text", e);
 			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("generic.io-error.write"));
@@ -411,7 +412,8 @@ public class GoLLMController {
 		final InterventionsFromDocumentResponseHandler.Input input = new InterventionsFromDocumentResponseHandler.Input();
 		input.setLlm(config.getLlm());
 		try {
-			input.setDocument(objectMapper.writeValueAsString(document.get().getExtractions()));
+			// FIXME: Prompt, craft specific payload
+			input.setDocument(objectMapper.writeValueAsString(document.get().getExtraction().getLightweightExtractions()));
 		} catch (final JsonProcessingException e) {
 			log.error("Unable to serialize document text", e);
 			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("generic.io-error.write"));
@@ -1211,13 +1213,13 @@ public class GoLLMController {
 			.orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, messages.get("document.not-found")));
 
 		// make sure there are document extractions available
-		if (document.getExtractions() == null || document.getExtractions().isEmpty()) {
+		if (document.getExtraction() == null) {
 			log.warn(String.format("Document %s has no extracted text", documentId));
 			throw new ResponseStatusException(HttpStatus.NOT_FOUND, messages.get("document.extraction.not-done"));
 		}
 
 		try {
-			input.setDocument(objectMapper.writeValueAsString(document.getExtractions()));
+			input.setDocument(objectMapper.writeValueAsString(document.getExtraction().getDocumentText()));
 		} catch (final JsonProcessingException e) {
 			log.error("Unable to serialize document text", e);
 			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("generic.io-error.write"));

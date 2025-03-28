@@ -247,8 +247,8 @@ async function upload() {
 		const createdAssets = await Promise.all(createAssetsPromises);
 		createdAssets.forEach((_, index) => {
 			const { name, id } = (results.value ?? [])[index];
-			if (name && name.toLowerCase().endsWith('.pdf')) {
-				extractPDF(id);
+			if (name) {
+				extractPDF(id); // FIXME: rename, this extracts all document types, not just PDF
 			}
 		});
 		emit('close');
