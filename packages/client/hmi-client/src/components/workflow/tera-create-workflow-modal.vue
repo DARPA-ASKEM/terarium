@@ -67,6 +67,8 @@ import TeraModelFromLiteratureTemplate from '@/components/workflow/scenario-temp
 import { ModelFromLiteratureScenario } from '@/components/workflow/scenario-templates/model-from-literature/model-from-literature-scenario';
 import { CalibrateEnsembleScenario } from '@/components/workflow/scenario-templates/calibrate-ensemble/calibrate-ensemble-scenario';
 import TeraCalibrateEnsembleTemplate from '@/components/workflow/scenario-templates/calibrate-ensemble/tera-calibrate-ensemble-template.vue';
+import { CounterfactualScenario } from './scenario-templates/counterfactual/counterfactual-scenario';
+import TeraCounterfactualTemplate from './scenario-templates/counterfactual/tera-counterfactual-template.vue';
 
 interface ScenarioItem {
 	name: string;
@@ -138,6 +140,14 @@ const scenarioMap = ref(
 				name: CalibrateEnsembleScenario.templateName,
 				instance: new CalibrateEnsembleScenario(),
 				component: markRaw(TeraCalibrateEnsembleTemplate)
+			}
+		],
+		[
+			CounterfactualScenario.templateId,
+			{
+				name: CounterfactualScenario.templateName,
+				instance: new CounterfactualScenario(),
+				component: markRaw(TeraCounterfactualTemplate)
 			}
 		]
 	])
