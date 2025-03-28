@@ -35,7 +35,29 @@
 				/>
 			</div>
 			<div class="search-controls">
-				<InputText type="text" v-model="searchText" placeholder="Search text" />
+				<Button icon="pi pi-search" size="small" outlined severity="secondary" @click="toggleSearchPopover" />
+				<OverlayPanel ref="searchPopover" :showCloseIcon="false">
+					<div class="search-popover-content">
+						<div class="flex items-center gap-2 mb-2">
+							<InputText
+								v-model="searchTextModel"
+								placeholder="Find text in document"
+								@keydown.enter="handleSearch"
+								class="w-full"
+							/>
+						</div>
+						<div class="flex items-center gap-2">
+							<div v-if="!isEmpty(searchResults)">
+								<Button icon="pi pi-chevron-up" size="small" outlined @click="searchNavigate('prev')" />
+								<span v-if="!isEmpty(searchResults)" class="text-sm">
+									{{ searchMatchIndex }} of {{ searchMatchCount }}
+								</span>
+								<Button icon="pi pi-chevron-down" size="small" outlined @click="searchNavigate('next')" />
+							</div>
+							<Button icon="pi pi-times" size="small" text @click="clearSearch" class="ml-auto" />
+						</div>
+					</div>
+				</OverlayPanel>
 			</div>
 		</div>
 		<div class="pages-container">
@@ -48,9 +70,12 @@
 					:fit-parent="fitToWidth"
 					:scale="scale"
 					text-layer
-					:highlight-text="searchText"
+					:highlight-text="searchTextHighlight"
+					@highlight="onSearchTextHighlight"
 					@loaded="(data) => onPageLoaded(data, page)"
-				/>
+				>
+					Loading...
+				</VuePDF>
 			</template>
 		</div>
 	</div>
@@ -58,12 +83,13 @@
 
 <script setup lang="ts">
 import '@tato30/vue-pdf/style.css';
-import { groupBy } from 'lodash';
+import { groupBy, isEmpty, debounce } from 'lodash';
 import { computed, ref, watch, useTemplateRef } from 'vue';
 import { VuePDF, usePDF } from '@tato30/vue-pdf';
 import Button from 'primevue/button';
 import InputText from 'primevue/inputtext';
 import InputNumber from 'primevue/inputnumber';
+import OverlayPanel from 'primevue/overlaypanel';
 
 const DEFAULT_SCALE = 1.5;
 const SCALE_INCREMENT = 0.25;
@@ -88,9 +114,14 @@ const props = defineProps<{
 }>();
 
 const vuePdfs = useTemplateRef<InstanceType<typeof VuePDF>[] | null>('vuePdfs');
+const searchPopover = ref<InstanceType<typeof OverlayPanel> | null>(null);
+
 const annotationsByPage = computed(() => groupBy(props.annotations ?? [], 'pageNo'));
 const { pdf, pages } = usePDF(computed(() => props.pdfLink));
 
+// ================================================
+// Page Navigation
+// ================================================
 const currentPage = ref(props.currentPage ?? DEFAULT_CURRENT_PAGE);
 watch(
 	() => props.currentPage,
@@ -110,7 +141,7 @@ const goToPage = (pageNumber: number) => {
 	if (pageNumber >= 1 && pageNumber <= pages.value) {
 		currentPage.value = pageNumber;
 		const targetPage = getPdfPage(pageNumber)?.$el;
-		targetPage?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+		targetPage?.scrollIntoView({ behavior: 'auto', block: 'start' });
 	}
 };
 
@@ -128,6 +159,9 @@ const nextPage = () => {
 	}
 };
 
+// ================================================
+// Annotations
+// ================================================
 const applyAnnotations = (annotations: PdfAnnotation[]) => {
 	annotations.forEach((annotation) =>
 		drawBbox(annotation.pageNo, annotation.bbox, annotation.isHighlight, annotation.color)
@@ -182,6 +216,9 @@ watch(
 	}
 );
 
+// ================================================
+// Zoom Controls
+// ================================================
 const scale = ref(DEFAULT_SCALE);
 
 const zoomIn = () => {
@@ -192,7 +229,113 @@ const zoomOut = () => {
 	scale.value = Math.max(MIN_SCALE, scale.value - SCALE_INCREMENT);
 };
 
-const searchText = ref('');
+// ================================================
+// Text Search
+// ================================================
+const FOCUSED_HIGHLIGHT_CLASS = 'highlight-focus';
+const searchTextModel = ref('');
+const searchTextHighlight = ref('');
+const searchResults = ref<Record<string, any>[]>([]);
+const searchMatches = ref<{ page: number; textElements: HTMLElement[] }[]>([]);
+const searchMatchCount = computed(() => searchMatches.value.length);
+const searchMatchIndex = ref(0);
+const focusedSearchItems = ref<HTMLElement[] | null>(null);
+
+watch(
+	() => searchResults.value,
+	debounce(() => {
+		// Since on highlight event triggers for every page, we need to debounce the search results to wait for all pages to be processed.
+		// Update searchMatches after all pages are processed.
+		searchMatches.value = searchResults.value
+			.map((r) => {
+				// Note that search results are ordered by page
+				const matches = r.matches.map((m) => {
+					const elementsIndices = Array.from({ length: m.end.idx - m.start.idx + 1 }, (_, i) => m.start.idx + i);
+					return {
+						page: r.page,
+						textElements: elementsIndices.map((i) => r.textDivs[i])
+					};
+				});
+				return matches;
+			})
+			.flat();
+		searchMatchIndex.value = isEmpty(searchMatches.value) ? 0 : 1;
+		focusSearchItem(searchMatchIndex.value);
+	}, 300),
+	{ deep: true }
+);
+
+const clearFocusedSearchItem = () => {
+	if (!isEmpty(focusedSearchItems.value) && focusedSearchItems.value !== null) {
+		focusedSearchItems.value.forEach((item) => {
+			item.classList.remove(FOCUSED_HIGHLIGHT_CLASS);
+		});
+	}
+	focusedSearchItems.value = null;
+};
+
+const focusSearchItem = (index: number) => {
+	clearFocusedSearchItem();
+	focusedSearchItems.value = searchMatches.value[index - 1]?.textElements ?? null;
+	focusedSearchItems.value?.forEach((item) => {
+		item.classList.add(FOCUSED_HIGHLIGHT_CLASS);
+	});
+	const firstFocusedItem = focusedSearchItems.value?.[0];
+	if (firstFocusedItem) {
+		// Scroll the first focused item into view if it's not visible
+		const rect = firstFocusedItem.getBoundingClientRect();
+		const isVisible =
+			rect.top >= 0 &&
+			rect.left >= 0 &&
+			rect.bottom <= (window.innerHeight || document.documentElement.clientHeight) &&
+			rect.right <= (window.innerWidth || document.documentElement.clientWidth);
+
+		if (!isVisible) {
+			firstFocusedItem.scrollIntoView({ behavior: 'auto', block: 'center' });
+		}
+	}
+};
+
+const toggleSearchPopover = (event) => {
+	searchPopover.value?.toggle(event);
+};
+
+const handleSearch = () => {
+	if (searchTextModel.value === '') {
+		searchResults.value = [];
+		clearFocusedSearchItem();
+	}
+	if (searchTextModel.value !== searchTextHighlight.value) {
+		searchTextHighlight.value = searchTextModel.value;
+	} else {
+		searchNavigate('next');
+	}
+};
+
+const onSearchTextHighlight = (value) => {
+	// Since page starts from 1, subtract 1 from the page number to index the results array ordered by page
+	searchResults.value[value.page - 1] = value;
+};
+
+const searchNavigate = (direction: 'next' | 'prev') => {
+	if (searchMatchCount.value === 0) return;
+
+	if (direction === 'next') {
+		searchMatchIndex.value = searchMatchIndex.value < searchMatchCount.value ? searchMatchIndex.value + 1 : 1;
+	} else {
+		searchMatchIndex.value = searchMatchIndex.value > 1 ? searchMatchIndex.value - 1 : searchMatchCount.value;
+	}
+	focusSearchItem(searchMatchIndex.value);
+};
+
+const clearSearch = () => {
+	searchTextModel.value = '';
+	searchTextHighlight.value = '';
+	searchResults.value = [];
+	searchMatchIndex.value = 0;
+	clearFocusedSearchItem();
+	searchPopover.value?.hide();
+};
 
 defineExpose({
 	goToPage
@@ -241,5 +384,22 @@ defineExpose({
 .page {
 	margin-bottom: 20px;
 	box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+.search-popover-content {
+	display: flex;
+	flex-direction: row;
+	gap: var(--gap-2);
+	min-width: 250px;
+}
+
+.textLayer .highlight {
+	/* Default highlight color */
+	--highlight-bg-color: rgba(230, 195, 0, 0.35);
+}
+
+.highlight-focus span {
+	/* Focused highlight color */
+	background-color: rgb(230, 80, 0, 0.4) !important;
 }
 </style>
