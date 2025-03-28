@@ -1,7 +1,7 @@
 <template>
 	<div class="pdf-viewer-container">
 		<div class="controls">
-			<div class="zoom-controls">
+			<div v-if="!fitToWidth" class="zoom-controls">
 				<Button icon="pi pi-search-minus" size="small" outlined severity="secondary" @click="zoomOut" />
 				<span class="w-3rem text-center">{{ Math.round(scale * 100) }}%</span>
 				<Button icon="pi pi-search-plus" size="small" outlined severity="secondary" @click="zoomIn" />
@@ -108,6 +108,9 @@ export interface PdfAnnotation {
 
 const props = defineProps<{
 	pdfLink: string;
+	/**
+	 * Whether to fit the PDF to the width of the container. When true, the zoom controls are hidden.
+	 */
 	fitToWidth?: boolean;
 	currentPage?: number;
 	annotations?: PdfAnnotation[];
