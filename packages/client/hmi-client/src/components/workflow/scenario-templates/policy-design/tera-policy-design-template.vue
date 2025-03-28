@@ -123,7 +123,6 @@ watch(
 			if (model.value) {
 				// States:
 				const modelStates = model.value.model.states;
-				console.log(modelStates);
 				modelStates.forEach((state) => modelStateAndObsOptions.value.push(state.id));
 				// Obs:
 				const modelObs = model.value.semantics?.ode.observables;

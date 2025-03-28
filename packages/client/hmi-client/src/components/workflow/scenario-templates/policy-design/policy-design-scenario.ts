@@ -116,7 +116,6 @@ export class PolicyDesignScenario extends BaseScenario {
 	}
 
 	getOptimizeOutputSettings() {
-		console.log(this.optimizeState.chartSettings);
 		return this.optimizeState.chartSettings?.flatMap((chartSettings) => chartSettings.selectedVariables) ?? [];
 	}
 
