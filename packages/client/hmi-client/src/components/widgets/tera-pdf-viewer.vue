@@ -357,7 +357,7 @@ defineExpose({
  */
 .pdf-viewer-search-text-overlay.p-overlaypanel {
 	.p-overlaypanel-content {
-		padding: 0.75rem !important;
+		padding: 0;
 	}
 }
 </style>
@@ -406,7 +406,7 @@ defineExpose({
 }
 
 .search-popover-content {
-	padding: 10px;
+	padding: 0.5rem;
 	display: flex;
 	flex-direction: row;
 	gap: var(--gap-2);
