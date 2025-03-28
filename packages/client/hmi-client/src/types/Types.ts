@@ -229,6 +229,17 @@ export interface DocumentAsset extends TerariumAsset {
     extraction?: Extraction;
 }
 
+export interface Enrichment {
+    id: string;
+    label: string;
+    target: EnrichmentTarget;
+    source: EnrichmentSource;
+    content: any;
+    extractionAssetId: string;
+    extractionItemIds: string[];
+    included: boolean;
+}
+
 export interface ExternalPublication extends TerariumAsset {
     title: string;
     xdd_uri: string;
@@ -855,14 +866,17 @@ export interface ModelMetadata {
     initials?: { [index: string]: any };
     parameters?: { [index: string]: any };
     card?: Card;
-    provenance?: string[];
     source?: any;
+    enrichments?: Enrichment[];
     description?: any;
+    modelProvenance?: { [index: string]: string[] };
     processed_at?: number;
     processed_by?: string;
     variable_statements?: VariableStatement[];
     gollmCard?: any;
-    gollmExtractions?: any;
+    /**
+     * @deprecated
+     */
     templateCard?: any;
     code_id?: string;
 }
@@ -900,12 +914,12 @@ export interface ProjectGroupPermission {
 
 export interface IProjectUserPermissionDisplayModel {
     user: User;
-    username: string;
     email: string;
-    permissionLevel: Permission;
+    username: string;
     givenName: string;
     id: string;
     familyName: string;
+    permissionLevel: Permission;
 }
 
 export interface ProvenanceNode {
@@ -1295,6 +1309,19 @@ export enum ColumnType {
     Datetime = "DATETIME",
     Date = "DATE",
     Time = "TIME",
+}
+
+export enum EnrichmentTarget {
+    State = "STATE",
+    Parameter = "PARAMETER",
+    Transition = "TRANSITION",
+    Observable = "OBSERVABLE",
+    Description = "DESCRIPTION",
+}
+
+export enum EnrichmentSource {
+    Gollm = "GOLLM",
+    Custom = "CUSTOM",
 }
 
 export enum SemanticType {

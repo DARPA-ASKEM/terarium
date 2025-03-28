@@ -1,7 +1,7 @@
 import API from '@/api/api';
 import { AxiosResponse } from 'axios';
 import { extractionStatusUpdateHandler, subscribe } from '@/services/ClientEventService';
-import { type DocumentAsset, type Model, ClientEventType } from '@/types/Types';
+import { type DocumentAsset, type Model, ClientEventType, ExtractionItem } from '@/types/Types';
 import { logger } from '@/utils/logger';
 import { Workflow, WorkflowNode } from '@/types/workflow';
 
@@ -33,6 +33,7 @@ export const getCleanedEquations = async (
  */
 export interface EquationsToAMRRequest {
 	equations: string[];
+	equationsWithSource?: Map<NonNullable<DocumentAsset['id']>, { id: ExtractionItem['id']; equationStr: string }[]>;
 	modelId?: Model['id'];
 	documentId?: DocumentAsset['id'];
 	workflowId?: Workflow['id'];
@@ -45,8 +46,12 @@ export interface EquationsToAMRRequest {
  * @return {Promise<any>}
  */
 export const equationsToAMR = async (request: EquationsToAMRRequest): Promise<string | null> => {
+	const payload = {
+		...request,
+		equationsWithSource: request.equationsWithSource ? Object.fromEntries(request.equationsWithSource) : {}
+	};
 	try {
-		const response: AxiosResponse<string> = await API.post(`/knowledge/equations-to-model`, request);
+		const response: AxiosResponse<string> = await API.post(`/knowledge/equations-to-model`, payload);
 		return response.data;
 	} catch (error: unknown) {
 		logger.error(error, { showToast: false });

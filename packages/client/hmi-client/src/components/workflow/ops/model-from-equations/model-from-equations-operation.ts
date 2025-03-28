@@ -5,25 +5,10 @@ const DOCUMENTATION_URL = 'https://documentation.terarium.ai/modeling/create-mod
 
 export interface EquationBlock {
 	text: string;
-	isEditedByAI?: boolean;
-	pageNumber?: number;
-	extractionError?: boolean;
-}
-
-export enum EnrichmentType {
-	DESCRIPTION = 'description',
-	PARAMTER = 'parameter',
-	STATE = 'state',
-	OBSERVABLE = 'observable',
-	TRANSITION = 'transition',
-	CUSTOM = 'custom'
-}
-
-export interface EnrichmentBlock {
-	content: any;
-	path: string[];
-	include: boolean;
-	type: EnrichmentType;
+	provenance?: {
+		documentId: string;
+		extractionItemId: string;
+	};
 }
 
 export interface ModelFromEquationsState {
@@ -32,7 +17,6 @@ export interface ModelFromEquationsState {
 	text: string;
 	modelFramework: string;
 	modelId: string | null;
-	enrichments: AssetBlock<EnrichmentBlock>[];
 }
 
 export const ModelFromEquationsOperation: Operation = {
@@ -52,8 +36,7 @@ export const ModelFromEquationsOperation: Operation = {
 			excludedEquations: [],
 			text: '',
 			modelFramework: 'petrinet',
-			modelId: null,
-			enrichments: []
+			modelId: null
 		};
 		return init;
 	}

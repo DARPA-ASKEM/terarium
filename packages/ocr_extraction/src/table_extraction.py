@@ -1,53 +1,14 @@
-import base64
 import logging
-from io import BytesIO
-from bs4 import BeautifulSoup
-from PIL import Image
 from src.llm_tools import LlmToolsInterface
-
-
-def convert_table_to_grid(html_table):
-    soup = BeautifulSoup(html_table, 'html.parser')
-    table = soup.find('table')
-
-    # Determine the size of the table
-    num_rows = len(table.find_all('tr'))
-    num_cols = max(len(row.find_all(['td', 'th'])) for row in table.find_all('tr'))
-
-    # Initialize the grid with empty strings
-    grid = [['' for _ in range(num_cols)] for _ in range(num_rows)]
-
-    for row_idx, row in enumerate(table.find_all('tr')):
-        col_idx = 0
-        for cell in row.find_all(['td', 'th']):
-            while grid[row_idx][col_idx]:
-                col_idx += 1
-
-            rowspan = int(cell.get('rowspan', 1))
-            colspan = int(cell.get('colspan', 1))
-            cell_text = cell.get_text(strip=True)
-
-            for i in range(rowspan):
-                for j in range(colspan):
-                    grid[row_idx + i][col_idx + j] = cell_text
-
-            col_idx += colspan
-
-    return grid
-
-
-def image_to_base64_string(img: Image.Image) -> str:
-    format = 'PNG'
-    buffered = BytesIO()
-    img.save(buffered, format=format)
-    img_base64 = base64.b64encode(buffered.getvalue()).decode("utf-8")
-    return f"data:image/{format.lower()};base64,{img_base64}"  # Return Data URI
+from src.utils import image_to_base64_string, convert_table_to_grid, normalize_bbox
 
 
 def extract_tables(result, llmTools: LlmToolsInterface):
     table_extraction_dict = {}
     for _idx, table in enumerate(result.document.tables):
         table_ref = table.self_ref
+        # Page information
+        page_size = result.document.pages[table.prov[0].page_no].size
         # Get the table image
         table_img = table.get_image(result.document)
         table_img = table_img.resize((table_img.width * 2, table_img.height * 2))
@@ -67,13 +28,13 @@ def extract_tables(result, llmTools: LlmToolsInterface):
                 col_idx = table_cell.start_col_offset_idx
                 cell_id = table_ref + ":" + str(row_idx) + "_" + str(col_idx)
                 cell_val = str(table_grid[row_idx][col_idx])
-                bbox = {
-                    "left": table_cell.bbox.l,
-                    "top": table_cell.bbox.t,
-                    "right": table_cell.bbox.r,
-                    "bottom": table_cell.bbox.b,
+                bbox = normalize_bbox({
+                    "l": table_cell.bbox.l,
+                    "t": table_cell.bbox.t,
+                    "r": table_cell.bbox.r,
+                    "b": table_cell.bbox.b,
                     "coord_origin": table_cell.bbox.coord_origin
-                }
+                }, (page_size.width, page_size.height))
                 cell_dict = vars(table_cell)
                 cell_dict["id"] = cell_id  # Add table cell id
                 cell_dict["bbox"] = bbox

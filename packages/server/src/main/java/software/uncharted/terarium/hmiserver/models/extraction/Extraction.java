@@ -1,10 +1,10 @@
 package software.uncharted.terarium.hmiserver.models.extraction;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.databind.JsonNode;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 import lombok.Data;
 import software.uncharted.terarium.hmiserver.annotations.TSModel;
 
@@ -68,5 +68,27 @@ public class Extraction {
 					}
 				}
 			});
+	}
+
+	@Data
+	private class LightweightExtractionItem {
+
+		private String id;
+		private String text;
+	}
+
+	// Collect simplified extraction items, used when sending for an LLM request to save tokens
+	@JsonIgnore
+	public List<LightweightExtractionItem> getLightweightExtractions() {
+		return extractions
+			.stream()
+			.filter(item -> !"picture".equalsIgnoreCase(item.getType()))
+			.map(item -> {
+				LightweightExtractionItem lightweight = new LightweightExtractionItem();
+				lightweight.setId(item.getId());
+				lightweight.setText(item.getText());
+				return lightweight;
+			})
+			.collect(Collectors.toList());
 	}
 }

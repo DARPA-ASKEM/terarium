@@ -51,7 +51,6 @@ import software.uncharted.terarium.hmiserver.proxies.jsdelivr.JsDelivrProxy;
 import software.uncharted.terarium.hmiserver.security.Roles;
 import software.uncharted.terarium.hmiserver.service.CurrentUserService;
 import software.uncharted.terarium.hmiserver.service.data.DocumentAssetService;
-import software.uncharted.terarium.hmiserver.service.data.ProjectService;
 import software.uncharted.terarium.hmiserver.utils.rebac.Schema;
 
 @RequestMapping("/document-asset")
@@ -63,7 +62,6 @@ public class DocumentController {
 	final Config config;
 	final CurrentUserService currentUserService;
 	final JsDelivrProxy gitHubProxy;
-	private final ProjectService projectService;
 	final DocumentAssetService documentAssetService;
 
 	@PostMapping

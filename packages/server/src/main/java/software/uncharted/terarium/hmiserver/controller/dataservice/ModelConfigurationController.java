@@ -46,7 +46,6 @@ import software.uncharted.terarium.hmiserver.service.data.ModelService;
 import software.uncharted.terarium.hmiserver.service.data.ProjectService;
 import software.uncharted.terarium.hmiserver.utils.Messages;
 import software.uncharted.terarium.hmiserver.utils.ModelConfigurationToTables;
-import software.uncharted.terarium.hmiserver.utils.rebac.Schema.Permission;
 
 @RequestMapping("/model-configurations")
 @RestController
