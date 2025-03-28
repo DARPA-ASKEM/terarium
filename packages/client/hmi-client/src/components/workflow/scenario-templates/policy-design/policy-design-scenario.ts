@@ -147,19 +147,19 @@ export class PolicyDesignScenario extends BaseScenario {
 		// Add Edges:
 		// Model Config Input
 		wf.addEdge(modelNode.id, modelNode.outputs[0].id, modelConfigNode.id, modelConfigNode.inputs[0].id, [
-			{ x: 0, y: 0 },
-			{ x: 0, y: 0 }
+			POSITION,
+			POSITION
 		]);
 		// Intevention Input
 		wf.addEdge(modelNode.id, modelNode.outputs[0].id, interventionNode.id, interventionNode.inputs[0].id, [
-			{ x: 0, y: 0 },
-			{ x: 0, y: 0 }
+			POSITION,
+			POSITION
 		]);
 
 		// Optimize Dataset:
 		wf.addEdge(interventionNode.id, interventionNode.outputs[0].id, optimizeNode.id, optimizeNode.inputs[1].id, [
-			{ x: 0, y: 0 },
-			{ x: 0, y: 0 }
+			POSITION,
+			POSITION
 		]);
 
 		// Manage States:
@@ -203,19 +203,19 @@ export class PolicyDesignScenario extends BaseScenario {
 
 			// Calibrate Inputs:
 			wf.addEdge(modelConfigNode.id, modelConfigNode.outputs[0].id, calibrateNode.id, calibrateNode.inputs[0].id, [
-				{ x: 0, y: 0 },
-				{ x: 0, y: 0 }
+				POSITION,
+				POSITION
 			]);
 
 			wf.addEdge(datasetNode.id, datasetNode.outputs[0].id, calibrateNode.id, calibrateNode.inputs[1].id, [
-				{ x: 0, y: 0 },
-				{ x: 0, y: 0 }
+				POSITION,
+				POSITION
 			]);
 
 			// Optimize Model Config
 			wf.addEdge(calibrateNode.id, calibrateNode.outputs[0].id, optimizeNode.id, optimizeNode.inputs[0].id, [
-				{ x: 0, y: 0 },
-				{ x: 0, y: 0 }
+				POSITION,
+				POSITION
 			]);
 
 			// Dataset state:
@@ -230,8 +230,8 @@ export class PolicyDesignScenario extends BaseScenario {
 		} else {
 			// Optimize Model Config
 			wf.addEdge(modelConfigNode.id, modelConfigNode.outputs[0].id, optimizeNode.id, optimizeNode.inputs[0].id, [
-				{ x: 0, y: 0 },
-				{ x: 0, y: 0 }
+				POSITION,
+				POSITION
 			]);
 		}
 
