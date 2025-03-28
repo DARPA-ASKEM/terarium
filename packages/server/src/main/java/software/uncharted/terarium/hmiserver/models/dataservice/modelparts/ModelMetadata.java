@@ -10,6 +10,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
@@ -63,14 +64,8 @@ public class ModelMetadata extends SupportAdditionalProperties implements Serial
 	private JsonNode gollmCard;
 
 	@TSOptional
-	@JsonProperty("gollmExtractions")
-	private JsonNode gollmExtractions;
-
-	@TSOptional
-	private List<String> provenance;
-
-	@TSOptional
 	@JsonProperty("templateCard")
+	@Deprecated
 	private JsonNode templateCard;
 
 	@TSOptional
@@ -88,18 +83,15 @@ public class ModelMetadata extends SupportAdditionalProperties implements Serial
 	@JdbcTypeCode(Types.BINARY)
 	private byte[] description;
 
+	@TSOptional
+	private Map<UUID, List<String>> modelProvenance;
+
 	public void retainMetadataFields(final ModelMetadata other) {
 		if (description == null) {
 			description = other.description;
 		}
 		if (gollmCard == null) {
 			gollmCard = other.gollmCard;
-		}
-		if (gollmExtractions == null) {
-			gollmExtractions = other.gollmExtractions;
-		}
-		if (provenance == null) {
-			provenance = other.provenance;
 		}
 		if (templateCard == null) {
 			templateCard = other.templateCard;
@@ -130,6 +122,9 @@ public class ModelMetadata extends SupportAdditionalProperties implements Serial
 		}
 		if (card == null) {
 			card = other.card;
+		}
+		if (modelProvenance == null) {
+			modelProvenance = other.modelProvenance;
 		}
 	}
 
@@ -173,15 +168,6 @@ public class ModelMetadata extends SupportAdditionalProperties implements Serial
 
 		if (gollmCard != null) {
 			clone.gollmCard = this.gollmCard.deepCopy();
-		}
-
-		if (gollmExtractions != null) {
-			clone.gollmExtractions = this.gollmExtractions.deepCopy();
-		}
-
-		if (provenance != null) {
-			clone.provenance = new ArrayList<>();
-			clone.provenance.addAll(provenance);
 		}
 
 		if (templateCard != null) {
