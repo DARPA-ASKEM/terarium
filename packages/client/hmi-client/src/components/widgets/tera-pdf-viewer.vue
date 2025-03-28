@@ -2,16 +2,16 @@
 	<div class="pdf-viewer-container">
 		<div class="controls">
 			<div v-if="!fitToWidth" class="zoom-controls">
-				<Button icon="pi pi-search-minus" size="small" outlined severity="secondary" @click="zoomOut" />
+				<Button icon="pi pi-search-minus" size="small" text severity="secondary" @click="zoomOut" />
 				<span class="w-3rem text-center">{{ Math.round(scale * 100) }}%</span>
-				<Button icon="pi pi-search-plus" size="small" outlined severity="secondary" @click="zoomIn" />
+				<Button icon="pi pi-search-plus" size="small" text severity="secondary" @click="zoomIn" />
 			</div>
 			<Divider layout="vertical" />
 			<div class="page-navigation">
 				<Button
 					icon="pi pi-arrow-left"
 					size="small"
-					outlined
+					text
 					severity="secondary"
 					@click="prevPage"
 					:disabled="currentPage <= 1"
@@ -29,7 +29,7 @@
 				<Button
 					icon="pi pi-arrow-right"
 					size="small"
-					outlined
+					text
 					severity="secondary"
 					@click="nextPage"
 					:disabled="currentPage >= pages"
@@ -37,7 +37,7 @@
 			</div>
 			<Divider layout="vertical" />
 			<div class="search-controls">
-				<Button icon="pi pi-search" size="small" outlined severity="secondary" @click="toggleSearchPopover" />
+				<Button icon="pi pi-search" size="small" text severity="secondary" @click="toggleSearchPopover" />
 				<OverlayPanel class="pdf-viewer-search-text-overlay" ref="searchPopover" :showCloseIcon="false">
 					<div class="search-popover-content gap-2">
 						<div class="flex gap-2 flex-grow-1">
