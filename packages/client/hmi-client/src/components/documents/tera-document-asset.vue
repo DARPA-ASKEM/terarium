@@ -1,7 +1,7 @@
 <template>
 	<tera-asset :id="assetId" :name="document?.name ?? ''" :is-loading="documentLoading" :is-document="true">
 		<p class="pl-3" v-if="documentLoading">Loading...</p>
-		<tera-pdf-viewer v-if="pdfLink" :pdf-link="pdfLink" />
+		<tera-pdf-viewer v-if="pdfLink" :pdf-link="pdfLink" :title="document?.name || ''" />
 		<tera-text-editor v-else-if="docText" :initial-text="docText" />
 	</tera-asset>
 </template>

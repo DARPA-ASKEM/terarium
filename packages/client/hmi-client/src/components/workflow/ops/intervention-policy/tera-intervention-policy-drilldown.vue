@@ -753,4 +753,8 @@ button.start-edit {
 .paginator {
 	padding: unset;
 }
+
+:deep(.content-wrapper) {
+	height: 100%;
+}
 </style>
