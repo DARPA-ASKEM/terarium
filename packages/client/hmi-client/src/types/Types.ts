@@ -905,13 +905,13 @@ export interface ProjectGroupPermission {
 }
 
 export interface IProjectUserPermissionDisplayModel {
-    permissionLevel: Permission;
-    user: User;
-    email: string;
-    username: string;
     givenName: string;
     id: string;
+    email: string;
     familyName: string;
+    username: string;
+    user: User;
+    permissionLevel: Permission;
 }
 
 export interface ProvenanceNode {
