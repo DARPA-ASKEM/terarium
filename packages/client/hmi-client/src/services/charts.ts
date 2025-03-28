@@ -13,7 +13,7 @@ import type { FunmanBox, FunmanConstraintsResponse } from './models/funman-servi
 
 const VEGALITE_SCHEMA = 'https://vega.github.io/schema/vega-lite/v5.json';
 const GLOBAL_FONT = 'Figtree';
-export const DEFAULT_FONT_SIZE = 12;
+export const DEFAULT_FONT_SIZE = 18;
 
 const getFontConfig = (fontSize = DEFAULT_FONT_SIZE, isCompact = false) => {
 	const BASE_FONT_SIZE = 12;
@@ -59,7 +59,7 @@ export const expressionFunctions = {
 	}
 };
 
-export const CATEGORICAL_SCHEME = ['#1B8073', '#6495E8', '#8F69B9', '#D67DBF', '#E18547', '#D2C446', '#84594D'];
+export const CATEGORICAL_SCHEME = ['#1A7F6A', '#DB7A3F', '#8A60B3', '#D06AB8', '#CABB3F', '#7B4F45', '#5A8FE3'];
 
 // diverging categorical colour scheme for the sensitivity chart (from a deep blue -> a deep red)
 export const SENSITIVITY_COLOUR_SCHEME = ['#4575B4', '#91BFDB', '#E0F3F8', '#FFFFBF', '#FEE090', '#FC8D59', '#D73027'];
@@ -507,7 +507,7 @@ function calculateLegendColumns(
 
 /**
  * Generate Vegalite specs for simulation/forecast charts. The chart can contain:
- *  - sampling layer: multiple forecast runsk
+ *  - sampling layer: multiple forecast runs
  *  - statistics layer: statistical aggregate of the sampling layer
  *  - ground truth layer: any grounding data
  *
@@ -1500,7 +1500,7 @@ export function createSensitivityRankingChart(data: { parameter: string; score: 
  *
  * @param chartSpec - The chart specification.
  * @param annotations - A list of annotations to be applied.
- * @param charType - The type of the chart to which the annotations are applied.
+ * @param chartType - The type of the chart to which the annotations are applied.
  * @returns The updated chart specification with the applied annotations.
  */
 export function applyChartAnnotations(

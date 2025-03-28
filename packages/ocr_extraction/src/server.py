@@ -11,7 +11,7 @@ from docling.document_converter import DocumentConverter, PdfFormatOption
 
 from texteller.inference_model import InferenceModel
 
-from src.table_extraction import extract_tables
+from src.table_extraction import extract_tables, normalize_bbox
 from src.llm_tools import get_llm_tools
 
 logging.basicConfig(level=logging.INFO)
@@ -146,12 +146,7 @@ async def process_and_predict(file: UploadFile = File(...), llm_model: str = For
         item["page"] = prov["page_no"]
         item["pageWidth"] = pages[str(item["page"])]["size"]["width"]
         item["pageHeight"] = pages[str(item["page"])]["size"]["height"]
-        item["bbox"] = {
-            "left": prov["bbox"]["l"],
-            "top": prov["bbox"]["t"],
-            "right": prov["bbox"]["r"],
-            "bottom": prov["bbox"]["b"]
-        }
+        item["bbox"] = normalize_bbox(prov["bbox"], (item["pageWidth"], item["pageHeight"]))
         item["charspan"] = prov["charspan"]
 
         if item["subType"] == "formula":
@@ -175,12 +170,7 @@ async def process_and_predict(file: UploadFile = File(...), llm_model: str = For
         item["page"] = prov["page_no"]
         item["pageWidth"] = pages[str(item["page"])]["size"]["width"]
         item["pageHeight"] = pages[str(item["page"])]["size"]["height"]
-        item["bbox"] = {
-            "left": prov["bbox"]["l"],
-            "top": prov["bbox"]["t"],
-            "right": prov["bbox"]["r"],
-            "bottom": prov["bbox"]["b"]
-        }
+        item["bbox"] = normalize_bbox(prov["bbox"], (item["pageWidth"], item["pageHeight"]))
         item["charspan"] = prov["charspan"]
         final_result["extractions"].append(item)
 
@@ -197,12 +187,7 @@ async def process_and_predict(file: UploadFile = File(...), llm_model: str = For
         item["page"] = prov["page_no"]
         item["pageWidth"] = pages[str(item["page"])]["size"]["width"]
         item["pageHeight"] = pages[str(item["page"])]["size"]["height"]
-        item["bbox"] = {
-            "left": prov["bbox"]["l"],
-            "top": prov["bbox"]["t"],
-            "right": prov["bbox"]["r"],
-            "bottom": prov["bbox"]["b"]
-        }
+        item["bbox"] = normalize_bbox(prov["bbox"], (item["pageWidth"], item["pageHeight"]))
         item["charspan"] = prov["charspan"]
         item["rawText"] = ""
         item["text"] = table_extraction_dict[id]["text"]
