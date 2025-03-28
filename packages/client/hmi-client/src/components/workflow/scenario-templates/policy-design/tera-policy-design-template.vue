@@ -49,7 +49,21 @@
 				class="mb-3"
 			/>
 		</template>
-		<template #outputs> </template>
+		<template #outputs>
+			<label :class="{ 'disabled-label': _.isEmpty(modelStateAndObsOptions) || isFetchingModelData }"
+				>Select an output metric</label
+			>
+			<MultiSelect
+				:disabled="_.isEmpty(modelStateAndObsOptions) || isFetchingModelData"
+				:model-value="selectedOutputSettings"
+				placeholder="Select output metrics"
+				:options="modelStateAndObsOptions"
+				@update:model-value="scenario.setOptimizeOutputSettings($event)"
+				:loading="isFetchingModelData"
+				filter
+			/>
+			<img :src="horizon" alt="Horizon scanning chart" class="" />
+		</template>
 	</tera-scenario-template>
 </template>
 
@@ -61,6 +75,8 @@ import { AssetType, ModelConfiguration, InterventionPolicy, Model } from '@/type
 import { getInterventionPoliciesForModel, getModel, getModelConfigurationsForModel } from '@/services/model';
 import _ from 'lodash';
 import { getModelConfigurationById } from '@/services/model-configurations';
+import horizon from '@/assets/svg/template-images/horizon-thumbnail.svg';
+import MultiSelect from 'primevue/multiselect';
 import TeraScenarioTemplate from '../tera-scenario-template.vue';
 import { ScenarioHeader } from '../base-scenario';
 import { PolicyDesignScenario } from './policy-design-scenario';
@@ -91,7 +107,8 @@ const modelConfiguration = ref<ModelConfiguration>();
 const allModelConfigOptions = ref<ModelConfiguration[]>([]);
 const allInterventionPolicyOptions = ref<InterventionPolicy[]>([]);
 const isFetchingModelData = ref<boolean>(false);
-const modelStateAndObsOptions = ref<{ label: string; value: string }[]>([]);
+const modelStateAndObsOptions = ref<string[]>([]);
+const selectedOutputSettings = computed(() => props.scenario.getOptimizeOutputSettings());
 
 watch(
 	() => selectedModelId,
@@ -106,19 +123,12 @@ watch(
 			if (model.value) {
 				// States:
 				const modelStates = model.value.model.states;
-				modelStateAndObsOptions.value = modelStates.map((state: any) => ({
-					label: state.id,
-					value: `${state.id}_state`
-				}));
+				console.log(modelStates);
+				modelStates.forEach((state) => modelStateAndObsOptions.value.push(state.id));
 				// Obs:
 				const modelObs = model.value.semantics?.ode.observables;
 				if (modelObs) {
-					modelStateAndObsOptions.value.push(
-						...modelObs.map((observable: any) => ({
-							label: observable.id,
-							value: `${observable.id}_observable`
-						}))
-					);
+					modelObs.forEach((obs) => modelStateAndObsOptions.value.push(obs.id));
 				}
 			}
 		}

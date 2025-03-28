@@ -11,6 +11,8 @@ import _ from 'lodash';
 import { getModelConfigurationById } from '@/services/model-configurations';
 import { getInterventionPolicyById } from '@/services/intervention-policy';
 import { ModelConfiguration } from '@/types/Types';
+import { ChartSetting, ChartSettingType } from '@/types/common';
+import { updateChartSettingsBySelectedVariables } from '@/services/chart-settings';
 import {
 	InterventionPolicyGroupForm,
 	OptimizeCiemssOperationState
@@ -109,12 +111,23 @@ export class PolicyDesignScenario extends BaseScenario {
 		return this.optimizeState;
 	}
 
-	setOptimizeState(optimizeState: OptimizeCiemssOperationState) {
-		this.optimizeState = optimizeState;
-	}
-
 	updateInterventionPolicyGroupForm(index: number, config: InterventionPolicyGroupForm) {
 		this.optimizeState.interventionPolicyGroups[index] = config;
+	}
+
+	getOptimizeOutputSettings() {
+		console.log(this.optimizeState.chartSettings);
+		return this.optimizeState.chartSettings?.flatMap((chartSettings) => chartSettings.selectedVariables) ?? [];
+	}
+
+	setOptimizeOutputSettings(selectedVariables: string[]) {
+		let optimizeChartSettings: ChartSetting[] = [];
+		optimizeChartSettings = updateChartSettingsBySelectedVariables(
+			optimizeChartSettings,
+			ChartSettingType.VARIABLE,
+			selectedVariables
+		);
+		this.optimizeState.chartSettings = optimizeChartSettings;
 	}
 
 	private async addAllNodes(wf: workflowService.WorkflowWrapper): Promise<workflowService.WorkflowWrapper> {
