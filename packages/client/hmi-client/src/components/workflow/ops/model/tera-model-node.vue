@@ -44,7 +44,7 @@ import { getModel } from '@/services/model';
 import { canPropagateResource } from '@/services/workflow';
 
 import { OperatorStatus, WorkflowNode } from '@/types/workflow';
-import { AssetType, ClientEventType, type Model, type ProjectAsset } from '@/types/Types';
+import { AssetType, ClientEventType, ProgressState, type Model, type ProjectAsset } from '@/types/Types';
 
 import TeraModelDiagram from '@/components/model/petrinet/tera-model-diagram.vue';
 import TeraModelEquation from '@/components/model/petrinet/tera-model-equation.vue';
@@ -62,7 +62,7 @@ const props = defineProps<{
 const emit = defineEmits(['append-output', 'open-drilldown', 'finished-job']);
 const models = computed(() => useProjects().getActiveProjectAssets(AssetType.Model));
 
-const taskStatus = ref<OperatorStatus | undefined>();
+const taskStatus = ref<OperatorStatus | ProgressState>();
 useClientEvent(
 	ClientEventType.TaskGollmEnrichModel,
 	createEnrichClientEventHandler(taskStatus, props.node.state.modelId, emit)

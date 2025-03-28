@@ -40,7 +40,7 @@ import TeraOperatorStatus from '@/components/operator/tera-operator-status.vue';
 import { getDocumentAsset } from '@/services/document-assets';
 import { DocumentOperationState } from './document-operation';
 
-const emit = defineEmits(['open-drilldown', 'update-state', 'append-output']);
+const emit = defineEmits(['open-drilldown', 'update-state', 'append-output', 'append-input-port']);
 const props = defineProps<{
 	node: WorkflowNode<DocumentOperationState>;
 }>();

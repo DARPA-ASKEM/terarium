@@ -746,7 +746,7 @@ export interface CiemssStatusUpdate {
 export interface TaskResponse {
     id: string;
     script: string;
-    status: TaskStatus;
+    status: ProgressState;
     output: any;
     userId: string;
     projectId: string;
@@ -913,13 +913,13 @@ export interface ProjectGroupPermission {
 }
 
 export interface IProjectUserPermissionDisplayModel {
+    permissionLevel: Permission;
     user: User;
-    email: string;
     username: string;
+    email: string;
     givenName: string;
     id: string;
     familyName: string;
-    permissionLevel: Permission;
 }
 
 export interface ProvenanceNode {
@@ -1146,6 +1146,14 @@ export interface MetadataDataset {
     metadata: string;
 }
 
+export enum ProgressState {
+    Cancelled = "CANCELLED",
+    Complete = "COMPLETE",
+    Error = "ERROR",
+    Queued = "QUEUED",
+    Running = "RUNNING",
+}
+
 export enum EventType {
     Search = "SEARCH",
     EvaluationScenario = "EVALUATION_SCENARIO",
@@ -1213,15 +1221,6 @@ export enum CiemssStatusType {
     Calibrate = "calibrate",
 }
 
-export enum TaskStatus {
-    Queued = "QUEUED",
-    Running = "RUNNING",
-    Success = "SUCCESS",
-    Failed = "FAILED",
-    Cancelling = "CANCELLING",
-    Cancelled = "CANCELLED",
-}
-
 export enum TerariumAssetEmbeddingType {
     Overview = "OVERVIEW",
     Name = "NAME",
@@ -1261,17 +1260,6 @@ export enum ClientEventType {
     TaskUndefinedEvent = "TASK_UNDEFINED_EVENT",
     WorkflowDelete = "WORKFLOW_DELETE",
     WorkflowUpdate = "WORKFLOW_UPDATE",
-}
-
-export enum ProgressState {
-    Cancelled = "CANCELLED",
-    Complete = "COMPLETE",
-    Error = "ERROR",
-    Failed = "FAILED",
-    Queued = "QUEUED",
-    Retrieving = "RETRIEVING",
-    Running = "RUNNING",
-    Cancelling = "CANCELLING",
 }
 
 export enum FileType {

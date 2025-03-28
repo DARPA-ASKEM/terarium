@@ -1,4 +1,5 @@
 import type { Position } from '@/types/common';
+import { ProgressState } from './Types';
 
 export const WorkflowOperationTypes = Object.freeze({
 	CALIBRATION_CIEMSS: 'CalibrationOperationCiemss',
@@ -130,7 +131,7 @@ export interface WorkflowNode<S> {
 	outputs: WorkflowOutput<S>[];
 
 	// Behaviour
-	status: OperatorStatus;
+	status: OperatorStatus | ProgressState;
 
 	uniqueInputs?: boolean;
 }

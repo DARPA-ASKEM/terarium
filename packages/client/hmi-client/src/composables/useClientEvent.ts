@@ -6,7 +6,7 @@ import {
 	ClientEventType,
 	type NotificationEvent,
 	type TaskResponse,
-	TaskStatus
+	ProgressState
 } from '@/types/Types';
 import { BaseState, OperatorStatus, WorkflowNode } from '@/types/workflow';
 import { DocumentOperationState } from '@/components/workflow/ops/document/document-operation';
@@ -29,22 +29,22 @@ export function createTaskListClientEventHandler(node: WorkflowNode<BaseState>, 
 	return async (event: ClientEvent<TaskResponse>) => {
 		const taskIds = node.state[taskIdsKey];
 		if (!taskIds?.includes(event.data?.id) || !event.data) return;
-		if ([TaskStatus.Success, TaskStatus.Cancelled, TaskStatus.Failed].includes(event.data.status)) {
+		if ([ProgressState.Complete, ProgressState.Cancelled, ProgressState.Error].includes(event.data.status)) {
 			node.state[taskIdsKey] = taskIds.filter((id) => id !== event.data.id);
 			switch (event.data.status) {
-				case TaskStatus.Success:
-					node.status = OperatorStatus.SUCCESS;
+				case ProgressState.Complete:
+					node.status = ProgressState.Complete;
 					break;
-				case TaskStatus.Failed:
-					node.status = OperatorStatus.ERROR;
+				case ProgressState.Error:
+					node.status = ProgressState.Error;
 					break;
-				case TaskStatus.Cancelled:
+				case ProgressState.Cancelled:
 				default:
-					node.status = OperatorStatus.DEFAULT;
+					node.status = ProgressState.Complete;
 			}
 		}
 		if (node.state[taskIdsKey].length > 0) {
-			node.status = OperatorStatus.IN_PROGRESS;
+			node.status = ProgressState.Running;
 		}
 		emit('update-state', node.state);
 	};
@@ -60,39 +60,25 @@ export function createTaskProgressClientEventHandler(
 		if (event.data?.data?.documentId !== node.state?.documentId) return;
 		const taskState = event.data.state || event.data.status;
 		node.state[progressKey] = event.data?.progress;
-		if ([TaskStatus.Success, TaskStatus.Cancelled, TaskStatus.Failed].includes(taskState)) {
+		if ([ProgressState.Complete, ProgressState.Cancelled, ProgressState.Error].includes(taskState)) {
 			node.state[progressKey] = undefined;
-			switch (taskState) {
-				case TaskStatus.Success:
-					node.status = OperatorStatus.SUCCESS;
-					break;
-				case TaskStatus.Failed:
-					node.status = OperatorStatus.ERROR;
-					break;
-				case TaskStatus.Cancelled:
-				default:
-					node.status = OperatorStatus.DEFAULT;
-			}
+			node.status = taskState;
 		} else {
 			node.status = OperatorStatus.IN_PROGRESS;
 		}
 		emit('update-state', node.state);
 	};
 }
-
+// TODO: remove OperatorStatus
 export function createEnrichClientEventHandler(taskStatus: Ref, assetId: string | null, emit) {
 	return async (event: ClientEvent<TaskResponse>) => {
 		const { datasetId, documentId, modelId } = event.data.additionalProperties;
 		if (assetId !== datasetId && assetId !== documentId && assetId !== modelId) return;
-		if (TaskStatus.Failed === event.data.status) {
-			taskStatus.value = OperatorStatus.ERROR;
-		} else if (TaskStatus.Success === event.data.status) {
+		if (ProgressState.Complete === event.data.status) {
 			taskStatus.value = OperatorStatus.SUCCESS;
 			emit('finished-job');
-		} else if (TaskStatus.Cancelled === event.data.status) {
-			taskStatus.value = OperatorStatus.DEFAULT;
 		} else {
-			taskStatus.value = OperatorStatus.IN_PROGRESS;
+			taskStatus.value = event.data.status;
 		}
 	};
 }

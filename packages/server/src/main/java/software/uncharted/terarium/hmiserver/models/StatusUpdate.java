@@ -3,8 +3,8 @@ package software.uncharted.terarium.hmiserver.models;
 import java.io.Serializable;
 import lombok.Builder;
 import lombok.Data;
+import software.uncharted.terarium.hmiserver.ProgressState;
 import software.uncharted.terarium.hmiserver.annotations.TSModel;
-import software.uncharted.terarium.hmiserver.models.dataservice.simulation.ProgressState;
 
 @Data
 @Builder

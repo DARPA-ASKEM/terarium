@@ -12,6 +12,7 @@ import { isHover } from '@/services/operator-bitmask';
 import { OperatorStatus } from '@/types/workflow';
 import Button from 'primevue/button';
 import Menu from 'primevue/menu';
+import { ProgressState } from '@/types/Types';
 
 const emit = defineEmits(['remove-operator', 'open-in-new-window', 'duplicate-branch', 'show-annotation-editor']);
 
@@ -21,7 +22,7 @@ const props = defineProps({
 		default: ''
 	},
 	status: {
-		type: String as PropType<OperatorStatus>,
+		type: String as PropType<OperatorStatus | ProgressState>,
 		default: OperatorStatus.DEFAULT
 	},
 	interactionStatus: {

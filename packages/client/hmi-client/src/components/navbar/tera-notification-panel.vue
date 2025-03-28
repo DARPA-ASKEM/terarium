@@ -24,13 +24,13 @@
 					</p>
 					<p v-if="!isComplete(item)">{{ item.msg }}</p>
 				</div>
-				<div v-if="isRunning(item) || isCancelling(item) || isQueued(item)" class="progressbar-container">
+				<div v-if="isRunning(item) || isQueued(item)" class="progressbar-container">
 					<p class="action">
 						{{ getActionText(item) }}
-						<span v-if="item.progress !== undefined && isRunning(item)"> {{ Math.round(item.progress * 100) }}%</span>
+						<span v-if="item.progress && isRunning(item)"> {{ Math.round(item.progress * 100) }}%</span>
 					</p>
 
-					<ProgressBar v-if="item.progress !== undefined" :value="isRunning(item) ? item.progress * 100 : 0" />
+					<ProgressBar v-if="item.progress && isRunning(item)" :value="isRunning(item) ? item.progress * 100 : 0" />
 					<ProgressBar v-else mode="indeterminate" />
 					<Button
 						v-if="item.supportCancel"
@@ -90,19 +90,14 @@ const sortedNotificationItems = computed(() => orderBy(notificationItems.value, 
 
 const isComplete = (item: NotificationItem) => item.status === ProgressState.Complete;
 const isQueued = (item: NotificationItem) => item.status === ProgressState.Queued;
-const isFailed = (item: NotificationItem) =>
-	item.status === ProgressState.Failed || item.status === ProgressState.Error;
+const isFailed = (item: NotificationItem) => item.status === ProgressState.Error;
 const isRunning = (item: NotificationItem) => item.status === ProgressState.Running;
-const isCancelling = (item: NotificationItem) => item.status === ProgressState.Cancelling;
 const isCancelled = (item: NotificationItem) => item.status === ProgressState.Cancelled;
 
 const getProjectName = (item: NotificationItem) =>
 	(useProjects().allProjects.value || []).find((p) => p.id === item.projectId)?.name || '';
 
 const getActionText = (item: NotificationItem) => {
-	if (isCancelling(item)) {
-		return 'Cancelling...';
-	}
 	if (isQueued(item)) {
 		return 'Queued...';
 	}
@@ -134,7 +129,7 @@ const cancelTask = (item: NotificationItem) => {
 		cancelGoLLMTask(item.notificationGroupId);
 	}
 	if (item.type === ClientEventType.SimulationNotification) {
-		item.status = ProgressState.Cancelling;
+		item.status = ProgressState.Cancelled;
 		cancelCiemssJob(item.notificationGroupId);
 	}
 };

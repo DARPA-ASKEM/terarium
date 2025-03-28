@@ -437,7 +437,7 @@ import {
 	EnrichmentTarget,
 	ExtractionItem,
 	TaskResponse,
-	TaskStatus,
+	ProgressState,
 	type Card,
 	type DocumentAsset,
 	type Model
@@ -488,7 +488,7 @@ const clonedState = ref<ModelFromEquationsState>({
 useClientEvent([ClientEventType.TaskGollmEnrichModel], async (event: ClientEvent<TaskResponse>) => {
 	const { modelId } = event.data.additionalProperties;
 	if (selectedModel.value?.id !== modelId) return;
-	if ([TaskStatus.Success, TaskStatus.Cancelled, TaskStatus.Failed].includes(event.data.status)) {
+	if ([ProgressState.Complete, ProgressState.Cancelled, ProgressState.Error].includes(event.data.status)) {
 		fetchModel();
 	}
 });
@@ -767,7 +767,7 @@ async function onRun() {
 	clonedState.value.modelId = modelId;
 	const enrichResponse = await enrichModelMetadata(modelId, document.value?.id ?? '', false);
 	// FIXME: The response can be returned right away and this may not get caught in the node subscriber since the model id isn't populated in time
-	if (enrichResponse.status === TaskStatus.Success) {
+	if (enrichResponse.status === ProgressState.Complete) {
 		fetchModel();
 	}
 

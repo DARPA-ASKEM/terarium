@@ -27,9 +27,9 @@ import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.amqp.rabbit.listener.DirectMessageListenerContainer;
 import org.springframework.beans.factory.annotation.Autowired;
 import software.uncharted.terarium.taskrunner.TaskRunnerApplicationTests;
+import software.uncharted.terarium.taskrunner.models.task.ProgressState;
 import software.uncharted.terarium.taskrunner.models.task.TaskRequest;
 import software.uncharted.terarium.taskrunner.models.task.TaskResponse;
-import software.uncharted.terarium.taskrunner.models.task.TaskStatus;
 
 @Slf4j
 public class TaskRunnerServiceTests extends TaskRunnerApplicationTests {
@@ -77,9 +77,9 @@ public class TaskRunnerServiceTests extends TaskRunnerApplicationTests {
 				final TaskResponse resp = queue.poll(TIMEOUT_SECONDS, TimeUnit.SECONDS);
 				responses.add(resp);
 				if (
-					resp.getStatus() == TaskStatus.SUCCESS ||
-					resp.getStatus() == TaskStatus.FAILED ||
-					resp.getStatus() == TaskStatus.CANCELLED
+					resp.getStatus() == ProgressState.COMPLETE ||
+					resp.getStatus() == ProgressState.ERROR ||
+					resp.getStatus() == ProgressState.CANCELLED
 				) {
 					break;
 				}
@@ -107,9 +107,9 @@ public class TaskRunnerServiceTests extends TaskRunnerApplicationTests {
 				queue.put(resp);
 
 				if (
-					resp.getStatus() == TaskStatus.SUCCESS ||
-					resp.getStatus() == TaskStatus.FAILED ||
-					resp.getStatus() == TaskStatus.CANCELLED
+					resp.getStatus() == ProgressState.COMPLETE ||
+					resp.getStatus() == ProgressState.ERROR ||
+					resp.getStatus() == ProgressState.CANCELLED
 				) {
 					// signal we are done
 					processFuture.complete(null);
@@ -151,13 +151,13 @@ public class TaskRunnerServiceTests extends TaskRunnerApplicationTests {
 		final List<TaskResponse> responses = consumeAllResponses();
 
 		Assertions.assertEquals(7, responses.size());
-		Assertions.assertEquals(TaskStatus.RUNNING, responses.get(0).getStatus());
-		Assertions.assertEquals(TaskStatus.RUNNING, responses.get(1).getStatus());
-		Assertions.assertEquals(TaskStatus.RUNNING, responses.get(2).getStatus());
-		Assertions.assertEquals(TaskStatus.RUNNING, responses.get(3).getStatus());
-		Assertions.assertEquals(TaskStatus.RUNNING, responses.get(4).getStatus());
-		Assertions.assertEquals(TaskStatus.RUNNING, responses.get(5).getStatus());
-		Assertions.assertEquals(TaskStatus.SUCCESS, responses.get(6).getStatus());
+		Assertions.assertEquals(ProgressState.RUNNING, responses.get(0).getStatus());
+		Assertions.assertEquals(ProgressState.RUNNING, responses.get(1).getStatus());
+		Assertions.assertEquals(ProgressState.RUNNING, responses.get(2).getStatus());
+		Assertions.assertEquals(ProgressState.RUNNING, responses.get(3).getStatus());
+		Assertions.assertEquals(ProgressState.RUNNING, responses.get(4).getStatus());
+		Assertions.assertEquals(ProgressState.RUNNING, responses.get(5).getStatus());
+		Assertions.assertEquals(ProgressState.COMPLETE, responses.get(6).getStatus());
 	}
 
 	@Test
@@ -175,8 +175,8 @@ public class TaskRunnerServiceTests extends TaskRunnerApplicationTests {
 		final List<TaskResponse> responses = consumeAllResponses();
 
 		Assertions.assertEquals(2, responses.size());
-		Assertions.assertEquals(TaskStatus.RUNNING, responses.get(0).getStatus());
-		Assertions.assertEquals(TaskStatus.FAILED, responses.get(1).getStatus());
+		Assertions.assertEquals(ProgressState.RUNNING, responses.get(0).getStatus());
+		Assertions.assertEquals(ProgressState.ERROR, responses.get(1).getStatus());
 	}
 
 	@Test
@@ -197,19 +197,18 @@ public class TaskRunnerServiceTests extends TaskRunnerApplicationTests {
 		while (true) {
 			final TaskResponse resp = queue.poll(TIMEOUT_SECONDS, TimeUnit.SECONDS);
 			responses.add(resp);
-			if (resp.getStatus() == TaskStatus.RUNNING) {
+			if (resp.getStatus() == ProgressState.RUNNING) {
 				// send the cancellation after we know the task has started
 				rabbitTemplate.convertAndSend(taskRunnerService.TASK_RUNNER_CANCELLATION_EXCHANGE, req.getId().toString(), "");
 			}
-			if (resp.getStatus() == TaskStatus.CANCELLED) {
+			if (resp.getStatus() == ProgressState.CANCELLED) {
 				break;
 			}
 		}
 
-		Assertions.assertEquals(3, responses.size());
-		Assertions.assertEquals(TaskStatus.RUNNING, responses.get(0).getStatus());
-		Assertions.assertEquals(TaskStatus.CANCELLING, responses.get(1).getStatus());
-		Assertions.assertEquals(TaskStatus.CANCELLED, responses.get(2).getStatus());
+		Assertions.assertEquals(2, responses.size());
+		Assertions.assertEquals(ProgressState.RUNNING, responses.get(0).getStatus());
+		Assertions.assertEquals(ProgressState.CANCELLED, responses.get(1).getStatus());
 	}
 
 	@Test
@@ -242,7 +241,7 @@ public class TaskRunnerServiceTests extends TaskRunnerApplicationTests {
 		final List<TaskResponse> responses = consumeAllResponses();
 
 		Assertions.assertEquals(1, responses.size());
-		Assertions.assertEquals(TaskStatus.CANCELLED, responses.get(0).getStatus());
+		Assertions.assertEquals(ProgressState.CANCELLED, responses.get(0).getStatus());
 	}
 
 	@Test
@@ -254,7 +253,7 @@ public class TaskRunnerServiceTests extends TaskRunnerApplicationTests {
 		final ExecutorService executor = Executors.newFixedThreadPool(NUM_THREADS);
 
 		final ConcurrentHashMap<UUID, List<TaskResponse>> responsesPerReq = new ConcurrentHashMap<>();
-		final ConcurrentHashMap<UUID, List<List<TaskStatus>>> expectedResponses = new ConcurrentHashMap<>();
+		final ConcurrentHashMap<UUID, List<List<ProgressState>>> expectedResponses = new ConcurrentHashMap<>();
 
 		final List<Future<?>> requestFutures = new ArrayList<>();
 		final ConcurrentHashMap<UUID, CompletableFuture<Void>> responseFutures = new ConcurrentHashMap<>();
@@ -270,9 +269,9 @@ public class TaskRunnerServiceTests extends TaskRunnerApplicationTests {
 				responsesPerReq.get(resp.getId()).add(resp);
 
 				if (
-					resp.getStatus() == TaskStatus.SUCCESS ||
-					resp.getStatus() == TaskStatus.CANCELLED ||
-					resp.getStatus() == TaskStatus.FAILED
+					resp.getStatus() == ProgressState.COMPLETE ||
+					resp.getStatus() == ProgressState.CANCELLED ||
+					resp.getStatus() == ProgressState.ERROR
 				) {
 					responseFutures.get(resp.getId()).complete(null);
 				}
@@ -315,12 +314,12 @@ public class TaskRunnerServiceTests extends TaskRunnerApplicationTests {
 						case 0:
 							// success
 							req.setInput(TEST_INPUT.getBytes());
-							expectedResponses.put(req.getId(), List.of(List.of(TaskStatus.RUNNING, TaskStatus.SUCCESS)));
+							expectedResponses.put(req.getId(), List.of(List.of(ProgressState.RUNNING, ProgressState.COMPLETE)));
 							break;
 						case 1:
 							// failure
 							req.setInput(FAILURE_INPUT.getBytes());
-							expectedResponses.put(req.getId(), List.of(List.of(TaskStatus.RUNNING, TaskStatus.FAILED)));
+							expectedResponses.put(req.getId(), List.of(List.of(ProgressState.RUNNING, ProgressState.ERROR)));
 							break;
 						case 2:
 							// cancellation
@@ -329,7 +328,7 @@ public class TaskRunnerServiceTests extends TaskRunnerApplicationTests {
 							expectedResponses.put(
 								req.getId(),
 								List.of(
-									List.of(TaskStatus.CANCELLED) // cancelled before request processed
+									List.of(ProgressState.CANCELLED) // cancelled before request processed
 								)
 							);
 							break;
@@ -340,11 +339,11 @@ public class TaskRunnerServiceTests extends TaskRunnerApplicationTests {
 							expectedResponses.put(
 								req.getId(),
 								List.of(
-									List.of(TaskStatus.CANCELLED), // cancelled before request processed
-									List.of(TaskStatus.RUNNING, TaskStatus.CANCELLING, TaskStatus.CANCELLED), // cancelled
+									List.of(ProgressState.CANCELLED), // cancelled before request processed
+									List.of(ProgressState.RUNNING, ProgressState.CANCELLED), // cancelled
 									// during
 									// processing
-									List.of(TaskStatus.RUNNING, TaskStatus.SUCCESS) // cancelled after processing
+									List.of(ProgressState.RUNNING, ProgressState.COMPLETE) // cancelled after processing
 								)
 							);
 							break;
@@ -399,10 +398,10 @@ public class TaskRunnerServiceTests extends TaskRunnerApplicationTests {
 			final UUID id = responseEntry.getKey();
 			final List<TaskResponse> responses = responseEntry.getValue();
 
-			final List<List<TaskStatus>> possibleExpected = expectedResponses.get(id);
+			final List<List<ProgressState>> possibleExpected = expectedResponses.get(id);
 
 			boolean found = false;
-			for (final List<TaskStatus> expected : possibleExpected) {
+			for (final List<ProgressState> expected : possibleExpected) {
 				if (expected.size() != responses.size()) {
 					continue;
 				}

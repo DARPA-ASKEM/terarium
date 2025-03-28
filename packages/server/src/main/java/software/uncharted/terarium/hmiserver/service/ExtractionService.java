@@ -37,17 +37,16 @@ import org.springframework.core.env.Environment;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
+import software.uncharted.terarium.hmiserver.ProgressState;
 import software.uncharted.terarium.hmiserver.configuration.Config;
 import software.uncharted.terarium.hmiserver.models.ClientEventType;
 import software.uncharted.terarium.hmiserver.models.dataservice.document.DocumentAsset;
 import software.uncharted.terarium.hmiserver.models.dataservice.document.ExtractedDocumentPage;
-import software.uncharted.terarium.hmiserver.models.dataservice.simulation.ProgressState;
 import software.uncharted.terarium.hmiserver.models.extraction.Extraction;
 import software.uncharted.terarium.hmiserver.models.extraction.ExtractionItem;
 import software.uncharted.terarium.hmiserver.models.task.TaskRequest;
 import software.uncharted.terarium.hmiserver.models.task.TaskRequest.TaskType;
 import software.uncharted.terarium.hmiserver.models.task.TaskResponse;
-import software.uncharted.terarium.hmiserver.models.task.TaskStatus;
 import software.uncharted.terarium.hmiserver.service.data.DocumentAssetService;
 import software.uncharted.terarium.hmiserver.service.notification.NotificationGroupInstance;
 import software.uncharted.terarium.hmiserver.service.notification.NotificationService;
@@ -474,7 +473,7 @@ public class ExtractionService {
 
 		return executor.submit(() -> {
 			final TaskResponse resp = taskService.runTaskSync(req);
-			if (resp.getStatus() != TaskStatus.SUCCESS) {
+			if (resp.getStatus() != ProgressState.COMPLETE) {
 				throw new RuntimeException("Equation extraction failed: " + resp.getStderr());
 			}
 
@@ -532,7 +531,7 @@ public class ExtractionService {
 
 		return executor.submit(() -> {
 			final TaskResponse resp = taskService.runTaskSync(req);
-			if (resp.getStatus() != TaskStatus.SUCCESS) {
+			if (resp.getStatus() != ProgressState.COMPLETE) {
 				throw new RuntimeException("Text extraction failed: " + resp.getStderr());
 			}
 
@@ -575,7 +574,7 @@ public class ExtractionService {
 
 		return executor.submit(() -> {
 			final TaskResponse resp = taskService.runTaskSync(req);
-			if (resp.getStatus() != TaskStatus.SUCCESS) {
+			if (resp.getStatus() != ProgressState.COMPLETE) {
 				throw new RuntimeException("Table extraction failed: " + resp.getStderr());
 			}
 
@@ -649,7 +648,7 @@ public class ExtractionService {
 
 		return executor.submit(() -> {
 			final TaskResponse resp = taskService.runTaskSync(req);
-			if (resp.getStatus() != TaskStatus.SUCCESS) {
+			if (resp.getStatus() != ProgressState.COMPLETE) {
 				throw new RuntimeException("OCR extraction failed: " + resp.getStderr());
 			}
 			final byte[] outputBytes = resp.getOutput();
