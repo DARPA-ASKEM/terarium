@@ -247,6 +247,7 @@ public class ExtractionService {
 		}
 	}
 
+	/*
 	public DocumentAsset applyExtractPDFResponse(
 		final UUID documentId,
 		final UUID projectId,
@@ -308,6 +309,7 @@ public class ExtractionService {
 
 		return documentService.updateAsset(document, projectId).orElseThrow();
 	}
+	*/
 
 	private static String sha256(final byte[] input) {
 		try {
@@ -331,6 +333,7 @@ public class ExtractionService {
 		}
 	}
 
+	/*
 	public Future<DocumentAsset> extractPDFAndApplyToDocument(final UUID documentId, final UUID projectId) {
 		final DocumentAsset document = documentService.getAsset(documentId).get();
 		if (document.getFileNames().isEmpty()) {
@@ -434,6 +437,7 @@ public class ExtractionService {
 			}
 		});
 	}
+	*/
 
 	@Value("${terarium.taskrunner.equation_extraction.gpu-endpoint}")
 	private String EQUATION_EXTRACTION_GPU_ENDPOINT;

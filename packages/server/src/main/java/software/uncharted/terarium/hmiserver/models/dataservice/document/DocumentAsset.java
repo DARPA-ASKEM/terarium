@@ -75,11 +75,13 @@ public class DocumentAsset extends TerariumAsset {
 	@Deprecated
 	private String documentAbstract;
 
+	/*
 	@TSOptional
 	@Type(JsonType.class)
 	@Column(columnDefinition = "json")
 	@Deprecated
 	private List<ExtractedDocumentPage> extractions = new ArrayList<>();
+	*/
 
 	@TSOptional
 	@Lob
@@ -91,6 +93,7 @@ public class DocumentAsset extends TerariumAsset {
 	@Column(columnDefinition = "json")
 	private Extraction extraction;
 
+	/*
 	public List<ExtractedDocumentPage> getExtractions() {
 		if (
 			this.extractions.size() == 0 &&
@@ -102,6 +105,7 @@ public class DocumentAsset extends TerariumAsset {
 		}
 		return this.extractions;
 	}
+	*/
 
 	@Override
 	public List<String> getFileNames() {
@@ -129,9 +133,11 @@ public class DocumentAsset extends TerariumAsset {
 
 		clone.source = this.source;
 		clone.text = this.text;
+		/*
 		for (final ExtractedDocumentPage extraction : this.extractions) {
 			clone.extractions.add(extraction.clone());
 		}
+		*/
 
 		if (this.grounding != null) {
 			clone.grounding = this.grounding.clone();
