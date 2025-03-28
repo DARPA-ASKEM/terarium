@@ -276,7 +276,8 @@ const clearFocusedSearchItem = () => {
 
 const focusSearchItem = (index: number) => {
 	clearFocusedSearchItem();
-	focusedSearchItems.value = searchMatches.value[index - 1]?.textElements ?? null;
+	const focusedMatch = searchMatches.value[index - 1];
+	focusedSearchItems.value = focusedMatch?.textElements ?? null;
 	focusedSearchItems.value?.forEach((item) => {
 		item.classList.add(FOCUSED_HIGHLIGHT_CLASS);
 	});
@@ -292,6 +293,7 @@ const focusSearchItem = (index: number) => {
 
 		if (!isVisible) {
 			firstFocusedItem.scrollIntoView({ behavior: 'auto', block: 'center' });
+			currentPage.value = focusedMatch.page; // Update current page to the page of the focused item
 		}
 	}
 };
