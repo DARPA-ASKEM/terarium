@@ -5,8 +5,8 @@
 				<Button icon="pi pi-search-minus" size="small" text severity="secondary" @click="zoomOut" />
 				<span class="w-3rem text-center">{{ Math.round(scale * 100) }}%</span>
 				<Button icon="pi pi-search-plus" size="small" text severity="secondary" @click="zoomIn" />
+				<Divider layout="vertical" />
 			</div>
-			<Divider layout="vertical" />
 			<div class="page-navigation">
 				<Button
 					icon="pi pi-arrow-left"
@@ -107,13 +107,14 @@ const BBOX_DEFAULT_COLOR = 'green';
 
 export interface PdfAnnotation {
 	pageNo: number;
-	bbox: { l: number; t: number; r: number; b: number };
+	bbox: { left: number; top: number; right: number; bottom: number };
 	color: string;
 	isHighlight: boolean;
 }
 
 const props = defineProps<{
 	pdfLink: string;
+	title?: string;
 	/**
 	 * Whether to fit the PDF to the width of the container. When true, the zoom controls are hidden.
 	 */
@@ -137,6 +138,7 @@ watch(
 	(newVal) => {
 		if (newVal && newVal !== currentPage.value) {
 			currentPage.value = newVal;
+			goToPage(newVal);
 		}
 	}
 );
@@ -182,12 +184,7 @@ const onPageLoaded = (_payload: any, pageNumber: number) => {
 	applyAnnotations(annotations);
 };
 
-const drawBbox = (
-	pageNumber: number,
-	bbox: { t: number; r: number; b: number; l: number },
-	isHighlight: boolean,
-	color?: string
-) => {
+const drawBbox = (pageNumber: number, bbox: PdfAnnotation['bbox'], isHighlight: boolean, color?: string) => {
 	const pageElement = getPdfPage(pageNumber)?.$el;
 	if (!pageElement) return;
 	const canvas = pageElement.querySelector('canvas');
@@ -195,15 +192,15 @@ const drawBbox = (
 	const context = canvas.getContext('2d');
 	if (!context) return;
 
-	const { t, r, b, l } = bbox;
+	const { top, right, bottom, left } = bbox;
 	const width = canvas.width;
 	const height = canvas.height;
 
 	context.save();
-	const x = l * width;
-	const y = t * height;
-	const w = (r - l) * width;
-	const h = (b - t) * height;
+	const x = left * width;
+	const y = top * height;
+	const w = (right - left) * width;
+	const h = (bottom - top) * height;
 	if (isHighlight) {
 		context.fillStyle = color ?? HIGHLIGHT_DEFAULT_COLOR;
 		context.globalCompositeOperation = 'multiply';

@@ -16,7 +16,14 @@
 			>
 				<template #content>
 					<tera-drilldown-section :is-loading="isFetchingPDF">
-						<tera-pdf-embed ref="pdfViewer" v-if="pdfLink" :pdf-link="pdfLink" :title="document?.name || ''" />
+						<tera-pdf-viewer
+							ref="pdfViewer"
+							v-if="pdfLink"
+							:pdf-link="pdfLink"
+							:title="document?.name || ''"
+							:annotations="pdfAnnotations"
+							fit-to-width
+						/>
 						<tera-text-editor v-else-if="docText" :initial-text="docText" />
 					</tera-drilldown-section>
 				</template>
@@ -446,7 +453,7 @@ import TeraModel from '@/components/model/tera-model.vue';
 import TeraMathEditor from '@/components/mathml/tera-math-editor.vue';
 import TeraSliderPanel from '@/components/widgets/tera-slider-panel.vue';
 import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.vue';
-import TeraPdfEmbed from '@/components/widgets/tera-pdf-embed.vue';
+import TeraPdfViewer, { PdfAnnotation } from '@/components/widgets/tera-pdf-viewer.vue';
 import TeraTextEditor from '@/components/documents/tera-text-editor.vue';
 import { logger } from '@/utils/logger';
 import TeraModal from '@/components/widgets/tera-modal.vue';
@@ -534,6 +541,9 @@ const multipleEquationsDisabled = ref(false);
 const isDocViewerOpen = ref(true);
 const isInputOpen = ref(true);
 const isOutputOpen = ref(true);
+
+// TODO: update annotation items to draw bbox on the pdf
+const pdfAnnotations = ref<PdfAnnotation[]>([]);
 
 const enrichments = computed(() => selectedModel.value?.metadata?.enrichments ?? []);
 
@@ -1046,6 +1056,10 @@ watch(
 /* fix patch for document viewer */
 :deep(.document-viewer-header) {
 	width: 3rem !important;
+}
+
+:deep(.content-wrapper) {
+	height: 100%;
 }
 
 .warn {

@@ -1,13 +1,7 @@
 <template>
 	<div class="container">
-		<tera-pdf-viewer
-			v-if="pdfLink"
-			:pdf-link="pdfLink"
-			:annotations="annotations"
-			:current-page="currentPage"
-			fit-to-width
-		/>
-		<div>
+		<tera-pdf-viewer v-if="pdfLink" :pdf-link="pdfLink" :annotations="annotations" :current-page="currentPage" />
+		<div class="annotation-buttons">
 			<button @click="annotate1">Annotation1</button>
 			<button @click="annotate2">Annotation2</button>
 		</div>
@@ -39,18 +33,18 @@ const normalizeBBox = (
 ) => {
 	if (bbox.coord_origin === 'TOPLEFT') {
 		return {
-			l: bbox.l / page.width,
-			t: bbox.t / page.height,
-			r: bbox.r / page.width,
-			b: bbox.b / page.height
+			left: bbox.l / page.width,
+			top: bbox.t / page.height,
+			right: bbox.r / page.width,
+			bottom: bbox.b / page.height
 		};
 	}
 	// Else, BottomLeft
 	return {
-		l: bbox.l / page.width,
-		t: 1 - bbox.t / page.height,
-		r: bbox.r / page.width,
-		b: 1 - bbox.b / page.height
+		left: bbox.l / page.width,
+		top: 1 - bbox.t / page.height,
+		right: bbox.r / page.width,
+		bottom: 1 - bbox.b / page.height
 	};
 };
 const annotations = ref<PdfAnnotation[]>([]);
@@ -176,8 +170,12 @@ const annotate2 = () => {
 <style scoped>
 .container {
 	height: 100%;
-	width: 50%;
-	max-width: 800px;
+	width: 100%;
+	max-width: 1200px;
 	margin: auto;
+}
+.annotation-buttons {
+	position: absolute;
+	top: 50px;
 }
 </style>
