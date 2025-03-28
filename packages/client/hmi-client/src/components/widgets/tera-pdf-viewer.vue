@@ -36,7 +36,7 @@
 			</div>
 			<div class="search-controls">
 				<Button icon="pi pi-search" size="small" outlined severity="secondary" @click="toggleSearchPopover" />
-				<OverlayPanel ref="searchPopover" :showCloseIcon="false">
+				<OverlayPanel class="pdf-viewer-search-text-overlay" ref="searchPopover" :showCloseIcon="false">
 					<div class="search-popover-content gap-2">
 						<div class="flex gap-2 flex-grow-1">
 							<InputText
@@ -51,8 +51,8 @@
 								<span v-if="!isEmpty(searchResults)" class="highlights-counter">
 									{{ searchMatchIndex }} of {{ searchMatchCount }}
 								</span>
-								<Button text severity="secondary" icon="pi pi-angle-left" @click="searchNavigate('prev')" />
-								<Button text severity="secondary" icon="pi pi-angle-right" @click="searchNavigate('next')" />
+								<Button text severity="secondary" icon="pi pi-angle-up" @click="searchNavigate('prev')" />
+								<Button text severity="secondary" icon="pi pi-angle-down" @click="searchNavigate('next')" />
 							</div>
 							<Button icon="pi pi-times" size="small" text @click="clearSearch" class="ml-auto" />
 						</div>
@@ -342,6 +342,17 @@ defineExpose({
 });
 </script>
 
+<style>
+/*
+ * Note that this style block isn't scoped since the overlay component is appended to the body html dynamically when opened
+ * and is placed outside of this component's scope and the scoped styles aren't applied to it.
+ */
+.pdf-viewer-search-text-overlay.p-overlaypanel {
+	.p-overlaypanel-content {
+		padding: 0.75rem !important;
+	}
+}
+</style>
 <style scoped>
 .pdf-viewer-container {
 	position: relative;
