@@ -37,22 +37,22 @@
 			<div class="search-controls">
 				<Button icon="pi pi-search" size="small" outlined severity="secondary" @click="toggleSearchPopover" />
 				<OverlayPanel ref="searchPopover" :showCloseIcon="false">
-					<div class="search-popover-content">
-						<div class="flex items-center gap-2 mb-2">
+					<div class="search-popover-content gap-2">
+						<div class="flex gap-2 flex-grow-1">
 							<InputText
 								v-model="searchTextModel"
 								placeholder="Find text in document"
 								@keydown.enter="handleSearch"
-								class="w-full"
+								class="w-full pr-[8rem]"
 							/>
 						</div>
-						<div class="flex items-center gap-2">
-							<div v-if="!isEmpty(searchResults)">
-								<Button icon="pi pi-chevron-up" size="small" outlined @click="searchNavigate('prev')" />
-								<span v-if="!isEmpty(searchResults)" class="text-sm">
+						<div class="flex gap-2">
+							<div class="flex flex-row align-items-center gap-1" v-if="!isEmpty(searchResults)">
+								<span v-if="!isEmpty(searchResults)" class="highlights-counter">
 									{{ searchMatchIndex }} of {{ searchMatchCount }}
 								</span>
-								<Button icon="pi pi-chevron-down" size="small" outlined @click="searchNavigate('next')" />
+								<Button text severity="secondary" icon="pi pi-angle-left" @click="searchNavigate('prev')" />
+								<Button text severity="secondary" icon="pi pi-angle-right" @click="searchNavigate('next')" />
 							</div>
 							<Button icon="pi pi-times" size="small" text @click="clearSearch" class="ml-auto" />
 						</div>
@@ -342,7 +342,7 @@ defineExpose({
 });
 </script>
 
-<style>
+<style scoped>
 .pdf-viewer-container {
 	position: relative;
 	height: 100%;
@@ -353,8 +353,8 @@ defineExpose({
 
 .controls {
 	display: flex;
-	padding: 10px;
-	gap: 20px;
+	padding: 0.5rem;
+	gap: var(--gap-5);
 	align-items: center;
 	border-bottom: 1px solid #ccc;
 }
@@ -364,11 +364,11 @@ defineExpose({
 .search-controls {
 	display: flex;
 	align-items: center;
-	gap: 10px;
+	gap: var(--gap-2);
 }
 
-.page-navigation input {
-	width: 50px;
+.page-navigation :deep(input) {
+	width: 3rem;
 }
 
 .pages-container {
@@ -378,11 +378,11 @@ defineExpose({
 	flex-direction: column;
 	overflow: auto;
 	align-items: center;
-	padding: 20px;
+	padding: 1.25rem;
 }
 
 .page {
-	margin-bottom: 20px;
+	margin-bottom: 1.25rem;
 	box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
 }
 
@@ -390,15 +390,28 @@ defineExpose({
 	display: flex;
 	flex-direction: row;
 	gap: var(--gap-2);
-	min-width: 250px;
+	min-width: 18rem;
+	justify-content: right;
+
+	&:deep(input.p-inputtext) {
+		width: 100%;
+		min-width: 10rem;
+		padding-right: 5.5rem;
+	}
+
+	.highlights-counter {
+		position: absolute;
+		right: 9.5rem;
+		font-size: var(--font-caption);
+	}
 }
 
-.textLayer .highlight {
+:deep(.textLayer .highlight) {
 	/* Default highlight color */
 	--highlight-bg-color: rgba(230, 195, 0, 0.35);
 }
 
-.highlight-focus span {
+:deep(.highlight-focus span) {
 	/* Focused highlight color */
 	background-color: rgb(230, 80, 0, 0.4) !important;
 }
