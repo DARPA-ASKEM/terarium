@@ -253,22 +253,14 @@ public class KnowledgeController {
 		@RequestParam(name = "project-id", required = false) final UUID projectId,
 		@RequestParam(name = "mode", required = false, defaultValue = "ASYNC") final TaskMode mode
 	) {
-		// FIXME: Running both new and old extractions for now. Swtich over to new-version once all
-		// enrichment points are moved over
-		final Future<DocumentAsset> f = extractionService.extractPDFAndApplyToDocument(documentId, projectId);
 		final Future<DocumentAsset> newF = extractionService.extractPDFAndApplyToDocumentNew(documentId, projectId);
 		if (mode == TaskMode.SYNC) {
-			try {
-				f.get();
-			} catch (InterruptedException | ExecutionException e) {
-				log.error("Error extracting PDF", e);
-				throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("document.extraction.failed"));
-			}
-
 			try {
 				newF.get();
 			} catch (Exception e) {
 				e.printStackTrace();
+				log.error("Error extracting Document", e);
+				throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("document.extraction.failed"));
 			}
 		}
 		return ResponseEntity.accepted().build();
