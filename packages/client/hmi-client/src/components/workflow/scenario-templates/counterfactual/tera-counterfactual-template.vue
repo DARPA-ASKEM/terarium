@@ -25,7 +25,7 @@
 				:options="allModelOptions"
 				option-label="assetName"
 				option-value="assetId"
-				placeholder="Select a model"
+				placeholder="Select a model configuration"
 				@update:model-value="props.scenario.setModelConfigId($event)"
 				class="mb-3"
 			/>
