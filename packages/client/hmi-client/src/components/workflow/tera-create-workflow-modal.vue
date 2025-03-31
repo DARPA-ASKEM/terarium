@@ -67,6 +67,8 @@ import TeraModelFromLiteratureTemplate from '@/components/workflow/scenario-temp
 import { ModelFromLiteratureScenario } from '@/components/workflow/scenario-templates/model-from-literature/model-from-literature-scenario';
 import { CalibrateEnsembleScenario } from '@/components/workflow/scenario-templates/calibrate-ensemble/calibrate-ensemble-scenario';
 import TeraCalibrateEnsembleTemplate from '@/components/workflow/scenario-templates/calibrate-ensemble/tera-calibrate-ensemble-template.vue';
+import { PolicyDesignScenario } from '@/components/workflow/scenario-templates/policy-design/policy-design-scenario';
+import TeraPolicyDesignScenario from '@/components/workflow/scenario-templates/policy-design/tera-policy-design-template.vue';
 import { CounterfactualScenario } from './scenario-templates/counterfactual/counterfactual-scenario';
 import TeraCounterfactualTemplate from './scenario-templates/counterfactual/tera-counterfactual-template.vue';
 
@@ -140,6 +142,14 @@ const scenarioMap = ref(
 				name: CalibrateEnsembleScenario.templateName,
 				instance: new CalibrateEnsembleScenario(),
 				component: markRaw(TeraCalibrateEnsembleTemplate)
+			}
+		],
+		[
+			PolicyDesignScenario.templateId,
+			{
+				name: PolicyDesignScenario.templateName,
+				instance: new PolicyDesignScenario(),
+				component: markRaw(TeraPolicyDesignScenario)
 			}
 		],
 		[

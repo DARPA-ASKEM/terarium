@@ -28,6 +28,7 @@ import {
 } from '@/services/model-configurations';
 import { logger } from '@/utils/logger';
 import {
+	blankInterventionPolicyGroup,
 	ContextMethods,
 	Criterion,
 	InterventionPolicyGroupForm,
@@ -276,3 +277,39 @@ export const resolveInterventionValue = (intervention: StaticIntervention, model
 	}
 	return getParameterDistributionAverage(parameter) * (intervention.value / 100);
 };
+
+export function setInterventionPolicyGroups(
+	providedState: OptimizeCiemssOperationState,
+	interventionPolicy: InterventionPolicy,
+	modelConfiguration: ModelConfiguration
+): OptimizeCiemssOperationState {
+	const state = _.cloneDeep(providedState);
+	// If already set + not changed since set, do not reset.
+	if (state.interventionPolicyGroups.length > 0 && state.interventionPolicyGroups[0].id === interventionPolicy.id) {
+		return state;
+	}
+	state.interventionPolicyId = interventionPolicy.id ?? '';
+
+	state.interventionPolicyGroups = []; // Reset prior to populating.
+	if (!_.isEmpty(interventionPolicy.interventions)) {
+		interventionPolicy.interventions.forEach((intervention) => {
+			// Static:
+			const newIntervention = _.cloneDeep(blankInterventionPolicyGroup);
+			newIntervention.id = interventionPolicy.id;
+			intervention.staticInterventions.forEach((staticIntervention) => {
+				newIntervention.relativeImportance = 5;
+				newIntervention.individualIntervention = staticIntervention;
+				newIntervention.startTimeGuess = staticIntervention.timestep;
+				newIntervention.initialGuessValue = resolveInterventionValue(staticIntervention, modelConfiguration!);
+				state.interventionPolicyGroups.push(_.cloneDeep(newIntervention));
+			});
+			// Dynamic:
+			intervention.dynamicInterventions.forEach((dynamicIntervention) => {
+				newIntervention.relativeImportance = 0;
+				newIntervention.individualIntervention = dynamicIntervention;
+				state.interventionPolicyGroups.push(_.cloneDeep(newIntervention));
+			});
+		});
+	}
+	return state;
+}
