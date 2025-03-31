@@ -97,7 +97,7 @@ const header: ScenarioHeader = Object.freeze({
 	]
 });
 
-const allModelOptions = computed(() => useProjects().getActiveProjectAssets(AssetType.Model));
+const allModelOptions = computed<ProjectAsset[]>(() => useProjects().getActiveProjectAssets(AssetType.Model));
 const allDatasetOptions = computed(() => useProjects().getActiveProjectAssets(AssetType.Dataset));
 const selectedModelId = computed(() => props.scenario.getModelId());
 const selectedModelConfigurationId = computed(() => props.scenario.getModelConfigId());
