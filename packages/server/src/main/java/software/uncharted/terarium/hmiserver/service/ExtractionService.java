@@ -247,6 +247,7 @@ public class ExtractionService {
 		}
 	}
 
+	/*
 	public DocumentAsset applyExtractPDFResponse(
 		final UUID documentId,
 		final UUID projectId,
@@ -308,6 +309,7 @@ public class ExtractionService {
 
 		return documentService.updateAsset(document, projectId).orElseThrow();
 	}
+	*/
 
 	private static String sha256(final byte[] input) {
 		try {
@@ -331,6 +333,7 @@ public class ExtractionService {
 		}
 	}
 
+	/*
 	public Future<DocumentAsset> extractPDFAndApplyToDocument(final UUID documentId, final UUID projectId) {
 		final DocumentAsset document = documentService.getAsset(documentId).get();
 		if (document.getFileNames().isEmpty()) {
@@ -434,6 +437,7 @@ public class ExtractionService {
 			}
 		});
 	}
+	*/
 
 	@Value("${terarium.taskrunner.equation_extraction.gpu-endpoint}")
 	private String EQUATION_EXTRACTION_GPU_ENDPOINT;
@@ -634,15 +638,23 @@ public class ExtractionService {
 		private Extraction response;
 	}
 
+	@Data
+	private static class ExtractionInput {
+
+		private byte[] bytes;
+		private String filename;
+		private String llm;
+	}
+
 	public Future<Extraction> ocrExtraction(
 		final NotificationGroupInstance<Properties> notificationInterface,
 		final String userId,
-		final byte[] pdf
+		final ExtractionInput input
 	) throws TimeoutException, InterruptedException, ExecutionException, IOException {
 		final int REQUEST_TIMEOUT_MINUTES = 30;
 		final TaskRequest req = new TaskRequest();
 		req.setTimeoutMinutes(REQUEST_TIMEOUT_MINUTES);
-		req.setInput(pdf);
+		req.setInput(objectMapper.writeValueAsBytes(input));
 		req.setScript(OCRExtractionResponseHandler.NAME);
 		req.setUserId(userId);
 		req.setType(TaskType.OCR_EXTRACTION);
@@ -684,7 +696,11 @@ public class ExtractionService {
 				final byte[] documentContents = documentService.fetchFileAsBytes(documentId, filename).get();
 
 				log.info("OCR extraction: starting");
-				Future<Extraction> extractionFuture = ocrExtraction(notificationInterface, userId, documentContents);
+				ExtractionInput extractionInput = new ExtractionInput();
+				extractionInput.setBytes(documentContents);
+				extractionInput.setFilename(filename);
+
+				Future<Extraction> extractionFuture = ocrExtraction(notificationInterface, userId, extractionInput);
 				Extraction extraction = extractionFuture.get();
 				log.info("OCR extraction: done");
 
@@ -725,6 +741,7 @@ public class ExtractionService {
 				document.setExtraction(extraction);
 				documentService.updateAsset(document, projectId);
 				log.info("OCR extraction: saving to storage: done");
+				notificationInterface.sendFinalMessage("Extraction complete");
 
 				return document;
 			} catch (final Exception e) {
