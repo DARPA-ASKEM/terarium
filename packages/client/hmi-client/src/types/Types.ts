@@ -220,10 +220,6 @@ export interface DocumentAsset extends TerariumAsset {
     source?: string;
     text?: string;
     grounding?: Grounding;
-    /**
-     * @deprecated
-     */
-    documentAbstract?: string;
     thumbnail?: any;
     extraction?: Extraction;
 }
@@ -907,11 +903,11 @@ export interface ProjectGroupPermission {
 export interface IProjectUserPermissionDisplayModel {
     user: User;
     username: string;
-    givenName: string;
     email: string;
+    permissionLevel: Permission;
+    givenName: string;
     id: string;
     familyName: string;
-    permissionLevel: Permission;
 }
 
 export interface ProvenanceNode {
