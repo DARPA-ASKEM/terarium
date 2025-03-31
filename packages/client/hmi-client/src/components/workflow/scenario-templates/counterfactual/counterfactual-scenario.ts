@@ -113,6 +113,15 @@ export class CounterfactualScenario extends BaseScenario {
 		const compareDatasetNode = wf.addNode(CompareDatasetOp, POSITION, SIZE);
 
 		// Update States:
+		// Model
+		wf.updateNode(modelNode, {
+			state: {
+				modelId: this.modelId
+			},
+			output: {
+				value: [this.modelId]
+			}
+		});
 		// Model Config:
 		wf.updateNode(modelConfigNode, {
 			state: {
