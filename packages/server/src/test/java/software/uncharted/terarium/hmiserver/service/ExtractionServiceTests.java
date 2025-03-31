@@ -1,6 +1,5 @@
 package software.uncharted.terarium.hmiserver.service;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.util.List;
@@ -69,8 +68,8 @@ public class ExtractionServiceTests extends TerariumApplicationTests {
 
 		documentAssetService.uploadFile(documentAsset.getId(), "SIR.pdf", pdfFileEntity);
 
-		documentAsset = extractionService.extractPDFAndApplyToDocument(documentAsset.getId(), null).get();
+		documentAsset = extractionService.extractPDFAndApplyToDocumentNew(documentAsset.getId(), null).get();
 
-		log.info("" + documentAsset.getExtractions());
+		log.info("" + documentAsset.getExtraction());
 	}
 }

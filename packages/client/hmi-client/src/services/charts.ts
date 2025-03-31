@@ -13,7 +13,7 @@ import type { FunmanBox, FunmanConstraintsResponse } from './models/funman-servi
 
 const VEGALITE_SCHEMA = 'https://vega.github.io/schema/vega-lite/v5.json';
 const GLOBAL_FONT = 'Figtree';
-export const DEFAULT_FONT_SIZE = 12;
+export const DEFAULT_FONT_SIZE = 18;
 
 const getFontConfig = (fontSize = DEFAULT_FONT_SIZE, isCompact = false) => {
 	const BASE_FONT_SIZE = 12;
@@ -59,7 +59,7 @@ export const expressionFunctions = {
 	}
 };
 
-export const CATEGORICAL_SCHEME = ['#1B8073', '#6495E8', '#8F69B9', '#D67DBF', '#E18547', '#D2C446', '#84594D'];
+export const CATEGORICAL_SCHEME = ['#1A7F6A', '#DB7A3F', '#8A60B3', '#D06AB8', '#CABB3F', '#7B4F45', '#5A8FE3'];
 
 // diverging categorical colour scheme for the sensitivity chart (from a deep blue -> a deep red)
 export const SENSITIVITY_COLOUR_SCHEME = ['#4575B4', '#91BFDB', '#E0F3F8', '#FFFFBF', '#FEE090', '#FC8D59', '#D73027'];
@@ -507,7 +507,7 @@ function calculateLegendColumns(
 
 /**
  * Generate Vegalite specs for simulation/forecast charts. The chart can contain:
- *  - sampling layer: multiple forecast runsk
+ *  - sampling layer: multiple forecast runs
  *  - statistics layer: statistical aggregate of the sampling layer
  *  - ground truth layer: any grounding data
  *
@@ -642,7 +642,7 @@ export function createForecastChart(
 	}
 
 	// Helper function to capture common layer structure
-	const newLayer = (layer: ForecastChartLayer, markType: string) => {
+	const newLayer = (layer: ForecastChartLayer, markType: string, layerName: string = '') => {
 		const selectedFields = layer.variables.concat([layer.timeField]);
 		if (layer.groupField) selectedFields.push(layer.groupField);
 
@@ -724,6 +724,7 @@ export function createForecastChart(
 			...header,
 			layer: [
 				{
+					name: layerName,
 					mark: { type: markType },
 					encoding
 				}
@@ -747,7 +748,7 @@ export function createForecastChart(
 
 	// Build sample layer
 	if (samplingLayer && !isEmpty(samplingLayer.variables) && !isEmpty(samplingLayer.data)) {
-		const layerSpec = newLayer(samplingLayer, 'line');
+		const layerSpec = newLayer(samplingLayer, 'line', 'sample-layer');
 		const lineSubLayer = layerSpec.layer[0];
 
 		Object.assign(lineSubLayer.encoding, {
@@ -769,7 +770,7 @@ export function createForecastChart(
 
 	// Build statistical layer
 	if (buildStatLayer) {
-		const layerSpec = newLayer(statisticsLayer, 'line');
+		const layerSpec = newLayer(statisticsLayer, 'line', 'statistics-layer');
 		const lineSubLayer = layerSpec.layer[0];
 
 		// Add formatted fields as to the data for display values
@@ -820,6 +821,7 @@ export function createForecastChart(
 
 		// Add vertical line for tooltip
 		const verticalLineLayer = {
+			name: 'tooltip-vertical-line-layer',
 			mark: {
 				type: 'rule',
 				color: '#AAA',
@@ -874,6 +876,7 @@ export function createForecastChart(
 		}
 		// Add a small rectangle behind the timeLabelLayer to make the time more readable
 		const timeLabelBackgroundLayer = {
+			name: 'time-label-background-layer',
 			mark: {
 				type: 'rect',
 				color: '#dddddd',
@@ -936,6 +939,7 @@ export function createForecastChart(
 
 		// Add a label with the current X value (time) for the vertical line
 		const timeLabelLayer = {
+			name: 'time-label-layer',
 			mark: {
 				type: 'text',
 				align: 'center',
@@ -977,16 +981,17 @@ export function createForecastChart(
 		const clickAndSelectLegend = `((click.${statisticsLayer.timeField} || [])[0] === datum.${statisticsLayer.timeField}) && (!legend_selection.variableField || indexof(legend_selection.variableField || [], datum.variableField) >= 0)`;
 		// Add tooltip points for the vertical line
 		const pointLayer = {
+			name: 'tooltip-point-layer',
 			mark: {
 				type: 'point',
 				size: 50
 			},
 			encoding: {
 				color: {
-					field: 'variableField',
+					field: options.bins ? 'group' : 'variableField',
 					type: 'nominal',
 					scale: {
-						domain: statisticsLayer.variables,
+						domain: options.bins ? Array.from(options.bins.keys()) : statisticsLayer.variables,
 						range: options.colorscheme || CATEGORICAL_SCHEME
 					}
 				},
@@ -1020,6 +1025,7 @@ export function createForecastChart(
 		// Add labels for each point for tooltip.
 		// This is the base layer with a white stroke around it to make the text readable
 		const labelLayerBase = {
+			name: 'label-base-layer',
 			mark: {
 				type: 'text',
 				align: 'left',
@@ -1066,6 +1072,7 @@ export function createForecastChart(
 		}
 		// This is the top layer no stroke
 		const labelLayer = {
+			name: 'label-layer',
 			mark: {
 				type: 'text',
 				align: 'left',
@@ -1116,7 +1123,7 @@ export function createForecastChart(
 
 	// Build ground truth layer
 	if (groundTruthLayer && !isEmpty(groundTruthLayer.variables) && !isEmpty(groundTruthLayer.data)) {
-		const layerSpec = newLayer(groundTruthLayer, 'point');
+		const layerSpec = newLayer(groundTruthLayer, 'point', 'ground-truth-layer');
 		const encoding = layerSpec.layer[0].encoding;
 
 		encoding.color.scale.range = options.colorscheme
@@ -1312,7 +1319,6 @@ export function createQuantilesForecastChart(
 					{
 						mark: {
 							type: 'errorband',
-							extent: 'ci',
 							borders: true
 						},
 						encoding: {
@@ -1501,7 +1507,7 @@ export function createSensitivityRankingChart(data: { parameter: string; score: 
  *
  * @param chartSpec - The chart specification.
  * @param annotations - A list of annotations to be applied.
- * @param charType - The type of the chart to which the annotations are applied.
+ * @param chartType - The type of the chart to which the annotations are applied.
  * @returns The updated chart specification with the applied annotations.
  */
 export function applyChartAnnotations(

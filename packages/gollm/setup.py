@@ -23,6 +23,7 @@ setup(
             "gollm:compare_models=tasks.compare_models:main",
             "gollm:configure_model_from_dataset=tasks.configure_model_from_dataset:main",
             "gollm:configure_model_from_document=tasks.configure_model_from_document:main",
+            "gollm:document_question=tasks.document_question:main",
             "gollm:embedding=tasks.embedding:main",
             "gollm:enrich_model=tasks.enrich_model:main",
             "gollm:enrich_dataset=tasks.enrich_dataset:main",

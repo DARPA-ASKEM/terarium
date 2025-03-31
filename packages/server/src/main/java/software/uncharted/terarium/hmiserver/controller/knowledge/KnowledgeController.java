@@ -11,7 +11,9 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import jakarta.annotation.PostConstruct;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
@@ -30,7 +32,6 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 import software.uncharted.terarium.hmiserver.annotations.HasProjectAccess;
 import software.uncharted.terarium.hmiserver.configuration.Config;
-import software.uncharted.terarium.hmiserver.models.ClientEventType;
 import software.uncharted.terarium.hmiserver.models.dataservice.document.DocumentAsset;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.Model;
 import software.uncharted.terarium.hmiserver.models.task.TaskRequest;
@@ -42,14 +43,12 @@ import software.uncharted.terarium.hmiserver.service.ClientEventService;
 import software.uncharted.terarium.hmiserver.service.CurrentUserService;
 import software.uncharted.terarium.hmiserver.service.ExtractionService;
 import software.uncharted.terarium.hmiserver.service.data.ModelService;
-import software.uncharted.terarium.hmiserver.service.notification.NotificationGroupInstance;
 import software.uncharted.terarium.hmiserver.service.notification.NotificationService;
 import software.uncharted.terarium.hmiserver.service.tasks.EquationsCleanupResponseHandler;
 import software.uncharted.terarium.hmiserver.service.tasks.LatexToSympyResponseHandler;
 import software.uncharted.terarium.hmiserver.service.tasks.SympyToAMRResponseHandler;
 import software.uncharted.terarium.hmiserver.service.tasks.TaskService;
 import software.uncharted.terarium.hmiserver.service.tasks.TaskService.TaskMode;
-import software.uncharted.terarium.hmiserver.utils.JsonUtil;
 import software.uncharted.terarium.hmiserver.utils.Messages;
 import software.uncharted.terarium.hmiserver.utils.rebac.Schema;
 
@@ -68,8 +67,6 @@ public class KnowledgeController {
 	private final TaskService taskService;
 
 	private final CurrentUserService currentUserService;
-	private final ClientEventService clientEventService;
-	private final NotificationService notificationService;
 
 	private final EquationsCleanupResponseHandler equationsCleanupResponseHandler;
 
@@ -140,92 +137,58 @@ public class KnowledgeController {
 		private UUID nodeId;
 	}
 
-	/**
-	 * Equations LaTeX to AMR
-	 *
-	 * @return UUID Model ID, or null if the model was not created or updated
-	 */
+	@Data
+	static class EquationRef {
+
+		private String id;
+		private String equationStr;
+	}
+
+	@Data
+	static class EquationToModelInput {
+
+		private UUID nodeId;
+		private UUID workflowId;
+		private Map<UUID, List<EquationRef>> equationsWithSource;
+		private List<String> equations;
+	}
+
 	@PostMapping("/equations-to-model")
 	@Secured(Roles.USER)
 	@HasProjectAccess(level = Schema.Permission.WRITE)
-	public ResponseEntity<UUID> equationsToModel(
-		@RequestBody final JsonNode req,
+	public ResponseEntity<UUID> equationsToModelNew(
+		@RequestBody final EquationToModelInput req,
 		@RequestParam(name = "project-id", required = false) final UUID projectId
 	) {
-		// Parse the request
-		UUID documentId = JsonUtil.parseUuidFromRequest(req, "documentId");
-		UUID modelId = JsonUtil.parseUuidFromRequest(req, "modelId");
+		// Collect equations
+		List<String> equations = new ArrayList();
+		Map<UUID, List<String>> modelProvenance = new HashMap();
 
-		// Create the notification properties
-		final NotificationProperties notificationProperties = new NotificationProperties();
-		notificationProperties.setProjectId(projectId);
-		notificationProperties.setDocumentId(documentId);
-		notificationProperties.setModelId(modelId);
-		notificationProperties.setWorkflowId(JsonUtil.parseUuidFromRequest(req, "workflowId"));
-		notificationProperties.setNodeId(JsonUtil.parseUuidFromRequest(req, "nodeId"));
-
-		// Create the notification group
-		final NotificationGroupInstance<NotificationProperties> notificationInterface = new NotificationGroupInstance<>(
-			clientEventService,
-			notificationService,
-			ClientEventType.KNOWLEDGE_ENRICHMENT_MODEL,
-			projectId,
-			notificationProperties,
-			currentUserService.get().getId()
-		);
-
-		notificationInterface.sendMessage("Beginning model enrichment using document extraction...");
-		log.info("Beginning model {} enrichment using document {} extraction...", modelId, documentId);
-
-		// Cleanup equations from the request
-		List<String> equations = new ArrayList<>();
-		if (req.get("equations") != null) {
-			for (final JsonNode equation : req.get("equations")) {
-				equations.add(equation.asText());
-			}
-		}
-		TaskRequest cleanupReq = cleanupEquationsTaskRequest(projectId, equations);
-		TaskResponse cleanupResp = null;
-		try {
-			cleanupResp = taskService.runTask(TaskMode.SYNC, cleanupReq);
-			if (cleanupResp.getStatus() != TaskStatus.SUCCESS) {
-				log.error("Task failed", cleanupResp.getStderr());
-				throw new ResponseStatusException(HttpStatus.BAD_REQUEST, cleanupResp.getStderr());
-			}
-		} catch (final JsonProcessingException e) {
-			log.warn("Unable to clean-up equations due to a JsonProcessingException. Reverting to original equations.", e);
-		} catch (final TimeoutException e) {
-			log.warn("Unable to clean-up equations due to a TimeoutException. Reverting to original equations.", e);
-		} catch (final InterruptedException e) {
-			log.warn("Unable to clean-up equations due to a InterruptedException. Reverting to original equations.", e);
-		} catch (final ExecutionException e) {
-			log.warn("Unable to clean-up equations due to a ExecutionException. Reverting to original equations.", e);
-		}
-
-		notificationInterface.sendMessage("Equations cleaned up.");
-
-		// get the equations from the cleanup response, or use the original equations
-		JsonNode equationsReq = req.get("equations");
-		if (cleanupResp != null && cleanupResp.getOutput() != null) {
-			try {
-				JsonNode output = mapper.readValue(cleanupResp.getOutput(), JsonNode.class);
-				if (output.get("response") != null && output.get("response").get("equations") != null) {
-					equationsReq = output.get("response").get("equations");
+		if (req.getEquationsWithSource() != null) {
+			for (var entry : req.getEquationsWithSource().entrySet()) {
+				List<String> refs = new ArrayList();
+				for (var equationRef : entry.getValue()) {
+					equations.add(equationRef.getEquationStr());
+					refs.add(equationRef.getId());
 				}
-			} catch (IOException e) {
-				log.warn("Unable to retrieve cleaned-up equations from GoLLM response. Reverting to original equations.", e);
+				modelProvenance.put(entry.getKey(), refs);
+			}
+		}
+		if (req.getEquations() != null) {
+			for (var equationStr : req.getEquations()) {
+				equations.add(equationStr);
 			}
 		}
 
-		final Model responseAMR;
 		final TaskRequest latexToSympyRequest;
 		final TaskResponse latexToSympyResponse;
 		final TaskRequest sympyToAMRRequest;
 		final TaskResponse sympyToAMRResponse;
+		final Model responseAMR;
 
 		try {
 			// 1. LaTeX to sympy code
-			latexToSympyRequest = createLatexToSympyTask(equationsReq);
+			latexToSympyRequest = createLatexToSympyTask(mapper.valueToTree(equations));
 			latexToSympyResponse = taskService.runTaskSync(latexToSympyRequest);
 
 			if (latexToSympyResponse.getStatus() != TaskStatus.SUCCESS) {
@@ -252,42 +215,20 @@ public class KnowledgeController {
 			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("task.mira.internal-error"));
 		}
 
-		// We only handle Petri Net models
-		if (!responseAMR.isPetrinet()) {
-			throw new ResponseStatusException(HttpStatus.UNPROCESSABLE_ENTITY, messages.get("bad-equations.petrinet"));
+		// Inject provenance information into metadata and save model
+		if (responseAMR != null) {
+			responseAMR.getMetadata().setModelProvenance(modelProvenance);
 		}
 
-		notificationInterface.sendMessage("AMR extracted via MIRA.");
-
-		modelService.fixGreekLetters(responseAMR);
-		notificationInterface.sendMessage("Greek letters fixed.");
-
-		// If no model id is provided, create a new model asset
-		Model model;
-		if (modelId == null) {
-			try {
-				model = modelService.createAsset(responseAMR, projectId);
-			} catch (final IOException e) {
-				log.error("An error occurred while trying to create a model.", e);
-				throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, messages.get("postgres.service-unavailable"));
-			}
-
-			notificationInterface.sendMessage("Model created.");
-			// If a model id is provided, update the existing model
-		} else {
-			try {
-				model = modelService.updateAsset(responseAMR, projectId).orElseThrow(() -> new IOException("Model not found"));
-			} catch (final IOException | IllegalArgumentException e) {
-				log.error("An error occurred while trying to update a model.", e);
-				throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, messages.get("postgres.service-unavailable"));
-			}
-
-			notificationInterface.sendMessage("Model updated.");
+		// Save model
+		final Model model;
+		try {
+			model = modelService.createAsset(responseAMR, projectId);
+		} catch (final IOException e) {
+			log.error("An error occurred while trying to create a model.", e);
+			throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, messages.get("postgres.service-unavailable"));
 		}
 
-		notificationInterface.sendFinalMessage("Model from equations done.");
-
-		// Return the model id
 		return ResponseEntity.ok(model.getId());
 	}
 
@@ -312,22 +253,14 @@ public class KnowledgeController {
 		@RequestParam(name = "project-id", required = false) final UUID projectId,
 		@RequestParam(name = "mode", required = false, defaultValue = "ASYNC") final TaskMode mode
 	) {
-		// FIXME: Running both new and old extractions for now. Swtich over to new-version once all
-		// enrichment points are moved over
-		final Future<DocumentAsset> f = extractionService.extractPDFAndApplyToDocument(documentId, projectId);
 		final Future<DocumentAsset> newF = extractionService.extractPDFAndApplyToDocumentNew(documentId, projectId);
 		if (mode == TaskMode.SYNC) {
-			try {
-				f.get();
-			} catch (InterruptedException | ExecutionException e) {
-				log.error("Error extracting PDF", e);
-				throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("document.extraction.failed"));
-			}
-
 			try {
 				newF.get();
 			} catch (Exception e) {
 				e.printStackTrace();
+				log.error("Error extracting Document", e);
+				throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("document.extraction.failed"));
 			}
 		}
 		return ResponseEntity.accepted().build();

@@ -55,6 +55,7 @@ import software.uncharted.terarium.hmiserver.service.tasks.ChartAnnotationRespon
 import software.uncharted.terarium.hmiserver.service.tasks.CompareModelsResponseHandler;
 import software.uncharted.terarium.hmiserver.service.tasks.ConfigureModelFromDatasetResponseHandler;
 import software.uncharted.terarium.hmiserver.service.tasks.ConfigureModelFromDocumentResponseHandler;
+import software.uncharted.terarium.hmiserver.service.tasks.DocumentQuestionHandler;
 import software.uncharted.terarium.hmiserver.service.tasks.EnrichDatasetResponseHandler;
 import software.uncharted.terarium.hmiserver.service.tasks.EnrichModelResponseHandler;
 import software.uncharted.terarium.hmiserver.service.tasks.EquationsFromImageResponseHandler;
@@ -85,6 +86,7 @@ public class GoLLMController {
 	private final CompareModelsResponseHandler compareModelsResponseHandler;
 	private final ConfigureModelFromDatasetResponseHandler configureModelFromDatasetResponseHandler;
 	private final ConfigureModelFromDocumentResponseHandler configureModelFromDocumentResponseHandler;
+	private final DocumentQuestionHandler documentQuestionHandler;
 	private final EnrichModelResponseHandler enrichModelResponseHandler;
 	private final EnrichDatasetResponseHandler enrichDatasetResponseHandler;
 	private final EquationsFromImageResponseHandler equationsFromImageResponseHandler;
@@ -100,6 +102,7 @@ public class GoLLMController {
 		taskService.addResponseHandler(compareModelsResponseHandler);
 		taskService.addResponseHandler(configureModelFromDatasetResponseHandler);
 		taskService.addResponseHandler(configureModelFromDocumentResponseHandler);
+		taskService.addResponseHandler(documentQuestionHandler);
 		taskService.addResponseHandler(enrichModelResponseHandler);
 		taskService.addResponseHandler(enrichDatasetResponseHandler);
 		taskService.addResponseHandler(equationsFromImageResponseHandler);
@@ -163,7 +166,8 @@ public class GoLLMController {
 		input.setLlm(config.getLlm());
 
 		try {
-			input.setDocument(objectMapper.writeValueAsString(document.get().getExtractions()));
+			// FIXME: Prompt, craft specific payload
+			input.setDocument(objectMapper.writeValueAsString(document.get().getExtraction().getLightweightExtractions()));
 		} catch (final JsonProcessingException e) {
 			log.error("Unable to serialize document text", e);
 			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("generic.io-error.write"));
@@ -408,7 +412,8 @@ public class GoLLMController {
 		final InterventionsFromDocumentResponseHandler.Input input = new InterventionsFromDocumentResponseHandler.Input();
 		input.setLlm(config.getLlm());
 		try {
-			input.setDocument(objectMapper.writeValueAsString(document.get().getExtractions()));
+			// FIXME: Prompt, craft specific payload
+			input.setDocument(objectMapper.writeValueAsString(document.get().getExtraction().getLightweightExtractions()));
 		} catch (final JsonProcessingException e) {
 			log.error("Unable to serialize document text", e);
 			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("generic.io-error.write"));
@@ -812,8 +817,8 @@ public class GoLLMController {
 				.orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, messages.get("document.not-found")));
 
 			// make sure there is a text in the document
-			if (document.getText() == null || document.getText().isBlank()) {
-				log.warn(String.format("Document %s has no extracted text", documentId));
+			if (document.getExtraction() == null) {
+				log.warn(String.format("Document %s has no extractions", documentId));
 				throw new ResponseStatusException(HttpStatus.NOT_FOUND, messages.get("document.extraction.not-done"));
 			}
 		}
@@ -1158,5 +1163,102 @@ public class GoLLMController {
 	public ResponseEntity<Void> cancelTask(@PathVariable("task-id") final UUID taskId) {
 		taskService.cancelTask(TaskType.GOLLM, taskId);
 		return ResponseEntity.ok().build();
+	}
+
+	@PostMapping("/document-question")
+	@Secured(Roles.USER)
+	@Operation(summary = "Dispatch a `GoLLM Document Question` task")
+	@ApiResponses(
+		value = {
+			@ApiResponse(
+				responseCode = "200",
+				description = "Dispatched successfully",
+				content = @Content(
+					mediaType = "application/json",
+					schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = TaskResponse.class)
+				)
+			),
+			@ApiResponse(
+				responseCode = "422",
+				description = "The request was interrupted while waiting for a response",
+				content = @Content
+			),
+			@ApiResponse(
+				responseCode = "503",
+				description = "The request was timed out while waiting for a response",
+				content = @Content
+			),
+			@ApiResponse(responseCode = "500", description = "There was an issue dispatching the request", content = @Content)
+		}
+	)
+	public ResponseEntity<TaskResponse> createDocumentQuestionTask(
+		@RequestParam(name = "mode", required = false, defaultValue = "SYNC") final TaskMode mode,
+		@RequestParam(name = "project-id", required = false) final UUID projectId,
+		@RequestParam(name = "document-id", required = true) final UUID documentId,
+		@RequestBody final String question
+	) {
+		// create the task
+		final TaskRequest req = new TaskRequest();
+		req.setType(TaskType.GOLLM);
+		req.setScript(DocumentQuestionHandler.NAME);
+		req.setUserId(currentUserService.get().getId());
+
+		final DocumentQuestionHandler.Input input = new DocumentQuestionHandler.Input();
+		input.setLlm(config.getLlm());
+		input.setQuestion(question);
+
+		// Grab the document
+		DocumentAsset document = documentAssetService
+			.getAsset(documentId)
+			.orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, messages.get("document.not-found")));
+
+		// make sure there are document extractions available
+		if (document.getExtraction() == null) {
+			log.warn(String.format("Document %s has no extracted text", documentId));
+			throw new ResponseStatusException(HttpStatus.NOT_FOUND, messages.get("document.extraction.not-done"));
+		}
+
+		try {
+			input.setDocument(objectMapper.writeValueAsString(document.getExtraction().getDocumentText()));
+		} catch (final JsonProcessingException e) {
+			log.error("Unable to serialize document text", e);
+			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("generic.io-error.write"));
+		}
+
+		try {
+			req.setInput(objectMapper.writeValueAsBytes(input));
+		} catch (final JsonProcessingException e) {
+			log.error("Unable to serialize input", e);
+			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("generic.io-error.write"));
+		}
+
+		req.setProjectId(projectId);
+
+		final DocumentQuestionHandler.Properties props = new DocumentQuestionHandler.Properties();
+		props.setProjectId(projectId);
+		req.setAdditionalProperties(props);
+
+		final TaskResponse resp;
+		try {
+			resp = taskService.runTask(mode, req);
+			if (mode == TaskMode.SYNC && resp.getStatus() != TaskStatus.SUCCESS) {
+				log.error("Task failed", resp.getStderr());
+				throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, resp.getStderr());
+			}
+		} catch (final JsonProcessingException e) {
+			log.error("Unable to serialize input: {}", e.getMessage());
+			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("task.gollm.json-processing"));
+		} catch (final TimeoutException e) {
+			log.error("Timeout while waiting for task response: {}", e.getMessage());
+			throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, messages.get("task.gollm.timeout"));
+		} catch (final InterruptedException e) {
+			log.error("Interrupted while waiting for task response: {}", e.getMessage());
+			throw new ResponseStatusException(HttpStatus.UNPROCESSABLE_ENTITY, messages.get("task.gollm.interrupted"));
+		} catch (final ExecutionException e) {
+			log.error("Error while waiting for task response: {}", e.getMessage());
+			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("task.gollm.execution-failure"));
+		}
+
+		return ResponseEntity.ok().body(resp);
 	}
 }

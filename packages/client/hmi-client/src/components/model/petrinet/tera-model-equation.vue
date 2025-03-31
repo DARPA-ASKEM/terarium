@@ -1,12 +1,10 @@
 <template>
 	<tera-equation-container
 		:is-editing="isEditing"
-		:is-editable="isEditable"
 		:isUpdating="isUpdating"
 		@cancel-edit="cancelEdit"
 		@add-equation="addEquation"
 		@start-editing="isEditing = true"
-		@update-model-from-equation="updateModelFromEquations"
 	>
 		<template #math-editor>
 			<div v-if="exceedEquationsThreshold == false">
@@ -14,7 +12,7 @@
 					v-for="(eq, index) in equations"
 					:key="index"
 					:index="index"
-					:is-editable="isEditable"
+					:is-editable="false"
 					:is-editing-eq="isEditing"
 					:latex-equation="eq"
 					@equation-updated="setNewEquation"
@@ -34,15 +32,12 @@ import { ref, watch } from 'vue';
 import TeraMathEditor from '@/components/mathml/tera-math-editor.vue';
 import TeraEquationContainer from '@/components/model/petrinet/tera-equation-container.vue';
 import type { Model } from '@/types/Types';
-import { equationsToAMR, EquationsToAMRRequest } from '@/services/knowledge';
 import { cleanLatexEquations } from '@/utils/math';
 import { isEmpty, isEqual } from 'lodash';
-import { useToastService } from '@/services/toast';
 import { getModelEquation } from '@/services/model';
 
 const props = defineProps<{
 	model: Model;
-	isEditable: boolean;
 }>();
 
 const emit = defineEmits(['model-updated']);
@@ -79,18 +74,6 @@ const cancelEdit = () => {
 const updateLatexFormula = (equationsList: string[]) => {
 	equations.value = equationsList;
 	if (isEmpty(originalEquations.value)) originalEquations.value = Array.from(equationsList);
-};
-
-const updateModelFromEquations = async () => {
-	isUpdating.value = true;
-	isEditing.value = false;
-	const request: EquationsToAMRRequest = { equations: equations.value, modelId: props.model.id };
-	const modelId = await equationsToAMR(request);
-	if (modelId) {
-		emit('model-updated');
-		useToastService().success('Success', `Model Updated from equation`);
-	}
-	isUpdating.value = false;
 };
 
 watch(

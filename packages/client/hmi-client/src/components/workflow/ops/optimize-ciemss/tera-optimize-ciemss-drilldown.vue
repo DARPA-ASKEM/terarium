@@ -424,6 +424,8 @@
 							/>
 						</div>
 						<Divider />
+						<tera-chart-settings-quantiles :settings="chartSettings" @update-options="updateQauntilesOptions" />
+						<Divider />
 					</div>
 				</template>
 			</tera-slider-panel>
@@ -500,6 +502,7 @@ import { ChartSettingType, CiemssPresetTypes, DrilldownTabs } from '@/types/comm
 import { useConfirm } from 'primevue/useconfirm';
 import TeraChartSettings from '@/components/widgets/tera-chart-settings.vue';
 import TeraChartSettingsPanel from '@/components/widgets/tera-chart-settings-panel.vue';
+import TeraChartSettingsQuantiles from '@/components/widgets/tera-chart-settings-quantiles.vue';
 import TeraTimestepCalendar from '@/components/widgets/tera-timestep-calendar.vue';
 import { updateChartSettingsBySelectedVariables } from '@/services/chart-settings';
 import { deleteAnnotation } from '@/services/chart-annotation';
@@ -513,7 +516,6 @@ import TeraDynamicInterventionPolicyGroup, {
 	DynamicInterventionPolicyGroupForm
 } from './tera-dynamic-intervention-policy-group.vue';
 import {
-	blankInterventionPolicyGroup,
 	Criterion,
 	defaultCriterion,
 	InterventionPolicyGroupForm,
@@ -524,7 +526,8 @@ import {
 	resolveInterventionValue,
 	policyGroupFormToIntervention,
 	setQoIData,
-	usePreparedChartInputs
+	usePreparedChartInputs,
+	setInterventionPolicyGroups
 } from './optimize-utils';
 import { isInterventionPolicyBlank } from '../intervention-policy/intervention-policy-operation';
 
@@ -784,7 +787,10 @@ const initialize = async () => {
 		// FIXME: This should be done in the node this should not be done in the drill down.
 		getInterventionPolicyById(policyId).then((interventionPolicy) => {
 			selectedInterventionPolicy.value = interventionPolicy;
-			if (interventionPolicy) setInterventionPolicyGroups(interventionPolicy);
+			if (interventionPolicy && modelConfiguration.value) {
+				const state = setInterventionPolicyGroups(props.node.state, interventionPolicy, modelConfiguration.value);
+				emit('update-state', state);
+			}
 		});
 	}
 
@@ -808,41 +814,6 @@ const initialize = async () => {
 			}))
 		);
 	}
-};
-
-const setInterventionPolicyGroups = (interventionPolicy: InterventionPolicy) => {
-	const state = _.cloneDeep(props.node.state);
-	// If already set + not changed since set, do not reset.
-	if (
-		knobs.value.interventionPolicyGroups.length > 0 &&
-		knobs.value.interventionPolicyGroups[0].id === interventionPolicy.id
-	) {
-		return;
-	}
-	state.interventionPolicyId = interventionPolicy.id ?? '';
-
-	knobs.value.interventionPolicyGroups = []; // Reset prior to populating.
-	if (interventionPolicy.interventions && interventionPolicy.interventions.length > 0) {
-		interventionPolicy.interventions.forEach((intervention) => {
-			// Static:
-			const newIntervention = _.cloneDeep(blankInterventionPolicyGroup);
-			newIntervention.id = interventionPolicy.id;
-			intervention.staticInterventions.forEach((staticIntervention) => {
-				newIntervention.relativeImportance = 5;
-				newIntervention.individualIntervention = staticIntervention;
-				newIntervention.startTimeGuess = staticIntervention.timestep;
-				newIntervention.initialGuessValue = resolveInterventionValue(staticIntervention, modelConfiguration.value!);
-				knobs.value.interventionPolicyGroups.push(_.cloneDeep(newIntervention));
-			});
-			// Dynamic:
-			intervention.dynamicInterventions.forEach((dynamicIntervention) => {
-				newIntervention.relativeImportance = 0;
-				newIntervention.individualIntervention = dynamicIntervention;
-				knobs.value.interventionPolicyGroups.push(_.cloneDeep(newIntervention));
-			});
-		});
-	}
-	emit('update-state', state);
 };
 
 const runOptimize = async () => {
@@ -1053,7 +1024,8 @@ const {
 	updateActiveChartSettings,
 	setActiveChartSettings,
 	addEmptyComparisonChart,
-	updateComparisonChartSetting
+	updateComparisonChartSetting,
+	updateQauntilesOptions
 } = useChartSettings(props, emit);
 
 const {
