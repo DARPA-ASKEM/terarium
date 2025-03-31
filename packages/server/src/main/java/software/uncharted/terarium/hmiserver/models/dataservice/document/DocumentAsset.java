@@ -71,19 +71,6 @@ public class DocumentAsset extends TerariumAsset {
 	private Grounding grounding;
 
 	@TSOptional
-	@Column(columnDefinition = "text")
-	@Deprecated
-	private String documentAbstract;
-
-	/*
-	@TSOptional
-	@Type(JsonType.class)
-	@Column(columnDefinition = "json")
-	@Deprecated
-	private List<ExtractedDocumentPage> extractions = new ArrayList<>();
-	*/
-
-	@TSOptional
 	@Lob
 	@JdbcTypeCode(Types.BINARY)
 	private byte[] thumbnail;
@@ -92,20 +79,6 @@ public class DocumentAsset extends TerariumAsset {
 	@Type(JsonType.class)
 	@Column(columnDefinition = "json")
 	private Extraction extraction;
-
-	/*
-	public List<ExtractedDocumentPage> getExtractions() {
-		if (
-			this.extractions.size() == 0 &&
-			this.fileNames.size() > 0 &&
-			(this.fileNames.get(0).endsWith(".txt") || this.fileNames.get(0).endsWith(".md")) &&
-			this.text != null
-		) {
-			extractions = List.of(new ExtractedDocumentPage().setPageNumber(1).setText(this.text));
-		}
-		return this.extractions;
-	}
-	*/
 
 	@Override
 	public List<String> getFileNames() {
@@ -133,11 +106,6 @@ public class DocumentAsset extends TerariumAsset {
 
 		clone.source = this.source;
 		clone.text = this.text;
-		/*
-		for (final ExtractedDocumentPage extraction : this.extractions) {
-			clone.extractions.add(extraction.clone());
-		}
-		*/
 
 		if (this.grounding != null) {
 			clone.grounding = this.grounding.clone();

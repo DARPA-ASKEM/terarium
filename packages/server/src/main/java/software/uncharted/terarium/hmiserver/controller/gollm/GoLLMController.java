@@ -149,12 +149,6 @@ public class GoLLMController {
 			throw new ResponseStatusException(HttpStatus.NOT_FOUND, messages.get("document.not-found"));
 		}
 
-		// make sure there is text in the document
-		if (document.get().getText() == null || document.get().getText().isEmpty()) {
-			log.warn(String.format("Document %s has no extracted text", documentId));
-			throw new ResponseStatusException(HttpStatus.NOT_FOUND, messages.get("document.extraction.not-done"));
-		}
-
 		// Grab the model
 		final Optional<Model> model = modelService.getAsset(modelId);
 		if (model.isEmpty()) {
@@ -394,12 +388,6 @@ public class GoLLMController {
 		if (document.isEmpty()) {
 			log.warn(String.format("Document %s not found", documentId));
 			throw new ResponseStatusException(HttpStatus.NOT_FOUND, messages.get("document.not-found"));
-		}
-
-		// make sure there is text in the document
-		if (document.get().getText() == null || document.get().getText().isEmpty()) {
-			log.warn(String.format("Document %s has no extracted text", documentId));
-			throw new ResponseStatusException(HttpStatus.NOT_FOUND, messages.get("document.extraction.not-done"));
 		}
 
 		// Grab the model
@@ -902,12 +890,6 @@ public class GoLLMController {
 			document = documentAssetService
 				.getAsset(documentId)
 				.orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, messages.get("document.not-found")));
-
-			// make sure there is a text in the document
-			if (document.getText() == null || document.getText().isBlank()) {
-				log.warn(String.format("Document %s has no extracted text", documentId));
-				throw new ResponseStatusException(HttpStatus.NOT_FOUND, messages.get("document.extraction.not-done"));
-			}
 		}
 
 		// Grab the dataset
