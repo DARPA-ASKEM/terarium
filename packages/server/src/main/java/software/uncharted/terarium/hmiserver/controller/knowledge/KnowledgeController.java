@@ -259,7 +259,7 @@ public class KnowledgeController {
 				newF.get();
 			} catch (Exception e) {
 				e.printStackTrace();
-				log.error("Error extracting PDF", e);
+				log.error("Error extracting Document", e);
 				throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("document.extraction.failed"));
 			}
 		}
