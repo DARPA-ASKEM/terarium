@@ -56,19 +56,19 @@
 			/>
 		</template>
 		<template #outputs>
-			<!-- <label :class="{ 'disabled-label': _.isEmpty(modelStateAndObsOptions) || isFetchingModelData }"
+			<label :class="{ 'disabled-label': _.isEmpty(modelStateAndObsOptions) || isFetchingModelData }"
 				>Select an output metric</label
 			>
 			<MultiSelect
 				:disabled="_.isEmpty(modelStateAndObsOptions) || isFetchingModelData"
-				:model-value="selectedOutputSettings"
+				:model-value="scenario.getOutputChartSettingsAsStrings()"
 				placeholder="Select output metrics"
 				:options="modelStateAndObsOptions"
-				@update:model-value="scenario.setOptimizeOutputSettings($event)"
+				@update:model-value="scenario.setOutputChartSettings($event)"
 				:loading="isFetchingModelData"
 				filter
 			/>
-			<img :src="horizon" alt="Horizon scanning chart" class="" /> -->
+			<img :src="horizon" alt="Horizon scanning chart" class="" />
 		</template>
 	</tera-scenario-template>
 </template>
@@ -81,6 +81,8 @@ import Dropdown from 'primevue/dropdown';
 import _ from 'lodash';
 import { getModelConfigurationById } from '@/services/model-configurations';
 import { getInterventionPoliciesForModel, getModel, getModelConfigurationsForModel } from '@/services/model';
+import horizon from '@/assets/svg/template-images/horizon-thumbnail.svg';
+import MultiSelect from 'primevue/multiselect';
 import { ScenarioHeader } from '../base-scenario';
 import { CounterfactualScenario } from './counterfactual-scenario';
 import TeraScenarioTemplate from '../tera-scenario-template.vue';

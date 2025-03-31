@@ -11,6 +11,10 @@ import { operation as CalibrateOp } from '@/components/workflow/ops/calibrate-ci
 import { operation as SimulateOp } from '@/components/workflow/ops/simulate-ciemss/mod';
 import { operation as CompareDatasetOp } from '@/components/workflow/ops/compare-datasets/mod';
 import _ from 'lodash';
+import { ChartSetting, ChartSettingType } from '@/types/common';
+import { updateChartSettingsBySelectedVariables } from '@/services/chart-settings';
+import { SimulateCiemssOperationState } from '../../ops/simulate-ciemss/simulate-ciemss-operation';
+import { CalibrationOperationStateCiemss } from '../../ops/calibrate-ciemss/calibrate-operation';
 
 export class CounterfactualScenario extends BaseScenario {
 	public static templateId = 'counterfactual';
@@ -25,6 +29,8 @@ export class CounterfactualScenario extends BaseScenario {
 
 	private datasetId: string;
 
+	private outputChartSettings: ChartSetting[];
+
 	constructor() {
 		super();
 		this.workflowName = CounterfactualScenario.templateName;
@@ -32,6 +38,7 @@ export class CounterfactualScenario extends BaseScenario {
 		this.modelConfigId = '';
 		this.interventionPolicyId = '';
 		this.datasetId = '';
+		this.outputChartSettings = [];
 	}
 
 	isValid(): boolean {
@@ -72,6 +79,20 @@ export class CounterfactualScenario extends BaseScenario {
 		this.interventionPolicyId = interventionPolicyId;
 	}
 
+	getOutputChartSettingsAsStrings() {
+		return this.outputChartSettings.flatMap((chartSettings) => chartSettings.selectedVariables) ?? [];
+	}
+
+	setOutputChartSettings(selectedVariables: string[]) {
+		let outputChartSettings: ChartSetting[] = [];
+		outputChartSettings = updateChartSettingsBySelectedVariables(
+			outputChartSettings,
+			ChartSettingType.VARIABLE,
+			selectedVariables
+		);
+		this.outputChartSettings = outputChartSettings;
+	}
+
 	toJSON() {
 		return {
 			templateId: CounterfactualScenario.templateId,
@@ -94,6 +115,8 @@ export class CounterfactualScenario extends BaseScenario {
 		const SIZE = { size: OperatorNodeSize.medium };
 		const modelConfig = await getModelConfigurationById(this.modelConfigId);
 		const interventionPolicy = await getInterventionPolicyById(this.interventionPolicyId);
+		const defaultSimulateState: SimulateCiemssOperationState = SimulateOp.initState!();
+		const defaultCalibrationState: CalibrationOperationStateCiemss = CalibrateOp.initState!();
 
 		// Add Nodes:
 		const modelNode = wf.addNode(ModelOp, POSITION, SIZE);
@@ -154,9 +177,38 @@ export class CounterfactualScenario extends BaseScenario {
 			}
 		});
 
+		// Simulates
+		wf.updateNode(simulateBaseNode, {
+			state: {
+				defaultSimulateState,
+				chartSettings: this.outputChartSettings
+			}
+		});
+
+		wf.updateNode(simulateWithInterventionNode, {
+			state: {
+				defaultSimulateState,
+				chartSettings: this.outputChartSettings
+			}
+		});
+
+		// Calibrate
+		wf.updateNode(calibrateNode, {
+			state: {
+				defaultCalibrationState,
+				chartSettings: this.outputChartSettings
+			}
+		});
+
 		// Add Edges:
 		// Model Config
 		wf.addEdge(modelNode.id, modelNode.outputs[0].id, modelConfigNode.id, modelConfigNode.inputs[0].id, [
+			POSITION,
+			POSITION
+		]);
+
+		// Intervention
+		wf.addEdge(modelNode.id, modelNode.outputs[0].id, interventionNode.id, interventionNode.inputs[0].id, [
 			POSITION,
 			POSITION
 		]);
