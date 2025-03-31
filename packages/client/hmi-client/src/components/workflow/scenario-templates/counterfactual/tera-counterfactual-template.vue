@@ -138,8 +138,7 @@ watch(
 		}
 
 		isFetchingModelData.value = false;
-	},
-	{ deep: true }
+	}
 );
 
 watch(
@@ -148,7 +147,6 @@ watch(
 		if (selectedModelConfigurationId.value) {
 			modelConfiguration.value = await getModelConfigurationById(selectedModelConfigurationId.value);
 		}
-	},
-	{ deep: true }
+	}
 );
 </script>
