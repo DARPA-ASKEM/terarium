@@ -71,7 +71,7 @@
 import Dropdown from 'primevue/dropdown';
 import { computed, ref, watch } from 'vue';
 import { useProjects } from '@/composables/project';
-import { AssetType, ModelConfiguration, InterventionPolicy, Model } from '@/types/Types';
+import { AssetType, ModelConfiguration, InterventionPolicy, Model, ProjectAsset } from '@/types/Types';
 import { getInterventionPoliciesForModel, getModel, getModelConfigurationsForModel } from '@/services/model';
 import _ from 'lodash';
 import { getModelConfigurationById } from '@/services/model-configurations';
@@ -98,9 +98,9 @@ const header: ScenarioHeader = Object.freeze({
 });
 
 const allModelOptions = computed<ProjectAsset[]>(() => useProjects().getActiveProjectAssets(AssetType.Model));
-const allDatasetOptions = computed(() => useProjects().getActiveProjectAssets(AssetType.Dataset));
-const selectedModelId = computed(() => props.scenario.getModelId());
-const selectedModelConfigurationId = computed(() => props.scenario.getModelConfigId());
+const allDatasetOptions = computed<ProjectAsset[]>(() => useProjects().getActiveProjectAssets(AssetType.Dataset));
+const selectedModelId = computed<string>(() => props.scenario.getModelId());
+const selectedModelConfigurationId = computed<string>(() => props.scenario.getModelConfigId());
 const isModelSelected = computed(() => !_.isEmpty(selectedModelId.value));
 const model = ref<Model | null>(null);
 const modelConfiguration = ref<ModelConfiguration>();
