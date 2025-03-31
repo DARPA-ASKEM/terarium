@@ -16,16 +16,39 @@
 				@update:model-value="props.scenario.setModelId($event)"
 				class="mb-3"
 			/>
+
+			<label>Select a model configuration</label>
+			<Dropdown
+				:model-value="props.scenario.getModelConfigId()"
+				:options="allModelOptions"
+				option-label="assetName"
+				option-value="assetId"
+				placeholder="Select a model"
+				@update:model-value="props.scenario.setModelConfigId($event)"
+				class="mb-3"
+			/>
+
+			<label>Select a dataset</label>
+			<Dropdown
+				:model-value="props.scenario.getDatasetId()"
+				:options="allDatasetOptions"
+				option-label="assetName"
+				option-value="assetId"
+				placeholder="Select a dataset"
+				@update:model-value="props.scenario.setDatasetId($event)"
+				class="mb-3"
+			/>
 		</template>
 		<template #outputs> </template>
 	</tera-scenario-template>
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue';
-import { AssetType } from '@/types/Types';
+import { computed, ref } from 'vue';
+import { AssetType, InterventionPolicy, Model, ModelConfiguration } from '@/types/Types';
 import { useProjects } from '@/composables/project';
 import Dropdown from 'primevue/dropdown';
+import _ from 'lodash';
 import { ScenarioHeader } from '../base-scenario';
 import { CounterfactualScenario } from './counterfactual-scenario';
 import TeraScenarioTemplate from '../tera-scenario-template.vue';
@@ -46,6 +69,16 @@ const header: ScenarioHeader = Object.freeze({
 });
 
 const allModelOptions = computed(() => useProjects().getActiveProjectAssets(AssetType.Model));
+const allDatasetOptions = computed(() => useProjects().getActiveProjectAssets(AssetType.Dataset));
+const selectedModelId = computed(() => props.scenario.getModelId());
+const selectedModelConfigurationId = computed(() => props.scenario.getModelConfigId());
+const isModelSelected = computed(() => !_.isEmpty(selectedModelId.value));
+const model = ref<Model | null>(null);
+const modelConfiguration = ref<ModelConfiguration>();
+const allModelConfigOptions = ref<ModelConfiguration[]>([]);
+const allInterventionPolicyOptions = ref<InterventionPolicy[]>([]);
+const isFetchingModelData = ref<boolean>(false);
+const modelStateAndObsOptions = ref<string[]>([]);
 
 const emit = defineEmits(['save-workflow']);
 </script>

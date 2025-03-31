@@ -31,6 +31,30 @@ export class CounterfactualScenario extends BaseScenario {
 		this.modelId = modelId;
 	}
 
+	getModelConfigId() {
+		return this.modelConfigId;
+	}
+
+	setModelConfigId(modelConfigId: string) {
+		this.modelConfigId = modelConfigId;
+	}
+
+	getDatasetId() {
+		return this.datasetId;
+	}
+
+	setDatasetId(datasetId: string) {
+		this.datasetId = datasetId;
+	}
+
+	getInterventionPolicyId() {
+		return this.interventionPolicyId;
+	}
+
+	setInterventionPolicyId(interventionPolicyId: string) {
+		this.interventionPolicyId = interventionPolicyId;
+	}
+
 	toJSON() {
 		return {
 			templateId: CounterfactualScenario.templateId,
