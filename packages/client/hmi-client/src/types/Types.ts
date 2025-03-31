@@ -224,7 +224,6 @@ export interface DocumentAsset extends TerariumAsset {
      * @deprecated
      */
     documentAbstract?: string;
-    extractions?: ExtractedDocumentPage[];
     thumbnail?: any;
     extraction?: Extraction;
 }
@@ -838,13 +837,6 @@ export interface NonNumericColumnStats {
     missing_values: number;
 }
 
-export interface ExtractedDocumentPage {
-    pageNumber: number;
-    text: string;
-    tables: any[];
-    equations: any[];
-}
-
 export interface ModelHeader {
     name: string;
     description: string;
@@ -918,6 +910,7 @@ export interface IProjectUserPermissionDisplayModel {
     username: string;
     email: string;
     givenName: string;
+    email: string;
     id: string;
     familyName: string;
 }

@@ -36,7 +36,7 @@ class OpenAiTools(LlmToolsInterface):
     GPT_MODEL = "gpt-4o-2024-08-06"
 
     def __init__(self, api_key=None):
-        self.api_key = os.getenv("ASKEM_DOC_AI_API_KEY") if api_key == None else api_key
+        self.api_key = os.getenv("ASKEM_DOC_AI_API_KEY") if api_key is None else api_key
         if (self.api_key is None):
             raise ValueError("ASKEM_DOC_AI_API_KEY not found in environment variables. Please set 'ASKEM_DOC_AI_API_KEY'.")
 
@@ -155,7 +155,7 @@ class AzureTools(LlmToolsInterface):
             raise ValueError("AZURE_OPENAI_MODEL not found in environment variables or provided as an argument. Please set 'AZURE_OPENAI_MODEL'.")
 
     def name(self) -> str:
-        return f"Azure OpenAI (gpt-4o 2024-11-20)"
+        return "Azure OpenAI (gpt-4o 2024-11-20)"
 
     def enhance_table_extraction(self, table_image_uri: str, table_html: str, max_tokens=8192) -> dict:
 
