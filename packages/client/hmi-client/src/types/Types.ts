@@ -902,11 +902,11 @@ export interface ProjectGroupPermission {
 
 export interface IProjectUserPermissionDisplayModel {
     user: User;
-    username: string;
     email: string;
-    permissionLevel: Permission;
+    username: string;
     givenName: string;
     id: string;
+    permissionLevel: Permission;
     familyName: string;
 }
 
