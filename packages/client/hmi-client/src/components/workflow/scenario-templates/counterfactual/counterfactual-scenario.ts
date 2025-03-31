@@ -10,6 +10,7 @@ import { operation as DatasetOp } from '@/components/workflow/ops/dataset/mod';
 import { operation as CalibrateOp } from '@/components/workflow/ops/calibrate-ciemss/mod';
 import { operation as SimulateOp } from '@/components/workflow/ops/simulate-ciemss/mod';
 import { operation as CompareDatasetOp } from '@/components/workflow/ops/compare-datasets/mod';
+import _ from 'lodash';
 
 export class CounterfactualScenario extends BaseScenario {
 	public static templateId = 'counterfactual';
@@ -26,7 +27,7 @@ export class CounterfactualScenario extends BaseScenario {
 
 	constructor() {
 		super();
-		this.workflowName = '';
+		this.workflowName = CounterfactualScenario.templateName;
 		this.modelId = '';
 		this.modelConfigId = '';
 		this.interventionPolicyId = '';
@@ -110,6 +111,40 @@ export class CounterfactualScenario extends BaseScenario {
 		const simulateWithInterventionNode = wf.addNode(SimulateOp, POSITION, SIZE);
 
 		const compareDatasetNode = wf.addNode(CompareDatasetOp, POSITION, SIZE);
+
+		// Update States:
+		// Model Config:
+		wf.updateNode(modelConfigNode, {
+			state: {
+				transientModelConfig: modelConfig
+			},
+			output: {
+				value: [this.modelConfigId],
+				state: _.omit(modelConfigNode.state, ['transientModelConfig'])
+			}
+		});
+
+		// Intervention:
+		wf.updateNode(interventionNode, {
+			state: {
+				interventionPolicy
+			},
+			output: {
+				value: [this.interventionPolicyId],
+				state: interventionNode.state
+			}
+		});
+
+		// Dataset state:
+		wf.updateNode(datasetNode, {
+			state: {
+				datasetId: this.datasetId
+			},
+			output: {
+				value: [this.datasetId]
+			}
+		});
+
 		// Add Edges:
 		// Model Config
 		wf.addEdge(modelNode.id, modelNode.outputs[0].id, modelConfigNode.id, modelConfigNode.inputs[0].id, [

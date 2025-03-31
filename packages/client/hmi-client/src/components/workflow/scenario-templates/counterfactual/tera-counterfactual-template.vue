@@ -19,15 +19,15 @@
 
 			<label>Select a model configuration</label>
 			<Dropdown
-				:model-value="props.scenario.getModelConfigId()"
-				:loading="isFetchingModelData"
 				:disabled="!isModelSelected"
-				:options="allModelOptions"
-				option-label="assetName"
-				option-value="assetId"
+				:model-value="props.scenario.getModelConfigId()"
+				:options="allModelConfigOptions"
+				option-label="name"
+				option-value="id"
 				placeholder="Select a model configuration"
 				@update:model-value="props.scenario.setModelConfigId($event)"
 				class="mb-3"
+				:loading="isFetchingModelData"
 			/>
 
 			<label>Select a dataset</label>
