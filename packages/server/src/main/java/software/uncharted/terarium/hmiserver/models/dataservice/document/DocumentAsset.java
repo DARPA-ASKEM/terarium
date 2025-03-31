@@ -62,10 +62,6 @@ public class DocumentAsset extends TerariumAsset {
 	private String source;
 
 	@TSOptional
-	@Column(columnDefinition = "text")
-	private String text;
-
-	@TSOptional
 	@OneToOne(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
 	@JoinColumn(name = "grounding_id")
 	private Grounding grounding;
@@ -105,7 +101,6 @@ public class DocumentAsset extends TerariumAsset {
 		}
 
 		clone.source = this.source;
-		clone.text = this.text;
 
 		if (this.grounding != null) {
 			clone.grounding = this.grounding.clone();
