@@ -905,12 +905,12 @@ export interface ProjectGroupPermission {
 }
 
 export interface IProjectUserPermissionDisplayModel {
-    givenName: string;
-    id: string;
     user: User;
     username: string;
-    familyName: string;
+    givenName: string;
     email: string;
+    id: string;
+    familyName: string;
     permissionLevel: Permission;
 }
 
