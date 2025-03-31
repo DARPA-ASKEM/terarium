@@ -33,6 +33,12 @@ export class CounterfactualScenario extends BaseScenario {
 		this.datasetId = '';
 	}
 
+	isValid(): boolean {
+		return (
+			!!this.workflowName && !!this.modelId && !!this.modelConfigId && !!this.interventionPolicyId && !!this.datasetId
+		);
+	}
+
 	getModelId() {
 		return this.modelId;
 	}
