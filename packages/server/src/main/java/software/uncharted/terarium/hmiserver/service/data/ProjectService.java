@@ -5,22 +5,33 @@ import java.io.IOException;
 import java.sql.Timestamp;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
+import software.uncharted.terarium.hmiserver.models.Group;
 import software.uncharted.terarium.hmiserver.models.User;
 import software.uncharted.terarium.hmiserver.models.dataservice.AssetType;
 import software.uncharted.terarium.hmiserver.models.dataservice.project.Project;
 import software.uncharted.terarium.hmiserver.models.dataservice.project.ProjectAndAssetAggregate;
+import software.uncharted.terarium.hmiserver.models.dataservice.project.ProjectGroupPermission;
+import software.uncharted.terarium.hmiserver.models.dataservice.project.ProjectPermissionLevel;
+import software.uncharted.terarium.hmiserver.models.dataservice.project.ProjectUserPermission;
+import software.uncharted.terarium.hmiserver.repository.ProjectGroupPermissionRepository;
+import software.uncharted.terarium.hmiserver.repository.ProjectUserPermissionRepository;
 import software.uncharted.terarium.hmiserver.repository.UserRepository;
 import software.uncharted.terarium.hmiserver.repository.data.ProjectRepository;
+import software.uncharted.terarium.hmiserver.service.CurrentUserService;
 import software.uncharted.terarium.hmiserver.utils.Messages;
 import software.uncharted.terarium.hmiserver.utils.rebac.ReBACService;
 import software.uncharted.terarium.hmiserver.utils.rebac.Schema;
@@ -35,12 +46,15 @@ public class ProjectService {
 	final ProjectRepository projectRepository;
 	final ProjectSearchService projectSearchService;
 	final UserRepository userRepository;
+	final ProjectGroupPermissionRepository projectGroupPermissionRepository;
+	final ProjectUserPermissionRepository projectUserPermissionRepository;
+	final CurrentUserService currentUserService;
 	final ReBACService reBACService;
 	final Messages messages;
 
 	@Observed(name = "function_profile")
 	public List<Project> getProjects() {
-		return projectRepository.findAll();
+		return projectRepository.findByDeletedOnIsNull();
 	}
 
 	@Observed(name = "function_profile")
@@ -66,6 +80,7 @@ public class ProjectService {
 				project.setThumbnail(aggregate.getThumbnail());
 				project.setUserId(aggregate.getUserId());
 				project.setMetadata(new HashMap<>());
+				project.setSampleProject(aggregate.getSampleProject());
 				addAssetCount(project, aggregate.getAssetType(), aggregate.getAssetCount());
 				projectMap.put(project.getId(), project);
 			}
@@ -101,6 +116,7 @@ public class ProjectService {
 				project.setThumbnail(aggregate.getThumbnail());
 				project.setUserId(aggregate.getUserId());
 				project.setMetadata(new HashMap<>());
+				project.setSampleProject(aggregate.getSampleProject());
 				addAssetCount(project, aggregate.getAssetType(), aggregate.getAssetCount());
 				projectMap.put(project.getId(), project);
 			}
@@ -171,73 +187,321 @@ public class ProjectService {
 	@Observed(name = "function_profile")
 	public boolean isProjectPublic(final UUID id) {
 		final Optional<Boolean> isPublic = projectRepository.findPublicAssetByIdNative(id);
-		if (isPublic.isEmpty()) {
-			return false;
-		}
-		return isPublic.get();
+		return isPublic.orElse(false);
+	}
+
+	public boolean hasPermission(final UUID projectId, final User user, final ProjectPermissionLevel permissionLevel) {
+		return hasPermission(projectId, user, projectPermissionToRebacPermission(permissionLevel));
 	}
 
 	@Observed(name = "function_profile")
-	public Schema.Permission checkPermissionCanReadOrNone(final String userId, final UUID projectId)
-		throws ResponseStatusException {
+	public boolean hasPermission(final UUID projectId, final User user, final Schema.Permission permission) {
 		try {
-			final RebacUser rebacUser = new RebacUser(userId, reBACService);
+			final RebacUser rebacUser = new RebacUser(user.getId(), reBACService);
 			final RebacProject rebacProject = new RebacProject(projectId, reBACService);
-			if (rebacUser.can(rebacProject, Schema.Permission.READ)) {
-				return Schema.Permission.READ;
-			}
+			return rebacUser.can(rebacProject, permission);
 		} catch (final Exception e) {
-			log.error("Error updating project", e);
+			log.error("Error checking project permission", e);
 			throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, messages.get("rebac.service-unavailable"));
 		}
-		return Schema.Permission.NONE;
 	}
 
+	/**
+	 * Add a group to a project with a specific permission level
+	 *
+	 * @param project the project
+	 * @param groups  the groups
+	 * @param level   the permission level
+	 * @return the {@link ProjectGroupPermission} instance
+	 */
 	@Observed(name = "function_profile")
-	public Schema.Permission checkPermissionCanRead(final String userId, final UUID projectId)
-		throws ResponseStatusException {
-		try {
-			final RebacUser rebacUser = new RebacUser(userId, reBACService);
-			final RebacProject rebacProject = new RebacProject(projectId, reBACService);
-			if (rebacUser.can(rebacProject, Schema.Permission.READ)) {
-				return Schema.Permission.READ;
-			}
-		} catch (final Exception e) {
-			log.error("Error check project permission", e);
-			throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, messages.get("rebac.service-unavailable"));
+	public Collection<ProjectGroupPermission> addGroups(
+		final Project project,
+		final Collection<Group> groups,
+		final ProjectPermissionLevel level
+	) {
+		final User currentUser = currentUserService.get();
+		if (currentUser != null && !hasPermission(project.getId(), currentUser, ProjectPermissionLevel.ADMIN)) {
+			throw new AccessDeniedException(
+				String.format(
+					"User %s does not have permission to add groups for project %s",
+					currentUser.getId(),
+					project.getId()
+				)
+			);
 		}
-		throw new ResponseStatusException(HttpStatus.FORBIDDEN, messages.get("rebac.unauthorized-update"));
+
+		final Map<String, ProjectGroupPermission> groupIdToExistingPermissions = projectGroupPermissionRepository
+			.findAllByProjectIdAndGroupIdIn(project.getId(), groups.stream().map(Group::getId).collect(Collectors.toList()))
+			.stream()
+			.collect(Collectors.toMap(p -> p.getGroup().getId(), p -> p));
+
+		final Collection<ProjectGroupPermission> permissions = groups
+			.stream()
+			.map(group -> {
+				final ProjectGroupPermission existingPermission = groupIdToExistingPermissions.get(group.getId());
+				if (existingPermission != null) {
+					existingPermission.setPermissionLevel(level);
+					return existingPermission;
+				}
+				return new ProjectGroupPermission().setProject(project).setGroup(group).setPermissionLevel(level);
+			})
+			.collect(Collectors.toList());
+
+		return projectGroupPermissionRepository.saveAll(permissions);
 	}
 
-	@Observed(name = "function_profile")
-	public Schema.Permission checkPermissionCanWrite(final String userId, final UUID projectId)
-		throws ResponseStatusException {
-		try {
-			final RebacUser rebacUser = new RebacUser(userId, reBACService);
-			final RebacProject rebacProject = new RebacProject(projectId, reBACService);
-			if (rebacUser.can(rebacProject, Schema.Permission.WRITE)) {
-				return Schema.Permission.WRITE;
-			}
-		} catch (final Exception e) {
-			log.error("Error check project permission", e);
-			throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, messages.get("rebac.service-unavailable"));
+	/**
+	 * Add a group to a project with READ permission
+	 *
+	 * @param project the project
+	 * @param group   the group
+	 */
+	public ProjectGroupPermission addGroup(final Project project, final Group group) {
+		return addGroup(project, group, ProjectPermissionLevel.READ);
+	}
+
+	/**
+	 * Add a group to a project with a specific permission level
+	 *
+	 * @param project the project
+	 * @param group   the group
+	 * @param level   the permission level
+	 * @return the {@link ProjectGroupPermission} instance
+	 */
+	public ProjectGroupPermission addGroup(final Project project, final Group group, final ProjectPermissionLevel level) {
+		return addGroups(project, Set.of(group), level).stream().findFirst().orElse(null);
+	}
+
+	/**
+	 * Update a collection of groups' permission level for a project
+	 *
+	 * @param project the project
+	 * @param groups  the groups
+	 * @param level   the permission level
+	 * @return the {@link ProjectGroupPermission} instances
+	 */
+	public Collection<ProjectGroupPermission> updateGroups(
+		final Project project,
+		final Collection<Group> groups,
+		final ProjectPermissionLevel level
+	) {
+		final User currentUser = currentUserService.get();
+		if (currentUser != null && !hasPermission(project.getId(), currentUser, ProjectPermissionLevel.ADMIN)) {
+			throw new AccessDeniedException(
+				String.format(
+					"User %s does not have permission to update groups for project %s",
+					currentUser.getId(),
+					project.getId()
+				)
+			);
 		}
-		throw new ResponseStatusException(HttpStatus.FORBIDDEN, messages.get("rebac.unauthorized-update"));
+
+		// Ensure the level being granted is not above the current user's level
+		if (currentUser != null) {
+			final ProjectUserPermission currentUserPermission = projectUserPermissionRepository.findByProjectIdAndUserId(
+				project.getId(),
+				currentUser.getId()
+			);
+			if (currentUserPermission != null && currentUserPermission.getPermissionLevel().ordinal() < level.ordinal()) {
+				throw new AccessDeniedException(
+					String.format(
+						"User %s does not have permission to grant groups %s permission for project %s",
+						currentUser.getId(),
+						level,
+						project.getId()
+					)
+				);
+			}
+		}
+
+		final Collection<ProjectGroupPermission> permissions =
+			projectGroupPermissionRepository.findAllByProjectIdAndGroupIdIn(
+				project.getId(),
+				groups.stream().map(Group::getId).collect(Collectors.toSet())
+			);
+		permissions.forEach(permission -> permission.setPermissionLevel(level));
+
+		return projectGroupPermissionRepository.saveAll(permissions);
 	}
 
+	/**
+	 * Update a group's permission level for a project
+	 *
+	 * @param project the project
+	 * @param group   the group
+	 * @param level   the permission level
+	 * @return the {@link ProjectGroupPermission} instance
+	 */
+	public ProjectGroupPermission updateGroup(
+		final Project project,
+		final Group group,
+		final ProjectPermissionLevel level
+	) {
+		return updateGroups(project, Set.of(group), level).stream().findFirst().orElse(null);
+	}
+
+	/**
+	 * Remove a collection of groups from a project
+	 *
+	 * @param project the project
+	 * @param groups  the groups
+	 */
+	public void removeGroups(final Project project, final Collection<Group> groups) {
+		final User currentUser = currentUserService.get();
+		if (currentUser != null && !hasPermission(project.getId(), currentUser, Schema.Permission.ADMINISTRATE)) {
+			throw new AccessDeniedException(
+				String.format(
+					"User %s does not have permission to remove groups for project %s",
+					currentUser.getId(),
+					project.getId()
+				)
+			);
+		}
+		projectGroupPermissionRepository.deleteByProjectIdAndGroupIdIn(
+			project.getId(),
+			groups.stream().map(Group::getId).collect(Collectors.toSet())
+		);
+		log.info(
+			"Removed groups {} from project {}",
+			groups.stream().map(Group::getId).collect(Collectors.toList()),
+			project.getId()
+		);
+	}
+
+	/**
+	 * Remove a group from a project
+	 *
+	 * @param project the project
+	 * @param group   the group
+	 */
+	public void removeGroup(final Project project, final Group group) {
+		removeGroups(project, Set.of(group));
+	}
+
+	/**
+	 * Add a user to a project with a specific permission level
+	 *
+	 * @param project the project
+	 * @param users   the users
+	 * @param level   the permission level
+	 * @return the {@link ProjectUserPermission} instance
+	 */
 	@Observed(name = "function_profile")
-	public Schema.Permission checkPermissionCanAdministrate(final String userId, final UUID projectId)
-		throws ResponseStatusException {
-		try {
-			final RebacUser rebacUser = new RebacUser(userId, reBACService);
-			final RebacProject rebacProject = new RebacProject(projectId, reBACService);
-			if (rebacUser.can(rebacProject, Schema.Permission.ADMINISTRATE)) {
+	public Collection<ProjectUserPermission> addUsers(
+		final Project project,
+		final Collection<User> users,
+		final ProjectPermissionLevel level
+	) {
+		final User currentUser = currentUserService.get();
+		if (currentUser != null && !hasPermission(project.getId(), currentUser, ProjectPermissionLevel.ADMIN)) {
+			throw new AccessDeniedException(
+				String.format(
+					"User %s does not have permission to add users for project %s",
+					currentUser.getId(),
+					project.getId()
+				)
+			);
+		}
+
+		final Map<String, ProjectUserPermission> userIdToExistingPermissions = projectUserPermissionRepository
+			.findAllByProjectIdAndUserIdIn(project.getId(), users.stream().map(User::getId).collect(Collectors.toList()))
+			.stream()
+			.collect(Collectors.toMap(p -> p.getUser().getId(), p -> p));
+
+		final Collection<ProjectUserPermission> permissions = users
+			.stream()
+			.map(user -> {
+				final ProjectUserPermission existingPermission = userIdToExistingPermissions.get(user.getId());
+				if (existingPermission != null) {
+					existingPermission.setPermissionLevel(level);
+					return existingPermission;
+				}
+				return new ProjectUserPermission().setProject(project).setUser(user).setPermissionLevel(level);
+			})
+			.collect(Collectors.toList());
+
+		return projectUserPermissionRepository.saveAll(permissions);
+	}
+
+	/**
+	 * Add a user to a project with READ permission
+	 *
+	 * @param project the project
+	 * @param user    the user
+	 * @return the {@link ProjectUserPermission} instance
+	 */
+	public ProjectUserPermission addUser(final Project project, final User user) {
+		return addUsers(project, Set.of(user), ProjectPermissionLevel.READ).stream().findFirst().orElse(null);
+	}
+
+	/**
+	 * Add a user to a project with a specific permission level
+	 *
+	 * @param project the project
+	 * @param user    the user
+	 * @param level   the permission level
+	 * @return the {@link ProjectUserPermission} instance
+	 */
+	public ProjectUserPermission addUser(final Project project, final User user, final ProjectPermissionLevel level) {
+		return addUsers(project, Set.of(user), level).stream().findFirst().orElse(null);
+	}
+
+	/**
+	 * Remove a collection of users from a project
+	 *
+	 * @param project the project
+	 * @param users   the users
+	 */
+	public void removeUsers(final Project project, final Collection<User> users) {
+		final User currentUser = currentUserService.get();
+		if (currentUser != null && !hasPermission(project.getId(), currentUser, Schema.Permission.ADMINISTRATE)) {
+			throw new AccessDeniedException(
+				String.format(
+					"User %s does not have permission to remove users for project %s",
+					currentUser.getId(),
+					project.getId()
+				)
+			);
+		}
+		projectUserPermissionRepository.deleteByProjectIdAndUserIdIn(
+			project.getId(),
+			users.stream().map(User::getId).collect(Collectors.toSet())
+		);
+
+		log.info(
+			"Removed users {} from project {}",
+			users.stream().map(User::getId).collect(Collectors.toList()),
+			project.getId()
+		);
+	}
+
+	/**
+	 * Remove a user from a project
+	 *
+	 * @param project the project
+	 * @param user    the user
+	 */
+	public void removeUser(final Project project, final User user) {
+		removeUsers(project, Set.of(user));
+	}
+
+	/**
+	 * This is a temporary method to convert the project permission level to a rebac permission.
+	 * This will be removed once the rebac service is fully removed
+	 * @param level the project permission level
+	 * @return the rebac permission
+	 */
+	public static Schema.Permission projectPermissionToRebacPermission(ProjectPermissionLevel level) {
+		switch (level) {
+			case ADMIN:
 				return Schema.Permission.ADMINISTRATE;
-			}
-		} catch (final Exception e) {
-			log.error("Error check project permission", e);
-			throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, messages.get("rebac.service-unavailable"));
+			case OWNER, WRITE:
+				return Schema.Permission.WRITE;
+			case READ:
+				return Schema.Permission.READ;
+			default:
+				return Schema.Permission.NONE;
 		}
-		throw new ResponseStatusException(HttpStatus.FORBIDDEN, messages.get("rebac.unauthorized-update"));
 	}
 }

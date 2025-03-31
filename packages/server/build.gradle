@@ -9,13 +9,15 @@ buildscript {
 
 plugins {
     id 'java'
-    id 'io.spring.dependency-management' version '1.1.6'
+    id 'io.spring.dependency-management' version '1.1.7'
     id 'org.springframework.boot' version '3.1.5'
     id 'org.hibernate.orm' version '6.2.7.Final'
 }
 
 ext {
-  set('springCloudVersion', "2022.0.5")
+    set('springCloudVersion', "2022.0.5")
+    set('junit.version', '4.13.2')
+    set('junit-jupiter.version', '5.11.3')
 }
 
 dependencyManagement {
@@ -68,7 +70,7 @@ dependencies {
     implementation 'org.apache.commons:commons-text:1.12.0'
     implementation 'commons-io:commons-io:2.17.0'
     implementation 'org.eclipse.microprofile.jwt:microprofile-jwt-auth-api:2.1'
-    implementation 'org.elasticsearch.client:elasticsearch-rest-high-level-client:7.17.24'
+    implementation 'org.elasticsearch.client:elasticsearch-rest-high-level-client:7.17.28'
     implementation 'org.flywaydb:flyway-core'
     implementation 'org.jsoup:jsoup:1.7.2'
     implementation 'org.keycloak:keycloak-admin-client:25.0.6'
@@ -86,7 +88,7 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-websocket'
     implementation 'org.springframework.cloud:spring-cloud-starter-openfeign'
     implementation 'com.github.ben-manes.caffeine:caffeine:3.1.8'
-    implementation 'org.apache.pdfbox:pdfbox:3.0.3'
+    implementation 'org.apache.pdfbox:pdfbox:3.0.4'
 
     implementation(platform("software.amazon.awssdk:bom:2.21.26"))
     implementation("software.amazon.awssdk:s3")
@@ -100,8 +102,10 @@ dependencies {
 
     testCompileOnly 'org.projectlombok:lombok'
 
-    testImplementation 'org.springframework.amqp:spring-rabbit-test'
-    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    testImplementation ('org.springframework.amqp:spring-rabbit-test'){
+        exclude group: 'org.junit.vintage', module: 'junit-vintage-engine'
+    }
+    testImplementation ('org.springframework.boot:spring-boot-starter-test')
     testImplementation 'org.springframework.security:spring-security-test'
     testImplementation 'org.mockito:mockito-core:5.3.1'
     testImplementation 'org.mockito:mockito-junit-jupiter:5.3.1'

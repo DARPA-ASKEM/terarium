@@ -7,12 +7,13 @@
 			<section class="main-section">
 				<section>
 					<label class="subheader">Add documents, models or datasets to your project here.</label>
-					<div class="supported-resources">
+					<div class="supported-resources py-3">
 						<div><i class="pi pi-file" /><span>Documents</span><span>(PDF, md, txt)</span></div>
 						<div><i class="pi pi-share-alt" /><span>Models</span><span>(AMR, sbml, vensim, stella)</span></div>
 						<div><dataset-icon /><span>Datasets</span><span>(csv, netcdf)</span></div>
 					</div>
 					<tera-drag-and-drop-importer
+						ref="dragAndDropImporter"
 						:accept-types="[
 							AcceptedTypes.PDF,
 							AcceptedTypes.CSV,
@@ -55,23 +56,11 @@
 						@imported-files-updated="(value) => (importedFiles = value)"
 					></tera-drag-and-drop-importer>
 				</section>
-				<section v-if="importedFiles.length < 1">
-					<label>Or upload from a Github repository URL</label>
-					<tera-input-text v-model="urlToUpload" class="upload-from-github-url" />
-				</section>
-				<tera-import-github-file
-					:visible="isImportGithubFileModalVisible"
-					:url-string="urlToUpload"
-					@close="
-						isImportGithubFileModalVisible = false;
-						emit('close');
-					"
-				/>
 			</section>
 		</template>
 		<template #footer>
 			<Button label="Upload" class="p-button-primary" @click="upload" />
-			<Button label="Cancel" class="p-button-secondary" @click="() => emit('close')" />
+			<Button label="Cancel" class="p-button-secondary" outlined @click="() => emit('close')" />
 		</template>
 	</tera-modal>
 </template>
@@ -87,19 +76,18 @@ import { AssetType, ProvenanceType } from '@/types/Types';
 import { uploadDocumentAssetToProject } from '@/services/document-assets';
 import { createNewDatasetFromFile } from '@/services/dataset';
 import useAuthStore from '@/stores/auth';
-import { ref } from 'vue';
+import { ref, watch, onMounted, nextTick } from 'vue';
 import TeraDragAndDropImporter from '@/components/extracting/tera-drag-n-drop-importer.vue';
 import { useToastService } from '@/services/toast';
-import TeraImportGithubFile from '@/components/widgets/tera-import-github-file.vue';
 import { extractPDF } from '@/services/knowledge';
 import DatasetIcon from '@/assets/svg/icons/dataset.svg?component';
 import { uploadArtifactToProject } from '@/services/artifact';
 import { createModel, createModelAndModelConfig, processAndAddModelToProject, validateAMRFile } from '@/services/model';
 import { createProvenance, RelationshipType } from '@/services/provenance';
-import TeraInputText from '@/components//widgets/tera-input-text.vue';
 
-defineProps<{
+const props = defineProps<{
 	visible: boolean;
+	files?: File[]; // For passing files dragged onto the resources panel into the uploader
 }>();
 const emit = defineEmits(['close']);
 
@@ -109,9 +97,38 @@ const urlToUpload = ref('');
 const isImportGithubFileModalVisible = ref(false);
 const importedFiles = ref<File[]>([]);
 
+// Handle any files that are dragged onto the resources panel
+const dragAndDropImporter = ref();
+const pendingFiles = ref<File[] | null>(null);
+
+// When files arrive, store them if we can't process them yet
+watch(
+	() => props.files,
+	async (newFiles) => {
+		if (newFiles?.length) {
+			pendingFiles.value = newFiles;
+			await nextTick();
+			tryAddFiles();
+		}
+	}
+);
+
+// Try to add files if we have both files and a mounted importer
+function tryAddFiles() {
+	if (pendingFiles.value?.length && dragAndDropImporter.value) {
+		dragAndDropImporter.value.addFiles(pendingFiles.value);
+		pendingFiles.value = null;
+	}
+}
+
+// Once mounted, try to process any pending files
+onMounted(() => {
+	tryAddFiles();
+});
+
 async function processFiles(files: File[], description: string) {
 	return files.map(async (file) => {
-		switch (file.name.split('.').pop()) {
+		switch (file.name.split('.').pop()?.toLowerCase()) {
 			case AcceptedExtensions.CSV:
 			case AcceptedExtensions.NC:
 				return processDataset(file, description);
@@ -230,8 +247,8 @@ async function upload() {
 		const createdAssets = await Promise.all(createAssetsPromises);
 		createdAssets.forEach((_, index) => {
 			const { name, id } = (results.value ?? [])[index];
-			if (name && name.toLowerCase().endsWith('.pdf')) {
-				extractPDF(id);
+			if (name) {
+				extractPDF(id); // FIXME: rename, this extracts all document types, not just PDF
 			}
 		});
 		emit('close');

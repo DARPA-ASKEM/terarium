@@ -58,7 +58,7 @@ public class NotebookSessionControllerTests extends TerariumApplicationTests {
 		mockMvc
 			.perform(
 				MockMvcRequestBuilders.post("/sessions")
-					.param("project-id", PROJECT_ID.toString())
+					.param("project-id", project.getId().toString())
 					.with(csrf())
 					.contentType("application/json")
 					.content(objectMapper.writeValueAsString(notebookSession))
@@ -71,14 +71,13 @@ public class NotebookSessionControllerTests extends TerariumApplicationTests {
 	public void testItCanGetNotebookSession() throws Exception {
 		final NotebookSession notebookSession = notebookSessionService.createAsset(
 			(NotebookSession) new NotebookSession().setName("test-notebook-name"),
-			project.getId(),
-			ASSUME_WRITE_PERMISSION
+			project.getId()
 		);
 
 		mockMvc
 			.perform(
 				MockMvcRequestBuilders.get("/sessions/" + notebookSession.getId())
-					.param("project-id", PROJECT_ID.toString())
+					.param("project-id", project.getId().toString())
 					.with(csrf())
 			)
 			.andExpect(status().isOk());
@@ -89,21 +88,21 @@ public class NotebookSessionControllerTests extends TerariumApplicationTests {
 	public void testItCanGetNotebookSessions() throws Exception {
 		notebookSessionService.createAsset(
 			(NotebookSession) new NotebookSession().setName("test-notebook-name"),
-			project.getId(),
-			ASSUME_WRITE_PERMISSION
+			project.getId()
 		);
 		notebookSessionService.createAsset(
 			(NotebookSession) new NotebookSession().setName("test-notebook-name"),
-			project.getId(),
-			ASSUME_WRITE_PERMISSION
+			project.getId()
 		);
 		notebookSessionService.createAsset(
 			(NotebookSession) new NotebookSession().setName("test-notebook-name"),
-			project.getId(),
-			ASSUME_WRITE_PERMISSION
+			project.getId()
 		);
 
-		mockMvc.perform(MockMvcRequestBuilders.get("/sessions").with(csrf())).andExpect(status().isOk()).andReturn();
+		mockMvc
+			.perform(MockMvcRequestBuilders.get("/sessions").param("project-id", project.getId().toString()).with(csrf()))
+			.andExpect(status().isOk())
+			.andReturn();
 	}
 
 	@Test
@@ -111,18 +110,17 @@ public class NotebookSessionControllerTests extends TerariumApplicationTests {
 	public void testItCanDeleteNotebookSession() throws Exception {
 		final NotebookSession notebookSession = notebookSessionService.createAsset(
 			(NotebookSession) new NotebookSession().setName("test-notebook-name"),
-			project.getId(),
-			ASSUME_WRITE_PERMISSION
+			project.getId()
 		);
 
 		mockMvc
 			.perform(
 				MockMvcRequestBuilders.delete("/sessions/" + notebookSession.getId())
-					.param("project-id", PROJECT_ID.toString())
+					.param("project-id", project.getId().toString())
 					.with(csrf())
 			)
 			.andExpect(status().isOk());
 
-		Assertions.assertTrue(notebookSessionService.getAsset(notebookSession.getId(), ASSUME_WRITE_PERMISSION).isEmpty());
+		Assertions.assertTrue(notebookSessionService.getAsset(notebookSession.getId()).isEmpty());
 	}
 }

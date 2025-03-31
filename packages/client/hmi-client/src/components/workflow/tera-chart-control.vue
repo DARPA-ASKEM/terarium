@@ -8,6 +8,8 @@
 			placeholder="Select variables to display"
 			@update:model-value="updateSelectedVariable"
 			filter
+			autoFilterFocus
+			style="max-width: 100%"
 		>
 			<template v-slot:value>
 				<template v-for="(variable, index) in selectedVariable" :key="index">
@@ -60,6 +62,6 @@ aside {
 	gap: var(--gap-2);
 	justify-content: space-between;
 	position: relative;
-	margin: var(--gap-2) 0;
+	margin: var(--gap-1) 0;
 }
 </style>

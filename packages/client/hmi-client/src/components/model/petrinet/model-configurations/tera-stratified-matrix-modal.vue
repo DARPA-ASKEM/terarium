@@ -3,7 +3,7 @@
 		<template #header>
 			<div class="flex align-items-center justify-space-between">
 				<h4 class="w-full mr-4">{{ id }} matrix</h4>
-				<div v-if="!isReadOnly" class="flex align-items-center gap-2 white-space-nowrap">
+				<div class="flex align-items-center gap-2 white-space-nowrap">
 					<InputSwitch
 						inputId="matrixShouldEval"
 						v-model="matrixShouldEval"
@@ -18,7 +18,7 @@
 			<tera-stratified-matrix
 				v-bind="props"
 				:should-eval="matrixShouldEval"
-				@update-cell-value="(configToUpdate: any) => emit('update-cell-value', configToUpdate)"
+				@update-cell-values="(configsToUpdate: any) => emit('update-cell-values', configsToUpdate)"
 			/>
 		</template>
 		<template #footer>
@@ -44,13 +44,7 @@ const props = defineProps<{
 	isReadOnly?: boolean;
 }>();
 
-const emit = defineEmits(['close-modal', 'update-cell-value']);
+const emit = defineEmits(['close-modal', 'update-cell-values']);
 
 const matrixShouldEval = ref(false);
 </script>
-
-<style scoped>
-main:deep(.content) {
-	min-width: 40rem;
-}
-</style>

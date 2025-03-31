@@ -6,7 +6,6 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import io.swagger.v3.oas.annotations.tags.Tags;
-import jakarta.transaction.Transactional;
 import java.util.Optional;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -20,11 +19,8 @@ import software.uncharted.terarium.hmiserver.models.dataservice.AssetType;
 import software.uncharted.terarium.hmiserver.models.dataservice.project.Project;
 import software.uncharted.terarium.hmiserver.models.dataservice.project.ProjectAsset;
 import software.uncharted.terarium.hmiserver.security.Roles;
-import software.uncharted.terarium.hmiserver.service.CurrentUserService;
 import software.uncharted.terarium.hmiserver.service.data.ProjectAssetService;
 import software.uncharted.terarium.hmiserver.service.data.ProjectService;
-import software.uncharted.terarium.hmiserver.utils.rebac.ReBACService;
-import software.uncharted.terarium.hmiserver.utils.rebac.Schema;
 
 @RequestMapping("/assets")
 @RestController
@@ -35,8 +31,6 @@ public class AssetController {
 
 	final ProjectService projectService;
 	final ProjectAssetService projectAssetService;
-	final ReBACService reBACService;
-	final CurrentUserService currentUserService;
 	final ObjectMapper objectMapper;
 
 	/**
@@ -68,15 +62,10 @@ public class AssetController {
 		@PathVariable("asset-name") final String assetName,
 		@RequestParam(name = "project-id", required = false) final UUID projectId
 	) {
-		final Schema.Permission assumedPermission = Schema.Permission.READ;
 		final AssetType assetType = AssetType.getAssetType(assetTypeName, objectMapper);
 
 		if (projectId == null) {
-			final Optional<ProjectAsset> asset = projectAssetService.getProjectAssetByNameAndType(
-				assetName,
-				assetType,
-				assumedPermission
-			);
+			final Optional<ProjectAsset> asset = projectAssetService.getProjectAssetByNameAndType(assetName, assetType);
 			if (asset.isPresent()) {
 				throw new ResponseStatusException(HttpStatus.CONFLICT, "Asset name is already in use");
 			} else {
@@ -89,8 +78,7 @@ public class AssetController {
 					final Optional<ProjectAsset> asset = projectAssetService.getProjectAssetByNameAndTypeAndProjectId(
 						projectId,
 						assetName,
-						assetType,
-						assumedPermission
+						assetType
 					);
 					if (asset.isPresent()) {
 						throw new ResponseStatusException(HttpStatus.CONFLICT, "Asset name is not available in this project");

@@ -1,161 +1,166 @@
 <template>
-	<section class="flex flex-column gap-3">
-		<span class="flex align-items-center gap-3">
-			<h6>{{ symbol }}</h6>
-			<span class="name">
-				<template v-if="featureConfig.isPreview">{{ item.name }}</template>
-				<tera-input-text
-					v-else
-					placeholder="Add a name"
-					:model-value="item.name ?? ''"
-					@update:model-value="$emit('update-item', { key: 'name', value: $event })"
-				/>
+	<section class="flex flex-column">
+		<div class="top-entry">
+			<h6>{{ id }}</h6>
+			<span v-if="!isTimePart" class="name">
+				<template v-if="featureConfig.isPreview">{{ nameText }}</template>
+				<tera-input-text v-else placeholder="Add a name" v-model="nameText" />
 			</span>
-			<span class="unit">
-				<template v-if="item.input && item.output">
-					<span><label>Input:</label> {{ item.input }}</span>
-					<span class="ml-"><label>Output:</label> {{ item.output }}</span>
+			<span class="unit" :class="{ time: isTimePart }">
+				<template v-if="subject || outcome">
+					<span><label>Subject:</label> {{ subject !== '' ? subject : 'n/a' }}</span>
+					<span><label>&nbsp;Outcome:</label> {{ outcome !== '' ? outcome : 'n/a' }}</span>
+					<span v-if="controllers"><label>&nbsp;Controllers:</label> {{ controllers }}</span>
 				</template>
 				<!--amr_to_mmt doesn't like unit expressions with spaces, removing them here before they are saved to the amr-->
 				<template v-else-if="showUnit">
-					<template v-if="featureConfig.isPreview"><label>Unit</label>{{ item.unitExpression }}</template>
+					<template v-if="featureConfig.isPreview"><label>Unit</label>{{ unitExpression }}</template>
 					<!-- we use a dropdown for units with time semantic-->
 					<Dropdown
 						v-else-if="isTimePart"
-						:model-value="item.unitExpression"
+						v-model="unitExpression"
 						placeholder="Add a time unit"
 						option-label="label"
 						option-value="value"
 						:options="[
 							{ label: 'Days', value: CalendarDateType.DATE },
+							{ label: 'Weeks', value: CalendarDateType.WEEK },
 							{ label: 'Months', value: CalendarDateType.MONTH },
 							{ label: 'Years', value: CalendarDateType.YEAR }
 						]"
-						@change="$emit('update-item', { key: 'unitExpression', value: $event.value })"
 					/>
 					<tera-input-text
 						v-else
 						label="Unit"
 						placeholder="Add a unit"
 						:characters-to-reject="[' ']"
-						:model-value="item.unitExpression ?? ''"
-						@update:model-value="$emit('update-item', { key: 'unitExpression', value: $event })"
+						v-model="unitExpression"
 					/>
 				</template>
 			</span>
-
-			<span v-if="!featureConfig.isPreview" class="flex ml-auto gap-3">
+			<template v-if="!featureConfig.isPreview && !isTimePart">
 				<!-- Three states of description buttons: Hide / Show / Add description -->
 				<Button
-					v-if="(item.description && showDescription) || (!item.description && showDescription)"
+					class="button-description"
 					text
 					size="small"
-					label="Hide description"
-					@click="showDescription = false"
+					:label="showDescription ? 'Hide description' : descriptionText ? 'Show description' : 'Add description'"
+					@click="showDescription = !showDescription"
 				/>
-				<Button
-					v-else-if="!showDescription"
-					text
-					size="small"
-					:label="item.description ? 'Show description' : 'Add description'"
-					@click="showDescription = true"
-				/>
-				<span v-if="showConcept" class="concept">
-					<label>Concept</label>
-					<template v-if="featureConfig.isPreview">{{ query }}</template>
-					<AutoComplete
-						v-else
-						size="small"
-						placeholder="Search concepts"
-						v-model="query"
-						:suggestions="results"
-						optionLabel="name"
-						@complete="async () => (results = await searchCuriesEntities(query))"
-						@item-select="$emit('update-item', { key: 'concept', value: $event.value.curie })"
-						@keyup.enter="applyValidConcept"
-						@blur="applyValidConcept"
-					/>
-				</span>
-			</span>
-		</span>
+				<aside class="concept" v-if="!isTransitionPart">
+					<tera-concept v-model="grounding" :is-preview="featureConfig.isPreview" />
+				</aside>
+			</template>
+		</div>
 		<katex-element
-			v-if="item.expression"
+			v-if="expression"
 			class="expression"
-			:expression="stringToLatexExpression(item.expression)"
+			:expression="stringToLatexExpression(expression)"
 			:throw-on-error="false"
 		/>
-		<span class="description">
-			<template v-if="featureConfig.isPreview">{{ item.description }}</template>
-			<tera-input-text
-				v-if="showDescription"
-				placeholder="Add a description"
-				:model-value="item.description ?? ''"
-				@update:model-value="$emit('update-item', { key: 'description', value: $event })"
-			/>
+		<span v-if="!isTimePart" class="description" :class="{ 'mt-1': showDescription }">
+			<template v-if="featureConfig.isPreview">{{ descriptionText }}</template>
+			<tera-input-text v-else-if="showDescription" v-model="descriptionText" placeholder="Add a description" />
 		</span>
 	</section>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch } from 'vue';
-import TeraInputText from '@/components/widgets/tera-input-text.vue';
-import AutoComplete from 'primevue/autocomplete';
+import { computed, ref } from 'vue';
+import { debounce } from 'lodash';
 import Button from 'primevue/button';
-import type { ModelPartItem } from '@/types/Model';
-import { stringToLatexExpression } from '@/services/model';
-import type { DKG } from '@/types/Types';
-import { getCurieFromGroundingIdentifier, getNameOfCurieCached, searchCuriesEntities } from '@/services/concept';
-import type { FeatureConfig } from '@/types/common';
 import Dropdown from 'primevue/dropdown';
+import TeraConcept from '@/components/widgets/tera-concept.vue';
+import TeraInputText from '@/components/widgets/tera-input-text.vue';
+import type { FeatureConfig } from '@/types/common';
 import { CalendarDateType } from '@/types/common';
+import { PartType } from '@/model-representation/service';
+import { stringToLatexExpression } from '@/services/model';
 
 const props = defineProps<{
-	item: ModelPartItem;
+	description?: string;
+	name?: string;
+	unitExpression?: string;
+	id?: string;
+	grounding?: any;
+	expression?: string;
+	subject?: string;
+	outcome?: string;
+	controllers?: string;
 	featureConfig: FeatureConfig;
-	isTimePart?: boolean;
+	partType: PartType;
 }>();
 
 const emit = defineEmits(['update-item']);
 
-const query = ref('');
-const results = ref<DKG[]>([]);
+const makeDebouncer = (key: string) =>
+	debounce((value: string) => {
+		emit('update-item', { key, value });
+	}, 300);
 
-const symbol = computed(() => (props.item.templateId ? `${props.item.templateId}, ${props.item.id}` : props.item.id));
+const unitExpressionDebouncer = makeDebouncer('unitExpression');
+const nameDebouncer = makeDebouncer('name');
+const groundingDebouncer = makeDebouncer('grounding');
+const descriptionDebouncer = makeDebouncer('description');
+
+const nameText = computed({
+	get: () => props.name,
+	set: (newName) => nameDebouncer(newName as string)
+});
+const unitExpression = computed({
+	get: () => props.unitExpression,
+	set: (newUnitExpression) => unitExpressionDebouncer(newUnitExpression as string)
+});
+const descriptionText = computed({
+	get: () => props.description,
+	set: (newDescription) => {
+		descriptionDebouncer(newDescription as string);
+		showDescription.value = !!newDescription;
+	}
+});
+const showDescription = ref<boolean>(true);
+const grounding = computed({
+	get: () => props.grounding,
+	set: (newGrounding) => groundingDebouncer(newGrounding as string)
+});
 
 // If we are in preview mode and there is no content, show nothing
-const showUnit = computed(() => !(props.featureConfig.isPreview && !props.item.unitExpression));
-const showConcept = computed(() => !(props.featureConfig.isPreview && !query.value));
-
-// Used if an option isn't selected from the Autocomplete suggestions but is typed in regularly
-function applyValidConcept() {
-	// Allows to empty the concept
-	if (query.value === '') {
-		emit('update-item', { key: 'concept', value: '' });
-	}
-	// If what was typed was one of the results then choose that result
-	else {
-		const concept = results.value.find((result) => result.name === query.value);
-		if (concept) {
-			emit('update-item', { key: 'concept', value: concept.curie });
-		}
-	}
-}
-
-watch(
-	() => props.item.grounding?.identifiers,
-	async (identifiers) => {
-		if (identifiers) query.value = await getNameOfCurieCached(getCurieFromGroundingIdentifier(identifiers));
-	},
-	{ immediate: true }
+const showUnit = computed(
+	() => !(props.featureConfig.isPreview && !unitExpression.value) && props.partType !== PartType.TRANSITION
 );
 
-const showDescription = ref(false);
-if (props.item.description) showDescription.value = true;
+const isTimePart = props.partType === PartType.TIME;
+const isTransitionPart = props.partType === PartType.TRANSITION;
 </script>
 
 <style scoped>
 section {
 	font-size: var(--font-caption);
+}
+
+.top-entry {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: var(--gap-3);
+}
+
+.button-description {
+	margin-left: auto;
+}
+
+.concept {
+	/* container-type: inline-size; */
+	container-name: concept;
+	margin-left: var(--gap-1);
+}
+
+@container concept (max-width: 25%) {
+	.concept {
+		margin-left: 0;
+		flex-basis: 100%;
+		width: 100%;
+	}
 }
 
 label,
@@ -170,18 +175,25 @@ h6::after {
 }
 
 .unit {
-	max-width: 20rem;
-	overflow: auto;
-}
-
-.unit,
-.concept {
 	display: flex;
 	align-items: center;
 	gap: var(--gap-1);
 }
 
-:deep(.p-autocomplete-input) {
-	padding: var(--gap-1) var(--gap-2);
+.unit:not(.time) {
+	overflow: auto;
+}
+
+.expression {
+	padding-top: var(--gap-1);
+	align-content: center;
+	min-height: 2rem;
+	max-height: 12rem;
+	overflow: auto;
+}
+
+:deep(.unit .tera-input > main > input) {
+	height: 1.25rem;
+	font-size: var(--font-caption);
 }
 </style>

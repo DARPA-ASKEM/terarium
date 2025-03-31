@@ -23,16 +23,11 @@ Report any issues into GitHub: [open an issue](https://github.com/DARPA-ASKEM/te
 2. Edit the default intervention card, name it `Static Parameters` and leave it as _Static_.
 3. Set Parameter `beta` to value `0.0001` starting at timestep `20`.
 4. Click `+ Add`.
-5. Set the Parameter gamma to `0.5`
-6. Check that the charts reflect the intervention
+5. Set the Parameter gamma to `0.5`.
 
 ### 5. Try to create an invalid intervention
 1. Create an intervention that has a negative timestamp within a static intervention.
       Expect to see a toaster error explaining where you have an invalid intervention
-2. Create an intervention that contains two static interventions each with the same parameter and time selected
-      Expect to see a toaster error explaining you have duplicates.
-3. Create two interventions each containing at least one static intervention that has the same parameter and time selected
-      Expect to see a toaster error explaining you have duplicates.
 
 ### 6. Create a dynamic parameter criteria
 1. Click `+ Add intervention`
@@ -48,12 +43,12 @@ Report any issues into GitHub: [open an issue](https://github.com/DARPA-ASKEM/te
 1. Click `+ Add intervention`
 2. Name it `Dynamic State` and change it to _Dynamic_.
 3. Set State `I` to `100` when `S` crosses the threshold of `800`.
-
-### 9. Save the intervention policy
-1. Save the intervention policy
-2. Check the preview of the intervention policy
-   1. Does the AI assisted _description_ match the criteria?
-   2. Are the _criteria_ visible in the chart?
+4. Save the intervention policy
+  
+### 9. Create a New intervention policy
+1. Click 'Create New' button. You should see a blank intervention card.
+2. Click 'Save' or 'Save As' without filling any of the details. (Currently that is not allowed so you should see a msg that the save failed.)
+3. Select the intervention policy created in step 8.
 
 ### 10. Simulate with the intervention policy
 1. Add the operator `Configure model` to the workflow

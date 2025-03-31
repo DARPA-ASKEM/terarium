@@ -8,15 +8,19 @@
 			{{ node.state.currentProgress }}%
 		</tera-progress-spinner>
 
+		<section v-if="!_.isEmpty(message)">
+			<p>{{ message }}</p>
+		</section>
+
 		<template v-if="node.inputs[0].value">
-			<Button @click="emit('open-drilldown')" label="Review checks" severity="secondary" outlined />
+			<Button @click="emit('open-drilldown')" label="Open" severity="secondary" outlined />
 		</template>
 	</section>
 </template>
 
 <script setup lang="ts">
 import _ from 'lodash';
-import { watch, computed, onUnmounted } from 'vue';
+import { watch, computed, onUnmounted, ref } from 'vue';
 import TeraOperatorPlaceholder from '@/components/operator/tera-operator-placeholder.vue';
 import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue';
 import { WorkflowNode } from '@/types/workflow';
@@ -25,6 +29,7 @@ import Button from 'primevue/button';
 import { Poller, PollerState } from '@/api/api';
 import { pollAction, getRunResult } from '@/services/models/simulation-service';
 import { logger } from '@/utils/logger';
+import { useToastService } from '@/services/toast';
 import { Simulation } from '@/types/Types';
 import { getModelConfigurationById } from '@/services/model-configurations';
 
@@ -34,8 +39,11 @@ const props = defineProps<{
 	node: WorkflowNode<FunmanOperationState>;
 }>();
 const inProgressId = computed(() => props.node.state.inProgressId);
-
+const message = ref('');
+const timer = ref();
 const poller = new Poller();
+
+const TIME_LIMIT = 5 * 60 * 1000;
 
 const addOutputPorts = async (runId: string) => {
 	// The validated configuration id is set as the output value
@@ -58,16 +66,32 @@ const addOutputPorts = async (runId: string) => {
 	});
 };
 
+function StartRequestTimer(state) {
+	clearTimeout(timer.value);
+	timer.value = setTimeout(() => {
+		state.isRequestUnresponsive = true;
+		message.value = "Process is stuck in Funman, open node and click 'Stop' to cancel.";
+		emit('update-state', state);
+		clearTimeout(timer.value);
+	}, TIME_LIMIT);
+}
+
 const getStatus = async (runId: string) => {
 	poller
-		.setInterval(5000)
-		.setThreshold(100)
+		.setInterval(6000)
+		.setThreshold(200)
 		.setPollAction(async () => pollAction(runId))
 		.setProgressAction((data: Simulation) => {
 			if (data.progress) {
 				const state = _.cloneDeep(props.node.state);
-				state.currentProgress = +(100 * data.progress).toFixed(2);
-				emit('update-state', state);
+				const newProgress = +(100 * data.progress).toFixed(2);
+				if (newProgress !== state.currentProgress) {
+					state.isRequestUnresponsive = false;
+					StartRequestTimer(state);
+
+					state.currentProgress = newProgress;
+					emit('update-state', state);
+				}
 			}
 		});
 
@@ -77,29 +101,36 @@ const getStatus = async (runId: string) => {
 		return pollerResults;
 	}
 	if (pollerResults.state !== PollerState.Done || !pollerResults.data) {
-		console.error(`Funman: ${runId} has failed`, pollerResults);
+		console.error(`Funman: ${runId} has failed with state=${pollerResults.state}`, pollerResults);
+
+		if (pollerResults.state === PollerState.ExceedThreshold) {
+			useToastService().error('Funman polling exceeded', 'Refresh page if you want to resume polling', 8000);
+		}
 	}
 	return pollerResults;
 };
 
 onUnmounted(() => {
 	poller.stop();
+	clearTimeout(timer.value);
 });
 
 watch(
 	() => props.node.state.inProgressId,
 	async (id) => {
 		if (!id || id === '') return;
-
+		const state = _.cloneDeep(props.node.state);
+		StartRequestTimer(state);
 		const response = await getStatus(id);
 		if (response.state === PollerState.Done) {
 			addOutputPorts(id);
+			state.inProgressId = '';
+			message.value = '';
+			state.isRequestUnresponsive = false;
+			state.currentProgress = 0;
+			emit('update-state', state);
+			clearTimeout(timer.value);
 		}
-
-		const state = _.cloneDeep(props.node.state);
-		state.inProgressId = '';
-		state.currentProgress = 0;
-		emit('update-state', state);
 	},
 	{ immediate: true }
 );

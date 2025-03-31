@@ -85,6 +85,11 @@ public class Config {
 	String codePath;
 	String imagePath;
 
+	/**
+	 * The name of the LLM model to use for GoLLM and Beaker
+	 */
+	String llm;
+
 	@Data
 	@Accessors(chain = true)
 	public static class Caching {
@@ -133,6 +138,9 @@ public class Config {
 		 * The base url of the deployed application. Mirror of {@link Config#baseUrl}
 		 */
 		String baseUrl;
+
+		/** The url of the help documentation */
+		String documentationUrl;
 
 		/**
 		 * If true, we will log all client-side errors to the server. This is useful for

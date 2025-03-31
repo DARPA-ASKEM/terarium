@@ -16,7 +16,7 @@
 		align-items: center;
 		padding: var(--gap-1) var(--gap-2);
 		background-color: var(--surface-section);
-		border: 1px solid var(--surface-border-alt);
+		border: 1px solid var(--surface-border);
 		border-radius: var(--border-radius);
 		cursor: text;
 		transition: border-color 0.3s ease-in-out;
@@ -38,12 +38,21 @@
 			font-family: var(--font-family);
 			font-feature-settings: 'tnum';
 			flex-grow: 1;
+			width: 100%;
 			border: none;
 			margin: 0;
 			&::-webkit-inner-spin-button,
 			&::-webkit-outer-spin-button {
-			-webkit-appearance: none;
-	}
+					-webkit-appearance: none;
+			}
+		}
+
+		& > input.empty, &.empty {
+			background-color: var(--error-background);
+			border-color: var(--error-border-color);
+		}
+		& > input.empty-value {
+			background-color: transparent;
 		}
 	}
 

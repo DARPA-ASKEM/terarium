@@ -3,10 +3,8 @@ package software.uncharted.terarium.hmiserver.service;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import feign.FeignException;
 import jakarta.annotation.PostConstruct;
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.URI;
@@ -28,62 +26,51 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
-import java.util.zip.ZipInputStream;
+import java.util.stream.Collectors;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.http.entity.ContentType;
 import org.redisson.api.RMapCache;
 import org.redisson.api.RedissonClient;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.env.Environment;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
+import software.uncharted.terarium.hmiserver.configuration.Config;
 import software.uncharted.terarium.hmiserver.models.ClientEventType;
-import software.uncharted.terarium.hmiserver.models.TerariumAssetEmbeddings;
 import software.uncharted.terarium.hmiserver.models.dataservice.document.DocumentAsset;
 import software.uncharted.terarium.hmiserver.models.dataservice.document.ExtractedDocumentPage;
-import software.uncharted.terarium.hmiserver.models.dataservice.model.Model;
-import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.ModelMetadata;
-import software.uncharted.terarium.hmiserver.models.dataservice.provenance.Provenance;
-import software.uncharted.terarium.hmiserver.models.dataservice.provenance.ProvenanceRelationType;
-import software.uncharted.terarium.hmiserver.models.dataservice.provenance.ProvenanceType;
 import software.uncharted.terarium.hmiserver.models.dataservice.simulation.ProgressState;
+import software.uncharted.terarium.hmiserver.models.extraction.Extraction;
+import software.uncharted.terarium.hmiserver.models.extraction.ExtractionItem;
 import software.uncharted.terarium.hmiserver.models.task.TaskRequest;
 import software.uncharted.terarium.hmiserver.models.task.TaskRequest.TaskType;
 import software.uncharted.terarium.hmiserver.models.task.TaskResponse;
-import software.uncharted.terarium.hmiserver.proxies.skema.SkemaUnifiedProxy;
-import software.uncharted.terarium.hmiserver.proxies.skema.SkemaUnifiedProxy.IntegratedTextExtractionsBody;
+import software.uncharted.terarium.hmiserver.models.task.TaskStatus;
 import software.uncharted.terarium.hmiserver.service.data.DocumentAssetService;
-import software.uncharted.terarium.hmiserver.service.data.ModelService;
-import software.uncharted.terarium.hmiserver.service.data.ProvenanceService;
-import software.uncharted.terarium.hmiserver.service.gollm.EmbeddingService;
 import software.uncharted.terarium.hmiserver.service.notification.NotificationGroupInstance;
 import software.uncharted.terarium.hmiserver.service.notification.NotificationService;
+import software.uncharted.terarium.hmiserver.service.tasks.EquationsCleanupResponseHandler;
 import software.uncharted.terarium.hmiserver.service.tasks.ExtractEquationsResponseHandler;
 import software.uncharted.terarium.hmiserver.service.tasks.ExtractTablesResponseHandler;
 import software.uncharted.terarium.hmiserver.service.tasks.ExtractTextResponseHandler;
+import software.uncharted.terarium.hmiserver.service.tasks.OCRExtractionResponseHandler;
 import software.uncharted.terarium.hmiserver.service.tasks.TaskService;
-import software.uncharted.terarium.hmiserver.utils.JsonUtil;
-import software.uncharted.terarium.hmiserver.utils.StringMultipartFile;
-import software.uncharted.terarium.hmiserver.utils.rebac.Schema;
+import software.uncharted.terarium.hmiserver.service.tasks.TaskService.TaskMode;
 
 @Service
 @RequiredArgsConstructor
 @Slf4j
 public class ExtractionService {
 
+	private final Config config;
 	private final DocumentAssetService documentService;
-	private final ModelService modelService;
-	private final SkemaUnifiedProxy skemaUnifiedProxy;
 	private final ObjectMapper objectMapper;
 	private final ClientEventService clientEventService;
 	private final NotificationService notificationService;
 	private final TaskService taskService;
-	private final ProvenanceService provenanceService;
-	private final EmbeddingService embeddingService;
+	//	private final EmbeddingService embeddingService;
 	private final CurrentUserService currentUserService;
 
 	private static final String RESPONSE_CACHE_KEY = "extraction-service-response-cache";
@@ -101,12 +88,6 @@ public class ExtractionService {
 	private final RedissonClient redissonClient;
 
 	private RMapCache<String, ExtractPDFResponse> responseCache;
-
-	// Used to get the Abstract text from PDF
-	private static final String NODE_CONTENT = "content";
-
-	// time the progress takes to reach each subsequent half.
-	final Double HALFTIME_SECONDS = 2.0;
 
 	@Value("${terarium.extractionService.poolSize:10}")
 	private int POOL_SIZE;
@@ -142,27 +123,6 @@ public class ExtractionService {
 	private static class Properties {
 
 		private final UUID documentId;
-	}
-
-	public static String removeFileExtension(final String filename) {
-		final int lastIndexOfDot = filename.lastIndexOf(".");
-		if (lastIndexOfDot != -1) {
-			return filename.substring(0, lastIndexOfDot);
-		}
-		return filename;
-	}
-
-	static class ExtractionFile {
-
-		ExtractionFile(final String filename, final byte[] bytes, final ContentType contentType) {
-			this.filename = filename;
-			this.bytes = bytes;
-			this.contentType = contentType;
-		}
-
-		ContentType contentType;
-		String filename;
-		byte[] bytes;
 	}
 
 	enum FailureType {
@@ -287,13 +247,13 @@ public class ExtractionService {
 		}
 	}
 
+	/*
 	public DocumentAsset applyExtractPDFResponse(
 		final UUID documentId,
 		final UUID projectId,
-		final ExtractPDFResponse extractionResponse,
-		final Schema.Permission hasWritePermission
+		final ExtractPDFResponse extractionResponse
 	) throws IOException {
-		final DocumentAsset document = documentService.getAsset(documentId, hasWritePermission).get();
+		final DocumentAsset document = documentService.getAsset(documentId).get();
 
 		if (extractionResponse.textExtraction != null) {
 			document.setText(extractionResponse.textExtraction.documentText);
@@ -347,8 +307,9 @@ public class ExtractionService {
 			}
 		}
 
-		return documentService.updateAsset(document, projectId, hasWritePermission).orElseThrow();
+		return documentService.updateAsset(document, projectId).orElseThrow();
 	}
+	*/
 
 	private static String sha256(final byte[] input) {
 		try {
@@ -372,12 +333,9 @@ public class ExtractionService {
 		}
 	}
 
-	public Future<DocumentAsset> extractPDFAndApplyToDocument(
-		final UUID documentId,
-		final UUID projectId,
-		final Schema.Permission hasWritePermission
-	) {
-		final DocumentAsset document = documentService.getAsset(documentId, hasWritePermission).get();
+	/*
+	public Future<DocumentAsset> extractPDFAndApplyToDocument(final UUID documentId, final UUID projectId) {
+		final DocumentAsset document = documentService.getAsset(documentId).get();
 		if (document.getFileNames().isEmpty()) {
 			throw new RuntimeException("No files found on document");
 		}
@@ -390,7 +348,7 @@ public class ExtractionService {
 			ClientEventType.EXTRACTION_PDF,
 			projectId,
 			new Properties(documentId),
-			HALFTIME_SECONDS
+			currentUserService.get().getId()
 		);
 
 		return executor.submit(() -> {
@@ -453,17 +411,12 @@ public class ExtractionService {
 
 				notificationInterface.sendMessage("Applying extraction results to document");
 				log.info("Applying extraction results to document {}", documentId);
-				final DocumentAsset doc = applyExtractPDFResponse(
-					documentId,
-					projectId,
-					extractionResponse,
-					hasWritePermission
-				);
+				final DocumentAsset doc = applyExtractPDFResponse(documentId, projectId, extractionResponse);
 
 				notificationInterface.sendMessage("Extractions applied to document. Finalizing response.");
 
 				if (!extractionResponse.failures.isEmpty()) {
-					// create a comma separated list of failures in human readable form
+					// create a comma separated list of failures in human-readable form
 					final String failures = String.join(
 						", ",
 						extractionResponse.failures.stream().map(FailureType::getHumanReadable).toArray(String[]::new)
@@ -484,277 +437,7 @@ public class ExtractionService {
 			}
 		});
 	}
-
-	private DocumentAsset runVariableExtraction(
-		final NotificationGroupInstance<Properties> notificationInterface,
-		final UUID projectId,
-		final UUID documentId,
-		final List<UUID> modelIds,
-		final Schema.Permission hasWritePermission
-	) {
-		notificationInterface.sendMessage("Starting variable extraction.");
-		try {
-			// Fetch the text from the document
-			final DocumentAsset document = documentService.getAsset(documentId, hasWritePermission).orElseThrow();
-			notificationInterface.sendMessage("Document found, fetching text.");
-			if (document.getText() == null || document.getText().isEmpty()) {
-				throw new RuntimeException("No text found in paper document");
-			}
-
-			// add optional models
-			final List<Model> models = new ArrayList<>();
-			for (final UUID modelId : modelIds) {
-				models.add(modelService.getAsset(modelId, hasWritePermission).orElseThrow());
-			}
-			notificationInterface.sendMessage("Model(s) found, added to extraction request.");
-
-			// Create a collection to hold the variable extractions
-			JsonNode collection = null;
-
-			notificationInterface.sendMessage("Sending request to be processes by MIT.");
-
-			final IntegratedTextExtractionsBody body = new IntegratedTextExtractionsBody(document.getText(), models);
-
-			log.info("Sending variable extraction request to SKEMA using MIT only");
-			final ResponseEntity<JsonNode> resp = skemaUnifiedProxy.integratedTextExtractions(true, false, body);
-
-			notificationInterface.sendMessage("Response received.");
-			if (resp.getStatusCode().is2xxSuccessful()) {
-				for (final JsonNode output : resp.getBody().get("outputs")) {
-					if (!output.has("errors") || output.get("errors").isEmpty()) {
-						collection = output.get("data");
-						break;
-					}
-				}
-			} else {
-				throw new RuntimeException("non successful response.");
-			}
-
-			if (collection == null) {
-				throw new RuntimeException("No variables extractions returned");
-			}
-
-			notificationInterface.sendMessage("Organizing and saving the extractions.");
-			final ArrayNode attributes = objectMapper.createArrayNode();
-			for (final JsonNode attribute : collection.get("attributes")) {
-				attributes.add(attribute);
-			}
-
-			// add the attributes to the metadata
-			if (document.getMetadata() == null) {
-				document.setMetadata(new HashMap<>());
-			}
-			document.getMetadata().put("attributes", attributes);
-
-			if (modelIds.size() > 0) {
-				for (final UUID modelId : modelIds) {
-					notificationInterface.sendMessage("Attempting to align models for model: " + modelId);
-					try {
-						runAlignAMR(notificationInterface, projectId, documentId, modelId, hasWritePermission);
-						notificationInterface.sendMessage("Model " + modelId + " aligned successfully");
-					} catch (final Exception e) {
-						notificationInterface.sendMessage("Failed to align model: " + modelId + ", continuing...");
-					}
-				}
-			}
-
-			// update the document
-			return documentService.updateAsset(document, projectId, hasWritePermission).orElseThrow();
-		} catch (final FeignException e) {
-			final String error = "Transitive service failure";
-			log.error(error, e.contentUTF8(), e);
-			throw new ResponseStatusException(
-				e.status() < 100 ? HttpStatus.INTERNAL_SERVER_ERROR : HttpStatus.valueOf(e.status()),
-				error + ": " + e.getMessage()
-			);
-		} catch (final Exception e) {
-			final String error = "Variable extraction on document: " + documentId + " failed.";
-			log.error(error, e);
-			notificationInterface.sendError(error + " — " + e.getMessage());
-			throw new ResponseStatusException(org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR, error);
-		}
-	}
-
-	public Future<DocumentAsset> extractVariables(
-		final UUID projectId,
-		final UUID documentId,
-		final List<UUID> modelIds,
-		final Schema.Permission hasWritePermission
-	) {
-		// Set up the client interface
-		final NotificationGroupInstance<Properties> notificationInterface = new NotificationGroupInstance<>(
-			clientEventService,
-			notificationService,
-			ClientEventType.EXTRACTION,
-			null,
-			new Properties(documentId),
-			HALFTIME_SECONDS
-		);
-		notificationInterface.sendMessage("Variable extraction task submitted...");
-
-		return executor.submit(() -> {
-			final DocumentAsset doc = runVariableExtraction(
-				notificationInterface,
-				projectId,
-				documentId,
-				modelIds,
-				hasWritePermission
-			);
-			notificationInterface.sendFinalMessage("Extraction complete");
-			return doc;
-		});
-	}
-
-	public Future<Model> alignAMR(
-		final UUID projectId,
-		final UUID documentId,
-		final UUID modelId,
-		final Schema.Permission hasWritePermission
-	) {
-		final NotificationGroupInstance<Properties> notificationInterface = new NotificationGroupInstance<>(
-			clientEventService,
-			notificationService,
-			ClientEventType.EXTRACTION,
-			null,
-			new Properties(documentId),
-			HALFTIME_SECONDS
-		);
-
-		notificationInterface.sendMessage("Model alignment task submitted...");
-
-		return executor.submit(() -> {
-			final Model model = runAlignAMR(notificationInterface, projectId, documentId, modelId, hasWritePermission);
-			notificationInterface.sendFinalMessage("Alignment complete");
-			return model;
-		});
-	}
-
-	public Model runAlignAMR(
-		final NotificationGroupInstance<Properties> notificationInterface,
-		final UUID projectId,
-		final UUID documentId,
-		final UUID modelId,
-		final Schema.Permission hasWritePermission
-	) {
-		try {
-			notificationInterface.sendMessage("Starting model alignment...");
-
-			final DocumentAsset document = documentService.getAsset(documentId, hasWritePermission).orElseThrow();
-
-			final Model model = modelService.getAsset(modelId, hasWritePermission).orElseThrow();
-
-			final String modelString = objectMapper.writeValueAsString(model);
-
-			if (document.getMetadata() == null) {
-				document.setMetadata(new HashMap<>());
-			}
-			if (document.getMetadata().get("attributes") == null) {
-				throw new RuntimeException("No attributes found in document");
-			}
-
-			final JsonNode attributes = objectMapper.valueToTree(document.getMetadata().get("attributes"));
-
-			final ObjectNode extractions = objectMapper.createObjectNode();
-			extractions.set("attributes", attributes);
-
-			final String extractionsString = objectMapper.writeValueAsString(extractions);
-
-			final StringMultipartFile amrFile = new StringMultipartFile(modelString, "amr.json", "application/json");
-			final StringMultipartFile extractionFile = new StringMultipartFile(
-				extractionsString,
-				"extractions.json",
-				"application/json"
-			);
-
-			final ResponseEntity<JsonNode> res;
-			try {
-				res = skemaUnifiedProxy.linkAMRFile(amrFile, extractionFile);
-			} catch (final FeignException e) {
-				final String error = "Transitive service failure";
-				log.error(error, e.contentUTF8(), e);
-				throw new ResponseStatusException(
-					e.status() < 100 ? HttpStatus.INTERNAL_SERVER_ERROR : HttpStatus.valueOf(e.status()),
-					error + ": " + e.getMessage()
-				);
-			}
-			if (!res.getStatusCode().is2xxSuccessful()) {
-				throw new ResponseStatusException(res.getStatusCode(), "Unable to link AMR file");
-			}
-
-			final JsonNode modelJson = objectMapper.valueToTree(model);
-
-			// overwrite all updated fields
-			JsonUtil.recursiveSetAll((ObjectNode) modelJson, res.getBody());
-
-			final Model updatedModel = objectMapper.treeToValue(modelJson, Model.class);
-
-			if (updatedModel.getMetadata() == null) {
-				updatedModel.setMetadata(new ModelMetadata());
-			}
-
-			// add document gollm card to model
-			final JsonNode card = document.getMetadata().get("gollmCard");
-			if (card != null) {
-				updatedModel.getMetadata().setGollmCard(card);
-			}
-
-			// update the model
-			modelService.updateAsset(model, projectId, hasWritePermission);
-
-			// create provenance
-			final Provenance provenance = new Provenance(
-				ProvenanceRelationType.EXTRACTED_FROM,
-				modelId,
-				ProvenanceType.MODEL,
-				documentId,
-				ProvenanceType.DOCUMENT
-			);
-			provenanceService.createProvenance(provenance);
-
-			// update model embeddings
-			if (card != null && model.getPublicAsset() && !model.getTemporary()) {
-				final String cardText = objectMapper.writeValueAsString(card);
-				try {
-					final TerariumAssetEmbeddings embeddings = embeddingService.generateEmbeddings(cardText);
-
-					modelService.uploadEmbeddings(modelId, embeddings, hasWritePermission);
-					notificationInterface.sendMessage("Embeddings created");
-				} catch (final Exception e) {
-					log.warn("Unable to generate embedding vectors for model");
-				}
-			}
-
-			return model;
-		} catch (final FeignException e) {
-			final String error = "Transitive service failure";
-			log.error(error, e.contentUTF8(), e);
-			throw new ResponseStatusException(
-				e.status() < 100 ? HttpStatus.INTERNAL_SERVER_ERROR : HttpStatus.valueOf(e.status()),
-				error + ": " + e.getMessage()
-			);
-		} catch (final Exception e) {
-			final String error = "SKEMA link_amr request from document: " + documentId + " failed.";
-			log.error(error, e);
-			notificationInterface.sendError(error + " — " + e.getMessage());
-			throw new ResponseStatusException(org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR, error);
-		}
-	}
-
-	public static byte[] zipEntryToBytes(final ZipInputStream zipInputStream) throws IOException {
-		final ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
-		final byte[] buffer = new byte[1024];
-		int len;
-		while ((len = zipInputStream.read(buffer)) > 0) {
-			byteArrayOutputStream.write(buffer, 0, len);
-		}
-
-		final byte[] bytes = byteArrayOutputStream.toByteArray();
-		if (bytes.length == 0) {
-			throw new IOException("Empty file found in zip");
-		}
-
-		return bytes;
-	}
+	*/
 
 	@Value("${terarium.taskrunner.equation_extraction.gpu-endpoint}")
 	private String EQUATION_EXTRACTION_GPU_ENDPOINT;
@@ -795,6 +478,9 @@ public class ExtractionService {
 
 		return executor.submit(() -> {
 			final TaskResponse resp = taskService.runTaskSync(req);
+			if (resp.getStatus() != TaskStatus.SUCCESS) {
+				throw new RuntimeException("Equation extraction failed: " + resp.getStderr());
+			}
 
 			final byte[] outputBytes = resp.getOutput();
 			final ExtractEquationsResponseHandler.ResponseOutput output = objectMapper.readValue(
@@ -850,6 +536,9 @@ public class ExtractionService {
 
 		return executor.submit(() -> {
 			final TaskResponse resp = taskService.runTaskSync(req);
+			if (resp.getStatus() != TaskStatus.SUCCESS) {
+				throw new RuntimeException("Text extraction failed: " + resp.getStderr());
+			}
 
 			final byte[] outputBytes = resp.getOutput();
 			final ExtractTextResponseHandler.ResponseOutput output = objectMapper.readValue(
@@ -890,6 +579,9 @@ public class ExtractionService {
 
 		return executor.submit(() -> {
 			final TaskResponse resp = taskService.runTaskSync(req);
+			if (resp.getStatus() != TaskStatus.SUCCESS) {
+				throw new RuntimeException("Table extraction failed: " + resp.getStderr());
+			}
 
 			final byte[] outputBytes = resp.getOutput();
 			final ExtractTablesResponseHandler.ResponseOutput output = objectMapper.readValue(
@@ -934,6 +626,128 @@ public class ExtractionService {
 			}
 
 			return extraction;
+		});
+	}
+
+	/**
+	 * All-in one document extraction with provenance
+	 **/
+	@Data
+	private static class ExtractionProxy {
+
+		private Extraction response;
+	}
+
+	@Data
+	private static class ExtractionInput {
+
+		private byte[] bytes;
+		private String filename;
+		private String llm;
+	}
+
+	public Future<Extraction> ocrExtraction(
+		final NotificationGroupInstance<Properties> notificationInterface,
+		final String userId,
+		final ExtractionInput input
+	) throws TimeoutException, InterruptedException, ExecutionException, IOException {
+		final int REQUEST_TIMEOUT_MINUTES = 30;
+		final TaskRequest req = new TaskRequest();
+		req.setTimeoutMinutes(REQUEST_TIMEOUT_MINUTES);
+		req.setInput(objectMapper.writeValueAsBytes(input));
+		req.setScript(OCRExtractionResponseHandler.NAME);
+		req.setUserId(userId);
+		req.setType(TaskType.OCR_EXTRACTION);
+
+		return executor.submit(() -> {
+			final TaskResponse resp = taskService.runTaskSync(req);
+			if (resp.getStatus() != TaskStatus.SUCCESS) {
+				throw new RuntimeException("OCR extraction failed: " + resp.getStderr());
+			}
+			final byte[] outputBytes = resp.getOutput();
+
+			final ExtractionProxy output = objectMapper.readValue(outputBytes, ExtractionProxy.class);
+			return output.getResponse();
+		});
+	}
+
+	/**
+	 * New PDF extraction process, March 2025
+	 **/
+	public Future<DocumentAsset> extractPDFAndApplyToDocumentNew(final UUID documentId, final UUID projectId) {
+		final DocumentAsset document = documentService.getAsset(documentId).get();
+		if (document.getFileNames().isEmpty()) {
+			throw new RuntimeException("No files found on document");
+		}
+		final String userId = currentUserService.get().getId();
+
+		final NotificationGroupInstance<Properties> notificationInterface = new NotificationGroupInstance<>(
+			clientEventService,
+			notificationService,
+			ClientEventType.EXTRACTION_PDF,
+			projectId,
+			new Properties(documentId),
+			userId
+		);
+
+		return executor.submit(() -> {
+			try {
+				final String filename = document.getFileNames().get(0);
+				final byte[] documentContents = documentService.fetchFileAsBytes(documentId, filename).get();
+
+				log.info("OCR extraction: starting");
+				ExtractionInput extractionInput = new ExtractionInput();
+				extractionInput.setBytes(documentContents);
+				extractionInput.setFilename(filename);
+
+				Future<Extraction> extractionFuture = ocrExtraction(notificationInterface, userId, extractionInput);
+				Extraction extraction = extractionFuture.get();
+				log.info("OCR extraction: done");
+
+				// Post process: Clean latex equations
+				log.info("OCR extraction equation post processing: starting ");
+				List<ExtractionItem> formulaItems = new ArrayList();
+				for (final ExtractionItem item : extraction.getExtractions()) {
+					if (item.getType().equalsIgnoreCase("text") && item.getSubType().equalsIgnoreCase("formula")) {
+						formulaItems.add(item);
+					}
+				}
+				List<String> formulaStrings = formulaItems.stream().map(item -> item.getRawText()).collect(Collectors.toList());
+
+				final EquationsCleanupResponseHandler.Input input = new EquationsCleanupResponseHandler.Input();
+				input.setLlm(config.getLlm());
+				input.setEquations(formulaStrings);
+
+				final TaskRequest cleanupReq = new TaskRequest();
+				cleanupReq.setType(TaskType.GOLLM);
+				cleanupReq.setScript(EquationsCleanupResponseHandler.NAME);
+				cleanupReq.setUserId(userId);
+				cleanupReq.setInput(objectMapper.writeValueAsBytes(input));
+				cleanupReq.setProjectId(projectId);
+
+				TaskResponse cleanupResp = taskService.runTask(TaskMode.SYNC, cleanupReq);
+				JsonNode output = objectMapper.readValue(cleanupResp.getOutput(), JsonNode.class);
+				if (cleanupResp != null && cleanupResp.getOutput() != null) {
+					int counter = 0;
+					for (JsonNode eq : output.get("response").get("equations")) {
+						formulaItems.get(counter).setText(eq.asText().trim());
+						counter++;
+					}
+				}
+				log.info("OCR extraction equation post processing: done");
+
+				// Save extraction result
+				log.info("OCR extraction: saving to storage: starting");
+				document.setExtraction(extraction);
+				documentService.updateAsset(document, projectId);
+				log.info("OCR extraction: saving to storage: done");
+				notificationInterface.sendFinalMessage("Extraction complete");
+
+				return document;
+			} catch (final Exception e) {
+				e.printStackTrace();
+				throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage());
+			}
 		});
 	}
 }

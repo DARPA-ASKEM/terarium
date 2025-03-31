@@ -1,12 +1,11 @@
 <template>
 	<tera-modal v-if="visible" @modal-mask-clicked="() => emit('close')">
 		<template #header>
-			<h4>Upload resources</h4>
+			<h4>Upload project</h4>
 		</template>
 		<template #default>
 			<section class="main-section">
 				<section>
-					<label class="subheader">Add project here.</label>
 					<tera-drag-and-drop-importer
 						:accept-types="[AcceptedTypes.PROJECTCONFIG]"
 						:accept-extensions="[AcceptedExtensions.PROJECTCONFIG]"
@@ -71,6 +70,7 @@ function importCompleted() {
 	display: flex;
 	flex-direction: column;
 	gap: 1rem;
+	padding-top: var(--gap-2);
 }
 
 .main-section section {

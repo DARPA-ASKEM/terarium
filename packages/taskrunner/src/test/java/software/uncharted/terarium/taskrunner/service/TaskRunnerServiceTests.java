@@ -44,12 +44,13 @@ public class TaskRunnerServiceTests extends TaskRunnerApplicationTests {
 	ObjectMapper mapper = new ObjectMapper();
 
 	private final long TIMEOUT_SECONDS = 30;
-	private final String TEST_INPUT = "{\"research_paper\":\"Test research paper\"}";
-	private final String TEST_INPUT_WITH_PROGRESS =
-		"{\"research_paper\":\"Test research paper\",\"include_progress\":true}";
+	private final String TEST_INPUT = "{\"document\":\"Test research paper\"}";
+	private final String TEST_INPUT_WITH_PROGRESS = "{\"document\":\"Test research paper\",\"include_progress\":true}";
 	private final String FAILURE_INPUT = "{\"should_fail\":true}";
 	private final String SCRIPT_PATH = getClass().getResource("/echo.py").getPath();
 	private final String TASK_RUNNER_RESPONSE_QUEUE = "terarium-response-queue-test";
+
+	String responseRoutingKey = "test-routing-key";
 
 	@BeforeEach
 	public void setup() {
@@ -58,7 +59,7 @@ public class TaskRunnerServiceTests extends TaskRunnerApplicationTests {
 		taskRunnerService.declareAndBindTransientQueueWithRoutingKey(
 			taskRunnerService.TASK_RUNNER_RESPONSE_EXCHANGE,
 			TASK_RUNNER_RESPONSE_QUEUE,
-			""
+			responseRoutingKey
 		);
 	}
 
@@ -142,6 +143,7 @@ public class TaskRunnerServiceTests extends TaskRunnerApplicationTests {
 		req.setScript(SCRIPT_PATH);
 		req.setInput(TEST_INPUT_WITH_PROGRESS.getBytes());
 		req.setTimeoutMinutes(1);
+		req.setRoutingKey(responseRoutingKey);
 
 		final String reqStr = mapper.writeValueAsString(req);
 		rabbitTemplate.convertAndSend(taskRunnerService.TASK_RUNNER_REQUEST_QUEUE, reqStr);
@@ -165,6 +167,7 @@ public class TaskRunnerServiceTests extends TaskRunnerApplicationTests {
 		req.setScript(SCRIPT_PATH);
 		req.setInput(FAILURE_INPUT.getBytes());
 		req.setTimeoutMinutes(1);
+		req.setRoutingKey(responseRoutingKey);
 
 		final String reqStr = mapper.writeValueAsString(req);
 		rabbitTemplate.convertAndSend(taskRunnerService.TASK_RUNNER_REQUEST_QUEUE, reqStr);
@@ -183,6 +186,7 @@ public class TaskRunnerServiceTests extends TaskRunnerApplicationTests {
 		req.setScript(SCRIPT_PATH);
 		req.setInput(TEST_INPUT_WITH_PROGRESS.getBytes());
 		req.setTimeoutMinutes(1);
+		req.setRoutingKey(responseRoutingKey);
 
 		final String reqStr = mapper.writeValueAsString(req);
 		rabbitTemplate.convertAndSend(taskRunnerService.TASK_RUNNER_REQUEST_QUEUE, reqStr);
@@ -215,6 +219,7 @@ public class TaskRunnerServiceTests extends TaskRunnerApplicationTests {
 		req.setScript(SCRIPT_PATH);
 		req.setInput(TEST_INPUT_WITH_PROGRESS.getBytes());
 		req.setTimeoutMinutes(1);
+		req.setRoutingKey(responseRoutingKey);
 
 		// we have to create this queue before sending the cancellation to know that
 		// there is a queue to get the msg
@@ -286,6 +291,7 @@ public class TaskRunnerServiceTests extends TaskRunnerApplicationTests {
 					req.setId(UUID.randomUUID());
 					req.setScript(SCRIPT_PATH);
 					req.setTimeoutMinutes(1);
+					req.setRoutingKey(responseRoutingKey);
 
 					// allocate the response stuff
 					responsesPerReq.put(req.getId(), Collections.synchronizedList(new ArrayList<>()));

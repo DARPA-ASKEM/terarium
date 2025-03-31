@@ -2,7 +2,7 @@ import type { Operation, BaseState } from '@/types/workflow';
 import { WorkflowOperationTypes } from '@/types/workflow';
 import stratifyModel from '@assets/svg/operator-images/stratify-model.svg';
 
-const DOCUMENTATION_URL = 'https://github.com/gyorilab/mira/blob/main/notebooks/viz_strat_petri.ipynb';
+const DOCUMENTATION_URL = 'https://documentation.terarium.ai/modeling/stratify-model/';
 
 export interface StratifyGroup {
 	borderColour: string;
@@ -15,6 +15,8 @@ export interface StratifyGroup {
 	structure: null | any[];
 
 	useStructure: boolean;
+
+	useFactoredParameter: boolean;
 }
 
 export interface StratifyCode {
@@ -28,6 +30,7 @@ export interface StratifyOperationStateMira extends BaseState {
 	strataGroup: StratifyGroup;
 	strataCodeHistory: StratifyCode[];
 	hasCodeBeenRun: boolean;
+	baseModelId: string;
 }
 
 export const blankStratifyGroup: StratifyGroup = {
@@ -51,7 +54,9 @@ export const blankStratifyGroup: StratifyGroup = {
 	useStructure: true,
 
 	// Always true for now - Feb 2024
-	directed: true
+	directed: true,
+
+	useFactoredParameter: true
 };
 
 export const StratifyMiraOperation: Operation = {
@@ -68,7 +73,8 @@ export const StratifyMiraOperation: Operation = {
 		const init: StratifyOperationStateMira = {
 			strataGroup: blankStratifyGroup,
 			strataCodeHistory: [],
-			hasCodeBeenRun: false
+			hasCodeBeenRun: false,
+			baseModelId: ''
 		};
 		return init;
 	}

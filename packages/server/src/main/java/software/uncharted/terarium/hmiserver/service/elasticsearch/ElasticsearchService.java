@@ -4,6 +4,7 @@ import co.elastic.clients.elasticsearch.ElasticsearchClient;
 import co.elastic.clients.elasticsearch._types.ElasticsearchException;
 import co.elastic.clients.elasticsearch._types.ErrorCause;
 import co.elastic.clients.elasticsearch._types.KnnQuery;
+import co.elastic.clients.elasticsearch._types.mapping.TypeMapping;
 import co.elastic.clients.elasticsearch._types.query_dsl.Query;
 import co.elastic.clients.elasticsearch.cluster.ExistsComponentTemplateRequest;
 import co.elastic.clients.elasticsearch.core.BulkRequest;
@@ -14,12 +15,15 @@ import co.elastic.clients.elasticsearch.core.DeleteRequest;
 import co.elastic.clients.elasticsearch.core.GetRequest;
 import co.elastic.clients.elasticsearch.core.GetResponse;
 import co.elastic.clients.elasticsearch.core.IndexRequest;
+import co.elastic.clients.elasticsearch.core.MsearchRequest;
+import co.elastic.clients.elasticsearch.core.MsearchResponse;
 import co.elastic.clients.elasticsearch.core.SearchRequest;
 import co.elastic.clients.elasticsearch.core.SearchResponse;
 import co.elastic.clients.elasticsearch.core.UpdateRequest;
 import co.elastic.clients.elasticsearch.core.bulk.BulkOperation;
 import co.elastic.clients.elasticsearch.core.bulk.BulkResponseItem;
 import co.elastic.clients.elasticsearch.core.bulk.UpdateOperation;
+import co.elastic.clients.elasticsearch.core.msearch.RequestItem;
 import co.elastic.clients.elasticsearch.core.search.Hit;
 import co.elastic.clients.elasticsearch.core.search.SourceConfigParam;
 import co.elastic.clients.elasticsearch.indices.CreateIndexRequest;
@@ -33,18 +37,25 @@ import co.elastic.clients.elasticsearch.indices.PutAliasRequest;
 import co.elastic.clients.elasticsearch.indices.RefreshRequest;
 import co.elastic.clients.elasticsearch.indices.RefreshResponse;
 import co.elastic.clients.elasticsearch.ingest.GetPipelineRequest;
+import co.elastic.clients.json.JsonpMapper;
+import co.elastic.clients.json.JsonpUtils;
 import co.elastic.clients.json.jackson.JacksonJsonpMapper;
 import co.elastic.clients.transport.ElasticsearchTransport;
 import co.elastic.clients.transport.rest_client.RestClientTransport;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import jakarta.annotation.PostConstruct;
+import jakarta.json.stream.JsonParser;
 import java.io.IOException;
+import java.io.StringReader;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Base64;
+import java.util.Iterator;
 import java.util.List;
+import java.util.UUID;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.http.Header;
@@ -213,6 +224,30 @@ public class ElasticsearchService {
 	}
 
 	/**
+	 * Create the provided index.
+	 *
+	 * @param index The name of the index to create
+	 * @throws IOException If an error occurs while creating the index
+	 */
+	public void createIndex(final String index, final String mapping) throws IOException {
+		try {
+			final JsonpMapper mapper = client._transport().jsonpMapper();
+			final JsonParser parser = mapper.jsonProvider().createParser(new StringReader(mapping));
+
+			log.info("Creating index {} with mapping", index);
+
+			final CreateIndexRequest req = new CreateIndexRequest.Builder()
+				.index(index)
+				.mappings(TypeMapping._DESERIALIZER.deserialize(parser, mapper))
+				.build();
+
+			client.indices().create(req);
+		} catch (final ElasticsearchException e) {
+			throw handleException(e);
+		}
+	}
+
+	/**
 	 * Create the provided index if it doesn't exist, if it does, delete it and
 	 * re-create it.
 	 *
@@ -309,7 +344,7 @@ public class ElasticsearchService {
 	}
 
 	/**
-	 * Put an component template to the cluster
+	 * Put a component template to the cluster
 	 *
 	 * @param name         The name of the index template
 	 * @param templateJson The component template json string
@@ -452,8 +487,9 @@ public class ElasticsearchService {
 	/**
 	 * Update a document from an index.
 	 *
-	 * @param index The index to remove the document from
-	 * @param id    The id of the document to remove
+	 * @param index   The index to remove the document from
+	 * @param id      The id of the document to remove
+	 * @param partial The partial document to update.
 	 */
 	public <T, Partial> void update(final String index, final String id, final Partial partial) throws IOException {
 		try {
@@ -463,6 +499,36 @@ public class ElasticsearchService {
 				.index(index)
 				.id(id)
 				.doc(partial)
+				.build();
+
+			client.update(req, Void.class);
+		} catch (final ElasticsearchException e) {
+			throw handleException(e);
+		}
+	}
+
+	/**
+	 * Update a document from an index.
+	 *
+	 * @param index   The index to remove the document from
+	 * @param id      The id of the document to remove
+	 * @param partial The partial document to update.
+	 * @param routing The routing key for the document.
+	 */
+	public <T, Partial> void updateWithRouting(
+		final String index,
+		final String id,
+		final Partial partial,
+		final String routing
+	) throws IOException {
+		try {
+			log.info("Updating: {} from {}", id, index);
+
+			final UpdateRequest<T, Partial> req = new UpdateRequest.Builder<T, Partial>()
+				.index(index)
+				.id(id)
+				.doc(partial)
+				.routing(routing)
 				.build();
 
 			client.update(req, Void.class);
@@ -535,6 +601,124 @@ public class ElasticsearchService {
 				if (knn.numCandidates() < knn.k()) {
 					throw new IllegalArgumentException("Number of candidates must be greater than or equal to k");
 				}
+
+				if (query != null) {
+					knn.filter().add(query);
+				}
+
+				builder.knn(knn);
+			}
+
+			final SearchRequest req = builder.build();
+
+			return client.search(req, tClass);
+		} catch (final ElasticsearchException e) {
+			throw handleException(e);
+		}
+	}
+
+	public <T> MsearchResponse bulkKnnSearch(final String index, final List<KnnQuery> knnQueries, final Class<T> tClass)
+		throws IOException {
+		try {
+			log.info("KNN search on: {}", index);
+
+			List<RequestItem> items = new ArrayList<>();
+			for (KnnQuery knnQuery : knnQueries) {
+				RequestItem item = new RequestItem.Builder()
+					.header(h -> h.index(index)) // Specify the index for the request
+					.body(b -> b.knn(knnQuery)) // Add the KnnQuery as the body
+					.build();
+
+				items.add(item);
+			}
+
+			MsearchRequest request = new MsearchRequest.Builder().index(index).searches(items).build();
+
+			return client.msearch(request, tClass);
+		} catch (final ElasticsearchException e) {
+			throw handleException(e);
+		}
+	}
+
+	/**
+	 * Bulk insert documents into an index.
+	 *
+	 * @param indexName      The index to insert the documents into
+	 * @param esIndexContent The content of the index
+	 */
+	public void bulkInsert(final String indexName, final String esIndexContent) {
+		try {
+			final BulkRequest.Builder bulkRequest = new BulkRequest.Builder();
+
+			final com.fasterxml.jackson.core.JsonParser parser = mapper.createParser(esIndexContent);
+			while (parser.hasCurrentToken()) {
+				final JsonNode node = mapper.readTree(parser);
+				log.warn("Inserting " + node.asText());
+				final String id = node.get("id").asText();
+				bulkRequest.operations(op -> op.index(idx -> idx.index(indexName).id(id).document(node)));
+			}
+			log.warn("Bulk inserting documents into index {}", indexName);
+			client.bulk(bulkRequest.build());
+		} catch (final IOException e) {
+			log.error("Error bulk inserting documents into index {}", indexName, e);
+		}
+	}
+
+	@Data
+	public static class KnnInnerHit<InnerType> {
+
+		private UUID id;
+		private InnerType source;
+		private Float score;
+	}
+
+	@Data
+	public static class KnnHit<Type, InnerType> {
+
+		private UUID id;
+		private Type source;
+		private Float score;
+		private List<KnnInnerHit<InnerType>> innerHits = new ArrayList<>();
+	}
+
+	@Data
+	public static class KnnSearchResponse<Type, InnerType> {
+
+		private List<KnnHit<Type, InnerType>> hits = new ArrayList<>();
+		private long total;
+	}
+
+	private JsonNode getFirstField(final JsonNode jsonNode) {
+		final Iterator<String> fieldNames = jsonNode.fieldNames();
+		if (fieldNames.hasNext()) {
+			return jsonNode.get(fieldNames.next());
+		}
+		return null;
+	}
+
+	public <Type, InnerType> KnnSearchResponse<Type, InnerType> knnSearchWithInnerHits(
+		final String index,
+		final KnnQuery knn,
+		final Query query,
+		final Integer page,
+		final Integer pageSize,
+		final List<String> excludes,
+		final Class<Type> hitClass,
+		final Class<InnerType> innerHitClass
+	) throws IOException {
+		try {
+			log.info("KNN search on: {}", index);
+
+			final SearchRequest.Builder builder = new SearchRequest.Builder()
+				.index(index)
+				.from(page)
+				.source(s -> s.filter(f -> f.excludes(excludes)))
+				.size(pageSize);
+
+			if (knn != null) {
+				if (knn.numCandidates() < knn.k()) {
+					throw new IllegalArgumentException("Number of candidates must be greater than or equal to k");
+				}
 				builder.knn(knn);
 			}
 
@@ -544,9 +728,59 @@ public class ElasticsearchService {
 
 			final SearchRequest req = builder.build();
 
-			return client.search(req, tClass);
+			final String queryStr = JsonpUtils.toJsonString(req, new JacksonJsonpMapper(mapper));
+			final ObjectNode jsonQuery = (ObjectNode) mapper.readTree(queryStr);
+
+			// manually inject the inner hits because the java client is stupid
+			for (final JsonNode knnJson : jsonQuery.get("knn")) {
+				((ObjectNode) knnJson).set("inner_hits", mapper.createObjectNode());
+			}
+
+			final JsonNode res = rawSearch(index, jsonQuery);
+
+			final KnnSearchResponse<Type, InnerType> response = new KnnSearchResponse<>();
+			response.total = res.get("hits").get("total").get("value").asLong();
+
+			for (final JsonNode hit : res.get("hits").get("hits")) {
+				final KnnHit<Type, InnerType> knnHit = new KnnHit<>();
+				knnHit.id = UUID.fromString(hit.get("_id").asText());
+				knnHit.source = mapper.convertValue(hit.get("_source"), hitClass);
+				knnHit.score = hit.get("_score").floatValue();
+
+				if (hit.get("inner_hits") == null || getFirstField(hit.get("inner_hits")) == null) {
+					continue;
+				}
+
+				for (final JsonNode innerHit : getFirstField(hit.get("inner_hits")).get("hits").get("hits")) {
+					final KnnInnerHit<InnerType> knnInnerHit = new KnnInnerHit<>();
+					knnInnerHit.id = UUID.fromString(innerHit.get("_id").asText());
+					knnInnerHit.source = mapper.convertValue(innerHit.get("_source"), innerHitClass);
+					knnInnerHit.score = innerHit.get("_score").floatValue();
+
+					knnHit.innerHits.add(knnInnerHit);
+				}
+
+				response.hits.add(knnHit);
+			}
+
+			return response;
 		} catch (final ElasticsearchException e) {
 			throw handleException(e);
+		}
+	}
+
+	public JsonNode rawSearch(final String index, final JsonNode body) throws IOException {
+		try {
+			final HttpHeaders headers = new HttpHeaders();
+			headers.setContentType(MediaType.APPLICATION_JSON);
+			final HttpEntity<String> entity = new HttpEntity<>(body.toString(), headers);
+
+			final ResponseEntity<JsonNode> response = getRestTemplate()
+				.exchange(new URI(config.getUrl() + "/" + index + "/_search"), HttpMethod.POST, entity, JsonNode.class);
+
+			return response.getBody();
+		} catch (final Exception e) {
+			throw new RuntimeException(e);
 		}
 	}
 
@@ -692,7 +926,50 @@ public class ElasticsearchService {
 		}
 	}
 
-	public static String emphasis(String s, int boost) {
-		return s + "^" + String.valueOf(boost);
+	public static String emphasis(final String s, final int boost) {
+		return s + "^" + boost;
+	}
+
+	/**
+	 * Insert the given documents into the given index with the given ids
+	 *
+	 * @param index     The index to insert the documents into
+	 * @param documents the documents to insert
+	 * @param ids       The ids of the documents to insert, parallel to the
+	 *                  documents
+	 * @return The bulk response
+	 * @throws IOException              If the bulk insert fails
+	 * @throws IllegalArgumentException If the number of documents and ids are not
+	 *                                  the same
+	 */
+	public BulkResponse bulkInsert(final String index, final List documents, final List<String> ids) throws IOException {
+		if (ids != null && documents.size() != ids.size()) {
+			throw new IllegalArgumentException("The number of documents and ids must be the same");
+		}
+
+		final List<BulkOperation> bulkOperations = new ArrayList<>();
+		for (int i = 0; i < documents.size(); i++) {
+			final String id = ids != null ? ids.get(i) : UUID.randomUUID().toString();
+			final Object document = documents.get(i);
+			bulkOperations.add(BulkOperation.of(b -> b.index(op -> op.index(index).id(id).document(document))));
+		}
+
+		log.info("Elasticsearch | Bulk | Inserting {} documents into index {}", documents.size(), index);
+		return client.bulk(BulkRequest.of(bulkRequest -> bulkRequest.index(index).operations(bulkOperations)));
+	}
+
+	/**
+	 * Checks if the given index exists
+	 *
+	 * @param name The index name
+	 * @return The boolean response, empty if the call fails
+	 */
+	public Boolean hasIndex(final String name) {
+		try {
+			return client.indices().exists(e -> e.index(name)).value();
+		} catch (final IOException e) {
+			log.error("Error checking if index exists {}", name, e);
+		}
+		return null;
 	}
 }

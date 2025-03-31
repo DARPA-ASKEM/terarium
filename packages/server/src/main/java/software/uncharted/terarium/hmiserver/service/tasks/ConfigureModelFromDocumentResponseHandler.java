@@ -23,7 +23,7 @@ import software.uncharted.terarium.hmiserver.service.data.ProvenanceService;
 @Component
 @RequiredArgsConstructor
 @Slf4j
-public class ConfigureModelFromDocumentResponseHandler extends TaskResponseHandler {
+public class ConfigureModelFromDocumentResponseHandler extends LlmTaskResponseHandler {
 
 	public static final String NAME = "gollm:configure_model_from_document";
 
@@ -38,10 +38,10 @@ public class ConfigureModelFromDocumentResponseHandler extends TaskResponseHandl
 	}
 
 	@Data
-	public static class Input {
+	public static class Input extends LlmTaskResponseHandler.Input {
 
-		@JsonProperty("research_paper")
-		String researchPaper;
+		@JsonProperty("document")
+		String document;
 
 		@JsonProperty("amr")
 		String amr;
@@ -77,11 +77,12 @@ public class ConfigureModelFromDocumentResponseHandler extends TaskResponseHandl
 					configuration.setModelId(props.modelId);
 				}
 
+				if (configuration.getExtractionDocumentId() != props.documentId) {
+					configuration.setExtractionDocumentId(props.documentId);
+				}
+
 				// Fetch the document name
-				final Optional<DocumentAsset> document = documentAssetService.getAsset(
-					props.documentId,
-					ASSUME_WRITE_PERMISSION_ON_BEHALF_OF_USER
-				);
+				final Optional<DocumentAsset> document = documentAssetService.getAsset(props.documentId);
 				final String source = document.map(TerariumAsset::getName).orElse(null);
 
 				// Set the extraction document id
@@ -93,11 +94,7 @@ public class ConfigureModelFromDocumentResponseHandler extends TaskResponseHandl
 					configuration.getParameterSemanticList().forEach(parameter -> parameter.setSource(source));
 				}
 
-				final ModelConfiguration newConfig = modelConfigurationService.createAsset(
-					configuration,
-					props.projectId,
-					ASSUME_WRITE_PERMISSION_ON_BEHALF_OF_USER
-				);
+				final ModelConfiguration newConfig = modelConfigurationService.createAsset(configuration, props.projectId);
 
 				// add provenance
 				provenanceService.createProvenance(

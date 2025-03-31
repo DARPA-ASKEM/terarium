@@ -33,4 +33,6 @@ public interface ProjectAndAssetAggregate {
 	Integer getAssetCount();
 
 	String getAssetType();
+
+	Boolean getSampleProject();
 }

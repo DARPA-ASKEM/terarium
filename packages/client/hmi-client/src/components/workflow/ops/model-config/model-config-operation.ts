@@ -1,17 +1,19 @@
-import type { BaseState, Operation } from '@/types/workflow';
-import { WorkflowOperationTypes } from '@/types/workflow';
+import { cloneDeep, differenceWith, isEqual, omit } from 'lodash';
+import { BaseState, Operation, OperatorStatus, WorkflowOperationTypes } from '@/types/workflow';
 import type { ModelConfiguration } from '@/types/Types';
 import { NotebookHistory } from '@/services/notebook';
 import configureModel from '@assets/svg/operator-images/configure-model.svg';
-import { cloneDeep, differenceWith, isEqual, omit } from 'lodash';
 
 export const name = 'ModelConfigOperation';
+
+const DOCUMENTATION_URL = 'https://documentation.terarium.ai/config-and-intervention/configure-model/';
 
 export interface ModelConfigOperationState extends BaseState {
 	transientModelConfig: ModelConfiguration;
 	notebookHistory: NotebookHistory[];
 	hasCodeRun: boolean;
 	modelConfigTaskIds: string[];
+	operatorStatus?: OperatorStatus;
 }
 
 export const blankModelConfig: ModelConfiguration = {
@@ -30,6 +32,7 @@ export const ModelConfigOperation: Operation = {
 	name: WorkflowOperationTypes.MODEL_CONFIG,
 	displayName: 'Configure model',
 	description: 'Create model configurations.',
+	documentationUrl: DOCUMENTATION_URL,
 	imageUrl: configureModel,
 	isRunnable: true,
 	inputs: [
@@ -44,7 +47,8 @@ export const ModelConfigOperation: Operation = {
 			transientModelConfig: blankModelConfig,
 			notebookHistory: [],
 			hasCodeRun: false,
-			modelConfigTaskIds: []
+			modelConfigTaskIds: [],
+			operatorStatus: OperatorStatus.DEFAULT
 		};
 		return init;
 	}
@@ -99,7 +103,13 @@ export const isModelConfigsEqual = (
 	return true;
 };
 
-// check if model config values are equal
+/** Compares the 'critical' values from two ModelConfiguration objects.
+ *  Critical values are any that will affect downstream operations / nodes.
+ *  @param originalConfig - The original model configuration to compare
+ *  @param newConfig 			- The new model configuration to compare against
+ *  @returns boolean 			- True if all critical values are equal or
+ * 													false if not (or if either config is empty).
+ */
 export const isModelConfigValuesEqual = (
 	originalConfig: ModelConfiguration | null,
 	newConfig: ModelConfiguration | null
@@ -125,11 +135,7 @@ export const isModelConfigValuesEqual = (
 	// compare initial values are the same
 	const initialValuesDifferent = originalInitialList.some((originalItem) => {
 		const newItem = initialMap.get(originalItem.target);
-		return (
-			newItem &&
-			(!isEqual(originalItem.expression, newItem.expression) ||
-				!isEqual(originalItem.expressionMathml, newItem.expressionMathml))
-		);
+		return newItem && !isEqual(originalItem.expression, newItem.expression);
 	});
 
 	if (initialValuesDifferent) return false;
@@ -145,11 +151,7 @@ export const isModelConfigValuesEqual = (
 	// compare observable values are the same
 	const observableValuesDifferent = originalObservableList.some((originalItem) => {
 		const newItem = observableMap.get(originalItem.referenceId);
-		return (
-			newItem &&
-			(!isEqual(originalItem.expression, newItem.expression) ||
-				!isEqual(originalItem.expressionMathml, newItem.expressionMathml))
-		);
+		return newItem && !isEqual(originalItem.expression, newItem.expression);
 	});
 
 	if (observableValuesDifferent) return false;

@@ -109,15 +109,15 @@ public class TaskServiceTest extends TerariumApplicationTests {
 
 	// @Test
 	@WithUserDetails(MockUser.URSULA)
-	public void testItCanSendGoLLMEnrichAMRRequest() throws Exception {
+	public void testItCanSendGoLLMEnrichModelRequest() throws Exception {
 		final ClassPathResource modelResource = new ClassPathResource("gollm/SIR.json");
 		final String modelContent = new String(Files.readAllBytes(modelResource.getFile().toPath()));
 
 		final ClassPathResource documentResource = new ClassPathResource("gollm/SIR.txt");
 		final String documentContent = new String(Files.readAllBytes(documentResource.getFile().toPath()));
 
-		final EnrichAmrResponseHandler.Input input = new EnrichAmrResponseHandler.Input();
-		input.setResearchPaper(documentContent);
+		final EnrichModelResponseHandler.Input input = new EnrichModelResponseHandler.Input();
+		input.setDocument(documentContent);
 		input.setAmr(modelContent);
 
 		final TaskRequest req = new TaskRequest();
@@ -143,7 +143,7 @@ public class TaskServiceTest extends TerariumApplicationTests {
 		req.setType(TaskType.GOLLM);
 		req.setScript("gollm:embedding");
 		req.setInput(
-			("{\"text\":\"What kind of dinosaur is the coolest?\",\"embedding_model\":\"text-embedding-ada-002\"}").getBytes()
+			("{\"text\": [\"What kind of dinosaur is the coolest?\"],\"embedding_model\":\"text-embedding-ada-002\"}").getBytes()
 		);
 
 		final AdditionalProps add = new AdditionalProps();
@@ -180,11 +180,10 @@ public class TaskServiceTest extends TerariumApplicationTests {
 	public void testItCanSendGoLLMGenerateResponseRequest() throws Exception {
 		final TaskRequest req = new TaskRequest();
 		req.setType(TaskType.GOLLM);
-		req.setScript(GenerateResponseHandler.NAME);
-		final GenerateResponseHandler.Input input = new GenerateResponseHandler.Input();
+		req.setScript(ChartAnnotationResponseHandler.NAME);
+		final ChartAnnotationResponseHandler.Input input = new ChartAnnotationResponseHandler.Input();
+		input.setPreamble("This is a preamble");
 		input.setInstruction("Give me a simple random json object");
-		final JsonNode resFormat = new ObjectMapper().readTree("{\"type\": \"json_object\"}");
-		input.setResponseFormat(resFormat);
 		req.setInput(input);
 
 		final TaskResponse resp = taskService.runTaskSync(req);
@@ -309,7 +308,7 @@ public class TaskServiceTest extends TerariumApplicationTests {
 		final String documentContent = new String(Files.readAllBytes(documentResource.getFile().toPath()));
 
 		final InterventionsFromDocumentResponseHandler.Input input = new InterventionsFromDocumentResponseHandler.Input();
-		input.setResearchPaper(documentContent);
+		input.setDocument(documentContent);
 		input.setAmr(modelContent);
 
 		final TaskRequest req = new TaskRequest();
@@ -340,6 +339,22 @@ public class TaskServiceTest extends TerariumApplicationTests {
 
 	// @Test
 	@WithUserDetails(MockUser.URSULA)
+	public void testItCanSendSimplifyModelRequest() throws Exception {
+		final ClassPathResource resource = new ClassPathResource("mira/SIR_model_modified.json");
+		final String content = new String(Files.readAllBytes(resource.getFile().toPath()));
+
+		final TaskRequest req = new TaskRequest();
+		req.setType(TaskType.MIRA);
+		req.setScript("mira_task:simplify_model");
+		req.setInput(content.getBytes());
+
+		final TaskResponse resp = taskService.runTaskSync(req);
+
+		log.info(new String(resp.getOutput()));
+	}
+
+	// @Test
+	@WithUserDetails(MockUser.URSULA)
 	public void testItCanSendGenerateModelLatexRequest() throws Exception {
 		final ClassPathResource resource = new ClassPathResource("mira/problem.json");
 		final String content = new String(Files.readAllBytes(resource.getFile().toPath()));
@@ -356,11 +371,29 @@ public class TaskServiceTest extends TerariumApplicationTests {
 
 	// @Test
 	@WithUserDetails(MockUser.URSULA)
-	public void testItCanSendLatexToSymPyRequest() throws Exception {
+	public void testItCanSendLatexToAMRRequest() throws Exception {
 		final TaskRequest req = new TaskRequest();
 		req.setType(TaskType.MIRA);
-		req.setScript("mira_task:latex_to_sympy");
-		req.setInput("\\frac{a}{b} + c".getBytes());
+		req.setScript("mira_task:latex_to_amr");
+
+		String input =
+			"[ \"\\\\frac{d S(t)}{d t} = - b_q S(t) I(t)\",  \"\\\\frac{d E(t)}{d t} = b_q S(t) I(t) - r_X E(t)\",  \"\\\\frac{d I(t)}{d t} = r_X E(t) - g_p_q I(t)\",  \"\\\\frac{d R(t)}{d t} = g_p_q I(t)\"]";
+		req.setInput(input.getBytes());
+		final TaskResponse resp = taskService.runTaskSync(req);
+
+		log.info(new String(resp.getOutput()));
+	}
+
+	// @Test
+	@WithUserDetails(MockUser.URSULA)
+	public void testItCanSendTextExtractionRequest() throws Exception {
+		final ClassPathResource resource = new ClassPathResource("equation/SIDARTHE paper.pdf");
+		final byte[] content = Files.readAllBytes(resource.getFile().toPath());
+
+		final TaskRequest req = new TaskRequest();
+		req.setType(TaskType.TEXT_EXTRACTION);
+		req.setScript(ExtractTextResponseHandler.NAME);
+		req.setInput(content);
 
 		final TaskResponse resp = taskService.runTaskSync(req);
 

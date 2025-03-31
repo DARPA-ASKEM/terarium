@@ -2,6 +2,8 @@
 	<Button
 		label="Enrich metadata"
 		icon="pi pi-sparkles"
+		:class="enrichStatus === OperatorStatus.ERROR ? 'error' : ''"
+		:disabled="isLoading"
 		:loading="isLoading"
 		severity="secondary"
 		outlined
@@ -11,10 +13,10 @@
 		<template #header>
 			<h4>Enrich metadata</h4>
 		</template>
-		<p>The AI assistant can enrich the metadata of this {{ assetType }}.</p>
+		<p class="mb-2">The AI assistant can enrich the metadata of this {{ assetType }}.</p>
 		<p>Select a document or generate the information without additional context.</p>
 		<ul>
-			<li>
+			<li class="mb-0">
 				<label for="no-document">
 					<RadioButton inputId="no-document" name="no-document" v-model="selectedResourceId" value="" />
 					Generate information without context
@@ -37,27 +39,33 @@
 </template>
 
 <script setup lang="ts">
-import { enrichDataset } from '@/services/knowledge';
-import { getRelatedArtifacts, mapAssetTypeToProvenanceType } from '@/services/provenance';
-import type { DocumentAsset, ProjectAsset, TerariumAsset } from '@/types/Types';
-import { AssetType, ProvenanceType } from '@/types/Types';
-import { isDocumentAsset } from '@/utils/asset';
+import { computed, ref, watch } from 'vue';
 import Button from 'primevue/button';
 import RadioButton from 'primevue/radiobutton';
-import { computed, ref, watch } from 'vue';
-import { enrichModelMetadata } from '@/services/goLLM';
+
+import { datasetCard, enrichModelMetadata } from '@/services/goLLM';
+import { getRelatedArtifacts, mapAssetTypeToProvenanceType } from '@/services/provenance';
+import { AssetType, ClientEventType, DocumentAsset, ProjectAsset, ProvenanceType, TerariumAsset } from '@/types/Types';
+import { isDocumentAsset } from '@/utils/asset';
 import { useProjects } from '@/composables/project';
 import TeraModal from '@/components/widgets/tera-modal.vue';
+import { createEnrichClientEventHandler, useClientEvent } from '@/composables/useClientEvent';
+import { OperatorStatus } from '@/types/workflow';
+
+const emit = defineEmits(['finished-job']);
 
 const props = defineProps<{
 	assetType: AssetType.Model | AssetType.Dataset;
 	assetId: TerariumAsset['id'];
 }>();
 
-const emit = defineEmits(['finished-job']);
-
-const isLoading = ref(false);
+const isLoading = computed(() => enrichStatus.value === OperatorStatus.IN_PROGRESS);
 const isModalVisible = ref(false);
+const enrichStatus = ref<string>('');
+useClientEvent(
+	[ClientEventType.TaskGollmEnrichDataset, ClientEventType.TaskGollmEnrichModel],
+	createEnrichClientEventHandler(enrichStatus, props.assetId || null, emit)
+);
 
 const selectedResourceId = ref<string>('');
 const relatedDocuments = ref<Array<{ name: string; id: string }>>([]);
@@ -76,24 +84,21 @@ function closeDialog() {
 }
 
 async function confirm() {
-	isLoading.value = true;
 	closeDialog();
-	await sendForEnrichment(); // Wait for enrichment/extraction so once we call finished-job the newly fetched dataset will have the new data
-	emit('finished-job');
+	await sendForEnrichment();
 	getRelatedDocuments();
-	isLoading.value = false;
 }
 
-async function sendForEnrichment(): Promise<void> {
+async function sendForEnrichment() {
 	if (props.assetId) {
 		if (props.assetType === AssetType.Model) {
 			// Build enrichment job ids list (profile asset, align model, etc...)
-			return enrichModelMetadata(props.assetId, selectedResourceId.value, true);
+			await enrichModelMetadata(props.assetId, selectedResourceId.value, true);
+		} else {
+			await datasetCard(props.assetId, selectedResourceId.value);
 		}
-
-		return enrichDataset(props.assetId, selectedResourceId.value);
+		enrichStatus.value = OperatorStatus.IN_PROGRESS;
 	}
-	return Promise.resolve();
 }
 
 function getRelatedDocuments() {
@@ -163,5 +168,10 @@ ul {
 	align-items: center;
 	gap: var(--gap-2);
 	margin-left: auto;
+}
+
+.error {
+	border-color: var(--error-border-color);
+	color: var(--error-message-color);
 }
 </style>

@@ -39,7 +39,7 @@
 			>
 				{{ title ?? node.displayName }}
 				<template #top-header-actions>
-					<aside class="flex gap-1 ml-3 mr-auto">
+					<aside class="chips">
 						<Chip
 							v-for="(input, index) in node.inputs.filter((input) => input.value)"
 							:key="index"
@@ -53,7 +53,6 @@
 					<template v-if="!hideDropdown && outputOptions && selectedOutputId">
 						<section v-if="isDraft">There are unsaved changes</section>
 						<tera-output-dropdown
-							class="mx-2"
 							:class="{ draft: isDraft }"
 							:options="outputOptions"
 							:output="selectedOutputId"
@@ -328,6 +327,14 @@ onUnmounted(() => window.removeEventListener('keydown', handleKeyNavigation));
 	}
 }
 
+.chips {
+	display: flex;
+	gap: var(--gap-1);
+	margin-right: auto;
+	overflow-x: auto;
+	scrollbar-width: thin;
+}
+
 footer {
 	padding: 0 1.5rem 1rem 1.5rem;
 	display: flex;
@@ -341,7 +348,7 @@ footer {
 }
 
 :deep(.p-chip .p-chip-text) {
-	font-size: var(--font-body-small);
+	font-size: 13px;
 	margin: var(--gap-0-5);
 }
 

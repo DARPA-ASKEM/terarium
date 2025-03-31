@@ -622,14 +622,14 @@ $successMessageTextColor: var(--primary-color-dark) !default;
 $successMessageIconColor: var(--primary-color-dark) !default;
 
 $warningMessageBg: var(--surface-warning) !default;
-$warningMessageBorder: 1px solid #7f6003 !default;
-$warningMessageTextColor: #7f6003 !default;
-$warningMessageIconColor: #7f6003 !default;
+$warningMessageBorder: 1px solid var(--warning-color) !default;
+$warningMessageTextColor: var(--warning-color) !default;
+$warningMessageIconColor: var(--warning-color) !default;
 
-$errorMessageBg: #FDF1ED !default;
-$errorMessageBorder: solid 1px #C2451E !default;
-$errorMessageTextColor: #C2451E !default;
-$errorMessageIconColor: #C2451E !default;
+$errorMessageBg: var(--surface-error) !default;
+$errorMessageBorder: solid 1px var(--error-color) !default;
+$errorMessageTextColor: var(--error-color) !default;
+$errorMessageIconColor: var(--error-color) !default;
 
 //overlays
 $overlayContentBorder: 0 none !default;
@@ -643,7 +643,7 @@ $dialogHeaderTextColor: $textColor;
 $dialogHeaderFontWeight: $fontWeightSemiBold;
 $dialogHeaderFontSize: $fontBodyLarge;
 $dialogHeaderPadding: 1rem 1.33rem 0rem 1.33rem;
-$dialogContentPadding: 0 1.33rem 1.33rem 1.33rem;
+$dialogContentPadding: 1.33rem;
 $dialogFooterBorder: 0 none;
 $dialogFooterPadding: 1rem 1.33rem;
 
@@ -652,9 +652,9 @@ $confirmPopupContentPadding: 1.5rem !default;
 $confirmPopupFooterPadding: 0 1.5rem 1rem 1.5rem !default;
 
 //tooltip
-$tooltipBg: rgba(97, 97, 97, .9) !default;
+$tooltipBg: rgba(52, 52, 52, 1) !default;
 $tooltipTextColor: #ffffff !default;
-$tooltipPadding: .5rem !default;
+$tooltipPadding: .85rem !default;
 
 //steps
 $stepsItemBg: transparent !default;
@@ -864,12 +864,6 @@ $imagePreviewActionIconHeight: 3rem !default;
 $imagePreviewActionIconFontSize: 1.5rem !default;
 $imagePreviewActionIconBorderRadius: 50% !default;
 
-//petrinet
-$petri-nodeBorder: var(--gray-500);
-$petri-nodeFill: var(--gray-500);
-$petri-lineColor: var(--gray-700);
-$petri-inputBox: var(--surface-0);
-
 :root {
 	--editing-color: rgb(238, 238, 136);
 	--border-radius-small: #{$smallBorderRadius};
@@ -880,7 +874,6 @@ $petri-inputBox: var(--surface-0);
 	--button-color: #{$successButtonBg};
 	--chevron-hover: #1b807332;
 	--content-padding: #{$panelContentPadding};
-	--error-message-background: #{$errorMessageBg};
 	--error-message-color: #{$errorMessageTextColor};
 	--focus-ring: #{$focusShadow};
 	--font-body-large: #{$fontBodyLarge};
@@ -946,8 +939,9 @@ $petri-inputBox: var(--surface-0);
 	--surface-highlight-hover: #bddad6;
 	--surface-warning: #FEC;
 	--warning-color: #FFAB00;
-	--surface-error: #FDDDD3;
-	--error-color: #F35625;
+	--surface-error: #FFDCDC;
+	--error-color: #b61919;
+	--error-background: rgba(243, 215, 208, 0.5);
 	--error-border-color: #F89A7C;
 	--surface-hover: var(--gray-100);
 	--surface-secondary: #f9fbfa;
@@ -963,10 +957,6 @@ $petri-inputBox: var(--surface-0);
 	--text-color-danger: #{$dangerTextButton};
 	--constrain-width: 55rem;
 	color-scheme: light;
-	--petri-nodeBorder: var(--gray-300);
-	--petri-nodeFill: var(--gray-300);
-	--petri-lineColor: #{$petri-lineColor};
-	--petri-inputBox: #{$petri-inputBox};
 	--port-base-size: 8px;
 	--overlay-menu-shadow: 0 0 0 1px rgba(0, 0, 0, 0.1), 0 2px 4px 0 rgba(0, 0, 0, 0.2);
 	--overlay-menu-shadow-hover: 0 0 0 1px rgba(0, 0, 0, 0.1), 0 2px 8px 0 rgba(0, 0, 0, 0.3);

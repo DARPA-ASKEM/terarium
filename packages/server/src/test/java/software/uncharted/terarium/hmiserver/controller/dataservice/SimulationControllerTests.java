@@ -60,7 +60,7 @@ public class SimulationControllerTests extends TerariumApplicationTests {
 		mockMvc
 			.perform(
 				MockMvcRequestBuilders.post("/simulations")
-					.param("project-id", PROJECT_ID.toString())
+					.param("project-id", project.getId().toString())
 					.with(csrf())
 					.contentType("application/json")
 					.content(objectMapper.writeValueAsString(simulationAsset))
@@ -74,16 +74,12 @@ public class SimulationControllerTests extends TerariumApplicationTests {
 		final Simulation tempSim = new Simulation();
 		tempSim.setName("test-simulation-name");
 		tempSim.setDescription("my description");
-		final Simulation simulationAsset = simulationAssetService.createAsset(
-			tempSim,
-			project.getId(),
-			ASSUME_WRITE_PERMISSION
-		);
+		final Simulation simulationAsset = simulationAssetService.createAsset(tempSim, project.getId());
 
 		mockMvc
 			.perform(
 				MockMvcRequestBuilders.get("/simulations/" + simulationAsset.getId())
-					.param("project-id", PROJECT_ID.toString())
+					.param("project-id", project.getId().toString())
 					.with(csrf())
 			)
 			.andExpect(status().isOk());
@@ -96,20 +92,16 @@ public class SimulationControllerTests extends TerariumApplicationTests {
 		tempSim.setName("test-simulation-name");
 		tempSim.setDescription("my description");
 
-		final Simulation simulationAsset = simulationAssetService.createAsset(
-			tempSim,
-			project.getId(),
-			ASSUME_WRITE_PERMISSION
-		);
+		final Simulation simulationAsset = simulationAssetService.createAsset(tempSim, project.getId());
 
 		mockMvc
 			.perform(
 				MockMvcRequestBuilders.delete("/simulations/" + simulationAsset.getId())
-					.param("project-id", PROJECT_ID.toString())
+					.param("project-id", project.getId().toString())
 					.with(csrf())
 			)
 			.andExpect(status().isOk());
 
-		Assertions.assertTrue(simulationAssetService.getAsset(simulationAsset.getId(), ASSUME_WRITE_PERMISSION).isEmpty());
+		Assertions.assertTrue(simulationAssetService.getAsset(simulationAsset.getId()).isEmpty());
 	}
 }

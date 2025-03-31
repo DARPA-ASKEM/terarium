@@ -29,6 +29,7 @@ public interface ProjectRepository extends PSCrudRepository<Project, UUID>, JpaS
 				p.name as name,
 				p.overviewContent as overviewContent,
 				p.publicAsset as publicAsset,
+				p.sampleProject as sampleProject,
 				p.temporary as temporary,
 				p.thumbnail as thumbnail,
 				p.userId as userId,
@@ -66,6 +67,7 @@ public interface ProjectRepository extends PSCrudRepository<Project, UUID>, JpaS
 				p.name as name,
 				p.overviewContent as overviewContent,
 				p.publicAsset as publicAsset,
+				p.sampleProject as sampleProject,
 				p.temporary as temporary,
 				p.thumbnail as thumbnail,
 				p.userId as userId,
@@ -92,4 +94,6 @@ public interface ProjectRepository extends PSCrudRepository<Project, UUID>, JpaS
 
 	@Query(value = "SELECT public_asset FROM project WHERE id = :id", nativeQuery = true)
 	Optional<Boolean> findPublicAssetByIdNative(@Param("id") UUID id);
+
+	List<Project> findByDeletedOnIsNull();
 }

@@ -47,6 +47,7 @@ import software.uncharted.terarium.hmiserver.models.permissions.PermissionRole;
 import software.uncharted.terarium.hmiserver.models.permissions.PermissionUser;
 import software.uncharted.terarium.hmiserver.utils.rebac.RelationsipAlreadyExistsException.RelationshipAlreadyExistsException;
 import software.uncharted.terarium.hmiserver.utils.rebac.askem.RebacPermissionRelationship;
+import software.uncharted.terarium.hmiserver.utils.rebac.askem.RebacUser;
 
 @Service
 @Slf4j
@@ -235,7 +236,7 @@ public class ReBACService {
 	private String getUserId(final String name) {
 		final List<UserRepresentation> users = keycloak.realm(REALM_NAME).users().search(name);
 		for (final UserRepresentation user : users) {
-			if (user.getUsername().equals(API_SERVICE_USER_NAME) || user.getUsername().equals(ADMIN_API_SERVICE_USER_NAME)) {
+			if (user.getUsername().equals(name)) {
 				return user.getId();
 			}
 		}
@@ -365,6 +366,11 @@ public class ReBACService {
 	}
 
 	@Observed(name = "function_profile")
+	public RebacUser getRebacUser(final String id) {
+		return new RebacUser(id, this);
+	}
+
+	@Observed(name = "function_profile")
 	public List<PermissionRole> getRoles() {
 		final List<PermissionRole> response = new ArrayList<>();
 
@@ -392,6 +398,36 @@ public class ReBACService {
 		}
 
 		return response;
+	}
+
+	@Observed(name = "function_profile")
+	// https://github.com/DARPA-ASKEM/terarium/issues/6008
+	public PermissionRole getAdminRole() {
+		final RolesResource rolesResource = keycloak.realm(REALM_NAME).roles();
+		for (final RoleRepresentation roleRepresentation : rolesResource.list()) {
+			if (roleRepresentation.getDescription().isBlank()) {
+				if (roleRepresentation.getId().equals(ASKEM_ADMIN_GROUP_ID)) {
+					final RoleResource roleResource = rolesResource.get(roleRepresentation.getName());
+					final List<PermissionUser> users = new ArrayList<>();
+					for (final UserRepresentation userRepresentation : roleResource.getRoleUserMembers()) {
+						if (userRepresentation.getEmail() != null) {
+							final PermissionUser user = new PermissionUser(
+								userRepresentation.getId(),
+								userRepresentation.getFirstName(),
+								userRepresentation.getLastName(),
+								userRepresentation.getEmail()
+								// no roles are acquired (to avoid circular references etc)
+							);
+							users.add(user);
+						}
+					}
+
+					return new PermissionRole(roleRepresentation.getId(), roleRepresentation.getName(), users);
+				}
+			}
+		}
+
+		return null;
 	}
 
 	@Observed(name = "function_profile")
@@ -491,11 +527,15 @@ public class ReBACService {
 		final SchemaObject who,
 		final SchemaObject what,
 		final Schema.Relationship relationship
-	) throws Exception, RelationshipAlreadyExistsException {
+	) throws Exception {
 		userCache.invalidate(who.id);
 		invalidatePermissionCache(who, what);
 		final ReBACFunctions rebac = new ReBACFunctions(channel, spiceDbBearerToken);
-		CURRENT_ZED_TOKEN = rebac.removeRelationship(who, relationship, what);
+		try {
+			CURRENT_ZED_TOKEN = rebac.removeRelationship(who, relationship, what);
+		} catch (RelationshipAlreadyExistsException ignore) {
+			// NB: This is a no-op as the relationship is already removed
+		}
 	}
 
 	private Consistency getCurrentConsistency() {

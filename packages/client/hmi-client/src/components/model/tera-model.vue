@@ -1,45 +1,21 @@
 <template>
 	<tera-asset
 		v-bind="$attrs"
-		:feature-config="featureConfig"
 		:id="assetId"
 		:is-loading="isModelLoading"
-		:is-naming-asset="isNaming"
-		:name="temporaryModel?.header.name"
-		@close-preview="emit('close-preview')"
 		:show-table-of-contents="!isWorkflow"
+		:name="temporaryModel?.header.name"
+		@rename="updateModelName"
 	>
-		<template #name-input>
-			<tera-input-text
-				v-if="isNaming"
-				v-model.lazy="newName"
-				@keyup.enter="updateModelName"
-				@keyup.esc="updateModelName"
-				auto-focus
-				class="w-4"
-				placeholder="Title of new model"
-			/>
-			<div v-if="isNaming" class="flex flex-nowrap ml-1 mr-3">
-				<Button
-					icon="pi pi-check"
-					rounded
-					text
-					@click="updateModelName"
-					title="This will rename the model and save all current changes."
-				/>
-			</div>
-		</template>
-		<template #edit-buttons v-if="!featureConfig.isPreview">
+		<template #edit-buttons>
 			<Button icon="pi pi-ellipsis-v" text rounded @click="toggleOptionsMenu" />
 			<ContextMenu ref="optionsMenu" :model="optionsMenuItems" popup :pt="optionsMenuPt" />
 			<aside class="btn-group">
-				<tera-asset-enrichment :asset-type="AssetType.Model" :assetId="assetId" @finished-job="fetchModel" />
-				<Button
-					label="Reset"
-					severity="secondary"
-					outlined
-					@click="onReset"
-					:disabled="!(hasChanged && hasEditPermission)"
+				<tera-asset-enrichment
+					v-if="!hideEnrichment"
+					:asset-type="AssetType.Model"
+					:assetId="assetId"
+					@finished-job="fetchModel"
 				/>
 				<Button
 					v-if="isSaveForReuse"
@@ -53,17 +29,38 @@
 				<Button label="Save" @click="onSave" :disabled="!(hasChanged && hasEditPermission)" />
 			</aside>
 		</template>
-		<section v-if="temporaryModel">
-			<tera-model-description
-				:feature-config="featureConfig"
-				:model="temporaryModel"
-				@update-model="updateTemporaryModel"
+		<section v-if="temporaryModel && mmtData">
+			<Message class="mx-3" severity="warn" v-if="modelErrors.length > 0">
+				Errors and/or warnings detected, please check individual sections below.
+			</Message>
+			<Message v-if="canModelBeSimplified" class="mx-3" severity="warn">
+				This model appears to have complex rate laws. It can lead to an combinatorial explosion if it is stratified.
+				This can be simplified reducing the number of controllers by {{ numberOfControllersSimplifyReduces }}.
+				<Button
+					label="Save this simplified version as a new model."
+					text
+					size="small"
+					class="save-simplified-button"
+					@click="saveSimplifiedModel()"
+				/>
+			</Message>
+			<tera-model-error-message
+				class="mx-3"
+				:modelErrors="modelErrors.filter(({ type }) => type === ModelErrorType.MODEL)"
 			/>
-			<tera-model-parts
-				class="mt-0"
-				:feature-config="featureConfig"
+
+			<tera-model-description :model="temporaryModel" :mmt-data="mmtData" @update-model="updateTemporaryModel" />
+			<tera-petrinet-parts
 				:model="temporaryModel"
-				@update-model="updateTemporaryModel"
+				:mmt="mmtData.mmt"
+				:mmt-params="mmtData.template_params"
+				:feature-config="{ isPreview: false }"
+				:model-errors="modelErrors"
+				@update-state="(e: any) => onUpdateModelPart('state', e)"
+				@update-parameter="(e: any) => onUpdateModelPart('parameter', e)"
+				@update-observable="(e: any) => onUpdateModelPart('observable', e)"
+				@update-transition="(e: any) => onUpdateModelPart('transition', e)"
+				@update-time="(e: any) => onUpdateModelPart('time', e)"
 			/>
 		</section>
 	</tera-asset>
@@ -81,30 +78,38 @@
 </template>
 
 <script setup lang="ts">
-import { computed, PropType, ref, watch, onMounted } from 'vue';
+import { computed, ref, watch, onMounted } from 'vue';
 import { cloneDeep, isEmpty, isEqual } from 'lodash';
 import Button from 'primevue/button';
 import ContextMenu from 'primevue/contextmenu';
+import Message from 'primevue/message';
 import TeraAsset from '@/components/asset/tera-asset.vue';
 import TeraAssetEnrichment from '@/components/widgets/tera-asset-enrichment.vue';
-import TeraInputText from '@/components/widgets/tera-input-text.vue';
 import TeraModelDescription from '@/components/model/petrinet/tera-model-description.vue';
-import TeraModelParts from '@/components/model/tera-model-parts.vue';
+import TeraModelErrorMessage from '@/components/model/model-parts/tera-model-error-message.vue';
+import TeraPetrinetParts from '@/components/model/petrinet/tera-petrinet-parts.vue';
 import TeraSaveAssetModal from '@/components/project/tera-save-asset-modal.vue';
-import { getModel, updateModel } from '@/services/model';
-import type { FeatureConfig } from '@/types/common';
+import { getModel, updateModel, getMMT, getSimplifyModel } from '@/services/model';
 import { AssetType, type Model } from '@/types/Types';
 import { useProjects } from '@/composables/project';
 import { logger } from '@/utils/logger';
+import { MMT } from '@/model-representation/mira/mira-common';
+import {
+	checkPetrinetAMR,
+	updateState,
+	updateParameter,
+	updateObservable,
+	updateTransition,
+	updateTime,
+	ModelErrorType
+} from '@/model-representation/service';
+import type { ModelError } from '@/model-representation/service';
+import * as saveAssetService from '@/services/save-asset';
 
 const props = defineProps({
 	assetId: {
 		type: String,
 		default: ''
-	},
-	featureConfig: {
-		type: Object as PropType<FeatureConfig>,
-		default: { isPreview: false } as FeatureConfig
 	},
 	isWorkflow: {
 		type: Boolean,
@@ -113,34 +118,56 @@ const props = defineProps({
 	isSaveForReuse: {
 		type: Boolean,
 		default: false
+	},
+	hideEnrichment: {
+		type: Boolean,
+		default: false
 	}
 });
 
-const emit = defineEmits(['close-preview', 'on-save']);
+const emit = defineEmits(['on-save']);
 
 const model = ref<Model | null>(null);
 const temporaryModel = ref<Model | null>(null);
+const mmtData = ref<MMT | null>(null);
 
-const newName = ref('New Model');
-const isRenaming = ref(false);
 const isModelLoading = ref(false);
 const showSaveModal = ref(false);
-const isNaming = computed(() => isEmpty(props.assetId) || isRenaming.value);
 const hasChanged = computed(() => !isEqual(model.value, temporaryModel.value));
 const hasEditPermission = useProjects().hasEditPermission();
+const modelErrors = ref<ModelError[]>([]);
+const numberOfControllersSimplifyReduces = ref<number>(0);
+const canModelBeSimplified = computed(() => numberOfControllersSimplifyReduces.value > 0);
 
 // Edit menu
-function onReset() {
-	temporaryModel.value = cloneDeep(model.value);
-}
-function onSave() {
-	saveModelContent();
+async function onSave() {
+	if (!hasEditPermission || !temporaryModel.value) return;
+	await updateModel(temporaryModel.value);
+	logger.info('Changes to the model has been saved.');
+	await useProjects().refresh();
+	await fetchModel();
 }
 function onSaveAs() {
 	showSaveModal.value = true;
 }
 function onSaveForReUse() {
 	showSaveModal.value = true;
+}
+
+async function checkSimplifyModel() {
+	if (!model.value) return;
+	const simplifyModelResponse = await getSimplifyModel(model.value);
+	numberOfControllersSimplifyReduces.value = simplifyModelResponse.max_controller_decrease;
+}
+
+async function saveSimplifiedModel() {
+	if (!model.value) return;
+	// Note that this is cached so theres no need to save the entire amr as a ref or anything to save 1 call.
+	const simplifyModelResponse = await getSimplifyModel(model.value);
+	const newModel = simplifyModelResponse.amr;
+	const newName = `${newModel.header.name} simplified`;
+	newModel.header.name = newName;
+	saveAssetService.saveAs(newModel, AssetType.Model);
 }
 
 // Save modal
@@ -158,14 +185,6 @@ const optionsMenu = ref();
 // TODO: Could be moved into tera-asset.vue
 const optionsMenuItems = ref<any[]>([
 	{
-		icon: 'pi pi-pencil',
-		label: 'Rename',
-		command() {
-			isRenaming.value = true;
-			newName.value = temporaryModel.value?.header.name ?? '';
-		}
-	},
-	{
 		icon: 'pi pi-download',
 		label: 'Download',
 		command: async () => {
@@ -178,7 +197,6 @@ const optionsMenuItems = ref<any[]>([
 				a.click();
 				a.remove();
 			}
-			emit('close-preview');
 		}
 	}
 ]);
@@ -188,29 +206,57 @@ const optionsMenuPt = {
 	}
 };
 
-async function saveModelContent() {
-	if (!hasEditPermission || !temporaryModel.value) return;
-	await updateModel(temporaryModel.value);
-	logger.info('Changes to the model has been saved.');
-	await useProjects().refresh();
-	await fetchModel();
+async function updateModelName(name: string) {
+	if (!temporaryModel.value) return;
+	temporaryModel.value.header.name = name;
+	onSave();
 }
 
-async function updateModelName() {
-	if (temporaryModel.value && !isEmpty(newName.value)) {
-		temporaryModel.value.header.name = newName.value;
-	}
-	isRenaming.value = false;
-	onSave();
+async function refreshMMT() {
+	if (!temporaryModel.value) return;
+	const response = await getMMT(temporaryModel.value);
+	if (!response) return;
+	mmtData.value = response;
 }
 
 function updateTemporaryModel(newModel: Model) {
 	temporaryModel.value = cloneDeep(newModel);
 }
 
+function onUpdateModelPart(property: 'state' | 'parameter' | 'observable' | 'transition' | 'time', event: any) {
+	if (!temporaryModel.value) return;
+	const newModel = cloneDeep(temporaryModel.value);
+	const { id, key, value } = event;
+	switch (property) {
+		case 'state':
+			updateState(newModel, id, key, value);
+			break;
+		case 'parameter':
+			updateParameter(newModel, id, key, value);
+			break;
+		case 'observable':
+			updateObservable(newModel, id, key, value);
+			break;
+		case 'transition':
+			updateTransition(newModel, id, key, value);
+			break;
+		case 'time':
+			updateTime(newModel, key, value);
+			break;
+		default:
+			break;
+	}
+	updateTemporaryModel(newModel);
+}
+
 async function fetchModel() {
-	model.value = await getModel(props.assetId);
-	temporaryModel.value = cloneDeep(model.value);
+	const fetchedModel = await getModel(props.assetId);
+	if (fetchedModel) {
+		model.value = fetchedModel;
+		updateTemporaryModel(fetchedModel);
+		modelErrors.value = await checkPetrinetAMR(fetchedModel);
+		await refreshMMT();
+	}
 }
 
 onMounted(async () => {
@@ -233,18 +279,27 @@ watch(
 	() => props.assetId,
 	async () => {
 		// Reset view of model page
-		isRenaming.value = false;
+		model.value = null;
+		temporaryModel.value = null;
+		mmtData.value = null;
 		if (!isEmpty(props.assetId)) {
 			isModelLoading.value = true;
 			await fetchModel();
 			isModelLoading.value = false;
 		}
+		checkSimplifyModel();
 	},
 	{ immediate: true }
 );
+
+defineExpose({ temporaryModel });
 </script>
 
 <style scoped>
+.save-simplified-button {
+	color: blue;
+	display: contents;
+}
 .btn-group {
 	display: flex;
 	align-items: center;

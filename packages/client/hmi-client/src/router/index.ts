@@ -1,6 +1,6 @@
 import { computed } from 'vue';
 import { createRouter, createWebHistory } from 'vue-router';
-import HomeView from '@/page/Home.vue';
+import HomeView from '@/page/tera-home.vue';
 import UnauthorizedView from '@/page/Unauthorized.vue';
 import ProjectView from '@/page/tera-project.vue';
 import WorkflowNodeView from '@/page/WorkflowNode.vue';
@@ -12,11 +12,13 @@ import SSE from '@/temp/sse.vue';
 import EvaluationScenarios from '@/temp/EvaluationScenarios.vue';
 import AMRPetriTest from '@/temp/AMRPetriTest.vue';
 import PyodideTest from '@/temp/PyodideTest.vue';
-import JupyterTest from '@/temp/JupyterTest.vue';
 import CustomInputTest from '@/temp/custom-input-test.vue';
 import ClipboardTest from '@/temp/Clipboard.vue';
 import VegaliteTest from '@/temp/Vegalite.vue';
+import EquationsTest from '@/temp/Equations.vue';
+import SymPyAMRTest from '@/temp/SympyAMR.vue';
 import FunmanDebugger from '@/temp/FunmanDebugger.vue';
+import VuePdf from '@/temp/VuePdf.vue';
 import { RouteName } from './routes';
 
 export enum RoutePath {
@@ -27,7 +29,6 @@ export enum RoutePath {
 	Unauthorized = '/unauthorized',
 
 	// Playground and experiments, these components are testing-only
-	Ta2Playground = '/ta2-playground',
 	ResponsivePlaygroundPath = '/responsive-playground',
 	EvaluationScenariosPath = '/evaluation-scenarios'
 }
@@ -59,11 +60,13 @@ const routes = [
 	{ path: '/sse', component: SSE },
 	{ path: '/amr-petri-test', component: AMRPetriTest },
 	{ path: '/pyodide-test', component: PyodideTest },
-	{ path: '/jupyter-test', component: JupyterTest },
 	{ path: '/custom-input-test', component: CustomInputTest },
 	{ path: '/clipboard', component: ClipboardTest },
 	{ path: '/vegalite', component: VegaliteTest },
-	{ path: '/funman-debugger', component: FunmanDebugger }
+	{ path: '/pdfviewer', component: VuePdf },
+	{ path: '/funman-debugger', component: FunmanDebugger },
+	{ path: '/equations', component: EquationsTest },
+	{ path: '/sympy-to-amr', component: SymPyAMRTest }
 ];
 
 const router = createRouter({

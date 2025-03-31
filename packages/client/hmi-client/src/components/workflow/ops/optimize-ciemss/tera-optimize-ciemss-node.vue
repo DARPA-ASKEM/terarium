@@ -13,12 +13,15 @@
 			</div>
 
 			<div v-if="!showSpinner && runResults">
-				<template v-for="(_, index) of selectedVariableSettings.map((s) => s.selectedVariables[0])" :key="index">
-					<vega-chart :visualization-spec="preparedCharts[index]" :are-embed-actions-visible="false" />
-				</template>
+				<vega-chart
+					v-for="setting of selectedVariableSettings"
+					:key="setting.id"
+					:visualization-spec="variableCharts[setting.id]"
+					:are-embed-actions-visible="false"
+				/>
 			</div>
 			<div class="flex gap-2">
-				<Button @click="emit('open-drilldown')" label="Edit" severity="secondary" outlined class="w-full" />
+				<Button @click="emit('open-drilldown')" label="Open" severity="secondary" outlined class="w-full" />
 			</div>
 		</template>
 	</main>
@@ -26,7 +29,7 @@
 
 <script setup lang="ts">
 import _ from 'lodash';
-import { computed, watch, ref, onUnmounted } from 'vue';
+import { computed, watch, ref, onUnmounted, toRef } from 'vue';
 import TeraOperatorPlaceholder from '@/components/operator/tera-operator-placeholder.vue';
 import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue';
 import { WorkflowNode } from '@/types/workflow';
@@ -37,7 +40,7 @@ import {
 	makeForecastJobCiemss,
 	getRunResult,
 	getRunResultCSV,
-	parsePyCiemssMap
+	renameFnGenerator
 } from '@/services/models/simulation-service';
 import { nodeMetadata, nodeOutputLabel } from '@/components/workflow/util';
 import {
@@ -50,19 +53,14 @@ import {
 } from '@/types/Types';
 import { createLLMSummary } from '@/services/summary-service';
 import VegaChart from '@/components/widgets/VegaChart.vue';
-import { applyForecastChartAnnotations, createForecastChart } from '@/services/charts';
-import { mergeResults, renameFnGenerator } from '@/components/workflow/ops/calibrate-ciemss/calibrate-utils';
-import { getModelByModelConfigurationId, getUnitsFromModelParts, getVegaDateOptions } from '@/services/model';
+import { getModelByModelConfigurationId, getUnitsFromModelParts } from '@/services/model';
 import { getModelConfigurationById } from '@/services/model-configurations';
 import { createDatasetFromSimulationResult } from '@/services/dataset';
 import { useProjects } from '@/composables/project';
-import { ChartSettingType } from '@/types/common';
-import { useChartAnnotations } from '@/composables/useChartAnnotations';
-import {
-	OptimizeCiemssOperationState,
-	OptimizeCiemssOperation,
-	createInterventionPolicyFromOptimize
-} from './optimize-ciemss-operation';
+import { useChartSettings } from '@/composables/useChartSettings';
+import { useCharts } from '@/composables/useCharts';
+import { OptimizeCiemssOperationState, OptimizeCiemssOperation } from './optimize-ciemss-operation';
+import { usePreparedChartInputs, createInterventionPolicyFromOptimize } from './optimize-utils';
 
 const emit = defineEmits(['open-drilldown', 'append-output', 'update-state']);
 
@@ -78,15 +76,19 @@ const model = ref<Model | null>(null);
 
 const modelVarUnits = ref<{ [key: string]: string }>({});
 
-const chartSettings = computed(() => props.node.state.chartSettings ?? []);
+const preparedChartInputs = usePreparedChartInputs(props, runResults, runResultsSummary);
+const { selectedVariableSettings } = useChartSettings(props, emit);
 
-const selectedVariableSettings = computed(() =>
-	chartSettings.value.filter((setting) => setting.type === ChartSettingType.VARIABLE)
+const { useVariableCharts } = useCharts(
+	props.node.id,
+	model,
+	modelConfiguration,
+	preparedChartInputs,
+	toRef({ width: 180, height: 120 }),
+	null,
+	null
 );
-
-const { getChartAnnotationsByChartId } = useChartAnnotations(props.node.id);
-
-let pyciemssMap: Record<string, string> = {};
+const variableCharts = useVariableCharts(selectedVariableSettings, null);
 
 const showSpinner = computed<boolean>(
 	() =>
@@ -98,18 +100,18 @@ const showSpinner = computed<boolean>(
 const poller = new Poller();
 const pollResult = async (runId: string) => {
 	poller
-		.setInterval(5000)
-		.setThreshold(350)
 		.setPollAction(async () => pollAction(runId))
 		.setProgressAction((data: Simulation) => {
 			if (runId === props.node.state.inProgressOptimizeId && data.updates.length > 0) {
-				const checkpointData = _.first(data.updates)?.data as CiemssOptimizeStatusUpdate;
+				data.updates.sort((a, b) => a.data.progress - b.data.progress);
+				const checkpointData = _.last(data.updates)?.data as CiemssOptimizeStatusUpdate;
 				if (checkpointData) {
 					const state = _.cloneDeep(props.node.state);
-					state.currentProgress = +((100 * checkpointData.progress) / checkpointData.totalPossibleIterations).toFixed(
-						2
-					);
-					emit('update-state', state);
+					const newProgress = Math.floor((100 * checkpointData.progress) / checkpointData.totalPossibleIterations);
+					if (newProgress !== state.currentProgress) {
+						state.currentProgress = newProgress;
+						emit('update-state', state);
+					}
 				}
 			}
 		});
@@ -132,9 +134,11 @@ const startForecast = async (optimizedInterventions?: InterventionPolicy) => {
 			start: 0,
 			end: props.node.state.endTime
 		},
+		loggingStepSize: props.node.state.endTime / props.node.state.numberOfTimepoints,
 		extra: {
 			num_samples: props.node.state.numSamples,
-			method: props.node.state.solverMethod
+			method: props.node.state.solverMethod,
+			solver_step_size: props.node.state.solverStepSize
 		},
 		engine: 'ciemss'
 	};
@@ -154,56 +158,6 @@ const startForecast = async (optimizedInterventions?: InterventionPolicy) => {
 
 	return makeForecastJobCiemss(simulationPayload, nodeMetadata(props.node));
 };
-
-const preparedCharts = computed(() => {
-	const { preForecastRunId, postForecastRunId } = props.node.state;
-	if (!postForecastRunId || !preForecastRunId) return [];
-	const preResult = runResults.value[preForecastRunId];
-	const preResultSummary = runResultsSummary.value[preForecastRunId];
-	const postResult = runResults.value[postForecastRunId];
-	const postResultSummary = runResultsSummary.value[postForecastRunId];
-
-	if (!postResult || !postResultSummary || !preResultSummary || !preResult) return [];
-	// Merge before/after for chart
-	const { result, resultSummary } = mergeResults(preResult, postResult, preResultSummary, postResultSummary);
-	const dateOptions = getVegaDateOptions(model.value, modelConfiguration.value);
-
-	return selectedVariableSettings.value.map((setting) => {
-		const variable = setting.selectedVariables[0];
-		const annotations = getChartAnnotationsByChartId(setting.id);
-		return applyForecastChartAnnotations(
-			createForecastChart(
-				{
-					data: result,
-					variables: [`${pyciemssMap[variable]}:pre`, pyciemssMap[variable]],
-					timeField: 'timepoint_id',
-					groupField: 'sample_id'
-				},
-				{
-					data: resultSummary,
-					variables: [`${pyciemssMap[variable]}_mean:pre`, `${pyciemssMap[variable]}_mean`],
-					timeField: 'timepoint_id'
-				},
-				null,
-				{
-					width: 180,
-					height: 120,
-					legend: true,
-					xAxisTitle: modelVarUnits.value._time || 'Time',
-					yAxisTitle: modelVarUnits.value[variable] || '',
-					translationMap: {
-						[`${pyciemssMap[variable]}_mean:pre`]: `${variable} before optimization`,
-						[`${pyciemssMap[variable]}_mean`]: `${variable} after optimization`
-					},
-					title: '',
-					colorscheme: ['#AAB3C6', '#1B8073'],
-					dateOptions
-				}
-			),
-			annotations
-		);
-	});
-});
 
 watch(
 	() => props.node.state.inProgressOptimizeId,
@@ -236,8 +190,8 @@ watch(
 				state.inProgressPostForecastId = '';
 				state.optimizedInterventionPolicyId = '';
 				state.optimizeErrorMessage = {
-					name: optId,
-					value: 'Failed to create intervention',
+					name: 'Failed to create intervention',
+					value: '',
 					traceback: 'Failed to create the intervention provided from optimize.'
 				};
 				emit('update-state', state);
@@ -245,9 +199,10 @@ watch(
 		} else {
 			// Simulation Failed:
 			const state = _.cloneDeep(props.node.state);
+			console.log(response);
 			if (response?.state && response?.error) {
 				state.optimizeErrorMessage = {
-					name: optId,
+					name: `Optimize: ${optId} has failed`,
 					value: response.state,
 					traceback: response.error
 				};
@@ -293,7 +248,6 @@ Provide a consis summary in 100 words or less.
 			state.inProgressPostForecastId = '';
 			state.postForecastRunId = postSimId;
 			state.currentProgress = 0;
-			emit('update-state', state);
 
 			const datasetName = `Forecast run ${state.postForecastRunId}`;
 			const projectId = useProjects().activeProjectId.value;
@@ -304,21 +258,31 @@ Provide a consis summary in 100 words or less.
 				false
 			);
 			if (!datasetResult) {
+				state.simulateErrorMessage = {
+					name: 'Failed to create dataset',
+					value: '',
+					traceback: `Failed to create dataset from simulation result: ${state.postForecastRunId}`
+				};
+				emit('update-state', state);
 				return;
 			}
 
-			emit('append-output', {
-				type: OptimizeCiemssOperation.outputs[0].type,
-				label: nodeOutputLabel(props.node, `Optimize output`),
-				value: [
-					{
-						policyInterventionId: state.optimizedInterventionPolicyId,
-						datasetId: datasetResult.id
-					}
-				],
-				isSelected: false,
+			emit(
+				'append-output',
+				{
+					type: OptimizeCiemssOperation.outputs[0].type,
+					label: nodeOutputLabel(props.node, `Optimize output`),
+					value: [
+						{
+							policyInterventionId: state.optimizedInterventionPolicyId,
+							datasetId: datasetResult.id
+						}
+					],
+					isSelected: false,
+					state: _.omit(state, ['chartSettings'])
+				},
 				state
-			});
+			);
 		} else {
 			// Simulation Failed:
 			const state = _.cloneDeep(props.node.state);
@@ -366,7 +330,6 @@ watch(
 
 		const preResult = await getRunResultCSV(preForecastRunId, 'result.csv', renameFnGenerator('pre'));
 		const postResult = await getRunResultCSV(postForecastRunId, 'result.csv');
-		pyciemssMap = parsePyCiemssMap(postResult[0]);
 
 		runResults.value[preForecastRunId] = preResult;
 		runResults.value[postForecastRunId] = postResult;

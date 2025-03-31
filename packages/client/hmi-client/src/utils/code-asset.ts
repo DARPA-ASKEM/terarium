@@ -48,6 +48,7 @@ export const getCodeBlocks = async (code: Code): Promise<AssetBlock<CodeBlock>[]
 			const codeSnippet = extractCodeLines(codeContent, startRow, endRow);
 
 			return {
+				id: '',
 				name: 'Code block',
 				includeInProcess: true,
 				asset: {

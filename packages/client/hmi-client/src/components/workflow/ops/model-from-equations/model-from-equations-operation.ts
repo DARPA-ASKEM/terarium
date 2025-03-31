@@ -1,28 +1,19 @@
-import type { DocumentExtraction } from '@/types/Types';
 import { AssetBlock, Operation, WorkflowOperationTypes } from '@/types/workflow';
 import createModelFromEquations from '@assets/svg/operator-images/create-model-from-equation.svg';
 
-const DOCUMENTATION_URL =
-	'https://github.com/DARPA-ASKEM/model-service/blob/07ae21cae2d5465f9ac5b5bbbe6c7b28b7259f04/src/ModelService.jl#L54';
+const DOCUMENTATION_URL = 'https://documentation.terarium.ai/modeling/create-model-from-equations/';
 
 export interface EquationBlock {
 	text: string;
-	pageNumber?: number;
-	extractionError?: boolean;
-}
-export interface EquationFromImageBlock extends DocumentExtraction {
-	text: string;
-	extractionError?: boolean;
-}
-
-export function instanceOfEquationFromImageBlock(
-	object: EquationBlock | EquationFromImageBlock
-): object is EquationFromImageBlock {
-	return 'fileName' in object;
+	provenance?: {
+		documentId: string;
+		extractionItemId: string;
+	};
 }
 
 export interface ModelFromEquationsState {
-	equations: AssetBlock<EquationBlock>[];
+	includedEquations: AssetBlock<EquationBlock>[];
+	excludedEquations: AssetBlock<EquationBlock>[];
 	text: string;
 	modelFramework: string;
 	modelId: string | null;
@@ -41,7 +32,8 @@ export const ModelFromEquationsOperation: Operation = {
 
 	initState: () => {
 		const init: ModelFromEquationsState = {
-			equations: [],
+			includedEquations: [],
+			excludedEquations: [],
 			text: '',
 			modelFramework: 'petrinet',
 			modelId: null

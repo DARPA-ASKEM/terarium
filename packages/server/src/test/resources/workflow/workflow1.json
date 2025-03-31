@@ -1,0 +1,385 @@
+{
+    "id": "bb3ed815-dae7-4d4c-bc1a-9ecadfa5bd22",
+    "createdOn": "2025-01-23T20:24:51.112+00:00",
+    "updatedOn": "2025-01-23T20:25:31.136+00:00",
+    "name": "New123",
+    "description": "",
+    "fileNames": [],
+    "temporary": false,
+    "publicAsset": false,
+    "transform": {
+        "x": 0,
+        "y": 0,
+        "k": 1
+    },
+    "nodes": [
+        {
+            "id": "706bcb0e-8f05-4ecd-8677-d00a7111ff44",
+            "workflowId": "bb3ed815-dae7-4d4c-bc1a-9ecadfa5bd22",
+            "version": 4,
+            "isDeleted": false,
+            "createdBy": "adam",
+            "createdAt": 1737663894065,
+            "displayName": "Model",
+            "operationType": "ModelOperation",
+            "documentationUrl": "https://documentation.terarium.ai/modeling/review-and-enrich-model/",
+            "imageUrl": "/src/assets/svg/operator-images/model.svg",
+            "x": 176.0,
+            "y": 157.0,
+            "width": 180.0,
+            "height": 220.0,
+            "state": {
+                "modelId": "49f83095-35db-4b28-b8d7-587826df1359"
+            },
+            "active": "45135f39-288b-4eb1-9537-c1db1e9ebf2d",
+            "inputs": [],
+            "outputs": [
+                {
+                    "id": "45135f39-288b-4eb1-9537-c1db1e9ebf2d",
+                    "type": "modelId",
+                    "status": "connected",
+                    "label": "SIR to validate",
+                    "value": [
+                        "49f83095-35db-4b28-b8d7-587826df1359"
+                    ],
+                    "isOptional": false,
+                    "isSelected": true,
+                    "operatorStatus": "success",
+                    "state": null,
+                    "timestamp": "2025-01-23T20:24:54.417+00:00"
+                }
+            ],
+            "status": "success",
+            "uniqueInputs": false
+        },
+        {
+            "id": "e459cf71-b788-4e3b-8161-ac586079fd20",
+            "workflowId": "bb3ed815-dae7-4d4c-bc1a-9ecadfa5bd22",
+            "version": 9,
+            "isDeleted": false,
+            "createdBy": "adam",
+            "createdAt": 1737663902437,
+            "displayName": "Configure model",
+            "operationType": "ModelConfiguration",
+            "documentationUrl": "https://documentation.terarium.ai/config-and-intervention/configure-model/",
+            "imageUrl": "/src/assets/svg/operator-images/configure-model.svg",
+            "x": 467.0,
+            "y": 174.0,
+            "width": 180.0,
+            "height": 220.0,
+            "state": {
+                "transientModelConfig": {
+                    "id": "c39fccdd-df5e-4491-9059-6535ad7a514c",
+                    "createdOn": "2025-01-08T16:17:47.216+00:00",
+                    "updatedOn": "2025-01-08T16:17:47.216+00:00",
+                    "name": "Default configuration",
+                    "description": "This is a default configuration.",
+                    "fileNames": [],
+                    "temporary": false,
+                    "publicAsset": false,
+                    "modelId": "49f83095-35db-4b28-b8d7-587826df1359",
+                    "observableSemanticList": [
+                        {
+                            "id": "368a2ea4-628e-4952-8365-339e189b03e1",
+                            "createdOn": "2025-01-08T16:17:47.221+00:00",
+                            "updatedOn": "2025-01-08T16:17:47.221+00:00",
+                            "referenceId": "noninf",
+                            "expression": "R + S",
+                            "expressionMathml": "<apply><plus/><ci>R</ci><ci>S</ci></apply>"
+                        }
+                    ],
+                    "parameterSemanticList": [
+                        {
+                            "id": "4f701c55-175e-4209-9498-270fad29d740",
+                            "createdOn": "2025-01-08T16:17:47.222+00:00",
+                            "updatedOn": "2025-01-08T16:17:47.227+00:00",
+                            "referenceId": "beta",
+                            "distribution": {
+                                "type": "StandardUniform1",
+                                "parameters": {
+                                    "minimum": 0.03,
+                                    "maximum": 0.05
+                                }
+                            },
+                            "default": false
+                        },
+                        {
+                            "id": "b14ea9e8-dd5e-4e03-9880-ea0e820f1228",
+                            "createdOn": "2025-01-08T16:17:47.223+00:00",
+                            "updatedOn": "2025-01-08T16:17:47.227+00:00",
+                            "referenceId": "gamma",
+                            "distribution": {
+                                "type": "StandardUniform1",
+                                "parameters": {
+                                    "minimum": 0.01,
+                                    "maximum": 0.03
+                                }
+                            },
+                            "default": false
+                        },
+                        {
+                            "id": "dc2b564a-c4bb-4302-9b5c-25eb54fe19cc",
+                            "createdOn": "2025-01-08T16:17:47.224+00:00",
+                            "updatedOn": "2025-01-08T16:17:47.228+00:00",
+                            "referenceId": "S0",
+                            "distribution": {
+                                "type": "Constant",
+                                "parameters": {
+                                    "value": 2000
+                                }
+                            },
+                            "default": false
+                        },
+                        {
+                            "id": "1c8e6eae-e610-4300-b227-7b254502de76",
+                            "createdOn": "2025-01-08T16:17:47.225+00:00",
+                            "updatedOn": "2025-01-08T16:17:47.228+00:00",
+                            "referenceId": "I0",
+                            "distribution": {
+                                "type": "Constant",
+                                "parameters": {
+                                    "value": 1
+                                }
+                            },
+                            "default": false
+                        },
+                        {
+                            "id": "ac272f27-7af8-4deb-b251-f362338cc110",
+                            "createdOn": "2025-01-08T16:17:47.226+00:00",
+                            "updatedOn": "2025-01-08T16:17:47.228+00:00",
+                            "referenceId": "R0",
+                            "distribution": {
+                                "type": "Constant",
+                                "parameters": {
+                                    "value": 0
+                                }
+                            },
+                            "default": false
+                        },
+                        {
+                            "id": "ac3c95d4-4254-490e-8827-8973a0ea592d",
+                            "createdOn": "2025-01-08T16:17:47.227+00:00",
+                            "updatedOn": "2025-01-08T16:17:47.228+00:00",
+                            "referenceId": "zeta",
+                            "distribution": {
+                                "type": "Constant",
+                                "parameters": {
+                                    "value": 999
+                                }
+                            },
+                            "default": false
+                        }
+                    ],
+                    "initialSemanticList": [
+                        {
+                            "id": "0fb83a7d-14fc-443d-9f55-bc7cec9da157",
+                            "createdOn": "2025-01-08T16:17:47.217+00:00",
+                            "updatedOn": "2025-01-08T16:17:47.217+00:00",
+                            "target": "S",
+                            "expression": "S0",
+                            "expressionMathml": "<ci>S0</ci>"
+                        },
+                        {
+                            "id": "a76cefb5-26af-4a36-87d7-f8a9cb281940",
+                            "createdOn": "2025-01-08T16:17:47.219+00:00",
+                            "updatedOn": "2025-01-08T16:17:47.219+00:00",
+                            "target": "I",
+                            "expression": "I0",
+                            "expressionMathml": "<ci>I0</ci>"
+                        },
+                        {
+                            "id": "c5941003-e931-4f7e-9cd0-13ac34ae06f9",
+                            "createdOn": "2025-01-08T16:17:47.220+00:00",
+                            "updatedOn": "2025-01-08T16:17:47.220+00:00",
+                            "target": "R",
+                            "expression": "R0",
+                            "expressionMathml": "<ci>R0</ci>"
+                        }
+                    ],
+                    "inferredParameterList": []
+                },
+                "notebookHistory": [],
+                "hasCodeRun": false,
+                "modelConfigTaskIds": []
+            },
+            "active": "f6687f89-a7c0-400c-99b4-d10f8903ad0c",
+            "inputs": [
+                {
+                    "id": "00c91ccb-901f-432b-af7d-5b8fc5b8c683",
+                    "type": "modelId",
+                    "status": "connected",
+                    "label": "SIR to validate",
+                    "value": [
+                        "49f83095-35db-4b28-b8d7-587826df1359"
+                    ],
+                    "isOptional": false
+                },
+                {
+                    "id": "022152bb-2f98-4642-9f4c-fe651768fdbb",
+                    "type": "documentId",
+                    "status": "not connected",
+                    "label": "Document",
+                    "isOptional": true
+                },
+                {
+                    "id": "07a67440-1137-49ca-874c-10e51bc709ef",
+                    "type": "datasetId",
+                    "status": "not connected",
+                    "label": "Dataset",
+                    "isOptional": true
+                }
+            ],
+            "outputs": [
+                {
+                    "id": "f6687f89-a7c0-400c-99b4-d10f8903ad0c",
+                    "type": "modelConfigId",
+                    "status": "connected",
+                    "label": "Default configuration",
+                    "value": [
+                        "c39fccdd-df5e-4491-9059-6535ad7a514c"
+                    ],
+                    "isOptional": false,
+                    "isSelected": true,
+                    "operatorStatus": "success",
+                    "state": {
+                        "notebookHistory": [],
+                        "hasCodeRun": false,
+                        "modelConfigTaskIds": []
+                    },
+                    "timestamp": "2025-01-23T20:25:07.406+00:00"
+                },
+                {
+                    "id": "68e55a5b-2914-4f43-a8c4-75a627b4c8eb",
+                    "type": "modelConfigId",
+                    "status": "not connected",
+                    "label": "Config 2",
+                    "value": [
+                        "1a3cf50a-1589-4660-ba8a-50809623a7a4"
+                    ],
+                    "isOptional": false,
+                    "isSelected": false,
+                    "operatorStatus": "success",
+                    "state": {
+                        "notebookHistory": [],
+                        "hasCodeRun": false,
+                        "modelConfigTaskIds": []
+                    },
+                    "timestamp": "2025-01-23T20:25:19.011+00:00"
+                }
+            ],
+            "status": "success",
+            "uniqueInputs": false
+        },
+        {
+            "id": "1c63929a-5aad-4e15-bbf0-e1e6ab0d5d14",
+            "workflowId": "bb3ed815-dae7-4d4c-bc1a-9ecadfa5bd22",
+            "version": 6,
+            "isDeleted": false,
+            "createdBy": "adam",
+            "createdAt": 1737663904962,
+            "displayName": "Simulate",
+            "operationType": "SimulateCiemssOperation",
+            "documentationUrl": "https://documentation.terarium.ai/simulation/simulate-model/",
+            "imageUrl": "/src/assets/svg/operator-images/simulate-probabilistic.svg",
+            "x": 731.0,
+            "y": 173.0,
+            "width": 180.0,
+            "height": 220.0,
+            "state": {
+                "chartSettings": null,
+                "currentTimespan": {
+                    "start": 0,
+                    "end": 100
+                },
+                "numSamples": 100,
+                "solverStepSize": 0.1,
+                "method": "dopri5",
+                "forecastId": "",
+                "baseForecastId": "",
+                "inProgressForecastId": "",
+                "inProgressBaseForecastId": "",
+                "errorMessage": {
+                    "name": "",
+                    "value": "",
+                    "traceback": ""
+                }
+            },
+            "inputs": [
+                {
+                    "id": "037c7692-6f9d-4768-b002-d723cec5e985",
+                    "type": "modelConfigId",
+                    "status": "connected",
+                    "label": "Default configuration",
+                    "value": [
+                        "c39fccdd-df5e-4491-9059-6535ad7a514c"
+                    ],
+                    "isOptional": false
+                },
+                {
+                    "id": "47ef81f2-f80e-48bc-87c6-9d5ddf7cd4c4",
+                    "type": "policyInterventionId",
+                    "status": "not connected",
+                    "label": "Interventions",
+                    "isOptional": true
+                }
+            ],
+            "outputs": [
+                {
+                    "id": "45047a7c-6584-41f4-8ff2-0325741d209a",
+                    "type": "datasetId",
+                    "status": "not connected",
+                    "isOptional": false,
+                    "state": {}
+                }
+            ],
+            "status": "success",
+            "uniqueInputs": false
+        }
+    ],
+    "edges": [
+        {
+            "id": "9f2f5783-8e9a-4081-91cb-063774392321",
+            "workflowId": "bb3ed815-dae7-4d4c-bc1a-9ecadfa5bd22",
+            "version": 2,
+            "isDeleted": false,
+            "source": "706bcb0e-8f05-4ecd-8677-d00a7111ff44",
+            "sourcePortId": "45135f39-288b-4eb1-9537-c1db1e9ebf2d",
+            "target": "e459cf71-b788-4e3b-8161-ac586079fd20",
+            "targetPortId": "00c91ccb-901f-432b-af7d-5b8fc5b8c683",
+            "points": [
+                {
+                    "x": 364,
+                    "y": 427
+                },
+                {
+                    "x": 471,
+                    "y": 218
+                }
+            ]
+        },
+        {
+            "id": "eb6b70af-4a6a-40df-a8af-1512386aab6f",
+            "workflowId": "bb3ed815-dae7-4d4c-bc1a-9ecadfa5bd22",
+            "version": 5,
+            "isDeleted": false,
+            "source": "e459cf71-b788-4e3b-8161-ac586079fd20",
+            "sourcePortId": "f6687f89-a7c0-400c-99b4-d10f8903ad0c",
+            "target": "1c63929a-5aad-4e15-bbf0-e1e6ab0d5d14",
+            "targetPortId": "037c7692-6f9d-4768-b002-d723cec5e985",
+            "points": [
+                {
+                    "x": 651,
+                    "y": 403
+                },
+                {
+                    "x": 735,
+                    "y": 217
+                }
+            ]
+        }
+    ],
+    "scenario": {
+        "templateId": "blank-canvas",
+        "workflowName": "New123"
+    }
+}

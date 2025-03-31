@@ -2,7 +2,7 @@
 	<SelectButton class="p-button-xsm" :model-value="view" :options="viewOptions" @change="handleChange" />
 	<div class="container">
 		<tera-model-diagram v-if="view === View.Diagram" :model="model" :feature-config="{ isPreview: true }" />
-		<tera-model-equation v-else-if="view === View.Equation" :model="model" :is-editable="false" />
+		<tera-model-equation v-else-if="view === View.Equation" :model="model" />
 	</div>
 </template>
 <script setup lang="ts">
@@ -30,6 +30,12 @@ const handleChange = (event) => {
 </script>
 
 <style scoped>
+.container {
+	border: 1px solid var(--surface-border-light);
+	border-radius: var(--border-radius);
+	overflow: hidden;
+}
+
 .p-selectbutton {
 	width: 100%;
 }

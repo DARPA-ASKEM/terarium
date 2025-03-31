@@ -7,19 +7,18 @@
 		@update:selection="onSelection"
 		v-bind="$attrs"
 	>
-		<div :tabName="StratifyTabs.Wizard">
+		<div :tabName="StratifyTabs.Wizard" class="input-section">
 			<tera-drilldown-section class="px-3 wizard-section">
 				<template #header-controls-left>
 					<section>
 						<h5>Stratification settings</h5>
-						<p>The model will be stratified with the following settings.</p>
 						<p v-if="node.state.hasCodeBeenRun" class="code-executed-warning">
 							Note: Code has been executed which may not be reflected here.
 						</p>
 					</section>
 				</template>
 				<template #header-controls-right>
-					<Button size="small" severity="secondary" outlined label="Reset" @click="resetModel" />
+					<Button size="small" severity="secondary" outlined label="Reset" @click="resetModel" class="mr-1" />
 					<Button
 						:loading="isStratifyInProgress"
 						:label="isStratifyInProgress ? 'Loading...' : 'Stratify'"
@@ -37,26 +36,25 @@
 		</div>
 		<div :tabName="StratifyTabs.Notebook">
 			<tera-drilldown-section class="notebook-section">
-				<div class="toolbar">
-					<tera-notebook-jupyter-input
-						:kernel-manager="kernelManager"
-						:default-options="sampleAgentQuestions"
-						:context-language="'python3'"
-						@llm-output="(data: any) => processLLMOutput(data)"
-						@llm-thought-output="(data: any) => llmThoughts.push(data)"
-						@question-asked="updateLlmQuery"
-					>
-						<template #toolbar-right-side>
-							<Button
-								:loading="isStratifyInProgress"
-								:label="isStratifyInProgress ? 'Loading...' : 'Run'"
-								size="small"
-								icon="pi pi-play"
-								@click="runCodeStratify"
-							/>
-						</template>
-					</tera-notebook-jupyter-input>
-				</div>
+				<tera-notebook-jupyter-input
+					:kernel-manager="kernelManager"
+					:default-options="sampleAgentQuestions"
+					:context-language="'python3'"
+					@llm-output="(data: any) => processLLMOutput(data)"
+					@llm-thought-output="(data: any) => llmThoughts.push(data)"
+					@question-asked="updateLlmQuery"
+				>
+					<template #toolbar-right-side>
+						<Button
+							:loading="isStratifyInProgress"
+							:label="isStratifyInProgress ? 'Loading...' : 'Run'"
+							size="small"
+							icon="pi pi-play"
+							@click="runCodeStratify"
+							:disabled="isEmpty(codeText)"
+						/>
+					</template>
+				</tera-notebook-jupyter-input>
 				<v-ace-editor
 					v-model:value="codeText"
 					@init="initialize"
@@ -66,6 +64,7 @@
 					class="ace-editor"
 					:options="{ showPrintMargin: false }"
 				/>
+				<tera-notebook-output :traceback="executeResponseTraceback" />
 			</tera-drilldown-section>
 		</div>
 		<template #preview>
@@ -81,7 +80,7 @@
 					:value="executeResponse.value"
 					:traceback="executeResponse.traceback"
 				/>
-				<tera-model v-else-if="outputAmr" is-workflow is-save-for-reuse :assetId="outputAmr.id" @on-save="updateNode" />
+				<tera-model v-else-if="outputAmr" is-workflow is-save-for-reuse :assetId="outputAmr.id" />
 				<template v-else>
 					<tera-progress-spinner v-if="isStratifyInProgress" is-centered :font-size="2">
 						Processing...
@@ -95,6 +94,7 @@
 
 <script setup lang="ts">
 import '@/ace-config';
+import { isEmpty, cloneDeep, debounce, isEqual, last } from 'lodash';
 import TeraDrilldownPreview from '@/components/drilldown/tera-drilldown-preview.vue';
 import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.vue';
 import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
@@ -106,12 +106,10 @@ import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue'
 import TeraStratificationGroupForm from '@/components/workflow/ops/stratify-mira/tera-stratification-group-form.vue';
 import { KernelSessionManager } from '@/services/jupyter';
 import { createModelFromOld, getModel } from '@/services/model';
-import { getModelIdFromModelConfigurationId } from '@/services/model-configurations';
 import type { Model } from '@/types/Types';
 import { AMRSchemaNames } from '@/types/common';
 import { OperatorStatus, WorkflowNode } from '@/types/workflow';
 import { logger } from '@/utils/logger';
-import { cloneDeep, debounce, isEqual, last } from 'lodash';
 import Button from 'primevue/button';
 import { v4 as uuidv4 } from 'uuid';
 import { onMounted, onUnmounted, ref, watch } from 'vue';
@@ -122,7 +120,7 @@ import { blankStratifyGroup, StratifyGroup, StratifyOperationStateMira } from '.
 const props = defineProps<{
 	node: WorkflowNode<StratifyOperationStateMira>;
 }>();
-const emit = defineEmits(['append-output', 'update-state', 'close', 'select-output', 'update-output']);
+const emit = defineEmits(['append-output', 'update-state', 'close', 'select-output']);
 
 enum StratifyTabs {
 	Wizard = 'Wizard',
@@ -151,6 +149,7 @@ let editor: VAceEditorInstance['_editor'] | null;
 const codeText = ref('');
 const llmQuery = ref('');
 const llmThoughts = ref<any[]>([]);
+const executeResponseTraceback = ref('');
 
 const sampleAgentQuestions = [
 	'Stratify my model by the ages young and old',
@@ -178,8 +177,8 @@ const processLLMOutput = (data: any) => {
 const resetModel = () => {
 	if (!amr.value) return;
 	kernelManager
-		.sendMessage('reset_request', {})
-		.register('reset_response', handleResetResponse)
+		.sendMessage('reset_mira_request', {})
+		.register('reset_mira_response', handleResetResponse)
 		.register('model_preview', handleModelPreview);
 };
 
@@ -211,24 +210,24 @@ const stratifyModel = () => {
 		if (modelParameters.includes(v)) parametersToStratify.push(v);
 	});
 
-	let executedCode = '';
 	const messageContent = {
 		key: strataOption.name,
 		strata: strataOption.groupLabels.split(',').map((d) => d.trim()),
 		concepts_to_stratify: conceptsToStratify,
 		params_to_stratify: parametersToStratify,
 		cartesian_control: strataOption.cartesianProduct,
-		structure: strataOption.useStructure ? null : []
+		structure: strataOption.useStructure ? null : [],
+		add_param_factor: strataOption.useFactoredParameter || false
 	};
-	kernelManager.sendMessage('reset_request', {}).register('reset_response', () => {
+	kernelManager.sendMessage('reset_mira_request', {}).register('reset_mira_response', () => {
 		kernelManager
 			.sendMessage('stratify_request', messageContent)
 			.register('stratify_response', (data: any) => {
-				executedCode = data.content.executed_code;
+				const executedCode = data.content.executed_code;
+				saveCodeToState(executedCode, false);
 			})
 			.register('model_preview', async (data: any) => {
 				await handleModelPreview(data);
-				saveCodeToState(executedCode, false);
 			});
 	});
 };
@@ -252,7 +251,8 @@ const handleModelPreview = async (data: any) => {
 	amrResponse.header.name = newName;
 
 	// Create output
-	const modelData = await createModelFromOld(amr.value, amrResponse);
+	const modelConfigId = props.node.inputs.find((i) => i.type === 'modelConfigId')?.value?.[0];
+	const modelData = await createModelFromOld(amr.value, amrResponse, modelConfigId);
 	if (!modelData) return;
 	outputAmr.value = modelData;
 
@@ -291,6 +291,9 @@ const getStatesAndParameters = (amrModel: Model) => {
 	const model = amrModel.model;
 	const semantics = amrModel.semantics;
 
+	const rates = semantics!.ode.rates || [];
+	const rateExpressions = rates.map((r) => r.expression);
+
 	if ((modelFramework === AMRSchemaNames.PETRINET || modelFramework === AMRSchemaNames.STOCKFLOW) && semantics?.ode) {
 		const { initials, parameters, observables } = semantics.ode;
 
@@ -298,7 +301,15 @@ const getStatesAndParameters = (amrModel: Model) => {
 			modelStates.push(i.target);
 		});
 		parameters?.forEach((p) => {
-			modelParameters.push(p.id);
+			// Parameters should be used within transition expressions for them to be "stratifiable"
+			// FIXME: This would be more accurate if we parse and check rate expressions' free variables
+			// instead of just the rate expression string
+			for (let i = 0; i < rateExpressions.length; i++) {
+				if (rateExpressions[i]?.includes(p.id)) {
+					modelParameters.push(p.id);
+					break;
+				}
+			}
 		});
 		observables?.forEach((o) => {
 			modelStates.push(o.id);
@@ -318,15 +329,7 @@ const getStatesAndParameters = (amrModel: Model) => {
 };
 
 const inputChangeHandler = async () => {
-	const input = props.node.inputs[0];
-	if (!input) return;
-
-	let modelId: string | null = null;
-	if (input.type === 'modelId') {
-		modelId = input.value?.[0];
-	} else if (input.type === 'modelConfigId') {
-		modelId = await getModelIdFromModelConfigurationId(input.value?.[0]);
-	}
+	const modelId = props.node.state.baseModelId;
 	if (!modelId) return;
 
 	amr.value = await getModel(modelId);
@@ -366,14 +369,16 @@ const runCodeStratify = () => {
 
 	let executedCode = '';
 
-	kernelManager.sendMessage('reset_request', {}).register('reset_response', () => {
+	kernelManager.sendMessage('reset_mira_request', {}).register('reset_mira_response', () => {
 		kernelManager
 			.sendMessage('execute_request', messageContent)
 			.register('execute_input', (data) => {
 				executedCode = data.content.code;
 			})
 			.register('stream', (data) => {
-				console.log('stream', data);
+				if ((data?.content?.name === 'stderr' || data?.content?.name === 'stdout') && data.content.text) {
+					executeResponseTraceback.value = `${executeResponseTraceback.value} ${data.content.text}`;
+				}
 			})
 			.register('model_preview', (data) => {
 				// TODO: https://github.com/DARPA-ASKEM/terarium/issues/2305
@@ -431,15 +436,6 @@ const hasCodeChange = () => {
 };
 const checkForCodeChange = debounce(hasCodeChange, 100);
 
-function updateNode(model: Model) {
-	if (!model) return;
-	outputAmr.value = model;
-	const outputPort = cloneDeep(props.node.outputs?.find((port) => port.value?.[0] === model.id));
-	if (!outputPort) return;
-	outputPort.label = model.header.name;
-	emit('update-output', outputPort);
-}
-
 watch(
 	() => codeText.value,
 	() => checkForCodeChange()
@@ -466,7 +462,7 @@ watch(
 
 // Set model, modelNodeOptions
 watch(
-	() => props.node.inputs[0],
+	() => props.node.state.baseModelId,
 	async () => {
 		await inputChangeHandler();
 	},
@@ -486,13 +482,22 @@ onUnmounted(() => {
 </script>
 
 <style scoped>
+/* set width of wizard section */
+:deep(main):has(.input-section) {
+	grid-template-columns: auto;
+}
+/* set width of notebook section */
+:deep(main):has(.notebook-section) {
+	grid-template-columns: 40% 60%;
+}
+
 .notebook-section:deep(main) {
 	gap: var(--gap-2);
 	position: relative;
 }
 
 .code-executed-warning {
-	background-color: var(--error-message-background);
+	background-color: var(--surface-error);
 	border-radius: var(--border-radius);
 	color: var(--error-message-color);
 	padding: var(--gap-2-5);
@@ -506,6 +511,6 @@ onUnmounted(() => {
 
 .wizard-section {
 	background-color: var(--surface-disabled);
-	border-right: 1px solid var(--surface-border-dark);
+	border-right: 1px solid var(--surface-border-light);
 }
 </style>

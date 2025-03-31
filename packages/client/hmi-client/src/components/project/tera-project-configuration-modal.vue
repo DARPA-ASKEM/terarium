@@ -8,7 +8,7 @@
 				<section>
 					<form @submit.prevent>
 						<div>
-							<label for="new-project-name">Project title* <span>(Required)</span></label>
+							<label for="new-project-name">Project name <span>(Required)</span></label>
 							<Textarea
 								id="new-project-name"
 								rows="1"
@@ -17,6 +17,7 @@
 								placeholder="What do you want to call your project?"
 								required
 								class="w-full"
+								style="min-height: 35px"
 							/>
 						</div>
 						<div>
@@ -56,7 +57,7 @@
 									<img src="@assets/images/project-thumbnails/default.png" alt="Default thumbnail image" />
 								</label>
 							</li>
-							<li v-for="i in 14" :key="i">
+							<li v-for="i in 53" :key="i">
 								<input type="radio" name="thumbnail" :id="`thumbnail-0${i}`" v-model="thumbnail" :value="`0${i}`" />
 								<label :for="`thumbnail-0${i}`">
 									<img

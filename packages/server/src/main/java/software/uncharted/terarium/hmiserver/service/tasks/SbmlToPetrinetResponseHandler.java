@@ -41,16 +41,12 @@ public class SbmlToPetrinetResponseHandler extends TaskResponseHandler {
 				.getParameters()
 				.forEach(param -> {
 					if (param.getName() == null || param.getName().isEmpty()) {
-						param.setName(param.getId());
+						param.setName(param.getConceptReference());
 					}
 				});
 
 			final ConversionAdditionalProperties props = resp.getAdditionalProperties(ConversionAdditionalProperties.class);
-			model = modelService.createAsset(
-				modelResp.getResponse(),
-				props.getProjectId(),
-				ASSUME_WRITE_PERMISSION_ON_BEHALF_OF_USER
-			);
+			model = modelService.createAsset(modelResp.getResponse(), props.getProjectId());
 			resp.setOutput(objectMapper.writeValueAsString(model).getBytes());
 		} catch (final Exception e) {
 			log.error("Failed to create model", e);

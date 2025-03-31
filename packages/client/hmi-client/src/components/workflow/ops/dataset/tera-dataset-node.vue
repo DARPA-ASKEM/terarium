@@ -15,33 +15,43 @@
 			/>
 			<tera-operator-placeholder :node="node" />
 		</template>
+		<tera-operator-status v-if="operatorStatus" :status="operatorStatus" />
 	</main>
 </template>
 
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue';
 import { isEmpty } from 'lodash';
-import { AssetType } from '@/types/Types';
-import type { Dataset, ProjectAsset } from '@/types/Types';
 import Button from 'primevue/button';
 import Dropdown from 'primevue/dropdown';
+
+import { AssetType, ClientEventType, type Dataset, type ProjectAsset } from '@/types/Types';
+import { OperatorStatus, WorkflowNode } from '@/types/workflow';
 import { getDataset } from '@/services/dataset';
 import { canPropagateResource } from '@/services/workflow';
-import { WorkflowNode } from '@/types/workflow';
 import TeraOperatorTitle from '@/components/operator/tera-operator-title.vue';
+import TeraOperatorPlaceholder from '@/components/operator/tera-operator-placeholder.vue';
+import TeraOperatorStatus from '@/components/operator/tera-operator-status.vue';
 import TeraShowMoreText from '@/components/widgets/tera-show-more-text.vue';
 import { useProjects } from '@/composables/project';
-import TeraOperatorPlaceholder from '@/components/operator/tera-operator-placeholder.vue';
+import { createEnrichClientEventHandler, useClientEvent } from '@/composables/useClientEvent';
+
 import { DatasetOperationState } from './dataset-operation';
 
 const props = defineProps<{
 	node: WorkflowNode<DatasetOperationState>;
 }>();
 
-const emit = defineEmits(['append-output', 'update-state', 'open-drilldown']);
+const emit = defineEmits(['append-output', 'open-drilldown', 'finished-job']);
 
 const datasets = computed(() => useProjects().getActiveProjectAssets(AssetType.Dataset));
 const dataset = ref<Dataset | null>(null);
+const operatorStatus = ref<OperatorStatus>();
+
+useClientEvent(
+	ClientEventType.TaskGollmEnrichDataset,
+	createEnrichClientEventHandler(operatorStatus, props.node.state.datasetId, emit)
+);
 
 async function getDatasetById(id: string) {
 	dataset.value = await getDataset(id);
@@ -50,15 +60,17 @@ async function getDatasetById(id: string) {
 		// Once a dataset is selected the output is assigned here,
 		const outputs = props.node.outputs;
 		if (canPropagateResource(outputs)) {
-			emit('update-state', {
-				datasetId: dataset.value.id
-			});
-
-			emit('append-output', {
-				type: 'datasetId',
-				label: dataset.value.name,
-				value: [dataset.value.id]
-			});
+			emit(
+				'append-output',
+				{
+					type: 'datasetId',
+					label: dataset.value.name,
+					value: [dataset.value.id]
+				},
+				{
+					datasetId: dataset.value.id
+				}
+			);
 		}
 	}
 }

@@ -33,7 +33,9 @@ public class TaskRequest implements Serializable {
 		@JsonAlias("text_extraction")
 		TEXT_EXTRACTION("text_extraction"),
 		@JsonAlias("table_extraction")
-		TABLE_EXTRACTION("table_extraction");
+		TABLE_EXTRACTION("table_extraction"),
+		@JsonAlias("ocr_extraction")
+		OCR_EXTRACTION("ocr_extraction");
 
 		private final String value;
 
@@ -52,6 +54,7 @@ public class TaskRequest implements Serializable {
 	protected int timeoutMinutes = 5;
 	protected String userId;
 	protected UUID projectId;
+	protected boolean useCache = true;
 
 	// Sometimes we have context specific variables what we want to associate with a
 	// request but aren't actually used by the task on the other side but are

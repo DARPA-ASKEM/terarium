@@ -8,7 +8,6 @@ import lombok.Data;
 import lombok.experimental.Accessors;
 import lombok.extern.slf4j.Slf4j;
 import software.uncharted.terarium.hmiserver.annotations.TSModel;
-import software.uncharted.terarium.hmiserver.annotations.TSOptional;
 
 @Data
 @Accessors(chain = true)
@@ -22,10 +21,6 @@ public class CsvAsset implements Serializable {
 
 	/** The csv data. Note that this may be incomplete if the dataset is too large. */
 	List<List<String>> csv;
-
-	/** Stats about the entire CSV file, not just the contents represented here */
-	@TSOptional
-	List<CsvColumnStats> stats;
 
 	/** Headers on this CSV file */
 	List<String> headers;

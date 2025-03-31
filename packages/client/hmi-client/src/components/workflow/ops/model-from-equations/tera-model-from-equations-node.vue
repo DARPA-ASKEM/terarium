@@ -2,7 +2,7 @@
 	<main>
 		<tera-operator-model-preview v-if="model" :model="model" />
 		<tera-operator-placeholder v-else :node="node" />
-		<Button @click="emit('open-drilldown')" label="Edit" severity="secondary" outlined />
+		<Button @click="emit('open-drilldown')" label="Open" severity="secondary" outlined />
 	</main>
 </template>
 
@@ -11,21 +11,21 @@ import { watch, ref } from 'vue';
 import Button from 'primevue/button';
 import { WorkflowNode } from '@/types/workflow';
 import TeraOperatorPlaceholder from '@/components/operator/tera-operator-placeholder.vue';
-import { ModelOperationState } from '@/components/workflow/ops/model/model-operation';
 import { getModel } from '@/services/model';
 import { Model } from '@/types/Types';
 import TeraOperatorModelPreview from '@/components/operator/tera-operator-model-preview.vue';
-import operator from '@/services/operator';
+import { getActiveOutput } from '@/components/workflow/util';
+import { ModelFromEquationsState } from '@/components/workflow/ops/model-from-equations/model-from-equations-operation';
 
 const props = defineProps<{
-	node: WorkflowNode<ModelOperationState>;
+	node: WorkflowNode<ModelFromEquationsState>;
 }>();
 
-const emit = defineEmits(['open-drilldown']);
+const emit = defineEmits(['open-drilldown', 'update-state']);
 
 const model = ref(null as Model | null);
 const updateModel = async () => {
-	const modelId = operator.getActiveOutput(props.node)?.value?.[0];
+	const modelId = getActiveOutput(props.node)?.value?.[0];
 	if (modelId && modelId !== model?.value?.id) {
 		model.value = await getModel(modelId);
 	}

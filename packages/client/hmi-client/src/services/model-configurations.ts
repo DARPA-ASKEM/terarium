@@ -1,5 +1,6 @@
 import API from '@/api/api';
 import type {
+	InferredParameterSemantic,
 	InitialSemantic,
 	Model,
 	ModelConfiguration,
@@ -7,12 +8,14 @@ import type {
 	ObservableSemantic,
 	ParameterSemantic
 } from '@/types/Types';
-import { isEmpty } from 'lodash';
-import { pythonInstance } from '@/python/PyodideController';
+import { SemanticType } from '@/types/Types';
+import { isEmpty, isNaN, isNumber, keyBy } from 'lodash';
+import { pythonInstance } from '@/web-workers/python/PyodideController';
 import { DistributionType } from './distribution';
 
 export interface SemanticOtherValues {
 	name: string;
+	description?: string;
 	target?: string;
 	expression?: string;
 	expressionMathml?: string;
@@ -45,13 +48,13 @@ export const deleteModelConfiguration = async (id: string) => {
 	return response?.data ?? null;
 };
 
-export const getAsConfiguredModel = async (modelConfiguration: ModelConfiguration): Promise<Model> => {
-	const response = await API.get<Model>(`model-configurations/as-configured-model/${modelConfiguration.id}`);
+export const getAsConfiguredModel = async (modelConfigurationId: string): Promise<Model> => {
+	const response = await API.get<Model>(`model-configurations/${modelConfigurationId}/model`);
 	return response?.data ?? null;
 };
 
 export const getArchive = async (modelConfiguration: ModelConfiguration): Promise<any> => {
-	const response = await API.get(`model-configurations/download/${modelConfiguration.id}`, {
+	const response = await API.get(`model-configurations/download-archive/${modelConfiguration.id}`, {
 		responseType: 'arraybuffer'
 	});
 	const blob = new Blob([response?.data], { type: 'application/octet-stream' });
@@ -94,9 +97,21 @@ export function getParameter(config: ModelConfiguration, parameterId: string): P
 	return config.parameterSemanticList?.find((param) => param.referenceId === parameterId);
 }
 
-export function getParameterDistribution(config: ModelConfiguration, parameterId: string): ModelDistribution {
+export function getInferredParameter(
+	config: ModelConfiguration,
+	parameterId: string
+): InferredParameterSemantic | undefined {
+	return config.inferredParameterList?.find((param) => param.referenceId === parameterId);
+}
+
+export function getParameterDistribution(
+	config: ModelConfiguration,
+	parameterId: string,
+	useDefaultNan: boolean = false
+): ModelDistribution {
 	const parameter = getParameter(config, parameterId);
-	if (!parameter) return { type: DistributionType.Constant, parameters: { value: 0 } };
+	const defaultValue = useDefaultNan ? NaN : 0;
+	if (!parameter) return { type: DistributionType.Constant, parameters: { value: defaultValue } };
 	return parameter.distribution;
 }
 
@@ -171,6 +186,17 @@ export async function setInitialExpression(
 	initial.expressionMathml = mathml;
 }
 
+export async function setInitialExpressions(
+	config: ModelConfiguration,
+	initialExpressions: { id: string; value: string }[]
+): Promise<void> {
+	await Promise.all(
+		initialExpressions.map(async (initial) => {
+			await setInitialExpression(config, initial.id, initial.value);
+		})
+	);
+}
+
 export function setInitialSource(config: ModelConfiguration, initialId: string, source: string): void {
 	const initial = getInitial(config, initialId);
 	if (initial) {
@@ -190,20 +216,134 @@ export function getObservables(config: ModelConfiguration): ObservableSemantic[]
 	return config.observableSemanticList ?? [];
 }
 
-export function getOtherValues(configs: ModelConfiguration[], id: string, key: string, otherValueList: string) {
+export function getOtherValues(
+	configs: ModelConfiguration[],
+	id: string,
+	key: string,
+	otherValueList: string,
+	description?: string
+): SemanticOtherValues[] {
 	let otherValues: SemanticOtherValues[] = [];
 
-	const modelConfigTableData = configs.map((modelConfig) => ({
-		name: modelConfig.name ?? '',
-		list: modelConfig[otherValueList]
-	}));
+	const modelConfigTableData = configs.map((modelConfig) => {
+		const name: string = modelConfig.name ?? '';
+		let semanticList: string = otherValueList;
+		if (semanticList === 'parameterSemanticList' && modelConfig.simulationId) {
+			semanticList = 'inferredParameterList';
+		}
+		const list = modelConfig[semanticList];
+		return { name, list };
+	});
 
 	modelConfigTableData.forEach((modelConfig) => {
-		const config: ParameterSemantic[] | InitialSemantic[] = modelConfig.list.filter((item) => item[key] === id)[0];
+		const config: ParameterSemantic[] | InitialSemantic[] | InferredParameterSemantic[] = modelConfig.list.filter(
+			(item) => item[key] === id
+		)[0];
 		if (config && modelConfig.name) {
 			const data: SemanticOtherValues = { name: modelConfig.name, ...config };
+			if (description) {
+				data.description = description;
+			}
 			otherValues = [...otherValues, data];
 		}
 	});
 	return otherValues;
+}
+
+export function isNumberInputEmpty(value: string) {
+	const number = parseFloat(value);
+	return isNaN(number) || !isNumber(number);
+}
+
+export function isParameterInputEmpty(parameter: ModelDistribution) {
+	if (parameter.type === DistributionType.Constant) {
+		return isNumberInputEmpty(parameter.parameters.value);
+	}
+	return isNumberInputEmpty(parameter.parameters.maximum) || isNumberInputEmpty(parameter.parameters.minimum);
+}
+
+export function getMissingInputAmount(modelConfiguration: ModelConfiguration) {
+	let missingInputs = 0;
+	modelConfiguration.initialSemanticList.forEach((initial) => {
+		if (isEmpty(initial.expression)) {
+			missingInputs++;
+		}
+	});
+
+	modelConfiguration.parameterSemanticList.forEach((parameter) => {
+		if (parameter.distribution.type === DistributionType.Constant) {
+			if (isNumberInputEmpty(parameter.distribution.parameters.value)) {
+				missingInputs++;
+			}
+		} else if (
+			isNumberInputEmpty(parameter.distribution.parameters.minimum) ||
+			isNumberInputEmpty(parameter.distribution.parameters.maximum)
+		) {
+			missingInputs++;
+		}
+	});
+	return missingInputs;
+}
+
+export function getModelParameters(modelConfiguration, source, amrParameters) {
+	const configParameters = keyBy(getParameters(modelConfiguration), 'referenceId');
+	return amrParameters.map((parameter) => {
+		if (configParameters[parameter.id]) return { ...configParameters[parameter.id] };
+		return {
+			default: false,
+			distribution: {
+				type: DistributionType.Constant,
+				parameters: { value: NaN }
+			},
+			referenceId: parameter.id,
+			type: SemanticType.Parameter,
+			source
+		};
+	});
+}
+
+export function getModelInitials(modelConfiguration, source, amrInitials) {
+	const configInitials = keyBy(getInitials(modelConfiguration), 'target');
+	return amrInitials.map((initial) => {
+		if (configInitials[initial.target]) return { ...configInitials[initial.target] };
+		return {
+			expression: '',
+			expressionMathml: '',
+			target: initial.target,
+			type: SemanticType.Initial,
+			source
+		};
+	});
+}
+
+// Get the model configuration name for the given model configuration id
+export function getModelConfigName(modelConfigs: ModelConfiguration[], configId: string) {
+	const modelConfig = modelConfigs.find((d) => d.id === configId);
+	return modelConfig?.name ?? '';
+}
+
+// Get the model configuration as a LaTeX table
+export async function getModelConfigurationAsLatexTable(id: ModelConfiguration['id']): Promise<string> {
+	const response = await API.get<string>(`model-configurations/${id}/latex-table`);
+	return response?.data ?? '';
+}
+
+export function getParameterDistributionAverage(parameter: ParameterSemantic | InferredParameterSemantic): number {
+	const distribution = parameter.distribution;
+	if (distribution.type === DistributionType.Constant) {
+		return distribution.parameters.value;
+	}
+	if (distribution.type === DistributionType.Uniform) {
+		return (distribution.parameters.minimum + distribution.parameters.maximum) / 2;
+	}
+	if (distribution.type === 'inferred') {
+		return distribution.parameters.mean;
+	}
+	return NaN;
+}
+
+// Get the model configuration as a CSV table
+export async function getModelConfigurationAsCsvTable(id: ModelConfiguration['id']): Promise<string> {
+	const response = await API.get<string>(`model-configurations/${id}/csv-table`);
+	return response?.data ?? '';
 }

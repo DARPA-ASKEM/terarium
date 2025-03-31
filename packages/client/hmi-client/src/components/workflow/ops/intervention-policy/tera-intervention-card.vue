@@ -1,7 +1,12 @@
 <template>
 	<div class="intervention-card">
 		<header class="card-section">
-			<tera-toggleable-input :model-value="intervention.name" @update:model-value="onUpdateName($event)" tag="h6" />
+			<tera-toggleable-input
+				:model-value="intervention.name"
+				@update:model-value="onUpdateName($event)"
+				tag="h6"
+				class="nudge-left"
+			/>
 			<div class="flex align-items-center ml-auto">
 				<RadioButton
 					:model-value="interventionType"
@@ -24,19 +29,9 @@
 			</div>
 		</header>
 		<section>
-			<div v-if="interventionType === 'static'" class="card-section pb-2">
-				Starting at day
-				<tera-input-number
-					auto-width
-					invalidate-negative
-					:model-value="intervention.staticInterventions[0].timestep"
-					@update:model-value="(val) => onUpdateThreshold(val, 0)"
-					placeholder="timestep"
-				/>
-				,
-			</div>
-			<div class="card-section">
-				<template v-if="interventionType === 'dynamic'">
+			<!-- Dynamic -->
+			<div class="card-setting" v-if="interventionType === 'dynamic'">
+				<div class="flex flex-wrap align-items-center gap-2">
 					Set
 					<section>
 						<Dropdown
@@ -55,11 +50,74 @@
 							option-label="label"
 							option-value="value"
 							placeholder="Select"
+							:filter="semanticOptions(intervention.dynamicInterventions[0].type).length > 5"
+							autoFilterFocus
 						/>
 					</section>
-				</template>
-				<!-- Static -->
-				<template v-if="interventionType === 'static'">
+					to
+					<tera-input-number
+						auto-width
+						:model-value="intervention.dynamicInterventions[0].value"
+						@update:model-value="(val) => onUpdateValue(val, 0)"
+						placeholder="value"
+					/>
+					<SelectButton
+						v-if="intervention.dynamicInterventions[0].type === InterventionSemanticType.Parameter"
+						:model-value="intervention.dynamicInterventions[0].valueType"
+						:options="interventionValueTypeOptions"
+						option-label="label"
+						option-value="value"
+						@update:model-value="(val) => onValueTypeChange(val, 0)"
+					/>
+					when
+					<Dropdown
+						class="applied-to-menu"
+						:model-value="intervention.dynamicInterventions[0].parameter"
+						@change="onTargetParameterChange"
+						:options="stateOptions"
+						option-label="label"
+						option-value="value"
+						placeholder="Select a trigger"
+						:filter="stateOptions.length > 5"
+						autoFilterFocus
+					/>
+					crosses the threshold
+					<tera-input-number
+						auto-width
+						:model-value="intervention.dynamicInterventions[0].threshold"
+						@update:model-value="(val) => onUpdateThreshold(val, 0)"
+						placeholder="threshold"
+					/>
+					{{ dynamicInterventionUnits }}.
+				</div>
+				<Button
+					class="ml-auto"
+					text
+					size="small"
+					label="Configuration Values"
+					:disabled="intervention.dynamicInterventions[0].appliedTo === ''"
+					@click="
+						emit('open-modal', {
+							semanticType: intervention.dynamicInterventions[0].type,
+							id: intervention.dynamicInterventions[0].appliedTo
+						})
+					"
+				/>
+			</div>
+			<!-- Static -->
+			<template v-if="interventionType === 'static'">
+				<div class="card-section pb-2">
+					Starting at day
+					<tera-input-number
+						auto-width
+						invalidate-negative
+						:model-value="intervention.staticInterventions[0].timestep"
+						@update:model-value="(val) => onUpdateThreshold(val, 0)"
+						placeholder="Timestep"
+					/>
+					:
+				</div>
+				<div class="card-setting">
 					<template v-if="intervention.staticInterventions.length === 1">
 						Set
 						<section>
@@ -79,6 +137,8 @@
 								option-label="label"
 								option-value="value"
 								placeholder="Select"
+								:filter="semanticOptions(intervention.staticInterventions[0].type).length > 5"
+								autoFilterFocus
 							/>
 						</section>
 						to
@@ -88,10 +148,32 @@
 							@update:model-value="(val) => onUpdateValue(val, 0)"
 							placeholder="value"
 						/>
+						<SelectButton
+							v-if="intervention.staticInterventions[0].type === InterventionSemanticType.Parameter"
+							:model-value="intervention.staticInterventions[0].valueType"
+							:options="interventionValueTypeOptions"
+							option-label="label"
+							option-value="value"
+							@update:model-value="(val) => onValueTypeChange(val, 0)"
+						/>
+
+						<Button
+							text
+							class="ml-auto"
+							size="small"
+							label="Configuration Values"
+							:disabled="intervention.staticInterventions[0].appliedTo === ''"
+							@click="
+								emit('open-modal', {
+									semanticType: intervention.staticInterventions[0].type,
+									id: intervention.staticInterventions[0].appliedTo
+								})
+							"
+						/>
 					</template>
 
 					<ul v-if="intervention.staticInterventions.length > 1" class="w-full">
-						<li v-for="(i, index) in intervention.staticInterventions" class="flex-1" :key="index">
+						<li v-for="(i, index) in intervention.staticInterventions" class="flex flex-column" :key="index">
 							<div class="flex align-items-center pt-2 pb-2 gap-2">
 								Set
 								<section>
@@ -111,6 +193,8 @@
 										option-label="label"
 										option-value="value"
 										placeholder="Select"
+										:filter="semanticOptions(i.type).length > 5"
+										autoFilterFocus
 									/>
 								</section>
 								to
@@ -120,41 +204,28 @@
 									@update:model-value="(val) => onUpdateValue(val, index)"
 									placeholder="value"
 								/>
-								<Button class="ml-auto" icon="pi pi-times" text @click="onRemoveStaticIntervention(index)" />
+								<SelectButton
+									v-if="i.type === InterventionSemanticType.Parameter"
+									:model-value="i.valueType"
+									:options="interventionValueTypeOptions"
+									option-label="label"
+									option-value="value"
+									@update:model-value="(val) => onValueTypeChange(val, index)"
+								/>
+								<Button
+									class="ml-auto"
+									text
+									size="small"
+									label="Configuration Values"
+									:disabled="i.appliedTo === ''"
+									@click="emit('open-modal', { semanticType: i.type, id: i.appliedTo })"
+								/>
+								<Button icon="pi pi-times" size="small" rounded text @click="onRemoveStaticIntervention(index)" />
 							</div>
-							<Divider />
 						</li>
 					</ul>
-				</template>
-
-				<!-- Dynamic -->
-				<template v-else>
-					to
-					<tera-input-number
-						auto-width
-						:model-value="intervention.dynamicInterventions[0].value"
-						@update:model-value="(val) => onUpdateValue(val, 0)"
-						placeholder="value"
-					/>
-					when
-					<Dropdown
-						:model-value="intervention.dynamicInterventions[0].parameter"
-						@change="onTargetParameterChange"
-						:options="stateOptions"
-						option-label="label"
-						option-value="value"
-						placeholder="Select a trigger"
-					/>
-					crosses the threshold
-					<tera-input-number
-						auto-width
-						:model-value="intervention.dynamicInterventions[0].threshold"
-						@update:model-value="(val) => onUpdateThreshold(val, 0)"
-						placeholder="threshold"
-					/>
-					{{ dynamicInterventionUnits }}.
-				</template>
-			</div>
+				</div>
+			</template>
 		</section>
 		<footer>
 			<Button
@@ -174,18 +245,29 @@ import TeraToggleableInput from '@/components/widgets/tera-toggleable-input.vue'
 import Button from 'primevue/button';
 import RadioButton from 'primevue/radiobutton';
 import { computed } from 'vue';
-import { Intervention, InterventionSemanticType } from '@/types/Types';
+import { Intervention, InterventionSemanticType, InterventionValueType } from '@/types/Types';
 import Dropdown, { DropdownChangeEvent } from 'primevue/dropdown';
 import TeraInputNumber from '@/components/widgets/tera-input-number.vue';
 import { cloneDeep, debounce, uniqueId } from 'lodash';
-import Divider from 'primevue/divider';
+import SelectButton from 'primevue/selectbutton';
 
-const emit = defineEmits(['update', 'delete', 'add']);
+const emit = defineEmits(['update', 'delete', 'add', 'open-modal']);
 const props = defineProps<{
 	intervention: Intervention;
 	parameterOptions: { label: string; value: string; units?: string }[];
 	stateOptions: { label: string; value: string; units?: string }[];
 }>();
+
+const interventionValueTypeOptions = [
+	{
+		label: 'Value',
+		value: InterventionValueType.Value
+	},
+	{
+		label: '%',
+		value: InterventionValueType.Percentage
+	}
+];
 
 const interventionSemanticOptions = [
 	{ label: 'Parameter', value: InterventionSemanticType.Parameter },
@@ -271,7 +353,8 @@ const onAddNewStaticIntervention = () => {
 		timestep: intervention.staticInterventions[0].timestep,
 		value: Number.NaN,
 		appliedTo: '',
-		type: InterventionSemanticType.Parameter
+		type: InterventionSemanticType.Parameter,
+		valueType: InterventionValueType.Value
 	});
 	emit('update', intervention);
 };
@@ -284,7 +367,8 @@ const onInterventionTypeChange = (value: string) => {
 				timestep: Number.NaN,
 				value: Number.NaN,
 				appliedTo: '',
-				type: InterventionSemanticType.Parameter
+				type: InterventionSemanticType.Parameter,
+				valueType: InterventionValueType.Value
 			}
 		];
 		intervention.dynamicInterventions = [];
@@ -296,7 +380,8 @@ const onInterventionTypeChange = (value: string) => {
 				value: Number.NaN,
 				parameter: '',
 				appliedTo: '',
-				type: InterventionSemanticType.Parameter
+				type: InterventionSemanticType.Parameter,
+				valueType: InterventionValueType.Value
 			}
 		];
 	}
@@ -317,8 +402,19 @@ const onSemanticChange = (event: DropdownChangeEvent, index: number) => {
 	item[index].type = event.value;
 	if (event.value === InterventionSemanticType.State) {
 		item[index].appliedTo = '';
+		item[index].valueType = InterventionValueType.Value;
 	} else {
 		item[index].appliedTo = '';
+	}
+	emit('update', intervention);
+};
+
+const onValueTypeChange = (valueType, index) => {
+	const intervention = cloneDeep(props.intervention);
+	if (interventionType.value === 'static') {
+		intervention.staticInterventions[index].valueType = valueType;
+	} else {
+		intervention.dynamicInterventions[index].valueType = valueType;
 	}
 	emit('update', intervention);
 };
@@ -346,24 +442,70 @@ const debounceUpdateState = debounce((intervention) => {
 
 .type-menu {
 	border-radius: var(--border-radius) 0 0 var(--border-radius);
-	background: var(--surface-200);
+	background: var(--surface-100);
+	height: 27px;
 }
 
 .applied-to-menu {
 	border-radius: 0 var(--border-radius) var(--border-radius) 0;
+	height: 27px;
 }
 
 .intervention-card {
-	background-color: var(--surface-50);
+	background-color: var(--surface-0);
 	border: 1px solid var(--surface-border-light);
 	border-radius: var(--border-radius-medium);
 	padding: var(--gap-2) var(--gap-4);
 	gap: var(--gap-2);
 	display: flex;
 	flex-direction: column;
+	cursor: pointer;
+	box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+}
+.intervention-card:hover {
+	background-color: var(--surface-highlight);
+	border-left-color: var(--primary-color);
+}
+.intervention-card:hover:has(.card-setting:hover) {
+	border-left-color: var(--primary-color-light);
+	background-color: color-mix(in srgb, var(--surface-highlight) 30%, var(--surface-0) 70%);
+}
+
+.card-setting {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: var(--gap-2);
+	background: var(--surface-50);
+	padding: var(--gap-2) var(--gap-4);
+	margin-bottom: var(--gap-1);
+	border-radius: var(--border-radius);
+	border: 1px solid var(--surface-border-light);
+	border-left: 4px solid var(--surface-300);
+}
+.card-setting:hover {
+	background: var(--surface-highlight);
+	border-left-color: var(--primary-color);
 }
 
 ul {
 	list-style: none;
+}
+
+/* lighten divider color */
+:deep(.p-divider.p-divider-horizontal:before) {
+	border-top-color: var(--surface-border-light);
+}
+
+/* Align name to the left edge even though it's a button */
+.nudge-left {
+	margin-left: -0.5rem;
+}
+
+:deep(.p-selectbutton) {
+	height: fit-content;
+	.p-button {
+		padding: 0;
+	}
 }
 </style>

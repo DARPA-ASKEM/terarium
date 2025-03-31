@@ -11,6 +11,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import io.swagger.v3.oas.annotations.tags.Tags;
 import jakarta.annotation.PostConstruct;
 import java.io.IOException;
+import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -42,8 +43,12 @@ import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
+import software.uncharted.terarium.hmiserver.annotations.HasProjectAccess;
+import software.uncharted.terarium.hmiserver.annotations.TSModel;
+import software.uncharted.terarium.hmiserver.annotations.TSOptional;
 import software.uncharted.terarium.hmiserver.models.ClientEventType;
 import software.uncharted.terarium.hmiserver.models.TerariumAsset;
+import software.uncharted.terarium.hmiserver.models.TerariumAssetEmbeddingType;
 import software.uncharted.terarium.hmiserver.models.dataservice.AssetType;
 import software.uncharted.terarium.hmiserver.models.dataservice.ResponseDeleted;
 import software.uncharted.terarium.hmiserver.models.dataservice.project.Contributor;
@@ -57,18 +62,13 @@ import software.uncharted.terarium.hmiserver.service.ClientEventService;
 import software.uncharted.terarium.hmiserver.service.CurrentUserService;
 import software.uncharted.terarium.hmiserver.service.TerariumAssetCloneService;
 import software.uncharted.terarium.hmiserver.service.UserService;
-import software.uncharted.terarium.hmiserver.service.data.ArtifactService;
-import software.uncharted.terarium.hmiserver.service.data.CodeService;
-import software.uncharted.terarium.hmiserver.service.data.DatasetService;
-import software.uncharted.terarium.hmiserver.service.data.DocumentAssetService;
 import software.uncharted.terarium.hmiserver.service.data.ITerariumAssetService;
-import software.uncharted.terarium.hmiserver.service.data.ModelService;
 import software.uncharted.terarium.hmiserver.service.data.ProjectAssetService;
 import software.uncharted.terarium.hmiserver.service.data.ProjectPermissionsService;
 import software.uncharted.terarium.hmiserver.service.data.ProjectSearchService;
+import software.uncharted.terarium.hmiserver.service.data.ProjectSearchService.ProjectSearchResponse;
 import software.uncharted.terarium.hmiserver.service.data.ProjectService;
 import software.uncharted.terarium.hmiserver.service.data.TerariumAssetServices;
-import software.uncharted.terarium.hmiserver.service.data.WorkflowService;
 import software.uncharted.terarium.hmiserver.service.notification.NotificationGroupInstance;
 import software.uncharted.terarium.hmiserver.service.notification.NotificationService;
 import software.uncharted.terarium.hmiserver.utils.Messages;
@@ -89,19 +89,13 @@ public class ProjectController {
 
 	static final String WELCOME_MESSAGE = "";
 	final Messages messages;
-	final ArtifactService artifactService;
-	final ModelService modelService;
-	final CodeService codeService;
 	final CurrentUserService currentUserService;
-	final DatasetService datasetService;
-	final DocumentAssetService documentAssetService;
 	final ProjectAssetService projectAssetService;
 	final ProjectService projectService;
 	final ReBACService reBACService;
 	final TerariumAssetServices terariumAssetServices;
 	final TerariumAssetCloneService cloneService;
 	final UserService userService;
-	final WorkflowService workflowService;
 	final ObjectMapper objectMapper;
 	final ProjectPermissionsService projectPermissionsService;
 	final ProjectSearchService projectSearchService;
@@ -167,7 +161,7 @@ public class ProjectController {
 			try {
 				projectIds = rebacUser.lookupProjects();
 			} catch (final Exception e) {
-				log.error("Error retrieving projects from spicedb", e);
+				log.error("Error retrieving projects from SpiceDB", e);
 				throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, messages.get("rebac.service-unavailable"));
 			}
 
@@ -192,6 +186,9 @@ public class ProjectController {
 			return ResponseEntity.noContent().build();
 		}
 
+		// Empty all the non-necessary information to speed up getting all the projects
+		projects.forEach(project -> project.setOverviewContent(null));
+
 		projects.forEach(project -> {
 			final RebacProject rebacProject = new RebacProject(project.getId(), reBACService);
 
@@ -201,7 +198,7 @@ public class ProjectController {
 				project.setUserPermission(rebacUser.getPermissionFor(rebacProject));
 			} catch (final Exception e) {
 				log.error(
-					"Failed to get user permissions from spicedb for project {}... Removing Project from list.",
+					"Failed to get user permissions from SpiceDB for project {}... Removing Project from list.",
 					project.getId(),
 					e
 				);
@@ -214,7 +211,7 @@ public class ProjectController {
 			try {
 				project.setPublicProject(rebacProject.isPublic());
 			} catch (final Exception e) {
-				log.error("Failed to get project {} public status from spicedb... Defaulting to private.", project.getId(), e);
+				log.error("Failed to get project {} public status from SpiceDB... Defaulting to private.", project.getId(), e);
 				project.setPublicProject(false);
 			}
 
@@ -231,7 +228,7 @@ public class ProjectController {
 					.getMetadata()
 					.put("contributor-count", Integer.toString(contributors == null ? 0 : contributors.size()));
 			} catch (final Exception e) {
-				log.error("Failed to get project contributors from spicedb for project {}", project.getId(), e);
+				log.error("Failed to get project contributors from SpiceDB for project {}", project.getId(), e);
 			}
 
 			// Set the author name for the project. If we are unable to get the author name,
@@ -284,14 +281,14 @@ public class ProjectController {
 	)
 	@GetMapping("/{id}")
 	@Secured(Roles.USER)
+	@HasProjectAccess("#id")
 	public ResponseEntity<Project> getProject(@PathVariable("id") final UUID id) {
-		projectService.checkPermissionCanRead(currentUserService.get().getId(), id);
 		final RebacUser rebacUser = new RebacUser(currentUserService.get().getId(), reBACService);
 		final RebacProject rebacProject = new RebacProject(id, reBACService);
 
 		final Optional<Project> project = projectService.getProject(id);
 
-		if (!project.isPresent()) {
+		if (project.isEmpty()) {
 			throw new ResponseStatusException(HttpStatus.NOT_FOUND, messages.get("projects.not-found"));
 		}
 
@@ -306,7 +303,7 @@ public class ProjectController {
 			project.get().setUserPermission(rebacUser.getPermissionFor(rebacProject));
 			project.get().setAuthors(authors);
 		} catch (final Exception e) {
-			log.error("Failed to get project permissions from spicedb", e);
+			log.error("Failed to get project permissions from SpiceDB", e);
 			throw new ResponseStatusException(
 				HttpStatus.INTERNAL_SERVER_ERROR,
 				messages.get("projects.unable-to-get-permissions")
@@ -349,10 +346,9 @@ public class ProjectController {
 		}
 	)
 	@DeleteMapping("/{id}")
+	@HasProjectAccess(value = "#id", level = Schema.Permission.ADMINISTRATE)
 	@Secured(Roles.USER)
 	public ResponseEntity<ResponseDeleted> deleteProject(@PathVariable("id") final UUID id) {
-		projectService.checkPermissionCanAdministrate(currentUserService.get().getId(), id);
-
 		try {
 			final boolean deleted = projectService.delete(id);
 			if (deleted) {
@@ -450,7 +446,7 @@ public class ProjectController {
 		value = {
 			@ApiResponse(
 				responseCode = "200",
-				description = "Project marked for deletion",
+				description = "Project updated",
 				content = {
 					@Content(
 						mediaType = "application/json",
@@ -466,16 +462,15 @@ public class ProjectController {
 			@ApiResponse(responseCode = "404", description = "Project could not be found", content = @Content),
 			@ApiResponse(
 				responseCode = "503",
-				description = "An error occurred when trying to communicate with either the postgres or spicedb" + " databases",
+				description = "An error occurred when trying to communicate with either the postgres or SpiceDB" + " databases",
 				content = @Content
 			)
 		}
 	)
 	@PutMapping("/{id}")
+	@HasProjectAccess(value = "#id", level = Schema.Permission.WRITE)
 	@Secured(Roles.USER)
 	public ResponseEntity<Project> updateProject(@PathVariable("id") final UUID id, @RequestBody final Project project) {
-		projectService.checkPermissionCanWrite(currentUserService.get().getId(), id);
-
 		final Optional<Project> originalProject = projectService.getProject(id);
 		if (originalProject.isEmpty()) {
 			throw new ResponseStatusException(HttpStatus.NOT_FOUND, messages.get("projects.not-found"));
@@ -490,19 +485,14 @@ public class ProjectController {
 			throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, messages.get("postgres.service-unavailable"));
 		}
 
-		if (!updatedProject.isPresent()) {
+		if (updatedProject.isEmpty()) {
 			log.error("Updated Project is NOT present");
 			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("projects.unable-to-update"));
 		}
 
 		if (originalProject.get().getPublicAsset() != updatedProject.get().getPublicAsset()) {
 			try {
-				projectAssetService.togglePublicForAssets(
-					terariumAssetServices,
-					id,
-					updatedProject.get().getPublicAsset(),
-					Schema.Permission.WRITE
-				);
+				projectAssetService.togglePublicForAssets(terariumAssetServices, id, updatedProject.get().getPublicAsset());
 			} catch (final Exception e) {
 				log.error("Error updating project", e);
 				throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, messages.get("postgres.service-unavailable"));
@@ -510,6 +500,71 @@ public class ProjectController {
 		}
 
 		return ResponseEntity.ok(updatedProject.get());
+	}
+
+	@Operation(summary = "Resynchronize Project in the Search Index")
+	@ApiResponses(
+		value = {
+			@ApiResponse(
+				responseCode = "200",
+				description = "Project assets updated in index",
+				content = {
+					@Content(
+						mediaType = "application/json",
+						schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = UUID.class)
+					)
+				}
+			),
+			@ApiResponse(
+				responseCode = "403",
+				description = "The current user does not have update privileges to this project",
+				content = @Content
+			),
+			@ApiResponse(responseCode = "404", description = "Project could not be found", content = @Content),
+			@ApiResponse(
+				responseCode = "503",
+				description = "An error occurred when trying to communicate with either the postgres or SpiceDB" + " databases",
+				content = @Content
+			)
+		}
+	)
+	@PostMapping("/reindex-project/{id}")
+	@Secured(Roles.USER)
+	@HasProjectAccess(value = "#id", level = Schema.Permission.WRITE)
+	public ResponseEntity<Project> updateProjectAssets(@PathVariable("id") final UUID id) {
+		try {
+			final Optional<Project> originalProject = projectService.getProject(id);
+			if (originalProject.isEmpty()) {
+				throw new ResponseStatusException(HttpStatus.NOT_FOUND, messages.get("projects.not-found"));
+			}
+
+			// re-index the project
+			projectSearchService.indexProject(originalProject.get());
+
+			final List<ProjectAsset> assets = projectAssetService.getProjectAssets(id);
+
+			for (final ProjectAsset projectAsset : assets) {
+				try {
+					final ITerariumAssetService<?> terariumAssetService = terariumAssetServices.getServiceByType(
+						projectAsset.getAssetType()
+					);
+
+					final Optional<? extends TerariumAsset> asset = terariumAssetService.getAsset(projectAsset.getAssetId());
+
+					final Future<Void> future = projectSearchService.generateAndUpsertProjectAssetEmbeddings(id, asset.get());
+					if (future != null) {
+						future.get();
+					}
+				} catch (final Exception e) {
+					log.error("Error updating project asset in index, skipping", e);
+				}
+			}
+
+			return ResponseEntity.ok(originalProject.get());
+		} catch (final Exception e) {
+			log.error("Error updating project", e);
+			throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, messages.get("postgres.service-unavailable"));
+		}
 	}
 
 	@Operation(summary = "Copy a project")
@@ -533,18 +588,15 @@ public class ProjectController {
 			@ApiResponse(responseCode = "404", description = "Project could not be found", content = @Content),
 			@ApiResponse(
 				responseCode = "503",
-				description = "An error occurred when trying to communicate with either the postgres or spicedb" + " databases",
+				description = "An error occurred when trying to communicate with either the postgres or SpiceDB" + " databases",
 				content = @Content
 			)
 		}
 	)
 	@PostMapping("/clone/{id}")
+	@HasProjectAccess(value = "#id")
 	@Secured(Roles.USER)
 	public ResponseEntity<Project> copyProject(@PathVariable("id") final UUID id) {
-		projectService.checkPermissionCanRead(currentUserService.get().getId(), id);
-		// time the progress takes to reach each subsequent half.
-		final Double HALFTIME_SECONDS = 1.0;
-
 		final Future<Project> project;
 		final Project clonedProject;
 
@@ -557,7 +609,7 @@ public class ProjectController {
 			ClientEventType.CLONE_PROJECT,
 			null,
 			new Properties(id),
-			HALFTIME_SECONDS
+			currentUserService.get().getId()
 		);
 
 		try {
@@ -566,7 +618,7 @@ public class ProjectController {
 			project = executor.submit(() -> {
 				log.info("Staring Cloning Process...");
 				final ProjectExport export = cloneService.exportProject(id);
-				export.getProject().setName("Copy of " + export.getProject().getName());
+				export.getProject().setName("Copying " + export.getProject().getName());
 				log.info("Cloning...");
 				final Project cloneProject = cloneService.importProject(userId, userName, export);
 				log.info("Cloned...");
@@ -629,15 +681,15 @@ public class ProjectController {
 			@ApiResponse(responseCode = "404", description = "Project could not be found", content = @Content),
 			@ApiResponse(
 				responseCode = "503",
-				description = "An error occurred when trying to communicate with either the postgres or spicedb" + " databases",
+				description = "An error occurred when trying to communicate with either the postgres or SpiceDB" + " databases",
 				content = @Content
 			)
 		}
 	)
 	@GetMapping("/export/{id}")
+	@HasProjectAccess(value = "#id")
 	@Secured(Roles.USER)
 	public ResponseEntity<byte[]> exportProject(@PathVariable("id") final UUID id) {
-		projectService.checkPermissionCanRead(currentUserService.get().getId(), id);
 		try {
 			final ProjectExport export = cloneService.exportProject(id);
 
@@ -679,7 +731,7 @@ public class ProjectController {
 			),
 			@ApiResponse(
 				responseCode = "503",
-				description = "An error occurred when trying to communicate with either the postgres or spicedb" + " databases",
+				description = "An error occurred when trying to communicate with either the postgres or SpiceDB" + " databases",
 				content = @Content
 			)
 		}
@@ -762,12 +814,13 @@ public class ProjectController {
 			@ApiResponse(responseCode = "500", description = "Error finding project", content = @Content),
 			@ApiResponse(
 				responseCode = "503",
-				description = "An error occurred when trying to communicate with either the postgres or spicedb" + " databases",
+				description = "An error occurred when trying to communicate with either the postgres or SpiceDB" + " databases",
 				content = @Content
 			)
 		}
 	)
 	@PostMapping("/{id}/assets/{asset-type}/{asset-id}")
+	@HasProjectAccess(level = Schema.Permission.WRITE)
 	@Secured(Roles.USER)
 	public ResponseEntity<ProjectAsset> createAsset(
 		@PathVariable("id") final UUID projectId,
@@ -775,15 +828,11 @@ public class ProjectController {
 		@PathVariable("asset-id") final UUID assetId
 	) {
 		final AssetType assetType = AssetType.getAssetType(assetTypeName, objectMapper);
-		final Schema.Permission permission = projectService.checkPermissionCanWrite(
-			currentUserService.get().getId(),
-			projectId
-		);
 
 		final Optional<Project> project;
 		try {
 			project = projectService.getProject(projectId);
-			if (!project.isPresent()) {
+			if (project.isEmpty()) {
 				throw new ResponseStatusException(HttpStatus.NOT_FOUND, messages.get("projects.not-found"));
 			}
 		} catch (final Exception e) {
@@ -798,18 +847,18 @@ public class ProjectController {
 		// check if the asset is already associated with a project, if it is, we should
 		// clone it and create a new asset
 
-		final UUID owningProjectId = projectAssetService.getProjectIdForAsset(assetId, permission);
+		final UUID owningProjectId = projectAssetService.getProjectIdForAsset(assetId);
 		final List<TerariumAsset> assets;
 
 		try {
 			if (owningProjectId != null) {
 				// if the asset is already under another project, we need to clone it and its
 				// dependencies
-				assets = cloneService.cloneAndPersistAsset(owningProjectId, assetId);
+				assets = cloneService.cloneAndPersistAsset(owningProjectId, assetId, assetType);
 			} else {
 				// TODO: we should probably check asset dependencies and make sure they are part
 				// of the project, and if not clone them
-				final Optional<? extends TerariumAsset> asset = terariumAssetService.getAsset(assetId, permission);
+				final Optional<? extends TerariumAsset> asset = terariumAssetService.getAsset(assetId);
 				if (asset.isEmpty()) {
 					throw new ResponseStatusException(HttpStatus.NOT_FOUND, messages.get("asset.not-found"));
 				}
@@ -824,9 +873,8 @@ public class ProjectController {
 		for (final TerariumAsset asset : assets) {
 			final Optional<ProjectAsset> projectAsset = projectAssetService.createProjectAsset(
 				project.get(),
-				assetType,
-				asset,
-				permission
+				TerariumAssetServices.getAssetType(asset),
+				asset
 			);
 
 			if (projectAsset.isEmpty()) {
@@ -868,12 +916,13 @@ public class ProjectController {
 			@ApiResponse(responseCode = "500", description = "Error deleting asset", content = @Content),
 			@ApiResponse(
 				responseCode = "503",
-				description = "An error occurred when trying to communicate with either the postgres or spicedb" + " databases",
+				description = "An error occurred when trying to communicate with either the postgres or SpiceDB" + " databases",
 				content = @Content
 			)
 		}
 	)
 	@DeleteMapping("/{id}/assets/{asset-type}/{asset-id}")
+	@HasProjectAccess(level = Schema.Permission.WRITE)
 	@Secured(Roles.USER)
 	public ResponseEntity<ResponseDeleted> deleteAsset(
 		@PathVariable("id") final UUID projectId,
@@ -882,12 +931,7 @@ public class ProjectController {
 	) {
 		final AssetType assetType = AssetType.getAssetType(assetTypeName, objectMapper);
 
-		final Schema.Permission permission = projectService.checkPermissionCanWrite(
-			currentUserService.get().getId(),
-			projectId
-		);
-
-		final boolean deleted = projectAssetService.deleteByAssetId(projectId, assetType, assetId, permission);
+		final boolean deleted = projectAssetService.deleteByAssetId(projectId, assetType, assetId);
 		if (deleted) {
 			return ResponseEntity.ok(new ResponseDeleted("ProjectAsset " + assetTypeName, assetId));
 		}
@@ -898,6 +942,7 @@ public class ProjectController {
 	@GetMapping("/{id}/permissions")
 	@Secured(Roles.USER)
 	@Operation(summary = "Gets the permissions for a project")
+	@HasProjectAccess("#id")
 	@ApiResponses(
 		value = {
 			@ApiResponse(
@@ -915,21 +960,19 @@ public class ProjectController {
 			),
 			@ApiResponse(
 				responseCode = "503",
-				description = "An error occurred when trying to communicate with spicedb database",
+				description = "An error occurred when trying to communicate with SpiceDB database",
 				content = @Content
 			)
 		}
 	)
 	public ResponseEntity<PermissionRelationships> getProjectPermissions(@PathVariable("id") final UUID id) {
-		projectService.checkPermissionCanRead(currentUserService.get().getId(), id);
-
 		final RebacProject rebacProject = new RebacProject(id, reBACService);
 
 		final PermissionRelationships permissions = new PermissionRelationships();
 		try {
 			for (final RebacPermissionRelationship permissionRelationship : rebacProject.getPermissionRelationships()) {
 				if (permissionRelationship.getSubjectType().equals(Schema.Type.USER)) {
-					PermissionUser user = reBACService.getUser(permissionRelationship.getSubjectId());
+					final PermissionUser user = reBACService.getUser(permissionRelationship.getSubjectId());
 					if (user != null) {
 						permissions.addUser(user, permissionRelationship.getRelationship());
 					}
@@ -948,6 +991,146 @@ public class ProjectController {
 		return ResponseEntity.ok(permissions);
 	}
 
+	@Data
+	@TSModel
+	public static class ProjectSearchResultAsset {
+
+		final UUID assetId;
+		final AssetType assetType;
+		final String assetName;
+		final String assetShortDescription;
+		final Timestamp createdOn;
+		final String embeddingContent;
+		final TerariumAssetEmbeddingType embeddingType;
+		final Float score;
+	}
+
+	@Data
+	@TSModel
+	public static class ProjectSearchResult {
+
+		@TSOptional
+		final UUID projectId;
+
+		@TSOptional
+		final Float score;
+
+		@TSOptional
+		final List<ProjectSearchResultAsset> assets;
+	}
+
+	@GetMapping("/knn")
+	@Secured(Roles.USER)
+	@Operation(summary = "Executes a knn search against the provided asset type")
+	@ApiResponses(
+		value = {
+			@ApiResponse(
+				responseCode = "200",
+				description = "Query results",
+				content = @Content(
+					mediaType = "application/json",
+					schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = JsonNode.class)
+				)
+			),
+			@ApiResponse(responseCode = "204", description = "There was no concept found", content = @Content),
+			@ApiResponse(
+				responseCode = "500",
+				description = "There was an issue retrieving the concept from the data store",
+				content = @Content
+			)
+		}
+	)
+	public ResponseEntity<List<ProjectSearchResult>> projectKnnSearch(
+		@RequestParam(value = "page-size", defaultValue = "100", required = false) final Integer pageSize,
+		@RequestParam(value = "page", defaultValue = "0", required = false) final Integer page,
+		@RequestParam(value = "text", defaultValue = "") final String text,
+		@RequestParam(value = "k", defaultValue = "100") final int k,
+		@RequestParam(value = "num-candidates", defaultValue = "1000") final int numCandidates
+	) {
+		try {
+			final String userId = currentUserService.get().getId();
+
+			final List<ProjectSearchResponse> searchResponseList = projectSearchService.searchProjectsKNN(
+				userId,
+				pageSize,
+				page,
+				text,
+				k,
+				numCandidates,
+				null
+			);
+
+			final List<ProjectSearchResult> searchResults = new ArrayList<>();
+
+			// Fluffing up the response with the project assets information
+			for (final ProjectSearchResponse searchResponse : searchResponseList) {
+				final List<ProjectSearchResultAsset> assets = new ArrayList<>();
+				for (ProjectSearchService.ProjectSearchAsset hit : searchResponse.getHits()) {
+					ProjectSearchResultAsset asset = this.createProjectSearchResultAsset(hit);
+					if (asset != null) {
+						assets.add(asset);
+					}
+				}
+
+				// Add the project information to the response
+				final Project project = projectService.getProject(searchResponse.getProjectId()).orElseThrow();
+				final ProjectSearchResult searchResult = new ProjectSearchResult(
+					project.getId(),
+					searchResponse.getScore(),
+					assets
+				);
+
+				searchResults.add(searchResult);
+			}
+
+			return ResponseEntity.ok(searchResults);
+		} catch (final Exception e) {
+			final String error = "Unable to get execute knn search";
+			log.error(error, e);
+			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, error);
+		}
+	}
+
+	/* Create a ProjectSearchResultAsset from a ProjectSearchHit */
+	private ProjectSearchResultAsset createProjectSearchResultAsset(final ProjectSearchService.ProjectSearchAsset hit) {
+		if (hit.getAssetType() == null || hit.getAssetId() == null) {
+			return null;
+		}
+
+		final TerariumAsset asset = terariumAssetServices.getAsset(hit.getAssetId(), hit.getAssetType());
+
+		if (asset == null) {
+			return null;
+		}
+
+		// Get the content that trigger the hit
+		final String embeddingContent =
+			switch (hit.getEmbeddingType()) {
+				case DESCRIPTION -> asset.getDescription();
+				case OVERVIEW -> ((Project) asset).getOverviewAsReadableString();
+				default -> asset.getName();
+			};
+
+		// Get the description of the asset to be displayed nonetheless
+		String assetShortDescription = asset.getDescription() == null ? "" : asset.getDescription();
+
+		// Only keep the first 100 characters of the description, followed by an ellipsis
+		if (assetShortDescription.length() > 100) {
+			assetShortDescription = assetShortDescription.substring(0, 100) + "...";
+		}
+
+		return new ProjectSearchResultAsset(
+			hit.getAssetId(),
+			hit.getAssetType(),
+			asset.getName(),
+			assetShortDescription,
+			asset.getCreatedOn(),
+			embeddingContent,
+			hit.getEmbeddingType(),
+			hit.getScore()
+		);
+	}
+
 	// --------------------------------------------------------------------------
 	// Project Permissions
 	// --------------------------------------------------------------------------
@@ -955,6 +1138,7 @@ public class ProjectController {
 	@PostMapping("/{id}/permissions/group/{group-id}/{relationship}")
 	@Secured({ Roles.USER, Roles.SERVICE })
 	@Operation(summary = "Sets a group's permissions for a project")
+	@HasProjectAccess(level = Schema.Permission.ADMINISTRATE)
 	@ApiResponses(
 		value = {
 			@ApiResponse(
@@ -975,8 +1159,6 @@ public class ProjectController {
 		@PathVariable("relationship") final String relationship
 	) {
 		try {
-			projectService.checkPermissionCanAdministrate(currentUserService.get().getId(), projectId);
-
 			final RebacProject what = new RebacProject(projectId, reBACService);
 			final RebacGroup who = new RebacGroup(groupId, reBACService);
 			projectPermissionsService.setProjectPermissions(what, who, relationship);
@@ -990,6 +1172,7 @@ public class ProjectController {
 	@PutMapping("/{id}/permissions/group/{groupId}/{oldRelationship}")
 	@Secured(Roles.USER)
 	@Operation(summary = "Updates a group's permissions for a project")
+	@HasProjectAccess(level = Schema.Permission.ADMINISTRATE)
 	@ApiResponses(
 		value = {
 			@ApiResponse(
@@ -1011,8 +1194,6 @@ public class ProjectController {
 		@RequestParam("to") final String newRelationship
 	) {
 		try {
-			projectService.checkPermissionCanAdministrate(currentUserService.get().getId(), projectId);
-
 			final RebacProject what = new RebacProject(projectId, reBACService);
 			final RebacGroup who = new RebacGroup(groupId, reBACService);
 			return projectPermissionsService.updateProjectPermissions(what, who, oldRelationship, newRelationship);
@@ -1025,6 +1206,7 @@ public class ProjectController {
 	@DeleteMapping("/{id}/permissions/group/{group-id}/{relationship}")
 	@Secured(Roles.USER)
 	@Operation(summary = "Deletes a group's permissions for a project")
+	@HasProjectAccess(level = Schema.Permission.WRITE)
 	@ApiResponses(
 		value = {
 			@ApiResponse(
@@ -1048,8 +1230,6 @@ public class ProjectController {
 			return ResponseEntity.status(HttpStatus.NOT_MODIFIED).build();
 		}
 		try {
-			projectService.checkPermissionCanAdministrate(currentUserService.get().getId(), projectId);
-
 			final RebacProject what = new RebacProject(projectId, reBACService);
 			final RebacGroup who = new RebacGroup(groupId, reBACService);
 			projectPermissionsService.removeProjectPermissions(what, who, relationship);
@@ -1082,18 +1262,15 @@ public class ProjectController {
 		}
 	)
 	@PutMapping("/set-public/{id}/{isPublic}")
+	@HasProjectAccess(value = "#id", level = Schema.Permission.WRITE)
 	@Secured(Roles.USER)
 	public ResponseEntity<JsonNode> makeProjectPublic(
 		@PathVariable("id") final UUID id,
 		@PathVariable("isPublic") final boolean isPublic
 	) {
 		try {
-			projectService.checkPermissionCanWrite(currentUserService.get().getId(), id);
-
 			// Getting the project permissions
 			final RebacProject project = new RebacProject(id, reBACService);
-			// Getting the user permissions
-			final RebacUser user = new RebacUser(currentUserService.get().getId(), reBACService);
 			// Getting the Public group permissions
 			final RebacGroup who = new RebacGroup(ReBACService.PUBLIC_GROUP_ID, reBACService);
 			// Setting the relationship to be of a reader
@@ -1106,7 +1283,7 @@ public class ProjectController {
 
 			// Update the project and child assets
 			p.get().setPublicAsset(isPublic);
-			projectAssetService.togglePublicForAssets(terariumAssetServices, id, isPublic, Schema.Permission.WRITE);
+			projectAssetService.togglePublicForAssets(terariumAssetServices, id, isPublic);
 			projectService.updateProject(p.get());
 
 			if (isPublic) {
@@ -1125,9 +1302,113 @@ public class ProjectController {
 		}
 	}
 
+	@Operation(summary = "Set a project as a sample project by ID")
+	@ApiResponses(
+		value = {
+			@ApiResponse(
+				responseCode = "200",
+				description = "Project has been made a sample project",
+				content = {
+					@Content(
+						mediaType = "application/json",
+						schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = UUID.class)
+					)
+				}
+			),
+			@ApiResponse(
+				responseCode = "403",
+				description = "The current user does not have privileges to modify this project.",
+				content = @Content
+			),
+			@ApiResponse(responseCode = "500", description = "An error occurred verifying permissions", content = @Content)
+		}
+	)
+	@PutMapping("/set-sample/{id}/{sample}")
+	@HasProjectAccess(value = "#id", level = Schema.Permission.ADMINISTRATE)
+	@Secured(Roles.USER)
+	public ResponseEntity<JsonNode> makeProjectSample(
+		@PathVariable("id") final UUID id,
+		@PathVariable("sample") final boolean isSample
+	) {
+		try {
+			// Get the project
+			final Project project = projectService
+				.getProject(id)
+				.orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, messages.get("projects.not-found")));
+
+			// Validate the request again the current project sample status
+			if (isSample && project.getSampleProject()) {
+				throw new ResponseStatusException(HttpStatus.BAD_REQUEST, messages.get("projects.already-sample"));
+			}
+			if (!isSample && !project.getSampleProject()) {
+				throw new ResponseStatusException(HttpStatus.BAD_REQUEST, messages.get("projects.already-not-sample"));
+			}
+
+			// Update the project sample status
+			project.setSampleProject(isSample);
+
+			// If the user is making the project a sample, make it public as well
+			if (isSample) {
+				project.setPublicAsset(true);
+				projectAssetService.togglePublicForAssets(terariumAssetServices, id, true);
+			}
+
+			// Update the project
+			projectService.updateProject(project);
+
+			/* Project Permissions */
+			final RebacProject rebacProject = new RebacProject(id, reBACService);
+
+			// When we make a project a sample project
+			if (isSample) {
+				// Update all user permissions to READER only
+				final List<Contributor> contributors = projectPermissionsService.getContributors(rebacProject);
+				for (final Contributor contributor : contributors) {
+					if (contributor.isUser()) {
+						final RebacUser rebacUser = new RebacUser(contributor.getUserId(), reBACService);
+						projectPermissionsService.removeProjectPermissions(
+							rebacProject,
+							rebacUser,
+							Schema.Relationship.CREATOR.toString()
+						);
+						projectPermissionsService.removeProjectPermissions(
+							rebacProject,
+							rebacUser,
+							Schema.Relationship.WRITER.toString()
+						);
+						projectPermissionsService.setProjectPermissions(
+							rebacProject,
+							rebacUser,
+							Schema.Relationship.READER.toString()
+						);
+					}
+				}
+
+				// Update the group permissions to the project when becoming a sample-project
+				final RebacGroup adminGroup = new RebacGroup(ReBACService.ASKEM_ADMIN_GROUP_ID, reBACService);
+				adminGroup.removeAllRelationsExceptOne(rebacProject, Schema.Relationship.ADMIN);
+				final RebacGroup publicGroup = new RebacGroup(ReBACService.PUBLIC_GROUP_ID, reBACService);
+				publicGroup.removeAllRelationsExceptOne(rebacProject, Schema.Relationship.READER);
+			} else {
+				// Project author become the creator of the project once more
+				final RebacUser rebacUser = new RebacUser(project.getUserId(), reBACService);
+				final String creator = Schema.Relationship.CREATOR.toString();
+				projectPermissionsService.setProjectPermissions(rebacProject, rebacUser, creator);
+			}
+
+			return ResponseEntity.ok().build();
+		} catch (final ResponseStatusException rethrow) {
+			throw rethrow;
+		} catch (final Exception e) {
+			log.error("Unexpected error, failed to set as a sample project ", e);
+			throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, messages.get("rebac.service-unavailable"));
+		}
+	}
+
 	@PostMapping("/{id}/permissions/user/{user-id}/{relationship}")
 	@Secured(Roles.USER)
 	@Operation(summary = "Sets a user's permissions for a project")
+	@HasProjectAccess(level = Schema.Permission.WRITE)
 	@ApiResponses(
 		value = {
 			@ApiResponse(
@@ -1148,8 +1429,6 @@ public class ProjectController {
 		@PathVariable("relationship") final String relationship
 	) {
 		try {
-			projectService.checkPermissionCanWrite(currentUserService.get().getId(), projectId);
-
 			final RebacProject what = new RebacProject(projectId, reBACService);
 			final RebacUser who = new RebacUser(userId, reBACService);
 			projectSearchService.addProjectPermission(projectId, userId);
@@ -1167,6 +1446,7 @@ public class ProjectController {
 	@PutMapping("/{id}/permissions/user/{user-id}/{old-relationship}")
 	@Secured(Roles.USER)
 	@Operation(summary = "Updates a user's permissions for a project")
+	@HasProjectAccess(level = Schema.Permission.ADMINISTRATE)
 	@ApiResponses(
 		value = {
 			@ApiResponse(
@@ -1188,8 +1468,6 @@ public class ProjectController {
 		@RequestParam("to") final String newRelationship
 	) {
 		try {
-			projectService.checkPermissionCanAdministrate(currentUserService.get().getId(), projectId);
-
 			final RebacProject what = new RebacProject(projectId, reBACService);
 			final RebacUser who = new RebacUser(userId, reBACService);
 
@@ -1209,6 +1487,7 @@ public class ProjectController {
 	@DeleteMapping("/{id}/permissions/user/{user-id}/{relationship}")
 	@Secured(Roles.USER)
 	@Operation(summary = "Deletes a user's permissions for a project")
+	@HasProjectAccess(level = Schema.Permission.ADMINISTRATE)
 	@ApiResponses(
 		value = {
 			@ApiResponse(
@@ -1230,8 +1509,6 @@ public class ProjectController {
 		@PathVariable("relationship") final String relationship
 	) {
 		try {
-			projectService.checkPermissionCanAdministrate(currentUserService.get().getId(), projectId);
-
 			final RebacProject what = new RebacProject(projectId, reBACService);
 			final RebacUser who = new RebacUser(userId, reBACService);
 

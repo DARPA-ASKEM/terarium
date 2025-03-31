@@ -23,8 +23,10 @@ aside {
 	flex-direction: column;
 	gap: var(--gap-6);
 	justify-content: center;
-	margin-top: var(--gap-8);
+	margin-top: var(--gap-3);
+	margin-bottom: var(--gap-3);
 	text-align: center;
+	font-size: var(--font-caption);
 }
 
 img {

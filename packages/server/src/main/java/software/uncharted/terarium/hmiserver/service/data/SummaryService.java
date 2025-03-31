@@ -9,10 +9,9 @@ import software.uncharted.terarium.hmiserver.configuration.Config;
 import software.uncharted.terarium.hmiserver.models.dataservice.Summary;
 import software.uncharted.terarium.hmiserver.repository.data.SummaryRepository;
 import software.uncharted.terarium.hmiserver.service.s3.S3ClientService;
-import software.uncharted.terarium.hmiserver.utils.rebac.Schema;
 
 @Service
-public class SummaryService extends TerariumAssetServiceWithoutSearch<Summary, SummaryRepository> {
+public class SummaryService extends TerariumAssetService<Summary, SummaryRepository> {
 
 	public SummaryService(
 		final ObjectMapper objectMapper,
@@ -25,7 +24,7 @@ public class SummaryService extends TerariumAssetServiceWithoutSearch<Summary, S
 		super(objectMapper, config, projectService, projectAssetService, repository, s3ClientService, Summary.class);
 	}
 
-	public List<Summary> getSummaries(final List<UUID> ids, final Schema.Permission hasReadPermission) {
+	public List<Summary> getSummaries(final List<UUID> ids) {
 		return repository.findAllByIdInAndDeletedOnIsNull(ids);
 	}
 

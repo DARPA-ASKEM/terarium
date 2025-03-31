@@ -1,6 +1,5 @@
 package software.uncharted.terarium.hmiserver.controller.dataservice;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -10,7 +9,6 @@ import java.awt.image.BufferedImage;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.util.Base64;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
@@ -25,7 +23,6 @@ import org.apache.http.entity.StringEntity;
 import org.apache.pdfbox.Loader;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.rendering.PDFRenderer;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.CacheControl;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -43,6 +40,7 @@ import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
+import software.uncharted.terarium.hmiserver.annotations.HasProjectAccess;
 import software.uncharted.terarium.hmiserver.configuration.Config;
 import software.uncharted.terarium.hmiserver.controller.services.DownloadService;
 import software.uncharted.terarium.hmiserver.models.dataservice.PresignedURL;
@@ -50,16 +48,9 @@ import software.uncharted.terarium.hmiserver.models.dataservice.ResponseDeleted;
 import software.uncharted.terarium.hmiserver.models.dataservice.ResponseStatus;
 import software.uncharted.terarium.hmiserver.models.dataservice.document.DocumentAsset;
 import software.uncharted.terarium.hmiserver.proxies.jsdelivr.JsDelivrProxy;
-import software.uncharted.terarium.hmiserver.proxies.skema.SkemaRustProxy;
-import software.uncharted.terarium.hmiserver.proxies.skema.SkemaUnifiedProxy;
 import software.uncharted.terarium.hmiserver.security.Roles;
 import software.uncharted.terarium.hmiserver.service.CurrentUserService;
-import software.uncharted.terarium.hmiserver.service.ExtractionService;
 import software.uncharted.terarium.hmiserver.service.data.DocumentAssetService;
-import software.uncharted.terarium.hmiserver.service.data.ProjectService;
-import software.uncharted.terarium.hmiserver.service.gollm.EmbeddingService;
-import software.uncharted.terarium.hmiserver.utils.Messages;
-import software.uncharted.terarium.hmiserver.utils.rebac.ReBACService;
 import software.uncharted.terarium.hmiserver.utils.rebac.Schema;
 
 @RequestMapping("/document-asset")
@@ -69,35 +60,14 @@ import software.uncharted.terarium.hmiserver.utils.rebac.Schema;
 public class DocumentController {
 
 	final Config config;
-	final ReBACService reBACService;
 	final CurrentUserService currentUserService;
-	final Messages messages;
-
-	final SkemaUnifiedProxy skemaUnifiedProxy;
-
-	final SkemaRustProxy skemaRustProxy;
-
 	final JsDelivrProxy gitHubProxy;
-
-	final DownloadService downloadService;
-
-	private final ProjectService projectService;
-
 	final DocumentAssetService documentAssetService;
-
-	final ObjectMapper objectMapper;
-	final ExtractionService extractionService;
-	final EmbeddingService embeddingService;
-
-	@Value("${xdd.api-key}")
-	String apikey;
-
-	@Value("${xdd.api-es-key}")
-	String api_es_key;
 
 	@PostMapping
 	@Secured(Roles.USER)
 	@Operation(summary = "Create a new document")
+	@HasProjectAccess(level = Schema.Permission.WRITE)
 	@ApiResponses(
 		value = {
 			@ApiResponse(
@@ -115,13 +85,8 @@ public class DocumentController {
 		@RequestBody final DocumentAsset documentAsset,
 		@RequestParam(name = "project-id", required = false) final UUID projectId
 	) {
-		final Schema.Permission permission = projectService.checkPermissionCanWrite(
-			currentUserService.get().getId(),
-			projectId
-		);
-
 		try {
-			final DocumentAsset document = documentAssetService.createAsset(documentAsset, projectId, permission);
+			final DocumentAsset document = documentAssetService.createAsset(documentAsset, projectId);
 			return ResponseEntity.status(HttpStatus.CREATED).body(document);
 		} catch (final IOException e) {
 			final String error = "Unable to create document";
@@ -133,6 +98,7 @@ public class DocumentController {
 	@PutMapping("/{id}")
 	@Secured(Roles.USER)
 	@Operation(summary = "Update a document")
+	@HasProjectAccess(level = Schema.Permission.WRITE)
 	@ApiResponses(
 		value = {
 			@ApiResponse(
@@ -152,22 +118,14 @@ public class DocumentController {
 		@RequestBody final DocumentAsset document,
 		@RequestParam(name = "project-id", required = false) final UUID projectId
 	) {
-		final Schema.Permission permission = projectService.checkPermissionCanWrite(
-			currentUserService.get().getId(),
-			projectId
-		);
-
 		// if the document asset does not have an id, set it to the id in the path
 		if (document.getId() == null) {
 			document.setId(id);
 		}
 
 		try {
-			final Optional<DocumentAsset> updated = documentAssetService.updateAsset(document, projectId, permission);
-			if (updated.isEmpty()) {
-				return ResponseEntity.notFound().build();
-			}
-			return ResponseEntity.ok(updated.get());
+			final Optional<DocumentAsset> updated = documentAssetService.updateAsset(document, projectId);
+			return updated.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
 		} catch (final IOException e) {
 			final String error = "Unable to update document";
 			log.error(error, e);
@@ -178,6 +136,7 @@ public class DocumentController {
 	@GetMapping("/{id}")
 	@Secured(Roles.USER)
 	@Operation(summary = "Gets document by ID")
+	@HasProjectAccess(level = Schema.Permission.READ)
 	@ApiResponses(
 		value = {
 			@ApiResponse(
@@ -200,43 +159,10 @@ public class DocumentController {
 		@PathVariable("id") final UUID id,
 		@RequestParam(name = "project-id", required = false) final UUID projectId
 	) {
-		final Schema.Permission permission = projectService.checkPermissionCanReadOrNone(
-			currentUserService.get().getId(),
-			projectId
-		);
-
-		final Optional<DocumentAsset> document = documentAssetService.getAsset(id, permission);
+		final Optional<DocumentAsset> document = documentAssetService.getAsset(id);
 		if (document.isEmpty()) {
 			return ResponseEntity.notFound().build();
 		}
-		// GETs not associated to a projectId cannot read private or temporary assets
-		if (
-			permission.equals(Schema.Permission.NONE) && (!document.get().getPublicAsset() || document.get().getTemporary())
-		) {
-			throw new ResponseStatusException(HttpStatus.FORBIDDEN, messages.get("rebac.unauthorized-read"));
-		}
-
-		// Test if the document as any assets
-		if (document.get().getAssets() == null) {
-			return ResponseEntity.ok(document.get());
-		}
-
-		document
-			.get()
-			.getAssets()
-			.forEach(asset -> {
-				try {
-					// Add the S3 bucket url to each asset metadata
-					final Optional<PresignedURL> url = documentAssetService.getDownloadUrl(id, asset.getFileName());
-					if (url.isEmpty()) {
-						return;
-					}
-					final PresignedURL presignedURL = url.get();
-					asset.getMetadata().put("url", presignedURL.getUrl());
-				} catch (final Exception e) {
-					log.error("Unable to extract S3 url for assets or extract equations", e);
-				}
-			});
 
 		// Return the updated document
 		return ResponseEntity.ok(document.get());
@@ -313,6 +239,7 @@ public class DocumentController {
 	@DeleteMapping("/{id}")
 	@Secured(Roles.USER)
 	@Operation(summary = "Deletes a document")
+	@HasProjectAccess(level = Schema.Permission.WRITE)
 	@ApiResponses(
 		value = {
 			@ApiResponse(
@@ -332,13 +259,8 @@ public class DocumentController {
 		@PathVariable("id") final UUID id,
 		@RequestParam(name = "project-id", required = false) final UUID projectId
 	) {
-		final Schema.Permission permission = projectService.checkPermissionCanWrite(
-			currentUserService.get().getId(),
-			projectId
-		);
-
 		try {
-			documentAssetService.deleteAsset(id, projectId, permission);
+			documentAssetService.deleteAsset(id, projectId);
 			return ResponseEntity.ok(new ResponseDeleted("Document", id));
 		} catch (final Exception e) {
 			final String error = "Unable to delete document";
@@ -355,21 +277,17 @@ public class DocumentController {
 	 * @param fileEntity The entity containing the file to upload
 	 * @return A response containing the status of the upload
 	 */
+	@HasProjectAccess(level = Schema.Permission.WRITE)
 	private ResponseEntity<Void> uploadDocumentHelper(
 		final UUID documentId,
 		final String fileName,
 		final HttpEntity fileEntity,
-		@RequestParam(name = "project-id", required = false) final UUID projectId
+		final UUID projectId
 	) {
-		final Schema.Permission permission = projectService.checkPermissionCanWrite(
-			currentUserService.get().getId(),
-			projectId
-		);
-
 		try {
 			// upload file to S3
 			final Integer status = documentAssetService.uploadFile(documentId, fileName, fileEntity);
-			final Optional<DocumentAsset> document = documentAssetService.getAsset(documentId, permission);
+			final Optional<DocumentAsset> document = documentAssetService.getAsset(documentId);
 
 			if (document.isPresent()) {
 				Graphics2D g2d = null;
@@ -406,7 +324,7 @@ public class DocumentController {
 					byte[] thumbnailBytes = outputStream.toByteArray();
 					document.get().setThumbnail(thumbnailBytes);
 
-					documentAssetService.updateAsset(document.get(), projectId, permission);
+					documentAssetService.updateAsset(document.get(), projectId);
 				} catch (final Exception e) {
 					final String error = "Unable to create thumbnail";
 					log.error(error, e);
@@ -431,7 +349,7 @@ public class DocumentController {
 				}
 
 				document.get().setText(IOUtils.toString(fileEntity.getContent(), StandardCharsets.UTF_8));
-				documentAssetService.updateAsset(document.get(), projectId, permission);
+				documentAssetService.updateAsset(document.get(), projectId);
 			}
 
 			return ResponseEntity.status(status).build();
@@ -446,6 +364,7 @@ public class DocumentController {
 	@PutMapping(value = "/{id}/upload-document", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
 	@Secured(Roles.USER)
 	@Operation(summary = "Uploads a document")
+	@HasProjectAccess(level = Schema.Permission.WRITE)
 	@ApiResponses(
 		value = {
 			@ApiResponse(
@@ -483,6 +402,7 @@ public class DocumentController {
 	@PutMapping("/{documentId}/upload-document-from-github")
 	@Secured(Roles.USER)
 	@Operation(summary = "Uploads a document from github")
+	@HasProjectAccess(level = Schema.Permission.WRITE)
 	@ApiResponses(
 		value = {
 			@ApiResponse(
@@ -591,66 +511,5 @@ public class DocumentController {
 			log.error(error, e);
 			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, error);
 		}
-	}
-
-	/**
-	 * Post Images to Equations Unified service to get an AMR
-	 *
-	 * @param documentId document id
-	 * @param filename   filename of the image
-	 * @return LaTeX representation of the equation
-	 */
-	@GetMapping("/{id}/image-to-equation")
-	@Secured(Roles.USER)
-	@Operation(summary = "Post Images to Equations Unified service to get an AMR")
-	@ApiResponses(
-		value = {
-			@ApiResponse(
-				responseCode = "200",
-				description = "Converts image to string",
-				content = @Content(
-					mediaType = "application/text",
-					schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = String.class)
-				)
-			),
-			@ApiResponse(responseCode = "500", description = "There was an issue creating equation", content = @Content)
-		}
-	)
-	public ResponseEntity<String> postImageToEquation(
-		@PathVariable("id") final UUID documentId,
-		@RequestParam("filename") final String filename
-	) {
-		Optional<byte[]> bytes = Optional.empty();
-		try {
-			bytes = documentAssetService.fetchFileAsBytes(documentId, filename);
-		} catch (IOException e) {
-			log.error("Unable to fetch files from the document asset service", e);
-			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("generic.io-error.read"));
-		}
-
-		if (bytes.isEmpty()) {
-			return ResponseEntity.notFound().build();
-		}
-
-		final byte[] imagesByte = bytes.get();
-
-		// Encode the image in Base 64
-		final String imageB64 = Base64.getEncoder().encodeToString(imagesByte);
-
-		// image -> mathML
-		final String mathML = skemaUnifiedProxy.postImageToEquations(imageB64).getBody();
-
-		// mathML -> LaTeX
-		final String latex = skemaRustProxy.convertMathML2Latex(mathML).getBody();
-		if (latex == null) {
-			log.error("Unable to convert MathML to LaTeX");
-			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("skema.error.image-2-equation"));
-		}
-
-		// Add spaces before and after "*"
-		String latexWithSpaces = latex.replaceAll("(?<!\\s)\\*", " *");
-		latexWithSpaces = latexWithSpaces.replaceAll("\\*(?!\\s)", "* ");
-
-		return ResponseEntity.ok(latexWithSpaces);
 	}
 }

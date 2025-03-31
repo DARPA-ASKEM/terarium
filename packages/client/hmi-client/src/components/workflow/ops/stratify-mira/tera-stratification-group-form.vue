@@ -6,6 +6,7 @@
 				v-model="strataName"
 				placeholder="e.g., Age group"
 				@focusout="emit('update-self', updatedConfig)"
+				class="common-input-height"
 			/>
 		</div>
 		<div class="input-row">
@@ -16,11 +17,21 @@
 				placeholder="Click to select"
 				display="chip"
 				@update:model-value="emit('update-self', updatedConfig)"
+				class="common-input-height"
+				filter
 			/>
 		</div>
-		<div class="input-row">
+		<div class="flex flex-column gap-2 mb-4 w-full">
 			<label>Enter a comma separated list of labels for each group.</label>
-			<tera-input-text v-model="labels" placeholder="e.g., Young, Old" @focusout="emit('update-self', updatedConfig)" />
+			<Textarea
+				v-model="labels"
+				rows="1"
+				placeholder="e.g., Young, Old"
+				@focusout="emit('update-self', updatedConfig)"
+				:autoResize="true"
+				class="w-full"
+				style="min-height: 2.35rem"
+			/>
 		</div>
 		<div class="input-row">
 			<div class="flex align-items-center gap-2">
@@ -31,13 +42,19 @@
 				<Checkbox @change="emit('update-self', updatedConfig)" v-model="cartesianProduct" binary />
 				<label>Allow existing interactions to involve multiple strata</label>
 			</div>
+
+			<div class="flex align-items-center gap-2">
+				<Checkbox @change="emit('update-self', updatedConfig)" v-model="useFactoredParameter" binary />
+				<label>Stratify parameter via multiplication factors</label>
+			</div>
 		</div>
 	</div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch } from 'vue';
+import { ref, computed } from 'vue';
 import TeraInputText from '@/components/widgets/tera-input-text.vue';
+import Textarea from 'primevue/textarea';
 import MultiSelect from 'primevue/multiselect';
 import Checkbox from 'primevue/checkbox';
 import { StratifyGroup } from '@/components/workflow/ops/stratify-mira/stratify-mira-operation';
@@ -56,6 +73,7 @@ const cartesianProduct = ref<boolean>(props.config.cartesianProduct);
 const directed = ref<boolean>(props.config.directed); // Currently not used, assume to be true
 const structure = ref<any>(props.config.structure); // Proxied by "useStructure"
 const useStructure = ref<any>(props.config.useStructure);
+const useFactoredParameter = ref<boolean>(props.config.useFactoredParameter || false);
 
 const updatedConfig = computed<StratifyGroup>(() => ({
 	borderColour: props.config.borderColour,
@@ -65,20 +83,9 @@ const updatedConfig = computed<StratifyGroup>(() => ({
 	cartesianProduct: cartesianProduct.value,
 	directed: directed.value,
 	structure: structure.value,
-	useStructure: useStructure.value
+	useStructure: useStructure.value,
+	useFactoredParameter: useFactoredParameter.value
 }));
-
-watch(
-	() => props.config,
-	() => {
-		strataName.value = props.config.name;
-		selectedVariables.value = props.config.selectedVariables;
-		labels.value = props.config.groupLabels;
-		cartesianProduct.value = props.config.cartesianProduct;
-		structure.value = props.config.structure;
-		useStructure.value = props.config.useStructure;
-	}
-);
 </script>
 
 <style scoped>
@@ -108,7 +115,7 @@ watch(
 	display: flex;
 	flex-direction: column;
 	gap: var(--gap-2);
-	margin-bottom: var(--gap-2);
+	margin-bottom: var(--gap-4);
 
 	& > * {
 		flex: 1;
@@ -120,5 +127,10 @@ watch(
 	flex-direction: column;
 	gap: var(--gap-2);
 	width: 0; /* CSS is weird but for some reason this prevents the Multiselect from going nuts */
+}
+
+/* make all the inputs on this page the same height */
+.common-input-height:deep(main) {
+	height: 2.35rem;
 }
 </style>

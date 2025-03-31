@@ -4,7 +4,6 @@ import static org.springframework.security.test.web.servlet.request.SecurityMock
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import jakarta.transaction.Transactional;
 import java.io.IOException;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
@@ -47,12 +46,10 @@ public class ProjectControllerTests extends TerariumApplicationTests {
 	@BeforeEach
 	public void setup() throws IOException {
 		projectSearchService.setupIndexAndAliasAndEnsureEmpty();
-		documentAssetService.setupIndexAndAliasAndEnsureEmpty();
 	}
 
 	@AfterEach
 	public void teardown() throws IOException {
-		documentAssetService.teardownIndexAndAlias();
 		projectSearchService.teardownIndexAndAlias();
 	}
 
@@ -110,8 +107,7 @@ public class ProjectControllerTests extends TerariumApplicationTests {
 
 		final DocumentAsset documentAsset = documentAssetService.createAsset(
 			(DocumentAsset) new DocumentAsset().setName("test-document-name").setDescription("my description"),
-			project.getId(),
-			ASSUME_WRITE_PERMISSION
+			project.getId()
 		);
 
 		final ProjectAsset projectAsset = new ProjectAsset()
@@ -134,7 +130,7 @@ public class ProjectControllerTests extends TerariumApplicationTests {
 			.perform(
 				MockMvcRequestBuilders.get("/document-asset/" + documentAsset.getId())
 					.param("types", AssetType.DOCUMENT.name())
-					.param("project-id", PROJECT_ID.toString())
+					.param("project-id", project.getId().toString())
 					.with(csrf())
 			)
 			.andExpect(status().isOk())
@@ -152,11 +148,10 @@ public class ProjectControllerTests extends TerariumApplicationTests {
 
 		final DocumentAsset documentAsset = documentAssetService.createAsset(
 			(DocumentAsset) new DocumentAsset().setName("test-document-name").setDescription("my description"),
-			project.getId(),
-			ASSUME_WRITE_PERMISSION
+			project.getId()
 		);
 
-		projectAssetService.createProjectAsset(project, AssetType.DOCUMENT, documentAsset, ASSUME_WRITE_PERMISSION);
+		projectAssetService.createProjectAsset(project, AssetType.DOCUMENT, documentAsset);
 
 		mockMvc
 			.perform(

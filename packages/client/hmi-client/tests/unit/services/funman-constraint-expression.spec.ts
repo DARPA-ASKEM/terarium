@@ -20,7 +20,8 @@ describe('generateConstraintExpression', () => {
 			constraintType: ConstraintType.GreaterThanOrEqualTo,
 			weights: [1, 1]
 		};
-		const expected = 'I(t),R(t)\\geq0 \\ \\forall \\ t \\in [0, 100]';
+		const expected =
+			'I(t)\\geq0 \\ \\forall \\ t \\in [0, 100] \\newline R(t)\\geq0 \\ \\forall \\ t \\in [0, 100] \\newline ';
 		const result = generateConstraintExpression(constraint);
 		expect(result).toEqual(expected);
 	});
@@ -42,7 +43,8 @@ describe('generateConstraintExpression', () => {
 			constraintType: ConstraintType.LessThanOrEqualTo,
 			weights: [1, 1]
 		};
-		const expected = 'I(t),R(t)\\leq100 \\ \\forall \\ t \\in [0, 100]';
+		const expected =
+			'I(t)\\leq100 \\ \\forall \\ t \\in [0, 100] \\newline R(t)\\leq100 \\ \\forall \\ t \\in [0, 100] \\newline ';
 		const result = generateConstraintExpression(constraint);
 		expect(result).toEqual(expected);
 	});
@@ -64,7 +66,8 @@ describe('generateConstraintExpression', () => {
 			constraintType: ConstraintType.LessThan,
 			weights: [1, 1]
 		};
-		const expected = 'I(t),R(t)<100 \\ \\forall \\ t \\in [0, 100]';
+		const expected =
+			'I(t)<100 \\ \\forall \\ t \\in [0, 100] \\newline R(t)<100 \\ \\forall \\ t \\in [0, 100] \\newline ';
 		const result = generateConstraintExpression(constraint);
 		expect(result).toEqual(expected);
 	});
@@ -86,7 +89,8 @@ describe('generateConstraintExpression', () => {
 			weights: [1, 1, 1],
 			constraintType: ConstraintType.Increasing
 		};
-		const expected = 'd/dt S(t),d/dt I(t),d/dt R(t)\\geq0 \\ \\forall \\ t \\in [0, 100]';
+		const expected =
+			'd/dt S(t)\\geq0 \\ \\forall \\ t \\in [0, 100] \\newline d/dt I(t)\\geq0 \\ \\forall \\ t \\in [0, 100] \\newline d/dt R(t)\\geq0 \\ \\forall \\ t \\in [0, 100] \\newline ';
 		const result = generateConstraintExpression(constraint);
 		expect(result).toEqual(expected);
 	});
@@ -108,7 +112,8 @@ describe('generateConstraintExpression', () => {
 			weights: [1, 1, 1],
 			constraintType: ConstraintType.Decreasing
 		};
-		const expected = 'd/dt S(t),d/dt I(t),d/dt R(t)\\leq0 \\ \\forall \\ t \\in [0, 100]';
+		const expected =
+			'd/dt S(t)\\leq0 \\ \\forall \\ t \\in [0, 100] \\newline d/dt I(t)\\leq0 \\ \\forall \\ t \\in [0, 100] \\newline d/dt R(t)\\leq0 \\ \\forall \\ t \\in [0, 100] \\newline ';
 		const result = generateConstraintExpression(constraint);
 		expect(result).toEqual(expected);
 	});

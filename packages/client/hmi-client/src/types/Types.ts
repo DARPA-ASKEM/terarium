@@ -3,9 +3,27 @@
 
 export interface ClientConfig {
     baseUrl: string;
+    documentationUrl: string;
     clientLogShippingEnabled: boolean;
     clientLogShippingIntervalMillis: number;
     sseHeartbeatIntervalMillis: number;
+}
+
+export interface ProjectSearchResult {
+    projectId?: string;
+    score?: number;
+    assets?: ProjectSearchResultAsset[];
+}
+
+export interface ProjectSearchResultAsset {
+    assetId: string;
+    assetType: AssetType;
+    assetName: string;
+    assetShortDescription: string;
+    createdOn: Date;
+    embeddingContent: string;
+    embeddingType: TerariumAssetEmbeddingType;
+    score: number;
 }
 
 export interface ClientEvent<T> {
@@ -14,6 +32,7 @@ export interface ClientEvent<T> {
     type: ClientEventType;
     projectId?: string;
     notificationGroupId?: string;
+    userId?: string;
     data: T;
 }
 
@@ -22,6 +41,19 @@ export interface ClientLog {
     timestampMillis: number;
     message: string;
     args?: string[];
+}
+
+export interface Group {
+    id: string;
+    name: string;
+    createdAtMs: number;
+    description: string;
+    roles: Role[];
+}
+
+export interface SimplifyModelResponse {
+    amr: Model;
+    max_controller_decrease: number;
 }
 
 export interface StatusUpdate<T> {
@@ -92,6 +124,7 @@ export interface ChartAnnotation extends TerariumAsset {
     nodeId: string;
     outputId: string;
     chartId: string;
+    chartType: ChartAnnotationType;
     layerSpec: any;
     llmGenerated: boolean;
     metadata: any;
@@ -99,28 +132,13 @@ export interface ChartAnnotation extends TerariumAsset {
 
 export interface CsvAsset {
     csv: string[][];
-    stats?: CsvColumnStats[];
     headers: string[];
     rowCount: number;
 }
 
-export interface CsvColumnStats {
-    bins: number[];
-    minValue: number;
-    maxValue: number;
-    mean: number;
-    median: number;
-    sd: number;
-}
-
 export interface Grounding extends TerariumEntity {
-    identifiers: Identifier[];
-    context?: any;
-}
-
-export interface Identifier {
-    curie: string;
-    name: string;
+    identifiers: { [index: string]: string };
+    modifiers?: { [index: string]: string };
 }
 
 export interface PresignedURL {
@@ -176,21 +194,28 @@ export interface Dataset extends TerariumAsset {
     grounding?: Grounding;
 }
 
-export interface DatasetColumn extends TerariumEntity {
-    name: string;
+export interface DatasetColumn extends TerariumEntity, GroundedSemantic {
+    conceptId?: string;
     fileName: string;
     dataType: ColumnType;
+    stats?: DatasetColumnStats;
     formatStr?: string;
     annotations: string[];
     metadata?: any;
-    grounding?: Grounding;
-    description?: string;
     dataset?: Dataset;
+}
+
+export interface DatasetColumnStats {
+    numericStats: NumericColumnStats;
+    nonNumericStats: NonNumericColumnStats;
 }
 
 export interface DocumentAsset extends TerariumAsset {
     userId?: string;
     documentUrl?: string;
+    /**
+     * @deprecated
+     */
     metadata?: { [index: string]: any };
     source?: string;
     text?: string;
@@ -199,12 +224,19 @@ export interface DocumentAsset extends TerariumAsset {
      * @deprecated
      */
     documentAbstract?: string;
-    /**
-     * @deprecated
-     */
-    assets?: DocumentExtraction[];
-    extractions?: ExtractedDocumentPage[];
     thumbnail?: any;
+    extraction?: Extraction;
+}
+
+export interface Enrichment {
+    id: string;
+    label: string;
+    target: EnrichmentTarget;
+    source: EnrichmentSource;
+    content: any;
+    extractionAssetId: string;
+    extractionItemIds: string[];
+    included: boolean;
 }
 
 export interface ExternalPublication extends TerariumAsset {
@@ -275,10 +307,12 @@ export interface Author {
 }
 
 export interface State extends GroundedSemantic {
+    id: string;
     units?: ModelUnit;
 }
 
 export interface Transition extends GroundedSemantic {
+    id: string;
     input: string[];
     output: string[];
     expression?: string;
@@ -297,6 +331,7 @@ export interface Project extends TerariumAsset {
     overviewContent?: any;
     projectAssets: ProjectAsset[];
     metadata?: { [index: string]: string };
+    sampleProject?: boolean;
     publicProject?: boolean;
     userPermission?: string;
 }
@@ -307,6 +342,16 @@ export interface ProjectAsset extends TerariumAsset {
     assetName: string;
     externalRef?: string;
     project: Project;
+}
+
+export interface ProjectPermission {
+    projectId: string;
+    userPermissions: ProjectUserPermission[];
+    groupPermissions: ProjectGroupPermission[];
+}
+
+export interface ProjectUserPermissionDisplayModel extends IProjectUserPermissionDisplayModel {
+    inheritedPermissionLevel: Permission;
 }
 
 export interface Provenance extends TerariumAsset {
@@ -338,7 +383,7 @@ export interface ProvenanceSearchResult {
 
 export interface RegNetBaseProperties {
     name: string;
-    grounding: ModelGrounding;
+    grounding: Grounding;
     rate_constant: any;
 }
 
@@ -360,11 +405,12 @@ export interface RegNetParameter {
     id: string;
     description?: string;
     value?: number;
-    grounding?: ModelGrounding;
+    grounding?: Grounding;
     distribution?: ModelDistribution;
 }
 
 export interface RegNetVertex extends GroundedSemantic {
+    id: string;
     sign: boolean;
     initial?: any;
     rate_constant?: any;
@@ -398,6 +444,19 @@ export interface EvaluationScenarioSummary {
     notes: string;
     multipleUsers: boolean;
     timestampMillis: number;
+}
+
+export interface Extraction {
+    extractedBy: string;
+    pages: { [index: string]: ExtractionPage };
+    body: ExtractionBody;
+    groups: ExtractionGroup[];
+    extractions: ExtractionItem[];
+}
+
+export interface ExtractionBody {
+    id: string;
+    children: ExtractionRef[];
 }
 
 export interface ExtractionResponse {
@@ -471,6 +530,7 @@ export interface DKG {
     curie: string;
     name: string;
     description: string;
+    locations?: string[];
 }
 
 export interface EntitySimilarityResult {
@@ -558,6 +618,7 @@ export interface EnsembleCalibrationCiemssRequest {
 export interface EnsembleSimulationCiemssRequest {
     modelConfigs: EnsembleModelConfigs[];
     timespan: TimeSpan;
+    loggingStepSize?: number;
     extra: any;
     engine: string;
 }
@@ -569,7 +630,6 @@ export interface OptimizeRequestCiemss {
     fixedInterventions?: Intervention[];
     loggingStepSize?: number;
     qoi: OptimizeQoi[];
-    boundsInterventions: number[][];
     extra: OptimizeExtra;
     engine: string;
     userId: string;
@@ -578,6 +638,7 @@ export interface OptimizeRequestCiemss {
 export interface SimulationRequest {
     modelConfigId: string;
     timespan: TimeSpan;
+    loggingStepSize?: number;
     extra: any;
     engine: string;
     policyInterventionId?: string;
@@ -589,11 +650,14 @@ export interface DynamicIntervention {
     value: number;
     appliedTo: string;
     type: InterventionSemanticType;
+    valueType: InterventionValueType;
 }
 
 export interface Intervention {
+    id: string;
     name: string;
     extractionDocumentId?: string;
+    extractionDatasetId?: string;
     extractionPage?: number;
     staticInterventions: StaticIntervention[];
     dynamicInterventions: DynamicIntervention[];
@@ -609,6 +673,7 @@ export interface StaticIntervention {
     value: number;
     appliedTo: string;
     type: InterventionSemanticType;
+    valueType: InterventionValueType;
 }
 
 export interface DatasetLocation {
@@ -636,12 +701,18 @@ export interface OptimizeExtra {
 
 export interface OptimizeInterventions {
     interventionType: string;
-    paramNames: string[];
-    paramValues?: number[];
-    startTime?: number[];
-    objectiveFunctionOption: string;
-    initialGuess?: number[];
+    paramName: string;
+    paramValue?: number;
+    startTime?: number;
+    timeObjectiveFunction: string;
+    parameterObjectiveFunction: string;
     relativeImportance: number;
+    paramValueInitialGuess?: number;
+    parameterValueLowerBound: number;
+    parameterValueUpperBound: number;
+    startTimeInitialGuess?: number;
+    startTimeLowerBound: number;
+    startTimeUpperBound: number;
 }
 
 export interface OptimizeQoi {
@@ -682,6 +753,8 @@ export interface TaskResponse {
     stdout: string;
     stderr: string;
     requestSHA256: string;
+    routingKey: string;
+    useCache: boolean;
 }
 
 export interface Annotation {
@@ -711,6 +784,12 @@ export interface UserEvent {
     message: any;
 }
 
+export interface ProjectSearchResponse {
+    projectId: string;
+    score: number;
+    hits: ProjectSearchAsset[];
+}
+
 export interface SimulationNotificationData {
     simulationId: string;
     simulationType: SimulationType;
@@ -732,17 +811,30 @@ export interface Links {
     self: string;
 }
 
-export interface DocumentExtraction {
-    fileName: string;
-    assetType: ExtractionAssetType;
-    metadata: { [index: string]: any };
+export interface GroundedSemantic {
+    name?: string;
+    description?: string;
+    grounding?: Grounding;
 }
 
-export interface ExtractedDocumentPage {
-    pageNumber: number;
-    text: string;
-    tables: any[];
-    equations: any[];
+export interface NumericColumnStats {
+    mean: number;
+    median: number;
+    min: number;
+    max: number;
+    quartiles: number[];
+    data_type: string;
+    std_dev: number;
+    unique_values: number;
+    missing_values: number;
+    histogram_bins: HistogramBin[];
+}
+
+export interface NonNumericColumnStats {
+    data_type: string;
+    unique_values: number;
+    most_common: { [index: string]: number };
+    missing_values: number;
 }
 
 export interface ModelHeader {
@@ -766,14 +858,17 @@ export interface ModelMetadata {
     initials?: { [index: string]: any };
     parameters?: { [index: string]: any };
     card?: Card;
-    provenance?: string[];
     source?: any;
+    enrichments?: Enrichment[];
     description?: any;
+    modelProvenance?: { [index: string]: string[] };
     processed_at?: number;
     processed_by?: string;
     variable_statements?: VariableStatement[];
     gollmCard?: any;
-    gollmExtractions?: any;
+    /**
+     * @deprecated
+     */
     templateCard?: any;
     code_id?: string;
 }
@@ -786,28 +881,37 @@ export interface ModelDistribution {
     parameters: { [index: string]: any };
 }
 
-export interface ModelGrounding {
-    identifiers: { [index: string]: any };
-    context?: { [index: string]: any };
-    modifiers?: any;
-}
-
 export interface ModelUnit {
     expression: string;
     expression_mathml: string;
 }
 
-export interface GroundedSemantic {
-    id: string;
-    name?: string;
-    description?: string;
-    grounding?: ModelGrounding;
-}
-
 export interface Properties {
     name: string;
-    grounding?: ModelGrounding;
+    grounding?: Grounding;
     description?: string;
+}
+
+export interface ProjectUserPermission {
+    user: User;
+    project: Project;
+    permissionLevel: ProjectPermissionLevel;
+}
+
+export interface ProjectGroupPermission {
+    group: Group;
+    project: Project;
+    permissionLevel: ProjectPermissionLevel;
+}
+
+export interface IProjectUserPermissionDisplayModel {
+    user: User;
+    username: string;
+    givenName: string;
+    email: string;
+    id: string;
+    familyName: string;
+    permissionLevel: Permission;
 }
 
 export interface ProvenanceNode {
@@ -822,6 +926,35 @@ export interface ProvenanceEdge {
     right: ProvenanceNode;
 }
 
+export interface ExtractionPage {
+    page: number;
+    size: PageSize;
+}
+
+export interface ExtractionGroup {
+    id: string;
+    children: ExtractionRef[];
+}
+
+export interface ExtractionItem {
+    id: string;
+    type: string;
+    subType: string;
+    extractedBy: string;
+    page: number;
+    pageWidth: number;
+    pageHeight: number;
+    bbox: BBox;
+    charspan: number[];
+    rawText: string;
+    text: string;
+    data: any;
+}
+
+export interface ExtractionRef {
+    id: string;
+}
+
 export interface PermissionRole {
     id: string;
     name: string;
@@ -833,10 +966,23 @@ export interface UserOld {
     roles: string[];
 }
 
+export interface ProjectSearchAsset {
+    assetId: string;
+    assetType: AssetType;
+    embeddingType: TerariumAssetEmbeddingType;
+    score: number;
+}
+
 export interface AuthorityInstance {
     id: number;
     mask: number;
     authority: Authority;
+}
+
+export interface HistogramBin {
+    start: number;
+    end: number;
+    count: number;
 }
 
 export interface OdeSemantics {
@@ -885,6 +1031,18 @@ export interface VariableStatement {
     provenance?: ProvenanceInfo;
 }
 
+export interface PageSize {
+    width: number;
+    height: number;
+}
+
+export interface BBox {
+    left: number;
+    top: number;
+    right: number;
+    bottom: number;
+}
+
 export interface Authority {
     id: number;
     name: string;
@@ -906,12 +1064,14 @@ export interface Initial {
 }
 
 export interface ModelParameter extends GroundedSemantic {
+    id: string;
     value?: number;
     distribution?: ModelDistribution;
     units?: ModelUnit;
 }
 
 export interface Observable extends GroundedSemantic {
+    id: string;
     states?: string[];
     units?: ModelUnit;
     expression?: string;
@@ -925,7 +1085,6 @@ export interface Variable {
     column: DataColumn[];
     paper: Paper;
     equations: EquationVariable[];
-    dkg_groundings: DKGConcept[];
 }
 
 export interface StatementValue {
@@ -1027,6 +1186,13 @@ export enum AssetType {
     ModelConfiguration = "model-configuration",
     Artifact = "artifact",
     InterventionPolicy = "intervention-policy",
+    NotebookSession = "notebook-session",
+    Project = "project",
+}
+
+export enum ChartAnnotationType {
+    ForecastChart = "FORECAST_CHART",
+    QuantileForecastChart = "QUANTILE_FORECAST_CHART",
 }
 
 export enum EvaluationScenarioStatus {
@@ -1048,10 +1214,17 @@ export enum TaskStatus {
     Cancelled = "CANCELLED",
 }
 
+export enum TerariumAssetEmbeddingType {
+    Overview = "OVERVIEW",
+    Name = "NAME",
+    Description = "DESCRIPTION",
+}
+
 export enum ClientEventType {
     ChartAnnotationCreate = "CHART_ANNOTATION_CREATE",
     ChartAnnotationDelete = "CHART_ANNOTATION_DELETE",
     CloneProject = "CLONE_PROJECT",
+    KnowledgeEnrichmentModel = "KNOWLEDGE_ENRICHMENT_MODEL",
     Extraction = "EXTRACTION",
     ExtractionPdf = "EXTRACTION_PDF",
     FileUploadProgress = "FILE_UPLOAD_PROGRESS",
@@ -1066,13 +1239,17 @@ export enum ClientEventType {
     TaskGollmCompareModel = "TASK_GOLLM_COMPARE_MODEL",
     TaskGollmConfigureModelFromDataset = "TASK_GOLLM_CONFIGURE_MODEL_FROM_DATASET",
     TaskGollmConfigureModelFromDocument = "TASK_GOLLM_CONFIGURE_MODEL_FROM_DOCUMENT",
-    TaskGollmEnrichAmr = "TASK_GOLLM_ENRICH_AMR",
+    TaskGollmDocumentQuestion = "TASK_GOLLM_DOCUMENT_QUESTION",
+    TaskGollmEnrichModel = "TASK_GOLLM_ENRICH_MODEL",
+    TaskGollmEnrichDataset = "TASK_GOLLM_ENRICH_DATASET",
     TaskGollmEquationsFromImage = "TASK_GOLLM_EQUATIONS_FROM_IMAGE",
     TaskGollmGenerateSummary = "TASK_GOLLM_GENERATE_SUMMARY",
     TaskGollmInterventionsFromDocument = "TASK_GOLLM_INTERVENTIONS_FROM_DOCUMENT",
-    TaskGollmModelCard = "TASK_GOLLM_MODEL_CARD",
+    TaskGollmInterventionsFromDataset = "TASK_GOLLM_INTERVENTIONS_FROM_DATASET",
+    TaskGollmDatasetStatistics = "TASK_GOLLM_DATASET_STATISTICS",
     TaskMiraAmrToMmt = "TASK_MIRA_AMR_TO_MMT",
     TaskMiraGenerateModelLatex = "TASK_MIRA_GENERATE_MODEL_LATEX",
+    TaskMiraCompareModelsConcepts = "TASK_MIRA_COMPARE_MODELS_CONCEPTS",
     TaskUndefinedEvent = "TASK_UNDEFINED_EVENT",
     WorkflowDelete = "WORKFLOW_DELETE",
     WorkflowUpdate = "WORKFLOW_UPDATE",
@@ -1126,11 +1303,32 @@ export enum ColumnType {
     Time = "TIME",
 }
 
+export enum EnrichmentTarget {
+    State = "STATE",
+    Parameter = "PARAMETER",
+    Transition = "TRANSITION",
+    Observable = "OBSERVABLE",
+    Description = "DESCRIPTION",
+}
+
+export enum EnrichmentSource {
+    Gollm = "GOLLM",
+    Custom = "CUSTOM",
+}
+
 export enum SemanticType {
     Initial = "initial",
     Parameter = "parameter",
     Observable = "observable",
     Inferred = "inferredParameter",
+}
+
+export enum Permission {
+    None = "NONE",
+    Read = "READ",
+    Write = "WRITE",
+    Membership = "MEMBERSHIP",
+    Administrate = "ADMINISTRATE",
 }
 
 export enum ProvenanceRelationType {
@@ -1188,8 +1386,15 @@ export enum InterventionSemanticType {
     Parameter = "parameter",
 }
 
-export enum ExtractionAssetType {
-    Figure = "FIGURE",
-    Table = "TABLE",
-    Equation = "EQUATION",
+export enum InterventionValueType {
+    Value = "value",
+    Percentage = "percentage",
+}
+
+export enum ProjectPermissionLevel {
+    None = "NONE",
+    Read = "READ",
+    Write = "WRITE",
+    Admin = "ADMIN",
+    Owner = "OWNER",
 }

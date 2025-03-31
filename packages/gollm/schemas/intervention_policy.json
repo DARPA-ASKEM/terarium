@@ -1,0 +1,171 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$defs": {
+    "interventionPolicy": {
+      "type": "object",
+      "description": "An intervention policy is a set of rules that reset the value of several parameters and state variables of a model, triggered at given timestep value or by some other model quantity passing a given threshold value; examples of public health intervention policies in the context of an epidemiological model include vaccination of high-risk individuals and quarantining of symptomatic individuals.",
+      "properties": {
+        "modelId": {
+          "type": "string",
+          "description": "The ID of the AMR model to which the intervention policy applies."
+        },
+        "name": {
+          "type": "string",
+          "description": "A name for the intervention policy, such as 'Initial response of the Italian government to the COVID-19 epidemic'"
+        },
+        "description": {
+          "type": "string",
+          "description": "A description of the overall intervention policy, such as 'Successive public health measures adopted by Italian policymakers over the first 38 days, as modelled by Giordano et al. 2020'"
+        },
+        "interventions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/intervention"
+          },
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "modelId",
+        "name",
+        "description",
+        "interventions"
+      ],
+      "additionalProperties": false
+    },
+    "intervention": {
+      "type": "object",
+      "description": "A set of rules that reset the value of parameters and state variables of a model, grouped by a decision made by policymakers and starting a particular date or timestep.",
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "A name for the policymaker decision, such as 'Day 4 - closure of schools' or 'Day 12 - serology testing limited to symptomatic individuals'."
+        },
+        "extractionPage": {
+          "type": "number",
+          "description": "The page number where the model configuration was found in the text."
+        },
+        "staticInterventions": {
+          "type": "array",
+          "description": "A list of static interventions on a model, grouped here by the timestep at which the interventions occur.",
+          "items": {
+            "$ref": "#/$defs/staticIntervention"
+          }
+        },
+        "dynamicInterventions": {
+          "type": "array",
+          "description": "A list of dynamic interventions on a model, grouped here by the threshold-crossing event that trigger the interventions.",
+          "items": {
+            "$ref": "#/$defs/dynamicIntervention"
+          },
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "name",
+        "extractionPage",
+        "staticInterventions",
+        "dynamicInterventions"
+      ],
+      "additionalProperties": false
+    },
+    "staticIntervention": {
+      "type": "object",
+      "description": "A static intervention is a rule that reset the value of a parameter or state variable of the model at a given timestep value; examples include decreasing the value of the disease transmission rate between children after schools are closed after some date by policymakers.",
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": [
+            "state",
+            "parameter"
+          ]
+        },
+        "valueType": {
+          "type": "string",
+          "enum": [
+            "value",
+            "percentage"
+          ]
+        },
+        "appliedTo": {
+          "type": "string",
+          "description": "The ID of the parameter or state variable to which the intervention is applied; for example, school closures cause a reduction in the disease transmission rate, which is represented by a parameter with some ID in the AMR model."
+        },
+        "value": {
+          "type": "number",
+          "description": "The new value to which the parameter or state variable of the model is reset; for example, the disease transmission rate is decreased to some value after schools are closed."
+        },
+        "timestep": {
+          "type": "number",
+          "description": "The timestep value at which the intervention is applied; for example, schools are closed 4 days after the first infection is detected."
+        }
+      },
+      "required": [
+        "timestep",
+        "value",
+        "appliedTo",
+        "type",
+        "valueType"
+      ],
+      "additionalProperties": false
+    },
+    "dynamicIntervention": {
+      "type": "object",
+      "description": "A dynamic intervention is a rule that reset the value of a parameter or state variable of the model, when some other state variable crosses a given threshold value, not a given timestep value; examples include increasing the serology testing rate when the proportion of hospitalized individuals exceeds some threshold value.",
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": [
+            "state",
+            "parameter"
+          ]
+        },
+        "valueType": {
+          "type": "string",
+          "enum": [
+            "value",
+            "percentage"
+          ]
+        },
+        "appliedTo": {
+          "type": "string",
+          "description": "The ID of the parameter or state variable to which the intervention is applied; for example, the serology testing rate is represented by a parameter with some ID in the AMR model."
+        },
+        "value": {
+          "type": "number",
+          "description": "The new value to which the parameter or state variable of the model is reset; for example, the serology testing rate is increased to some value."
+        },
+        "parameter": {
+          "type": "string",
+          "description": "The ID of the state variable whose threshold crossing triggers this intervention; it cannot be a parameter; for example, the state variable is the proportion of hospitalized individuals."
+        },
+        "threshold": {
+          "type": "number",
+          "description": "The value at which the intervention-triggering state variable must cross for the value resetting rule to apply; for example, the proportion of hospitalized individuals exceeds some number and triggers the serology testing rate to increase."
+        }
+      },
+      "required": [
+        "parameter",
+        "threshold",
+        "value",
+        "appliedTo",
+        "type",
+        "valueType"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "type": "object",
+  "properties": {
+    "interventionPolicies": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/interventionPolicy"
+      }
+    }
+  },
+  "required": [
+    "interventionPolicies"
+  ],
+  "additionalProperties": false
+}

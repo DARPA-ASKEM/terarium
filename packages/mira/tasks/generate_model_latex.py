@@ -12,53 +12,104 @@ def main():
     exitCode = 0
 
     try:
-        taskrunner = TaskRunnerInterface(description="Generate latex")
+        taskrunner = TaskRunnerInterface(description="Generate LaTeX")
         taskrunner.on_cancellation(cleanup)
 
         data = taskrunner.read_input_str_with_timeout()
         amr = json.loads(data)
         model = model_from_json(amr)
 
-        odeterms = {var: 0 for var in model.get_concepts_name_map().keys()}
+        # =========================================
+        # Generate LaTeX code string from MMT model
+        # =========================================
 
-        for t in model.templates:
-            if hasattr(t, "subject"):
-                var = t.subject.name
-                odeterms[var] -= t.rate_law.args[0]
+        odeterms = {var: [] for var in sorted(model.get_concepts_name_map().keys())}
 
-            if hasattr(t, "outcome"):
-                var = t.outcome.name
-                odeterms[var] += t.rate_law.args[0]
+        # ODE terms from template rate laws
+        for template in model.templates:
+            if hasattr(template, "subject"):
+                var = template.subject.name
+                if template.rate_law is not None:
+                    odeterms[var].append(-template.rate_law.args[0])
+                else:
+                    odeterms[var].append(0)
+
+            if hasattr(template, "outcome"):
+                var = template.outcome.name
+                if template.rate_law is not None:
+                    odeterms[var].append(template.rate_law.args[0])
+                else:
+                    odeterms[var].append(0)
+
+        # Sort the terms such that all negative ones come first
+        odeterms = {var: sorted(terms, key = lambda term: str(term)) for var, terms in odeterms.items()}
 
         # Time
         if model.time and model.time.name:
             time = model.time.name
         else:
             time = "t"
-
         t = sympy.Symbol(time)
 
-        # Construct Sympy equations
-        odesys = [
-            sympy.latex(sympy.Eq(sympy.diff(sympy.Function(var)(t), t), terms))
-            for var, terms in odeterms.items()
-        ]
+        # Add "(t)" to all the state variables as time-dependent functions
+        for var, terms in odeterms.items():
+            for i, term in enumerate(terms):
+                if hasattr(term, 'atoms'):
+                    for atom in term.atoms(sympy.Symbol):
+                        if str(atom) in odeterms.keys():
+                            term = term.subs(atom, sympy.Function(str(atom))(t))
+                    terms[i] = term
 
-        # Observables
-        if len(model.observables) != 0:
-            obs_eqs = [
-                f"{{{obs.name}}}(t) = " + sympy.latex(obs.expression.args[0])
-                for obs in model.observables.values()
-            ]
 
-            #add observables.
-            odesys += obs_eqs
+        # Construct equations
+        odesys = []
+        exprs = ""
+        for i, (var, terms) in enumerate(odeterms.items()):
+
+            lhs = sympy.diff(sympy.Function(var)(t), t)
+            rhs = sum(terms)
+            exprs += sympy.latex(lhs) + " ={} "
+
+            # Few equation terms = no wrapping needed
+            exprs += sympy.latex(rhs)
+
+            if i < (len(odeterms) - 1):
+                exprs += " \\\\ \n"
+
+            odesys = [exprs]
+
+
+        # Repeat for observables if present
+        if len(model.observables) > 0:
+
+            # Sort observables alphabetically
+            observables = {obs: model.observables[obs].expression.args[0] for obs in sorted(model.observables.keys())}
+
+            # Add "(t)" for all the state variables as time-dependent symbols
+            for obs, expr in observables.items():
+                if hasattr(expr, 'atoms'):
+                    for atom in expr.atoms(sympy.Symbol):
+                        if str(atom) in odeterms.keys():
+                            expr = expr.subs(atom, sympy.Function(str(atom))(t))
+                    observables[obs] = expr
+
+            for i, (obs, expr) in enumerate(observables.items()):
+                lhs = sympy.Function(obs)(t)
+                rhs = expr
+                exprs = "     " + sympy.latex(lhs) + " ={} " + sympy.latex(rhs)
+                if i == 0:
+                    exprs = " \\\\ \n" + exprs
+                if i < (len(observables) - 1):
+                    exprs += " \\\\ \n"
+
+                odesys[0] += exprs
 
         # Reformat:
-        odesys = "\\begin{align} \n    " + " \\\\ \n    ".join([eq for eq in odesys]) + "\n\\end{align}"
+        odesys = "\\begin{align} \n    " + odesys[0] + "\n\\end{align}"
+        # =========================================
 
         taskrunner.write_output_dict_with_timeout({"response": odesys})
-        print("Generate latex succeeded")
+        print("Generate LaTeX succeeded")
 
     except Exception as e:
         sys.stderr.write(f"Error: {str(e)}\n")

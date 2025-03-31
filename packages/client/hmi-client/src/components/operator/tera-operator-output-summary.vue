@@ -76,17 +76,14 @@ function cancelEdit() {
 const poller = new Poller<Summary>();
 async function pollSummary() {
 	isLoading.value = true;
-	poller
-		.setInterval(3000)
-		.setThreshold(15)
-		.setPollAction(async () => {
-			const summaryMap = await getSummaries([props.summaryId]);
-			const summaryObj = summaryMap[props.summaryId];
-			if (summaryObj && summaryObj.generatedSummary) {
-				return { data: summaryObj, progress: null, error: null };
-			}
-			return { data: null, progress: null, error: null };
-		});
+	poller.setThreshold(15).setPollAction(async () => {
+		const summaryMap = await getSummaries([props.summaryId]);
+		const summaryObj = summaryMap[props.summaryId];
+		if (summaryObj && summaryObj.generatedSummary) {
+			return { data: summaryObj, progress: null, error: null };
+		}
+		return { data: null, progress: null, error: null };
+	});
 	const pollerResult = await poller.start();
 	if (pollerResult.state === PollerState.Cancelled) {
 		return;
@@ -136,9 +133,9 @@ section {
 	& > .summary {
 		display: flex;
 		width: 100%;
-		font-size: var(--font-caption);
 		color: var(--text-color-primary);
 		cursor: text;
+		padding-left: var(--gap-2);
 
 		img {
 			padding-right: var(--gap-2);
@@ -147,7 +144,7 @@ section {
 	}
 
 	& > .p-inputtext {
-		font-size: var(--font-caption);
+		font-size: var(--font-size);
 	}
 
 	padding-bottom: var(--gap-2);

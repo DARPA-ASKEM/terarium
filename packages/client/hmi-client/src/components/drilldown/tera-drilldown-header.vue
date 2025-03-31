@@ -12,7 +12,7 @@
 			<div class="actions">
 				<slot name="actions" />
 			</div>
-			<a v-if="documentationUrl" :href="documentationUrl" rel="noopener noreferrer">Documentation</a>
+			<a v-if="documentationUrl" :href="documentationUrl" rel="noopener noreferrer">Help</a>
 		</div>
 	</header>
 </template>
@@ -53,6 +53,12 @@ header > * {
 	justify-content: space-between;
 }
 
+.title-row {
+	display: flex;
+	align-items: center;
+	gap: var(--gap-3);
+}
+
 .title-row > h4 > i {
 	color: var(--text-color-secondary);
 	margin-left: 1rem;
@@ -69,8 +75,7 @@ header > * {
 
 header .title {
 	white-space: nowrap;
-	overflow: hidden;
-	text-overflow: ellipsis;
+	min-width: fit-content;
 }
 
 header .tabs-row {
@@ -84,12 +89,18 @@ header .tabs-row:deep(.p-tabview .p-tabview-panels) {
 }
 
 a {
-	height: 3rem;
 	display: flex;
 	align-items: center;
 	color: var(--primary-color);
 	margin-left: auto;
 	margin-right: var(--gap-4);
+	margin-bottom: 2px;
+	font-size: var(--font-caption);
+	padding: var(--gap-3);
+	border-radius: var(--border-radius-medium);
+}
+a:hover {
+	background-color: rgba(27, 128, 115, 0.04);
 }
 
 :deep(.p-tabview-header:not(.p-highlight) .p-tabview-nav-link) {

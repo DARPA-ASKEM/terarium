@@ -1,7 +1,9 @@
 package software.uncharted.terarium.hmiserver.models.dataservice.document;
 
 import com.fasterxml.jackson.annotation.JsonAlias;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import io.hypersistence.utils.hibernate.type.json.JsonType;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
@@ -19,18 +21,22 @@ import java.util.Map;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
+import lombok.extern.slf4j.Slf4j;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.annotations.Type;
+import software.uncharted.terarium.hmiserver.annotations.TSIgnore;
 import software.uncharted.terarium.hmiserver.annotations.TSModel;
 import software.uncharted.terarium.hmiserver.annotations.TSOptional;
 import software.uncharted.terarium.hmiserver.models.TerariumAsset;
 import software.uncharted.terarium.hmiserver.models.dataservice.Grounding;
+import software.uncharted.terarium.hmiserver.models.extraction.Extraction;
 
 @EqualsAndHashCode(callSuper = true)
 @Data
 @TSModel
 @Accessors(chain = true)
 @Entity
+@Slf4j
 public class DocumentAsset extends TerariumAsset {
 
 	@Serial
@@ -48,6 +54,7 @@ public class DocumentAsset extends TerariumAsset {
 	@TSOptional
 	@Type(JsonType.class)
 	@Column(columnDefinition = "json")
+	@Deprecated
 	private Map<String, JsonNode> metadata;
 
 	@TSOptional
@@ -68,35 +75,42 @@ public class DocumentAsset extends TerariumAsset {
 	@Deprecated
 	private String documentAbstract;
 
+	/*
 	@TSOptional
 	@Type(JsonType.class)
 	@Column(columnDefinition = "json")
 	@Deprecated
-	private List<DocumentExtraction> assets;
-
-	@TSOptional
-	@Type(JsonType.class)
-	@Column(columnDefinition = "json")
 	private List<ExtractedDocumentPage> extractions = new ArrayList<>();
+	*/
 
 	@TSOptional
 	@Lob
 	@JdbcTypeCode(Types.BINARY)
 	private byte[] thumbnail;
 
+	@TSOptional
+	@Type(JsonType.class)
+	@Column(columnDefinition = "json")
+	private Extraction extraction;
+
+	/*
+	public List<ExtractedDocumentPage> getExtractions() {
+		if (
+			this.extractions.size() == 0 &&
+			this.fileNames.size() > 0 &&
+			(this.fileNames.get(0).endsWith(".txt") || this.fileNames.get(0).endsWith(".md")) &&
+			this.text != null
+		) {
+			extractions = List.of(new ExtractedDocumentPage().setPageNumber(1).setText(this.text));
+		}
+		return this.extractions;
+	}
+	*/
+
 	@Override
 	public List<String> getFileNames() {
 		if (this.fileNames == null) {
 			this.fileNames = new ArrayList<>();
-		}
-
-		// ensure these are included in filenames
-		if (this.assets != null) {
-			for (final DocumentExtraction asset : assets) {
-				if (!this.fileNames.contains(asset.getFileName())) {
-					this.fileNames.add(asset.getFileName());
-				}
-			}
 		}
 		return this.fileNames;
 	}
@@ -107,6 +121,7 @@ public class DocumentAsset extends TerariumAsset {
 		super.cloneSuperFields(clone);
 
 		clone.documentUrl = this.documentUrl;
+		clone.thumbnail = this.thumbnail;
 
 		if (this.metadata != null) {
 			clone.metadata = new HashMap<>();
@@ -118,21 +133,31 @@ public class DocumentAsset extends TerariumAsset {
 
 		clone.source = this.source;
 		clone.text = this.text;
+		/*
 		for (final ExtractedDocumentPage extraction : this.extractions) {
 			clone.extractions.add(extraction.clone());
 		}
+		*/
 
 		if (this.grounding != null) {
 			clone.grounding = this.grounding.clone();
 		}
-
-		if (this.assets != null) {
-			clone.assets = new ArrayList<>();
-			for (final DocumentExtraction asset : this.assets) {
-				clone.assets.add(asset.clone());
-			}
-		}
-
 		return clone;
+	}
+
+	@JsonIgnore
+	@TSIgnore
+	public String getEmbeddingSourceText() {
+		try {
+			if (getMetadata() != null && getMetadata().containsKey("gollmCard")) {
+				// update embeddings
+				final JsonNode card = getMetadata().get("gollmCard");
+				final ObjectMapper objectMapper = new ObjectMapper();
+				return objectMapper.writeValueAsString(card);
+			}
+			return null;
+		} catch (final Exception e) {
+			throw new RuntimeException("Failed to serialize model embedding text into JSON", e);
+		}
 	}
 }
