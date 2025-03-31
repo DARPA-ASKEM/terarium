@@ -906,12 +906,12 @@ export interface ProjectGroupPermission {
 
 export interface IProjectUserPermissionDisplayModel {
     user: User;
+    email: string;
     username: string;
     givenName: string;
-    email: string;
     id: string;
-    familyName: string;
     permissionLevel: Permission;
+    familyName: string;
 }
 
 export interface ProvenanceNode {
