@@ -642,7 +642,7 @@ export function createForecastChart(
 	}
 
 	// Helper function to capture common layer structure
-	const newLayer = (layer: ForecastChartLayer, markType: string) => {
+	const newLayer = (layer: ForecastChartLayer, markType: string, layerName: string = '') => {
 		const selectedFields = layer.variables.concat([layer.timeField]);
 		if (layer.groupField) selectedFields.push(layer.groupField);
 
@@ -724,6 +724,7 @@ export function createForecastChart(
 			...header,
 			layer: [
 				{
+					name: layerName,
 					mark: { type: markType },
 					encoding
 				}
@@ -747,7 +748,7 @@ export function createForecastChart(
 
 	// Build sample layer
 	if (samplingLayer && !isEmpty(samplingLayer.variables) && !isEmpty(samplingLayer.data)) {
-		const layerSpec = newLayer(samplingLayer, 'line');
+		const layerSpec = newLayer(samplingLayer, 'line', 'sample-layer');
 		const lineSubLayer = layerSpec.layer[0];
 
 		Object.assign(lineSubLayer.encoding, {
@@ -769,7 +770,7 @@ export function createForecastChart(
 
 	// Build statistical layer
 	if (buildStatLayer) {
-		const layerSpec = newLayer(statisticsLayer, 'line');
+		const layerSpec = newLayer(statisticsLayer, 'line', 'statistics-layer');
 		const lineSubLayer = layerSpec.layer[0];
 
 		// Add formatted fields as to the data for display values
@@ -820,6 +821,7 @@ export function createForecastChart(
 
 		// Add vertical line for tooltip
 		const verticalLineLayer = {
+			name: 'tooltip-vertical-line-layer',
 			mark: {
 				type: 'rule',
 				color: '#AAA',
@@ -874,6 +876,7 @@ export function createForecastChart(
 		}
 		// Add a small rectangle behind the timeLabelLayer to make the time more readable
 		const timeLabelBackgroundLayer = {
+			name: 'time-label-background-layer',
 			mark: {
 				type: 'rect',
 				color: '#dddddd',
@@ -936,6 +939,7 @@ export function createForecastChart(
 
 		// Add a label with the current X value (time) for the vertical line
 		const timeLabelLayer = {
+			name: 'time-label-layer',
 			mark: {
 				type: 'text',
 				align: 'center',
@@ -977,16 +981,17 @@ export function createForecastChart(
 		const clickAndSelectLegend = `((click.${statisticsLayer.timeField} || [])[0] === datum.${statisticsLayer.timeField}) && (!legend_selection.variableField || indexof(legend_selection.variableField || [], datum.variableField) >= 0)`;
 		// Add tooltip points for the vertical line
 		const pointLayer = {
+			name: 'tooltip-point-layer',
 			mark: {
 				type: 'point',
 				size: 50
 			},
 			encoding: {
 				color: {
-					field: 'variableField',
+					field: options.bins ? 'group' : 'variableField',
 					type: 'nominal',
 					scale: {
-						domain: statisticsLayer.variables,
+						domain: options.bins ? Array.from(options.bins.keys()) : statisticsLayer.variables,
 						range: options.colorscheme || CATEGORICAL_SCHEME
 					}
 				},
@@ -1020,6 +1025,7 @@ export function createForecastChart(
 		// Add labels for each point for tooltip.
 		// This is the base layer with a white stroke around it to make the text readable
 		const labelLayerBase = {
+			name: 'label-base-layer',
 			mark: {
 				type: 'text',
 				align: 'left',
@@ -1066,6 +1072,7 @@ export function createForecastChart(
 		}
 		// This is the top layer no stroke
 		const labelLayer = {
+			name: 'label-layer',
 			mark: {
 				type: 'text',
 				align: 'left',
@@ -1116,7 +1123,7 @@ export function createForecastChart(
 
 	// Build ground truth layer
 	if (groundTruthLayer && !isEmpty(groundTruthLayer.variables) && !isEmpty(groundTruthLayer.data)) {
-		const layerSpec = newLayer(groundTruthLayer, 'point');
+		const layerSpec = newLayer(groundTruthLayer, 'point', 'ground-truth-layer');
 		const encoding = layerSpec.layer[0].encoding;
 
 		encoding.color.scale.range = options.colorscheme
