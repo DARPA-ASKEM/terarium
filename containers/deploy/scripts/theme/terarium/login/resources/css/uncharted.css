@@ -1,0 +1,459 @@
+@import url("https://cdn.jsdelivr.net/npm/primeicons@6.0.1/primeicons.min.css");
+
+:root {
+  --un-color-accent-darker: #3f1515ff;
+  --un-color-accent-dark: #840d0dff;
+  --un-color-accent: #de1b1bff;
+  --un-color-accent-light: #f9aeaeff;
+  --un-color-accent-lighter: #fff0f0;
+
+  --un-alert-highlight: #de1b1bff;
+
+  --un-color-button-primary: #de1b1bff;
+  --un-color-button-hover: #bc0909;
+  --un-color-button-secondary: #fcefef;
+  --un-color-button-secondary-hover: #fde4e4;
+
+  --un-background-color-left: #fff5f5;
+  --un-background-color-right: #ff8888;
+
+  --un-color-font-dark: #1c2127;
+  --un-color-font-light: #fdfafd;
+  --un-color-body-text-disabled: #747576ff;
+  --un-color-body-text-secondary: #9da5af;
+  --un-color-body-text-primary: black;
+
+  --un-font-xxxlarge: 600 1.375rem/2.25rem Inter, -apple-system,
+    BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif,
+    "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+  --un-font-xxlarge: 600 1.25rem/2rem Inter, -apple-system, BlinkMacSystemFont,
+    "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif, "Apple Color Emoji",
+    "Segoe UI Emoji", "Segoe UI Symbol";
+  --un-font-xlarge: 400 1.125rem/1.75rem Inter, -apple-system,
+    BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif,
+    "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+  --un-font-large: 400 1rem/1.5rem Inter, -apple-system, BlinkMacSystemFont,
+    "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif, "Apple Color Emoji",
+    "Segoe UI Emoji", "Segoe UI Symbol";
+  --un-font-body: 400 0.875rem/1.25rem Inter, -apple-system, BlinkMacSystemFont,
+    "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif, "Apple Color Emoji",
+    "Segoe UI Emoji", "Segoe UI Symbol";
+  --un-font-small: 400 0.75rem/1rem Inter, -apple-system, BlinkMacSystemFont,
+    "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif, "Apple Color Emoji",
+    "Segoe UI Emoji", "Segoe UI Symbol";
+
+  --un-border-radius: 6px;
+}
+/***************/
+/**** CORE *****/
+/***************/
+body {
+  background: radial-gradient(
+    105.92% 916.85% at 101.3% -5.92%,
+    var(--un-background-color-right) 0%,
+    var(--un-background-color-left) 100%
+  );
+
+  font: var(--un-font-body);
+  color: var(--un-color-body-text-primary);
+}
+
+a {
+  color: var(--un-color-accent);
+}
+
+a:hover {
+  color: var(--un-color-accent-darker);
+}
+
+hr {
+  border-top: 1px solid var(--un-color-accent-dark);
+}
+
+h1 {
+  font: var(--un-font-xxxlarge);
+  margin-bottom: 1em;
+  margin-top: 0;
+}
+
+h2,
+h3,
+h4 {
+  font: var(--un-font-body);
+}
+
+main {
+  display: flex;
+  align-items: center;
+  padding: 2em;
+  gap: 0;
+}
+
+label {
+  display: block;
+  font-weight: bold;
+  color: var(--un-color-body-text-primary);
+  margin-bottom: 0.33em;
+  margin-top: 1.66em;
+}
+
+.kc-background-logo {
+  background-image: url("../img/logo-outline.svg");
+  background-repeat: no-repeat;
+  background-size: auto 100%;
+  background-position: right -150px top;
+  position: fixed;
+  padding: 50px;
+  height: 100vh;
+  width: 100vw;
+}
+
+.main-content {
+  height: 100%;
+}
+
+@media (min-width: 900px) {
+  .main-content {
+    display: flex;
+    justify-content: center;
+    gap: 6rem;
+  }
+}
+
+/***************/
+/**** ALERT ****/
+/***************/
+.pf-c-alert {
+  margin-bottom: 1rem;
+}
+
+.pf-c-alert.pf-m-danger,
+.pf-c-alert.pf-m-warning {
+  --pf-c-alert--BorderTopColor: var(--un-alert-highlight);
+  --pf-c-alert__icon--Color: var(--un-alert-highlight);
+  --pf-c-alert__title--Color: var(--un-alert-highlight);
+  --pf-c-alert--m-inline--BackgroundColor: var(--un-color-accent-lighter);
+}
+
+/***************/
+/**** ASIDE ****/
+/***************/
+aside {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 2em;
+}
+
+aside img {
+  display: block;
+  margin-bottom: 2.5rem;
+  max-width: 20rem;
+}
+
+aside p {
+  max-width: auto;
+  font: var(--un-font-body);
+  color: var(--un-color-body-text-primary);
+  margin-bottom: 1rem;
+}
+
+.primary-desc {
+  font: var(--un-font-xxlarge);
+}
+
+@media (min-width: 900px) {
+  aside p {
+    max-width: 500px;
+  }
+}
+
+/*******************************/
+/**** ASIDE COMPANY/SUPPORT ****/
+/*******************************/
+.company {
+  padding: 4rem 0rem 2.5rem 0rem;
+  font: var(--un-font-small);
+}
+
+/* company logo */
+.company > img {
+  margin: 1rem 0 0 0;
+  max-width: 10rem;
+}
+
+/* Deals with the questions and email support section */
+.support {
+  display: inline;
+}
+
+.support > div {
+  font: var(--un-font-small);
+  margin-bottom: 1rem;
+}
+
+/* Support email link */
+.support div > a {
+  color: var(--un-color-body-text-primary);
+  text-decoration: underline;
+}
+
+/**********************/
+/**** ASIDE LOCALE ****/
+/**********************/
+#kc-current-locale-link {
+  background-color: var(--un-color-button-secondary);
+  border: 1px solid var(--un-color-button-primary);
+  border-radius: var(--un-border-radius);
+
+  color: var(--un-color-button-primary);
+
+  padding: 0.7rem;
+
+  text-decoration: none;
+  vertical-align: middle;
+
+  display: flex;
+  justify-content: space-between;
+
+  min-width: 100px;
+}
+
+#kc-current-locale-link img {
+  margin: 0;
+}
+
+a#kc-current-locale-link::after {
+  content: image("../img/chevron.svg");
+  margin-left: var(--pf-global--spacer--xs);
+}
+
+#kc-locale ul {
+  display: none;
+  position: absolute;
+
+  top: 1.5rem;
+  min-width: 100px;
+
+  padding: 0.5rem 0 0.5rem 0;
+  margin-top: 0.9rem;
+
+  background-color: var(--un-color-button-secondary);
+  box-shadow: 0px 0px 10px -5px var(--un-color-button-primary);
+  border-radius: var(--un-border-radius);
+}
+
+#kc-locale-dropdown {
+  display: inline-block;
+}
+
+#kc-locale-dropdown:hover ul {
+  display: block;
+}
+
+#kc-locale-dropdown ul a {
+  font-size: var(--un-font-small);
+  border-radius: var(--un-border-radius);
+  color: var(--un-color-font-dark);
+}
+
+#kc-locale-dropdown ul a:hover {
+  background-color: var(--un-color-button-secondary-hover);
+  border-radius: 0;
+}
+
+/***************/
+/**** FORMS ****/
+/***************/
+.login-pf-page {
+  max-width: auto;
+  flex-grow: 1;
+
+  .login-pf-settings {
+    flex-direction: row;
+    justify-content: space-between;
+    flex-wrap: nowrap;
+  }
+
+  .login-pf-signup {
+    font: var(--un-font-body);
+  }
+}
+
+@media (min-width: 900px) {
+  .login-pf-page {
+    max-width: 25rem;
+  }
+}
+
+/* Forgot Pass Link */
+.login-pf-settings a {
+  color: var(--un-color-font-dark);
+  font: var(--un-font-small);
+}
+
+/* Remember Me Checkbox */
+input[type="checkbox"] {
+  min-width: auto;
+  margin-top: 0.1rem;
+  transform: scale(1.3);
+}
+
+input[type="checkbox"]:checked {
+  accent-color: var(--un-color-accent);
+}
+
+#kc-form-options .checkbox {
+  margin-top: 0;
+}
+
+#kc-form-options .checkbox label {
+  margin: 0.2rem 0 0 0.2rem;
+  font: var(--un-font-small);
+}
+
+/* Register New User Sections */
+#kc-info {
+  margin-top: 1rem;
+}
+
+/*********************/
+/**** FORM INPUTS ****/
+/*********************/
+input {
+  box-sizing: border-box;
+  cursor: pointer;
+  font: var(--un-font-body);
+  outline-color: var(--un-color-accent-light);
+}
+
+@media (min-width: 900px) {
+  input {
+    min-width: 400px;
+  }
+}
+
+input[type="text"],
+input[type="password"] {
+  color: var(--un-color-body-text-primary);
+  background: var(--un-color-accent-lighter);
+
+  border: 1px solid var(--un-color-accent-lighter);
+  border-radius: var(--un-border-radius);
+
+  font: var(--un-font-small);
+  height: 2.5rem;
+}
+
+input[type="submit"] {
+  height: 2.5rem;
+  border-radius: var(--un-border-radius);
+  background-image: none;
+  font-weight: bold;
+  text-align: left;
+}
+
+input[type="submit"].pf-c-button.pf-m-primary {
+  border: 1px solid var(--un-color-button-primary);
+  box-shadow: 0px 0px 26px var(--un-color-button-primary);
+  background-color: var(--un-color-button-primary);
+  color: var(--un-color-font-light);
+}
+
+input[type="submit"].pf-c-button.pf-m-primary:hover {
+  background-color: var(--un-color-button-hover);
+}
+
+input[type="submit"].pf-c-button.pf-m-primary:active {
+  background-color: var(--un-color-accent-dark);
+}
+
+input[type="submit"].btn-default {
+  border: 1px solid var(--un-color-button-primary);
+  background-color: var(--un-color-button-secondary);
+  color: var(--un-color-button-primary);
+  margin-top: 1rem;
+  font-weight: 400;
+}
+
+input[type="submit"].btn-default:hover {
+  background-color: var(--un-color-button-secondary-hover);
+}
+
+#input-error {
+  display: block;
+  font-weight: bold;
+  color: var(--un-alert-highlight);
+}
+
+/* Disable repeated error icon */
+.pf-c-form-control[aria-invalid="true"] {
+  background-repeat: no-repeat;
+}
+
+/* Override placeholder color */
+.pf-c-form-control {
+  border-bottom-width: 0;
+}
+
+/* Password input overrides for the show/hide icon */
+#password,
+#password-new,
+#password-confirm {
+  position: relative;
+}
+
+.password-reveal {
+  position: relative;
+  cursor: pointer;
+  right: -94%;
+  top: -1.7rem;
+  color: var(--un-color-body-text-secondary);
+  display: block;
+  height: 0;
+}
+
+/***********************/
+/**** SOCIAL LOGINS ****/
+/***********************/
+#kc-social-providers h4 {
+  text-align: center;
+}
+#kc-social-providers ul {
+  gap: 1rem;
+}
+
+#kc-social-providers a {
+  border: 1px solid var(--un-color-accent);
+  border-radius: var(--un-border-radius);
+
+  color: var(--un-color-accent);
+  background-color: var(--un-color-button-secondary);
+  --pf-c-button--after--BorderWidth: 0;
+}
+
+#kc-social-providers a:hover,
+#kc-social-providers a:active {
+  --pf-c-button--after--BorderColor: transparent;
+
+  background-color: var(--un-color-accent);
+  color: var(--un-color-button-secondary);
+}
+
+/***********************/
+/**** REGISTER USER ****/
+/***********************/
+#back-to-login {
+  padding-bottom: 1rem;
+}
+
+#back-to-login a {
+  font: var(--un-font-body);
+}
+
+/***********************/
+/********* TOC *********/
+/***********************/
+#kc-terms-text {
+  padding-bottom: 1rem;
+}
