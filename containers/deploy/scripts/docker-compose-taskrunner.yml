@@ -27,7 +27,7 @@ services:
       TERARIUM_MQ_PASSWORD: "terarium123"
       TERARIUM_MQ_USERNAME: "terarium"
       TERARIUM_TASKRUNNER_REQUEST_TYPE: "mira"
-      MIRA_REST_URL: "http://mira8771"
+      MIRA_REST_URL: "http://mira:8771"
     depends_on:
       rabbitmq:
         condition: service_healthy
