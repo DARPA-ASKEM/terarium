@@ -19,8 +19,6 @@ services:
       timeout: "3s"
       retries: 30
     environment:
-      ADOBE_API-KEY: "${secret_adobe_api_key}"
-      ADOBE_API-LOCALHOST-KEY: "${secret_adobe_api_key}"
       CIEMSS-SERVICE_URL: "http://pyciemss-api:8000"
       GOOGLE-ANALYTICS-ID: ""
       SPICEDB_LAUNCHMODE: "PLAINTEXT"

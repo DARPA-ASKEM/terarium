@@ -218,12 +218,7 @@ export interface DocumentAsset extends TerariumAsset {
      */
     metadata?: { [index: string]: any };
     source?: string;
-    text?: string;
     grounding?: Grounding;
-    /**
-     * @deprecated
-     */
-    documentAbstract?: string;
     thumbnail?: any;
     extraction?: Extraction;
 }
@@ -906,9 +901,9 @@ export interface ProjectGroupPermission {
 
 export interface IProjectUserPermissionDisplayModel {
     user: User;
+    email: string;
     username: string;
     givenName: string;
-    email: string;
     id: string;
     familyName: string;
     permissionLevel: Permission;

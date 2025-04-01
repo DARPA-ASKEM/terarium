@@ -40,8 +40,6 @@ const props = defineProps<{
 	model: Model;
 }>();
 
-const emit = defineEmits(['model-updated']);
-
 const MAX_EQUATION_THRESHOLD = 100;
 
 const equationsRef = ref<any[]>([]);
