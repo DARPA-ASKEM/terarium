@@ -11,7 +11,7 @@ Use the following JSON formatted mathematical model:
 {amr}
 ---END MODEL JSON---
 
-and the following JSON formatted research paper:
+and the following JSON list of extractions from a reasearch paper:
 
 ---START PAPER---
 {document}
@@ -21,7 +21,7 @@ Assume that the paper describes multiple conditions to which the model can be ap
 
 Be sure to extract state and parameter values from the paper, and do not use the default values from the model.
 Be sure to use consistent naming conventions for the conditions. Instead of "condition_1" and "condition_2", use descriptive names.
-State and parameter values are often found in tables. Look at the tables in the paper first and pay attention to the table structure when determining which values correspond to which state or parameter.
+State and parameter values are often found in tables. Look at the tables in the paper first and pay attention to the table structure when determining which values correspond to which state or parameter.  You can identify which extractions is a table by looking at the id of the extraction, if the id has `#/tables` in it, it is a table.  Please look at all the tables extractions, as there may be multiple tables in the paper.  The table structure will help you determine which values correspond to which state or parameter.  For example, if a table has a column for "country" and a column for "population", you can assume that the values in the "population" column correspond to the population of each country listed in the "country" column.
 If state and parameter values are not found in tables, look for them in the text of the paper.
 
 For Context, here are some examples of how state and parameters can be described in the text of the paper:
@@ -37,17 +37,15 @@ For Context, here are some examples of how state and parameters can be described
 For each condition, create a model configuration JSON object that satisfies the JSON schema specified in the response format. To do this, follow the instructions below:
 1.	Create a value for `name` and `description` from the paper.
 2.	For the description, provide a long-form description of the condition. If the description cannot be created from the text, set it to an empty string.
-3.	`model_id` id a UUID. If the model has an id, you can use it. Otherwise, you can set as the nil UUID "00000000-0000-0000-0000-000000000000".
-4.  Use the following rules to populate configurations:
+3.  Use the following rules to populate configurations:
     a.	For each state specified in the model, extract information from the text and create an initial semantic object. Do not create new initial semantic objects for states that are not included in the original model. If you cannot find a value or expression for the initial state, do not create an initial semantic object. Use the following rules to determine the value of a state:
         ii.  A state can be a mathematical expression of the initial condition parameter of other states in the system (e.g. the initial condition for the susceptible population equals the total population minus the population of all the other disease states).
         iii.  A state can be a constant value.
     b.	For each parameter specified in the model, extract information from the text and create a parameter semantic object. Do not create new parameter semantic objects for parameters that are not included in the original model. If you cannot find a value for the parameter, do not create a parameter semantic object. Parameters can be an initial value for a state, a constant value for a transition, or a range or distribution for a transition. Use the following rules to determine the value of a parameter:
         b.  Constant parameters will have a single value. To create a constant parameter, set the distribution type to "Constant" and add the value to the `value` field. Sometimes constants will be in the form of a ratio (E.g. 1/n), in these cases, evaluate the ratio and provide the resulting value.
         c.  Distributed parameters will usually appear as a range (E.g. 0.01 - 0.2) or a list of values (E.g. [0.01 0.02 0.03 0.04 0.05] or 0.01, 0.02, 0.03, 0.04, 0.05 ). To create a distribution parameter, set the distribution type to "StandardUniform1" and add the smallest value in the range or list to the `minimum` field and the largest value to the `maximum` field.
-5. `observableSemanticList` should be an empty list.
-6. `inferredParameterList` should be an empty list.
-7. Determine what page the information was extracted from and set the `extractionPage` value to that page number. If the page number cannot be determined, set it to 0. Only pick one page number. Do not provide a range.
+    c. There is an `extractionItemIds` field in the JSON schema. This field is a list of extraction ids that correspond to the list extractions in the research paper. Use this field to link the model configuration fields to the extractions in the research paper as to where you sourced the information. The extraction ids are provided in the JSON formatted extractions from the research paper.
+
 
 For context, use the following as examples of correctly extracted model configurations from a JSON formatted model and a research paper:
 
@@ -162,154 +160,200 @@ With the following JSON formatted model:
   }}
 }}
 
-and the following JSON formatted research paper:
+and the following JSON formatted extractions from the research paper:
 
 [
-  {{
-    "pageNumber": 0,
-    "text": "Use the following table to configure the model",
-    "tables": [{{"table_text":["<table border='1'><thead><tr><th>Parameters</th><th>minor interventions</th><th>major interventions</th></tr></thead><tbody><tr><td>N (million)</td><td>1000</td><td>1000</td></tr><tr><td>β</td><td>0.45</td><td>0.54</td></tr><tr><td>γ</td><td>0.78</td><td>0.87</td></tr><tr><td>S0</td><td>N-I0-R0</td><td>N-I0-R0</td></tr><tr><td>I0</td><td>2</td><td>2</td></tr><tr><td>R0</td><td>0</td><td>0</td></tr></tbody></table>"],"score":10}}],
-    "equations": []
-  }}
+    {{
+        "id": "ext_1",
+        "text": "We examined two scenarios: baseline and intervention measures."
+    }},
+    {{
+        "id": "ext_2",
+        "text": "Total population N was fixed at 10000 for all scenarios."
+    }},
+    {{
+        "id": "ext_3",
+        "text": "In the baseline scenario, transmission rate β ranged from 0.4 to 0.7."
+    }},
+    {{
+        "id": "ext_4",
+        "text": "For intervention measures, β was reduced to 0.2."
+    }},
+    {{
+        "id": "ext_5",
+        "text": "Recovery rate γ showed variation [0.1, 0.2, 0.3, 0.4] across all scenarios."
+    }},
+    {{
+        "id": "ext_6",
+        "text": "Initially, we had 100 infected individuals and no recovered cases."
+    }}
 ]
 
 The correctly extracted model configuration would be:
 
 {{
-  "conditions": [
-    {{
-      "modelId": "00000000-0000-0000-0000-000000000000",
-      "name": "Minor interventions",
-      "description": "This configuration models the minor interventions of the SIR compartmental model",
-      "extractionPage": 0,
-      "inferredParameterList": None,
-      "initialSemanticList": [
+    "conditions": [
         {{
-          "expression": "998",
-          "expressionMathml": "<math><cn>998</cn></math>",
-          "source": "Page 0",
-          "target": "S",
-          "type": "initial"
+            "name": {{
+                "content": "Baseline scenario",
+                "extractionItemIds": ["ext_1"]
+            }},
+            "description": {{
+                "content": "Configuration representing baseline disease spread without interventions",
+                "extractionItemIds": ["ext_1", "ext_3"]
+            }},
+            "initialSemanticList": [
+                {{
+                    "content": {{
+                        "expression": "9900",
+                        "expressionMathml": "<math><cn>9900</cn></math>",
+                        "target": "S"
+                    }},
+                    "extractionItemIds": ["ext_2", "ext_6"]
+                }},
+                {{
+                    "content": {{
+                        "expression": "100",
+                        "expressionMathml": "<math><cn>100</cn></math>",
+                        "target": "I"
+                    }},
+                    "extractionItemIds": ["ext_6"]
+                }},
+                {{
+                    "content": {{
+                        "expression": "0",
+                        "expressionMathml": "<math><cn>0</cn></math>",
+                        "target": "R"
+                    }},
+                    "extractionItemIds": ["ext_6"]
+                }}
+            ],
+            "parameterSemanticList": [
+                {{
+                    "content": {{
+                        "distribution": {{
+                            "parameters": {{
+                                "value": 10000,
+                                "minimum": null,
+                                "maximum": null
+                            }},
+                            "type": "Constant"
+                        }},
+                        "referenceId": "N"
+                    }},
+                    "extractionItemIds": ["ext_2"]
+                }},
+                {{
+                    "content": {{
+                        "distribution": {{
+                            "parameters": {{
+                                "value": null,
+                                "minimum": 0.4,
+                                "maximum": 0.7
+                            }},
+                            "type": "StandardUniform1"
+                        }},
+                        "referenceId": "β"
+                    }},
+                    "extractionItemIds": ["ext_3"]
+                }},
+                {{
+                    "content": {{
+                        "distribution": {{
+                            "parameters": {{
+                                "value": null,
+                                "minimum": 0.1,
+                                "maximum": 0.4
+                            }},
+                            "type": "StandardUniform1"
+                        }},
+                        "referenceId": "γ"
+                    }},
+                    "extractionItemIds": ["ext_5"]
+                }}
+            ]
         }},
         {{
-          "expression": "2",
-          "expressionMathml": "<math><cn>2</cn></math>",
-          "source": "Page 0",
-          "target": "I",
-          "type": "initial"
-        }},
-        {{
-          "expression": "0",
-          "expressionMathml": "<math><cn>0</cn></math>",
-          "source": "Page 0",
-          "target": "R",
-          "type": "initial"
+            "name": {{
+                "content": "Intervention measures",
+                "extractionItemIds": ["ext_1"]
+            }},
+            "description": {{
+                "content": "Configuration with intervention measures showing reduced transmission",
+                "extractionItemIds": ["ext_1", "ext_4"]
+            }},
+            "initialSemanticList": [
+                {{
+                    "content": {{
+                        "expression": "9900",
+                        "expressionMathml": "<math><cn>9900</cn></math>",
+                        "target": "S"
+                    }},
+                    "extractionItemIds": ["ext_2", "ext_6"]
+                }},
+                {{
+                    "content": {{
+                        "expression": "100",
+                        "expressionMathml": "<math><cn>100</cn></math>",
+                        "target": "I"
+                    }},
+                    "extractionItemIds": ["ext_6"]
+                }},
+                {{
+                    "content": {{
+                        "expression": "0",
+                        "expressionMathml": "<math><cn>0</cn></math>",
+                        "target": "R"
+                    }},
+                    "extractionItemIds": ["ext_6"]
+                }}
+            ],
+            "parameterSemanticList": [
+                {{
+                    "content": {{
+                        "distribution": {{
+                            "parameters": {{
+                                "value": 10000,
+                                "minimum": null,
+                                "maximum": null
+                            }},
+                            "type": "Constant"
+                        }},
+                        "referenceId": "N"
+                    }},
+                    "extractionItemIds": ["ext_2"]
+                }},
+                {{
+                    "content": {{
+                        "distribution": {{
+                            "parameters": {{
+                                "value": 0.2,
+                                "minimum": null,
+                                "maximum": null
+                            }},
+                            "type": "Constant"
+                        }},
+                        "referenceId": "β"
+                    }},
+                    "extractionItemIds": ["ext_4"]
+                }},
+                {{
+                    "content": {{
+                        "distribution": {{
+                            "parameters": {{
+                                "value": null,
+                                "minimum": 0.1,
+                                "maximum": 0.4
+                            }},
+                            "type": "StandardUniform1"
+                        }},
+                        "referenceId": "γ"
+                    }},
+                    "extractionItemIds": ["ext_5"]
+                }}
+            ]
         }}
-      ],
-      "observableSemanticList": [],
-      "parameterSemanticList": [
-        {{
-          "distribution": {{
-            "parameters": {{
-              "value": 1000
-            }},
-            "type": "Constant"
-          }},
-          "referenceId": "N",
-          "source": "Page 0",
-          "type": "parameter"
-        }},
-        {{
-          "distribution": {{
-            "parameters": {{
-              "value": 0.45
-            }},
-            "type": "Constant"
-          }},
-          "referenceId": "β",
-          "source": "Page 0",
-          "type": "parameter"
-        }},
-        {{
-          "distribution": {{
-            "parameters": {{
-              "value": 0.78
-            }},
-            "type": "Constant"
-          }},
-          "referenceId": "γ",
-          "source": "Page 0",
-          "type": "parameter"
-        }}
-      ]
-    }},
-    {{
-      "modelId": "00000000-0000-0000-0000-000000000000",
-      "name": "Major interventions",
-      "description": "This configuration models the major interventions of the SIR compartmental model",
-      "extractionPage": 0,
-      "inferredParameterList": None,
-      "initialSemanticList": [
-        {{
-          "expression": "998",
-          "expressionMathml": "<math><cn>998</cn></math>",
-          "source": "Page 0",
-          "target": "S",
-          "type": "initial"
-        }},
-        {{
-          "expression": "I0",
-          "expressionMathml": "<math><cn>2</cn></math>",
-          "source": "Page 0",
-          "target": "I",
-          "type": "initial"
-        }},
-        {{
-          "expression": "R0",
-          "expressionMathml": "<math><cn>0</cn></math>",
-          "source": "Page 0",
-          "target": "R",
-          "type": "initial"
-        }}
-      ],
-      "observableSemanticList": [],
-      "parameterSemanticList": [
-        {{
-          "distribution": {{
-            "parameters": {{
-              "value": 1000
-            }},
-            "type": "Constant"
-          }},
-          "referenceId": "N",
-          "source": "Page 0",
-          "type": "parameter"
-        }},
-        {{
-          "distribution": {{
-            "parameters": {{
-              "value": 0.54
-            }},
-            "type": "Constant"
-          }},
-          "referenceId": "β",
-          "source": "Page 0",
-          "type": "parameter"
-        }},
-        {{
-          "distribution": {{
-            "parameters": {{
-              "value": 0.87
-            }},
-            "type": "Constant"
-          }},
-          "referenceId": "γ",
-          "source": "Page 0",
-          "type": "parameter"
-        }}
-      ]
-    }}
-  ]
+    ]
 }}
 --- END CONFIGURATION EXAMPLE ---
 """
