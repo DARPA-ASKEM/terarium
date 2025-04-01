@@ -237,8 +237,8 @@ import { subscribe, unsubscribe } from '@/services/ClientEventService';
 import { activeProjectId } from '@/composables/activeProject';
 
 const WORKFLOW_LOCAL_STORAGE_UPDATE_INTERVAL = 4000;
-const WORKFLOW_SYNC_INTERVAL = 2000; // how long to wait before applying changes received from server
 const WORKFLOW_SAVE_INTERVAL = 500; // how long to wait before sending changes to server
+const WORKFLOW_SYNC_INTERVAL = 3 * WORKFLOW_SAVE_INTERVAL; // how long to wait before applying changes received from server
 
 // const currentUserId = useAuthStore().user?.id;
 
