@@ -147,19 +147,8 @@ public class ConfigureModelFromDocumentResponseHandler extends LlmTaskResponseHa
 				// create and set enrichments
 				List<Enrichment> enrichments = createEnrichments(condition, props);
 				clonedConfiguration.setEnrichments(enrichments);
-
-				// Fetch the document name
-				final Optional<DocumentAsset> document = documentAssetService.getAsset(props.documentId);
-				final String source = document.map(TerariumAsset::getName).orElse(null);
-
 				// Set the extraction document id
 				clonedConfiguration.setExtractionDocumentId(props.documentId);
-
-				// Update the source of the model-configuration with the Document name
-				// if (source != null) {
-				// 	configuration.getInitialSemanticList().forEach(initial -> initial.setSource(source));
-				// 	configuration.getParameterSemanticList().forEach(parameter -> parameter.setSource(source));
-				// }
 
 				final ModelConfiguration newConfig = modelConfigurationService.createAsset(
 					clonedConfiguration,
