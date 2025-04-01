@@ -218,13 +218,7 @@ export interface DocumentAsset extends TerariumAsset {
      */
     metadata?: { [index: string]: any };
     source?: string;
-    text?: string;
     grounding?: Grounding;
-    /**
-     * @deprecated
-     */
-    documentAbstract?: string;
-    extractions?: ExtractedDocumentPage[];
     thumbnail?: any;
     extraction?: Extraction;
 }
@@ -279,6 +273,7 @@ export interface ModelConfiguration extends TerariumAsset {
     temporalContext?: Date;
     extractionDocumentId?: string;
     extractionPage?: number;
+    enrichments?: Enrichment[];
     observableSemanticList: ObservableSemantic[];
     parameterSemanticList: ParameterSemantic[];
     initialSemanticList: InitialSemantic[];
@@ -838,13 +833,6 @@ export interface NonNumericColumnStats {
     missing_values: number;
 }
 
-export interface ExtractedDocumentPage {
-    pageNumber: number;
-    text: string;
-    tables: any[];
-    equations: any[];
-}
-
 export interface ModelHeader {
     name: string;
     description: string;
@@ -914,12 +902,12 @@ export interface ProjectGroupPermission {
 
 export interface IProjectUserPermissionDisplayModel {
     user: User;
-    email: string;
     username: string;
+    email: string;
+    permissionLevel: Permission;
     givenName: string;
     id: string;
     familyName: string;
-    permissionLevel: Permission;
 }
 
 export interface ProvenanceNode {
