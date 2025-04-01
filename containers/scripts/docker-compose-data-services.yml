@@ -20,7 +20,7 @@ services:
     environment:
       HMI_SERVER_URL: "http://${local_host_name}:3000"
       JUPYTER_SERVER: "http://${local_host_name}:3050"
-      MIRA_REST_URL: "http://mira-epi-dkg-lb-dc1e19b273dedaa2.elb.us-east-1.amazonaws.com/"
+      MIRA_REST_URL: "http://${local_host_name}:8771"
       SIMULATION_SCHEDULER_URL: "http://${local_host_name}:3030"
       JUPYTER_TOKEN: "${secret_tgpt_token}"
       AUTH_USERNAME: "${secret_service_account_username}"
