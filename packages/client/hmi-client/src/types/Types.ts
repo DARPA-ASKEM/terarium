@@ -901,11 +901,11 @@ export interface ProjectGroupPermission {
 
 export interface IProjectUserPermissionDisplayModel {
     user: User;
-    givenName: string;
-    email: string;
     username: string;
-    id: string;
+    email: string;
     permissionLevel: Permission;
+    givenName: string;
+    id: string;
     familyName: string;
 }
 
