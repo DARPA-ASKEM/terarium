@@ -846,13 +846,13 @@ export interface ProjectGroupPermission {
 }
 
 export interface IProjectUserPermissionDisplayModel {
-    givenName: string;
-    id: string;
     permissionLevel: Permission;
-    email: string;
-    familyName: string;
     user: User;
     username: string;
+    email: string;
+    givenName: string;
+    id: string;
+    familyName: string;
 }
 
 export interface ProvenanceNode {
