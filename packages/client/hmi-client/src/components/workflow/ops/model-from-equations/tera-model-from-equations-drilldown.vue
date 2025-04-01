@@ -648,7 +648,6 @@ onMounted(async () => {
 			state.excludedEquations = clonedState.value.excludedEquations;
 		}
 
-		state.text = document.value?.text ?? '';
 		emit('update-state', state);
 	}
 });
