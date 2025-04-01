@@ -234,11 +234,6 @@ export interface Enrichment {
     included: boolean;
 }
 
-export interface ExternalPublication extends TerariumAsset {
-    title: string;
-    xdd_uri: string;
-}
-
 export interface Model extends TerariumAssetThatSupportsAdditionalProperties {
     header: ModelHeader;
     userId?: string;
@@ -417,20 +412,6 @@ export interface Extraction {
 export interface ExtractionBody {
     id: string;
     children: ExtractionRef[];
-}
-
-export interface ExtractionResponse {
-    id: string;
-    status: string;
-    result: ExtractionResponseResult;
-}
-
-export interface ExtractionResponseResult {
-    created_at: Date;
-    enqueued_at: Date;
-    started_at: Date;
-    job_error: string;
-    job_result: any;
 }
 
 export interface FunmanPostQueriesRequest {
@@ -865,13 +846,13 @@ export interface ProjectGroupPermission {
 }
 
 export interface IProjectUserPermissionDisplayModel {
+    givenName: string;
+    id: string;
+    permissionLevel: Permission;
+    email: string;
+    familyName: string;
     user: User;
     username: string;
-    givenName: string;
-    email: string;
-    id: string;
-    familyName: string;
-    permissionLevel: Permission;
 }
 
 export interface ProvenanceNode {
