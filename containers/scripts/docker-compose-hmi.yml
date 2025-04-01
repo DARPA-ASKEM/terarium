@@ -56,6 +56,7 @@ services:
       TGPT_APP_URL: "http://${local_host_name}:3050/beaker/"
       TGPT_TOKEN: "${secret_tgpt_token}"
       TGPT_WS_URL: "ws://${local_host_name}:3050/beaker_ws/"
+      MIRA_REST_URL: "http://${local_host_name}:8771"
     depends_on:
       postgres:
         condition: service_healthy
