@@ -900,13 +900,13 @@ export interface ProjectGroupPermission {
 }
 
 export interface IProjectUserPermissionDisplayModel {
+    user: User;
     givenName: string;
+    email: string;
+    username: string;
     id: string;
     permissionLevel: Permission;
-    email: string;
     familyName: string;
-    user: User;
-    username: string;
 }
 
 export interface ProvenanceNode {
