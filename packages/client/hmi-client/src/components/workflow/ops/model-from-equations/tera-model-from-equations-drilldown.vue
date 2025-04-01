@@ -933,7 +933,10 @@ const highlightEnrichmentBlock = (enrichment: Enrichment) => {
 			const extractionItem = documentExtractionMap.value.get(refId);
 			if (extractionItem) {
 				if (idx === 0) {
-					pdfCurrentPage.value = { page: extractionItem.page, scrollPosition: 'start' };
+					pdfCurrentPage.value = {
+						page: extractionItem.page,
+						scrollPosition: calculatePageScrollPosition(extractionItem.bbox)
+					};
 				}
 				pdfAnnotations.value.push({
 					pageNo: extractionItem.page,
