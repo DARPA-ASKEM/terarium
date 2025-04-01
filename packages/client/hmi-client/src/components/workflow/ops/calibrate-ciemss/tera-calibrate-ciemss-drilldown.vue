@@ -973,7 +973,7 @@ const runCalibrate = async () => {
 };
 
 const messageHandler = (event: ClientEvent<any>) => {
-	const data = { iter: lossValues.value.length, loss: event.data.loss };
+	const data = { iter: event.data.progress, loss: event.data.loss };
 	lossValues.value.push(data);
 	updateLossChartSpec(lossValues.value, lossChartSize.value);
 };
