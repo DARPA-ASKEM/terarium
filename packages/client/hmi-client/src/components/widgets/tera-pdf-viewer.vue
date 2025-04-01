@@ -219,7 +219,8 @@ watch(
 		const pageNumbers = [...(annotations ?? []), ...(oldAnnotations ?? [])].map((annotation) => annotation.pageNo);
 		const uniquePages = Array.from(new Set(pageNumbers));
 		uniquePages.forEach((page) => getPdfPage(page)?.reload());
-	}
+	},
+	{ deep: true }
 );
 
 // ================================================

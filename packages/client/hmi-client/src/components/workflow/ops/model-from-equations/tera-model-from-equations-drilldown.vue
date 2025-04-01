@@ -22,6 +22,7 @@
 							:pdf-link="pdfLink"
 							:title="document?.name || ''"
 							:annotations="pdfAnnotations"
+							:current-page="pdfCurrentPage"
 							fit-to-width
 						/>
 						<tera-text-editor v-else-if="docText" :initial-text="docText" />
@@ -161,6 +162,7 @@
 											:is-permitted="false"
 											:use-default-style="false"
 											:class="['asset-panel', { selected: selectedItem === equation.id }]"
+											@click="highlightEquationBlock(equation.asset)"
 										>
 											<template #header>
 												<h6 v-if="equation.asset.provenance">Edited by AI</h6>
@@ -227,6 +229,7 @@
 											:is-toggleable="false"
 											:use-default-style="false"
 											:class="['asset-panel', { selected: selectedItem === equation.id }]"
+											@click="highlightEquationBlock(equation.asset)"
 										>
 											<template #header>
 												<h6 v-if="equation.asset.provenance">Edited by AI</h6>
@@ -302,6 +305,7 @@
 											:is-toggleable="false"
 											:use-default-style="false"
 											:class="['asset-panel', { selected: selectedEnrichment === enrichment.id }]"
+											@click="highlightEnrichmentBlock(enrichment)"
 										>
 											<template #header>
 												<h6>{{ enrichmentTargetTypeToLabel(enrichment.target) + ' > ' + enrichment.label }}</h6>
@@ -549,8 +553,8 @@ const isDocViewerOpen = ref(true);
 const isInputOpen = ref(true);
 const isOutputOpen = ref(true);
 
-// TODO: update annotation items to draw bbox on the pdf
 const pdfAnnotations = ref<PdfAnnotation[]>([]);
+const pdfCurrentPage = ref(1);
 
 const enrichments = computed(() => selectedModel.value?.metadata?.enrichments ?? []);
 
@@ -890,6 +894,44 @@ const goToPreviousEnrichment = () => {
 	const currentIndex = enrichments.value.findIndex((eq) => eq.id === selectedEnrichment.value);
 	if (currentIndex > 0) {
 		selectEnrichment(enrichments.value[currentIndex - 1]);
+	}
+};
+
+const highlightEquationBlock = (block: EquationBlock) => {
+	if (block.provenance?.extractionItemId) {
+		const extractionItem = documentExtractionMap.value.get(block.provenance?.extractionItemId);
+		if (extractionItem) {
+			pdfCurrentPage.value = extractionItem.page;
+			pdfAnnotations.value = [
+				{
+					pageNo: extractionItem.page,
+					bbox: extractionItem.bbox,
+					color: '#fc0',
+					isHighlight: true
+				}
+			];
+		}
+	}
+};
+
+const highlightEnrichmentBlock = (enrichment: Enrichment) => {
+	console.log('clicking', enrichment);
+	if (enrichment.extractionItemIds && enrichment.extractionItemIds.length > 0) {
+		pdfAnnotations.value = [];
+		enrichment.extractionItemIds.forEach((refId, idx) => {
+			const extractionItem = documentExtractionMap.value.get(refId);
+			if (extractionItem) {
+				if (idx === 0) {
+					pdfCurrentPage.value = extractionItem.page;
+				}
+				pdfAnnotations.value.push({
+					pageNo: extractionItem.page,
+					bbox: extractionItem.bbox,
+					color: '#fc0',
+					isHighlight: true
+				});
+			}
+		});
 	}
 };
 
