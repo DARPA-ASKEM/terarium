@@ -41,7 +41,7 @@ def model_config_from_dataset_chain(llm: LlmToolsInterface, amr: str, dataset: L
 
 def model_config_from_document_chain(llm: LlmToolsInterface, document: str, amr: str) -> dict:
     print("Uploading and validating model configuration schema...")
-    config_path = os.path.join(SCHEMAS_DIR, 'configuration.json')
+    config_path = os.path.join(SCHEMAS_DIR, 'configuration_new.json')
     with open(config_path, 'r') as config_file:
         response_schema = json.load(config_file)
     validate_schema(response_schema)

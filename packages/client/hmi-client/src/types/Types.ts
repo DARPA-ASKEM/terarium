@@ -272,7 +272,7 @@ export interface ModelConfiguration extends TerariumAsset {
     simulationId?: string;
     temporalContext?: Date;
     extractionDocumentId?: string;
-    extractionPage?: number;
+    enrichments?: Enrichment[];
     observableSemanticList: ObservableSemantic[];
     parameterSemanticList: ParameterSemantic[];
     initialSemanticList: InitialSemantic[];
@@ -900,13 +900,13 @@ export interface ProjectGroupPermission {
 }
 
 export interface IProjectUserPermissionDisplayModel {
+    email: string;
     permissionLevel: Permission;
     user: User;
     username: string;
-    email: string;
+    familyName: string;
     givenName: string;
     id: string;
-    familyName: string;
 }
 
 export interface ProvenanceNode {
