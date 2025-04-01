@@ -341,17 +341,6 @@ public class DocumentController {
 				}
 			}
 
-			// if the fileEntity is not a PDF, then we need to extract the text and update
-			// the document asset
-			if (!DownloadService.IsPdf(fileEntity.getContent().readAllBytes())) {
-				if (document.isEmpty()) {
-					return ResponseEntity.notFound().build();
-				}
-
-				document.get().setText(IOUtils.toString(fileEntity.getContent(), StandardCharsets.UTF_8));
-				documentAssetService.updateAsset(document.get(), projectId);
-			}
-
 			return ResponseEntity.status(status).build();
 		} catch (final IOException e) {
 			final String error = "Unable to upload document";
