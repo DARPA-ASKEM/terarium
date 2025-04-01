@@ -1,5 +1,15 @@
 ---
 services:
+  mira:
+    container_name: mira
+    image: ghcr.io/darpa-askem/mira:latest
+    networks:
+      - terarium
+    environment:
+      MIRA_NEO4J_URL: 'bolt://neo4j:7687'
+    extra_hosts:
+      - "${local_host_name}:host-gateway"
+
   beaker:
     container_name: beaker
     image: ghcr.io/darpa-askem/beaker-kernel:latest

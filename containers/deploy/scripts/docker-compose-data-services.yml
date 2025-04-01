@@ -1,7 +1,7 @@
 ---
 services:
-  mira-dkg:
-    container_name: mira-dkg
+  mira:
+    container_name: mira
     image: ghcr.io/darpa-askem/mira:latest
     networks:
       - terarium
