@@ -234,11 +234,6 @@ export interface Enrichment {
     included: boolean;
 }
 
-export interface ExternalPublication extends TerariumAsset {
-    title: string;
-    xdd_uri: string;
-}
-
 export interface Model extends TerariumAssetThatSupportsAdditionalProperties {
     header: ModelHeader;
     userId?: string;
@@ -866,12 +861,12 @@ export interface ProjectGroupPermission {
 
 export interface IProjectUserPermissionDisplayModel {
     user: User;
-    username: string;
     givenName: string;
+    username: string;
     email: string;
     id: string;
-    familyName: string;
     permissionLevel: Permission;
+    familyName: string;
 }
 
 export interface ProvenanceNode {
