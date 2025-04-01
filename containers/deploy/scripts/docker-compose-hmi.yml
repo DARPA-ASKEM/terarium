@@ -19,8 +19,6 @@ services:
       timeout: "3s"
       retries: 30
     environment:
-      ADOBE_API-KEY: "${secret_adobe_api_key}"
-      ADOBE_API-LOCALHOST-KEY: "${secret_adobe_api_key}"
       AWS-ACCESS-KEY-ID: "admin"
       AWS-SECRET-ACCESS-KEY: "admin123"
       AWS-URL: "http://minio:9000"
