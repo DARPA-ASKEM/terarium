@@ -376,41 +376,6 @@ export interface ProvenanceSearchResult {
     edges: ProvenanceEdge[];
 }
 
-export interface RegNetBaseProperties {
-    name: string;
-    grounding: Grounding;
-    rate_constant: any;
-}
-
-export interface RegNetEdge {
-    source: string;
-    target: string;
-    id: string;
-    sign: boolean;
-    properties?: RegNetBaseProperties;
-}
-
-export interface RegNetModel {
-    vertices: RegNetVertex[];
-    edges: RegNetEdge[];
-    parameters?: RegNetParameter[];
-}
-
-export interface RegNetParameter {
-    id: string;
-    description?: string;
-    value?: number;
-    grounding?: Grounding;
-    distribution?: ModelDistribution;
-}
-
-export interface RegNetVertex extends GroundedSemantic {
-    id: string;
-    sign: boolean;
-    initial?: any;
-    rate_constant?: any;
-}
-
 export interface Simulation extends TerariumAsset {
     executionPayload: any;
     resultFiles?: string[];
@@ -902,11 +867,11 @@ export interface ProjectGroupPermission {
 export interface IProjectUserPermissionDisplayModel {
     user: User;
     username: string;
-    email: string;
-    permissionLevel: Permission;
     givenName: string;
+    email: string;
     id: string;
     familyName: string;
+    permissionLevel: Permission;
 }
 
 export interface ProvenanceNode {
