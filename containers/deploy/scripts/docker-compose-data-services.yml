@@ -12,10 +12,9 @@ services:
 
   beaker:
     container_name: beaker
-    image: ghcr.io/darpa-askem/beaker-kernel:latest
+    image: ghcr.io/darpa-askem/askem-beaker:latest
     networks:
       - terarium
-    command: ["python", "-m", "beaker_kernel.service.notebook"]
     environment:
       HMI_SERVER_URL: "http://hmi-server:3000"
       JUPYTER_SERVER: "http://beaker:8888"
