@@ -121,7 +121,7 @@ services:
     environment:
       RABBITMQ_DEFAULT_USER: "terarium"
       RABBITMQ_DEFAULT_PASS: "terarium123"
-      RABBITMQ_MANAGEMENT_ENABLED: "true"
+      RABBITMQ_MANAGEMENT_ENABLED: true
     extra_hosts:
       - "${local_host_name}:host-gateway"
 
@@ -134,7 +134,7 @@ services:
     environment:
       SPICEDB_GRPC_PRESHARED_KEY: "dev"
       SPICEDB_DATASTORE_ENGINE: "postgres"
-      SPICEDB_HTTP_ENABLED: "true"
+      SPICEDB_HTTP_ENABLED: true
       SPICEDB_DATASTORE_CONN_URI: "postgres://terarium_user:terarium@postgres:5432/spicedb?sslmode=disable"
     healthcheck:
       test: [ "CMD", "grpc_health_probe", "-addr=:50051" ]

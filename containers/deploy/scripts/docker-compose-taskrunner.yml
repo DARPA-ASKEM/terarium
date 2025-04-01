@@ -10,11 +10,6 @@ services:
       TERARIUM_MQ_PASSWORD: "terarium123"
       TERARIUM_MQ_USERNAME: "terarium"
       TERARIUM_TASKRUNNER_REQUEST_TYPE: "gollm"
-      AZURE_OPENAI_KEY: "${secret_azure_openai_key}"
-      AZURE_OPENAI_ENDPOINT: "${secret_azure_openai_endpoint}"
-      AZURE_OPENAI_MODEL: "${secret_azure_openai_model}"
-      BEDROCK_ACCESS_KEY: "${secret_bedrock_access_key}"
-      BEDROCK_SECRET_ACCESS_KEY: "${secret_bedrock_secret_key}"
       OPENAI_API_KEY: "${secret_openai_key}"
     depends_on:
       rabbitmq:
@@ -32,7 +27,7 @@ services:
       TERARIUM_MQ_PASSWORD: "terarium123"
       TERARIUM_MQ_USERNAME: "terarium"
       TERARIUM_TASKRUNNER_REQUEST_TYPE: "mira"
-      MIRA_REST_URL: "http://mira"
+      MIRA_REST_URL: "http://mira8771"
     depends_on:
       rabbitmq:
         condition: service_healthy
@@ -56,48 +51,16 @@ services:
       - "${local_host_name}:host-gateway"
     platform: linux/amd64
 
-  equation-extraction-taskrunner:
-    image: ghcr.io/darpa-askem/equation-extraction-taskrunner:latest
-    container_name: equation-extraction-taskrunner
+  ocr-extraction-taskrunner:
+    image: ghcr.io/darpa-askem/ocr-extraction-taskrunner:latest
+    container_name: ocr-extraction-taskrunner
     networks:
       - terarium
     environment:
       TERARIUM_MQ_ADDRESSES: "amqp://rabbitmq:5672"
       TERARIUM_MQ_PASSWORD: "terarium123"
       TERARIUM_MQ_USERNAME: "terarium"
-      TERARIUM_TASKRUNNER_REQUEST_TYPE: "equation_extraction"
-    depends_on:
-      rabbitmq:
-        condition: service_healthy
-    extra_hosts:
-      - "${local_host_name}:host-gateway"
-
-  text-extraction-taskrunner:
-    image: ghcr.io/darpa-askem/text-extraction-taskrunner:latest
-    container_name: text-extraction-taskrunner
-    networks:
-      - terarium
-    environment:
-      TERARIUM_MQ_ADDRESSES: "amqp://rabbitmq:5672"
-      TERARIUM_MQ_PASSWORD: "terarium123"
-      TERARIUM_MQ_USERNAME: "terarium"
-      TERARIUM_TASKRUNNER_REQUEST_TYPE: "text_extraction"
-    depends_on:
-      rabbitmq:
-        condition: service_healthy
-    extra_hosts:
-      - "${local_host_name}:host-gateway"
-
-  table-extraction-taskrunner:
-    image: ghcr.io/darpa-askem/table-extraction-taskrunner:latest
-    container_name: table-extraction-taskrunner
-    networks:
-      - terarium
-    environment:
-      TERARIUM_MQ_ADDRESSES: "amqp://rabbitmq:5672"
-      TERARIUM_MQ_PASSWORD: "terarium123"
-      TERARIUM_MQ_USERNAME: "terarium"
-      TERARIUM_TASKRUNNER_REQUEST_TYPE: "table_extraction"
+      TERARIUM_TASKRUNNER_REQUEST_TYPE: "ocr_extraction"
       ASKEM_DOC_AI_API_KEY: "${secret_openai_key}"
     depends_on:
       rabbitmq:

@@ -7,41 +7,30 @@ services:
       - terarium
     ports:
       - "8081:8081"
+      - "9000:9000"
     restart: always
     healthcheck:
-      # Keycloak no longer has curl, https://stackoverflow.com/questions/58168955/testing-minimal-docker-containers-with-healthcheck/76790330#76790330
-      test:
-        [
-          "CMD-SHELL",
-          "exec 3<>/dev/tcp/127.0.0.1/8081;echo -e \"GET /health/ready HTTP/1.1\r
-
-            host: http://localhost\r
-
-            Connection: close\r
-
-            \r
-
-            \" >&3;grep \"HTTP/1.1 200 OK\" <&3"
-        ]
-      interval: '3s'
-      timeout: '3s'
+      test: "{ printf >&3 'GET /realms/terarium/.well-known/openid-configuration HTTP/1.0\r\nHost: localhost\r\n\r\n'; cat <&3; } 3<>/dev/tcp/localhost/8081 | head -1 | grep 200"
+      interval: 3s
+      timeout: 3s
       retries: 30
+      start_period: 20s
     command: [ 'start-dev', '--http-port=8081' ]
     environment:
+      KC_BOOTSTRAP_ADMIN_PASSWORD: 'admin123'
+      KC_BOOTSTRAP_ADMIN_USERNAME: 'admin'
       KC_DB: 'postgres'
+      KC_DB_PASSWORD: 'postgres'
       KC_DB_URL: 'jdbc:postgresql://postgres/postgres'
       KC_DB_URL_HOST: 'postgres'
       KC_DB_USERNAME: 'postgres'
-      KC_DB_PASSWORD: 'postgres'
+      KC_HEALTH_ENABLED: true
+      KC_METRICS_ENABLED: true
+      KC_HOSTNAME: 'http://keycloak:8081'
+      KC_HOSTNAME_ADMIN: 'http://keycloak:8081'
+      KC_HOSTNAME_STRICT: false
+      KC_HTTP_ENABLED: true
       KC_PROXY_HEADERS: 'xforwarded'
-      KC_BOOTSTRAP_ADMIN_USERNAME: 'admin'
-      KC_BOOTSTRAP_ADMIN_PASSWORD: 'admin123'
-      KC_HOSTNAME: 'keycloak'
-      KC_HOSTNAME_PORT: '8081'
-      KC_HOSTNAME_ADMIN_URL: 'http://${local_host_name}:8081'
-      KC_HTTP_ENABLED: 'true'
-      KC_HOSTNAME_STRICT: 'false'
-      KC_HOSTNAME_STRICT_HTTPS: 'false'
     depends_on:
       keycloak-init:
         condition: service_completed_successfully
@@ -71,9 +60,9 @@ services:
       KC_HOSTNAME: 'keycloak'
       KC_HOSTNAME_PORT: '8081'
       KC_HOSTNAME_ADMIN_URL: 'http://keycloak:8081'
-      KC_HTTP_ENABLED: 'true'
-      KC_HOSTNAME_STRICT: 'false'
-      KC_HOSTNAME_STRICT_HTTPS: 'false'
+      KC_HTTP_ENABLED: true
+      KC_HOSTNAME_STRICT: false
+      KC_HOSTNAME_STRICT_HTTPS: false
     depends_on:
       postgres:
         condition: service_healthy
