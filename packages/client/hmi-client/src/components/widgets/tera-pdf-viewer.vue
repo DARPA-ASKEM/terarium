@@ -14,15 +14,15 @@
 					text
 					severity="secondary"
 					@click="prevPage"
-					:disabled="currentPage <= 1"
+					:disabled="currentPageNumber <= 1"
 				/>
 				<span class="w-6rem text-center">
 					<InputNumber
 						type="number"
-						v-model.number="currentPage"
+						v-model.number="currentPageNumber"
 						:min="1"
 						:max="pages"
-						@keydown.enter="goToPage(currentPage)"
+						@keydown.enter="goToPage(currentPageNumber)"
 					/>
 					/ {{ pages }}
 				</span>
@@ -32,7 +32,7 @@
 					text
 					severity="secondary"
 					@click="nextPage"
-					:disabled="currentPage >= pages"
+					:disabled="currentPageNumber >= pages"
 				/>
 			</div>
 			<Divider layout="vertical" />
@@ -88,7 +88,7 @@
 
 <script setup lang="ts">
 import '@tato30/vue-pdf/style.css';
-import { groupBy, isEmpty, debounce } from 'lodash';
+import { groupBy, isEmpty, debounce, isEqual } from 'lodash';
 import { computed, ref, watch, useTemplateRef } from 'vue';
 import { VuePDF, usePDF } from '@tato30/vue-pdf';
 import Button from 'primevue/button';
@@ -111,6 +111,7 @@ export interface PdfAnnotation {
 	color: string;
 	isHighlight: boolean;
 }
+export type PageScrollPosition = 'start' | 'center' | 'end';
 
 const props = defineProps<{
 	pdfLink: string;
@@ -119,7 +120,10 @@ const props = defineProps<{
 	 * Whether to fit the PDF to the width of the container. When true, the zoom controls are hidden.
 	 */
 	fitToWidth?: boolean;
-	currentPage?: number;
+	currentPage?: {
+		page: number;
+		scrollPosition?: PageScrollPosition;
+	};
 	annotations?: PdfAnnotation[];
 }>();
 
@@ -132,13 +136,12 @@ const { pdf, pages } = usePDF(computed(() => props.pdfLink));
 // ================================================
 // Page Navigation
 // ================================================
-const currentPage = ref(props.currentPage ?? DEFAULT_CURRENT_PAGE);
+const currentPageNumber = ref(props.currentPage?.page ?? DEFAULT_CURRENT_PAGE);
 watch(
 	() => props.currentPage,
 	(newVal) => {
-		if (newVal && newVal !== currentPage.value) {
-			currentPage.value = newVal;
-			goToPage(newVal);
+		if (newVal && !isEqual(newVal, currentPageNumber.value)) {
+			goToPage(newVal.page, newVal.scrollPosition);
 		}
 	}
 );
@@ -148,25 +151,25 @@ const getPdfPage = (pageNumber: number) => {
 	return vuePdfs.value[pageNumber - 1];
 };
 
-const goToPage = (pageNumber: number) => {
+const goToPage = (pageNumber: number, pageScrollPosition = 'start') => {
 	if (pageNumber >= 1 && pageNumber <= pages.value) {
-		currentPage.value = pageNumber;
+		currentPageNumber.value = pageNumber;
 		const targetPage = getPdfPage(pageNumber)?.$el;
-		targetPage?.scrollIntoView({ behavior: 'auto', block: 'start' });
+		targetPage?.scrollIntoView({ behavior: 'auto', block: pageScrollPosition });
 	}
 };
 
 const prevPage = () => {
-	if (currentPage.value > 1) {
-		currentPage.value--;
-		goToPage(currentPage.value);
+	if (currentPageNumber.value > 1) {
+		currentPageNumber.value--;
+		goToPage(currentPageNumber.value);
 	}
 };
 
 const nextPage = () => {
-	if (currentPage.value < pages.value) {
-		currentPage.value++;
-		goToPage(currentPage.value);
+	if (currentPageNumber.value < pages.value) {
+		currentPageNumber.value++;
+		goToPage(currentPageNumber.value);
 	}
 };
 
@@ -300,7 +303,7 @@ const focusSearchItem = (index: number) => {
 
 		if (!isVisible) {
 			firstFocusedItem.scrollIntoView({ behavior: 'auto', block: 'center' });
-			currentPage.value = focusedMatch.page; // Update current page to the page of the focused item
+			currentPageNumber.value = focusedMatch.page; // Update current page to the page of the focused item
 		}
 	}
 };

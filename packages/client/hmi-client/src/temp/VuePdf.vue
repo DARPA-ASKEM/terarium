@@ -14,7 +14,7 @@ import { downloadDocumentAsset, getDocumentAsset } from '@/services/document-ass
 import { ref, onMounted } from 'vue';
 
 const pdfLink = ref<string | null>(null);
-const currentPage = ref(1);
+const currentPage = ref({ page: 1 });
 
 const projectId = '979609fd-bad2-4aa2-9484-1bc4785b41ba'; // Terarium project id
 const pdfAssetId = '8b51a0d7-d79e-497d-aa9b-1efd7e52b459'; // PDF document asset id for  SIR paper 1.pdf
@@ -53,7 +53,7 @@ const annotate1 = () => {
 			isHighlight: false
 		}
 	];
-	currentPage.value = 2;
+	currentPage.value = { page: 2 };
 };
 
 const annotate2 = () => {
@@ -115,7 +115,7 @@ const annotate2 = () => {
 		}
 	];
 
-	currentPage.value = 7;
+	currentPage.value = { page: 7 };
 };
 </script>
 

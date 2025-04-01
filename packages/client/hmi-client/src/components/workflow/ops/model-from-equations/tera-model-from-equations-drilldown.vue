@@ -17,7 +17,6 @@
 				<template #content>
 					<tera-drilldown-section :is-loading="isFetchingPDF">
 						<tera-pdf-viewer
-							ref="pdfViewer"
 							v-if="pdfLink"
 							:pdf-link="pdfLink"
 							:title="document?.name || ''"
@@ -441,6 +440,7 @@ import TeraDrilldownPreview from '@/components/drilldown/tera-drilldown-preview.
 import TeraAssetBlock from '@/components/widgets/tera-asset-block.vue';
 import { computed, onMounted, onBeforeUnmount, ref, watch } from 'vue';
 import {
+	BBox,
 	ClientEvent,
 	ClientEventType,
 	Enrichment,
@@ -464,7 +464,7 @@ import TeraModel from '@/components/model/tera-model.vue';
 import TeraMathEditor from '@/components/mathml/tera-math-editor.vue';
 import TeraSliderPanel from '@/components/widgets/tera-slider-panel.vue';
 import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.vue';
-import TeraPdfViewer, { PdfAnnotation } from '@/components/widgets/tera-pdf-viewer.vue';
+import TeraPdfViewer, { PageScrollPosition, PdfAnnotation } from '@/components/widgets/tera-pdf-viewer.vue';
 import TeraTextEditor from '@/components/documents/tera-text-editor.vue';
 import TeraModal from '@/components/widgets/tera-modal.vue';
 import { createCopyTextToClipboard } from '@/utils/clipboard';
@@ -514,8 +514,6 @@ const allEquations = computed(() => [...clonedState.value.includedEquations, ...
 const { btnCopyLabel, setCopyClipboard } = createCopyTextToClipboard();
 /* End Copy all equations */
 
-const pdfViewer = ref();
-
 const selectedItem = ref('');
 
 const selectedEnrichment = ref('');
@@ -526,11 +524,9 @@ const selectEnrichment = (enrichment: Enrichment) => {
 
 const selectItem = (equation: AssetBlock<EquationBlock>, event?) => {
 	selectedItem.value = equation.id;
-	if (pdfViewer.value && !!equation.asset.provenance) {
-		const pageNumber = documentExtractionMap.value.get(equation.asset.provenance.extractionItemId)?.page;
-		pdfViewer.value.goToPage(pageNumber);
+	if (equation.asset.provenance?.extractionItemId) {
+		highlightAndFocusExtractionItem(equation.asset.provenance.extractionItemId);
 	}
-
 	// Prevent the child’s click handler from firing
 	event?.stopImmediatePropagation();
 };
@@ -554,8 +550,7 @@ const isInputOpen = ref(true);
 const isOutputOpen = ref(true);
 
 const pdfAnnotations = ref<PdfAnnotation[]>([]);
-const pdfCurrentPage = ref(1);
-
+const pdfCurrentPage = ref({ page: 1, scrollPosition: 'start' as PageScrollPosition });
 const enrichments = computed(() => selectedModel.value?.metadata?.enrichments ?? []);
 
 const outputArrowDirection = computed(() => (!isDocViewerOpen.value && !isInputOpen.value ? 'left' : 'right'));
@@ -896,21 +891,38 @@ const goToPreviousEnrichment = () => {
 	}
 };
 
-const highlightEquationBlock = (block: EquationBlock) => {
-	if (block.provenance?.extractionItemId) {
-		const extractionItem = documentExtractionMap.value.get(block.provenance?.extractionItemId);
-		if (extractionItem) {
-			pdfCurrentPage.value = extractionItem.page;
-			pdfAnnotations.value = [
-				{
-					pageNo: extractionItem.page,
-					bbox: extractionItem.bbox,
-					color: '#fc0',
-					isHighlight: true
-				}
-			];
-		}
+const calculatePageScrollPosition = (bbox: BBox) => {
+	const { top, bottom } = bbox;
+	const mid = (top + bottom) / 2;
+	if (mid < 0.25) {
+		return 'start';
 	}
+	if (mid > 0.75) {
+		return 'end';
+	}
+	return 'center';
+};
+
+const highlightAndFocusExtractionItem = (extractionItemId: string) => {
+	const extractionItem = documentExtractionMap.value.get(extractionItemId);
+	if (!extractionItem) return;
+	pdfCurrentPage.value = {
+		page: extractionItem.page,
+		scrollPosition: calculatePageScrollPosition(extractionItem.bbox)
+	};
+	pdfAnnotations.value = [
+		{
+			pageNo: extractionItem.page,
+			bbox: extractionItem.bbox,
+			color: '#fc0',
+			isHighlight: true
+		}
+	];
+};
+
+const highlightEquationBlock = (block: EquationBlock) => {
+	if (!block.provenance?.extractionItemId) return;
+	highlightAndFocusExtractionItem(block.provenance.extractionItemId);
 };
 
 const highlightEnrichmentBlock = (enrichment: Enrichment) => {
@@ -921,7 +933,7 @@ const highlightEnrichmentBlock = (enrichment: Enrichment) => {
 			const extractionItem = documentExtractionMap.value.get(refId);
 			if (extractionItem) {
 				if (idx === 0) {
-					pdfCurrentPage.value = extractionItem.page;
+					pdfCurrentPage.value = { page: extractionItem.page, scrollPosition: 'start' };
 				}
 				pdfAnnotations.value.push({
 					pageNo: extractionItem.page,
