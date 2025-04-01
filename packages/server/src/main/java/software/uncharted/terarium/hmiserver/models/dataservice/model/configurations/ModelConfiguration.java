@@ -40,6 +40,9 @@ public class ModelConfiguration extends TerariumAsset {
 	private UUID extractionDocumentId;
 
 	@TSOptional
+	private Integer extractionPage;
+
+	@TSOptional
 	@Type(JsonType.class)
 	@Column(columnDefinition = "json")
 	private List<Enrichment> enrichments = new ArrayList<>();
@@ -84,6 +87,7 @@ public class ModelConfiguration extends TerariumAsset {
 		clone.setSimulationId(this.simulationId);
 		clone.setTemporalContext(this.temporalContext);
 		clone.setExtractionDocumentId(this.extractionDocumentId);
+		clone.setExtractionPage(extractionPage);
 		clone.setEnrichments(this.enrichments);
 
 		if (this.observableSemanticList != null) {
