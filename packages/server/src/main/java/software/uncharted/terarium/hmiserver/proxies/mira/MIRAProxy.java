@@ -9,7 +9,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import software.uncharted.terarium.hmiserver.models.mira.Curies;
 import software.uncharted.terarium.hmiserver.models.mira.EntitySimilarityResult;
 
-@FeignClient(name = "mira-api", url = "${mira-api.url}", path = "/api")
+@FeignClient(name = "mira-api", url = "${mira-rest-url}", path = "/api")
 public interface MIRAProxy {
 	@PostMapping("/entity_similarity")
 	ResponseEntity<List<EntitySimilarityResult>> entitySimilarity(@RequestBody Curies obj) throws FeignException;
