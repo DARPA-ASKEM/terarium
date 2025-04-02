@@ -848,8 +848,8 @@ export interface ProjectGroupPermission {
 
 export interface IProjectUserPermissionDisplayModel {
     user: User;
-    email: string;
     username: string;
+    email: string;
     givenName: string;
     id: string;
     permissionLevel: Permission;
