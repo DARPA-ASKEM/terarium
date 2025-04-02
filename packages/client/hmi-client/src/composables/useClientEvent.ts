@@ -64,7 +64,7 @@ export function createTaskProgressClientEventHandler(
 			node.state[progressKey] = undefined;
 			node.status = taskState;
 		} else {
-			node.status = OperatorStatus.IN_PROGRESS;
+			node.status = OperatorStatus.RUNNING;
 		}
 		emit('update-state', node.state);
 	};
@@ -75,7 +75,7 @@ export function createEnrichClientEventHandler(taskStatus: Ref, assetId: string 
 		const { datasetId, documentId, modelId } = event.data.additionalProperties;
 		if (assetId !== datasetId && assetId !== documentId && assetId !== modelId) return;
 		if (ProgressState.Complete === event.data.status) {
-			taskStatus.value = OperatorStatus.SUCCESS;
+			taskStatus.value = OperatorStatus.COMPLETE;
 			emit('finished-job');
 		} else {
 			taskStatus.value = event.data.status;

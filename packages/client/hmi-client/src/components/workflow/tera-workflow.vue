@@ -387,7 +387,7 @@ async function appendOutput(
 		isSelected: true,
 		timestamp: new Date(),
 		// We assume that if we can produce an output, the status is okay
-		operatorStatus: OperatorStatus.SUCCESS
+		operatorStatus: OperatorStatus.COMPLETE
 	};
 
 	const updatedWorkflow = await workflowService.appendOutput(wf.value.getId(), node.id, outputPort, newState);

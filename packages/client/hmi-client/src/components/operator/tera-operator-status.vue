@@ -1,10 +1,7 @@
 <template>
-	<section v-if="props.status !== OperatorStatus.DEFAULT && props.status !== OperatorStatus.SUCCESS">
+	<section v-if="props.status !== OperatorStatus.DEFAULT && props.status !== OperatorStatus.COMPLETE">
 		<div :class="`${status}`">
-			<div
-				v-if="props.status === OperatorStatus.IN_PROGRESS || props.status === ProgressState.Running"
-				class="container"
-			>
+			<div v-if="props.status === OperatorStatus.RUNNING || props.status === ProgressState.Running" class="container">
 				<div v-if="props.progress">
 					<p class="action">{{ Math.round(props.progress * 100) }}%</p>
 					<ProgressBar :value="props.progress ? props.progress * 100 : 0" />
@@ -37,8 +34,8 @@ const props = defineProps<{
 const slots = useSlots();
 const hasSlot = (name: string) => !!slots[name];
 const notificationStatusMap = {
-	[OperatorStatus.SUCCESS]: { icon: 'check', message: 'Success' },
-	[OperatorStatus.IN_PROGRESS]: { icon: 'spinner', message: 'Processing' },
+	[OperatorStatus.COMPLETE]: { icon: 'check', message: 'Success' },
+	[OperatorStatus.RUNNING]: { icon: 'spinner', message: 'Processing' },
 	[OperatorStatus.ERROR]: { icon: 'alert-octagon', message: 'Error' },
 	[OperatorStatus.INVALID]: { icon: 'alert-octagon', message: 'Invalid' },
 	[OperatorStatus.DEFAULT]: { icon: 'circle', message: '' }

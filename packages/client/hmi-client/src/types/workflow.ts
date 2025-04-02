@@ -26,8 +26,8 @@ export const WorkflowOperationTypes = Object.freeze({
 
 export enum OperatorStatus {
 	DEFAULT = 'default',
-	IN_PROGRESS = 'in progress',
-	SUCCESS = 'success',
+	RUNNING = 'running',
+	COMPLETE = 'complete',
 	INVALID = 'invalid',
 	ERROR = 'error'
 }

@@ -422,7 +422,7 @@ const runFromCode = () => {
 		})
 		.register('any_execute_reply', (data) => {
 			let status = OperatorStatus.DEFAULT;
-			if (data.msg.content.status === 'ok') status = OperatorStatus.SUCCESS;
+			if (data.msg.content.status === 'ok') status = OperatorStatus.COMPLETE;
 			if (data.msg.content.status === 'error') status = OperatorStatus.ERROR;
 			executeResponse.value = {
 				status,

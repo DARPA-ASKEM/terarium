@@ -59,7 +59,7 @@ const props = defineProps<{
 	assetId: TerariumAsset['id'];
 }>();
 
-const isLoading = computed(() => enrichStatus.value === OperatorStatus.IN_PROGRESS);
+const isLoading = computed(() => enrichStatus.value === OperatorStatus.RUNNING);
 const isModalVisible = ref(false);
 const enrichStatus = ref<string>('');
 useClientEvent(
@@ -97,7 +97,7 @@ async function sendForEnrichment() {
 		} else {
 			await datasetCard(props.assetId, selectedResourceId.value);
 		}
-		enrichStatus.value = OperatorStatus.IN_PROGRESS;
+		enrichStatus.value = OperatorStatus.RUNNING;
 	}
 }
 

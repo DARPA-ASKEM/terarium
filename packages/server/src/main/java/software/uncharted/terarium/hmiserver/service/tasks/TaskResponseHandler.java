@@ -37,7 +37,7 @@ public abstract class TaskResponseHandler {
 			case RUNNING:
 				return onRunning(response);
 			case COMPLETE:
-				return onCancelling(response);
+				return onSuccess(response);
 			case CANCELLED:
 				return onCancelled(response);
 			case ERROR:

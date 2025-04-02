@@ -358,7 +358,7 @@ export class WorkflowWrapper {
 		// if there is an output set the output port and set statuses to success
 		if (!_.isEmpty(options.output)) {
 			node.active = outputPort.id;
-			node.status = OperatorStatus.SUCCESS;
+			node.status = OperatorStatus.COMPLETE;
 			outputPort.operatorStatus = node.status;
 			Object.assign(outputPort, options.output);
 			this.selectOutput(node, outputPort.id);
