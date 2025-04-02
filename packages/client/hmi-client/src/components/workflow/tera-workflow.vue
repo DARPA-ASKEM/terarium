@@ -236,7 +236,9 @@ import * as InterventionPolicyOp from '@/components/workflow/ops/intervention-po
 import { subscribe, unsubscribe } from '@/services/ClientEventService';
 import { activeProjectId } from '@/composables/activeProject';
 
-const WORKFLOW_SAVE_INTERVAL = 4000;
+const WORKFLOW_LOCAL_STORAGE_UPDATE_INTERVAL = 4000;
+const WORKFLOW_SAVE_INTERVAL = 500; // how long to wait before sending changes to server
+const WORKFLOW_SYNC_INTERVAL = 3 * WORKFLOW_SAVE_INTERVAL; // how long to wait before applying changes received from server
 
 // const currentUserId = useAuthStore().user?.id;
 
@@ -316,7 +318,7 @@ const _updateWorkflow = (event: ClientEvent<any>) => {
 };
 
 const nodeStateMap: Map<string, any> = new Map();
-const updateWorkflowHandler = debounce(_updateWorkflow, 250);
+const updateWorkflowHandler = debounce(_updateWorkflow, WORKFLOW_SYNC_INTERVAL);
 const saveNodeStateHandler = debounce(async () => {
 	const updatedWorkflow = await workflowService.updateState(wf.value.getId(), nodeStateMap);
 	nodeStateMap.clear();
@@ -326,13 +328,13 @@ const saveNodeStateHandler = debounce(async () => {
 			wf.value.updateNodeState(node.id, node.state);
 		}
 	});
-}, 500);
+}, WORKFLOW_SAVE_INTERVAL);
 
 const nodePositionSet: Set<string> = new Set();
 const edgePositionSet: Set<string> = new Set();
 const debounceSaveWorkflowPositions = debounce(() => {
 	saveWorkflowPositions();
-}, 100);
+}, WORKFLOW_SAVE_INTERVAL);
 
 async function appendInput(
 	node: WorkflowNode<any>,
@@ -1032,7 +1034,7 @@ onMounted(() => {
 
 	saveTimer = setInterval(async () => {
 		workflowService.setLocalStorageTransform(wf.value.getId(), canvasTransform);
-	}, WORKFLOW_SAVE_INTERVAL);
+	}, WORKFLOW_LOCAL_STORAGE_UPDATE_INTERVAL);
 
 	subscribe(ClientEventType.WorkflowUpdate, updateWorkflowHandler);
 	currentProjectId.value = activeProjectId.value;
