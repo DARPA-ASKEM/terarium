@@ -652,11 +652,16 @@ public class ExtractionService {
 	) throws TimeoutException, InterruptedException, ExecutionException, IOException {
 		final int REQUEST_TIMEOUT_MINUTES = 30;
 		final TaskRequest req = new TaskRequest();
+
+		// final String documentSHA = sha256(input.bytes);
+
 		req.setTimeoutMinutes(REQUEST_TIMEOUT_MINUTES);
 		req.setInput(objectMapper.writeValueAsBytes(input));
 		req.setScript(OCRExtractionResponseHandler.NAME);
 		req.setUserId(userId);
 		req.setType(TaskType.OCR_EXTRACTION);
+		// req.setRequestSHA256(documentSHA);
+		req.setUseCache(true);
 
 		return executor.submit(() -> {
 			final TaskResponse resp = taskService.runTaskSync(req);
@@ -729,8 +734,16 @@ public class ExtractionService {
 				if (cleanupResp != null && cleanupResp.getOutput() != null) {
 					int counter = 0;
 					for (JsonNode eq : output.get("response").get("equations")) {
-						formulaItems.get(counter).setText(eq.asText().trim());
-						counter++;
+						// FIXME: It seems like on rare occasions the lengths of the original equations and the cleaned
+						// equations mismatch. May be better to changet the prompt to return a dictionary.
+						final String cleanEq = eq.asText().trim();
+						if (counter < formulaItems.size()) {
+							formulaItems.get(counter).setText(cleanEq);
+							log.info("Setting " + formulaItems.get(counter).getText() + " => " + cleanEq);
+							counter++;
+						} else {
+							log.warn("Unmatched cleaned equation string : " + cleanEq);
+						}
 					}
 				}
 				log.info("OCR extraction equation post processing: done");
