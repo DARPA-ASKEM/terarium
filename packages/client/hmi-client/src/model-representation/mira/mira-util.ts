@@ -18,6 +18,14 @@ export const removeModifiers = (v: string, context: { [key: string]: string }, s
 	return result;
 };
 
+export const removeModifiersByValues = (v: string, values: string[]) => {
+	let result = v;
+	values.forEach((key) => {
+		result = result.replace(`_${key}`, '');
+	});
+	return result;
+};
+
 export const extractConceptNames = (templates: MiraTemplate[], key: string) => {
 	let names: string[] = [];
 	if (key === 'subject') {
