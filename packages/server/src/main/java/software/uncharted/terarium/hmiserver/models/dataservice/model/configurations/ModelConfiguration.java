@@ -1,7 +1,9 @@
 package software.uncharted.terarium.hmiserver.models.dataservice.model.configurations;
 
 import com.fasterxml.jackson.annotation.JsonManagedReference;
+import io.hypersistence.utils.hibernate.type.json.JsonType;
 import jakarta.persistence.CascadeType;
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.OneToMany;
@@ -12,9 +14,11 @@ import java.util.UUID;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
+import org.hibernate.annotations.Type;
 import software.uncharted.terarium.hmiserver.annotations.TSModel;
 import software.uncharted.terarium.hmiserver.annotations.TSOptional;
 import software.uncharted.terarium.hmiserver.models.TerariumAsset;
+import software.uncharted.terarium.hmiserver.models.dataservice.enrichment.Enrichment;
 
 @EqualsAndHashCode(callSuper = true)
 @Data
@@ -37,6 +41,11 @@ public class ModelConfiguration extends TerariumAsset {
 
 	@TSOptional
 	private Integer extractionPage;
+
+	@TSOptional
+	@Type(JsonType.class)
+	@Column(columnDefinition = "json")
+	private List<Enrichment> enrichments = new ArrayList<>();
 
 	@OneToMany(mappedBy = "modelConfiguration", fetch = FetchType.EAGER, cascade = CascadeType.ALL)
 	@JsonManagedReference
@@ -78,7 +87,8 @@ public class ModelConfiguration extends TerariumAsset {
 		clone.setSimulationId(this.simulationId);
 		clone.setTemporalContext(this.temporalContext);
 		clone.setExtractionDocumentId(this.extractionDocumentId);
-		clone.setExtractionPage(this.extractionPage);
+		clone.setExtractionPage(extractionPage);
+		clone.setEnrichments(this.enrichments);
 
 		if (this.observableSemanticList != null) {
 			clone.setObservableSemanticList(new ArrayList<>());
