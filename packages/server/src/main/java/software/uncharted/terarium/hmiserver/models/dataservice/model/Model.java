@@ -35,7 +35,6 @@ import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.seman
 import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.semantics.Rate;
 import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.semantics.State;
 import software.uncharted.terarium.hmiserver.models.dataservice.modelparts.semantics.Transition;
-import software.uncharted.terarium.hmiserver.models.dataservice.regnet.RegNetVertex;
 import software.uncharted.terarium.hmiserver.utils.JsonUtil;
 
 @EqualsAndHashCode(callSuper = true)
@@ -183,23 +182,6 @@ public class Model extends TerariumAssetThatSupportsAdditionalProperties {
 		if (isRegnet()) return;
 		final ObjectMapper objectMapper = new ObjectMapper();
 		getModel().put("states", objectMapper.convertValue(states, JsonNode.class));
-	}
-
-	@JsonIgnore
-	@TSIgnore
-	public List<RegNetVertex> getVerticies() {
-		if (!isRegnet()) return null;
-		if (!getModel().containsKey("vertices")) return new ArrayList<>();
-		final ObjectMapper objectMapper = new ObjectMapper();
-		return objectMapper.convertValue(getModel().get("vertices"), new TypeReference<>() {});
-	}
-
-	@JsonIgnore
-	@TSIgnore
-	public void setVerticies(final List<RegNetVertex> verticies) {
-		if (!isRegnet()) return;
-		final ObjectMapper objectMapper = new ObjectMapper();
-		getModel().put("vertices", objectMapper.convertValue(verticies, JsonNode.class));
 	}
 
 	@JsonIgnore
