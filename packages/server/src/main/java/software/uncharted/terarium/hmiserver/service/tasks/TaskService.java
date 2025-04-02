@@ -482,7 +482,8 @@ public class TaskService {
 				try {
 					// add to the response cache
 					log.info(
-						"Writing SUCCESS response for task id {} to cache under SHA: {} for script {}",
+						"Writing {} response for task id {} to cache under SHA: {} for script {}",
+						resp.getStatus(),
 						resp.getId(),
 						resp.getRequestSHA256(),
 						resp.getScript()
