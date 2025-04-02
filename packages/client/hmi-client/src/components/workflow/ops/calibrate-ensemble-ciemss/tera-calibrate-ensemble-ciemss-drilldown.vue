@@ -233,7 +233,6 @@
 							<vega-chart
 								v-if="!_.isEmpty(lossValues)"
 								expandable
-								ref="lossChartRef"
 								:are-embed-actions-visible="true"
 								:visualization-spec="lossChartSpec"
 							/>
@@ -358,7 +357,6 @@
 
 <script setup lang="ts">
 import _, { isEmpty } from 'lodash';
-import * as vega from 'vega';
 import { ref, shallowRef, computed, watch, onMounted } from 'vue';
 import {
 	makeEnsembleCiemssCalibration,
@@ -505,7 +503,6 @@ const outputDatasetId = computed(() => {
 });
 
 // Loss Chart:
-const lossChartRef = ref<InstanceType<typeof VegaChart>>();
 const lossChartSpec = ref();
 const lossValues = ref<{ [key: string]: number }[]>([]);
 const LOSS_CHART_DATA_SOURCE = 'lossData';
@@ -562,10 +559,9 @@ const toggleIsNumberOfTimepointsManual = () => {
 };
 
 const messageHandler = (event: ClientEvent<any>) => {
-	const data = { iter: lossValues.value.length, loss: event.data.loss };
+	const data = { iter: event.data.progress, loss: event.data.loss };
 	lossValues.value.push(data);
-	if (!lossChartRef.value?.view) return;
-	lossChartRef.value.view.change(LOSS_CHART_DATA_SOURCE, vega.changeset().insert(data)).resize().run();
+	updateLossChartSpec(lossValues.value, chartSize.value);
 };
 
 const presetType = computed(() => {
