@@ -184,7 +184,7 @@ public class ModelConfigurationService extends TerariumAssetService<ModelConfigu
 			} else {
 				distribution = new ModelDistribution();
 				distribution.setType("Constant");
-				distribution.setParameters(Map.of("value", Double.NaN));
+				distribution.setParameters(Map.of("value", ""));
 			}
 
 			parameterSemantic.setDistribution(distribution);
