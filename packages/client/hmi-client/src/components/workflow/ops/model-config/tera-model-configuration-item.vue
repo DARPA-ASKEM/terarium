@@ -12,9 +12,90 @@
 			@mouseenter="contextMenuInFocus = true"
 			@mouseleave="contextMenuInFocus = false"
 		/>
-		<p class="constrain-width">{{ configuration.description }}</p>
+		<p>{{ configuration.description }}</p>
 		<p>{{ formatTimestamp(configuration.createdOn) }}</p>
 		<div v-if="emptyInputCount" class="input-count">{{ emptyInputCount }}</div>
+		<template v-if="selected && !_.isEmpty(configuration.enrichments)">
+			<h6 class="my-2">Description</h6>
+			<ul>
+				<li v-for="enrichment in descriptionEnrichments" :key="enrichment.id">
+					<tera-asset-block
+						:is-toggleable="false"
+						:is-selected="selectedEnrichment === enrichment.id"
+						@click="selectedEnrichment = enrichment.id"
+						@next="goToNextEnrichment"
+						@previous="goToPreviousEnrichment"
+						@close="selectedEnrichment = ''"
+					>
+						<template #header>
+							<p>{{ enrichment.content }}</p>
+							<Checkbox
+								v-model="enrichment.included"
+								:binary="true"
+								@update:model-value="emit('enrichment-change')"
+								@click.stop
+							/>
+						</template>
+					</tera-asset-block>
+				</li>
+			</ul>
+			<h6 class="my-2">Initials</h6>
+			<ul>
+				<li v-for="enrichment in stateEnrichments" :key="enrichment.id">
+					<tera-asset-block
+						:is-toggleable="false"
+						:is-selected="selectedEnrichment === enrichment.id"
+						@click="selectedEnrichment = enrichment.id"
+						@next="goToNextEnrichment"
+						@previous="goToPreviousEnrichment"
+						@close="selectedEnrichment = ''"
+					>
+						<template #header>
+							<h6>{{ enrichment.label }}</h6>
+							<p class="ml-auto">{{ enrichment.content.expression }}</p>
+							<Checkbox
+								v-model="enrichment.included"
+								:binary="true"
+								@update:model-value="emit('enrichment-change')"
+								@click.stop
+							/>
+						</template>
+					</tera-asset-block>
+				</li>
+			</ul>
+			<h6 class="my-2">Parameters</h6>
+			<ul>
+				<li v-for="enrichment in parameterEnrichments" :key="enrichment.id">
+					<tera-asset-block
+						:is-toggleable="false"
+						:is-selected="selectedEnrichment === enrichment.id"
+						@click="selectedEnrichment = enrichment.id"
+						@next="goToNextEnrichment"
+						@previous="goToPreviousEnrichment"
+						@close="selectedEnrichment = ''"
+					>
+						<template #header>
+							<h6>{{ enrichment.label }}</h6>
+							<p class="ml-auto">
+								<template v-if="enrichment.content.distribution.type === DistributionType.Uniform">
+									{{ displayNumber(enrichment.content.distribution.parameters.minimum) }} -
+									{{ displayNumber(enrichment.content.distribution.parameters.maximum) }}
+								</template>
+								<template v-else-if="enrichment.content.distribution.type === DistributionType.Constant">
+									{{ displayNumber(enrichment.content.distribution.parameters.value) }}
+								</template>
+							</p>
+							<Checkbox
+								v-model="enrichment.included"
+								:binary="true"
+								@update:model-value="emit('enrichment-change')"
+								@click.stop
+							/>
+						</template>
+					</tera-asset-block>
+				</li>
+			</ul>
+		</template>
 	</main>
 
 	<tera-modal v-if="viewLatexTable" class="w-8" @modal-mask-clicked="viewLatexTable = false">
@@ -42,7 +123,8 @@
 </template>
 
 <script setup lang="ts">
-import { ModelConfiguration } from '@/types/Types';
+import { ModelConfiguration, EnrichmentTarget } from '@/types/Types';
+import { DistributionType } from '@/services/distribution';
 import { formatTimestamp } from '@/utils/date';
 import Button from 'primevue/button';
 import ContextMenu from 'primevue/contextmenu';
@@ -55,13 +137,29 @@ import {
 } from '@/services/model-configurations';
 import { createCopyTextToClipboard } from '@/utils/clipboard';
 import TeraModal from '@/components/widgets/tera-modal.vue';
+import _ from 'lodash';
+import Checkbox from 'primevue/checkbox';
+import TeraAssetBlock from '@/components/widgets/tera-asset-block.vue';
+import { displayNumber } from '@/utils/number';
 
-const emit = defineEmits(['delete', 'use', 'downloadArchive', 'downloadModel']);
+const emit = defineEmits(['delete', 'use', 'downloadArchive', 'downloadModel', 'enrichment-change']);
 const props = defineProps<{
 	configuration: ModelConfiguration;
+	transientConfiguration: ModelConfiguration;
 	selected?: boolean;
 	emptyInputCount?: string;
 }>();
+
+const descriptionEnrichments = computed(() =>
+	props.transientConfiguration.enrichments?.filter((e) => e.target === EnrichmentTarget.Description)
+);
+const stateEnrichments = computed(() =>
+	props.transientConfiguration.enrichments?.filter((e) => e.target === EnrichmentTarget.State)
+);
+const parameterEnrichments = computed(() =>
+	props.transientConfiguration.enrichments?.filter((e) => e.target === EnrichmentTarget.Parameter)
+);
+const selectedEnrichment = ref('');
 
 const isCalibrated = computed(() => props.configuration.simulationId !== null);
 
@@ -151,6 +249,21 @@ const onDeleteConfiguration = () => {
 	});
 };
 
+const goToNextEnrichment = () => {
+	if (!props.configuration.enrichments) return;
+	const currentIndex = props.configuration.enrichments.findIndex((e) => e.id === selectedEnrichment.value);
+	if (currentIndex < props.configuration.enrichments.length - 1) {
+		selectedEnrichment.value = props.configuration.enrichments[currentIndex + 1].id;
+	}
+};
+const goToPreviousEnrichment = () => {
+	if (!props.configuration.enrichments) return;
+	const currentIndex = props.configuration.enrichments.findIndex((e) => e.id === selectedEnrichment.value);
+	if (currentIndex > 0) {
+		selectedEnrichment.value = props.configuration.enrichments[currentIndex - 1].id;
+	}
+};
+
 // Watch for viewLatexTable changes and fetch the latexTable value
 watch(viewLatexTable, async (value) => {
 	if (value) {
@@ -194,6 +307,11 @@ header {
 	& > *:last-child {
 		margin-left: auto;
 	}
+}
+
+ul {
+	list-style: none;
+	padding-left: 0;
 }
 
 p,
