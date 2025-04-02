@@ -108,6 +108,7 @@ const pollResult = async (runId: string) => {
 	} else if (pollerResults.state !== PollerState.Done || !pollerResults.data) {
 		const simulation = await getSimulation(runId);
 		if (simulation?.status && simulation?.statusMessage) {
+			state.inProgressForecastId = '';
 			state.errorMessage = {
 				name: `Simulate: ${runId} has failed`,
 				value: simulation.status,
@@ -118,6 +119,7 @@ const pollResult = async (runId: string) => {
 		logger.error(`Simulate: ${runId} has failed`, {
 			toastTitle: 'Error - Pyciemss'
 		});
+		poller.stop();
 	}
 	emit('update-state', state);
 	return pollerResults;
