@@ -35,7 +35,7 @@ def main():
 
         taskrunner.write_output_dict_with_timeout({"response": response})
 
-    except Exception as e:
+    except Exception:
         sys.stderr.write(traceback.format_exc())
         sys.stderr.flush()
         exitCode = 1
