@@ -161,7 +161,6 @@
 											:is-permitted="false"
 											:use-default-style="false"
 											:class="['asset-panel', { selected: selectedItem === equation.id }]"
-											@click="highlightEquationBlock(equation.asset)"
 										>
 											<template #header>
 												<h6 v-if="equation.asset.provenance">Edited by AI</h6>
@@ -228,7 +227,6 @@
 											:is-toggleable="false"
 											:use-default-style="false"
 											:class="['asset-panel', { selected: selectedItem === equation.id }]"
-											@click="highlightEquationBlock(equation.asset)"
 										>
 											<template #header>
 												<h6 v-if="equation.asset.provenance">Edited by AI</h6>
@@ -304,7 +302,6 @@
 											:is-toggleable="false"
 											:use-default-style="false"
 											:class="['asset-panel', { selected: selectedEnrichment === enrichment.id }]"
-											@click="highlightEnrichmentBlock(enrichment)"
 										>
 											<template #header>
 												<h6>{{ enrichmentTargetTypeToLabel(enrichment.target) + ' > ' + enrichment.label }}</h6>
@@ -521,6 +518,7 @@ const selectedEnrichment = ref('');
 
 const selectEnrichment = (enrichment: Enrichment) => {
 	selectedEnrichment.value = enrichment.id;
+	highlightEnrichmentBlock(enrichment);
 };
 
 const selectItem = (equation: AssetBlock<EquationBlock>, event?) => {
@@ -899,13 +897,7 @@ const highlightAndFocusExtractionItem = (extractionItemId: string) => {
 	highlightAndScrollToBBox(extractionItem.page, extractionItem.bbox);
 };
 
-const highlightEquationBlock = (block: EquationBlock) => {
-	if (!block.provenance?.extractionItemId) return;
-	highlightAndFocusExtractionItem(block.provenance.extractionItemId);
-};
-
 const highlightEnrichmentBlock = (enrichment: Enrichment) => {
-	console.log('clicking', enrichment);
 	if (enrichment.extractionItemIds && enrichment.extractionItemIds.length > 0) {
 		const extractionItems = enrichment.extractionItemIds
 			.map((id) => documentExtractionMap.value.get(id))
