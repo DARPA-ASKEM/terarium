@@ -9,7 +9,7 @@
 </template>
 
 <script setup lang="ts">
-import teraPdfViewer, { PdfAnnotation } from '@/components/widgets/tera-pdf-viewer.vue';
+import teraPdfViewer, { PDFAnnotation } from '@/components/widgets/tera-pdf-viewer.vue';
 import { downloadDocumentAsset, getDocumentAsset } from '@/services/document-assets';
 import { ref, onMounted } from 'vue';
 
@@ -26,7 +26,7 @@ onMounted(async () => {
 	pdfLink.value = (await downloadDocumentAsset(pdfAssetId, filename)) ?? null;
 });
 
-const annotations = ref<PdfAnnotation[]>([]);
+const annotations = ref<PDFAnnotation[]>([]);
 
 const annotate1 = () => {
 	annotations.value = [

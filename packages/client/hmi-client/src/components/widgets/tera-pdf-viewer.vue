@@ -96,6 +96,7 @@ import InputText from 'primevue/inputtext';
 import InputNumber from 'primevue/inputnumber';
 import OverlayPanel from 'primevue/overlaypanel';
 import Divider from 'primevue/divider';
+import { PDFAnnotation, PDFPageScrollPosition } from '@/types/common';
 
 const DEFAULT_SCALE = 1.5;
 const SCALE_INCREMENT = 0.25;
@@ -104,14 +105,6 @@ const MAX_SCALE = 4;
 const DEFAULT_CURRENT_PAGE = 1;
 const HIGHLIGHT_DEFAULT_COLOR = 'rgba(255, 255, 0, 0.5)';
 const BBOX_DEFAULT_COLOR = 'green';
-
-export interface PdfAnnotation {
-	pageNo: number;
-	bbox: { left: number; top: number; right: number; bottom: number };
-	color: string;
-	isHighlight: boolean;
-}
-export type PageScrollPosition = 'start' | 'center' | 'end';
 
 const props = defineProps<{
 	pdfLink: string;
@@ -122,9 +115,9 @@ const props = defineProps<{
 	fitToWidth?: boolean;
 	currentPage?: {
 		page: number;
-		scrollPosition?: PageScrollPosition;
+		scrollPosition?: PDFPageScrollPosition;
 	};
-	annotations?: PdfAnnotation[];
+	annotations?: PDFAnnotation[];
 }>();
 
 const vuePdfs = useTemplateRef<InstanceType<typeof VuePDF>[] | null>('vuePdfs');
@@ -176,7 +169,7 @@ const nextPage = () => {
 // ================================================
 // Annotations
 // ================================================
-const applyAnnotations = (annotations: PdfAnnotation[]) => {
+const applyAnnotations = (annotations: PDFAnnotation[]) => {
 	annotations.forEach((annotation) =>
 		drawBbox(annotation.pageNo, annotation.bbox, annotation.isHighlight, annotation.color)
 	);
@@ -187,7 +180,7 @@ const onPageLoaded = (_payload: any, pageNumber: number) => {
 	applyAnnotations(annotations);
 };
 
-const drawBbox = (pageNumber: number, bbox: PdfAnnotation['bbox'], isHighlight: boolean, color?: string) => {
+const drawBbox = (pageNumber: number, bbox: PDFAnnotation['bbox'], isHighlight: boolean, color?: string) => {
 	const pageElement = getPdfPage(pageNumber)?.$el;
 	if (!pageElement) return;
 	const canvas = pageElement.querySelector('canvas');

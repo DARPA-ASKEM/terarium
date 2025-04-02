@@ -464,7 +464,7 @@ import TeraModel from '@/components/model/tera-model.vue';
 import TeraMathEditor from '@/components/mathml/tera-math-editor.vue';
 import TeraSliderPanel from '@/components/widgets/tera-slider-panel.vue';
 import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.vue';
-import TeraPdfViewer, { PageScrollPosition, PdfAnnotation } from '@/components/widgets/tera-pdf-viewer.vue';
+import TeraPdfViewer from '@/components/widgets/tera-pdf-viewer.vue';
 import TeraTextEditor from '@/components/documents/tera-text-editor.vue';
 import TeraModal from '@/components/widgets/tera-modal.vue';
 import { createCopyTextToClipboard } from '@/utils/clipboard';
@@ -474,6 +474,7 @@ import { v4 as uuidv4 } from 'uuid';
 import TeraInputText from '@/components/widgets/tera-input-text.vue';
 import { useClientEvent } from '@/composables/useClientEvent';
 import { formatTitle } from '@/utils/text';
+import { usePDFViewerActions } from '@/composables/usePDFViewerActions';
 import { ModelFromEquationsState, EquationBlock } from './model-from-equations-operation';
 import { updateModelWithEnrichments, enrichmentTargetTypeToLabel } from './model-from-equations-utils';
 
@@ -549,8 +550,9 @@ const isDocViewerOpen = ref(true);
 const isInputOpen = ref(true);
 const isOutputOpen = ref(true);
 
-const pdfAnnotations = ref<PdfAnnotation[]>([]);
-const pdfCurrentPage = ref({ page: 1, scrollPosition: 'start' as PageScrollPosition });
+const { pdfAnnotations, pdfCurrentPage, highlightAndScrollToBBox, highlightBBoxes, scrollToBBox } =
+	usePDFViewerActions();
+
 const enrichments = computed(() => selectedModel.value?.metadata?.enrichments ?? []);
 
 const outputArrowDirection = computed(() => (!isDocViewerOpen.value && !isInputOpen.value ? 'left' : 'right'));
@@ -891,33 +893,10 @@ const goToPreviousEnrichment = () => {
 	}
 };
 
-const calculatePageScrollPosition = (bbox: BBox) => {
-	const { top, bottom } = bbox;
-	const mid = (top + bottom) / 2;
-	if (mid < 0.25) {
-		return 'start';
-	}
-	if (mid > 0.75) {
-		return 'end';
-	}
-	return 'center';
-};
-
 const highlightAndFocusExtractionItem = (extractionItemId: string) => {
 	const extractionItem = documentExtractionMap.value.get(extractionItemId);
 	if (!extractionItem) return;
-	pdfCurrentPage.value = {
-		page: extractionItem.page,
-		scrollPosition: calculatePageScrollPosition(extractionItem.bbox)
-	};
-	pdfAnnotations.value = [
-		{
-			pageNo: extractionItem.page,
-			bbox: extractionItem.bbox,
-			color: '#fc0',
-			isHighlight: true
-		}
-	];
+	highlightAndScrollToBBox(extractionItem.page, extractionItem.bbox);
 };
 
 const highlightEquationBlock = (block: EquationBlock) => {
@@ -928,24 +907,12 @@ const highlightEquationBlock = (block: EquationBlock) => {
 const highlightEnrichmentBlock = (enrichment: Enrichment) => {
 	console.log('clicking', enrichment);
 	if (enrichment.extractionItemIds && enrichment.extractionItemIds.length > 0) {
-		pdfAnnotations.value = [];
-		enrichment.extractionItemIds.forEach((refId, idx) => {
-			const extractionItem = documentExtractionMap.value.get(refId);
-			if (extractionItem) {
-				if (idx === 0) {
-					pdfCurrentPage.value = {
-						page: extractionItem.page,
-						scrollPosition: calculatePageScrollPosition(extractionItem.bbox)
-					};
-				}
-				pdfAnnotations.value.push({
-					pageNo: extractionItem.page,
-					bbox: extractionItem.bbox,
-					color: '#fc0',
-					isHighlight: true
-				});
-			}
-		});
+		const extractionItems = enrichment.extractionItemIds
+			.map((id) => documentExtractionMap.value.get(id))
+			.filter(Boolean) as ExtractionItem[];
+		highlightBBoxes(extractionItems);
+		// Scroll to the first extraction item
+		scrollToBBox(extractionItems[0].page, extractionItems[0].bbox);
 	}
 };
 
