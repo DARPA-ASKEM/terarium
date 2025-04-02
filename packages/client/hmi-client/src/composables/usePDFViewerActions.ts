@@ -21,7 +21,7 @@ export function usePDFViewerActions() {
 	const pdfCurrentPage = ref({ page: 1, scrollPosition: 'start' as PDFPageScrollPosition });
 
 	/**
-	 * Scroll to the given bounding box on the given page.
+	 * Scroll to the given bounding box on the given page
 	 * @param page page number
 	 * @param bbox bounding box
 	 * @returns
