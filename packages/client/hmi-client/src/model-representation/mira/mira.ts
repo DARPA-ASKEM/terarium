@@ -6,7 +6,8 @@ import {
 	extractOutcomeControllersMatrix,
 	extractSubjectControllersMatrix,
 	extractSubjectOutcomeMatrix,
-	removeModifiers
+	removeModifiers,
+	removeModifiersByValues
 } from './mira-util';
 import type {
 	MiraMatrix,
@@ -311,17 +312,36 @@ export const collapseTemplates = (miraModel: MiraModel) => {
 	};
 };
 
-export const collapseObservableReferences = (observableSummary: ObservableSummary, initials: Map<string, string[]>) => {
-	const collapsedObservableSummary: ObservableSummary = cloneDeep(observableSummary);
-	Object.values(collapsedObservableSummary).forEach((observable) => {
-		// Extract the first part of the reference before the first underscore
-		observable.references = uniq(
-			observable.references.map((r) => {
-				const splitReference = r.split('_')[0];
-				return initials.has(splitReference) ? splitReference : r;
+export const collapseObservableReferences = (
+	observableSummary: ObservableSummary,
+	context: { keys: string[]; values: string[] }
+) => {
+	const collapsedObservableSummary: ObservableSummary = {}; // cloneDeep(observableSummary);
+
+	Object.values(observableSummary).forEach((observable) => {
+		// 1. Collapse observable constituents
+		// 2. Collapse observable
+		const obs = cloneDeep(observable);
+		const newName = removeModifiersByValues(obs.name, context.values);
+
+		obs.references = uniq(
+			obs.references.map((r) => {
+				const scrubbedRef = removeModifiersByValues(r, context.values);
+				return scrubbedRef;
 			})
 		);
+
+		if (!collapsedObservableSummary[newName]) {
+			collapsedObservableSummary[newName] = {
+				name: newName,
+				display_name: newName,
+				description: obs.description,
+				expression: '',
+				references: obs.references
+			};
+		}
 	});
+
 	return collapsedObservableSummary;
 };
 
@@ -436,8 +456,9 @@ export const convertToIGraph = (
 	let observableSummary: ObservableSummary = {};
 
 	if (isStratified) {
+		const context = getContext(miraModel);
 		templates.push(...collapseTemplates(miraModel).templatesSummary);
-		observableSummary = collapseObservableReferences(initObservableSummary, collapseInitials(miraModel));
+		observableSummary = collapseObservableReferences(initObservableSummary, context);
 	} else {
 		templates.push(...rawTemplatesSummary(miraModel));
 		observableSummary = cloneDeep(initObservableSummary);

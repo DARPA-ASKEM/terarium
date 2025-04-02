@@ -16,7 +16,15 @@
 			>
 				<template #content>
 					<tera-drilldown-section :is-loading="isFetchingPDF">
-						<tera-pdf-embed ref="pdfViewer" v-if="pdfLink" :pdf-link="pdfLink" :title="document?.name || ''" />
+						<tera-pdf-viewer
+							ref="pdfViewer"
+							v-if="pdfLink"
+							:pdf-link="pdfLink"
+							:title="document?.name || ''"
+							:annotations="pdfAnnotations"
+							:current-page="pdfCurrentPage"
+							fit-to-width
+						/>
 						<tera-text-editor v-else-if="docText" :initial-text="docText" />
 					</tera-drilldown-section>
 				</template>
@@ -154,6 +162,7 @@
 											:is-permitted="false"
 											:use-default-style="false"
 											:class="['asset-panel', { selected: selectedItem === equation.id }]"
+											@click="highlightEquationBlock(equation.asset)"
 										>
 											<template #header>
 												<h6 v-if="equation.asset.provenance">Edited by AI</h6>
@@ -220,6 +229,7 @@
 											:is-toggleable="false"
 											:use-default-style="false"
 											:class="['asset-panel', { selected: selectedItem === equation.id }]"
+											@click="highlightEquationBlock(equation.asset)"
 										>
 											<template #header>
 												<h6 v-if="equation.asset.provenance">Edited by AI</h6>
@@ -295,6 +305,7 @@
 											:is-toggleable="false"
 											:use-default-style="false"
 											:class="['asset-panel', { selected: selectedEnrichment === enrichment.id }]"
+											@click="highlightEnrichmentBlock(enrichment)"
 										>
 											<template #header>
 												<h6>{{ enrichmentTargetTypeToLabel(enrichment.target) + ' > ' + enrichment.label }}</h6>
@@ -453,7 +464,7 @@ import TeraModel from '@/components/model/tera-model.vue';
 import TeraMathEditor from '@/components/mathml/tera-math-editor.vue';
 import TeraSliderPanel from '@/components/widgets/tera-slider-panel.vue';
 import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.vue';
-import TeraPdfEmbed from '@/components/widgets/tera-pdf-embed.vue';
+import TeraPdfViewer, { PdfAnnotation } from '@/components/widgets/tera-pdf-viewer.vue';
 import TeraTextEditor from '@/components/documents/tera-text-editor.vue';
 import TeraModal from '@/components/widgets/tera-modal.vue';
 import { createCopyTextToClipboard } from '@/utils/clipboard';
@@ -541,6 +552,9 @@ const multipleEquationsDisabled = ref(false);
 const isDocViewerOpen = ref(true);
 const isInputOpen = ref(true);
 const isOutputOpen = ref(true);
+
+const pdfAnnotations = ref<PdfAnnotation[]>([]);
+const pdfCurrentPage = ref(1);
 
 const enrichments = computed(() => selectedModel.value?.metadata?.enrichments ?? []);
 
@@ -634,7 +648,6 @@ onMounted(async () => {
 			state.excludedEquations = clonedState.value.excludedEquations;
 		}
 
-		state.text = document.value?.text ?? '';
 		emit('update-state', state);
 	}
 });
@@ -883,6 +896,44 @@ const goToPreviousEnrichment = () => {
 	}
 };
 
+const highlightEquationBlock = (block: EquationBlock) => {
+	if (block.provenance?.extractionItemId) {
+		const extractionItem = documentExtractionMap.value.get(block.provenance?.extractionItemId);
+		if (extractionItem) {
+			pdfCurrentPage.value = extractionItem.page;
+			pdfAnnotations.value = [
+				{
+					pageNo: extractionItem.page,
+					bbox: extractionItem.bbox,
+					color: '#fc0',
+					isHighlight: true
+				}
+			];
+		}
+	}
+};
+
+const highlightEnrichmentBlock = (enrichment: Enrichment) => {
+	console.log('clicking', enrichment);
+	if (enrichment.extractionItemIds && enrichment.extractionItemIds.length > 0) {
+		pdfAnnotations.value = [];
+		enrichment.extractionItemIds.forEach((refId, idx) => {
+			const extractionItem = documentExtractionMap.value.get(refId);
+			if (extractionItem) {
+				if (idx === 0) {
+					pdfCurrentPage.value = extractionItem.page;
+				}
+				pdfAnnotations.value.push({
+					pageNo: extractionItem.page,
+					bbox: extractionItem.bbox,
+					color: '#fc0',
+					isHighlight: true
+				});
+			}
+		});
+	}
+};
+
 const addPrompt = () => {
 	selectedModel.value?.metadata?.enrichments?.unshift({
 		id: uuidv4(),
@@ -1057,6 +1108,10 @@ watch(
 /* fix patch for document viewer */
 :deep(.document-viewer-header) {
 	width: 3rem !important;
+}
+
+:deep(.content-wrapper) {
+	height: 100%;
 }
 
 .warn {
