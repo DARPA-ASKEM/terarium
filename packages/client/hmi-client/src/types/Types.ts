@@ -268,6 +268,7 @@ export interface ModelConfiguration extends TerariumAsset {
     temporalContext?: Date;
     extractionDocumentId?: string;
     extractionPage?: number;
+    enrichments?: Enrichment[];
     observableSemanticList: ObservableSemantic[];
     parameterSemanticList: ParameterSemantic[];
     initialSemanticList: InitialSemantic[];

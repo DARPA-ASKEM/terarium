@@ -64,21 +64,21 @@ def model_config_adapter(model_config: dict) -> dict:
     # otherwise, remove the maximum and minimum keys.
     for condition in model_config["conditions"]:
         for param in condition["parameterSemanticList"]:
-            if param["distribution"]["type"].casefold() == "constant":
-                param["distribution"]["type"] = "Constant"
-                param["distribution"]["parameters"].pop("minimum", None)
-                param["distribution"]["parameters"].pop("maximum", None)
-            elif param["distribution"]["type"].casefold() == "uniform" or param["distribution"]["type"].casefold() == "standarduniform1":
-                param["distribution"]["type"] = "StandardUniform1"
-                param["distribution"]["parameters"].pop("value", None)
+            if param["content"]["distribution"]["type"].casefold() == "constant":
+                param["content"]["distribution"]["type"] = "Constant"
+                param["content"]["distribution"]["parameters"].pop("minimum", None)
+                param["content"]["distribution"]["parameters"].pop("maximum", None)
+            elif param["content"]["distribution"]["type"].casefold() == "uniform" or param["content"]["distribution"]["type"].casefold() == "standarduniform1":
+                param["content"]["distribution"]["type"] = "StandardUniform1"
+                param["content"]["distribution"]["parameters"].pop("value", None)
             else:
-                if "value" in param["distribution"]["parameters"]:
-                    param["distribution"]["type"] = "Constant"
-                    param["distribution"]["parameters"].pop("minimum", None)
-                    param["distribution"]["parameters"].pop("maximum", None)
-                elif "minimum" in param["distribution"]["parameters"] and "maximum" in param["distribution"]["parameters"]:
-                    param["distribution"]["type"] = "StandardUniform1"
-                    param["distribution"]["parameters"].pop("value", None)
+                if "value" in param["content"]["distribution"]["parameters"]:
+                    param["content"]["distribution"]["type"] = "Constant"
+                    param["content"]["distribution"]["parameters"].pop("minimum", None)
+                    param["content"]["distribution"]["parameters"].pop("maximum", None)
+                elif "minimum" in param["content"]["distribution"]["parameters"] and "maximum" in param["content"]["distribution"]["parameters"]:
+                    param["content"]["distribution"]["type"] = "StandardUniform1"
+                    param["content"]["distribution"]["parameters"].pop("value", None)
                 else:
                     raise ValueError("Invalid distribution type")
 
