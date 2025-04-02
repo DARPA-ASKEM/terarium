@@ -21,7 +21,7 @@ import Menu from 'primevue/menu';
 import { computed, ref } from 'vue';
 import { exportProjectAsFile } from '@/services/project';
 import { AcceptedExtensions } from '@/types/common';
-import { MenuItem } from 'primevue/menuitem';
+import type { MenuItem } from 'primevue/menuitem';
 import useAuthStore from '@/stores/auth';
 
 const props = defineProps<{ project: Project | null }>();
