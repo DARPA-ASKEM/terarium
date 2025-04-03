@@ -248,6 +248,14 @@ export interface ChartSettingBase extends ChartLabelOptions {
 	quantiles?: number[];
 	fontSize?: number;
 }
+export interface PDFAnnotation {
+	pageNo: number;
+	bbox: { left: number; top: number; right: number; bottom: number };
+	color: string;
+	isHighlight: boolean;
+}
+
+export type PDFPageScrollPosition = 'start' | 'center' | 'end';
 
 export const ProgrammingLanguageVersion: { [key in ProgrammingLanguage]: string } = {
 	[ProgrammingLanguage.Python]: 'python3',

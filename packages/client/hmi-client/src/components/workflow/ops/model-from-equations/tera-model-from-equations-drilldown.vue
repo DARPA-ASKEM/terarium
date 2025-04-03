@@ -17,7 +17,6 @@
 				<template #content>
 					<tera-drilldown-section :is-loading="isFetchingPDF">
 						<tera-pdf-viewer
-							ref="pdfViewer"
 							v-if="pdfLink"
 							:pdf-link="pdfLink"
 							:title="document?.name || ''"
@@ -160,7 +159,6 @@
 										<tera-asset-block
 											:is-toggleable="false"
 											:is-selected="selectedItem === equation.id"
-											@click="highlightEquationBlock(equation.asset)"
 											@next="goToNext"
 											@previous="goToPrevious"
 											@close="selectedItem = ''"
@@ -216,7 +214,6 @@
 										<tera-asset-block
 											:is-toggleable="false"
 											:is-selected="selectedItem === equation.id"
-											@click="highlightEquationBlock(equation.asset)"
 											@next="goToNext"
 											@previous="goToPrevious"
 											@close="selectedItem = ''"
@@ -281,7 +278,6 @@
 										<tera-asset-block
 											:is-toggleable="false"
 											:is-selected="selectedEnrichment === enrichment.id"
-											@click="highlightEnrichmentBlock(enrichment)"
 											@next="goToNextEnrichment"
 											@previous="goToPreviousEnrichment"
 											@close="selectedEnrichment = ''"
@@ -424,7 +420,7 @@ import TeraModel from '@/components/model/tera-model.vue';
 import TeraMathEditor from '@/components/mathml/tera-math-editor.vue';
 import TeraSliderPanel from '@/components/widgets/tera-slider-panel.vue';
 import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.vue';
-import TeraPdfViewer, { PdfAnnotation } from '@/components/widgets/tera-pdf-viewer.vue';
+import TeraPdfViewer from '@/components/widgets/tera-pdf-viewer.vue';
 import TeraTextEditor from '@/components/documents/tera-text-editor.vue';
 import TeraModal from '@/components/widgets/tera-modal.vue';
 import { createCopyTextToClipboard } from '@/utils/clipboard';
@@ -434,6 +430,7 @@ import { v4 as uuidv4 } from 'uuid';
 import TeraInputText from '@/components/widgets/tera-input-text.vue';
 import { useClientEvent } from '@/composables/useClientEvent';
 import { formatTitle } from '@/utils/text';
+import { usePDFViewerActions } from '@/composables/usePDFViewerActions';
 import { ModelFromEquationsState, EquationBlock } from './model-from-equations-operation';
 import { updateModelWithEnrichments, enrichmentTargetTypeToLabel } from './model-from-equations-utils';
 
@@ -474,23 +471,20 @@ const allEquations = computed(() => [...clonedState.value.includedEquations, ...
 const { btnCopyLabel, setCopyClipboard } = createCopyTextToClipboard();
 /* End Copy all equations */
 
-const pdfViewer = ref();
-
 const selectedItem = ref('');
 
 const selectedEnrichment = ref('');
 
 const selectEnrichment = (enrichment: Enrichment) => {
 	selectedEnrichment.value = enrichment.id;
+	highlightEnrichmentBlock(enrichment);
 };
 
 const selectItem = (equation: AssetBlock<EquationBlock>, event?) => {
 	selectedItem.value = equation.id;
-	if (pdfViewer.value && !!equation.asset.provenance) {
-		const pageNumber = documentExtractionMap.value.get(equation.asset.provenance.extractionItemId)?.page;
-		pdfViewer.value.goToPage(pageNumber);
+	if (equation.asset.provenance?.extractionItemId) {
+		highlightAndFocusExtractionItem(equation.asset.provenance.extractionItemId);
 	}
-
 	// Prevent the child’s click handler from firing
 	event?.stopImmediatePropagation();
 };
@@ -513,8 +507,8 @@ const isDocViewerOpen = ref(true);
 const isInputOpen = ref(true);
 const isOutputOpen = ref(true);
 
-const pdfAnnotations = ref<PdfAnnotation[]>([]);
-const pdfCurrentPage = ref(1);
+const { pdfAnnotations, pdfCurrentPage, highlightAndScrollToBBox, highlightBBoxes, scrollToBBox } =
+	usePDFViewerActions();
 
 const enrichments = computed(() => selectedModel.value?.metadata?.enrichments ?? []);
 
@@ -856,41 +850,20 @@ const goToPreviousEnrichment = () => {
 	}
 };
 
-const highlightEquationBlock = (block: EquationBlock) => {
-	if (block.provenance?.extractionItemId) {
-		const extractionItem = documentExtractionMap.value.get(block.provenance?.extractionItemId);
-		if (extractionItem) {
-			pdfCurrentPage.value = extractionItem.page;
-			pdfAnnotations.value = [
-				{
-					pageNo: extractionItem.page,
-					bbox: extractionItem.bbox,
-					color: '#fc0',
-					isHighlight: true
-				}
-			];
-		}
-	}
+const highlightAndFocusExtractionItem = (extractionItemId: string) => {
+	const extractionItem = documentExtractionMap.value.get(extractionItemId);
+	if (!extractionItem) return;
+	highlightAndScrollToBBox(extractionItem.page, extractionItem.bbox);
 };
 
 const highlightEnrichmentBlock = (enrichment: Enrichment) => {
-	console.log('clicking', enrichment);
 	if (enrichment.extractionItemIds && enrichment.extractionItemIds.length > 0) {
-		pdfAnnotations.value = [];
-		enrichment.extractionItemIds.forEach((refId, idx) => {
-			const extractionItem = documentExtractionMap.value.get(refId);
-			if (extractionItem) {
-				if (idx === 0) {
-					pdfCurrentPage.value = extractionItem.page;
-				}
-				pdfAnnotations.value.push({
-					pageNo: extractionItem.page,
-					bbox: extractionItem.bbox,
-					color: '#fc0',
-					isHighlight: true
-				});
-			}
-		});
+		const extractionItems = enrichment.extractionItemIds
+			.map((id) => documentExtractionMap.value.get(id))
+			.filter(Boolean) as ExtractionItem[];
+		highlightBBoxes(extractionItems);
+		// Scroll to the first extraction item
+		scrollToBBox(extractionItems[0].page, extractionItems[0].bbox);
 	}
 };
 
