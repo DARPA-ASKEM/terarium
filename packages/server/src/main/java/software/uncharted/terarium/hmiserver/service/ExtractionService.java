@@ -732,7 +732,7 @@ public class ExtractionService {
 					int counter = 0;
 					for (JsonNode eq : output.get("response").get("equations")) {
 						// FIXME: It seems like on rare occasions the lengths of the original equations and the cleaned
-						// equations mismatch. May be better to changet the prompt to return a dictionary.
+						// equations mismatch. May be better to change the prompt to return a dictionary.
 						final String cleanEq = eq.asText().trim();
 						if (counter < formulaItems.size()) {
 							formulaItems.get(counter).setText(cleanEq);
