@@ -888,7 +888,6 @@ onMounted(() => {
 		isFetchingPDF.value = true;
 		documentIds.value.forEach(async (id) => {
 			const document = await getDocumentAsset(id);
-			console.log(document);
 			const name: string = document?.name ?? '';
 			const filename = document?.fileNames?.[0];
 			const isPdf = !!document?.fileNames?.[0]?.endsWith('.pdf');
