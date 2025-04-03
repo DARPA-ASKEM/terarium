@@ -5,8 +5,15 @@
 		class="container"
 		:class="pdfs?.length < 2 ? 'hide-tab-selectors' : ''"
 	>
-		<TabPanel :header="pdf.name" v-for="pdf in pdfs" :key="pdf.name">
-			<tera-pdf-viewer v-if="pdf.isPdf" ref="pdfRef" :pdf-link="pdf.data" :title="pdf.name || ''" />
+		<TabPanel :header="pdf.name" v-for="(pdf, index) in pdfs" :key="pdf.name">
+			<tera-pdf-viewer
+				v-if="pdf.isPdf"
+				ref="pdfRef"
+				:pdf-link="pdf.data"
+				:title="pdf.name || ''"
+				:annotations="pdfActions[index].pdfAnnotations.value"
+				:current-page="pdfActions[index].pdfCurrentPage.value"
+			/>
 			<tera-text-editor v-else :initial-text="pdf.data" />
 		</TabPanel>
 	</TabView>
@@ -22,6 +29,7 @@ import TabPanel from 'primevue/tabpanel';
 import TeraPdfViewer from '@/components/widgets/tera-pdf-viewer.vue';
 import TeraTextEditor from '@/components/documents/tera-text-editor.vue';
 import type { DocumentAsset } from '@/types/Types';
+import { usePDFViewerActions } from '@/composables/usePDFViewerActions';
 
 interface PdfData {
 	document: DocumentAsset;
@@ -35,6 +43,7 @@ const props = defineProps<{
 }>();
 
 const pdfs = ref<PdfData[]>(props.pdfs);
+const pdfActions = computed(() => pdfs.value.map((pdf) => (pdf.isPdf ? usePDFViewerActions() : null)));
 const pdfRef = ref(null);
 const activeTabIndex = ref();
 const pdfDocs = computed(() =>
@@ -48,10 +57,10 @@ const pdfDocs = computed(() =>
 	)
 );
 
-async function selectPdf(id) {
+async function selectPdf(docId: string) {
 	activeTabIndex.value = null;
-	if (pdfDocs.value?.[id]?.index) {
-		activeTabIndex.value = pdfDocs.value[id].index;
+	if (pdfDocs.value?.[docId]?.index) {
+		activeTabIndex.value = pdfDocs.value[docId].index;
 	} else {
 		activeTabIndex.value = 0;
 	}
@@ -59,7 +68,12 @@ async function selectPdf(id) {
 	return activeTabIndex.value;
 }
 
-defineExpose({ pdfRef, selectPdf });
+const getPdfActions = (docId: string) => {
+	const pdfIndex = pdfDocs.value?.[docId]?.index ? pdfDocs.value[docId].index : 0;
+	return pdfActions.value[pdfIndex];
+};
+
+defineExpose({ pdfRef, selectPdf, getPdfActions });
 </script>
 
 <style scoped>

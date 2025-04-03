@@ -59,6 +59,7 @@
 									@downloadModel="downloadModel(configuration)"
 									@use="onSelectConfiguration(configuration)"
 									@enrichment-change="onEnrichmentChange"
+									@enrichment-select="onEnrichmentSelect"
 								/>
 							</li>
 							<!-- Show a message if nothing found after filtering -->
@@ -262,7 +263,15 @@ import {
 	updateModelConfigurationWithEnrichments
 } from '@/services/model-configurations';
 import { useToastService } from '@/services/toast';
-import type { DocumentAsset, Initial, Model, ModelConfiguration, TaskResponse } from '@/types/Types';
+import type {
+	DocumentAsset,
+	Enrichment,
+	ExtractionItem,
+	Initial,
+	Model,
+	ModelConfiguration,
+	TaskResponse
+} from '@/types/Types';
 import { AssetType, ModelParameter } from '@/types/Types';
 import type { WorkflowNode } from '@/types/workflow';
 import { OperatorStatus } from '@/types/workflow';
@@ -306,6 +315,13 @@ const isDocViewerOpen = ref(true);
 
 const currentActiveIndexes = ref([0, 1, 2]);
 const pdfData = ref<{ document: DocumentAsset; data: string; isPdf: boolean; name: string }[]>([]);
+const documentExtractionMaps = computed(() =>
+	pdfData.value.map((d) =>
+		d.document
+			? new Map(d.document.extraction?.extractions.map((ex) => [ex.id, ex]))
+			: new Map<string, ExtractionItem>()
+	)
+);
 const pdfPanelRef = ref();
 
 const isSidebarOpen = ref(true);
@@ -813,6 +829,26 @@ const onEnrichmentChange = () => {
 	);
 };
 
+const onEnrichmentSelect = (enrichment: Enrichment) => {
+	const docIndex = pdfData.value.findIndex((d) => d.document.id === enrichment.extractionAssetId);
+	const docId = pdfData.value[docIndex].document.id;
+	if (enrichment.extractionItemIds && enrichment.extractionItemIds.length > 0) {
+		const extractionItems = enrichment.extractionItemIds
+			.map((id) => documentExtractionMaps.value[docIndex].get(id))
+			.filter(Boolean) as ExtractionItem[];
+
+		pdfPanelRef.value.selectPdf(docId);
+
+		const { highlightBBoxes, scrollToBBox } = pdfPanelRef.value.getPdfActions(docId) ?? {
+			highlightBBoxes() {},
+			scrollToBBox() {}
+		};
+		highlightBBoxes(extractionItems);
+		// Scroll to the first extraction item
+		scrollToBBox(extractionItems[0].page, extractionItems[0].bbox);
+	}
+};
+
 watch(
 	() => props.node.state.modelConfigTaskIds,
 	(newValue, oldValue) => {
@@ -854,6 +890,7 @@ onMounted(() => {
 		isFetchingPDF.value = true;
 		documentIds.value.forEach(async (id) => {
 			const document = await getDocumentAsset(id);
+			console.log(document);
 			const name: string = document?.name ?? '';
 			const filename = document?.fileNames?.[0];
 			const isPdf = !!document?.fileNames?.[0]?.endsWith('.pdf');
