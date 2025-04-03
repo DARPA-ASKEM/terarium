@@ -17,7 +17,6 @@
 				<template #content>
 					<tera-drilldown-section :is-loading="isFetchingPDF">
 						<tera-pdf-viewer
-							ref="pdfViewer"
 							v-if="pdfLink"
 							:pdf-link="pdfLink"
 							:title="document?.name || ''"
@@ -159,10 +158,10 @@
 									>
 										<tera-asset-block
 											:is-toggleable="false"
-											:is-permitted="false"
-											:use-default-style="false"
-											:class="['asset-panel', { selected: selectedItem === equation.id }]"
-											@click="highlightEquationBlock(equation.asset)"
+											:is-selected="selectedItem === equation.id"
+											@next="goToNext"
+											@previous="goToPrevious"
+											@close="selectedItem = ''"
 										>
 											<template #header>
 												<h6 v-if="equation.asset.provenance">Edited by AI</h6>
@@ -198,19 +197,6 @@
 													>Page {{ documentExtractionMap.get(equation.asset.provenance.extractionItemId)?.page }}</span
 												>
 											</template>
-											<template #footer v-if="selectedItem === equation.id">
-												<footer class="flex">
-													<Button label="Close" outlined severity="secondary" @click.stop="selectedItem = ''" />
-													<Button class="ml-auto" icon="pi pi-arrow-up" label="Previous" @click.stop="goToPrevious" />
-													<Button
-														class="ml-2"
-														icon="pi pi-arrow-down"
-														icon-pos="right"
-														label="Next"
-														@click.stop="goToNext"
-													/>
-												</footer>
-											</template>
 										</tera-asset-block>
 									</li>
 									<!-- <p v-if="isEmpty(includedEquations) && !pastedImage" class="secondary-text">No equations selected</p> -->
@@ -227,9 +213,10 @@
 									>
 										<tera-asset-block
 											:is-toggleable="false"
-											:use-default-style="false"
-											:class="['asset-panel', { selected: selectedItem === equation.id }]"
-											@click="highlightEquationBlock(equation.asset)"
+											:is-selected="selectedItem === equation.id"
+											@next="goToNext"
+											@previous="goToPrevious"
+											@close="selectedItem = ''"
 										>
 											<template #header>
 												<h6 v-if="equation.asset.provenance">Edited by AI</h6>
@@ -265,19 +252,6 @@
 													>Page {{ documentExtractionMap.get(equation.asset.provenance.extractionItemId)?.page }}</span
 												>
 											</template>
-											<template #footer v-if="selectedItem === equation.id">
-												<footer class="flex">
-													<Button label="Close" outlined severity="secondary" @click.stop="selectedItem = ''" />
-													<Button class="ml-auto" icon="pi pi-arrow-up" label="Previous" @click.stop="goToPrevious" />
-													<Button
-														class="ml-2"
-														icon="pi pi-arrow-down"
-														icon-pos="right"
-														label="Next"
-														@click.stop="goToNext"
-													/>
-												</footer>
-											</template>
 										</tera-asset-block>
 									</li>
 								</ul>
@@ -303,9 +277,10 @@
 									<li v-for="enrichment in enrichments" :key="enrichment.id" @click="selectEnrichment(enrichment)">
 										<tera-asset-block
 											:is-toggleable="false"
-											:use-default-style="false"
-											:class="['asset-panel', { selected: selectedEnrichment === enrichment.id }]"
-											@click="highlightEnrichmentBlock(enrichment)"
+											:is-selected="selectedEnrichment === enrichment.id"
+											@next="goToNextEnrichment"
+											@previous="goToPreviousEnrichment"
+											@close="selectedEnrichment = ''"
 										>
 											<template #header>
 												<h6>{{ enrichmentTargetTypeToLabel(enrichment.target) + ' > ' + enrichment.label }}</h6>
@@ -363,25 +338,6 @@
 													</span>
 												</template>
 											</section>
-
-											<template #footer v-if="selectedEnrichment === enrichment.id">
-												<footer class="flex">
-													<Button label="Close" outlined severity="secondary" @click.stop="selectedEnrichment = ''" />
-													<Button
-														class="ml-auto"
-														icon="pi pi-arrow-up"
-														label="Previous"
-														@click.stop="goToPreviousEnrichment"
-													/>
-													<Button
-														class="ml-2"
-														icon="pi pi-arrow-down"
-														icon-pos="right"
-														label="Next"
-														@click.stop="goToNextEnrichment"
-													/>
-												</footer>
-											</template>
 										</tera-asset-block>
 									</li>
 								</ul>
@@ -464,7 +420,7 @@ import TeraModel from '@/components/model/tera-model.vue';
 import TeraMathEditor from '@/components/mathml/tera-math-editor.vue';
 import TeraSliderPanel from '@/components/widgets/tera-slider-panel.vue';
 import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.vue';
-import TeraPdfViewer, { PdfAnnotation } from '@/components/widgets/tera-pdf-viewer.vue';
+import TeraPdfViewer from '@/components/widgets/tera-pdf-viewer.vue';
 import TeraTextEditor from '@/components/documents/tera-text-editor.vue';
 import TeraModal from '@/components/widgets/tera-modal.vue';
 import { createCopyTextToClipboard } from '@/utils/clipboard';
@@ -474,6 +430,7 @@ import { v4 as uuidv4 } from 'uuid';
 import TeraInputText from '@/components/widgets/tera-input-text.vue';
 import { useClientEvent } from '@/composables/useClientEvent';
 import { formatTitle } from '@/utils/text';
+import { usePDFViewerActions } from '@/composables/usePDFViewerActions';
 import { ModelFromEquationsState, EquationBlock } from './model-from-equations-operation';
 import { updateModelWithEnrichments, enrichmentTargetTypeToLabel } from './model-from-equations-utils';
 
@@ -514,23 +471,20 @@ const allEquations = computed(() => [...clonedState.value.includedEquations, ...
 const { btnCopyLabel, setCopyClipboard } = createCopyTextToClipboard();
 /* End Copy all equations */
 
-const pdfViewer = ref();
-
 const selectedItem = ref('');
 
 const selectedEnrichment = ref('');
 
 const selectEnrichment = (enrichment: Enrichment) => {
 	selectedEnrichment.value = enrichment.id;
+	highlightEnrichmentBlock(enrichment);
 };
 
 const selectItem = (equation: AssetBlock<EquationBlock>, event?) => {
 	selectedItem.value = equation.id;
-	if (pdfViewer.value && !!equation.asset.provenance) {
-		const pageNumber = documentExtractionMap.value.get(equation.asset.provenance.extractionItemId)?.page;
-		pdfViewer.value.goToPage(pageNumber);
+	if (equation.asset.provenance?.extractionItemId) {
+		highlightAndFocusExtractionItem(equation.asset.provenance.extractionItemId);
 	}
-
 	// Prevent the child’s click handler from firing
 	event?.stopImmediatePropagation();
 };
@@ -553,8 +507,8 @@ const isDocViewerOpen = ref(true);
 const isInputOpen = ref(true);
 const isOutputOpen = ref(true);
 
-const pdfAnnotations = ref<PdfAnnotation[]>([]);
-const pdfCurrentPage = ref(1);
+const { pdfAnnotations, pdfCurrentPage, highlightAndScrollToBBox, highlightBBoxes, scrollToBBox } =
+	usePDFViewerActions();
 
 const enrichments = computed(() => selectedModel.value?.metadata?.enrichments ?? []);
 
@@ -896,41 +850,20 @@ const goToPreviousEnrichment = () => {
 	}
 };
 
-const highlightEquationBlock = (block: EquationBlock) => {
-	if (block.provenance?.extractionItemId) {
-		const extractionItem = documentExtractionMap.value.get(block.provenance?.extractionItemId);
-		if (extractionItem) {
-			pdfCurrentPage.value = extractionItem.page;
-			pdfAnnotations.value = [
-				{
-					pageNo: extractionItem.page,
-					bbox: extractionItem.bbox,
-					color: '#fc0',
-					isHighlight: true
-				}
-			];
-		}
-	}
+const highlightAndFocusExtractionItem = (extractionItemId: string) => {
+	const extractionItem = documentExtractionMap.value.get(extractionItemId);
+	if (!extractionItem) return;
+	highlightAndScrollToBBox(extractionItem.page, extractionItem.bbox);
 };
 
 const highlightEnrichmentBlock = (enrichment: Enrichment) => {
-	console.log('clicking', enrichment);
 	if (enrichment.extractionItemIds && enrichment.extractionItemIds.length > 0) {
-		pdfAnnotations.value = [];
-		enrichment.extractionItemIds.forEach((refId, idx) => {
-			const extractionItem = documentExtractionMap.value.get(refId);
-			if (extractionItem) {
-				if (idx === 0) {
-					pdfCurrentPage.value = extractionItem.page;
-				}
-				pdfAnnotations.value.push({
-					pageNo: extractionItem.page,
-					bbox: extractionItem.bbox,
-					color: '#fc0',
-					isHighlight: true
-				});
-			}
-		});
+		const extractionItems = enrichment.extractionItemIds
+			.map((id) => documentExtractionMap.value.get(id))
+			.filter(Boolean) as ExtractionItem[];
+		highlightBBoxes(extractionItems);
+		// Scroll to the first extraction item
+		scrollToBBox(extractionItems[0].page, extractionItems[0].bbox);
 	}
 };
 
@@ -996,31 +929,6 @@ watch(
 	font-size: 12px;
 	color: var(--surface-600);
 	border-radius: var(--border-radius-small);
-}
-
-.asset-panel {
-	border: 1px solid var(--surface-border-light);
-	border-left: 4px solid var(--surface-400);
-	border-radius: var(--border-radius);
-	overflow: auto;
-	background: var(--surface-0);
-	cursor: pointer;
-	&.selected {
-		border-left: 4px solid var(--primary-color);
-	}
-}
-.asset-panel:deep(.p-panel-header) {
-	padding-bottom: var(--gap-1);
-	background: transparent;
-}
-.asset-panel:deep(.p-panel-content) {
-	background: transparent;
-}
-.asset-panel:deep(.p-panel-footer) {
-	background: transparent;
-}
-.asset-panel:hover {
-	background: var(--surface-highlight);
 }
 
 .input-container {

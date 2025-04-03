@@ -89,6 +89,7 @@ public class ModelConfigurationService extends TerariumAssetService<ModelConfigu
 		private String name;
 		private String description;
 		private Timestamp temporalContext;
+		private Boolean empty; // create a configuration with empty values
 	}
 
 	public static ModelConfiguration modelConfigurationFromAMR(
@@ -103,8 +104,8 @@ public class ModelConfigurationService extends TerariumAssetService<ModelConfigu
 		modelConfiguration.setName(name != null ? name : "Default configuration");
 		modelConfiguration.setDescription(description != null ? description : "This is a default configuration.");
 		modelConfiguration.setModelId(model.getId());
-		modelConfiguration.setParameterSemanticList(createParameterSemanticList(model));
-		modelConfiguration.setInitialSemanticList(createInitialSemanticList(model));
+		modelConfiguration.setParameterSemanticList(createParameterSemanticList(model, options.getEmpty()));
+		modelConfiguration.setInitialSemanticList(createInitialSemanticList(model, options.getEmpty()));
 		modelConfiguration.setObservableSemanticList(createObservableSemanticList(model));
 		modelConfiguration.setTemporalContext(temporalContext);
 		return modelConfiguration;
@@ -136,7 +137,7 @@ public class ModelConfigurationService extends TerariumAssetService<ModelConfigu
 		}
 	}
 
-	private static List<InitialSemantic> createInitialSemanticList(final Model model) {
+	private static List<InitialSemantic> createInitialSemanticList(final Model model, final Boolean empty) {
 		final List<InitialSemantic> initialSemantics = new ArrayList<>();
 
 		if (model == null || model.getInitials() == null) return initialSemantics;
@@ -144,8 +145,9 @@ public class ModelConfigurationService extends TerariumAssetService<ModelConfigu
 		for (final Initial initial : model.getInitials()) {
 			final InitialSemantic initialSemantic = new InitialSemantic();
 			initialSemantic.setTarget(initial.getTarget());
-			initialSemantic.setExpression(initial.getExpression());
-			initialSemantic.setExpressionMathml(initial.getExpressionMathml());
+			initialSemantic.setExpression(empty == null || empty == false ? initial.getExpression() : null);
+			initialSemantic.setExpressionMathml(empty == null || empty == false ? initial.getExpressionMathml() : null);
+
 			initialSemantics.add(initialSemantic);
 		}
 		return initialSemantics;
@@ -167,7 +169,7 @@ public class ModelConfigurationService extends TerariumAssetService<ModelConfigu
 		return observableSemantics;
 	}
 
-	private static List<ParameterSemantic> createParameterSemanticList(final Model model) {
+	private static List<ParameterSemantic> createParameterSemanticList(final Model model, final Boolean empty) {
 		final List<ParameterSemantic> parameterSemantics = new ArrayList<>();
 
 		if (model == null || model.getParameters() == null) return parameterSemantics;
@@ -176,7 +178,14 @@ public class ModelConfigurationService extends TerariumAssetService<ModelConfigu
 			final ParameterSemantic parameterSemantic = new ParameterSemantic();
 			parameterSemantic.setReferenceId(parameter.getConceptReference());
 
-			final ModelDistribution distribution = getModelDistribution(parameter);
+			final ModelDistribution distribution;
+			if (empty == null || empty == false) {
+				distribution = getModelDistribution(parameter);
+			} else {
+				distribution = new ModelDistribution();
+				distribution.setType("Constant");
+				distribution.setParameters(Map.of("value", ""));
+			}
 
 			parameterSemantic.setDistribution(distribution);
 			parameterSemantics.add(parameterSemantic);

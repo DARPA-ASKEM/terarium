@@ -36,7 +36,7 @@ S, I, R, D = sympy.symbols("S I R D", cls = sympy.Function)
 N = S(t) + I(t) + R(t) + D(t)
 
 equation_output = [
-    sympy.Eq(S(t).diff(t), -beta * S(t) * I(t) / N + b - mu * S(t))),
+    sympy.Eq(S(t).diff(t), -beta * S(t) * I(t) / N + b - mu * S(t)),
     sympy.Eq(I(t).diff(t), beta * S(t) * I(t) / N - gamma * I(t)),
     sympy.Eq(R(t).diff(t), (1 - lambda_) * gamma * I(t)),
     sympy.Eq(D(t).diff(t), lambda_ * gamma * I(t))

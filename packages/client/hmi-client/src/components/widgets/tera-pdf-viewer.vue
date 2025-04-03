@@ -14,15 +14,15 @@
 					text
 					severity="secondary"
 					@click="prevPage"
-					:disabled="currentPage <= 1"
+					:disabled="currentPageNumber <= 1"
 				/>
 				<span class="w-6rem text-center">
 					<InputNumber
 						type="number"
-						v-model.number="currentPage"
+						v-model.number="currentPageNumber"
 						:min="1"
 						:max="pages"
-						@keydown.enter="goToPage(currentPage)"
+						@keydown.enter="goToPage(currentPageNumber)"
 					/>
 					/ {{ pages }}
 				</span>
@@ -32,7 +32,7 @@
 					text
 					severity="secondary"
 					@click="nextPage"
-					:disabled="currentPage >= pages"
+					:disabled="currentPageNumber >= pages"
 				/>
 			</div>
 			<Divider layout="vertical" />
@@ -88,7 +88,7 @@
 
 <script setup lang="ts">
 import '@tato30/vue-pdf/style.css';
-import { groupBy, isEmpty, debounce } from 'lodash';
+import { groupBy, isEmpty, debounce, isEqual } from 'lodash';
 import { computed, ref, watch, useTemplateRef } from 'vue';
 import { VuePDF, usePDF } from '@tato30/vue-pdf';
 import Button from 'primevue/button';
@@ -96,6 +96,7 @@ import InputText from 'primevue/inputtext';
 import InputNumber from 'primevue/inputnumber';
 import OverlayPanel from 'primevue/overlaypanel';
 import Divider from 'primevue/divider';
+import { PDFAnnotation, PDFPageScrollPosition } from '@/types/common';
 
 const DEFAULT_SCALE = 1.5;
 const SCALE_INCREMENT = 0.25;
@@ -105,13 +106,6 @@ const DEFAULT_CURRENT_PAGE = 1;
 const HIGHLIGHT_DEFAULT_COLOR = 'rgba(255, 255, 0, 0.5)';
 const BBOX_DEFAULT_COLOR = 'green';
 
-export interface PdfAnnotation {
-	pageNo: number;
-	bbox: { left: number; top: number; right: number; bottom: number };
-	color: string;
-	isHighlight: boolean;
-}
-
 const props = defineProps<{
 	pdfLink: string;
 	title?: string;
@@ -119,8 +113,11 @@ const props = defineProps<{
 	 * Whether to fit the PDF to the width of the container. When true, the zoom controls are hidden.
 	 */
 	fitToWidth?: boolean;
-	currentPage?: number;
-	annotations?: PdfAnnotation[];
+	currentPage?: {
+		page: number;
+		scrollPosition?: PDFPageScrollPosition;
+	};
+	annotations?: PDFAnnotation[];
 }>();
 
 const vuePdfs = useTemplateRef<InstanceType<typeof VuePDF>[] | null>('vuePdfs');
@@ -132,13 +129,12 @@ const { pdf, pages } = usePDF(computed(() => props.pdfLink));
 // ================================================
 // Page Navigation
 // ================================================
-const currentPage = ref(props.currentPage ?? DEFAULT_CURRENT_PAGE);
+const currentPageNumber = ref(props.currentPage?.page ?? DEFAULT_CURRENT_PAGE);
 watch(
 	() => props.currentPage,
 	(newVal) => {
-		if (newVal && newVal !== currentPage.value) {
-			currentPage.value = newVal;
-			goToPage(newVal);
+		if (newVal && !isEqual(newVal, currentPageNumber.value)) {
+			goToPage(newVal.page, newVal.scrollPosition);
 		}
 	}
 );
@@ -148,32 +144,32 @@ const getPdfPage = (pageNumber: number) => {
 	return vuePdfs.value[pageNumber - 1];
 };
 
-const goToPage = (pageNumber: number) => {
+const goToPage = (pageNumber: number, pageScrollPosition = 'start') => {
 	if (pageNumber >= 1 && pageNumber <= pages.value) {
-		currentPage.value = pageNumber;
+		currentPageNumber.value = pageNumber;
 		const targetPage = getPdfPage(pageNumber)?.$el;
-		targetPage?.scrollIntoView({ behavior: 'auto', block: 'start' });
+		targetPage?.scrollIntoView({ behavior: 'auto', block: pageScrollPosition });
 	}
 };
 
 const prevPage = () => {
-	if (currentPage.value > 1) {
-		currentPage.value--;
-		goToPage(currentPage.value);
+	if (currentPageNumber.value > 1) {
+		currentPageNumber.value--;
+		goToPage(currentPageNumber.value);
 	}
 };
 
 const nextPage = () => {
-	if (currentPage.value < pages.value) {
-		currentPage.value++;
-		goToPage(currentPage.value);
+	if (currentPageNumber.value < pages.value) {
+		currentPageNumber.value++;
+		goToPage(currentPageNumber.value);
 	}
 };
 
 // ================================================
 // Annotations
 // ================================================
-const applyAnnotations = (annotations: PdfAnnotation[]) => {
+const applyAnnotations = (annotations: PDFAnnotation[]) => {
 	annotations.forEach((annotation) =>
 		drawBbox(annotation.pageNo, annotation.bbox, annotation.isHighlight, annotation.color)
 	);
@@ -184,7 +180,7 @@ const onPageLoaded = (_payload: any, pageNumber: number) => {
 	applyAnnotations(annotations);
 };
 
-const drawBbox = (pageNumber: number, bbox: PdfAnnotation['bbox'], isHighlight: boolean, color?: string) => {
+const drawBbox = (pageNumber: number, bbox: PDFAnnotation['bbox'], isHighlight: boolean, color?: string) => {
 	const pageElement = getPdfPage(pageNumber)?.$el;
 	if (!pageElement) return;
 	const canvas = pageElement.querySelector('canvas');
@@ -300,7 +296,7 @@ const focusSearchItem = (index: number) => {
 
 		if (!isVisible) {
 			firstFocusedItem.scrollIntoView({ behavior: 'auto', block: 'center' });
-			currentPage.value = focusedMatch.page; // Update current page to the page of the focused item
+			currentPageNumber.value = focusedMatch.page; // Update current page to the page of the focused item
 		}
 	}
 };
