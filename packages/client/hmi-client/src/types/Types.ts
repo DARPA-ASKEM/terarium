@@ -847,10 +847,10 @@ export interface ProjectGroupPermission {
 }
 
 export interface IProjectUserPermissionDisplayModel {
-    user: User;
-    username: string;
-    email: string;
     permissionLevel: Permission;
+    user: User;
+    email: string;
+    username: string;
     givenName: string;
     id: string;
     familyName: string;
