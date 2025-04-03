@@ -653,14 +653,11 @@ public class ExtractionService {
 		final int REQUEST_TIMEOUT_MINUTES = 30;
 		final TaskRequest req = new TaskRequest();
 
-		// final String documentSHA = sha256(input.bytes);
-
 		req.setTimeoutMinutes(REQUEST_TIMEOUT_MINUTES);
 		req.setInput(objectMapper.writeValueAsBytes(input));
 		req.setScript(OCRExtractionResponseHandler.NAME);
 		req.setUserId(userId);
 		req.setType(TaskType.OCR_EXTRACTION);
-		// req.setRequestSHA256(documentSHA);
 		req.setUseCache(true);
 
 		return executor.submit(() -> {
