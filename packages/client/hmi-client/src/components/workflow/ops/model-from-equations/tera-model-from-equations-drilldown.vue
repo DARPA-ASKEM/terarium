@@ -397,7 +397,6 @@ import TeraDrilldownPreview from '@/components/drilldown/tera-drilldown-preview.
 import TeraAssetBlock from '@/components/widgets/tera-asset-block.vue';
 import { computed, onMounted, onBeforeUnmount, ref, watch } from 'vue';
 import {
-	BBox,
 	ClientEvent,
 	ClientEventType,
 	Enrichment,

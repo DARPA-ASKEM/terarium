@@ -9,8 +9,9 @@
 </template>
 
 <script setup lang="ts">
-import teraPdfViewer, { PDFAnnotation } from '@/components/widgets/tera-pdf-viewer.vue';
+import teraPdfViewer from '@/components/widgets/tera-pdf-viewer.vue';
 import { downloadDocumentAsset, getDocumentAsset } from '@/services/document-assets';
+import { PDFAnnotation } from '@/types/common';
 import { ref, onMounted } from 'vue';
 
 const pdfLink = ref<string | null>(null);
