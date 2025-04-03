@@ -51,12 +51,14 @@
 							<li v-for="configuration in filteredModelConfigurations" :key="configuration.id">
 								<tera-model-configuration-item
 									:configuration="configuration"
+									:transient-configuration="knobs.transientModelConfig"
 									:selected="selectedConfigId === configuration.id"
 									:empty-input-count="missingInputCount(configuration)"
 									@delete="fetchConfigurations(model.id)"
 									@downloadArchive="downloadZippedModelAndConfig(configuration)"
 									@downloadModel="downloadModel(configuration)"
 									@use="onSelectConfiguration(configuration)"
+									@enrichment-change="onEnrichmentChange"
 								/>
 							</li>
 							<!-- Show a message if nothing found after filtering -->
@@ -256,10 +258,11 @@ import {
 	setParameterDistributions,
 	setParameterSource,
 	updateModelConfiguration,
-	getAsConfiguredModel
+	getAsConfiguredModel,
+	updateModelConfigurationWithEnrichments
 } from '@/services/model-configurations';
 import { useToastService } from '@/services/toast';
-import type { Initial, Model, ModelConfiguration, TaskResponse } from '@/types/Types';
+import type { DocumentAsset, Initial, Model, ModelConfiguration, TaskResponse } from '@/types/Types';
 import { AssetType, ModelParameter } from '@/types/Types';
 import type { WorkflowNode } from '@/types/workflow';
 import { OperatorStatus } from '@/types/workflow';
@@ -302,7 +305,7 @@ const isFetchingPDF = ref(false);
 const isDocViewerOpen = ref(true);
 
 const currentActiveIndexes = ref([0, 1, 2]);
-const pdfData = ref<{ document: any; data: string; isPdf: boolean; name: string }[]>([]);
+const pdfData = ref<{ document: DocumentAsset; data: string; isPdf: boolean; name: string }[]>([]);
 const pdfPanelRef = ref();
 
 const isSidebarOpen = ref(true);
@@ -326,12 +329,14 @@ const getTotalInput = (modelConfiguration: ModelConfiguration) =>
 // Check if the model configuration is the same as the original
 const isModelConfigChanged = computed(() => !isModelConfigsEqual(originalConfig, knobs.value.transientModelConfig));
 
-// Save button is disabled if the model configuration name is empty, the values have changed, or the configuration is the same as the original
+// Save button is disabled if the model configuration name is empty, the values have changed, or the configuration is the same as the original.  If there are missing values on the configuration, you can save it.
 const isSaveDisabled = computed(
 	() =>
 		knobs.value.transientModelConfig.name === '' ||
 		isModelConfigsEqual(originalConfig, knobs.value.transientModelConfig) ||
-		!isModelConfigValuesEqual(originalConfig, knobs.value.transientModelConfig)
+		(!isModelConfigValuesEqual(originalConfig, knobs.value.transientModelConfig) &&
+			!!originalConfig &&
+			getMissingInputAmount(originalConfig) === 0)
 );
 
 const kernelManager = new KernelSessionManager();
@@ -714,6 +719,8 @@ const initialize = async (overwriteWithState: boolean = false) => {
 
 const onSelectConfiguration = async (config: ModelConfiguration) => {
 	const { transientModelConfig } = knobs.value;
+	// check if the selected configuration is the same as the current one
+	if (config.id === transientModelConfig.id) return;
 	// If no changes were made switch right away
 	if (isModelConfigsEqual(originalConfig, transientModelConfig)) {
 		applyConfigValues(config);
@@ -794,6 +801,16 @@ const updateThoughts = (data: any) => {
 	if (llmResponse) {
 		notebookResponse.value = llmResponse.content.text;
 	}
+};
+
+const onEnrichmentChange = () => {
+	// Update the model configuration with the new enrichment
+	const documents = pdfData.value.map((doc) => doc.document);
+	updateModelConfigurationWithEnrichments(
+		knobs.value.transientModelConfig,
+		knobs.value.transientModelConfig.enrichments!,
+		documents
+	);
 };
 
 watch(

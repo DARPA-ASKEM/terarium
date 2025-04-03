@@ -852,8 +852,8 @@ export interface IProjectUserPermissionDisplayModel {
     username: string;
     givenName: string;
     id: string;
-    permissionLevel: Permission;
     familyName: string;
+    permissionLevel: Permission;
 }
 
 export interface ProvenanceNode {

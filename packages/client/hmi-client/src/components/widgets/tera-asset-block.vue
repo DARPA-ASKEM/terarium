@@ -1,5 +1,5 @@
 <template>
-	<Panel :toggleable="isToggleable" :class="{ 'asset-panel': useDefaultStyle }">
+	<Panel class="asset-panel" :toggleable="isToggleable" :class="{ selected: isSelected }">
 		<template #header>
 			<slot name="header" />
 		</template>
@@ -13,8 +13,12 @@
 			<slot />
 		</main>
 
-		<template v-if="$slots.footer" #footer>
-			<slot name="footer" />
+		<template v-if="isSelected" #footer>
+			<footer class="flex">
+				<Button label="Close" outlined severity="secondary" @click.stop="emit('close')" />
+				<Button class="ml-auto" icon="pi pi-arrow-up" label="Previous" @click.stop="emit('previous')" />
+				<Button class="ml-2" icon="pi pi-arrow-down" icon-pos="right" label="Next" @click.stop="emit('next')" />
+			</footer>
 		</template>
 	</Panel>
 </template>
@@ -23,7 +27,7 @@
 import Panel from 'primevue/panel';
 import Button from 'primevue/button';
 
-const emit = defineEmits(['delete', 'edit', 'update:is-included']);
+const emit = defineEmits(['delete', 'edit', 'update:is-included', 'next', 'previous', 'close']);
 
 defineProps({
 	isDeletable: {
@@ -36,9 +40,9 @@ defineProps({
 		type: Boolean,
 		default: true
 	},
-	useDefaultStyle: {
+	isSelected: {
 		type: Boolean,
-		default: true
+		default: false
 	}
 });
 </script>
@@ -46,8 +50,27 @@ defineProps({
 <style scoped>
 .asset-panel {
 	border: 1px solid var(--surface-border-light);
-	border-radius: var(--border-radius-medium);
-	border-left: 0.5rem solid var(--primary-color);
+	border-left: 4px solid var(--surface-400);
+	border-radius: var(--border-radius);
+	overflow: auto;
+	background: var(--surface-0);
+	cursor: pointer;
+	&.selected {
+		border-left: 4px solid var(--primary-color);
+	}
+}
+.asset-panel:deep(.p-panel-header) {
+	padding-bottom: var(--gap-1);
+	background: transparent;
+}
+.asset-panel:deep(.p-panel-content) {
+	background: transparent;
+}
+.asset-panel:deep(.p-panel-footer) {
+	background: transparent;
+}
+.asset-panel:hover {
+	background: var(--surface-highlight);
 }
 
 .p-panel:deep(section) {
