@@ -59,14 +59,12 @@ services:
       KC_DB_URL: "jdbc:postgresql://postgres/postgres"
       KC_DB_URL_HOST: "postgres"
       KC_DB_USERNAME: "postgres"
-      KC_HEALTH_ENABLED: true
       KC_HOSTNAME: "http://keycloak:8081"
       KC_HOSTNAME_ADMIN: "http://keycloak:8081"
       KC_HOSTNAME_STRICT: false
       KC_HTTP_ENABLED: true
       KC_HTTP_HOST: "keycloak"
       KC_HTTP_PORT: "8081"
-      KC_METRICS_ENABLED: true
       KC_PROXY_HEADERS: "xforwarded"
     depends_on:
       postgres:
