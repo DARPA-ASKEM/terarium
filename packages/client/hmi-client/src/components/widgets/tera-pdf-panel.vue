@@ -1,5 +1,4 @@
 <template>
-	{{ activeTabIndex }}
 	<TabView
 		v-if="pdfs?.length"
 		v-model:activeIndex="activeTabIndex"
