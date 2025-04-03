@@ -1,5 +1,7 @@
 import API from '@/api/api';
 import type {
+	DocumentAsset,
+	Enrichment,
 	InferredParameterSemantic,
 	InitialSemantic,
 	Model,
@@ -8,7 +10,7 @@ import type {
 	ObservableSemantic,
 	ParameterSemantic
 } from '@/types/Types';
-import { SemanticType } from '@/types/Types';
+import { EnrichmentTarget, SemanticType } from '@/types/Types';
 import { isEmpty, isNaN, isNumber, keyBy } from 'lodash';
 import { pythonInstance } from '@/web-workers/python/PyodideController';
 import { DistributionType } from './distribution';
@@ -346,4 +348,54 @@ export function getParameterDistributionAverage(parameter: ParameterSemantic | I
 export async function getModelConfigurationAsCsvTable(id: ModelConfiguration['id']): Promise<string> {
 	const response = await API.get<string>(`model-configurations/${id}/csv-table`);
 	return response?.data ?? '';
+}
+
+export function createModelConfigurationMap(config: ModelConfiguration) {
+	const parameters = keyBy(config.parameterSemanticList, 'referenceId');
+	const initials = keyBy(config.initialSemanticList, 'target');
+	const observables = keyBy(config.observableSemanticList, 'target');
+	const inferredParameters = keyBy(config.inferredParameterList, 'referenceId');
+
+	return {
+		parameters,
+		initials,
+		observables,
+		inferredParameters
+	};
+}
+
+export function updateModelConfigurationWithEnrichments(
+	config: ModelConfiguration,
+	enrichments: Enrichment[],
+	documents: DocumentAsset[] = []
+) {
+	const configMap = createModelConfigurationMap(config);
+	const includedEnrichments = enrichments.filter((enrichment) => enrichment.included);
+
+	config.description = includedEnrichments
+		.filter((e) => e.target === EnrichmentTarget.Description)
+		.map((enrichment) => enrichment.content)
+		.join('\n\n');
+
+	includedEnrichments.forEach((enrichment) => {
+		const source = documents.find((doc) => doc.id === enrichment.extractionAssetId)?.name ?? '';
+		if (enrichment.target === EnrichmentTarget.Parameter) {
+			const foundParameter = configMap.parameters[enrichment.content.referenceId];
+			if (foundParameter) {
+				foundParameter.distribution = enrichment.content.distribution;
+				foundParameter.source = source;
+			} else {
+				console.error('Parameter not found');
+			}
+		} else if (enrichment.target === EnrichmentTarget.State) {
+			const foundInitial = configMap.initials[enrichment.content.target];
+			if (foundInitial) {
+				foundInitial.expression = enrichment.content.expression;
+				foundInitial.expressionMathml = enrichment.content.expressionMathml;
+				foundInitial.source = source;
+			} else {
+				console.error('Initial not found');
+			}
+		}
+	});
 }
