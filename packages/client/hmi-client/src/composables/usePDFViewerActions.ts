@@ -2,7 +2,7 @@ import { PDFAnnotation, PDFPageScrollPosition } from '@/types/common';
 import { BBox } from '@/types/Types';
 import { ref } from 'vue';
 
-const HIGHLIGHT_COLOR = '#fc0';
+const HIGHLIGHT_COLOR = '#EBF4F3';
 
 const calculatePageScrollPosition = (bbox: BBox) => {
 	const { top, bottom } = bbox;
