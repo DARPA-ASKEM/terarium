@@ -99,12 +99,6 @@
 
 						<div class="flex justify-content-between">
 							<Button class="p-button-sm p-button-text" icon="pi pi-plus" label="Add mapping" @click="addMapping" />
-							<Button
-								class="p-button-sm p-button-text"
-								icon="pi pi-sparkles"
-								label="Auto map"
-								@click="getAutoMapping"
-							/>
 							<Button class="ml-auto p-button-sm p-button-text" label="Delete all mapping" @click="deleteAllMappings" />
 						</div>
 					</section>
@@ -554,8 +548,6 @@ import {
 } from '@/types/Types';
 import { CiemssPresetTypes, DrilldownTabs, ChartSettingType } from '@/types/common';
 import { getActiveOutput, getTimespan, nodeMetadata } from '@/components/workflow/util';
-import { useToastService } from '@/services/toast';
-import { autoCalibrationMapping } from '@/services/concept';
 import {
 	getSimulation,
 	getRunResultCSV,
@@ -594,7 +586,6 @@ const props = defineProps<{
 	node: WorkflowNode<CalibrationOperationStateCiemss>;
 }>();
 const emit = defineEmits(['close', 'select-output', 'update-state']);
-const toast = useToastService();
 const confirm = useConfirm();
 
 interface BasicKnobs {
@@ -1025,21 +1016,6 @@ function deleteMapRow(index: number) {
 	const state = cloneDeep(props.node.state);
 	state.mapping = mapping.value;
 
-	emit('update-state', state);
-}
-
-async function getAutoMapping() {
-	if (!modelOptions.value || isEmpty(modelOptions.value)) {
-		toast.error('', 'No model states or observables to map with');
-		return;
-	}
-	if (!datasetColumns.value || isEmpty(datasetColumns.value)) {
-		toast.error('', 'No dataset columns to map with');
-		return;
-	}
-	mapping.value = await autoCalibrationMapping(modelOptions.value, datasetColumns.value);
-	const state = cloneDeep(props.node.state);
-	state.mapping = mapping.value;
 	emit('update-state', state);
 }
 
