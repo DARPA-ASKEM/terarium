@@ -88,8 +88,8 @@ defineExpose({ pdfRef, selectPdf, getPdfActions });
 	display: flex;
 	flex-direction: column;
 	flex: 1;
-	padding-top: 0;
-	height: 100%;
+	padding: 0;
+	height: calc(100% - 42px); /* 42px is the height of the tab header */
 }
 
 :deep(.p-tabview-panel) {

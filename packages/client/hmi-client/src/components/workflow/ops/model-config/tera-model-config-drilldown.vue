@@ -837,7 +837,7 @@ const onEnrichmentSelect = (enrichment: Enrichment) => {
 			.map((id) => documentExtractionMaps.value[docIndex].get(id))
 			.filter(Boolean) as ExtractionItem[];
 
-		pdfPanelRef.value.selectPdf(docId);
+		// pdfPanelRef.value.selectPdf(docId);
 
 		const { highlightBBoxes, scrollToBBox } = pdfPanelRef.value.getPdfActions(docId) ?? {
 			highlightBBoxes() {},
