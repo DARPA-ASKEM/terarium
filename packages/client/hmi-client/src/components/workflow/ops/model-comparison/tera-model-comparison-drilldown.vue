@@ -199,7 +199,7 @@ import { logger } from '@/utils/logger';
 import Button from 'primevue/button';
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
 import { VAceEditor } from 'vue3-ace-editor';
-import { VAceEditorInstance } from 'vue3-ace-editor/types';
+import type { VAceEditorInstance } from 'vue3-ace-editor/types';
 import TeraNotebookJupyterInput from '@/components/llm/tera-notebook-jupyter-input.vue';
 import teraNotebookOutput from '@/components/drilldown/tera-notebook-output.vue';
 import Image from 'primevue/image';

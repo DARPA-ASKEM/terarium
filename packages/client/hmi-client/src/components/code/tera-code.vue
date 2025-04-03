@@ -167,7 +167,7 @@ import InputText from 'primevue/inputtext';
 import Textarea from 'primevue/textarea';
 import { computed, ref, watch, onMounted } from 'vue';
 import { VAceEditor } from 'vue3-ace-editor';
-import { VAceEditorInstance } from 'vue3-ace-editor/types';
+import type { VAceEditorInstance } from 'vue3-ace-editor/types';
 import TeraInputText from '@/components/widgets/tera-input-text.vue';
 import TeraCodeDynamic from './tera-code-dynamic.vue';
 import TeraDirectory from './tera-directory.vue';

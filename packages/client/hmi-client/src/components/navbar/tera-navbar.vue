@@ -172,7 +172,7 @@ import Avatar from 'primevue/avatar';
 import Button from 'primevue/button';
 import Dialog from 'primevue/dialog';
 import Menu from 'primevue/menu';
-import { MenuItem } from 'primevue/menuitem';
+import type { MenuItem } from 'primevue/menuitem';
 import { RoutePath } from '@/router/index';
 import { RouteName } from '@/router/routes';
 import useAuthStore from '@/stores/auth';
