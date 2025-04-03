@@ -3,26 +3,11 @@
  */
 
 import API from '@/api/api';
-import type {
-	Curies,
-	DatasetColumn,
-	DKG,
-	EntitySimilarityResult,
-	State,
-	Model,
-	Grounding,
-	Observable
-} from '@/types/Types';
+import type { DKG, Model, Grounding } from '@/types/Types';
 import { logger } from '@/utils/logger';
 import { isEmpty } from 'lodash';
-import { CalibrateMap } from '@/services/calibrate-workflow';
 import { FIFOCache } from '@/utils/FifoCache';
 import { Workflow, WorkflowNode } from '@/types/workflow';
-
-interface Entity {
-	id: string;
-	grounding: Grounding;
-}
 
 const curieNameCache = new Map<string, string>();
 
@@ -126,119 +111,6 @@ function parseListDKGToGroundingModifiers(dkgList: DKG[]): { [index: string]: st
 }
 
 /**
- * Hit MIRA to get pairwise similarities between elements referenced by curies in the first list and second list.
- * @input a List of curies (strings) for each source, and target.
- * @return EntitySimilarityResult[] - The source and target curies and their corresponding cosine_distance
-  Sample:
-	"sources": ["ido:0000514"],
-  "targets": ["doid:0081014", "cido:0000180"]
-
-  Output:
-	[
-		{
-			"source": "ido:0000514",
-			"target": "doid:0081014",
-			"distance": 1.3786096032625137
-		},
-		{
-			"source": "ido:0000514",
-			"target": "cido:0000180",
-			"distance": 0.8597939628230753
-		}
-	]
- */
-async function getEntitySimilarity(
-	sources: string[],
-	targets: string[]
-): Promise<Array<EntitySimilarityResult> | null> {
-	try {
-		const response = await API.post('/mira/entity-similarity', { sources, targets } as Curies);
-		if (response?.status !== 200) return null;
-		return response?.data ?? null;
-	} catch (error) {
-		logger.error(error, { showToast: false });
-		return null;
-	}
-}
-
-function getUniqueIdentifierCuriesFromGroundings(groundings: Grounding[]): DKG['curie'][] {
-	return [...new Set(groundings.map((grounding) => getCurieFromGroundingIdentifier(grounding.identifiers)))];
-}
-
-/**
- * Auto map identifier concept from source to target based on similarity
- * Takes in 2 lists of generic {id, groundings} and returns the singular closest match for each element in list one.
- * Only matches to the lowest list from either the sources or targets.
- */
-async function autoMappingGrounding(sources: Entity[], targets: Entity[]): Promise<CalibrateMap[]> {
-	// Get all uniques identifier curies to a list to make one call to MIRA
-	const sourceCuries = getUniqueIdentifierCuriesFromGroundings(sources.map((source) => source.grounding));
-	const targetCuries = getUniqueIdentifierCuriesFromGroundings(targets.map((target) => target.grounding));
-
-	let allSimilarity = await getEntitySimilarity(sourceCuries, targetCuries);
-	if (!allSimilarity) return [] as CalibrateMap[];
-
-	// Filter out anything with a similarity too small
-	allSimilarity = allSimilarity.filter((ele) => ele.similarity >= 0.5);
-
-	// Check if the source or target list is smaller
-	const isSourceSmaller = sources.length < targets.length;
-
-	// Make a list of the longest list to map the curies to the ids
-	const curieMap = new Map(
-		(isSourceSmaller ? targets : sources).map((entity) => [
-			getCurieFromGroundingIdentifier(entity.grounding.identifiers),
-			entity.id
-		])
-	);
-
-	// Go through the smallest list and find similarities
-	return (isSourceSmaller ? sources : targets)
-		.map((entity) => {
-			const curie = getCurieFromGroundingIdentifier(entity.grounding.identifiers);
-			const bestMatch = allSimilarity
-				.filter((similarity) => (isSourceSmaller ? similarity.source : similarity.target) === curie)
-				.reduce((best, curr) => (curr.similarity > best.similarity ? curr : best), {
-					similarity: -Infinity,
-					target: '',
-					source: ''
-				});
-
-			const matchedId = curieMap.get(isSourceSmaller ? bestMatch.target : bestMatch.source);
-
-			return matchedId
-				? {
-						modelVariable: isSourceSmaller ? entity.id : matchedId,
-						datasetVariable: isSourceSmaller ? matchedId : entity.id
-					}
-				: null;
-		})
-		.filter(Boolean) as CalibrateMap[];
-}
-
-/**
- Takes in a list of states/observables and a list of dataset columns.
- Transforms them into generic entities with {id, Grounding}
- rewrites result in form {modelVariable, datasetVariable}
- */
-async function autoCalibrationMapping(
-	modelOptions: (State | Observable)[],
-	datasetColumns: DatasetColumn[]
-): Promise<CalibrateMap[]> {
-	// Sources are modelOptions
-	const sources: Entity[] = modelOptions
-		.filter((variable) => variable.grounding)
-		.map((variable) => ({ id: variable.id, grounding: variable.grounding }) as Entity);
-
-	// Targets are datasetColumns
-	const targets: Entity[] = datasetColumns
-		.filter((column) => column.grounding && !isEmpty(column.name))
-		.map((column) => ({ id: column.name ?? '', grounding: column.grounding }) as Entity);
-
-	return autoMappingGrounding(sources, targets);
-}
-
-/**
  * Compare multiple models and return the concepts that are common between them
  * @param modelIds - List of model ids to compare
  * @returns
@@ -266,7 +138,6 @@ async function getCompareModelConcepts(
 
 export {
 	getCuriesEntities,
-	getEntitySimilarity,
 	searchCuriesEntities,
 	getNameOfCurieCached,
 	getCurieFromGroundingIdentifier,
@@ -274,8 +145,6 @@ export {
 	getDKGFromGroundingModifier,
 	parseCurieToIdentifier,
 	parseListDKGToGroundingModifiers,
-	autoCalibrationMapping,
-	autoMappingGrounding,
 	getCompareModelConcepts,
 	type CompareModelsConceptsResponse
 };
