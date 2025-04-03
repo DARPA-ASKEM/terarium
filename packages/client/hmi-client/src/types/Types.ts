@@ -847,13 +847,13 @@ export interface ProjectGroupPermission {
 }
 
 export interface IProjectUserPermissionDisplayModel {
-    user: User;
+    id: string;
     username: string;
+    familyName: string;
+    user: User;
+    permissionLevel: Permission;
     email: string;
     givenName: string;
-    id: string;
-    permissionLevel: Permission;
-    familyName: string;
 }
 
 export interface ProvenanceNode {
