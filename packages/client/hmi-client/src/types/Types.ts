@@ -850,9 +850,9 @@ export interface IProjectUserPermissionDisplayModel {
     user: User;
     username: string;
     email: string;
-    permissionLevel: Permission;
     givenName: string;
     id: string;
+    permissionLevel: Permission;
     familyName: string;
 }
 
