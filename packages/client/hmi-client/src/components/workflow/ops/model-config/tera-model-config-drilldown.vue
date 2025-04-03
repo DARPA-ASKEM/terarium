@@ -829,20 +829,18 @@ const onEnrichmentChange = () => {
 	);
 };
 
-const onEnrichmentSelect = (enrichment: Enrichment) => {
+const onEnrichmentSelect = async (enrichment: Enrichment) => {
 	const docIndex = pdfData.value.findIndex((d) => d.document.id === enrichment.extractionAssetId);
 	const docId = pdfData.value[docIndex].document.id;
 	if (enrichment.extractionItemIds && enrichment.extractionItemIds.length > 0) {
 		const extractionItems = enrichment.extractionItemIds
 			.map((id) => documentExtractionMaps.value[docIndex].get(id))
 			.filter(Boolean) as ExtractionItem[];
-
-		// pdfPanelRef.value.selectPdf(docId);
-
-		const { highlightBBoxes, scrollToBBox } = pdfPanelRef.value.getPdfActions(docId) ?? {
-			highlightBBoxes() {},
-			scrollToBBox() {}
-		};
+		// Select the PDF panel
+		await pdfPanelRef.value.selectPdf(docId);
+		// Get the PDF actions for the selected pdf viewer
+		const { highlightBBoxes, scrollToBBox } = pdfPanelRef.value.getPdfActions(docId);
+		if (!highlightBBoxes || !scrollToBBox) return;
 		highlightBBoxes(extractionItems);
 		// Scroll to the first extraction item
 		scrollToBBox(extractionItems[0].page, extractionItems[0].bbox);

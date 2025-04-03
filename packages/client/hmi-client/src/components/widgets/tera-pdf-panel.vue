@@ -1,7 +1,8 @@
 <template>
+	{{ activeTabIndex }}
 	<TabView
 		v-if="pdfs?.length"
-		:activeIndex="activeTabIndex"
+		v-model:activeIndex="activeTabIndex"
 		class="container"
 		:class="pdfs?.length < 2 ? 'hide-tab-selectors' : ''"
 	>
@@ -11,8 +12,8 @@
 				ref="pdfRef"
 				:pdf-link="pdf.data"
 				:title="pdf.name || ''"
-				:annotations="pdfActions[index].pdfAnnotations.value"
-				:current-page="pdfActions[index].pdfCurrentPage.value"
+				:annotations="pdfActions[index]?.pdfAnnotations.value"
+				:current-page="pdfActions[index]?.pdfCurrentPage.value"
 			/>
 			<tera-text-editor v-else :initial-text="pdf.data" />
 		</TabPanel>
