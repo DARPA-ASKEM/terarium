@@ -31,6 +31,7 @@ import software.uncharted.terarium.hmiserver.annotations.HasProjectAccess;
 import software.uncharted.terarium.hmiserver.models.ClientEvent;
 import software.uncharted.terarium.hmiserver.models.ClientEventType;
 import software.uncharted.terarium.hmiserver.models.dataservice.ResponseDeleted;
+import software.uncharted.terarium.hmiserver.models.dataservice.project.ProjectPermissionLevel;
 import software.uncharted.terarium.hmiserver.models.dataservice.workflow.InputPort;
 import software.uncharted.terarium.hmiserver.models.dataservice.workflow.OutputPort;
 import software.uncharted.terarium.hmiserver.models.dataservice.workflow.Workflow;
@@ -119,7 +120,7 @@ public class WorkflowController {
 	@PostMapping
 	@Secured(Roles.USER)
 	@Operation(summary = "Create a new workflow")
-	@HasProjectAccess(level = Schema.Permission.WRITE)
+	@HasProjectAccess(level = ProjectPermissionLevel.WRITE)
 	@ApiResponses(
 		value = {
 			@ApiResponse(
@@ -149,7 +150,7 @@ public class WorkflowController {
 	@PutMapping("/{id}")
 	@Secured(Roles.USER)
 	@Operation(summary = "Update a workflow")
-	@HasProjectAccess(level = Schema.Permission.WRITE)
+	@HasProjectAccess(level = ProjectPermissionLevel.WRITE)
 	@ApiResponses(
 		value = {
 			@ApiResponse(
@@ -197,7 +198,7 @@ public class WorkflowController {
 	@DeleteMapping("/{id}")
 	@Secured(Roles.USER)
 	@Operation(summary = "Delete a workflow by ID")
-	@HasProjectAccess(level = Schema.Permission.WRITE)
+	@HasProjectAccess(level = ProjectPermissionLevel.WRITE)
 	@ApiResponses(
 		value = {
 			@ApiResponse(
@@ -253,7 +254,7 @@ public class WorkflowController {
 	@PostMapping("/{id}/node/{nodeId}/output/{outputId}")
 	@Secured(Roles.USER)
 	@Operation(summary = "Select an operator output to use")
-	@HasProjectAccess(level = Schema.Permission.WRITE)
+	@HasProjectAccess(level = ProjectPermissionLevel.WRITE)
 	@ApiResponses(
 		value = {
 			@ApiResponse(
@@ -298,7 +299,7 @@ public class WorkflowController {
 	@PostMapping("/{id}/update-position")
 	@Secured(Roles.USER)
 	@Operation(summary = "Update node and edge positions")
-	@HasProjectAccess(level = Schema.Permission.WRITE)
+	@HasProjectAccess(level = ProjectPermissionLevel.WRITE)
 	@ApiResponses(
 		value = {
 			@ApiResponse(
@@ -342,7 +343,7 @@ public class WorkflowController {
 	@PostMapping("/{id}/update-state")
 	@Secured(Roles.USER)
 	@Operation(summary = "Update operator states")
-	@HasProjectAccess(level = Schema.Permission.WRITE)
+	@HasProjectAccess(level = ProjectPermissionLevel.WRITE)
 	@ApiResponses(
 		value = {
 			@ApiResponse(
@@ -386,7 +387,7 @@ public class WorkflowController {
 	@PostMapping("/{id}/update-status")
 	@Secured(Roles.USER)
 	@Operation(summary = "Update operator statuses")
-	@HasProjectAccess(level = Schema.Permission.WRITE)
+	@HasProjectAccess(level = ProjectPermissionLevel.WRITE)
 	@ApiResponses(
 		value = {
 			@ApiResponse(
@@ -437,7 +438,7 @@ public class WorkflowController {
 	@PostMapping("/{id}/node/{nodeId}/input")
 	@Secured(Roles.USER)
 	@Operation(summary = "Append an input port to an operator node")
-	@HasProjectAccess(level = Schema.Permission.WRITE)
+	@HasProjectAccess(level = ProjectPermissionLevel.WRITE)
 	@ApiResponses(
 		value = {
 			@ApiResponse(
@@ -482,7 +483,7 @@ public class WorkflowController {
 	@PostMapping("/{id}/node/{nodeId}/output")
 	@Secured(Roles.USER)
 	@Operation(summary = "Append an output to an operator node")
-	@HasProjectAccess(level = Schema.Permission.WRITE)
+	@HasProjectAccess(level = ProjectPermissionLevel.WRITE)
 	@ApiResponses(
 		value = {
 			@ApiResponse(
@@ -527,7 +528,7 @@ public class WorkflowController {
 	@PostMapping("/{id}/node")
 	@Secured(Roles.USER)
 	@Operation(summary = "Add a node to a workflow")
-	@HasProjectAccess(level = Schema.Permission.WRITE)
+	@HasProjectAccess(level = ProjectPermissionLevel.WRITE)
 	@ApiResponses(
 		value = {
 			@ApiResponse(
@@ -571,7 +572,7 @@ public class WorkflowController {
 	@PostMapping("/{id}/remove-nodes")
 	@Secured(Roles.USER)
 	@Operation(summary = "Remove a node from a workflow")
-	@HasProjectAccess(level = Schema.Permission.WRITE)
+	@HasProjectAccess(level = ProjectPermissionLevel.WRITE)
 	@ApiResponses(
 		value = {
 			@ApiResponse(
@@ -615,7 +616,7 @@ public class WorkflowController {
 	@PostMapping("/{id}/edge")
 	@Secured(Roles.USER)
 	@Operation(summary = "Add an edge to a workflow")
-	@HasProjectAccess(level = Schema.Permission.WRITE)
+	@HasProjectAccess(level = ProjectPermissionLevel.WRITE)
 	@ApiResponses(
 		value = {
 			@ApiResponse(
@@ -659,7 +660,7 @@ public class WorkflowController {
 	@PostMapping("/{id}/remove-edges")
 	@Secured(Roles.USER)
 	@Operation(summary = "Remove an edge from a workflow")
-	@HasProjectAccess(level = Schema.Permission.WRITE)
+	@HasProjectAccess(level = ProjectPermissionLevel.WRITE)
 	@ApiResponses(
 		value = {
 			@ApiResponse(
@@ -703,7 +704,7 @@ public class WorkflowController {
 	@PostMapping("/{id}/branch-from-node/{nodeId}")
 	@Secured(Roles.USER)
 	@Operation(summary = "Branch workflow starting from a given node")
-	@HasProjectAccess(level = Schema.Permission.WRITE)
+	@HasProjectAccess(level = ProjectPermissionLevel.WRITE)
 	@ApiResponses(
 		value = {
 			@ApiResponse(
@@ -747,7 +748,7 @@ public class WorkflowController {
 	@PostMapping("/{id}/annotation")
 	@Secured(Roles.USER)
 	@Operation(summary = "Add or update a workflow annotation")
-	@HasProjectAccess(level = Schema.Permission.WRITE)
+	@HasProjectAccess(level = ProjectPermissionLevel.WRITE)
 	@ApiResponses(
 		value = {
 			@ApiResponse(
@@ -790,7 +791,7 @@ public class WorkflowController {
 	@DeleteMapping("/{id}/annotation/{annotationId}")
 	@Secured(Roles.USER)
 	@Operation(summary = "Remove a workflow annotation")
-	@HasProjectAccess(level = Schema.Permission.WRITE)
+	@HasProjectAccess(level = ProjectPermissionLevel.WRITE)
 	@ApiResponses(
 		value = {
 			@ApiResponse(

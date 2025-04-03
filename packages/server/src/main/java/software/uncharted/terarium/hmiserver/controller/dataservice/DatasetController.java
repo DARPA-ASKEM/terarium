@@ -48,6 +48,7 @@ import software.uncharted.terarium.hmiserver.models.dataservice.PresignedURL;
 import software.uncharted.terarium.hmiserver.models.dataservice.ResponseDeleted;
 import software.uncharted.terarium.hmiserver.models.dataservice.ResponseStatus;
 import software.uncharted.terarium.hmiserver.models.dataservice.dataset.Dataset;
+import software.uncharted.terarium.hmiserver.models.dataservice.project.ProjectPermissionLevel;
 import software.uncharted.terarium.hmiserver.proxies.jsdelivr.JsDelivrProxy;
 import software.uncharted.terarium.hmiserver.security.Roles;
 import software.uncharted.terarium.hmiserver.service.CurrentUserService;
@@ -79,7 +80,7 @@ public class DatasetController {
 	@PostMapping
 	@Secured(Roles.USER)
 	@Operation(summary = "Create a new dataset")
-	@HasProjectAccess(level = Schema.Permission.WRITE)
+	@HasProjectAccess(level = ProjectPermissionLevel.WRITE)
 	@ApiResponses(
 		value = {
 			@ApiResponse(
@@ -148,7 +149,7 @@ public class DatasetController {
 			final boolean permissionCanWrite = projectService.hasPermission(
 				projectId,
 				currentUserService.get(),
-				Schema.Permission.WRITE
+				ProjectPermissionLevel.WRITE
 			);
 			if (permissionCanWrite && dataset.getColumns().stream().allMatch(column -> column.getStats() == null)) {
 				// Calculate the statistics for the columns
@@ -191,7 +192,7 @@ public class DatasetController {
 	@DeleteMapping("/{id}")
 	@Secured(Roles.USER)
 	@Operation(summary = "Deletes a dataset")
-	@HasProjectAccess(level = Schema.Permission.WRITE)
+	@HasProjectAccess(level = ProjectPermissionLevel.WRITE)
 	@ApiResponses(
 		value = {
 			@ApiResponse(
@@ -226,7 +227,7 @@ public class DatasetController {
 	@PutMapping("/{id}")
 	@Secured(Roles.USER)
 	@Operation(summary = "Update a dataset")
-	@HasProjectAccess(level = Schema.Permission.WRITE)
+	@HasProjectAccess(level = ProjectPermissionLevel.WRITE)
 	@ApiResponses(
 		value = {
 			@ApiResponse(
@@ -444,7 +445,7 @@ public class DatasetController {
 	@PutMapping("/{id}/upload-csv-from-github")
 	@Secured(Roles.USER)
 	@Operation(summary = "Uploads a CSV file from github to a dataset")
-	@HasProjectAccess(level = Schema.Permission.WRITE)
+	@HasProjectAccess(level = ProjectPermissionLevel.WRITE)
 	@ApiResponses(
 		value = {
 			@ApiResponse(
@@ -509,7 +510,7 @@ public class DatasetController {
 	@PutMapping(value = "/{id}/upload-csv", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
 	@Secured(Roles.USER)
 	@Operation(summary = "Uploads a CSV file to a dataset")
-	@HasProjectAccess(level = Schema.Permission.WRITE)
+	@HasProjectAccess(level = ProjectPermissionLevel.WRITE)
 	@ApiResponses(
 		value = {
 			@ApiResponse(
@@ -558,7 +559,7 @@ public class DatasetController {
 	@PutMapping(value = "/{id}/upload-file", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
 	@Secured(Roles.USER)
 	@Operation(summary = "Uploads an arbitrary file to a dataset")
-	@HasProjectAccess(level = Schema.Permission.WRITE)
+	@HasProjectAccess(level = ProjectPermissionLevel.WRITE)
 	@ApiResponses(
 		value = {
 			@ApiResponse(

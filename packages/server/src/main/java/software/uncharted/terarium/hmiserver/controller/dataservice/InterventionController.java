@@ -25,6 +25,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 import software.uncharted.terarium.hmiserver.annotations.HasProjectAccess;
 import software.uncharted.terarium.hmiserver.models.dataservice.ResponseDeleted;
+import software.uncharted.terarium.hmiserver.models.dataservice.project.ProjectPermissionLevel;
 import software.uncharted.terarium.hmiserver.models.simulationservice.interventions.InterventionPolicy;
 import software.uncharted.terarium.hmiserver.security.Roles;
 import software.uncharted.terarium.hmiserver.service.data.InterventionService;
@@ -71,7 +72,7 @@ public class InterventionController {
 	@PostMapping
 	@Secured(Roles.USER)
 	@Operation(summary = "Create a new intervention")
-	@HasProjectAccess(level = Schema.Permission.WRITE)
+	@HasProjectAccess(level = ProjectPermissionLevel.WRITE)
 	@ApiResponses(
 		value = {
 			@ApiResponse(
@@ -116,7 +117,7 @@ public class InterventionController {
 	@PutMapping("/{id}")
 	@Secured(Roles.USER)
 	@Operation(summary = "Update a intervention")
-	@HasProjectAccess(level = Schema.Permission.WRITE)
+	@HasProjectAccess(level = ProjectPermissionLevel.WRITE)
 	@ApiResponses(
 		value = {
 			@ApiResponse(
@@ -158,7 +159,7 @@ public class InterventionController {
 	@DeleteMapping("/{id}")
 	@Secured(Roles.USER)
 	@Operation(summary = "Delete a intervention by ID")
-	@HasProjectAccess(level = Schema.Permission.WRITE)
+	@HasProjectAccess(level = ProjectPermissionLevel.WRITE)
 	@ApiResponses(
 		value = {
 			@ApiResponse(

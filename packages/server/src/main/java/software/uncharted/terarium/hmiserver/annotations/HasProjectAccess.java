@@ -4,6 +4,7 @@ import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
+import software.uncharted.terarium.hmiserver.models.dataservice.project.ProjectPermissionLevel;
 import software.uncharted.terarium.hmiserver.utils.rebac.Schema;
 
 /**
@@ -35,7 +36,5 @@ import software.uncharted.terarium.hmiserver.utils.rebac.Schema;
 public @interface HasProjectAccess {
 	String value() default "#projectId";
 
-	Schema.Permission level() default Schema.Permission.READ;
-//TODO: Migrate this from Pantera or make decision to use our existing Schema.Permission. Update comment if needed. -dvince
-//ProjectPermissionLevel level() default ProjectPermissionLevel.READ;
+	ProjectPermissionLevel level() default ProjectPermissionLevel.READ;
 }

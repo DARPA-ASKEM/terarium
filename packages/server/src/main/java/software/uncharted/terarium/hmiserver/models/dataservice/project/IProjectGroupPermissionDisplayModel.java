@@ -7,5 +7,5 @@ public interface IProjectGroupPermissionDisplayModel {
 	String getId();
 	Group getGroup();
 	String getName();
-	Schema.Permission getPermissionLevel();
+	ProjectPermissionLevel getPermissionLevel();
 }

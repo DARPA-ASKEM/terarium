@@ -36,6 +36,7 @@ import software.uncharted.terarium.hmiserver.configuration.Config;
 import software.uncharted.terarium.hmiserver.models.dataservice.Artifact;
 import software.uncharted.terarium.hmiserver.models.dataservice.PresignedURL;
 import software.uncharted.terarium.hmiserver.models.dataservice.ResponseDeleted;
+import software.uncharted.terarium.hmiserver.models.dataservice.project.ProjectPermissionLevel;
 import software.uncharted.terarium.hmiserver.proxies.jsdelivr.JsDelivrProxy;
 import software.uncharted.terarium.hmiserver.security.Roles;
 import software.uncharted.terarium.hmiserver.service.data.ArtifactService;
@@ -56,7 +57,7 @@ public class ArtifactController {
 	@PostMapping
 	@Secured(Roles.USER)
 	@Operation(summary = "Creates a new artifact")
-	@HasProjectAccess(level = Schema.Permission.WRITE)
+	@HasProjectAccess(level = ProjectPermissionLevel.WRITE)
 	@ApiResponses(
 		value = {
 			@ApiResponse(
@@ -118,7 +119,7 @@ public class ArtifactController {
 	@PutMapping("/{id}")
 	@Secured(Roles.USER)
 	@Operation(summary = "Updates an artifact")
-	@HasProjectAccess(level = Schema.Permission.WRITE)
+	@HasProjectAccess(level = ProjectPermissionLevel.WRITE)
 	@ApiResponses(
 		value = {
 			@ApiResponse(
@@ -152,7 +153,7 @@ public class ArtifactController {
 	@DeleteMapping("/{id}")
 	@Secured(Roles.USER)
 	@Operation(summary = "Deletes an artifact")
-	@HasProjectAccess(level = Schema.Permission.WRITE)
+	@HasProjectAccess(level = ProjectPermissionLevel.WRITE)
 	@ApiResponses(
 		value = {
 			@ApiResponse(

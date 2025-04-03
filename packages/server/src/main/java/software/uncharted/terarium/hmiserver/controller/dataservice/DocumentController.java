@@ -47,6 +47,7 @@ import software.uncharted.terarium.hmiserver.models.dataservice.PresignedURL;
 import software.uncharted.terarium.hmiserver.models.dataservice.ResponseDeleted;
 import software.uncharted.terarium.hmiserver.models.dataservice.ResponseStatus;
 import software.uncharted.terarium.hmiserver.models.dataservice.document.DocumentAsset;
+import software.uncharted.terarium.hmiserver.models.dataservice.project.ProjectPermissionLevel;
 import software.uncharted.terarium.hmiserver.proxies.jsdelivr.JsDelivrProxy;
 import software.uncharted.terarium.hmiserver.security.Roles;
 import software.uncharted.terarium.hmiserver.service.CurrentUserService;
@@ -67,7 +68,7 @@ public class DocumentController {
 	@PostMapping
 	@Secured(Roles.USER)
 	@Operation(summary = "Create a new document")
-	@HasProjectAccess(level = Schema.Permission.WRITE)
+	@HasProjectAccess(level = ProjectPermissionLevel.WRITE)
 	@ApiResponses(
 		value = {
 			@ApiResponse(
@@ -98,7 +99,7 @@ public class DocumentController {
 	@PutMapping("/{id}")
 	@Secured(Roles.USER)
 	@Operation(summary = "Update a document")
-	@HasProjectAccess(level = Schema.Permission.WRITE)
+	@HasProjectAccess(level = ProjectPermissionLevel.WRITE)
 	@ApiResponses(
 		value = {
 			@ApiResponse(
@@ -136,7 +137,7 @@ public class DocumentController {
 	@GetMapping("/{id}")
 	@Secured(Roles.USER)
 	@Operation(summary = "Gets document by ID")
-	@HasProjectAccess(level = Schema.Permission.READ)
+	@HasProjectAccess(level = ProjectPermissionLevel.READ)
 	@ApiResponses(
 		value = {
 			@ApiResponse(
@@ -239,7 +240,7 @@ public class DocumentController {
 	@DeleteMapping("/{id}")
 	@Secured(Roles.USER)
 	@Operation(summary = "Deletes a document")
-	@HasProjectAccess(level = Schema.Permission.WRITE)
+	@HasProjectAccess(level = ProjectPermissionLevel.WRITE)
 	@ApiResponses(
 		value = {
 			@ApiResponse(
@@ -277,7 +278,7 @@ public class DocumentController {
 	 * @param fileEntity The entity containing the file to upload
 	 * @return A response containing the status of the upload
 	 */
-	@HasProjectAccess(level = Schema.Permission.WRITE)
+	@HasProjectAccess(level = ProjectPermissionLevel.WRITE)
 	private ResponseEntity<Void> uploadDocumentHelper(
 		final UUID documentId,
 		final String fileName,
@@ -353,7 +354,7 @@ public class DocumentController {
 	@PutMapping(value = "/{id}/upload-document", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
 	@Secured(Roles.USER)
 	@Operation(summary = "Uploads a document")
-	@HasProjectAccess(level = Schema.Permission.WRITE)
+	@HasProjectAccess(level = ProjectPermissionLevel.WRITE)
 	@ApiResponses(
 		value = {
 			@ApiResponse(
@@ -391,7 +392,7 @@ public class DocumentController {
 	@PutMapping("/{documentId}/upload-document-from-github")
 	@Secured(Roles.USER)
 	@Operation(summary = "Uploads a document from github")
-	@HasProjectAccess(level = Schema.Permission.WRITE)
+	@HasProjectAccess(level = ProjectPermissionLevel.WRITE)
 	@ApiResponses(
 		value = {
 			@ApiResponse(

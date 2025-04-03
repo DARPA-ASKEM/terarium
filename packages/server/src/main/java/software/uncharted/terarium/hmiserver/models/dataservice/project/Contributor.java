@@ -6,6 +6,7 @@ import software.uncharted.terarium.hmiserver.utils.rebac.Schema;
 public class Contributor {
 
 	private final String userId;
+	private final String groupId;
 	String name;
 	Schema.Relationship permission;
 
@@ -13,6 +14,19 @@ public class Contributor {
 		this.name = name;
 		this.userId = userId;
 		this.permission = permission;
+		this.groupId = null;
+	}
+
+	public Contributor(
+		final String name,
+		final String userId,
+		final String groupId,
+		final Schema.Relationship permission
+	) {
+		this.name = name;
+		this.userId = userId;
+		this.permission = permission;
+		this.groupId = groupId;
 	}
 
 	public String getName() {
@@ -25,6 +39,10 @@ public class Contributor {
 
 	public String getUserId() {
 		return userId;
+	}
+
+	public String getGroupId() {
+		return groupId;
 	}
 
 	/** Is the Contributor a Group? */

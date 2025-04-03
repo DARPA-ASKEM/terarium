@@ -1,12 +1,16 @@
 package software.uncharted.terarium.hmiserver.service;
 
 import java.time.Instant;
+import java.util.Collection;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Stream;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.CachePut;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
+import software.uncharted.terarium.hmiserver.models.Group;
 import software.uncharted.terarium.hmiserver.models.User;
 import software.uncharted.terarium.hmiserver.repository.UserRepository;
 
@@ -42,5 +46,32 @@ public class UserService {
 	@CachePut(value = "users", key = "#user.id")
 	public User save(final User user) {
 		return userRepository.save(user);
+	}
+
+	/**
+	 * Stream users by a group
+	 * @param group the group
+	 * @return      A stream of users
+	 */
+	public Stream<User> streamByGroup(final Group group) {
+		return userRepository.readAllByGroupsContains(group);
+	}
+
+	/**
+	 * Stream users by a set of ids
+	 * @param ids    The full set of user ids to load
+	 * @return       A stream of users
+	 */
+	public Stream<User> streamByIds(final Collection<String> ids) {
+		return userRepository.readAllByIdIn(ids);
+	}
+
+	/**
+	 * Saves a collection of users. Ensures that the last update time is set
+	 * @param users The users to save
+	 * @return      The saved users
+	 */
+	public List<User> saveAll(Collection<User> users) {
+		return userRepository.saveAll(users);
 	}
 }

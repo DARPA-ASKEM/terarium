@@ -11,5 +11,5 @@ public interface IProjectUserPermissionDisplayModel {
 	String getGivenName();
 	String getUsername();
 
-	Schema.Permission getPermissionLevel();
+	ProjectPermissionLevel getPermissionLevel();
 }

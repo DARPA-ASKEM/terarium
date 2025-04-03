@@ -29,7 +29,7 @@ public class ProjectPermissionsService {
 
 	final ReBACService reBACService;
 
-	private List<Contributor> getContributorsByRelationships(
+	public List<Contributor> getContributorsByRelationships(
 		final RebacProject rebacProject,
 		final Schema.Relationship... relationships
 	) throws Exception {
@@ -50,7 +50,7 @@ public class ProjectPermissionsService {
 				} else if (permissionRelationship.getSubjectType().equals(Schema.Type.GROUP)) {
 					final PermissionGroup group = reBACService.getGroup(permissionRelationship.getSubjectId());
 					if (!contributorMap.containsKey(group.getName())) {
-						contributorMap.put(group.getName(), new Contributor(group.getName(), null, relationship));
+						contributorMap.put(group.getName(), new Contributor(group.getName(), null, group.getId(), relationship));
 					}
 				}
 			}

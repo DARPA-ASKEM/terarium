@@ -13,7 +13,7 @@ public class ProjectGroupPermissionDisplayModel implements IProjectGroupPermissi
 	private final String id;
 	private final Group group;
 	private final String name;
-	private final Schema.Permission permissionLevel;
+	private final ProjectPermissionLevel permissionLevel;
 
 	public ProjectGroupPermissionDisplayModel(IProjectGroupPermissionDisplayModel model) {
 		this.id = model.getId();
@@ -23,7 +23,7 @@ public class ProjectGroupPermissionDisplayModel implements IProjectGroupPermissi
 	}
 
 	@JsonProperty("permissionLevel")
-	public Schema.Permission getProjectPermissionLevel() {
-		return permissionLevel != null ? permissionLevel : Schema.Permission.NONE;
+	public ProjectPermissionLevel getProjectPermissionLevel() {
+		return permissionLevel != null ? permissionLevel : ProjectPermissionLevel.NONE;
 	}
 }

@@ -55,6 +55,7 @@ import software.uncharted.terarium.hmiserver.models.dataservice.project.Contribu
 import software.uncharted.terarium.hmiserver.models.dataservice.project.Project;
 import software.uncharted.terarium.hmiserver.models.dataservice.project.ProjectAsset;
 import software.uncharted.terarium.hmiserver.models.dataservice.project.ProjectExport;
+import software.uncharted.terarium.hmiserver.models.dataservice.project.ProjectPermissionLevel;
 import software.uncharted.terarium.hmiserver.models.permissions.PermissionRelationships;
 import software.uncharted.terarium.hmiserver.models.permissions.PermissionUser;
 import software.uncharted.terarium.hmiserver.security.Roles;
@@ -346,7 +347,7 @@ public class ProjectController {
 		}
 	)
 	@DeleteMapping("/{id}")
-	@HasProjectAccess(value = "#id", level = Schema.Permission.ADMINISTRATE)
+	@HasProjectAccess(value = "#id", level = ProjectPermissionLevel.ADMIN)
 	@Secured(Roles.USER)
 	public ResponseEntity<ResponseDeleted> deleteProject(@PathVariable("id") final UUID id) {
 		try {
@@ -468,7 +469,7 @@ public class ProjectController {
 		}
 	)
 	@PutMapping("/{id}")
-	@HasProjectAccess(value = "#id", level = Schema.Permission.WRITE)
+	@HasProjectAccess(value = "#id", level = ProjectPermissionLevel.WRITE)
 	@Secured(Roles.USER)
 	public ResponseEntity<Project> updateProject(@PathVariable("id") final UUID id, @RequestBody final Project project) {
 		final Optional<Project> originalProject = projectService.getProject(id);
@@ -530,7 +531,7 @@ public class ProjectController {
 	)
 	@PostMapping("/reindex-project/{id}")
 	@Secured(Roles.USER)
-	@HasProjectAccess(value = "#id", level = Schema.Permission.WRITE)
+	@HasProjectAccess(value = "#id", level = ProjectPermissionLevel.WRITE)
 	public ResponseEntity<Project> updateProjectAssets(@PathVariable("id") final UUID id) {
 		try {
 			final Optional<Project> originalProject = projectService.getProject(id);
@@ -820,7 +821,7 @@ public class ProjectController {
 		}
 	)
 	@PostMapping("/{id}/assets/{asset-type}/{asset-id}")
-	@HasProjectAccess(level = Schema.Permission.WRITE)
+	@HasProjectAccess(level = ProjectPermissionLevel.WRITE)
 	@Secured(Roles.USER)
 	public ResponseEntity<ProjectAsset> createAsset(
 		@PathVariable("id") final UUID projectId,
@@ -922,7 +923,7 @@ public class ProjectController {
 		}
 	)
 	@DeleteMapping("/{id}/assets/{asset-type}/{asset-id}")
-	@HasProjectAccess(level = Schema.Permission.WRITE)
+	@HasProjectAccess(level = ProjectPermissionLevel.WRITE)
 	@Secured(Roles.USER)
 	public ResponseEntity<ResponseDeleted> deleteAsset(
 		@PathVariable("id") final UUID projectId,
@@ -1138,7 +1139,7 @@ public class ProjectController {
 	@PostMapping("/{id}/permissions/group/{group-id}/{relationship}")
 	@Secured({ Roles.USER, Roles.SERVICE })
 	@Operation(summary = "Sets a group's permissions for a project")
-	@HasProjectAccess(level = Schema.Permission.ADMINISTRATE)
+	@HasProjectAccess(level = ProjectPermissionLevel.ADMIN)
 	@ApiResponses(
 		value = {
 			@ApiResponse(
@@ -1172,7 +1173,7 @@ public class ProjectController {
 	@PutMapping("/{id}/permissions/group/{groupId}/{oldRelationship}")
 	@Secured(Roles.USER)
 	@Operation(summary = "Updates a group's permissions for a project")
-	@HasProjectAccess(level = Schema.Permission.ADMINISTRATE)
+	@HasProjectAccess(level = ProjectPermissionLevel.ADMIN)
 	@ApiResponses(
 		value = {
 			@ApiResponse(
@@ -1206,7 +1207,7 @@ public class ProjectController {
 	@DeleteMapping("/{id}/permissions/group/{group-id}/{relationship}")
 	@Secured(Roles.USER)
 	@Operation(summary = "Deletes a group's permissions for a project")
-	@HasProjectAccess(level = Schema.Permission.WRITE)
+	@HasProjectAccess(level = ProjectPermissionLevel.WRITE)
 	@ApiResponses(
 		value = {
 			@ApiResponse(
@@ -1262,7 +1263,7 @@ public class ProjectController {
 		}
 	)
 	@PutMapping("/set-public/{id}/{isPublic}")
-	@HasProjectAccess(value = "#id", level = Schema.Permission.WRITE)
+	@HasProjectAccess(value = "#id", level = ProjectPermissionLevel.WRITE)
 	@Secured(Roles.USER)
 	public ResponseEntity<JsonNode> makeProjectPublic(
 		@PathVariable("id") final UUID id,
@@ -1324,7 +1325,7 @@ public class ProjectController {
 		}
 	)
 	@PutMapping("/set-sample/{id}/{sample}")
-	@HasProjectAccess(value = "#id", level = Schema.Permission.ADMINISTRATE)
+	@HasProjectAccess(value = "#id", level = ProjectPermissionLevel.ADMIN)
 	@Secured(Roles.USER)
 	public ResponseEntity<JsonNode> makeProjectSample(
 		@PathVariable("id") final UUID id,
@@ -1408,7 +1409,7 @@ public class ProjectController {
 	@PostMapping("/{id}/permissions/user/{user-id}/{relationship}")
 	@Secured(Roles.USER)
 	@Operation(summary = "Sets a user's permissions for a project")
-	@HasProjectAccess(level = Schema.Permission.WRITE)
+	@HasProjectAccess(level = ProjectPermissionLevel.WRITE)
 	@ApiResponses(
 		value = {
 			@ApiResponse(
@@ -1446,7 +1447,7 @@ public class ProjectController {
 	@PutMapping("/{id}/permissions/user/{user-id}/{old-relationship}")
 	@Secured(Roles.USER)
 	@Operation(summary = "Updates a user's permissions for a project")
-	@HasProjectAccess(level = Schema.Permission.ADMINISTRATE)
+	@HasProjectAccess(level = ProjectPermissionLevel.ADMIN)
 	@ApiResponses(
 		value = {
 			@ApiResponse(
@@ -1487,7 +1488,7 @@ public class ProjectController {
 	@DeleteMapping("/{id}/permissions/user/{user-id}/{relationship}")
 	@Secured(Roles.USER)
 	@Operation(summary = "Deletes a user's permissions for a project")
-	@HasProjectAccess(level = Schema.Permission.ADMINISTRATE)
+	@HasProjectAccess(level = ProjectPermissionLevel.ADMIN)
 	@ApiResponses(
 		value = {
 			@ApiResponse(

@@ -15,16 +15,24 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 import software.uncharted.terarium.hmiserver.models.Group;
 import software.uncharted.terarium.hmiserver.models.User;
+import software.uncharted.terarium.hmiserver.models.authority.Role;
+import software.uncharted.terarium.hmiserver.models.authority.RoleType;
 import software.uncharted.terarium.hmiserver.models.dataservice.AssetType;
+import software.uncharted.terarium.hmiserver.models.dataservice.project.IProjectGroupPermissionDisplayModel;
 import software.uncharted.terarium.hmiserver.models.dataservice.project.Project;
 import software.uncharted.terarium.hmiserver.models.dataservice.project.ProjectAndAssetAggregate;
 import software.uncharted.terarium.hmiserver.models.dataservice.project.ProjectGroupPermission;
+import software.uncharted.terarium.hmiserver.models.dataservice.project.ProjectGroupPermissionDisplayModel;
+import software.uncharted.terarium.hmiserver.models.dataservice.project.ProjectPermission;
 import software.uncharted.terarium.hmiserver.models.dataservice.project.ProjectPermissionLevel;
 import software.uncharted.terarium.hmiserver.models.dataservice.project.ProjectUserPermission;
 import software.uncharted.terarium.hmiserver.repository.ProjectGroupPermissionRepository;
@@ -32,6 +40,7 @@ import software.uncharted.terarium.hmiserver.repository.ProjectUserPermissionRep
 import software.uncharted.terarium.hmiserver.repository.UserRepository;
 import software.uncharted.terarium.hmiserver.repository.data.ProjectRepository;
 import software.uncharted.terarium.hmiserver.service.CurrentUserService;
+import software.uncharted.terarium.hmiserver.service.RoleService;
 import software.uncharted.terarium.hmiserver.utils.Messages;
 import software.uncharted.terarium.hmiserver.utils.rebac.ReBACService;
 import software.uncharted.terarium.hmiserver.utils.rebac.Schema;
@@ -49,8 +58,11 @@ public class ProjectService {
 	final ProjectGroupPermissionRepository projectGroupPermissionRepository;
 	final ProjectUserPermissionRepository projectUserPermissionRepository;
 	final CurrentUserService currentUserService;
+	final RoleService roleService;
 	final ReBACService reBACService;
 	final Messages messages;
+
+	private Role ADMIN_ROLE = null;
 
 	@Observed(name = "function_profile")
 	public List<Project> getProjects() {
@@ -190,20 +202,72 @@ public class ProjectService {
 		return isPublic.orElse(false);
 	}
 
-	public boolean hasPermission(final UUID projectId, final User user, final ProjectPermissionLevel permissionLevel) {
-		return hasPermission(projectId, user, projectPermissionToRebacPermission(permissionLevel));
+	@Observed(name = "function_profile")
+	public boolean hasPermission(final UUID projectId, final User user, final ProjectPermissionLevel level) {
+		if (user.hasRole(getAdminRole())) {
+			return true;
+		}
+		final ProjectPermissionLevel permission = getLevel(projectId, user);
+		return permission != null && permission.ordinal() >= level.ordinal();
 	}
 
-	@Observed(name = "function_profile")
-	public boolean hasPermission(final UUID projectId, final User user, final Schema.Permission permission) {
-		try {
-			final RebacUser rebacUser = new RebacUser(user.getId(), reBACService);
-			final RebacProject rebacProject = new RebacProject(projectId, reBACService);
-			return rebacUser.can(rebacProject, permission);
-		} catch (final Exception e) {
-			log.error("Error checking project permission", e);
-			throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, messages.get("rebac.service-unavailable"));
+	private Role getAdminRole() {
+		if (ADMIN_ROLE == null) {
+			ADMIN_ROLE = roleService.getRole(RoleType.ADMIN.name());
 		}
+		return ADMIN_ROLE;
+	}
+
+	/**
+	 * Get the maximum permission level for a user for a project
+	 *
+	 * @param projectId the project
+	 * @param user    the user
+	 * @return the maximum permission level for the user, or null if the user does not have permission
+	 */
+	public ProjectPermissionLevel getLevel(final UUID projectId, final User user) {
+		final ProjectPermission permission = getPermissions(projectId);
+		final ProjectPermissionLevel maxUserPermission = permission
+			.getUserPermissions()
+			.stream()
+			.filter(p -> p.getUser().getId().equals(user.getId()))
+			.map(ProjectUserPermission::getPermissionLevel)
+			.max(ProjectPermissionLevel::compareTo)
+			.orElse(null);
+
+		final Collection<Group> userGroups = user.getGroups();
+		final ProjectPermissionLevel maxGroupPermission = userGroups == null
+			? null
+			: permission
+				.getGroupPermissions()
+				.stream()
+				.filter(p -> userGroups.stream().anyMatch(group -> group.getId().equals(p.getGroup().getId())))
+				.map(ProjectGroupPermission::getPermissionLevel)
+				.max(ProjectPermissionLevel::compareTo)
+				.orElse(null);
+
+		if (maxUserPermission == null && maxGroupPermission == null) {
+			return null;
+		} else if (maxUserPermission == null) {
+			return maxGroupPermission;
+		} else if (maxGroupPermission == null) {
+			return maxUserPermission;
+		} else {
+			return maxUserPermission.ordinal() > maxGroupPermission.ordinal() ? maxUserPermission : maxGroupPermission;
+		}
+	}
+
+	/**
+	 * Get the permissions for a project
+	 *
+	 * @param projectId the project
+	 * @return the {@link ProjectPermission} instance
+	 */
+	public ProjectPermission getPermissions(final UUID projectId) {
+		return new ProjectPermission()
+			.setProjectId(projectId)
+			.setUserPermissions(projectUserPermissionRepository.findAllByProjectId(projectId))
+			.setGroupPermissions(projectGroupPermissionRepository.findAllByProjectId(projectId));
 	}
 
 	/**
@@ -349,7 +413,7 @@ public class ProjectService {
 	 */
 	public void removeGroups(final Project project, final Collection<Group> groups) {
 		final User currentUser = currentUserService.get();
-		if (currentUser != null && !hasPermission(project.getId(), currentUser, Schema.Permission.ADMINISTRATE)) {
+		if (currentUser != null && !hasPermission(project.getId(), currentUser, ProjectPermissionLevel.ADMIN)) {
 			throw new AccessDeniedException(
 				String.format(
 					"User %s does not have permission to remove groups for project %s",
@@ -377,6 +441,35 @@ public class ProjectService {
 	 */
 	public void removeGroup(final Project project, final Group group) {
 		removeGroups(project, Set.of(group));
+	}
+
+	/**
+	 * Gets a page of groups and their associated permissions for the given project/filter/pageable instance.
+	 * This function uses the {@link IProjectGroupPermissionDisplayModel} interface to fetch the joined data from the Group and ProjectGroupPermission tables.
+	 * We then create a {@link ProjectGroupPermissionDisplayModel} instance for each group, and set the inherited permission level for each group as well
+	 * as provide serialization methods for the case when the group does not have a permission level.
+	 *
+	 * @param project  the project
+	 * @param query    the optional query to filter the groups
+	 * @param pageable the pageable instance
+	 * @return a page of groups and their associated permissions
+	 */
+	public Page<ProjectGroupPermissionDisplayModel> getGroups(
+		final Project project,
+		final String query,
+		final Pageable pageable
+	) {
+		final Page<IProjectGroupPermissionDisplayModel> page = projectGroupPermissionRepository.findAllByProjectId(
+			project.getId(),
+			query,
+			pageable
+		);
+		final List<ProjectGroupPermissionDisplayModel> content = page
+			.getContent()
+			.stream()
+			.map(ProjectGroupPermissionDisplayModel::new)
+			.toList();
+		return new PageImpl<>(content, pageable, page.getTotalElements());
 	}
 
 	/**
@@ -455,7 +548,7 @@ public class ProjectService {
 	 */
 	public void removeUsers(final Project project, final Collection<User> users) {
 		final User currentUser = currentUserService.get();
-		if (currentUser != null && !hasPermission(project.getId(), currentUser, Schema.Permission.ADMINISTRATE)) {
+		if (currentUser != null && !hasPermission(project.getId(), currentUser, ProjectPermissionLevel.ADMIN)) {
 			throw new AccessDeniedException(
 				String.format(
 					"User %s does not have permission to remove users for project %s",

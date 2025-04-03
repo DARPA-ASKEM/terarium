@@ -2,6 +2,7 @@ package software.uncharted.terarium.hmiserver.aspects;
 
 import org.springframework.stereotype.Service;
 import software.uncharted.terarium.hmiserver.annotations.HasProjectAccess;
+import software.uncharted.terarium.hmiserver.models.dataservice.project.ProjectPermissionLevel;
 import software.uncharted.terarium.hmiserver.utils.rebac.Schema;
 
 @Service
@@ -13,6 +14,6 @@ public class HasProjectAccessAspectClassTestService {
 	@HasProjectAccess("#id")
 	public void methodOverride(String id) {}
 
-	@HasProjectAccess(level = Schema.Permission.WRITE)
+	@HasProjectAccess(level = ProjectPermissionLevel.WRITE)
 	public void ownerLevel(String projectId) {}
 }

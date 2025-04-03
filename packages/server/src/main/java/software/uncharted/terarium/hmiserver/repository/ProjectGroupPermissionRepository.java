@@ -28,7 +28,7 @@ public interface ProjectGroupPermissionRepository extends PSCrudRepository<Proje
 		"WHERE lower(name) LIKE lower(concat('%', :query, '%')) OR lower(cast(permissionLevel as string)) LIKE lower(concat('%', :query, '%'))"
 	)
 	Page<IProjectGroupPermissionDisplayModel> findAllByProjectId(
-		@Param("projectId") String projectId,
+		@Param("projectId") UUID projectId,
 		@Param("query") String query,
 		Pageable pageable
 	);

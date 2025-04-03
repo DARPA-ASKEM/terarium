@@ -38,6 +38,7 @@ import software.uncharted.terarium.hmiserver.models.dataservice.ResponseDeleted;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.Model;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.configurations.ModelConfiguration;
 import software.uncharted.terarium.hmiserver.models.dataservice.project.ProjectExport;
+import software.uncharted.terarium.hmiserver.models.dataservice.project.ProjectPermissionLevel;
 import software.uncharted.terarium.hmiserver.security.Roles;
 import software.uncharted.terarium.hmiserver.service.CurrentUserService;
 import software.uncharted.terarium.hmiserver.service.data.ModelConfigurationService;
@@ -117,7 +118,7 @@ public class ModelConfigurationController {
 	@PostMapping(value = "/import-archive", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
 	@Secured(Roles.USER)
 	@Operation(summary = "Imports both a model and its configuration in a single go")
-	@HasProjectAccess(level = software.uncharted.terarium.hmiserver.utils.rebac.Schema.Permission.WRITE)
+	@HasProjectAccess(level = ProjectPermissionLevel.WRITE)
 	@ApiResponses(
 		value = {
 			@ApiResponse(
@@ -441,7 +442,7 @@ public class ModelConfigurationController {
 	@PostMapping
 	@Secured(Roles.USER)
 	@Operation(summary = "Create a new model configuration")
-	@HasProjectAccess(level = software.uncharted.terarium.hmiserver.utils.rebac.Schema.Permission.WRITE)
+	@HasProjectAccess(level = ProjectPermissionLevel.WRITE)
 	@ApiResponses(
 		value = {
 			@ApiResponse(
@@ -488,7 +489,7 @@ public class ModelConfigurationController {
 	@PutMapping("/{id}")
 	@Secured(Roles.USER)
 	@Operation(summary = "Create a new model configuration")
-	@HasProjectAccess(level = software.uncharted.terarium.hmiserver.utils.rebac.Schema.Permission.WRITE)
+	@HasProjectAccess(level = ProjectPermissionLevel.WRITE)
 	@ApiResponses(
 		value = {
 			@ApiResponse(
@@ -536,7 +537,7 @@ public class ModelConfigurationController {
 	@DeleteMapping("/{id}")
 	@Secured(Roles.USER)
 	@Operation(summary = "Deletes a model configuration")
-	@HasProjectAccess(level = software.uncharted.terarium.hmiserver.utils.rebac.Schema.Permission.WRITE)
+	@HasProjectAccess(level = ProjectPermissionLevel.WRITE)
 	@ApiResponses(
 		value = {
 			@ApiResponse(

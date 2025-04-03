@@ -34,6 +34,7 @@ import software.uncharted.terarium.hmiserver.annotations.HasProjectAccess;
 import software.uncharted.terarium.hmiserver.configuration.Config;
 import software.uncharted.terarium.hmiserver.models.dataservice.document.DocumentAsset;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.Model;
+import software.uncharted.terarium.hmiserver.models.dataservice.project.ProjectPermissionLevel;
 import software.uncharted.terarium.hmiserver.models.task.TaskRequest;
 import software.uncharted.terarium.hmiserver.models.task.TaskRequest.TaskType;
 import software.uncharted.terarium.hmiserver.models.task.TaskResponse;
@@ -155,7 +156,7 @@ public class KnowledgeController {
 
 	@PostMapping("/equations-to-model")
 	@Secured(Roles.USER)
-	@HasProjectAccess(level = Schema.Permission.WRITE)
+	@HasProjectAccess(level = ProjectPermissionLevel.WRITE)
 	public ResponseEntity<UUID> equationsToModelNew(
 		@RequestBody final EquationToModelInput req,
 		@RequestParam(name = "project-id", required = false) final UUID projectId
@@ -241,7 +242,7 @@ public class KnowledgeController {
 	@PostMapping("/pdf-extractions")
 	@Secured(Roles.USER)
 	@Operation(summary = "Extracts information from the first PDF associated with the given document id")
-	@HasProjectAccess(level = Schema.Permission.WRITE)
+	@HasProjectAccess(level = ProjectPermissionLevel.WRITE)
 	@ApiResponses(
 		value = {
 			@ApiResponse(responseCode = "202", description = "Extraction started on PDF", content = @Content),

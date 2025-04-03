@@ -59,4 +59,8 @@ public class RoleService {
 		);
 		return authorities;
 	}
+
+	public Role getRole(final String name) {
+		return roleRepository.findByName(name);
+	}
 }

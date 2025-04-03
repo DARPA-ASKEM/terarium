@@ -19,10 +19,10 @@ public class ProjectUserPermissionDisplayModel implements IProjectUserPermission
 	private final String familyName;
 	private final String givenName;
 	private final String username;
-	private final Schema.Permission permissionLevel;
+	private final ProjectPermissionLevel permissionLevel;
 
 	@Setter
-	private Schema.Permission inheritedPermissionLevel;
+	private ProjectPermissionLevel inheritedPermissionLevel;
 
 	public ProjectUserPermissionDisplayModel(IProjectUserPermissionDisplayModel model) {
 		this.id = model.getId();
@@ -35,12 +35,12 @@ public class ProjectUserPermissionDisplayModel implements IProjectUserPermission
 	}
 
 	@JsonProperty("permissionLevel")
-	public Schema.Permission getProjectPermissionLevel() {
-		return permissionLevel != null ? permissionLevel : Schema.Permission.NONE;
+	public ProjectPermissionLevel getProjectPermissionLevel() {
+		return permissionLevel != null ? permissionLevel : ProjectPermissionLevel.NONE;
 	}
 
 	@JsonProperty("inheritedPermissionLevel")
-	public Schema.Permission getInheritedProjectPermissionLevel() {
-		return inheritedPermissionLevel != null ? inheritedPermissionLevel : Schema.Permission.NONE;
+	public ProjectPermissionLevel getInheritedProjectPermissionLevel() {
+		return inheritedPermissionLevel != null ? inheritedPermissionLevel : ProjectPermissionLevel.NONE;
 	}
 }

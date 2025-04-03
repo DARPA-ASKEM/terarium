@@ -5,6 +5,9 @@ import jakarta.persistence.*;
 import jakarta.persistence.Id;
 import java.io.Serial;
 import java.util.Collection;
+import java.util.HashSet;
+import java.util.Objects;
+import java.util.stream.Collectors;
 import lombok.Data;
 import lombok.experimental.Accessors;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -35,6 +38,9 @@ public class User implements UserDetails {
 
 	@ManyToMany(fetch = FetchType.EAGER, cascade = { CascadeType.ALL })
 	private Collection<Role> roles;
+
+	@ManyToMany(fetch = FetchType.EAGER, cascade = { CascadeType.ALL })
+	private Collection<Group> groups;
 
 	private String username;
 	private String email;
@@ -118,5 +124,53 @@ public class User implements UserDetails {
 			}
 		}
 		return this;
+	}
+
+	/**
+	 * Checks if a user has a role
+	 *
+	 * @param role the role
+	 * @return true if the user has the role, false otherwise
+	 */
+	public boolean hasRole(Role role) {
+		return hasRoleByName(role.getName());
+	}
+
+	/**
+	 * Checks if a user has a role by name
+	 *
+	 * @param name the name of the role
+	 * @return true if the user has the role, false otherwise
+	 */
+	public boolean hasRoleByName(String name) {
+		if (getAllRoles().isEmpty()) {
+			return false;
+		}
+		return getAllRoles().stream().anyMatch(r -> r.getName().equals(name));
+	}
+
+	@JsonIgnore
+	@Transient
+	public Collection<Role> getAllRoles() {
+		final Collection<Role> combinedRoles = new HashSet<>();
+
+		final Collection<Role> userRoles = getRoles();
+		if (userRoles != null && !userRoles.isEmpty()) {
+			combinedRoles.addAll(userRoles);
+		}
+		if (getGroups() != null) {
+			final Collection<Role> groupRoles = getGroups()
+				.stream()
+				.map(Group::getRoles)
+				.filter(Objects::nonNull)
+				.flatMap(Collection::stream)
+				.map(role -> role.setInherited(true))
+				.collect(Collectors.toSet());
+
+			if (!groupRoles.isEmpty()) {
+				combinedRoles.addAll(groupRoles);
+			}
+		}
+		return combinedRoles;
 	}
 }
