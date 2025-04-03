@@ -1,0 +1,211 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$defs": {
+    "modelConfiguration": {
+      "type": "object",
+      "description": "A model configuration is the set of values of the parameters and initial values of the state variables of the model at the start of a given scenario, usually at timestep zero or one (depending on the choice of the start index).",
+      "properties": {
+        "name": {
+          "type": "object",
+          "properties": {
+            "content": {
+              "type": "string",
+              "description": "A very concise name describing the scenario for which this configuration represents; for example, 'Onset of an outbreak in the United States'."
+            },
+            "extractionItemIds": {
+              "type": "array",
+              "description": "A list of source ids for which the information for the name of the configuration was sourced from.",
+              "items": {
+                "type": "string",
+                "description": "An id of where the information for the name of the configuration was sourced from."
+              }
+            }
+          },
+          "required": [
+            "content",
+            "extractionItemIds"
+          ],
+          "additionalProperties": false
+        },
+        "description": {
+          "type": "object",
+          "properties": {
+            "content": {
+              "type": "string",
+              "description": "A description of the scenario represented by the given model configuration; usually no more than one or two sentences."
+            },
+            "extractionItemIds": {
+              "type": "array",
+              "description": "A list of source ids for which the information for the desctiption of the configuration was sourced from.",
+              "items": {
+                "type": "string",
+                "description": "An id of where the information for the description of the configuration was sourced from."
+              }
+            }
+          },
+          "required": [
+            "content",
+            "extractionItemIds"
+          ],
+          "additionalProperties": false
+        },
+        "initialSemanticList": {
+          "type": "array",
+          "description": "A list of initial values for every state defined in the model.",
+          "items": {
+            "type": "object",
+            "description": "The initial condition of a given state variable of the model; a starting value (number or mathematical expression) of this state variable; usually at timestep zero or one (depending on the choice of the starting index).",
+            "properties": {
+              "content": {
+                "type": "object",
+                "properties": {
+                  "expression": {
+                    "type": "string",
+                    "description": "A mathematical representation of the initial condition of this state variable, written in SymPy; for example, the initial condition of the state variable 'proportion of infected individuals' can be a percentage of the total population."
+                  },
+                  "expressionMathml": {
+                    "type": "string",
+                    "description": "A MathML equivalent of the Sympy expression for the initial condition of this state variable."
+                  },
+                  "target": {
+                    "type": "string",
+                    "description": "Target should be the ID of the initial state variable in the AMR model."
+                  }
+                },
+                "required": [
+                  "expression",
+                  "expressionMathml",
+                  "target"
+                ],
+                "additionalProperties": false
+              },
+              "extractionItemIds": {
+                "type": "array",
+                "description": "A list of source ids for which the information for the initial condition of the state variable was sourced from.",
+                "items": {
+                  "type": "string",
+                  "description": "An id of where the information for the initial condition of the state variable was sourced from."
+                }
+              }
+            },
+            "required": [
+              "content",
+              "extractionItemIds"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "parameterSemanticList": {
+          "type": "array",
+          "description": "A list of values for for every parameter defined in the model.",
+          "items": {
+            "type": "object",
+            "description": "The initial value of a given parameter of the model; it can be a probability distribution representing measurement uncertainty or a real number (a point estimate).",
+            "properties": {
+              "content": {
+                "type": "object",
+                "properties": {
+                 "distribution": {
+                    "type": "object",
+                    "description": "A constant value or probability distribution representing the measurement uncertainty or best range estimate of the model parameter.",
+                    "properties": {
+                      "parameters": {
+                        "type": "object",
+                        "description": "Values for the model parameter.",
+                        "properties": {
+                          "value": {
+                            "type": [
+                              "number",
+                              "null"
+                            ],
+                            "description": "The constant value of the parameter, or the initial value of the probability distribution; it must be a real number."
+                          },
+                          "minimum": {
+                            "type": [
+                              "number",
+                              "null"
+                            ],
+                            "description": "The lower bound parameter of the probability distribution; it must be a real number."
+                          },
+                          "maximum": {
+                            "type": [
+                              "number",
+                              "null"
+                            ],
+                            "description": "The upper bound parameter of the probability distribution; it must be a real number."
+                          }
+                        },
+                        "required": [
+                          "value",
+                          "minimum",
+                          "maximum"
+                        ],
+                        "additionalProperties": false
+                      },
+                      "type": {
+                        "type": "string",
+                        "description": "The type of value for the parameter. can be a constant value or a distribution",
+                        "enum": [
+                          "Constant",
+                          "StandardUniform1"
+                        ]
+                      }
+                    },
+                    "required": [
+                      "parameters",
+                      "type"
+                    ],
+                    "additionalProperties": false
+                  },
+                  "referenceId": {
+                    "type": "string",
+                    "description": "The ID used to reference the parameter in the model AMR."
+                  }
+                },
+                "required": [
+                  "referenceId",
+                  "distribution"
+                ],
+                "additionalProperties": false
+              },
+              "extractionItemIds": {
+                "type": "array",
+                "description": "A list of source ids for which the information for the parameter was sourced from.",
+                "items": {
+                  "type": "string",
+                  "description": "An id of where the information for the parameter was sourced from."
+                }
+              }
+            },
+            "required": [
+              "content",
+              "extractionItemIds"
+            ],
+            "additionalProperties": false
+          }
+        }
+      },
+      "required": [
+        "description",
+        "name",
+        "initialSemanticList",
+        "parameterSemanticList"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "type": "object",
+  "properties": {
+    "conditions": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/modelConfiguration"
+      },
+      "additionalProperties": false
+    }
+  },
+  "required": [
+    "conditions"
+  ],
+  "additionalProperties": false
+}

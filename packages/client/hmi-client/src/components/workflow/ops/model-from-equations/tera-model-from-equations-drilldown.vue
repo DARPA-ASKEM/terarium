@@ -158,9 +158,10 @@
 									>
 										<tera-asset-block
 											:is-toggleable="false"
-											:is-permitted="false"
-											:use-default-style="false"
-											:class="['asset-panel', { selected: selectedItem === equation.id }]"
+											:is-selected="selectedItem === equation.id"
+											@next="goToNext"
+											@previous="goToPrevious"
+											@close="selectedItem = ''"
 										>
 											<template #header>
 												<h6 v-if="equation.asset.provenance">Edited by AI</h6>
@@ -196,19 +197,6 @@
 													>Page {{ documentExtractionMap.get(equation.asset.provenance.extractionItemId)?.page }}</span
 												>
 											</template>
-											<template #footer v-if="selectedItem === equation.id">
-												<footer class="flex">
-													<Button label="Close" outlined severity="secondary" @click.stop="selectedItem = ''" />
-													<Button class="ml-auto" icon="pi pi-arrow-up" label="Previous" @click.stop="goToPrevious" />
-													<Button
-														class="ml-2"
-														icon="pi pi-arrow-down"
-														icon-pos="right"
-														label="Next"
-														@click.stop="goToNext"
-													/>
-												</footer>
-											</template>
 										</tera-asset-block>
 									</li>
 									<!-- <p v-if="isEmpty(includedEquations) && !pastedImage" class="secondary-text">No equations selected</p> -->
@@ -225,8 +213,10 @@
 									>
 										<tera-asset-block
 											:is-toggleable="false"
-											:use-default-style="false"
-											:class="['asset-panel', { selected: selectedItem === equation.id }]"
+											:is-selected="selectedItem === equation.id"
+											@next="goToNext"
+											@previous="goToPrevious"
+											@close="selectedItem = ''"
 										>
 											<template #header>
 												<h6 v-if="equation.asset.provenance">Edited by AI</h6>
@@ -262,19 +252,6 @@
 													>Page {{ documentExtractionMap.get(equation.asset.provenance.extractionItemId)?.page }}</span
 												>
 											</template>
-											<template #footer v-if="selectedItem === equation.id">
-												<footer class="flex">
-													<Button label="Close" outlined severity="secondary" @click.stop="selectedItem = ''" />
-													<Button class="ml-auto" icon="pi pi-arrow-up" label="Previous" @click.stop="goToPrevious" />
-													<Button
-														class="ml-2"
-														icon="pi pi-arrow-down"
-														icon-pos="right"
-														label="Next"
-														@click.stop="goToNext"
-													/>
-												</footer>
-											</template>
 										</tera-asset-block>
 									</li>
 								</ul>
@@ -300,8 +277,10 @@
 									<li v-for="enrichment in enrichments" :key="enrichment.id" @click="selectEnrichment(enrichment)">
 										<tera-asset-block
 											:is-toggleable="false"
-											:use-default-style="false"
-											:class="['asset-panel', { selected: selectedEnrichment === enrichment.id }]"
+											:is-selected="selectedEnrichment === enrichment.id"
+											@next="goToNextEnrichment"
+											@previous="goToPreviousEnrichment"
+											@close="selectedEnrichment = ''"
 										>
 											<template #header>
 												<h6>{{ enrichmentTargetTypeToLabel(enrichment.target) + ' > ' + enrichment.label }}</h6>
@@ -359,25 +338,6 @@
 													</span>
 												</template>
 											</section>
-
-											<template #footer v-if="selectedEnrichment === enrichment.id">
-												<footer class="flex">
-													<Button label="Close" outlined severity="secondary" @click.stop="selectedEnrichment = ''" />
-													<Button
-														class="ml-auto"
-														icon="pi pi-arrow-up"
-														label="Previous"
-														@click.stop="goToPreviousEnrichment"
-													/>
-													<Button
-														class="ml-2"
-														icon="pi pi-arrow-down"
-														icon-pos="right"
-														label="Next"
-														@click.stop="goToNextEnrichment"
-													/>
-												</footer>
-											</template>
 										</tera-asset-block>
 									</li>
 								</ul>
@@ -970,31 +930,6 @@ watch(
 	font-size: 12px;
 	color: var(--surface-600);
 	border-radius: var(--border-radius-small);
-}
-
-.asset-panel {
-	border: 1px solid var(--surface-border-light);
-	border-left: 4px solid var(--surface-400);
-	border-radius: var(--border-radius);
-	overflow: auto;
-	background: var(--surface-0);
-	cursor: pointer;
-	&.selected {
-		border-left: 4px solid var(--primary-color);
-	}
-}
-.asset-panel:deep(.p-panel-header) {
-	padding-bottom: var(--gap-1);
-	background: transparent;
-}
-.asset-panel:deep(.p-panel-content) {
-	background: transparent;
-}
-.asset-panel:deep(.p-panel-footer) {
-	background: transparent;
-}
-.asset-panel:hover {
-	background: var(--surface-highlight);
 }
 
 .input-container {

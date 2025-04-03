@@ -269,7 +269,6 @@
 							<vega-chart
 								expandable
 								v-if="lossValues.length > 0 || isLoading"
-								ref="lossChartRef"
 								:are-embed-actions-visible="true"
 								:visualization-spec="lossChartSpec"
 							/>
@@ -518,7 +517,6 @@
 
 <script setup lang="ts">
 import { cloneDeep, groupBy, intersection, isEmpty } from 'lodash';
-import * as vega from 'vega';
 import { computed, onMounted, ref, shallowRef, watch } from 'vue';
 import { useConfirm } from 'primevue/useconfirm';
 import Divider from 'primevue/divider';
@@ -856,7 +854,6 @@ const comparisonCharts = useComparisonCharts(selectedComparisonChartSettings);
 const { errorChart, onExpandErrorChart } = useErrorChart(selectedErrorVariableSettings, errorData);
 
 const LOSS_CHART_DATA_SOURCE = 'lossData'; // Name of the streaming data source
-const lossChartRef = ref<InstanceType<typeof VegaChart>>();
 const lossChartSpec = ref();
 const lossValues = ref<{ [key: string]: number }[]>([]);
 const updateLossChartSpec = (data: string | Record<string, any>[], size: { width: number; height: number }) => {
@@ -976,10 +973,9 @@ const runCalibrate = async () => {
 };
 
 const messageHandler = (event: ClientEvent<any>) => {
-	const data = { iter: lossValues.value.length, loss: event.data.loss };
+	const data = { iter: event.data.progress, loss: event.data.loss };
 	lossValues.value.push(data);
-	if (!lossChartRef.value?.view) return;
-	lossChartRef.value.view.change(LOSS_CHART_DATA_SOURCE, vega.changeset().insert(data)).resize().run();
+	updateLossChartSpec(lossValues.value, lossChartSize.value);
 };
 
 const onSelection = (id: string) => {

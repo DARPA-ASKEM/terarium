@@ -234,11 +234,6 @@ export interface Enrichment {
     included: boolean;
 }
 
-export interface ExternalPublication extends TerariumAsset {
-    title: string;
-    xdd_uri: string;
-}
-
 export interface Model extends TerariumAssetThatSupportsAdditionalProperties {
     header: ModelHeader;
     userId?: string;
@@ -273,6 +268,7 @@ export interface ModelConfiguration extends TerariumAsset {
     temporalContext?: Date;
     extractionDocumentId?: string;
     extractionPage?: number;
+    enrichments?: Enrichment[];
     observableSemanticList: ObservableSemantic[];
     parameterSemanticList: ParameterSemantic[];
     initialSemanticList: InitialSemantic[];
@@ -376,41 +372,6 @@ export interface ProvenanceSearchResult {
     edges: ProvenanceEdge[];
 }
 
-export interface RegNetBaseProperties {
-    name: string;
-    grounding: Grounding;
-    rate_constant: any;
-}
-
-export interface RegNetEdge {
-    source: string;
-    target: string;
-    id: string;
-    sign: boolean;
-    properties?: RegNetBaseProperties;
-}
-
-export interface RegNetModel {
-    vertices: RegNetVertex[];
-    edges: RegNetEdge[];
-    parameters?: RegNetParameter[];
-}
-
-export interface RegNetParameter {
-    id: string;
-    description?: string;
-    value?: number;
-    grounding?: Grounding;
-    distribution?: ModelDistribution;
-}
-
-export interface RegNetVertex extends GroundedSemantic {
-    id: string;
-    sign: boolean;
-    initial?: any;
-    rate_constant?: any;
-}
-
 export interface Simulation extends TerariumAsset {
     executionPayload: any;
     resultFiles?: string[];
@@ -452,20 +413,6 @@ export interface Extraction {
 export interface ExtractionBody {
     id: string;
     children: ExtractionRef[];
-}
-
-export interface ExtractionResponse {
-    id: string;
-    status: string;
-    result: ExtractionResponseResult;
-}
-
-export interface ExtractionResponseResult {
-    created_at: Date;
-    enqueued_at: Date;
-    started_at: Date;
-    job_error: string;
-    job_result: any;
 }
 
 export interface FunmanPostQueriesRequest {
