@@ -108,7 +108,7 @@ import Button from 'primevue/button';
 import Textarea from 'primevue/textarea';
 import Menu from 'primevue/menu';
 import { defineEmits, ref, computed, onMounted } from 'vue';
-import { MenuItem } from 'primevue/menuitem';
+import type { MenuItem } from 'primevue/menuitem';
 import Checkbox from 'primevue/checkbox';
 
 const emit = defineEmits([

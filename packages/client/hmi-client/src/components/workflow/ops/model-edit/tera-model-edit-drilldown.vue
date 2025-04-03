@@ -73,7 +73,7 @@ import { cloneDeep, isEmpty, isEqual, debounce } from 'lodash';
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
 import '@/ace-config';
 import { VAceEditor } from 'vue3-ace-editor';
-import { VAceEditorInstance } from 'vue3-ace-editor/types';
+import type { VAceEditorInstance } from 'vue3-ace-editor/types';
 import Button from 'primevue/button';
 import { DrilldownTabs } from '@/types/common';
 import type { Model } from '@/types/Types';

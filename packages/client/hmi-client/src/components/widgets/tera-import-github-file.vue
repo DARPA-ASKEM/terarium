@@ -164,7 +164,7 @@ import { getGithubCode, getGithubRepositoryContent } from '@/services/github-imp
 import type { DocumentAsset, GithubFile, GithubRepo } from '@/types/Types';
 import { AssetType, FileCategory } from '@/types/Types';
 import { VAceEditor } from 'vue3-ace-editor';
-import { VAceEditorInstance } from 'vue3-ace-editor/types';
+import type { VAceEditorInstance } from 'vue3-ace-editor/types';
 import { getModeForPath } from 'ace-builds/src-noconflict/ext-modelist';
 import '@/ace-config';
 import Checkbox from 'primevue/checkbox';

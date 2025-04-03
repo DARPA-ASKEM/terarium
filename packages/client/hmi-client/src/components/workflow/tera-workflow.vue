@@ -212,7 +212,7 @@ import { v4 as uuidv4 } from 'uuid';
 import TeraProgressSpinner from '@/components/widgets/tera-progress-spinner.vue';
 
 import { useRouter, useRoute } from 'vue-router';
-import { MenuItem } from 'primevue/menuitem';
+import type { MenuItem } from 'primevue/menuitem';
 import * as EventService from '@/services/event';
 import { useProjects } from '@/composables/project';
 // import useAuthStore from '@/stores/auth';
