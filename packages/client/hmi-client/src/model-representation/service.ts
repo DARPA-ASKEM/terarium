@@ -4,7 +4,7 @@ import { rerouteEdges } from '@/services/graph';
 import { MiraModel } from '@/model-representation/mira/mira-common';
 import { ModelPartItem } from '@/types/Model';
 import { extractNestedStratas } from '@/model-representation/petrinet/mira-petri';
-import type { Initial, Model, ModelParameter, Observable, Rate, RegNetVertex, State, Transition } from '@/types/Types';
+import type { Initial, Model, ModelParameter, Observable, Rate, State, Transition } from '@/types/Types';
 import { getModelType } from '@/services/model';
 import { AMRSchemaNames } from '@/types/common';
 import { parseCurieToIdentifier } from '@/services/concept';
@@ -197,7 +197,7 @@ export function updateTime(model: Model, key: string, value: any) {
 }
 
 // Gets states, vertices, stocks (no stock type yet)
-export function getStates(model: Model): (State & RegNetVertex)[] {
+export function getStates(model: Model): State[] {
 	const modelType = getModelType(model);
 	switch (modelType) {
 		case AMRSchemaNames.REGNET:

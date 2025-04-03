@@ -11,8 +11,6 @@ import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
-import software.uncharted.terarium.hmiserver.models.TerariumAsset;
-import software.uncharted.terarium.hmiserver.models.dataservice.document.DocumentAsset;
 import software.uncharted.terarium.hmiserver.models.dataservice.enrichment.Enrichment;
 import software.uncharted.terarium.hmiserver.models.dataservice.enrichment.EnrichmentSource;
 import software.uncharted.terarium.hmiserver.models.dataservice.enrichment.EnrichmentTarget;
@@ -22,7 +20,6 @@ import software.uncharted.terarium.hmiserver.models.dataservice.provenance.Prove
 import software.uncharted.terarium.hmiserver.models.dataservice.provenance.ProvenanceRelationType;
 import software.uncharted.terarium.hmiserver.models.dataservice.provenance.ProvenanceType;
 import software.uncharted.terarium.hmiserver.models.task.TaskResponse;
-import software.uncharted.terarium.hmiserver.service.data.DocumentAssetService;
 import software.uncharted.terarium.hmiserver.service.data.ModelConfigurationService;
 import software.uncharted.terarium.hmiserver.service.data.ModelConfigurationService.ModelConfigurationUpdate;
 import software.uncharted.terarium.hmiserver.service.data.ModelService;
@@ -38,7 +35,6 @@ public class ConfigureModelFromDocumentResponseHandler extends LlmTaskResponseHa
 	private final ObjectMapper objectMapper;
 	private final ModelConfigurationService modelConfigurationService;
 	private final ProvenanceService provenanceService;
-	private final DocumentAssetService documentAssetService;
 	private final ModelService modelService;
 
 	@Override
@@ -93,6 +89,7 @@ public class ConfigureModelFromDocumentResponseHandler extends LlmTaskResponseHa
 
 		final Enrichment descriptionEnrichment = new Enrichment();
 		descriptionEnrichment.setId(UUID.randomUUID());
+		descriptionEnrichment.setLabel("Description");
 		descriptionEnrichment.setTarget(EnrichmentTarget.DESCRIPTION);
 		descriptionEnrichment.setSource(EnrichmentSource.GOLLM);
 		descriptionEnrichment.setContent(condition.getDescription().getContent());
@@ -104,6 +101,7 @@ public class ConfigureModelFromDocumentResponseHandler extends LlmTaskResponseHa
 		condition.initialSemanticList.forEach(initial -> {
 			final Enrichment enrichment = new Enrichment();
 			enrichment.setId(UUID.randomUUID());
+			enrichment.setLabel(initial.getContent().get("target").asText());
 			enrichment.setTarget(EnrichmentTarget.STATE);
 			enrichment.setSource(EnrichmentSource.GOLLM);
 			enrichment.setContent(initial.getContent());
@@ -115,6 +113,7 @@ public class ConfigureModelFromDocumentResponseHandler extends LlmTaskResponseHa
 		condition.parameterSemanticList.forEach(parameter -> {
 			final Enrichment enrichment = new Enrichment();
 			enrichment.setId(UUID.randomUUID());
+			enrichment.setLabel(parameter.getContent().get("referenceId").asText());
 			enrichment.setTarget(EnrichmentTarget.PARAMETER);
 			enrichment.setSource(EnrichmentSource.GOLLM);
 			enrichment.setContent(parameter.getContent());
@@ -134,10 +133,11 @@ public class ConfigureModelFromDocumentResponseHandler extends LlmTaskResponseHa
 			final Response response = objectMapper.treeToValue(node.get("response"), Response.class);
 
 			final Optional<Model> model = modelService.getAsset(props.modelId);
-			final ModelConfiguration configuration = ModelConfigurationService.modelConfigurationFromAMR(
-				model.get(),
-				new ModelConfigurationUpdate()
-			);
+
+			final ModelConfigurationUpdate update = new ModelConfigurationUpdate();
+			update.setDescription("");
+			update.setEmpty(true);
+			final ModelConfiguration configuration = ModelConfigurationService.modelConfigurationFromAMR(model.get(), update);
 
 			// For each configuration, create a new model configuration
 			for (final Condition condition : response.conditions) {
