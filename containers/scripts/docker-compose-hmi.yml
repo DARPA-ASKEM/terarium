@@ -50,9 +50,6 @@ services:
       TERARIUM_MQ-USERNAME: "terarium"
       TERARIUM_ELASTICSEARCH_URL: "http://${local_host_name}:9200"
       TERARIUM_ELASTICSEARCH_AUTH-ENABLED: false
-      SPRING_NEO4J_URI: "bolt://${local_host_name}:7687"
-      SPRING_NEO4J_AUTHENTICATION_USERNAME: "neo4j"
-      SPRING_NEO4J_AUTHENTICATION_PASSWORD: "password"
       TGPT_APP_URL: "http://${local_host_name}:3050/beaker/"
       TGPT_TOKEN: "${secret_tgpt_token}"
       TGPT_WS_URL: "ws://${local_host_name}:3050/beaker_ws/"
@@ -62,8 +59,6 @@ services:
       spicedb:
         condition: service_healthy
       elasticsearch:
-        condition: service_healthy
-      neo4j:
         condition: service_healthy
       minio:
         condition: service_healthy
