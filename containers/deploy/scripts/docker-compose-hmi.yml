@@ -78,7 +78,6 @@ services:
       TGPT_BASE_URL: "/beaker/"
       TGPT_TOKEN: "FkxqR4MT4k3MhEnzBZ75"
       TGPT_WS_URL: "ws://beaker:8888/beaker_ws/"
-      MIRA_REST_URL: "http://mira:8771"
     depends_on:
       elasticsearch:
         condition: service_healthy
