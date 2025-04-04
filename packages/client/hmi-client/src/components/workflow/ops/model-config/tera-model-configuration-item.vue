@@ -22,7 +22,7 @@
 					<tera-asset-block
 						:is-toggleable="false"
 						:is-selected="selectedEnrichment === enrichment.id"
-						@click="selectedEnrichment = enrichment.id"
+						@click="selectEnrichment(enrichment)"
 						@next="goToNextEnrichment"
 						@previous="goToPreviousEnrichment"
 						@close="selectedEnrichment = ''"
@@ -45,7 +45,7 @@
 					<tera-asset-block
 						:is-toggleable="false"
 						:is-selected="selectedEnrichment === enrichment.id"
-						@click="selectedEnrichment = enrichment.id"
+						@click="selectEnrichment(enrichment)"
 						@next="goToNextEnrichment"
 						@previous="goToPreviousEnrichment"
 						@close="selectedEnrichment = ''"
@@ -69,7 +69,7 @@
 					<tera-asset-block
 						:is-toggleable="false"
 						:is-selected="selectedEnrichment === enrichment.id"
-						@click="selectedEnrichment = enrichment.id"
+						@click="selectEnrichment(enrichment)"
 						@next="goToNextEnrichment"
 						@previous="goToPreviousEnrichment"
 						@close="selectedEnrichment = ''"
@@ -123,7 +123,7 @@
 </template>
 
 <script setup lang="ts">
-import { ModelConfiguration, EnrichmentTarget } from '@/types/Types';
+import { ModelConfiguration, EnrichmentTarget, Enrichment } from '@/types/Types';
 import { DistributionType } from '@/services/distribution';
 import { formatTimestamp } from '@/utils/date';
 import Button from 'primevue/button';
@@ -142,7 +142,14 @@ import Checkbox from 'primevue/checkbox';
 import TeraAssetBlock from '@/components/widgets/tera-asset-block.vue';
 import { displayNumber } from '@/utils/number';
 
-const emit = defineEmits(['delete', 'use', 'downloadArchive', 'downloadModel', 'enrichment-change']);
+const emit = defineEmits([
+	'delete',
+	'use',
+	'downloadArchive',
+	'downloadModel',
+	'enrichment-change',
+	'enrichment-select'
+]);
 const props = defineProps<{
 	configuration: ModelConfiguration;
 	transientConfiguration: ModelConfiguration;
@@ -249,18 +256,27 @@ const onDeleteConfiguration = () => {
 	});
 };
 
+const selectEnrichment = (enrichment: Enrichment) => {
+	selectedEnrichment.value = enrichment.id;
+	emit('enrichment-select', enrichment);
+};
+
 const goToNextEnrichment = () => {
 	if (!props.configuration.enrichments) return;
 	const currentIndex = props.configuration.enrichments.findIndex((e) => e.id === selectedEnrichment.value);
 	if (currentIndex < props.configuration.enrichments.length - 1) {
-		selectedEnrichment.value = props.configuration.enrichments[currentIndex + 1].id;
+		const selected = props.configuration.enrichments[currentIndex + 1];
+		selectedEnrichment.value = selected.id;
+		emit('enrichment-select', selected);
 	}
 };
 const goToPreviousEnrichment = () => {
 	if (!props.configuration.enrichments) return;
 	const currentIndex = props.configuration.enrichments.findIndex((e) => e.id === selectedEnrichment.value);
 	if (currentIndex > 0) {
-		selectedEnrichment.value = props.configuration.enrichments[currentIndex - 1].id;
+		const selected = props.configuration.enrichments[currentIndex - 1];
+		selectedEnrichment.value = selected.id;
+		emit('enrichment-select', selected);
 	}
 };
 
