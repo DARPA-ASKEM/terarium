@@ -16,14 +16,10 @@ import software.uncharted.terarium.hmiserver.models.dataservice.enrichment.Enric
 import software.uncharted.terarium.hmiserver.models.dataservice.enrichment.EnrichmentTarget;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.Model;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.configurations.ModelConfiguration;
-import software.uncharted.terarium.hmiserver.models.dataservice.provenance.Provenance;
-import software.uncharted.terarium.hmiserver.models.dataservice.provenance.ProvenanceRelationType;
-import software.uncharted.terarium.hmiserver.models.dataservice.provenance.ProvenanceType;
 import software.uncharted.terarium.hmiserver.models.task.TaskResponse;
 import software.uncharted.terarium.hmiserver.service.data.ModelConfigurationService;
 import software.uncharted.terarium.hmiserver.service.data.ModelConfigurationService.ModelConfigurationUpdate;
 import software.uncharted.terarium.hmiserver.service.data.ModelService;
-import software.uncharted.terarium.hmiserver.service.data.ProvenanceService;
 
 @Component
 @RequiredArgsConstructor
@@ -34,7 +30,6 @@ public class ConfigureModelFromDocumentResponseHandler extends LlmTaskResponseHa
 
 	private final ObjectMapper objectMapper;
 	private final ModelConfigurationService modelConfigurationService;
-	private final ProvenanceService provenanceService;
 	private final ModelService modelService;
 
 	@Override
@@ -150,20 +145,7 @@ public class ConfigureModelFromDocumentResponseHandler extends LlmTaskResponseHa
 				// Set the extraction document id
 				clonedConfiguration.setExtractionDocumentId(props.documentId);
 
-				final ModelConfiguration newConfig = modelConfigurationService.createAsset(
-					clonedConfiguration,
-					props.projectId
-				);
-
-				// add provenance
-				provenanceService.createProvenance(
-					new Provenance()
-						.setLeft(newConfig.getId())
-						.setLeftType(ProvenanceType.MODEL_CONFIGURATION)
-						.setRight(props.documentId)
-						.setRightType(ProvenanceType.DOCUMENT)
-						.setRelationType(ProvenanceRelationType.EXTRACTED_FROM)
-				);
+				modelConfigurationService.createAsset(clonedConfiguration, props.projectId);
 			}
 		} catch (final Exception e) {
 			log.error("Failed to configure model", e);

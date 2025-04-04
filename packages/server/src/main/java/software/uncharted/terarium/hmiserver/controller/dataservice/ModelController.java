@@ -1,19 +1,13 @@
 package software.uncharted.terarium.hmiserver.controller.dataservice;
 
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Optional;
-import java.util.Set;
 import java.util.UUID;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
@@ -35,7 +29,6 @@ import org.springframework.web.server.ResponseStatusException;
 import software.uncharted.terarium.hmiserver.annotations.HasProjectAccess;
 import software.uncharted.terarium.hmiserver.models.dataservice.AssetType;
 import software.uncharted.terarium.hmiserver.models.dataservice.ResponseDeleted;
-import software.uncharted.terarium.hmiserver.models.dataservice.document.DocumentAsset;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.Model;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.ModelDescription;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.configurations.ModelConfiguration;
@@ -48,13 +41,11 @@ import software.uncharted.terarium.hmiserver.models.simulationservice.interventi
 import software.uncharted.terarium.hmiserver.repository.data.InterventionRepository;
 import software.uncharted.terarium.hmiserver.repository.data.ModelConfigRepository;
 import software.uncharted.terarium.hmiserver.security.Roles;
-import software.uncharted.terarium.hmiserver.service.data.DocumentAssetService;
 import software.uncharted.terarium.hmiserver.service.data.ModelConfigurationService;
 import software.uncharted.terarium.hmiserver.service.data.ModelConfigurationService.ModelConfigurationUpdate;
 import software.uncharted.terarium.hmiserver.service.data.ModelService;
 import software.uncharted.terarium.hmiserver.service.data.ProjectAssetService;
 import software.uncharted.terarium.hmiserver.service.data.ProjectService;
-import software.uncharted.terarium.hmiserver.service.data.ProvenanceSearchService;
 import software.uncharted.terarium.hmiserver.utils.rebac.Schema;
 
 @RequestMapping("/models")
@@ -63,15 +54,12 @@ import software.uncharted.terarium.hmiserver.utils.rebac.Schema;
 @RequiredArgsConstructor
 public class ModelController {
 
-	final DocumentAssetService documentAssetService;
 	final InterventionRepository interventionRepository;
 	final ModelConfigRepository modelConfigRepository;
 	final ModelConfigurationService modelConfigurationService;
 	final ModelService modelService;
-	final ObjectMapper objectMapper;
 	final ProjectAssetService projectAssetService;
 	final ProjectService projectService;
-	final ProvenanceSearchService provenanceSearchService;
 
 	@GetMapping("/{id}/descriptions")
 	@Secured(Roles.USER)
@@ -146,46 +134,6 @@ public class ModelController {
 			body.setRootId(id);
 			body.setRootType(ProvenanceType.MODEL);
 			body.setTypes(List.of(ProvenanceType.DOCUMENT));
-			final Set<String> documentIds = provenanceSearchService.modelsFromDocument(body);
-			if (!documentIds.isEmpty()) {
-				// Make sure we have a metadata object
-				if (model.get().getMetadata() == null) {
-					model.get().setMetadata(new ModelMetadata());
-				}
-				// Make sure we have an attributes list
-				if (model.get().getMetadata().getAttributes() == null) {
-					model.get().getMetadata().setAttributes(new ArrayList<>());
-				}
-
-				documentIds.forEach(documentId -> {
-					try {
-						// Fetch the Document extractions
-						final Optional<DocumentAsset> document = documentAssetService.getAsset(UUID.fromString(documentId));
-						if (document.isPresent()) {
-							if (document.get().getMetadata() == null) {
-								document.get().setMetadata(new HashMap<>());
-							}
-							final List<JsonNode> extractions = objectMapper.convertValue(
-								document.get().getMetadata().get("attributes"),
-								new TypeReference<>() {}
-							);
-
-							// Append the Document extractions to the Model extractions, just for the
-							// front-end.
-							// Those are NOT to be saved back to the data-service.
-							if (extractions != null) {
-								model.get().getMetadata().getAttributes().addAll(extractions);
-							} else {
-								log.error("No attributes added to Model as DocumentAsset ({}) has no attributes.", documentId);
-							}
-						}
-					} catch (final Exception e) {
-						log.error("Unable to get the document " + documentId, e);
-					}
-				});
-			} else {
-				log.debug("Unable to get the, or empty, provenance search models_from_document for model " + id);
-			}
 
 			// Force proper annotation metadata
 			final ModelMetadata metadata = model.get().getMetadata();
@@ -238,11 +186,7 @@ public class ModelController {
 			// the front-end.
 			final Optional<Model> updated = modelService.updateAsset(model, projectId);
 
-			if (updated.isEmpty()) {
-				return ResponseEntity.notFound().build();
-			}
-
-			return ResponseEntity.ok(updated.get());
+			return updated.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
 		} catch (final IOException e) {
 			final String error = "Unable to update model";
 			log.error(error, e);
@@ -332,9 +276,9 @@ public class ModelController {
 
 			// add default model configuration to project
 			final Optional<Project> project = projectService.getProject(projectId);
-			if (project.isPresent()) {
-				projectAssetService.createProjectAsset(project.get(), AssetType.MODEL_CONFIGURATION, modelConfiguration);
-			}
+			project.ifPresent(value ->
+				projectAssetService.createProjectAsset(value, AssetType.MODEL_CONFIGURATION, modelConfiguration)
+			);
 
 			return ResponseEntity.status(HttpStatus.CREATED).body(created);
 		} catch (final IOException e) {
@@ -401,9 +345,9 @@ public class ModelController {
 
 			// add default model configuration to project
 			final Optional<Project> project = projectService.getProject(projectId);
-			if (project.isPresent()) {
-				projectAssetService.createProjectAsset(project.get(), AssetType.MODEL_CONFIGURATION, modelConfiguration);
-			}
+			project.ifPresent(value ->
+				projectAssetService.createProjectAsset(value, AssetType.MODEL_CONFIGURATION, modelConfiguration)
+			);
 
 			return ResponseEntity.status(HttpStatus.CREATED).body(created);
 		} catch (final IOException e) {

@@ -3,21 +3,19 @@ import { createRouter, createWebHistory } from 'vue-router';
 import HomeView from '@/page/tera-home.vue';
 import UnauthorizedView from '@/page/Unauthorized.vue';
 import ProjectView from '@/page/tera-project.vue';
-import WorkflowNodeView from '@/page/WorkflowNode.vue';
+// import WorkflowNodeView from '@/page/WorkflowNode.vue';
 import UserAdminView from '@/components/navbar/tera-useradmin.vue';
 
 // These are test/experiment pages
-import ResponsivePlayground from '@/temp/ResponsivePlayground.vue';
-import SSE from '@/temp/sse.vue';
-import EvaluationScenarios from '@/temp/EvaluationScenarios.vue';
+// import ResponsivePlayground from '@/temp/ResponsivePlayground.vue';
+// import EvaluationScenarios from '@/temp/EvaluationScenarios.vue';
 import AMRPetriTest from '@/temp/AMRPetriTest.vue';
-import PyodideTest from '@/temp/PyodideTest.vue';
-import CustomInputTest from '@/temp/custom-input-test.vue';
-import ClipboardTest from '@/temp/Clipboard.vue';
+// import PyodideTest from '@/temp/PyodideTest.vue';
+// import CustomInputTest from '@/temp/custom-input-test.vue';
+// import ClipboardTest from '@/temp/Clipboard.vue';
 import VegaliteTest from '@/temp/Vegalite.vue';
 import EquationsTest from '@/temp/Equations.vue';
 import SymPyAMRTest from '@/temp/SympyAMR.vue';
-import FunmanDebugger from '@/temp/FunmanDebugger.vue';
 import VuePdf from '@/temp/VuePdf.vue';
 import { RouteName } from './routes';
 
@@ -29,7 +27,7 @@ export enum RoutePath {
 	Unauthorized = '/unauthorized',
 
 	// Playground and experiments, these components are testing-only
-	ResponsivePlaygroundPath = '/responsive-playground',
+	// ResponsivePlaygroundPath = '/responsive-playground',
 	EvaluationScenariosPath = '/evaluation-scenarios'
 }
 
@@ -42,12 +40,12 @@ const routes = [
 		component: ProjectView,
 		props: true
 	},
-	{
-		name: RouteName.WorkflowNode,
-		path: RoutePath.WorkflowNode,
-		component: WorkflowNodeView,
-		props: true
-	},
+	// {
+	// 	name: RouteName.WorkflowNode,
+	// 	path: RoutePath.WorkflowNode,
+	// 	component: WorkflowNodeView,
+	// 	props: true
+	// },
 	{
 		name: RouteName.UserAdmin,
 		path: RoutePath.UserAdmin,
@@ -55,16 +53,14 @@ const routes = [
 	},
 
 	// Playground and experiments, these components are testing-only
-	{ path: RoutePath.ResponsivePlaygroundPath, component: ResponsivePlayground },
-	{ path: RoutePath.EvaluationScenariosPath, component: EvaluationScenarios },
-	{ path: '/sse', component: SSE },
+	// { path: RoutePath.ResponsivePlaygroundPath, component: ResponsivePlayground },
+	// { path: RoutePath.EvaluationScenariosPath, component: EvaluationScenarios },
 	{ path: '/amr-petri-test', component: AMRPetriTest },
-	{ path: '/pyodide-test', component: PyodideTest },
-	{ path: '/custom-input-test', component: CustomInputTest },
-	{ path: '/clipboard', component: ClipboardTest },
+	// { path: '/pyodide-test', component: PyodideTest },
+	// { path: '/custom-input-test', component: CustomInputTest },
+	// { path: '/clipboard', component: ClipboardTest },
 	{ path: '/vegalite', component: VegaliteTest },
 	{ path: '/pdfviewer', component: VuePdf },
-	{ path: '/funman-debugger', component: FunmanDebugger },
 	{ path: '/equations', component: EquationsTest },
 	{ path: '/sympy-to-amr', component: SymPyAMRTest }
 ];
