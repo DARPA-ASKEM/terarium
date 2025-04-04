@@ -1,7 +1,9 @@
 MODEL_INTROSPECTION_PROMPT = """
 You are an expert in global trades, supply chains, and geopolitics.
-Your job is to assess which part of the model can be tweaks and tuned to answer our question below.
 
+Your job is to assess which parts of the model should be tweaked to address the question/concern below.
+
+The model represents mineral trade/export across time amongst different countries: CD, CN, RW, SA, US, ZM
 
 The model is specified in LaTeX as a ODE-system.
 
@@ -97,1641 +99,1173 @@ The tunable paramters, along with their descriptions purposes, are listed here i
 [
         {{
           "id": "IE_CD_US_CoArticles",
-          "name": "IE_CD_US",
           "description": "Trade from CD to US",
-          "value": 0,
-          "conceptReference": "IE_CD_US_CoArticles"
+          "value": 0
         }},
         {{
           "id": "IE_CD_US_CoOre",
-          "name": "IE_CD_US",
           "description": "Trade from CD to US",
-          "value": 0,
-          "conceptReference": "IE_CD_US_CoOre"
+          "value": 0
         }},
         {{
           "id": "IE_CD_US_CoOxides",
-          "name": "IE_CD_US",
           "description": "Trade from CD to US",
-          "value": 0,
-          "conceptReference": "IE_CD_US_CoOxides"
+          "value": 0
         }},
         {{
           "id": "IE_CD_US_CoUnwrought",
-          "name": "IE_CD_US",
           "description": "Trade from CD to US",
-          "value": 0,
-          "conceptReference": "IE_CD_US_CoUnwrought"
+          "value": 0
         }},
         {{
           "id": "IE_US_CD_CoArticles",
-          "name": "IE_US_CD",
           "description": "Trade from US to CD",
-          "value": 0,
-          "conceptReference": "IE_US_CD_CoArticles"
+          "value": 0
         }},
         {{
           "id": "IE_US_CD_CoOre",
-          "name": "IE_US_CD",
           "description": "Trade from US to CD",
-          "value": 0,
-          "conceptReference": "IE_US_CD_CoOre"
+          "value": 0
         }},
         {{
           "id": "IE_US_CD_CoOxides",
-          "name": "IE_US_CD",
           "description": "Trade from US to CD",
-          "value": 0,
-          "conceptReference": "IE_US_CD_CoOxides"
+          "value": 0
         }},
         {{
           "id": "IE_US_CD_CoUnwrought",
-          "name": "IE_US_CD",
           "description": "Trade from US to CD",
-          "value": 0,
-          "conceptReference": "IE_US_CD_CoUnwrought"
+          "value": 0
         }},
         {{
           "id": "IE_US_ZM_CoArticles",
-          "name": "IE_US_ZM",
           "description": "Trade from US to ZM",
-          "value": 0,
-          "conceptReference": "IE_US_ZM_CoArticles"
+          "value": 0
         }},
         {{
           "id": "IE_US_ZM_CoOre",
-          "name": "IE_US_ZM",
           "description": "Trade from US to ZM",
-          "value": 0,
-          "conceptReference": "IE_US_ZM_CoOre"
+          "value": 0
         }},
         {{
           "id": "IE_US_ZM_CoOxides",
-          "name": "IE_US_ZM",
           "description": "Trade from US to ZM",
-          "value": 0,
-          "conceptReference": "IE_US_ZM_CoOxides"
+          "value": 0
         }},
         {{
           "id": "IE_US_ZM_CoUnwrought",
-          "name": "IE_US_ZM",
           "description": "Trade from US to ZM",
-          "value": 0,
-          "conceptReference": "IE_US_ZM_CoUnwrought"
+          "value": 0
         }},
         {{
           "id": "IE_ZM_US_CoArticles",
-          "name": "IE_ZM_US",
           "description": "Trade from ZM to US",
-          "value": 0,
-          "conceptReference": "IE_ZM_US_CoArticles"
+          "value": 0
         }},
         {{
           "id": "IE_ZM_US_CoOre",
-          "name": "IE_ZM_US",
           "description": "Trade from ZM to US",
-          "value": 0,
-          "conceptReference": "IE_ZM_US_CoOre"
+          "value": 0
         }},
         {{
           "id": "IE_ZM_US_CoOxides",
-          "name": "IE_ZM_US",
           "description": "Trade from ZM to US",
-          "value": 0,
-          "conceptReference": "IE_ZM_US_CoOxides"
+          "value": 0
         }},
         {{
           "id": "IE_ZM_US_CoUnwrought",
-          "name": "IE_ZM_US",
           "description": "Trade from ZM to US",
-          "value": 0,
-          "conceptReference": "IE_ZM_US_CoUnwrought"
+          "value": 0
         }},
         {{
           "id": "IE_SA_US_CoArticles",
-          "name": "IE_SA_US",
           "description": "Trade from SA to US",
-          "value": 0,
-          "conceptReference": "IE_SA_US_CoArticles"
+          "value": 0
         }},
         {{
           "id": "IE_SA_US_CoOre",
-          "name": "IE_SA_US",
           "description": "Trade from SA to US",
-          "value": 0,
-          "conceptReference": "IE_SA_US_CoOre"
+          "value": 0
         }},
         {{
           "id": "IE_SA_US_CoOxides",
-          "name": "IE_SA_US",
           "description": "Trade from SA to US",
-          "value": 0,
-          "conceptReference": "IE_SA_US_CoOxides"
+          "value": 0
         }},
         {{
           "id": "IE_SA_US_CoUnwrought",
-          "name": "IE_SA_US",
           "description": "Trade from SA to US",
-          "value": 0,
-          "conceptReference": "IE_SA_US_CoUnwrought"
+          "value": 0
         }},
         {{
           "id": "IE_US_SA_CoArticles",
-          "name": "IE_US_SA",
           "description": "Trade from US to SA",
-          "value": 0,
-          "conceptReference": "IE_US_SA_CoArticles"
+          "value": 0
         }},
         {{
           "id": "IE_US_SA_CoOre",
-          "name": "IE_US_SA",
           "description": "Trade from US to SA",
-          "value": 0,
-          "conceptReference": "IE_US_SA_CoOre"
+          "value": 0
         }},
         {{
           "id": "IE_US_SA_CoOxides",
-          "name": "IE_US_SA",
           "description": "Trade from US to SA",
-          "value": 0,
-          "conceptReference": "IE_US_SA_CoOxides"
+          "value": 0
         }},
         {{
           "id": "IE_US_SA_CoUnwrought",
-          "name": "IE_US_SA",
           "description": "Trade from US to SA",
-          "value": 0,
-          "conceptReference": "IE_US_SA_CoUnwrought"
+          "value": 0
         }},
         {{
           "id": "IE_RW_US_CoArticles",
-          "name": "IE_RW_US",
           "description": "Trade from RW to US",
-          "value": 0,
-          "conceptReference": "IE_RW_US_CoArticles"
+          "value": 0
         }},
         {{
           "id": "IE_RW_US_CoOre",
-          "name": "IE_RW_US",
           "description": "Trade from RW to US",
-          "value": 0,
-          "conceptReference": "IE_RW_US_CoOre"
+          "value": 0
         }},
         {{
           "id": "IE_RW_US_CoOxides",
-          "name": "IE_RW_US",
           "description": "Trade from RW to US",
-          "value": 0,
-          "conceptReference": "IE_RW_US_CoOxides"
+          "value": 0
         }},
         {{
           "id": "IE_RW_US_CoUnwrought",
-          "name": "IE_RW_US",
           "description": "Trade from RW to US",
-          "value": 0,
-          "conceptReference": "IE_RW_US_CoUnwrought"
+          "value": 0
         }},
         {{
           "id": "IE_US_RW_CoArticles",
-          "name": "IE_US_RW",
           "description": "Trade from US to RW",
-          "value": 0,
-          "conceptReference": "IE_US_RW_CoArticles"
+          "value": 0
         }},
         {{
           "id": "IE_US_RW_CoOre",
-          "name": "IE_US_RW",
           "description": "Trade from US to RW",
-          "value": 0,
-          "conceptReference": "IE_US_RW_CoOre"
+          "value": 0
         }},
         {{
           "id": "IE_US_RW_CoOxides",
-          "name": "IE_US_RW",
           "description": "Trade from US to RW",
-          "value": 0,
-          "conceptReference": "IE_US_RW_CoOxides"
+          "value": 0
         }},
         {{
           "id": "IE_US_RW_CoUnwrought",
-          "name": "IE_US_RW",
           "description": "Trade from US to RW",
-          "value": 0,
-          "conceptReference": "IE_US_RW_CoUnwrought"
+          "value": 0
         }},
         {{
           "id": "IE_CN_US_CoArticles",
-          "name": "IE_CN_US",
           "description": "Trade from CN to US",
-          "value": 0,
-          "conceptReference": "IE_CN_US_CoArticles"
+          "value": 0
         }},
         {{
           "id": "IE_CN_US_CoOre",
-          "name": "IE_CN_US",
           "description": "Trade from CN to US",
-          "value": 0,
-          "conceptReference": "IE_CN_US_CoOre"
+          "value": 0
         }},
         {{
           "id": "IE_CN_US_CoOxides",
-          "name": "IE_CN_US",
           "description": "Trade from CN to US",
-          "value": 0,
-          "conceptReference": "IE_CN_US_CoOxides"
+          "value": 0
         }},
         {{
           "id": "IE_CN_US_CoUnwrought",
-          "name": "IE_CN_US",
           "description": "Trade from CN to US",
-          "value": 0,
-          "conceptReference": "IE_CN_US_CoUnwrought"
+          "value": 0
         }},
         {{
           "id": "IE_US_CN_CoArticles",
-          "name": "IE_US_CN",
           "description": "Trade from US to CN",
-          "value": 0,
-          "conceptReference": "IE_US_CN_CoArticles"
+          "value": 0
         }},
         {{
           "id": "IE_US_CN_CoOre",
-          "name": "IE_US_CN",
           "description": "Trade from US to CN",
-          "value": 0,
-          "conceptReference": "IE_US_CN_CoOre"
+          "value": 0
         }},
         {{
           "id": "IE_US_CN_CoOxides",
-          "name": "IE_US_CN",
           "description": "Trade from US to CN",
-          "value": 0,
-          "conceptReference": "IE_US_CN_CoOxides"
+          "value": 0
         }},
         {{
           "id": "IE_US_CN_CoUnwrought",
-          "name": "IE_US_CN",
           "description": "Trade from US to CN",
-          "value": 0,
-          "conceptReference": "IE_US_CN_CoUnwrought"
+          "value": 0
         }},
         {{
           "id": "IE_CD_ZM_CoArticles",
-          "name": "IE_CD_ZM",
           "description": "Trade from CD to ZM",
-          "value": 0,
-          "conceptReference": "IE_CD_ZM_CoArticles"
+          "value": 0
         }},
         {{
           "id": "IE_CD_ZM_CoOre",
-          "name": "IE_CD_ZM",
           "description": "Trade from CD to ZM",
-          "value": 0,
-          "conceptReference": "IE_CD_ZM_CoOre"
+          "value": 0
         }},
         {{
           "id": "IE_CD_ZM_CoOxides",
-          "name": "IE_CD_ZM",
           "description": "Trade from CD to ZM",
-          "value": 0,
-          "conceptReference": "IE_CD_ZM_CoOxides"
+          "value": 0
         }},
         {{
           "id": "IE_CD_ZM_CoUnwrought",
-          "name": "IE_CD_ZM",
           "description": "Trade from CD to ZM",
-          "value": 0,
-          "conceptReference": "IE_CD_ZM_CoUnwrought"
+          "value": 0
         }},
         {{
           "id": "IE_ZM_CD_CoArticles",
-          "name": "IE_ZM_CD",
           "description": "Trade from ZM to CD",
-          "value": 0,
-          "conceptReference": "IE_ZM_CD_CoArticles"
+          "value": 0
         }},
         {{
           "id": "IE_ZM_CD_CoOre",
-          "name": "IE_ZM_CD",
           "description": "Trade from ZM to CD",
-          "value": 0,
-          "conceptReference": "IE_ZM_CD_CoOre"
+          "value": 0
         }},
         {{
           "id": "IE_ZM_CD_CoOxides",
-          "name": "IE_ZM_CD",
           "description": "Trade from ZM to CD",
-          "value": 0,
-          "conceptReference": "IE_ZM_CD_CoOxides"
+          "value": 0
         }},
         {{
           "id": "IE_ZM_CD_CoUnwrought",
-          "name": "IE_ZM_CD",
           "description": "Trade from ZM to CD",
-          "value": 0,
-          "conceptReference": "IE_ZM_CD_CoUnwrought"
+          "value": 0
         }},
         {{
           "id": "IE_CD_SA_CoArticles",
-          "name": "IE_CD_SA",
           "description": "Trade from CD to SA",
-          "value": 0,
-          "conceptReference": "IE_CD_SA_CoArticles"
+          "value": 0
         }},
         {{
           "id": "IE_CD_SA_CoOre",
-          "name": "IE_CD_SA",
           "description": "Trade from CD to SA",
-          "value": 0,
-          "conceptReference": "IE_CD_SA_CoOre"
+          "value": 0
         }},
         {{
           "id": "IE_CD_SA_CoOxides",
-          "name": "IE_CD_SA",
           "description": "Trade from CD to SA",
-          "value": 0,
-          "conceptReference": "IE_CD_SA_CoOxides"
+          "value": 0
         }},
         {{
           "id": "IE_CD_SA_CoUnwrought",
-          "name": "IE_CD_SA",
           "description": "Trade from CD to SA",
-          "value": 0,
-          "conceptReference": "IE_CD_SA_CoUnwrought"
+          "value": 0
         }},
         {{
           "id": "IE_SA_CD_CoArticles",
-          "name": "IE_SA_CD",
           "description": "Trade from SA to CD",
-          "value": 0,
-          "conceptReference": "IE_SA_CD_CoArticles"
+          "value": 0
         }},
         {{
           "id": "IE_SA_CD_CoOre",
-          "name": "IE_SA_CD",
           "description": "Trade from SA to CD",
-          "value": 0,
-          "conceptReference": "IE_SA_CD_CoOre"
+          "value": 0
         }},
         {{
           "id": "IE_SA_CD_CoOxides",
-          "name": "IE_SA_CD",
           "description": "Trade from SA to CD",
-          "value": 0,
-          "conceptReference": "IE_SA_CD_CoOxides"
+          "value": 0
         }},
         {{
           "id": "IE_SA_CD_CoUnwrought",
-          "name": "IE_SA_CD",
           "description": "Trade from SA to CD",
-          "value": 0,
-          "conceptReference": "IE_SA_CD_CoUnwrought"
+          "value": 0
         }},
         {{
           "id": "IE_CD_RW_CoArticles",
-          "name": "IE_CD_RW",
           "description": "Trade from CD to RW",
-          "value": 0,
-          "conceptReference": "IE_CD_RW_CoArticles"
+          "value": 0
         }},
         {{
           "id": "IE_CD_RW_CoOre",
-          "name": "IE_CD_RW",
           "description": "Trade from CD to RW",
-          "value": 0,
-          "conceptReference": "IE_CD_RW_CoOre"
+          "value": 0
         }},
         {{
           "id": "IE_CD_RW_CoOxides",
-          "name": "IE_CD_RW",
           "description": "Trade from CD to RW",
-          "value": 0,
-          "conceptReference": "IE_CD_RW_CoOxides"
+          "value": 0
         }},
         {{
           "id": "IE_CD_RW_CoUnwrought",
-          "name": "IE_CD_RW",
           "description": "Trade from CD to RW",
-          "value": 0,
-          "conceptReference": "IE_CD_RW_CoUnwrought"
+          "value": 0
         }},
         {{
           "id": "IE_RW_CD_CoArticles",
-          "name": "IE_RW_CD",
           "description": "Trade from RW to CD",
-          "value": 0,
-          "conceptReference": "IE_RW_CD_CoArticles"
+          "value": 0
         }},
         {{
           "id": "IE_RW_CD_CoOre",
-          "name": "IE_RW_CD",
           "description": "Trade from RW to CD",
-          "value": 0,
-          "conceptReference": "IE_RW_CD_CoOre"
+          "value": 0
         }},
         {{
           "id": "IE_RW_CD_CoOxides",
-          "name": "IE_RW_CD",
           "description": "Trade from RW to CD",
-          "value": 0,
-          "conceptReference": "IE_RW_CD_CoOxides"
+          "value": 0
         }},
         {{
           "id": "IE_RW_CD_CoUnwrought",
-          "name": "IE_RW_CD",
           "description": "Trade from RW to CD",
-          "value": 0,
-          "conceptReference": "IE_RW_CD_CoUnwrought"
+          "value": 0
         }},
         {{
           "id": "IE_CD_CN_CoArticles",
-          "name": "IE_CD_CN",
           "description": "Trade from CD to CN",
-          "value": 0,
-          "conceptReference": "IE_CD_CN_CoArticles"
+          "value": 0
         }},
         {{
           "id": "IE_CD_CN_CoOre",
-          "name": "IE_CD_CN",
           "description": "Trade from CD to CN",
-          "value": 0,
-          "conceptReference": "IE_CD_CN_CoOre"
+          "value": 0
         }},
         {{
           "id": "IE_CD_CN_CoOxides",
-          "name": "IE_CD_CN",
           "description": "Trade from CD to CN",
-          "value": 0,
-          "conceptReference": "IE_CD_CN_CoOxides"
+          "value": 0
         }},
         {{
           "id": "IE_CD_CN_CoUnwrought",
-          "name": "IE_CD_CN",
           "description": "Trade from CD to CN",
-          "value": 0,
-          "conceptReference": "IE_CD_CN_CoUnwrought"
+          "value": 0
         }},
         {{
           "id": "IE_CN_CD_CoArticles",
-          "name": "IE_CN_CD",
           "description": "Trade from CN to CD",
-          "value": 0,
-          "conceptReference": "IE_CN_CD_CoArticles"
+          "value": 0
         }},
         {{
           "id": "IE_CN_CD_CoOre",
-          "name": "IE_CN_CD",
           "description": "Trade from CN to CD",
-          "value": 0,
-          "conceptReference": "IE_CN_CD_CoOre"
+          "value": 0
         }},
         {{
           "id": "IE_CN_CD_CoOxides",
-          "name": "IE_CN_CD",
           "description": "Trade from CN to CD",
-          "value": 0,
-          "conceptReference": "IE_CN_CD_CoOxides"
+          "value": 0
         }},
         {{
           "id": "IE_CN_CD_CoUnwrought",
-          "name": "IE_CN_CD",
           "description": "Trade from CN to CD",
-          "value": 0,
-          "conceptReference": "IE_CN_CD_CoUnwrought"
+          "value": 0
         }},
         {{
           "id": "IE_SA_ZM_CoArticles",
-          "name": "IE_SA_ZM",
           "description": "Trade from SA to ZM",
-          "value": 0,
-          "conceptReference": "IE_SA_ZM_CoArticles"
+          "value": 0
         }},
         {{
           "id": "IE_SA_ZM_CoOre",
-          "name": "IE_SA_ZM",
           "description": "Trade from SA to ZM",
-          "value": 0,
-          "conceptReference": "IE_SA_ZM_CoOre"
+          "value": 0
         }},
         {{
           "id": "IE_SA_ZM_CoOxides",
-          "name": "IE_SA_ZM",
           "description": "Trade from SA to ZM",
-          "value": 0,
-          "conceptReference": "IE_SA_ZM_CoOxides"
+          "value": 0
         }},
         {{
           "id": "IE_SA_ZM_CoUnwrought",
-          "name": "IE_SA_ZM",
           "description": "Trade from SA to ZM",
-          "value": 0,
-          "conceptReference": "IE_SA_ZM_CoUnwrought"
+          "value": 0
         }},
         {{
           "id": "IE_ZM_SA_CoArticles",
-          "name": "IE_ZM_SA",
           "description": "Trade from ZM to SA",
-          "value": 0,
-          "conceptReference": "IE_ZM_SA_CoArticles"
+          "value": 0
         }},
         {{
           "id": "IE_ZM_SA_CoOre",
-          "name": "IE_ZM_SA",
           "description": "Trade from ZM to SA",
-          "value": 0,
-          "conceptReference": "IE_ZM_SA_CoOre"
+          "value": 0
         }},
         {{
           "id": "IE_ZM_SA_CoOxides",
-          "name": "IE_ZM_SA",
           "description": "Trade from ZM to SA",
-          "value": 0,
-          "conceptReference": "IE_ZM_SA_CoOxides"
+          "value": 0
         }},
         {{
           "id": "IE_ZM_SA_CoUnwrought",
-          "name": "IE_ZM_SA",
           "description": "Trade from ZM to SA",
-          "value": 0,
-          "conceptReference": "IE_ZM_SA_CoUnwrought"
+          "value": 0
         }},
         {{
           "id": "IE_RW_ZM_CoArticles",
-          "name": "IE_RW_ZM",
           "description": "Trade from RW to ZM",
-          "value": 0,
-          "conceptReference": "IE_RW_ZM_CoArticles"
+          "value": 0
         }},
         {{
           "id": "IE_RW_ZM_CoOre",
-          "name": "IE_RW_ZM",
           "description": "Trade from RW to ZM",
-          "value": 0,
-          "conceptReference": "IE_RW_ZM_CoOre"
+          "value": 0
         }},
         {{
           "id": "IE_RW_ZM_CoOxides",
-          "name": "IE_RW_ZM",
           "description": "Trade from RW to ZM",
-          "value": 0,
-          "conceptReference": "IE_RW_ZM_CoOxides"
+          "value": 0
         }},
         {{
           "id": "IE_RW_ZM_CoUnwrought",
-          "name": "IE_RW_ZM",
           "description": "Trade from RW to ZM",
-          "value": 0,
-          "conceptReference": "IE_RW_ZM_CoUnwrought"
+          "value": 0
         }},
         {{
           "id": "IE_ZM_RW_CoArticles",
-          "name": "IE_ZM_RW",
           "description": "Trade from ZM to RW",
-          "value": 0,
-          "conceptReference": "IE_ZM_RW_CoArticles"
+          "value": 0
         }},
         {{
           "id": "IE_ZM_RW_CoOre",
-          "name": "IE_ZM_RW",
           "description": "Trade from ZM to RW",
-          "value": 0,
-          "conceptReference": "IE_ZM_RW_CoOre"
+          "value": 0
         }},
         {{
           "id": "IE_ZM_RW_CoOxides",
-          "name": "IE_ZM_RW",
           "description": "Trade from ZM to RW",
-          "value": 0,
-          "conceptReference": "IE_ZM_RW_CoOxides"
+          "value": 0
         }},
         {{
           "id": "IE_ZM_RW_CoUnwrought",
-          "name": "IE_ZM_RW",
           "description": "Trade from ZM to RW",
-          "value": 0,
-          "conceptReference": "IE_ZM_RW_CoUnwrought"
+          "value": 0
         }},
         {{
           "id": "IE_CN_ZM_CoArticles",
-          "name": "IE_CN_ZM",
           "description": "Trade from CN to ZM",
-          "value": 0,
-          "conceptReference": "IE_CN_ZM_CoArticles"
+          "value": 0
         }},
         {{
           "id": "IE_CN_ZM_CoOre",
-          "name": "IE_CN_ZM",
           "description": "Trade from CN to ZM",
-          "value": 0,
-          "conceptReference": "IE_CN_ZM_CoOre"
+          "value": 0
         }},
         {{
           "id": "IE_CN_ZM_CoOxides",
-          "name": "IE_CN_ZM",
           "description": "Trade from CN to ZM",
-          "value": 0,
-          "conceptReference": "IE_CN_ZM_CoOxides"
+          "value": 0
         }},
         {{
           "id": "IE_CN_ZM_CoUnwrought",
-          "name": "IE_CN_ZM",
           "description": "Trade from CN to ZM",
-          "value": 0,
-          "conceptReference": "IE_CN_ZM_CoUnwrought"
+          "value": 0
         }},
         {{
           "id": "IE_ZM_CN_CoArticles",
-          "name": "IE_ZM_CN",
           "description": "Trade from ZM to CN",
-          "value": 0,
-          "conceptReference": "IE_ZM_CN_CoArticles"
+          "value": 0
         }},
         {{
           "id": "IE_ZM_CN_CoOre",
-          "name": "IE_ZM_CN",
           "description": "Trade from ZM to CN",
-          "value": 0,
-          "conceptReference": "IE_ZM_CN_CoOre"
+          "value": 0
         }},
         {{
           "id": "IE_ZM_CN_CoOxides",
-          "name": "IE_ZM_CN",
           "description": "Trade from ZM to CN",
-          "value": 0,
-          "conceptReference": "IE_ZM_CN_CoOxides"
+          "value": 0
         }},
         {{
           "id": "IE_ZM_CN_CoUnwrought",
-          "name": "IE_ZM_CN",
           "description": "Trade from ZM to CN",
-          "value": 0,
-          "conceptReference": "IE_ZM_CN_CoUnwrought"
+          "value": 0
         }},
         {{
           "id": "IE_RW_SA_CoArticles",
-          "name": "IE_RW_SA",
           "description": "Trade from RW to SA",
-          "value": 0,
-          "conceptReference": "IE_RW_SA_CoArticles"
+          "value": 0
         }},
         {{
           "id": "IE_RW_SA_CoOre",
-          "name": "IE_RW_SA",
           "description": "Trade from RW to SA",
-          "value": 0,
-          "conceptReference": "IE_RW_SA_CoOre"
+          "value": 0
         }},
         {{
           "id": "IE_RW_SA_CoOxides",
-          "name": "IE_RW_SA",
           "description": "Trade from RW to SA",
-          "value": 0,
-          "conceptReference": "IE_RW_SA_CoOxides"
+          "value": 0
         }},
         {{
           "id": "IE_RW_SA_CoUnwrought",
-          "name": "IE_RW_SA",
           "description": "Trade from RW to SA",
-          "value": 0,
-          "conceptReference": "IE_RW_SA_CoUnwrought"
+          "value": 0
         }},
         {{
           "id": "IE_SA_RW_CoArticles",
-          "name": "IE_SA_RW",
           "description": "Trade from SA to RW",
-          "value": 0,
-          "conceptReference": "IE_SA_RW_CoArticles"
+          "value": 0
         }},
         {{
           "id": "IE_SA_RW_CoOre",
-          "name": "IE_SA_RW",
           "description": "Trade from SA to RW",
-          "value": 0,
-          "conceptReference": "IE_SA_RW_CoOre"
+          "value": 0
         }},
         {{
           "id": "IE_SA_RW_CoOxides",
-          "name": "IE_SA_RW",
           "description": "Trade from SA to RW",
-          "value": 0,
-          "conceptReference": "IE_SA_RW_CoOxides"
+          "value": 0
         }},
         {{
           "id": "IE_SA_RW_CoUnwrought",
-          "name": "IE_SA_RW",
           "description": "Trade from SA to RW",
-          "value": 0,
-          "conceptReference": "IE_SA_RW_CoUnwrought"
+          "value": 0
         }},
         {{
           "id": "IE_CN_SA_CoArticles",
-          "name": "IE_CN_SA",
           "description": "Trade from CN to SA",
-          "value": 0,
-          "conceptReference": "IE_CN_SA_CoArticles"
+          "value": 0
         }},
         {{
           "id": "IE_CN_SA_CoOre",
-          "name": "IE_CN_SA",
           "description": "Trade from CN to SA",
-          "value": 0,
-          "conceptReference": "IE_CN_SA_CoOre"
+          "value": 0
         }},
         {{
           "id": "IE_CN_SA_CoOxides",
-          "name": "IE_CN_SA",
           "description": "Trade from CN to SA",
-          "value": 0,
-          "conceptReference": "IE_CN_SA_CoOxides"
+          "value": 0
         }},
         {{
           "id": "IE_CN_SA_CoUnwrought",
-          "name": "IE_CN_SA",
           "description": "Trade from CN to SA",
-          "value": 0,
-          "conceptReference": "IE_CN_SA_CoUnwrought"
+          "value": 0
         }},
         {{
           "id": "IE_SA_CN_CoArticles",
-          "name": "IE_SA_CN",
           "description": "Trade from SA to CN",
-          "value": 0,
-          "conceptReference": "IE_SA_CN_CoArticles"
+          "value": 0
         }},
         {{
           "id": "IE_SA_CN_CoOre",
-          "name": "IE_SA_CN",
           "description": "Trade from SA to CN",
-          "value": 0,
-          "conceptReference": "IE_SA_CN_CoOre"
+          "value": 0
         }},
         {{
           "id": "IE_SA_CN_CoOxides",
-          "name": "IE_SA_CN",
           "description": "Trade from SA to CN",
-          "value": 0,
-          "conceptReference": "IE_SA_CN_CoOxides"
+          "value": 0
         }},
         {{
           "id": "IE_SA_CN_CoUnwrought",
-          "name": "IE_SA_CN",
           "description": "Trade from SA to CN",
-          "value": 0,
-          "conceptReference": "IE_SA_CN_CoUnwrought"
+          "value": 0
         }},
         {{
           "id": "IE_CN_RW_CoArticles",
-          "name": "IE_CN_RW",
           "description": "Trade from CN to RW",
-          "value": 0,
-          "conceptReference": "IE_CN_RW_CoArticles"
+          "value": 0
         }},
         {{
           "id": "IE_CN_RW_CoOre",
-          "name": "IE_CN_RW",
           "description": "Trade from CN to RW",
-          "value": 0,
-          "conceptReference": "IE_CN_RW_CoOre"
+          "value": 0
         }},
         {{
           "id": "IE_CN_RW_CoOxides",
-          "name": "IE_CN_RW",
           "description": "Trade from CN to RW",
-          "value": 0,
-          "conceptReference": "IE_CN_RW_CoOxides"
+          "value": 0
         }},
         {{
           "id": "IE_CN_RW_CoUnwrought",
-          "name": "IE_CN_RW",
           "description": "Trade from CN to RW",
-          "value": 0,
-          "conceptReference": "IE_CN_RW_CoUnwrought"
+          "value": 0
         }},
         {{
           "id": "IE_RW_CN_CoArticles",
-          "name": "IE_RW_CN",
           "description": "Trade from RW to CN",
-          "value": 0,
-          "conceptReference": "IE_RW_CN_CoArticles"
+          "value": 0
         }},
         {{
           "id": "IE_RW_CN_CoOre",
-          "name": "IE_RW_CN",
           "description": "Trade from RW to CN",
-          "value": 0,
-          "conceptReference": "IE_RW_CN_CoOre"
+          "value": 0
         }},
         {{
           "id": "IE_RW_CN_CoOxides",
-          "name": "IE_RW_CN",
           "description": "Trade from RW to CN",
-          "value": 0,
-          "conceptReference": "IE_RW_CN_CoOxides"
+          "value": 0
         }},
         {{
           "id": "IE_RW_CN_CoUnwrought",
-          "name": "IE_RW_CN",
           "description": "Trade from RW to CN",
-          "value": 0,
-          "conceptReference": "IE_RW_CN_CoUnwrought"
+          "value": 0
         }},
         {{
           "id": "FWI_CD",
-          "name": "FWI_CN(t)",
           "description": "Freedom House's Freedom in the World index of a country US CD ZM SA RW CN.",
-          "value": 1,
-          "conceptReference": "FWI_CD"
+          "value": 1
         }},
         {{
           "id": "FWI_US",
-          "name": "FWI_CN(t)",
           "description": "Freedom House's Freedom in the World index of a country US CD ZM SA RW CN.",
-          "value": 1,
-          "conceptReference": "FWI_US"
+          "value": 1
         }},
         {{
           "id": "FWI_ZM",
-          "name": "FWI_CN(t)",
           "description": "Freedom House's Freedom in the World index of a country US CD ZM SA RW CN.",
-          "value": 1,
-          "conceptReference": "FWI_ZM"
+          "value": 1
         }},
         {{
           "id": "FWI_SA",
-          "name": "FWI_CN(t)",
           "description": "Freedom House's Freedom in the World index of a country US CD ZM SA RW CN.",
-          "value": 1,
-          "conceptReference": "FWI_SA"
+          "value": 1
         }},
         {{
           "id": "FWI_RW",
-          "name": "FWI_CN(t)",
           "description": "Freedom House's Freedom in the World index of a country US CD ZM SA RW CN.",
-          "value": 1,
-          "conceptReference": "FWI_RW"
+          "value": 1
         }},
         {{
           "id": "FWI_CN",
-          "name": "FWI_CN(t)",
           "description": "Freedom House's Freedom in the World index of a country US CD ZM SA RW CN.",
-          "value": 1,
-          "conceptReference": "FWI_CN"
+          "value": 1
         }},
         {{
           "id": "PPI_US",
-          "name": "PPI_CN(t)",
           "description": "Policy perception index of a country US CD ZM SA RW CN.",
-          "value": 1,
-          "conceptReference": "PPI_US"
+          "value": 1
         }},
         {{
           "id": "PPI_CD",
-          "name": "PPI_CN(t)",
           "description": "Policy perception index of a country US CD ZM SA RW CN.",
-          "value": 1,
-          "conceptReference": "PPI_CD"
+          "value": 1
         }},
         {{
           "id": "PPI_ZM",
-          "name": "PPI_CN(t)",
           "description": "Policy perception index of a country US CD ZM SA RW CN.",
-          "value": 1,
-          "conceptReference": "PPI_ZM"
+          "value": 1
         }},
         {{
           "id": "PPI_SA",
-          "name": "PPI_CN(t)",
           "description": "Policy perception index of a country US CD ZM SA RW CN.",
-          "value": 1,
-          "conceptReference": "PPI_SA"
+          "value": 1
         }},
         {{
           "id": "PPI_RW",
-          "name": "PPI_CN(t)",
           "description": "Policy perception index of a country US CD ZM SA RW CN.",
-          "value": 1,
-          "conceptReference": "PPI_RW"
+          "value": 1
         }},
         {{
           "id": "PPI_CN",
-          "name": "PPI_CN(t)",
           "description": "Policy perception index of a country US CD ZM SA RW CN.",
-          "value": 1,
-          "conceptReference": "PPI_CN"
+          "value": 1
         }},
         {{
           "id": "PP_CD_CoArticles",
-          "name": "PP",
           "description": "Primary production of a commodity in a country.",
-          "value": 1,
-          "conceptReference": "PP_CD_CoArticles"
+          "value": 1
         }},
         {{
           "id": "PP_CN_CoArticles",
-          "name": "PP",
           "description": "Primary production of a commodity in a country.",
-          "value": 1,
-          "conceptReference": "PP_CN_CoArticles"
+          "value": 1
         }},
         {{
           "id": "PP_RW_CoArticles",
-          "name": "PP",
           "description": "Primary production of a commodity in a country.",
-          "value": 1,
-          "conceptReference": "PP_RW_CoArticles"
+          "value": 1
         }},
         {{
           "id": "PP_SA_CoArticles",
-          "name": "PP",
           "description": "Primary production of a commodity in a country.",
-          "value": 1,
-          "conceptReference": "PP_SA_CoArticles"
+          "value": 1
         }},
         {{
           "id": "PP_US_CoArticles",
-          "name": "PP",
           "description": "Primary production of a commodity in a country.",
-          "value": 1,
-          "conceptReference": "PP_US_CoArticles"
+          "value": 1
         }},
         {{
           "id": "PP_ZM_CoArticles",
-          "name": "PP",
           "description": "Primary production of a commodity in a country.",
-          "value": 1,
-          "conceptReference": "PP_ZM_CoArticles"
+          "value": 1
         }},
         {{
           "id": "SP_CD_CoArticles",
-          "name": "SP",
           "description": "Secondary production of a commodity in a country.",
-          "value": 1,
-          "conceptReference": "SP_CD_CoArticles"
+          "value": 1
         }},
         {{
           "id": "SP_CN_CoArticles",
-          "name": "SP",
           "description": "Secondary production of a commodity in a country.",
-          "value": 1,
-          "conceptReference": "SP_CN_CoArticles"
+          "value": 1
         }},
         {{
           "id": "SP_RW_CoArticles",
-          "name": "SP",
           "description": "Secondary production of a commodity in a country.",
-          "value": 1,
-          "conceptReference": "SP_RW_CoArticles"
+          "value": 1
         }},
         {{
           "id": "SP_SA_CoArticles",
-          "name": "SP",
           "description": "Secondary production of a commodity in a country.",
-          "value": 1,
-          "conceptReference": "SP_SA_CoArticles"
+          "value": 1
         }},
         {{
           "id": "SP_US_CoArticles",
-          "name": "SP",
           "description": "Secondary production of a commodity in a country.",
-          "value": 1,
-          "conceptReference": "SP_US_CoArticles"
+          "value": 1
         }},
         {{
           "id": "SP_ZM_CoArticles",
-          "name": "SP",
           "description": "Secondary production of a commodity in a country.",
-          "value": 1,
-          "conceptReference": "SP_ZM_CoArticles"
+          "value": 1
         }},
         {{
           "id": "PP_US_CoOre",
-          "name": "PP",
           "description": "Primary production of a commodity in a country.",
-          "value": 1,
-          "conceptReference": "PP_US_CoOre"
+          "value": 1
         }},
         {{
           "id": "SP_US_CoOre",
-          "name": "SP",
           "description": "Secondary production of a commodity in a country.",
-          "value": 1,
-          "conceptReference": "SP_US_CoOre"
+          "value": 1
         }},
         {{
           "id": "PP_US_CoOxides",
-          "name": "PP",
           "description": "Primary production of a commodity in a country.",
-          "value": 1,
-          "conceptReference": "PP_US_CoOxides"
+          "value": 1
         }},
         {{
           "id": "SP_US_CoOxides",
-          "name": "SP",
           "description": "Secondary production of a commodity in a country.",
-          "value": 1,
-          "conceptReference": "SP_US_CoOxides"
+          "value": 1
         }},
         {{
           "id": "PP_US_CoUnwrought",
-          "name": "PP",
           "description": "Primary production of a commodity in a country.",
-          "value": 1,
-          "conceptReference": "PP_US_CoUnwrought"
+          "value": 1
         }},
         {{
           "id": "SP_US_CoUnwrought",
-          "name": "SP",
           "description": "Secondary production of a commodity in a country.",
-          "value": 1,
-          "conceptReference": "SP_US_CoUnwrought"
+          "value": 1
         }},
         {{
           "id": "PP_CD_CoOre",
-          "name": "PP",
           "description": "Primary production of a commodity in a country.",
-          "value": 1,
-          "conceptReference": "PP_CD_CoOre"
+          "value": 1
         }},
         {{
           "id": "SP_CD_CoOre",
-          "name": "SP",
           "description": "Secondary production of a commodity in a country.",
-          "value": 1,
-          "conceptReference": "SP_CD_CoOre"
+          "value": 1
         }},
         {{
           "id": "PP_CD_CoOxides",
-          "name": "PP",
           "description": "Primary production of a commodity in a country.",
-          "value": 1,
-          "conceptReference": "PP_CD_CoOxides"
+          "value": 1
         }},
         {{
           "id": "SP_CD_CoOxides",
-          "name": "SP",
           "description": "Secondary production of a commodity in a country.",
-          "value": 1,
-          "conceptReference": "SP_CD_CoOxides"
+          "value": 1
         }},
         {{
           "id": "PP_CD_CoUnwrought",
-          "name": "PP",
           "description": "Primary production of a commodity in a country.",
-          "value": 1,
-          "conceptReference": "PP_CD_CoUnwrought"
+          "value": 1
         }},
         {{
           "id": "SP_CD_CoUnwrought",
-          "name": "SP",
           "description": "Secondary production of a commodity in a country.",
-          "value": 1,
-          "conceptReference": "SP_CD_CoUnwrought"
+          "value": 1
         }},
         {{
           "id": "PP_ZM_CoOre",
-          "name": "PP",
           "description": "Primary production of a commodity in a country.",
-          "value": 1,
-          "conceptReference": "PP_ZM_CoOre"
+          "value": 1
         }},
         {{
           "id": "SP_ZM_CoOre",
-          "name": "SP",
           "description": "Secondary production of a commodity in a country.",
-          "value": 1,
-          "conceptReference": "SP_ZM_CoOre"
+          "value": 1
         }},
         {{
           "id": "PP_ZM_CoOxides",
-          "name": "PP",
           "description": "Primary production of a commodity in a country.",
-          "value": 1,
-          "conceptReference": "PP_ZM_CoOxides"
+          "value": 1
         }},
         {{
           "id": "SP_ZM_CoOxides",
-          "name": "SP",
           "description": "Secondary production of a commodity in a country.",
-          "value": 1,
-          "conceptReference": "SP_ZM_CoOxides"
+          "value": 1
         }},
         {{
           "id": "PP_ZM_CoUnwrought",
-          "name": "PP",
           "description": "Primary production of a commodity in a country.",
-          "value": 1,
-          "conceptReference": "PP_ZM_CoUnwrought"
+          "value": 1
         }},
         {{
           "id": "SP_ZM_CoUnwrought",
-          "name": "SP",
           "description": "Secondary production of a commodity in a country.",
-          "value": 1,
-          "conceptReference": "SP_ZM_CoUnwrought"
+          "value": 1
         }},
         {{
           "id": "PP_SA_CoOre",
-          "name": "PP",
           "description": "Primary production of a commodity in a country.",
-          "value": 1,
-          "conceptReference": "PP_SA_CoOre"
+          "value": 1
         }},
         {{
           "id": "SP_SA_CoOre",
-          "name": "SP",
           "description": "Secondary production of a commodity in a country.",
-          "value": 1,
-          "conceptReference": "SP_SA_CoOre"
+          "value": 1
         }},
         {{
           "id": "PP_SA_CoOxides",
-          "name": "PP",
           "description": "Primary production of a commodity in a country.",
-          "value": 1,
-          "conceptReference": "PP_SA_CoOxides"
+          "value": 1
         }},
         {{
           "id": "SP_SA_CoOxides",
-          "name": "SP",
           "description": "Secondary production of a commodity in a country.",
-          "value": 1,
-          "conceptReference": "SP_SA_CoOxides"
+          "value": 1
         }},
         {{
           "id": "PP_SA_CoUnwrought",
-          "name": "PP",
           "description": "Primary production of a commodity in a country.",
-          "value": 1,
-          "conceptReference": "PP_SA_CoUnwrought"
+          "value": 1
         }},
         {{
           "id": "SP_SA_CoUnwrought",
-          "name": "SP",
           "description": "Secondary production of a commodity in a country.",
-          "value": 1,
-          "conceptReference": "SP_SA_CoUnwrought"
+          "value": 1
         }},
         {{
           "id": "PP_RW_CoOre",
-          "name": "PP",
           "description": "Primary production of a commodity in a country.",
-          "value": 1,
-          "conceptReference": "PP_RW_CoOre"
+          "value": 1
         }},
         {{
           "id": "SP_RW_CoOre",
-          "name": "SP",
           "description": "Secondary production of a commodity in a country.",
-          "value": 1,
-          "conceptReference": "SP_RW_CoOre"
+          "value": 1
         }},
         {{
           "id": "PP_RW_CoOxides",
-          "name": "PP",
           "description": "Primary production of a commodity in a country.",
-          "value": 1,
-          "conceptReference": "PP_RW_CoOxides"
+          "value": 1
         }},
         {{
           "id": "SP_RW_CoOxides",
-          "name": "SP",
           "description": "Secondary production of a commodity in a country.",
-          "value": 1,
-          "conceptReference": "SP_RW_CoOxides"
+          "value": 1
         }},
         {{
           "id": "PP_RW_CoUnwrought",
-          "name": "PP",
           "description": "Primary production of a commodity in a country.",
-          "value": 1,
-          "conceptReference": "PP_RW_CoUnwrought"
+          "value": 1
         }},
         {{
           "id": "SP_RW_CoUnwrought",
-          "name": "SP",
           "description": "Secondary production of a commodity in a country.",
-          "value": 1,
-          "conceptReference": "SP_RW_CoUnwrought"
+          "value": 1
         }},
         {{
           "id": "PP_CN_CoOre",
-          "name": "PP",
           "description": "Primary production of a commodity in a country.",
-          "value": 1,
-          "conceptReference": "PP_CN_CoOre"
+          "value": 1
         }},
         {{
           "id": "SP_CN_CoOre",
-          "name": "SP",
           "description": "Secondary production of a commodity in a country.",
-          "value": 1,
-          "conceptReference": "SP_CN_CoOre"
+          "value": 1
         }},
         {{
           "id": "PP_CN_CoOxides",
-          "name": "PP",
           "description": "Primary production of a commodity in a country.",
-          "value": 1,
-          "conceptReference": "PP_CN_CoOxides"
+          "value": 1
         }},
         {{
           "id": "SP_CN_CoOxides",
-          "name": "SP",
           "description": "Secondary production of a commodity in a country.",
-          "value": 1,
-          "conceptReference": "SP_CN_CoOxides"
+          "value": 1
         }},
         {{
           "id": "PP_CN_CoUnwrought",
-          "name": "PP",
           "description": "Primary production of a commodity in a country.",
-          "value": 1,
-          "conceptReference": "PP_CN_CoUnwrought"
+          "value": 1
         }},
         {{
           "id": "SP_CN_CoUnwrought",
-          "name": "SP",
           "description": "Secondary production of a commodity in a country.",
-          "value": 1,
-          "conceptReference": "SP_CN_CoUnwrought"
+          "value": 1
         }},
         {{
           "id": "EXP_magneticalloys_CoOre",
-          "name": "EXP_magneticalloys_CoArticles(t)",
           "description": "Expenditure of an industry on a commodity in the US.",
-          "value": 1,
-          "conceptReference": "EXP_magneticalloys_CoOre"
+          "value": 1
         }},
         {{
           "id": "EXP_steels_CoOre",
-          "name": "EXP_magneticalloys_CoArticles(t)",
           "description": "Expenditure of an industry on a commodity in the US.",
-          "value": 1,
-          "conceptReference": "EXP_steels_CoOre"
+          "value": 1
         }},
         {{
           "id": "EXP_superalloys_CoOre",
-          "name": "EXP_magneticalloys_CoArticles(t)",
           "description": "Expenditure of an industry on a commodity in the US.",
-          "value": 1,
-          "conceptReference": "EXP_superalloys_CoOre"
+          "value": 1
         }},
         {{
           "id": "OP_magneticalloys",
-          "name": "OP_magneticalloys(t)",
           "description": "Operating profit of an industry in the US.",
-          "value": 1,
-          "conceptReference": "OP_magneticalloys"
+          "value": 1
         }},
         {{
           "id": "OP_steels",
-          "name": "OP_magneticalloys(t)",
           "description": "Operating profit of an industry in the US.",
-          "value": 1,
-          "conceptReference": "OP_steels"
+          "value": 1
         }},
         {{
           "id": "OP_superalloys",
-          "name": "OP_magneticalloys(t)",
           "description": "Operating profit of an industry in the US.",
-          "value": 1,
-          "conceptReference": "OP_superalloys"
+          "value": 1
         }},
         {{
           "id": "VA_magneticalloys",
-          "name": "VA_magneticalloys(t)",
           "description": "Value added (i.e. its contribution to a GDP) of an industry in the US.",
-          "value": 1,
-          "conceptReference": "VA_magneticalloys"
+          "value": 1
         }},
         {{
           "id": "VA_steels",
-          "name": "VA_magneticalloys(t)",
           "description": "Value added (i.e. its contribution to a GDP) of an industry in the US.",
-          "value": 1,
-          "conceptReference": "VA_steels"
+          "value": 1
         }},
         {{
           "id": "VA_superalloys",
-          "name": "VA_magneticalloys(t)",
           "description": "Value added (i.e. its contribution to a GDP) of an industry in the US.",
-          "value": 1,
-          "conceptReference": "VA_superalloys"
+          "value": 1
         }},
         {{
           "id": "EXP_magneticalloys_CoOxides",
-          "name": "EXP_magneticalloys_CoArticles(t)",
           "description": "Expenditure of an industry on a commodity in the US.",
-          "value": 1,
-          "conceptReference": "EXP_magneticalloys_CoOxides"
+          "value": 1
         }},
         {{
           "id": "EXP_steels_CoOxides",
-          "name": "EXP_magneticalloys_CoArticles(t)",
           "description": "Expenditure of an industry on a commodity in the US.",
-          "value": 1,
-          "conceptReference": "EXP_steels_CoOxides"
+          "value": 1
         }},
         {{
           "id": "EXP_superalloys_CoOxides",
-          "name": "EXP_magneticalloys_CoArticles(t)",
           "description": "Expenditure of an industry on a commodity in the US.",
-          "value": 1,
-          "conceptReference": "EXP_superalloys_CoOxides"
+          "value": 1
         }},
         {{
           "id": "EXP_magneticalloys_CoUnwrought",
-          "name": "EXP_magneticalloys_CoArticles(t)",
           "description": "Expenditure of an industry on a commodity in the US.",
-          "value": 1,
-          "conceptReference": "EXP_magneticalloys_CoUnwrought"
+          "value": 1
         }},
         {{
           "id": "EXP_steels_CoUnwrought",
-          "name": "EXP_magneticalloys_CoArticles(t)",
           "description": "Expenditure of an industry on a commodity in the US.",
-          "value": 1,
-          "conceptReference": "EXP_steels_CoUnwrought"
+          "value": 1
         }},
         {{
           "id": "EXP_superalloys_CoUnwrought",
-          "name": "EXP_magneticalloys_CoArticles(t)",
           "description": "Expenditure of an industry on a commodity in the US.",
-          "value": 1,
-          "conceptReference": "EXP_superalloys_CoUnwrought"
+          "value": 1
         }},
         {{
           "id": "EXP_magneticalloys_CoArticles",
-          "name": "EXP_magneticalloys_CoArticles(t)",
           "description": "Expenditure of an industry on a commodity in the US.",
-          "value": 1,
-          "conceptReference": "EXP_magneticalloys_CoArticles"
+          "value": 1
         }},
         {{
           "id": "EXP_steels_CoArticles",
-          "name": "EXP_magneticalloys_CoArticles(t)",
           "description": "Expenditure of an industry on a commodity in the US.",
-          "value": 1,
-          "conceptReference": "EXP_steels_CoArticles"
+          "value": 1
         }},
         {{
           "id": "EXP_superalloys_CoArticles",
-          "name": "EXP_magneticalloys_CoArticles(t)",
           "description": "Expenditure of an industry on a commodity in the US.",
-          "value": 1,
-          "conceptReference": "EXP_superalloys_CoArticles"
+          "value": 1
         }},
         {{
           "id": "DeltaS_US_CoOre",
-          "name": "DeltaS",
           "description": "Adjustments of industry and government stocks of a commodity in a country.",
-          "value": 1,
-          "conceptReference": "DeltaS_US_CoOre"
+          "value": 1
         }},
         {{
           "id": "DeltaS_US_CoOxides",
-          "name": "DeltaS",
           "description": "Adjustments of industry and government stocks of a commodity in a country.",
-          "value": 1,
-          "conceptReference": "DeltaS_US_CoOxides"
+          "value": 1
         }},
         {{
           "id": "DeltaS_US_CoUnwrought",
-          "name": "DeltaS",
           "description": "Adjustments of industry and government stocks of a commodity in a country.",
-          "value": 1,
-          "conceptReference": "DeltaS_US_CoUnwrought"
+          "value": 1
         }},
         {{
           "id": "DeltaS_US_CoArticles",
-          "name": "DeltaS",
           "description": "Adjustments of industry and government stocks of a commodity in a country.",
-          "value": 1,
-          "conceptReference": "DeltaS_US_CoArticles"
+          "value": 1
         }},
         {{
           "id": "DeltaS_CD_CoOre",
-          "name": "DeltaS",
           "description": "Adjustments of industry and government stocks of a commodity in a country.",
-          "value": 1,
-          "conceptReference": "DeltaS_CD_CoOre"
+          "value": 1
         }},
         {{
           "id": "DeltaS_CD_CoOxides",
-          "name": "DeltaS",
           "description": "Adjustments of industry and government stocks of a commodity in a country.",
-          "value": 1,
-          "conceptReference": "DeltaS_CD_CoOxides"
+          "value": 1
         }},
         {{
           "id": "DeltaS_CD_CoUnwrought",
-          "name": "DeltaS",
           "description": "Adjustments of industry and government stocks of a commodity in a country.",
-          "value": 1,
-          "conceptReference": "DeltaS_CD_CoUnwrought"
+          "value": 1
         }},
         {{
           "id": "DeltaS_CD_CoArticles",
-          "name": "DeltaS",
           "description": "Adjustments of industry and government stocks of a commodity in a country.",
-          "value": 1,
-          "conceptReference": "DeltaS_CD_CoArticles"
+          "value": 1
         }},
         {{
           "id": "DeltaS_ZM_CoOre",
-          "name": "DeltaS",
           "description": "Adjustments of industry and government stocks of a commodity in a country.",
-          "value": 1,
-          "conceptReference": "DeltaS_ZM_CoOre"
+          "value": 1
         }},
         {{
           "id": "DeltaS_ZM_CoOxides",
-          "name": "DeltaS",
           "description": "Adjustments of industry and government stocks of a commodity in a country.",
-          "value": 1,
-          "conceptReference": "DeltaS_ZM_CoOxides"
+          "value": 1
         }},
         {{
           "id": "DeltaS_ZM_CoUnwrought",
-          "name": "DeltaS",
           "description": "Adjustments of industry and government stocks of a commodity in a country.",
-          "value": 1,
-          "conceptReference": "DeltaS_ZM_CoUnwrought"
+          "value": 1
         }},
         {{
           "id": "DeltaS_ZM_CoArticles",
-          "name": "DeltaS",
           "description": "Adjustments of industry and government stocks of a commodity in a country.",
-          "value": 1,
-          "conceptReference": "DeltaS_ZM_CoArticles"
+          "value": 1
         }},
         {{
           "id": "DeltaS_SA_CoOre",
-          "name": "DeltaS",
           "description": "Adjustments of industry and government stocks of a commodity in a country.",
-          "value": 1,
-          "conceptReference": "DeltaS_SA_CoOre"
+          "value": 1
         }},
         {{
           "id": "DeltaS_SA_CoOxides",
-          "name": "DeltaS",
           "description": "Adjustments of industry and government stocks of a commodity in a country.",
-          "value": 1,
-          "conceptReference": "DeltaS_SA_CoOxides"
+          "value": 1
         }},
         {{
           "id": "DeltaS_SA_CoUnwrought",
-          "name": "DeltaS",
           "description": "Adjustments of industry and government stocks of a commodity in a country.",
-          "value": 1,
-          "conceptReference": "DeltaS_SA_CoUnwrought"
+          "value": 1
         }},
         {{
           "id": "DeltaS_SA_CoArticles",
-          "name": "DeltaS",
           "description": "Adjustments of industry and government stocks of a commodity in a country.",
-          "value": 1,
-          "conceptReference": "DeltaS_SA_CoArticles"
+          "value": 1
         }},
         {{
           "id": "DeltaS_RW_CoOre",
-          "name": "DeltaS",
           "description": "Adjustments of industry and government stocks of a commodity in a country.",
-          "value": 1,
-          "conceptReference": "DeltaS_RW_CoOre"
+          "value": 1
         }},
         {{
           "id": "DeltaS_RW_CoOxides",
-          "name": "DeltaS",
           "description": "Adjustments of industry and government stocks of a commodity in a country.",
-          "value": 1,
-          "conceptReference": "DeltaS_RW_CoOxides"
+          "value": 1
         }},
         {{
           "id": "DeltaS_RW_CoUnwrought",
-          "name": "DeltaS",
           "description": "Adjustments of industry and government stocks of a commodity in a country.",
-          "value": 1,
-          "conceptReference": "DeltaS_RW_CoUnwrought"
+          "value": 1
         }},
         {{
           "id": "DeltaS_RW_CoArticles",
-          "name": "DeltaS",
           "description": "Adjustments of industry and government stocks of a commodity in a country.",
-          "value": 1,
-          "conceptReference": "DeltaS_RW_CoArticles"
+          "value": 1
         }},
         {{
           "id": "DeltaS_CN_CoOre",
-          "name": "DeltaS",
           "description": "Adjustments of industry and government stocks of a commodity in a country.",
-          "value": 1,
-          "conceptReference": "DeltaS_CN_CoOre"
+          "value": 1
         }},
         {{
           "id": "DeltaS_CN_CoOxides",
-          "name": "DeltaS",
           "description": "Adjustments of industry and government stocks of a commodity in a country.",
-          "value": 1,
-          "conceptReference": "DeltaS_CN_CoOxides"
+          "value": 1
         }},
         {{
           "id": "DeltaS_CN_CoUnwrought",
-          "name": "DeltaS",
           "description": "Adjustments of industry and government stocks of a commodity in a country.",
-          "value": 1,
-          "conceptReference": "DeltaS_CN_CoUnwrought"
+          "value": 1
         }},
         {{
           "id": "DeltaS_CN_CoArticles",
-          "name": "DeltaS",
           "description": "Adjustments of industry and government stocks of a commodity in a country.",
-          "value": 1,
-          "conceptReference": "DeltaS_CN_CoArticles"
+          "value": 1
         }},
         {{
           "id": "g_US",
-          "name": "g",
           "description": "GDO growth rate of a country.",
-          "value": 1,
-          "conceptReference": "g_US"
+          "value": 1
         }},
         {{
           "id": "g_CD",
-          "name": "g",
           "description": "GDO growth rate of a country.",
-          "value": 1,
-          "conceptReference": "g_CD"
+          "value": 1
         }},
         {{
           "id": "g_ZM",
-          "name": "g",
           "description": "GDO growth rate of a country.",
-          "value": 1,
-          "conceptReference": "g_ZM"
+          "value": 1
         }},
         {{
           "id": "g_SA",
-          "name": "g",
           "description": "GDO growth rate of a country.",
-          "value": 1,
-          "conceptReference": "g_SA"
+          "value": 1
         }},
         {{
           "id": "g_RW",
-          "name": "g",
           "description": "GDO growth rate of a country.",
-          "value": 1,
-          "conceptReference": "g_RW"
+          "value": 1
         }},
         {{
           "id": "g_CN",
-          "name": "g",
           "description": "GDO growth rate of a country.",
-          "value": 1,
-          "conceptReference": "g_CN"
+          "value": 1
         }},
         {{
           "id": "MC_US",
-          "name": "MC_CN(t)",
           "description": "Military cooperation, refers to whether the country has a current collective defense arrangement with the US US CD ZM SA RW CN.",
-          "value": 1,
-          "conceptReference": "MC_US"
+          "value": 1
         }},
         {{
           "id": "MC_CD",
-          "name": "MC_CN(t)",
           "description": "Military cooperation, refers to whether the country has a current collective defense arrangement with the US US CD ZM SA RW CN.",
-          "value": 1,
-          "conceptReference": "MC_CD"
+          "value": 1
         }},
         {{
           "id": "MC_ZM",
-          "name": "MC_CN(t)",
           "description": "Military cooperation, refers to whether the country has a current collective defense arrangement with the US US CD ZM SA RW CN.",
-          "value": 1,
-          "conceptReference": "MC_ZM"
+          "value": 1
         }},
         {{
           "id": "MC_SA",
-          "name": "MC_CN(t)",
           "description": "Military cooperation, refers to whether the country has a current collective defense arrangement with the US US CD ZM SA RW CN.",
-          "value": 1,
-          "conceptReference": "MC_SA"
+          "value": 1
         }},
         {{
           "id": "MC_RW",
-          "name": "MC_CN(t)",
           "description": "Military cooperation, refers to whether the country has a current collective defense arrangement with the US US CD ZM SA RW CN.",
-          "value": 1,
-          "conceptReference": "MC_RW"
+          "value": 1
         }},
         {{
           "id": "MC_CN",
-          "name": "MC_CN(t)",
           "description": "Military cooperation, refers to whether the country has a current collective defense arrangement with the US US CD ZM SA RW CN.",
-          "value": 1,
-          "conceptReference": "MC_CN"
+          "value": 1
         }}
       ]
 
@@ -1742,11 +1276,15 @@ Compose your reply with up to 4 top answers, with this JSON-format:
 
 {{
   "answer": [
-    {{ "name": <parameter_id>, "reason": <reason> }},
-    {{ "name": <parameter_id>, "reason": <reason> }},
+    {{ "id": <parameter_id>, "reason": <reason> }},
+    {{ "id": <parameter_id>, "reason": <reason> }},
     ...
   ]
 }}
+
+
+If there are no good ansers, return answer as an empty array.
+
 
 The question is:
 

@@ -7,14 +7,14 @@
       "items": {
         "type": "object",
         "properties": {
-          "name": {
+          "id": {
             "type": "string"
           },
           "reason": {
             "type": "string"
           }
         },
-        "required": ["name", "reason"],
+        "required": ["id", "reason"],
         "additionalProperties": false
       }
     }
