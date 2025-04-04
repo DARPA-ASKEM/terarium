@@ -39,7 +39,7 @@ services:
     container_name: migrate-minio
     networks:
       - terarium
-    command:  [
+    command: [
       "echo 'Installing MinIO client and unzip...' &&
       apk add --no-cache curl unzip &&
       curl -O https://dl.min.io/client/mc/release/linux-amd64/mc &&
