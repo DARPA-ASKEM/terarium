@@ -72,7 +72,7 @@ import { AcceptedExtensions, AcceptedTypes } from '@/types/common';
 import { uploadCodeToProject } from '@/services/code';
 import { useProjects } from '@/composables/project';
 import type { Dataset, DocumentAsset } from '@/types/Types';
-import { AssetType, ProvenanceType } from '@/types/Types';
+import { AssetType } from '@/types/Types';
 import { uploadDocumentAssetToProject } from '@/services/document-assets';
 import { createNewDatasetFromFile } from '@/services/dataset';
 import useAuthStore from '@/stores/auth';
@@ -83,7 +83,6 @@ import { extractPDF } from '@/services/knowledge';
 import DatasetIcon from '@/assets/svg/icons/dataset.svg?component';
 import { uploadArtifactToProject } from '@/services/artifact';
 import { createModel, createModelAndModelConfig, processAndAddModelToProject, validateAMRFile } from '@/services/model';
-import { createProvenance, RelationshipType } from '@/services/provenance';
 
 const props = defineProps<{
 	visible: boolean;
@@ -220,13 +219,6 @@ async function processModel(file: File) {
 	const artifact = await uploadArtifactToProject(file, useAuthStore().user?.id ?? '', '', progress);
 	if (!artifact) return { id: '', assetType: '' };
 	const newModelId = await processAndAddModelToProject(artifact);
-	await createProvenance({
-		relation_type: RelationshipType.EXTRACTED_FROM,
-		left: newModelId ?? '',
-		left_type: ProvenanceType.Model,
-		right: artifact.id ?? '',
-		right_type: ProvenanceType.Artifact
-	});
 	return { id: newModelId ?? '', assetType: AssetType.Model };
 }
 
@@ -296,9 +288,5 @@ async function upload() {
 	span:last-of-type {
 		color: #667985;
 	}
-}
-
-:deep(.upload-from-github-url) {
-	margin-bottom: 0;
 }
 </style>

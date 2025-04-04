@@ -93,32 +93,6 @@ services:
     extra_hosts:
       - "${local_host_name}:host-gateway"
 
-  neo4j:
-    container_name: neo4j
-    image: neo4j:5.20-community
-    healthcheck:
-      test: wget http://127.0.0.1:7474 || exit 1
-      interval: 1s
-      timeout: 10s
-      retries: 20
-      start_period: 3s
-    networks:
-      - terarium
-    ports:
-      - "7474:7474"
-      - "7687:7687"
-    environment:
-      - NEO4J_PLUGINS=["apoc"]
-      - apoc.import.file.enabled=true
-      - NEO4J_AUTH=none
-      - NEO4J_dbms_memory_pagecache_size=512M
-      - PG_HOST=postgres
-      - PG_PORT=5432
-    depends_on:
-      - postgres
-    extra_hosts:
-      - "${local_host_name}:host-gateway"
-
   rabbitmq:
     container_name: rabbitmq
     image: rabbitmq:3-management-alpine
