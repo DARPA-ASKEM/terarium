@@ -4,6 +4,7 @@ from pydantic import BaseModel, root_validator
 from typing import List, Callable, Type, Optional
 from enum import StrEnum
 
+
 class GollmModel(BaseModel):
     llm: Optional[str] = None
 
@@ -35,6 +36,7 @@ class DatasetCardModel(GollmModel):
 class ModelCompareModel(GollmModel):
     amrs: List[str]  # expects AMRs to be a stringified JSON object
     goal: str = None
+
 
 class DocumentQuestionModel(GollmModel):
     document: str  # expects a stringified JSON object
@@ -161,16 +163,6 @@ class Toolset:
 
     def __exit__(self, exc_type, exc_value, traceback):
         pass
-
-    def add_tool(
-        self,
-        name: str,
-        args: List[str],
-        description: str,
-        func: Callable,
-        input_type: Type,
-    ):
-        self.tools.append(Tool(name, args, description, func, input_type))
 
     def get_tool_names(self):
         """

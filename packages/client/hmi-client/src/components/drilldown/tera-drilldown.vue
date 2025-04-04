@@ -124,7 +124,7 @@ import { ref, computed, onMounted, onUnmounted, useSlots, ComponentPublicInstanc
 import Button from 'primevue/button';
 import Chip from 'primevue/chip';
 import Menu from 'primevue/menu';
-import { MenuItem, MenuItemCommandEvent } from 'primevue/menuitem';
+import type { MenuItem, MenuItemCommandEvent } from 'primevue/menuitem';
 import type { TabViewChangeEvent } from 'primevue/tabview';
 import { type WorkflowNode } from '@/types/workflow';
 import { isAssetOperator } from '@/services/workflow';
