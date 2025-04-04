@@ -59,6 +59,7 @@
 									@downloadModel="downloadModel(configuration)"
 									@use="onSelectConfiguration(configuration)"
 									@enrichment-change="onEnrichmentChange"
+									@enrichment-select="onEnrichmentSelect"
 								/>
 							</li>
 							<!-- Show a message if nothing found after filtering -->
@@ -226,7 +227,7 @@ import Button from 'primevue/button';
 import TeraInputText from '@/components/widgets/tera-input-text.vue';
 import Textarea from 'primevue/textarea';
 import { VAceEditor } from 'vue3-ace-editor';
-import { VAceEditorInstance } from 'vue3-ace-editor/types';
+import type { VAceEditorInstance } from 'vue3-ace-editor/types';
 import TeraDrilldownPreview from '@/components/drilldown/tera-drilldown-preview.vue';
 import TeraDrilldownSection from '@/components/drilldown/tera-drilldown-section.vue';
 import TeraDrilldown from '@/components/drilldown/tera-drilldown.vue';
@@ -262,7 +263,15 @@ import {
 	updateModelConfigurationWithEnrichments
 } from '@/services/model-configurations';
 import { useToastService } from '@/services/toast';
-import type { DocumentAsset, Initial, Model, ModelConfiguration, TaskResponse } from '@/types/Types';
+import type {
+	DocumentAsset,
+	Enrichment,
+	ExtractionItem,
+	Initial,
+	Model,
+	ModelConfiguration,
+	TaskResponse
+} from '@/types/Types';
 import { AssetType, ModelParameter } from '@/types/Types';
 import type { WorkflowNode } from '@/types/workflow';
 import { OperatorStatus } from '@/types/workflow';
@@ -306,6 +315,13 @@ const isDocViewerOpen = ref(true);
 
 const currentActiveIndexes = ref([0, 1, 2]);
 const pdfData = ref<{ document: DocumentAsset; data: string; isPdf: boolean; name: string }[]>([]);
+const documentExtractionMaps = computed(() =>
+	pdfData.value.map((d) =>
+		d.document
+			? new Map(d.document.extraction?.extractions.map((ex) => [ex.id, ex]))
+			: new Map<string, ExtractionItem>()
+	)
+);
 const pdfPanelRef = ref();
 
 const isSidebarOpen = ref(true);
@@ -811,6 +827,24 @@ const onEnrichmentChange = () => {
 		knobs.value.transientModelConfig.enrichments!,
 		documents
 	);
+};
+
+const onEnrichmentSelect = async (enrichment: Enrichment) => {
+	const docIndex = pdfData.value.findIndex((d) => d.document.id === enrichment.extractionAssetId);
+	const docId = pdfData.value[docIndex].document.id;
+	if (enrichment.extractionItemIds && enrichment.extractionItemIds.length > 0) {
+		const extractionItems = enrichment.extractionItemIds
+			.map((id) => documentExtractionMaps.value[docIndex].get(id))
+			.filter(Boolean) as ExtractionItem[];
+		// Select the PDF panel
+		await pdfPanelRef.value.selectPdf(docId);
+		// Get the PDF actions for the selected pdf viewer
+		const { highlightBBoxes, scrollToBBox } = pdfPanelRef.value.getPdfActions(docId);
+		if (!highlightBBoxes || !scrollToBBox) return;
+		highlightBBoxes(extractionItems);
+		// Scroll to the first extraction item
+		scrollToBBox(extractionItems[0].page, extractionItems[0].bbox);
+	}
 };
 
 watch(

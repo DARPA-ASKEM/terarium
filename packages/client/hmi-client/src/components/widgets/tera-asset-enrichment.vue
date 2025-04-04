@@ -39,14 +39,11 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue';
+import { computed, ref } from 'vue';
 import Button from 'primevue/button';
 import RadioButton from 'primevue/radiobutton';
-
 import { datasetCard, enrichModelMetadata } from '@/services/goLLM';
-import { getRelatedArtifacts, mapAssetTypeToProvenanceType } from '@/services/provenance';
-import { AssetType, ClientEventType, DocumentAsset, ProjectAsset, ProvenanceType, TerariumAsset } from '@/types/Types';
-import { isDocumentAsset } from '@/utils/asset';
+import { AssetType, ClientEventType, ProjectAsset, TerariumAsset } from '@/types/Types';
 import { useProjects } from '@/composables/project';
 import TeraModal from '@/components/widgets/tera-modal.vue';
 import { createEnrichClientEventHandler, useClientEvent } from '@/composables/useClientEvent';
@@ -68,7 +65,6 @@ useClientEvent(
 );
 
 const selectedResourceId = ref<string>('');
-const relatedDocuments = ref<Array<{ name: string; id: string }>>([]);
 
 const documents = computed<{ name: string; id: string }[]>(() =>
 	useProjects()
@@ -83,10 +79,9 @@ function closeDialog() {
 	isModalVisible.value = false;
 }
 
-async function confirm() {
+function confirm() {
 	closeDialog();
-	await sendForEnrichment();
-	getRelatedDocuments();
+	sendForEnrichment();
 }
 
 async function sendForEnrichment() {
@@ -100,26 +95,6 @@ async function sendForEnrichment() {
 		enrichStatus.value = OperatorStatus.IN_PROGRESS;
 	}
 }
-
-function getRelatedDocuments() {
-	const provenanceType = mapAssetTypeToProvenanceType(props.assetType);
-	if (!provenanceType) return;
-
-	getRelatedArtifacts(props.assetId, provenanceType, [ProvenanceType.Document]).then((nodes) => {
-		const provenanceNodes = nodes ?? [];
-		relatedDocuments.value =
-			(provenanceNodes.filter((node) => isDocumentAsset(node)) as DocumentAsset[]).map(({ id, name }) => ({
-				id: id ?? '',
-				name: name ?? ''
-			})) ?? [];
-	});
-}
-
-watch(
-	() => props.assetId,
-	() => getRelatedDocuments(),
-	{ immediate: true }
-);
 </script>
 
 <style scoped>
