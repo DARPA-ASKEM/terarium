@@ -245,10 +245,11 @@ class OpenAiTools(LlmToolsInterface):
             question=question
         )
 
-    def create_model_introspection_promp(self, ode_system: str, parameters: str, schema: str) -> str:
+    def create_model_introspection_prompt(self, ode: str, parameters: str, question: str, schema: str) -> str:
         print("Building prompt to answer a question from model introspection...")
         return MODEL_INTROSPECTION_PROMPT.format(
-            ode_system = ode_system,
-            parameters = parameters
+            ode = ode,
+            parameters = parameters,
+            question = question
         )
 

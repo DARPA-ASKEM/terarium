@@ -406,11 +406,11 @@ class LlamaTools(LlmToolsInterface):
         return prompt
 
 
-    def create_model_introspection_promp(self, ode_system: str, parameters: str, schema: str) -> str:
+    def create_model_introspection_promp(self, ode: str, parameters: str, schema: str) -> str:
         print("Building prompt to answer a question from model introspection...")
         prompt = LLAMA_START_PROMPT
         prompt += MODEL_INTROSPECTION_PROMPT.format(
-            ode_system = ode_system,
+            ode = ode,
             parameters = parameters
         )
         prompt += LLAMA_RETURN_INSTRUCTIONS.format(

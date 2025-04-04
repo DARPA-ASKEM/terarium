@@ -1,7 +1,7 @@
 import sys
 import traceback
 from chains import model_introspection_chain
-from entities import ModelAndDocument
+from entities import ModelIntrospection
 from llms.azure.AzureTools import AzureTools
 from llms.determine_llm import determine_llm
 
@@ -21,7 +21,7 @@ def main():
         input_dict = taskrunner.read_input_dict_with_timeout()
 
         taskrunner.log("Creating ModelAndDocument from input")
-        input_model = ModelAndDocument(**input_dict)
+        input_model = ModelIntrospection(**input_dict)
 
         try:
             llm = determine_llm(input_model.llm)
@@ -30,7 +30,7 @@ def main():
             llm = AzureTools()
             taskrunner.log(f"WARNING: {e}, defaulting to {llm.name}")
 
-        response = model_introspection_chain(llm, ode_system=input_model.odeSystem, parameters=input_model.parameters)
+        response = model_introspection_chain(llm, ode=input_model.ode, parameters=input_model.parameters, question=input_model.question)
         taskrunner.log("Received response from LLM")
 
         taskrunner.write_output_dict_with_timeout({"response": response})
