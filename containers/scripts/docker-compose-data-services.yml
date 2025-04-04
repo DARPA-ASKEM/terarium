@@ -2,7 +2,7 @@
 services:
   beaker:
     container_name: beaker
-    image: ghcr.io/darpa-askem/beaker-kernel:latest
+    image: ghcr.io/darpa-askem/askem-beaker:latest
     networks:
       - terarium
     ports:

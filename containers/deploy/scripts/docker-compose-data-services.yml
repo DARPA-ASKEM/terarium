@@ -1,0 +1,32 @@
+---
+services:
+  mira-dkg:
+    container_name: mira-dkg
+    image: ghcr.io/darpa-askem/mira:latest
+    networks:
+      - terarium
+    environment:
+      MIRA_NEO4J_URL: 'bolt://neo4j:7687'
+    extra_hosts:
+      - "${local_host_name}:host-gateway"
+
+  beaker:
+    container_name: beaker
+    image: ghcr.io/darpa-askem/askem-beaker:latest
+    networks:
+      - terarium
+    environment:
+      HMI_SERVER_URL: "http://hmi-server:3000"
+      JUPYTER_SERVER: "http://beaker:8888"
+      MIRA_REST_URL: "http://mira-dkg:8771"
+      SIMULATION_SCHEDULER_URL: "http://pyciemss-api:8000"
+      JUPYTER_TOKEN: "FkxqR4MT4k3MhEnzBZ75"
+      AUTH_USERNAME: "api-service"
+      AUTH_PASSWORD: "service123"
+      OPENAI_API_KEY: "${secret_openai_key}"
+      DEBUG: 1
+      TOOL_ENABLED_ASK_USER: false
+      TOOL_ENABLED_RUN_CODE: false
+      ENABLE_CHECKPOINTS: false
+    extra_hosts:
+      - "${local_host_name}:host-gateway"

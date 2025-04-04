@@ -1,0 +1,44 @@
+@import url("https://fonts.googleapis.com/css2?family=Figtree:ital,wght@0,400;0,600;1,400;1,600&display=swap");
+
+:root {
+	--un-color-accent-darker: #166359;
+	--un-color-accent-dark: #198c7d;
+	--un-color-accent: #1b8073;
+	--un-color-accent-light: #86d3c9;
+	--un-color-accent-lighter: #f4fefd;
+
+	--un-alert-highlight: #037566;
+
+	--un-color-button-primary: #1b8073;
+	--un-color-button-hover: #198c7d;
+	--un-color-button-secondary: #dffaf6;
+	--un-color-button-secondary-hover: #c3e9e4;
+
+	--un-background-color-left: #ffffff;
+	--un-background-color-right: #75d5c8;
+
+	--un-color-font-dark: #1c2127;
+	--un-color-font-light: #fdfafd;
+	--un-color-body-text-disabled: #747576ff;
+	--un-color-body-text-secondary: #9da5af;
+	--un-color-body-text-primary: #101828;
+
+	--un-font-xxxlarge: 600 1.375rem/2.25rem Figtree, Inter, -apple-system,
+		BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif,
+		"Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+	--un-font-xxlarge: 600 1.25rem/2rem Figtree, Inter, -apple-system,
+		BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif,
+		"Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+	--un-font-xlarge: 400 1.25rem/1.75rem Figtree, Inter, -apple-system,
+		BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif,
+		"Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+	--un-font-large: 400 1rem/1.5rem Figtree, Inter, -apple-system,
+		BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif,
+		"Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+	--un-font-body: 400 0.875rem/1.25rem Figtree, Inter, -apple-system,
+		BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif,
+		"Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+	--un-font-small: 400 0.75rem/1rem Figtree, Inter, -apple-system,
+		BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif,
+		"Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+}
