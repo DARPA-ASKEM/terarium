@@ -367,11 +367,6 @@ export interface ProvenanceQueryParam {
     verbose?: boolean;
 }
 
-export interface ProvenanceSearchResult {
-    nodes: ProvenanceNode[];
-    edges: ProvenanceEdge[];
-}
-
 export interface Simulation extends TerariumAsset {
     executionPayload: any;
     resultFiles?: string[];
@@ -847,25 +842,13 @@ export interface ProjectGroupPermission {
 }
 
 export interface IProjectUserPermissionDisplayModel {
-    permissionLevel: Permission;
     user: User;
-    email: string;
     username: string;
+    email: string;
+    permissionLevel: Permission;
     givenName: string;
     id: string;
     familyName: string;
-}
-
-export interface ProvenanceNode {
-    id: string;
-    type: ProvenanceType;
-    uuid: string;
-}
-
-export interface ProvenanceEdge {
-    relationType: ProvenanceRelationType;
-    left: ProvenanceNode;
-    right: ProvenanceNode;
 }
 
 export interface ExtractionPage {

@@ -13,13 +13,9 @@ import org.springframework.stereotype.Component;
 import software.uncharted.terarium.hmiserver.models.TerariumAsset;
 import software.uncharted.terarium.hmiserver.models.dataservice.dataset.Dataset;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.configurations.ModelConfiguration;
-import software.uncharted.terarium.hmiserver.models.dataservice.provenance.Provenance;
-import software.uncharted.terarium.hmiserver.models.dataservice.provenance.ProvenanceRelationType;
-import software.uncharted.terarium.hmiserver.models.dataservice.provenance.ProvenanceType;
 import software.uncharted.terarium.hmiserver.models.task.TaskResponse;
 import software.uncharted.terarium.hmiserver.service.data.DatasetService;
 import software.uncharted.terarium.hmiserver.service.data.ModelConfigurationService;
-import software.uncharted.terarium.hmiserver.service.data.ProvenanceService;
 
 @Component
 @RequiredArgsConstructor
@@ -30,7 +26,6 @@ public class ConfigureModelFromDatasetResponseHandler extends LlmTaskResponseHan
 
 	private final ObjectMapper objectMapper;
 	private final ModelConfigurationService modelConfigurationService;
-	private final ProvenanceService provenanceService;
 	private final DatasetService datasetService;
 
 	@Override
@@ -95,17 +90,7 @@ public class ConfigureModelFromDatasetResponseHandler extends LlmTaskResponseHan
 					configuration.getParameterSemanticList().forEach(parameter -> parameter.setSource(source));
 				}
 
-				final ModelConfiguration newConfig = modelConfigurationService.createAsset(configuration, props.projectId);
-
-				// add provenance
-				provenanceService.createProvenance(
-					new Provenance()
-						.setLeft(newConfig.getId())
-						.setLeftType(ProvenanceType.MODEL_CONFIGURATION)
-						.setRight(props.getDatasetId())
-						.setRightType(ProvenanceType.DATASET)
-						.setRelationType(ProvenanceRelationType.EXTRACTED_FROM)
-				);
+				modelConfigurationService.createAsset(configuration, props.projectId);
 			}
 		} catch (final Exception e) {
 			log.error("Failed to configure model", e);
