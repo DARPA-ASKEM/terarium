@@ -1,3 +1,4 @@
+
 from entities import ChartAnnotationType
 from typing import List, Optional
 
@@ -76,3 +77,8 @@ class LlmToolsInterface:
     def create_document_question_prompt(self, document: str, question: str) -> str:
         """Create a prompt that answers questions from a document"""
         pass
+
+    def model_introspection_prompt(self, ode_system: str, parameters: str, question: str, schema: str) -> str:
+        """Create a prompt that answers questions to what parts of the model are relevant to the question"""
+        pass
+
