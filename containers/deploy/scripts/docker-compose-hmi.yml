@@ -18,6 +18,7 @@ services:
       interval: "3s"
       timeout: "3s"
       retries: 30
+      start_period: "5m"
     environment:
       AWS-ACCESS-KEY-ID: "admin"
       AWS-SECRET-ACCESS-KEY: "admin123"
@@ -67,6 +68,7 @@ services:
       TERARIUM_MQ-PASSWORD: "terarium123"
       TERARIUM_MQ-USERNAME: "terarium"
       TERARIUM_RESULTS-PATH: "simulations"
+      TERARIUM_STATIC-INDEX-PATH: "askem-static-storage"
       TERARIUM_TASKRUNNER_DEPLOYMENTROUTINGKEY: "local"
       TERARIUM_TASKRUNNER_RABBITMQ_DEFAULT_ADDRESSES: "amqp://rabbitmq:5672"
       TERARIUM_TASKRUNNER_RABBITMQ_DEFAULT_PASSWORD: "terarium123"
@@ -82,6 +84,8 @@ services:
         condition: service_healthy
       minio:
         condition: service_healthy
+      migrate-minio:
+        condition: service_completed_successfully
       postgres:
         condition: service_healthy
       rabbitmq:

@@ -30,24 +30,52 @@ services:
       MINIO_ROOT_PASSWORD: admin123
     volumes:
       - minio-data:/data
+      - ./resources:/init-resources:ro
     extra_hosts:
       - "${local_host_name}:host-gateway"
 
   migrate-minio:
-    image: minio/mc:RELEASE.2024-11-05T11-29-45Z
+    image: alpine:latest
     container_name: migrate-minio
     networks:
       - terarium
     command: [
-      "mc alias set local_minio http://minio:9000 admin admin123 &&
-      mc mb --ignore-existing local_minio/askem-local-storage &&
-      mc anonymous set public local_minio/askem-local-storage &&
-      mc mb --ignore-existing local_minio/askem-test-storage &&
-      mc anonymous set public local_minio/askem-test-storage &&
-      tail -f /dev/null"
+      "echo 'Installing MinIO client and unzip...' &&
+      apk add --no-cache curl unzip &&
+      curl -O https://dl.min.io/client/mc/release/linux-amd64/mc &&
+      chmod +x mc &&
+      echo 'Creating MinIO buckets...' &&
+      ./mc alias set local_minio http://minio:9000 admin admin123 &&
+      ./mc mb --ignore-existing local_minio/askem-local-storage &&
+      ./mc anonymous set public local_minio/askem-local-storage &&
+      ./mc mb --ignore-existing local_minio/askem-static-storage &&
+      ./mc anonymous set public local_minio/askem-static-storage &&
+      echo 'Downloading and unzipping data...' &&
+      mkdir -p /tmp/extracted &&
+      unzip /init-resources/epi_dkg_20250128_chunk0.jsonl.zip -d /tmp/extracted &&
+      unzip /init-resources/epi_dkg_20250128_chunk1.jsonl.zip -d /tmp/extracted &&
+      unzip /init-resources/epi_dkg_20250128_chunk2.jsonl.zip -d /tmp/extracted &&
+      unzip /init-resources/epi_dkg_20250128_chunk3.jsonl.zip -d /tmp/extracted &&
+      unzip /init-resources/epi_dkg_20250128_chunk4.jsonl.zip -d /tmp/extracted &&
+      unzip /init-resources/epi_dkg_20250128_chunk5.jsonl.zip -d /tmp/extracted &&
+      unzip /init-resources/epi_dkg_20250128_chunk6.jsonl.zip -d /tmp/extracted &&
+      unzip /init-resources/epi_dkg_20250128_chunk7.jsonl.zip -d /tmp/extracted &&
+      unzip /init-resources/epi_dkg_20250128_chunk8.jsonl.zip -d /tmp/extracted &&
+      unzip /init-resources/epi_dkg_20250128_chunk9.jsonl.zip -d /tmp/extracted &&
+      unzip /init-resources/epi_dkg_20250128_chunk10.jsonl.zip -d /tmp/extracted &&
+      unzip /init-resources/epi_dkg_20250128_chunk11.jsonl.zip -d /tmp/extracted &&
+      unzip /init-resources/epi_dkg_20250128_chunk12.jsonl.zip -d /tmp/extracted &&
+      cat $(ls /tmp/extracted/epi_dkg_20250128_chunk*.jsonl | sort -V) > /tmp/extracted/epi_dkg_20250128.jsonl &&
+      unzip /init-resources/epi_dkg_20250128_mapping.json.zip -d /tmp/extracted &&
+      echo 'Copying files to MinIO...' &&
+      ./mc cp /tmp/extracted/epi_dkg_20250128_mapping.json local_minio/askem-static-storage &&
+      ./mc cp /tmp/extracted/epi_dkg_20250128.jsonl local_minio/askem-static-storage &&
+      echo 'Buckets initialized.'"
     ]
     entrypoint: [ "/bin/sh", "-c" ]
     tty: true
+    volumes:
+      - ./resources:/init-resources
     depends_on:
       minio:
         condition: service_healthy
