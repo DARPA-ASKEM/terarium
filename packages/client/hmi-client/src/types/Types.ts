@@ -842,13 +842,13 @@ export interface ProjectGroupPermission {
 }
 
 export interface IProjectUserPermissionDisplayModel {
-    id: string;
-    givenName: string;
-    permissionLevel: Permission;
     user: User;
-    familyName: string;
     username: string;
     email: string;
+    permissionLevel: Permission;
+    givenName: string;
+    id: string;
+    familyName: string;
 }
 
 export interface ExtractionPage {
