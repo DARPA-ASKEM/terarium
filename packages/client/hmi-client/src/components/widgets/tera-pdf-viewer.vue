@@ -98,7 +98,7 @@ import OverlayPanel from 'primevue/overlaypanel';
 import Divider from 'primevue/divider';
 import { PDFAnnotation, PDFPageScrollPosition } from '@/types/common';
 
-const DEFAULT_SCALE = 1.5;
+const DEFAULT_SCALE = 1;
 const SCALE_INCREMENT = 0.25;
 const MIN_SCALE = 0.5;
 const MAX_SCALE = 4;
