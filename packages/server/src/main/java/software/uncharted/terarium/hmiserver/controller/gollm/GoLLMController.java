@@ -59,9 +59,11 @@ import software.uncharted.terarium.hmiserver.service.tasks.DocumentQuestionHandl
 import software.uncharted.terarium.hmiserver.service.tasks.EnrichDatasetResponseHandler;
 import software.uncharted.terarium.hmiserver.service.tasks.EnrichModelResponseHandler;
 import software.uncharted.terarium.hmiserver.service.tasks.EquationsFromImageResponseHandler;
+import software.uncharted.terarium.hmiserver.service.tasks.GenerateModelLatexResponseHandler;
 import software.uncharted.terarium.hmiserver.service.tasks.GenerateSummaryHandler;
 import software.uncharted.terarium.hmiserver.service.tasks.InterventionsFromDatasetResponseHandler;
 import software.uncharted.terarium.hmiserver.service.tasks.InterventionsFromDocumentResponseHandler;
+import software.uncharted.terarium.hmiserver.service.tasks.ModelIntrospectionHandler;
 import software.uncharted.terarium.hmiserver.service.tasks.TaskService;
 import software.uncharted.terarium.hmiserver.service.tasks.TaskService.TaskMode;
 import software.uncharted.terarium.hmiserver.service.tasks.TaskUtilities;
@@ -1242,5 +1244,100 @@ public class GoLLMController {
 		}
 
 		return ResponseEntity.ok().body(resp);
+	}
+
+	@Data
+	private static class ModelIntrospectionInput {
+
+		private UUID modelId;
+		private String question;
+	}
+
+	@Data
+	private static class ModelIntrospectionRequest {
+
+		private String ode;
+		private String parameters;
+		private String question;
+	}
+
+	@PostMapping("/model-introspection")
+	@Secured(Roles.USER)
+	@Operation(summary = "Dispatch a model introspection` task")
+	@ApiResponses(
+		value = {
+			@ApiResponse(
+				responseCode = "200",
+				description = "Dispatched successfully",
+				content = @Content(
+					mediaType = "application/json",
+					schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = TaskResponse.class)
+				)
+			),
+			@ApiResponse(
+				responseCode = "422",
+				description = "The request was interrupted while waiting for a response",
+				content = @Content
+			),
+			@ApiResponse(responseCode = "500", description = "There was an issue dispatching the request", content = @Content)
+		}
+	)
+	public ResponseEntity<JsonNode> createDocumentQuestionTask(
+		@RequestParam(name = "project-id", required = false) final UUID projectId,
+		@RequestBody final ModelIntrospectionInput modelIntrospectionInput
+	) {
+		UUID modelId = modelIntrospectionInput.getModelId();
+		final Optional<Model> model = modelService.getAsset(modelId);
+		if (model.isEmpty()) {
+			log.warn(String.format("Model %s not found", modelId));
+			throw new ResponseStatusException(HttpStatus.NOT_FOUND, messages.get("model.not-found"));
+		}
+
+		final ModelIntrospectionRequest miRequest = new ModelIntrospectionRequest();
+
+		// Set the model in ODE system format
+		final TaskRequest latexRequest = new TaskRequest();
+		try {
+			latexRequest.setType(TaskType.MIRA);
+			latexRequest.setInput(model.get().serializeWithoutTerariumFields(null, null).getBytes());
+			latexRequest.setScript(GenerateModelLatexResponseHandler.NAME);
+			latexRequest.setUserId(currentUserService.get().getId());
+
+			final TaskResponse latexResponse = taskService.runTaskSync(latexRequest);
+			final JsonNode odeNode = objectMapper.readValue(latexResponse.getOutput(), JsonNode.class);
+			miRequest.setOde(objectMapper.writeValueAsString(odeNode.get("response")));
+		} catch (Exception e) {}
+
+		// Set the parameters
+		try {
+			miRequest.setParameters(objectMapper.writeValueAsString(model.get().getSemantics().getOde().getParameters()));
+		} catch (Exception e) {
+			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("task.gollm.execution-failure"));
+		}
+
+		// Set the question
+		miRequest.setQuestion(modelIntrospectionInput.getQuestion());
+
+		System.out.println("");
+		System.out.println("");
+		System.out.println(miRequest);
+		System.out.println("");
+		System.out.println("");
+
+		// Run model introspection
+		final TaskRequest request = new TaskRequest();
+		final TaskResponse response;
+		try {
+			request.setType(TaskType.GOLLM);
+			request.setInput(objectMapper.writeValueAsBytes(miRequest));
+			request.setScript(ModelIntrospectionHandler.NAME);
+			latexRequest.setUserId(currentUserService.get().getId());
+
+			response = taskService.runTaskSync(request);
+			JsonNode result = objectMapper.readValue(response.getOutput(), JsonNode.class);
+			return ResponseEntity.ok().body(result);
+		} catch (Exception e) {
+			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messages.get("task.gollm.execution-failure"));
+		}
 	}
 }
