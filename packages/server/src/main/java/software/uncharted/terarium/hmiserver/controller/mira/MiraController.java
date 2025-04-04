@@ -3,7 +3,6 @@ package software.uncharted.terarium.hmiserver.controller.mira;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import feign.FeignException;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -34,13 +33,10 @@ import software.uncharted.terarium.hmiserver.annotations.HasProjectAccess;
 import software.uncharted.terarium.hmiserver.models.dataservice.Artifact;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.Model;
 import software.uncharted.terarium.hmiserver.models.dataservice.model.configurations.ModelConfiguration;
-import software.uncharted.terarium.hmiserver.models.mira.Curies;
-import software.uncharted.terarium.hmiserver.models.mira.EntitySimilarityResult;
 import software.uncharted.terarium.hmiserver.models.task.TaskRequest;
 import software.uncharted.terarium.hmiserver.models.task.TaskRequest.TaskType;
 import software.uncharted.terarium.hmiserver.models.task.TaskResponse;
 import software.uncharted.terarium.hmiserver.models.task.TaskStatus;
-import software.uncharted.terarium.hmiserver.proxies.mira.MIRAProxy;
 import software.uncharted.terarium.hmiserver.security.Roles;
 import software.uncharted.terarium.hmiserver.service.CurrentUserService;
 import software.uncharted.terarium.hmiserver.service.data.ArtifactService;
@@ -67,7 +63,6 @@ public class MiraController {
 	private final ArtifactService artifactService;
 	private final TaskService taskService;
 	private final ModelService modelService;
-	private final MIRAProxy proxy;
 	private final StellaToStockflowResponseHandler stellaToStockflowResponseHandler;
 	private final MdlToStockflowResponseHandler mdlToStockflowResponseHandler;
 	private final SbmlToPetrinetResponseHandler sbmlToPetrinetResponseHandler;
@@ -542,50 +537,5 @@ public class MiraController {
 	public ResponseEntity<Void> cancelTask(@PathVariable("task-id") final UUID taskId) {
 		taskService.cancelTask(TaskType.MIRA, taskId);
 		return ResponseEntity.ok().build();
-	}
-
-	@PostMapping("/entity-similarity")
-	@Secured(Roles.USER)
-	public ResponseEntity<List<EntitySimilarityResult>> entitySimilarity(@RequestBody final Curies obj) {
-		final ResponseEntity<List<EntitySimilarityResult>> response;
-		try {
-			response = proxy.entitySimilarity(obj);
-		} catch (final FeignException e) {
-			throw handleMiraFeignException(e);
-		}
-
-		return new ResponseEntity<>(response.getBody(), response.getStatusCode());
-	}
-
-	private ResponseStatusException handleMiraFeignException(final FeignException e) {
-		final HttpStatus statusCode = HttpStatus.resolve(e.status());
-		if (statusCode != null && statusCode.is4xxClientError()) {
-			log.warn(String.format("MIRA did not return valid %s based on %s: %s", "entity similarities", "curies", ""));
-			return new ResponseStatusException(statusCode, messages.get("mira.similarity.bad-curies"));
-		} else if (statusCode == HttpStatus.SERVICE_UNAVAILABLE) {
-			log.warn("MIRA is currently unavailable");
-			return new ResponseStatusException(statusCode, messages.get("mira.service-unavailable"));
-		} else if (statusCode != null && statusCode.is5xxServerError()) {
-			log.error(
-				String.format(
-					"An error occurred while MIRA was trying to determine %s based on %s: %s",
-					"entity similarities",
-					"curies",
-					""
-				)
-			);
-			return new ResponseStatusException(statusCode, messages.get("mira.internal-error"));
-		}
-
-		final HttpStatus httpStatus = (statusCode == null) ? HttpStatus.INTERNAL_SERVER_ERROR : statusCode;
-		log.error(
-			String.format(
-				"An unknown error occurred while MIRA was trying to determine %s based on %s: %s",
-				"entity similarities",
-				"curies",
-				""
-			)
-		);
-		return new ResponseStatusException(httpStatus, messages.get("generic.unknown"));
 	}
 }

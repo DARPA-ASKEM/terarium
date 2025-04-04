@@ -49,7 +49,7 @@ services:
 #      TERARIUM_MQ_PASSWORD: "terarium123"
 #      TERARIUM_MQ_USERNAME: "terarium"
 #      TERARIUM_TASKRUNNER_REQUEST_TYPE: "mira"
-#      MIRA_REST_URL: "http://mira-epi-dkg-lb-dc1e19b273dedaa2.elb.us-east-1.amazonaws.com/"
+#      MIRA_REST_URL: "http://${local_host_name}:8771"
 #    depends_on:
 #      rabbitmq:
 #        condition: service_healthy

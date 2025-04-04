@@ -1,7 +1,7 @@
 ---
 services:
-  mira-dkg:
-    container_name: mira-dkg
+  mira:
+    container_name: mira
     image: ghcr.io/darpa-askem/mira:latest
     networks:
       - terarium
@@ -18,7 +18,7 @@ services:
     environment:
       HMI_SERVER_URL: "http://hmi-server:3000"
       JUPYTER_SERVER: "http://beaker:8888"
-      MIRA_REST_URL: "http://mira-dkg:8771"
+      MIRA_REST_URL: "http://mira:8771"
       SIMULATION_SCHEDULER_URL: "http://pyciemss-api:8000"
       JUPYTER_TOKEN: "FkxqR4MT4k3MhEnzBZ75"
       AUTH_USERNAME: "api-service"
