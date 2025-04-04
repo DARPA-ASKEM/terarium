@@ -1318,12 +1318,6 @@ public class GoLLMController {
 		// Set the question
 		miRequest.setQuestion(modelIntrospectionInput.getQuestion());
 
-		System.out.println("");
-		System.out.println("");
-		System.out.println(miRequest);
-		System.out.println("");
-		System.out.println("");
-
 		// Run model introspection
 		final TaskRequest request = new TaskRequest();
 		final TaskResponse response;
