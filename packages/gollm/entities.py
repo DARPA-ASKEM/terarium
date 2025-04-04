@@ -1,4 +1,3 @@
-import inspect
 from datetime import datetime
 from pydantic import BaseModel, root_validator
 from typing import List, Callable, Type, Optional
@@ -16,6 +15,12 @@ class GeneralQueryModel(GollmModel):
 class ModelAndDocument(GollmModel):
     amr: str  # expects AMR in a stringified JSON object
     document: Optional[str] = None
+
+
+class ModelIntrospection(GollmModel):
+    ode: str
+    parameters: str
+    question: str
 
 
 class ModelAndDataset(GollmModel):

@@ -32,6 +32,7 @@ from common.prompts.model_meta_compare import (
     MODEL_METADATA_COMPARE_DATA_PROMPT,
     MODEL_METADATA_COMPARE_GOAL_AND_DATA_PROMPT
 )
+from common.prompts.model_introspection import ( MODEL_INTROSPECTION_PROMPT )
 from common.utils import (
     decode_if_bytes,
     escape_curly_braces,
@@ -403,3 +404,18 @@ class LlamaTools(LlmToolsInterface):
         )
         prompt += LLAMA_END_PROMPT
         return prompt
+
+
+    def create_model_introspection_promp(self, ode: str, parameters: str, schema: str) -> str:
+        print("Building prompt to answer a question from model introspection...")
+        prompt = LLAMA_START_PROMPT
+        prompt += MODEL_INTROSPECTION_PROMPT.format(
+            ode = ode,
+            parameters = parameters
+        )
+        prompt += LLAMA_RETURN_INSTRUCTIONS.format(
+            schema = schema
+        )
+        prompt += LLAMA_END_PROMPT
+        return prompt
+

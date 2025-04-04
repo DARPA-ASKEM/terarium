@@ -30,6 +30,7 @@ from common.prompts.model_meta_compare import (
     MODEL_METADATA_COMPARE_DATA_PROMPT,
     MODEL_METADATA_COMPARE_GOAL_AND_DATA_PROMPT
 )
+from common.prompts.model_introspection import ( MODEL_INTROSPECTION_PROMPT )
 from common.utils import (
     escape_curly_braces,
     unescape_curly_braces
@@ -271,3 +272,12 @@ class AzureTools(LlmToolsInterface):
             document=document,
             question=question
         )
+
+    def create_model_introspection_prompt(self, ode: str, parameters: str, question: str, schema: str) -> str:
+        print("Building prompt to answer a question from model introspection...")
+        return MODEL_INTROSPECTION_PROMPT.format(
+            ode=ode,
+            parameters=parameters,
+            question=question
+        )
+
