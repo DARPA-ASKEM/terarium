@@ -164,3 +164,14 @@ def latex_to_sympy_chain(llm: LlmToolsInterface, equations: List[str]) -> dict:
 def document_question_chain(llm: LlmToolsInterface, document: str, question: str) -> str:
     prompt = llm.create_document_question_prompt(document, question)
     return llm.send_to_llm_with_string_output(prompt, None)
+
+
+def model_introspection_chain(llm: LlmToolsInterface, ode_system: str, parameters: str) -> str:
+    config_path = os.path.join(SCHEMAS_DIR, 'model_introspection.json'.json')
+    with open(config_path, 'r') as config_file:
+        response_schema = json.load(config_file)
+    validate_schema(response_schema)
+
+    prompt = llm.create_model_introspection_promp(ode_system, parameters, response_schema)
+    return llm.send_to_llm_with_json_output(prompt, response_schema)
+
