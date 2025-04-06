@@ -1,0 +1,5 @@
+### ENVIRONMENT ###
+.env
+
+### DOCKER ###
+docker/

@@ -1,3 +1,0 @@
----
-include:
-  - scripts/docker-compose-common.yml

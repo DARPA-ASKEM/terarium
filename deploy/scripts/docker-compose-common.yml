@@ -1,0 +1,201 @@
+---
+services:
+  redis:
+    image: redis:7-alpine
+    container_name: redis
+    networks:
+      - terarium
+    restart: always
+    healthcheck:
+      test: [ "CMD", "redis-cli", "ping" ]
+      interval: "3s"
+      timeout: "3s"
+      retries: 30
+    extra_hosts:
+      - "${local_host_name}:host-gateway"
+
+  minio:
+    image: minio/minio:RELEASE.2024-11-07T00-52-20Z
+    container_name: minio
+    command: [ "server", "/data", "--console-address", ":9090" ]
+    healthcheck:
+      test: timeout 5s bash -c ':> /dev/tcp/127.0.0.1/9000' || exit 1
+      interval: "3s"
+      timeout: "3s"
+      retries: 30
+    networks:
+      - terarium
+    environment:
+      MINIO_ROOT_USER: admin
+      MINIO_ROOT_PASSWORD: admin123
+    volumes:
+      - minio-data:/data
+      - ./resources:/init-resources:ro
+    extra_hosts:
+      - "${local_host_name}:host-gateway"
+
+  migrate-minio:
+    image: alpine:latest
+    container_name: migrate-minio
+    networks:
+      - terarium
+    command: [
+      "echo 'Installing MinIO client and unzip...' &&
+      apk add --no-cache curl unzip &&
+      curl -O https://dl.min.io/client/mc/release/linux-amd64/mc &&
+      chmod +x mc &&
+      echo 'Creating MinIO buckets...' &&
+      ./mc alias set local_minio http://minio:9000 admin admin123 &&
+      ./mc mb --ignore-existing local_minio/askem-local-storage &&
+      ./mc anonymous set public local_minio/askem-local-storage &&
+      ./mc mb --ignore-existing local_minio/askem-static-storage &&
+      ./mc anonymous set public local_minio/askem-static-storage &&
+      echo 'Downloading and unzipping data...' &&
+      mkdir -p /tmp/extracted &&
+      unzip /init-resources/epi_dkg_20250128_chunk0.jsonl.zip -d /tmp/extracted &&
+      unzip /init-resources/epi_dkg_20250128_chunk1.jsonl.zip -d /tmp/extracted &&
+      unzip /init-resources/epi_dkg_20250128_chunk2.jsonl.zip -d /tmp/extracted &&
+      unzip /init-resources/epi_dkg_20250128_chunk3.jsonl.zip -d /tmp/extracted &&
+      unzip /init-resources/epi_dkg_20250128_chunk4.jsonl.zip -d /tmp/extracted &&
+      unzip /init-resources/epi_dkg_20250128_chunk5.jsonl.zip -d /tmp/extracted &&
+      unzip /init-resources/epi_dkg_20250128_chunk6.jsonl.zip -d /tmp/extracted &&
+      unzip /init-resources/epi_dkg_20250128_chunk7.jsonl.zip -d /tmp/extracted &&
+      unzip /init-resources/epi_dkg_20250128_chunk8.jsonl.zip -d /tmp/extracted &&
+      unzip /init-resources/epi_dkg_20250128_chunk9.jsonl.zip -d /tmp/extracted &&
+      unzip /init-resources/epi_dkg_20250128_chunk10.jsonl.zip -d /tmp/extracted &&
+      unzip /init-resources/epi_dkg_20250128_chunk11.jsonl.zip -d /tmp/extracted &&
+      unzip /init-resources/epi_dkg_20250128_chunk12.jsonl.zip -d /tmp/extracted &&
+      cat $(ls /tmp/extracted/epi_dkg_20250128_chunk*.jsonl | sort -V) > /tmp/extracted/epi_dkg_20250128.jsonl &&
+      unzip /init-resources/epi_dkg_20250128_mapping.json.zip -d /tmp/extracted &&
+      echo 'Copying files to MinIO...' &&
+      ./mc cp /tmp/extracted/epi_dkg_20250128_mapping.json local_minio/askem-static-storage &&
+      ./mc cp /tmp/extracted/epi_dkg_20250128.jsonl local_minio/askem-static-storage &&
+      echo 'Buckets initialized.'"
+    ]
+    entrypoint: [ "/bin/sh", "-c" ]
+    tty: true
+    volumes:
+      - ./resources:/init-resources
+    depends_on:
+      minio:
+        condition: service_healthy
+    extra_hosts:
+      - "${local_host_name}:host-gateway"
+
+  elasticsearch:
+    container_name: elasticsearch
+    image: elasticsearch:8.12.1
+    networks:
+      - terarium
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "curl",
+          "--head",
+          "0.0.0.0:9200/_cluster/health?wait_for_status=yellow"
+        ]
+      interval: "3s"
+      timeout: "3s"
+      retries: 30
+    environment:
+      - cluster.name=elasticsearch
+      - discovery.type=single-node
+      - bootstrap.memory_lock=true
+      - "ES_JAVA_OPTS=-Xms1024m -Xmx4096m"
+      - xpack.security.enabled=false
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    volumes:
+      - elasticsearch-data:/usr/share/elasticsearch/data
+    extra_hosts:
+      - "${local_host_name}:host-gateway"
+
+  rabbitmq:
+    container_name: rabbitmq
+    image: rabbitmq:3-management-alpine
+    healthcheck:
+      test: rabbitmq-diagnostics -q ping
+      interval: 30s
+      timeout: 30s
+      retries: 3
+    networks:
+      - terarium
+    environment:
+      RABBITMQ_DEFAULT_USER: "terarium"
+      RABBITMQ_DEFAULT_PASS: "terarium123"
+      RABBITMQ_MANAGEMENT_ENABLED: true
+    extra_hosts:
+      - "${local_host_name}:host-gateway"
+
+  spicedb:
+    container_name: spicedb
+    image: authzed/spicedb:v1.39.1
+    networks:
+      - terarium
+    command: [ "serve" ]
+    environment:
+      SPICEDB_GRPC_PRESHARED_KEY: "dev"
+      SPICEDB_DATASTORE_ENGINE: "postgres"
+      SPICEDB_HTTP_ENABLED: true
+      SPICEDB_DATASTORE_CONN_URI: "postgres://terarium_user:terarium@postgres:5432/spicedb?sslmode=disable"
+    healthcheck:
+      test: [ "CMD", "grpc_health_probe", "-addr=:50051" ]
+      interval: "3s"
+      timeout: "3s"
+      retries: 30
+    depends_on:
+      migrate-spicedb:
+        condition: service_completed_successfully
+    extra_hosts:
+      - "${local_host_name}:host-gateway"
+
+  migrate-spicedb:
+    container_name: migrate-spicedb
+    image: authzed/spicedb:v1.39.1
+    networks:
+      - terarium
+    command: [ "migrate", "head" ]
+    restart: "on-failure"
+    environment:
+      SPICEDB_DATASTORE_ENGINE: "postgres"
+      SPICEDB_DATASTORE_CONN_URI: "postgres://terarium_user:terarium@postgres:5432/spicedb?sslmode=disable"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    extra_hosts:
+      - "${local_host_name}:host-gateway"
+
+  postgres:
+    container_name: postgres
+    image: postgres:14-alpine
+    networks:
+      - terarium
+    restart: always
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready", "-d", "terarium" ]
+      interval: "3s"
+      timeout: "3s"
+      retries: 30
+    user: postgres
+    environment:
+      POSTGRES_USER: "postgres"
+      POSTGRES_PASSWORD: "postgres"
+      POSTGRES_DB: "postgres"
+    volumes:
+      - terarium-db:/var/lib/postgresql/data
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+    extra_hosts:
+      - "${local_host_name}:host-gateway"
+
+volumes:
+  elasticsearch-data:
+  minio-data:
+  terarium-db:
+    driver: local
+
+networks:
+  terarium:
+    name: terarium

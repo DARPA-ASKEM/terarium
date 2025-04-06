@@ -14,11 +14,8 @@ all:
 	@echo "  image-<target>           - build docker image of a specific target - see below for list of targets"
 
 
-
 ## Targets
 TARGETS :=
-
-
 
 TARGETS += hmi-server
 clean-hmi-server: clean-hmi-server-base
@@ -52,8 +49,6 @@ clean-hmi-server-base:
 ## Images
 .PHONY: images
 images: $(TARGETS:%=image-%)
-
-
 
 ## Utilities
 yarn-install:
