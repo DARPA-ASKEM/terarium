@@ -843,11 +843,11 @@ export interface ProjectGroupPermission {
 
 export interface IProjectUserPermissionDisplayModel {
     user: User;
-    email: string;
     username: string;
-    permissionLevel: Permission;
+    email: string;
     givenName: string;
     id: string;
+    permissionLevel: Permission;
     familyName: string;
 }
 
