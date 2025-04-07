@@ -48,7 +48,6 @@ import software.uncharted.terarium.hmiserver.models.dataservice.PresignedURL;
 import software.uncharted.terarium.hmiserver.models.dataservice.ResponseDeleted;
 import software.uncharted.terarium.hmiserver.models.dataservice.ResponseStatus;
 import software.uncharted.terarium.hmiserver.models.dataservice.dataset.Dataset;
-import software.uncharted.terarium.hmiserver.proxies.jsdelivr.JsDelivrProxy;
 import software.uncharted.terarium.hmiserver.security.Roles;
 import software.uncharted.terarium.hmiserver.service.CurrentUserService;
 import software.uncharted.terarium.hmiserver.service.data.DatasetService;
@@ -69,8 +68,6 @@ public class DatasetController {
 
 	final DatasetService datasetService;
 	final DatasetStatistics datasetStatistics;
-
-	final JsDelivrProxy githubProxy;
 
 	final ProjectService projectService;
 	final CurrentUserService currentUserService;
@@ -434,67 +431,6 @@ public class DatasetController {
 					messages.get("postgres.service-unavailable")
 				);
 			}
-		}
-	}
-
-	/**
-	 * Uploads a CSV file from GitHub given the path and owner name, then uploads
-	 * it to the dataset.
-	 */
-	@PutMapping("/{id}/upload-csv-from-github")
-	@Secured(Roles.USER)
-	@Operation(summary = "Uploads a CSV file from github to a dataset")
-	@HasProjectAccess(level = Schema.Permission.WRITE)
-	@ApiResponses(
-		value = {
-			@ApiResponse(
-				responseCode = "200",
-				description = "Uploaded the CSV file.",
-				content = @Content(
-					mediaType = "application/json",
-					schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = ResponseStatus.class)
-				)
-			),
-			@ApiResponse(responseCode = "500", description = "There was an issue uploading the CSV", content = @Content)
-		}
-	)
-	public ResponseEntity<ResponseStatus> uploadCsvFromGithub(
-		@PathVariable("id") final UUID datasetId,
-		@RequestParam("path") final String path,
-		@RequestParam("repo-owner-and-name") final String repoOwnerAndName,
-		@RequestParam("filename") final String filename,
-		@RequestParam(name = "project-id", required = false) final UUID projectId
-	) {
-		log.debug("Uploading CSV file from github to dataset {}", datasetId);
-
-		// download CSV from GitHub
-		final String csvString = githubProxy.getGithubCode(repoOwnerAndName, path).getBody();
-
-		if (csvString == null) {
-			final String error = "Unable to download csv from github";
-			log.error(error);
-			throw new ResponseStatusException(
-				org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
-				messages.get("dataset.download-error")
-			);
-		}
-
-		CSVParser csvParser;
-		try {
-			csvParser = new CSVParser(
-				new StringReader(csvString),
-				CSVFormat.Builder.create(CSVFormat.DEFAULT).setHeader().setSkipHeaderRecord(false).build()
-			);
-			List<String> headers = new ArrayList<>(csvParser.getHeaderMap().keySet());
-			csvParser.close();
-			final HttpEntity csvEntity = new StringEntity(csvString, ContentType.APPLICATION_OCTET_STREAM);
-			return uploadCSVAndUpdateColumns(datasetId, projectId, filename, csvEntity, headers);
-		} catch (IOException e) {
-			log.error("Unable to parse csv from github", e);
-			throw new ResponseStatusException(
-				org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
-				messages.get("dataset.parse-error")
-			);
 		}
 	}
 
