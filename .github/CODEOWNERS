@@ -7,21 +7,6 @@
 # precedence.
 
 # Global Owners. Unless a later match takes precedence
-* @dgauldie @mwdchang @YohannParis
-
-# Client code owners
-/packages/client/ @YohannParis @mwdchang @jryu01 @Tom-Szendrey @blanchco @mloppie @DSheffield
-
-# Backend services owners
-/packages/server/ @dgauldie @dvince2 @YohannParis @DSheffield
-/packages/taskrunner/ @dgauldie @YohannParis
-
-# Documentation owners
-docs/*  @dgauldie @YohannParis @dvince2
-
-
-# Generated Types - removing generated types from codeowners to reduce client owners spam.
-packages/client/hmi-client/src/types/Types.ts
 
 # CODEOWNERS prevent renovate automerge since it will automatically ask for review
 # See documentation for more details: https://docs.renovatebot.com/key-concepts/automerge/#codeowners

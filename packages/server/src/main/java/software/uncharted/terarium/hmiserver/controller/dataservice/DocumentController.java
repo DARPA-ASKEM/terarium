@@ -47,7 +47,6 @@ import software.uncharted.terarium.hmiserver.models.dataservice.PresignedURL;
 import software.uncharted.terarium.hmiserver.models.dataservice.ResponseDeleted;
 import software.uncharted.terarium.hmiserver.models.dataservice.ResponseStatus;
 import software.uncharted.terarium.hmiserver.models.dataservice.document.DocumentAsset;
-import software.uncharted.terarium.hmiserver.proxies.jsdelivr.JsDelivrProxy;
 import software.uncharted.terarium.hmiserver.security.Roles;
 import software.uncharted.terarium.hmiserver.service.CurrentUserService;
 import software.uncharted.terarium.hmiserver.service.data.DocumentAssetService;
@@ -61,7 +60,6 @@ public class DocumentController {
 
 	final Config config;
 	final CurrentUserService currentUserService;
-	final JsDelivrProxy gitHubProxy;
 	final DocumentAssetService documentAssetService;
 
 	@PostMapping
@@ -382,47 +380,6 @@ public class DocumentController {
 			log.error(error, e);
 			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, error);
 		}
-	}
-
-	/**
-	 * Downloads a file from GitHub given the path and owner name, then uploads it
-	 * to the project.
-	 */
-	@PutMapping("/{documentId}/upload-document-from-github")
-	@Secured(Roles.USER)
-	@Operation(summary = "Uploads a document from github")
-	@HasProjectAccess(level = Schema.Permission.WRITE)
-	@ApiResponses(
-		value = {
-			@ApiResponse(
-				responseCode = "200",
-				description = "Uploaded the document.",
-				content = @Content(
-					mediaType = "application/json",
-					schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = ResponseStatus.class)
-				)
-			),
-			@ApiResponse(responseCode = "500", description = "There was an issue uploading the document", content = @Content)
-		}
-	)
-	public ResponseEntity<Void> uploadDocumentFromGithub(
-		@PathVariable("documentId") final UUID documentId,
-		@RequestParam("path") final String path,
-		@RequestParam("repo-owner-and-name") final String repoOwnerAndName,
-		@RequestParam("filename") final String filename,
-		@RequestParam(name = "project-id", required = false) final UUID projectId
-	) {
-		log.debug("Uploading Document file from github to dataset {}", documentId);
-
-		// download file from GitHub
-		final String fileString = gitHubProxy.getGithubCode(repoOwnerAndName, path).getBody();
-		if (fileString == null) {
-			final String error = "Unable to download document from github";
-			log.error(error);
-			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, error);
-		}
-		final HttpEntity fileEntity = new StringEntity(fileString, ContentType.TEXT_PLAIN);
-		return uploadDocumentHelper(documentId, filename, fileEntity, projectId);
 	}
 
 	@GetMapping(value = "/{id}/download-document", produces = MediaType.APPLICATION_OCTET_STREAM_VALUE)

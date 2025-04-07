@@ -1,0 +1,9 @@
+---
+name: terarium
+include:
+    - scripts/docker-compose-common.yml
+    - scripts/docker-compose-keycloak.yml
+    - scripts/docker-compose-taskrunner.yml
+    - scripts/docker-compose-data-services.yml
+    - scripts/docker-compose-sim-services.yml
+    - scripts/docker-compose-hmi.yml

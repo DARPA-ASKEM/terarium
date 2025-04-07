@@ -1,0 +1,133 @@
+---
+services:
+  hmi-server:
+    image: ghcr.io/darpa-askem/hmi-server:latest
+    container_name: hmi-server
+    networks:
+      - terarium
+    ports:
+      - "3000:3000"
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "curl",
+          "--head",
+          "0.0.0.0:3000/actuator/health"
+        ]
+      interval: "3s"
+      timeout: "3s"
+      retries: 30
+      start_period: "5m"
+    environment:
+      AWS-ACCESS-KEY-ID: "admin"
+      AWS-SECRET-ACCESS-KEY: "admin123"
+      AWS-URL: "http://minio:9000"
+      CIEMSS-SERVICE_URL: "http://pyciemss-api:8000"
+      GOOGLE-ANALYTICS-ID: ""
+      SPICEDB_LAUNCHMODE: "PLAINTEXT"
+      SPICEDB_SHARED-KEY: "dev"
+      SPICEDB_TARGET: "spicedb:50051"
+      SPRING_DATASOURCE_INITIALIZE: true
+      SPRING_DATASOURCE_PASSWORD: "postgres"
+      SPRING_DATASOURCE_URL: "jdbc:postgresql://postgres:5432/terarium"
+      SPRING_DATASOURCE_USERNAME: "postgres"
+      SPRING_DATA_REDIS_URL: "redis://redis:6379"
+      SPRING_FLYWAY_ENABLED: true
+      SPRING_JPA_HIBERNATE_DDL-AUTO: update
+      SPRING_PROFILES_ACTIVE: "default"
+      SPRING_RABBITMQ_ADDRESSES: "amqp://rabbitmq:5672"
+      SPRING_SECURITY_OAUTH2_CLIENT_PROVIDER_KEYCLOAK_ISSUER-URI: "http://keycloak:8081/realms/terarium"
+      SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_KEYCLOAK_CLIENT-ID: "app"
+      SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER-URI: "http://keycloak:8081/realms/terarium"
+      TERARIUM_AMAZON_CREDENTIALS_DEFAULT_ACCESS-KEY: "admin"
+      TERARIUM_AMAZON_CREDENTIALS_DEFAULT_SECRET-KEY: "admin123"
+      TERARIUM_AMAZON_CREDENTIALS_STATIC-INDEX_ACCESS-KEY: "admin"
+      TERARIUM_AMAZON_CREDENTIALS_STATIC-INDEX_SECRET-KEY: "admin123"
+      TERARIUM_AMAZON_S3_DEFAULT_URL: "http://minio:9000"
+      TERARIUM_AMAZON_S3_STATIC-INDEX_URL: "http://minio:9000"
+      TERARIUM_ARTIFACT-PATH: "artifacts"
+      TERARIUM_CLIENTCONFIG_DOCUMENTATIONURL: "http://terarium-docs:8082"
+      TERARIUM_CODE-PATH: "code"
+      TERARIUM_DATASET-PATH: "datasets"
+      TERARIUM_DOCUMENT-PATH: "documents"
+      TERARIUM_ELASTICSEARCH_AUTH-ENABLED: false
+      TERARIUM_ELASTICSEARCH_URL: "http://elasticsearch:9200"
+      TERARIUM_FILE-STORAGE-S3-BUCKET-NAME: "askem-local-storage"
+      TERARIUM_KEYCLOAK_ADMIN-API-SERVICE-NAME: "api-service"
+      TERARIUM_KEYCLOAK_ADMIN-CLIENT-ID: "admin-cli"
+      TERARIUM_KEYCLOAK_ADMIN-PASSWORD: "admin123"
+      TERARIUM_KEYCLOAK_ADMIN-REALM: "master"
+      TERARIUM_KEYCLOAK_ADMIN-USERNAME: "admin"
+      TERARIUM_KEYCLOAK_API-SERVICE-NAME: "api-service"
+      TERARIUM_KEYCLOAK_CLIENT-ID: "app"
+      TERARIUM_KEYCLOAK_REALM: "terarium"
+      TERARIUM_KEYCLOAK_URL: "http://keycloak:8081"
+      TERARIUM_LLM: "openai"
+      TERARIUM_MQ-ADDRESSES: "amqp://rabbitmq:5672"
+      TERARIUM_MQ-PASSWORD: "terarium123"
+      TERARIUM_MQ-USERNAME: "terarium"
+      TERARIUM_RESULTS-PATH: "simulations"
+      TERARIUM_STATIC-INDEX-PATH: "askem-static-storage"
+      TERARIUM_TASKRUNNER_DEPLOYMENTROUTINGKEY: "local"
+      TERARIUM_TASKRUNNER_RABBITMQ_DEFAULT_ADDRESSES: "amqp://rabbitmq:5672"
+      TERARIUM_TASKRUNNER_RABBITMQ_DEFAULT_PASSWORD: "terarium123"
+      TERARIUM_TASKRUNNER_RABBITMQ_DEFAULT_USERNAME: "terarium"
+      TGPT_APP_URL: "http://beaker:8888/beaker/"
+      TGPT_BASE_URL: "/beaker/"
+      TGPT_TOKEN: "FkxqR4MT4k3MhEnzBZ75"
+      TGPT_WS_URL: "ws://beaker:8888/beaker_ws/"
+    depends_on:
+      elasticsearch:
+        condition: service_healthy
+      keycloak:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+      migrate-minio:
+        condition: service_completed_successfully
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      spicedb:
+        condition: service_healthy
+    extra_hosts:
+      - "${local_host_name}:host-gateway"
+
+  hmi-client:
+    image: ghcr.io/darpa-askem/hmi-client:latest
+    container_name: hmi-client
+    networks:
+      - terarium
+    ports:
+      - "8080:80"
+    restart: always
+    healthcheck:
+      test: [ "CMD", "curl", "--head", "0.0.0.0:80/healthcheck" ]
+      interval: "3s"
+      timeout: "3s"
+      retries: 30
+    depends_on:
+      hmi-server:
+        condition: service_healthy
+    extra_hosts:
+      - "${local_host_name}:host-gateway"
+
+  terarium-docs:
+    image: ghcr.io/darpa-askem/terarium-docs:latest
+    container_name: terarium-docs
+    networks:
+      - terarium
+    ports:
+      - "8082:80"
+    restart: always
+    healthcheck:
+      test: [ "CMD", "curl", "--head", "0.0.0.0:80/healthcheck" ]
+      interval: "3s"
+      timeout: "3s"
+      retries: 30
+    extra_hosts:
+      - "${local_host_name}:host-gateway"

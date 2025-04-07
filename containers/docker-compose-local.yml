@@ -1,9 +1,0 @@
----
-include:
-  - scripts/docker-compose-common.yml
-  - scripts/docker-compose-data-services.yml
-  - scripts/docker-compose-sim-services.yml
-################################################
-# Uncomment this to run any taskrunner locally #
-################################################
-#  - scripts/docker-compose-taskrunner.yml

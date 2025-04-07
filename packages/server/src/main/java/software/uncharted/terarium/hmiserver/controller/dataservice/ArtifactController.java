@@ -36,7 +36,6 @@ import software.uncharted.terarium.hmiserver.configuration.Config;
 import software.uncharted.terarium.hmiserver.models.dataservice.Artifact;
 import software.uncharted.terarium.hmiserver.models.dataservice.PresignedURL;
 import software.uncharted.terarium.hmiserver.models.dataservice.ResponseDeleted;
-import software.uncharted.terarium.hmiserver.proxies.jsdelivr.JsDelivrProxy;
 import software.uncharted.terarium.hmiserver.security.Roles;
 import software.uncharted.terarium.hmiserver.service.data.ArtifactService;
 import software.uncharted.terarium.hmiserver.utils.rebac.Schema;
@@ -50,8 +49,6 @@ public class ArtifactController {
 	final Config config;
 
 	final ArtifactService artifactService;
-
-	final JsDelivrProxy gitHubProxy;
 
 	@PostMapping
 	@Secured(Roles.USER)
@@ -341,44 +338,6 @@ public class ArtifactController {
 
 		final byte[] fileAsBytes = input.getBytes();
 		final HttpEntity fileEntity = new ByteArrayEntity(fileAsBytes, ContentType.APPLICATION_OCTET_STREAM);
-		return uploadArtifactHelper(artifactId, filename, fileEntity);
-	}
-
-	/**
-	 * Downloads a file from GitHub given the path and owner name, then uploads it
-	 * to the project.
-	 */
-	@PutMapping("/{id}/upload-artifact-from-github")
-	@Secured(Roles.USER)
-	@Operation(summary = "Uploads a file from GitHub to the artifact")
-	@ApiResponses(
-		value = {
-			@ApiResponse(
-				responseCode = "200",
-				description = "File uploaded.",
-				content = @Content(
-					mediaType = "application/json",
-					schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = Integer.class)
-				)
-			),
-			@ApiResponse(responseCode = "404", description = "File not found", content = @Content),
-			@ApiResponse(responseCode = "500", description = "There was an issue uploading the file", content = @Content)
-		}
-	)
-	public ResponseEntity<Integer> uploadArtifactFromGithub(
-		@PathVariable("id") final UUID artifactId,
-		@RequestParam("path") final String path,
-		@RequestParam("repo-owner-and-name") final String repoOwnerAndName,
-		@RequestParam("filename") final String filename
-	) {
-		log.debug("Uploading artifact file from github to dataset {}", artifactId);
-
-		// download file from GitHub
-		final String fileString = gitHubProxy.getGithubCode(repoOwnerAndName, path).getBody();
-		if (fileString == null) {
-			return ResponseEntity.notFound().build();
-		}
-		final HttpEntity fileEntity = new StringEntity(fileString, ContentType.TEXT_PLAIN);
 		return uploadArtifactHelper(artifactId, filename, fileEntity);
 	}
 

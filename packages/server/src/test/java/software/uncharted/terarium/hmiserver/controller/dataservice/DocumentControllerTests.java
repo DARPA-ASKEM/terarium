@@ -142,27 +142,6 @@ public class DocumentControllerTests extends TerariumApplicationTests {
 
 	@Test
 	@WithUserDetails(MockUser.URSULA)
-	public void testItCanUploadDocumentFromGithub() throws Exception {
-		final DocumentAsset documentAsset = documentAssetService.createAsset(
-			(DocumentAsset) new DocumentAsset().setName("test-document-name").setDescription("my description"),
-			project.getId()
-		);
-
-		mockMvc
-			.perform(
-				MockMvcRequestBuilders.put("/document-asset/" + documentAsset.getId() + "/upload-document-from-github")
-					.param("project-id", project.getId().toString())
-					.with(csrf())
-					.param("repo-owner-and-name", "unchartedsoftware/torflow")
-					.param("path", "README.md")
-					.param("filename", "torflow-readme.md")
-					.contentType("application/json")
-			)
-			.andExpect(status().isOk());
-	}
-
-	@Test
-	@WithUserDetails(MockUser.URSULA)
 	public void testItCanDownloadDocument() throws Exception {
 		final DocumentAsset documentAsset = documentAssetService.createAsset(
 			(DocumentAsset) new DocumentAsset().setName("test-document-name").setDescription("my description"),
