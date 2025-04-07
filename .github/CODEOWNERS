@@ -8,12 +8,6 @@
 
 # Global Owners. Unless a later match takes precedence
 
-# Client code owners
-
-# Backend services owners
-
-# Documentation owners
-
 # CODEOWNERS prevent renovate automerge since it will automatically ask for review
 # See documentation for more details: https://docs.renovatebot.com/key-concepts/automerge/#codeowners
 # NOTE: leave at the bottom for precedence matching
