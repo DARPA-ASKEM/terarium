@@ -154,27 +154,6 @@ public class DatasetControllerTests extends TerariumApplicationTests {
 
 	//@Test
 	@WithUserDetails(MockUser.URSULA)
-	public void testItCanUploadDatasetFromGithub() throws Exception {
-		final Dataset dataset = datasetService.createAsset(
-			(Dataset) new Dataset().setName("test-dataset-name").setDescription("my description"),
-			project.getId()
-		);
-
-		mockMvc
-			.perform(
-				MockMvcRequestBuilders.put("/datasets/" + dataset.getId() + "/upload-csv-from-github")
-					.with(csrf())
-					.param("project-id", project.getId().toString())
-					.param("repo-owner-and-name", "unchartedsoftware/torflow")
-					.param("path", "README.md")
-					.param("filename", "torflow-readme.md")
-					.contentType("application/json")
-			)
-			.andExpect(status().isOk());
-	}
-
-	//@Test
-	@WithUserDetails(MockUser.URSULA)
 	public void testItCanDownloadDatasetCSV() throws Exception {
 		final Dataset dataset = datasetService.createAsset(
 			(Dataset) new Dataset().setName("test-dataset-name").setDescription("my description"),

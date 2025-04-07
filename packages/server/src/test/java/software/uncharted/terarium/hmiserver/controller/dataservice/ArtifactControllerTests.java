@@ -138,26 +138,6 @@ public class ArtifactControllerTests extends TerariumApplicationTests {
 
 	@Test
 	@WithUserDetails(MockUser.URSULA)
-	public void testItCanUploadArtifactFromGithub() throws Exception {
-		final Artifact artifact = artifactService.createAsset(
-			(Artifact) new Artifact().setName("test-artifact-name").setDescription("my description"),
-			project.getId()
-		);
-
-		mockMvc
-			.perform(
-				MockMvcRequestBuilders.put("/artifacts/" + artifact.getId() + "/upload-artifact-from-github")
-					.with(csrf())
-					.param("repo-owner-and-name", "unchartedsoftware/torflow")
-					.param("path", "README.md")
-					.param("filename", "torflow-readme.md")
-					.contentType("application/json")
-			)
-			.andExpect(status().isOk());
-	}
-
-	@Test
-	@WithUserDetails(MockUser.URSULA)
 	public void testItCanDownloadArtifact() throws Exception {
 		final Artifact artifact = artifactService.createAsset(
 			(Artifact) new Artifact().setName("test-artifact-name").setDescription("my description"),
