@@ -76,15 +76,6 @@
 							</div>
 
 							<Button size="small" text icon="pi pi-plus" label="Add mapping" @click="addMapping" />
-							<!--
-						TODO: Add auto mapping here
-						<Button
-							text
-							size="small"
-							icon="pi pi-sparkles"
-							label="Auto map"
-							@click="getAutoMapping"
-						/> -->
 						</AccordionTab>
 						<AccordionTab header="Model weights">
 							<div
@@ -455,17 +446,17 @@ const isSidebarOpen = ref(true);
 const selectedOutputId = ref<string>();
 
 // Checks for disabling run button:
-const isMappingfilled = computed(
+const isMappingFilled = computed(
 	() =>
 		knobs.value.ensembleMapping.length !== 0 && knobs.value.ensembleMapping[0].newName && knobs.value.timestampColName
 );
 
 const areNodeInputsFilled = computed(() => datasetId.value && allModelConfigurations.value.length >= 2);
 
-const isRunDisabled = computed(() => !isMappingfilled.value || !areNodeInputsFilled.value);
+const isRunDisabled = computed(() => !isMappingFilled.value || !areNodeInputsFilled.value);
 
 const mappingFilledTooltip = computed(() =>
-	!isMappingfilled.value ? 'Must contain a Timestamp column and at least one mapping. \n' : ''
+	!isMappingFilled.value ? 'Must contain a Timestamp column and at least one mapping. \n' : ''
 );
 const nodeInputsFilledTooltip = computed(() =>
 	!areNodeInputsFilled.value ? 'Must contain one dataset and at least two model configurations.\n' : ''
@@ -522,7 +513,7 @@ const tableHeaders = computed(() => {
 	});
 	return headers;
 });
-// List of each observible + state for each model.
+// List of each observable + state for each model.
 const allModelOptions = ref<any[][]>([]);
 
 const onSelection = (id: string) => {

@@ -1,0 +1,69 @@
+---
+services:
+  gollm-taskrunner:
+    image: ghcr.io/darpa-askem/gollm-taskrunner:latest
+    container_name: gollm-taskrunner
+    networks:
+      - terarium
+    environment:
+      TERARIUM_MQ_ADDRESSES: "amqp://rabbitmq:5672"
+      TERARIUM_MQ_PASSWORD: "terarium123"
+      TERARIUM_MQ_USERNAME: "terarium"
+      TERARIUM_TASKRUNNER_REQUEST_TYPE: "gollm"
+      OPENAI_API_KEY: "${secret_openai_key}"
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+    extra_hosts:
+      - "${local_host_name}:host-gateway"
+
+  mira-taskrunner:
+    image: ghcr.io/darpa-askem/mira-taskrunner:latest
+    container_name: mira-taskrunner
+    networks:
+      - terarium
+    environment:
+      TERARIUM_MQ_ADDRESSES: "amqp://rabbitmq:5672"
+      TERARIUM_MQ_PASSWORD: "terarium123"
+      TERARIUM_MQ_USERNAME: "terarium"
+      TERARIUM_TASKRUNNER_REQUEST_TYPE: "mira"
+      MIRA_REST_URL: "http://mira:8771"
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+    extra_hosts:
+      - "${local_host_name}:host-gateway"
+
+  funman-taskrunner:
+    image: ghcr.io/darpa-askem/funman-taskrunner:latest
+    container_name: funman-taskrunner
+    networks:
+      - terarium
+    environment:
+      TERARIUM_MQ_ADDRESSES: "amqp://rabbitmq:5672"
+      TERARIUM_MQ_PASSWORD: "terarium123"
+      TERARIUM_MQ_USERNAME: "terarium"
+      TERARIUM_TASKRUNNER_REQUEST_TYPE: "funman"
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+    extra_hosts:
+      - "${local_host_name}:host-gateway"
+    platform: linux/amd64
+
+  ocr-extraction-taskrunner:
+    image: ghcr.io/darpa-askem/ocr-extraction-taskrunner:latest
+    container_name: ocr-extraction-taskrunner
+    networks:
+      - terarium
+    environment:
+      TERARIUM_MQ_ADDRESSES: "amqp://rabbitmq:5672"
+      TERARIUM_MQ_PASSWORD: "terarium123"
+      TERARIUM_MQ_USERNAME: "terarium"
+      TERARIUM_TASKRUNNER_REQUEST_TYPE: "ocr_extraction"
+      ASKEM_DOC_AI_API_KEY: "${secret_openai_key}"
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+    extra_hosts:
+      - "${local_host_name}:host-gateway"
